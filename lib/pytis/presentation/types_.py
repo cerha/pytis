@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -90,6 +90,13 @@ class PrettyTreeOrder(PrettyType):
 class PrettyFoldable(PrettyTreeOrder):
     """Similar as 'PrettyTreeOrder' but with an additional folding indicator.
     """
+    FOLDED_MARK = u'⊞'
+    "Folding indicator for a foldable node in a folded state."
+    UNFOLDED_MARK = u'⊟'
+    "Folding indicator for a foldable node in a unfolded state."
+    NON_FOLDABLE_MARK = u'⊙'
+    "Folding indicator for an unfoldable node."
+    
     def __init__(self, tree_column_id, subcount_column_id=None, **kwargs):
         """
         Arguments:
@@ -114,9 +121,9 @@ class PrettyFoldable(PrettyTreeOrder):
             if (self._tree_column_nsub_id and
                 row.has_key(self._tree_column_nsub_id) and
                 not row[self._tree_column_nsub_id].value()):
-                mark = u'⊙ '
+                mark = self.NON_FOLDABLE_MARK + ' '
             elif folding == 0:
-                mark = u'⊞ '
+                mark = self.FOLDED_MARK + ' '
             else:
-                mark = u'⊟ '
+                mark = self.UNFOLDED_MARK + ' '
         return 3*level*' ' + mark

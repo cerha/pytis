@@ -240,7 +240,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.grid.EVT_GRID_COL_SIZE,      g, self._on_label_drag_size)
         wx_callback(wx.grid.EVT_GRID_EDITOR_SHOWN,  g, self._on_editor_shown)
         wx_callback(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, g, self._on_right_click)
-        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, g, self._on_left_dclick)
+        wx_callback(wx.grid.EVT_GRID_CELL_LEFT_CLICK, g, self._on_left_click)
         wx_callback(wx.EVT_MOUSEWHEEL,   g,      self._on_wheel)
         wx_callback(wx.EVT_IDLE,         g,      self._on_idle)
         wx_callback(wx.EVT_KEY_DOWN,     g,      self.on_key_down)
@@ -1257,7 +1257,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
         event.Skip()
         
-    def _on_left_dclick(self, event):
+    def _on_left_click(self, event):
         event.Skip()
             
     def _on_wheel(self, event):
@@ -2362,11 +2362,37 @@ class FoldableForm(ListForm):
             self._folding = self.Folding(level=None)
         return super(FoldableForm, self)._apply_filter(condition)
 
-    def _on_left_dclick(self, event):
+        # ['ClientData', 'ClientObject', 'Col', 'EventObject', 'EventType',
+        # 'GetCol', 'GetEventObject', 'GetEventType', 'GetPosition', 'GetRow',
+        # 'Position' 'Row'
+    
+    def _on_left_click(self, event):
         if self._folding_enabled():
-            self._cmd_expand_or_collapse()
+            col = self._columns[event.GetCol()]
+            if isinstance(col.type(), pytis.presentation.PrettyFoldable):
+                row = event.GetRow()
+                value = self._table.row(row).format(col.id(), pretty=True, form=self)
+                pos = value.find(pytis.presentation.PrettyFoldable.FOLDED_MARK)
+                if pos == -1:
+                    pos = value.find(pytis.presentation.PrettyFoldable.UNFOLDED_MARK)
+                if pos != -1:
+                    x1 = self._grid.GetTextExtent(value[:pos])[0]
+                    x2 = self._grid.GetTextExtent(value[:pos+1])[0]
+                    x = event.GetPosition()[0] - 2 # don't count grid padding.
+                    if x1-2 < x < x2+2: # enlarge the active area by 2px for easier hit.
+                        if event.ControlDown():
+                            level = None
+                        else:
+                            level = 1
+                        self._expand_or_collapse(row, level=level)
+                        return
         event.Skip()
         
+    def _expand_or_collapse(self, row, level=None):
+        node = self._table.row(row)[self._folding_column_id].value()
+        if self._folding.expand_or_collapse(node, level=level):
+            self._refresh_folding()
+
     def _on_form_state_change(self):
         super(FoldableForm, self)._on_form_state_change()
         self._init_folding()
@@ -2375,16 +2401,19 @@ class FoldableForm(ListForm):
         self._set_state_param('folding', self._folding.folding_state())
         self.refresh()
         
+    def _can_expand_or_collapse_subtree(self, level=None):
+        return self._folding_enabled()
+
     def _cmd_expand_or_collapse_subtree(self, level=None):
-        if not self._folding_enabled():
-            return
-        row, _col = self._current_cell()
-        node = self._table.row(row)[self._folding_column_id].value()
-        if self._folding.expand_or_collapse(node, level=level):
-            self._refresh_folding()
+        row = self._current_cell()[0]
+        self._expand_or_collapse(row, level=level)
+
+    def _can_expand_or_collapse(self):
+        return self._folding_enabled()
 
     def _cmd_expand_or_collapse(self):
-        self._cmd_expand_or_collapse_subtree(level=1)
+        row = self._current_cell()[0]
+        self._expand_or_collapse(row, level=1)
         
     def _cmd_expand_all(self):
         self._folding = self.Folding(level=None)
@@ -2530,11 +2559,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         return True
 
     def _on_dclick(self, event):
-        if event.AltDown():
-            command = self.COMMAND_EXPAND_OR_COLLAPSE
-        else:
-            command = self.COMMAND_ACTIVATE
-        return command.invoke()
+        return self.COMMAND_ACTIVATE.invoke()
 
 class SelectRowsForm(CodebookForm):
     """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""
