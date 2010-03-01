@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006, 2008, 2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -251,10 +251,6 @@ class Resolver(object):
         'ResolverSpecError'.
 
         """
-        colon = module_name.find(':')
-        if colon != -1:
-            kwargs['variant'] = module_name[colon+1:]
-            module_name = module_name[:colon]
         key = (module_name, spec_name, tuple(kwargs.items()))
         return self._spec_cache[key]
         
