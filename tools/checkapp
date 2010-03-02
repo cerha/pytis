@@ -35,7 +35,8 @@ def run():
         config.add_command_line_options(sys.argv)
     except getopt.GetoptError, e:
         usage(e)
-    reporter = pytis.extensions.CheckReporter()
+    # reporter = pytis.extensions.CheckReporter()
+    reporter = CheckReporterExt()
     pytis.extensions.MenuChecker().batch_check(reporter)
 
 if __name__ == '__main__':
