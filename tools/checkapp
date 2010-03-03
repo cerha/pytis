@@ -19,8 +19,34 @@
 
 import getopt
 import sys
+import datetime
 
 import pytis.extensions
+
+class CheckReporterExt(pytis.extensions.CheckReporter):
+
+    def start(self, number_of_items):
+        self._number_of_items = number_of_items
+        self._number_of_errors = 0
+        self._start_time = datetime.datetime.now()
+        self._current = 0
+
+    def end(self):
+        end_time = datetime.datetime.now()
+        diff = end_time - self._start_time
+        print "="*80
+        print "Checked %s specification in %s seconds" % (self._number_of_items, diff.seconds) 
+
+    def info(self, message):
+        self._current += 1
+        procent = (float(self._current) / self._number_of_items) * 100
+        elapsed = datetime.datetime.now() - self._start_time
+        print "%s sec\t%s/%s\t%s%%\t%s" % (elapsed.seconds, self._current, self._number_of_items, int(procent), message)
+        sys.stdout.flush()
+
+    def error(self, message):
+        print "Error:", message
+
 
 def usage(optexception=None):
     sys.stderr.write("usage: %s [ --config=CONFIG_FILE ]\n")
