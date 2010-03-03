@@ -28,6 +28,7 @@ Database API implementation.
 """
 
 import select
+import time
 import types as pytypes
 
 import psycopg2 as dbapi
@@ -161,23 +162,35 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # contingent connection initialization commands such as coding settings
         # don't prevent to set (non-default) transaction isolation level at the
         # beginning of transaction.
-        self._postgresql_commit_transaction()
+        try:
+            self._postgresql_commit_transaction()
+        except dbapi.OperationalError, e:
+            self._maybe_connection_error(e)
     
     def _postgresql_commit_transaction(self):
         connection = self._pg_get_connection().connection()
-        connection.commit()
+        try:
+            connection.commit()
+        except dbapi.OperationalError, e:
+            self._maybe_connection_error(e)
         
     def _postgresql_rollback_transaction(self):
         connection = self._pg_get_connection().connection()
-        connection.rollback()
+        try:
+            connection.rollback()
+        except dbapi.OperationalError, e:
+            self._maybe_connection_error(e)
         # For unknown reasons, connection client encoding gets reset after
         # rollback
         cursor = connection.cursor()
         try:
             cursor.execute('set client_encoding to "utf-8"')
         except dbapi.OperationalError, e:
-            if e.args[0].find('server closed the connection unexpectedly') != -1:
-                raise DBSystemException(_("Database connection error"), e, e.args)
+            self._maybe_connection_error(e)
+
+    def _maybe_connection_error(self, e):
+        if e.args[0].find('server closed the connection unexpectedly') != -1:
+            raise DBSystemException(_("Database connection error"), e, e.args)
 
     
 class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
@@ -207,8 +220,11 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection = self._postgresql_new_connection(connection_data)
                 self._pgnotif_connection = connection
                 connection.connection().set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+                self._registered_notifications = []
             
         def _notif_do_registration(self, notification):
+            if notification not in self._registered_notifications:
+                self._registered_notifications.append(notification)
             connection = self._pgnotif_connection
             query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations            
@@ -218,9 +234,17 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 with_lock(self._pg_query_lock, lfunction)
         
         def _notif_listen_loop(self):
-            connection_ = self._pgnotif_connection
-            connection = connection_.connection()
             while True:
+                while self._pgnotif_connection is None:
+                    time.sleep(10)
+                    try:
+                        self._notif_init_connection()
+                        for notification in self._registered_notifications:
+                            self._notif_do_registration(notification)
+                    except Exception, e:
+                        self._pgnotif_connection = None
+                connection_ = self._pgnotif_connection
+                connection = connection_.connection()
                 if __debug__:
                     log(DEBUG, 'Hlídám vstup', connection)
                 def lfunction():
@@ -238,7 +262,12 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     log(DEBUG, 'Pøi¹el vstup')
                 def lfunction():
                     notifications = []
-                    if cursor.isready():
+                    try:
+                        ready = cursor.isready()
+                    except dbapi.OperationalError:
+                        self._pg_notif_connection = None
+                        return notifications
+                    if ready:
                         notifies = connection.notifies
                         if notifies:
                             if __debug__:

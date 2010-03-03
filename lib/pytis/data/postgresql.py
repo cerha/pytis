@@ -2647,7 +2647,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_is_in_select:
             _, self._pg_last_select_row_number = self._pg_buffer.current()
         if self._pg_is_in_select is True: # no user transaction
-            self._pg_commit_transaction()
+            try:
+                self._pg_commit_transaction()
+            except DBSystemException: # e.g. after db engine restart
+                pass
         elif self._pg_is_in_select: # inside user transaction
             query = self._pdbb_command_close_select.format(
                 {'selection': self._pdbb_selection_number})
