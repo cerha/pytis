@@ -253,7 +253,10 @@ class DBConnectionPool:
                 connections = pool[spec_id]
             except KeyError:
                 pool[spec_id] = connections = []
-            connections.append(connection)
+            import config
+            if (config.max_pool_connections is None or
+                len(connections) < config.max_pool_connections):
+                connections.append(connection)
         with_lock(self._lock, lfunction)
         if __debug__: log(DEBUG, 'Do poolu vráceno spojení:', connection)
 

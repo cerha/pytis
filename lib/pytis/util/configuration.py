@@ -574,6 +574,12 @@ class Configuration(object):
         _DESCR = _("Flag urèující, zda má být spou¹tìn dohlí¾eè zmìn dat.")
         _DEFAULT = True
 
+    class _Option_max_pool_connections(NumericOption):
+        _DESCR = _("Maximum number of database connections stored in a pool "
+                   "for a single connection specification. "
+                   "If None then there is no limit.")
+        _DEFAULT = None
+
     # Logovací volby
 
     class _Option_log_logger(Option):
