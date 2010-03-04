@@ -229,7 +229,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
             query = 'listen "%s"' % (notification,)
             # TODO: Allow reconnection with re-registrations            
             def lfunction():
-                return self._postgresql_query(connection, query, False)
+                return self._postgresql_query(connection, query, True)
             _result, self._pgnotif_connection = \
                 with_lock(self._pg_query_lock, lfunction)
         
