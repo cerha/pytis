@@ -580,6 +580,12 @@ class Configuration(object):
                    "If None then there is no limit.")
         _DEFAULT = None
 
+    class _Option_connection_limit(NumericOption):
+        _DESCR = _("Maximum number of concurrently open database connections "
+                   "for a single connection specification in a database pool. "
+                   "If None then there is no limit.")
+        _DEFAULT = None
+
     # Logovací volby
 
     class _Option_log_logger(Option):

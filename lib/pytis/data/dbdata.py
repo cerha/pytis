@@ -55,6 +55,7 @@ tabulky.
 
 
 import thread
+import weakref
 
 from pytis.data import *
 
@@ -205,6 +206,7 @@ class DBConnectionPool:
         self._pool = {}
         self._connection_creator = connection_creator
         self._connection_closer = connection_closer
+        self._allocated_connections = {}
 
     def __del__(self):
         # Pro jistotu uzavíráme v¹echna spojení, pøesto¾e by to mìlo být
@@ -227,6 +229,7 @@ class DBConnectionPool:
         return (c.database(), c.host(), c.port(), c.user(), c.password(), c.sslmode(), schemas,)
 
     def get(self, connection_spec):
+        import config
         pool = self._pool
         spec_id = self._connection_spec_id(connection_spec)
         def lfunction():
@@ -234,12 +237,21 @@ class DBConnectionPool:
                 connections = pool[spec_id]
             except KeyError:
                 pool[spec_id] = connections = []
+            try:
+                allocated_connections = self._allocated_connections[spec_id]
+            except KeyError:
+                allocated_connections = self._allocated_connections[spec_id] \
+                    = weakref.WeakKeyDictionary()
             if connections:
                 if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
                 c = connections.pop()
+            elif (config.connection_limit is not None and
+                  len(allocated_connections) >= config.connection_limit):
+                raise DBSystemException(_("Pøíli¹ mnoho databázových spojení"))
             else:
                 c = self._connection_creator(connection_spec)
                 if __debug__: log(DEBUG, 'Vytvoøeno nové spojení:', c)
+                allocated_connections[c] = True
             return c
         c = with_lock(self._lock, lfunction)
         if __debug__: log(DEBUG, 'Pøedávám spojení:', c)
