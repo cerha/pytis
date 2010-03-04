@@ -130,6 +130,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.IntegrityError, e:
             raise DBUserException(_("Database integrity violation"),
                                   e, e.args, query)
+        if __debug__:
+            connection.set_connection_info('last_access', (time.ctime(time.time()), query,))
         return self._postgresql_Result(result), connection
 
     def _postgresql_transform_query_result(self, result):

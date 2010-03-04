@@ -247,6 +247,10 @@ class DBConnectionPool:
                 c = connections.pop()
             elif (config.connection_limit is not None and
                   len(allocated_connections) >= config.connection_limit):
+                if __debug__:
+                    log(EVENT, "Pøehled evidovaných spojení:")
+                    for c in allocated_connections.keys():
+                        log(EVENT, "Spojení:", c.connection_info('last_access'))
                 raise DBSystemException(_("Pøíli¹ mnoho databázových spojení"))
             else:
                 c = self._connection_creator(connection_spec)
