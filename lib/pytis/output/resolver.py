@@ -66,6 +66,13 @@ class OutputResolver(ProxyResolver):
             result = super(OutputResolver, self)._get_module(module_name)
         return result
 
+    def get(self, module_name, spec_name, **kwargs):
+        colon = module_name.find(':')
+        if colon != -1:
+            kwargs['variant'] = module_name[colon+1:]
+            module_name = module_name[:colon]
+        return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
+    
     def output_parameter(self, name, **kwargs):
         """Vra» hodnotu parametru výstupu 'name'.
 

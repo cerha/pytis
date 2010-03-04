@@ -249,12 +249,8 @@ class Resolver(object):
         'ResolverModuleError'.  Je-li modul nalezen, av¹ak není v nìm
         nalezena specifikace 'spec_name', je vyvolána výjimka
         'ResolverSpecError'.
-
-        """
-        colon = module_name.find(':')
-        if colon != -1:
-            kwargs['variant'] = module_name[colon+1:]
-            module_name = module_name[:colon]
+        
+        """        
         key = (module_name, spec_name, tuple(kwargs.items()))
         return self._spec_cache[key]
         
