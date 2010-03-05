@@ -353,9 +353,16 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         
     def _cleanup(self):
         super(Form, self)._cleanup()
+        self._cleanup_data()
         for id in self._STATUS_FIELDS:
             set_status(id, '')
-    
+
+    def _cleanup_data(self):
+        try:
+            self._data.close()
+        except:
+            pass
+        self._data = None
 
 class InnerForm(Form):
     """Formuláø, který zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
@@ -1518,6 +1525,11 @@ class RecordForm(LookupForm):
             else:
                 raise ProgramError("Unsupported action secondary_context:", scontext)
         return args
+
+    def _cleanup(self):
+        super(RecordForm, self)._cleanup()
+        # PresentedRow may contain references to data objects
+        self._row = None
     
     # Command handling
     
@@ -2275,9 +2287,6 @@ class PopupEditForm(PopupForm, EditForm):
                 button.SetDefault()
             sizer.Add(button, 0, wx.ALL, 20)
         return sizer
-
-    def _cleanup(self):
-        super(PopupEditForm, self)._cleanup()
 
     def _can_commit_record(self, close=True, next=False):
         if next and (self._mode != self.MODE_INSERT or not self._multi_insert):

@@ -1470,17 +1470,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cleanup(self):
         super(ListForm, self)._cleanup()
-        self._data.remove_callback_on_change(self.on_data_change)
-        try:
-            self._data.close()
-        except pytis.data.DBException:
-            pass
         # Musíme ruènì zru¹it editory, jinak se doèkáme segmentation fault.
         self._close_editors()
         # Musíme tabulce zru¹it datový objekt, proto¾e jinak do nìj bude ¹ahat
         # i po kompletním uzavøení starého gridu (!!) a rozhodí nám tak data
         # v novém gridu.
         self._table.close()
+
+    def _cleanup_data(self):
+        self._data.remove_callback_on_change(self.on_data_change)
+        super(ListForm, self)._cleanup_data()
 
     # Zpracování pøíkazù
     

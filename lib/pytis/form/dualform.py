@@ -236,15 +236,24 @@ class DualForm(Form, Refreshable):
         return self._main_form._exit_check() and self._side_form._exit_check()
             
     def _cleanup(self):
-        self._main_form.close(force=True)
-        self._side_form.close(force=True)
+        try:
+            self._main_form.close(force=True)
+        except:
+            pass
+        try:
+            self._side_form.close(force=True)
+        except:
+            pass
         self._side_form = None
         self._main_form = None
         self._side_form = None
         self._active_form = None
-        self._splitter.Show(False)
-        self._splitter.Close()
-        self._splitter.Destroy()
+        try:
+            self._splitter.Show(False)
+            self._splitter.Close()
+            self._splitter.Destroy()
+        except:
+            pass
         
     def focus(self):
         active = self._active_form
@@ -376,7 +385,10 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         return True
 
     def _cleanup(self):
-        self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
+        try:
+            self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
+        except:
+            pass
         super(SideBrowseDualForm, self)._cleanup()
 
 
@@ -592,18 +604,30 @@ class MultiForm(Form, Refreshable):
         return True
             
     def _cleanup(self):
-        nb = self._notebook
-        nb.Show(False)
+        try:
+            nb = self._notebook
+            nb.Show(False)
+        except:
+            pass
         for form in self._forms:
             if form:
                 form.Reparent(self)
-                nb.RemovePage(0)
+                try:
+                    nb.RemovePage(0)
+                except:
+                    pass
                 form.close(force=True)
             else:
-                nb.DeletePage(0)
+                try:
+                    nb.DeletePage(0)
+                except:
+                    pass
         self._forms = None
-        nb.Close()
-        nb.Destroy()
+        try:
+            nb.Close()
+            nb.Destroy()
+        except:
+            pass
         super(MultiForm, self)._cleanup()
         
     def _on_size(self, event):
