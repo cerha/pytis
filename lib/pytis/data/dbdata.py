@@ -54,6 +54,7 @@ tabulky.
 # ov¹em nutno definovat nìjaký mechanismus o¹etøování chyb.
 
 
+import gc
 import thread
 import weakref
 
@@ -245,17 +246,19 @@ class DBConnectionPool:
             if connections:
                 if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
                 c = connections.pop()
-            elif (config.connection_limit is not None and
-                  len(allocated_connections) >= config.connection_limit):
-                if __debug__:
-                    log(EVENT, "Pøehled evidovaných spojení:")
-                    for c in allocated_connections.keys():
-                        log(EVENT, "Spojení:", c.connection_info('last_access'))
-                raise DBSystemException(_("Pøíli¹ mnoho databázových spojení"))
             else:
-                c = self._connection_creator(connection_spec)
-                if __debug__: log(DEBUG, 'Vytvoøeno nové spojení:', c)
-                allocated_connections[c] = True
+                gc.collect()
+                if (config.connection_limit is not None and
+                    len(allocated_connections) >= config.connection_limit):
+                    if __debug__:
+                        log(EVENT, "Pøehled evidovaných spojení:")
+                        for c in allocated_connections.keys():
+                            log(EVENT, "Spojení:", c.connection_info('last_access'))
+                    raise DBSystemException(_("Pøíli¹ mnoho databázových spojení"))
+                else:
+                    c = self._connection_creator(connection_spec)
+                    if __debug__: log(DEBUG, 'Vytvoøeno nové spojení:', c)
+                    allocated_connections[c] = True
             return c
         c = with_lock(self._lock, lfunction)
         if __debug__: log(DEBUG, 'Pøedávám spojení:', c)
