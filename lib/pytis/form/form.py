@@ -151,7 +151,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             raise self.InitError()
         self._init_attributes(**kwargs)
         self._result = None
-        self._create_form()
+        try:
+            self._create_form()
+        except:
+            # This is necessary to prevent database connection leaks
+            self._cleanup()
+            raise
         show_time = pytis.data.DateTime.now()
         if self._LOG_STATISTICS and config.form_statistics:
             pytis.extensions.dbfunction('pytis_log_form',
