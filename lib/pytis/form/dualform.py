@@ -587,6 +587,11 @@ class MultiForm(Form, Refreshable):
                 if row is not None:
                     form.on_selection(row)
                 form.focus()
+                old_selection = event.GetOldSelection()
+                if old_selection != -1:
+                    old_form = self._forms[old_selection]
+                    if old_form and old_form is not form:
+                        old_form._release_data()
             elif event:
                 message(_("Formuláø není dostupný"), beep_=True)
                 event.Veto()
@@ -652,6 +657,7 @@ class MultiForm(Form, Refreshable):
         for form in self._forms:
             if form:
                 form.show()
+                form._release_data()
         self._notebook.Enable(True)
         self._notebook.Show(True)
 
@@ -659,6 +665,7 @@ class MultiForm(Form, Refreshable):
         for form in self._forms:
             if form:
                 form.hide()
+                form._release_data()
         self._notebook.Show(False)
         self._notebook.Enable(False)
 
@@ -752,7 +759,9 @@ class MultiSideForm(MultiForm):
             form = self.TabbedShowForm
         else:
             form = self.TabbedBrowseForm
-        return form(parent, self._resolver, binding.name(), **kwargs)
+        form_instance = form(parent, self._resolver, binding.name(), **kwargs)
+        form_instance._release_data()
+        return form_instance
 
     def _create_forms(self, parent):
         return [(binding.title(), self._create_subform(parent, binding))
