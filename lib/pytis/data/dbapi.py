@@ -131,7 +131,13 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             raise DBUserException(_("Database integrity violation"),
                                   e, e.args, query)
         if __debug__:
-            connection.set_connection_info('last_access', (time.ctime(time.time()), query,))
+            if query.startswith('fetch') or query.startswith('skip'):
+                extra_info = (query,)
+            else:
+                self._last_informative_query = query
+                extra_info = ()
+            info = (time.ctime(time.time()), self._last_informative_query,) + extra_info
+            connection.set_connection_info('last_access', info)
         return self._postgresql_Result(result), connection
 
     def _postgresql_transform_query_result(self, result):
