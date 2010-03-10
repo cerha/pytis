@@ -381,9 +381,10 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         connections = self._pg_connections()        
         if outside_transaction or not connections:
             pool = self._pg_connection_pool()
-            return pool.get(self._pg_connection_data())
+            connection = pool.get(self._pg_connection_data())
         else:
-            return connections[-1]
+            connection = connections[-1]
+        return connection
         
     def _pg_return_connection(self, connection):
         pool = self._pg_connection_pool()
@@ -1608,6 +1609,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             find_fulltext(condition)
         args['fulltext_queries'] = fulltext_queries[0]
         self._pg_make_arguments(args, arguments)
+        connections = self._pg_connections()
+        if connections and connections[-1].connection_info('broken') and transaction is None:
+            # Current connection is broken, maybe after database server
+            # restart.  In such a situation ugly things happen in wx forms and
+            # we should try to avoid them.  We are most likely here
+            # because_pg_restore_select tries to reopen the select.  We replace
+            # the broken connection by a new one, but we may do it only if we
+            # are not inside higher level transaction.
+            new_connection = self._pg_connection_pool().get(self._pg_connection_data())
+            connections[-1] = new_connection
         data = self._pg_query(self._pdbb_command_count % args, transaction=transaction)
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
@@ -2337,8 +2348,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def _pg_restore_select(self):
         row_number = self._pg_last_select_row_number
-        if row_number is None:
+        if row_number is None and self._pg_last_select_transaction is not None:
+            # The last select wasn't closed correctly and we are inside a
+            # higher level transaction -- we mustn't continue in such a case.
             return False
+        if row_number is None:
+            row_number = self._pg_buffer.current()[1]
         self.select(condition=self._pg_last_select_condition,
                     sort=self._pg_last_select_sorting,
                     transaction=self._pg_last_select_transaction)
@@ -2645,7 +2660,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if __debug__:
             log(DEBUG, 'Explicitly closing current select')
         if self._pg_is_in_select:
-            _, self._pg_last_select_row_number = self._pg_buffer.current()
+            self._pg_last_select_row_number = self._pg_buffer.current()[1]
         if self._pg_is_in_select is True: # no user transaction
             try:
                 self._pg_commit_transaction()

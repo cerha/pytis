@@ -90,6 +90,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raw_connection.commit()
             return cursor
         def retry(message, exception):
+            connection.set_connection_info('broken', True)
             if _retry and outside_transaction:
                 cdata = connection.connection_data()
                 new_connection = self._postgresql_new_connection(cdata)
