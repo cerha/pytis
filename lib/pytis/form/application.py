@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1300,6 +1300,10 @@ def exit():
     return Application.COMMAND_EXIT.invoke()
 
 def db_operation(operation, *args, **kwargs):
+    in_transaction = (kwargs.get('transaction') is not None)
+    return db_op(operation, args, kwargs, in_transaction=in_transaction)
+
+def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
     """Invoke database operation with handling possible exceptions.
 
     The 'operation' is called with given arguments.  If a 'pytis.data.dbdata.DBException' exception
@@ -1318,6 +1322,8 @@ def db_operation(operation, *args, **kwargs):
       operation -- function (callable object) performing a database operation and returning its
         result
       args, kwargs -- arguments and keyword arguments passed to the function
+      in_transaction -- iff true, don't offer the user a chance for restoring the operation
+      quiet -- iff true, don't report errors to the user
 
     Returns: Pair (SUCCESS, RESULT), where SUCCESS is a boolean flag indicating success (true) or
     failure (false) and RESULT is the value returned by 'operation' (if SUCCESS is false, RESULT is
@@ -1351,10 +1357,17 @@ def db_operation(operation, *args, **kwargs):
             message = e.message()
             if e.exception():
                 message += '\n' + str(e.exception())
-            message += '\n' + _("Zkusit znovu?")
-            if not run_dialog(Question, message, title=_("Databázová chyba"),
-                              icon=Question.ICON_ERROR):
+            if quiet:
                 return FAILURE
+            if in_transaction:
+                run_dialog(Message, message, title=_("Databázová chyba"),
+                           icon=Message.ICON_ERROR)
+                return FAILURE
+            else:
+                message += '\n' + _("Zkusit znovu?")
+                if not run_dialog(Question, message, title=_("Databázová chyba"),
+                                  icon=Question.ICON_ERROR):
+                    return FAILURE
 
 def delete_record_question(msg=None):
     """Zeptej se uživatele, zda má být opravdu smazán záznam.
