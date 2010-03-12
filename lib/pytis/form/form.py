@@ -2027,12 +2027,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
         if transaction is not None:
-            success, result = db_operation(transaction.set_point, 'commitform')
+            success, result = db_op(transaction.set_point, ('commitform',),
+                                    in_transaction=True, quiet=True)
         else:
             success = True
         if success:
             if op is not None:
-                success, result = db_operation(op, *args, **dict(transaction=transaction))
+                success, result = db_op(op, args, dict(transaction=transaction),
+                                        in_transaction=(transaction is not None))
             else:
                 success, result = True, (None, True)
         if success and result[1]:
@@ -2054,7 +2056,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._result = self._row
                 self.close()
             if self._governing_transaction is None and self._transaction is not None:
-                db_operation(self._transaction.commit)
+                db_op(self._transaction.commit, in_transaction=True, quiet=True)
                 if close:
                     self._transaction = None
                 else:
@@ -2064,7 +2066,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             return True
         else:
             if transaction is not None:
-                success, __ = db_operation(transaction.cut, 'commitform')
+                success, __ = db_op(transaction.cut, ('commitform',), in_transaction=True,
+                                    quiet=True)
             else:
                 success = True
             if success:
