@@ -632,9 +632,12 @@ class PresentedRow(object):
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error and column.type.unique() and not column.virtual and \
                (self._new or value != self._original_row[key]) and value.value() is not None:
+            if isinstance(self._data, pytis.data.RestrictedData):
+                select_kwargs = dict(check_condition=False)
+            else:
+                select_kwargs = dict()
             count = self._data.select(condition=pytis.data.EQ(column.id, value),
-                                      check_condition=False,
-                                      transaction=self._transaction)
+                                      transaction=self._transaction, **select_kwargs)
             self._data.close()
             if count != 0:
                 error = pytis.data.ValidationError(_("Taková hodnota ji¾ existuje."))
