@@ -593,7 +593,7 @@ class BrowseForm(LayoutForm):
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
                  allow_query_search=None, filter=None, filters=None, message=None, req=None,
-                 **kwargs):
+                 arguments=None, **kwargs):
         """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for the default columns
@@ -696,6 +696,11 @@ class BrowseForm(LayoutForm):
             (defined in parent class) may be used to distinguish between multiple forms on one
             page.  If this parameter was passed, it is sent as the request argument 'form_name'.
             Thus if this argument doesn't match the form name, the request arguments are ignored.
+            
+          arguments -- dictionary of table function call arguments, with
+            function argument identifiers as keys and 'pytis.data.Value'
+            instances as values.  Useful only when the table is actually a row
+            returning function, otherwise ignored.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -729,6 +734,7 @@ class BrowseForm(LayoutForm):
                         except:
                             continue
                     params[param] = value
+        self._arguments = arguments
         # Determine the current sorting.
         if params.has_key('sort') and params.has_key('dir'):
             cid = params['sort']
@@ -764,7 +770,7 @@ class BrowseForm(LayoutForm):
             if params.has_key('prev') and offset >= limit:
                 offset -= limit
         self._offset = offset
-        # Determine the curren key or index search condition.
+        # Determine the current key or index search condition.
         index_search_string = ''
         if req is not None and search is None:
             if params.has_key('search'):
@@ -981,7 +987,8 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
-        self._count = count = data.select(condition=self._conditions(), sort=self._sorting)
+        self._count = count = data.select(condition=self._conditions(), sort=self._sorting,
+                                          arguments=self._arguments)
         found = False
         offset = self._offset
         if self._search:
