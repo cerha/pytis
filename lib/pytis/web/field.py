@@ -106,6 +106,16 @@ class FieldExporter(object):
         self._uri_provider = uri_provider
 
     def _format(self, context):
+        """Return the formatted field value as a (localizable) string.
+
+        This method is called as part of the public method 'format()' to
+        provide the field's exported value.  The final result returned by
+        'format()' will also include the additional information returned by the
+        method '_display()' (if not None).  For fields represented by links,
+        value returned by '_format() will be used as the link label and the
+        '_display()' result will be added outside the link.
+
+        """
         field = self._field
         value = self._value().export()
         if value and not isinstance(value, lcg.Localizable):
@@ -124,6 +134,7 @@ class FieldExporter(object):
         return value
 
     def _display(self, context):
+        """Additional information about the field value (see '_format()' for more info)."""
         return None
 
     def _value(self):
@@ -146,6 +157,13 @@ class FieldExporter(object):
                     cls=error and 'invalid' or None)
 
     def _editor(self, context, **kwargs):
+        """Return the field editor control as HTML string.
+
+        The keyword arguments passed to this method are the values returned by
+        '_editor_kwargs()'.  This allows easier customization of the final
+        result by independent overriding of either of the two methods.
+
+        """
         return None
 
     def format(self, context):
