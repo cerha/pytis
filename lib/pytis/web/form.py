@@ -121,20 +121,28 @@ class FieldForm(Form):
         self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
         
     def _field(self, id):
-        from field import _Field
-        return _Field(self._view.field(id), self._row[id].type(), self, self._uri_provider)
+        return Field(self._row, self._view.field(id), self._row[id].type(), self, self._uri_provider)
         
-    def _format_field(self, context, field):
-        if isinstance(field.type, pd.StructuredText):
-            wrap = context.generator().div
+    def _export_field(self, context, field, editable=False):
+        if editable:
+            result = field.exporter.editor(context, prefill=self._prefill.get(field.id),
+                                           error=dict(self._errors).get(field.id))
+            if self._has_not_null_indicator(field):
+                script = "document.getElementById('%s').setAttribute('aria-required', 'true');"
+                result += context.generator().script(script % field.unique_id)
         else:
-            wrap = context.generator().span
-        return wrap(field.formatter.format(context, self._row, field), cls='field id-'+field.id)
+            formatted = field.exporter.format(context)
+            if isinstance(field.type, pd.StructuredText):
+                wrap = context.generator().div
+            else:
+                wrap = context.generator().span
+            result = wrap(formatted, cls='field id-'+field.id)
+        return result
 
     def _interpolate(self, context, template, row):
         if callable(template):
             template = template(row)
-        result = template.interpolate(lambda fid: self._format_field(context, self._fields[fid]))
+        result = template.interpolate(lambda fid: self._export_field(context, self._fields[fid]))
         # Translation is called immediately to force immediate interpolation (with the current row
         # data).  Delayed translation (which invokes the interpolation) would use invalid row data
         # (the 'PresentedRow' instance is reused and filled with table data row by row).
@@ -145,6 +153,7 @@ class LayoutForm(FieldForm):
     """Form with fields arranged according to pytis layout specification."""
     _MAXLEN = 100
     _ALIGN_NUMERIC_FIELDS = False
+    _EDITABLE = False
 
     def __init__(self, view, row, layout=None, allow_table_layout=True, **kwargs):
         assert layout is None or isinstance(layout, GroupSpec)
@@ -181,7 +190,7 @@ class LayoutForm(FieldForm):
                                           id='%s-%d' % (id or 'group', group_number)))
             else:
                 field = self._fields[item]
-                ctrl = self._export_field(context, field)
+                ctrl = self._export_field(context, field, editable=self._EDITABLE)
                 if ctrl is not None:
                     label = self._export_field_label(context, field)
                     help = self._export_field_help(context, field)
@@ -242,9 +251,6 @@ class LayoutForm(FieldForm):
             rows = g.table(rows, cls='packed-fields')
         return concat(rows, separator="\n")
 
-    def _export_field(self, context, field):
-        return None
-
     def _export_field_label(self, context, field):
         if field.label:
             return context.generator().label(field.label, None) + ":"
@@ -300,14 +306,12 @@ class ShowForm(_SingleRecordForm):
     _CSS_CLS = 'show-form'
     _ALIGN_NUMERIC_FIELDS = True
     
-    def _export_field(self, context, field):
-        return self._format_field(context, field)
-
     
 class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
+    _EDITABLE = True
     
-    def __init__(self, view, row, errors=(), allow_calendar_widget=True, **kwargs):
+    def __init__(self, view, row, errors=(), **kwargs):
         """Arguments:
 
           errors -- a sequence of error messages to display within the form (results of previous
@@ -318,14 +322,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             the current specification (typically for fields which only appear in the underlying
             database objects).
 
-          allow_calendar_widget -- boolean flag for disabling the calendar widget.  The calendar
-            widget is currently inaccessible, so this option is just a hack for applications, which
-            don't want to disturb the accessibility.
-            
           See the parent classes for definition of the remaining arguments.
 
         """
-        self._allow_calendar_widget = allow_calendar_widget
         super(EditForm, self).__init__(view, row, **kwargs)
         key, order = self._key, tuple(self._layout.order())
         self._hidden += [(k, v) for k, v in self._prefill.items()
@@ -342,97 +341,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         self._errors = errors
         binary = [id for id in order if isinstance(self._row[id].type(), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
-
-    def _export_field(self, context, field):
-        g = context.generator()
-        value = self._row[field.id]
-        type = value.type()
-        attr = {'name': field.id,
-                'id': field.unique_id,
-                'disabled': not self._row.editable(field.id) or None,
-                'cls': field.id in [id for id, msg in self._errors] and 'invalid' or None}
-        if isinstance(type, pytis.data.Boolean):
-            ctrl = g.checkbox
-            attr['value'] = 'T'
-            attr['checked'] = value.value()
-        elif isinstance(type, pytis.data.Binary):
-            ctrl = g.upload
-        elif type.enumerator() and \
-                field.selection_type in (SelectionType.RADIO, SelectionType.CHOICE, None):
-            options = [(val, type.export(val), g.escape(display).replace(' ',  '&nbsp;'))
-                       for val, display in self._row.enumerate(field.id)]
-            if field.selection_type == SelectionType.RADIO:
-                ctrls = []
-                del attr['id'] # Replace by unique id for each radio button separately.
-                for val, strval, display in options:
-                    unique_id = field.unique_id +'-'+ strval
-                    radio = g.radio(value=strval, checked=(val==value), id=unique_id, **attr)
-                    label = g.label(display, unique_id)
-                    ctrls.append(g.div(radio + label))
-                return g.div(ctrls, cls='radio-group', id=field.unique_id)
-            else:
-                ctrl = g.select
-                attr['options'] = [(field.spec.null_display() or "&nbsp;", "")] + \
-                                  [(display, strval) for val, strval, display in options]
-                if value.value() in [val for val, strval, display in options]:
-                    attr['selected'] = type.export(value.value())
-        else:
-            if field.spec.height() > 1:
-                ctrl = g.textarea
-                attr['rows'] = field.spec.height()
-                attr['cols'] = width = field.spec.width()
-                if width >= 80:
-                    attr['cls'] = (attr['cls'] and attr['cls']+' ' or '') + 'fullsize'
-            else:
-                if isinstance(type, pytis.data.String):
-                    maxlen = type.maxlen()
-                else:
-                    maxlen = None
-                ctrl = g.field
-                attr['size'] = field.spec.width(maxlen)
-                attr['maxlength'] = maxlen
-            if isinstance(type, pytis.data.Password):
-                attr['password'] = True
-            else:
-                attr['value'] = self._prefill.get(field.id) or value.export()
-        # Warning: This common part is not as common as it might seem to be.
-        # It is not executed for radio buttons, since they return before.
-        result = ctrl(**attr)
-        if isinstance(type, pytis.data.Password) and type.verify():
-            attr['id'] = attr['id'] + '-verify-pasword'
-            result += g.br() + ctrl(**attr)
-        if isinstance(type, pd.Date) and self._allow_calendar_widget:
-            result += g.script_write(g.button(label='...', id='%s-button' % attr['id'],
-                                              cls='selection-invocation calendar-invocation',
-                                              disabled=attr['disabled']))
-            if not attr['disabled']:
-                context.resource('prototype.js')
-                context.resource('calendarview.js')
-                context.resource('calendarview.css')
-                locale_data = context.locale_data()
-                js_values = dict(
-                    id = attr['id'],
-                    format = locale_data.date_format,
-                    today = context.translate(_("today")),
-                    day_names = g.js_value([context.translate(lcg.week_day_name(i, abbrev=True))
-                                            for i in (6,0,1,2,3,4,5)]),
-                    month_names = g.js_value([context.translate(lcg.month_name(i))
-                                              for i in range(12)]),
-                    first_week_day = (locale_data.first_week_day + 1) % 7,
-                    )
-                result += g.script("""
-                   Calendar.setup({dateField: '%(id)s',
-                                   triggerElement: '%(id)s-button',
-                                   dateFormat: '%(format)s'});
-                   Calendar.TODAY = '%(today)s';
-                   Calendar.SHORT_DAY_NAMES = %(day_names)s;
-                   Calendar.MONTH_NAMES = %(month_names)s;
-                   Calendar.FIRST_WEEK_DAY = %(first_week_day)d;
-                   """ % js_values)
-        if self._has_not_null_indicator(field):
-            script = "document.getElementById('%s').setAttribute('aria-required', 'true');"
-            result += g.script(script % field.unique_id)
-        return result
 
     def _has_not_null_indicator(self, field):
         type = field.type
@@ -846,7 +754,7 @@ class BrowseForm(LayoutForm):
             self._lang = None
 
     def _export_cell(self, context, field):
-        value = self._format_field(context, field)
+        value = self._export_field(context, field)
         if field.id == self._column_fields[0].id and self._tree_order_column:
             order = self._row[self._tree_order_column].value()
             if order is not None:
@@ -919,7 +827,7 @@ class BrowseForm(LayoutForm):
     
     def _export_group_heading(self, context, field):
         g = context.generator()
-        return g.tr(g.th(self._format_field(context, field), colspan=len(self._column_fields)),
+        return g.tr(g.th(self._export_field(context, field), colspan=len(self._column_fields)),
                     cls='group-heading')
     
     def _export_headings(self, context):
@@ -1325,7 +1233,7 @@ class ListView(BrowseForm):
         if self._meta:
             meta = [(labeled and
                      g.span(field.label+":", cls='label id-'+ field.id)+" " or '') + \
-                    self._format_field(context, field)
+                    self._export_field(context, field)
                     for field, labeled in self._meta]
             parts.append(g.div(concat(meta, separator=', '), cls='meta'))
         if layout.layout():
@@ -1343,11 +1251,8 @@ class ListView(BrowseForm):
         cls = self._style(self._view.row_style(), row, n)['cls']
         return g.div(parts, id=id, cls='list-item '+cls)
 
-    def _export_field(self, context, field):
-        return self._format_field(context, field)
-
     def _export_group_heading(self, context, field):
-        #return context.generator().h(self._format_field(context, field), 3, cls='group-heding')
+        #return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
         return None
 
     def _wrap_exported_rows(self, context, rows, summary):
@@ -1407,7 +1312,7 @@ class ItemizedView(BrowseForm):
         if template:
             return self._interpolate(context, template, row)
         else:
-            fields = [self._format_field(context, field)
+            fields = [self._export_field(context, field)
                       for field in self._column_fields if row[field.id].value() is not None]
             return concat(fields, separator=self._separator)
 
