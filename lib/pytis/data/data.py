@@ -1325,6 +1325,19 @@ def LTreeDescendant(x, y):
     """
     return Operator('LTreeDescendant', x, y)
 
+def RawCondition(x):
+    """Raw SQL string to use as a condition.
+
+    Avoid using this operator whenever possible and if you use it then use it
+    with caution.
+
+    Arguments:
+
+      x -- the SQL string
+      
+    """
+    return Operator('Raw', x)
+
 def reversed_sorting(sorting):
     """Vra» specifikaci tøídìní reverzní ke specifikaci 'sorting'.
 

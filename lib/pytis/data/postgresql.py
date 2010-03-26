@@ -1421,6 +1421,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert len(op_args) == 2, ('Invalid number of arguments', op_args)
             col, query = op_args
             expression = "%s ~ '%s'" % (col, query,)
+        elif op_name == 'Raw':
+            assert len(op_args) == 1, ('Invalid number of arguments', op_args)
+            expression = op_args[0]
         else:
             raise ProgramError('Unknown operator', op_name)
         return '(%s)' % expression
