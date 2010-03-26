@@ -19,7 +19,7 @@
 """Tøídy pro specifikaci prezentaèní vlastností formuláøù.
 
 Tøída 'ViewSpec' zastøe¹uje ostatní specifikaèní tøídy definované tímto
-modulem ('Field', 'GroupSpec', 'LayoutSpec').
+modulem ('Field', 'GroupSpec', ...).
 
 Vytvoøení instance formuláøové tøídy je potom v podstatì interpretací
 pøíslu¹ných specifikací.
@@ -177,8 +177,9 @@ class Orientation(object):
 class Button(object):
     """Specification of a button for use within a form layout.
 
-    This allows to place buttons which can invoke an action or a user defined function within form
-    layout.  See `GroupSpec' for more information about where buttons can be used.
+    This allows to place buttons which can invoke an action or a user defined
+    function within form layout.  See 'GroupSpec' for more information about
+    where buttons can be used.
 
     """
     
@@ -517,29 +518,18 @@ class Filter(object):
 Condition = Filter
     
 class GroupSpec(object):
-    """Definice skupiny vstupních polí editaèního formuláøe.
+    """Specification of form field layout in a single record presentation.
 
-    Tato specifikace se nestará o vzhled jednotlivých vstupních polí, pouze
-    definuje jejich rozlo¾ení ve formuláøi.
+    Pytis forms are always either column based (tables) or layout based (record
+    view, record edit form).  The layout defined by this class applies to the
+    second category and specifies grouping of fields of a single record in this
+    kind od forms.
 
-    Skupina mù¾e obsa¾ené prvky skládat horizontálnì, nebo vertikálnì a skupiny
-    se mohou libovolnì vnoøovat (prvkem je buïto pøímo vstupní políèko, nebo
-    jiná skupina -- viz argument 'items' konstruktoru).
+    The layout constitutes of a group of items, where each of the items is
+    either a form field (referenced by its identifier) or a recoursively
+    embedded group.  The items are composed either horizontally (above each
+    other) or vertically (side by side).
 
-    Dal¹ími argumenty konstruktoru lze urèit rozestupy políèek, mezeru kolem
-    celé skupiny, styl orámování, nadpis skupiny apod.
-
-    Postup skládání políèek a skupin ve formuláøi je následovný:
-
-    Podle orientace skupiny jsou obsa¾ené celky skládány buïto horizontálnì
-    (vedle sebe), nebo vertikálnì (nad sebe).  Obsa¾enými celky se rozumí
-    sekvence za sebou následujících políèek a vnoøených skupin.  V¹echna za
-    sebou následující políèka jsou skládána pod sebe do møí¾ky (nehledì na to,
-    jde-li o vertikální, nebo horizontální skupinu).  Teprve celky takto
-    seskupených políèek a vnoøených skupin jsou skládány podle orientace
-    skupiny.  Samostatná vedle sebe umístìná políèka je mo¾no vytvoøit jejich
-    umístìním do samstatných vnoøených podskupin (jednoprvkových).
-    
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL):
@@ -553,24 +543,16 @@ class GroupSpec(object):
             instance) as an argument.  The last option allows building layouts dynamically
             depending on the values/properties of the current record.
             
-          orientation -- orientace skládání obsa¾ených prvkù; konstanta
-            tøídy 'Orientation'.
+          orientation -- defines how the fields are composed together as one of
+            'Orientation' class constants.  Horizontal group has items above
+            each other, vertical has items side by side.
+    
+          label -- Group label as a (localizable) string displayed at the top
+            of the group or None for unlabeled group.  Labeled groups are
+            always framed.
             
-          label -- název skupiny uvedený v záhlaví rámeèku - pokud není None,
-            skupina bude orámována; string;
-            
-          gap -- velikost vertikální mezery mezi jednotlivými políèky
-            v dialog units; integer; 1 du = 1/4 ¹íøky bì¾ného znaku.
-            Relevantní pouze pokud 'items' obsahuje pøímo políèka.
-            
-          space -- velikost mezery mezi políèkem a jeho labelem v du; integer;
-            Relevantní pouze pokud 'items' obsahuje pøímo políèka.
-            
-          border -- velikost mezery kolem celé skupiny v du; integer;
-          
-          border_style -- styl orámování; mezera je implicitnì ze v¹ech stran,
-            mù¾e v¹ak být pouze vpravo, vlevo, nahoøe, nebo dole; Konstanta
-            tøídy 'BorderStyle'.
+          gap, space, border, border_style -- Depracated and unsupported by
+            some form types (particularly by web forms).
 
         """
         assert is_sequence(items)
@@ -642,6 +624,32 @@ class GroupSpec(object):
         """Vra» styl mezery kolem skupiny jako konstantu 'BorderStyle'."""
         return self._border_style
 
+
+class FieldSet(GroupSpec):
+    """Labeled field group with a frame for grouping of fields in form layout.
+
+    This class is derived from 'GroupSpec' (it is actually just its
+    specialization with more convenient constructor interface for this kind of
+    layout) so its instances may be used as items of 'ViewSpec' 'layout'
+    specification.
+    
+    """
+    def __init__(self, label, items):
+        super(FieldSet, self).__init__(items, label=label, orientation=Orientation.VERTICAL)
+        
+
+class ColumnLayout(GroupSpec):
+    """Set of horizontally (side by side) composed field groups in form layout.
+    
+    This class is derived from 'GroupSpec' (it is actually just its
+    specialization with more convenient constructor interface for this kind of
+    layout) so its instances may be used as items of 'ViewSpec' 'layout'
+    specification.
+    
+    """
+    def __init__(self, *items):
+        super(ColumnLayout, self).__init__(items, orientation=Orientation.HORIZONTAL)
+
     
 class TabGroup(GroupSpec):
     """Tabbed layout specification."""
@@ -706,15 +714,7 @@ class LVGroup(VGroup):
     
 
 class LayoutSpec(object):
-    """Specifikace rozmístìní vstupních polí editaèního formuláøe.
-
-    Editaèní formuláø pro jeden záznam tabulky (na úrovni u¾ivatelského
-    rozhraní) se sestává z nìkolika editaèních polí - jedno pro ka¾dou polo¾ku
-    záznamu.  Tato pole mohou být vizuálnì seskupena do skupin.  Skupina je
-    specifikována instancí tøídy 'GroupSpec'.  Zpùsob rozlo¾ení polí ve skupinì
-    je popsán v dokumentaci tøídy 'GroupSpec'.
-
-    """
+    """Deprecated: Use 'GroupSpec' directly to specify 'ViewSpec' 'layout'."""
     def __init__(self, caption, group, order=None):
         """Inicializace a doplnìní defaultních hodnot atributù.
 
@@ -805,21 +805,22 @@ class ViewSpec(object):
 
         Argumenty:
 
-          title -- the title of this view as a (unicode) string.  The title is used in browse form
-            headings and in other contexts, where the entity is refered as whole (all the records).
-            Thus the title should mostly be in plural (for example 'Invoices').
+          title -- the title of this view as a (unicode) string.  The title is
+            used in browse form headings and in other contexts, where the
+            entity is refered as whole (all the records).  Thus the title
+            should mostly be in plural (for example 'Invoices').
             
-          singular -- the title of a single item (one record) of the entity as a (unicode) string.
-            If None, 'title' is used in both contexts.
+          singular -- the title of a single item (one record) of the entity as
+            a (unicode) string.  If None, 'title' is used in both contexts.
             
-          layout -- specifikace rozlo¾ení políèek v editaèním formuláøi,
-            instance tøídy 'GroupSpec'.  Je mo¾né pøedat také sekvenci
-            identifikátorù políèek -- v tom pøípadì bude vytvoøena horizontální
-            skupina obsahující vyjmenovaná políèka.  Pokud je None, bude
-            výchozí rozlo¾ení sestaveno poskládáním v¹ech políèek definovaných
-            ve fields.  Pro zpìtnou kompatibilitu je mo¾né pou¾ít také
-            'LayoutSpec', ale tento zpùsob definice je pova¾ován za nevhodný a
-            v budoucnu nebude podporován.
+          layout -- single record form layout specification as a 'GroupSpec'
+            instance.  It is also possible to pass a sequence of items, which
+            are automatically wrapped into a newly created 'GroupSpec' instance
+            with horizontal arrangement.  The items must be compatible with
+            item types supported by 'GroupSpec'.  If None, the default layout
+            will automatically contain all fields defined by 'fields'.
+            'LayoutSpec' instance is also accepted for backwards compatibility,
+            but its usage is deprecated.
 
           list_layout -- specification of list layout as a 'ListLayout' instance or None.
           
@@ -1875,11 +1876,12 @@ class ListLayout(object):
             item's title as records meta information.  A single item may be passed as a string
             directly.
 
-          layout -- GroupSpec instance describing the layout of a fields within each item's
-            section.  If used (not None), the fields will be displayed for each record in a manner
-            simillar to a show form.  Similarly as for the 'layout' argument in 'ViewSpec', it is
-            also possible to pass a sequence of fields (or 'GroupFpec' instances) which will be
-            turned into a vertical group automatically.
+          layout -- 'GroupSpec' instance describing the layout of a fields
+            within each item's section.  If used (not None), the fields will be
+            displayed for each record in a manner simillar to a show form.
+            Similarly as for the 'layout' argument in 'ViewSpec', it is also
+            possible to pass a sequence of fields (or 'GroupFpec' instances)
+            which will be turned into a vertical group automatically.
 
           content -- a sequence of field identifiers (strings) which provide a textual content for
             this item.  The text of the field values will be formatted as LCG structured text.
