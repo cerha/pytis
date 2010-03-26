@@ -67,6 +67,8 @@ class Field(object):
             exporter = BinaryFieldExporter
         elif isinstance(type, pytis.data.Date):
             exporter = DateFieldExporter
+        elif isinstance(type, pytis.data.DateTime):
+            exporter = DateTimeFieldExporter
         elif type.enumerator():
             selection_type = spec.selection_type()
             if selection_type == SelectionType.RADIO:
@@ -244,7 +246,35 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
         return context.generator().div(content.export(context))
 
 
-class DateFieldExporter(TextFieldExporter):
+class DateTimeFieldExporter(TextFieldExporter):
+    
+    _LOCALIZABLE_FORMAT = {pytis.data.DateTime: '%Y-%m-%d %H:%M:%S',
+                           pytis.data.Date: '%Y-%m-%d',
+                           pytis.data.Time: '%H:%M:%S'}
+    
+    def _format(self, context):
+        # Format the date as lcg.LocalizableDateTime to allow its locale
+        # dependent formatting during LCG export.  This is applied only to base
+        # pytis.data.Date type and not to its descendants.  The derived classes
+        # may customize the export and since we are replacing the type's export
+        # here, the customized export would be igored.  Thus it is safer to
+        # limit special handling to direct pytis.data.Date instances here,
+        # althought it is unpleasant, that derived types are not localized
+        # automatically.
+        value = self._value()
+        try:
+            format = self._LOCALIZABLE_FORMAT[value.type().__class__]
+        except KeyError:
+            return value.export()
+        else:
+            return lcg.LocalizableDateTime(value.value().strftime(format))
+    
+    def _editor_kwargs(self, context, prefill, error):
+        kwargs = super(DateTimeFieldExporter, self)._editor_kwargs(context, prefill, error)
+        # Use localizable values also inside editor fields (exported value is used by default).
+        return dict(kwargs, value=self._format(context))
+    
+class DateFieldExporter(DateTimeFieldExporter):
     
     def _editor(self, context, **kwargs):
         result = super(DateFieldExporter, self)._editor(context, **kwargs)
