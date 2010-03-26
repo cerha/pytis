@@ -280,12 +280,15 @@ class DateTimeFieldExporter(TextFieldExporter):
         # althought it is unpleasant, that derived types are not localized
         # automatically.
         value = self._value()
-        try:
-            format = self._LOCALIZABLE_FORMAT[value.type().__class__]
-        except KeyError:
-            return value.export()
+        if value.value() is not None:
+            try:
+                format = self._LOCALIZABLE_FORMAT[value.type().__class__]
+            except KeyError:
+                return value.export()
+            else:
+                return lcg.LocalizableDateTime(value.value().strftime(format))
         else:
-            return lcg.LocalizableDateTime(value.value().strftime(format))
+            return ''
     
     def _editor_kwargs(self, context, prefill, error):
         kwargs = super(DateTimeFieldExporter, self)._editor_kwargs(context, prefill, error)
