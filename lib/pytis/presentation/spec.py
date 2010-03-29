@@ -273,18 +273,27 @@ class ActionContext(object):
     RECORD = 'RECORD'
     """Action is performed on the current record (table row, show form record etc.).
 
-    The action handler will receive the record as a 'PresentedRow' instance as its first positional
-    argument.
+    The action handler will receive the record as a 'PresentedRow' instance as
+    its first positional argument.
 
     """
     CURRENT_ROW = RECORD
     """Depracated: Use RECORD instaed."""
     
     SELECTION = 'SELECTION'
-    """Action is performed on the current selection (set of records selected in the UI).
+    """Action is performed on the current selection (records selected in the UI).
 
-    The action handler will receive the selection as an iterable object itering over the
-    'PresentedRow' instances as its first positional argument.
+    The action handler will receive the selection as an iterable object itering
+    over the 'PresentedRow' instances as its first positional argument.
+
+    """
+    GLOBAL = 'GLOBAL'
+    """Action is global for the view it belongs to.
+
+    Global actions don't operate on particular records, they either don't
+    operate on records at all or they operate on all records or they implement
+    their own method of selecting the record(s) for the operation (e.g. pop-up
+    a dialog).  The handler wil receive no positional argument.
 
     """
     # TODO: Zde by je¹tì mohla být jedna hodnota, která by umo¾nila definovat
