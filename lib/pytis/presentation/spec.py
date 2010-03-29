@@ -268,19 +268,25 @@ class Button(object):
         return self._active_in_readonly_form
 
 class ActionContext(object):
-    """Výètová tøída definující konstanty pro urèení kontextu akce."""
+    """Enumeration class defining available constants for 'Action' context specification."""
     
-    CURRENT_ROW = 'CURRENT_ROW'
+    RECORD = 'RECORD'
+    """Action is performed on the current record (table row, show form record etc.).
 
-    """Akce je provádìna nad aktuálním øádkem tabulky.  Ten bude pøedán
-    handleru akce jako pozièní argument v podobì instance PresentedRow."""
+    The action handler will receive the record as a 'PresentedRow' instance as its first positional
+    argument.
+
+    """
+    CURRENT_ROW = RECORD
+    """Depracated: Use RECORD instaed."""
     
     SELECTION = 'SELECTION'
+    """Action is performed on the current selection (set of records selected in the UI).
 
-    """Akce je provádìna nad aktuálním výbìrem, tedy nad v¹emi vybranými øádky
-    tabulky.  Výbìr bude pøedán handleru akce jako pozièní argument v podobì
-    iterátoru, který vrací jednotlivé øádky jako instance PresentedRow."""
+    The action handler will receive the selection as an iterable object itering over the
+    'PresentedRow' instances as its first positional argument.
 
+    """
     # TODO: Zde by je¹tì mohla být jedna hodnota, která by umo¾nila definovat
     # univerzální akce, které pracují implicitnì s aktuálním øádkem, ale pokud
     # existuje výbìr, tak s výbìrem.

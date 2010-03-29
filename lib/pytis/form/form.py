@@ -1492,7 +1492,7 @@ class RecordForm(LookupForm):
             return None
     
     def _context_action_args(self, action):
-        if action.context() == ActionContext.CURRENT_ROW:
+        if action.context() == ActionContext.RECORD:
             args = (self.current_row(),)
         elif action.context() == ActionContext.SELECTION:
             args = (self.selected_rows(),)
@@ -1509,7 +1509,7 @@ class RecordForm(LookupForm):
                 form = dual.inactive_form()
             else:
                 form = dual.active_form()
-            if context == ActionContext.CURRENT_ROW:
+            if context == ActionContext.RECORD:
                 return form.current_row()
             elif context == ActionContext.SELECTION:
                 return form.selected_rows()
