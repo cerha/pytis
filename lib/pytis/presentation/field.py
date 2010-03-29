@@ -881,43 +881,70 @@ class PresentedRow(object):
         return self._runtime_limit(key, self._runtime_arguments_dirty, self._runtime_arguments,
                                    'runtime_arguments')
 
-    def completions(self, key, prefix):
-        """Return the sequence of available completions for given prefix.
+    def has_completer(self, key, static=False):
+        """Return true if given field has a completer.
 
         Arguments:
           key -- field identifier as a string
-          prefix -- prefix value as a (unicode) string
+          static -- if true, true is returned only if the completer is defined by a static set of
+            values (i.e. it is not bound to a data object).
 
-        The returned sequence will contain all available values returned by the underlying
-        completer, which begin with given prefix.  The completer is determined either by the
-        'completer' argument in field specification or (if not defined) the enumerator of the
-        field's data type.
+        """
+        column = self._coldict[key]
+        completer = self._completer(column)
+        if completer is None:
+            return False
+        elif static:
+            return not isinstance(completer, pytis.data.DataEnumerator)
+        else:
+            return True
 
-        If the field is not associated with any completer, the method always returns None.
+    def completions(self, key, prefix=None):
+        """Return the list of available completions for given prefix.
+
+        Arguments:
+          key -- field identifier as a string
+          prefix -- prefix value as a (unicode) string or None.  If specified, the list of
+            completions is filtered for values with given prefix.  Prefix matching is case
+            insensitive.
+
+        The returned list contains available completions provided by the underlying completer of
+        given field.  The completer is determined either by the 'completer' argument in field
+        specification or (if not defined) the enumerator of the field's data type.  If the field is
+        not associated with any completer, the method always returns an empty list.  The method
+        'has_completer()' may be used to find out, whether the field has a completer.
         
         """
         column = self._coldict[key]
         completer = self._completer(column)
         if completer is not None:
-            if not prefix:
-                return ()
-            prefix = prefix.lower()
+            if prefix:
+                prefix = prefix.lower()
             if isinstance(completer, pytis.data.DataEnumerator):
-                wmvalue = pytis.data.WMValue(pytis.data.String(), prefix+'*')
-                c1 = pytis.data.WM(completer.value_column(), wmvalue)
-                c2 = self.runtime_filter(key)
-                condition = c2 and pytis.data.AND(c1, c2) or c1
+                condition = self.runtime_filter(key)
+                if prefix:
+                    wmvalue = pytis.data.WMValue(pytis.data.String(), prefix+'*')
+                    prefix_condition = pytis.data.WM(completer.value_column(), wmvalue)
+                    if condition:
+                        condition = pytis.data.AND(condition, prefix_condition)
+                    else:
+                        condition = prefix_condition
                 arguments = self.runtime_arguments(key)
-                choices = completer.values(condition=condition, arguments=arguments, max=40) or ()
+                choices = completer.values(condition=condition, arguments=arguments, max=40) or []
             else:
+                # TODO: runtime filter doesn't apply here.  We would need to use MemData object to
+                # apply filtering by a pytis operator (which would also have the advantage of
+                # common handling of both static and data object based completers).
+                choices = completer.values()
+                if prefix:
+                    choices = [x for x in choices if x.lower().startswith(prefix)]
+                else:
+                    choices = list(choices)
                 import locale
-                choices = [x for x in completer.values() if x.lower().startswith(prefix)]
                 choices.sort(key=lambda x: locale.strxfrm(x).lower())
-            if len(choices) == 1 and choices[0].lower() == prefix:
-                return ()
-            return choices
-        else:
-            return None
+            if not (len(choices) == 1 and prefix and choices[0].lower() == prefix):
+                return choices
+        return []
 
     def depends(self, key, keys):
         """Return True iff any of the columns in 'keys' depend on column 'key'.
