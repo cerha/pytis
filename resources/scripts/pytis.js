@@ -36,19 +36,10 @@ pytis.FormHandler = Class.create({
 	 if (form != null) {
 	    form._handler = this;
 	    this._form = form;
-	    this._fields = fields; 
-	    this._filters = filters; 
-	    this._last_keypress = null; 
+	    this._fields = fields;
+	    this._filters = filters;
 	    new Form.Observer(form, 1, this.on_change);
-	    //for (i=0; i<fields.length; i++)
-	    //   form[fields[i]].onkeypress = this.on_keypress;
 	 }
-      },
-
-      on_keypress: function(event) {
-	 var handler = this.form._handler;
-	 handler._last_keypress = new Date().valueOf();
-	 return true;
       },
 
       on_change: function(form, value) {
