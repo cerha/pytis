@@ -316,87 +316,105 @@ class _ActionItem(object):
             
     
 class Action(_ActionItem):
-    """Definice kontextovì závislé akce.
+    """User action specification.
 
-    Tato definice akce slou¾í pro pou¾ití ve specifikátoru 'actions' tøídy
-    'ViewSpec'.  Ka¾dá akce je o¹etøena vlastní obslu¾nou funkcí, co¾ umo¾òuje
-    implementovat libovolnou vlastní funkcionalitu.  Pro ka¾dou akci lze
-    definovat také kontext, který urèuje kdy má akce smysl a jaké argumenty
-    budou handleru akce pøedány.  Tím je napøíklad mo¾né, aby akce pracovala s
-    aktuálním øádkem tabulky apod.  Více viz argumenty konstruktoru.
-    
+    Actions typically appear in the user interface as action buttons or menu items and instances of
+    this class define their properties, such as label, identifier, description, context in which
+    they appear etc.  Instances of this class are used to define the 'actions' argument of
+    'ViewSpec'.
+
     """
-    
-    def __init__(self, id, title, handler, context=ActionContext.CURRENT_ROW,
-                 secondary_context=None, enabled=True, access_groups=None,
-                 descr=None, hotkey=None, **kwargs):
+    def __init__(self, id, title, handler=None, context=ActionContext.RECORD,
+                 secondary_context=None, enabled=True, visible=True, access_groups=None,
+                 descr=None, hotkey=None, kwargs=None, **kwargs_):
         """Inicializuj instanci.
 
         Argumenty:
 
           id -- action identifier as a string.  It must be unique among all
             objects identifiers within a given form.
-          title -- titulek akce zobrazený v u¾ivatelském rozhraní.
-          handler -- callable objekt o¹etøující danou akci.  Handleru jsou pøi
-            vyvolání akce pøedány argumenty odpovídající danému kontextu.
-            Pokud argument 'context' není None, bude pøedán první pozièní
-            argument.  Je to buïto instance 'PresentedRow' odpovídající
-            aktuálnímu øádku, nebo sekvence vybraných øádkù, v závislosti na
-            hodnotì argumentu 'context'.  Pokud je definován také argument
-            'secondary_context', bude pøedán také druhý pozièní argument
-            odpovídající kontextu ve druhém formuláøi duálního formuláøe.  Dále
-            jsou handleru pøedány také ve¹keré zbylé klíèové argumenty.
-          context -- Instance 'ActionContext' urèující v jakém kontextu mù¾e
-            být akce vyvolána.  Tato hodnota ovlivòuje argumenty, které jsou
-            handleru akce pøedány pøi jejím vyvolání.  Mù¾e být také None, v
-            kterém¾to pøípadì nejsou handleru pøadávány ¾ádné argumenty.
-          secondary_context -- Instance 'ActionContext', nebo None.  Nìkteré
-            akce mohou v duálním formuláøi pracovat i s kontextovou informací z
-            druhého formuláøe.  Tímto argumentem, podobnì jako argumentem
-            'context' urèujeme s èím se pracuje.  Specifikace ovlivní druhý
-            pozièní argument pøedaný handleru akce.  Pokud je None, s ¾ádným
-            dal¹ím kontextem se nepracuje a druhý pozièní argument se handleru
-            nepøedává.
-          enabled -- funkce, vracející pravdu, pokud je akce aktivní a nepravdu
-            v opaèném pøípadì.  Funkci jsou pøadány stejné argumenty, jako
-            handleru.  Není-li uvedeno, je akce aktivní v závislosti na
-            'access_groups'.  Namísto funkce mù¾e být pøedána té¾ pøímo boolean
-            hodnota, která dostupnost akce urèuje staticky.
-          access_groups -- seznam u¾ivatelských skupin, které mají právo akci
-            vyvolat.  Akce se pro ostatní u¾ivatele stane automaticky
-            neaktivní.  Teprve pokud u¾ivatel patøí do jedné z vyjmenovaných
-            skupin, je dostupnost akce zji¹tìna pomocí funkce 'enabled'.
-          descr -- textový popis akce, který mù¾e být pou¾it jak k vytvoøení
-            nápovìdy, tak k zobrazení v u¾ivatelském rozhraní.
-          hotkey -- pøípadná klávesová zkratka, která akci vyvolá.
-
-          V¹echny ostatní klíèové argumenty budou pøi vyvolání akce pøedány
-          handleru jako klíèové argmenty.  Takto napøíklad lze jeden handler
-          pou¾ít pro více podobných akcí.
+          title -- action title displayed in the user interface.
+          descr -- brief textual description of the action to be displayed in
+            the user intercace (for example as a tooltip).  Should be more
+            descriptive than title, but should not exceed one or two sentences.
+          handler -- callable object implementing the action.  This argument is
+            only applicable for wx forms (fat client).  Web interface (based on
+            Wiking) implements actions as Wiking module's methods of the name
+            determined by the action id.  The handler will be called on action
+            invocation and will receive the arguments according to the
+            'context' and 'secondary_context' (see below).  This argument may
+            also be specified as positional.
+          context -- action context as one of 'ActionContext' constants.
+            Determines the context in which the action is available and the
+            first positional argument passed to the context sensitive methods
+            ('handler', 'enabled' and 'visible').  See 'ActionContext'
+            constants for description of what is passed for which kind of
+            context.
+          secondary_context -- secondary action context in dual form as one of
+            'ActionContext' constants or None.  Certain actions may need also a
+            contextual information from another form of a dual form.  If this
+            argument is not None, the action is only available in dual forms
+            and context sensitive methods ('handler', 'enabled', 'visible')
+            will receive a second positional argument representing the second
+            form's context (current record or selection).
+          enabled -- a boolean value determining action availability in the
+            user interface or a callable object (function) determining action
+            availability dynamically.  The function receives arguments
+            according to the 'context' (see above) and returns true iff the
+            action should be available or false otherwise.  Uvavailable actions
+            are still present in the user interface, but they are inactive
+            (grayed out).  See 'visible' for hiding the action completely under
+            certain conditions.
+          visible -- a boolean value determining action visibility in the user
+            interface or a callable object (function) determining the
+            visibility dynamically.  The function receives arguments according
+            to the 'context' (see above).  If 'False' or if 'False' is returned
+            by the function, the action is competely removed from the user
+            interface.  See 'enabled' for making the action inactive, but still
+            visible.  Note: Visibility is currently not implemented in wx
+            forms, so the argument only has effect in web applications.
+          access_groups -- Depracated: DMP now implements full dynamic action
+            access management.  The original docstring was: seznam
+            u¾ivatelských skupin, které mají právo akci vyvolat.  Akce se pro
+            ostatní u¾ivatele stane automaticky neaktivní.  Teprve pokud
+            u¾ivatel patøí do jedné z vyjmenovaných skupin, je dostupnost akce
+            zji¹tìna pomocí funkce 'enabled' (pouze wx formuláøe).
+          kwargs -- dictionary of additional keyword arguments passed to the
+            action handler (and 'enabled' and 'visible' functions if defined
+            dynamically) in runtime.  In Wiking web applications these
+            arguments are passed as ordinary request parameters.  These
+            arguments may also be passed directly as additional Action
+            constructor keyword arguemnts for backwards compatibility, but this
+            practice is deprecated.
+          hotkey -- keyboard shortcut (implemented only in wx forms).
         
         """
-        assert callable(handler)
-        assert context in (None,) + public_attributes(ActionContext)
-        assert secondary_context in (None,) + public_attributes(ActionContext)
-        assert callable(enabled) or isinstance(enabled, bool)
-        assert access_groups is None or isinstance(access_groups, (str, tuple, list))
         assert descr is None or isinstance(descr, (str, unicode))
+        assert handler is None or callable(handler)
+        assert context in public_attributes(ActionContext)
+        assert secondary_context is None or secondary_context in public_attributes(ActionContext)
+        assert callable(enabled) or isinstance(enabled, bool)
+        assert callable(visible) or isinstance(visible, bool)
+        assert access_groups is None or isinstance(access_groups, (str, tuple, list))
         assert hotkey is None or isinstance(hotkey, (str, tuple))
+        assert kwargs is None or isinstance(kwargs, dict) and not kwargs_
         self._handler = handler
         self._context = context
         self._secondary_context = secondary_context
         self._id = id
         self._enabled = enabled
+        self._visible = visible
         self._access_groups = access_groups
         self._descr = descr
         self._hotkey = hotkey
-        self._kwargs = kwargs
+        self._kwargs = kwargs or kwargs_
         super(Action, self).__init__(title)
 
     def id(self):
         return self._id
 
     def name(self):
+        """Deprecated: Use id() instead."""
         return self.id()
     
     def handler(self):
@@ -411,6 +429,9 @@ class Action(_ActionItem):
     def enabled(self):
         return self._enabled
         
+    def visible(self):
+        return self._visible
+
     def access_groups(self):
         return self._access_groups
         

@@ -1492,31 +1492,27 @@ class RecordForm(LookupForm):
             return None
     
     def _context_action_args(self, action):
-        if action.context() == ActionContext.RECORD:
+        context = action.context()
+        if context == ActionContext.RECORD:
             args = (self.current_row(),)
-        elif action.context() == ActionContext.SELECTION:
+        elif context == ActionContext.SELECTION:
             args = (self.selected_rows(),)
         else:
-            raise ProgramError("Invalid action context:", action.context())
-        if action.secondary_context() is not None:
-            args += (self._secondary_context(action.secondary_context()),)
-        return args
-    
-    def _secondary_context(self, context):
-        dual = self._dualform()
-        if dual:
+            raise ProgramError("Unsupported action context:", context)
+        scontext = action.secondary_context()
+        if scontext is not None:
+            dual = self._dualform()
             if dual.active_form() is self:
                 form = dual.inactive_form()
             else:
                 form = dual.active_form()
-            if context == ActionContext.RECORD:
-                return form.current_row()
-            elif context == ActionContext.SELECTION:
-                return form.selected_rows()
+            if scontext == ActionContext.RECORD:
+                args += (form.current_row(),)
+            elif scontext == ActionContext.SELECTION:
+                args += (form.selected_rows(),)
             else:
-                raise ProgramError("Invalid action secondary_context:", context)
-        else:
-            return None
+                raise ProgramError("Unsupported action secondary_context:", scontext)
+        return args
     
     # Command handling
     
@@ -1577,8 +1573,7 @@ class RecordForm(LookupForm):
     def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and len(self.selected_rows()) < 1:
             return False
-        if action.secondary_context() is not None and \
-               self._secondary_context(action.secondary_context()) is None:
+        if action.secondary_context() is not None and not self._dualform():
             return False
         if not pytis.data.is_in_groups(action.access_groups()):
             return False
