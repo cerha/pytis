@@ -389,15 +389,16 @@ class Action(_ActionItem):
           hotkey -- keyboard shortcut (implemented only in wx forms).
         
         """
-        assert descr is None or isinstance(descr, (str, unicode))
-        assert handler is None or callable(handler)
-        assert context in public_attributes(ActionContext)
-        assert secondary_context is None or secondary_context in public_attributes(ActionContext)
-        assert callable(enabled) or isinstance(enabled, bool)
-        assert callable(visible) or isinstance(visible, bool)
+        assert descr is None or isinstance(descr, (str, unicode)), descr
+        assert handler is None or callable(handler), handler
+        assert context in public_attributes(ActionContext), context
+        assert secondary_context is None or secondary_context in public_attributes(ActionContext), \
+            secondary_context
+        assert callable(enabled) or isinstance(enabled, bool), enabled
+        assert callable(visible) or isinstance(visible, bool), visible
         assert access_groups is None or isinstance(access_groups, (str, tuple, list))
-        assert hotkey is None or isinstance(hotkey, (str, tuple))
-        assert kwargs is None or isinstance(kwargs, dict) and not kwargs_
+        assert hotkey is None or isinstance(hotkey, (str, tuple)), hotkey
+        assert kwargs is None or isinstance(kwargs, dict) and not kwargs_, kwargs_
         self._handler = handler
         self._context = context
         self._secondary_context = secondary_context
