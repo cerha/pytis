@@ -408,11 +408,11 @@ class RadioFieldExporter(CodebookFieldExporter):
     def _editor(self, context, **kwargs):
         g = context.generator()
         del kwargs['id'] # Replace by unique id for each radio button separately.
-        value = self._value()
+        value = self._value().value()
         group_id = self._field.unique_id
         radios = []
-        for val, strval, display in self._enumeration(context):
-            radio_id = group_id +'-'+ strval
+        for i, (val, strval, display) in enumerate(self._enumeration(context)):
+            radio_id = group_id +'-'+ str(i)
             radio = g.radio(value=strval, checked=(val==value), id=radio_id, **kwargs)
             label = g.label(display, radio_id)
             radios.append(g.div(radio + label))
