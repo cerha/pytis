@@ -266,10 +266,6 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
 
 class DateTimeFieldExporter(TextFieldExporter):
     
-    _LOCALIZABLE_FORMAT = {pytis.data.DateTime: '%Y-%m-%d %H:%M:%S',
-                           pytis.data.Date: '%Y-%m-%d',
-                           pytis.data.Time: '%H:%M:%S'}
-    
     def _format(self, context):
         # Format the date as lcg.LocalizableDateTime to allow its locale
         # dependent formatting during LCG export.  This is applied only to base
@@ -281,12 +277,19 @@ class DateTimeFieldExporter(TextFieldExporter):
         # automatically.
         value = self._value()
         if value.value() is not None:
-            try:
-                format = self._LOCALIZABLE_FORMAT[value.type().__class__]
-            except KeyError:
-                return value.export()
+            type_cls = value.type().__class__
+            if type_cls is pytis.data.DateTime:
+                format = '%Y-%m-%d %H:%M:%S'
+                localizable = lcg.LocalizableDateTime
+            elif type_cls is pytis.data.Date:
+                format = '%Y-%m-%d'
+                localizable = lcg.LocalizableDateTime
+            elif type_cls is pytis.data.Time: 
+                format = '%H:%M:%S'
+                localizable = lcg.LocalizableTime
             else:
-                return lcg.LocalizableDateTime(value.value().strftime(format))
+                return value.export()
+            return localizable(value.value().strftime(format))
         else:
             return ''
     
