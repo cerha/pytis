@@ -745,7 +745,8 @@ class BrowseForm(LayoutForm):
         else:
             self._tree_order_column = None
         self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
-        self._align = dict([(f.id, 'right') for f in cfields if isinstance(f.type, pd.Number)])
+        self._align = dict([(f.id, 'right') for f in cfields
+                            if not f.type.enumerator() and isinstance(f.type, pd.Number)])
         self._custom_message = message
         # Hack allowing locale dependent index search controls.
         try:
