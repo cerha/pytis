@@ -473,9 +473,9 @@ class DBColumnBinding(DBBinding):
         DBBinding.__init__(self, id)
         assert isinstance(table, str), table
         assert isinstance(column, str), column
-        assert isinstance(type_, Type) or type_ is None, type_
+        assert isinstance(type_, Type) or type(type_) == type(Type) or type_ is None, type_
         if __debug__:
-            if type_ is not None:
+            if isinstance(type_, Type):
                 kwargs_copy = copy.copy(kwargs)
                 if type_.not_null() == kwargs_copy.get('not_null', type_.not_null()):
                     try:
