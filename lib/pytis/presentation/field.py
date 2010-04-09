@@ -61,9 +61,9 @@ class PresentedRow(object):
     The enumaration is the list of valid field values provided by data type enumarator."""
     
     class _Column:
-        def __init__(self, f, data):
+        def __init__(self, f, type, data):
             self.id = f.id()
-            self.type = f.type(data)
+            self.type = type
             self.computer = f.computer()
             self.line_separator = f.line_separator()
             self.default = f.default()
@@ -71,13 +71,12 @@ class PresentedRow(object):
             self.display = f.display()
             self.null_display = f.null_display()
             self.prefer_display = f.prefer_display()
-            self.codebook = f.codebook(data)
-            self.completer = f.completer()
-            self.enumerator_kwargs = f.enumerator_kwargs()
+            self.codebook = f.codebook()
+            self.completer = f.completer
             self.runtime_filter = f.runtime_filter()
             self.runtime_arguments = f.runtime_arguments()
             self.data_column = data.find_column(f.id())
-            self.virtual = self.data_column is None
+            self.virtual = f.virtual()
             
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
@@ -121,6 +120,7 @@ class PresentedRow(object):
         assert isinstance(singleline, bool)
         assert isinstance(new, bool)
         assert resolver is None or isinstance(resolver, Resolver)
+        assert data.key()[0].id() in [f.id() for f in fields]
         self._fields = fields
         self._data = data
         self._singleline = singleline
@@ -130,31 +130,45 @@ class PresentedRow(object):
         self._invalid = {}
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
-        self._columns = columns = tuple([self._Column(f, data) for f in fields])
+        self._columns = columns = tuple([self._Column(f, self._type(f), data) for f in fields])
         self._coldict = dict([(c.id, c) for c in columns])
         self._cb_spec_cache = {}
         self._completer_cache = {}
-        self._properties = {}
-        key = data.key()[0].id()
-        if not self._coldict.has_key(key):
-            # TODO: This is a temporary hack for old applications which have data columns not
-            # present in field specifications.  This should not be supported in future and should
-            # be removed.
-            self._columns += (self._Column(FieldSpec(key), data),)
-        self._hidden_codebooks = []
-        for c in self._columns:
-            if c.codebook:
-                codebook_spec = self._resolver.get(c.codebook, 'data_spec')
-                enumerator = pytis.data.DataEnumerator(codebook_spec, **c.enumerator_kwargs)
-                if not enumerator.permitted():
-                    self._hidden_codebooks.append(c.id)
         self._init_dependencies()
         self._set_row(row, reset=True, prefill=prefill)
 
     def _secret_column(self, key, virtual):
         return ((virtual and key in self._secret_computers) or
                 (not virtual and not self.permitted(key, pytis.data.Permission.VIEW)))
-    
+
+    def _type(self, fspec):
+        """Return the final 'pytis.data.Type' instance for given field specification."""
+        column = self._data.find_column(fspec.id())
+        if column:
+            # Actually, the type taken from the data object always takes precedence, since it
+            # should already respect type and its arguments from field specification -- they are
+            # passed to column binding constructors when the data object is created.
+            type_ = column.type()
+        else:
+            type_ = fspec.type()
+            computer = fspec.computer()
+            if not type_ and isinstance(computer, CbComputer):
+                # If a virtual field as a CbComputer, we can take the data type from the related
+                # columnin the enumerator's data object.
+                cb_column = self._data.find_column(computer.field())
+                type_ = cb_column.type().enumerator().type(computer.column())
+                assert type_ is not None, \
+                       "Invalid enumerator column '%s' in CbComputer for '%s'." % \
+                       (computer.column(), fspec.id())
+            else:
+                kwargs = fspec.type_kwargs(self._resolver)
+                if not type_:
+                    # String is the default type of virtual columns.
+                    type_ = pytis.data.String(**kwargs)
+                elif type(type_) == type(pytis.data.Type):
+                    type_ = type_(**kwargs)
+        return type_
+
     def _set_row(self, row, reset=False, prefill=None):
         if prefill:
             def value(v):
@@ -199,7 +213,6 @@ class PresentedRow(object):
         self._row = pytis.data.Row(row_data)
         self._virtual = dict(virtual)
         self._invalid = {}
-        self._properties = {}
         if reset:
             self._original_row_empty = row is None
             if not hasattr(self, '_original_row'):
@@ -593,7 +606,7 @@ class PresentedRow(object):
         """
         if not self.permitted(key, permission=True):
             return False
-        if key in self._hidden_codebooks:
+        if self.hidden_codebook(key):
             return False
         if self._editable.has_key(key):
             if self._editability_dirty[key]:
@@ -607,7 +620,9 @@ class PresentedRow(object):
 
     def hidden_codebook(self, key):
         """Return true iff field identified by 'key' is bound to a non-readable codebook."""
-        return key in self._hidden_codebooks
+        column = self._coldict[key]
+        enumerator = column.type.enumerator()
+        return isinstance(enumerator, pytis.data.DataEnumerator) and not enumerator.permitted()
         
     def validate(self, key, string, **kwargs):
         """Validate user input and propagate the value to the row if the string is valid.
@@ -725,19 +740,11 @@ class PresentedRow(object):
         try:
             completer = self._completer_cache[column.id]
         except KeyError:
-            completer = column.completer
-            if completer:
-                if not isinstance(completer, pytis.data.Enumerator):
-                    if isinstance(completer, (list, tuple)):
-                        completer = pytis.data.FixedEnumerator(completer)
-                    else:
-                        spec = self._resolver.get(completer, 'data_spec')
-                        completer = pytis.data.DataEnumerator(spec, **column.enumerator_kwargs)
-            elif column.type.enumerator() and isinstance(column.type, pytis.data.String):
+            completer = column.completer(self._resolver)
+            if not completer and column.type.enumerator() \
+                    and isinstance(column.type, pytis.data.String):
                 cb_spec = self._cb_spec(column)
-                if cb_spec and not cb_spec.enable_autocompletion():
-                    completer = None
-                else:
+                if not cb_spec or cb_spec.enable_autocompletion():
                     completer = column.type.enumerator()
             self._completer_cache[column.id] = completer
         return completer
@@ -835,7 +842,7 @@ class PresentedRow(object):
             cb_spec = self._cb_spec(column)
             if cb_spec:
                 sorting = cb_spec.sorting()
-            if sorting is None:
+            if sorting is None and column.codebook is not None:
                 sorting = self._resolver.get(column.codebook, 'view_spec').sorting()
             if sorting:
                 kwargs['sort'] = sorting

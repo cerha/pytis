@@ -996,6 +996,11 @@
 	* lib/pytis/data/dbapi.py:
 	Fix return values of db connection retry results.
 
+2009-10-22  Tomas Cerha  <cerha@brailcom.org>
+
+	* lib/pytis/data/types_.py:
+	Remove now unnecessary enumerator db connection hack.
+
 2009-10-29  Milan Zamazal  <pdm@brailcom.org>
 
 	* db/db_pytis_menu.py:

@@ -1420,7 +1420,6 @@ class Binding(object):
     def __init__(self, id, title, name, binding_column=None, condition=None, descr=None,
                  single=False, arguments=None):
         """Arguments:
-
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
           title -- title used for the list of related records
@@ -2028,10 +2027,20 @@ class Field(object):
           dbcolumn -- name of the related column in the underlying data object.  The name is the
             same as the field identifier by default.  It is not recommended to use different column
             name than the field identifier unless there is a serious reason for it.
-          type -- explicit data type as a 'pytis.data.Type' instance.  The data type is normally
-            determined from the underlying data object, but you may need to define the type
-            explicitly to improve field presentation or pass additional validation constraints.
-            Given type, however, must be compatible with the type used by the data object.
+          type -- explicit data type as a 'pytis.data.Type' class or instance.  None value means to
+            use the default type determined from the underlying data object (or the default type
+            'pyttis.data.String' for virtual fields not present in the data object).  If a class is
+            passed, the instance of this class will be created automatically and the system will
+            pass it all arguments which it is able to determine.  If an instance is passed it is
+            used as is even if the system would create it with other arguments.  So by passing a
+            class you leave the system to do its best, while by passing an instance, you can force
+            whatever you want.  In any case, the specified type must be compatible with the type
+            determined by the underlying data object.  If None or if a class is specified,
+            individual type constructor arguments may be passed separately as additional 'Field'
+            keyword arguments and they take precedence over the arguments determined by system.
+            Thus this is a more gentle way to force specific properties of the field data type
+            individually.  The arguments 'codebook' and 'enumerator' determine the constructed
+            type's enumerator.
           width -- field width in characters (integer).  Default width is determined automatically
             if not specified here.  Certain types of input fields may interpret the value
             differently (e.g. as a number of columns) when number of characters doesn't make sense.
@@ -2055,15 +2064,12 @@ class Field(object):
             computer specifications below).  The default value is 'Editable.ALWAYS', but certain
             combinations of other specification parameters may lead to another default value (for
             example if a 'computer' is defined, the default value is 'Editable.NEVER').
-          compact -- pravdivá hodnota znamená, ¾e bude textový popisek políèka
-            v editaèním formuláøi pøimknut k hornímu okraji vstupního prvku
-            (bude tedy nad políèkem).  V opaèném pøípadì (výchozí chování) je
-            popisek vlevo od políèka.
-          nocopy -- pøíznak umo¾òující zakázat kopírování hodnoty políèka pøi
-            kopírování záznamu.  Standardnì nejsou kopírovány klíèové sloupce a
-            dopoèítávaná políèka na nich závisející.  Nìkdy je v¹ak tøeba
-            zamezit také kopírování nìkterých dal¹ích hodnot.  V tom pøípadì je
-            nutno pøedat pravdivou hodnotu tomuto argumentu.
+          compact -- true value results in the field label being displayed above the field, not on
+            the left which is the default.  This way the field will span to the full width of the
+            field group.
+          nocopy -- iff true, the field's value will be omitted during record copying (user command
+            for creation of a new record as a copy af an existing record).  Key columns and
+            computed fields depending on key columns are omitted automatically.
           default -- default value or a function for computing the default value.  The default
             value is used when a new record is initialized.  Please note, that if computer is
             defined, it has higher precedence than the default value.  You may pass a value
@@ -2074,42 +2080,33 @@ class Field(object):
             (usually 'None').
           computer -- a 'Computer' instance for computing the field value based on the values of
             other fields of the same record.  See below for more details about computed fields.
-          line_separator -- oddìlovaè øádkù v jednoøádkovém zobrazení
-            víceøádkové hodnoty.  Tento argument smí být vyu¾íván pouze pro
-            read-only políèka.
-          codebook -- name of the specification which acts as a codebook for this field.  If 'None',
-            the field may still have an 'enumerator' on tha data level, but the user interface is
-            not able to determine which specification it is, so displaying the codebook in a
-            separate form is not possible.  If 'codebook' is defined, the default value of
-            'selection_type' is 'SelectionType.CODEBOOK'.  Also the default 'enumerator' for the
-            field's data type is automatically set to a 'DataEnumerator' bound to given
-            specification.
-          display -- defines the method of retrieving the user visible value of an enumeration
-            item.  None means to use the exported enumeration value itself.  A function of one
-            argument may be used to provide custom display values.  The function receives an
-            enumeration value as its argument and returns a string representing that value.  For
-            fields with a 'codebook', the 'display' overrides the 'display' defined by the related
-            'CodebookSpec' and has the same meaning as defined by 'CodebookSpec' (namely may refer
-            to a codebook column providing the codebook value or work with a codebook row within
-            the display function).  In any case, display is always used only for valid enumaration
-            values -- see 'null_display' for a way to customize the displayed value of the
-            unselected state.  This option is only relevant for fields with a 'codebook' or
-            'enumerator'.
-          prefer_display -- has the same meaning as the same option in the related 'CodebookSpec',
-            but higher priority (only relevant for fields with a 'codebook').
-          display_size -- has the same meaning as the same option in the related 'CodebookSpec',
-            but higher priority (only relevant for fields with a 'codebook').
           null_display -- display value (string) to use for the unselected state of an enumeration
             field (null field value).  Null value is not part of the enumeration, but if the field
             is not 'not_null', it is a valid field value, but as it is not within the enumeration,
             'display' may not be used.
+          line_separator -- line separator in single line field value presentation.
+          codebook -- name (string) of the specification which acts as a codebook for this field.
+            This argument has two effects.  It is used as the default value of 'enumerator' (if
+            'enumerator is not set explicitly) and it determines the name of the specification used
+            for codebook form invocation for 'SelectionType.CODEBOOK'.  Specifying 'codebook'
+            causes 'selection_type' to default to 'SelectionType.CODEBOOK'.  From the other
+            perspective 'SelectionType.CODEBOOK' requires 'codebook' to be defined.
+          enumerator -- field data type enumerator as a string (name of a specification for
+            'pytis.data.DataEnumerator' construction), 'pytis.data.DataFactory' instance (for
+            'pytis.data.DataEnumerator' construction) or a 'pytis.data.Enumerator' instance
+            directly.  Unlike 'codebook', 'enumerator' is only used for field's data type
+            construction and has no effect on 'selection_type'.  If None, enumerator will default
+            to the value of 'codebook'.
+          display -- overrides the same 'CodebookSpec' option for this particular field.  If not
+            defined, the value defaults to the value defined by the related codebook.
+          prefer_display -- overrides the same 'CodebookSpec' option for this particular field.  If
+            not defined, the value defaults to the value defined by the related codebook.
+          display_size -- overrides the same 'CodebookSpec' option for this particular field.  If
+            not defined, the value defaults to the value defined by the related codebook.
           allow_codebook_insert -- true value enables a button for codebook new record insertion.
             This button is displayed next to the codebook field.
-          codebook_insert_spec -- Název specifikace, která má být pou¾ita pro
-            vkládání nových záznamù (viz 'allow_codebook_insert').  Pokud je
-            'None', bude pou¾ita hodnota 'codebook', nebo její výchozí hodnota.
-            Relevantní jen pro èíselníková políèka, kde 'allow_codebook_insert'
-            je pravdivé.
+          codebook_insert_spec -- name of the specification to use for codebook insertion when
+            'allow_codebook_insert' is true.  If none, the value defined by 'codebook' is used.
           runtime_filter -- provider of enumeration runtime filter as a 'Computer' instance.  The
             computer function computes the filter condition based on the current row data and
             returns it as a 'pytis.data.Operator' instance.  This condition is used to filter out
@@ -2127,17 +2124,19 @@ class Field(object):
             'enumerator' or 'codebook'), it will be used for completions automatically (unless
             autocompletion is disabled by the relevant 'CodebookSpec').  This argument, however,
             makes it possible to specify a completer even for fields, which don't have an
-            enumerator (the validation constants imposed by enumerator are not desirable).  The
+            enumerator (the validation constraints imposed by enumerator are not desirable).  The
             value of this argument may be an enumerator instance directly
             (e.g. 'pytis.data.FixedEnumerator') or a name of the specification used to create a
             'pytis.data.DataEnumerator'.  Also a sequens (list or tuple) is accepted and converted
             to a 'FixedEnumerator' instance.
           selection_type -- one of 'SelectionType' constants defining the type of user interface
             element used to present the related enumeration.  Only relevant for fields with an
-            enumerator (specified either by 'codebook' or 'enumerator').
-          orientation -- orientace políèka, jedna z konstant tøídy
-            'Orientation'; relevantní jen u nìkterých typù vstupních polí, jako
-            napø. 'inputfield.RadioBoxInputField'.
+            enumerator (specified either by 'codebook' or 'enumerator').  If 'codebook' is not
+            None, selection_type defaults to 'SelectionType.CODEBOOK'.  Also if selection_type is
+            set to 'SelectionType.CODEBOOK', 'codebook' must be defined.
+          orientation -- field orientation as one of 'Orientation' class constants; relevant only
+            for certain field types, such as radio buttons, which may be arranged vertically or
+            horizontally..
           post_process -- funkce upravující vkládaný text bìhem psaní.  Jedná
             se o funkci jednoho argumentu, kterým je øetìzcová hodnota políèka.
             Vrácená hodnota je potom nastavena jako nová hodnota políèka.  Tato
@@ -2168,16 +2167,15 @@ class Field(object):
           filename -- identifier of the field, which provides the filename for downloading/saving
             the value of this field into a file.  If not None, the user interface should offer
             downloading/saving the content of the field into a file.  This may be relevant for
-            binary fields, as well as for ordinary string data.            
+            binary fields, as well as for ordinary string data.
 
-        V¹echny dal¹í argumenty, které budou konstruktoru pøedány jsou
-        pova¾ovány za argumenty konstruktoru datového typu.  Pøedání argumentù
-        konstruktoru tímto zpùsobem je preferováno pøed pøedáním instance typu.
-        Nìkteré argumenty takto ani pøedat nelze, jako napøíklad `enumerator'
-        který je vytváøen automaticky podle argumentu `codebook'.  To v¹ak
-        platí jen pøi pou¾ití tøídy `Specification' pro sestavení datové
-        specifikace.
-            
+          **kwargs -- all the remaining keyword arguments are passed to the constructor of field's
+            data type instance.  These arguments override the values of arguments, that the system
+            would normally use for data type construction, so you can override certain data type
+            properties this way.  It is prefered to overriding the type completely by passing a
+            'pytis.data.Type' instance as the 'type' argument.  See also 'type' argument's
+            documentation.
+
         Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
         hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
         poèítána.  Takový sloupec mù¾e být plnì \"virtuální\", tj. není
@@ -2225,17 +2223,23 @@ class Field(object):
               codebook_insert_spec=None, codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None,
-              filter_list=None, style=None, link=(), filename=None, **kwargs):
+              filter_list=None, style=None, link=(), filename=None, enumerator=None,
+              value_column=None, validity_column=None, validity_condition=None, **kwargs):
+        def err(msg, *args):
+            """Return assertion error message."""
+            return "Field '%s': " % id + msg % args
+        def log_(msg, *args):
+            """Return assertion error message."""
+            log(OPERATIONAL, "Field '%s':" % id, msg % args)
         assert isinstance(id, str)
         assert dbcolumn is None or isinstance(dbcolumn, str)
-        self._id = id
-        self._dbcolumn = dbcolumn or id
         if type_ is not None:
             assert type is None
             type = type_
         assert label is None or isinstance(label, (str, unicode))
         assert descr is None or isinstance(descr, (str, unicode))
-        assert type is None or isinstance(type, pytis.data.Type)
+        assert type is None or isinstance(type, pytis.data.Type) \
+            or issubclass(type, pytis.data.Type)
         assert isinstance(virtual, bool)
         assert isinstance(disable_column, bool)
         assert isinstance(fixed, bool)
@@ -2246,7 +2250,7 @@ class Field(object):
         
         assert codebook is None or isinstance(codebook, str)
         assert display is None or isinstance(display, str) or callable(display)
-        assert completer is None or isinstance(completer, (str, list,tuple, pytis.data.Enumerator))
+        assert completer is None or isinstance(completer, (str,list,tuple,pytis.data.Enumerator))
         assert prefer_display is None or isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert null_display is None or isinstance(null_display, basestring)
@@ -2260,44 +2264,72 @@ class Field(object):
             runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
         assert runtime_arguments is None or isinstance(runtime_arguments, Computer), runtime_arguments
-        assert selection_type is None \
-               or selection_type in public_attributes(SelectionType)
+        assert selection_type is None or selection_type in public_attributes(SelectionType)
+        assert selection_type is None or selection_type in public_attributes(SelectionType)
         assert orientation in public_attributes(Orientation)
         assert post_process is None or callable(post_process) \
-               or post_process in public_attributes(PostProcess)
+            or post_process in public_attributes(PostProcess)
         assert filter is None or filter in public_attributes(TextFilter)
-        assert filter not in ('INCLUDE_LIST','EXCLUDE_LIST') \
-               or is_sequence(filter_list)
-        assert style is None or isinstance(style, Style) \
-               or callable(style), ('Invalid field style', id, style)
+        assert filter not in ('INCLUDE_LIST', 'EXCLUDE_LIST') or is_sequence(filter_list)
+        assert style is None or isinstance(style, Style) or callable(style), \
+            err("Invalid 'style' specification: %s", style)
         assert filename is None or isinstance(filename, str)
+        if enumerator is None:
+            enumerator = codebook
+        else:
+            assert isinstance(enumerator, (str, pytis.data.DataFactory, pytis.data.Enumerator))
+        enumerator_kwargs = dict([(k, v) for k, v
+                                  in dict(value_column=value_column,
+                                          validity_column=validity_column,
+                                          validity_condition=validity_condition).items()
+                                  if v is not None])
+        #assert not enumerator_kwargs or not isinstance(enumerator, pytis.data.Enumerator), \
+        #    err("'enumerator' defined as Enumerator instance and '%s' passed.",
+        #        enumerator_kwargs.keys()[0])
         links = xtuple(link)
-        enumerator_kwargs = {}
-        for k in ('value_column', 'validity_column', 'validity_condition'):
-            if kwargs.has_key(k):
-                enumerator_kwargs[k] = kwargs.pop(k)
         if __debug__:
+            # Temporary: The following test replaces the commented out assertion above.  The
+            # assertion would break older applications, so we just log for now.
+            if enumerator_kwargs and isinstance(enumerator, pytis.data.Enumerator):
+                log_("'enumerator' defined as Enumerator instance and '%s' passed.",
+                     enumerator_kwargs.keys()[0])
             for lnk in links:
-                assert isinstance(lnk, Link)
+                assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
             for k in kwargs.keys():
-                assert k in ('not_null', 'unique', 'constraints', 'enumerator', 'minlen', 'maxlen',
+                assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
                              'precision', 'format', 'mindate', 'maxdate', 'validation_messages'), \
-                             "Invalid Field argument for field '%s': %r" % (id, k)
+                             err("Invalid argument: %r", k)
+            if isinstance(type, pytis.data.Type):
+                for arg, value in (('codebook', codebook),
+                                   ('enumerator', enumerator),
+                                   (enumerator_kwargs, enumerator_kwargs.keys()),
+                                   (kwargs, kwargs.keys())):
+                    #assert not value, err("'type' defined as Type instance and '%s' passed.", arg)
+                    # Temporary: Assertion would break older applications, so we just log for now.
+                    if value:
+                        log_("'type' defined as Type instance and '%s' passed.", arg)
+        self._id = id
+        self._dbcolumn = dbcolumn or id
         if label is None:
-            label = id
+            label = id # TODO: Allow unlabeled fields?
         self._label = label
         if column_label is None:
             column_label = label
         self._column_label = column_label
+        if (enumerator or codebook) and not kwargs.has_key('not_null'):
+            # Enumeration fields are NOT NULL by default.  It is not very intuitive, but
+            # we must keep it for backwards compatibility.
+            kwargs['not_null'] = True
+        self._virtual = virtual
+        self._type = type
+        self._type_kwargs = kwargs
+        self._enumerator = enumerator
+        self._enumerator_kwargs = enumerator_kwargs
         self._descr = descr
         self._width = width
         if column_width is None and width != 0:
             column_width = width
         self._column_width = column_width
-        if virtual and type is None:
-            type = pytis.data.String(**kwargs)
-        self._virtual = virtual
-        self._type = type
         self._fixed = fixed
         self._disable_column = disable_column
         self._compact = compact
@@ -2329,6 +2361,8 @@ class Field(object):
         self._runtime_filter = runtime_filter
         self._runtime_arguments = runtime_arguments
         self._selection_type = selection_type
+        if isinstance(completer, (list, tuple)):
+            completer = pytis.data.FixedEnumerator(completer)
         self._completer = completer
         self._orientation = orientation
         self._post_process = post_process
@@ -2342,40 +2376,29 @@ class Field(object):
         self._style = style
         self._links = links
         self._filename = filename
-        self._type_kwargs = kwargs
-        self._enumerator_kwargs = enumerator_kwargs
-        
+
     def __str__(self):
         return "<Field for '%s'>" % self.id()
-        
+
     def id(self):
         return self._id
 
     def dbcolumn(self):
         return self._dbcolumn
-    
-    def type(self, data=None):
-        """Return the specified data type or take it from data object if not defined explicitly."""
-        type = self._type
-        if data:
-            column = data.find_column(self.id())
-            if type is not None:
-                assert column is None or isinstance(type, column.type().__class__), \
-                       (type, column.type().__class__)
-            elif column is not None:
-                type = column.type()
-            elif isinstance(self._computer, CbComputer):
-                cb_column = data.find_column(self._computer.field())
-                type = cb_column.type().enumerator().type(self._computer.column())
-                assert type is not None, "Invalid enumerator column '%s' in CbComputer for '%s'." \
-                       % (self._computer.column(), self.id())
-            else:
-                raise ProgramError("Data type not specified for virtual column '%s'." % self.id())
-        return type
+
+    def type(self):
+        """Return the specified 'type' argument passed to the constructor.
+
+        This method should not be used outside the 'pytis.presentation' module.  The actual field
+        type instance is initialized during the data object and 'PresentedRow' construction and
+        their instances should always be queried to obtain the actual field type instance.
+
+        """
+        return self._type
 
     def virtual(self):
         return self._virtual
-    
+
     def label(self):
         return self._label
 
@@ -2430,12 +2453,8 @@ class Field(object):
     def line_separator(self):
         return self._line_separator
     
-    def codebook(self, data=None):
-        if data is not None:
-            enumerator = self.type(data).enumerator()
-            if isinstance(enumerator, pytis.data.DataEnumerator) and \
-                   isinstance(enumerator.data_factory(), _DataFactoryWithOrigin):
-                return enumerator.data_factory().origin() or self._codebook
+    def codebook(self):
+        """Return the 'codebook' name passeed to the constructor as a string."""
         return self._codebook
 
     def display(self):
@@ -2465,9 +2484,6 @@ class Field(object):
     def selection_type(self):
         return self._selection_type
 
-    def completer(self):
-        return self._completer
-    
     def orientation(self):
         return self._orientation
 
@@ -2489,11 +2505,33 @@ class Field(object):
     def filename(self):
         return self._filename
 
-    def type_kwargs(self):
-        return self._type_kwargs
+    def completer(self, resolver):
+        """Return field completer as a 'pytis.data.Enumerator' instance."""
+        completer = self._completer
+        if isinstance(completer, str):
+            # Completer was defined as a specification name.
+            data_spec = resolver.get(completer, 'data_spec')
+            completer = pytis.data.DataEnumerator(data_spec, **self._enumerator_kwargs)
+        return completer
+    
+    def type_kwargs(self, resolver):
+        """Return the keyword arguments for field's data tape construction.
+        
+        This method should never be called from outside of the 'pytis.presentation' module.
 
-    def enumerator_kwargs(self):
-        return self._enumerator_kwargs
+        """
+        kwargs = dict(self._type_kwargs)
+        enumerator = self._enumerator
+        if enumerator is None:
+            enumerator = self._codebook
+        if isinstance(enumerator, str):
+            enumerator = resolver.get(enumerator, 'data_spec')
+        if isinstance(enumerator, pytis.data.DataFactory):
+            enumerator = pytis.data.DataEnumerator(enumerator, **self._enumerator_kwargs)
+        if enumerator:
+            kwargs['enumerator'] = enumerator
+        return kwargs
+
 
 # Backwards compatibility alias
 FieldSpec = Field
@@ -2547,202 +2585,6 @@ class Fields(object):
         override = dict([(f.id(), f) for f in override])
         return [override.get(f.id(), f) for f in self._fields if f.id() not in exclude]
     
-
-class _DataFactoryWithOrigin(pytis.data.DataFactory):
-    """Factory na tvorbu datových objektù dle zadané specifikace.
-    
-    Celá tøída je velký hack, který umo¾òuje zjednodu¹ení ve specifikacích.
-    Pokud datový objekt sestavíme pomocí této tøídy a vyu¾ijeme jej pro
-    specifikaci enumerátoru, je potom mo¾né v u¾ivatelském rozhraní zjistit
-    název specifikace tohoto enumerátoru a pou¾ít ji pro zobrazení èíselníku.
-
-    Jinak se tøída chová zcela shodnì jako její rodièovská tøída.
-
-    """
-
-    
-    def set_origin(self, name):
-        """Nastav pùvodce této specifikace.
-
-        Argumentem je název specifikace pro resolver.
-
-        Instance si takto mù¾e pamatovat ze které specifikace pochází a tato
-        infomace mù¾e být v aplikaci dále vyu¾ita.
-        
-        """
-        self._origin = name
-        
-    def origin(self):
-        """Vra» název specifikace, ze které tato instance pochází.
-
-        Pokud je pùvod znám, je vrácen název pro resolver, jinak None.
- 
-        """
-        try:
-            return self._origin
-        except AttributeError:
-            return None
-
-    
-class DataSpec(_DataFactoryWithOrigin):
-    """Tøída zjednodu¹ující tvorbu datové specifikace (deprecated).
-
-    Konstruktor této tøídy pøijímá argumenty ve zjednodu¹ené formì a schovává tak nìkteré
-    nízkoúrovòové detaily pøed tvùrcem specifikace.  Oproti rodièovské tøídì je podstatnì omezena
-    obecnost, ale v typickém pøípadì pou¾ití datového rozhraní v Pytis aplikaci je specifikace pøi
-    pou¾ití této tøídy nejen pøehlednìj¹í, ale také flexibilnìj¹í.
-
-    Podrobný popis rozhraní viz. konstruktor tøídy.
-
-    POZOR: Tato tøída je urèena k zániku.  Namísto ní nech» je pou¾ívána tøída 'Specification'
-    ní¾e.  Ta zajistí sestavení datové specifikace zcela automaticky, tak¾e samostatné udr¾ování
-    datových specifikací ji¾ není potøeba.
-
-    """
-    
-    def __init__(self, table, columns, key, access_rights=None, condition=None,
-                 data_class_=pytis.data.DBDataDefault,
-                 oid=() # temporary backward compatibility argument, ignored
-                 ):
-        """Inicializuj specifikaci.
-
-        Argumenty:
-
-          table -- název datové tabulky jako øetìzec.
-          
-          columns -- sekvence specifikací sloupcù jako instancí 'Column'.  Jedná se v¾dy o sloupce
-            z tabulky 'table'.
-            
-          key -- název klíèového sloupce jako øetìzec.  Sloupec s tímto identifikátorem musí být
-            pøítomný v 'columns'.
-            
-          access_rights -- práva jako instance 'pytis.data.AccessRights' nebo None, pokud mají být
-            práva neomezená.
-            
-          condition -- A hardcoded condition filtering data of the underlying data object.  This
-            condition is used permanently and the user is not able to switch it off or know that it
-            exists.  It has the same effect as implementing the condition in the underlying data
-            source.  The value is a 'pytis.data.Operator' instance.
-        
-          data_class_ -- tøída datového objektu, odvozená od `Data'.
-
-        """
-        assert isinstance(table, str)
-        assert isinstance(columns, (list, tuple))
-        assert isinstance(key, str)
-        assert isinstance(access_rights, pytis.data.AccessRights) or access_rights is None
-        assert find(key, columns, key=lambda c: c.id()) is not None
-        if __debug__:
-            for c in columns:
-                assert isinstance(c, Column)
-        if access_rights is None:
-            perm = pytis.data.Permission.ALL
-            access_rights = pytis.data.AccessRights((None, (None, perm)))
-        bindings = []
-        B = pytis.data.DBColumnBinding
-        for c in columns:
-            kwargs = c.kwargs()
-            e = c.enumerator()
-            if e:
-                enumerator = resolver().get(e, 'data_spec')
-                if isinstance(enumerator, _DataFactoryWithOrigin):
-                    enumerator.set_origin(e)
-            else:
-                enumerator = None
-            if isinstance(enumerator, pytis.data.DataFactory):
-                enumerator = pytis.data.DataEnumerator(enumerator, **c.enumerator_kwargs())
-            if enumerator is not None:
-                if not kwargs.has_key('not_null'):
-                    kwargs['not_null'] = True
-                kwargs = dict(kwargs, enumerator=enumerator)
-            bindings.append(B(c.id(), table, c.column(), type_=c.type(), **kwargs))
-        key = find(key, bindings, key=lambda b: b.column())
-        super(DataSpec, self).__init__(data_class_, bindings, key, access_rights=access_rights,
-                                       condition=condition)
-        self._origin = None
-
-    
-class Column(object):
-    """Specifikace sloupce pro datovou specifikaci 'DataSpec'."""
-    
-    def __init__(self, id, column=None, enumerator=None, type=None, **kwargs):
-        """Inicializuj specifikaci.
-
-        Argumenty:
-        
-          id -- identifikátor sloupce (øetìzec).  Pod tímto identifikátorem
-            bude sloubec vystupovat v aplikaci.
-            
-          column -- název databázového sloupce (øetìzec nebo None).  Implicitnì
-            je doplnìna hodnota 'id', tak¾e pokud se název sloupce
-            shoduje s identifikátorem, není jej tøeba definovat.
-            
-          enumerator -- název specifikace pro resolver (øetìzec nebo None).  Z
-            této specifikace bude získán datový objekt a pou¾it jako enumerátor
-            hodnot datového typu.
-            
-          type -- explicitní urèení datového typu sloupce (instance
-            'pytis.data.Type', nebo None).  Tento argument by mìl být pou¾it
-            pouze pokud chceme urèit vlastní (odvozený) datový typ, nikoliv
-            pokud chceme mìnit parametry standardních typù.  Ty je mo¾no
-            nastavit pøedáním klíèovách argumentù (viz ní¾e).
-            
-          **kwargs -- pokud jsou uvedeny jakékoliv dal¹í klíèové argumenty,
-            budou tyto pøedány konstruktoru datového typu sloupce.  Tento
-            postup by mìl být preferován pøed explicitní definicí instance typu
-            argumentem 'type', pokud je to mo¾né.
-
-        """
-        assert isinstance(id, str), \
-               "Invalid value for argument 'id': %s" % id
-        assert isinstance(column, str) or column is None, \
-               "Invalid value for argument 'column': %s" % column
-        assert isinstance(enumerator, str) or enumerator is None, \
-               "Invalid value for argument 'enumerator': %s" % enumerator
-        assert isinstance(type, pytis.data.Type) or type is None, \
-               "Invalid value for argument 'type': %s" % type
-        assert enumerator is None or type is None \
-               or isinstance(type, pytis.data.Codebook), \
-               "Invalid codebook type: %s" % type
-        assert type is None or kwargs == {}, \
-               "When the 'type' is defined explicitly, " + \
-               "using kwargs makes no sense: %s" % kwargs
-        self._id = id
-        if column is None:
-            column = id
-        self._column = column
-        self._enumerator = enumerator
-        self._type = type
-        self._enumerator_kwargs = {}
-        for k in ('value_column', 'validity_column', 'validity_condition'):
-            if kwargs.has_key(k):
-                self._enumerator_kwargs[k] = kwargs.pop(k)
-        self._kwargs = kwargs
-    
-    def id(self):
-        """Vra» identifikátor sloupce jako øetìzec."""
-        return self._id
-    
-    def column(self):
-        """Vra» název sloupce v datovém zdroji jako øetìzec."""
-        return self._column
-
-    def enumerator(self):
-        """Vra» název specifikace enumerátoru jako øetìzec nebo None."""
-        return self._enumerator
-
-    def enumerator_kwargs(self):
-        """Vra» název specifikace enumerátoru jako øetìzec nebo None."""
-        return self._enumerator_kwargs
-
-    def type(self):
-        """Vra» datový typ sloupce jako instanci 'pytis.data.Type' nebo None."""
-        return self._type
-    
-    def kwargs(self):
-        """Vra» slovník klíèových argumentù konstruktoru datového typu."""
-        return self._kwargs
-
 
 class Specification(object):
     """Souhrnná specifikaèní tøída sestavující specifikace automaticky.
@@ -2998,27 +2840,11 @@ class Specification(object):
         return spec_name
 
     def _create_data_spec(self):
-        def type_kwargs(f):
-            kwargs = copy.copy(f.type_kwargs())
-            assert f.type() is None or not kwargs, \
-                   ("Can't define type and its arguments at the same time.", f.id(), kwargs)
-            enumerator = kwargs.get('enumerator')
-            if enumerator is None and f.codebook():
-                enumerator = f.codebook()
-            if isinstance(enumerator, str):
-                enumerator = self._resolver.get(enumerator, 'data_spec')
-            if isinstance(enumerator, pytis.data.DataFactory):
-                enumerator = pytis.data.DataEnumerator(enumerator, **f.enumerator_kwargs())
-            if enumerator is not None:
-                assert isinstance(enumerator, pytis.data.Enumerator)
-                kwargs['enumerator'] = enumerator
-                if not kwargs.has_key('not_null'):
-                    kwargs['not_null'] = True
-            return kwargs
+        resolver = self._resolver
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
-            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **type_kwargs(f))
+            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **f.type_kwargs(resolver))
                         for f in self.fields if not f.virtual()]
             if self.key:
                 keyid = self.key
@@ -3033,17 +2859,17 @@ class Specification(object):
             if self.arguments is None:
                 arguments = None
             else:
-                arguments = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **type_kwargs(f))
+                arguments = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **f.type_kwargs(resolver))
                              for f in self.arguments]
         else:
-            columns = []
-            for f in self.fields:
-                if not f.virtual():
-                    type = f.type() or pytis.data.String()
-                    kwargs = type_kwargs(f)
-                    if kwargs:
-                        type = type.__class__(**kwargs)
-                    columns.append(pytis.data.ColumnSpec(f.id(), type))
+            def type_(f):
+                t = f.type() or pytis.data.String
+                if type(t) == type(pytis.data.Type):
+                    kwargs = f.type_kwargs(resolver)
+                    t = t(**kwargs)
+                return t
+            columns = [pytis.data.ColumnSpec(f.id(), type_(f))
+                       for f in self.fields if not f.virtual()]
             args = (columns,)
             arguments = None
         access_rights = self.data_access_rights('form/' + self._action_spec_name())
@@ -3055,7 +2881,7 @@ class Specification(object):
         kwargs = dict(access_rights=access_rights, connection_name=self.connection,
                       condition=self.condition, distinct_on=self.distinct_on,
                       arguments=arguments)
-        return _DataFactoryWithOrigin(self.data_cls, *args, **kwargs)
+        return pytis.data.DataFactory(self.data_cls, *args, **kwargs)
 
     def _create_view_spec(self, title=None, **kwargs):
         if not title:

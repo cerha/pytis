@@ -930,9 +930,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'char': String,
                         'date': Date,
                         'time': Time,
-                        'smallint': Integer,                        
+                        'smallint': Integer,
                         'bigint': Integer,
-                        'int2': Integer,                        
+                        'int2': Integer,
                         'int4': Integer,
                         'int8': Integer,
                         'numeric': Float,
@@ -955,18 +955,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             type_class_ = TYPE_MAPPING[type_]
         except KeyError:
             raise pytis.data.DBException('Unhandled database type', None, type_)
-        if ctype is None:
+        if ctype is None or type(ctype) == type(pytis.data.Type):
             if type_kwargs is None:
                 type_kwargs = {}
             if not_null in (1, 'T') and not type_kwargs.has_key('not_null'):
                 type_kwargs['not_null'] = True
             if not type_kwargs.has_key('unique') and type_class_ != Boolean:
                 type_kwargs['unique'] = unique
-            enumerator = type_kwargs.get('enumerator')
-            if enumerator and isinstance(enumerator, DataEnumerator):
-                # This hack makes it possible to use the current connection in enumerator data
-                # object instead of config.dbconnection, which is not set in the web environment.
-                enumerator.set_connection_data(self._pg_connection_data())
             if type_class_ == String:
                 if type_ != 'text':
                     try:
@@ -984,6 +979,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 type_kwargs['precision'] = precision
             elif type_class_ == Integer and serial:
                 type_class_ = Serial
+            if ctype:
+                assert issubclass(ctype, type_class_), \
+                       ("User type doesn't match DB type", ctype, type_class_)
+                type_class_ = ctype
             result = type_class_(**type_kwargs)
         else:
             assert isinstance(ctype, type_class_), \
@@ -2454,7 +2453,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         """Vra» sekvenci v¹ech nestejných hodnot daného sloupce.
 
         Argumenty:
-
+        
           column -- column identifier
           prefix -- lenght of a string prefix to work on (integer).  If not 'None', only given
             initial substring of column's value is considered by the query.  Only applicable for

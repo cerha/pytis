@@ -195,7 +195,7 @@ class ListTable(wx.grid.PyGridTableBase):
 
     def _update_columns(self, columns):
         self._columns = [self._Column(c.id(),
-                                      self._wx_type(c.type(self._data)),
+                                      self._wx_type(self._presented_row[c.id()].type()),
                                       c.column_label() or '',
                                       c.style())
                          for c in columns]

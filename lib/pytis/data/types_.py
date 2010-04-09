@@ -1712,7 +1712,6 @@ class DataEnumerator(Enumerator):
             validity_condition = EQ(validity_column, Value(Boolean(), True))            
         self._validity_condition = validity_condition
         self._change_callbacks = []
-        self._connection_data = None
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -1720,13 +1719,11 @@ class DataEnumerator(Enumerator):
             return self.__dict__[name]
         else:
             raise AttributeError(name)
-        
+
     def _complete(self):
         # Finish the instance by data object creation.
-        if self._connection_data is None:
-            import config
-            self._connection_data = config.dbconnection
-        self._data = data = self._data_factory.create(connection_data=self._connection_data)
+        import config
+        self._data = data = self._data_factory.create(connection_data=config.dbconnection)
         if self._value_column_ is None:
             self._value_column = data.key()[0].id()
         else:
@@ -1813,9 +1810,6 @@ class DataEnumerator(Enumerator):
     def data_factory(self):
         """Vra» specifikaci datového objektu enumerátoru jako instanci 'pytis.data.DataFactory'."""
         return self._data_factory
-    
-    def set_connection_data(self, connection_data):
-        self._connection_data = connection_data
     
     def value_column(self):
         """Vra» název sloupce datového objektu, který nese vnitøní hodnotu."""

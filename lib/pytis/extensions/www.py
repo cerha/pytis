@@ -72,12 +72,13 @@ class BaseDBTable(object):
         return [self._view.field(c) for c in self._columns]
 
     def _col_aligns(self):
-        def align(type):
-            if isinstance(type, pytis.data.Number):
+        def align(f):
+            column = self._data.find_column(f.id())
+            if column and isinstance(column.type(), pytis.data.Number):
                 return 'right'
             else:
                 return 'left'
-        return [align(f.type(self._data)) for f in self._fields]
+        return [align(f) for f in self._fields]
 
     def spec(self):
         return self._spec

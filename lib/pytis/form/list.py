@@ -337,7 +337,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         for i, c in enumerate(self._columns):
             # zarovnání
             attr = wx.grid.GridCellAttr()
-            if isinstance(c.type(self._data), pytis.data.Number):
+            if isinstance(self._row[c.id()].type(), pytis.data.Number):
                 alignment = wx.ALIGN_RIGHT
             else:
                 alignment = wx.ALIGN_LEFT
@@ -404,7 +404,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._incremental_search_last_direction = pytis.data.FORWARD
         self._incremental_search_results = []
         columns = [(c.label(), c) for c in self._columns
-                   if isinstance(c.type(self._data), pytis.data.String)]
+                   if isinstance(self._row[c.id()].type(), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
                       tooltip=_("Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální "
@@ -1720,8 +1720,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         column = self._columns[col]
         if (not isinstance(column.type(self._data), pytis.data.String) or
             not self._data.permitted(column.id(), pytis.data.Permission.VIEW)):
-            message(_("V tomto sloupci nelze vyhledávat inkrementálnì"),
-                    beep_=True)
+            message(_("V tomto sloupci nelze vyhledávat inkrementálnì"), beep_=True)
             return
         if self._search_panel is None:
             self._create_search_panel(full=full, prefill=prefill)
@@ -1868,7 +1867,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             run_dialog(Warning, msg)
             return
         # Seznam sloupcù
-        column_list = [(c.id(), c.type(data)) for c in self._columns]
+        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
         allowed = True
         # Kontrola práv        
         for cid, ctype in column_list:
@@ -2678,7 +2677,8 @@ class BrowseForm(FoldableForm):
         self._automatic_links = []
         links = [(f, Link(cb, col))  for f, cb, col in
                  remove_duplicates([(f, cb, e.value_column()) for f, cb, e in
-                                    [(f, f.codebook(self._data), f.type(self._data).enumerator())
+                                    [(f, self._row.codebook(f.id()),
+                                      self._row[f.id()].type().enumerator())
                                      for f in self._fields] if e and cb])]
         linkdict = {}
         # Group automatic links by target spec name.

@@ -2,7 +2,7 @@
 
 # Formátovací funkce pro datové objekty
 # 
-# Copyright (C) 2002-2009 Brailcom, o.p.s.
+# Copyright (C) 2002-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,6 +79,7 @@ def data_table(resolver, name, condition=None, sorting=None,
     data_spec = resolver.get(name, 'data_spec')
     import config
     data = data_spec.create(dbconnection_spec=config.dbconnection)
+    presented_row = pytis.presentation.PresentedRow(view.fields(), data, None, singleline=True)
     import pytis.form
     columns = []
     for cid in view.columns():
@@ -87,19 +88,16 @@ def data_table(resolver, name, condition=None, sorting=None,
         if width == 0:
             continue
         label = f.column_label()
-        if isinstance(f.type(data), pytis.data.Number):
+        if isinstance(presented_row[cid].type(), pytis.data.Number):
             alignment = LongTable.Column.ALIGN_RIGHT
         else:
             alignment = LongTable.Column.ALIGN_LEFT
         tc = LongTable.Column(label, width, alignment=alignment)
-        tc.id = cid                     # fuj, viz `table_row' ní¾e
+        tc.id = cid # fuj, viz `table_row' ní¾e
         columns.append(tc)
     # Data
     data.select(condition=condition, sort=sorting)
     # Formátování
-    presented_row = \
-      pytis.presentation.PresentedRow(view.fields(), data, None,
-                                    singleline=True)
     def table_row(*args, **kwargs):
         row = data.fetchone()
         if row is None:

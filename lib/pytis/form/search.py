@@ -2,7 +2,7 @@
 
 # Prvky u¾ivatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -686,12 +686,12 @@ def sfs_columns(columns, data, labelfunc=FieldSpec.label):
     """
     sfs_columns = []
     for c in columns:
-        label = labelfunc(c)
-        if data.find_column(c.id()) is None or not label:
-            continue
         id = c.id()
+        label = labelfunc(c)
+        column = data.find_column(id)
+        if column is None or not label:
+            continue
         if not data.permitted(id, pytis.data.Permission.VIEW):
             continue
-        type_ = c.type(data)
-        sfs_columns.append(SFSColumn(id, type_, label))
+        sfs_columns.append(SFSColumn(id, column.type(), label))
     return sfs_columns
