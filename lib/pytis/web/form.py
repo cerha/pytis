@@ -826,10 +826,17 @@ class BrowseForm(LayoutForm):
                  for i, field in enumerate(self._column_fields)]
         return g.tr(cells, cls='aggregation-results '+agg_id)
     
-    def _export_group_heading(self, context, field):
+    def _export_group_heading(self, context):
+        group_heading = self._view.group_heading()
+        if group_heading is None:
+            return None
+        if isinstance(group_heading, lcg.TranslatableText):
+            heading = self._interpolate(context, group_heading, self._row)
+        else:
+            field = self._fields[group_heading]
+            heading = self._export_field(context, field)
         g = context.generator()
-        return g.tr(g.th(self._export_field(context, field), colspan=len(self._column_fields)),
-                    cls='group-heading')
+        return g.tr(g.th(heading, colspan=len(self._column_fields)), cls='group-heading')
     
     def _export_headings(self, context):
         g = context.generator()
@@ -921,10 +928,6 @@ class BrowseForm(LayoutForm):
             pages += modulo and 1 or 0
         self._pages = pages
         grouping = self._view.grouping()
-        if self._view.group_heading():
-            group_heading = self._fields[self._view.group_heading()]
-        else:
-            group_heading = None
         if self._sorting != self._view.sorting():
             grouping = None
         self._group = True
@@ -942,10 +945,9 @@ class BrowseForm(LayoutForm):
                 if group_values != last_group_values:
                     self._group = not self._group
                     last_group_values = group_values
-                    if group_heading:
-                        exported_heading = self._export_group_heading(context, group_heading)
-                        if exported_heading is not None:
-                            exported_rows.append(exported_heading)
+                    group_heading = self._export_group_heading(context)
+                    if group_heading is not None:
+                        exported_rows.append(group_heading)
             if found and (limit is None and offset == n or \
                           limit is not None and offset == (n + page * limit)):
                 id = 'found-record'
@@ -1252,7 +1254,7 @@ class ListView(BrowseForm):
         cls = self._style(self._view.row_style(), row, n)['cls']
         return g.div(parts, id=id, cls='list-item '+cls)
 
-    def _export_group_heading(self, context, field):
+    def _export_group_heading(self, context):
         #return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
         return None
 
@@ -1317,7 +1319,7 @@ class ItemizedView(BrowseForm):
                       for field in self._column_fields if row[field.id].value() is not None]
             return concat(fields, separator=self._separator)
 
-    def _export_group_heading(self, context, field):
+    def _export_group_heading(self, context):
         #TODO: Create multi-level lists.
         return None
     

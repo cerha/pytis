@@ -888,12 +888,17 @@ class ViewSpec(object):
             changes in the background color.  Rows with the same values in grouping columns always
             have the same background color.  This color changes whenever one of the values changes.
 
-          group_heading -- group heading allows additional representation of `grouping' (see
-            above).  If a column identifier is specified, the value of this column will apeear as a
-            separate table row whenever a new group starts.  Thus this only makes sense when
-            `grouping' is on.  Most often, you will want to show group headings when the grouping
-            columns are actually not shown in the table.  Group heading is currently only supported
-            by web forms.
+          group_heading -- group heading allows additional representation of `grouping' (see above)
+            and thus is only relevant when grouping is on.  If a column identifier is specified,
+            the value of this column will apeear as a separate table row whenever a new group
+            starts.  An 'lcg.TranslatableText' instance can also be passed as an interpolation
+            template.  In this case the group heading will be produced by interpolation of the
+            template (with python string formatting syntax such as '%(field_id)s') by formatted
+            field values of the first row of the group.  Most often, you will want to show group
+            headings when the grouping columns are actually not shown in the table.  Group heading
+            is currently only supported by web forms.  In this case the title will be produced by
+            interpolation of formatted row values within given string (with python string
+            formatting syntax).
 
           check -- funkce pro ovìøení integrity dat celého záznamu.  Jedná se o
             funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
@@ -1087,7 +1092,7 @@ class ViewSpec(object):
             assert group_heading is None
         else:
             grouping = xtuple(grouping)
-            assert group_heading is None or self.field(group_heading) is not None, group_heading
+            assert group_heading is None or isinstance(group_heading, (unicode, str)), group_heading
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None, id
