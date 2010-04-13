@@ -714,6 +714,12 @@ class BrowseForm(LayoutForm):
         # Determine the current set of user selectable filters.
         if filters is None:
             filters = self._view.filters()
+        if filters:
+            null_filter = find(None, filters, key=lambda f: f.condition())
+            if not null_filter:
+                # Translators: Label used in filter selection box for the option which disables
+                # filtering and thus results in all records to be displayed.
+                filters = (Filter(self._NULL_FILTER_ID, _("All items"), None),) + tuple(filters)
         self._filters = filters or ()
         # Determine the currently selected filter.
         filter_id = params.get('filter')
@@ -725,15 +731,15 @@ class BrowseForm(LayoutForm):
                 filter_id = cookie[len(self._name)+1:]
             else:
                 filter_id = self._view.default_filter()
-        if filter_id and filter_id != self._NULL_FILTER_ID:
-            condition = find(filter_id, self._filters, key=lambda f: f.id())
+        if filter_id:
+            matching_filter = find(filter_id, self._filters, key=lambda f: f.id())
             # Append the current user selected filter to the filter passed as 'filter' argument.
-            if condition:
-                c = condition.condition()
-                if filter:
-                    filter = pd.AND(filter, c)
-                else:
-                    filter = c
+            if matching_filter:
+                cond = matching_filter.condition()
+                if filter and cond:
+                    filter = pd.AND(filter, cond)
+                elif cond:
+                    filter = cond
             else:
                 filter_id = None
         self._filter_id = filter_id
@@ -1062,9 +1068,7 @@ class BrowseForm(LayoutForm):
         id = (bottom and '0' or '1') + self._id
         content = []
         # Construct a list of filters for export.
-        filters = [(f.name(), f.id()) for f in self._filters
-                   if f.id() is not None and f.condition() is not None]
-        show_filter = filters and (count or self._filter_id is not None)
+        show_filter = self._filters and (count or self._filter_id is not None)
         show_query_field = self._show_query_field
         if not bottom:
             msg = self._message(count)
@@ -1079,14 +1083,6 @@ class BrowseForm(LayoutForm):
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
-            null_filter = find(None, self._filters, key=lambda f: f.condition())
-            if null_filter:
-                null_filter_name = null_filter.name()
-            else:
-                # Translators: Label used in filter selection box for the option which disables
-                # filtering and thus results in all records to be displayed.
-                null_filter_name = _("All items")
-            filters.insert(0, (null_filter_name, self._NULL_FILTER_ID))
             filter_id = 'filter-' + id
             # Translators: Label of filter selection box.  Filtering limits the displayed records
             # by certain criterias.
@@ -1099,7 +1095,7 @@ class BrowseForm(LayoutForm):
                                                   # unexpected invocation of the option.
                                                   _("(Use ALT+arrow down to select)")),
                                            onchange='this.form.submit(); return true',
-                                           options=filters),
+                                           options=[(f.name(), f.id()) for f in self._filters]),
                                   # Translators: Button for manual selection invocation (when
                                   # JavaScript is off.
                                   g.noscript(g.submit(_("Apply")))),
