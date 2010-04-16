@@ -1237,15 +1237,23 @@ class ListView(BrowseForm):
             parts.append(g.div(concat(meta, separator=', '), cls='meta'))
         if layout.layout():
             parts.append(self._export_group(context, layout.layout()))
-        for fid in layout.content():
-            if self._row[fid].value() is not None:
-                text = self._row[fid].export()
+        for item in layout.content():
+            if callable(item):
+                content = item(self._row)
+                if content is None:
+                    continue
+                cls = 'dynamic-content'
+            elif self._row[item].value() is not None:
+                text = self._row[item].export()
                 content = lcg.SectionContainer(parser.parse(text), toc_depth=0)
-                content.set_parent(self.parent())
-                # Hack: Add a fake container to force the heading level start at 4.
-                container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content,
-                                                                             anchor=anchor)))
-                parts.append(g.div(content.export(context), cls='content id-'+ fid))
+                cls = 'content id-'+ item
+            else:
+                continue
+            content.set_parent(self.parent())
+            # Hack: Add a fake container to force the heading level start at 4.
+            container = lcg.SectionContainer(lcg.Section('', lcg.Section('', content,
+                                                                         anchor=anchor)))
+            parts.append(g.div(content.export(context), cls=cls))
         # We use only css class name from row_style, since other attributes are BrowseForm specific.
         cls = self._style(self._view.row_style(), row, n)['cls']
         return g.div(parts, id=id, cls='list-item '+cls)

@@ -1924,9 +1924,12 @@ class ListLayout(object):
             possible to pass a sequence of fields (or 'GroupFpec' instances)
             which will be turned into a vertical group automatically.
 
-          content -- a sequence of field identifiers (strings) which provide a textual content for
-            this item.  The text of the field values will be formatted as LCG structured text.
-            A single item may be passed as a string directly.
+          content -- free content provider a field identifier or a function.  If a function is used
+            it must accept one argument (a PresentedRow instance) and return 'lcg.Content' or None.
+            If a field identifier is used, the field value must be a string formatted as LCG
+            structured text.  The field text is parsed to produce the content.  A sequence of
+            functions or field identifiers may also be used to provide more pieces of content
+            concatenated together on the output.
 
           image -- identifier of a field which provides an image to be displayed along with each
             record.
