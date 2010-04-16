@@ -2826,7 +2826,7 @@ class Specification(object):
             self._view_spec_kwargs['bindings'] = self.bindings
         else:
             assert isinstance(self.bindings, dict)
-        for arg in ('layout', 'actions', 'columns', 'grouping'):
+        for arg in ('layout', 'list_layout', 'actions', 'columns', 'grouping'):
             try:
                 value = self._view_spec_kwargs[arg]
             except:
