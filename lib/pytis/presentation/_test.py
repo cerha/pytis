@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,11 +58,11 @@ class PresentedRow_(unittest.TestCase):
                         FieldSpec('d', 
                                   computer=Computer(twice, depends=('c',)),
                                   editable=Computer(gt5, depends=('sum',))),
-                        FieldSpec('e', type=pytis.data.Integer(),
+                        FieldSpec('e', type=pytis.data.Integer(), virtual=True,
                                   default=88),
-                        FieldSpec('sum', type=pytis.data.Integer(),
+                        FieldSpec('sum', type=pytis.data.Integer(), virtual=True, 
                                   computer=Computer(sum, depends=('b','c'))),
-                        FieldSpec('inc', type=pytis.data.Integer(),
+                        FieldSpec('inc', type=pytis.data.Integer(), virtual=True,
                                   computer=Computer(inc, depends=('sum',))))
         
     def _check_values(self, row, pairs):
