@@ -75,8 +75,9 @@ class PresentedRow(object):
             self.completer = f.completer
             self.runtime_filter = f.runtime_filter()
             self.runtime_arguments = f.runtime_arguments()
-            self.data_column = data.find_column(f.id())
+            self.data_column = data.find_column(self.id)
             self.virtual = f.virtual()
+            self.secret_computer = False # Set dynamically during initialization.
             
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
@@ -137,9 +138,11 @@ class PresentedRow(object):
         self._init_dependencies()
         self._set_row(row, reset=True, prefill=prefill)
 
-    def _secret_column(self, key, virtual):
-        return ((virtual and key in self._secret_computers) or
-                (not virtual and not self.permitted(key, pytis.data.Permission.VIEW)))
+    def _secret_column(self, column):
+        if column.virtual:
+            return column.secret_computer
+        else:
+            return not self.permitted(column.id, pytis.data.Permission.VIEW)
 
     def _type(self, fspec):
         """Return the final 'pytis.data.Type' instance for given field specification."""
@@ -273,16 +276,15 @@ class PresentedRow(object):
             if c.runtime_arguments is not None:
                 make_deps(c, self._runtime_arguments, self._runtime_arguments_dirty,
                           self._runtime_arguments_dependent, c.runtime_arguments)
-        self._secret_computers = []
-        def add_secret(key):
-            for secret in self._dependent.get(key, []):
-                if secret not in self._secret_computers:
-                    self._secret_computers.append(secret)
-                    add_secret(secret)
-        for c in self._columns:
-            key = c.id
-            if not self.permitted(key, pytis.data.Permission.VIEW):
-                add_secret(key)
+        def add_secret(column):
+            for key in self._dependent.get(column.id, []):
+                column = self._coldict[key]
+                if not column.secret_computer:
+                    column.secret_computer = True
+                    add_secret(column)
+        for column in self._columns:
+            if not self.permitted(column.id, pytis.data.Permission.VIEW):
+                add_secret(column)
 
     def __getitem__(self, key, lazy=False):
         """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.
@@ -713,8 +715,9 @@ class PresentedRow(object):
                 permission = pytis.data.Permission.INSERT
             else:
                 permission = pytis.data.Permission.UPDATE            
-        if self._coldict[key].virtual:
-            permitted = key not in self._secret_computers
+        column = self._coldict[key]
+        if column.virtual:
+            permitted = column.secret_computer
         elif isinstance(self._data, pytis.data.RestrictedData):
             permitted = self._data.permitted(key, permission)
         else:
@@ -750,7 +753,7 @@ class PresentedRow(object):
         return completer
         
     def _display_func(self, column):
-        if self._secret_column(column.id, column.virtual):
+        if self._secret_column(column):
             hidden_value = column.type.secret_export()
             return lambda v: hidden_value
         def get(enum, value, display, call=False):
@@ -800,7 +803,7 @@ class PresentedRow(object):
         
         """
         column = self._coldict[key]
-        if self._secret_column(key, column.virtual):
+        if self._secret_column(column):
             return ''
         display = self._display_func(column)
         if not display:
@@ -829,7 +832,7 @@ class PresentedRow(object):
        
         """
         column = self._coldict[key]
-        if self._secret_column(key, column.virtual):
+        if self._secret_column(column):
             return []
         display = self._display_func(column)
         if display is None:
