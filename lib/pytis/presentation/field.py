@@ -78,7 +78,7 @@ class PresentedRow(object):
             self.data_column = data.find_column(self.id)
             self.virtual = f.virtual()
             self.secret_computer = False # Set dynamically during initialization.
-            
+    
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
         """Inicialize the instance.
@@ -751,36 +751,60 @@ class PresentedRow(object):
                     completer = column.type.enumerator()
             self._completer_cache[column.id] = completer
         return completer
-        
-    def _display_func(self, column):
+
+    def _display(self, column):
+        # Returns a display function to apply to an enumeration value."
         if self._secret_column(column):
             hidden_value = column.type.secret_export()
-            return lambda v: hidden_value
-        def get(enum, value, display, call=False):
-            if value is None or self._transaction and not self._transaction.open():
-                return ''
-            try:
-                row = enum.row(value, condition=self.runtime_filter(column.id),
-                               transaction=self._transaction,
-                               arguments=self.runtime_arguments(column.id))
-            except pytis.data.DataAccessException:
-                return ''
-            if row is None:
-                return ''
-            if call:
-                return display(row)
-            else:
-                return row[display].export()
-        display = column.display or self._cb_spec(column).display()
-        if not display:
-            return None
-        call = callable(display)
-        if call and argument_names(display) != ('row',):
-            return display
+            display = lambda v: hidden_value
         else:
-            enum = column.type.enumerator()
-            return lambda v: get(enum, v, display, call=call)
+            display = column.display or self._cb_spec(column).display()
+            if display:
+                if isinstance(display, str):
+                    display_column = display
+                    row_function = lambda row: row[display_column].export()
+                elif argument_names(display) == ('row',):
+                    row_function = display
+                else:
+                    row_function = None
+                if row_function:
+                    enumerator = column.type.enumerator()
+                    def display(value):
+                        if value is None or self._transaction and not self._transaction.open():
+                            return ''
+                        try:
+                            row = enumerator.row(value, transaction=self._transaction,
+                                                  condition=self.runtime_filter(column.id),
+                                                  arguments=self.runtime_arguments(column.id))
+                        except pytis.data.DataAccessException:
+                            return ''
+                        if row:
+                            return row_function(row)
+                        else:
+                            return ''
+        return display
 
+    def _display_as_row_function(self, column):
+        # Same as '_display()', but returns a function of a data row.  It would be possible to use
+        # '_display()' everywhere, but that causes major inefficiency in 'enumerate()' (separate
+        # select for each row of the select).
+        if self._secret_column(column):
+            hidden_value = column.type.secret_export()
+            display = lambda row: hidden_value
+        else:
+            display = column.display or self._cb_spec(column).display()
+            if display is None:
+                value_column = column.type.enumerator().value_column()
+                display = lambda row: row[value_column].export()
+            elif isinstance(display, str):
+                display_column = display
+                display = lambda row: row[display_column].export()
+            elif argument_names(display) != ('row',):
+                value_column = column.type.enumerator().value_column()
+                display_function = display
+                display = lambda row: display_function(row[value_column].value())
+        return display
+    
     def codebook(self, key):
         """Return the name of given field's codebook specification for resolver."""
         return self._coldict[key].codebook
@@ -795,30 +819,31 @@ class PresentedRow(object):
     def display(self, key):
         """Return enumerator `display' value for given field as a string.
 
-        If the field has no enumerator or no display was specified, an empty string is returned.
+        If the field has no enumerator or no display was specified, an empty
+        string is returned.
 
-        Empty string is also returned if current field value doesn't belong to the enumeration (is
-        invalid) or if it is not possible to retrieve the displayed value (isufficient access
-        rights, current transaction aborted etc.)
+        Empty string is also returned if the current field value doesn't belong
+        to the enumeration (is invalid) or if it is not possible to retrieve
+        the displayed value (isufficient access rights, current transaction
+        aborted etc.)
         
         """
         column = self._coldict[key]
         if self._secret_column(column):
             return ''
-        display = self._display_func(column)
+        display = self._display(column)
         if not display:
             computer = column.computer
             if computer and isinstance(computer, CbComputer):
                 column = self._coldict[computer.field()]
-                display = self._display_func(column)
+                display = self._display(column)
         value = self[column.id].value()
         if value is None:
             return column.null_display or ''
         elif display:
             return display(value)
         else:
-            value = ''
-        return value
+            return ''
     
     def enumerate(self, key):
         """Vra» výèet hodnot èíselníku daného políèka jako seznam dvojic.
@@ -834,24 +859,26 @@ class PresentedRow(object):
         column = self._coldict[key]
         if self._secret_column(column):
             return []
-        display = self._display_func(column)
-        if display is None:
-            display = lambda v: column.type.export(v)
         enumerator = column.type.enumerator()
         if isinstance(enumerator, pytis.data.DataEnumerator):
-            kwargs = dict(condition=self.runtime_filter(key),
-                          arguments=self.runtime_arguments(key))
             sorting = None
             cb_spec = self._cb_spec(column)
             if cb_spec:
                 sorting = cb_spec.sorting()
             if sorting is None and column.codebook is not None:
                 sorting = self._resolver.get(column.codebook, 'view_spec').sorting()
-            if sorting:
-                kwargs['sort'] = sorting
+            value_column = enumerator.value_column()
+            display = self._display_as_row_function(column)
+            return [(row[value_column].value(), display(row))
+                    for row in enumerator.rows(transaction=self._transaction,
+                                               condition=self.runtime_filter(key),
+                                               arguments=self.runtime_arguments(key),
+                                               sort=sorting or ())]
         else:
-            kwargs = {}
-        return [(v, display(v)) for v in enumerator.values(**kwargs)]
+            display = self._display(column)
+            if display is None:
+                display = lambda v: column.type.export(v)
+            return [(v, display(v)) for v in enumerator.values()]
 
     def _runtime_limit(self, key, dirty_dict, value_dict, column_attribute):
         try:

@@ -1838,7 +1838,7 @@ class DataEnumerator(Enumerator):
         """
         return self._retrieve(value, transaction=transaction, condition=condition, arguments=arguments)
     
-    def rows(self, transaction=None, condition=None, sort=(), arguments=None):
+    def rows(self, transaction=None, condition=None, arguments=None, sort=()):
         """Return sequence of rows of the underlying data object.
 
         Arguments:
@@ -1856,9 +1856,9 @@ class DataEnumerator(Enumerator):
             arguments = {}
         the_condition = self._condition(condition=condition)
         def lfunction():
-            return self._data.select_map(identity, condition=the_condition,
-                                         transaction=transaction, sort=sort,
-                                         arguments=arguments)
+            return self._data.select_map(identity, transaction=transaction,
+                                         condition=the_condition, arguments=arguments,
+                                         sort=sort)
         return with_lock(self._data_lock, lfunction)
 
     def type(self, column):
