@@ -2368,10 +2368,11 @@ class FoldableForm(ListForm):
     
     def _on_left_click(self, event):
         if self._folding_enabled():
-            col = self._columns[event.GetCol()]
-            if isinstance(col.type(), pytis.presentation.PrettyFoldable):
+            col = event.GetCol()
+            column = self._columns[col]
+            if isinstance(column.type(), pytis.presentation.PrettyFoldable):
                 row = event.GetRow()
-                value = self._table.row(row).format(col.id(), pretty=True, form=self)
+                value = self._table.row(row).format(column.id(), pretty=True, form=self)
                 pos = value.find(pytis.presentation.PrettyFoldable.FOLDED_MARK)
                 if pos == -1:
                     pos = value.find(pytis.presentation.PrettyFoldable.UNFOLDED_MARK)
@@ -2379,7 +2380,8 @@ class FoldableForm(ListForm):
                     x1 = self._grid.GetTextExtent(value[:pos])[0]
                     x2 = self._grid.GetTextExtent(value[:pos+1])[0]
                     x = event.GetPosition()[0] - 2 # don't count grid padding.
-                    if x1-2 < x < x2+2: # enlarge the active area by 2px for easier hit.
+                    offset = self._grid.CellToRect(row, col)[0]
+                    if x1-2 < x-offset < x2+2: # enlarge the active area by 2px for easier hit.
                         if event.ControlDown():
                             level = None
                         else:
