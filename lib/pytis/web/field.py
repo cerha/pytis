@@ -40,6 +40,42 @@ class Link(object):
     def target(self):
         return self._target
 
+def localizable_datetime(value):
+    """Try to convert a 'pytis.data.DateTime' value to 'lcg.LocalizableDateTime'.
+
+    Arguemnts:
+      value -- 'pytis.data.Value' instance to be converted.
+
+    'lcg.LocalizableDateTime' instances may be included in LCG element's export
+    result and will be automatically formatted according to the target locale
+    during LCG export.  The function returns a string if the conversion is not
+    possible (see below) or necessary (for null values).
+
+    The conversion is applied only to base pytis.data.Date type and not to its
+    descendants.  The derived classes may customize the export and since we are
+    replacing the type's export here, the customized export would be igored.
+    Thus it is safer to limit special handling to direct pytis.data.Date
+    instances here, althought it is unpleasant, that derived types are not
+    localized automatically.
+    
+    """
+    if value.value() is not None:
+        type_cls = value.type().__class__
+        if type_cls is pytis.data.DateTime:
+            format = '%Y-%m-%d %H:%M:%S'
+            localizable = lcg.LocalizableDateTime
+        elif type_cls is pytis.data.Date:
+            format = '%Y-%m-%d'
+            localizable = lcg.LocalizableDateTime
+        elif type_cls is pytis.data.Time: 
+            format = '%H:%M:%S'
+            localizable = lcg.LocalizableTime
+        else:
+            return value.export()
+        return localizable(value.value().strftime(format))
+    else:
+        return ''
+    
     
 class Field(object):
     """Internal form field representation (all attributes are read-only)."""
@@ -267,31 +303,7 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
 class DateTimeFieldExporter(TextFieldExporter):
     
     def _format(self, context):
-        # Format the date as lcg.LocalizableDateTime to allow its locale
-        # dependent formatting during LCG export.  This is applied only to base
-        # pytis.data.Date type and not to its descendants.  The derived classes
-        # may customize the export and since we are replacing the type's export
-        # here, the customized export would be igored.  Thus it is safer to
-        # limit special handling to direct pytis.data.Date instances here,
-        # althought it is unpleasant, that derived types are not localized
-        # automatically.
-        value = self._value()
-        if value.value() is not None:
-            type_cls = value.type().__class__
-            if type_cls is pytis.data.DateTime:
-                format = '%Y-%m-%d %H:%M:%S'
-                localizable = lcg.LocalizableDateTime
-            elif type_cls is pytis.data.Date:
-                format = '%Y-%m-%d'
-                localizable = lcg.LocalizableDateTime
-            elif type_cls is pytis.data.Time: 
-                format = '%H:%M:%S'
-                localizable = lcg.LocalizableTime
-            else:
-                return value.export()
-            return localizable(value.value().strftime(format))
-        else:
-            return ''
+        return localizable_datetime(self._value())
     
     def _editor_kwargs(self, context, prefill, error):
         kwargs = super(DateTimeFieldExporter, self)._editor_kwargs(context, prefill, error)

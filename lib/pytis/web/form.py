@@ -406,7 +406,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             if isinstance(arg, pd.Operator):
                 return self._op2str(arg)
             elif isinstance(arg, (pd.Value, pd.WMValue)):
-                return repr(arg.value())
+                value = arg.value()
+                if isinstance(arg.type(), pd.DateTime):
+                    value = str(value)
+                return repr(value)
             else:
                 return repr(arg)
         if operator is None:
@@ -459,10 +462,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             if fid != changed_field:
                 fdata['editable'] = row.editable(fid)
                 if row.invalid_string(fid) is None:
-                    value = translator.translate(row[fid].export())
+                    value = row[fid]
+                    if isinstance(value.type(), pd.DateTime):
+                        exported_value = localizable_datetime(value)
+                    else:
+                        exported_value = value.export()
+                    localized_value = translator.translate(exported_value)
                     # Values of disabled fields are not in the request, so send them always...
-                    if not req.has_param(fid) or value != req.param(fid):
-                        fdata['value'] = value
+                    if not req.has_param(fid) or localized_value != req.param(fid):
+                        fdata['value'] = localized_value
                 if filters.has_key(fid):
                     old_filter = filters[fid]
                     new_filter = cls._op2str(row.runtime_filter(fid))
