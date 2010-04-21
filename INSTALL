@@ -9,6 +9,10 @@ Requirements:
   * python-wxgtk2.6 or later (only for GUI apps)
   * python-imaging (only when using Image data types)  
 
+On Debian-based system, you can install the requirements with this command
+    (strip the last one or two packages if not needed according to above notes):
+sudo apt-get install python postgresql python-psycopg2 python-egenix-mxdatetime python-wxgtk2.6 python-imaging
+
 The simplest installation can be done using the provided Makefile.  Just run
 "make all && make install" within the package root directory.  Feel free to
 edit the Makefile and setup your own installation paths.
