@@ -1994,47 +1994,51 @@ class ListLayout(object):
     
     
 class Field(object):
-    """Specifikace abstraktního políèka zobrazujícího datovou hodnotu.
+    """Specification of a generic form field representing a data value.
 
-    Tato specifikace je pou¾itelná pro v¹echny druhy práce s políèky
-    zobrazujícími hodnoty, zejména v obrazovkových formuláøích, øádkových
-    formuláøích a výstupních sestavách.
+    This specification is used for all kinds of situations where fields are
+    used to display and/or edit values, such as screen forms, tables, print
+    reports etc.
 
-    Ka¾dý modul pracující s políèky si z této ponìkud komplexní specifikace
-    vybírá pouze pro nìj relevantní informace.  Pøesný zpùsob interpretace
-    tìchto specifikací závisí na tøídách implemenujících prvky u¾ivatelské
-    rozhraní.  Detailní popis je proto v pøípadì této tøídy tøeba hledat v
-    dokumentaci tøíd 'EditForm', 'ListForm', 'InputField' apod.
-
+    Only certain subset of information defined here is relevant for each
+    situation.  The exact way of interpretarion of this specification depends
+    on classes implementing the user interface and the details also depend on
+    the kind of user interface (GUI forms, web forms, printed reports).  Not
+    all features may be supported by all user interface implementations.
+    
     """
-
     def __init__(self, id=None, label=None, column_label=None, inherit=None,
                  **kwargs):
         """Initialize field specification.
 
         Arguments:
 
-          id -- field identifier as a string.  This identifier is used to refer to the field within
-            all pytis operations.  The identifier is also used as the name of the related column in
-            the underlying data object by default, but this may be overriden by the 'dbcolumn'
-            argument.
-          label -- user visible field label as a string or unicode.  This argument (unlike
-            the remaining arguments) may also be passed as positional.
-          inherit -- may be used to inherit from other field specification.  If a 'Field'
-            instance is passed in this argument, all constructor arguments not overriden in the
-            current constructor call will be inherited from that instance.
-          column_label -- optional field label in the column view.  The column label is the same as
-            'label' by default, but may be overriden by passing a string or unicode value.
-          descr -- brief field description in the extent of approx. one sentence, suitable for
-            example for tooltip text.
-          virtual -- boolean flag indicating that the field is not bound to the underlying data
-            object.  The value of a virtual field will most often be computed on the fly by a
-            'Computer'.  See the argument 'computer' for more information.  Since the data type of
-            a virtual field cannot be obtained from the data object, the hardcoded default type of
-            virtual fields is 'pytis.data.String'.  Use the 'type' argument to override it.
-          dbcolumn -- name of the related column in the underlying data object.  The name is the
-            same as the field identifier by default.  It is not recommended to use different column
-            name than the field identifier unless there is a serious reason for it.
+          id -- field identifier as a string.  This identifier is used to refer
+            to the field within all pytis operations.  The identifier is also
+            used as the name of the related column in the underlying data
+            object by default, but this may be overriden by the 'dbcolumn'
+            argument.  This argument is typically passed as positional.
+          label -- user visible field label as a string or unicode.  This
+            argument is also typically passed as positional.
+          column_label -- optional field label in the column view.  The column
+            label is the same as 'label' by default, but may be overriden by
+            passing a string or unicode value.  This argument (unlike the
+            remaining arguments) may also be passed as positional.
+          inherit -- deprecated - use the method 'clone()' to implement field
+            inheritance.
+          descr -- brief field description in the extent of approx. one
+            sentence, suitable for example for tooltip text.
+          virtual -- boolean flag indicating that the field is not bound to the
+            underlying data object.  The value of a virtual field will most
+            often be computed on the fly by a 'Computer'.  See the argument
+            'computer' for more information.  Since the data type of a virtual
+            field cannot be obtained from the data object, the hardcoded
+            default type of virtual fields is 'pytis.data.String'.  Use the
+            'type' argument to override it.
+          dbcolumn -- name of the related column in the underlying data object.
+            The name is the same as the field identifier by default.  It is not
+            recommended to use different column name than the field identifier
+            unless there is a serious reason for it.
           type -- explicit data type as a 'pytis.data.Type' class or instance.  None value means to
             use the default type determined from the underlying data object (or the default type
             'pyttis.data.String' for virtual fields not present in the data object).  If a class is
@@ -2177,12 +2181,13 @@ class Field(object):
             downloading/saving the content of the field into a file.  This may be relevant for
             binary fields, as well as for ordinary string data.
 
-          **kwargs -- all the remaining keyword arguments are passed to the constructor of field's
-            data type instance.  These arguments override the values of arguments, that the system
-            would normally use for data type construction, so you can override certain data type
-            properties this way.  It is prefered to overriding the type completely by passing a
-            'pytis.data.Type' instance as the 'type' argument.  See also 'type' argument's
-            documentation.
+          **kwargs -- all the remaining keyword arguments are passed to the
+            constructor of field's data type instance.  These arguments
+            override the values of arguments, that the system would normally
+            use for data type construction, so you can override certain data
+            type properties this way.  It is prefered to overriding the type
+            completely by passing a 'pytis.data.Type' instance as the 'type'
+            argument.  See also 'type' argument's documentation.
 
         Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
         hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
