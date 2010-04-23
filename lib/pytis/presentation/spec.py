@@ -2393,6 +2393,18 @@ class Field(object):
     def __str__(self):
         return "<Field for '%s'>" % self.id()
 
+    def clone(self, field):
+        """Clone this field by another field and return the cloned instance.
+
+        The cloned instance will inherit all attributes of this field and the
+        other field passed as argument, where the attributes of the later field
+        take precedence.
+
+        """
+        assert isinstance(field, Field), field
+        kwargs = dict(self._kwargs, **field._kwargs)
+        return Field(**kwargs)
+
     def id(self):
         return self._id
 
@@ -2551,26 +2563,9 @@ FieldSpec = Field
 
 
 class Fields(object):
-    """Field specification container for convenient field specification inheritance.
-
-    Example usage:
-
-      def fields():
-          inherited = Fields(super(SpecName, self).fields())
-          overriden = (
-              Field(inherit=inherited['field3'], editable=NEVER, default='09'),
-              Field(inherit=inherited['field5'], editable=NEVER),
-              Field(inherit=inherited['field6'], maxlen=8))
-          return inherited.fields(override=overriden, exclude=('field8', 'field9'))
-
-    """
+    """Deprecarted -- use `Specification._inherited_fields()' instead."""
 
     def __init__(self, fields):
-        """Initialize the instance.
-
-        The argument is a sequence of field specifications as 'Field' instances.
-        
-        """
         self._fields = tuple(fields)
         self._dict = dict([(f.id(), f) for f in fields])
 
@@ -2584,17 +2579,6 @@ class Fields(object):
         return self._dict.keys()
 
     def fields(self, override=(), exclude=()):
-        """Return the list of fields in their original order with given fields excluded/overriden.
-
-        Arguments:
-
-          override -- sequence of 'Field' instances that should replace the items of the same
-            id within the original list.
-
-          exclude -- sequence of field identifiers to be excluded from the resulting list.
-
-        """
-        #exclude = [isinstance(x, Field) and x.id() or x for x in exclude]
         override = dict([(f.id(), f) for f in override])
         return [override.get(f.id(), f) for f in self._fields if f.id() not in exclude]
     
@@ -2901,6 +2885,38 @@ class Specification(object):
             title = ' '.join(split_camel_case(self.__class__.__name__))
         return ViewSpec(title, **kwargs)
 
+    def _inherited_fields(self, cls, override=(), exclude=()):
+        """Helper method for simplification of field inheritance.
+        
+        Sample usage:
+        
+        def fields(self):
+            return self._inherited_fields(SpecName,
+                override=(
+                    Field('x', editable=NEVER, default='09'),
+                    Field('y', editable=NEVER),
+                    Field('z', maxlen=8)),
+                exclude=('a', 'b'))
+
+        This will return a tuple of all fields defined by the parent class
+        except for fields 'a' and 'b'.  Fields 'x', 'y' and 'z' will be
+        modified by the attributes passed to the corresponding Field
+        constructors, but their other attributes will remain as in the parent
+        class.
+
+        """
+        fields = super(cls, self).fields
+        if callable(fields):
+            fields = fields()
+        if override:
+            inherited = dict([(field.id(), field) for field in fields])
+            overriden = dict([(field.id(), inherited[field.id()].clone(field))
+                              for field in override])
+        else:
+            overriden = {}
+        return tuple([overriden.get(field.id(), field)
+                      for field in fields if field.id() not in exclude])
+    
     def view_spec(self):
         """Vra» prezentaèní specifikaci jako instanci 'ViewSpec'."""
         try:
