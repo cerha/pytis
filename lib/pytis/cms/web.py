@@ -279,14 +279,24 @@ class Menu(wiking.PytisModule):
 class UserRoles(wiking.PytisModule):
     class Spec(Specification, cms.UserRoles):
         pass
-
+    
+    _SYSTEM_ROLE_MAPPING = {'USER': 'authenticated',
+                            'ANYONE': 'anyone',
+                            'OWNER': 'owner'}
+    
     @classmethod
-    def role(cls, role_id, system_role):
-        return system_role or 'cms-role-%d' % role_id
+    def role(cls, numeric_role_id, system_role, name):
+        if system_role:
+            # TODO: Convert the databases to map role id directly.
+            role_id = cls._SYSTEM_ROLE_MAPPING[system_role]
+        else:
+            role_id = 'cms-role-%d' % numeric_role_id
+        return wiking.Role(role_id, name)
     
     def roles(self, uid):
-        """Return list of user's roles as unique string identifiers."""
-        return [self.role(row['role_id'].value(), row['system_role'].value())
+        """Return list of user's roles as 'wiking.Role' instances."""
+        return [self.role(row['role_id'].value(), row['system_role'].value(),
+                          row['name'].value())
                 for row in self._data.get_rows(uid=uid)]
 
     
@@ -296,7 +306,8 @@ class Rights(wiking.PytisModule):
 
     def permitted_roles(self, menu_item_id, action):
         """Return list of roles as unique string identifiers."""
-        return [UserRoles.role(row['role_id'].value(), row['system_role'].value())
+        return [UserRoles.role(row['role_id'].value(), row['system_role'].value(),
+                               row['role_name'].value())
                 for row in self._data.get_rows(menu_item_id=menu_item_id,
                                                action_name=action, permitted=True)]
 
@@ -312,7 +323,7 @@ class Users(wiking.PytisModule):
     def _user_args(self, req, row):
         """Override this method to customize the 'User' instance constructor arguments."""
         uid = row['uid'].value()
-        roles = [wiking.Roles.USER] + self._module('UserRoles').roles(uid)
+        roles = [wiking.Roles.AUTHENTICATED] + self._module('UserRoles').roles(uid)
         return dict(uid=uid,
                     name=row['fullname'].value(),
                     password=row['passwd'].value(),
