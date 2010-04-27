@@ -279,16 +279,20 @@ class Menu(wiking.PytisModule):
 class UserRoles(wiking.PytisModule):
     class Spec(Specification, cms.UserRoles):
         pass
-    
-    _SYSTEM_ROLE_MAPPING = {'USER': 'authenticated',
-                            'ANYONE': 'anyone',
-                            'OWNER': 'owner'}
+
+    # Backwards compatibility hack -- may be removed when all databases are
+    # converted to use new system role ids.
+    _OLD_SYSTEM_ROLE_MAPPING = {'USER': 'authenticated',
+                                'ANYONE': 'anyone',
+                                'OWNER': 'owner'}
     
     @classmethod
     def role(cls, numeric_role_id, system_role, name):
         if system_role:
-            # TODO: Convert the databases to map role id directly.
-            role_id = cls._SYSTEM_ROLE_MAPPING[system_role]
+            try:
+                role_id = cls._OLD_SYSTEM_ROLE_MAPPING[system_role]
+            except KeyError:
+                role_id = system_role
         else:
             role_id = 'cms-role-%d' % numeric_role_id
         return wiking.Role(role_id, name)
