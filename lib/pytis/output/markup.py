@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,78 +31,18 @@ elementy ke spojení dohromady.
 
 """
 
-import collections
-
+import lcg
+from lcg import UMm, UPoint, UFont, USpace
 from pytis.output import *
 
 
-class Unit(object):
-    """Velikost explicitně vyjádřená v určitých jednotkách.
-
-    Instance potomků této třídy mohou být použity kdekoliv, kde je možno předat
-    absolutní délkové jednotky, místo implicitně uvažovaných jednotek.
-
-    Tato třída je bázová, k přímému použití jsou určeni až její potomci,
-    odpovídající konkrétním jednotkám.
-
-    """
-    def __init__(self, size):
-        """Inicializuj instanci.
-
-        Argumenty:
-
-          size -- velikost v daných jednotkách, float
-
-        """
-        self._size = size
-
-    def __nonzero__(self):
-        """Vrať pravdu, právě když velikost je nenulová."""
-        return self._size != 0
-    
-    def __add__(self, other):
-        """Vrať instanci stejné třídy s velikostí zvětšenou o 'other'.
-
-        Argumenty:
-
-          other -- float nebo int udávající velikost, o kterou má být v nové
-            instanci zvětšena velikost aktuální instance
-
-        """
-        assert isinstance(other, float) or isinstance(other, int)
-        return self.__class__(self._size + other)
-
-    def __mul__(self, other):
-        """Vrať instanci stejné třídy s velikostí vynásobenou 'other'.
-
-        Argumenty:
-
-          other -- float nebo int udávající násobek, kterým má být pro novou
-            instanci vynásobena velikost aktuální instance
-
-        """
-        assert isinstance(other, float) or isinstance(other, int)
-        return self.__class__(self._size * other)        
-
-    def size(self):
-        """Vrať velikost zadanou v konstruktoru."""
-        return self._size
-
-class UMm(Unit):
-    """Milimetry."""
-
-class UPoint(Unit):
-    """Tiskové body (1/72 palce)."""
-    
-class UFont(Unit):
-    """Jednotky odpovídající velikosti aktuálního fontu."""
-    
-class USpace(Unit):
-    """Jednotky odpovídající preferované mezislovní mezeře aktuálního fontu."""
-    
-
 class _Mark(object):
-    pass
+
+    def lcg(self):
+        """Return LCG content corresponding to the mark and its content.
+        The return value is an 'lcg.Content' instance.
+        """
+        return lcg.NoneContent()
 
 
 class _Container(_Mark):
@@ -133,6 +73,12 @@ class _Container(_Mark):
         """Vrať obsah odstavce zadaný v konstruktoru."""
         return self._contents
 
+    def _lcg_contents(self):
+        return [c.lcg() for c in self._contents]
+        
+    def lcg(self):
+        return lcg.Container(self._lcg_contents())
+    
 
 class Null(_Mark):
     """Nic.
@@ -150,26 +96,42 @@ class Nbsp(_Mark):
     Značka slouží jako alternativní forma zápisu.
 
     """
+    def lcg(self):
+        return lcg.TextContent(" ")
 
 class Euro(_Mark):
     """Značka reprezentující znak měny Euro."""
+    def lcg(self):
+        return lcg.TextContent("€")
 
 class Pound(_Mark):
     """Značka reprezentující znak libry."""
+    def lcg(self):
+        return lcg.TextContent("£")
 
 class Center(_Container):
     """Značka horizontálního vycentrování svého obsahu."""
+    def lcg(self):
+        return lcg.Container(self._lcg_contents(),
+                             halign=lcg.HorizontalAlignment.CENTER)
 
 class AlignLeft(_Container):
     """Značka zarovnání svého obsahu vlevo."""
+    def lcg(self):
+        return lcg.Container(self._lcg_contents(),
+                             halign=lcg.HorizontalAlignment.LEFT)
 
 class AlignRight(_Container):
     """Značka zarovnání svého obsahu vpravo."""
-    
+    def lcg(self):
+        return lcg.Container(self._lcg_contents(),
+                             halign=lcg.HorizontalAlignment.RIGHT)    
 
 class VCenter(_Container):
     """Značka horizontálního vycentrování svého obsahu."""
-
+    def lcg(self):
+        return lcg.Container(self._lcg_contents(),
+                             valign=lcg.VerticalAlignment.CENTER)
 
 class _Space(_Mark):
 
@@ -185,6 +147,16 @@ class _Space(_Mark):
 
     def orientation(self):
         return self._orientation
+
+    def lcg(self):
+        if self._orientation == self.VERTICAL:
+            mark = lcg.VSpace
+        elif self._orientation == self.HORIZONTAL:
+            mark = lcg.HSpace
+        else:
+            raise Exception('Unexpected orientation', self._orientation)
+        size = lcg.UMm(self._size)
+        return mark(size)
 
 class VSpace(_Space):
     """Značka prázdného vertikálního objektu dané šířky."""
@@ -221,11 +193,13 @@ class HSpace(_Space):
 
 class HLine(_Mark):
     """Značka horizontální čáry vyplňující celý dostupný prostor."""
-
+    def lcg(self):
+        return lcg.HorizontalSeparator()
 
 class Paragraph(_Container):
     """Značka odstavce."""
-
+    def lcg(self):
+        return lcg.Paragraph(self._lcg_contents())
 
 class List(_Container):
     """Seznam.
@@ -241,11 +215,20 @@ class List(_Container):
     """Položky seznamu uvozené puntíkem."""
     
     KWARGS = {'mark': None}
-    
+
+    def lcg(self):
+        if self.arg_mark == self.BULLET_MARK:
+            type_ = lcg.ItemizedList.TYPE_UNORDERED
+        elif self.arg_mark == self.NUMBER_MARK:
+            type_ = lcg.ItemizedList.TYPE_NUMERIC
+        else:
+            raise Exception('Unexpected list type', self.arg_mark)
+        return lcg.ItemizedList(self._lcg_contents(), type=type_)
 
 class NewPage(_Mark):
     """Značka nové stránky."""
-
+    def lcg(self):
+        return lcg.NewPage()
 
 class PageNumber(_Mark):
     """Značka generující číslo aktuální stránky.
@@ -272,18 +255,29 @@ class PageNumber(_Mark):
         """Vrať hodnotu argumentu 'total' z konstruktoru."""
         return self._total
 
+    def lcg(self):
+        return lcg.PageNumber(total=self._total)
 
 class Bold(_Container):
     """Tučně sázený text."""
-
+    def lcg(self):
+        presentation = lcg.Presentation()
+        presentation.bold = True
+        return lcg.Container(self._lcg_contents(), presentation=presentation)
 
 class Italic(_Container):
     """Text sázený kurzívou."""
-
+    def lcg(self):
+        presentation = lcg.Presentation()
+        presentation.italic = True
+        return lcg.Container(self._lcg_contents(), presentation=presentation)
 
 class Roman(_Container):
     """Standardně sázený text."""
-
+    def lcg(self):
+        presentation = lcg.Presentation()
+        presentation.bold = presentation.italic = False
+        return lcg.Container(self._lcg_contents(), presentation=presentation)
 
 class FontSize(_Container):
     """Standardně sázený text."""
@@ -306,6 +300,10 @@ class FontSize(_Container):
         """Vrať velikost zadanou v konstruktoru."""
         return self._size
 
+    def lcg(self):
+        presentation = lcg.Presentation()
+        presentation.font_size = self._size
+        return lcg.Container(self._lcg_contents(), presentation=presentation)
 
 class FontFamily(_Container):
     """Text sázený zadanou rodinou fontu.
@@ -337,6 +335,16 @@ class FontFamily(_Container):
         """Vrať rodinu fontu zadanou v konstruktoru."""
         return self._family
 
+    def lcg(self):
+        presentation = lcg.Presentation()
+        if self._family == self.PROPORTIONAL:
+            family = lcg.FontFamily.PROPORTIONAL
+        elif self._family == self.SANS_SERIF:
+            family = lcg.FontFamily.SANS_SERIF
+        elif self._family == self.FIXED_WIDTH:
+            family = lcg.FontFamily.FIXED_WIDTH
+        presentation.font_family = family
+        return lcg.Container(self._lcg_contents(), presentation=presentation)
 
 class Group(_Container):
     """Spojení obsahu do skupiny.
@@ -348,17 +356,22 @@ class Group(_Container):
       vertical -- je-li pravdivé, budou prvky spojeny vertikálně, jinak budou
         spojeny horizontálně
       boxed -- právě když je pravdivé, budou prvky skupiny orámovány
-      balance -- není-li 'None', jedná se o tuple o počtu prvků shodném
-        s počtem prvků skupiny, udávající vzájemný poměr velikostí pořadím
-        odpovídajících prvků.  Velikost prvků ve směru orientace skupiny (dle
-        argumentu 'vertical') bude patřičně upravena, velikost prvků s udaným
-        poměrem 0 zůstane nezměněna.
       
     """
     KWARGS = {'vertical': False,
-              'boxed': False,
-              'balance': None}
+              'boxed': False}
 
+    def lcg(self):
+        presentation = lcg.Presentation()
+        if self.arg_boxed:
+            presentation.boxed = True
+        kwargs = {}
+        if arg_vertical:
+            orientation = lcg.Orientation.VERTICAL
+        else:
+            orientation = lcg.Orientation.HORIZONTAL
+        return lcg.Container(self._lcg_contents(), orientation=orientation,
+                             presentation=presentation)
 
 class Document(_Container):
     """Samostatná část dokumentu se samostatně číslovanými stránkami.
@@ -389,6 +402,13 @@ class Document(_Container):
               'page_footer': None,
               'first_page_header': None}
 
+    def lcg_document(self):
+        "Return the document(s) as an 'lcg.ContentNode' instance."
+        return lcg.ContentNode(id='pytis-document',
+                               content=self.lcg(),
+                               page_header=self.arg_page_header,
+                               page_footer=self.arg_page_footer,
+                               first_page_header=self.arg_first_page_header)
 
 class Table(_Mark):
     """Nejvýše jednostránková tabulka s předpřipravenými daty.
@@ -419,7 +439,7 @@ class Table(_Mark):
                 (v kterémžto případě je šířka sloupce určena automaticky)
               alignment -- způsob zarovnání obsahu sloupce, jedna z 'ALIGN_*'
                 konstant třídy
-              alignment -- způsob zarovnání hlavičky sloupce, jedna z 'ALIGN_*'
+              label_alignment -- způsob zarovnání hlavičky sloupce, jedna z 'ALIGN_*'
                 konstant třídy
 
             """
@@ -468,7 +488,62 @@ class Table(_Mark):
     def vmargin(self):
         """Vrať hodnotu argumentu 'vmargin' zadaného v '__init__()'."""
         return self._vmargin
+
+    def _lcg_presentation(self):
+        presentation = lcg.Presentation()
+        if self._vmargin == 0:
+            presentation.table_separator_margin = lcg.UMm(0)
+        return presentation
+
+    def _lcg_table_data(self):
+        return self._data
     
+    def _lcg_table(self, table_rows, column_widths):
+        return lcg.Table(table_rows, column_widths=column_widths)
+    
+    def lcg(self):
+        table_rows = []
+        if any([c.label is not None for c in self._columns]):
+            cells = []
+            for column in self._columns:
+                label = column.label.lcg()
+                if column.label_alignment == column.ALIGN_LEFT:
+                    alignment = lcg.HorizontalAlignment.LEFT
+                elif column.label_alignment == column.ALIGN_CENTER:
+                    alignment = lcg.HorizontalAlignment.CENTER
+                elif column.label_alignment == column.ALIGN_RIGHT:
+                    alignment = lcg.HorizontalAlignment.RIGHT
+                else:
+                    raise Exception('Unknown label alignment', column.label_alignment)
+                cells.append(lcg.TableHeading(label, halign=alignment))
+            table_rows.append(lcg.TableRow(cells))
+        alignments = []
+        for column in self._columns:
+            if column.alignment == column.ALIGN_LEFT:
+                alignment = lcg.TableCell.LEFT
+            elif column.alignment == column.ALIGN_CENTER:
+                alignment = lcg.TableCell.CENTER
+            elif column.alignment == column.ALIGN_RIGHT:
+                alignment = lcg.TableCell.RIGHT
+            else:
+                raise Exception('Unknown label alignment', column.alignment)
+            alignments.append(alignment)
+        for data_row in self._lcg_table_data():
+            if data_row is None:
+                table_rows.append(lcg.HorizontalSeparator())
+            else:
+                cells = []
+                for column, cell_data, alignment in zip(self._columns, data_row, alignments):
+                    cells.append(lcg.TableCell(cell_data.lcg(), align=alignment))
+                table_rows.append(lcg.TableRow(cells))
+        column_widths = []
+        for column in self._columns:
+            if column.width is None:
+                width = None
+            else:
+                width = lcg.USpace(width)
+            column_widths.append(width)
+        return self._lcg_table(table_rows, column_widths)
 
 class LongTable(Table):
     """Tabulka, potenciálně vícestránková.
@@ -551,8 +626,30 @@ class LongTable(Table):
     def line_separator_margin(self):
         """Vrať vzdálenost oddělovací čáry řádků zadanou v konstruktoru."""
         return self._line_separator_margin
+    
+    def _lcg_presentation(self):
+        presentation = super(LongTable, self)._lcg_presentation()
+        presentation.table_separator_height = lcg.UPoint(self._line_separator_height)
+        presentation.table_separator_margin = lcg.UPoint(self._line_separator_margin)
+        presentation.table_header_separator_height = lcg.UPoint(self._separator_height)
+        presentation.table_header_separator_margin = lcg.UPoint(self._separator_margin)
+        return presentation
+    
+    def _lcg_table_data(self):
+        if self._row_generator_init is not None:
+            self._row_generator_init()
+        data = []
+        while True:
+            row = self._row_generator()
+            if row is None:
+                break
+            data.append(row)
+        return data
 
-
+    def _lcg_table(self, table_rows, column_widths):
+        presentation
+        return lcg.Table(table_rows, column_widths=column_widths, long=True)
+    
 class Image(_Mark):
     """EPS obrázek."""
     
@@ -570,3 +667,7 @@ class Image(_Mark):
     def file_name(self):
         """Vrať jméno souboru zadané v konstruktoru."""
         return self._file_name
+
+    def lcg(self):
+        image = lcg.Image(self._file_name)
+        return lcg.InlineImage(image)
