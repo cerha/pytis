@@ -717,7 +717,7 @@ class PresentedRow(object):
                 permission = pytis.data.Permission.UPDATE            
         column = self._coldict[key]
         if column.virtual:
-            permitted = column.secret_computer
+            permitted = not column.secret_computer
         elif isinstance(self._data, pytis.data.RestrictedData):
             permitted = self._data.permitted(key, permission)
         else:
