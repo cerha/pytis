@@ -1126,7 +1126,7 @@ class ViewSpec(object):
         if __debug__:
             binding_identifiers = []
             for b in bindings:
-                assert isinstance(b, Binding)
+                assert isinstance(b, Binding), b
                 if b.id() is not None:
                     assert b.id() not in binding_identifiers, "Duplicate binding id: %s" % b.id()
                     binding_identifiers.append(b.id())
