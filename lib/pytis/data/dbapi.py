@@ -125,7 +125,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBInsertException()
                 elif e.args[0].find('server closed the connection unexpectedly') != -1:
                     result, connection = retry(_("Database connection error"), e)
-            raise DBUserException(None, e, e.args, query)
+                else:
+                    raise DBUserException(None, e, e.args, query)
+            else:
+                raise DBUserException(None, e, e.args, query)
         except dbapi.DataError, e:
             raise DBUserException(None, e, e.args, query)
         except dbapi.OperationalError, e:
