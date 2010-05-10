@@ -79,6 +79,7 @@ def data_table(resolver, name, condition=None, sorting=None,
     data_spec = resolver.get(name, 'data_spec')
     import config
     data = data_spec.create(dbconnection_spec=config.dbconnection)
+    import pytis.data, pytis.form, pytis.presentation
     presented_row = pytis.presentation.PresentedRow(view.fields(), data, None, singleline=True)
     columns = []
     for cid in view.columns():
