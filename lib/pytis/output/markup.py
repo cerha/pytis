@@ -32,7 +32,7 @@ elementy ke spojení dohromady.
 """
 
 import lcg
-from lcg import UMm, UPoint, UFont, USpace
+from lcg import Unit, UMm, UPoint, UFont, USpace
 from pytis.output import *
 
 
