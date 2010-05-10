@@ -2165,7 +2165,7 @@ class TutorialTest(_DBBaseTest):
         cis_columns = (cis_key,
                        C('popis', 'cis', 'y'))
         cis_data_spec = pytis.data.DataFactory(D, cis_columns, cis_key)
-        cis_enumerator = pytis.data.DataEnumerator(cis_data_spec, value_column='popis')
+        cis_enumerator = pytis.data.DataEnumerator(cis_data_spec, value_column='popis', connection_data=connection)
         cis_data = cis_data_spec.create(connection_data=connection)
         tab_key = C('klic', 'tab', 'a')
         tab_columns = (tab_key,

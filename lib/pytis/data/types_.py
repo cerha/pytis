@@ -1676,7 +1676,7 @@ class DataEnumerator(Enumerator):
 
     """
     def __init__(self, data_factory, value_column=None, validity_column=None,
-                 validity_condition=None):
+                 validity_condition=None, connection_data=None):
         """Initialize the instance.
         
         Arguments:
@@ -1693,6 +1693,9 @@ class DataEnumerator(Enumerator):
             be used for the enumeration.  This is a more general option than the 'validity_column'
             argument above.  It is not possible to combine these two arguments, but it is always
             possible to implement 'validity_column' within 'validity_condition'.
+          connection_data -- 'DBConnection' instance providing the database
+            connection parameters; if 'None' then connection parameters are
+            retrieved from the configuration
             
         """
         super(DataEnumerator, self).__init__()
@@ -1712,6 +1715,7 @@ class DataEnumerator(Enumerator):
             validity_condition = EQ(validity_column, Value(Boolean(), True))            
         self._validity_condition = validity_condition
         self._change_callbacks = []
+        self._connection_data = connection_data
 
     def __getattr__(self, name):
         if name in ('_data', '_value_column'):
@@ -1722,8 +1726,12 @@ class DataEnumerator(Enumerator):
 
     def _complete(self):
         # Finish the instance by data object creation.
-        import config
-        self._data = data = self._data_factory.create(connection_data=config.dbconnection)
+        if self._connection_data is None:
+            import config
+            connection_data = config.dbconnection
+        else:
+            connection_data = self._connection_data
+        self._data = data = self._data_factory.create(connection_data=connection_data)
         if self._value_column_ is None:
             self._value_column = data.key()[0].id()
         else:
