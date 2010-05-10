@@ -104,7 +104,13 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         try:
             result = do_query(connection.connection())
         except dbapi.InterfaceError, e:
-            raise DBUserException(None, e, e.args, query)
+            if e.args and e.args[0].find('connection already closed') != -1:
+                # We believe this shouldn't happen as a program error and it
+                # may occur as a result of database engine connection crash.
+                log(OPERATIONAL, "Access to closed database connection")
+                result, connection = retry(_("Database interface error"), e)
+            else:
+                raise DBUserException(None, e, e.args, query)
         except dbapi.NotSupportedError, e:
             if e.args and e.args[0].find('cannot perform INSERT RETURNING') != -1:
                 # This is handled once again below since older dbapi versions report it as
