@@ -36,6 +36,14 @@ from lcg import Unit, UMm, UPoint, UFont, USpace
 from pytis.output import *
 
 
+def _something_to_lcg(something):
+    if isinstance(something, basestring):
+        result = lcg.TextContent(something)
+    else:
+        result = something.lcg()
+    return result
+
+
 class _Mark(object):
 
     def lcg(self):
@@ -57,7 +65,12 @@ class _Container(_Mark):
           contents -- obsah odstavce, značky a řetězce
 
         """
-        self._contents = contents
+        self._contents = []
+        for c in contents:
+            if is_sequence(c):
+                self._contents += c
+            else:
+                self._contents.append(c)
         for k, v in self.KWARGS.items():
             try:
                 v = kwargs[k]
@@ -74,7 +87,7 @@ class _Container(_Mark):
         return self._contents
 
     def _lcg_contents(self):
-        return [c.lcg() for c in self._contents]
+        return [_something_to_lcg(c) for c in self._contents]
         
     def lcg(self):
         return lcg.Container(self._lcg_contents())
@@ -371,8 +384,7 @@ class Group(_Container):
         presentation = lcg.Presentation()
         if self.arg_boxed:
             presentation.boxed = True
-        kwargs = {}
-        if arg_vertical:
+        if self.arg_vertical:
             orientation = lcg.Orientation.VERTICAL
         else:
             orientation = lcg.Orientation.HORIZONTAL
@@ -410,7 +422,7 @@ class Document(_Container):
 
     def lcg_document(self):
         "Return the document(s) as an 'lcg.ContentNode' instance."
-        return lcg.ContentNode(id='pytis-document',
+        return lcg.ContentNode(id='',
                                content=self.lcg(),
                                page_header=self.arg_page_header,
                                page_footer=self.arg_page_footer,
@@ -512,7 +524,7 @@ class Table(_Mark):
         if any([c.label is not None for c in self._columns]):
             cells = []
             for column in self._columns:
-                label = column.label.lcg()
+                label = _something_to_lcg(column.label)
                 if column.label_alignment == column.ALIGN_LEFT:
                     alignment = lcg.HorizontalAlignment.LEFT
                 elif column.label_alignment == column.ALIGN_CENTER:
@@ -540,14 +552,17 @@ class Table(_Mark):
             else:
                 cells = []
                 for column, cell_data, alignment in zip(self._columns, data_row, alignments):
-                    cells.append(lcg.TableCell(cell_data.lcg(), align=alignment))
+                    cell_data = _something_to_lcg(cell_data)
+                    cells.append(lcg.TableCell(cell_data, align=alignment))
                 table_rows.append(lcg.TableRow(cells))
         column_widths = []
         for column in self._columns:
             if column.width is None:
                 width = None
+            elif isinstance(column.width, lcg.Unit):
+                width = column.width
             else:
-                width = lcg.USpace(width)
+                width = lcg.USpace(column.width)
             column_widths.append(width)
         return self._lcg_table(table_rows, column_widths)
 
@@ -653,7 +668,6 @@ class LongTable(Table):
         return data
 
     def _lcg_table(self, table_rows, column_widths):
-        presentation
         return lcg.Table(table_rows, column_widths=column_widths, long=True)
     
 class Image(_Mark):
