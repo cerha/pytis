@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ import UserList
 import pytis.data
 from pytis.output import *
 import pytis.presentation
+import lcg
 
 
 class Coding:
@@ -1119,5 +1120,106 @@ class LoutFormatter(Tmpdir):
         self._cleanup ()
 
 
-Formatter = LoutFormatter
+class LCGFormatter(object):
+    """LCG based formatter."""
+    
+    def __init__(self, resolvers, template_id):
+        """
+        Arguments:
+
+          resolvers -- resolver of template names and data objects; may also be
+            a non-empty sekvence of resolvers, in such a case the first
+            resolver not throwing 'ResolverFileError' when accessing the
+            template will be used
+          template_id -- id of the output template, string
+            
+        """
+        self._resolvers = resolvers
+        # Resolvers
+        self._output_resolver = resolver = \
+          self._ok_resolver(template_id, 'body', mandatory=True)
+        self._generic_resolver = None
+        # Specifications
+        self._coding = self._resolve(resolver, template_id, 'coding')
+        self._doc_header = self._resolve(resolver, template_id, 'doc_header')
+        self._doc_footer = self._resolve(resolver, template_id, 'doc_footer')
+        self._page_header = self._resolve(resolver, template_id, 'page_header', default=Null())
+        self._first_page_header = self._resolve(resolver, template_id, 'first_page_header',
+                                                default=self._page_header)
+        self._page_footer = self._resolve(resolver, template_id, 'page_footer',
+                                          default=Center('Strana ', PageNumber()))
+        self._page_background = self._resolve(resolver, template_id, 'background', default=None)
+        self._page_layout = self._resolve(resolver, template_id, 'page_layout', default={})
+        body = self._resolve(resolver, template_id, 'body')
+        if (not isinstance(body, Document) and
+            not (is_sequence(body) and body and isinstance(body[0], Document))):
+            body = Document(body)
+        self._body = body
+        
+    def _ok_resolver(self, template_id, element, mandatory=False):
+        for resolver in xtuple(self._resolvers):
+            try:
+                resolver.get_object(template_id, element)
+            except ResolverError:
+                continue
+            break
+        else:
+            if mandatory:
+                raise TemplateException(_("Chybí použitelný resolver"))
+            else:
+                resolver = None
+        return resolver
+    
+    def _resolve(self, resolver, template_id, element, default=''):
+        try:
+            result = resolver.get(template_id, element)
+        except ResolverSpecError, e:
+            if __debug__: log(DEBUG, 'Specifikace nenalezena:', e.args)
+            result = default
+        return result
+
+    def _pdf(self):
+        body = self._body
+        lcg_content = body.lcg_document()
+        exporter = lcg.pdf.PDFExporter()
+        context = exporter.context(lcg_content, None)
+        pdf = exporter.export(context)
+        return pdf
+        
+    def preview(self, stream):
+        """Return the formatted document as a plain text.
+        
+        Arguments:
+
+          stream -- stream open for writing, providing 'write' method.
+
+        'stream' gets closed by this method after its writing is finished.
+
+        """
+
+    def printout(self, stream):
+        """Send the document as PDF to 'stream'.
+
+        Arguments:
+        
+          stream -- stream open for writing, providing 'write' method.
+
+        'stream' gets closed by this method after its writing is finished.
+
+        """
+        stream.write(self._pdf())
+        stream.close()
+    
+    def printdirect(self):
+        """Send the document as PDF to the standard input of 'printing_command'."""
+        process = Popen(config.printing_command, from_child=dev_null_stream('w'))
+        stream = process.to_child()
+        thread.start_new_thread(self.printout, (stream,))
+    
+    def close(self):
+        """Obsolete, no need to call this method anymore."""
+        pass
+
+
+Formatter = LCGFormatter
 """Implicitní formátovač."""
