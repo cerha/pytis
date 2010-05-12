@@ -45,7 +45,7 @@ table('cms_menu_structure',
                Column('parent', pd.Integer(), references='cms_menu_structure'),
                Column('mod_id', pd.Integer(), references='cms_modules',),
                Column('ord', pd.Integer(), constraints=('NOT NULL',)),
-               Column('tree_order', pd.String())),
+               Column('tree_order', pd.LTree())),
       depends=('cms_modules',),
       grant=cms_rights)
 
@@ -56,13 +56,12 @@ sql_raw("CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order "
 
 function('cms_menu_structure_tree_order',
          doc="Generate a sortable string representing the hierarchical position of given menu item.",
-         arguments=(pd.Integer(),), output_type=pd.String(),
+         arguments=(pd.Integer(),), output_type=pd.LTree(),
          body="""
-         SELECT CASE WHEN $1 IS NULL THEN '''' ELSE
-           (SELECT cms_menu_structure_tree_order(parent) || ''.'' ||
-                   to_char(coalesce(ord, 999999), ''FM000000'')
-            FROM cms_menu_structure where menu_item_id=$1)
-         END AS RESULT""",
+           select case when parent is null then text2ltree('''')
+                       else cms_menu_structure_tree_order(parent)
+                  end || to_char(coalesce(ord, 999999), ''FM000000'')::text as result
+           from cms_menu_structure where menu_item_id=$1""",
          depends=('cms_menu_structure', ))
 
 table('cms_menu_texts',
@@ -98,6 +97,8 @@ viewng('cms_menu',
                         ViewColumn(None, alias='published', sql="coalesce(t.published, 'FALSE')"),
                         ViewColumn(None, alias='title_or_identifier',
                                    sql="coalesce(t.title, s.identifier)"), 
+                        ViewColumn(None, 'tree_order_nsub',
+                                   "(select count(*)-1 from cms_menu_structure where tree_order <@ s.tree_order)"),
                         ),
        insert="""(
        INSERT INTO cms_menu_structure (identifier, parent, mod_id, ord)
