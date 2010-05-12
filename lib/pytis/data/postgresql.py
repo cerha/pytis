@@ -1704,7 +1704,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     kwargs = dict(format=t.SQL_FORMAT, local=not t.is_utc())
                 else:
                     kwargs = dict()
-                value, error = t.validate(dbvalue, **kwargs)
+                value, error = t.validate(dbvalue, strict=False, **kwargs)
                 assert error is None, (error, t, dbvalue)
             return value
         result = [make_value(cid, data[0][i]) for i, cid in enumerate(colids)]
