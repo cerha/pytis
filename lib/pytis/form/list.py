@@ -2368,7 +2368,7 @@ class FoldableForm(ListForm):
         if self._folding_enabled():
             col = event.GetCol()
             column = self._columns[col]
-            if isinstance(column.type(), pytis.presentation.PrettyFoldable):
+            if isinstance(self._row[column.id()].type(), pytis.presentation.PrettyFoldable):
                 row = event.GetRow()
                 value = self._table.row(row).format(column.id(), pretty=True, form=self)
                 pos = value.find(pytis.presentation.PrettyFoldable.FOLDED_MARK)
