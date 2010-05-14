@@ -111,9 +111,9 @@ viewng('cms_menu',
        SELECT (SELECT menu_item_id FROM cms_menu_structure WHERE identifier=new.identifier),
               new.lang, new.published, new.title, new.heading, new.description, new.content
        RETURNING 
-          menu_item_id, NULL::varchar(32), NULL::int, NULL::int, NULL::int, NULL::text, 
+          menu_item_id, NULL::varchar(32), NULL::int, NULL::int, NULL::int, NULL::ltree, 
           lang, title, heading, description, content, NULL::varchar(64), 
-          menu_item_id ||'.'|| lang, published, title
+          menu_item_id ||'.'|| lang, published, title, 0::bigint
        )""",
        update="""(
        UPDATE cms_menu_structure SET
