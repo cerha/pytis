@@ -517,7 +517,8 @@ class Table(_Mark):
         return self._data
     
     def _lcg_table(self, table_rows, column_widths):
-        return lcg.Table(table_rows, column_widths=column_widths)
+        return lcg.Table(table_rows, column_widths=column_widths,
+                         presentation=self._lcg_presentation())
     
     def lcg(self):
         table_rows = []
@@ -606,23 +607,32 @@ class LongTable(Table):
           row_generator_init -- funkce volaná bez argumentů před prvním voláním
             'row_generator', nebo 'None'
           separator_height -- tloušťka oddělovací čáry mezi záhlavím tabulky a
-            jejími řádky v bodech, jako float
+            jejími řádky v bodech, jako float nebo 'Unit'
           line_separator_height -- tloušťka oddělovací čáry za každým řádkem
-            tabulky v bodech, jako float
+            tabulky v bodech, jako float nebo 'Unit'
           separator_margin -- vzdálenost oddělovací čáry záhlaví tabulky od
-            záhlaví v bodech, jako float
+            záhlaví v bodech, jako float nebo 'Unit'
           line_separator_margin -- vzdálenost oddělovací čáry od každého řádku
-            tabulky v bodech, jako float
+            tabulky v bodech, jako float nebo 'Unit'
 
         """
         super(LongTable, self).__init__(columns)
-        assert isinstance(row_generator, collections.Callable)
+        assert isinstance(row_generator, collections.Callable), row_generator
+        assert row_generator_init is None or callable(row_generator_init), row_generator_init
+        assert isinstance(separator_height, (float, int, long, Unit,)), separator_height
+        assert isinstance(line_separator_height, (float, int, long, Unit,)), line_separator_height
+        assert isinstance(separator_margin, (float, int, long, Unit,)), separator_margin
+        assert isinstance(line_separator_margin, (float, int, long, Unit,)), line_separator_margin
         self._row_generator = row_generator
         self._row_generator_init = row_generator_init
-        self._separator_height = separator_height
-        self._line_separator_height = line_separator_height
-        self._separator_margin = separator_margin
-        self._line_separator_margin = line_separator_margin
+        def convert(size):
+            if not isinstance(size, Unit):
+                size = UPoint(size)
+            return size
+        self._separator_height = convert(separator_height)
+        self._line_separator_height = convert(line_separator_height)
+        self._separator_margin = convert(separator_margin)
+        self._line_separator_margin = convert(line_separator_margin)
 
     def row_generator(self):
         """Vrať funkci generující řádku tabulky zadanou v konstruktoru."""
@@ -650,10 +660,10 @@ class LongTable(Table):
     
     def _lcg_presentation(self):
         presentation = super(LongTable, self)._lcg_presentation()
-        presentation.table_separator_height = lcg.UPoint(self._line_separator_height)
-        presentation.table_separator_margin = lcg.UPoint(self._line_separator_margin)
-        presentation.table_header_separator_height = lcg.UPoint(self._separator_height)
-        presentation.table_header_separator_margin = lcg.UPoint(self._separator_margin)
+        presentation.separator_height = self._line_separator_height
+        presentation.separator_margin = self._line_separator_margin
+        presentation.header_separator_height = self._separator_height
+        presentation.header_separator_margin = self._separator_margin
         return presentation
     
     def _lcg_table_data(self):
@@ -668,7 +678,8 @@ class LongTable(Table):
         return data
 
     def _lcg_table(self, table_rows, column_widths):
-        return lcg.Table(table_rows, column_widths=column_widths, long=True)
+        return lcg.Table(table_rows, column_widths=column_widths, long=True,
+                         presentation=self._lcg_presentation())
     
 class Image(_Mark):
     """EPS obrázek."""
