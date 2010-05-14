@@ -241,7 +241,7 @@ class _GsqlSpec(object):
           connection -- PgConnection objekt zpøístupòující pøíslu¹nou databázi
           
         """
-        data = connection.query(("select relname from pg_class "+
+        data = connection.query(("select relname from pg_class, pg_namespace "+
                                  "where relkind='%s' and "+
                                  "pg_class.relnamespace=pg_namespace.oid and "+
                                  "pg_namespace.nspname='public'") %
@@ -906,6 +906,7 @@ class _GsqlTable(_GsqlSpec):
                                 'int8': pytis.data.Integer,
                                 'bigint': pytis.data.Integer,
                                 'numeric': pytis.data.Float,
+                                'ltree': pytis.data.LTree,
                                 'oid': pytis.data.Oid,
                                 'name': pytis.data.String,
                                 'text': pytis.data.String,
@@ -1987,7 +1988,7 @@ class _GsqlFunction(_GsqlSpec):
         return self.output()
 
     def db_all_names(self, connection):
-        data = connection.query("select proname from pg_proc where "
+        data = connection.query("select proname from pg_proc, pg_namespace where "
                                 "pg_proc.pronamespace=pg_namespace.oid and "
                                 "pg_namespace.nspname='public'")
         names = []
