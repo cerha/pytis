@@ -2796,7 +2796,7 @@ class SideBrowseForm(BrowseForm):
 
     def _init_attributes(self, main_form, binding_column=None, side_binding_column=None,
                          hide_binding_column=True, condition=None, arguments=None,
-                         **kwargs):
+                         prefill=None, **kwargs):
         """Process constructor arguments and initialize attributes.
         
         Arguments:
@@ -2810,6 +2810,7 @@ class SideBrowseForm(BrowseForm):
         self._hide_binding_column = hide_binding_column
         self._xarguments = arguments
         self._selection_arguments = {}
+        self._side_prefill = prefill
         if binding_column:
             column_condition = lambda row: pytis.data.EQ(side_binding_column, row[binding_column])
             if condition is not None:
@@ -2817,7 +2818,6 @@ class SideBrowseForm(BrowseForm):
                 condition = lambda row: pytis.data.AND(column_condition(row), cond(row))
             else:
                 condition = column_condition
-            self._side_binding_column_type = self._data.find_column(side_binding_column).type()
         self._main_form = main_form
         self._selection_condition = condition
         kwargs['condition'] = pytis.data.OR() # The form will be empty after initialization.
@@ -2838,10 +2838,15 @@ class SideBrowseForm(BrowseForm):
         if self._xarguments is not None:
             self._selection_arguments = copy.copy(self._arguments or {})
             self._selection_arguments.update(self._xarguments(row))
-        if self._binding_column:
-            value = pytis.data.Value(self._side_binding_column_type,
-                                     row[self._binding_column].value())
-            self._prefill = {self._side_binding_column: value}
+        if self._side_prefill:
+            prefill = self._side_prefill(row)
+        elif self._binding_column:
+            prefill = {self._side_binding_column: row[self._binding_column].value()}
+        else:
+            prefill = {}
+        if prefill:
+            self._prefill = dict([(column, pytis.data.Value(self._row[column].type(), value))
+                                  for column, value in prefill.items()])
         if self._selection_condition is not None:
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:

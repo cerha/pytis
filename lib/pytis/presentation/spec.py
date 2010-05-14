@@ -1423,7 +1423,7 @@ class Binding(object):
 
     """
     def __init__(self, id, title, name, binding_column=None, condition=None, descr=None,
-                 single=False, arguments=None):
+                 single=False, arguments=None, prefill=None):
         """Arguments:
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
@@ -1455,6 +1455,12 @@ class Binding(object):
             relation the binding column must exist in the related view and must have a codebook
             (foreign key) specification pointing to the main form (the view for which the binding
             is used).
+          prefill -- function of one argument (the main form record) returning
+            a dictionary of values to prefill in the side form's new record.
+            The dictionary keys are field identifiers and values are internal
+            (python) values.  If 'prefill' is None and 'binding_column' is
+            specified, the default prefill is automatically generated using the
+            binding column value.
           
         """
         assert isinstance(name, basestring), name
@@ -1466,6 +1472,7 @@ class Binding(object):
         assert isinstance(single, bool), single
         assert isinstance(id, basestring), id
         assert arguments is None or callable(arguments), arguments
+        assert prefill is None or callable(prefill), prefill
         self._name = name
         self._title = title
         self._binding_column = binding_column
@@ -1474,6 +1481,7 @@ class Binding(object):
         self._descr = descr
         self._single = single
         self._arguments = arguments
+        self._prefill = prefill
         
     def id(self):
         return self._id
@@ -1498,6 +1506,9 @@ class Binding(object):
 
     def arguments(self):
         return self._arguments
+
+    def prefill(self):
+        return self._prefill
 
 
 class Editable(object):

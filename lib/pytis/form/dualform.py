@@ -736,7 +736,8 @@ class MultiSideForm(MultiForm):
             else:
                 bcol = None
             kwargs = dict(kwargs, binding_column=bcol, side_binding_column=sbcol,
-                          condition=binding.condition(), arguments=binding.arguments())
+                          condition=binding.condition(), arguments=binding.arguments(),
+                          prefill=binding.prefill())
             super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
     class TabbedShowForm(TabbedForm, ShowForm):
         def _init_attributes(self, binding, main_form, **kwargs):
