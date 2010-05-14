@@ -954,8 +954,14 @@ class _GsqlTable(_GsqlSpec):
                 if not dbcolumns.has_key(name):
                     return name
                 i = i + 1
+        def column_name(column):
+            name = column.name
+            pos = name.rfind('.')
+            if pos != -1:
+                name = name[pos+1:]
+            return name
         for cname, other in dbcolumns.items():
-            i = position(cname, columns, key=(lambda c: c.name))
+            i = position(cname, columns, key=column_name)
             if i is None:
                 result = result + ("ALTER TABLE %s DROP COLUMN %s;\n" %
                                    (name, cname))
