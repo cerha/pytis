@@ -894,7 +894,21 @@ class _GsqlTable(_GsqlSpec):
                     if not primaryp:
                         constraints.append('not null')
                 else:
-                    ctclass = ct.__class__
+                    for c in ct.__class__.__mro__:
+                        if c in (pytis.data.Boolean,
+                                 pytis.data.Date,
+                                 pytis.data.DateTime,
+                                 pytis.data.Float,
+                                 pytis.data.Integer,
+                                 pytis.data.LTree,
+                                 pytis.data.Oid,
+                                 pytis.data.String,
+                                 pytis.data.Time,
+                                 ):
+                            ctclass = c
+                            break
+                    else:
+                        ctclass = ct.__class__
                 TYPE_MAPPING = {'bool': pytis.data.Boolean,
                                 'bpchar': pytis.data.String,
                                 'char': pytis.data.String,
