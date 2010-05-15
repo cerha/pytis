@@ -909,6 +909,11 @@ class _GsqlTable(_GsqlSpec):
                             break
                     else:
                         ctclass = ct.__class__
+                if ctclass is pytis.data.Boolean:
+                    if default.lower() in ("'f'", "'false'", "false"):
+                        default = 'false'
+                    elif default.lower() in ("'t'", "'true'", "true"):
+                        default = 'true'
                 TYPE_MAPPING = {'bool': pytis.data.Boolean,
                                 'bpchar': pytis.data.String,
                                 'char': pytis.data.String,
@@ -953,7 +958,12 @@ class _GsqlTable(_GsqlSpec):
                         'session_user': '"session_user"()'}
             if MAPPINGS.has_key(default):
                 default = MAPPINGS[default]
-            if default != dbcolumn.get('default'):
+            dbcolumn_default = dbcolumn.get('default')
+            if dbcolumn_default is not None and not dbcolumn.get('primaryp'):
+                pos = dbcolumn_default.find('::')
+                if pos != -1:
+                    dbcolumn_default = dbcolumn_default[:pos]
+            if default != dbcolumn_default:
                 return ('Default value mismatch (%s x %s)' %
                         (default, dbcolumn.get('default')))
             # primaryp
