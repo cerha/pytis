@@ -952,7 +952,10 @@ class _GsqlTable(_GsqlSpec):
             # unique
             if xor(primaryp or 'unique' in constraints,
                    dbcolumn.get('uniquep')):
-                return 'Unique status mismatch'
+                message = 'Unique status mismatch'
+                if dbcolumn['typename'] == 'ltree':
+                    message += ' (note that ltree columns cannot be unique)'
+                return message
             # default
             MAPPINGS = {'user': '"current_user"()',
                         'session_user': '"session_user"()'}
