@@ -856,12 +856,12 @@ class _GsqlTable(_GsqlSpec):
                 k, v = fnames[j-1], data.getvalue(i, j)
                 other[k] = v
             dbcolumns[cname] = other
-        data = connection.query("select count(*) from pg_index, pg_class where pg_class.relname='%s' and pg_index.indrelid=pg_class.oid and pg_index.indisunique and pg_index.indkey[1]!=0" % name)
+        data = connection.query("select count(*) from pg_index, pg_class where pg_class.relname='%s' and pg_index.indrelid=pg_class.oid and pg_index.indisunique and pg_index.indkey[1] is not null" % name)
         if data.getvalue(0, 0) != 0:
             result = (result +
                       _gsql_warning("Can't handle multicolumn indexes in %s" %
                                     name))
-        data = connection.query("select attname as column, indisprimary as primary, indisunique as unique from pg_index, pg_class, pg_attribute where pg_class.relname='%s' and pg_index.indrelid=pg_class.oid and pg_attribute.attrelid=pg_class.oid and pg_attribute.attnum=pg_index.indkey[0] and pg_index.indkey[1]=0 and pg_attribute.attnum>0 and pg_attribute.attislocal" % name)
+        data = connection.query("select attname as column, indisprimary as primary, indisunique as unique from pg_index, pg_class, pg_attribute where pg_class.relname='%s' and pg_index.indrelid=pg_class.oid and pg_attribute.attrelid=pg_class.oid and pg_attribute.attnum=pg_index.indkey[0] and pg_index.indkey[1] is null and pg_attribute.attnum>0 and pg_attribute.attislocal" % name)
         for i in range(data.ntuples):
             cname = data.getvalue(i, 0)
             dbcolumns[cname]['primaryp'] = data.getvalue(i, 1)
