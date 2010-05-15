@@ -1153,7 +1153,10 @@ class LCGFormatter(object):
         body = self._resolve(resolver, template_id, 'body')
         if (not isinstance(body, Document) and
             not (is_sequence(body) and body and isinstance(body[0], Document))):
-            body = Document(body)
+            body = Document(body,
+                            page_header=self._page_header.lcg(),
+                            first_page_header=self._first_page_header.lcg(),
+                            page_footer=self._page_footer.lcg())
         self._body = body
         
     def _ok_resolver(self, template_id, element, mandatory=False):
