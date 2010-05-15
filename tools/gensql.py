@@ -888,8 +888,8 @@ class _GsqlTable(_GsqlSpec):
             else:
                 if ct.__class__ == pytis.data.Serial:
                     if default is None:
-                        default = ('nextval(\'"%s_%s_seq"\'::text)'
-                                   % (name, cname))
+                        default = ('nextval(\'%s_%s_seq\'::regclass)'
+                                   % (name, _gsql_column_table_column(cname)[1]))
                     ctclass = pytis.data.Integer
                     if not primaryp:
                         constraints.append('not null')
@@ -955,11 +955,7 @@ class _GsqlTable(_GsqlSpec):
                     return name
                 i = i + 1
         def column_name(column):
-            name = column.name
-            pos = name.rfind('.')
-            if pos != -1:
-                name = name[pos+1:]
-            return name
+            return _gsql_column_table_column(column.name)[1]
         for cname, other in dbcolumns.items():
             i = position(cname, columns, key=column_name)
             if i is None:
