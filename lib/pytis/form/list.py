@@ -1716,9 +1716,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     def _cmd_incremental_search(self, full=False, prefill=None):
         row, col = self._current_cell()
-        column = self._columns[col]
-        if (not isinstance(column.type(self._data), pytis.data.String) or
-            not self._data.permitted(column.id(), pytis.data.Permission.VIEW)):
+        col_id = self._columns[col].id()
+        if (not isinstance(self._row[col_id].type(), pytis.data.String) or
+            not self._data.permitted(col_id, pytis.data.Permission.VIEW)):
             message(_("V tomto sloupci nelze vyhledávat inkrementálnì"), beep_=True)
             return
         if self._search_panel is None:
