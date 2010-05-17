@@ -308,8 +308,12 @@ class Menu(Specification):
                      label=_("Text stránky (pro aktuální jazykovou verzi)")))
     columns = ('title_or_identifier', 'identifier', 'modname', 'ord', 'published')
     def bindings(self):
-        return (Binding('rights', _("Pøístupová práva"), self._spec_name('Rights'),
-                        condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id'])),)
+        return (
+            Binding('rights', _("Pøístupová práva"), self._spec_name('Rights'),
+                    condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id']),
+                    prefill=lambda r: {'menu_item_id': r['menu_item_id'].value(),
+                                       'mod_id': r['mod_id'].value()}),
+            )
 
 
 class Users(Specification):
@@ -402,6 +406,7 @@ class Actions(Specification):
     sorting = (('action_id', ASC),)
     layout = ('name', 'description')
     columns = ('name', 'description')
+    cb = CodebookSpec(display='name')
 
     
 class GenericActions(Actions):
@@ -417,29 +422,30 @@ class Rights(Specification):
     help = _("Pøiøazení práv k akcím modulù pro jednotlivé u¾ivatelské role.")
     table = 'cms_rights'
     def fields(self): return (
-        Field('right_id'),
+        Field('rights_assignment_id',
+              default=nextval('cms_rights_assignment_rights_assignment_id_seq')),
         Field('menu_item_id'),
-        Field('role_id'),
-        Field('role_name', _("Role"), editable=NEVER),
+        Field('role_id', _("Role"), codebook=self._spec_name('Roles', False)),
+        Field('role_name', _("Role")),
         Field('system_role'),
         Field('mod_id'),
-        Field('action_id'),
-        Field('action_name', _("Akce"), editable=NEVER),
+        Field('action_id', _("Akce"), codebook=self._spec_name('Actions', False),
+              runtime_filter=computer(self._action_filter)),
+        Field('action_name', _("Akce")),
         Field('action_description', _("Popis"), width=30, editable=NEVER),
-        Field('permitted', _("Povoleno"), width=3, fixed=True))
+        )
     grouping = 'role_id'
     sorting = (('role_name', ASC), ('mod_id', DESC), ('action_id', ASC))
-    layout = columns = ('role_name', 'action_name', 'action_description', 'permitted')
+    columns = ('role_name', 'action_name', 'action_description')
+    layout = ('role_id', 'action_id')
+    def _action_filter(self, record, mod_id):
+        return pd.OR(pd.EQ('mod_id', record['mod_id']),
+                     pd.EQ('mod_id', pd.Value(pd.Integer(), None)))
     def row_style(self, record):
         if not record['mod_id'].value():
             return None
         else:
             return pp.Style(background='#ffd')
-    def actions(self):
-        return (Action('toggle', _("Povolit/zakázat"), self._toggle_permission, hotkey=' '),)
-    def _toggle_permission(self, record):
-        permitted = pd.Value(pd.Boolean(), not record['permitted'].value())
-        record.data().update((record['right_id'],), pd.Row((('permitted', permitted),)))
         
 
 class _Log(Specification):

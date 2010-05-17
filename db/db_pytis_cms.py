@@ -204,42 +204,26 @@ table('cms_rights_assignment',
       grant=cms_rights)
 
 viewng('cms_rights',
-       doc="User editable access rights assignment joining all menu items, roles and actions.",
-       relations=(Relation('cms_menu_structure', alias='s', key_column='menu_item_id',
-                           exclude_columns='*'),
-                  Relation('cms_roles', alias='r', key_column='role_id',
-                           exclude_columns=('name', 'description'),
-                           jointype=JoinType.CROSS),
-                  Relation('cms_actions', alias='a', key_column='action_id',
-                           exclude_columns=('name', 'description'),
-                           jointype=JoinType.INNER,
-                           condition='a.mod_id = s.mod_id OR a.mod_id IS NULL'),
-                  Relation('cms_rights_assignment', alias='x', key_column='rights_assignment_id',
-                           jointype=JoinType.LEFT_OUTER,
-                           condition=('x.menu_item_id = s.menu_item_id AND x.role_id = r.role_id '
-                                      'AND x.action_id = a.action_id'),
-                           exclude_columns=('menu_item_id', 'role_id', 'action_id'))),
-       include_columns=(ViewColumn(None, alias='right_id',
-                                   sql="s.menu_item_id ||'.'|| r.role_id ||'.'|| a.action_id"),
-                        ViewColumn('s.menu_item_id'),
-                        ViewColumn('r.name', alias='role_name'),
+       doc="User editable access rights assignment.",
+       relations=(Relation('cms_rights_assignment', alias='x', key_column='rights_assignment_id'),
+                  Relation('cms_menu_structure', alias='s', jointype=JoinType.INNER,
+                           condition='s.menu_item_id=x.menu_item_id', exclude_columns=('*',)),
+                  Relation('cms_roles', alias='r', jointype=JoinType.INNER,
+                           condition='r.role_id = x.role_id', exclude_columns=('*',)),
+                  Relation('cms_actions', alias='a', jointype=JoinType.INNER,
+                           condition='a.action_id = x.action_id', exclude_columns=('*',)),
+                  ),
+       include_columns=(ViewColumn('r.name', alias='role_name'),
+                        ViewColumn('s.mod_id'),
                         ViewColumn('r.description', alias='role_description'),
+                        ViewColumn('r.system_role'),
                         ViewColumn('a.name', alias='action_name'),
                         ViewColumn('a.description', alias='action_description'),
-                        ViewColumn(None, alias='permitted',
-                                   sql="x.rights_assignment_id IS NOT NULL"),
                         ),
-       insert=None,
-       update="""(
-       INSERT INTO cms_rights_assignment (menu_item_id, role_id, action_id)
-         SELECT new.menu_item_id, new.role_id, new.action_id
-         WHERE new.permitted;
-       DELETE FROM cms_rights_assignment
-         WHERE menu_item_id=new.menu_item_id AND role_id=new.role_id
-         AND action_id=new.action_id AND NOT new.permitted;
-       )""",
-       delete=None,
-       depends=('cms_menu_structure', 'cms_roles', 'cms_actions', 'cms_rights_assignment'),
+       insert_order=('cms_rights_assignment',),
+       update_order=('cms_rights_assignment',),
+       delete_order=('cms_rights_assignment',),
+       depends=('cms_rights_assignment', 'cms_menu_structure', 'cms_roles', 'cms_actions'),
        grant=cms_rights)
 
 table('cms_session',

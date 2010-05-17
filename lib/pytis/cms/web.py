@@ -312,8 +312,7 @@ class Rights(wiking.PytisModule):
         """Return list of roles as unique string identifiers."""
         return [UserRoles.role(row['role_id'].value(), row['system_role'].value(),
                                row['role_name'].value())
-                for row in self._data.get_rows(menu_item_id=menu_item_id,
-                                               action_name=action, permitted=True)]
+                for row in self._data.get_rows(menu_item_id=menu_item_id, action_name=action)]
 
 
 class Users(wiking.PytisModule):
