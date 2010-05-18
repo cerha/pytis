@@ -114,10 +114,7 @@ class Menu(wiking.PytisModule):
     def _action(self, req, record=None):
         # The only supported action of this module is `view' and the `action' argument is ignored
         # here (left for the embedded module action resolution).
-        if record is not None and req.unresolved_path:
-            return 'subpath'
-        else:
-            return 'view'
+        return 'view'
     
     def _handle(self, req, action, **kwargs):
         # HACK: We need to store the current resolved menu item somewhere.
@@ -145,18 +142,14 @@ class Menu(wiking.PytisModule):
             rights = self._module('Rights')
             menu_record = req.cms_current_menu_record
             menu_item_id = menu_record['menu_item_id'].value()
-            if module is self and action in ('view', 'subpath') \
-                   and record is not None and record['menu_item_id'].value() == menu_item_id:
+            if module is self and action == 'view' and record is not None \
+                    and record['menu_item_id'].value() == menu_item_id:
                 return rights.permitted_roles(menu_item_id, 'visit')
             else:
                 # Access rights are defined for menu items which are bound to the original module
                 # before pytis redirection.
                 module = self._pytis_redirect_origin(req) or module
                 if module.name() == menu_record['modname'].value():
-                    if action == 'subpath':
-                        # Infer 'subpath' rights from 'view' rights to hide this mysterious
-                        # action from the CMS user.
-                        action = 'view'
                     return rights.permitted_roles(menu_item_id, action)
         return ()
 

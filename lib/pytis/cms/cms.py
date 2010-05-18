@@ -141,8 +141,7 @@ class Modules(Specification):
         if module:
             from pytis.form import run_dialog, CheckListDialog, create_data_object
             actions = [attr[7:] for attr in dir(module)
-                       if attr.startswith('action_') and callable(getattr(module, attr)) \
-                       and attr != 'action_subpath']
+                       if attr.startswith('action_') and callable(getattr(module, attr))]
             default_actions = [a[0] for a in self._DEFAULT_ACTIONS]
             # Order default actions first and in the order of self._DEFAULT_ACTIONS.
             order = lambda a: a in default_actions and (default_actions.index(a)+1) or a
