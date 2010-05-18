@@ -274,9 +274,9 @@ class Menu(Specification):
                 return ('parent', _("Polo¾ka nemù¾e být nadøízená sama sobì."))
             if not record.new():
                 # A new record can't be a parent of existing records.
-                tree_order = pd.WMValue(pd.String(), record['tree_order'].value()+'*')
-                count = data.select(condition=pd.AND(pd.EQ('menu_item_id', record['parent']),
-                                                     pd.WM('tree_order', tree_order)))
+                condition = pd.AND(pd.EQ('menu_item_id', record['parent']),
+                                   pd.LTreeDescendant('tree_order', record['tree_order']))
+                count = data.select(condition=condition)
                 data.close()
                 if count:
                     return ('parent', _("Nelze pøiøadit podøízenou polo¾ku jako nadøízenou "
