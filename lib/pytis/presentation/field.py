@@ -332,12 +332,12 @@ class PresentedRow(object):
             if run_callback:
                 self._run_callback(self.CALL_CHANGE, key)
                 
-    def __str__(self):
+    def __unicode__(self):
         if hasattr(self, '_row'):
-            items = [c.id + '=' + str(self[c.id].value()) for c in self._columns]
+            items = [c.id + '=' + unicode(self[c.id].value()) for c in self._columns]
             return "<%s: %s>" % (self.__class__.__name__, string.join(items, ', '))
         else:
-            return super(PresentedRow, self).__str__()
+            return super(PresentedRow, self).__unicode__()
 
     def _run_callback(self, kind, key=None):
         callbacks = self._callbacks.get(kind, {})
@@ -714,7 +714,7 @@ class PresentedRow(object):
             if self._new:
                 permission = pytis.data.Permission.INSERT
             else:
-                permission = pytis.data.Permission.UPDATE            
+                permission = pytis.data.Permission.UPDATE
         column = self._coldict[key]
         if column.virtual:
             permitted = not column.secret_computer
