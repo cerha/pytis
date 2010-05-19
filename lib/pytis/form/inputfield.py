@@ -65,8 +65,7 @@ class _Completer(wx.PopupWindow):
         self._last_insertion_point = 0
         style = wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER| wx.SIMPLE_BORDER
         self._list = listctrl = wx.ListCtrl(self, pos=wx.Point(0, 0), style=style)
-        self.update(ctrl.GetValue())
-        self._show(False)
+        self.update(ctrl.GetValue(), False)
         wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_close)
         wx_callback(wx.EVT_LEFT_DOWN,  ctrl, self._on_toggle_down)
         wx_callback(wx.EVT_LEFT_UP,    ctrl, self._on_toggle_up)
@@ -149,7 +148,7 @@ class _Completer(wx.PopupWindow):
                 return True
         return False
     
-    def update(self, completions):
+    def update(self, completions, show):
         """Update the list of available completions."""
         listctrl = self._list
         self._show(False)
@@ -170,7 +169,7 @@ class _Completer(wx.PopupWindow):
         size = wx.Size(width, height or total_height)
         listctrl.SetSize(size)
         self.SetClientSize(size)
-        if completions:
+        if completions and show:
             self._show(True)
             listctrl.Select(0)
             listctrl.EnsureVisible(0)
@@ -774,7 +773,10 @@ class TextField(InputField):
         text = self._update_completions
         if text is not None:
             self._update_completions = None
-            self._completer.update(self._row.completions(self.id(), prefix=text))
+            # If the field has no focus, the change is *most likely* not originated by the user, so
+            # we we don't popup the selection (the second argument to update()).
+            self._completer.update(self._row.completions(self.id(), prefix=text),
+                                   self._enabled and self._has_focus())
         return super(TextField, self)._on_idle(event)
         
     def _on_change(self, event=None):
@@ -783,9 +785,7 @@ class TextField(InputField):
             value = post_process(self._get_value())
             if value != self._get_value():
                 self._set_value(value)
-        if event and self._completer and self._enabled:
-            # TODO: Maybe also omit this if the field has no focus (the change comes from the
-            # computer).
+        if event and self._completer:
             self._update_completions = event.GetString()
         super(TextField, self)._on_change(event=event)
 
