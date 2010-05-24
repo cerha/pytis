@@ -168,7 +168,7 @@ class DataTable(object):
 
     def _update_columns(self, columns):
         self._columns = [self._Column(c.id(),
-                                      c.type(self._data),
+                                      c.type(),
                                       c.column_label() or '',
                                       c.style())
                          for c in columns]
