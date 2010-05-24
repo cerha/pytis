@@ -131,6 +131,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._check_default_columns = not columns
         self._search_panel = None
         self._last_updated_row_count = 0
+        self._grid = None
         
     def _default_columns(self):
         return self._view.columns()
@@ -1498,12 +1499,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cleanup(self):
         super(ListForm, self)._cleanup()
-        # Musíme ruènì zru¹it editory, jinak se doèkáme segmentation fault.
-        self._close_editors()
-        # Musíme tabulce zru¹it datový objekt, proto¾e jinak do nìj bude ¹ahat
-        # i po kompletním uzavøení starého gridu (!!) a rozhodí nám tak data
-        # v novém gridu.
-        self._table.close()
+        if self._grid is not None:
+            # Musíme ruènì zru¹it editory, jinak se doèkáme segmentation fault.
+            self._close_editors()
+            # Musíme tabulce zru¹it datový objekt, proto¾e jinak do nìj bude ¹ahat
+            # i po kompletním uzavøení starého gridu (!!) a rozhodí nám tak data
+            # v novém gridu.
+            self._table.close()
 
     def _cleanup_data(self):
         self._data.remove_callback_on_change(self.on_data_change)
