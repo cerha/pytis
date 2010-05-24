@@ -864,8 +864,9 @@ class _GsqlTable(_GsqlSpec):
         data = connection.query("select attname as column, indisprimary as primary, indisunique as unique from pg_index, pg_class, pg_attribute where pg_class.relname='%s' and pg_index.indrelid=pg_class.oid and pg_attribute.attrelid=pg_class.oid and pg_attribute.attnum=pg_index.indkey[0] and pg_index.indkey[1] is null and pg_attribute.attnum>0 and pg_attribute.attislocal" % name)
         for i in range(data.ntuples):
             cname = data.getvalue(i, 0)
-            dbcolumns[cname]['primaryp'] = data.getvalue(i, 1)
-            dbcolumns[cname]['uniquep'] = data.getvalue(i, 2)
+            cproperties = dbcolumns[cname]
+            cproperties['primaryp'] = cproperties.get('primaryp') or data.getvalue(i, 1)
+            cproperties['uniquep'] = cproperties.get('uniquep') or data.getvalue(i, 2)
         data = connection.query("select attname, adsrc from pg_attribute, pg_attrdef, pg_class where pg_class.relname='%s' and pg_attribute.attrelid=pg_class.oid and pg_attrdef.adrelid=pg_class.oid and pg_attribute.attnum=pg_attrdef.adnum and pg_attribute.attnum>0 and pg_attribute.attislocal" % name)
         for i in range(data.ntuples):
             dbcolumns[data.getvalue(i, 0)]['default'] = data.getvalue(i, 1)
@@ -953,8 +954,6 @@ class _GsqlTable(_GsqlSpec):
             if xor(primaryp or 'unique' in constraints,
                    dbcolumn.get('uniquep')):
                 message = 'Unique status mismatch'
-                if dbcolumn['typename'] == 'ltree':
-                    message += ' (note that ltree columns cannot be unique)'
                 return message
             # default
             MAPPINGS = {'user': '"current_user"()',
