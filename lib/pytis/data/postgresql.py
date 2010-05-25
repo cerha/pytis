@@ -2254,7 +2254,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         for c in columns:
             id = c.id()
             type = c.type()
-            if isinstance(type, String):
+            if isinstance(type, (String, LTree)):
                 typid = 0
             elif isinstance(type, (Time, DateTime)):
                 typid = 2
@@ -2275,7 +2275,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         row_data = []
         data_0 = data_[0]
         i = 0
-        for id, typid, type_ in template:            
+        for id, typid, type_ in template:
             dbvalue = data_0[i]
             i += 1
             if typid == 0:              # string

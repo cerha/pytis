@@ -1570,7 +1570,7 @@ class LTree(Type):
     VM_INVALID_ITEM = 'VM_INVALID_ITEM'
     _VM_INVALID_ITEM_MSG = _("Nìkterá z hierarchických polo¾ek obsahuje nepovolené znaky")
 
-    _REGEX = re.compile('^[a-zA-Z0-9_]+$')
+    _REGEX = re.compile('^\w+$', re.UNICODE) 
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
