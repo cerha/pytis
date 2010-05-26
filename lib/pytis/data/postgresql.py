@@ -779,10 +779,19 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """Vra» zadaný sloupec zformátovaný pro SQL."""
         return '%s.%s' % (table_name, column_name)
 
-    def _pdbb_btabcol(self, binding, full_text_handler=None):
+    def _pdbb_btabcol(self, binding, full_text_handler=None, convert_ltree=False):
         """Vra» sloupec z 'binding' zformátovaný pro SQL."""
+        def column_type():
+            try:
+                t = self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
+                                              type_kwargs=binding.kwargs())
+            except DBException:
+                t = None
+            return t
         if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
             result = full_text_handler(binding)
+        elif convert_ltree and (column_type(), LTree):
+            result = self._pdbb_tabcol(binding.table(), binding.column()) + '::text'
         else:
             result = self._pdbb_tabcol(binding.table(), binding.column())
         return result
@@ -1077,11 +1086,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             distinct_on = " DISTINCT ON (%s)" % (distinct_columns_string,)
         else:
             distinct_on = ''
-        def sortspec(dir, self=self, keytabcols=keytabcols):
+        def sortspec(dir):
             items = []
-            for i in range(len(keytabcols)):
-                k = keytabcols[i]
-                items.append('%s %s' % (k, dir,))
+            for b in self._key_binding:
+                items.append('%s %s' % (self._pdbb_btabcol(b, convert_ltree=True), dir,))
             spec = string.join(items, ',')
             return spec
         ordering = sortspec('ASC')
@@ -1443,7 +1451,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 id, dir = item, 'ASC'
             b = self._db_column_binding(id)
-            return '%s %s' % (self._pdbb_btabcol(b, full_text_handler=full_text_handler), dir)
+            return '%s %s' % (self._pdbb_btabcol(b, full_text_handler=full_text_handler,
+                                                 convert_ltree=True),
+                              dir)
         sort_string = ','.join([item2sql(item) for item in sort])
         if sort_string:
             sort_string += ','
