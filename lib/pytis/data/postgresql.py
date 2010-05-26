@@ -790,7 +790,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return t
         if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
             result = full_text_handler(binding)
-        elif convert_ltree and (column_type(), LTree):
+        elif convert_ltree and isinstance(column_type(), LTree):
             result = self._pdbb_tabcol(binding.table(), binding.column()) + '::text'
         else:
             result = self._pdbb_tabcol(binding.table(), binding.column())
