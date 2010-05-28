@@ -872,19 +872,20 @@ class DBDataDefault(_DBTest):
         key = B('cislo', 'denik', 'id', related_to=cosi)
         madati = B('', 'cosnova', 'id')
         stat = B('', 'cstat', 'stat')
+        denik_spec = (key,
+                      B('datum', 'denik', 'datum',
+                        type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
+                      B('castka', 'denik', 'castka'),
+                      B('', 'denik', 'madati',
+                        related_to=madati, enumerator=dosnova_spec),
+                      B('', 'cosnova', 'stat', related_to=stat, enumerator=dstat_spec),
+                      B('stat-nazev', 'cstat', 'nazev'),
+                      B('cosi-popis', 'xcosi', 'popis'),
+                      madati,
+                      stat,
+                      cosi)
         d = pytis.data.DBDataDefault(
-            (key,
-             B('datum', 'denik', 'datum',
-               type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
-             B('castka', 'denik', 'castka'),
-             B('', 'denik', 'madati',
-               related_to=madati, enumerator=dosnova_spec),
-             B('', 'cosnova', 'stat', related_to=stat, enumerator=dstat_spec),
-             B('stat-nazev', 'cstat', 'nazev'),
-             B('cosi-popis', 'xcosi', 'popis'),
-             madati,
-             stat,
-             cosi),
+            denik_spec,
             key,
             conn)
         key = B('id', 'xcosi', 'id')
@@ -1911,6 +1912,39 @@ class DBDataOrdering(_DBTest):
                ('Unexpected value', result['popis'].value())
         d.close()
 tests.add(DBDataOrdering)
+
+
+class DBDataAggregated(DBDataDefault):
+    def test_aggregated(self):
+        D = pytis.data.DBDataDefault
+        B = pytis.data.DBColumnBinding
+        denik_spec = (B('cislo', 'denik', 'id'),
+                      B('datum', 'denik', 'datum',
+                        type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
+                      B('castka', 'denik', 'castka'),
+                      B('madati', 'denik', 'madati'),
+                      )
+        data = D(
+            denik_spec,
+            denik_spec[0],
+            self._dconnection,
+            operations=((D.AGG_SUM, 'madati', 'madatisum',),),
+            column_groups=('datum', 'castka',))
+        try:
+            data.select()
+            for expected_result in ((('castka', 1000.0), ('madatisum', 2),),
+                                    (('castka', 2000.0), ('madatisum', 2),),
+                                    (('castka', 3000.0), ('madatisum', 3),),
+                                    ):
+                items = data.fetchone().items()
+                items_dict = dict(items)
+                assert len(items) == 3, ('Invalid number of columns', items,)
+                for k, v in expected_result:
+                    assert items_dict[k].value() == v, ('Unexpected result', (k, v, row[k].value(),),)
+            assert data.fetchone() is None, 'Extra row'
+        finally:
+            data.close()
+tests.add(DBDataAggregated)
 
 
 class DBDataNotification(DBDataDefault):
