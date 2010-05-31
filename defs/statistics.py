@@ -95,3 +95,18 @@ class FormUserStatistics(Specification):
         Field('last_used', _("Poslední spu¹tìní")),
         )
     columns = ('form', 'class', 'info', 'n_open', 'last_used',)
+
+class FormUserStatisticsNoinfo(Specification):
+    public = True
+    table = 'ev_pytis_form_users_noinfo'
+    title = _("Formuláøe u¾ivatele")
+    fields = (
+        Field('shortname', _("Akce")),
+        Field('login', _("Login")),
+        Field('form', _("Jméno formuláøe")),
+        Field('class', _("Tøída formuláøe")),
+        Field('n_open', _("Poèet otevøení")),
+        Field('last_used', _("Poslední spu¹tìní")),
+        )
+    columns = ('login', 'class', 'n_open', 'last_used',)
+

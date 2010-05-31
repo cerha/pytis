@@ -327,6 +327,8 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        multirights=ApplicationMenuM._multiform_row(row),
                                                                        ))),
+                pytis.presentation.Binding('users', _("U¾ivatelé"), 'statistics.FormUserStatisticsNoinfo',
+                                           condition=(lambda row: pytis.data.EQ('shortname', row['shortname']))),
                 )
     def actions(self): return (
         pytis.presentation.Action('copy_rights', _("Zkopírovat práva z..."), self._copy_rights,
