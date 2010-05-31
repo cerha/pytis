@@ -139,6 +139,7 @@ class _GsqlSpec(object):
     _counter = Counter()
     _groups = None
     _group_list = []
+    _seen_names = []
     
     def __init__(self, name, depends=(), doc=None, grant=()):
         """Inicializuj instanci.
@@ -165,7 +166,7 @@ class _GsqlSpec(object):
         self._serial_number = self._counter.next()
         if name is None:
             name = '@%d' % self._serial_number
-        self._name = name
+        self._set_name(name)
         self._depends = depends
         self._doc = doc
         self._grant = grant
@@ -175,6 +176,12 @@ class _GsqlSpec(object):
                 _GsqlSpec._group_list.append(group)
         self._schemas = None
 
+    def _set_name(self, name):
+        if name in self._seen_names:
+            raise Error("Duplicate object name", name)
+        self._name = name
+        self._seen_names.append(name)
+        
     def _set_schemas(self, schemas):
         if schemas is not None:
             assert isinstance(schemas, (tuple, list,)), ('invalid schema list', schemas,)
@@ -539,7 +546,6 @@ class _GsqlType(_GsqlSpec):
             tøídy Column
         """    
         super(_GsqlType, self).__init__(name, **kwargs)
-        self._name = name
         self._columns = columns
         
     def _column_column(self, column):        
@@ -608,7 +614,6 @@ class _GsqlSchema(_GsqlSpec):
             Pozor, uvede-li se, pak musí být vytváøení provedeno superuserem.
         """
         super(_GsqlSchema, self).__init__(name, **kwargs)
-        self._name = name
         self._owner = owner
         
     def _output(self):
@@ -681,7 +686,6 @@ class _GsqlTable(_GsqlSpec):
         self._views = map(self._make_view, xtuple(view or ()))
         self._with_oids = with_oids
         self._sql = sql
-        self._name = name
         self._set_schemas(schemas)
         self._on_insert, self._on_update, self._on_delete = \
           on_insert, on_update, on_delete
@@ -1330,7 +1334,7 @@ class _GsqlViewNG(Select):
         """
         #assert relations[0].jointype == JoinType.FROM
         super(ViewNG, self).__init__(relations, **kwargs)
-        self._name = name
+        self._set_name(name)
         self._set_schemas(schemas)
         self._insert = insert
         self._update = update
@@ -1573,7 +1577,6 @@ class _GsqlView(_GsqlSpec):
                 pos = len(tname)
             name = tname[:pos] + 'v' + tname[pos:]
         super(_GsqlView, self).__init__(name, **kwargs)
-        self._name = name
         self._columns = columns
         self._table_alias = table_alias
         self._join = join
