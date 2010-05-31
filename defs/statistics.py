@@ -84,7 +84,7 @@ class FormUserList(Specification):
 
 class FormUserStatistics(Specification):
     public = True
-    table = 'ev_pytis_form_user_statistics'
+    table = 'ev_pytis_form_users'
     title = _("Formuláøe u¾ivatele")
     fields = (
         Field('login', _("Login")),

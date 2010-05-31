@@ -698,17 +698,3 @@ viewng('ev_pytis_form_user_list',
        grant=Gall_pytis,
        depends=('e_pytis_form_log',)
        )
-
-viewng('ev_pytis_form_user_statistics',
-       (R('e_pytis_form_log', alias='log', exclude_columns=('id', 't_start', 't_show',)),
-        ),
-       group_by="form, class, info, login",
-       include_columns=(V(None, 'n_open', "count(t_start)"),
-                        V(None, 'last_used', "max(t_start)"),
-                        ),
-       insert=None,
-       update=None,
-       delete=None,
-       grant=Gall_pytis,
-       depends=('e_pytis_form_log',)
-       )
