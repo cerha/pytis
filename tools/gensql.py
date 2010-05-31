@@ -178,7 +178,7 @@ class _GsqlSpec(object):
 
     def _set_name(self, name):
         if name in self._seen_names:
-            raise Error("Duplicate object name", name)
+            raise ProgramError("Duplicate object name", name)
         self._name = name
         self._seen_names.append(name)
         
