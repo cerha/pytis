@@ -18,8 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytis.data
+import pytis.extensions
+import pytis.form
 import pytis.presentation
 from pytis.presentation import Binding, Field, Specification
+import pytis.util
 
 class FormShortStatistics(Specification):
     public = True
@@ -109,4 +112,10 @@ class FormUserStatisticsNoinfo(Specification):
         Field('last_used', _("Poslední spu¹tìní")),
         )
     columns = ('login', 'class', 'n_open', 'last_used',)
-
+    
+    def on_new_record(self, prefill=None, transaction=None):
+        try:
+            pytis.form.run_form(pytis.form.PopupEditForm, 'Nastaveni.BvUsersCfg',
+                                select_row=pytis.extensions.cfg_param('id', cfgspec='Nastaveni.BvUsersCfg'))
+        except pytis.util.ResolverFileError:
+            pytis.form.run_dialog(pytis.form.Warning, _("Tato databáze neobsahuje u¾ivatelskou konfiguraci"))
