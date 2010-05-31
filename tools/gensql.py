@@ -85,7 +85,7 @@ def _gsql_column_table_column(column):
     if is_sequence(column):
         column = find(1, column,
                       test=(lambda x, y: x is not None and y is not None))
-    pos = column.find('.')
+    pos = column.rfind('.')
     if pos == -1:
         result = None, column
     else:
@@ -173,6 +173,15 @@ class _GsqlSpec(object):
             group = g[1]
             if group not in _GsqlSpec._group_list:
                 _GsqlSpec._group_list.append(group)
+        self._schemas = None
+
+    def _set_schemas(self, schemas):
+        if schemas is not None:
+            assert isinstance(schemas, (tuple, list,)), ('invalid schema list', schemas,)
+            if __debug__:
+                for s in schemas:
+                    assert isinstance(s, basestring), ('invalid schema', s,)
+            self._schemas = schemas
 
     def _grant_command(self, gspec):
         right, group = gspec
@@ -208,13 +217,28 @@ class _GsqlSpec(object):
         """
         return self._serial_number
 
-    def output(self):
+    def output(self, *args, **kwargs):
         """Vra» string obsahující SQL pøíkazy nutné k vygenerování objektu.
 
         V této tøídì metoda vyvolává výjimku 'ProgramError'.
 
         """
+        output = self._output(*args, **kwargs)
+        if self._schemas is None:
+            result = output
+        else:
+            result = ''
+            for s in self._schemas:
+                result += self._search_path_command(s)
+                result += output
+            result += 'SET search_path TO "$user",public;\n'
+        return result
+
+    def _output(self):
         raise ProgramError('Not implemented')
+
+    def _search_path_command(self, search_path):
+        return "SET search_path TO %s;\n" % (search_path,)
 
     def outputall(self):
         """Vra» string obsahující SQL pøíkazy nutné k vygenerování objektu
@@ -388,7 +412,8 @@ class SelectRelation(object):
     def __init__(self, relation, alias=None,
                  key_column=None, exclude_columns=(), column_aliases=(),
                  jointype=JoinType.FROM, condition=None,
-                 insert_columns=(), update_columns=()
+                 insert_columns=(), update_columns=(),
+                 schema=None
                  ):
         """Specifikace relace pro SQL select.
         Argumenty:
@@ -406,12 +431,16 @@ class SelectRelation(object):
           jointype -- typ joinu.
           condition -- podmínka, která se pou¾ije ve specifikaci ON
             nebo v pøípadì typu FROM jako WHERE.
+          schema -- není-li 'None', jde o øetìzec urèující schéma, které se má
+            pou¾ít pro tuto relaci
         """
         assert jointype != JoinType.CROSS or \
                condition is None
         assert isinstance(relation, types.StringTypes) or \
-               isinstance(relation, Select) 
+               isinstance(relation, Select)
+        assert schema is None or isinstance(schema, basestring), schema
         self.relation = relation
+        self.schema = schema
         self.alias = alias
         self.key_column = key_column
         self.exclude_columns = exclude_columns
@@ -521,7 +550,7 @@ class _GsqlType(_GsqlSpec):
                             _gsql_format_type(column.type))
         return result
 
-    def output(self):
+    def _output(self):
         columns = [self._format_column(c) for c in self._columns]
         columns = string.join(columns, ',\n        ')
         result = ('CREATE TYPE %s AS (\n%s);\n' %
@@ -582,7 +611,7 @@ class _GsqlSchema(_GsqlSpec):
         self._name = name
         self._owner = owner
         
-    def output(self):
+    def _output(self):
         if self._owner is not None:
             owner = " AUTHORIZATION %s" % self._owner
         else:
@@ -598,7 +627,7 @@ class _GsqlTable(_GsqlSpec):
     _PGSQL_TYPE = 'r'
     
     def __init__(self, name, columns, inherits=None, view=None,
-                 with_oids=True, sql=None,
+                 with_oids=True, sql=None, schemas=None,
                  on_insert=None, on_update=None, on_delete=None,
                  init_values=(), init_columns=(),
                  tablespace=None, upd_log_trigger=None, **kwargs):
@@ -614,6 +643,11 @@ class _GsqlTable(_GsqlSpec):
           sql -- SQL string SQL definic pøidaný za definici sloupcù, lze jej
             vyu¾ít pro doplnìní SQL konstrukcí souvisejících se sloupci, které
             nelze zadat jiným zpùsobem
+          schemas -- není-li 'None', definuje schémata, ve kterých má být
+            tabulka vytvoøena, jde o sekvenci øetìzcù obsahujících textové
+            definice postgresové search_path urèující search_path nastavenou
+            pøi vytváøení tabulky, tabulka je samostatnì vytvoøena pro ka¾dý
+            z prvkù této sekvence
           on_insert -- doplòující akce, které mají být provedeny pøi vlo¾ení
             záznamu do tabulky, SQL string
           on_update -- doplòující akce, které mají být provedeny pøi updatu
@@ -648,6 +682,7 @@ class _GsqlTable(_GsqlSpec):
         self._with_oids = with_oids
         self._sql = sql
         self._name = name
+        self._set_schemas(schemas)
         self._on_insert, self._on_update, self._on_delete = \
           on_insert, on_update, on_delete
         self._init_values = init_values
@@ -669,7 +704,7 @@ class _GsqlTable(_GsqlSpec):
 
     def _grant_command(self, gspec, name=None):
         if not name:
-            name = self._name
+            name = self.name()
         right, group = gspec
         return 'GRANT %s ON %s TO GROUP %s;\n' % (right, name, group)
 
@@ -758,7 +793,7 @@ class _GsqlTable(_GsqlSpec):
                 kcols.append(self._full_column_name(c).name)
         return kcols        
     
-    def output(self, _re=False, _all=False):
+    def _output(self, _re=False, _all=False):
         if not _re:
             columns = map(self._format_column, self._columns)
             columns = string.join(columns, ',\n        ')
@@ -1110,7 +1145,10 @@ class Select(_GsqlSpec):
                 sel = rel.relation.format_select(indent=indent+1)
                 sel = sel.strip().strip('\n')
                 relation = '\n%s(%s)' % (' '*(indent+1), sel)
-            else:    
+            elif (isinstance(rel, SelectRelation) and
+                  rel.schema is not None):
+                relation = '%s.%s' % (rel.schema, rel.relation,)
+            else:
                 relation = rel.relation
             alias = rel.alias or ''
             if i == 0 or rel.condition is None:
@@ -1228,7 +1266,7 @@ class Select(_GsqlSpec):
             select = '%s LIMIT %s\n' % (select, self._limit)
         return select
 
-    def output(self):
+    def _output(self):
         return ''
     
 
@@ -1242,7 +1280,7 @@ class _GsqlViewNG(Select):
     _UPDATE = 'UPDATE'
     _DELETE = 'DELETE'
    
-    def __init__(self, name, relations, 
+    def __init__(self, name, relations, schemas=None,
                  insert=(), update=(), delete=(),
                  insert_order=None, update_order=None, delete_order=None,
                  **kwargs):
@@ -1251,6 +1289,11 @@ class _GsqlViewNG(Select):
 
           name -- jméno view jako SQL string
           relations -- sekvence instancí tøídy SelectRelation
+          schemas -- není-li 'None', definuje schémata, ve kterých má být
+            view vytvoøeno, jde o sekvenci øetìzcù obsahujících textové
+            definice postgresové search_path urèující search_path nastavenou
+            pøi vytváøení view, view je samostatnì vytvoøeno pro ka¾dý
+            z prvkù této sekvence
           insert -- specifikace akce nad view pøi provedení operace INSERT.
             Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
             string, jedná se o SQL string definující kompletní DO INSTEAD akci.
@@ -1288,6 +1331,7 @@ class _GsqlViewNG(Select):
         #assert relations[0].jointype == JoinType.FROM
         super(ViewNG, self).__init__(relations, **kwargs)
         self._name = name
+        self._set_schemas(schemas)
         self._insert = insert
         self._update = update
         self._delete = delete
@@ -1322,9 +1366,15 @@ class _GsqlViewNG(Select):
         def get_default_body(kind):
             columns = self._columns
             body = []
+            def make_table_name(r):
+                table_name = r.relation
+                if isinstance(r, SelectRelation) and r.schema is not None:
+                    table_name = '%s.%s' % (r.schema, table_name,)
+                return table_name
             if kind == self._INSERT:
                 for r in relations(self._insert_order):
-                    table_alias = r.alias or r.relation
+                    table_name = make_table_name(r)
+                    table_alias = r.alias or table_name
                     column_names = []
                     column_values = []
                     for c in columns:
@@ -1342,7 +1392,7 @@ class _GsqlViewNG(Select):
                     values = ',\n      '.join(column_values)
                     if len(column_names) > 0:
                         body.append('INSERT INTO %s (\n      %s)\n     '
-                                    'VALUES (\n      %s)' % (r.relation,
+                                    'VALUES (\n      %s)' % (table_name,
                                                              bodycolumns,
                                                              values))
                 action = self._insert
@@ -1350,9 +1400,10 @@ class _GsqlViewNG(Select):
                 command = 'UPDATE'
                 suffix = 'upd'
                 for r in relations(self._update_order):
+                    table_name = make_table_name(r)
                     if isinstance(r.relation, Select):
                         continue
-                    table_alias = r.alias or r.relation
+                    table_alias = r.alias or table_name
                     column_names = []
                     values = []                
                     for c in columns:
@@ -1373,24 +1424,25 @@ class _GsqlViewNG(Select):
                         key_column = get_key_column(r)
                         if not key_column:
                             raise ProgramError("Update rule: no key column "
-                                           "specified", r.relation)
+                                           "specified", table_name)
                         condition = '%s = old.%s' % (key_column, key_column)                        
                         body.append('UPDATE %s SET\n      %s \n    WHERE %s' % 
-                                    (r.relation, settings, condition))
+                                    (table_name, settings, condition))
                 action = self._update
             elif kind == self._DELETE:
                 command = 'DELETE'
                 suffix = 'del'
                 for r in relations(self._delete_order):
+                    table_name = make_table_name(r)
                     if isinstance(r.relation, Select):
                         continue
                     key_column = get_key_column(r)
                     if not key_column:
                         raise ProgramError("Delete rule: no key column "
-                                           "specified", r.relation)
+                                           "specified", table_name)
                     condition = '%s = old.%s' % (key_column, key_column)
-                    body.append('DELETE FROM %s \n    WHERE %s' % (r.relation,
-                                                                   condition))
+                    body.append('DELETE FROM %s \n    WHERE %s' % (table_name,
+                                                                   condition,))
                 action = self._delete
             else:
                 raise ProgramError('Invalid rule specifier', kind)
@@ -1431,7 +1483,7 @@ class _GsqlViewNG(Select):
                (self._name, suffix, command, self._name, body)
 
         
-    def output(self, table_keys):
+    def _output(self, table_keys):
         select = self.format_select()
         result = 'CREATE OR REPLACE VIEW %s AS\n%s;\n\n' % \
                  (self._name, select)        
@@ -1787,7 +1839,7 @@ class _GsqlView(_GsqlSpec):
     def columns(self):
         return self._columns
         
-    def output(self, table_keys):
+    def _output(self, table_keys):
         columns = self._format_complex_columns()
         is_union = is_sequence(columns)        
         if self._key_columns is None:
@@ -1853,7 +1905,7 @@ class _GsqlFunction(_GsqlSpec):
     _SQL_NAME = 'FUNCTION'
     
     def __init__(self, name, arguments, output_type, body=None, security_definer=False,
-                 use_functions=(), **kwargs):
+                 use_functions=(), schemas=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -1869,6 +1921,11 @@ class _GsqlFunction(_GsqlSpec):
             modifikátoru 'out' v 'arguments')
           use_functions -- sekvence pythonových funkcí, jejich¾ definice mají
             být pøidány pøed definici funkce samotné
+          schemas -- není-li 'None', definuje schémata, ve kterých má být
+            funkce vytvoøena, jde o sekvenci øetìzcù obsahujících textové
+            definice postgresové search_path urèující search_path nastavenou
+            pøi vytváøení funkce, funkce je samostatnì vytvoøena pro ka¾dý
+            z prvkù této sekvence
           body -- definice funkce; mù¾e být buï SQL string obsahující tìlo
             funkce ve formì SQL pøíkazù, nebo pythonová funkce s dostupným
             zdrojovým kódem tvoøící tìlo funkce v jazyce plpython, nebo 'None',
@@ -1890,6 +1947,7 @@ class _GsqlFunction(_GsqlSpec):
             body = name
         self._body = body
         self._security_definer = security_definer
+        self._set_schemas(schemas)
         if self._doc is None and not isinstance(body, str):
             self._doc = body.__doc__
 
@@ -1993,7 +2051,7 @@ class _GsqlFunction(_GsqlSpec):
         else:
             return ""
     
-    def output(self):
+    def _output(self):
         # input_types = string.join(map(_gsql_format_type, self._input_types),
         #                          ',')
         # output_type = _gsql_format_type(self._output_type)
@@ -2035,13 +2093,18 @@ class _GsqlSequence(_GsqlSpec):
     _PGSQL_TYPE = 'S'
     
     def __init__(self, name, increment=None, minvalue=None,
-                 maxvalue=None, start=None, cycle=None, **kwargs):
+                 maxvalue=None, start=None, cycle=None, schemas=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
 
           name -- jméno sekvence, SQL string
           increment, minvalue, maxvalue, start, cycle -- viz 'create sequence'
+          schemas -- není-li 'None', definuje schémata, ve kterých má být
+            databázová sekvence vytvoøena, jde o tuple nebo list øetìzcù
+            obsahujících textové definice postgresové search_path urèující
+            search_path nastavenou pøi vytváøení databázové sekvence, tabulka
+            je samostatnì vytvoøena pro ka¾dý z prvkù tohoto tuple nebo listu
           kwargs -- argumenty pøedané konstruktoru pøedka
 
         """
@@ -2051,8 +2114,9 @@ class _GsqlSequence(_GsqlSpec):
         self._maxvalue = maxvalue
         self._start = start
         self._cycle = cycle
+        self._set_schemas(schemas)
         
-    def output(self):
+    def _output(self):
         result = 'CREATE SEQUENCE %s' % self._name
         if self._increment:
             result = result + ' INCREMENT %s' % self._increment
@@ -2097,7 +2161,7 @@ class _GsqlRaw(_GsqlSpec):
         self._sql = sql
         self._file_name = file_name
 
-    def output(self):
+    def _output(self):
         result = self._sql + '\n'
         if self._file_name:
             result = '''
@@ -2172,7 +2236,7 @@ class _GviewsqlRaw(_GsqlSpec):
                            kind, self._name, body)
         return rule
 
-    def output(self):
+    def _output(self):
         if isinstance(self._columns, types.TupleType):
             self._columns = ', '.join(self._columns)
         body = "SELECT %s\nFROM %s\n" % (self._columns, self._fromitems)
