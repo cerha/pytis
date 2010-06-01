@@ -365,7 +365,11 @@ class SystemRoles(Roles):
     access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
                                     (None, ('cms_user', pd.Permission.VIEW)))
 
-    
+
+class AllRoles(Roles):
+    title = _("Role")
+    help = _("Role dostupné pro pøiøazování práv akcím (obsahuje systémové i u¾ivatelsky definované role).")
+    condition = None
 
     
 class UserRoles(Specification):
@@ -424,7 +428,7 @@ class Rights(Specification):
         Field('rights_assignment_id',
               default=nextval('cms_rights_assignment_rights_assignment_id_seq')),
         Field('menu_item_id'),
-        Field('role_id', _("Role"), codebook=self._spec_name('Roles', False)),
+        Field('role_id', _("Role"), codebook=self._spec_name('AllRoles', False)),
         Field('role_name', _("Role")),
         Field('system_role'),
         Field('mod_id'),
