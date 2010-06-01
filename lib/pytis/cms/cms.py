@@ -140,6 +140,16 @@ class Modules(Specification):
         module = self._module(record['modname'].value())
         if module:
             from pytis.form import run_dialog, CheckListDialog, create_data_object
+            data = create_data_object(self._spec_name('Actions'))
+            data.select(condition=pd.EQ('mod_id', record['mod_id']))
+            existing_actions = {}
+            while True:
+                row = data.fetchone()
+                if row is None:
+                    break
+                else:
+                    existing_actions[row['name'].value()] = row['action_id']
+            data.close()
             actions = [attr[7:] for attr in dir(module)
                        if attr.startswith('action_') and callable(getattr(module, attr))]
             default_actions = [a[0] for a in self._DEFAULT_ACTIONS]
@@ -150,20 +160,11 @@ class Modules(Specification):
             result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
                                 message=_("Za¹krtnìte akce, které chcete zpøístupnit webovým "
                                           "u¾ivatelùm:"),
-                                items=zip([True for a in actions], actions, descriptions),
+                                items=zip([existing_actions.has_key(a) for a in actions],
+                                          actions, descriptions),
                                 columns=(_("Akce"), _("Popis")))
             if result is not None:
                 # TODO: Use a transaction.  Respect existing actions.
-                data = create_data_object(self._spec_name('Actions'))
-                data.select(condition=pd.EQ('mod_id', record['mod_id']))
-                existing_actions = {}
-                while True:
-                    row = data.fetchone()
-                    if row is None:
-                        break
-                    else:
-                        existing_actions[row['name'].value()] = row['action_id']
-                data.close()
                 for i, action in enumerate(actions):
                     if result[i]:
                         description_value = pd.Value(pd.String(), descriptions[i] or None)
