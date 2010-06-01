@@ -181,6 +181,8 @@ class Modules(Specification):
     _DEFAULT_ACTIONS = (
         ('view',    _(u"Zobrazení záznamu")),
         ('list',    _(u"Výpis v¹ech záznamù")),
+        ('export',  _(u"Export tabulky do CSV formátu")),
+        ('rss',     _(u"Zobrazení RSS kanálù")),
         ('insert',  _(u"Vlo¾ení nového záznamu")),
         ('update',  _(u"Editace stávajícího záznamu")),
         ('delete',  _(u"Smazání záznamu")),
