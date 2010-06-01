@@ -529,7 +529,7 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
         return result
 
 
-class EmbeddablePytisModule(wiking.PytisModule, EmbeddableModule):
+class EmbeddablePytisModule(wiking.PytisRssModule, EmbeddableModule):
     """Base class for pytis modules which may be embedded into page content.
 
     This class only modifies the generic class `wiking.PytisModule' to be usable within Pytis CMS
