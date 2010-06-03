@@ -1777,6 +1777,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         self._pg_initial_count = new_thread._pg_initial_count
                         self._pg_current_count = new_thread._pg_current_count
                         self._pg_finished = new_thread._pg_finished
+                        self._pg_terminate = False
                 elif min_value is not None:
                     while self._pg_current_count < min_value and not self._pg_finished:
                         self._pg_terminate_event.wait(timeout or self._PG_DEFAULT_TIMEOUT)
