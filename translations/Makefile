@@ -9,7 +9,7 @@ all: $(mo_files)
 	mkdir -p $*/LC_MESSAGES/
 
 $(shell ls *.po): pytis.%.po: pytis.pot
-	msgmerge -q --update $@ $< && touch $@
+	msgmerge -q --backup=none --update $@ $< && touch $@
 
 pytis.pot: $(shell find ../lib/pytis/web -name "*.py")
 	xgettext $^ --add-comments=Translators: --from-code=utf-8 -o $@
