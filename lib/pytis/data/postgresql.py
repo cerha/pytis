@@ -1732,6 +1732,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_finished = False
                 self._pg_terminate = False
                 self._pg_terminate_event = threading.Event()
+                self._pg_urgent = False
                 self._pg_correction = 0
             def run(self):
                 try:
@@ -1760,10 +1761,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         if step < max_step:
                             step = min(2*step, max_step)
                         test_count += step
+                        # Give other (perhaps more urgent) threads on the same
+                        # data object opportunity to call database queries.
+                        if not self._pg_urgent:
+                            time.sleep(0.1)
                     self._pg_finished = True
                 finally:
                     self._pg_terminate_event.set()
             def pg_count(self, min_value=None, timeout=None, corrected=False):
+                self._pg_urgent = True
                 if self._pg_terminate:
                     if not self._pg_finished and (min_value is None or self._pg_current_count < min_value):
                         new_thread = self.pg_restart()
@@ -1780,6 +1786,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 count = self._pg_current_count
                 if corrected:
                     count += self._pg_correction
+                self._pg_urgent = False
                 return count, self._pg_finished
             def pg_stop(self):
                 self._pg_terminate = True
