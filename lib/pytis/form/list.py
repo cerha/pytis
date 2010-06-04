@@ -880,9 +880,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     self.COMMAND_RESET_FORM_STATE.invoke()
                 else:
                     self._set_state_param('default_columns', columns)
-        # Update grid when lazy row count computation is in progress
+        # Update grid when lazy row count computation is in progress; we
+        # mustn't do it much often otherwise row count computation gets disrupted
+        # and slowed down significantly.  Hence the timeout value below.
         if (self._table.editing() is None and
-            self._last_updated_row_count != self._table.number_of_rows(timeout=0)):
+            self._last_updated_row_count != self._table.number_of_rows(timeout=0.3)):
             self._update_grid()
             self._show_position()
         # V budoucnu by zde mohlo být pøednaèítání dal¹ích øádkù nebo dat

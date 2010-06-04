@@ -465,6 +465,8 @@ class DataTable(object):
             count, finished = self._row_count, True
         else:
             count, finished = self._row_count.count(min_value=min_value, timeout=timeout)
+            if finished:
+                self._row_count = count
         if full_result:
             return count, finished
         else:
