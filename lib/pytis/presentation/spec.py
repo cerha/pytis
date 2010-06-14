@@ -95,9 +95,7 @@ class Style(object):
 
     def __init__(self, foreground=None, background=None, bold=None, slanted=None,
                  overstrike=None, underline=None, name=None):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           foreground -- background color as one of 'Color' constants, a tuple of three integers
             (RGB), or a hexadecimal string representation (such as '#ff0000')
@@ -185,9 +183,7 @@ class Button(object):
     
     def __init__(self, label=None, handler=None, enabled=None, action=None, width=None,
                  tooltip=None, active_in_popup_form=True, active_in_readonly_form=False):
-        """Initialize the instance.
-        
-        Arguments:
+        """Arguments:
 
           label -- button label as a string.  Can be None when 'action' is specified -- in this
             case the action title is used.
@@ -489,9 +485,7 @@ class Filter(object):
     """Predefined filtering condition specification."""
     
     def __init__(self, id, name, condition, fixed=True):
-        """Initialize condition specification.
-
-        Arguments:
+        """Arguments:
         
           id -- action identifier as a string.  It must be unique among all
             objects identifiers within a given form.
@@ -570,9 +564,7 @@ class GroupSpec(object):
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           items -- contents of the group as a sequence of field identifiers (strings), button
             specifications ('Button' instances), nested groups ('GroupSpec' instances) or callable
@@ -692,9 +684,7 @@ class TabGroup(GroupSpec):
     """Tabbed layout specification."""
     
     def __init__(self, *tabs):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
 
           tabs -- tab specifications as (LABEL, GROUP) pairs, where LABEL is the tab label and
             GROUP is the tab contents as a 'GroupSpec' instance.  If GROUP is a sequence, it will
@@ -1726,9 +1716,7 @@ class CodebookSpec(object):
     """
     def __init__(self, columns=None, sorting=None, display=None, prefer_display=False,
                  display_size=20, enable_autocompletion=True, begin_search=None):
-        """Initialize the instance.
-
-        Arguments:
+        """Arguments:
         
           display -- defines the method of retrieving the user visible value of the codebook item
             (see below for more information about user visible values).  None (the default value)
@@ -1915,9 +1903,7 @@ class ListLayout(object):
     """
     def __init__(self, title, meta=(), layout=None, content=(), image=None, anchor=None,
                  meta_labels=False, columns=1, allow_index=False):
-        """Initialize the instance.
-
-        Arguemnts:
+        """Arguments:
 
           title -- identifier of a field which will be used as a title for each item in the list (a
             string).  An 'lcg.TranslatableText' instance can also be passed as an interpolation
@@ -2020,9 +2006,7 @@ class Field(object):
     """
     def __init__(self, id=None, label=None, column_label=None, inherit=None,
                  **kwargs):
-        """Initialize field specification.
-
-        Arguments:
+        """Arguments:
 
           id -- field identifier as a string.  This identifier is used to refer
             to the field within all pytis operations.  The identifier is also
