@@ -558,24 +558,26 @@ class GroupSpec(object):
 
     The layout constitutes of a group of items, where each of the items is
     either a form field (referenced by its identifier) or a recoursively
-    embedded group.  The items are composed either horizontally (above each
-    other) or vertically (side by side).
+    embedded group.  The items are composed either vertically (above each
+    other) or horizontally (side by side).
 
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL):
         """Arguments:
 
-          items -- contents of the group as a sequence of field identifiers (strings), button
-            specifications ('Button' instances), nested groups ('GroupSpec' instances) or callable
-            objects which return one of the above when passed the current record ('PresentedRow'
-            instance) as an argument.  The last option allows building layouts dynamically
-            depending on the values/properties of the current record.
+          items -- contents of the group as a sequence of field identifiers
+            (strings), button specifications ('Button' instances), nested
+            groups ('GroupSpec' instances) or callable objects which return one
+            of the above when passed the current record ('PresentedRow'
+            instance) as an argument.  The last option allows building layouts
+            dynamically depending on the values/properties of the current
+            record.
             
           orientation -- defines how the fields are composed together as one of
-            'Orientation' class constants.  Horizontal group has items above
-            each other, vertical has items side by side.
-    
+            'Orientation' class constants.  Vertical group has items above each
+            other, horizontal has items side by side.
+
           label -- Group label as a (localizable) string displayed at the top
             of the group or None for unlabeled group.  Labeled groups are
             always framed.
