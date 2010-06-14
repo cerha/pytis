@@ -172,8 +172,8 @@ class ConfigForm(PopupEditForm):
             if doc:
                 descr += "\n" + doc
             return descr
-        fields = [FieldSpec(option, _LABELS.get(option, option), descr=descr(option),
-                            **_FIELDSPEC_KWARGS.get(option, {}))
+        fields = [Field(option, _LABELS.get(option, option), descr=descr(option),
+                        **_FIELDSPEC_KWARGS.get(option, {}))
                   for option in self._layout().order()]
         return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
                         fields, layout=self._layout(), **self._spec_kwargs)

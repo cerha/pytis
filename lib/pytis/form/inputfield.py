@@ -309,7 +309,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             
           row -- 'PresentedRow' instance.
 
-          id -- field specification as a 'FieldSpec' instance.
+          id -- field specification as a 'Field' instance.
             
           inline -- if true, only the basic input widget is created.  The label and all surrounding
             widgets are omitted, so that the widget can be used in the inline editation mode in of
@@ -629,7 +629,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._guardian
 
     def spec(self):
-        """Return field specification as a 'FieldSpec' instance."""
+        """Return field specification as a 'Field' instance."""
         return self._spec
 
     def type(self):
@@ -1321,7 +1321,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     Bude pou¾ito v pøípadì, ¾e datový typ definuje enumerátor typu
     'pytis.data.DataEnumerator' a prezentaèní specifikace políèka definuje
-    navázaný èíselník (viz. argument 'codebook' konstruktoru 'FieldSpec').
+    navázaný èíselník (viz. argument 'codebook' konstruktoru 'Field').
 
     Jako akci pro vyvolání výbìru definuje zobrazení formuláøe
     'pytis.form.CodebookForm'.  Název specifikace èíselníku je dán vý¹e

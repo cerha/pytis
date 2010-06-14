@@ -671,7 +671,7 @@ class FilterDialog(SFDialog):
         return self._perform, self._condition
 
 
-def sfs_columns(columns, data, labelfunc=FieldSpec.label):
+def sfs_columns(columns, data, labelfunc=Field.label):
     """Vra» sloupce vhodné k pou¾ití v konstruktorech SFS dialogù.
 
     (SFS = Search, Filter, Sort)

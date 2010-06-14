@@ -52,18 +52,18 @@ class PresentedRow_(unittest.TestCase):
             return sum is not None and sum + 1 or None
         def gt5(row):
             return row['sum'].value() > 5
-        self._fields = (FieldSpec('a'),
-                        FieldSpec('b'),
-                        FieldSpec('c', default=lambda : 5),
-                        FieldSpec('d', 
-                                  computer=Computer(twice, depends=('c',)),
-                                  editable=Computer(gt5, depends=('sum',))),
-                        FieldSpec('e', type=pytis.data.Integer(), virtual=True,
-                                  default=88),
-                        FieldSpec('sum', type=pytis.data.Integer(), virtual=True, 
-                                  computer=Computer(sum, depends=('b','c'))),
-                        FieldSpec('inc', type=pytis.data.Integer(), virtual=True,
-                                  computer=Computer(inc, depends=('sum',))))
+        self._fields = (Field('a'),
+                        Field('b'),
+                        Field('c', default=lambda : 5),
+                        Field('d', 
+                              computer=Computer(twice, depends=('c',)),
+                              editable=Computer(gt5, depends=('sum',))),
+                        Field('e', type=pytis.data.Integer(), virtual=True,
+                              default=88),
+                        Field('sum', type=pytis.data.Integer(), virtual=True, 
+                              computer=Computer(sum, depends=('b','c'))),
+                        Field('inc', type=pytis.data.Integer(), virtual=True,
+                              computer=Computer(inc, depends=('sum',))))
         
     def _check_values(self, row, pairs):
         for k, v in pairs:
@@ -279,10 +279,10 @@ class PresentedRow_(unittest.TestCase):
                    C('c', S(enumerator=enum)),
                    C('d', S(enumerator=enum)))
         data = pytis.data.Data(columns, key)
-        fields = (FieldSpec('a'),
-                  FieldSpec('b', display='y'),
-                  FieldSpec('c', display=lambda x: '-'+x+'-'),
-                  FieldSpec('d', display=lambda row: row['y'].value().lower()),
+        fields = (Field('a'),
+                  Field('b', display='y'),
+                  Field('c', display=lambda x: '-'+x+'-'),
+                  Field('d', display=lambda row: row['y'].value().lower()),
                   )
         row = PresentedRow(fields, data, None,
                            prefill={'b': '2', 'c': '3', 'd': '1'})

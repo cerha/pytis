@@ -85,7 +85,7 @@ class PresentedRow(object):
         
         Arguments:
 
-          fields -- a sequence of field specifications as 'FieldSpec' instances.
+          fields -- a sequence of field specifications as 'Field' instances.
           data -- the underlying data object as a 'pytis.data.Data' instance.
           transaction -- current transaction for data operations.
           row -- initial row data (see below).
@@ -529,7 +529,7 @@ class PresentedRow(object):
         self._set_row(row, reset=reset, prefill=prefill)
 
     def fields(self):
-        """Return the list of all field specifications as 'FieldSpec' instances."""
+        """Return the list of all field specifications as 'Field' instances."""
         return self._fields
         
     def has_key(self, key):
