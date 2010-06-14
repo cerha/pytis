@@ -2189,6 +2189,8 @@ class PopupEditForm(PopupForm, EditForm):
         panel = self._create_form_controls()
         buttons = self._create_buttons()
         status_bar = self._create_status_bar()
+        # This is needed since wx2.8 to force panel's real size.
+        panel.SetMinSize(panel.GetSize())
         # Add parts to the sizer.
         sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
         sizer.Add(panel, 1, wx.EXPAND)
