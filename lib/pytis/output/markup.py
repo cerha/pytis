@@ -90,7 +90,7 @@ class _Container(_Mark):
         return [_something_to_lcg(c) for c in self._contents]
         
     def lcg(self):
-        return lcg.Container(self._lcg_contents())
+        return lcg.Container(self._lcg_contents(), orientation=lcg.Orientation.HORIZONTAL)
     
 
 class Null(_Mark):
@@ -126,25 +126,29 @@ class Center(_Container):
     """Značka horizontálního vycentrování svého obsahu."""
     def lcg(self):
         return lcg.Container(self._lcg_contents(),
-                             halign=lcg.HorizontalAlignment.CENTER)
+                             halign=lcg.HorizontalAlignment.CENTER,
+                             orientation=lcg.Orientation.HORIZONTAL)
 
 class AlignLeft(_Container):
     """Značka zarovnání svého obsahu vlevo."""
     def lcg(self):
         return lcg.Container(self._lcg_contents(),
-                             halign=lcg.HorizontalAlignment.LEFT)
+                             halign=lcg.HorizontalAlignment.LEFT,
+                             orientation=lcg.Orientation.HORIZONTAL)
 
 class AlignRight(_Container):
     """Značka zarovnání svého obsahu vpravo."""
     def lcg(self):
         return lcg.Container(self._lcg_contents(),
-                             halign=lcg.HorizontalAlignment.RIGHT)    
-
+                             halign=lcg.HorizontalAlignment.RIGHT,
+                             orientation=lcg.Orientation.HORIZONTAL)
+    
 class VCenter(_Container):
-    """Značka horizontálního vycentrování svého obsahu."""
+    """Značka vertikálního vycentrování svého obsahu."""
     def lcg(self):
         return lcg.Container(self._lcg_contents(),
-                             valign=lcg.VerticalAlignment.CENTER)
+                             valign=lcg.VerticalAlignment.CENTER,
+                             orientation=lcg.Orientation.HORIZONTAL)
 
 class _Space(_Mark):
 
