@@ -380,7 +380,7 @@ class Action(_ActionItem):
             dynamically) in runtime.  In Wiking web applications these
             arguments are passed as ordinary request parameters.  These
             arguments may also be passed directly as additional Action
-            constructor keyword arguemnts for backwards compatibility, but this
+            constructor keyword arguments for backwards compatibility, but this
             practice is deprecated.
           hotkey -- keyboard shortcut (implemented only in wx forms).
         
@@ -908,7 +908,7 @@ class ViewSpec(object):
             zpráva, která má být zobrazena u¾ivateli.
             
           cleanup -- a function for final actions after inserting/updating a record.  The function
-            must accept two arguemnts -- the first one is the row after performing the database
+            must accept two arguments -- the first one is the row after performing the database
             operation (insert/update) and the second is the edited/inserted row before the database
             operation (row values may be changed by the operation -- default values may be supplied
             and/or triggers/rules may modify the data).  Both arguments are `PresentedRow'
