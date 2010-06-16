@@ -2145,7 +2145,7 @@ class _GsqlSequence(_GsqlSpec):
 class _GsqlRaw(_GsqlSpec):
     """Prosté SQL pøíkazy."""
     
-    def __init__(self, sql, file_name=None, **kwargs):
+    def __init__(self, sql, file_name=None, schemas=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -2155,6 +2155,11 @@ class _GsqlRaw(_GsqlSpec):
             nìjakého SQL souboru, je tento argument jménem onoho souboru
             (v jakékoliv podobì, tento argument má pouze funkci dokumentaèní);
             v jiném pøípadì je 'None'
+          schemas -- není-li 'None', definuje schémata, ve kterých mají být
+            pøíkazy provedeny, jde o sekvenci øetìzcù obsahujících textové
+            definice postgresové search_path urèující search_path nastavenou
+            pøi provádìní pøíkazù, pøíkazy jsou samostatnì provedeny pro ka¾dý
+            z prvkù této sekvence
           kwargs -- argumenty pøedané konstruktoru pøedka
 
         """
@@ -2163,6 +2168,7 @@ class _GsqlRaw(_GsqlSpec):
         super(_GsqlRaw, self).__init__(**kwargs)
         self._sql = sql
         self._file_name = file_name
+        self._set_schemas(schemas)
 
     def _output(self):
         result = self._sql + '\n'
@@ -2537,7 +2543,7 @@ def sequence(*args, **kwargs):
     return _gsql_process(_GsqlSequence, args, kwargs)
 
 
-def sql_raw(text, name=None, depends=()):
+def sql_raw(text, name=None, depends=(), **kwargs):
     """Specifikace prostých SQL pøíkazù.
 
     Argumenty:
@@ -2549,7 +2555,9 @@ def sql_raw(text, name=None, depends=()):
     obsa¾ený kód je mimo dosah v¹ech kontrol.
       
     """
-    return _gsql_process(_GsqlRaw, (text,), {'name': name, 'depends': depends})
+    kwargs = copy.copy(kwargs)
+    kwargs.update({'name': name, 'depends': depends})
+    return _gsql_process(_GsqlRaw, (text,), kwargs)
 
 
 def view_sql_raw(*args, **kwargs):
@@ -2557,7 +2565,7 @@ def view_sql_raw(*args, **kwargs):
     return _gsql_process(_GviewsqlRaw, args, kwargs)
 
 
-def sql_raw_include(file_name, depends=()):
+def sql_raw_include(file_name, depends=(), **kwargs):
     """Specifikace souboru obsahujícího SQL pøíkazy, který má být naèten.
 
     Tento soubor je beze zmìny zahrnut do výsledných SQL pøíkazù.
@@ -2572,8 +2580,9 @@ def sql_raw_include(file_name, depends=()):
     f = open(file_name)
     sql = f.read()
     f.close()
-    return _gsql_process(_GsqlRaw, (sql,),
-                         {'depends': depends, 'file_name': file_name})
+    kwargs = copy.copy(kwargs)
+    kwargs.update({'depends': depends, 'file_name': file_name})
+    return _gsql_process(_GsqlRaw, (sql,), kwargs)
 
 
 def include(file_name):
