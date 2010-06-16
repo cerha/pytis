@@ -172,7 +172,9 @@ class _Space(_Mark):
             mark = lcg.HSpace
         else:
             raise Exception('Unexpected orientation', self._orientation)
-        size = lcg.UMm(self._size)
+        size = self._size
+        if not isinstance(size, lcg.Unit):
+            size = lcg.UMm(self._size)
         return mark(size)
 
 class VSpace(_Space):
@@ -184,6 +186,7 @@ class VSpace(_Space):
         Argumenty:
 
           height -- požadovaná výška objektu v milimetrech, nezáporné číslo;
+            může být i instance 'lcg.Unit';
             může být též 'None', v kterémžto případě objekt bude mít největší
             rozumnou výšku, přičemž \"největší rozumná výška\" není nijak
             exaktně definována
@@ -200,6 +203,7 @@ class HSpace(_Space):
         Argumenty:
 
           width -- požadovaná šířka objektu v milimetrech, nezáporné číslo;
+            může být i instance 'lcg.Unit';
             může být též 'None', v kterémžto případě objekt bude mít největší
             rozumnou šířku, přičemž \"největší rozumná šířka\" není nijak
             exaktně definována
@@ -428,9 +432,9 @@ class Document(_Container):
         "Return the document(s) as an 'lcg.ContentNode' instance."
         return lcg.ContentNode(id='',
                                content=self.lcg(),
-                               page_header=self.arg_page_header,
-                               page_footer=self.arg_page_footer,
-                               first_page_header=self.arg_first_page_header)
+                               page_header=self.arg_page_header.lcg(),
+                               page_footer=self.arg_page_footer.lcg(),
+                               first_page_header=self.arg_first_page_header.lcg())
 
 class Table(_Mark):
     """Nejvýše jednostránková tabulka s předpřipravenými daty.

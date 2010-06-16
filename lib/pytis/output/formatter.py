@@ -1183,7 +1183,11 @@ class LCGFormatter(object):
 
     def _pdf(self):
         body = self._body
-        lcg_content = body.lcg_document()
+        if isinstance(body, (list, tuple,)):
+            children = [document.lcg_document() for document in body]
+            lcg_content = lcg.ContentNode(id='', content=lcg.Content(), children=children)
+        else:
+            lcg_content = body.lcg_document()
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None)
         pdf = exporter.export(context)
