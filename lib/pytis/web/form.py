@@ -167,7 +167,7 @@ class LayoutForm(FieldForm):
         # directly, but previously stacked fields must be added before.
         def append(result, fields, content):
             if fields:
-                result.append(self._export_fields(g, fields))
+                result.append(self._export_packed_fields(context, fields))
                 del fields[:]
             if content:
                 result.append(content)
@@ -190,12 +190,16 @@ class LayoutForm(FieldForm):
                                           id='%s-%d' % (id or 'group', group_number)))
             else:
                 field = self._fields[item]
-                ctrl = self._export_field(context, field, editable=self._EDITABLE)
-                if ctrl is not None:
-                    label = self._export_field_label(context, field)
-                    help = self._export_field_help(context, field)
-                    fields.append((field, label, ctrl, help))
+                if group.orientation() == Orientation.VERTICAL:
+                    fields.append(field)
                     wrap = True
+                else:
+                    ctrl = self._export_field(context, field, editable=self._EDITABLE)
+                    help = self._export_field_help(context, field)
+                    if help is not None:
+                        ctrl += help
+                    append(result, fields, self._export_field_label(context, field))
+                    append(result, fields, ctrl)
         append(result, fields, None) # Make sure all remaining fields are appended.
         if group.orientation() == Orientation.HORIZONTAL:
             result = [g.table(g.tr([g.td(x, valign='top', cls=(i != 0 and 'spaced' or None))
@@ -214,7 +218,11 @@ class LayoutForm(FieldForm):
             result = concat(result, separator="\n")
         return result
 
-    def _export_packed_field(self, g, field, label, ctrl, help, single=False):
+    def _export_packed_field(self, context, field, single=False):
+        g = context.generator()
+        ctrl = self._export_field(context, field, editable=self._EDITABLE)
+        label = self._export_field_label(context, field)
+        help = self._export_field_help(context, field)
         if self._allow_table_layout:
             if help is not None:
                 ctrl += help
@@ -235,21 +243,20 @@ class LayoutForm(FieldForm):
                     td += g.td(ctrl, cls='ctrl', valign='top', width='100%', colspan=2)
             return g.tr(td)
         else:
-            rows = (concat(label, g.br()), concat(ctrl, g.br()))
+            content = (concat(label, g.br()), concat(ctrl, g.br()))
             if help:
-                rows += (help,)
-            return g.div(rows, cls="field")
+                content += (help,)
+            return g.div(content, cls="field")
         
-    def _export_fields(self, g, fields):
-        if len(fields) == 1 and fields[0][0].spec.compact():
+    def _export_packed_fields(self, context, fields):
+        if len(fields) == 1 and fields[0].spec.compact():
             # Avoid unnecessary packing of a single compact field.
-            field, label, ctrl, help = fields[0]
-            return self._export_packed_field(g, field, label, ctrl, help, single=True)
-        rows = [self._export_packed_field(g, field, label, ctrl, help)
-                for field, label, ctrl, help in fields]
-        if self._allow_table_layout:
-            rows = g.table(rows, cls='packed-fields')
-        return concat(rows, separator="\n")
+            return self._export_packed_field(context, field, single=True)
+        else:
+            rows = [self._export_packed_field(context, field) for field in fields]
+            if self._allow_table_layout:
+                rows = context.generator().table(rows, cls='packed-fields', border=0)
+            return concat(rows, separator="\n")
 
     def _export_field_label(self, context, field):
         if field.label:
