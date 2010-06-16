@@ -1891,9 +1891,13 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                                   and cmd.enabled(**args),
                          width=button.width() and dlg2px(parent, 4*button.width()))
 
-    def _create_group(self, parent, group):
-        # Each continuous sequence of fields is first stored in an array and finally packed into a
-        # grid sizer by self._pack_fields() and added to this group's sizer.
+    def _create_group(self, parent, group, aligned=False):
+        # Each continuous sequence of fields is first stored in an array and
+        # finally packed into a grid sizer by self._pack_fields() and added to
+        # this group's sizer.  'aligned' is True if this group is aligned
+        # within a vertical pack.  In this case the first field label is
+        # omitted, since it was already placed within the pack's labels column
+        # and the outer borders around this group are suppressed.
         orientation = orientation2wx(group.orientation())
         if group.label() is not None:
             box = wx.StaticBox(parent, -1, group.label())
@@ -1905,20 +1909,27 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         gap = dlg2px(parent, group.gap())
         border = dlg2px(parent, group.border())
         border_style = border_style2wx(group.border_style())
-        for item in group.items():
+        for i, item in enumerate(group.items()):
             if is_string(item):
                 if self._view.field(item).width() == 0:
                     continue
                 item = self._field(item)
-            if group.orientation() == Orientation.VERTICAL \
-                   and (isinstance(item, InputField)
+            if group.orientation() == Orientation.VERTICAL:
+                if isinstance(item, Button) \
+                        or isinstance(item, InputField) \
                         and not item.spec().compact() \
-                        or isinstance(item, Button)):
-                # This field will become a part of current pack.
-                pack.append(item)
-                continue
+                        or isinstance(item, GroupSpec) \
+                        and item.label() is None \
+                        and item.orientation() == Orientation.HORIZONTAL \
+                        and is_string(item.items()[0]) \
+                        and not self._field(item.items()[0]).spec().compact() \
+                        and not isinstance(self._field(item.items()[0]).type(), pytis.data.Boolean):
+                    # This item will become a part of the current aligned pack.
+                    # Nested horizontal groups are aligned if they start with a labeled field.
+                    pack.append(item)
+                    continue
             if len(pack) != 0:
-                # Add the latest pack into the sizer (if there was one).
+                # Add the latest aligned pack into the sizer (if there was one).
                 sizer.Add(self._pack_fields(parent, pack, space, gap),
                           0, wx.ALIGN_TOP|border_style, border)
                 pack = []
@@ -1926,16 +1937,20 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 x = self._create_group(parent, item)
             elif isinstance(item, InputField):
                 if item.spec().compact():
-                    # This is a compact field (not a part of the pack).
+                    # This is a compact field (not a part of the aligned pack).
                     x = wx.BoxSizer(wx.VERTICAL)
                     x.Add(item.label(), 0, wx.ALIGN_LEFT)
                     x.Add(item.widget())
                 else:
-                    # This only happens in a HORIZONTAL group.
-                    x = self._pack_fields(parent, (item,), space, gap)
+                    # Fields in a HORIZONTAL group are packed separately (label and ctrl).
+                    x = self._pack_fields(parent, (item,), space, gap,
+                                          suppress_label=(i==0 and aligned))
             else:
                 x = self._create_button(parent, item)
-            sizer.Add(x, 0, wx.ALIGN_TOP|border_style, border)
+            bstyle = border_style
+            if aligned:
+                bstyle = bstyle & ~(wx.LEFT|wx.TOP|wx.BOTTOM)
+            sizer.Add(x, 0, wx.ALIGN_TOP|bstyle, border)
         if len(pack) != 0:
             # pøidej zbylý sled políèek (pokud nìjaký byl)
             sizer.Add(self._pack_fields(parent, pack, space, gap),
@@ -1948,26 +1963,36 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             sizer = s
         return sizer
 
-    def _pack_fields(self, parent, items, space, gap):
-        # Pack the sequence of fields and/or buttons into a grid.
+    def _pack_fields(self, parent, items, space, gap, suppress_label=False):
+        # Pack the sequence of fields and/or buttons aligned vertically into a grid.
         #  items -- sequence of field identifiers and/or Button instances.
         #  space -- space between the control and its label in dlg units; integer
         #  gap -- space between the fields in dlg units; integer
+        #  suppress_label -- True if the field label should be supressed.  Used
+        #    for vertically aligned horizontal groups (the label is placed in
+        #    the parent pack)
         grid = wx.FlexGridSizer(len(items), 2, gap, space)
         for item in items:
-            if isinstance(item, Button):
+            if isinstance(item, GroupSpec):
+                field = self._field(item.items()[0])
+                label = field.label()
+                if label: 
+                    grid.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 2)
+                grid.Add(self._create_group(parent, item, aligned=True))
+            elif isinstance(item, Button):
                 button = self._create_button(parent, item)
                 style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
                 label = wx.StaticText(parent, -1, "",
                                       style=wx.ALIGN_RIGHT)
                 grid.Add(label, 0, style, 2)
                 grid.Add(button)                
-            else:    
-                if item.height() > 1:
-                    style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
-                else:
-                    style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-                grid.Add(item.label(), 0, style, 2)
+            else:
+                if not suppress_label:
+                    if item.height() > 1:
+                        style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
+                    else:
+                        style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+                    grid.Add(item.label(), 0, style, 2)
                 grid.Add(item.widget())
         return grid
 
