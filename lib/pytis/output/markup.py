@@ -430,11 +430,17 @@ class Document(_Container):
 
     def lcg_document(self):
         "Return the document(s) as an 'lcg.ContentNode' instance."
+        def arg(definition):
+            if definition is None or isinstance(definition, lcg.Content):
+                result = definition
+            else:
+                result = definition.lcg()
+            return result
         return lcg.ContentNode(id='',
                                content=self.lcg(),
-                               page_header=self.arg_page_header.lcg(),
-                               page_footer=self.arg_page_footer.lcg(),
-                               first_page_header=self.arg_first_page_header.lcg())
+                               page_header=arg(self.arg_page_header),
+                               page_footer=arg(self.arg_page_footer),
+                               first_page_header=arg(self.arg_first_page_header))
 
 class Table(_Mark):
     """Nejvýše jednostránková tabulka s předpřipravenými daty.
