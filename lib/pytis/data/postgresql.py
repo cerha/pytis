@@ -1746,11 +1746,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     query = data._pdbb_command_move_absolute.format(args)
                     data._pg_query(query, transaction=transaction)
                     while True:
-                        if self._pg_terminate:
+                        if self._pg_dead():
                             self._pg_initial_count = self._pg_current_count
                             args = dict(selection=selection, number=self._pg_position()+1)
                             query = data._pdbb_command_move_absolute.format(args)
-                            data._pg_query(query, transaction=transaction)
+                            if not transaction or transaction.open():
+                                # The transaction can still become dead before
+                                # the following query gets called, but the
+                                # resulting error should be harmless.
+                                data._pg_query(query, transaction=transaction)
                             return
                         args = dict(selection=selection, number=step)
                         query = data._pdbb_command_move_forward.format(args)
@@ -1768,9 +1772,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     self._pg_finished = True
                 finally:
                     self._pg_terminate_event.set()
+            def _pg_dead(self):
+                return (self._pg_terminate or
+                        (self._pg_transaction and not self._pg_transaction.open()))
             def pg_count(self, min_value=None, timeout=None, corrected=False):
                 self._pg_urgent = True
-                if self._pg_terminate:
+                if self._pg_dead():
                     pass
                 elif min_value is not None:
                     while self._pg_current_count < min_value and not self._pg_finished:
@@ -1783,7 +1790,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_urgent = False
                 return count, self._pg_finished
             def pg_stop(self):
-                if self._pg_terminate:
+                if self._pg_dead():
                     return
                 self._pg_terminate = True
                 self._pg_terminate_event.wait()
