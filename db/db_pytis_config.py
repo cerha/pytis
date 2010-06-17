@@ -9,6 +9,7 @@ execfile('db_pytis_config.py', copy.copy(globals()))
 """
 
 db_rights = globals().get('Gpytis_config', None)
+db_schemas = globals().get('Gpytis_config_schemas', None)
 
 if not db_rights:
     raise ProgramError('No rights specified! Please define Gpytis_config')
@@ -17,6 +18,7 @@ table('_pytis_config',
       (P('uzivatel', TUser),
        C('config', TString)),
       grant=db_rights,
+      schemas=db_schemas,
       doc="""Tabulka pro ukládání configu pytisu."""      
       )
 
