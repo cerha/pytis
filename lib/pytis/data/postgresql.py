@@ -1771,24 +1771,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             def pg_count(self, min_value=None, timeout=None, corrected=False):
                 self._pg_urgent = True
                 if self._pg_terminate:
-                    if not self._pg_finished and (min_value is None or self._pg_current_count < min_value):
-                        new_thread = self.pg_restart()
-                        new_thread.pg_count(min_value=min_value, timeout=timeout)
-                        self._pg_initial_count = new_thread._pg_initial_count
-                        self._pg_current_count = new_thread._pg_current_count
-                        self._pg_finished = new_thread._pg_finished
-                        self._pg_terminate = False
+                    pass
                 elif min_value is not None:
                     while self._pg_current_count < min_value and not self._pg_finished:
                         self._pg_terminate_event.wait(timeout or self._PG_DEFAULT_TIMEOUT)
                 elif not self._pg_finished:
-                        self._pg_terminate_event.wait(timeout)
+                    self._pg_terminate_event.wait(timeout)
                 count = self._pg_current_count
                 if corrected:
                     count += self._pg_correction
                 self._pg_urgent = False
                 return count, self._pg_finished
             def pg_stop(self):
+                if self._pg_terminate:
+                    return
                 self._pg_terminate = True
                 self._pg_terminate_event.wait()
                 data = self._pg_data
