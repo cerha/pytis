@@ -2634,7 +2634,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self.select(condition=self._pg_last_select_condition,
                     sort=self._pg_last_select_sorting,
                     transaction=self._pg_last_select_transaction)
-        self.skip(row_number)
+        if row_number >= 0:
+            self.skip(row_number)
         return True
 
     def _pg_number_of_rows_(self, min_value=None):
