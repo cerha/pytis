@@ -155,61 +155,165 @@ class LayoutForm(FieldForm):
     _ALIGN_NUMERIC_FIELDS = False
     _EDITABLE = False
 
+    class _GroupContent(object):
+        """Export helper class.
+
+        This class tries to encapsulate some of the group export logic to make
+        the '_export_group()' method more readable.
+        
+        """
+        def __init__(self):
+            self._content = []
+            self._needs_panel = False
+            self._has_labeled_items = False
+            self._allow_right_aligned_fields = False
+            self._last_field_was_right_aligned = False
+            
+        def append(self, content, label=None, fullsize=True, right_aligned=False,
+                   needs_panel=False):
+            """Append exported content to the group .
+            
+            Arguments:
+              content -- exported content of one group item.
+              label -- exported label of one group item.  This is typically
+                used for fields, but there may be also a labeled nested group.
+              fullsize -- boolean flag only relevent for vertical group, where
+                fullsize content spans across the label and field column (if
+                there are any labeled fields).  Fullsize content has no label,
+                but having no label doesn't imply being fullsize.
+              right_aligned -- only relevent for vertical group.  Group allows
+                right aligned fields are aligned to the right, if at least two
+                right aligned fields appear above each other.
+              needs_panel -- boolean indicating that the appended content
+                should appear on a visually distinct panel.  A group will be
+                rendered as a panel if there is at least one item which needs a
+                panel.  If the group is only a composition of nested groups, it
+                does not need a panel, if it contains fields and other directly
+                visible content needs a panel.
+              
+            """
+            self._content.append((label, content, fullsize, right_aligned))
+            if needs_panel:
+                self._needs_panel = needs_panel
+            if right_aligned and self._last_field_was_right_aligned:
+                self._allow_right_aligned_fields = True
+            self._last_field_was_right_aligned = right_aligned
+            if label:
+                self._has_labeled_items = True
+            if needs_panel:
+                self._needs_panel = needs_panel
+                
+        def needs_panel(self):
+            return self._needs_panel
+        def has_labeled_items(self):
+            return self._has_labeled_items
+        def allow_right_aligned_fields(self):
+            return self._allow_right_aligned_fields
+        def content(self):
+            return self._content
+            
     def __init__(self, view, row, layout=None, allow_table_layout=True, **kwargs):
         assert layout is None or isinstance(layout, GroupSpec)
         self._layout = layout
         super(LayoutForm, self).__init__(view, row, **kwargs)
         self._allow_table_layout = allow_table_layout
         
-    def _export_group(self, context, group, inner=False, id=None):
-        # Fields are first stacked into `fields' and every continuous sequence of fields is
-        # appended to the result all together wrapped into a grid.  Other elements are inserted
-        # directly, but previously stacked fields must be added before.
-        def append(result, fields, content):
-            if fields:
-                result.append(self._export_packed_fields(context, fields))
-                del fields[:]
-            if content:
-                result.append(content)
+    def _export_group(self, context, group, inner=False, id=None, omit_first_field_label=False):
         g = context.generator()
-        result = []
-        fields = []
-        wrap = False
-        group_number = 0
-        for item in group.items():
+        content = self._GroupContent()
+        subgroup_number = 0
+        for i, item in enumerate(group.items()):
             if callable(item):
                 item = item(self._row)
-            if isinstance(item, Button):
-                pass
-            elif isinstance(item, lcg.Content):
-                append(result, fields, item.export(context))
-            elif isinstance(item, GroupSpec):
-                group_number += 1
-                append(result, fields,
-                       self._export_group(context, item, inner=True,
-                                          id='%s-%d' % (id or 'group', group_number)))
-            else:
+            if isinstance(item, (str, unicode)):
                 field = self._fields[item]
-                if group.orientation() == Orientation.VERTICAL:
-                    fields.append(field)
-                    wrap = True
+                if omit_first_field_label and i == 0:
+                    label = None
                 else:
-                    ctrl = self._export_field(context, field, editable=self._EDITABLE)
-                    help = self._export_field_help(context, field)
-                    if help is not None:
-                        ctrl += help
-                    append(result, fields, self._export_field_label(context, field))
-                    append(result, fields, ctrl)
-        append(result, fields, None) # Make sure all remaining fields are appended.
+                    label = self._export_field_label(context, field)
+                ctrl = self._export_field(context, field, editable=self._EDITABLE)
+                help = self._export_field_help(context, field)
+                if help is not None:
+                    ctrl += help
+                if field.spec.compact():
+                    if label:
+                        ctrl = label + g.br() +"\n"+ ctrl
+                    content.append(ctrl, needs_panel=True)
+                else:
+                    # Codebook field display is not numeric even though the underlying type is...
+                    right_aligned = (self._ALIGN_NUMERIC_FIELDS and not field.type.enumerator()
+                                     and isinstance(field.type, pytis.data.Number))
+                    content.append(ctrl, label=label, right_aligned=right_aligned,
+                                   needs_panel=True, fullsize=False)
+            elif isinstance(item, GroupSpec):
+                subgroup_number += 1
+                subgroup_id = '%s-%d' % (id or 'group', subgroup_number)
+                label = None
+                if group.orientation() == Orientation.VERTICAL \
+                        and item.orientation() == Orientation.HORIZONTAL \
+                        and isinstance(item.items()[0], str):
+                    field = self._fields[item.items()[0]]
+                    # Nested horizontal group which starts with a labeled field will be aligned
+                    # within the current vertical group if possible.
+                    if not field.spec.compact():
+                        label = self._export_field_label(context, field)
+                content.append(self._export_group(context, item, inner=True, id=subgroup_id,
+                                                  omit_first_field_label=label is not None),
+                               label=label, fullsize=label is None)
+            elif isinstance(item, lcg.Content):
+                content.append(item.export(context))
+            elif isinstance(item, Text):
+                text = g.div(g.escape(item.text()).replace("\n", g.br()))
+                content.append(text, fullsize=False, needs_panel=True)
+            elif isinstance(item, Button):
+                pass
+            else:
+                raise ProgramError("Unsupported layout item type:", item)
         if group.orientation() == Orientation.HORIZONTAL:
-            result = [g.table(g.tr([g.td(x, valign='top', cls=(i != 0 and 'spaced' or None))
-                                    for i, x in enumerate(result)]),
-                              cellspacing=0, cellpadding=0, cls='horizontal-group')]
-            wrap = False
+            def td(i, label, content_):
+                spaced = (i != 0 and ' spaced' or '')
+                if label:
+                    return (g.th(label, valign='top', cls='label'+spaced) +
+                            g.td(content_, valign='top', cls='ctrl'))
+                else:
+                    return g.td(content_, valign='top', cls='ctrl'+spaced)
+            cells = [td(i, label, content_)
+                     for i, (label, content_, fullsize, right_aligned)
+                     in enumerate(content.content())]
+            result = [g.table([g.tr(cells)], cellspacing=0, cellpadding=0,
+                              cls='horizontal-group' + (not omit_first_field_label
+                                                        and ' expanded' or ''))]
+        else:
+            def td(label, content_, fullsize, right_aligned, fullspan, normalspan):
+                if fullsize:
+                    return g.td(content_, cls='ctrl', valign='top', colspan=fullspan)
+                else:
+                    if content.allow_right_aligned_fields() and right_aligned:
+                        spacer = g.td('', width='100%', cls='spacer')
+                        kwargs =  dict(align='right')
+                    else:
+                        spacer = ''
+                        kwargs =  dict(width='100%', colspan=normalspan)
+                    return (g.th(label or '', valign='top', cls='label', align='right') +
+                            g.td(content_, cls='ctrl', valign='top', **kwargs) + spacer)
+            if content.has_labeled_items():
+                if content.allow_right_aligned_fields():
+                    normalspan = 2
+                    fullspan = 3
+                else:
+                    normalspan = None
+                    fullspan = 2
+                rows = [g.tr(td(label, content_, fullsize, right_aligned, fullspan, normalspan))
+                        for label, content_, fullsize, right_aligned in content.content()]
+                result = [g.table(rows, cls='vertical-group')]
+            else:
+                result = [item[1] for item in content.content()]
         cls = 'group' + (id and ' ' + id or '')
         if group.label():
             result = g.fieldset(group.label()+':', result, cls=cls)
-        elif wrap:
+        elif content.needs_panel():
+            # If there are any items which need a panel and there is no
+            # fieldset panel, add a panel styled div.
             result = g.div(result, cls=cls)
         elif not inner:
             # This fieldset fixes MSIE display of top-level horizontal groups...
@@ -218,45 +322,9 @@ class LayoutForm(FieldForm):
             result = concat(result, separator="\n")
         return result
 
-    def _export_packed_field(self, context, field, single=False):
-        g = context.generator()
-        ctrl = self._export_field(context, field, editable=self._EDITABLE)
-        label = self._export_field_label(context, field)
-        help = self._export_field_help(context, field)
-        if self._allow_table_layout:
-            if help is not None:
-                ctrl += help
-            if field.spec.compact():
-                if label:
-                    label += g.br() +"\n"
-                if single:
-                    return label + ctrl
-                td = g.td(label + ctrl, colspan=3)
-            else:
-                td = g.th(label or '', valign='top', cls='label', align='right')
-                if self._ALIGN_NUMERIC_FIELDS and not field.type.enumerator() \
-                       and isinstance(field.type, pytis.data.Number):
-                    # Codebook field display is not numeric even though the underlying type is...
-                    td += g.td(ctrl, cls='ctrl', valign='top', align='right') + \
-                          g.td('', width='100%', cls='spacer')
-                else:
-                    td += g.td(ctrl, cls='ctrl', valign='top', width='100%', colspan=2)
-            return g.tr(td)
-        else:
-            content = (concat(label, g.br()), concat(ctrl, g.br()))
-            if help:
-                content += (help,)
-            return g.div(content, cls="field")
-        
-    def _export_packed_fields(self, context, fields):
-        if len(fields) == 1 and fields[0].spec.compact():
-            # Avoid unnecessary packing of a single compact field.
-            return self._export_packed_field(context, field, single=True)
-        else:
-            rows = [self._export_packed_field(context, field) for field in fields]
-            if self._allow_table_layout:
-                rows = context.generator().table(rows, cls='packed-fields', border=0)
-            return concat(rows, separator="\n")
+            
+
+    
 
     def _export_field_label(self, context, field):
         if field.label:
