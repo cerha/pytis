@@ -1891,6 +1891,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                                   and cmd.enabled(**args),
                          width=button.width() and dlg2px(parent, 4*button.width()))
 
+    def _create_text(self, parent, text):
+        return wx.StaticText(parent, -1, text.text(), style=wx.ALIGN_LEFT)
+
     def _create_group(self, parent, group, aligned=False):
         # Each continuous sequence of fields is first stored in an array and
         # finally packed into a grid sizer by self._pack_fields() and added to
@@ -1915,7 +1918,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     continue
                 item = self._field(item)
             if group.orientation() == Orientation.VERTICAL:
-                if isinstance(item, Button) \
+                if isinstance(item, (Button, Text)) \
                         or isinstance(item, InputField) \
                         and not item.spec().compact() \
                         or isinstance(item, GroupSpec) \
@@ -1945,8 +1948,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     # Fields in a HORIZONTAL group are packed separately (label and ctrl).
                     x = self._pack_fields(parent, (item,), space, gap,
                                           suppress_label=(i==0 and aligned))
-            else:
+            elif isinstance(item, Button):
                 x = self._create_button(parent, item)
+            elif isinstance(item, Text):
+                x = self._create_text(parent, item)
+            else:
+                raise ProgramError("Unsupported layout item!", item)
             bstyle = border_style
             if aligned:
                 bstyle = bstyle & ~(wx.LEFT|wx.TOP|wx.BOTTOM)
@@ -1979,13 +1986,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 if label: 
                     grid.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 2)
                 grid.Add(self._create_group(parent, item, aligned=True))
-            elif isinstance(item, Button):
-                button = self._create_button(parent, item)
+            elif isinstance(item, (Button, Text)):
                 style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-                label = wx.StaticText(parent, -1, "",
-                                      style=wx.ALIGN_RIGHT)
+                label = wx.StaticText(parent, -1, "", style=wx.ALIGN_RIGHT)
                 grid.Add(label, 0, style, 2)
-                grid.Add(button)                
+                if isinstance(item, Button):
+                    grid.Add(self._create_button(parent, item))
+                else:
+                    grid.Add(self._create_text(parent, item))
             else:
                 if not suppress_label:
                     if item.height() > 1:

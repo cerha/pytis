@@ -172,12 +172,27 @@ class Orientation(object):
     """Vertical orientation."""
 
     
-class Button(object):
-    """Specification of a button for use within a form layout.
+class Text(object):
+    """Specification of a text embedded within form layout.
 
-    This allows to place buttons which can invoke an action or a user defined
-    function within form layout.  See 'GroupSpec' for more information about
-    where buttons can be used.
+    Instances of this class may be included within form layout (in 'GroupSpec'
+    constructor) to place arbitrary text to forms.
+
+    """
+    def __init__(self, text):
+        assert isinstance(text, (str, unicode)), text
+        self._text = text
+        
+    def text(self):
+        return self._text
+
+
+class Button(object):
+    """Specification of a button embedded within form layout.
+
+    Instances of this class may be included within form layout (in 'GroupSpec'
+    constructor) to place action buttons into forms.  These buttons may invoke
+    actions (defined by 'Action') or a user defined function.
 
     """
     
@@ -554,25 +569,36 @@ class GroupSpec(object):
     Pytis forms are always either column based (tables) or layout based (record
     view, record edit form).  The layout defined by this class applies to the
     second category and specifies grouping of fields of a single record in this
-    kind od forms.
+    kind of forms.
 
-    The layout constitutes of a group of items, where each of the items is
-    either a form field (referenced by its identifier) or a recoursively
-    embedded group.  The items are composed either vertically (above each
-    other) or horizontally (side by side).
+    The layout constitutes of a group of items, where each of the items one of
+    the following:
+
+      * string identifier refering to one of the fields present in fields
+        specification,
+
+      * 'Button' instance to place action button inside the layout,
+      
+      * 'Text' instance to place arbitrary text inside the layout,
+      
+      * recursively embedded group as a 'GroupSpec' instance,
+
+      * callable object (function) which returns one of the above.  The
+        function must accept the current record ('PresentedRow' instance) as an
+        argument.  This allows building layouts dynamically depending on the
+        properties of the record to be displayed within the layout.
+      
+    The items are composed either vertically (above each other) or horizontally
+    (side by side).  Sophisticated layouts may be created by combining multiple
+    nested layouts.
 
     """
     def __init__(self, items, orientation=Orientation.HORIZONTAL, label=None,
                  gap=2, space=1, border=3, border_style=BorderStyle.ALL):
         """Arguments:
 
-          items -- contents of the group as a sequence of field identifiers
-            (strings), button specifications ('Button' instances), nested
-            groups ('GroupSpec' instances) or callable objects which return one
-            of the above when passed the current record ('PresentedRow'
-            instance) as an argument.  The last option allows building layouts
-            dynamically depending on the values/properties of the current
-            record.
+          items -- contents of the group as a sequence of layout items (see
+            'GroupSpec' for details about possible types if items.
             
           orientation -- defines how the fields are composed together as one of
             'Orientation' class constants.  Vertical group has items above each
@@ -593,7 +619,7 @@ class GroupSpec(object):
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
         if __debug__:
-            allowed_item_types = (GroupSpec, Button, str, unicode)
+            allowed_item_types = (GroupSpec, Button, Text, str, unicode)
             try:
                 # Avoid the dependency on LCG, but allow LCG content if LCG is available.
                 import lcg
@@ -627,7 +653,7 @@ class GroupSpec(object):
         for item in self._items:
             if isinstance(item, GroupSpec):
                 fields.extend(item.order())
-            elif not isinstance(item, Button):
+            elif not isinstance(item, (Button, Text)):
                 fields.append(item)
         return fields
 
@@ -705,8 +731,7 @@ class HGroup(GroupSpec):
 
     """
     def __init__(self, *items, **kwargs):
-        kwargs['orientation'] = Orientation.HORIZONTAL
-        super(HGroup, self).__init__(items, **kwargs)
+        super(HGroup, self).__init__(items, orientation=Orientation.HORIZONTAL, **kwargs)
 
         
 class VGroup(GroupSpec):
@@ -716,8 +741,7 @@ class VGroup(GroupSpec):
 
     """
     def __init__(self, *items, **kwargs):
-        kwargs['orientation'] = Orientation.VERTICAL
-        super(VGroup, self).__init__(items, **kwargs)
+        super(VGroup, self).__init__(items, orientation=Orientation.VERTICAL, **kwargs)
 
         
 class LHGroup(HGroup):
@@ -1039,6 +1063,8 @@ class ViewSpec(object):
                     elif isinstance(item, Button):
                         assert item.action() is None or item.action() in action_names, \
                                "Unknown button action in layout: %s" % item.action()
+                    elif isinstance(item, Text):
+                        pass
                     else:
                         assert self._field_dict.has_key(item), \
                                "Unknown field in layout: %r" % item
