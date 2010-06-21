@@ -2,6 +2,38 @@
 
 db_schemas = globals().get('Gpytis_config_schemas', None)
 
+
+sql_raw("""
+create or replace function f_user_cfg_datum_od() returns date as $$
+begin
+  if (select count(*) from pg_class where relname='bv_users_cfg') > 0 then
+    return (select datum_od from bv_users_cfg);
+  elsif(select count(*) from pg_class where relname='cv_users_cfg') > 0 then
+    return (select datum_od from cv_users_cfg);
+  elsif(select count(*) from pg_class where relname='solv_users_cfg') > 0 then
+    return (select datum_od from solv_users_cfg);
+  else
+    return '2000-01-01'::date;
+  end if;
+end;
+$$ language plpgsql stable;
+create or replace function f_user_cfg_datum_do() returns date as $$
+begin
+  if (select count(*) from pg_class where relname='bv_users_cfg') > 0 then
+    return (select datum_do from bv_users_cfg);
+  elsif(select count(*) from pg_class where relname='cv_users_cfg') > 0 then
+    return (select datum_do from cv_users_cfg);
+  elsif(select count(*) from pg_class where relname='solv_users_cfg') > 0 then
+    return (select datum_do from solv_users_cfg);
+  else
+    return '2099-12-31'::date;
+  end if;
+end;
+$$ language plpgsql stable;
+""",
+        schemas=db_schemas,
+        name='f_user_cfg')
+
 # Form statistics
 
 _std_table_nolog('e_pytis_form_log',
