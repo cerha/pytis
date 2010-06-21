@@ -237,7 +237,7 @@ class LayoutForm(FieldForm):
                     ctrl += help
                 if field.spec.compact():
                     if label:
-                        ctrl = label + g.br() +"\n"+ ctrl
+                        ctrl = g.div(label) + ctrl
                     content.append(ctrl, needs_panel=True)
                 else:
                     # Codebook field display is not numeric even though the underlying type is...
