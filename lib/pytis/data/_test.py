@@ -1931,7 +1931,8 @@ class DBDataAggregated(DBDataDefault):
             operations=((D.AGG_SUM, 'madati', 'madatisum',),),
             column_groups=('datum', 'castka',))
         try:
-            data.select()
+            count = data.select()
+            assert count == 3, ('Unexpected number of aggregate rows', count)
             for expected_result in ((('castka', 1000.0), ('madatisum', 2),),
                                     (('castka', 2000.0), ('madatisum', 2),),
                                     (('castka', 3000.0), ('madatisum', 3),),
