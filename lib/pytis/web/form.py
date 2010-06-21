@@ -212,11 +212,10 @@ class LayoutForm(FieldForm):
         def content(self):
             return self._content
             
-    def __init__(self, view, row, layout=None, allow_table_layout=True, **kwargs):
+    def __init__(self, view, row, layout=None, **kwargs):
         assert layout is None or isinstance(layout, GroupSpec)
         self._layout = layout
         super(LayoutForm, self).__init__(view, row, **kwargs)
-        self._allow_table_layout = allow_table_layout
         
     def _export_group(self, context, group, inner=False, id=None, omit_first_field_label=False):
         g = context.generator()
