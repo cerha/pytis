@@ -1275,10 +1275,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             ('select %%(columns)s from %s where %s%s %s order by %s %%(supplement)s' %
              (table_list, relation_and_condition, filter_condition, groupby, ordering,)),
             {'columns': column_list, 'supplement': '', 'condition': 'true'})
-        if distinct_on:
+        if distinct_on or self._pdbb_operations is not None:
+            if groupby:
+                count_column = groupby_columns[0]
+            else:
+                count_column = first_key_column
             self._pdbb_command_count = \
-                "select count(*) from (select%s * from %s%%(fulltext_queries)s where %%(condition)s and (%s)%s) as %s" % \
-                (distinct_on, table_list, relation, filter_condition, table_names[0])
+                "select count(*) from (select%s %s from %s%%(fulltext_queries)s where %%(condition)s and (%s) %s%s) as %s" % \
+                (distinct_on, count_column, table_list, relation, filter_condition, groupby, table_names[0],)
         else:
             if self._arguments is None:
                 count_column = first_key_column
