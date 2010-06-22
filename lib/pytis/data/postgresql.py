@@ -367,6 +367,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         self._pg_connection_data_ = connection_data
         self._pg_connections_ = []
         self._pg_query_lock = thread.allocate_lock()
+        self._pg_query_counter = 0
         super(PostgreSQLConnector, self).__init__(connection_data=connection_data, **kwargs)
 
     def _pg_connection_pool(self):
@@ -431,6 +432,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             raise DBUserException("Can't use closed transaction")
         else:
             connection = transaction._trans_connection()
+        self._pg_query_counter += 1
         # Proveï dotaz
         if __debug__:
             log(DEBUG, 'SQL query', query)
@@ -1737,7 +1739,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             def run(self):
                 try:
                     data = self._pg_data
-                    step = self._PG_INITIAL_STEP
+                    step = min_step = self._PG_INITIAL_STEP
                     max_step = self._PG_MAX_STEP
                     test_count = self._pg_initial_count + step
                     selection = self._pg_selection
@@ -1745,6 +1747,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     args = dict(selection=selection, number=self._pg_initial_count)
                     query = data._pdbb_command_move_absolute.format(args)
                     data._pg_query(query, transaction=transaction)
+                    query_counter = data._pg_query_counter
                     while True:
                         if self._pg_dead():
                             self._pg_initial_count = self._pg_current_count
@@ -1756,9 +1759,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                 # resulting error should be harmless.
                                 data._pg_query(query, transaction=transaction)
                             return
+                        if data._pg_query_counter > query_counter:
+                            step = max(step/8, min_step)
                         args = dict(selection=selection, number=step)
                         query = data._pdbb_command_move_forward.format(args)
                         result = data._pg_query(query, transaction=transaction)
+                        query_counter = data._pg_query_counter
                         self._pg_current_count = self._pg_current_count + result[0][0]
                         if self._pg_current_count < test_count:
                             break
