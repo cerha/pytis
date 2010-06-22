@@ -934,14 +934,6 @@ class DBDataDefault(_DBTest):
              B('index', 'fulltext', 'index', type_=pytis.data.FullTextIndex(columns=('text1','text2',))),),
             key,
             conn)
-        # testfunc
-        key = B('id', 'testfunc', 'id', type_=pytis.data.Integer())
-        testfunc = pytis.data.DBDataDefault(
-            (key,
-             B('popis', 'testfunc', 'popis', type_=pytis.data.String(maxlen=12)),),
-            key,
-            conn,
-            arguments = (B('id', 'testfunc', 'id', type_=pytis.data.Integer()),))
         # views
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
@@ -975,7 +967,6 @@ class DBDataDefault(_DBTest):
         self.view5 = view5
         self.view7 = view7
         self.rudeview = rudeview
-        self.testfunc = testfunc
         #self._to_kill = [d, md, dstat, dstat1, dosnova, dcosi, view]
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
         # row data
