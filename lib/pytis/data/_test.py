@@ -1932,7 +1932,7 @@ class DBDataAggregated(DBDataDefault):
                 items_dict = dict(items)
                 assert len(items) == 3, ('Invalid number of columns', items,)
                 for k, v in expected_result:
-                    assert items_dict[k].value() == v, ('Unexpected result', (k, v, row[k].value(),),)
+                    assert items_dict[k].value() == v, ('Unexpected result', (k, v, items_dict[k].value(),),)
             assert data.fetchone() is None, 'Extra row'
         finally:
             data.close()
