@@ -1921,6 +1921,7 @@ class DBDataAggregated(DBDataDefault):
             self._dconnection,
             operations=((D.AGG_SUM, 'madati', 'madatisum',),),
             column_groups=('datum', 'castka',))
+        assert isinstance(data.find_column('madatisum').type(), pytis.data.Integer)
         try:
             count = data.select(columns=columns)
             assert count == 3, ('Unexpected number of aggregate rows', count)
