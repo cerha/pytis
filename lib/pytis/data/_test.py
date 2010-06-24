@@ -1906,7 +1906,7 @@ tests.add(DBDataOrdering)
 
 
 class DBDataAggregated(DBDataDefault):
-    def test_aggregated(self):
+    def test_aggregated(self, columns=None):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
         denik_spec = (B('cislo', 'denik', 'id'),
@@ -1922,7 +1922,7 @@ class DBDataAggregated(DBDataDefault):
             operations=((D.AGG_SUM, 'madati', 'madatisum',),),
             column_groups=('datum', 'castka',))
         try:
-            count = data.select()
+            count = data.select(columns=columns)
             assert count == 3, ('Unexpected number of aggregate rows', count)
             for expected_result in ((('castka', 1000.0), ('madatisum', 2),),
                                     (('castka', 2000.0), ('madatisum', 2),),
@@ -1930,12 +1930,17 @@ class DBDataAggregated(DBDataDefault):
                                     ):
                 items = data.fetchone().items()
                 items_dict = dict(items)
-                assert len(items) == 3, ('Invalid number of columns', items,)
+                assert columns is None and len(items) == 3 or len(items) == len(columns), \
+                    ('Invalid number of columns', items,)
                 for k, v in expected_result:
-                    assert items_dict[k].value() == v, ('Unexpected result', (k, v, items_dict[k].value(),),)
+                    assert items_dict[k].value() == v, \
+                        ('Unexpected result', (k, v, items_dict[k].value(),),)
             assert data.fetchone() is None, 'Extra row'
         finally:
             data.close()
+    def test_aggregated2(self):
+        self.test_aggregated(columns=('castka', 'madatisum'))
+            
 tests.add(DBDataAggregated)
 
 
