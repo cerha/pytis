@@ -812,14 +812,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     return None
             log(ACTION, 'Vytváøím nový formuláø:', (form_class, name, kwargs))
             message(_("Spou¹tím formuláø..."), root=True)
-            wx_yield_()
             assert issubclass(form_class, Form)
             assert is_anystring(name)
+            # We indicate busy state here so that the action is not delayed by
+            # some time consuming _on_idle methods.
+            busy_cursor(True)
+            wx_yield_()
             result = None
             self.save()
             form = find((form_class, name), self._windows.items(),
                         key=lambda f: (f.__class__, f.name()))
             if form is not None:
+                busy_cursor(False)
                 self._raise_form(form)
                 message(_('Formuláø "%s" nalezen na zásobníku oken.') % form.title())
                 if kwargs.has_key('select_row'):
@@ -842,6 +846,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             except Form.InitError:
                 form = None
             if form is None:
+                busy_cursor(False)
                 self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit: %s") % name)
             else:
                 if isinstance(form, PopupForm):

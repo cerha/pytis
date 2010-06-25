@@ -851,6 +851,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._show_data_status()
 
     def _on_idle(self, event):
+        if is_busy_cursor():
+            return False
         if self._selection_candidate is not None:
             row, col = self._selection_candidate
             self._selection_candidate = None
