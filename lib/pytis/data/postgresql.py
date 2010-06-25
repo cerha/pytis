@@ -804,7 +804,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         
     def _pdbb_tabcol(self, table_name, column_name):
         """Vra» zadaný sloupec zformátovaný pro SQL."""
-        return '%s.%s' % (table_name, column_name)
+        if table_name:
+            result = '%s.%s' % (table_name, column_name)
+        else:
+            result = column_name
+        return result
 
     def _pdbb_btabcol(self, binding, full_text_handler=None, convert_ltree=False, operations=None):
         """Vra» sloupec z 'binding' zformátovaný pro SQL."""
@@ -815,20 +819,23 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             except DBException:
                 t = None
             return t
-        if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
-            result = full_text_handler(binding)
-        elif convert_ltree and isinstance(column_type(), LTree):
-            # In order to make Czech sorting working on ltrees, we must do some
-            # ugly things...
-            result = ("replace(%s::text, '.', chr(160))" %
-                      (self._pdbb_tabcol(binding.table(), binding.column()),))
-        else:
-            result = self._pdbb_tabcol(binding.table(), binding.column())
+        result = None
         if operations is not None:
             for aggregate, id_, name in operations:
-                if id_ == binding.id():
-                    result = '%s(%s) as %s' % (self._pg_aggregate_name(aggregate), result, name,)
+                if name == binding.id():
+                    result = '%s(%s) as %s' % (self._pg_aggregate_name(aggregate), id_, name,)
                     break
+        if result is None:
+            if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
+                result = full_text_handler(binding)
+            elif convert_ltree and isinstance(column_type(), LTree):
+                # In order to make Czech sorting working on ltrees, we must do some
+                # ugly things...
+                result = ("replace(%s::text, '.', chr(160))" %
+                          (self._pdbb_tabcol(binding.table(), binding.column()),))
+                result = self._pdbb_tabcol(binding.table(), binding.column()) + '::text'
+            else:
+                result = self._pdbb_tabcol(binding.table(), binding.column())
         return result
         
     def _pdbb_coalesce(self, ctype, value):
@@ -1059,9 +1066,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Hotovo
         return columns, tuple(key)
 
-    def _pdbb_sql_column_list_from_names(self, column_names, full_text_handler=None):
+    def _pdbb_sql_column_list_from_names(self, column_names, full_text_handler=None, operations=None):
         bindings = [self._db_column_binding(name) for name in column_names]
-        return self._pdbb_sql_column_list(bindings, full_text_handler)
+        return self._pdbb_sql_column_list(bindings, full_text_handler, operations=operations)
         
     def _pdbb_sql_column_list(self, bindings, full_text_handler=None, operations=None):
         column_names = [self._pdbb_btabcol(b, full_text_handler=full_text_handler, operations=operations)
@@ -1089,14 +1096,32 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert isinstance(b, DBColumnBinding), \
                    ('Unsupported binding specification', b)
         # Pøiprav parametry
-        aggregate_columns = [x[1] for x in (self._pdbb_operations or [])]
+        operations = (self._pdbb_operations or [])
+        aggregate_columns = [o[2] for o in operations]
         if self._pdbb_column_groups is None and self._pdbb_operations is None:
             filtered_bindings = bindings
         else:
             # TODO: Handle multiple column presences in operations!
-            filtered_bindings = [b for b in bindings
-                                 if (b.id() in aggregate_columns or
-                                     b.id() in [x for x in (self._pdbb_column_groups or [])])]
+            group_columns = [c for c in (self._pdbb_column_groups or [])]
+            filtered_bindings = []
+            for b in bindings:
+                bid = b.id()
+                if bid in group_columns:
+                    filtered_bindings.append(b)
+                for aggregate, id_, name in operations:
+                    if id_ == bid:
+                        assert name not in [b.id() for b in bindings], ('Duplicate column name', name,)
+                        if aggregate == self.AGG_COUNT:
+                            type_ = Integer()
+                        elif aggregate == self.AGG_AVG:
+                            type_ = Float()
+                        else:
+                            type_ = b.type() or Float()
+                        b = DBColumnBinding(name, '', name, type_=type_)
+                        self._bindings = bindings = bindings + (b,)
+                        filtered_bindings.append(b)
+                        self._columns = self._columns + (ColumnSpec(name, type_),)
+                        break
         assert filtered_bindings, 'No columns present'
         self._pdbb_filtered_bindings = filtered_bindings
         column_list = self._pdbb_sql_column_list(filtered_bindings,
@@ -1110,7 +1135,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             groupby = 'group by %s' % (string.join(groupby_columns, ','))
         else:
             groupby = ''
-        table_names = map(lambda b: b.table(), bindings)
+        table_names = [b.table() for b in bindings if b.table()]
         table_names = remove_duplicates(table_names)
         if self._arguments is not None:
             assert len(table_names) == 1, "Only single tables supported for table functions"
@@ -1704,7 +1729,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
                 self._pdbb_sql_column_list_from_names(columns,
-                                                      full_text_handler=self._pdbb_full_text_handler)
+                                                      full_text_handler=self._pdbb_full_text_handler,
+                                                      operations=self._pdbb_operations)
         else:
             self._pdbb_select_column_list = None
         args['selection'] = self._pdbb_selection_number = \
