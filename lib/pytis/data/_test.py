@@ -1913,7 +1913,7 @@ class DBDataAggregated(DBDataDefault):
                       B('datum', 'denik', 'datum',
                         type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
                       B('castka', 'denik', 'castka'),
-                      B('madati', 'denik', 'madati'),
+                      B('madati', 'denik', 'madati', type_=pytis.data.Integer()),
                       )
         data = D(
             denik_spec,
@@ -1921,7 +1921,8 @@ class DBDataAggregated(DBDataDefault):
             self._dconnection,
             operations=((D.AGG_SUM, 'madati', 'madatisum',),),
             column_groups=('datum', 'castka',))
-        assert isinstance(data.find_column('madatisum').type(), pytis.data.Integer)
+        column = data.find_column('madatisum').type()
+        assert isinstance(column, pytis.data.Integer), column
         try:
             count = data.select(columns=columns)
             assert count == 3, ('Unexpected number of aggregate rows', count)
@@ -1941,7 +1942,6 @@ class DBDataAggregated(DBDataDefault):
             data.close()
     def test_aggregated2(self):
         self.test_aggregated(columns=('castka', 'madatisum'))
-            
 tests.add(DBDataAggregated)
 
 
