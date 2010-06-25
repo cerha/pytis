@@ -1116,7 +1116,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         elif aggregate == self.AGG_AVG:
                             type_ = Float()
                         else:
-                            type_ = b.type() or Float()
+                            type_ = self.find_column(id_).type()
+                            assert type_ is not None
                         b = DBColumnBinding(name, '', name, type_=type_)
                         self._bindings = bindings = bindings + (b,)
                         filtered_bindings.append(b)

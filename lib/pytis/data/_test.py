@@ -1913,7 +1913,7 @@ class DBDataAggregated(DBDataDefault):
                       B('datum', 'denik', 'datum',
                         type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
                       B('castka', 'denik', 'castka'),
-                      B('madati', 'denik', 'madati', type_=pytis.data.Integer()),
+                      B('madati', 'denik', 'madati'),
                       )
         data = D(
             denik_spec,
