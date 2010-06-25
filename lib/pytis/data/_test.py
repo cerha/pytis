@@ -1915,33 +1915,39 @@ class DBDataAggregated(DBDataDefault):
                       B('castka', 'denik', 'castka'),
                       B('madati', 'denik', 'madati'),
                       )
-        data = D(
-            denik_spec,
-            denik_spec[0],
-            self._dconnection,
-            operations=((D.AGG_SUM, 'madati', 'madatisum',),),
-            column_groups=('datum', 'castka',))
-        column = data.find_column('madatisum').type()
-        assert isinstance(column, pytis.data.Integer), column
+        operations = ((D.AGG_SUM, 'madati', 'madatisum',), (D.AGG_COUNT, 'id', 'count',),)
+        column_groups = ('datum', 'castka',)
+        data = D(denik_spec,
+                 denik_spec[0],
+                 self._dconnection,
+                 operations=operations,
+                 column_groups=column_groups)
+        for column_id in ('madatisum', 'count'):
+            column = data.find_column(column_id)
+            assert column is not None, 'Aggregation column %s not found.' % column_id
+            assert isinstance(column.type(), pytis.data.Integer), column.type()
         try:
             count = data.select(columns=columns)
             assert count == 3, ('Unexpected number of aggregate rows', count)
-            for expected_result in ((('castka', 1000.0), ('madatisum', 2),),
-                                    (('castka', 2000.0), ('madatisum', 2),),
-                                    (('castka', 3000.0), ('madatisum', 3),),
+            for expected_result in ((('castka', 1000.0), ('madatisum', 2), ('count', 2),),
+                                    (('castka', 2000.0), ('madatisum', 2), ('count', 1),),
+                                    (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
                                     ):
                 items = data.fetchone().items()
                 items_dict = dict(items)
-                assert columns is None and len(items) == 3 or len(items) == len(columns), \
-                    ('Invalid number of columns', items,)
+                if columns is None:
+                    assert len(items) == len(column_groups) + len(operations), \
+                           ('Invalid number of columns', items,)
+                else:
+                    assert len(items) == len(columns), ('Invalid number of columns', items,)
                 for k, v in expected_result:
                     assert items_dict[k].value() == v, \
-                        ('Unexpected result', (k, v, items_dict[k].value(),),)
+                           ('Unexpected result', (k, v, items_dict[k].value(),),)
             assert data.fetchone() is None, 'Extra row'
         finally:
             data.close()
     def test_aggregated2(self):
-        self.test_aggregated(columns=('castka', 'madatisum'))
+        self.test_aggregated(columns=('castka', 'madatisum', 'count'))
 tests.add(DBDataAggregated)
 
 
