@@ -1101,7 +1101,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._pdbb_column_groups is None and self._pdbb_operations is None:
             filtered_bindings = bindings
         else:
-            # TODO: Handle multiple column presences in operations!
             group_columns = [c for c in (self._pdbb_column_groups or [])]
             filtered_bindings = []
             for b in bindings:
@@ -1122,7 +1121,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         self._bindings = bindings = bindings + (b,)
                         filtered_bindings.append(b)
                         self._columns = self._columns + (ColumnSpec(name, type_),)
-                        break
         assert filtered_bindings, 'No columns present'
         self._pdbb_filtered_bindings = filtered_bindings
         column_list = self._pdbb_sql_column_list(filtered_bindings,
