@@ -78,6 +78,8 @@ class PresentedRow(object):
             self.data_column = data.find_column(self.id)
             self.virtual = f.virtual()
             self.secret_computer = False # Set dynamically during initialization.
+        def __str__(self):
+            return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
     
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
@@ -334,10 +336,10 @@ class PresentedRow(object):
                 
     def __unicode__(self):
         if hasattr(self, '_row'):
-            items = [c.id + '=' + unicode(self[c.id].value()) for c in self._columns]
-            return "<%s: %s>" % (self.__class__.__name__, string.join(items, ', '))
+            info = ', '.join([c.id + '=' + unicode(self[c.id].value()) for c in self._columns])
         else:
-            return super(PresentedRow, self).__unicode__()
+            info = '%x' % positive_id(self)
+        return "<%s: %s>" % (self.__class__.__name__, info)
 
     def _run_callback(self, kind, key=None):
         callbacks = self._callbacks.get(kind, {})
