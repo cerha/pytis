@@ -106,6 +106,8 @@ def go():
                 sys.stdout = stdout
         else:
             run_application()
+    except SystemExit:
+        pass
     except:
         einfo = sys.exc_info()
         try:
