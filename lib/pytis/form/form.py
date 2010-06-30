@@ -1841,9 +1841,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         group = self._view.layout().group()
         if isinstance(group, TabGroup):
             nb = wx.Notebook(self)
-            width = height = 0
-            tab_height = 32 # Pixel height of tab controls (empiric value)
-            page_margin = 2 # Pixel size of margin around tab page contents (empiric value)
             for item in group.items():
                 if len(item.items()) == 1 and isinstance(item.items()[0], GroupSpec):
                     group = item.items()[0]
@@ -1851,11 +1848,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     group = GroupSpec(item.items(), orientation=Orientation.VERTICAL)
                 panel = self._create_group_panel(nb, group)
                 nb.AddPage(panel, item.label())
-                size = panel.GetSize()
-                width = max(size.width+page_margin, width)
-                height = max(size.height+tab_height, height)
-            # This is needed since wx2.8 to force the size to the size of the largest tab page.
-            nb.SetSize((width, height))
             return nb
         else:
             return self._create_group_panel(self, group)
@@ -2231,8 +2223,6 @@ class PopupEditForm(PopupForm, EditForm):
         panel = self._create_form_controls()
         buttons = self._create_buttons()
         status_bar = self._create_status_bar()
-        # This is needed since wx2.8 to force panel's real size.
-        panel.SetMinSize(panel.GetSize())
         # Add parts to the sizer.
         sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
         sizer.Add(panel, 1, wx.EXPAND)
