@@ -1787,8 +1787,30 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     
     def __init__(self, *args, **kwargs):
         super(EditForm, self).__init__(*args, **kwargs)
-        # Remember the original size.
-        self._size = self.GetSizer().GetMinSize() + wx.Size(2, 2)
+        # Calculate the ideal total form size.
+        size = self.GetSizer().CalcMin()
+        if isinstance(self._form_controls_window, wx.ScrolledWindow):
+            # Since the sizer counts zero space for the scrollable form panel,
+            # we must add it to the calculated minimal size manually.
+            panel_size = self._form_controls_window.GetVirtualSize()
+            width = panel_size.width
+            height = panel_size.height
+        else:
+            # If the form controls window is a wx.Notebook instance we need to
+            # count the size of the largest tab page.
+            width = height = 0
+            for i in range(self._form_controls_window.GetPageCount()):
+                page_size = self._form_controls_window.GetPage(i).GetSizer().CalcMin()
+                width = max(page_size.width, width)
+                height = max(page_size.height, height)
+            # Modify the computed size by some empiric numbers...
+            width += 2 # The tab border is not counted, so add it manually.
+            height -= 22 # The top level sizer probably counts with some
+            # constant space for the tabs.  Thus we must subtract it from the
+            # number we will be adding.
+        size.width = max(size.width, width)
+        size.height += height
+        self._size = size
         if isinstance(self._parent, wx.Dialog):
             wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
@@ -1840,30 +1862,35 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self._fields = []
         group = self._view.layout().group()
         if isinstance(group, TabGroup):
-            nb = wx.Notebook(self)
+            window = wx.Notebook(self)
             for item in group.items():
                 if len(item.items()) == 1 and isinstance(item.items()[0], GroupSpec):
                     group = item.items()[0]
                 else:
                     group = GroupSpec(item.items(), orientation=Orientation.VERTICAL)
-                panel = self._create_group_panel(nb, group)
-                nb.AddPage(panel, item.label())
-            return nb
+                panel = self._create_group_panel(window, group)
+                window.AddPage(panel, item.label())
         else:
-            return self._create_group_panel(self, group)
+            window = self._create_group_panel(self, group)
+        # Store the scrollable form panel to be able to compute the popup
+        # window size.  If we want to keep the panel scrollable, it will not
+        # propagate its size through the sizer automatically in wx 2.8.
+        self._form_controls_window = window
+        return window
 
     def _create_group_panel(self, parent, group):
         panel = wx.ScrolledWindow(parent, style=wx.TAB_TRAVERSAL)
+        panel.SetScrollRate(20, 20)
         # Create the form controls first, according to the order.
         fields = [InputField.create(panel, self._row, id, guardian=self, readonly=self.readonly())
                   for id in group.order() if self._view.field(id).width() != 0]
         self._fields.extend(fields)
-        # Now create the layout groups.
+        # Create the layout groups.
+        group_sizer = self._create_group(panel, group)
+        # Add outer sizer with margins and alignment. 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self._create_group(panel, group), 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 8)
-        panel.SetScrollRate(20, 20)
+        sizer.Add(group_sizer, 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 8)
         panel.SetSizer(sizer)
-        sizer.Fit(panel)
         return panel
     
     def _field(self, id):
@@ -2186,9 +2213,12 @@ class PopupEditForm(PopupForm, EditForm):
         EditForm.__init__(self, self._popup_frame(parent), *args, **kwargs)
         if self._inserted_data is not None:
             self._load_next_row()
+        # Set the popup window size according to the ideal form size limited to
+        # the screen size.  If the form size exceeds the screen, scrollbars
+        # will appear.
         size = copy.copy(self.size())
-        size.DecTo(wx.GetDisplaySize() - wx.Size(50, 50))
-        self.SetSize(size)
+        size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
+        self.SetClientSize(size)
 
     def _default_transaction(self):
         return pytis.data.DBTransactionDefault(config.dbconnection)
@@ -2243,12 +2273,10 @@ class PopupEditForm(PopupForm, EditForm):
     def _create_status_bar_field(self, sizer, width, descr):
         panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
         panel.SetToolTipString(descr)
-        box = wx.BoxSizer()
-        panel.SetSizer(box)
         panel.SetAutoLayout(True)
+        box = wx.BoxSizer()
         field = wx.StaticText(panel, -1, '', style=wx.ALIGN_LEFT)
         box.Add(field, 1, wx.EXPAND|wx.ALL, 2)
-        box.Fit(panel)
         if width is not None:
             width = dlg2px(field, 4*width)
             height = field.GetSize().GetHeight()
@@ -2257,6 +2285,8 @@ class PopupEditForm(PopupForm, EditForm):
         else:
             expansion = 1
         sizer.Add(panel, expansion, wx.EXPAND)
+        panel.SetSizer(box)
+        box.Fit(panel)
         return field
 
     def _load_next_row(self):
@@ -2283,8 +2313,7 @@ class PopupEditForm(PopupForm, EditForm):
         i = self._inserted_data_pointer
         data = self._inserted_data
         if data is not None and i <= len(data):
-            msg = _("Je¹tì nebyly zpracovány v¹echny øádky "
-                    "vstupních dat.\n"
+            msg = _("Je¹tì nebyly zpracovány v¹echny øádky vstupních dat.\n"
                     "Chcete opravdu ukonèit vkládání?")
             if not run_dialog(Question, msg, default=False):
                 return False
