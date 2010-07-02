@@ -823,7 +823,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if operations is not None:
             for aggregate, id_, name in operations:
                 if name == binding.id():
-                    result = '%s(%s) as %s' % (self._pg_aggregate_name(aggregate), id_, name,)
+                    result = '%s(%s) as %s' % (self._pg_aggregate_name(aggregate), binding.column(), name,)
                     break
         if result is None:
             if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
@@ -1117,7 +1117,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         else:
                             type_ = self.find_column(id_).type()
                             assert type_ is not None
-                        b = DBColumnBinding(name, '', name, type_=type_)
+                        b = DBColumnBinding(name, '', b.column(), type_=type_)
                         self._bindings = bindings = bindings + (b,)
                         filtered_bindings.append(b)
                         self._columns = self._columns + (ColumnSpec(name, type_),)

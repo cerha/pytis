@@ -1915,7 +1915,7 @@ class DBDataAggregated(DBDataDefault):
                       B('castka', 'denik', 'castka'),
                       B('madati', 'denik', 'madati'),
                       )
-        operations = ((D.AGG_SUM, 'madati', 'madatisum',), (D.AGG_COUNT, 'id', 'count',),)
+        operations = ((D.AGG_SUM, 'madati', 'madatisum',), (D.AGG_COUNT, 'cislo', 'count',),)
         column_groups = ('datum', 'castka',)
         data = D(denik_spec,
                  denik_spec[0],
@@ -1924,7 +1924,7 @@ class DBDataAggregated(DBDataDefault):
                  column_groups=column_groups)
         for column_id in ('madatisum', 'count'):
             column = data.find_column(column_id)
-            assert column is not None, 'Aggregation column %s not found.' % column_id
+            assert column is not None, ('Aggregation column not found', column_id,)
             assert isinstance(column.type(), pytis.data.Integer), column.type()
         try:
             count = data.select(columns=columns)
