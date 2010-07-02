@@ -987,6 +987,7 @@ class _GsqlTable(_GsqlSpec):
                     elif default.lower() in ("'t'", "'true'", "true"):
                         default = 'true'
                 TYPE_MAPPING = {'bool': pytis.data.Boolean,
+                                'bytea': pytis.data.Binary,
                                 'bpchar': pytis.data.String,
                                 'char': pytis.data.String,
                                 'date': pytis.data.Date,
@@ -2480,7 +2481,10 @@ class _GsqlDefs(UserDict.UserDict):
                     sys.stdout.write(c.db_remove(n))
         # Create and update objects
         for o in to_create:
-            sys.stdout.write(o.output())
+            if isinstance(o, (_GsqlView, _GsqlViewNG)):
+                sys.stdout.write(o.output(self._table_keys))
+            else:
+                sys.stdout.write(o.output())
         for o in to_update:
             sys.stdout.write(o.db_update(connection))
         # Finish
