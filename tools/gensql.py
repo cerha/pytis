@@ -869,12 +869,26 @@ class _GsqlTable(_GsqlSpec):
         return self.output(_re=True)
 
     def db_update(self, connection):
+        schemas = self._schemas
+        if schemas is None:
+            result = self._db_update(connection, 'public')
+        else:
+            result = ''
+            for s in schemas:
+                sname = s.split(',')[0].strip()
+                result += self._db_update(connection, sname)
+        return result
+
+    def _db_update(self, connection, schema):
         name = self.name()
+        query_args = dict(name=name, schema=schema)
         # Inheritance
         data = connection.query(
-            ("select anc.relname from pg_class succ, pg_class anc, pg_inherits"
-             " where succ.relname='%s' and pg_inherits.inhrelid=succ.oid and "
-             "pg_inherits.inhparent=anc.oid") % name)
+            ("select anc.relname from pg_class succ, pg_class anc, pg_inherits, pg_namespace "
+             "where succ.relname='%(name)s' and pg_inherits.inhrelid=succ.oid and "
+             "pg_inherits.inhparent=anc.oid and "
+             "succ.relnamespace=pg_namespace.oid and "+
+             "pg_namespace.nspname='%(schema)s'") % query_args)
         inherits = []
         for i in range(data.ntuples):
             inherits.append(data.getvalue(i, 0))
@@ -885,7 +899,12 @@ class _GsqlTable(_GsqlSpec):
         # Columns: name, type, primaryp, references, default,
         # constraints (unique, not null)
         result = ''
-        data = connection.query("select attname, typname as typename, atttypmod as typelen, attnotnull as notnull from pg_attribute, pg_class, pg_type where pg_class.relname='%s' and pg_attribute.attrelid=pg_class.oid and not pg_attribute.attisdropped and pg_attribute.atttypid=pg_type.oid and pg_attribute.attnum>0 and pg_attribute.attislocal" % name)
+        data = connection.query(
+            ("select attname, typname as typename, atttypmod as typelen, attnotnull as notnull "
+             "from pg_attribute, pg_class, pg_namespace, pg_type "
+             "where pg_class.relname='%(name)s' and "
+             "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+             "pg_attribute.attrelid=pg_class.oid and not pg_attribute.attisdropped and pg_attribute.atttypid=pg_type.oid and pg_attribute.attnum>0 and pg_attribute.attislocal") % query_args)
         fnames = [data.fname(j) for j in range(1, data.nfields)]
         dbcolumns = {}
         for i in range(data.ntuples):
@@ -895,18 +914,31 @@ class _GsqlTable(_GsqlSpec):
                 k, v = fnames[j-1], data.getvalue(i, j)
                 other[k] = v
             dbcolumns[cname] = other
-        data = connection.query("select count(*) from pg_index, pg_class where pg_class.relname='%s' and pg_index.indrelid=pg_class.oid and pg_index.indisunique and pg_index.indkey[1] is not null" % name)
+        data = connection.query(
+            ("select count(*) from pg_index, pg_class, pg_namespace "
+             "where pg_class.relname='%(name)s' and "
+             "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+             "pg_index.indrelid=pg_class.oid and pg_index.indisunique and pg_index.indkey[1] is not null") % query_args)
         if data.getvalue(0, 0) != 0:
             result = (result +
                       _gsql_warning("Can't handle multicolumn indexes in %s" %
                                     name))
-        data = connection.query("select attname as column, indisprimary as primary, indisunique as unique from pg_index, pg_class, pg_attribute where pg_class.relname='%s' and pg_index.indrelid=pg_class.oid and pg_attribute.attrelid=pg_class.oid and pg_attribute.attnum=pg_index.indkey[0] and pg_index.indkey[1] is null and pg_attribute.attnum>0 and pg_attribute.attislocal" % name)
+        data = connection.query(
+                ("select attname as column, indisprimary as primary, indisunique as unique "
+                 "from pg_index, pg_class, pg_namespace, pg_attribute "
+                 "where pg_class.relname='%(name)s' and "
+                 "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+                 "pg_index.indrelid=pg_class.oid and pg_attribute.attrelid=pg_class.oid and pg_attribute.attnum=pg_index.indkey[0] and pg_index.indkey[1] is null and pg_attribute.attnum>0 and pg_attribute.attislocal") % query_args)
         for i in range(data.ntuples):
             cname = data.getvalue(i, 0)
             cproperties = dbcolumns[cname]
             cproperties['primaryp'] = cproperties.get('primaryp') or data.getvalue(i, 1)
             cproperties['uniquep'] = cproperties.get('uniquep') or data.getvalue(i, 2)
-        data = connection.query("select attname, adsrc from pg_attribute, pg_attrdef, pg_class where pg_class.relname='%s' and pg_attribute.attrelid=pg_class.oid and pg_attrdef.adrelid=pg_class.oid and pg_attribute.attnum=pg_attrdef.adnum and pg_attribute.attnum>0 and pg_attribute.attislocal" % name)
+        data = connection.query(
+                ("select attname, adsrc from pg_attribute, pg_attrdef, pg_class, pg_namespace "
+                 "where pg_class.relname='%(name)s' and "
+                 "pg_class.relnamespace=pg_namespace.oid and pg_namespace.nspname='%(schema)s' and "
+                 "pg_attribute.attrelid=pg_class.oid and pg_attrdef.adrelid=pg_class.oid and pg_attribute.attnum=pg_attrdef.adnum and pg_attribute.attnum>0 and pg_attribute.attislocal") % query_args)
         for i in range(data.ntuples):
             dbcolumns[data.getvalue(i, 0)]['default'] = data.getvalue(i, 1)
         columns = list(copy.copy(self._columns))
@@ -1485,7 +1517,6 @@ class _GsqlViewNG(Select):
         return ('CREATE OR REPLACE RULE %s_%s AS\n ON %s TO %s DO INSTEAD \n' + \
                 '    %s;\n\n') % \
                (self._name, suffix, command, self._name, body)
-
         
     def _output(self, table_keys):
         select = self.format_select()
