@@ -1105,11 +1105,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             group_columns = [c for c in (self._pdbb_column_groups or [])]
             filtered_bindings = []
             for b in bindings:
-                bid = b.id()
-                if bid in group_columns:
+                if b.id() in group_columns:
                     filtered_bindings.append(b)
-                for aggregate, id_, name in operations:
-                    if id_ == bid:
+            for aggregate, id_, name in operations:
+                for b in bindings:
+                    if id_ == b.id():
                         assert name not in [b.id() for b in bindings], ('Duplicate column name', name,)
                         if aggregate == self.AGG_COUNT:
                             type_ = Integer()
