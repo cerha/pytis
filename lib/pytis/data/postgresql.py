@@ -776,8 +776,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           bindings, ordering, kwargs -- passed to superclass
           operations -- sequence of pairs (OPERATION, COLUMN, NAME), where
             OPERATION is one of 'AGG_*' constants of the class, COLUMN is id of
-            the column to be aggregated and NAME is the result column name
-            (string)
+            the column binding corresponding to the column to be aggregated and
+            NAME is the result column name (string) that can be used to refer to
+            the aggregate column
           column_groups -- sequence of column ids to be groupped
 
         If 'column_groups' is not 'None' it defines the set of grouped columns
