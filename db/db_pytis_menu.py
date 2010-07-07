@@ -1396,7 +1396,6 @@ viewng('ev_pytis_user_roles',
 sql_raw("""
 create or replace view ev_pytis_colnames as select distinct shortname, colname
 from e_pytis_action_rights where system = 't' and colname is not null;
-GRANT all ON ev_pytis_colnames TO GROUP has;
 """,
         name='ev_pytis_colnames',
         depends=('e_pytis_action_rights',))
