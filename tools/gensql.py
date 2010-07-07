@@ -955,9 +955,11 @@ class _GsqlTable(_GsqlSpec):
             constraints = map(normalize, column.constraints)
             ct = column.type
             if isinstance(ct, str):
-                sys.stdout.write(
-                    _gsql_warning('Raw column type not checked: %s(%s)' %
-                                  (name, cname)))
+                TYPE_ALIASES = {'int2': 'smallint'}
+                if ct != dbcolumn['typename'] and ct != TYPE_ALIASES.get(dbcolumn['typename']):
+                    sys.stdout.write(
+                        _gsql_warning('Possible mismatch in raw column type of %s(%s): %s x %s' %
+                                      (name, cname, ct, dbcolumn['typename'],)))
             else:
                 if ct.__class__ == pytis.data.Serial:
                     if default is None:
@@ -2230,7 +2232,6 @@ class _GsqlRaw(_GsqlSpec):
 
 class _GviewsqlRaw(_GsqlSpec):
     """View definované prostými SQL pøíkazy."""
-
    
     def __init__(self, name, columns, fromitems, where=None, 
                  groupby=None, having=None,
