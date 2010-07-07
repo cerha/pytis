@@ -305,7 +305,12 @@ class _GsqlSpec(object):
           name -- jméno objektu, který má být odstranìn; string
           
         """
-        return "DROP %s %s;\n" % (class_._SQL_NAME, name)
+        class_sql_name = class_._SQL_NAME
+        if class_sql_name:
+            result = "DROP %s %s;\n" % (class_sql_name, name,)
+        else:
+            result = "-- DROP ??? %s;\n" % (name,)
+        return result
     db_remove = classmethod(db_remove)
 
 
