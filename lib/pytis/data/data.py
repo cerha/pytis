@@ -323,7 +323,7 @@ class Data(object_2_5):
         return None
     
     def select(self, condition=None, reuse=False, sort=(), columns=None, transaction=None,
-               arguments={}):
+               arguments={}, async_count=False):
         """Initialize selection of records from the data source.
         
         The method itself does not necessarily load any data, the selection is only initialized if
@@ -348,6 +348,7 @@ class Data(object_2_5):
             columns are selected
           transaction -- transaction object encapsulating the database
             operation environment or 'None' (meaning default environment)
+          async_count -- if true, try to count result lines asynchronously
           
         Je-li 'condition' rùzné od 'None', specifikuje podmínku pro výbìr
         øádkù.  Podtøídy nejsou povinny podmínky implementovat (mohou je
@@ -985,7 +986,7 @@ class MemData(Data):
                 raise ProgramError("Operator not supported:", op_name)
 
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
-               arguments={}):
+               arguments={}, async_count=False):
         """Inicializace vytahování záznamù.
 
         Bli¾¹í popis viz nadtøída.  Argumenty 'condition', 'sort',
