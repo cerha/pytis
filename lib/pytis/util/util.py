@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -652,6 +652,18 @@ class Structure (object):
         result = copy.copy(self)
         result._init(kwargs, nodefault=True)
         return result
+
+
+class object_2_5(object):
+    """Base class emulating Python 2.5 'object' class.
+
+    Unlike 'object' class in Python 2.6 it consumes any keyword arguments.
+    This makes handling some multiple inheritance situations easier.
+    
+    """
+
+    def __init__(self, **kwargs):
+        object.__init__(self)
 
 
 ### Funkce

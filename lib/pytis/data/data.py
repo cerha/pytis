@@ -170,7 +170,7 @@ class Operator:
                 hash(tuple(self._kwargs.items())))
 
 
-class Data(object):
+class Data(object_2_5):
     """Základní abstrakce pøístupu k tabulkovým datùm.
 
     Tabulková data jsou rozdìlena do sloupcù a øádkù.  Tøída umo¾òuje pracovat

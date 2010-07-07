@@ -138,7 +138,7 @@ class PostgreSQLResult(object):
         return len(self._data)
     
 
-class PostgreSQLAccessor(object):
+class PostgreSQLAccessor(object_2_5):
     """Tøída pro low-level pøístup k PostgreSQL.
 
     Tato tøída je zodpovìdná za komunikaci s PostgreSQL realizovanou
