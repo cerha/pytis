@@ -20,8 +20,8 @@ redundancy -- set during rights redundancy update to prevent recursive trigger c
 ### Roles
 
 _std_table_nolog('c_pytis_role_purposes',
-                 (P('purposeid', 'char(4)'),
-                  C('purpose', 'varchar(32)', constraints=('unique', 'not null',)),),
+                 (P('purposeid', pytis.data.String(minlen=4, maxlen=4)),
+                  C('purpose', pytis.data.String(maxlen=32), constraints=('unique', 'not null',)),),
                  """There are three kinds of roles:
 1. Menu and access administrator roles.  Definitions of these roles may be changed
    only by the database administrators.
@@ -36,8 +36,8 @@ _std_table_nolog('c_pytis_role_purposes',
 
 _std_table('e_pytis_roles',
            (P('name', TUser),
-            C('description', 'varchar(64)'),
-            C('purposeid', 'char(4)', constraints=('not null',), default="'appl'",
+            C('description', pytis.data.String(maxlen=64)),
+            C('purposeid', pytis.data.String(minlen=4, maxlen=4), constraints=('not null',), default="'appl'",
               references='c_pytis_role_purposes on update cascade'),
             C('deleted', TDate),),
             """Application user roles.""",
@@ -228,7 +228,7 @@ By redefining this function, debugging of user behavior or sulogin may be possib
 ### Actions
 
 _std_table_nolog('c_pytis_action_types',
-                 (P('type', 'char(4)'),
+                 (P('type', pytis.data.String(minlen=4, maxlen=4)),
                   C('description', TString),
                   ),
                  """List of defined action types.""",
@@ -291,7 +291,7 @@ _std_table('e_pytis_menu',
            (P('menuid', TSerial),
             C('name', TString, constraints=('unique',),
               doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators."),
-            C('title', 'varchar(64)',
+            C('title', pytis.data.String(maxlen=64),
               doc='User title of the item. If NULL then it is a separator.'),
             C('position', TLTree, constraints=('not null', 'unique',),
               doc=("Unique identifier of menu item placement within menu. "
@@ -563,8 +563,8 @@ viewng('ev_pytis_menu_positions',
 ### Access rights
 
 _std_table_nolog('c_pytis_access_rights',
-                 (P('rightid', 'varchar(8)'),
-                  C('description', 'varchar(32)', constraints=('not null',)),
+                 (P('rightid', pytis.data.String(maxlen=8)),
+                  C('description', pytis.data.String(maxlen=32), constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
                  init_values=(("'show'", _("'Viditelnost položek menu'"),),
@@ -583,7 +583,7 @@ _std_table('e_pytis_action_rights',
               doc="Just to make logging happy"),
             C('shortname', TString, constraints=('not null',)),
             C('roleid', TUser, references='e_pytis_roles on update cascade', constraints=('not null',)),
-            C('rightid', 'varchar(8)', references='c_pytis_access_rights on update cascade', constraints=('not null',)),
+            C('rightid', pytis.data.String(maxlen=8), references='c_pytis_access_rights on update cascade', constraints=('not null',)),
             C('colname', TUser),
             C('system', TBoolean, constraints=('not null',), default="'f'",
               doc="Iff true, this is a system (noneditable) permission."),
@@ -1092,7 +1092,7 @@ _std_table_nolog('a_pytis_actions_structure',
                   C('shortname', TString, constraints=('not null',)),
                   C('menuid', TInteger),
                   C('position', TLTree, constraints=('not null',)),
-                  C('type', 'char(4)', constraints=('not null',),
+                  C('type', pytis.data.String(minlen=4, maxlen=4), constraints=('not null',),
                     references='c_pytis_action_types'),
                   ),
                  """Precomputed actions structure as presented to menu admin.

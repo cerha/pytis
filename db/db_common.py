@@ -601,7 +601,7 @@ function('drop_temptables', (TString,), TInteger,  body=drop_temptables,
          "v seznamu existují a případně je dropne."))
 
 _std_table('c_typ_formular',
-           (P('id', 'varchar(2)'),
+           (P('id', pytis.data.String(minlen=2, maxlen=2)),
             C('popis', TString)),
            doc="Slouží jako číselník typů formulářů",
            init_values=(("'BF'", "'Jednoduchý náhled'"),
