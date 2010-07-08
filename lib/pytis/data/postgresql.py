@@ -1110,7 +1110,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for aggregate, id_, name in operations:
                 for b in bindings:
                     if id_ == b.id():
-                        assert name not in [b.id() for b in bindings], ('Duplicate column name', name,)
+                        assert name not in [b_.id() for b_ in bindings], \
+                               ('Duplicate column name', name,)
                         if aggregate == self.AGG_COUNT:
                             type_ = Integer()
                         elif aggregate == self.AGG_AVG:
