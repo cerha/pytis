@@ -975,7 +975,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 type_kwargs['not_null'] = True
             if not type_kwargs.has_key('unique') and type_class_ != Boolean:
                 type_kwargs['unique'] = unique
-            if type_class_ == String:
+            if type_class_ == String and not type_kwargs.has_key('maxlen'):
                 if type_ != 'text':
                     try:
                         size = int(size_string) - 4
@@ -984,7 +984,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if size < 0:
                         size = None
                     type_kwargs['maxlen'] = size
-            elif type_class_ == Float:
+            elif type_class_ == Float and not type_kwargs.has_key('precision'):
                 spec = int(size_string)
                 precision = (spec & 0xFFFF) - 4
                 if precision < 0 or precision > 100:
