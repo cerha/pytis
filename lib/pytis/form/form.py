@@ -83,7 +83,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     descr = classmethod(descr)
         
     def __init__(self, parent, resolver, name, guardian=None, transaction=None,
-                 spec_kwargs={}, **kwargs):
+                 spec_kwargs={}, data_kwargs={}, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -97,7 +97,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             klávesových událostí \"nahoru\".  Typicky je to formuláø, který
             tuto instanci vytváøí.
           transaction -- transaction to use when manipulating data
-          spec_kwargs -- keyword arguments passed to the view specification constructor.
+          spec_kwargs -- dictionary of keyword arguments passed to the view
+            specification constructor.
+          data_kwargs -- dictionary of additional keyword arguments passed to
+            the data object constructor.
           kwargs -- viz ní¾e.
 
         Resolver je pou¾it k získání datové a prezentaèní specifikace a
@@ -139,11 +142,13 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._guardian = guardian or parent
         self._governing_transaction = transaction
         self._transaction = transaction or self._default_transaction()
-        self._spec_kwargs = spec_kwargs
+        self._spec_kwargs = copy.copy(spec_kwargs)
+        self._data_kwargs = copy.copy(data_kwargs)
         Window.__init__(self, parent)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         try:
+            # Note, that some code relies on the order of calling these two methods.
             self._view = self._create_view_spec()
             self._data = self._create_data_object()
         except (ResolverError, ProgramError):
@@ -190,7 +195,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return spec        
 
     def _create_data_object(self):
-        return create_data_object(self._name, spec_kwargs=self._spec_kwargs)
+        return create_data_object(self._name, spec_kwargs=self._spec_kwargs,
+                                  kwargs=self._data_kwargs)
 
     def _create_form(self):
         # Build the form from parts

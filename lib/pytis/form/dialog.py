@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1263,7 +1263,81 @@ class CheckListDialog(Message):
             return [self._checklist.IsChecked(i) for i, triple in enumerate(self._items)]
         else:
             return None
+
+        
+class CheckMatrixDialog(Message):
+    """A dialog with a matrix of checkable items.
+
+    The dialog displays a question with a matrix of checkboxes arranged within
+    labeled rows and columns.
+
+    The result returned by the `run()' method is a sequence of sequences of
+    boolean values, one sequence for each matrix row and one boolean value for
+    each column.  The order of rows and columns corresponds to the order passed
+    to the constructor.  The value is True for items which were checked and
+    False for unchecked items.
+
+    """
+    _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
+    def __init__(self, parent, columns=(), rows=(), values=None, enabled=None, **kwargs):
+        """Arguments:
+             columns -- sequence of column labels (strings).
+             rows --  sequence of row labels (strings).
+             values -- a sequence of sequences of boolean values.  The outer
+               sequence corresponds to matrix rows and the inner sequences
+               correcpond to matrix columns.  The length of the outer sequence
+               must match the length of 'rows', the lengths of inner sequences
+               must match the lengths of 'columns'.  The values control the
+               initial state of the corresponding checkboxes.
+             enabled -- None or a function of two arguments (ROW, COLUMN)
+               returning a boolean value indicating the availability of the
+               corresponding checkbox in the matrix through numeric row/column
+               indices.  When False is returned the checkbox at given row and
+               column will be inactive (the user will not be able to change its
+               state from its initial state given by values).
+        """
+        super(CheckMatrixDialog, self).__init__(parent, buttons=(Message.BUTTON_OK,
+                                                                 Message.BUTTON_CANCEL), **kwargs)
+        assert isinstance(columns, (list, tuple)), columns
+        assert isinstance(rows, (list, tuple)), rows
+        assert values is None or isinstance(values, (list, tuple)), values
+        self._columns = columns
+        self._rows = rows
+        self._values = values
+        self._enabled = enabled
+
+    def _create_content(self, sizer):
+        super(CheckMatrixDialog, self)._create_content(sizer)
+        self._grid = grid = wx.FlexGridSizer(len(self._rows)+1, len(self._columns)+1, 2, 6)
+        self._controls = []
+        grid.Add(wx.StaticText(self._dialog, -1, ""))
+        for column in self._columns:
+            label = wx.StaticText(self._dialog, -1, column)
+            grid.Add(label)
+        for i, row_label in enumerate(self._rows):
+            label = wx.StaticText(self._dialog, -1, row_label)
+            grid.Add(label)
+            controls = []
+            for j, column_label in enumerate(self._columns):
+                control = wx.CheckBox(self._dialog, -1)
+                if self._values:
+                    value = self._values[i][j]
+                    control.SetValue(value)
+                if self._enabled:
+                    control.Enable(self._enabled(i, j))
+                grid.Add(control)
+                controls.append(control)
+            self._controls.append(controls)
+        sizer.Add(grid, 1, wx.EXPAND|wx.ALL, 5)
+        
+    def _customize_result(self, result):
+        if self._button_label(result) == self.BUTTON_OK:
+            return [[ctrl.IsChecked() for ctrl in controls]
+                    for controls in self._controls]
+        else:
+            return None
+
         
 class ExitDialog(Question):
     """Application exit question with a choice of items to save for next startup.

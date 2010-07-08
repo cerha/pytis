@@ -138,17 +138,20 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._aggregation_results.reset()
         return super(ListForm, self)._init_select()
 
+    def _aggregation_valid(self, operation, type):
+        allowed_types = (pytis.data.Number,)
+        if operation in (pytis.data.Data.AGG_MIN, pytis.data.Data.AGG_MAX,
+                         pytis.data.Data.AGG_COUNT):
+            allowed_types += (pytis.data.String, pytis.data.DateTime)
+        return isinstance(type, allowed_types)
+
     def _get_aggregation_result(self, key):
         cid, operation = key
         c = self._data.find_column(cid)
-        if c is not None:
-            allowed_types = (pytis.data.Number,)
-            if operation in (pytis.data.Data.AGG_MIN, pytis.data.Data.AGG_MAX):
-                allowed_types += (pytis.data.String, pytis.data.DateTime)
-            if isinstance(c.type(), allowed_types):
-                return self._data.select_aggregate((operation, cid),
-                                                   condition=self._current_condition(),
-                                                   transaction=self._transaction)
+        if c is not None and self._aggregation_valid(operation, c.type()):
+            return self._data.select_aggregate((operation, cid),
+                                               condition=self._current_condition(),
+                                               transaction=self._transaction)
         return None
         
     def _init_columns(self, columns=None):
@@ -925,8 +928,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for op, title, icon, label in self._AGGREGATIONS] + \
                [MSeparator(),
                 MItem(_("Zobrazit v¹e"), command=ListForm.COMMAND_AGGREGATE),
-                MItem(_("Skrýt v¹e"),    command=ListForm.COMMAND_UNAGGREGATE)]
-        
+                MItem(_("Skrýt v¹e"),    command=ListForm.COMMAND_UNAGGREGATE),
+                MSeparator(),
+                MItem(_("Zobrazit agregovaný náhled"), command=ListForm.COMMAND_AGGREGATED_VIEW)]
+                
     def _column_context_menu(self, col):
         M = Menu
         I = MItem
@@ -1635,6 +1640,35 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._aggregations.remove(operation)
         self._update_label_height()
         self.refresh()
+
+    def _available_aggregations(self):
+        return ([(op, title) for op, title, icon, label in self._AGGREGATIONS] +
+                [(pytis.data.Data.AGG_COUNT, _("Poèet"))])
+        
+    def _cmd_aggregated_view(self):
+        available_aggregations = self._available_aggregations()
+        def enabled(row, col):
+            # Return False for invalid aggregate operations to make the
+            # corresponding checbox in the matrix inactive.
+            if col == 0:
+                return True
+            else:
+                column_type = self._row[self._columns[row].id()].type()
+                return self._aggregation_valid(available_aggregations[col-1][0], column_type)
+        selection = run_dialog(CheckMatrixDialog, title=_("Zvolte sloupce..."),
+                               message=_("Zvolte sloupce agregaèního náhledu"),
+                               columns=[_("Seskupování")]+[x[1] for x in available_aggregations],
+                               rows=[column.label() for column in self._columns],
+                               enabled=enabled)
+        if selection is not None:
+            group_by_columns = [col.id() for col, row in zip(self._columns, selection) if row[0]]
+            aggregation_columns = []
+            for col, row in zip(self._columns, selection):
+                for (op, label), checked in zip(available_aggregations, row[1:]):
+                    if checked:
+                        aggregation_columns.append((col.id(), op))
+            run_form(AggregationForm, self._name,
+                     group_by_columns=group_by_columns, aggregation_columns=aggregation_columns)
         
     def _cmd_filter_by_cell(self):
         row, col = self._current_cell()
@@ -2874,3 +2908,51 @@ class SideBrowseForm(BrowseForm):
     def main_form(self):
         """Return main form instance corresponding to this side form."""
         return self._main_form
+
+
+class AggregationForm(BrowseForm):
+
+    def __init__(self, *args, **kwargs):
+        # We can't process these arguments in _init_attributes() since they are
+        # needed in _create_view_spec() and _create_data_object() which are
+        # called before _init_attributes().
+        self._aggregation_columns = kwargs.pop('aggregation_columns')
+        self._group_by_columns = tuple(kwargs.pop('group_by_columns'))
+        super(AggregationForm, self).__init__(*args, **kwargs)
+    
+    def _create_view_spec(self):
+        view = super(AggregationForm, self)._create_view_spec()
+        fields = list(view.fields())
+        data = create_data_object(self._name, spec_kwargs=self._spec_kwargs,
+                                  kwargs=self._data_kwargs)
+        record = self.Record(self, fields, data, None)
+        labels = dict([(f.id(), f.label()) for f in fields])
+        operations = []
+        for f in view.fields():
+            if f.id() not in self._group_by_columns and not f.virtual():
+                for op, title in self._available_aggregations():
+                    if self._aggregation_valid(op, record[f.id()].type()):
+                        column_id = self._aggregation_column_id(f.id(), op)
+                        operations.append((op, f.id(), column_id))
+                        fields.append(Field(column_id, labels[f.id()]+'/'+title))
+        self._data_kwargs['operations'] = tuple(operations)
+        self._data_kwargs['column_groups'] = self._group_by_columns
+        return view.clone(ViewSpec(view.title(), fields))
+
+    def _can_aggregated_view(self):
+        return False
+        
+    def _aggregation_column_id(self, column_id, op):
+        return '_'+ column_id +'_'+ str(op)
+    
+    def _default_columns(self):
+        return list(self._group_by_columns) + [self._aggregation_column_id(column_id, op)
+                                               for column_id, op in self._aggregation_columns]
+        
+    def _default_sorting(self):
+        return tuple([(column_id, pytis.data.ASCENDENT) for column_id in self._group_by_columns])
+        
+    def _select_columns(self):
+        return [column_id for column_id in super(AggregationForm, self)._select_columns()
+                if column_id in self._group_by_columns or column_id.startswith('_')]
+

@@ -648,7 +648,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.top())
                 return False
             forms = [(f.__class__, f.name(), f.title(), True) for f in self._windows.items()
-                     if not isinstance(f, PrintForm)]
+                     if not isinstance(f, (PrintForm, AggregationForm))]
             for cls, name, title in self._saved_startup_forms:
                 if title is not None and (cls, name) not in [x[:2] for x in forms]:
                     forms.append((cls, name, title, False))
@@ -1471,13 +1471,17 @@ def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             message = message[:-1]
         _application.set_status('message', message, timeout=timeout, root=root)
 
-def create_data_object(name, spec_kwargs={}):
+def create_data_object(name, spec_kwargs={}, kwargs={}):
     """Create a data object for given specification.
 
     Arguments:
 
       name -- specification name for resolver as a string.
-      spec_kwargs -- a dictionary of keyword arguments passed to the specification.
+      spec_kwargs -- a dictionary of keyword arguments passed to the
+        specification.
+      kwargs -- a dictionary of keyword arguments passed to the data object
+        constructor.  The argument 'connection_data' is added automatically
+        if the data class is derived from 'pytis.data.DBData'.
 
     Raises 'ResolverError' or 'ProgramError' if data object creation fails.
     
@@ -1491,9 +1495,7 @@ def create_data_object(name, spec_kwargs={}):
         import pytis.data    
         assert isinstance(factory, pytis.data.DataFactory)
     if issubclass(factory.class_(), pytis.data.DBData):
-        kwargs = dict(connection_data=config.dbconnection)
-    else:
-        kwargs = {}
+        kwargs = dict(kwargs, connection_data=config.dbconnection)
     t = time.time()
     success, data_object = db_operation(factory.create, **kwargs)
     if not success:

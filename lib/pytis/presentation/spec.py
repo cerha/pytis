@@ -846,14 +846,8 @@ class ViewSpec(object):
     pro nìj relevantní.
 
     """
-    
-    def __init__(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
-                 actions=(), sorting=None, grouping=None, group_heading=None, check=(),
-                 cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
-                 redirect=None, focus_field=None, description=None, help=None, row_style=None,
-                 filters=(), conditions=(), default_filter=None, aggregations=(), bindings=(),
-                 initial_folding=None, spec_name='', arguments=None, public=None):
-        
+
+    def __init__(self, title, fields, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -1023,6 +1017,15 @@ class ViewSpec(object):
         the field specifications in 'fields'.
         
         """
+        self._kwargs = dict(kwargs, title=title, fields=fields)
+        self._init(**self._kwargs)
+    
+    def _init(self, title, fields, singular=None, layout=None, list_layout=None, columns=None,
+              actions=(), sorting=None, grouping=None, group_heading=None, check=(),
+              cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
+              redirect=None, focus_field=None, description=None, help=None, row_style=None,
+              filters=(), conditions=(), default_filter=None, aggregations=(), bindings=(),
+              initial_folding=None, spec_name='', arguments=None, public=None):
         assert isinstance(title, (str, unicode))
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1197,6 +1200,18 @@ class ViewSpec(object):
                 raise ProgramError("Invalid action specification: %s" % x)
         return actions
     
+    def clone(self, other):
+        """Clone this instance by another 'ViewSpec' instance and return the cloned instance.
+
+        The cloned instance will inherit all attributes of this instance and
+        the other instance passed as argument, where the attributes of the
+        later instance take precedence.
+
+        """
+        assert isinstance(other, ViewSpec), other
+        kwargs = dict(self._kwargs, **other._kwargs)
+        return ViewSpec(**kwargs)
+
     def title(self):
         """Vra» název náhledu jako øetìzec."""
         return self._title
@@ -2032,8 +2047,7 @@ class Field(object):
     all features may be supported by all user interface implementations.
     
     """
-    def __init__(self, id=None, label=None, column_label=None, inherit=None,
-                 **kwargs):
+    def __init__(self, id=None, label=None, column_label=None, inherit=None, **kwargs):
         """Arguments:
 
           id -- field identifier as a string.  This identifier is used to refer
