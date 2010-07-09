@@ -1741,7 +1741,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     data = self._pg_data
                     step = min_step = self._PG_INITIAL_STEP
                     max_step = self._PG_MAX_STEP
-                    test_count = self._pg_initial_count + step
+                    test_count = self._pg_initial_count
                     selection = self._pg_selection
                     transaction = self._pg_transaction
                     args = dict(selection=selection, number=self._pg_initial_count)
@@ -1761,6 +1761,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                             return
                         if data._pg_query_counter > query_counter:
                             step = max(step/8, min_step)
+                        test_count += step
                         args = dict(selection=selection, number=step)
                         query = data._pdbb_command_move_forward.format(args)
                         result = data._pg_query(query, transaction=transaction)
@@ -1770,7 +1771,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                             break
                         if step < max_step:
                             step = min(2*step, max_step)
-                        test_count += step
                         # Give other (perhaps more urgent) threads on the same
                         # data object opportunity to call database queries.
                         if not self._pg_urgent:
