@@ -58,11 +58,10 @@ pytis.FormHandler = Class.create({
 	    // Disabled fields are not present in values/last_values, but also
 	    // checkbox fields are not there if unchecked.
 	    if ((field in values || field in last_values) && values[field] != last_values[field]) {
-	       var update = function(data) { handler.update(form, data) };
 	       form.request({
 		     parameters: {_pytis_form_update_request: field,
 			          _pytis_form_filter_state: $H(handler._filters).toJSON()},
-		     onSuccess: function(transport, data) { update(data) }
+		     onSuccess: function(response) { handler.update(form, response) }
 	       });
 	       break;
 	    }
@@ -114,18 +113,21 @@ pytis.FormHandler = Class.create({
 	 }
       },
 
-      update: function(form, data) {
+      update: function(form, response) {
 	 // Update the form state in reaction to previously sent AJAX request.
-	 for (var id in data) {
-	    var cdata = data[id];
-	    for (var key in cdata) {
-	       var value = cdata[key];
-	       var field = form[id];
-	       if (field) {
-		  if      (key == 'editable')    this._set_editability(field, value);
-		  else if (key == 'value')       this._set_value(field, value);
-		  else if (key == 'filter')      form._handler._filters[id] = value;
-		  else if (key == 'enumeration') this._set_enumeration(field, value);
+	 var data = response.responseJSON;
+	 if (data != null) {
+	    for (var id in data) {
+	       var cdata = data[id];
+	       for (var key in cdata) {
+		  var value = cdata[key];
+		  var field = form[id];
+		  if (field) {
+		     if      (key == 'editable')    this._set_editability(field, value);
+		     else if (key == 'value')       this._set_value(field, value);
+		     else if (key == 'filter')      form._handler._filters[id] = value;
+		     else if (key == 'enumeration') this._set_enumeration(field, value);
+		  }
 	       }
 	    }
 	 }
