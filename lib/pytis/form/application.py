@@ -978,6 +978,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_custom_debug(self):
         if __debug__:
             config.custom_debug()
+
+    def _cmd_inspect(self):
+        import wx.lib.inspection
+        tool = wx.lib.inspection.InspectionTool()
+        tool.Init(app=self)
+        tool.Show()
         
     def _cmd_exit(self):
         self._frame.Close()

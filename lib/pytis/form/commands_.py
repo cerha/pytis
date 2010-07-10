@@ -346,8 +346,11 @@ DEFAULT_KEYMAP = (
 if __debug__:
     Command(Application, 'CUSTOM_DEBUG',
             "Pomocný pøíkaz pro vyvolání pomocné ladící funkce")
+    Command(Application, 'INSPECT',
+            "Vyvolání vývojáøského nástroje pro inspekci wx Widgets")
     DEFAULT_KEYMAP += \
-        (('Ctrl-d', Application.COMMAND_CUSTOM_DEBUG),)
+        (('Ctrl-d', Application.COMMAND_CUSTOM_DEBUG),
+         ('Ctrl-i', Application.COMMAND_INSPECT),)
 
 
 _ASC = LookupForm.SORTING_ASCENDENT
