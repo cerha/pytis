@@ -813,6 +813,10 @@ class BrowseForm(LayoutForm):
                 filter_id = cookie[len(self._name)+1:]
             else:
                 filter_id = self._view.default_filter()
+                if filter_id is None:
+                    null_filter = find(None, filters, key=lambda f: f.condition())
+                    if null_filter is not None:
+                        filter_id = null_filter.id()
         if filter_id:
             matching_filter = find(filter_id, self._filters, key=lambda f: f.id())
             # Append the current user selected filter to the filter passed as 'filter' argument.
