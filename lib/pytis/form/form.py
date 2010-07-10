@@ -1787,27 +1787,33 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     
     def __init__(self, *args, **kwargs):
         super(EditForm, self).__init__(*args, **kwargs)
-        # Calculate the ideal total form size.
+        # Calculate the ideal total form size.  We first count the size of the sizer without the
+        # form panel (that's why its hidden and shown below) and then add the manually computed
+        # size of the panel to the result.  The size of the forma panel computed by wx Windows is
+        # totaly useless.  It doesn't reflect the form content at all.
+        panel = self._form_controls_window
+        panel.Show(False)
         size = self.GetSizer().CalcMin()
-        if isinstance(self._form_controls_window, wx.ScrolledWindow):
-            # Since the sizer counts zero space for the scrollable form panel,
-            # we must add it to the calculated minimal size manually.
-            panel_size = self._form_controls_window.GetVirtualSize()
+        panel.Show(True)
+        if isinstance(panel, wx.ScrolledWindow):
+            # The size of a scrollable window is simly its virtual size.
+            panel_size = panel.GetVirtualSize()
             width = panel_size.width
             height = panel_size.height
+            if (wx.MAJOR_VERSION, wx.MINOR_VERSION) == (2, 6):
+                width += 16
+                height += 16
         else:
             # If the form controls window is a wx.Notebook instance we need to
             # count the size of the largest tab page.
             width = height = 0
-            for i in range(self._form_controls_window.GetPageCount()):
-                page_size = self._form_controls_window.GetPage(i).GetSizer().CalcMin()
+            for i in range(panel.GetPageCount()):
+                page_size = panel.GetPage(i).GetSizer().CalcMin()
                 width = max(page_size.width, width)
                 height = max(page_size.height, height)
             # Modify the computed size by some empiric numbers...
-            width += 2 # The tab border is not counted, so add it manually.
-            height -= 22 # The top level sizer probably counts with some
-            # constant space for the tabs.  Thus we must subtract it from the
-            # number we will be adding.
+            width += 8 # Add space for border manually.
+            height += 41 # Add space for border and Notebook tabs.
         size.width = max(size.width, width)
         size.height += height
         self._size = size
