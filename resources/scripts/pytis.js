@@ -56,7 +56,8 @@ pytis.FormHandler = Class.create({
 	    var field = fields[i];
 	    // Disabled fields are not present in values/last_values, but also
 	    // checkbox fields are not there if unchecked.
-	    if (field in values || field in last_values	&& values[field] != last_values[field]) {
+	    if ((field in values || field in last_values) 
+		&& values[field] != last_values[field]) {
 	       this._form.request({
 		     parameters: {_pytis_form_update_request: ++this._last_request_number,
 			          _pytis_form_changed_field: field,
