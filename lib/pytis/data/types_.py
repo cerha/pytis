@@ -692,7 +692,7 @@ class Float(Number):
     def _export(self, value, locale_format=True):
         if locale_format:
             import locale
-            encoding = locale.getdefaultlocale()[1]
+            encoding = locale.getlocale(locale.LC_NUMERIC)[1] or 'ASCII'
             return locale.format(self._format_string, value, 1).decode(encoding)
         else:
             return unicode(self._format_string % value)
