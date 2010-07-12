@@ -514,29 +514,37 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         """Return the AJAX request response as a JSON encoded data structure.
 
         Arguemnts:
-          req -- AJAX request object as an instance of class implementing the pytis 'Request' API.
+          req -- AJAX request object as an instance of class implementing the
+            pytis 'Request' API.
           row -- edited form record as a 'PresentedRow' instance.
           layout -- edited form layout as a 'GroupSpec' instance.
-          errors -- form data validation result as a sequence of pairs (field_id, error_message).
-          translator -- 'lcg.Translator' instance used for localization of computed field values.
+          errors -- form data validation result as a sequence of pairs
+            (field_id, error_message).
+          translator -- 'lcg.Translator' instance used for localization of
+            computed field values (such as dates, numbers, etc).
 
-        The returned string is supposed to be sent back to the client within the 'X-Json' HTTP
-        header of the request response.
-
-        This method acts as the server side counter-part of the client side code defined in the
-        pytis form JavaScript code in 'pytis.js'.
+        This method acts as the server side counter-part of the client side
+        code defined in the pytis form JavaScript code in 'pytis.js'.  The
+        returned string is supposed to be sent back to the client within the
+        response body with the 'application/json' content type set in HTTP
+        response headers.  That way the client side code will be able to
+        process it.
         
         """
         import simplejson as json
-        changed_field = str(req.param('_pytis_form_update_request'))
+        request_number = req.param('_pytis_form_update_request')
+        changed_field = str(req.param('_pytis_form_changed_field'))
         filters = json.loads(req.param('_pytis_form_filter_state'))
-        data = {}
+        fields = {}
+        original_row = row.original_row()
         for fid in layout.order():
-            data[fid] = fdata = {}
+            fields[fid] = fdata = {}
             if fid != changed_field:
                 fdata['editable'] = row.editable(fid)
                 if row.invalid_string(fid) is None:
                     value = row[fid]
+                    if original_row.has_key(fid):
+                        lcg.log("***", value.value(), original_row[fid].value())
                     if isinstance(value.type(), pd.DateTime):
                         exported_value = localizable_datetime(value)
                     else:
@@ -548,13 +556,14 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 if filters.has_key(fid):
                     old_filter = filters[fid]
                     new_filter = cls._op2str(row.runtime_filter(fid))
+                    lcg.log("===", new_filter != old_filter, new_filter, old_filter)
                     if new_filter != old_filter:
                         fdata['filter'] = new_filter
                         fdata['enumeration'] = row.enumerate(fid)
         for fid, error in errors:
-            if data.has_key(fid):
-                data[fid]['error'] = error
-        return json.dumps(data)
+            if fields.has_key(fid):
+                fields[fid]['error'] = error
+        return json.dumps(dict(request_number=request_number, fields=fields))
 
     
 class FilterForm(EditForm):

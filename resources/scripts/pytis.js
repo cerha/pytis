@@ -34,34 +34,34 @@ pytis.FormHandler = Class.create({
       initialize: function(form_id, fields, filters) {
 	 var form = $(form_id);
 	 if (form != null) {
-	    form._handler = this;
 	    this._form = form;
 	    this._fields = fields;
 	    this._filters = filters;
-	    new Form.Observer(form, 1, this.on_change);
+	    this._last_request_number = 0;
+	    this._observer = new Form.Observer(form, 1, this.on_change.bind(this));
 	 }
       },
 
       on_change: function(form, value) {
 	 // Send AJAX request in reaction to user changes of form values.
-	 var handler = form._handler;
-	 // TODO: Avoid AJAX requests during continuous typing.
-	 //var now = new Date().valueOf();
-	 //if (handler._last_keypress != null && handler._last_keypress + 500 > now) {
-	 //   return;
-	 //}
+	 // TODO: Avoid AJAX request flooding during typing or other continuous
+	 // changes.  The problem is that we must always send a request as we
+	 // don't know whether another change comes soon.  Maybe we could send
+	 // the request after some delay if no other change comes in the
+	 // meantime, but this would slow down the UI responsivity.
 	 var values = value.parseQuery(); 
-	 var last_values = this.lastValue.parseQuery();
-	 var fields = handler._fields;
+	 var last_values = this._observer.lastValue.parseQuery();
+	 var fields = this._fields;
 	 for (var i=0; i<fields.length; i++) {
 	    var field = fields[i];
 	    // Disabled fields are not present in values/last_values, but also
 	    // checkbox fields are not there if unchecked.
-	    if ((field in values || field in last_values) && values[field] != last_values[field]) {
-	       form.request({
-		     parameters: {_pytis_form_update_request: field,
-			          _pytis_form_filter_state: $H(handler._filters).toJSON()},
-		     onSuccess: function(response) { handler.update(form, response) }
+	    if (field in values || field in last_values	&& values[field] != last_values[field]) {
+	       this._form.request({
+		     parameters: {_pytis_form_update_request: ++this._last_request_number,
+			          _pytis_form_changed_field: field,
+ 			          _pytis_form_filter_state: $H(this._filters).toJSON()},
+		     onSuccess: this.update.bind(this)
 	       });
 	       break;
 	    }
@@ -113,20 +113,29 @@ pytis.FormHandler = Class.create({
 	 }
       },
 
-      update: function(form, response) {
+      update: function(response) {
 	 // Update the form state in reaction to previously sent AJAX request.
 	 var data = response.responseJSON;
 	 if (data != null) {
-	    for (var id in data) {
-	       var cdata = data[id];
-	       for (var key in cdata) {
-		  var value = cdata[key];
-		  var field = form[id];
-		  if (field) {
-		     if      (key == 'editable')    this._set_editability(field, value);
-		     else if (key == 'value')       this._set_value(field, value);
-		     else if (key == 'filter')      form._handler._filters[id] = value;
-		     else if (key == 'enumeration') this._set_enumeration(field, value);
+	    var response_number = data['request_number'];
+	    var fields = data['fields'];
+	    // Ignore the response if other requests were sent in the meantime.
+	    // Only the most recently sent request really corresponds to the
+	    // current form state!  This also prevents processing responses
+	    // coming in wrong order (earlier request may be processed longer
+	    // than a later one).
+	    if (response_number == this._last_request_number && fields != null) {
+	       for (var id in fields) {
+		  var cdata = fields[id];
+		  for (var key in cdata) {
+		     var value = cdata[key];
+		     var field = this._form[id];
+		     if (field) {
+			if      (key == 'editable')    this._set_editability(field, value);
+			else if (key == 'value')       this._set_value(field, value);
+			else if (key == 'filter')      this._filters[id] = value;
+			else if (key == 'enumeration') this._set_enumeration(field, value);
+		     }
 		  }
 	       }
 	    }
