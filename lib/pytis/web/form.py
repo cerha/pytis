@@ -536,15 +536,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         changed_field = str(req.param('_pytis_form_changed_field'))
         filters = json.loads(req.param('_pytis_form_filter_state'))
         fields = {}
-        original_row = row.original_row()
         for fid in layout.order():
             fields[fid] = fdata = {}
             if fid != changed_field:
                 fdata['editable'] = row.editable(fid)
                 if row.invalid_string(fid) is None:
                     value = row[fid]
-                    if original_row.has_key(fid):
-                        lcg.log("***", value.value(), original_row[fid].value())
                     if isinstance(value.type(), pd.DateTime):
                         exported_value = localizable_datetime(value)
                     else:
@@ -556,7 +553,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 if filters.has_key(fid):
                     old_filter = filters[fid]
                     new_filter = cls._op2str(row.runtime_filter(fid))
-                    lcg.log("===", new_filter != old_filter, new_filter, old_filter)
                     if new_filter != old_filter:
                         fdata['filter'] = new_filter
                         fdata['enumeration'] = row.enumerate(fid)
