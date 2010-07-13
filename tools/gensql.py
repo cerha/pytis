@@ -208,6 +208,14 @@ class _GsqlSpec(object):
         """Vra» jméno objektu zadané v konstruktoru."""
         return self._name
 
+    def extra_names(self):
+        """Return sequence of additional associated object names.
+        
+        For instance, index names or names of sequences corresponding to serial
+        columns may be returned.
+        """
+        return ()
+
     def depends(self):
         """Vra» tuple objektù, na kterých tento objekt závisí.
 
@@ -542,6 +550,9 @@ class TableView(object):
 class _GsqlType(_GsqlSpec):
     """Specifikace SQL typu."""
 
+    _SQL_NAME = 'TYPE'
+    _PGSQL_TYPE = 'c'
+    
     def __init__(self, name, columns, **kwargs):
         """Inicializuj instanci.
 
@@ -790,6 +801,14 @@ class _GsqlTable(_GsqlSpec):
     def name(self):
         """Vra» jméno tabulky zadané v konstruktoru."""
         return self._name
+    
+    def extra_names(self):
+        names = []
+        for c in self._columns:
+            if isinstance(c.type, pytis.data.Serial):
+                cname = c.name.split('.')[-1]
+                names.append('%s_%s_seq' % (self._name, cname,))
+        return names
 
     def columns(self):
         """Vra» specifikaci sloupcù zadanou v konstruktoru."""
@@ -2453,36 +2472,51 @@ class _GsqlDefs(UserDict.UserDict):
         # Found all relevant objects in all the object classes
         all_names = []
         names = {}
-        def process(n):
-            o = self[n]
+        sql_types_classes = {}
+        classes = []
+        def process(name):
+            o = self[name]
             c = o.__class__
-            if not names.has_key(c):
-                db_names = c.db_all_names(connection)
-                names[c] = db_names
-                for d in db_names:
-                    all_names.append(d)
+            if c not in classes:
+                sql_type = c._SQL_NAME
+                classes.append(c)
+                sql_types_classes[sql_type] = c
+                if not names.has_key(sql_type):
+                    db_names = c.db_all_names(connection)
+                    names[sql_type] = db_names
+                    for d in db_names:
+                        if d not in all_names:
+                            all_names.append(d)
         self._process_resolved(process)
         # Remove objects of wrong types and build the list of objects to update
         to_create = []
         to_update = []
         to_remove = []
-        def process(n):
-            o = self[n]
-            i = position(n, all_names)
+        def process(name):
+            o = self[name]
+            i = position(name, all_names)
             if i is None:
                 to_create.append(o)
             else:
                 del all_names[i]
                 c = o.__class__
-                if n in names[c]:
+                sql_type = c._SQL_NAME
+                if name in names[sql_type]:
                     to_update.append(o)
+                    names[sql_type].remove(name)
                 else:
                     to_remove.append(o)
+                for n in o.extra_names():
+                    try:
+                        all_names.remove(n)
+                    except ValueError:
+                        pass
         self._process_resolved(process)
         for o in to_remove:
             sys.stdout.write(o.db_remove(o.name()))
         # Remove orphans
-        for c, ns in names.items():
+        for sql_type, ns in names.items():
+            c = sql_types_classes[sql_type]
             for n in ns:
                 if n in all_names:
                     sys.stdout.write(c.db_remove(n))
