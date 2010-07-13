@@ -660,9 +660,9 @@ class Float(Number):
         error = None
         try:
             import locale
-            # TODO: Odporný hack, z nìjakého dùvodu následující
-            # metoda bez toho nezafunguje
-            locale.getlocale(locale.LC_NUMERIC)
+            if isinstance(string, unicode):
+                encoding = locale.getpreferredencoding()
+                string = string.encode(encoding)
             value = locale.atof(string)
         except:
             # Dokumentace Pythonu 1.5.2 neøíká, ¾e by `float' mohlo metat metat
