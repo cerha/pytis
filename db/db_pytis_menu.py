@@ -294,6 +294,7 @@ _std_table('e_pytis_menu',
             C('title', pytis.data.String(maxlen=64),
               doc='User title of the item. If NULL then it is a separator.'),
             C('position', TLTree, constraints=('not null', 'unique',),
+              index=dict(method='gist'),
               doc=("Unique identifier of menu item placement within menu. "
                    "The top-menu item position is ''. "
                    "Each submenu has exactly one label more than its parent. ")),
@@ -315,8 +316,6 @@ _std_table('e_pytis_menu',
            """Menu structure definition.""",
            grant=db_rights,
            depends=('c_pytis_menu_actions',))
-sql_raw("create index e_pytis_menu_position_index on e_pytis_menu using gist (position);",
-        depends=('e_pytis_menu',))
 def e_pytis_menu_trigger():
     class Menu(BaseTriggerObject):
         def _pg_escape(self, val):
@@ -1091,7 +1090,8 @@ _std_table_nolog('a_pytis_actions_structure',
                  (C('fullname', TString, constraints=('not null',)),
                   C('shortname', TString, constraints=('not null',)),
                   C('menuid', TInteger),
-                  C('position', TLTree, constraints=('not null',)),
+                  C('position', TLTree, constraints=('not null',),
+                    index=dict(method='gist')),
                   C('type', pytis.data.String(minlen=4, maxlen=4), constraints=('not null',),
                     references='c_pytis_action_types'),
                   ),
@@ -1100,8 +1100,6 @@ Item positions and indentations are determined by positions.
 This table is modified only by triggers.
 """,
                  depends=('c_pytis_action_types',))
-sql_raw("create index a_pytis_actions_structure_index on a_pytis_actions_structure using gist (position);",
-        depends=('a_pytis_actions_structure',))
 
 def pytis_update_actions_structure():
     for row in plpy.execute("select pytis_actions_lock_id() as lock_id"):

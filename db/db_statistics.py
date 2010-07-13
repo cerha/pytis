@@ -44,11 +44,11 @@ $$ language plpgsql stable;
 
 _std_table_nolog('e_pytis_form_log',
                  (P('id', TSerial),
-                  C('form', TString, constraints=('NOT NULL',)),
-                  C('class', TString, constraints=('NOT NULL',)),
-                  C('info', TString),
-                  C('login', TUser, constraints=('NOT NULL',)),
-                  C('t_start', TDateTime, constraints=('NOT NULL',)),
+                  C('form', TString, constraints=('NOT NULL',), index=True),
+                  C('class', TString, constraints=('NOT NULL',), index=True),
+                  C('info', TString, index=True),
+                  C('login', TUser, constraints=('NOT NULL',), index=True),
+                  C('t_start', TDateTime, constraints=('NOT NULL',), index=True),
                   C('t_show', TDateTime, constraints=('NOT NULL',)),
                   ),
                  schemas=db_schemas,
@@ -61,16 +61,6 @@ info is optional extra information provided by the form (e.g. sorting used).
 t_start is the time when user invoked the form opening command.
 t_show is the time when the form got actually ready for operation after its start.
 """)
-
-sql_raw("""
-create index e_pytis_form_log_form_index on e_pytis_form_log(form);
-create index e_pytis_form_log_info_index on e_pytis_form_log(info);
-create index e_pytis_form_log_class_index on e_pytis_form_log(class);
-create index e_pytis_form_log_user_index on e_pytis_form_log(login);
-create index e_pytis_form_log_tstart_index on e_pytis_form_log(t_start);
-""",
-        schemas=db_schemas,
-        depends=('e_pytis_form_log',))
 
 function('pytis_log_form', (TString, TString, TString, TDateTime, TDateTime), TInteger,
          body="""

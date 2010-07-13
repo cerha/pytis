@@ -326,7 +326,7 @@ class Column(object):
     """Úlo¾ná tøída specifikace sloupce."""
     
     def __init__(self, name, type, constraints=(), references=None,
-                 default=None, doc=None):
+                 default=None, index=None, doc=None):
         """Nastav atributy.
 
         Argumenty:
@@ -340,6 +340,9 @@ class Column(object):
           references -- odkazovaná tabulka sloupce (\"REFERENCES\"), SQL
             strings
           default -- implicitní hodnota sloupce, SQL string
+          index -- if 'True', create index for this column; if a dictionary
+            then it defines additional index options, currently only
+            'method=METHOD' is supported where METHOD is the index method
           doc -- dokumentace sloupce, string nebo 'None' (¾ádná dokumentace)
 
         """
@@ -348,6 +351,7 @@ class Column(object):
         self.constraints = constraints
         self.references = references
         self.default = default
+        self.index = index
         self.doc = doc
 
 class PrimaryColumn(Column):
@@ -652,7 +656,8 @@ class _GsqlTable(_GsqlSpec):
                  with_oids=True, sql=None, schemas=None,
                  on_insert=None, on_update=None, on_delete=None,
                  init_values=(), init_columns=(),
-                 tablespace=None, upd_log_trigger=None, **kwargs):
+                 tablespace=None, upd_log_trigger=None,
+                 indexes=(), **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -694,6 +699,12 @@ class _GsqlTable(_GsqlSpec):
           tablespace -- název tablespace, ve kterém bude tabulka vytvoøena  
           upd_log_trigger -- název trigger funkce, která bude logovat zmìny v
             záznamech, nebo None, pokud se nemá logovat.
+          indexes -- sequence of multicolumn index definitions; each element of
+            the sequence is a tuple of the form (COLUMNS, OPTIONS), where
+            COLUMNS is sequence of column names and OPTIONS is (possibly empty)
+            dictionary of index options.  Currently the only supported index
+            option is 'method=METHOD' where 'METHOD' is a string defining the
+            index method.
           kwargs -- argumenty pøedané konstruktoru pøedka
 
         """
@@ -714,6 +725,7 @@ class _GsqlTable(_GsqlSpec):
         self._init_columns = [isinstance(c, str) and c
                               or self._column_column(c)
                               for c in init_columns]
+        self._indexes = indexes
 
     def _full_column_name(self, column):
         if not _gsql_column_table_column(column.name)[0]:
@@ -780,6 +792,21 @@ class _GsqlTable(_GsqlSpec):
         full_column = self._full_column_name(column)
         return "COMMENT ON COLUMN %s IS '%s';\n" % \
                (full_column.name, column.doc)
+
+    def _format_index(self, index_spec):
+        columns, options = index_spec
+        def strip(name):
+            return name.split('.')[-1]
+        columns = [strip(c) for c in columns]
+        columns_string = string.join(columns, ', ')
+        columns_name = string.join(columns, '_')
+        name = '%s__%s__index' % (self._name, columns_name,)
+        method_spec = (isinstance(options, dict) and options.get('method'))
+        if method_spec:
+            method = ' USING %s' % (method_spec,)
+        else:
+            method = ''
+        return "CREATE INDEX %s ON %s%s (%s);\n" % (name, self._name, method, columns_string,)
 
     def _format_rule(self, action):
         laction = string.lower(action)
@@ -863,6 +890,15 @@ class _GsqlTable(_GsqlSpec):
                     result = result + self._grant_command(g, seqname)
             if c.doc is not None:
                 result = result + self._format_column_doc(c)
+            if c.index is True:
+                result = result + self._format_index(((c.name,), {},))
+            elif isinstance(c.index, dict):
+                result = result + self._format_index(((c.name,), c.index,))
+            elif c.index is not None:
+                raise ProgramError("Invalid column index specification",
+                                   (self._name, c.name, c.index,))
+        for index_spec in self._indexes:
+            result = result + self._format_index(index_spec)
         for action in 'INSERT', 'UPDATE', 'DELETE':
             result = result + self._format_rule(action)
         if not _re and _all:
