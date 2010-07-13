@@ -2524,15 +2524,27 @@ class _GsqlDefs(UserDict.UserDict):
             c = sql_types_classes[sql_type]
             for n in ns:
                 if n in all_names:
-                    sys.stdout.write(c.db_remove(n))
+                    if _GsqlConfig.check_presence:
+                        sys.stdout.write('EXTRA: %s\n' % (n,))
+                    else:
+                        sys.stdout.write(c.db_remove(n))
         # Create and update objects
         for o in to_create:
-            if isinstance(o, (_GsqlView, _GsqlViewNG)):
+            if _GsqlConfig.check_presence:
+                sys.stdout.write('MISSING: %s\n' % (o.name(),))
+            elif isinstance(o, (_GsqlView, _GsqlViewNG)):
                 sys.stdout.write(o.output(self._table_keys))
             else:
                 sys.stdout.write(o.output())
         for o in to_update:
-            sys.stdout.write(o.db_update(connection))
+            update_commands = o.db_update(connection)
+            if _GsqlConfig.check_presence:
+                for line in update_commands.split('\n'):
+                    if line and line[:2] != '--':
+                        sys.stdout.write('CHANGED: %s\n' % (o.name(),))
+                        break
+            else:
+                sys.stdout.write(update_commands)
         # Finish
         if _GsqlConfig.warnings and not _quietly:
             sys.stderr.write("""
@@ -2698,6 +2710,7 @@ class _GsqlConfig:
     dbhost = None
     dbuser = None
     dbpassword = None
+    check_presence = False
 
 
 _GSQL_OPTIONS = (
@@ -2706,6 +2719,7 @@ _GSQL_OPTIONS = (
     ('create-all       ', 'create all database objects with data'),
     ('recreate         ', 'recreate all non-data database objects'),
     ('check-db=DATABASE', 'check DATABASE contents against definitions'),
+    ('check-presence   ', 'just check for presence rather than generating updates'),
     ('update-views=object', 'update views dependent on specified object (table or view)'),
     ('fix-db=DATABASE  ', 'update DATABASE contents according to definitions'),
     ('no-warn          ', 'suppress warnings when checking/fixing'),
@@ -2763,6 +2777,8 @@ def _go(argv=None):
         elif o == '--check-db':
             _GsqlConfig.request = _GsqlConfig.CHKDB
             _GsqlConfig.dbname = v
+        elif o == '--check-presence':
+            _GsqlConfig.check_presence = True
         elif o == '--update-views':
             _GsqlConfig.request = _GsqlConfig.UPDVW
             _GsqlConfig.update_views = v
