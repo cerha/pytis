@@ -1118,7 +1118,12 @@ class _GsqlTable(_GsqlSpec):
                           _gsql_warning(
                             "`now()' initial value not checked in %s" % name))
                 continue
-            spec = ['%s=%s' % x for x in zip(self._init_columns, values)]
+            spec = []
+            for col, value in zip(self._init_columns, values):
+                if value.lower() == 'null':
+                    spec.append('%s is %s' % (col, value,))
+                else:
+                    spec.append('%s=%s' % (col, value,))
             specstring = string.join(spec, ' AND ')
             query = "SELECT COUNT(*) FROM %s WHERE %s" % (name, specstring)
             data = connection.query(query)
