@@ -1331,6 +1331,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                  (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
                   table_names[0], groupby, ordering,)),
                 {'columns': column_list})
+        elif aggregate_columns:
+            self._pdbb_command_select = \
+                self._SQLCommandTemplate(
+                (('declare %s scroll cursor for select *, '+
+                  'row_number() over () as _number '+
+                  'from (select %%(columns)s from %s where (%s)%s %s order by %%(ordering)s %s) as %s '+
+                  '%%(fulltext_queries)s where %%(condition)s') %
+                 (cursor_name, table_list, relation, filter_condition,
+                  groupby, ordering, table_names[0],)),
+                {'columns': column_list})            
         else:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
