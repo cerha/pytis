@@ -671,27 +671,26 @@ class FilterDialog(SFDialog):
         return self._perform, self._condition
 
 
-def sfs_columns(columns, data, labelfunc=Field.label):
-    """Vra» sloupce vhodné k pou¾ití v konstruktorech SFS dialogù.
+def sfs_columns(fields, data, labelfunc=Field.label):
+    """Return a list of 'SFSColumn' instances for SFS dialog constructor.
 
     (SFS = Search, Filter, Sort)
 
     Argumenty:
 
-      columns -- sekvence instancí tøídy 'Column' obsahující sloupce
-      data -- datový objekt, na nìj¾ jsou sloupce navázány
-      labelfunc -- funkce jednoho argumentu (instance 'Column') vracející
-        návì¹tí sloupce v dialogu
+      fields -- sequence of 'Field' instances from specification
+      data -- related data object
+      labelfunc -- function of one argument ('Field' instance) returning the
+        column label used in the dialog or None to exclude the field from the
+        dialog.
 
     """
-    sfs_columns = []
-    for c in columns:
-        id = c.id()
-        label = labelfunc(c)
+    columns = []
+    for f in fields:
+        id = f.id()
+        label = labelfunc(f)
         column = data.find_column(id)
-        if column is None or not label:
-            continue
-        if not data.permitted(id, pytis.data.Permission.VIEW):
-            continue
-        sfs_columns.append(SFSColumn(id, column.type(), label))
-    return sfs_columns
+        if column is not None and label and data.permitted(id, pytis.data.Permission.VIEW):
+            columns.append(SFSColumn(id, column.type(), label))
+    columns.sort(key=lambda c: c.label())
+    return columns

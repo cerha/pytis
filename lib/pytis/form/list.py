@@ -387,16 +387,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             )
 
     def _lf_sfs_columns(self):
-        shown = tuple(self._columns)
-        hidden = tuple([c for c in self._fields
-                        if c not in shown and c.column_label()])
         def labelfunc(c):
             label = c.column_label()
-            if c in hidden:
-                return "(" + label + ")"
-            else:
-                return label
-        return sfs_columns(shown + hidden, self._data, labelfunc=labelfunc)
+            if c not in self._columns and label:
+                label += _(u" (skrytý)")
+            return label
+        return sfs_columns(self._fields, self._data, labelfunc=labelfunc)
 
     def _create_search_panel(self, full=False, prefill=None):
         HEIGHT = 27
@@ -911,6 +907,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             columns = self._fields
         else:
             columns = [self._view.field(cid) for cid in select_columns]
+        columns.sort(key=lambda c: c.label())
         return [CheckItem(_("Záhlaví øádkù"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
                           state=lambda : self._grid.GetRowLabelSize() != 0)] + \
                [CheckItem(c.column_label(),
