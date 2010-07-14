@@ -267,7 +267,10 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     log(DEBUG, 'Hlídám vstup', connection)
                 def lfunction():
                     cursor = connection.cursor()
-                    fileno = cursor.fileno()
+                    try:
+                        fileno = connection.fileno()
+                    except AttributeError: # older psycogp2 versions
+                        fileno = cursor.fileno()
                     return cursor, fileno
                 cursor, fileno = with_lock(self._pg_query_lock, lfunction)
                 try:
@@ -281,10 +284,14 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 def lfunction():
                     notifications = []
                     try:
-                        ready = cursor.isready()
-                    except dbapi.OperationalError:
-                        self._pg_notif_connection = None
-                        return notifications
+                        connection.poll()
+                        ready = True
+                    except AttributeError: # older psycopg2 versions
+                        try:
+                            ready = cursor.isready()
+                        except dbapi.OperationalError:
+                            self._pg_notif_connection = None
+                            return notifications
                     if ready:
                         notifies = connection.notifies
                         if notifies:
