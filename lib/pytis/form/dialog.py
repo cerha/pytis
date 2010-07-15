@@ -1337,10 +1337,11 @@ class CheckMatrixDialog(Message):
         sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
 
     def _run_dialog(self):
-        size = self._dialog.GetSizer().CalcMin()
-        size = wx.Size(max(size.width, self._matrix_size.width + 40),
-                       size.height + self._matrix_size.height)
-        self._dialog.SetClientSize(size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80)))
+        sizer_size = self._dialog.GetSizer().CalcMin()
+        size = wx.Size(max(sizer_size.width, self._matrix_size.width + 40),
+                       sizer_size.height + self._matrix_size.height)
+        size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
+        self._dialog.SetClientSize(size)
         return super(CheckMatrixDialog, self)._run_dialog()
 
         
