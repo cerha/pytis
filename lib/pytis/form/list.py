@@ -1669,7 +1669,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for (op, label), checked in zip(available_aggregations, row[1:]):
                     if checked:
                         aggregation_columns.append((col.id(), op))
-            run_form(AggregationForm, self._name,
+            run_form(AggregationDualForm, self._name,
                      group_by_columns=group_by_columns, aggregation_columns=aggregation_columns)
         
     def _cmd_filter_by_cell(self):
@@ -2964,3 +2964,6 @@ class AggregationForm(BrowseForm):
     def title(self):
         labels = [self._view.field(fid).label() for fid in self._group_by_columns]
         return super(AggregationForm, self).title() + _(" - agregováno pøes ") + ', '.join(labels)
+
+    def group_by_columns(self):
+        return self._group_by_columns

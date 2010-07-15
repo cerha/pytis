@@ -424,6 +424,70 @@ class BrowseDualForm(SideBrowseDualForm):
             form, name = (ShowDualForm, self._name)
         run_form(form, name, select_row=self._main_form.current_key())
 
+class AggregationDualForm(PostponedSelectionDualForm):
+    """Dual form with 'AggregationForm' main form and 'BrowseForm' sideform.
+    
+    The side form shows all records corresponding to the currently selected
+    aggregation form row.  This means records having the values of all "group
+    by" columns same as the selected row.
+    
+    """
+    class _SideForm(SideBrowseForm):
+        def _default_columns(self):
+            return tuple([c for c in super(AggregationDualForm._SideForm, self)._default_columns()
+                          if c not in self._main_form.group_by_columns()])
+
+    def _create_view_spec(self):
+        return None
+    
+    def _initial_orientation(self):
+        return Orientation.HORIZONTAL
+    
+    def _initial_sash_position(self, mode, size):
+        return size.height / 2 
+        
+    def _create_main_form(self, parent, **kwargs):
+        return AggregationForm(parent, self._resolver, self._name, guardian=self, **kwargs)
+
+    def _create_side_form(self, parent):
+        return self._SideForm(parent, self._resolver, self._name, guardian=self,
+                              main_form=self._main_form, condition=self._side_form_condition)
+    
+    def _set_main_form_callbacks(self):
+        f = self._main_form
+        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+        f.set_callback(f.CALL_SELECTION, self._on_main_selection)
+    
+    def _set_side_form_callbacks(self):
+        f = self._side_form
+        f.set_callback(f.CALL_MODIFICATION, self._main_form.refresh)
+        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+
+    def _side_form_condition(self, row):
+        eqs = [pytis.data.EQ(cid, row[cid]) for cid in self._main_form.group_by_columns()]
+        return pytis.data.AND(*eqs)
+        
+    def _do_selection(self, row):
+        form = self._side_form
+        focused = wx_focused_window()
+        try:
+            form.on_selection(row)
+            form.Show(True)
+        finally:
+            if focused:
+                focused.SetFocus()
+        return True
+
+    def _cleanup(self):
+        try:
+            self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
+        except:
+            pass
+        super(AggregationForm, self)._cleanup()
+
+    def title(self):
+        return self._main_form.title()
+
         
 class ShowDualForm(SideBrowseDualForm):
     """Duální formuláø s hlavním formuláøem 'BrowsableShowForm'.
