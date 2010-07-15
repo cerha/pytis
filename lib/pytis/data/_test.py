@@ -1906,7 +1906,7 @@ tests.add(DBDataOrdering)
 
 
 class DBDataAggregated(DBDataDefault):
-    def _test_aggregated(self, test_result, columns=None, condition=None):
+    def _aggtest(self, test_result, columns=None, condition=None, operation=None):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
         denik_spec = (B('cislo', 'denik', 'id'),
@@ -1927,49 +1927,57 @@ class DBDataAggregated(DBDataDefault):
             assert column is not None, ('Aggregation column not found', column_id,)
             assert isinstance(column.type(), pytis.data.Integer), column.type()
         try:
-            count = data.select(columns=columns, condition=condition)
-            test_result(data, count, columns, column_groups, operations)
-            assert data.fetchone() is None, 'Extra row'
+            if operation is None:
+                count = data.select(columns=columns, condition=condition)
+                assert count == len(test_result), ('Unexpected number of aggregate rows', count)
+                for expected_result in test_result:
+                    items = data.fetchone().items()
+                    items_dict = dict(items)
+                    if columns is None:
+                        assert len(items) == len(column_groups) + len(operations), \
+                               ('Invalid number of columns', items,)
+                    else:
+                        assert len(items) == len(columns), ('Invalid number of columns', items,)
+                    for k, v in expected_result:
+                        assert items_dict[k].value() == v, \
+                               ('Unexpected result', (k, v, items_dict[k].value(),),)
+                assert data.fetchone() is None, 'Extra row'
+            elif isinstance(operation, tuple):
+                value = data.select_aggregate(operation, condition=condition)
+                assert value.value() == test_result, ('Invalid aggregate result', value.value(),)
+            else:
+                count, row = data.select_and_aggregate(operation, condition=condition, columns=columns)
+                assert count == test_result[0], ('Invalid aggregate count', count,)
+                for k, v in row.items():
+                    value = v.value()
+                    if value is None:
+                        continue
+                    test_result = test_result[1:]
+                    assert test_result, ('Extra items in aggregate row', k, value,)
+                    assert value == test_result[0], ('Invalid aggregate value', k, value,)
+                assert len(test_result) <= 1, ('Missing aggregate row item', test_result,)
         finally:
             data.close()
-    def test_aggregated(self, **kwargs):
-        def test_result(data, count, columns, column_groups, operations):
-            assert count == 3, ('Unexpected number of aggregate rows', count)
-            for expected_result in ((('castka', 1000.0), ('madatisum', 2), ('count', 2),),
-                                    (('castka', 2000.0), ('madatisum', 2), ('count', 1),),
-                                    (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
-                                    ):
-                items = data.fetchone().items()
-                items_dict = dict(items)
-                if columns is None:
-                    assert len(items) == len(column_groups) + len(operations), \
-                           ('Invalid number of columns', items,)
-                else:
-                    assert len(items) == len(columns), ('Invalid number of columns', items,)
-                for k, v in expected_result:
-                    assert items_dict[k].value() == v, \
-                           ('Unexpected result', (k, v, items_dict[k].value(),),)
-        self._test_aggregated(test_result, **kwargs)
-    def test_aggregated_columns(self):
-        self.test_aggregated(columns=('castka', 'madatisum', 'count'))
-    def test_aggregated_condition(self):
-        def test_result(data, count, columns, column_groups, operations):
-            assert count == 2, ('Unexpected number of aggregate rows', count)
-            for expected_result in ((('castka', 2000.0), ('madatisum', 2), ('count', 1),),
-                                    (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
-                                    ):
-                items = data.fetchone().items()
-                items_dict = dict(items)
-                if columns is None:
-                    assert len(items) == len(column_groups) + len(operations), \
-                           ('Invalid number of columns', items,)
-                else:
-                    assert len(items) == len(columns), ('Invalid number of columns', items,)
-                for k, v in expected_result:
-                    assert items_dict[k].value() == v, \
-                           ('Unexpected result', (k, v, items_dict[k].value(),),)
+    def test_basic(self, **kwargs):
+        test_result = ((('castka', 1000.0), ('madatisum', 2), ('count', 2),),
+                       (('castka', 2000.0), ('madatisum', 2), ('count', 1),),
+                       (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
+                       )
+        self._aggtest(test_result, **kwargs)
+    def test_columns(self):
+        self.test_basic(columns=('castka', 'madatisum', 'count'))
+    def test_condition(self):
+        test_result = ((('castka', 2000.0), ('madatisum', 2), ('count', 1),),
+                       (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
+                       )
         condition = pytis.data.EQ('count', pytis.data.Value(pytis.data.Integer(), 1))
-        self._test_aggregated(test_result, condition=condition)
+        self._aggtest(test_result, condition=condition)
+    def test_double_aggregated(self):
+        D = pytis.data.DBDataDefault
+        self._aggtest(3, operation=(D.AGG_COUNT, 'madatisum',))
+        self._aggtest(4, operation=(D.AGG_SUM, 'count',))
+        self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM, columns=('castka', 'madatisum', 'count',))
+        self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM)
 tests.add(DBDataAggregated)
 
 

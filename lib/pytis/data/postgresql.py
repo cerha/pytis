@@ -1359,9 +1359,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 {'columns': column_list})
         self._pdbb_command_close_select = \
             self._SQLCommandTemplate('close %s' % (cursor_name,))
-        self._pdbb_command_select_agg = \
-          ('select%s %%s from %s where %%s and (%s)%s' %
-           (distinct_on, table_list, relation, filter_condition,))
+        if self._pdbb_operations:
+            self._pdbb_command_select_agg = \
+              ('select%s %%s from (select %s from %s %s) as %s where %%s and (%s)%s' %
+               (distinct_on, column_list, table_list, groupby, table_names[0], relation, filter_condition,))
+        else:
+            self._pdbb_command_select_agg = \
+              ('select%s %%s from %s where %%s and (%s)%s' %
+               (distinct_on, table_list, relation, filter_condition,))
         self._pdbb_command_fetch_forward = \
           self._SQLCommandTemplate('fetch forward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_fetch_backward = \
@@ -2587,6 +2592,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                              columns=None, transaction=None):
         if columns is None:
             columns = [c.id() for c in self.columns()]
+            if self._pdbb_operations:
+                allowed_column_ids = [b.id() for b in self._pdbb_filtered_bindings]
+                columns = [c for c in columns if c in allowed_column_ids]
         select_result = self.select(condition=condition, reuse=reuse,
                                     sort=sort, columns=columns, transaction=transaction)
         if operation == self.AGG_COUNT:
