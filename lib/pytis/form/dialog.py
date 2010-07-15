@@ -167,15 +167,16 @@ class GenericDialog(Dialog):
         sizer.Fit(dialog)
 
     def _create_content(self, sizer):
-        """Abstraktní metoda - nutno pøedefinovat v odvozených tøídách.
+        """Create the main dialog content and add it to the top level sizer.
 
-        Vrací: Libovolný wx objekt, který má být vlo¾en do tìla dialogu.
+        This method must be defined by all derived classes.  The base class
+        implementation does nothing.
         
         """
         pass
     
     def _create_buttons(self):
-        """Vytvoø tlaèítka a vra» je jako sekvenci."""
+        """Create dialog buttons and return them as a sequence of wx widgets."""
         self._buttons = []
         self._button_label_dict = {}
         for label in self._button_labels:
@@ -1309,18 +1310,20 @@ class CheckMatrixDialog(Message):
 
     def _create_content(self, sizer):
         super(CheckMatrixDialog, self)._create_content(sizer)
-        self._grid = grid = wx.FlexGridSizer(len(self._rows)+1, len(self._columns)+1, 2, 6)
+        panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
+        panel.SetScrollRate(20, 20)
+        grid = wx.FlexGridSizer(len(self._rows)+1, len(self._columns)+1, 2, 6)
         self._controls = []
-        grid.Add(wx.StaticText(self._dialog, -1, ""))
+        grid.Add(wx.StaticText(panel, -1, ""))
         for column in self._columns:
-            label = wx.StaticText(self._dialog, -1, column)
+            label = wx.StaticText(panel, -1, column)
             grid.Add(label)
         for i, row_label in enumerate(self._rows):
-            label = wx.StaticText(self._dialog, -1, row_label)
+            label = wx.StaticText(panel, -1, row_label)
             grid.Add(label)
             controls = []
             for j, column_label in enumerate(self._columns):
-                control = wx.CheckBox(self._dialog, -1)
+                control = wx.CheckBox(panel, -1)
                 if self._values:
                     value = self._values[i][j]
                     control.SetValue(value)
@@ -1329,7 +1332,17 @@ class CheckMatrixDialog(Message):
                 grid.Add(control)
                 controls.append(control)
             self._controls.append(controls)
-        sizer.Add(grid, 1, wx.EXPAND|wx.ALL, 5)
+        panel.SetSizer(grid)
+        self._matrix_size = grid.CalcMin()
+        sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
+
+    def _run_dialog(self):
+        size = self._dialog.GetSizer().CalcMin()
+        size = wx.Size(max(size.width, self._matrix_size.width + 40),
+                       size.height + self._matrix_size.height)
+        self._dialog.SetClientSize(size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80)))
+        return super(CheckMatrixDialog, self)._run_dialog()
+
         
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
