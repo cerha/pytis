@@ -2961,3 +2961,6 @@ class AggregationForm(BrowseForm):
         return [column_id for column_id in super(AggregationForm, self)._select_columns()
                 if column_id in self._group_by_columns or column_id.startswith('_')]
 
+    def title(self):
+        labels = [self._view.field(fid).label() for fid in self._group_by_columns]
+        return super(AggregationForm, self).title() + _(" - agregováno pøes ") + ', '.join(labels)
