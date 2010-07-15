@@ -1655,12 +1655,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 column_type = self._row[self._columns[row].id()].type()
                 return self._aggregation_valid(available_aggregations[col-1][0], column_type)
+        last_selection = self._get_state_param('aggregation-selection', cls=tuple, item_cls=tuple)
         selection = run_dialog(CheckMatrixDialog, title=_("Zvolte sloupce..."),
                                message=_("Zvolte sloupce agregaèního náhledu"),
                                columns=[_("Seskupování")]+[x[1] for x in available_aggregations],
                                rows=[column.label() for column in self._columns],
-                               enabled=enabled)
+                               values=last_selection, enabled=enabled)
         if selection is not None:
+            self._set_state_param('aggregation-selection', tuple([tuple(x) for x in selection]))
             group_by_columns = [col.id() for col, row in zip(self._columns, selection) if row[0]]
             aggregation_columns = []
             for col, row in zip(self._columns, selection):
@@ -2945,10 +2947,13 @@ class AggregationForm(BrowseForm):
     def _aggregation_column_id(self, column_id, op):
         return '_'+ column_id +'_'+ str(op)
     
-    def _default_columns(self):
-        return list(self._group_by_columns) + [self._aggregation_column_id(column_id, op)
-                                               for column_id, op in self._aggregation_columns]
-        
+    def _init_columns(self, columns=None):
+        if columns is None:
+            columns = tuple(list(self._group_by_columns) +
+                            [self._aggregation_column_id(column_id, op)
+                             for column_id, op in self._aggregation_columns])
+        return super(AggregationForm, self)._init_columns(columns=columns)
+    
     def _default_sorting(self):
         return tuple([(column_id, pytis.data.ASCENDENT) for column_id in self._group_by_columns])
         
