@@ -392,7 +392,7 @@ class Data(object_2_5):
     def select_aggregate(self, operation, condition=None, transaction=None):
         """Vra» výslednou hodnotu agregaèní funkce.
 
-        Metoda je provádí select, jeho¾ hodnotou je výsledek agregaèní funkce
+        Metoda provádí select, jeho¾ hodnotou je výsledek agregaèní funkce
         kompletnì vybraných dat.  Je-li vyvolána bìhem neuzavøeného select,
         tento select nepøeru¹uje a je-li podmínka její a aktuálního select
         shodná, vrací výsledek odpovídající obsahu onoho selectu (napøíklad
