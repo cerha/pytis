@@ -537,8 +537,8 @@ class DBColumnBinding(DBBinding):
         return self._is_hidden
 
     def __str__(self):
-        return ('<DBCB: table=%s, column=%s, related_to=%s, type=%s, is_hidden=%s>') % \
-               (self._table, self._column, self._related_to, self._type, self._is_hidden)
+        return ('<DBCB: id=%s, table=%s, column=%s, related_to=%s, type=%s, is_hidden=%s>') % \
+               (self._id, self._table, self._column, self._related_to, self._type, self._is_hidden)
 
     def __cmp__(self, other):
         return compare_attr(self, other,
