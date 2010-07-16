@@ -272,8 +272,12 @@ class Data(object_2_5):
         pass
         
     def columns(self):
-        """Vra» specifikaci sloupcù zadanou v konstruktoru, jako tuple."""
+        """Return 'columns' specification given to constructor."""
         return self._columns
+
+    def condition(self):
+        """Return 'condition' specification given to constructor."""
+        return self._condition
 
     def find_column(self, id):
         """Vra» 'ColumnSpec' identifikovanou 'id'.

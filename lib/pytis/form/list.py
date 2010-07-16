@@ -1669,8 +1669,20 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for (op, label), checked in zip(available_aggregations, row[1:]):
                     if checked:
                         aggregation_columns.append((col.id(), op))
+            # Compose the aggregated data object inner condition from the
+            # current user filter and the hardcoded condition from
+            # specification.
+            condition = self._current_condition()
+            spec_condition = self._data.condition()
+            if spec_condition:
+                if condition:
+                    condition = pytis.data.AND(condition, view.condition())
+                else:
+                    condition = spec_condition
             run_form(AggregationDualForm, self._name,
-                     group_by_columns=group_by_columns, aggregation_columns=aggregation_columns)
+                     group_by_columns=group_by_columns,
+                     aggregation_columns=aggregation_columns,
+                     aggregation_condition=condition)
         
     def _cmd_filter_by_cell(self):
         row, col = self._current_cell()
@@ -2920,6 +2932,7 @@ class AggregationForm(BrowseForm):
         # called before _init_attributes().
         self._aggregation_columns = kwargs.pop('aggregation_columns')
         self._group_by_columns = tuple(kwargs.pop('group_by_columns'))
+        self._aggregation_condition = kwargs.pop('aggregation_condition', None)
         super(AggregationForm, self).__init__(*args, **kwargs)
     
     def _create_view_spec(self):
@@ -2935,6 +2948,7 @@ class AggregationForm(BrowseForm):
             fields.append(Field(agg_column_id, label))
         self._data_kwargs['operations'] = tuple(operations)
         self._data_kwargs['column_groups'] = self._group_by_columns
+        self._data_kwargs['condition'] = self._aggregation_condition
         return view.clone(ViewSpec(view.title(), fields))
 
     def _can_aggregated_view(self):
