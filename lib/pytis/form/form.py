@@ -1731,7 +1731,10 @@ class RecordForm(LookupForm):
         
         """
         row = self._data_row(position)
-        if not quiet and position is not None and row is None:
+        if (not quiet and
+            position is not None and
+            (not is_sequence(position) or len(position) != 1 or position[0].value() is not None) and
+            row is None):
             run_dialog(Warning, _("Záznam nenalezen"))
             return False
         return self._select_row(row, quiet=quiet)
