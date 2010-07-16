@@ -1676,7 +1676,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             spec_condition = self._data.condition()
             if spec_condition:
                 if condition:
-                    condition = pytis.data.AND(condition, view.condition())
+                    condition = pytis.data.AND(condition, spec_condition)
                 else:
                     condition = spec_condition
             run_form(AggregationDualForm, self._name,
