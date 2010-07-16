@@ -1906,7 +1906,7 @@ tests.add(DBDataOrdering)
 
 
 class DBDataAggregated(DBDataDefault):
-    def _aggtest(self, test_result, columns=None, condition=None, operation=None):
+    def _aggtest(self, test_result, columns=None, condition=None, operation=None, key=None):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
         denik_spec = (B('cislo', 'denik', 'id'),
@@ -1927,7 +1927,12 @@ class DBDataAggregated(DBDataDefault):
             assert column is not None, ('Aggregation column not found', column_id,)
             assert isinstance(column.type(), pytis.data.Integer), column.type()
         try:
-            if operation is None:
+            if key is not None:
+                row = data.row(key=pytis.data.Value(pytis.data.Integer(), key), columns=columns)
+                for k, v in test_result:
+                    assert row.has_key(k), ('Missing column', k,)
+                    assert row[k].value() == v, ('Invalid value', v,)
+            elif operation is None:
                 count = data.select(columns=columns, condition=condition)
                 assert count == len(test_result), ('Unexpected number of aggregate rows', count)
                 for expected_result in test_result:
@@ -1978,6 +1983,8 @@ class DBDataAggregated(DBDataDefault):
         self._aggtest(4, operation=(D.AGG_SUM, 'count',))
         self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM, columns=('castka', 'madatisum', 'count',))
         self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM)
+    def test_row(self):
+        self._aggtest((('castka', 2000.0), ('madatisum', 2), ('count', 1),), key=3)
 tests.add(DBDataAggregated)
 
 

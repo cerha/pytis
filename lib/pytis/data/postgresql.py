@@ -1163,11 +1163,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
         assert len (keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
         first_key_column = keytabcols[0]
-        if self._pdbb_operations is not None or self._pdbb_column_groups is not None:
-            row_id_column = '_number'
-        else:
-            row_id_column = first_key_column
-        key_cond = '%s=%%(key)s' % (row_id_column,)
+        key_cond = '%s=%%(key)s' % (first_key_column,)
         if self._distinct_on:
             distinct_columns_string = self._pdbb_sql_column_list_from_names(self._distinct_on)
             distinct_on = " DISTINCT ON (%s)" % (distinct_columns_string,)
@@ -1302,7 +1298,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           self._SQLCommandTemplate(
             ('select %%(columns)s from %s where %s%s %s order by %s %%(supplement)s' %
              (table_list, relation_and_condition, filter_condition, groupby, ordering,)),
-            {'columns': column_list, 'supplement': '', 'condition': 'true'})
+            {'columns': column_list, 'supplement': '', 'condition': 'true'})            
         if distinct_on or self._pdbb_operations is not None:
             if groupby:
                 count_column = groupby_columns[0]
@@ -1617,7 +1613,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """Retrieve and return raw data corresponding to 'key_value'."""
         args = {'key': key_value, 'supplement': supplement}
         if columns:
-            args['columns'] = self._pdbb_sql_column_list_from_names(columns)
+            args['columns'] = self._pdbb_sql_column_list_from_names(columns, operations=self._pdbb_operations)
         self._pg_make_arguments(args, arguments)
         query = self._pdbb_command_row.format(args)
         return self._pg_query(query, transaction=transaction)
