@@ -792,7 +792,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         typically not present when using groupings), without its presence it's
         impossible to perform data manipulation and other operations(in some
         cases you can use the virtual column named '_number' containing the
-        current row number).
+        current row number).  Additionally note that 'condition' constructor
+        argument, unlike 'condition' argument in 'select' calls, applies to the
+        base non-aggregated columns of the table thus allowing you to filter
+        the underlying data rows before aggregations get applied.
 
         """
         self._pdbb_table_schemas = {}
@@ -1306,8 +1309,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 count_column = first_key_column
             if self._pdbb_operations:
                 self._pdbb_command_count = \
-                    "select count(*) from (select%s * from (select %s from %s%%(fulltext_queries)s where (%s) %s) as %s where %%(condition)s%s) as __count" % \
-                    (distinct_on, column_list, table_list, relation, groupby, table_names[0], filter_condition,)
+                    "select count(*) from (select%s * from (select %s from %s%%(fulltext_queries)s where (%s)%s %s) as %s where %%(condition)s) as __count" % \
+                    (distinct_on, column_list, table_list, relation, filter_condition, groupby, table_names[0],)
             else:
                 self._pdbb_command_count = \
                     "select count(*) from (select%s %s from %s%%(fulltext_queries)s where %%(condition)s and (%s) %s%s) as %s" % \
@@ -1328,10 +1331,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._SQLCommandTemplate(
                 (('declare %s scroll cursor for select *, '+
                   'row_number() over () as _number '+
-                  'from (select%s %%(columns)s from %s where (%s) %s order by %%(ordering)s %s) as %s '+
-                  '%%(fulltext_queries)s where %%(condition)s%s') %
-                 (cursor_name, distinct_on, table_list, relation,
-                  groupby, ordering, table_names[0], filter_condition,)),
+                  'from (select%s %%(columns)s from %s where (%s)%s %s order by %%(ordering)s %s) as %s '+
+                  '%%(fulltext_queries)s where %%(condition)s') %
+                 (cursor_name, distinct_on, table_list, relation, filter_condition,
+                  groupby, ordering, table_names[0],)),
                 {'columns': column_list})
         elif distinct_on:
             self._pdbb_command_select = \
@@ -1357,8 +1360,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._SQLCommandTemplate('close %s' % (cursor_name,))
         if self._pdbb_operations:
             self._pdbb_command_select_agg = \
-              ('select%s %%s from (select %s from %s %s) as %s where %%s and (%s)%s' %
-               (distinct_on, column_list, table_list, groupby, table_names[0], relation, filter_condition,))
+              ('select%s %%s from (select %s from %s where true%s %s) as %s where %%s and (%s)' %
+               (distinct_on, column_list, table_list, filter_condition, groupby, table_names[0], relation,))
         else:
             self._pdbb_command_select_agg = \
               ('select%s %%s from %s where %%s and (%s)%s' %
@@ -1385,8 +1388,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             {'columns': column_list})
         if self._pdbb_operations:
             self._pdbb_command_search_distance = \
-                'select count(*) from (select%s * from (select %s from %s where (%s) %s) as %s where %%(condition)s%s) as __count' % \
-                (distinct_on, column_list, table_list, relation, groupby, table_names[0], filter_condition,)
+                'select count(*) from (select%s * from (select %s from %s where (%s)%s %s) as %s where %%(condition)s) as __count' % \
+                (distinct_on, column_list, table_list, relation, filter_condition, groupby, table_names[0],)
         elif distinct_on:
             self._pdbb_command_search_distance = \
                 'select count(*) from (select%s * from %s where (%s)%s and %%(condition)s) as %s' % \

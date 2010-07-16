@@ -1906,7 +1906,8 @@ tests.add(DBDataOrdering)
 
 
 class DBDataAggregated(DBDataDefault):
-    def _aggtest(self, test_result, columns=None, condition=None, operation=None, key=None):
+    def _aggtest(self, test_result, columns=None, condition=None, operation=None, key=None,
+                 filter_condition=None):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
         denik_spec = (B('cislo', 'denik', 'id'),
@@ -1921,7 +1922,8 @@ class DBDataAggregated(DBDataDefault):
                  denik_spec[0],
                  self._dconnection,
                  operations=operations,
-                 column_groups=column_groups)
+                 column_groups=column_groups,
+                 condition=filter_condition)
         for column_id in ('madatisum', 'count'):
             column = data.find_column(column_id)
             assert column is not None, ('Aggregation column not found', column_id,)
@@ -1985,6 +1987,13 @@ class DBDataAggregated(DBDataDefault):
         self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM)
     def test_row(self):
         self._aggtest((('castka', 2000.0), ('madatisum', 2), ('count', 1),), key=3)
+    def test_aggregated_filter(self):
+        D = pytis.data.DBDataDefault
+        condition = pytis.data.EQ('cislo', pytis.data.Value(pytis.data.Integer(), 2))
+        self._aggtest(((('castka', 1000.0), ('madatisum', 1), ('count', 1),),),
+                      filter_condition=condition)
+        condition = pytis.data.EQ('cislo', pytis.data.Value(pytis.data.Integer(), 3))
+        self._aggtest(1, operation=(D.AGG_COUNT, 'madatisum',), filter_condition=condition)
 tests.add(DBDataAggregated)
 
 
