@@ -483,7 +483,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
             self._side_form.set_callback(ListForm.CALL_MODIFICATION, None)
         except:
             pass
-        super(AggregationForm, self)._cleanup()
+        super(AggregationDualForm, self)._cleanup()
 
     def title(self):
         return self._main_form.title()
