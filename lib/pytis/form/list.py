@@ -2925,18 +2925,14 @@ class AggregationForm(BrowseForm):
     def _create_view_spec(self):
         view = super(AggregationForm, self)._create_view_spec()
         fields = list(view.fields())
-        data = create_data_object(self._name, spec_kwargs=self._spec_kwargs,
-                                  kwargs=self._data_kwargs)
-        record = self.Record(self, fields, data, None)
         labels = dict([(f.id(), f.label()) for f in fields])
+        agg_labels = dict(self._available_aggregations())
         operations = []
-        for f in view.fields():
-            if f.id() not in self._group_by_columns and not f.virtual():
-                for op, title in self._available_aggregations():
-                    if self._aggregation_valid(op, record[f.id()].type()):
-                        column_id = self._aggregation_column_id(f.id(), op)
-                        operations.append((op, f.id(), column_id))
-                        fields.append(Field(column_id, labels[f.id()]+'/'+title))
+        for column_id, op in self._aggregation_columns:
+            agg_column_id = self._aggregation_column_id(column_id, op)
+            label = labels[column_id] +'/'+ agg_labels[op]
+            operations.append((op, column_id, agg_column_id))
+            fields.append(Field(agg_column_id, label))
         self._data_kwargs['operations'] = tuple(operations)
         self._data_kwargs['column_groups'] = self._group_by_columns
         return view.clone(ViewSpec(view.title(), fields))
