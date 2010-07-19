@@ -648,7 +648,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.top())
                 return False
             forms = [(f.__class__, f.name(), f.title(), True) for f in self._windows.items()
-                     if not isinstance(f, (PrintForm, AggregationForm))]
+                     if not isinstance(f, (PrintForm, AggregationForm, AggregationDualForm))]
             for cls, name, title in self._saved_startup_forms:
                 if title is not None and (cls, name) not in [x[:2] for x in forms]:
                     forms.append((cls, name, title, False))
