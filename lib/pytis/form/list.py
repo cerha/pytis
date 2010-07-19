@@ -2959,17 +2959,20 @@ class AggregationForm(BrowseForm):
     
     def _init_columns(self, columns=None):
         if columns is None:
-            columns = tuple(list(self._group_by_columns) +
-                            [self._aggregation_column_id(column_id, op)
-                             for column_id, op in self._aggregation_columns])
+            columns = self._select_columns()
         return super(AggregationForm, self)._init_columns(columns=columns)
     
     def _default_sorting(self):
         return tuple([(column_id, pytis.data.ASCENDENT) for column_id in self._group_by_columns])
         
     def _select_columns(self):
-        return [column_id for column_id in super(AggregationForm, self)._select_columns()
-                if column_id in self._group_by_columns or column_id.startswith('_')]
+        aggregation_columns = [self._aggregation_column_id(column_id, op)
+                               for column_id, op in self._aggregation_columns]
+        return tuple(list(self._group_by_columns) + aggregation_columns)
+
+    def _lf_sfs_columns(self):
+        return [c for c in super(AggregationForm, self)._lf_sfs_columns()
+                if c.id() in self._select_columns()]
 
     def title(self):
         labels = [self._view.field(fid).label() for fid in self._group_by_columns]
