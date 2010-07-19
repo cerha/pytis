@@ -2980,3 +2980,6 @@ class AggregationForm(BrowseForm):
 
     def group_by_columns(self):
         return self._group_by_columns
+
+    def aggregation_condition(self):
+        return self._aggregation_condition

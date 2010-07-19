@@ -465,6 +465,9 @@ class AggregationDualForm(PostponedSelectionDualForm):
 
     def _side_form_condition(self, row):
         eqs = [pytis.data.EQ(cid, row[cid]) for cid in self._main_form.group_by_columns()]
+        aggregation_condition = self._main_form.aggregation_condition()
+        if aggregation_condition:
+            eqs.append(aggregation_condition)
         return pytis.data.AND(*eqs)
         
     def _do_selection(self, row):
