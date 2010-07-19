@@ -2949,7 +2949,7 @@ class AggregationForm(BrowseForm):
         self._data_kwargs['operations'] = tuple(operations)
         self._data_kwargs['column_groups'] = self._group_by_columns
         self._data_kwargs['condition'] = self._aggregation_condition
-        return view.clone(ViewSpec(view.title(), fields))
+        return ViewSpec(view.title(), fields)
 
     def _can_aggregated_view(self):
         return False
