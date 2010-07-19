@@ -516,6 +516,10 @@ class UICommands(object):
         RecordForm.COMMAND_IMPORT_INTERACTIVE(),
         _("Import z textového souboru"),
         _("Importovat data z textového souboru ve formátu CSV."))
+    AGGREGATED_VIEW = UICommand(
+        ListForm.COMMAND_AGGREGATED_VIEW(),
+        _("Zobrazit agregovaný náhled"),
+        _("Zobrazit duální formuláø se zvolenými agregaèními funkcemi."))
     RELOAD_FORM_STATE = UICommand(
         InnerForm.COMMAND_RELOAD_FORM_STATE(),
         _("Vrátit pøedchozí nastavení formuláøe"),
@@ -571,6 +575,7 @@ FORM_MENU_COMMANDS = ((
         UICommands.SORT,
         UICommands.FILTER,
         UICommands.UNFILTER,
+        UICommands.AGGREGATED_VIEW,
         ),(
         UICommands.EDIT_RECORD,
         UICommands.NEW_RECORD,
