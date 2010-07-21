@@ -2394,11 +2394,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         template = []
         for c in columns:
             id_ = c.id()
-            if self._pdbb_operations:
-                for _op, op_id, name in self._pdbb_operations:
-                    if id_ == op_id:
-                        id_ = name
-                        break
             type = c.type()
             if isinstance(type, (String, LTree)):
                 typid = 0
