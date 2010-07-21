@@ -337,6 +337,7 @@ DEFAULT_KEYMAP = (
     ('Escape',           Dialog.COMMAND_CLOSE_DIALOG),
     ('Enter',            Dialog.COMMAND_COMMIT_DIALOG),
     ('Ctrl-Enter',       Dialog.COMMAND_COMMIT_DIALOG(force=True)),
+    ('Alt-=',            ListForm.COMMAND_AGGREGATED_VIEW),
 
     # Just for backwards compatibility
     ('Ctrl-F4',       LookupForm.COMMAND_FILTER),
