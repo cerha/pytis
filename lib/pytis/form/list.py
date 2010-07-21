@@ -1826,8 +1826,77 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._on_line_rollback()
         return True
     
-    def _cmd_export_csv(self, filename, column_list):
+    def _can_cmd_export(self):
+        # Kontrola poètu øádkù
+        number_rows = self._table.GetNumberRows()
+        if number_rows == 0:
+            msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return False
+        # Seznam sloupcù
+        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
+        allowed = True
+        # Kontrola práv        
+        for cid, ctype in column_list:
+            if not self._data.permitted(cid, pytis.data.Permission.EXPORT):
+                allowed = False
+                break
+        if not allowed:
+            msg = _("Nemáte právo exportu k této tabulce.\n")
+            msg = msg + _("Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return False
+        else:
+            return True
+        
+    def _cmd_export_file(self):
+        log(EVENT, 'Called export to file')
+        if not self._can_cmd_export():
+            return 
+        try:
+            import pyExcelerator as pyxls
+            xls_possible = True
+        except:
+            xls_possible = False
+        wildcards = ["Soubory TXT (*.txt)", "*.txt",
+                     "Soubory CSV (*.csv)", "*.csv"
+                     ]
+        default_filename = 'export.txt'
+        if xls_possible:
+            msg = _("Export mù¾e být proveden do XLS nebo CSV souboru.\n\n")
+            msg = msg + _("Zvolte po¾adovaný formát.")
+            fileformat = run_dialog(MultiQuestion, msg, ('CSV','XLS'), default='CSV')
+            if not fileformat:
+                return
+            if fileformat == 'XLS':                
+                wildcards = ["Soubory XLS (*.xls)", "*.xls"]
+                default_filename = 'export.xls'
+        else:
+            fileformat = 'CSV'
+        export_dir = config.export_directory
+        filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
+                                         dir=export_dir, file=default_filename, mode='SAVE',
+                                         wildcards=tuple(wildcards))
+        if not filename:
+            return
+        try:       
+            export_file = open(filename,'w')
+            export_file.write('')
+        except:
+            msg = _("Nepodaøilo se otevøít soubor " + filename + \
+                    " pro zápis!\n")
+            run_dialog(Error, msg)
+            return
+        export_file.close()
+        if fileformat == 'XLS':
+            self._cmd_export_xls(filename)
+        else:
+            self._cmd_export_csv(filename)
+        return
+    
+    def _cmd_export_csv(self, filename):
         log(EVENT, 'Vyvolání CSV exportu')
+        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
         export_encoding = config.export_encoding
         db_encoding = 'utf-8'
         try:
@@ -1867,70 +1936,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 export_file.write('\n')
             export_file.close()
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
-
-    def _cmd_export_file(self):
-        log(EVENT, 'Called export to file')
-        try:
-            import pyExcelerator as pyxls
-            xls_possible = True
-        except:
-            xls_possible = False
-        wildcards = ["Soubory TXT (*.txt)", "*.txt",
-                     "Soubory CSV (*.csv)", "*.csv"
-                     ]
-        default_filename = 'export.txt'
-        if xls_possible:
-            msg = _("Export mù¾e být proveden do XLS nebo CSV souboru.\n\n")
-            msg = msg + _("Zvolte po¾adovaný formát.")
-            fileformat = run_dialog(MultiQuestion, msg, ('CSV','XLS'), default='CSV')
-            if fileformat and fileformat == 'XLS':                
-                wildcards = ["Soubory XLS (*.xls)", "*.xls"]
-                default_filename = 'export.xls'
-        else:
-            fileformat = 'CSV'
-        export_dir = config.export_directory
-        filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
-                                         dir=export_dir, file=default_filename, mode='SAVE',
-                                         wildcards=tuple(wildcards))
-        if not filename:
-            return
-        try:       
-            export_file = open(filename,'w')
-            export_file.write('')
-        except:
-            msg = _("Nepodaøilo se otevøít soubor " + filename + \
-                    " pro zápis!\n")
-            run_dialog(Error, msg)
-            return
-        export_file.close()
-        data = self._data
-        # Kontrola poètu øádkù
-        number_rows = self._table.GetNumberRows()
-        if number_rows == 0:
-            msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return
-        # Seznam sloupcù
-        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
-        allowed = True
-        # Kontrola práv        
-        for cid, ctype in column_list:
-            if not data.permitted(cid, pytis.data.Permission.EXPORT):
-                allowed = False
-                break
-        if not allowed:
-            msg = _("Nemáte právo exportu k této tabulce.\n")
-            msg = msg + _("Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return            
-        if fileformat == 'XLS':
-            self._cmd_export_xls(filename, column_list)
-        else:
-            self._cmd_export_csv(filename, column_list)            
-        return 
         
-    def _cmd_export_xls(self, filename, column_list):
+    def _cmd_export_xls(self, filename):
         log(EVENT, 'Called XLS export')
+        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
         import datetime
         try:
             import pyExcelerator as pyxls
