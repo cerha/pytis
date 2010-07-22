@@ -173,7 +173,9 @@ class _Space(_Mark):
         else:
             raise Exception('Unexpected orientation', self._orientation)
         size = self._size
-        if not isinstance(size, lcg.Unit):
+        if size is None:
+            size = lcg.UAny(1)
+        elif not isinstance(size, lcg.Unit):
             size = lcg.UMm(self._size)
         return mark(size)
 
