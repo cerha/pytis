@@ -716,5 +716,6 @@ class Image(_Mark):
         return self._file_name
 
     def lcg(self):
-        image = lcg.Image(self._file_name)
+        import config
+        image = lcg.Image(os.path.join(config.def_dir, self._file_name))
         return lcg.InlineImage(image)
