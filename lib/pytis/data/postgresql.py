@@ -2405,8 +2405,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return template
 
     def _pg_limited_make_row_template(self, columns):
-        return [item for item in self._pg_make_row_template
-                if item[0] in columns]
+        template = []
+        for c in columns:
+            for item in self._pg_make_row_template:
+                if item[0] == c:
+                    template.append(item)
+                    break
+            else:
+                raise ProgramError("Column not found in template", c)
+        return template
     
     def _pg_make_row_from_raw_data(self, data_, template=None):
         if not data_:
