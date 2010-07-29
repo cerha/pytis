@@ -2746,6 +2746,14 @@ class BrowseForm(FoldableForm):
             except ResolverSpecError:
                 x = self._Spec(self)
             return x
+
+    class _PlainPrintResolver(PlainFileResolver):
+        def get(self, *args, **kwargs):
+            result = PlainFileResolver.get(self, *args, **kwargs)
+            if isinstance(result, basestring):
+                import lcg
+                result = pytis.output.StructuredText(result)
+            return result
         
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
@@ -2928,9 +2936,14 @@ class BrowseForm(FoldableForm):
         parameters = self._formatter_parameters()
         parameters.update({P.P_NAME: name})
         print_resolver = P(self._resolver, parameters=parameters)
-        resolvers = (print_resolver,)
-        formatter = pytis.output.Formatter(resolvers, print_spec_path)
+        wiki_template_resolver = self._PlainPrintResolver(config.def_dir, extension='text')
+        resolvers = (wiki_template_resolver, print_resolver,)
+        formatter = pytis.output.Formatter(resolvers, print_spec_path, form=self,
+                                           **self._print_form_kwargs())
         run_form(print_form(), name, formatter=formatter)
+
+    def _print_form_kwargs(self):
+        return {}
 
 
 class SideBrowseForm(BrowseForm):

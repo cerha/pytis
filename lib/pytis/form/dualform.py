@@ -290,6 +290,9 @@ class DualForm(Form, Refreshable):
         # being closed.
         self._side_form._leave_form_requested = True
         return super(DualForm, self).close(force=force)
+            
+    def _print_form_kwargs(self):
+        return dict(form_bindings=self._main_form.bindings())
 
         
 class ImmediateSelectionDualForm(DualForm):

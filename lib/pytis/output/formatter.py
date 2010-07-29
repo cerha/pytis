@@ -1122,8 +1122,53 @@ class LoutFormatter(Tmpdir):
 
 class LCGFormatter(object):
     """LCG based formatter."""
-    
-    def __init__(self, resolvers, template_id):
+
+    class _DummyDict(dict):
+        def __getitem__(self, key):
+            return ''
+
+    class _ProxyDict(dict):
+        def __getitem__(self, key):
+            result = dict.__getitem__(self, key)
+            if (not isinstance(result, (basestring, Content, LCGFormatter._ProxyDict,)) and
+                callable(result)):
+                result = self[key] = result()
+            return result
+        
+    class _LCGGlobals(dict):
+        def __init__(self, form, form_bindings, current_row=None):
+            dictionary = self._initial_dictionary(form, form_bindings, current_row)
+            dict.__init__(self, dictionary)
+            self._form = form
+            self._form_bindings = form_bindings
+        def _initial_dictionary(self, form, form_bindings, current_row):
+            dictionary = LCGFormatter._ProxyDict()
+            if form is not None:
+                if current_row is None:
+                    current_row = form.current_row()
+                if current_row is None:
+                    current_row_dictionary = LCGFormatter._DummyDict()
+                else:
+                    current_row_dictionary = dict([(k, current_row[k].value(),)
+                                                   for k in current_row.keys()])
+                dictionary['current_row'] = current_row_dictionary
+                dictionary['table'] = self._make_table
+                if form_bindings:
+                    print '????yes!!!!!'
+                    dictionary['Binding'] = binding_dictionary = LCGFormatter._ProxyDict()
+                    for binding in form_bindings:
+                        if has_access(binding.name()):
+                            def make_binding():
+                                return self._make_binding(binding)
+                            binding_dictionary[binding.id()] = make_binding
+            return dictionary
+        def _make_table(self):
+            data = self._form.data()
+            return 'not implemented'
+        def _make_binding(self, binding):
+            return 'placeholder for ' + binding.name()
+        
+    def __init__(self, resolvers, template_id, form=None, form_bindings=None):
         """
         Arguments:
 
@@ -1132,14 +1177,12 @@ class LCGFormatter(object):
             resolver not throwing 'ResolverFileError' when accessing the
             template will be used
           template_id -- id of the output template, string
+          form -- current form; 'Form' instance or 'None'
+          form_bindings -- bindings of the current form (if it is the main form
+            of a dual form) as a sequence of 'Binding' instances; or 'None'
             
         """
-        self._resolvers = resolvers
-        # Resolvers
-        self._output_resolver = resolver = \
-          self._ok_resolver(template_id, 'body', mandatory=True)
-        self._generic_resolver = None
-        # Specifications
+        self._resolvers = xtuple(resolvers)
         self._coding = self._resolve(resolver, template_id, 'coding')
         self._doc_header = self._resolve(resolver, template_id, 'doc_header')
         self._doc_footer = self._resolve(resolver, template_id, 'doc_footer')
@@ -1158,36 +1201,38 @@ class LCGFormatter(object):
                             first_page_header=self._first_page_header.lcg(),
                             page_footer=self._page_footer.lcg())
         self._body = body
-        
-    def _ok_resolver(self, template_id, element, mandatory=False):
+        self._form = form
+        self._form_bindings = form_bindings
+        self._row_template = self._resolve(resolver, template_id, 'row')
+
+    def _resolve(self, resolver, template_id, element, default=''):
+        result = default
         for resolver in xtuple(self._resolvers):
             try:
-                resolver.get_object(template_id, element)
-            except ResolverError:
+                result = resolver.get(template_id, element)
+            except ResolverError, e:
+                continue
+            except ResolverSpecError, e:
                 continue
             break
-        else:
-            if mandatory:
-                raise TemplateException(_("Chybí použitelný resolver"))
-            else:
-                resolver = None
-        return resolver
-    
-    def _resolve(self, resolver, template_id, element, default=''):
-        try:
-            result = resolver.get(template_id, element)
-        except ResolverSpecError, e:
-            if __debug__: log(DEBUG, 'Specifikace nenalezena:', e.args)
-            result = default
         return result
 
     def _pdf(self):
+        children = []
+        if self._form is not None and self._row_template is not None:
+            for row in self._form.presented_rows():
+                row_content = self._row_template.lcg()
+                row_lcg_globals = self._LCGGlobals(self._form, self._form_bindings,
+                                                   current_row=row)
+                document = lcg.ContentNode(id='', content=row_content, globals=row_lcg_globals)
+                children.append(document)
+        lcg_globals = self._LCGGlobals(self._form, self._form_bindings)
         body = self._body
-        if isinstance(body, (list, tuple,)):
-            children = [document.lcg_document() for document in body]
-            lcg_content = lcg.ContentNode(id='', content=lcg.Content(), children=children)
-        else:
-            lcg_content = body.lcg_document()
+        if not isinstance(body, (list, tuple,)):
+            body = [body]            
+        children = ([document.lcg_document(globals=lcg_globals) for document in body] +
+                    children)
+        lcg_content = lcg.ContentNode(id='', content=lcg.Content(), children=children)
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None)
         pdf = exporter.export(context)

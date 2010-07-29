@@ -430,8 +430,14 @@ class Document(_Container):
               'page_footer': None,
               'first_page_header': None}
 
-    def lcg_document(self):
-        "Return the document(s) as an 'lcg.ContentNode' instance."
+    def lcg_document(self, **kwargs):
+        """Return the document(s) as an 'lcg.ContentNode' instance.
+
+        Arguments:
+
+          kwargs -- kwargs to pass to 'lcg.ContentNode' constructor
+          
+        """
         def arg(definition):
             if definition is None or isinstance(definition, lcg.Content):
                 result = definition
@@ -442,7 +448,8 @@ class Document(_Container):
                                content=self.lcg(),
                                page_header=arg(self.arg_page_header),
                                page_footer=arg(self.arg_page_footer),
-                               first_page_header=arg(self.arg_first_page_header))
+                               first_page_header=arg(self.arg_first_page_header),
+                               **kwargs)
 
 class Table(_Mark):
     """Nejvýše jednostránková tabulka s předpřipravenými daty.
@@ -719,3 +726,18 @@ class Image(_Mark):
         import config
         image = lcg.Image(os.path.join(config.def_dir, self._file_name))
         return lcg.InlineImage(image)
+
+class StructuredText(_Mark):
+    """LCG structured text."""
+
+    def __init__(self, text):
+        """
+        Arguments:
+
+          text -- the structured text; basestring
+
+        """
+        self._text = text
+
+    def lcg(self):
+        return lcg.Container(lcg.Parser().parse(self._text))
