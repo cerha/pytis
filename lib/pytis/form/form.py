@@ -2096,6 +2096,22 @@ class RecordForm(LookupForm):
         """Vrať data pro předvyplnění nového záznamu."""
         return self._prefill
     
+    def presented_rows(self):
+        """Return an iterator over all rows currently contained in the form."""
+        class Iterator(object):
+            def __init__(self, table):
+                self._table = table
+                self._row_number = 0
+            def __iter__(self):
+                return self
+            def next(self):
+                if self._row_number >= self._table.GetNumberRows():
+                    raise StopIteration
+                row = self._table.row(self._row_number)
+                self._row_number += 1
+                return row
+        return Iterator(self._table)
+    
 
 ### Editační formulář
 
