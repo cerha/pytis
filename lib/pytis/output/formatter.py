@@ -1130,7 +1130,7 @@ class LCGFormatter(object):
     class _ProxyDict(dict):
         def __getitem__(self, key):
             result = dict.__getitem__(self, key)
-            if (not isinstance(result, (basestring, Content, LCGFormatter._ProxyDict,)) and
+            if (not isinstance(result, (basestring, lcg.Content, LCGFormatter._ProxyDict,)) and
                 callable(result)):
                 result = self[key] = result()
             return result
@@ -1154,13 +1154,19 @@ class LCGFormatter(object):
                 dictionary['current_row'] = current_row_dictionary
                 dictionary['table'] = self._make_table
                 if form_bindings:
-                    print '????yes!!!!!'
                     dictionary['Binding'] = binding_dictionary = LCGFormatter._ProxyDict()
                     for binding in form_bindings:
-                        if has_access(binding.name()):
-                            def make_binding():
-                                return self._make_binding(binding)
-                            binding_dictionary[binding.id()] = make_binding
+                        if pytis.form.has_access(binding.name()):
+                            # I tried to use closure here, but it produced unexpected results
+                            class MakeBinding(object):
+                                def __init__(self, binding, processor):
+                                    self._binding = binding
+                                    self._processor = processor
+                                def __call__(self):
+                                    return self._processor(self._binding)
+                            binding_id = re.sub('[^A-Za-z0-9_]', '_', binding.id())
+                            binding_dictionary[binding_id] = MakeBinding(binding,
+                                                                         self._make_binding)
             return dictionary
         def _make_table(self):
             data = self._form.data()
@@ -1203,7 +1209,7 @@ class LCGFormatter(object):
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
-        self._row_template = self._resolve(resolver, template_id, 'row')
+        self._row_template = self._resolve(resolver, template_id, 'row', default=None)
 
     def _resolve(self, resolver, template_id, element, default=''):
         result = default

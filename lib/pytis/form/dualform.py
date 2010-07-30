@@ -947,6 +947,8 @@ class MultiBrowseDualForm(BrowseDualForm):
     class MainForm(BrowseForm):
         def bindings(self):
             return self._view.bindings()
+        def _print_form_kwargs(self):
+            return dict(form_bindings=self.bindings())
     
     def _create_view_spec(self):
         return None
