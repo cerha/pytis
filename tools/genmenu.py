@@ -434,7 +434,7 @@ def check_actions(cursor, actions, update, spec_fullname):
     else:
         specification = spec_fullname.split('/')[2]
         sub_pattern = 'sub/%%/form/%%/%s/%%' % (specification,)
-        condition = "shortname = 'form/%s'" % (specification,)
+        condition = "shortname like '%%/%s'" % (specification,)
     query = "select fullname, shortname from c_pytis_menu_actions where fullname like '%s'" % (sub_pattern,)
     cursor.execute(query)
     while True:
@@ -492,7 +492,7 @@ def check_actions(cursor, actions, update, spec_fullname):
             print 'Check: Missing action: %s (%s)' % (fullname, action.shortname,)
             if update:
                 print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values ('%s', '%s', '%s', '%s');" %
-                       (action.name, action.shortname, action.title, action.description,))
+                       (action.name, action.shortname, action.title, (action.description or ''),))
                 subactions_list = action.subactions
                 for i in range(len(subactions_list)):
                     subaction_id = subactions_list[i]
