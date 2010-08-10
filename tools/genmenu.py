@@ -653,6 +653,11 @@ def fill_menu_items(cursor, menu, position=''):
     for m in menu.children:
         fill_menu_items(cursor, m, position=position)
 
+def add_menu_item(actions, spec_fullname, position):
+    action = actions[spec_fullname]
+    print "Update: delete from e_pytis_menu where fullname='%s'" % (spec_fullname,)
+    print "Update: insert into e_pytis_menu (name, title, position, fullname, help, locked) values ('%s', '%s', '%s', '%s', '%s', False)" % (action.name, action.title, position, spec_fullname, action.description,)
+
 def transfer_roles(cursor, present_roles):
     excluded_roles = ('postgres',)
     semi_excluded_roles = ('admin', 'admin_roles', 'admin_menu',) + excluded_roles
@@ -790,6 +795,8 @@ def run():
             print "Checking rights..."
             roles = check_rights(cursor, rights, options.check_update, options.check_spec)
             print "Checking rights...done"
+        if options.check_spec is not None and options.position is not None and options.check_update:
+            add_menu_item(actions, options.check_spec, options.position)
     else:
         print "Inserting actions..."
         fill_actions(cursor, actions)
