@@ -319,7 +319,7 @@ def process_form_actions(resolver, actions, rights):
                     formaction_rights = (None, (a.access_groups(), pytis.data.Permission.CALL,),)
                     rights[form_action_id] = Rights(pytis.data.AccessRights(formaction_rights), action)
 
-def process_rights(resolver, actions, rights, def_dir):
+def process_rights(resolver, actions, rights, def_dir, spec_fullname):
     def add_rights(form_name, action, action_name):
         global _current_form_name
         if form_name.find(':') != -1:
@@ -344,11 +344,13 @@ def process_rights(resolver, actions, rights, def_dir):
             print "Note: No access rights specified for form %s, assuming everything permitted" % (form_name,)
             access_rights = pytis.data.AccessRights((None, (None, pytis.data.Permission.ALL)),)
         rights[action_name] = Rights(access_rights, action)
-    for action in (actions.values() +
-                   [Action('form/*/menu.ApplicationMenu', '', 'form/menu.ApplicationMenu'),
-                    Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM'),
-                    Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles'),
-                    ]):
+    action_list = actions.values()
+    if spec_fullname is None:
+        action_list = action_list + [Action('form/*/menu.ApplicationMenu', '', 'form/menu.ApplicationMenu'),
+                                     Action('form/*/menu.ApplicationMenuM', '', 'form/menu.ApplicationMenuM'),
+                                     Action('form/*/menu.ApplicationRoles', '', 'form/menu.ApplicationRoles'),
+                                     ]
+    for action in action_list:
         action_name = action.name
         if rights.has_key(action_name):
             continue
@@ -367,6 +369,8 @@ def process_rights(resolver, actions, rights, def_dir):
         form_components = form_name.split('::')
         if len(form_components) <= 2:
             add_rights(form_name, action, action_name)
+    if spec_fullname is not None:
+        return rights
     actions_shortnames = {}
     for a in actions.values():
         if a.name.find('::') == -1 and a.name[:4] != 'sub/':
@@ -500,7 +504,7 @@ def check_actions(cursor, actions, update, spec_fullname):
         if update:
             print "Update: update c_pytis_menu_actions set action_title='%s' where fullname='%s';" % (pg_escape(title), pg_escape(fullname),)
 
-def fill_rights(cursor, rights, check_rights=None):
+def fill_rights(cursor, rights, check_rights=None, spec_name=None):
     already_stored = {}
     roles = {}
     for r in ('*', 'admin', 'admin_menu', 'admin_roles',):
@@ -509,6 +513,8 @@ def fill_rights(cursor, rights, check_rights=None):
     for right in rights.values():
         action = right.action
         action_name = action.shortname
+        if spec_name is not None and action_name != ('form/%s' % (spec_name,)):
+            continue
         for specification in right.rights.specification():
             columns = specification[0]
             if columns is None:
@@ -551,11 +557,20 @@ def fill_rights(cursor, rights, check_rights=None):
                                     permitted_columns.sort()
     return roles
 
-def check_rights(cursor, rights, update):
+def check_rights(cursor, rights, update, spec_fullname):
     app_rights = {}
-    fill_rights(cursor, rights, app_rights)
+    if spec_fullname is None:
+        condition = "true"
+    else:
+        spec_name = spec_fullname.split('/')[2]
+        if update:
+            condition = "false"
+            print "Update: delete from e_pytis_action_rights where shortname='form/%s'" % (spec_name,)
+        else:
+            condition = "shortname='form/%s'" % (spec_name,)
+    fill_rights(cursor, rights, app_rights, spec_name)
     db_rights = {}
-    cursor.execute("select id, shortname, roleid, rightid, colname from e_pytis_action_rights where system = 'T' and status<=0")
+    cursor.execute("select id, shortname, roleid, rightid, colname from e_pytis_action_rights where system = 'T' and status<=0 and %s" % (condition,))
     while True:
         row = cursor.fetchone()
         if row is None:
@@ -689,6 +704,8 @@ def parse_options():
                       help="Check specification identified by given fullname and print SQL commands for update")
     parser.add_option("--position", default=None, action="store", dest="position",
                       help="Position within the menu, useful only with --check-spec")
+    parser.add_option("--reset-rights", action="store_true", dest="reset_rights",
+                      help="Reset access rights of given specification, useful only with --check-spec")
     parser.add_option("--rebuild", action="store_true", dest="rebuild",
                       help="Delete all DMP data and import them from DEF_DIRECTORY specifications again")
     parser.add_option("--delete", action="store_true", dest="delete_only",
@@ -761,17 +778,17 @@ def run():
     process_menu(resolver, (options.check_spec or menu), top, menu_items, actions, rights, position='2.1111', system=True)
     process_form_actions(resolver, actions, rights)
     print "Retrieving menu...done"
-    print "Retrieving rights..."
-    if options.check_spec is None:
-        process_rights(resolver, actions, rights, def_dir)
-    print "Retrieving rights...done"
+    if options.check_spec is None or options.reset_rights:
+        print "Retrieving rights..."
+        process_rights(resolver, actions, rights, def_dir, options.check_spec)
+        print "Retrieving rights...done"
     if check_only:
         print "Checking actions..."
         check_actions(cursor, actions, options.check_update, options.check_spec)
         print "Checking actions...done"
-        if options.check_spec is None:
+        if options.check_spec is None or options.reset_rights:
             print "Checking rights..."
-            roles = check_rights(cursor, rights, options.check_update)
+            roles = check_rights(cursor, rights, options.check_update, options.check_spec)
             print "Checking rights...done"
     else:
         print "Inserting actions..."
