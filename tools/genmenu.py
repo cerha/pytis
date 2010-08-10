@@ -124,8 +124,83 @@ def command_form(resolver, form_string):
         return None, None
     return form_name, form_class
 
-def process_menu(resolver, menu, parent, menu_items, actions, rights, position, system=False):
-    if isinstance(menu, pytis.form.Menu):
+def process_menu(resolver, menu, parent, menu_items, actions, rights, position, system=False, form_class_name=None):
+    def process_spec(form_name, form_class, action_id, subactions):
+        shortname = 'form/' + form_name
+        form_name_components = form_name.split('.')
+        form_module = string.join(form_name_components[:-1], '/')
+        base_form_name = form_name_components[-1]
+        try:
+            spec = resolver.get_object(form_module, base_form_name)
+        except:
+            spec = None
+        if spec is None:
+            spec_instance = None
+        else:
+            try:
+                spec_instance = spec(resolver)
+            except Exception, e:
+                spec_instance = None
+                print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
+        if spec_instance is not None:
+            try:
+                spec_title = spec_instance.view_spec().title()
+            except:
+                pass
+        # Subforms
+        bindings = None
+        def binding(name):
+            form_name_components = name.split('.')
+            form_module = string.join(form_name_components[:-1], '/')
+            base_form_name = form_name_components[-1]
+            try:
+                spec = resolver.get_object(form_module, base_form_name)
+            except:
+                spec = None
+            if spec is None:
+                title = ''
+            else:
+                try:
+                    title = spec(resolver).view_spec().title()
+                except Exception, e:
+                    title = ''
+                    print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
+            return pytis.presentation.Binding(id=name, title=title, name=name,
+                                              binding_column='dummy')
+        if issubclass(form_class, pytis.form.DualForm):
+            pos = form_name.find('::')
+            if pos == -1:
+                try:
+                    spec = resolver.get_object(form_module, base_form_name)
+                    bindings = spec(resolver).view_spec().bindings()
+                    bindings = (binding(form_name),) + tuple(bindings)
+                except Exception, e:
+                    bindings = None
+                    print "Warning: Can't import bindings of %s: %s" % (form_name, e,)
+            else:
+                bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
+        if pytis.util.is_sequence(bindings):
+            for i in range(len(bindings)):
+                b = bindings[i]
+                subaction_id = 'sub/%02d/%s' % (i, action_id,)
+                subaction_title = b.title()
+                subaction_shortname = 'form/'+b.name()
+                actions[subaction_id] = Action(subaction_id, '',
+                                               shortname=subaction_shortname,
+                                               title=subaction_title)
+                subactions.append(subaction_id)
+        return spec_instance
+    if isinstance(menu, basestring):
+        subactions = []
+        form_name = menu
+        action_id = 'form/%s/%s//' % (form_class_name, form_name,)
+        shortname = 'form/%s' % (form_name,)
+        spec_instance = process_spec(form_name, eval(form_class_name), action_id, subactions)
+        spec_title = spec_instance.view_spec().title()
+        description = spec_instance.view_spec().description() or ''
+        actions[action_id] = Action(name=action_id, description=description, shortname=shortname,
+                                    title=spec_title, subactions=subactions)
+    elif isinstance(menu, pytis.form.Menu):
         menu_id = super_menu_id(menu, menu_items)
         menu_items[menu_id] = supmenu = Menu(name=None, title=menu.title(), parent=parent, position=position, system=system)
         parent.children.append(supmenu)
@@ -151,69 +226,8 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                 else:
                     form_name = action_components[2]
                     form_class = eval(action_components[1])
+                process_spec(form_name, form_class, action_id, subactions)
                 shortname = 'form/' + form_name
-                form_name_components = form_name.split('.')
-                form_module = string.join(form_name_components[:-1], '/')
-                base_form_name = form_name_components[-1]
-                try:
-                    spec = resolver.get_object(form_module, base_form_name)
-                except:
-                    spec = None
-                if spec is None:
-                    spec_instance = None
-                else:
-                    try:
-                        spec_instance = spec(resolver)
-                    except Exception, e:
-                        spec_instance = None
-                        print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
-                if spec_instance is not None:
-                    try:
-                        spec_title = spec_instance.view_spec().title()
-                    except:
-                        pass
-                # Subforms
-                bindings = None
-                def binding(name):
-                    form_name_components = name.split('.')
-                    form_module = string.join(form_name_components[:-1], '/')
-                    base_form_name = form_name_components[-1]
-                    try:
-                        spec = resolver.get_object(form_module, base_form_name)
-                    except:
-                        spec = None
-                    if spec is None:
-                        title = ''
-                    else:
-                        try:
-                            title = spec(resolver).view_spec().title()
-                        except Exception, e:
-                            title = ''
-                            print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
-                    return pytis.presentation.Binding(id=name, title=title, name=name,
-                                                      binding_column='dummy')
-                if issubclass(form_class, pytis.form.DualForm):
-                    pos = form_name.find('::')
-                    if pos == -1:
-                        try:
-                            spec = resolver.get_object(form_module, base_form_name)
-                            bindings = spec(resolver).view_spec().bindings()
-                            bindings = (binding(form_name),) + tuple(bindings)
-                        except Exception, e:
-                            bindings = None
-                            print "Warning: Can't import bindings of %s: %s" % (form_name, e,)
-                    else:
-                        bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
-                if pytis.util.is_sequence(bindings):
-                    for i in range(len(bindings)):
-                        b = bindings[i]
-                        subaction_id = 'sub/%02d/%s' % (i, action_id,)
-                        subaction_title = b.title()
-                        subaction_shortname = 'form/'+b.name()
-                        actions[subaction_id] = Action(subaction_id, '',
-                                                       shortname=subaction_shortname,
-                                                       title=subaction_title)
-                        subactions.append(subaction_id)
             else:
                 shortname = action_id
             actions[action_id] = action = Action(name=action_id, shortname=shortname,
@@ -400,12 +414,19 @@ def process_rights(resolver, actions, rights, def_dir):
 
 def fill_actions(cursor, actions):
     for action in actions.values():
-        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values(%s, %s, %s, %s)",
+        cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values (%s, %s, %s, %s)",
                        (action.name, action.shortname, action.title, action.description,))
 
-def check_actions(cursor, actions, update):
+def check_actions(cursor, actions, update, specification):
     subactions = {}
-    cursor.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%'")
+    if specification is None:
+        sub_pattern = 'sub/%'
+        condition = 'true'
+    else:
+        sub_pattern = 'sub/%%/form/%%/%s/%%' % (specification,)
+        condition = "shortname = 'form/%s'" % (specification,)
+    query = "select fullname, shortname from c_pytis_menu_actions where fullname like '%s'" % (sub_pattern,)
+    cursor.execute(query)
     while True:
         row = cursor.fetchone()
         if row is None:
@@ -417,7 +438,7 @@ def check_actions(cursor, actions, update):
         if subactions_dict is None:
             subactions_dict = subactions[parent_name] = {}
         subactions_dict[shortname] = index
-    cursor.execute("select fullname, shortname, action_title from c_pytis_menu_actions")
+    cursor.execute("select fullname, shortname, action_title from c_pytis_menu_actions where %s" % (condition,))
     missing_actions = copy.copy(actions)
     missing_titles = []
     while True:
@@ -451,7 +472,7 @@ def check_actions(cursor, actions, update):
                 print 'Check: Missing subaction: %s %s %s' % (fullname, index, sub_shortname,)
                 if update:
                     subaction = actions['sub/%s/%s' % (index, fullname,)]
-                    print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values('%s', '%s', '%s', '%s');" %
+                    print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values ('%s', '%s', '%s', '%s');" %
                            (subaction.name, subaction.shortname, subaction.title, subaction.description,))
             if not title and action.title:
                 missing_titles.append((fullname, action.title,))
@@ -459,7 +480,7 @@ def check_actions(cursor, actions, update):
         if fullname[:4] != 'sub/':
             print 'Check: Missing action: %s (%s)' % (fullname, action.shortname,)
             if update:
-                print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values('%s', '%s', '%s', '%s');" %
+                print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values ('%s', '%s', '%s', '%s');" %
                        (action.name, action.shortname, action.title, action.description,))
     for fullname, title in missing_titles:
         print 'Check: Missing action title in %s: %s' % (fullname , title,)
@@ -505,7 +526,7 @@ def fill_rights(cursor, rights, check_rights=None):
                                 if already_stored.has_key(key):
                                     continue
                                 cursor.execute(("insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
-                                                "values(%s, %s, %s, %s, %s, %s, 0)"),
+                                                "values (%s, %s, %s, %s, %s, %s, 0)"),
                                                (action_name, group, permission, True, True, c,))
                                 already_stored[key] = True
                             else:
@@ -569,7 +590,7 @@ def check_rights(cursor, rights, update):
                             continue
                         if update:
                             print (("Update: insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
-                                    "values('%s', '%s', '%s', 't', 't', %s, 0);") % rights_args)
+                                    "values ('%s', '%s', '%s', 't', 't', %s, 0);") % rights_args)
                         rights_seen[rights_args] = True
                     continue
                 db_columns = db_group_info.get(permission)
@@ -598,7 +619,7 @@ def fill_menu_items(cursor, menu, position=''):
         locked = 'F'
     cursor.execute(("insert into e_pytis_menu "
                     "(menuid, name, title, position, next_position, fullname, help, hotkey, locked) "
-                    "values(%s, %s, %s, %s, %s, %s, %s, %s, %s)"),
+                    "values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"),
                    (-menu.id, menu.name, menu.title, menu.position, menu.position+'4', action,
                      menu.help, menu.hotkey, locked,))
     for m in menu.children:
@@ -651,12 +672,18 @@ def parse_options():
                       help="Only check DMP data, do not modify the database")
     parser.add_option("--check-update", action="store_true", dest="check_update",
                       help="The same as --check, but print SQL commands needed for update")
+    parser.add_option("--check-spec", default=None, action="store", dest="check_spec",
+                      help="Check given specification and print SQL commands for update")
+    parser.add_option("--form-class", default='pytis.form.BrowseForm', action="store", dest="form_class",
+                      help="Form class to use, useful only with --check-spec")
+    parser.add_option("--position", default=None, action="store", dest="position",
+                      help="Position within the menu, useful only with --check-spec")
     parser.add_option("--rebuild", action="store_true", dest="rebuild",
                       help="Delete all DMP data and import them from DEF_DIRECTORY specifications again")
     parser.add_option("--delete", action="store_true", dest="delete_only",
                       help="Just delete everything from DMP tables and exit")
     options, args = parser.parse_args()
-    if options.check_update:
+    if options.check_update or options.check_spec:
         options.check_only = True
     dbparameters = Configuration.dbparameters
     dbparameters['host'] = options.host
@@ -720,19 +747,22 @@ def run():
     actions = {}
     rights = {}
     print "Retrieving menu..."
-    process_menu(resolver, menu, top, menu_items, actions, rights, position='2.1111', system=True)
+    process_menu(resolver, (options.check_spec or menu), top, menu_items, actions, rights, position='2.1111',
+                 system=True, form_class_name=options.form_class)
     process_form_actions(resolver, actions, rights)
     print "Retrieving menu...done"
     print "Retrieving rights..."
-    process_rights(resolver, actions, rights, def_dir)
+    if options.check_spec is None:
+        process_rights(resolver, actions, rights, def_dir)
     print "Retrieving rights...done"
     if check_only:
         print "Checking actions..."
-        check_actions(cursor, actions, options.check_update)
+        check_actions(cursor, actions, options.check_update, options.check_spec)
         print "Checking actions...done"
-        print "Checking rights..."
-        roles = check_rights(cursor, rights, options.check_update)
-        print "Checking rights...done"
+        if options.check_spec is None:
+            print "Checking rights..."
+            roles = check_rights(cursor, rights, options.check_update)
+            print "Checking rights...done"
     else:
         print "Inserting actions..."
         fill_actions(cursor, actions)
