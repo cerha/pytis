@@ -193,9 +193,10 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
     if isinstance(menu, basestring):
         subactions = []
         form_name = menu
-        action_id = 'form/%s/%s//' % (form_class_name, form_name,)
+        form_class = eval(form_class_name)
+        action_id = 'form/%s.%s/%s//' % (form_class.__module__, form_class.__name__, form_name,)
         shortname = 'form/%s' % (form_name,)
-        spec_instance = process_spec(form_name, eval(form_class_name), action_id, subactions)
+        spec_instance = process_spec(form_name, form_class, action_id, subactions)
         spec_title = spec_instance.view_spec().title()
         description = spec_instance.view_spec().description() or ''
         actions[action_id] = Action(name=action_id, description=description, shortname=shortname,
@@ -460,7 +461,7 @@ def check_actions(cursor, actions, update, specification):
                 key = actions[subactions_list[i]].shortname
                 subactions_dict[key] = '%02d' % (i,)
             for sub_shortname, index in subactions_dict.items():
-                if db_subactions_dict.get(sub_shortname) == index:
+                if db_subactions_dict.get(sub_shortname) is not None:
                     del subactions_dict[sub_shortname]
                     del db_subactions_dict[sub_shortname]
             for sub_shortname, index in db_subactions_dict.items():
@@ -472,8 +473,9 @@ def check_actions(cursor, actions, update, specification):
                 print 'Check: Missing subaction: %s %s %s' % (fullname, index, sub_shortname,)
                 if update:
                     subaction = actions['sub/%s/%s' % (index, fullname,)]
+                    sub_name = ('sub/%02d' % (i,)) + subaction.name[6:]
                     print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values ('%s', '%s', '%s', '%s');" %
-                           (subaction.name, subaction.shortname, subaction.title, subaction.description,))
+                           (sub_name, subaction.shortname, subaction.title, subaction.description,))
             if not title and action.title:
                 missing_titles.append((fullname, action.title,))
     for fullname, action in missing_actions.items():
@@ -482,6 +484,12 @@ def check_actions(cursor, actions, update, specification):
             if update:
                 print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values ('%s', '%s', '%s', '%s');" %
                        (action.name, action.shortname, action.title, action.description,))
+                subactions_list = action.subactions
+                for i in range(len(subactions_list)):
+                    subaction_id = subactions_list[i]
+                    subaction = actions[subaction_id]
+                    print ("Update: insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values ('%s', '%s', '%s', '%s');" %
+                           (subaction.name, subaction.shortname, subaction.title, subaction.description,))
     for fullname, title in missing_titles:
         print 'Check: Missing action title in %s: %s' % (fullname , title,)
         if update:
