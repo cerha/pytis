@@ -124,7 +124,7 @@ def command_form(resolver, form_string):
         return None, None
     return form_name, form_class
 
-def process_menu(resolver, menu, parent, menu_items, actions, rights, position, system=False, form_class_name=None):
+def process_menu(resolver, menu, parent, menu_items, actions, rights, position, system=False):
     def process_spec(form_name, form_class, action_id, subactions):
         shortname = 'form/' + form_name
         form_name_components = form_name.split('.')
@@ -192,9 +192,13 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
         return spec_instance
     if isinstance(menu, basestring):
         subactions = []
-        form_name = menu
+        components = menu.split('/')
+        if len(components) != 5:
+            print 'Error: Invalid specification fullname:', menu
+            return
+        __, form_class_name, form_name, __, __ = components
         form_class = eval(form_class_name)
-        action_id = 'form/%s.%s/%s//' % (form_class.__module__, form_class.__name__, form_name,)
+        action_id = menu
         shortname = 'form/%s' % (form_name,)
         spec_instance = process_spec(form_name, form_class, action_id, subactions)
         spec_title = spec_instance.view_spec().title()
@@ -418,12 +422,13 @@ def fill_actions(cursor, actions):
         cursor.execute("insert into c_pytis_menu_actions (fullname, shortname, action_title, description) values (%s, %s, %s, %s)",
                        (action.name, action.shortname, action.title, action.description,))
 
-def check_actions(cursor, actions, update, specification):
+def check_actions(cursor, actions, update, spec_fullname):
     subactions = {}
-    if specification is None:
+    if spec_fullname is None:
         sub_pattern = 'sub/%'
         condition = 'true'
     else:
+        specification = spec_fullname.split('/')[2]
         sub_pattern = 'sub/%%/form/%%/%s/%%' % (specification,)
         condition = "shortname = 'form/%s'" % (specification,)
     query = "select fullname, shortname from c_pytis_menu_actions where fullname like '%s'" % (sub_pattern,)
@@ -681,9 +686,7 @@ def parse_options():
     parser.add_option("--check-update", action="store_true", dest="check_update",
                       help="The same as --check, but print SQL commands needed for update")
     parser.add_option("--check-spec", default=None, action="store", dest="check_spec",
-                      help="Check given specification and print SQL commands for update")
-    parser.add_option("--form-class", default='pytis.form.BrowseForm', action="store", dest="form_class",
-                      help="Form class to use, useful only with --check-spec")
+                      help="Check specification identified by given fullname and print SQL commands for update")
     parser.add_option("--position", default=None, action="store", dest="position",
                       help="Position within the menu, useful only with --check-spec")
     parser.add_option("--rebuild", action="store_true", dest="rebuild",
@@ -755,8 +758,7 @@ def run():
     actions = {}
     rights = {}
     print "Retrieving menu..."
-    process_menu(resolver, (options.check_spec or menu), top, menu_items, actions, rights, position='2.1111',
-                 system=True, form_class_name=options.form_class)
+    process_menu(resolver, (options.check_spec or menu), top, menu_items, actions, rights, position='2.1111', system=True)
     process_form_actions(resolver, actions, rights)
     print "Retrieving menu...done"
     print "Retrieving rights..."
