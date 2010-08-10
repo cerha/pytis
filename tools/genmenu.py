@@ -587,7 +587,7 @@ def check_rights(cursor, rights, update):
                     print 'Check: Missing group rights:', action_name, group
                     continue
             app_group_info = app_action_info[group]
-            for permission in app_group_info.keys():
+            for permission, columns in app_group_info.items():
                 if missing:
                     for c in (columns or [None]):
                         if c is None:
