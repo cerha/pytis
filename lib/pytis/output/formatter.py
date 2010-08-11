@@ -1136,9 +1136,10 @@ class LCGFormatter(object):
             return result
         
     class _LCGGlobals(dict):
-        def __init__(self, form, form_bindings, current_row=None):
+        def __init__(self, resolvers, form, form_bindings, current_row=None):
             dictionary = self._initial_dictionary(form, form_bindings, current_row)
             dict.__init__(self, dictionary)
+            self._resolvers = resolvers
             self._form = form
             self._form_bindings = form_bindings
         def _initial_dictionary(self, form, form_bindings, current_row):
@@ -1159,20 +1160,44 @@ class LCGFormatter(object):
                         if pytis.form.has_access(binding.name()):
                             # I tried to use closure here, but it produced unexpected results
                             class MakeBinding(object):
-                                def __init__(self, binding, processor):
+                                def __init__(self, binding, processor, current_row):
                                     self._binding = binding
+                                    self._current_row = current_row
                                     self._processor = processor
                                 def __call__(self):
-                                    return self._processor(self._binding)
+                                    return self._processor(self._binding, self._current_row)
                             binding_id = re.sub('[^A-Za-z0-9_]', '_', binding.id())
                             binding_dictionary[binding_id] = MakeBinding(binding,
-                                                                         self._make_binding)
+                                                                         self._make_binding,
+                                                                         current_row)
             return dictionary
         def _make_table(self):
-            data = self._form.data()
+            # for row in self._form.presented_rows():
             return 'not implemented'
-        def _make_binding(self, binding):
-            return 'placeholder for ' + binding.name()
+        def _make_binding(self, binding, current_row):
+            name = binding.name()
+            for resolver in self._resolvers:
+                try:
+                    resolver.get(name, 'view_spec')
+                except ResolverError:
+                    continue
+                break
+            else:
+                log(EVENT, 'No view specification found for binding ' + name)
+                return {}
+            binding_condition = binding.condition()
+            binding_column = binding.binding_column()
+            if binding_column and current_row is not None:
+                condition = pytis.data.EQ(binding_column, current_row.row()[0])
+                if binding_condition is not None:
+                    condition = pytis.data.AND(condition, binding_condition(current_row))
+            elif binding_condition and current_row is not None:
+                condition = binding_condition(current_row)
+            else:
+                condition = pytis.data.AND()
+            table = pytis.output.data_table(resolver, binding.name(), condition=condition,
+                                            sorting=())
+            return dict(table=table.lcg())
         
     def __init__(self, resolvers, template_id, form=None, form_bindings=None):
         """
@@ -1228,11 +1253,11 @@ class LCGFormatter(object):
         if self._form is not None and self._row_template is not None:
             for row in self._form.presented_rows():
                 row_content = self._row_template.lcg()
-                row_lcg_globals = self._LCGGlobals(self._form, self._form_bindings,
+                row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
                                                    current_row=row)
                 document = lcg.ContentNode(id='', content=row_content, globals=row_lcg_globals)
                 children.append(document)
-        lcg_globals = self._LCGGlobals(self._form, self._form_bindings)
+        lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings)
         body = self._body
         if not isinstance(body, (list, tuple,)):
             body = [body]            
