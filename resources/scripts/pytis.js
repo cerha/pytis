@@ -31,11 +31,19 @@
 var pytis = {};
 
 pytis.FormHandler = Class.create({
-      initialize: function(form_id, fields, filters) {
+      initialize: function(form_id, active_fields, filters) {
+	 /* form_id ... HTML id of the form to connect to (string)
+	  * active_fields ... array of field identifiers (strings) of fields
+	  *    which may trigger changes of other fields.  The changes in the
+	  *    active fields will be observed and sent for server processing.
+	  * filters ... initial state of form's runtime filters as an
+	  *    associative array (hash) keyed by field id where value is a
+	  *    string representation of the filter for server side comparisons.
+	  */
 	 var form = $(form_id);
 	 if (form != null) {
 	    this._form = form;
-	    this._fields = fields;
+	    this._active_fields = active_fields;
 	    this._filters = filters;
 	    this._last_request_number = 0;
 	    this._observer = new Form.Observer(form, 1, this.on_change.bind(this));
@@ -51,13 +59,11 @@ pytis.FormHandler = Class.create({
 	 // meantime, but this would slow down the UI responsivity.
 	 var values = value.parseQuery(); 
 	 var last_values = this._observer.lastValue.parseQuery();
-	 var fields = this._fields;
-	 for (var i=0; i<fields.length; i++) {
-	    var field = fields[i];
+	 for (var i=0; i<this._active_fields.length; i++) {
+	    var field = this._active_fields[i];
 	    // Disabled fields are not present in values/last_values, but also
 	    // checkbox fields are not there if unchecked.
-	    if ((field in values || field in last_values) 
-		&& values[field] != last_values[field]) {
+	    if ((field in values || field in last_values) && values[field] != last_values[field]) {
 	       this._form.request({
 		     parameters: {_pytis_form_update_request: ++this._last_request_number,
 			          _pytis_form_changed_field: field,
@@ -127,12 +133,12 @@ pytis.FormHandler = Class.create({
 	    // than a later one).
 	    if (response_number == this._last_request_number && fields != null) {
 	       for (var id in fields) {
-		  var cdata = fields[id];
-		  for (var key in cdata) {
-		     var value = cdata[key];
-		     var field = this._form[id];
-		     if (field) {
-			if      (key == 'editable')    this._set_editability(field, value);
+		  var field = this._form[id];
+		  if (field) {
+		     var cdata = fields[id];
+		     for (var key in cdata) {
+			var value = cdata[key];
+		        if      (key == 'editable')    this._set_editability(field, value);
 			else if (key == 'value')       this._set_value(field, value);
 			else if (key == 'filter')      this._filters[id] = value;
 			else if (key == 'enumeration') this._set_enumeration(field, value);
