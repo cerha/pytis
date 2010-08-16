@@ -1859,7 +1859,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     def _can_cmd_export(self):
         # Kontrola poètu øádkù
-        number_rows = self._table.GetNumberRows()
+        number_rows = self._table.number_of_rows()
         if number_rows == 0:
             msg = _("Tabulka neobsahuje ¾ádné øádky! Export nebude proveden.")
             run_dialog(Warning, msg)

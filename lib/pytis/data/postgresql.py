@@ -1333,7 +1333,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._SQLCommandTemplate('fetch last from %s' % (cursor_name,))
         self._pdbb_command_move_to_start = \
             self._SQLCommandTemplate('move absolute 0 from %s' % (cursor_name,))
-                {'columns': column_list})
         if self._pdbb_operations:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
@@ -1354,6 +1353,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                   "as %s %s order by %%(ordering)s %s") %
                  (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
                   table_names[0], groupby, ordering,)),
+                {'columns': column_list})
         else:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
