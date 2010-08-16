@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005-2009 Brailcom, o.p.s.
+# Copyright (C) 2005-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ from types import *
 from types import _TreeOrder
 from spec import *
 from defs import *
+from dmp import dmp_import, dmp_commit
 
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
@@ -38,5 +39,3 @@ for file in (dbconfig, dbutils, misc, types, spec, defs):
 # používat celé názvy `pytis.forms.*'.  Zde je import každopádně až na konci,
 # abychom "nezasvinili" jmenný prostor modulů.
 from pytis.form import *
-
-    
