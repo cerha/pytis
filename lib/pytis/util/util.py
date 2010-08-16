@@ -584,24 +584,29 @@ class XStack(Stack):
 class Attribute(object):
     """Definition of a 'Structure' attribute."""
     
-    def __init__(self, name, type=object, default=None):
+    def __init__(self, name, type=object, default=None, mutable=False):
         """
         Arguments:
 
           name -- name of the attribute, string
           type -- Python type or a sequence of Python types of the attribute
           default -- default value of the attribute
+          mutable -- whether the given attribute is mutable; if so, a setter
+            function is defined for it
 
         """
         self._name = name
         self._type = type
         self._default = default
+        self._mutable = mutable
     def name(self):
         return self._name
     def type(self):
         return self._type
     def default(self):
         return self._default
+    def mutable(self):
+        return self._mutable
                  
 class Structure (object):
     """Simple data structures.
@@ -621,7 +626,8 @@ class Structure (object):
             value = UNDEFINED
             if kwargs.has_key (name):
                 value = kwargs[name]
-                assert isinstance(value, member.type()), ("Invalid attribute type", name, value, member.type())
+                assert isinstance(value, member.type()) or value == member.default(), \
+                       ("Invalid attribute type", name, value, member.type())
                 if __debug__:
                     del kwargs[name]
             else:
@@ -635,6 +641,9 @@ class Structure (object):
                     value = member.default()
             if value is not UNDEFINED:
                 setattr (self, name, lambda value=value: value)
+            if member.mutable():
+                setattr(self, 'set_'+name,
+                        lambda value, name=name: self._replace_value(name, value))
         assert not kwargs, ("Extra initialization arguments", kwargs.keys())
 
     def _replace_value(self, name, value):
