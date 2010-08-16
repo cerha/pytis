@@ -78,6 +78,20 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         result = None
         def do_query(raw_connection):
             cursor = raw_connection.cursor()
+            # The hasattr test is a hack enforced by the fact that constructor
+            # calls of pytis.data classes are in very strange state now.
+            if hasattr(self, '_sql_logger') and self._sql_logger is not None:
+                if query_args:
+                    def escape(arg):
+                        if isinstance(arg, basestring):
+                            result = "'%s'" % (arg.replace("'", "''"),)
+                        else:
+                            result = arg
+                        return result
+                    query_string = query % tuple([escape(arg) for arg in query_args])
+                else:
+                    query_string = query
+                self._sql_logger.write(query_string + '\n')
             # query_args shouldn't be used when empty to prevent mistaken
             # '%' processing in `query'
             try:
@@ -216,8 +230,9 @@ class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
 
 
 class DBAPIFunction(_DBAPIAccessor, DBPostgreSQLFunction):
-    pass
-
+    def __init__(self, name, connection_data, sql_logger=None, **kwargs):
+        self._sql_logger = sql_logger
+        super(DBAPIFunction, self).__init__(name=name, connection_data=connection_data, **kwargs)
 
 class DBAPITransaction(_DBAPIAccessor, DBPostgreSQLTransaction):
     pass
@@ -228,8 +243,10 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
     class _PgNotifier(_DBAPIAccessor, PostgreSQLNotifier._PgNotifier):
 
         def __init__(self, connection_data, connection_name=None):
+            self._sql_logger = None # difficult to call superclass constructors properly
             PostgreSQLNotifier._PgNotifier.__init__(self, connection_data,
                                                     connection_name=connection_name)
+            
             self._pgnotif_connection = None
 
         def _notif_init_connection(self):
@@ -321,7 +338,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
     """    
     def __init__(self, bindings, key, connection_data=None, ordering=None,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
-                 dbconnection_spec=None, **kwargs):
+                 dbconnection_spec=None, sql_logger=None, **kwargs):
         # TODO: Vyøadit dbconnection_spec ze seznamu argumentù po konverzi
         # aplikací.
         if dbconnection_spec is not None:
@@ -332,6 +349,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
         super(DBDataDefaultClass, self).__init__(
             bindings=bindings, key=key, connection_data=connection_data,
             ordering=ordering, access_rights=access_rights, **kwargs)
+        self._sql_logger = None
         # TODO: Následující hack je tu proto, ¾e ve voláních konstruktorù vý¹e
         # je _pg_add_notifications voláno pøedèasnì, pøièem¾ poøadí volání
         # konstruktorù nelze zmìnit.  Pro nápravu je potøeba je¹tì pøedìlat

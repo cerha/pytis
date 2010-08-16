@@ -1767,7 +1767,7 @@ class DataFactory(object):
 #         return hash_attr(self, ('_class_', '_args', '_kwargs_hashable'))
 
 
-def dbtable(table, columns, connection_data, arguments=None, connection_name=None):
+def dbtable(table, columns, connection_data, arguments=None, connection_name=None, sql_logger=None):
     """Return 'DBDataDefault' instance corresponding to a 'table' with 'columns'.
 
     Arguments:
@@ -1780,6 +1780,8 @@ def dbtable(table, columns, connection_data, arguments=None, connection_name=Non
       arguments -- optional sequence of table function arguments in case the
         table is actually a database function returning rows; sequence items
         must be 'DBBinding' instances
+      sql_logger -- if not 'None' all SQL commands are written to this object
+        using its 'write' method (which the object must provide)
     
     """
     def binding(spec):
