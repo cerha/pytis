@@ -653,6 +653,18 @@ class Structure (object):
         result._init(kwargs, nodefault=True)
         return result
 
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        for attribute in self._attributes:
+            name = attribute.name()
+            if getattr(self, name) != getattr(other, name):
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 class object_2_5(object):
     """Base class emulating Python 2.5 'object' class.
