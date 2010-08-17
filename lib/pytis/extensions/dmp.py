@@ -899,7 +899,7 @@ class DMPActions(DMPObject):
                     title = ''
                 else:
                     try:
-                        title = spec(resolver).view_spec().title()
+                        title = spec.view_spec().title()
                     except Exception, e:
                         title = ''
                         add_message(messages, DMPMessage.ERROR_MESSAGE,
