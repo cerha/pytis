@@ -349,7 +349,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
         super(DBDataDefaultClass, self).__init__(
             bindings=bindings, key=key, connection_data=connection_data,
             ordering=ordering, access_rights=access_rights, **kwargs)
-        self._sql_logger = None
+        self._sql_logger = sql_logger
         # TODO: Následující hack je tu proto, ¾e ve voláních konstruktorù vý¹e
         # je _pg_add_notifications voláno pøedèasnì, pøièem¾ poøadí volání
         # konstruktorù nelze zmìnit.  Pro nápravu je potøeba je¹tì pøedìlat

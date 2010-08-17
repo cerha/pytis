@@ -1792,6 +1792,6 @@ def dbtable(table, columns, connection_data, arguments=None, connection_name=Non
         return pytis.data.DBColumnBinding(id,  table, id, type_=type_)
     bindings = [binding(spec) for spec in columns]
     factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0],
-                                     arguments=arguments)
+                                     arguments=arguments, sql_logger=sql_logger)
     data = factory.create(connection_data=connection_data, connection_name=connection_name)
     return data
