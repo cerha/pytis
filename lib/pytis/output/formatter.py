@@ -1263,7 +1263,7 @@ class LCGFormatter(object):
             body = [body]            
         children = ([document.lcg_document(globals=lcg_globals) for document in body] +
                     children)
-        lcg_content = lcg.ContentNode(id='', content=lcg.Content(), children=children)
+        lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children)
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None)
         pdf = exporter.export(context)
