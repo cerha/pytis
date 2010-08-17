@@ -341,7 +341,7 @@ class DMPObject(object):
     def _retrieve_data(self):
         pass
     
-    def store_data(self, fake, transaction=None):
+    def store_data(self, fake, transaction=None, specifications=None):
         """Store DMP data into the database.
 
         Arguments:
@@ -351,6 +351,8 @@ class DMPObject(object):
           transaction -- transaction object to use or 'None'; if not 'None' no
             commit nor rollback is performed in this method regardless 'fake'
             argument value
+          specifications -- if not 'None' then it is a sequence of specification
+            names to restrict the operation to
 
         """
         messages = []
@@ -358,7 +360,7 @@ class DMPObject(object):
             transaction_ = self._transaction()
         else:
             transaction_ = transaction
-        success = self._store_data(transaction_)
+        success = self._store_data(transaction_, specifications)
         if fake:
             messages += self._logger.messages()
         if transaction is None:
@@ -368,10 +370,10 @@ class DMPObject(object):
                 transaction_.rollback()
         return messages
 
-    def _store_data(self, transaction):
+    def _store_data(self, transaction, specifications):
         return False
 
-    def delete_data(self, fake, transaction=None):
+    def delete_data(self, fake, transaction=None, specifications=None):
         """Delete DMP data from the database.
 
           fake -- iff True, don't actually delete the data but return sequence
@@ -379,6 +381,8 @@ class DMPObject(object):
           transaction -- transaction object to use or 'None'; if not 'None' no
             commit nor rollback is performed in this method regardless 'fake'
             argument value
+          specifications -- if not 'None' then it is a sequence of specification
+            names to restrict the operation to
 
         """
         messages = []
@@ -386,7 +390,8 @@ class DMPObject(object):
             transaction_ = self._transaction()
         else:
             transaction_ = transaction
-        success = self._delete_data(transaction_)
+        condition = self._delete_condition(transaction_, specifications)
+        success = self._delete_data(transaction_, condition)
         if fake:
             messages += self._logger.messages()
         if transaction is None:
@@ -395,6 +400,17 @@ class DMPObject(object):
             else:
                 transaction_.rollback()
         return messages
+
+    def _delete_condition(self, transaction, specifications):
+        if specifications is None:
+            condition = pytis.data.AND()
+        else:
+            condition = self._specifications_condition(transaction, specifications)
+        return condition
+
+    def _specifications_condition(self, transaction, specifications):
+        return pytis.data.OR(*[pytis.data.WM('shortname', self._s_('*/%s' % (s,)))
+                               for s in specifications])
     
     def dump_specifications(self, stream):
         raise Exception('Not implemented')
@@ -592,12 +608,14 @@ class DMPMenu(DMPObject):
                     self._top_item = item
             item.set_children(children_by_position.get(position, []))
     
-    def _store_data(self, transaction):
+    def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_menu')
         B = self._b_
         I = self._i_
         S = self._s_
         for item in self.items():
+            if not action.specifications_match(specifications):
+                continue
             row = pytis.data.Row((('menuid', I(item.id()),),
                                   ('name', S(item.action()),),
                                   ('title', S(item.title()),),
@@ -613,9 +631,9 @@ class DMPMenu(DMPObject):
                 return False
         return True
     
-    def _delete_data(self, transaction):
+    def _delete_data(self, transaction, condition):
         data = self._data('e_pytis_menu')
-        data.delete_many(pytis.data.AND(), transaction=transaction)
+        data.delete_many(condition, transaction=transaction)
 
 
 class DMPRights(DMPObject):
@@ -697,12 +715,16 @@ class DMPRights(DMPObject):
                               )
         self._rights = data.select_map(process, condition=condition)
     
-    def _store_data(self, transaction):
+    def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_action_rights')
         B = self._b_
         I = self._i_
         S = self._s_
         for right in self.items():
+            right_spec = right.shortname().split('/')[-1]
+            if (specifications is not None and
+                not some(lambda s: s==right_spec, specifications)):
+                continue
             row = pytis.data.Row((('shortname', S(right.shortname()),),
                                   ('roleid', S(right.roleid()),),
                                   ('rightid', S(right.rightid()),),
@@ -716,10 +738,16 @@ class DMPRights(DMPObject):
                 return False
         return True
 
-    def _delete_data(self, transaction):
+    def _delete_data(self, transaction, condition):
         data = self._data('e_pytis_action_rights')
-        data.delete_many(pytis.data.AND(), transaction=transaction)        
+        data.delete_many(condition, transaction=transaction)        
 
+    def restore(self, fake, def_directory, specifications):
+        transaction = self._transaction()
+        self.delete_data(fake, transaction=transaction, specifications=specifications)
+        self.load_specifications()
+        self.store_data(fake, transaction=transaction, specifications=specifications)
+        
 
 class DMPRoles(DMPObject):
     
@@ -762,7 +790,7 @@ class DMPRoles(DMPObject):
                              )
         self._roles = data.select_map(process)
     
-    def _store_data(self, transaction):
+    def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_roles')
         S = self._s_
         for role in self.items():
@@ -775,11 +803,11 @@ class DMPRoles(DMPObject):
                 return False
         return True
 
-    def _delete_data(self, transaction):
+    def _delete_data(self, transaction, condition):
         data = self._data('e_pytis_role_members')
-        data.delete_many(pytis.data.AND(), transaction=transaction)
+        data.delete_many(condition, transaction=transaction)
         data = self._data('e_pytis_roles')
-        data.delete_many(pytis.data.AND(), transaction=transaction)
+        data.delete_many(condition, transaction=transaction)
 
 
 class DMPActions(DMPObject):
@@ -841,6 +869,15 @@ class DMPActions(DMPObject):
             else:
                 class_ = None
             return class_
+
+        def specifications_match(self, specifications):
+            if specifications is None:
+                return True
+            spec_name = self.shortname().split('/')[-1]
+            for s in specifications:
+                if spec_name == s:
+                    return True
+            return False
             
         @classmethod
         def dummy_action(class_, shortname):
@@ -953,10 +990,12 @@ class DMPActions(DMPObject):
                               )
         self._actions = data.select_map(process)
     
-    def _store_data(self, transaction):
+    def _store_data(self, transaction, specifications):
         data = self._data('c_pytis_menu_actions')
         S = self._s_
         for action in self.items():
+            if not action.specifications_match(specifications):
+                continue
             row = pytis.data.Row((('fullname', S(action.fullname()),),
                                   ('shortname', S(action.shortname()),),
                                   ('title', S(action.title()),),
@@ -967,15 +1006,15 @@ class DMPActions(DMPObject):
                 return False
         return True
 
-    def _delete_data(self, transaction):
+    def _delete_data(self, transaction, condition):
         data = self._data('c_pytis_menu_actions')
-        data.delete_many(pytis.data.AND(), transaction=transaction)
+        data.delete_many(condition, transaction=transaction)
 
 
 class DMPCommit(DMPObject):
     """This class just performs commits of simple access rights changes."""
     
-    def _store_data(self, transaction):
+    def _store_data(self, transaction, specifications):
         messages = []
         dbfunction = self._dbfunction('pytis_update_summary_rights')
         dbfunction.call(pytis.data.Row(()), transaction=transaction)
@@ -1053,6 +1092,10 @@ class DMPImport(DMPObject):
 def dmp_import(connection_parameters, fake, def_directory):
     configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
     return DMPImport(configuration).dmp_import(fake)
+
+def dmp_reset_rights(connection_parameters, fake, def_directory, specification):
+    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
+    return DMPRights(configuration).restore(fake, def_directory, [specification])
 
 def dmp_commit(connection_parameters, fake):
     configuration = DMPConfiguration(**connection_parameters)

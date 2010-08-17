@@ -286,6 +286,16 @@ def command_import(connection_parameters, dry_run, args):
         return
     defs_directory = args[0]
     return pytis.extensions.dmp_import(connection_parameters, dry_run, defs_directory)
+
+def command_reset_rights(connection_parameters, dry_run, args):
+    if len(args) < 2:
+        print "Error: missing defs directory or specification name"
+        return
+    if len(args) > 2:
+        print 'Error: extra arguments'
+        return
+    defs_directory, specification = args
+    return pytis.extensions.dmp_reset_rights(connection_parameters, dry_run, defs_directory, specification)
     
 def command_commit(connection_parameters, dry_run, args):
     if args:
@@ -294,6 +304,7 @@ def command_commit(connection_parameters, dry_run, args):
     return pytis.extensions.dmp_commit(connection_parameters, dry_run)
 
 COMMANDS = {'import': command_import,
+            'reset-rights': command_reset_rights,
             'commit': command_commit,
             }
 OLD_COMMANDS = {'ls': command_ls,
@@ -312,6 +323,7 @@ Commands:
   sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   rig SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   import DEFS_DIRECTORY
+  reset-rights DEFS_DIRECTORY SPECIFICATION-NAME
   commit"""
 
 def parse_options():
