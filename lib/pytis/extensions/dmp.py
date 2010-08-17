@@ -409,7 +409,7 @@ class DMPObject(object):
         return condition
 
     def _specifications_condition(self, transaction, specifications):
-        return pytis.data.OR(*[pytis.data.WM('shortname', self._s_('*/%s' % (s,)))
+        return pytis.data.OR(*[pytis.data.WM('shortname', self._s_('*/%s' % (s,)), ignore_case=False)
                                for s in specifications])
     
     def dump_specifications(self, stream):
@@ -648,7 +648,7 @@ class DMPRights(DMPObject):
                        )
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
-                      [('e_pytis_action_rights', ('shortname', 'roleid', 'rightid', 'system', 'granted', 'colname', 'status',),)])
+                      [('e_pytis_action_rights', ('id', 'shortname', 'roleid', 'rightid', 'system', 'granted', 'colname', 'status',),)])
 
     def _reset(self):
         self._rights = []
@@ -672,12 +672,10 @@ class DMPRights(DMPObject):
                         groups = (groups,)
                     for g in groups:
                         for p in permissions:
-                            self._rights.append(self.Right(shortname=shortname,
-                                                           roleid=(g or '*'),
-                                                           rightid=p.lower(),
-                                                           colname=column,
-                                                           system=True,
-                                                           granted=True))            
+                            right = self.Right(shortname=shortname, roleid=(g or '*'),
+                                               rightid=p.lower(), colname=column,
+                                               system=True, granted=True)
+                            self._rights.append(right)
         for spec_name in self._all_form_specification_names(messages):
             # Form access rights
             shortname = 'form/' + spec_name
@@ -733,9 +731,7 @@ class DMPRights(DMPObject):
                                   ('granted', B(right.granted(),),),
                                   ('status', I(0),),
                                   ))
-            _, result = data.insert(row, transaction=transaction)
-            if not result:
-                return False
+            data.insert(row, transaction=transaction)
         return True
 
     def _delete_data(self, transaction, condition):
@@ -743,11 +739,58 @@ class DMPRights(DMPObject):
         data.delete_many(condition, transaction=transaction)        
 
     def restore(self, fake, def_directory, specifications):
+        """Restore access rights of the given specification.
+
+        Access rights of the specification in the database are deleted and
+        initialized again from application specifications.
+
+        Arguments:
+
+          fake -- iff True, don't actually change the data but return sequence
+            of SQL commands (basestrings) that would do so
+          def_directory -- directory containing application specifications,
+            string or 'None'
+          specifications -- sequence of specification names to restrict the
+            operation to
+
+        """
+        messages = []
         transaction = self._transaction()
-        self.delete_data(fake, transaction=transaction, specifications=specifications)
+        messages += self.delete_data(fake, transaction=transaction, specifications=specifications)
         self.load_specifications()
-        self.store_data(fake, transaction=transaction, specifications=specifications)
+        messages += self.store_data(fake, transaction=transaction, specifications=specifications)
+        messages += self.commit(fake, transaction=transaction)
+        if fake:
+            transaction.rollback()
+        else:
+            transaction.commit()
+        return messages
         
+    def commit(self, fake, transaction=None):
+        """Commit changes in access rights stored in the database.
+
+        This makes access rights being prepared in the database tables actually
+        effective.
+        
+        """
+        if transaction is None:
+            transaction_ = self._transaction()
+        else:
+            transaction_ = transaction
+        dbfunction = self._dbfunction('pytis_update_summary_rights')
+        self._logger.clear()
+        dbfunction.call(pytis.data.Row(()), transaction=transaction_)
+        if fake:
+            messages = self._logger.messages()
+        else:
+            messages = []
+        if transaction is None:
+            if success and not fake:
+                transaction_.commit()
+            else:
+                transaction_.rollback()
+        return messages
+
 
 class DMPRoles(DMPObject):
     
@@ -1029,7 +1072,7 @@ class DMPActions(DMPObject):
         original_actions.retrieve_data()
         transaction = self._transaction()
         for s in specifications:
-            condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*', s))
+            condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*' % (s,)), ignore_case=False)
             self._logger.clear()
             self._delete_data(transaction=transaction, condition=condition)
             self._store_data(transaction=transaction, specifications=specifications,
@@ -1037,16 +1080,6 @@ class DMPActions(DMPObject):
             self._store_data(transaction=transaction, specifications=specifications,
                              original_actions=original_actions)
             messages += self._logger.messages()
-        return messages
-
-
-class DMPCommit(DMPObject):
-    """This class just performs commits of simple access rights changes."""
-    
-    def _store_data(self, transaction, specifications):
-        messages = []
-        dbfunction = self._dbfunction('pytis_update_summary_rights')
-        dbfunction.call(pytis.data.Row(()), transaction=transaction)
         return messages
 
 
@@ -1122,16 +1155,23 @@ def dmp_import(connection_parameters, fake, def_directory):
     configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
     return DMPImport(configuration).dmp_import(fake)
 
-def dmp_reset_rights(connection_parameters, fake, def_directory, specification):
-    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
-    return DMPRights(configuration).restore(fake, def_directory, [specification])
-
 def dmp_update_form(connection_parameters, fake, def_directory, specification):
     configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
     messages = []
     messages += DMPActions(configuration).update_forms(fake, def_directory, [specification])
     return messages
 
+def dmp_reset_rights(connection_parameters, fake, def_directory, specification):
+    """Restore access rights of the given specification.
+
+    Delete them from the database, load them from application specification and
+    store them again into the database.
+
+    """
+    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
+    return DMPRights(configuration).restore(fake, def_directory, [specification])
+
 def dmp_commit(connection_parameters, fake):
+    """Make access rights prepared in the database actually effective."""
     configuration = DMPConfiguration(**connection_parameters)
-    return DMPCommit(configuration).store_data(fake=fake)
+    return DMPRights(configuration).commit(fake=fake)
