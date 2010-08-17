@@ -34,6 +34,7 @@ elementy ke spojení dohromady.
 import lcg
 from lcg import Unit, UMm, UPoint, UFont, USpace
 from pytis.output import *
+import pytis.util
 
 
 def _something_to_lcg(something):
@@ -429,6 +430,7 @@ class Document(_Container):
     KWARGS = {'page_header': None,
               'page_footer': None,
               'first_page_header': None}
+    _counter = pytis.util.Counter()
 
     def lcg_document(self, **kwargs):
         """Return the document(s) as an 'lcg.ContentNode' instance.
@@ -444,7 +446,8 @@ class Document(_Container):
             else:
                 result = definition.lcg()
             return result
-        return lcg.ContentNode(id='',
+        content_id = 'pytismarkup%d' % (self._counter.next(),)
+        return lcg.ContentNode(id=content_id, title=' ', # let's avoid printing the id
                                content=self.lcg(),
                                page_header=arg(self.arg_page_header),
                                page_footer=arg(self.arg_page_footer),
