@@ -573,7 +573,7 @@ class DMPMenu(DMPObject):
         assign(self._top_item.children(), self._top_item.position())
         return messages        
     
-    def _retrieve_data(self, transaction):
+    def _retrieve_data(self):
         data = self._data('e_pytis_menu')
         items_by_position = {}
         children_by_position = {}
@@ -702,7 +702,7 @@ class DMPRights(DMPObject):
                     add_rights(form_action_name, form_action_rights)
         return messages
 
-    def _retrieve_data(self, connection):
+    def _retrieve_data(self):
         data = self._data('e_pytis_action_rights')
         condition = pytis.data.LE('status', self._i_(0))
         def process(row):
@@ -781,7 +781,7 @@ class DMPRoles(DMPObject):
                 roles.append(self.Role(name=right.roleid(), description='', purposeid='appl'))
         return []
 
-    def _retrieve_data(self, connection):
+    def _retrieve_data(self):
         data = self._data('e_pytis_roles')
         def process(row):
             return self.Role(name=row['name'].value(),
@@ -801,6 +801,8 @@ class DMPRoles(DMPObject):
             _, result = data.insert(row, transaction=transaction)
             if not result:
                 return False
+        self._dbfunction('pytis_update_transitive_roles')
+        dbfunction.call(pytis.data.Row(()), transaction=transaction)            
         return True
 
     def _delete_data(self, transaction, condition):
@@ -808,6 +810,8 @@ class DMPRoles(DMPObject):
         data.delete_many(condition, transaction=transaction)
         data = self._data('e_pytis_roles')
         data.delete_many(condition, transaction=transaction)
+        self._dbfunction('pytis_update_transitive_roles')
+        dbfunction.call(pytis.data.Row(()), transaction=transaction)            
 
 
 class DMPActions(DMPObject):
@@ -980,21 +984,26 @@ class DMPActions(DMPObject):
             if not self._shortnames.get(right.shortname()):
                 self._add_action(self.Action.dummy_action(right.shortname()))
 
-    def _retrieve_data(self, connection):
+    def _retrieve_data(self):
         data = self._data('c_pytis_menu_actions')
         def process(row):
             return self.Action(fullname=row['fullname'].value(),
                                shortname=row['shortname'].value(),
-                               title=row['title'].value(),
+                               title=row['action_title'].value(),
                                description=row['description'].value(),
                               )
         self._actions = data.select_map(process)
     
-    def _store_data(self, transaction, specifications):
+    def _store_data(self, transaction, specifications, subforms_only=False, original_actions=None):
         data = self._data('c_pytis_menu_actions')
         S = self._s_
         for action in self.items():
             if not action.specifications_match(specifications):
+                continue
+            if subforms_only and action.fullname().split('/')[0] != 'sub':
+                continue
+            if (original_actions is not None and
+                original_actions._fullnames.has_key(action.fullname())):
                 continue
             row = pytis.data.Row((('fullname', S(action.fullname()),),
                                   ('shortname', S(action.shortname()),),
@@ -1004,11 +1013,31 @@ class DMPActions(DMPObject):
             _, result = data.insert(row, transaction=transaction)
             if not result:
                 return False
+        self._dbfunction('pytis_update_actions_structure')
+        dbfunction.call(pytis.data.Row(()), transaction=transaction)            
         return True
 
     def _delete_data(self, transaction, condition):
         data = self._data('c_pytis_menu_actions')
         data.delete_many(condition, transaction=transaction)
+        self._dbfunction('pytis_update_actions_structure')
+        dbfunction.call(pytis.data.Row(()), transaction=transaction)
+        
+    def update_forms(self, fake, def_directory, specifications):
+        messages = []
+        original_actions = DMPActions(self._configuration)
+        original_actions.retrieve_data()
+        transaction = self._transaction()
+        for s in specifications:
+            condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*', s))
+            self._logger.clear()
+            self._delete_data(transaction=transaction, condition=condition)
+            self._store_data(transaction=transaction, specifications=specifications,
+                             subforms_only=True)
+            self._store_data(transaction=transaction, specifications=specifications,
+                             original_actions=original_actions)
+            messages += self._logger.messages()
+        return messages
 
 
 class DMPCommit(DMPObject):
@@ -1096,6 +1125,12 @@ def dmp_import(connection_parameters, fake, def_directory):
 def dmp_reset_rights(connection_parameters, fake, def_directory, specification):
     configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
     return DMPRights(configuration).restore(fake, def_directory, [specification])
+
+def dmp_update_form(connection_parameters, fake, def_directory, specification):
+    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
+    messages = []
+    messages += DMPActions(configuration).update_forms(fake, def_directory, [specification])
+    return messages
 
 def dmp_commit(connection_parameters, fake):
     configuration = DMPConfiguration(**connection_parameters)
