@@ -109,7 +109,10 @@ def add_message(messages, kind, message, arguments=()):
       
     """
     m = DMPMessage(kind=kind, message=message, arguments=tuple([unicode(a) for a in arguments]))
-    messages.append(m.format())
+    formatted = m.format()
+    if not formatted or formatted[-1] != '\n':
+        formatted += '\n'
+    messages.append(formatted)
 
 
 class DMPConfiguration(object):
@@ -350,12 +353,14 @@ class DMPObject(object):
             argument value
 
         """
+        messages = []
         if transaction is None:
             transaction_ = self._transaction()
         else:
             transaction_ = transaction
         success = self._store_data(transaction_)
-        messages = self._logger.messages()
+        if fake:
+            messages += self._logger.messages()
         if transaction is None:
             if success and not fake:
                 transaction_.commit()
@@ -376,12 +381,14 @@ class DMPObject(object):
             argument value
 
         """
+        messages = []
         if transaction is None:
             transaction_ = self._transaction()
         else:
             transaction_ = transaction
         success = self._delete_data(transaction_)
-        messages = self._logger.messages()
+        if fake:
+            messages += self._logger.messages()
         if transaction is None:
             if success and not fake:
                 transaction_.commit()
