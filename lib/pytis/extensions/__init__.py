@@ -29,7 +29,7 @@ from types import *
 from types import _TreeOrder
 from spec import *
 from defs import *
-from dmp import dmp_commit, dmp_import, dmp_reset_rights, dmp_update_form
+from dmp import dmp_add_form, dmp_commit, dmp_import, dmp_reset_rights, dmp_update_form
 
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())

@@ -522,12 +522,20 @@ class DMPMenu(DMPObject):
     def items(self):
         return self._menu
 
-    def add_item(self, kind, parent, title=None, action=None, position=None, hotkey=None, help=None):
+    def add_item(self, kind, parent=None, title=None, action=None, position=None, hotkey=None, help=None):
         id_ = self._counter.next()
         if title is not None:
             title = unicode(title)
         if help is not None:
             help = unicode(help)
+        if parent is None and position is not None:
+            pos = position.rfind('.')
+            if pos >= 0:
+                parent_position = position[:pos]
+                for item in self.items():
+                    if item.position == parent_position:
+                        parent = item
+                        break
         menu_item = self.MenuItem(id=-id_, kind=kind, title=title,
                                   parent=parent, children=[],
                                   action=action, position=position,
@@ -592,14 +600,20 @@ class DMPMenu(DMPObject):
         items_by_position = {}
         children_by_position = {}
         def process(row):
-            position = row['position'].value()
+            position = str(row['position'].value())
+            if row['name'].value():
+                kind = self.MenuItem.ACTION_ITEM
+            elif row['title'].value():
+                kind = self.MenuItem.MENU_ITEM
+            else:
+                kind = self.MenuItem.SEPARATOR_ITEM
             item = self.MenuItem(id=row['menuid'].value(),
-                                 name=row['name'].value(),
+                                 kind=kind,
                                  title=row['title'].value(),
-                                 action=row['fullname'].value(),
+                                 action=str(row['fullname'].value()),
                                  position=position,
                                  help=row['help'].value(),
-                                 hotkey=row['hotkey'].value(),
+                                 hotkey=str(row['hotkey'].value()),
                                  locked=row['locked'].value(),
                               )
             items_by_position[position] = item
@@ -610,7 +624,8 @@ class DMPMenu(DMPObject):
                   children_by_position.get(parent_position, []) + [item]
             return item
         self._menu = data.select_map(process)
-        # Assign parents and children, find top item
+        # Assign parents and children, find top item, reset counter
+        min_id = 0
         for item in self._menu:
             position = item.position()
             pos = position.rfind('.')
@@ -621,6 +636,9 @@ class DMPMenu(DMPObject):
                 if self._top_item is None or item.position() < self._top_item.position():
                     self._top_item = item
             item.set_children(children_by_position.get(position, []))
+            if item.id() < min_id:
+                min_id = item.id()
+        self._counter = Counter(value=-min_id)
     
     def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_menu')
@@ -628,12 +646,13 @@ class DMPMenu(DMPObject):
         I = self._i_
         S = self._s_
         for item in self.items():
-            if not action.specifications_match(specifications):
+            fullname = item.action()
+            if not DMPActions.Action(fullname=fullname).specifications_match(specifications):
                 continue
             row = pytis.data.Row((('menuid', I(item.id()),),
                                   ('name', S(item.action()),),
                                   ('title', S(item.title()),),
-                                  ('fullname', S(item.action()),),
+                                  ('fullname', S(fullname),),
                                   ('position', S(item.position()),),
                                   ('next_position', S(item.position() + '4'),),
                                   ('help', S(item.help()),),
@@ -883,7 +902,7 @@ class DMPActions(DMPObject):
 
         """
         _attributes = (Attribute('fullname', str),
-                       Attribute('title', basestring),
+                       Attribute('title', basestring, mutable=True),
                        Attribute('description', basestring),
                        )
 
@@ -943,9 +962,10 @@ class DMPActions(DMPObject):
         def specifications_match(self, specifications):
             if specifications is None:
                 return True
+            fullname = self.fullname()
             spec_name = self.shortname().split('/')[-1]
             for s in specifications:
-                if spec_name == s:
+                if spec_name == s or fullname == s:
                     return True
             return False
             
@@ -978,12 +998,14 @@ class DMPActions(DMPObject):
     def items(self):
         return self._actions
 
-    def _load_specifications(self, dmp_menu=None, dmp_rights=None):
+    def _load_specifications(self, dmp_menu=None, dmp_rights=None, actions=None):
         messages = []
         if dmp_menu is not None:
             self._load_from_menu(dmp_menu.items(), messages)
         if dmp_rights is not None:
             self._load_from_rights(dmp_rights.items(), messages)
+        if actions is not None:
+            self._load_from_actions(actions, messages)
         return messages
 
     def _load_from_menu(self, items, messages):
@@ -993,10 +1015,12 @@ class DMPActions(DMPObject):
                 continue
             action = self.Action(fullname=fullname, title=menu.title())
             self._load_complete_action(action, messages)
+            
+    def _load_from_actions(self, actions, messages):
+        for action in actions:
+            self._load_complete_action(action, messages)
 
     def _load_complete_action(self, action, messages):
-        # Register the main action
-        self._add_action(action)
         # Retrieve specification
         form_name = action.form_name()
         if form_name is None:
@@ -1004,6 +1028,10 @@ class DMPActions(DMPObject):
         spec = self._specification(form_name, messages)
         if spec is None:
             return
+        # Register the main action
+        if not action.title():
+            action.set_title(spec.view_spec().title())
+        self._add_action(action)
         # Subforms
         form_class = action.form_class()
         def binding(name):
@@ -1093,7 +1121,7 @@ class DMPActions(DMPObject):
         dbfunction = self._dbfunction('pytis_update_actions_structure')
         dbfunction.call(pytis.data.Row(()), transaction=transaction)
         
-    def update_forms(self, fake, def_directory, specifications):
+    def update_forms(self, fake, specifications, transaction=None):
         messages = []
         original_actions = DMPActions(self._configuration)
         original_actions.retrieve_data()
@@ -1102,14 +1130,17 @@ class DMPActions(DMPObject):
         rights = DMPRights(self._configuration)
         rights.load_specifications()
         self.load_specifications(dmp_menu=menu, dmp_rights=rights)
-        transaction = self._transaction()
+        if transaction is None:
+            transaction_ = self._transaction()
+        else:
+            transaction_ = transaction
         for s in specifications:
             self._logger.clear()
             condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*' % (s,)), ignore_case=False)
-            self._delete_data(transaction=transaction, condition=condition)
-            self._store_data(transaction=transaction, specifications=specifications,
+            self._delete_data(transaction=transaction_, condition=condition)
+            self._store_data(transaction=transaction_, specifications=specifications,
                              subforms_only=True)
-            self._store_data(transaction=transaction, specifications=specifications,
+            self._store_data(transaction=transaction_, specifications=specifications,
                              original_actions=original_actions)
             if fake:
                 messages += self._logger.messages()
@@ -1119,13 +1150,14 @@ class DMPActions(DMPObject):
                 action.kind() == 'action' and
                 not self._fullnames.has_key(action.fullname())):
                 condition = pytis.data.EQ('fullname', self._s_(action.fullname()))
-                self._delete_data(transaction, condition)
+                self._delete_data(transaction_, condition)
         if fake:
             messages += self._logger.messages()
-        if fake:
-            transaction.rollback()
-        else:
-            transaction.commit()
+        if transaction is None:
+            if fake:
+                transaction_.rollback()
+            else:
+                transaction_.commit()
         return messages
 
 
@@ -1196,15 +1228,39 @@ class DMPImport(DMPObject):
             transaction.commit()
         return messages
 
+    def dmp_add_form(self, fake, fullname, position):
+        transaction = self._transaction()
+        messages = []
+        action = DMPActions.Action(fullname=fullname)
+        messages += self._dmp_actions.load_specifications(actions=[action])
+        messages += self._dmp_actions.store_data(fake, transaction)
+        specification = action.form_name()
+        messages += self._dmp_actions.update_forms(fake, [specification], transaction=transaction)
+        self._dmp_menu.retrieve_data()
+        self._dmp_menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
+                                title=action.title(), action=fullname, position=position)
+        messages += self._dmp_menu.store_data(fake, transaction=transaction, specifications=[fullname])
+        if fake:
+            transaction.rollback()
+        else:
+            transaction.commit()
+        return messages
+
 
 def dmp_import(connection_parameters, fake, def_directory):
     configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
     return DMPImport(configuration).dmp_import(fake)
 
+def dmp_add_form(connection_parameters, fake, def_directory, fullname, position):
+    """Add new form from specifications to database menu."""
+    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
+    return DMPImport(configuration).dmp_add_form(fake, fullname, position)
+
 def dmp_update_form(connection_parameters, fake, def_directory, specification):
+    """Update form subforms and actions from specifications."""
     configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
     messages = []
-    messages += DMPActions(configuration).update_forms(fake, def_directory, [specification])
+    messages += DMPActions(configuration).update_forms(fake, [specification])
     return messages
 
 def dmp_reset_rights(connection_parameters, fake, def_directory, specification):
