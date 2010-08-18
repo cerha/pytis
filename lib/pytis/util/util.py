@@ -113,15 +113,15 @@ class NotImplementedException(Exception):
 class Counter:
     """Jednoduchý èítaè.
 
-    Po svém vytvoøení je inicializován na hodnotu 0 a pøi ka¾dém ètení metodou
-    'next()' je tato hodnota zvý¹ena.
+    Po svém vytvoøení je inicializován na hodnotu 0 nebo hodnotu zadanou v konstruktoru
+    a pøi ka¾dém ètení metodou 'next()' je tato hodnota zvý¹ena.
 
     Tøída není thread-safe.
 
     """
-    def __init__(self):
+    def __init__(self, value=0):
         """Inicializuj instanci."""
-        self._value = 0
+        self._value = value
 
     def next(self):
         """Zvy¹ hodnotu èítaèe o 1 a vra» ji."""
