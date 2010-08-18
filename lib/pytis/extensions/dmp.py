@@ -830,7 +830,8 @@ class DMPRoles(DMPObject):
     class Role(DMPItem):
         _attributes = (Attribute('name', str),
                        Attribute('description', basestring),
-                       Attribute('purposeid', str),
+                       Attribute('purposeid', str, mutable=True),
+                       Attribute('members', list, mutable=True),
                        )
         def signature(self):
             return self.name
@@ -842,7 +843,10 @@ class DMPRoles(DMPObject):
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
                       [('e_pytis_roles', ('name', 'description', 'purposeid',),),
-                       ('e_pytis_role_members', ('roleid', 'member',),)])
+                       ('e_pytis_role_members', ('roleid', 'member',),),
+                       ('pg_roles', ('oid', 'rolname', 'rolcanlogin',),),
+                       ('pg_auth_members', ('roleid', 'member',),),
+                       ])
 
     def _reset(self):
         self._roles = []
@@ -869,19 +873,23 @@ class DMPRoles(DMPObject):
         self._roles = data.select_map(process)
     
     def _store_data(self, transaction, specifications):
-        data = self._data('e_pytis_roles')
         S = self._s_
+        data = self._data('e_pytis_roles')
         for role in self.items():
             row = pytis.data.Row((('name', S(role.name()),),
                                   ('description', S(role.description()),),
                                   ('purposeid', S(role.purposeid()),),
                                   ))
-            _, result = data.insert(row, transaction=transaction)
-            if not result:
-                return False
+            data.insert(row, transaction=transaction)
+        data = self._data('e_pytis_role_members')
+        for role in self.items():
+            name = role.name()
+            for member in (role.members() or ()):
+                row = pytis.data.Row((('roleid', S(name),),
+                                      ('member', S(member),),))
+                data.insert(row, transaction=transaction)
         dbfunction = self._dbfunction('pytis_update_transitive_roles')
-        self._logger.clear()
-        dbfunction.call(pytis.data.Row(()), transaction=transaction)            
+        dbfunction.call(pytis.data.Row(()), transaction=transaction)
         return True
 
     def _delete_data(self, transaction, condition):
@@ -891,7 +899,45 @@ class DMPRoles(DMPObject):
         self._logger.clear()
         data_members.delete_many(condition, transaction=transaction)
         data_roles.delete_many(condition, transaction=transaction)
-        dbfunction.call(pytis.data.Row(()), transaction=transaction)            
+        dbfunction.call(pytis.data.Row(()), transaction=transaction)
+        
+    def load_system_roles(self):
+        """Load PostgreSQL roles."""
+        excluded_roles = ('postgres',)
+        semi_excluded_roles = ('admin', 'admin_roles', 'admin_menu',) + excluded_roles
+        roles_by_names = {}
+        for role in self._roles:
+            roles_by_names[role.name()] = role
+        # Roles
+        role_oids = {}
+        data = self._data('pg_roles')
+        def process(row):
+            oid = row['oid'].value()
+            role = str(row['rolname'].value())
+            login = row['rolcanlogin'].value()
+            role_oids[oid] = role
+            if role not in semi_excluded_roles:
+                if login:
+                    purpose = 'user'
+                else:
+                    purpose = 'appl'
+                if not roles_by_names.has_key(role):
+                    new_role = self.Role(name=role, purposeid=purpose)
+                    self._roles.append(new_role)
+                    roles_by_names[role] = new_role
+                elif purpose != 'appl':
+                    roles_by_names[role].set_purpose(purposeid)
+        data.select_map(process)
+        # Membership
+        data = self._data('pg_auth_members')
+        def process(row):
+            roleid = role_oids[row['roleid'].value()]
+            member = role_oids[row['member'].value()]
+            role = roles_by_names[roleid]
+            role_members = role.members() or []
+            if member not in role_members:
+                role.set_members(role_members + [member])
+        data.select_map(process)
 
 
 class DMPActions(DMPObject):
@@ -1179,6 +1225,7 @@ class DMPImport(DMPObject):
         messages += self._dmp_menu.load_specifications()
         messages += self._dmp_rights.load_specifications()
         messages += self._dmp_roles.load_specifications(dmp_rights=self._dmp_rights)
+        self._dmp_roles.load_system_roles()
         messages += self._dmp_actions.load_specifications(dmp_menu=self._dmp_menu, dmp_rights=self._dmp_rights)
         return messages
     
