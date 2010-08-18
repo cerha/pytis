@@ -201,12 +201,20 @@ class DMPObject(object):
     class Logger(object):
         def __init__(self):
             self._messages = []
+            self._active = True
         def write(self, message):
-            self.append('SQL: %s' % (message,))
+            if self._active:
+                self.append('SQL: %s' % (message,))
         def append(self, message):
             self._messages.append(message)            
         def clear(self):
             self._messages = []
+        def active(self):
+            return self._active
+        def disable(self):
+            self._active = False
+        def enable(self):
+            self._active = True
         def messages(self):
             return copy.copy(self._messages)
     
@@ -228,16 +236,22 @@ class DMPObject(object):
         return self._configuration.resolver()
 
     def _data(self, table):
+        logger_active = self._logger.active()
+        self._logger.disable()
         data = pytis.data.dbtable(table, self._DB_TABLES[table],
                                   self._configuration.connection_data(),
                                   sql_logger=self._logger)
-        self._logger.clear()
+        if logger_active:
+            self._logger.enable()
         return data
 
     def _dbfunction(self, function):
+        logger_active = self._logger.active()
+        self._logger.disable()
         dbfunction = pytis.data.DBFunctionDefault(function, self._configuration.connection_data(),
                                                   sql_logger=self._logger)
-        self._logger.clear()
+        if logger_active:
+            self._logger.enable()
         return dbfunction
 
     def _transaction(self):
@@ -844,16 +858,18 @@ class DMPRoles(DMPObject):
             _, result = data.insert(row, transaction=transaction)
             if not result:
                 return False
-        self._dbfunction('pytis_update_transitive_roles')
+        dbfunction = self._dbfunction('pytis_update_transitive_roles')
+        self._logger.clear()
         dbfunction.call(pytis.data.Row(()), transaction=transaction)            
         return True
 
     def _delete_data(self, transaction, condition):
-        data = self._data('e_pytis_role_members')
-        data.delete_many(condition, transaction=transaction)
-        data = self._data('e_pytis_roles')
-        data.delete_many(condition, transaction=transaction)
-        self._dbfunction('pytis_update_transitive_roles')
+        dbfunction = self._dbfunction('pytis_update_transitive_roles')
+        data_members = self._data('e_pytis_role_members')
+        data_roles = self._data('e_pytis_roles')
+        self._logger.clear()
+        data_members.delete_many(condition, transaction=transaction)
+        data_roles.delete_many(condition, transaction=transaction)
         dbfunction.call(pytis.data.Row(()), transaction=transaction)            
 
 
