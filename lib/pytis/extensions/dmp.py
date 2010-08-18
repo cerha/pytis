@@ -888,7 +888,7 @@ class DMPActions(DMPObject):
                        )
 
         def signature(self):
-            return self.fullname
+            return self.fullname()
 
         def equal(self, other):
             equal = DMPItem.equal(self, other)
@@ -896,9 +896,12 @@ class DMPActions(DMPObject):
                 equal = None
             return equal
 
+        def _components(self):
+            return self.fullname().split('/')
+
         def shortname(self):
             """Return shortname of the action as a string."""
-            components = self.fullname().split('/')
+            components = self._components()
             if components[0] == 'form':
                 shortname = 'form/%s' % (components[2],)
             elif components[0] == 'sub':
@@ -907,13 +910,17 @@ class DMPActions(DMPObject):
                 shortname = self.fullname()
             return shortname
 
+        def kind(self):
+            """Return kind of the action as a string."""
+            return self._components()[0]
+
         def form_name(self):
             """Return name of the specification related to the action.
 
             For non-form actions return 'None'.
             
             """
-            components = self.fullname().split('/')
+            components = self._components()
             if components[0] == 'form':
                 name = components[2]
             else:
@@ -926,7 +933,7 @@ class DMPActions(DMPObject):
             For non-form actions and dummy form actions return 'None'.
             
             """
-            components = self.fullname().split('/')
+            components = self._components()
             if components[0] == 'form' and components[1] != '*':
                 class_ = eval(components[1])
             else:
@@ -960,8 +967,11 @@ class DMPActions(DMPObject):
         self._shortnames = {}
 
     def _add_action(self, action):
+        fullname = action.fullname()
+        if self._fullnames.has_key(fullname):
+            return
         self._actions.append(action)
-        self._fullnames[action.fullname()] = action
+        self._fullnames[fullname] = action
         shortname = action.shortname()
         self._shortnames[shortname] = self._shortnames.get(shortname, []) + [action]
         
@@ -978,65 +988,69 @@ class DMPActions(DMPObject):
 
     def _load_from_menu(self, items, messages):
         for menu in items:
-            # Create and register DMP action
             fullname = menu.action()
             if fullname is None:
                 continue
             action = self.Action(fullname=fullname, title=menu.title())
-            self._add_action(action)
-            # Retrieve specification
-            form_name = action.form_name()
-            if form_name is None:
-                continue
-            spec = self._specification(form_name, messages)
+            self._load_complete_action(action, messages)
+
+    def _load_complete_action(self, action, messages):
+        # Register the main action
+        self._add_action(action)
+        # Retrieve specification
+        form_name = action.form_name()
+        if form_name is None:
+            return
+        spec = self._specification(form_name, messages)
+        if spec is None:
+            return
+        # Subforms
+        form_class = action.form_class()
+        def binding(name):
+            spec = self._specification(name, messages)
             if spec is None:
-                continue
-            # Subforms
-            form_class = action.form_class()
-            def binding(name):
-                spec = self._specification(name, messages)
-                if spec is None:
+                title = ''
+            else:
+                try:
+                    title = spec.view_spec().title()
+                except Exception, e:
                     title = ''
+                    add_message(messages, DMPMessage.ERROR_MESSAGE,
+                                "Can't create specification instance to get binding title",
+                                (name, e,))
+            return pytis.presentation.Binding(id=name, title=title, name=name,
+                                              binding_column='dummy')
+        if issubclass(form_class, pytis.form.DualForm):
+            pos = form_name.find('::')
+            if pos == -1:
+                bindings = spec.view_spec().bindings()
+                bindings = (binding(form_name),) + tuple(bindings)
+            else:
+                bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
+            if pytis.util.is_sequence(bindings):
+                for i in range(len(bindings)):
+                    b = bindings[i]
+                    subaction_fullname = 'sub/%02d/%s' % (i, action.fullname(),)
+                    subaction_title = b.title()
+                    self._add_action(self.Action(fullname=subaction_fullname, title=subaction_title))
+        # Form actions
+        form_actions = []
+        def add_form_actions(actions):
+            for a in actions:
+                if isinstance(a, pytis.presentation.Action):
+                    form_actions.append(a)
+                elif isinstance(a, pytis.presentation.ActionGroup):
+                    add_form_actions(a.actions())
+                elif pytis.util.is_sequence(a):
+                    add_form_actions(a)                                    
                 else:
-                    try:
-                        title = spec.view_spec().title()
-                    except Exception, e:
-                        title = ''
-                        add_message(messages, DMPMessage.ERROR_MESSAGE,
-                                    "Can't create specification instance to get binding title",
-                                    (name, e,))
-                return pytis.presentation.Binding(id=name, title=title, name=name,
-                                                  binding_column='dummy')
-            if issubclass(form_class, pytis.form.DualForm):
-                pos = form_name.find('::')
-                if pos == -1:
-                    bindings = spec.view_spec().bindings()
-                    bindings = (binding(form_name),) + tuple(bindings)
-                else:
-                    bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
-                if pytis.util.is_sequence(bindings):
-                    for i in range(len(bindings)):
-                        b = bindings[i]
-                        subaction_fullname = 'sub/%02d/%s' % (i, action.fullname(),)
-                        subaction_title = b.title()
-                        self._add_action(self.Action(fullname=subaction_fullname, title=subaction_title))
-            # Form actions
-            form_actions = []
-            def add_form_actions(actions):
-                for a in actions:
-                    if isinstance(a, pytis.presentation.Action):
-                        form_actions.append(a)
-                    elif isinstance(a, pytis.presentation.ActionGroup):
-                        add_form_actions(a.actions())
-                    elif pytis.util.is_sequence(a):
-                        add_form_actions(a)                                    
-                    else:
-                        add_message(messages, DMPMessage.ERROR_MESSAGE,
-                                    "Unknown form action class", (spec_name, a,))
-            add_form_actions(spec.view_spec().actions())
-            for a in form_actions:
-                fullname = 'action/%s/%s' % (a.id(), form_name,)
-                self._add_action(self.Action(fullname=fullname, title=a.title(raw=True)))
+                    add_message(messages, DMPMessage.ERROR_MESSAGE,
+                                "Unknown form action class", (spec_name, a,))
+        add_form_actions(spec.view_spec().actions())
+        for a in form_actions:
+            fullname = 'action/%s/%s' % (a.id(), form_name,)
+            action = self.Action(fullname=fullname, title=a.title(raw=True))
+            self._add_action(action)
         
     def _load_from_rights(self, items, messages):
         for right in items:
@@ -1046,12 +1060,11 @@ class DMPActions(DMPObject):
     def _retrieve_data(self):
         data = self._data('c_pytis_menu_actions')
         def process(row):
-            return self.Action(fullname=row['fullname'].value(),
-                               shortname=row['shortname'].value(),
-                               title=row['action_title'].value(),
-                               description=row['description'].value(),
-                              )
-        self._actions = data.select_map(process)
+            action = self.Action(fullname=str(row['fullname'].value()),
+                                 title=row['action_title'].value(),
+                                 description=row['description'].value())
+            self._add_action(action)    
+        data.select_map(process)
     
     def _store_data(self, transaction, specifications, subforms_only=False, original_actions=None):
         data = self._data('c_pytis_menu_actions')
@@ -1066,36 +1079,53 @@ class DMPActions(DMPObject):
                 continue
             row = pytis.data.Row((('fullname', S(action.fullname()),),
                                   ('shortname', S(action.shortname()),),
-                                  ('title', S(action.title()),),
+                                  ('action_title', S(action.title()),),
                                   ('description', S(action.description()),),
                                   ))
-            _, result = data.insert(row, transaction=transaction)
-            if not result:
-                return False
-        self._dbfunction('pytis_update_actions_structure')
+            data.insert(row, transaction=transaction)
+        dbfunction = self._dbfunction('pytis_update_actions_structure')
         dbfunction.call(pytis.data.Row(()), transaction=transaction)            
         return True
 
     def _delete_data(self, transaction, condition):
         data = self._data('c_pytis_menu_actions')
         data.delete_many(condition, transaction=transaction)
-        self._dbfunction('pytis_update_actions_structure')
+        dbfunction = self._dbfunction('pytis_update_actions_structure')
         dbfunction.call(pytis.data.Row(()), transaction=transaction)
         
     def update_forms(self, fake, def_directory, specifications):
         messages = []
         original_actions = DMPActions(self._configuration)
         original_actions.retrieve_data()
+        menu = DMPMenu(self._configuration)
+        menu.load_specifications()
+        rights = DMPRights(self._configuration)
+        rights.load_specifications()
+        self.load_specifications(dmp_menu=menu, dmp_rights=rights)
         transaction = self._transaction()
         for s in specifications:
-            condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*' % (s,)), ignore_case=False)
             self._logger.clear()
+            condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*' % (s,)), ignore_case=False)
             self._delete_data(transaction=transaction, condition=condition)
             self._store_data(transaction=transaction, specifications=specifications,
                              subforms_only=True)
             self._store_data(transaction=transaction, specifications=specifications,
                              original_actions=original_actions)
+            if fake:
+                messages += self._logger.messages()
+        self._logger.clear()
+        for action in original_actions.items():
+            if (action.specifications_match(specifications) and
+                action.kind() == 'action' and
+                not self._fullnames.has_key(action.fullname())):
+                condition = pytis.data.EQ('fullname', self._s_(action.fullname()))
+                self._delete_data(transaction, condition)
+        if fake:
             messages += self._logger.messages()
+        if fake:
+            transaction.rollback()
+        else:
+            transaction.commit()
         return messages
 
 
