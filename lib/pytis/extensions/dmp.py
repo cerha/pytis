@@ -818,10 +818,10 @@ class DMPRights(DMPObject):
         else:
             messages = []
         if transaction is None:
-            if success and not fake:
-                transaction_.commit()
-            else:
+            if fake:
                 transaction_.rollback()
+            else:
+                transaction_.commit()
         return messages
 
 
@@ -851,10 +851,12 @@ class DMPRoles(DMPObject):
         return self._roles
 
     def _load_specifications(self, dmp_rights):
-        roles = self._roles
+        roleids = [r.name() for r in self._roles]
         for right in dmp_rights.items():
-            if right.roleid() not in roles:
-                roles.append(self.Role(name=right.roleid(), description='', purposeid='appl'))
+            roleid = right.roleid()
+            if roleid not in roleids:
+                self._roles.append(self.Role(name=roleid, description='', purposeid='appl'))
+                roleids.append(roleid)
         return []
 
     def _retrieve_data(self):
@@ -1024,14 +1026,15 @@ class DMPActions(DMPObject):
         # Retrieve specification
         form_name = action.form_name()
         if form_name is None:
-            return
-        spec = self._specification(form_name, messages)
-        if spec is None:
-            return
+            spec = None
+        else:
+            spec = self._specification(form_name, messages)
         # Register the main action
         if not action.title():
             action.set_title(spec.view_spec().title())
         self._add_action(action)
+        if spec is None:
+            return
         # Subforms
         form_class = action.form_class()
         def binding(name):
@@ -1107,8 +1110,8 @@ class DMPActions(DMPObject):
                 continue
             row = pytis.data.Row((('fullname', S(action.fullname()),),
                                   ('shortname', S(action.shortname()),),
-                                  ('action_title', S(action.title()),),
-                                  ('description', S(action.description()),),
+                                  ('action_title', S(unicode(action.title() or '')),),
+                                  ('description', S(unicode(action.description() or '')),),
                                   ))
             data.insert(row, transaction=transaction)
         dbfunction = self._dbfunction('pytis_update_actions_structure')
