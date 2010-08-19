@@ -554,6 +554,19 @@ class DMPMenu(DMPObject):
     def _load_specifications(self):
         self._top_item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=None, title=u"CELÉ MENU", position='2')
         menu = self._resolver().get('application', 'menu')
+        menu[0]._items = ((pytis.form.Menu(u"Správa menu a uživatelských rolí",
+                                           (pytis.extensions.run_form_mitem(u"Menu", 'menu.ApplicationMenu',
+                                                                            pytis.form.BrowseForm),
+                                            pytis.extensions.run_form_mitem(u"Práva menu", 'menu.ApplicationMenuM',
+                                                                            pytis.form.MultiBrowseDualForm),
+                                            pytis.extensions.run_form_mitem(u"Uživatelské role", 'menu.ApplicationRoles',
+                                                                            pytis.form.MultiBrowseDualForm),
+                                            pytis.extensions.run_procedure_mitem(u"Aplikace změn práv",
+                                                                                 'menu.ApplicationMenuRights', 'commit_changes'),
+                                            pytis.form.MItem(u"Přenačtení menu a práv",
+                                                             command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),
+                                            )),)
+                          + menu[0]._items)
         messages = []
         # Load menu
         def load(menu, parent):
