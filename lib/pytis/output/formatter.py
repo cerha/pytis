@@ -1251,12 +1251,19 @@ class LCGFormatter(object):
     def _pdf(self):
         children = []
         if self._form is not None and self._row_template is not None:
+            i = 1
             for row in self._form.presented_rows():
                 row_content = self._row_template.lcg()
                 row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
                                                    current_row=row)
-                document = lcg.ContentNode(id='', content=row_content, globals=row_lcg_globals)
+                id_ = 'pytissubdoc%d' % (i,)    
+                document = lcg.ContentNode(id=id_, title=' ', # let's avoid printing the id
+                                           content=row_content, globals=row_lcg_globals,
+                                           page_header=self._page_header.lcg(),
+                                           first_page_header=self._first_page_header.lcg(),
+                                           page_footer=self._page_footer.lcg())
                 children.append(document)
+                i += 1
         lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings)
         body = self._body
         if not isinstance(body, (list, tuple,)):
