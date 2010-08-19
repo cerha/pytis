@@ -1214,17 +1214,17 @@ class LCGFormatter(object):
             
         """
         self._resolvers = xtuple(resolvers)
-        self._coding = self._resolve(resolver, template_id, 'coding')
-        self._doc_header = self._resolve(resolver, template_id, 'doc_header')
-        self._doc_footer = self._resolve(resolver, template_id, 'doc_footer')
-        self._page_header = self._resolve(resolver, template_id, 'page_header', default=Null())
-        self._first_page_header = self._resolve(resolver, template_id, 'first_page_header',
+        self._coding = self._resolve(template_id, 'coding')
+        self._doc_header = self._resolve(template_id, 'doc_header')
+        self._doc_footer = self._resolve(template_id, 'doc_footer')
+        self._page_header = self._resolve(template_id, 'page_header', default=Null())
+        self._first_page_header = self._resolve(template_id, 'first_page_header',
                                                 default=self._page_header)
-        self._page_footer = self._resolve(resolver, template_id, 'page_footer',
+        self._page_footer = self._resolve(template_id, 'page_footer',
                                           default=Center('Strana ', PageNumber()))
-        self._page_background = self._resolve(resolver, template_id, 'background', default=None)
-        self._page_layout = self._resolve(resolver, template_id, 'page_layout', default={})
-        body = self._resolve(resolver, template_id, 'body')
+        self._page_background = self._resolve(template_id, 'background', default=None)
+        self._page_layout = self._resolve(template_id, 'page_layout', default={})
+        body = self._resolve(template_id, 'body')
         if (not isinstance(body, Document) and
             not (is_sequence(body) and body and isinstance(body[0], Document))):
             body = Document(body,
@@ -1234,9 +1234,9 @@ class LCGFormatter(object):
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
-        self._row_template = self._resolve(resolver, template_id, 'row', default=None)
+        self._row_template = self._resolve(template_id, 'row', default=None)
 
-    def _resolve(self, resolver, template_id, element, default=''):
+    def _resolve(self, template_id, element, default=''):
         result = default
         for resolver in xtuple(self._resolvers):
             try:
