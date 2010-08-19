@@ -73,6 +73,7 @@ import copy
 import string
 
 import pytis.data
+import pytis.extensions
 import pytis.form
 from pytis.util import *
 
@@ -490,6 +491,7 @@ class DMPMenu(DMPObject):
         MENU_ITEM = 'MENU_ITEM'
         SEPARATOR_ITEM = 'SEPARATOR_ITEM'
         _attributes = (Attribute('id', int),
+                       Attribute('name', str),
                        Attribute('kind', str),
                        Attribute('title', unicode),
                        Attribute('parent'),
@@ -536,7 +538,11 @@ class DMPMenu(DMPObject):
                     if item.position == parent_position:
                         parent = item
                         break
-        menu_item = self.MenuItem(id=-id_, kind=kind, title=title,
+        if action is None:
+            name = None
+        else:
+            name = '%s/%s' % (id_, action,)
+        menu_item = self.MenuItem(id=-id_, name=name, kind=kind, title=title,
                                   parent=parent, children=[],
                                   action=action, position=position,
                                   hotkey=hotkey, help=help)
@@ -608,6 +614,7 @@ class DMPMenu(DMPObject):
             else:
                 kind = self.MenuItem.SEPARATOR_ITEM
             item = self.MenuItem(id=row['menuid'].value(),
+                                 name=str(row['name'].value()),
                                  kind=kind,
                                  title=row['title'].value(),
                                  action=str(row['fullname'].value()),
@@ -650,7 +657,7 @@ class DMPMenu(DMPObject):
             if not DMPActions.Action(fullname=fullname).specifications_match(specifications):
                 continue
             row = pytis.data.Row((('menuid', I(item.id()),),
-                                  ('name', S(item.action()),),
+                                  ('name', S(item.name()),),
                                   ('title', S(item.title()),),
                                   ('fullname', S(fullname),),
                                   ('position', S(item.position()),),
