@@ -1237,6 +1237,7 @@ class LCGFormatter(object):
         self._form = form
         self._form_bindings = form_bindings
         self._row_template = self._resolve(template_id, 'row', default=None)
+        self._application_variables = self._resolve(template_id, 'variables', default={})
 
     def _resolve(self, template_id, element, default=''):
         result = default
@@ -1264,6 +1265,7 @@ class LCGFormatter(object):
                 children.append(document)
                 i += 1
         lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings)
+        lcg_globals['app'] = self._application_variables
         body = self._body
         if not isinstance(body, (list, tuple,)):
             body = [body]            
