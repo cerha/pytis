@@ -1258,10 +1258,7 @@ class LCGFormatter(object):
                                                    current_row=row)
                 id_ = 'pytissubdoc%d' % (i,)    
                 document = lcg.ContentNode(id=id_, title=' ', # let's avoid printing the id
-                                           content=row_content, globals=row_lcg_globals,
-                                           page_header=self._page_header.lcg(),
-                                           first_page_header=self._first_page_header.lcg(),
-                                           page_footer=self._page_footer.lcg())
+                                           content=row_content, globals=row_lcg_globals)
                 children.append(document)
                 i += 1
         lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings)
@@ -1270,7 +1267,10 @@ class LCGFormatter(object):
             body = [body]            
         children = ([document.lcg_document(globals=lcg_globals) for document in body] +
                     children)
-        lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children)
+        lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children,
+                                      page_header=self._page_header.lcg(),
+                                      first_page_header=self._first_page_header.lcg(),
+                                      page_footer=self._page_footer.lcg())
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None)
         pdf = exporter.export(context)
