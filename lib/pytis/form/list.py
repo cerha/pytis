@@ -2754,6 +2754,16 @@ class BrowseForm(FoldableForm):
                 import lcg
                 result = pytis.output.StructuredText(result)
             return result
+
+    class _DBPrintResolver(DatabaseResolver):
+        def __init__(self):
+            DatabaseResolver.__init__(self, 'e_pytis_output_templates')
+        def get(self, *args, **kwargs):
+            result = DatabaseResolver.get(self, *args, **kwargs)
+            if result and isinstance(result, basestring):
+                import lcg
+                result = pytis.output.StructuredText(result)
+            return result
         
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
@@ -2937,7 +2947,8 @@ class BrowseForm(FoldableForm):
         parameters.update({P.P_NAME: name})
         print_resolver = P(self._resolver, parameters=parameters)
         wiki_template_resolver = self._PlainPrintResolver(config.def_dir, extension='text')
-        resolvers = (wiki_template_resolver, print_resolver,)
+        db_template_resolver = self._DBPrintResolver()
+        resolvers = (db_template_resolver, wiki_template_resolver, print_resolver,)
         formatter = pytis.output.Formatter(resolvers, print_spec_path, form=self,
                                            **self._print_form_kwargs())
         run_form(print_form(), name, formatter=formatter)

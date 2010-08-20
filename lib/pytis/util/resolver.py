@@ -31,6 +31,7 @@ import imp
 import sys
 
 from pytis.util import *
+import pytis.data
 
 global _current_resolver
 _current_resolver = None
@@ -345,6 +346,61 @@ class PlainFileResolver(Resolver):
 
     def _get_instance(self, key):
         return self._get_object(key[:2])
+
+
+class DatabaseResolver(Resolver):
+    """Resolver taking its objects from a database.
+
+    It looks up objects in the database table specified in the constructor.
+    This table is expected to contain (at least) the following columns:
+
+      module -- text column containing module names
+      specification -- text column containing specification names
+      data -- column of any type containing the object data
+
+    Each (module, specification) value should be unique within the table.
+
+    For given module and specification the resolver returns data Python value
+    from the corresponding row.  If there is no corresponding row,
+    ResolverError is raised.
+
+    This resolver can handle only complete module + specification requests, it
+    doesn't return anything reasonable for module only requests.
+
+    """
+    def __init__(self, table):
+        """
+        Arguments:
+
+          table -- name of the database table storing the resolved data
+
+        """
+        super(DatabaseResolver, self).__init__()
+        assert isinstance(table, basestring), table
+        import config
+        self._data = pytis.data.dbtable(table, ('module', 'specification', 'data'),
+                                        config.dbconnection)
+        
+    def _get_module(self, name):
+        return name
+
+    def _get_object(self, key):
+        module_name, spec_name = key
+        def s(value):
+            return pytis.data.Value(pytis.data.String(), value)
+        condition = pytis.data.AND(pytis.data.EQ('module', s(module_name)),
+                                   pytis.data.EQ('specification', s(spec_name)))
+        rows = self._data.select_map(identity, condition=condition)
+        if not rows:
+            raise ResolverSpecError(module_name, spec_name)
+        obj = rows[0]['data'].value()
+        return obj
+
+    def _get_spec(self, key):
+        return self._get_object(key[:2])
+
+    def _get_instance(self, key):
+        return self._get_object(key[:2])    
 
 
 class ProxyResolver(Resolver):
