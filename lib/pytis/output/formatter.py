@@ -1120,6 +1120,13 @@ class LoutFormatter(Tmpdir):
         self._cleanup ()
 
 
+class _ProxyDict(dict):
+    def __getitem__(self, key):
+        result = dict.__getitem__(self, key)
+        if (not isinstance(result, (basestring, lcg.Content, _ProxyDict,)) and
+            callable(result)):
+            result = self[key] = result()
+        return result
 class LCGFormatter(object):
     """LCG based formatter."""
 
@@ -1127,23 +1134,26 @@ class LCGFormatter(object):
         def __getitem__(self, key):
             return ''
 
-    class _ProxyDict(dict):
-        def __getitem__(self, key):
-            result = dict.__getitem__(self, key)
-            if (not isinstance(result, (basestring, lcg.Content, LCGFormatter._ProxyDict,)) and
-                callable(result)):
-                result = self[key] = result()
-            return result
-        
-    class _LCGGlobals(dict):
+    class _LCGGlobals(_ProxyDict):
         def __init__(self, resolvers, form, form_bindings, current_row=None):
             dictionary = self._initial_dictionary(form, form_bindings, current_row)
-            dict.__init__(self, dictionary)
+            _ProxyDict.__init__(self, dictionary)
             self._resolvers = resolvers
+            name = form.name()
+            for r in resolvers:
+                try:
+                    r.get(name, 'view_spec')
+                except ResolverError:
+                    continue
+                self._selected_resolver = r
+                break
+            else:
+                log(EVENT, 'No working resolver found ' + name)
+                self._selected_resolver = resolvers[0]
             self._form = form
             self._form_bindings = form_bindings
         def _initial_dictionary(self, form, form_bindings, current_row):
-            dictionary = LCGFormatter._ProxyDict()
+            dictionary = _ProxyDict()
             if form is not None:
                 if current_row is None:
                     current_row = form.current_row()
@@ -1155,7 +1165,7 @@ class LCGFormatter(object):
                 dictionary['current_row'] = current_row_dictionary
                 dictionary['table'] = self._make_table
                 if form_bindings:
-                    dictionary['Binding'] = binding_dictionary = LCGFormatter._ProxyDict()
+                    dictionary['Binding'] = binding_dictionary = _ProxyDict()
                     for binding in form_bindings:
                         if pytis.form.has_access(binding.name()):
                             # I tried to use closure here, but it produced unexpected results
@@ -1172,19 +1182,11 @@ class LCGFormatter(object):
                                                                          current_row)
             return dictionary
         def _make_table(self):
-            # for row in self._form.presented_rows():
-            return 'not implemented'
+            form = self._form
+            table = pytis.output.data_table(self._selected_resolver, form.name(),
+                                            condition=form.condition(), sorting=form.data_sorting())
+            return table.lcg()
         def _make_binding(self, binding, current_row):
-            name = binding.name()
-            for resolver in self._resolvers:
-                try:
-                    resolver.get(name, 'view_spec')
-                except ResolverError:
-                    continue
-                break
-            else:
-                log(EVENT, 'No view specification found for binding ' + name)
-                return {}
             binding_condition = binding.condition()
             binding_column = binding.binding_column()
             if binding_column and current_row is not None:
@@ -1195,7 +1197,7 @@ class LCGFormatter(object):
                 condition = binding_condition(current_row)
             else:
                 condition = pytis.data.AND()
-            table = pytis.output.data_table(resolver, binding.name(), condition=condition,
+            table = pytis.output.data_table(self._selected_resolver, binding.name(), condition=condition,
                                             sorting=())
             return dict(table=table.lcg())
         
