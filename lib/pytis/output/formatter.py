@@ -1228,6 +1228,7 @@ class LCGFormatter(object):
         self._page_layout = self._resolve(template_id, 'page_layout', default={})
         body = self._resolve(template_id, 'body')
         if (not isinstance(body, Document) and
+            body and
             not (is_sequence(body) and body and isinstance(body[0], Document))):
             body = Document(body,
                             page_header=self._page_header.lcg(),
@@ -1267,7 +1268,9 @@ class LCGFormatter(object):
         lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings)
         lcg_globals['app'] = self._application_variables
         body = self._body
-        if not isinstance(body, (list, tuple,)):
+        if not body:
+            body = []
+        elif not isinstance(body, (list, tuple,)):
             body = [body]            
         children = ([document.lcg_document(globals=lcg_globals) for document in body] +
                     children)

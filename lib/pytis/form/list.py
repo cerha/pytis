@@ -2750,7 +2750,7 @@ class BrowseForm(FoldableForm):
     class _PlainPrintResolver(PlainFileResolver):
         def get(self, *args, **kwargs):
             result = PlainFileResolver.get(self, *args, **kwargs)
-            if isinstance(result, basestring):
+            if result and isinstance(result, basestring):
                 import lcg
                 result = pytis.output.StructuredText(result)
             return result
