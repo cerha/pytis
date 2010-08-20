@@ -124,8 +124,7 @@ class _ConfigData(pytis.data.RestrictedData):
         super(_ConfigData, self).__init__(columns=columns, key=columns[0], **kwargs)
         self._giveone = False
 
-    def select(self, condition=None, columns=None, sort=None, reuse=False,
-               transaction=None, arguments={}):
+    def select(self, *args, **kwargs):
         self._giveone = True
         return 1
 
