@@ -981,7 +981,7 @@ class Configuration(object):
         if self.__dict__['_options'].has_key(name):
             self.__dict__['_options'][name].set_value(value)
         elif hasattr(self, name):
-            self.__dict__[name] = name
+            self.__dict__[name] = value
         else:
             raise AttributeError(name)
 
