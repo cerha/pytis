@@ -364,7 +364,7 @@ class SystemRoles(Roles):
     help = _("Systémové role jsou u¾ivatelùm pøiøazeny automaticky.")
     layout = columns = ('name', 'system_role', 'description')
     condition = pd.NE('system_role', pd.Value(pd.String(), None))
-    bindings = None
+    bindings = ()
     access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
                                     (None, ('cms_user', pd.Permission.VIEW)))
 

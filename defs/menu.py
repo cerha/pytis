@@ -42,8 +42,8 @@ class CommonApplicationRolePurposes(ApplicationRolePurposes):
     public = True
     condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'admn'))
 
-class ApplicationRolesSpecification(pytis.presentation.Specification):
-    public = True
+class _ApplicationRolesSpecification(pytis.presentation.Specification):
+    public = False
     
     access_rights = pytis.data.AccessRights((None, (['admin_roles'], pytis.data.Permission.ALL)),)
     
@@ -69,7 +69,7 @@ class ApplicationRolesSpecification(pytis.presentation.Specification):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
     
-class ApplicationRoles(ApplicationRolesSpecification):
+class ApplicationRoles(_ApplicationRolesSpecification):
     public = True
     table = 'ev_pytis_roles'
     title = _("Role")
@@ -144,7 +144,7 @@ class CommonApplicationRoles(ApplicationRoles):
     table = 'ev_pytis_valid_roles'
     condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'admn'))
 
-class ApplicationRolesMembership(ApplicationRolesSpecification):
+class ApplicationRolesMembership(_ApplicationRolesSpecification):
     public = True
     table = 'ev_pytis_valid_role_members'
     title = "Èlenství v rolích"
