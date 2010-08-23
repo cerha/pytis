@@ -1107,7 +1107,8 @@ class DMPActions(DMPObject):
             spec = self._specification(form_name, messages)
         # Register the main action
         if not action.title():
-            action.set_title(spec.view_spec().title())
+            if spec is not None:
+                action.set_title(spec.view_spec().title())
         self._add_action(action)
         if spec is None:
             return
