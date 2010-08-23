@@ -1266,7 +1266,6 @@ class DMPImport(DMPObject):
         else:
             transaction_ = transaction
         messages = []
-        #import pdb; pdb.set_trace()
         messages += self._dmp_menu.delete_data(fake=fake, transaction=transaction_)
         messages += self._dmp_rights.delete_data(fake=fake, transaction=transaction_)
         messages += self._dmp_roles.delete_data(fake=fake, transaction=transaction_)
