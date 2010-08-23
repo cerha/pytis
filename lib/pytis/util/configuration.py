@@ -130,7 +130,8 @@ class Configuration(object):
                 
             """
             self._configuration = configuration
-            self._value = self._initial_value = self._undefined = object()
+            self._value = self._undefined = object()
+            self._changed = False
             assert self._DESCR is not None, \
                    "Option '%s' doesn't define the description string." % \
                    self.name()
@@ -179,12 +180,6 @@ class Configuration(object):
             if force or self._value is self._undefined:
                 value = self._compute_init_value(self._configuration)
                 self._value = value
-                # Callable objekty nelze kopírovat, tak zkopírujeme alespoò
-                # v¹echny ostatní...
-                if callable(value):
-                    self._initial_value = value
-                else:
-                    self._initial_value = copy.copy(value)
 
         def value(self):
             """Vra» aktuální hodnotu konfiguraèní volby."""
@@ -197,11 +192,8 @@ class Configuration(object):
 
         def set_value(self, value, initialization=False):
             """Nastav hodnotu konfiguraèní volby na 'value'."""
-            if initialization:
-                if callable(value):
-                    self._initial_value = value
-                else:
-                    self._initial_value = copy.copy(value)
+            if not initialization:
+                self._changed = True
             self._value = value
 
         def changed(self):
@@ -212,7 +204,12 @@ class Configuration(object):
             pøíkazové øádky a konfiguraèního souboru).
             
             """ 
-            return self._value != self._initial_value
+            return self._changed
+
+        def reset(self):
+            """Set option value to the initial default value."""
+            self._value = self._undefined
+            self._changed = False
 
         def long_option(self):
             """Vra» specifikaci dlouhé volby pro 'getopt' jako string.
@@ -940,8 +937,21 @@ class Configuration(object):
                 opt = options[o]
                 if not cloptions.has_key(opt.long_option()):
                     value = confmodule.__dict__[o]
-                    opt.set_value(value, initialization=True)
+                    opt.set_value(value, initialization=False)
         return filetime
+
+    def read_configuration_file(self, filename):
+        """Read options from given pytis configuration file.
+
+        Previously set configuration values may get reset during that process.
+
+        Arguments:
+
+          filename -- name of the pytis configuration file, basestring
+          
+        """
+        assert isinstance(filename, basestring), filename
+        return self._read_configuration_file(filename)
 
     def __getattr__(self, name):
         """Return the current value of configuration option 'name'.
@@ -984,6 +994,9 @@ class Configuration(object):
             self.__dict__[name] = value
         else:
             raise AttributeError(name)
+        for o in self._options.values():
+            if not o.changed():
+                o.reset()
 
     def merge(self, dict, override_cmdline=False):
         """Nastav aktuální konfiguraci z hodnot daného slovníku.

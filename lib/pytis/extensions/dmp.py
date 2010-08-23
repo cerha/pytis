@@ -71,6 +71,7 @@ classes provide useful functionality for DMP we use the functionality.
 
 import copy
 import string
+import sys
 
 import pytis.data
 import pytis.extensions
@@ -119,7 +120,7 @@ def add_message(messages, kind, message, arguments=()):
 class DMPConfiguration(object):
     """Storage of various runtime objects for DMP processing."""
 
-    def __init__(self, def_directory=None, schemas=None,
+    def __init__(self, configuration_file=None, schemas=None,
                  database=None, host=None, port=None, user=None, password=None, sslmode=None):
         """
         Arguments:
@@ -131,19 +132,28 @@ class DMPConfiguration(object):
             connection parameters
             
         """
-        if def_directory is None:
+        import config
+        if configuration_file is not None:
+            config.read_configuration_file(configuration_file)
+        arguments_options = (('schemas', 'dbschemas'),
+                             ('database', 'dbname'),
+                             ('host', 'dbhost'),
+                             ('port', 'dbport'),
+                             ('user', 'dbuser'),
+                             ('password', 'dbpass'),
+                             ('sslmode', 'dbsslm'),)
+        for argument, option in arguments_options:
+            if locals()[argument] is not None:
+                setattr(config, option, locals()[argument])
+        if configuration_file is None:
             self._resolver = None
         else:
-            self._resolver = FileResolver(def_directory)
-        connection_parameters = {}
-        for argument in ('database', 'host', 'port', 'user', 'password', 'sslmode',):
-            if locals().has_key(argument):
-                connection_parameters[argument] = locals()[argument]
+            self._resolver = FileResolver(config.def_dir)
         if schemas:
             schemas_list = [s.strip() for s in schemas_string.split(',')]
         else:
             schemas_list = None
-        self._connection_data = pytis.data.DBConnection(schemas=schemas_list, **connection_parameters)
+        self._connection_data = config.dbconnection
 
     def resolver(self):
         """Return specifications resolver instance."""
@@ -1317,31 +1327,31 @@ class DMPImport(DMPObject):
         return messages
 
 
-def dmp_import(connection_parameters, fake, def_directory):
-    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
+def dmp_import(parameters, fake):
+    configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_import(fake)
 
-def dmp_add_form(connection_parameters, fake, def_directory, fullname, position):
+def dmp_add_form(parameters, fake, fullname, position):
     """Add new form from specifications to database menu."""
-    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
+    configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_add_form(fake, fullname, position)
 
-def dmp_update_form(connection_parameters, fake, def_directory, specification):
+def dmp_update_form(parameters, fake, specification):
     """Update form subforms and actions from specifications."""
-    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
+    configuration = DMPConfiguration(**parameters)
     messages = []
     messages += DMPActions(configuration).update_forms(fake, [specification])
     return messages
 
-def dmp_reset_rights(connection_parameters, fake, def_directory, specification):
+def dmp_reset_rights(parameters, fake, specification):
     """Restore access rights of the given specification.
 
     Delete them from the database, load them from application specification and
     store them again into the database.
 
     """
-    configuration = DMPConfiguration(def_directory=def_directory, **connection_parameters)
-    return DMPRights(configuration).restore(fake, def_directory, [specification])
+    configuration = DMPConfiguration(**parameters)
+    return DMPRights(configuration).restore(fake, [specification])
 
 def dmp_commit(connection_parameters, fake):
     """Make access rights prepared in the database actually effective."""

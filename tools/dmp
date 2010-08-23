@@ -277,51 +277,47 @@ def command_sys(connection, dry_run, args, system=True):
 def command_rig(connection, dry_run, args):
     command_sys(connection, dry_run, args, system=False)
 
-def command_import(connection_parameters, dry_run, args):
-    if not args:
-        print "Error: missing defs directory"
+def command_import(parameters, dry_run, args):
+    if len(args) > 0:
+        print 'Error: extra arguments'
+        return
+    return pytis.extensions.dmp_import(parameters, dry_run)
+
+def command_reset_rights(parameters, dry_run, args):
+    if len(args) < 1:
+        print "Error: missing specification name"
         return
     if len(args) > 1:
         print 'Error: extra arguments'
         return
-    defs_directory = args[0]
-    return pytis.extensions.dmp_import(connection_parameters, dry_run, defs_directory)
+    specification = args[0]
+    return pytis.extensions.dmp_reset_rights(parameters, dry_run, specification)
 
-def command_reset_rights(connection_parameters, dry_run, args):
+def command_add_form(parameters, dry_run, args):
     if len(args) < 2:
-        print "Error: missing defs directory or specification name"
-        return
-    if len(args) > 2:
-        print 'Error: extra arguments'
-        return
-    defs_directory, specification = args
-    return pytis.extensions.dmp_reset_rights(connection_parameters, dry_run, defs_directory, specification)
-
-def command_add_form(connection_parameters, dry_run, args):
-    if len(args) < 3:
         print "Error: missing argument"
         return
-    if len(args) > 3:
-        print 'Error: extra arguments'
-        return
-    defs_directory, fullname, position = args
-    return pytis.extensions.dmp_add_form(connection_parameters, dry_run, defs_directory, fullname, position)
-
-def command_update_form(connection_parameters, dry_run, args):
-    if len(args) < 2:
-        print "Error: missing defs directory or specification name"
-        return
     if len(args) > 2:
         print 'Error: extra arguments'
         return
-    defs_directory, specification = args
-    return pytis.extensions.dmp_update_form(connection_parameters, dry_run, defs_directory, specification)
+    fullname, position = args
+    return pytis.extensions.dmp_add_form(parameters, dry_run, fullname, position)
+
+def command_update_form(parameters, dry_run, args):
+    if len(args) < 1:
+        print "Error: missing defs directory or specification name"
+        return
+    if len(args) > 1:
+        print 'Error: extra arguments'
+        return
+    specification = args[0]
+    return pytis.extensions.dmp_update_form(parameters, dry_run, specification)
     
-def command_commit(connection_parameters, dry_run, args):
+def command_commit(parameters, dry_run, args):
     if args:
         print "Error: commit takes no arguments"
         return
-    return pytis.extensions.dmp_commit(connection_parameters, dry_run)
+    return pytis.extensions.dmp_commit(parameters, dry_run)
 
 COMMANDS = {'import': command_import,
             'add-form': command_add_form,
@@ -344,14 +340,15 @@ Commands:
   del { SHORTNAME | FULLNAME | MENU-ID }
   sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   rig SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
-  import DEFS_DIRECTORY
-  add-form DEFS_DIRECTORY FULLNAME MENU-POSITION
-  update-form DEFS_DIRECTORY SPECIFICATION-NAME
-  reset-rights DEFS_DIRECTORY SPECIFICATION-NAME
+  import
+  add-form FULLNAME MENU-POSITION
+  update-form SPECIFICATION-NAME
+  reset-rights SPECIFICATION-NAME
   commit"""
 
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
+    parser.add_option("--config", default=None, action="store", dest="config")
     parser.add_option("--host", default=None, action="store", dest="host")
     parser.add_option("--database", default=None, action="store", dest="database")
     parser.add_option("--user", default=None, action="store", dest="user")
@@ -377,7 +374,7 @@ def parse_options():
 
 def run():
     options, args = parse_options()
-    parameters = {}
+    parameters = dict(configuration_file=options.config)
     for k, v in Configuration.dbparameters.items():
         if v is not None:
             parameters[k] = v    
