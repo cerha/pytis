@@ -1104,7 +1104,7 @@ class DMPActions(DMPObject):
         if form_name is None:
             spec = None
         else:
-            spec = self._specification(form_name, messages)
+            spec = self._specification(form_name.split('::')[0], messages)
         # Register the main action
         if not action.title():
             if spec is not None:
