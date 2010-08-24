@@ -927,7 +927,11 @@ class Configuration(object):
         except:
             raise Exception(_("Unable to open configuration file:"), filename)
         try:
-            confmodule = imp.load_module('_config', f, filename, ('.py', 'r', imp.PY_SOURCE))
+            del sys.modules['_config']
+        except:
+            pass
+        try:
+            confmodule = imp.load_source('_config', filename, f)
         finally:
             f.close()
         options = self._options
