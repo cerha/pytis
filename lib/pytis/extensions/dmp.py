@@ -677,8 +677,13 @@ class DMPMenu(DMPObject):
         S = self._s_
         for item in self.items():
             fullname = item.action()
-            if not DMPActions.Action(fullname=fullname).specifications_match(specifications):
-                continue
+            if fullname is None:
+                if specifications is not None:
+                    continue
+            else:
+                action = DMPActions.Action(self._resolver(), None, fullname=fullname)
+                if not action.specifications_match(specifications):
+                    continue
             row = pytis.data.Row((('menuid', I(item.id()),),
                                   ('name', S(item.name()),),
                                   ('title', S(item.title()),),
@@ -984,6 +989,39 @@ class DMPActions(DMPObject):
                        Attribute('description', basestring),
                        )
 
+        def __init__(self, resolver, messages, **kwargs):
+            DMPItem.__init__(self, **kwargs)
+            assert self.fullname() is not None
+            self._make_alternate_fullname(resolver, messages)
+
+        def _make_alternate_fullname(self, resolver, messages):
+            fullname = self.fullname()
+            components = fullname.split('/')
+            if components[0] == 'RUN_FORM':
+                form_string = components[1]
+                try:
+                    command, args = resolver.get('app_commands', form_string)
+                    form_class = args['form_class']
+                    if not issubclass(form_class, pytis.form.Form):
+                        raise Exception()
+                    form_name = args['name']
+                except:
+                    if messages is not None:
+                        add_message(messages, DMPMessage.WARNING_MESSAGE,
+                                    "Failed to retrieve RUN_FORM command", (form_string,))
+                    form_name = None
+                if form_name is not None:
+                    self._alternate_fullname = 'form/%s/%s//' % (form_class, form_name,)
+                else:
+                    self._alternate_fullname = fullname
+            elif components[0] == 'sub' and components[2] == 'RUN_FORM':
+                subaction = self.__class__(resolver, messages,
+                                           fullname=string.join(components[2:], '/'))
+                self._alternate_fullname = '%s/%s/%s' % (components[0], components[1],
+                                                         subaction._alternate_fullname)
+            else:
+                self._alternate_fullname = fullname
+            
         def signature(self):
             return self.fullname()
 
@@ -994,7 +1032,7 @@ class DMPActions(DMPObject):
             return equal
 
         def _components(self):
-            return self.fullname().split('/')
+            return self._alternate_fullname.split('/')
 
         def shortname(self):
             """Return shortname of the action as a string."""
@@ -1002,7 +1040,10 @@ class DMPActions(DMPObject):
             if components[0] == 'form':
                 shortname = 'form/%s' % (components[2],)
             elif components[0] == 'sub':
-                shortname = 'form/%s' % (components[4],)
+                if len(components) < 5: # only in wrong specifications
+                    shortname = 'form/INVALID'
+                else:
+                    shortname = 'form/%s' % (components[4],)
             else:
                 shortname = self.fullname()
             return shortname
@@ -1054,7 +1095,7 @@ class DMPActions(DMPObject):
                 fullname = 'form/*/%s' % (components[1],)
             else:
                 fullname = shortname
-            return class_(fullname=fullname)
+            return class_(None, None, fullname=fullname)
         
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
                       [('c_pytis_menu_actions', ('fullname', 'shortname', 'action_title', 'description',),)])
@@ -1091,7 +1132,7 @@ class DMPActions(DMPObject):
             fullname = menu.action()
             if fullname is None:
                 continue
-            action = self.Action(fullname=fullname, title=menu.title())
+            action = self.Action(self._resolver(), messages, fullname=fullname, title=menu.title())
             self._load_complete_action(action, messages)
             
     def _load_from_actions(self, actions, messages):
@@ -1140,7 +1181,9 @@ class DMPActions(DMPObject):
                     b = bindings[i]
                     subaction_fullname = 'sub/%02d/%s' % (i, action.fullname(),)
                     subaction_title = b.title()
-                    self._add_action(self.Action(fullname=subaction_fullname, title=subaction_title))
+                    self._add_action(self.Action(self._resolver(), messages,
+                                                 fullname=subaction_fullname,
+                                                 title=subaction_title))
         # Form actions
         form_actions = []
         def add_form_actions(actions):
@@ -1157,7 +1200,8 @@ class DMPActions(DMPObject):
         add_form_actions(spec.view_spec().actions())
         for a in form_actions:
             fullname = 'action/%s/%s' % (a.id(), form_name,)
-            action = self.Action(fullname=fullname, title=a.title(raw=True))
+            action = self.Action(self._resolver(), messages,
+                                 fullname=fullname, title=a.title(raw=True))
             self._add_action(action)
         
     def _load_from_rights(self, items, messages):
@@ -1168,7 +1212,8 @@ class DMPActions(DMPObject):
     def _retrieve_data(self):
         data = self._data('c_pytis_menu_actions')
         def process(row):
-            action = self.Action(fullname=str(row['fullname'].value()),
+            action = self.Action(self._resolver(), None,
+                                 fullname=str(row['fullname'].value()),
                                  title=row['action_title'].value(),
                                  description=row['description'].value())
             self._add_action(action)    
@@ -1311,7 +1356,7 @@ class DMPImport(DMPObject):
     def dmp_add_form(self, fake, fullname, position):
         transaction = self._transaction()
         messages = []
-        action = DMPActions.Action(fullname=fullname)
+        action = DMPActions.Action(self._resolver(), messages, fullname=fullname)
         messages += self._dmp_actions.load_specifications(actions=[action])
         messages += self._dmp_actions.store_data(fake, transaction)
         specification = action.form_name()
