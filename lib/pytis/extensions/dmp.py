@@ -760,7 +760,7 @@ class DMPRights(DMPObject):
                 access_specification = access_rights.specification()
             add_rights(shortname, access_specification)
             # Form actions access rights
-            form_actions = spec.view_spec().actions()
+            form_actions = spec.view_spec().actions(linear=True)
             if form_actions:
                 for a in form_actions:
                     form_action_name = 'action/%s/%s' % (a.id(), spec_name,)
@@ -1185,20 +1185,7 @@ class DMPActions(DMPObject):
                                                  fullname=subaction_fullname,
                                                  title=subaction_title))
         # Form actions
-        form_actions = []
-        def add_form_actions(actions):
-            for a in actions:
-                if isinstance(a, pytis.presentation.Action):
-                    form_actions.append(a)
-                elif isinstance(a, pytis.presentation.ActionGroup):
-                    add_form_actions(a.actions())
-                elif pytis.util.is_sequence(a):
-                    add_form_actions(a)                                    
-                else:
-                    add_message(messages, DMPMessage.ERROR_MESSAGE,
-                                "Unknown form action class", (spec_name, a,))
-        add_form_actions(spec.view_spec().actions())
-        for a in form_actions:
+        for a in spec.view_spec().actions(linear=True):
             fullname = 'action/%s/%s' % (a.id(), form_name,)
             action = self.Action(self._resolver(), messages,
                                  fullname=fullname, title=a.title(raw=True))
