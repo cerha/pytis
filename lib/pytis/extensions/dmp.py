@@ -728,7 +728,9 @@ class DMPRights(DMPObject):
         messages = []
         def add_rights(shortname, access_specification):
             for item in access_specification:
-                column = item[0]
+                columns = item[0]
+                if columns is None:
+                    columns = [None]
                 for groups_permissions in item[1:]:
                     groups = groups_permissions[0]
                     permissions = groups_permissions[1:]
@@ -740,10 +742,11 @@ class DMPRights(DMPObject):
                         groups = (groups,)
                     for g in groups:
                         for p in permissions:
-                            right = self.Right(shortname=shortname, roleid=(g or '*'),
-                                               rightid=p.lower(), colname=column,
-                                               system=True, granted=True)
-                            self._rights.append(right)
+                            for c in columns:
+                                right = self.Right(shortname=shortname, roleid=(g or '*'),
+                                                   rightid=p.lower(), colname=c,
+                                                   system=True, granted=True)
+                                self._rights.append(right)
         for spec_name in self._all_form_specification_names(messages):
             # Form access rights
             shortname = 'form/' + spec_name
