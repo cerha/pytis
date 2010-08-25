@@ -1065,12 +1065,13 @@ class ViewSpec(object):
                         recourse_group(item)
                     elif isinstance(item, Button):
                         assert item.action() is None or item.action() in action_names, \
-                               "Unknown button action in layout: %s" % item.action()
+                               ("Unknown button action in layout of %s: %s" %
+                                (spec_name, item.action(),))
                     elif isinstance(item, Text):
                         pass
                     else:
                         assert self._field_dict.has_key(item), \
-                               "Unknown field in layout: %r" % item
+                               ("Unknown field in layout of %s: %r" % (spec_name, item,))
                         if self._field_dict[item].width() == 0:
                             log(OPERATIONAL,
                                 "Zero width field in layout:", item)
@@ -1096,10 +1097,11 @@ class ViewSpec(object):
                 assert is_sequence(columns)
                 for c in columns:
                     assert isinstance(c, str) and self._field_dict.has_key(c),\
-                      _("Unknown column id in 'columns' specification: %r") % (c,)
+                           (_("Unknown column id in 'columns' specification of %s: %r") %
+                            (spec_name, c,))
                     f = self._field_dict[c]
                     assert not f.disable_column(), \
-                           _("Disabled column in columns: %s") % c
+                           _("Disabled column in columns of %s: %s") % (spec_name, c,)
         # Initialize other specification parameters
         if sorting is not None:
             assert is_sequence(sorting)
@@ -1133,10 +1135,11 @@ class ViewSpec(object):
                 assert isinstance(f, Filter)
                 assert f.fixed()
                 if f.id():
-                    assert f.id() not in filter_identifiers, "Duplicate filter id: %s" % f.id()
+                    assert f.id() not in filter_identifiers, \
+                           ("Duplicate filter id of %s: %s" % (spec_name, f.id(),))
                     filter_identifiers.append(f.id())
             assert default_filter is None or default_filter in filter_identifiers, \
-                "Default filter not found in filters: %s" % default_filter
+                   ("Default filter not found in filters of %s: %s" % (spec_name, default_filter,))
         assert isinstance(aggregations, (tuple, list))
         if __debug__:
             for agg in aggregations:
@@ -1149,7 +1152,8 @@ class ViewSpec(object):
             for b in bindings:
                 assert isinstance(b, Binding), b
                 if b.id() is not None:
-                    assert b.id() not in binding_identifiers, "Duplicate binding id: %s" % b.id()
+                    assert b.id() not in binding_identifiers, \
+                           "Duplicate binding id of %s: %s" % (spec_name, b.id(),)
                     binding_identifiers.append(b.id())
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
