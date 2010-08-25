@@ -19,10 +19,64 @@
 """Funkce pro naèítání, caching, kontrolu a reporty z defsù.""" 
 
 import pytis.data
+import pytis.util
 from pytis.extensions import *
 
 
+def get_form_defs(resolver, messages=None):
+    """Return sequence of names of all public form specifications in the application.
+
+    Arguments:
+
+      resolver -- resolver to use when exploring application definitions modules
+      messages -- list to use for adding notification messages about the
+        specification lookup; or 'None'
+
+    """
+    assert isinstance(resolver, pytis.util.Resolver), resolver
+    assert messages is None or isinstance(messages, list), messages
+    from dmp import DMPMessage, add_message
+    import config
+    def_dir = config.def_dir
+    def_dir_len = len(def_dir.split('/'))
+    specification_names = []
+    for root, dirs, files in os.walk(def_dir):
+        relative_root_path = root.split('/')[def_dir_len:]
+        if relative_root_path:
+            relative_root = os.path.join(*relative_root_path) + '/'
+        else:
+            relative_root = ''
+        for f in files:
+            if f.endswith('.py'):
+                module_name = relative_root + f[:-3]
+                try:
+                    module = resolver.get_module(module_name)
+                except pytis.util.ResolverFileError:
+                    add_message(messages, DMPMessage.WARNING_MESSAGE, "Module not loaded", (module,))
+                    continue
+                except Exception, e:
+                    add_message(messages, DMPMessage.ERROR_MESSAGE, "Error when loading module", (module, e,))
+                module_identifier = module_name.replace('/', '.')
+                for spec_attr in [o for o in dir(module)]:
+                    spec = getattr(module, spec_attr)
+                    if isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec.public:
+                        if spec_attr[0] == '_':
+                            add_message(messages, DMPMessage.WARNING_MESSAGE,
+                                        "Public specification starting with underscore",
+                                        ('%s.%s' % (module_identifier, spec_attr,),))
+                        spec_name = module_identifier + '.' + spec.__name__
+                        specification_names.append(spec_name)
+                    elif (isinstance(spec, type) and
+                          issubclass(spec, pytis.form.Specification) and
+                          spec_attr != 'Specification'):
+                        add_message(messages, DMPMessage.NOTE_MESSAGE,
+                                    "Private specification, ignored",
+                                    ('%s.%s' % (module_identifier, spec_attr,),))
+    return specification_names
+    
 def get_menu_defs():
+    """Return sequence of names of all specifications present in application menu.
+    """
     def flatten_menus(queue, found, level=0):
         if queue:
             head, tail = queue[0], queue[1:]
@@ -159,13 +213,19 @@ class MenuChecker(object):
     def __init__(self):
         self._resolver = pytis.util.resolver()
         self._dbconn = config.dbconnection
-        if self.__class__._specnames is None:
-            self.__class__._specnames = get_menu_defs()
         connection_data = config.dbconnection
         data = pytis.data.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
         condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'user'))
         self._application_roles = [row[0].value()
                                    for row in data.select_map(identity, condition=condition)]
+
+    def _specification_names(self, errors=None):
+        if self.__class__._specnames is None:
+            self.__class__._specnames = self._find_specification_names(errors)
+        return self.__class__._specnames
+
+    def _find_specifications_names(self, errors):
+        return get_menu_defs()        
 
     def check_public(self, spec_name):
         errors = []
@@ -232,7 +292,7 @@ class MenuChecker(object):
     def _codebook_form_users(self, codebook_name):
         if self._codebook_form_users_ is None:
             form_users = {}
-            for name in self._specnames:
+            for name in self._specification_names():
                 try:
                     view_spec = self._resolver.get(name, 'view_spec')
                 except:
@@ -281,9 +341,9 @@ class MenuChecker(object):
                 self.check_codebook_rights(name))
 
     def interactive_check(self):
-        specnames = self._specnames
-        width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
         errors = []
+        specnames = self._specification_names(errors)
+        width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
         def check_specs(update, specnames):
             check_spec = self._check_spec
             total = len(specnames)
@@ -313,8 +373,12 @@ class MenuChecker(object):
                                   report="\n".join(errors))
 
     def batch_check(self, reporter):
-        reporter.start(len(self._specnames))
-        for s in self._specnames:
+        errors = []
+        specnames = self._specification_names(errors)
+        for e in errors:
+            reporter.error(e)
+        reporter.start(len(specnames))
+        for s in specnames:
             reporter.info("Specifikace: " + s)
             try:
                 errors = self._check_spec(s)
@@ -323,6 +387,13 @@ class MenuChecker(object):
             for e in errors:
                 reporter.error(e)
         reporter.end()
+
+class AppChecker(MenuChecker):
+    
+    def _find_specification_names(self, errors):
+        menu_specs = get_menu_defs()
+        form_specs = get_form_defs(self._resolver, errors)
+        return remove_duplicates(menu_specs + form_specs)
             
 def check_menus_defs():
     """Zkontroluje v¹echny specifikace uvedené v menu aplikace."""

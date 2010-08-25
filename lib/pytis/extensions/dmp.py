@@ -110,6 +110,8 @@ def add_message(messages, kind, message, arguments=()):
       arguments -- tuple of message arguments
       
     """
+    if messages is None:
+        return
     m = DMPMessage(kind=kind, message=message, arguments=tuple([unicode(a) for a in arguments]))
     formatted = m.format()
     if not formatted or formatted[-1] != '\n':
@@ -281,42 +283,7 @@ class DMPObject(object):
         return pytis.data.Value(pytis.data.String(), value)
 
     def _all_form_specification_names(self, messages):
-        specification_names = []
-        resolver = self._resolver()
-        import config
-        def_dir = config.def_dir
-        def_dir_len = len(def_dir.split('/'))
-        for root, dirs, files in os.walk(def_dir):
-            relative_root_path = root.split('/')[def_dir_len:]
-            if relative_root_path:
-                relative_root = os.path.join(*relative_root_path) + '/'
-            else:
-                relative_root = ''
-            for f in files:
-                if f.endswith('.py'):
-                    module_name = relative_root + f[:-3]
-                    try:
-                        module = resolver.get_module(module_name)
-                    except pytis.util.ResolverFileError:
-                        add_message(messages, DMPMessage.WARNING_MESSAGE, "Module not loaded", (module,))
-                        continue
-                    module_identifier = module_name.replace('/', '.')
-                    for spec_attr in [o for o in dir(module)]:
-                        spec = getattr(module, spec_attr)
-                        if isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec.public:
-                            if spec_attr[0] == '_':
-                                add_message(messages, DMPMessage.WARNING_MESSAGE,
-                                            "Public specification starting with underscore",
-                                            ('%s.%s' % (module_identifier, spec_attr,),))
-                            spec_name = module_identifier + '.' + spec.__name__
-                            specification_names.append(spec_name)
-                        elif (isinstance(spec, type) and
-                              issubclass(spec, pytis.form.Specification) and
-                              spec_attr != 'Specification'):
-                            add_message(messages, DMPMessage.NOTE_MESSAGE,
-                                        "Private specification, ignored",
-                                        ('%s.%s' % (module_identifier, spec_attr,),))
-        return specification_names
+        return pytis.extensions.get_form_defs(self._resolver(), messages)
 
     def _specification(self, name, messages):
         resolver = self._resolver()
