@@ -851,7 +851,7 @@ class DMPRoles(DMPObject):
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
                       [('e_pytis_roles', ('name', 'description', 'purposeid',),),
-                       ('e_pytis_role_members', ('roleid', 'member',),),
+                       ('e_pytis_role_members', ('id', 'roleid', 'member',),),
                        ('pg_roles', ('oid', 'rolname', 'rolcanlogin',),),
                        ('pg_auth_members', ('roleid', 'member',),),
                        ])
@@ -863,11 +863,16 @@ class DMPRoles(DMPObject):
         return self._roles
 
     def _load_specifications(self, dmp_rights):
-        roleids = [r.name() for r in self._roles]
+        roles = self._roles
+        for name, purpose, members in (('admin_roles', 'admn', ['admin'],),
+                                       ('admin_menu', 'admn', ['admin'],),
+                                       ('admin', 'admn', [],),):
+            roles.append(self.Role(name=name, description='', purposeid=purpose, members=members))
+        roleids = [r.name() for r in roles]
         for right in dmp_rights.items():
             roleid = right.roleid()
             if roleid not in roleids:
-                self._roles.append(self.Role(name=roleid, description='', purposeid='appl'))
+                roles.append(self.Role(name=roleid, description='', purposeid='appl'))
                 roleids.append(roleid)
         return []
 
