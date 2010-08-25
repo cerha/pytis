@@ -1299,6 +1299,14 @@ class DMPImport(DMPObject):
         messages += self._dmp_roles.store_data(fake=fake, transaction=transaction_)
         messages += self._dmp_rights.store_data(fake=fake, transaction=transaction_)
         messages += self._dmp_menu.store_data(fake=fake, transaction=transaction_)
+        function_names = ('pytis_update_summary_rights', 'pytis_update_actions_structure',
+                          'pytis_update_transitive_roles',)
+        for name in function_names:
+            dbfunction = self._dbfunction(name)
+            self._logger.clear()
+            dbfunction.call(pytis.data.Row(()), transaction=transaction_)
+            if fake:
+                messages += self._logger.messages()
         if transaction is None:
             if fake:
                 transaction_.rollback()        
