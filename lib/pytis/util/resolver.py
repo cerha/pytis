@@ -27,6 +27,7 @@ vytvoøeny a¾ pøi jejich skuteèné potøebì pouze na základì znalosti jména.
 """
 
 import imp
+import sys
 
 from pytis.util import *
 
@@ -275,16 +276,18 @@ class FileResolver(Resolver):
         self._path = xlist(path)
         
     def _get_module(self, name):
-        module = file = None
-        try:
+        module = sys.modules.get(name)
+        if module is None:
+            file = None
             try:
-                file, pathname, descr = imp.find_module(name, self._path)
-                module = imp.load_module(name, file, pathname, descr)
-            except ImportError, e:
-                raise ResolverFileError(name, self._path, e)
-        finally:
-            if file is not None:
-                file.close()
+                try:
+                    file, pathname, descr = imp.find_module(name, self._path)
+                    module = imp.load_module(name, file, pathname, descr)
+                except ImportError, e:
+                    raise ResolverFileError(name, self._path, e)
+            finally:
+                if file is not None:
+                    file.close()
         return module
 
 
