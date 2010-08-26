@@ -224,7 +224,7 @@ class MenuChecker(object):
             self.__class__._specnames = self._find_specification_names(errors)
         return self.__class__._specnames
 
-    def _find_specifications_names(self, errors):
+    def _find_specification_names(self, errors):
         return get_menu_defs()        
 
     def check_public(self, spec_name):
