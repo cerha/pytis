@@ -35,6 +35,8 @@ Basic requirements on their functionality are:
 
 - Outputting Python specification source code corresponding to updated data.
 
+(Note that not all these functions are actually implemented here.)
+
 Overall intended usages are:
 
 - Importing DMP database tables from application specifications.
@@ -57,6 +59,8 @@ We are interested in the following kinds of data:
 - Forms (either present in the application menu or not) and their bindings and
   actions.
 
+- User roles and role membership.
+
 - Access rights.
 
 We use proprietary classes for storing, examining and manipulating given kinds
@@ -66,6 +70,11 @@ as database rows numeric identifiers and for second we need simple and
 intelligible data structures and operations just serving the purpose of
 implementing and maintaining the required functionality easily.  But if pytis
 classes provide useful functionality for DMP we use the functionality.
+
+This file defines several classes for the tasks defined above: 'DMPActions',
+'DMPRoles', 'DMPMenu', 'DMPRights', 'DMPImport'.  There are also some utility
+functions defined and exported here, serving mostly as an interface for 'dmp'
+script.
 
 """
 
@@ -80,7 +89,12 @@ from pytis.util import *
 
 
 class DMPMessage(Structure):
-    """Message about DMP operation to be presented to the user."""
+    """Message about DMP operation to be presented to the user.
+
+    This class and related facilities should be merged with other
+    reporting/logging mechanisms in pytis.
+
+    """
     ERROR_MESSAGE = 'Error'
     WARNING_MESSAGE = 'Warning'
     NOTE_MESSAGE = 'Note'
@@ -109,6 +123,9 @@ def add_message(messages, kind, message, arguments=()):
       message -- the message itself, basestring
       arguments -- tuple of message arguments
       
+    This function and related facilities should be merged with other
+    reporting/logging mechanisms in pytis.
+
     """
     if messages is None:
         return
@@ -215,6 +232,7 @@ class DMPObject(object):
     _DB_TABLES = {'e_pytis_disabled_dmp_triggers': ('id',)}
 
     class Logger(object):
+        """Class for SQL commands logging."""
         def __init__(self):
             self._messages = []
             self._active = True
@@ -408,6 +426,7 @@ class DMPObject(object):
                                for s in specifications])
     
     def dump_specifications(self, stream):
+        """Dump DMP data in the form of Python source code."""
         raise Exception('Not implemented')
 
     def compare(self, other):
@@ -465,8 +484,21 @@ class DMPMenu(DMPObject):
     This class represents the whole menu, single menu items are represented by
     'MenuItem' instances.
 
+    Note that this class stores not only actual menu items, but also additional
+    actions available in the application (in a menu like structure) in the form
+    similar to menu rights editing form presentation.
+
     """
     class MenuItem(DMPItem):
+        """Representation of a single menu item.
+
+        There are several kinds of menu items:
+
+          action item -- it invokes an action
+          menu item -- it invokes a nested menu
+          separator item -- visual separator in a menu
+
+        """
         ACTION_ITEM = 'ACTION_ITEM'
         MENU_ITEM = 'MENU_ITEM'
         SEPARATOR_ITEM = 'SEPARATOR_ITEM'
@@ -675,6 +707,7 @@ class DMPMenu(DMPObject):
 
 
 class DMPRights(DMPObject):
+    """Representation of DMP access rights."""
 
     class Right(DMPItem):
         _attributes = (Attribute('shortname', str),
@@ -834,6 +867,7 @@ class DMPRights(DMPObject):
 
 
 class DMPRoles(DMPObject):
+    """Representation of DMP roles and their memberships."""
     
     class Role(DMPItem):
         _attributes = (Attribute('name', str),
@@ -954,6 +988,12 @@ class DMPRoles(DMPObject):
 
 
 class DMPActions(DMPObject):
+    """Representation of DMP actions.
+
+    Note that actions are not loaded directly from specifications, but they are
+    retrieved from loaded menu items, access rights and other loaded objects.
+
+    """
 
     class Action(DMPItem):
         """Representation of an DMP action.
@@ -1214,6 +1254,22 @@ class DMPActions(DMPObject):
         dbfunction.call(pytis.data.Row(()), transaction=transaction)
         
     def update_forms(self, fake, specifications, transaction=None):
+        """Check given form specifications and update the database.
+
+        For given form specification names, load the specifications and check
+        their bindings and actions.  Delete old bindings and actions from the
+        database and insert the new ones.
+
+        Arguments:
+
+          fake -- iff True, don't actually change the data but return sequence
+            of SQL commands (basestrings) that would do so
+          specifications -- sequence of form specification names, string
+          transaction -- transaction object to use or 'None'; if not 'None' no
+            commit nor rollback is performed in this method regardless 'fake'
+            argument value
+
+        """
         messages = []
         original_actions = DMPActions(self._configuration)
         original_actions.retrieve_data()
@@ -1315,6 +1371,16 @@ class DMPImport(DMPObject):
         return messages
 
     def dmp_import(self, fake):
+        """Import data from specifications and store them to a database.
+
+        Original database data are deleted.
+
+        Arguments:
+
+          fake -- iff True, don't actually change the data but return sequence
+            of SQL commands (basestrings) that would do so
+            
+        """
         transaction = self._transaction()
         self._disable_triggers(transaction=transaction)
         messages = []
@@ -1329,6 +1395,16 @@ class DMPImport(DMPObject):
         return messages
 
     def dmp_add_form(self, fake, fullname, position):
+        """Add new form invocation action.
+
+        Arguments:
+
+          fake -- iff True, don't actually change the data but return sequence
+            of SQL commands (basestrings) that would do so
+          fullname -- fullname of the form invoking action, string
+          position -- menu position of the action, string
+
+        """
         transaction = self._transaction()
         messages = []
         action = DMPActions.Action(self._resolver(), messages, fullname=fullname)
@@ -1348,6 +1424,7 @@ class DMPImport(DMPObject):
 
 
 def dmp_import(parameters, fake):
+    """Import DMP data from application specifications to a database."""
     configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_import(fake)
 
