@@ -112,6 +112,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'startup_forms'
     _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
+    _STATE_FORM_CONFIG = 'form_config'
 
     def _get_command_handler_instance(cls):
         global _application
@@ -187,6 +188,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             dummy_data = factory.create(connection_data=config.dbconnection)
         db_operation(test)
+        # Initialize the database storage of form configurations if the needed database table is
+        # found.  If not, form configurations will be stored as part of application state, but this
+        # is not optimal for large scale applications with lots of forms.
+        try:
+            form_config_data = pytis.data.dbtable('e_pytis_form_config',
+                                                  ('id', 'username', 'form', 'profile', 'config',),
+                                                  config.dbconnection)
+        except pytis.data.DBException:
+            form_config_data = None
+        self._form_config_data = form_config_data
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Init the recent forms list.
@@ -217,7 +228,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             for uicmd in group:
                 handler = uicmd.command().handler()
                 handler.add_toolbar_ctrl(self._toolbar, uicmd)
-        toolbar.Realize()                
+        toolbar.Realize()
         # Run application specific initialization.
         self._spec('init')
         if self._windows.empty():
@@ -643,8 +654,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         for option in to_delete:
             wxconfig.DeleteEntry(option)
         wxconfig.Flush()
-
-
+        
+    def _fullname(self, form):
+        return 'form/%s/%s//' % (form.__class__.__name__, form.name())
+    
     def _cleanup(self):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
         # situaci bylo mo¾no aplikaci ukonèit.
@@ -1189,6 +1202,71 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if success:
                 self._login_hook = None
 
+    def _form_config_key_values(self, form, profile):
+        return [(key, pytis.data.Value(pytis.data.String(), value))
+                for key, value in (('username', config.dbuser),
+                                   ('form', self._fullname(form)),
+                                   ('profile', profile),
+                                   )]
+
+    def _form_config_row(self, form, profile):
+        condition = pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
+                                     self._form_config_key_values(form, profile)])
+        count = self._form_config_data.select(condition=condition)
+        assert count in (0, 1)
+        return self._form_config_data.fetchone()
+
+    def save_form_config(self, form, profile, config):
+        """Save user specific configuration of a form.
+
+        Arguments:
+          form -- 'Form' instance to which the given configurtation belongs.
+          profile -- string name of the form profile to which the given
+            configurtation belongs.
+          config -- dictionary of form configuration parameters.
+
+        """
+        if self._form_config_data:
+            row = self._form_config_row(form, profile)
+            value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
+            if row:
+                row['config'] = value
+                self._form_config_data.update(row['id'], row)
+            else:
+                values = self._form_config_key_values(form, profile)
+                row = pytis.data.Row(values + [('config', value)])
+                self._form_config_data.insert(row)
+        else:
+            state = self._get_state_param(self._STATE_FORM_CONFIG, {}, dict)
+            state[self._fullname(form)+profile] = config
+            self._set_state_param(self._STATE_FORM_CONFIG, state)
+
+    def load_form_config(self, form, profile):
+        """Return prevoiusly saved user specific configuration of a form.
+
+        Arguments:
+          form -- 'Form' instance to which the given configurtation belongs.
+          profile -- string name of the form profile to which the given
+            configurtation belongs.
+
+        Returns a dictionary of form configuration parameters.  If no
+        configuration was previously saved (using 'save_form_config()') or if a
+        problem occures reading it, an empty dictionary is returned.
+
+        """
+        if self._form_config_data:
+            row = self._form_config_row(form, profile)
+            if row:
+                result = pickle.loads(str(row['config'].value()))
+                if not isinstance(result, dict):
+                    result = {}
+                    self._form_config_data.delete(row['id'])
+                return result
+            else:
+                return {}
+        else:
+            state = self._get_state_param(self._STATE_FORM_CONFIG, {}, dict)
+            return state.get(self._fullname(form)+profile, {})
 
 # Funkce odpovídající pøíkazùm aplikace.
 
@@ -1456,6 +1534,14 @@ def recent_forms_menu():
 def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
+
+def save_form_config(form, profile, config):
+    """Call 'Application.save_form_config()' on current application instance."""
+    return _application.save_form_config(form, profile, config)
+
+def load_form_config(form, profile):
+    """Call 'Application.load_form_config()' on current application instance."""
+    return _application.load_form_config(form, profile)
 
 # Ostatní funkce.
 

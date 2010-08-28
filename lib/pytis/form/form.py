@@ -183,10 +183,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         the attributes of the instance.  See also the constructor documentation for more details.
 
         """
-        key = self._form_state_key()
-        self._form_state = config.form_state.get(key)
-        if not isinstance(self._form_state, dict):
-            self._form_state = config.form_state[key] = {}
+        self._form_state = load_form_config(self, '-')
         self._initial_form_state = copy.copy(self._form_state)
 
     def _create_view_spec(self):
@@ -222,9 +219,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def __repr__(self):
         return str(self)
 
-    def _form_state_key(self):
-        return self.__class__.__name__+'/'+self._name
-    
     def _get_state_param(self, name, default=None, cls=None, item_cls=None):
         try:
             param = self._form_state[name]
@@ -253,7 +247,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _persistent_form_params(self):
         state, keys = self._form_state, self._PERSISTENT_FORM_PARAMS
-        return dict([(k, state[k]) for k in keys if state.has_key(k)])
+        return dict([(k, state[k]) for k in keys if k in state])
 
     def _release_data(self):
         if self._data is not None:
@@ -280,20 +274,21 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     
     def _cmd_reload_form_state(self):
         persistent = self._persistent_form_params()
-        self._form_state = copy.copy(self._initial_form_state)
+        # We must manipulate the existing dictionary without replacing the reference!
+        self._form_state.clear()
+        self._form_state.update(self._initial_form_state)
         self._form_state.update(persistent)
-        config.form_state[self._form_state_key()] = self._form_state
         self._on_form_state_change()
         if isinstance(self, Refreshable):
             self.refresh()
 
     def _can_reset_form_state(self):
         persistent = self._PERSISTENT_FORM_PARAMS
-        return [k for k in self._form_state.keys() if k not in persistent]
+        return bool([k for k in self._form_state.keys() if k not in persistent])
         
     def _cmd_reset_form_state(self):
-        self._form_state = self._persistent_form_params()
-        config.form_state[self._form_state_key()] = self._form_state
+        self._form_state.clear()
+        self._form_state.update(self._persistent_form_params())
         self._on_form_state_change()
         if isinstance(self, Refreshable):
             self.refresh()
@@ -386,6 +381,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._cleanup_data()
         for id in self._STATUS_FIELDS:
             set_status(id, '')
+        save_form_config(self, '-', self._form_state)
 
     def _cleanup_data(self):
         try:

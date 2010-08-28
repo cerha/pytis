@@ -49,3 +49,15 @@ function('write_pytis_config',
          doc="""Funkce na zápis configu pro daného uživatele.""",
          depends=('_pytis_config',))
 
+
+table('e_pytis_form_config',
+      (P('id', TSerial),
+       C('username', TUser, constraints=('NOT NULL',)),
+       C('form', TString, constraints=('NOT NULL',)),
+       C('profile', TString, ),
+       C('config', TString, constraints=('NOT NULL',))),
+      sql='UNIQUE (username, form, profile)',
+      grant=db_rights,
+      schemas=db_schemas,
+      doc="""Pytis form configuration storage."""      
+      )
