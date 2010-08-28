@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -207,7 +207,7 @@ class MenuOverviewReader(MenuReader):
                     else:
                         actions = []
                 if help_src:
-                    help = lcg.SectionContainer(lcg.Parser().parse(help_src))
+                    help = lcg.Container(lcg.Parser().parse(help_src))
                 else:
                     help = lcg.p(_("Popis není k dispozici."))
                 content = lcg.coerce((lcg.fieldset((('Titulek formuláře', title),
@@ -222,7 +222,7 @@ class MenuOverviewReader(MenuReader):
                 
     def _content(self):
         sections = [self._create_section(menu) for menu in self._item.items()]
-        return lcg.SectionContainer([lcg.TableOfContents(title="Obsah")] + sections)
+        return lcg.Container([lcg.TableOfContents(title="Obsah")] + sections)
 
     def _children(self):
         return []
@@ -270,7 +270,7 @@ class _DescrReader(lcg.StructuredTextReader):
     def _default_description_text(self):
         help = self._view_spec.help()
         if help:
-            return lcg.SectionContainer(lcg.Parser().parse(help))
+            return lcg.Container(lcg.Parser().parse(help))
         else:
             return lcg.p(_("Popis není k dispozici."))
 
@@ -356,7 +356,7 @@ class _DualDescrReader(_DescrReader):
         b = self._binding
         help = b.help() or b.description()
         if help:
-            return lcg.SectionContainer(lcg.Parser().parse(help))
+            return lcg.Container(lcg.Parser().parse(help))
         else:
             main, side = self._name.split('::')
             text = _("Hlavním formulářem tohoto duálního formuláře je [%s].  V dolní části "
