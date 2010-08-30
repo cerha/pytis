@@ -2222,6 +2222,11 @@ class FoldableForm(ListForm):
               
             """
             self._folding = FoldableForm._FoldingState(level=level, subnodes={})
+        def __cmp__(self, other):
+            if sameclass(self, other):
+                return cmp(self._folding, other._folding)
+            else:
+                return compare_objects(self, other)
         def _find_node(self, node):
             state = self._folding
             labels = (node or '').split('.')
@@ -2358,6 +2363,7 @@ class FoldableForm(ListForm):
 
     def _init_folding(self):
         self._folding = self._default_folding()
+        self._initial_folding = copy.copy(self._folding)
         folding_state = self._get_state_param('folding')
         if folding_state is None:
             view_folding = self._view.initial_folding()
@@ -2483,7 +2489,8 @@ class FoldableForm(ListForm):
         self._init_folding()
 
     def _refresh_folding(self):
-        self._set_state_param('folding', self._folding.folding_state())
+        if self._folding != self._init_folding:
+            self._set_state_param('folding', self._folding.folding_state())
         self.refresh()
         
     def _can_expand_or_collapse_subtree(self, level=None):
