@@ -942,6 +942,9 @@ class Configuration(object):
                 if not cloptions.has_key(opt.long_option()):
                     value = confmodule.__dict__[o]
                     opt.set_value(value, initialization=False)
+        for o in self._options.values():
+            if not o.changed():
+                o.reset()
         return filetime
 
     def read_configuration_file(self, filename):
@@ -998,9 +1001,6 @@ class Configuration(object):
             self.__dict__[name] = value
         else:
             raise AttributeError(name)
-        for o in self._options.values():
-            if not o.changed():
-                o.reset()
 
     def merge(self, dict, override_cmdline=False):
         """Nastav aktuální konfiguraci z hodnot daného slovníku.
