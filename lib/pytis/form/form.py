@@ -840,7 +840,9 @@ class LookupForm(InnerForm):
         if not success:
             log(EVENT, 'Selhání databázové operace')
             raise self.InitError()
-        return self._lf_count(timeout=0)
+        # Make sure at least one line is returned (if any is actually present),
+        # otherwise segfault may happen when committing an edited line.
+        return self._lf_count(timeout=0, min_value=1)
 
     def _data_sorting(self):
         mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
