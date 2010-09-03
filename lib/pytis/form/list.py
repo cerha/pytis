@@ -2757,7 +2757,7 @@ class BrowseForm(FoldableForm):
 
     class _DBPrintResolver(DatabaseResolver):
         def __init__(self):
-            DatabaseResolver.__init__(self, 'e_pytis_output_templates')
+            DatabaseResolver.__init__(self, 'ev_pytis_output_templates')
         def get(self, *args, **kwargs):
             result = DatabaseResolver.get(self, *args, **kwargs)
             if result and isinstance(result, basestring):

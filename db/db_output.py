@@ -26,8 +26,23 @@ _std_table('e_pytis_output_templates',
             C('module', TString, constraints=('not null',)),
             C('specification', TString, constraints=('not null',)),
             C('data', TString),
+            C('username', TString, default="current_user"),
             ),
            """Storage of print output templates handled by a DatabaseResolver.""",
-           sql="unique (module, specification)",
+           sql="unique (module, specification, username)",
            grant=db_rights,
            depends=())
+
+viewng('ev_pytis_output_templates',
+       (SelectRelation('e_pytis_output_templates', alias='templates',
+                       condition="username = current_user or username is null"),
+        ),
+       insert_order=('e_pytis_output_templates',),
+       update_order="""(
+       delete from e_pytis_output_templates where id=old.id and username=current_user;
+       insert into e_pytis_output_templates (module, specification, data) value (new.module, new.specification, new.data);
+       )
+       """,
+       delete="delete from e_pytis_output_templates where id=old.id and username=current_user",
+       grant=db_rights,
+       depends=('e_pytis_output_templates',))
