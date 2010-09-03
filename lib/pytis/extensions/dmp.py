@@ -812,7 +812,7 @@ class DMPRights(DMPObject):
         data = self._data('e_pytis_action_rights')
         data.delete_many(condition, transaction=transaction)        
 
-    def restore(self, fake, def_directory, specifications):
+    def restore(self, fake, specifications):
         """Restore access rights of the given specification.
 
         Access rights of the specification in the database are deleted and
