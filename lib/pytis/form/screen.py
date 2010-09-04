@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1766,32 +1766,33 @@ def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     return checkbox
 
 
-def wx_text_view(parent, content, format=TextFormat.PLAIN):
+def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=None):
     import wx
-    if format in (TextFormat.PLAIN, TextFormat.WIKI):
-        lines = content.splitlines()
-        width = min(max([len(l) for l in lines]), 80)
-        height = min(len(lines), 20)
-        size = (width, height)
-    else:
-        size = None
     if format == TextFormat.PLAIN:
+        lines = content.splitlines()
+        if width is None:
+            width = min(max([len(l) for l in lines]), 80)
+        if height is None:
+            height = min(len(lines), 20)
         style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
         w = wx.TextCtrl(parent, style=style)
-        w.SetBestFittingSize(char2px(w, *size))
         w.SetValue(content)
     else:
+        if width is None:
+            width = 80
+        if height is None:
+            height = 20
+        import wx.html
+        w = wx.html.HtmlWindow(parent)
         if format == TextFormat.WIKI:
             import lcg
             n = lcg.ContentNode('', content=lcg.Container(lcg.Parser().parse(content)))
             html = n.content().export(lcg.HtmlExporter().context(n, None))
         else:
             html = content
-        import wx.html
-        size = size and char2px(parent, *[1.3 * x for x in size]) or (400, 300)
-        w = wx.html.HtmlWindow(parent, size=size)
-        #w.SetFonts('', '', sizes=(8,9,10,11,12,13,14))
-        w.SetPage('<html><head><title></title></head>' + \
-                  '<body><font size="-2">' + html + '</font></body></html>')
+        if (wx.MAJOR_VERSION, wx.MINOR_VERSION) == (2, 6):
+            html = '<font size="-2">' + html + '</font>'
+        w.SetPage('<html><head></head><body>'+ html +'</body></html>')
+    w.SetBestFittingSize(char2px(w, width, height))
     return w
 

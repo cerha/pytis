@@ -81,7 +81,7 @@ class GenericDialog(Dialog):
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
     
     def __init__(self, parent, title, buttons, default=None, report=None,
-                 report_format=TextFormat.PLAIN):
+                 report_format=TextFormat.PLAIN, report_size=(None, None)):
         """Inicializuj dialog.
 
         Argumenty:
@@ -100,19 +100,25 @@ class GenericDialog(Dialog):
           report_format -- konstanta tøídy 'TextFormat' urèující jak má být
             nakládáno se vstupním textem argumentu 'report'.  V pøípadì, ¾e
             není ¾ádný report specifikován, je tento argument irelevantní.
+          report_size -- report window size as a pair of integers (width,
+            height) in characters.  If any of the numbers is 'None' given size
+            will be will automatically accommodate to the size of the contents
+            (for plain text) or use a default value.
             
         """
-        assert is_sequence(buttons)
-        assert isinstance(title, types.StringTypes)
-        assert default is None or default in buttons
-        assert report is None or isinstance(report, types.StringTypes)
-        assert report_format in public_attributes(TextFormat)
+        assert isinstance(title, types.StringTypes), title
+        assert isinstance(buttons, (list, tuple)), buttons
+        assert default is None or default in buttons, default
+        assert report is None or isinstance(report, types.StringTypes), report
+        assert report_format in public_attributes(TextFormat), report_format
+        assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super_(GenericDialog).__init__(self, parent)
         self._title = unicode(title)
         self._button_labels = buttons
         self._default = default
         self._report = report
         self._report_format = report_format
+        self._report_size = report_size
         self._want_focus = None
         self._shown = False
 
@@ -156,7 +162,8 @@ class GenericDialog(Dialog):
         # poskládej obsah a tlaèítka do top-level sizeru (nad sebe)
         if self._report is not None:
             report = wx_text_view(dialog, self._report,
-                                  format=self._report_format)
+                                  format=self._report_format,
+                                  width=self._report_size[0], height=self._report_size[1])
             sizer.Add(report, 1, wx.EXPAND)
         sizer.Add(button_sizer, 0, wx.CENTER)
         wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
@@ -346,8 +353,7 @@ class Message(GenericDialog):
     _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
     
     def __init__(self, parent, message, icon=ICON_INFO, title=_('Zpráva'),
-                 buttons=(BUTTON_OK,), default=_(BUTTON_OK), report=None,
-                 report_format=TextFormat.PLAIN):
+                 buttons=(BUTTON_OK,), default=_(BUTTON_OK), **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
@@ -358,7 +364,7 @@ class Message(GenericDialog):
           
         """
         super_(Message).__init__(self, parent, title, buttons,
-                                 default=default, report=report, report_format=report_format)
+                                 default=default, **kwargs)
         assert icon in self._icons + (None,)
         if message:
             self._message = unicode(message)
@@ -382,8 +388,7 @@ class Message(GenericDialog):
 class Warning(Message):
     """Dialog pro zobrazení varovné zprávy."""
 
-    def __init__(self, parent, message, title=_('Varování'), report=None,
-                 report_format=TextFormat.PLAIN):
+    def __init__(self, parent, message, title=_('Varování'), **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
@@ -401,14 +406,13 @@ class Warning(Message):
                                  icon=Message.ICON_WARNING,
                                  buttons=(Message.BUTTON_OK,),
                                  default=Message.BUTTON_OK,
-                                 report=report, report_format=report_format)
+                                 **kwargs)
 
 
 class Error(Message):
     """Dialog pro zobrazení chybové zprávy."""
 
-    def __init__(self, parent, message, title=_('Chyba'), report=None,
-                 report_format=TextFormat.PLAIN):
+    def __init__(self, parent, message, title=_('Chyba'), **kwargs):
         """Inicializuj dialog.
         
         Argumenty:
@@ -426,22 +430,15 @@ class Error(Message):
                                icon=Message.ICON_ERROR,
                                buttons=(Message.BUTTON_OK,),
                                default=Message.BUTTON_OK,
-                               report=report, report_format=report_format)
+                               **kwargs)
 
 
 class MultiQuestion(Message):
-    """Dialog vy¾adující odpovìï na otázku výbìrem z tlaèítek.
-
-    Jedná se o jednoduché pøizpùsobení tøídy message, s pøednastavením ikony a
-    titulku.
-    
-    """
+    """Dialog vy¾adující odpovìï na otázku výbìrem z tlaèítek."""
     def __init__(self, parent, message, buttons, default=None,
-                 title=_("Otázka"), icon=Message.ICON_QUESTION,
-                 report=None, report_format=TextFormat.PLAIN):
-        super_(MultiQuestion).__init__(self, parent, message, title=title,
-                                       buttons=buttons, default=default,
-                                       icon=icon, report=report, report_format=report_format)
+                 title=_("Otázka"), icon=Message.ICON_QUESTION, **kwargs):
+        super_(MultiQuestion).__init__(self, parent, message, title=title, buttons=buttons,
+                                       default=default, icon=icon, **kwargs)
     
 
 class Question(MultiQuestion):
@@ -453,7 +450,7 @@ class Question(MultiQuestion):
     """
     def __init__(self, parent, message, default=True,
                  title=_("Otázka"), icon=Message.ICON_QUESTION,
-                 report=None, report_format=TextFormat.PLAIN):
+                 **kwargs):
         """Inicializuj dialog.
         
         Argumenty:
@@ -479,8 +476,7 @@ class Question(MultiQuestion):
         self._COMMIT_BUTTON = default
         super_(Question).__init__(self, parent, message, title=title,
                                   buttons=(self.BUTTON_YES, self.BUTTON_NO),
-                                  default=default, icon=icon,
-                                  report=report, report_format=report_format)
+                                  default=default, icon=icon, **kwargs)
         
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_YES:
@@ -502,9 +498,8 @@ class InputDialog(Message):
 
     
     def __init__(self, parent, message=None, value=None, prompt=None,
-                 title=_("Zadejte hodnotu"), icon=None, passwd=False,
-                 report=None, report_format=TextFormat.PLAIN,
-                 input_width=None, input_height=1, allow_empty=True):
+                 title=_("Zadejte hodnotu"), passwd=False,
+                 input_width=None, input_height=1, allow_empty=True, **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
@@ -534,8 +529,7 @@ class InputDialog(Message):
         super_(InputDialog).__init__(self, parent, message, title=title,
                                      buttons=(Message.BUTTON_OK,
                                               Message.BUTTON_CANCEL),
-                                     default=None, icon=icon,
-                                     report=report, report_format=report_format)
+                                     default=None, **kwargs)
         assert value is None or isinstance(value, types.StringTypes)
         assert prompt is None or isinstance(prompt, types.StringTypes)
         assert isinstance(allow_empty, types.BooleanType)
