@@ -1,5 +1,5 @@
-# -*- coding: iso-8859-2 -*-
-
+# -*- coding: utf-8 -*-
+#
 # Copyright (C) 2006-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -727,11 +727,12 @@ class BrowseForm(LayoutForm):
             indicated in the user interface.
           filters -- sequence of user visible named filters as
             'pytis.presentation.Filter' or 'pytis.presentation.FilterSet'
-            instances in the same form as the 'pytis.presentation.ViewsSpec'
-            argument of the same name.  These filters will be available in the
-            user interface for user's selection.  If None, the default set of
-            filters defined by specification is used.  If not None, the filters
-            from specification are ignored, so they need to be included in this
+            instances (sequence of 'pytis.presentation.Filter' instances is
+            automatically converted to one filter set containing given
+            filters).  These filters will be available in the user interface
+            for user's selection.  If None, the default set of filters defined
+            by specification is used.  If not None, the filters from
+            specification are ignored, so they need to be included in this
             argument explicitly if they should be displayed.  This argument is
             mostly useful to construct the list of filters dynamically
             (specification filters are static).
@@ -803,9 +804,11 @@ class BrowseForm(LayoutForm):
         super(BrowseForm, self).__init__(view, row, **kwargs)
         self._condition = condition
         if filters is None:
-            filters = self._view.filters()
-        if not filters:
-            filters = ()
+            filters = self._view.filter_sets()
+            profiles = self._view.profiles()
+            if profiles:
+                filters += (FilterSet('profile', _("Profile"), profiles,
+                                      default=self._view.default_profile()),)
         elif isinstance(filters[0], Filter):
             filters = (FilterSet('__single', _("Filter"), filters),)
         params = {}
@@ -895,9 +898,6 @@ class BrowseForm(LayoutForm):
         self._show_query_field = show_query_field
         self._allow_query_field = allow_query_field
         # Process filters.
-        default_filter_ids = self._view.default_filter() or ()
-        if not is_sequence(default_filter_ids):
-            default_filter_ids = (default_filter_ids,)
         self._filters = []
         self._filter_ids = {}
         for filter_set in filters:
@@ -915,21 +915,16 @@ class BrowseForm(LayoutForm):
             # Determine the currently selected filter.
             filter_id = params.get('filter_%s' % (filter_set_id,))
             if filter_id is not None:
-                req.set_cookie('pytis-form-last-filter_%s' % (filter_set_id,),
+                req.set_cookie('pytis-form-last-filter-%s' % (filter_set_id,),
                                self._name +':'+ filter_id)
             else:
-                cookie = req.cookie('pytis-form-last-filter_%s' % (filter_set_id,))
+                cookie = req.cookie('pytis-form-last-filter-%s' % (filter_set_id,))
                 if cookie and cookie.startswith(self._name +':'):
                     filter_id = cookie[len(self._name)+1:]
+                elif filter_set.default():
+                    filter_id = filter_set.default()
                 else:
-                    for f in filter_set:
-                        if f.id() in default_filter_ids:
-                            filter_id = f.id()
-                            break
-                    else:
-                        null_filter = find(None, filter_set, key=lambda f: f.condition())
-                        if null_filter is not None:
-                            filter_id = null_filter.id()
+                    filter_id = null_filter.id()
             if filter_id:
                 matching_filter = find(filter_id, filter_set, key=lambda f: f.id())
                 # Append the current user selected filter to the filter passed
@@ -1322,7 +1317,7 @@ class BrowseForm(LayoutForm):
                 if count:
                     i = 0;
                     while i < len(values) \
-                              and (values[i][-1].lower() in (u'á',u'è',u'ï',u'é',u'ì') \
+                              and (values[i][-1].lower() in (u'Ã¡',u'Ã¨',u'Ã¯',u'Ã©',u'Ã¬') \
                                    or values[i][-1].lower() < u'i'):
                         i += 1
                     values.insert(i, search_ch_string)

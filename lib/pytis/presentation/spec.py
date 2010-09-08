@@ -498,56 +498,48 @@ class ActionGroup(_ActionItem):
         return self._actions
 
     
-class Filter(object):
-    """Predefined filtering condition specification."""
+class Profile(object):
+    """Predefined form profile specification.
+
+    Form profiles are a set of predefined form parameters, such as filtering
+    condition, sorting, visible columns and their order, grouping, etc. (see
+    constructor arguemnts for a full list).
+
+    The user interface allows simple switching between available profiles and
+    may also implement the option of saving user defined profiles.  Thus
+    instances of this class may originate either from specification or from
+    user data.
+
+    """
     
-    def __init__(self, id, name, condition, fixed=True):
+    def __init__(self, id, name, condition=None, sorting=None, columns=None):
         """Arguments:
         
-          id -- action identifier as a string.  It must be unique among all
-            objects identifiers within a given form.
-          name -- condition name as a string
-          condition -- condition as a 'pytis.data.Operator' instance.  The
-            condition must be displayable in the serach/filtering dialog, thus
-            certain restrictions apply.  It is not possible to use the logical
-            operator 'NOT', logical operators 'AND' and 'OR' must always have
-            exactly two operands and only the first of the two may be a nested
-            logical operator.  For example instead of AND(a, b, c) use
-            AND(AND(a, b), c), insteda of NOT(EQ(x, y)) use NE(x, y), etc.
-          fixed -- indicates, whether the user is allowed to manipulate the
-            condition.
-
+          id -- profile identifier as a string.  It must be unique among all
+            profile identifiers within a given form.
+          name -- user visible profile name as a string.
+          condition -- filtering condition as a 'pytis.data.Operator' instance.
+            This condition is always applied together (in conjunction) with the
+            forms default 'condition' given by it's specification (if not None).
+          sorting -- sorting in the same format as accepted by the 'sort'
+            argument of 'pytis.data.Data.select()'.  If None, the default
+            sorting given by the specification applies.
+          columns -- sequence of visible form columns (string field
+            identifiers) in the order in which they appear in the table.  If
+            None, the columns defined by the specification are displayed.
+          
         """
-        def check(cond):
-            assert isinstance(cond, pytis.data.Operator), \
-               ('Not an Operator instance:', str(cond))
-            assert len(cond.args()) == 2, \
-               ('Operator must have just two arguments:', str(cond.args()))
-            arg1, arg2 = cond.args()
-            if cond.logical():
-                check(arg1)
-                check(arg1)
-                assert not arg2.logical(), \
-                   ('Nested conditions only allowed as first operand:',
-                    str(arg2))
-            else:
-                assert isinstance(arg1, str), \
-                   ('First operand must be column id:', str(arg1))
-                assert isinstance(arg2, (str, pytis.data.Value,
-                                         pytis.data.WMValue)), \
-                   ('Second operand must be column id or Value instance:',
-                    str(arg2))
-            return True
         assert isinstance(id, basestring)
         assert isinstance(name, basestring), name
         assert condition is None or isinstance(condition, pytis.data.Operator), condition
+        assert sorting is None or isinstance(sorting, tuple), sorting
         self._id = id
         self._name = name
         self._condition = condition
-        self._fixed = fixed
+        self._sorting = sorting
     
     def id(self):
-        """Return the filter identifier."""
+        """Return the unique profile identifier."""
         return self._id
         
     def name(self):
@@ -558,12 +550,15 @@ class Filter(object):
         """Return the condition passed to the constructor."""
         return self._condition
     
-    def fixed(self):
-        """Return True if the user is allowed to manipulate this condition."""
-        return self._fixed
-    
+    def sorting(self):
+        """Return the sorting specification passed to the constructor."""
+        return self._sorting
+
 # For backwards compatibility
-Condition = Filter
+Filter = Profile
+"""Deprecated: Use 'Profile' instead."""
+Condition = Profile
+"""Deprecated: Use 'Profile' instead."""
 
 class FilterSet(list):
     """Uniquely identified set of filters.
@@ -578,9 +573,8 @@ class FilterSet(list):
     """
     _ID_MATCHER = re.compile('[a-z0-9_]+')
     
-    def __init__(self, id, title, filters):
-        """
-        Arguments:
+    def __init__(self, id, title, filters, default=None):
+        """Arguments:
         
           id -- filter set identifier as a non-empty string.  It must be unique
             among all objects identifiers within a given form and it may
@@ -588,6 +582,7 @@ class FilterSet(list):
             underscores.
           title -- label of the filter to be displayed to the user, basestring
           filters -- sequence of 'Filter' instances
+          default -- identifier of the filter (from 'filters') to be selected by default
         
         """
         assert isinstance(id, str), id
@@ -595,9 +590,17 @@ class FilterSet(list):
         assert isinstance(title, basestring)
         assert is_sequence(filters), filters
         assert all([isinstance(f, Filter) for f in filters]), filters
+        if __debug__:
+            filter_identifiers = []
+            for f in filters:
+                assert f.id() not in filter_identifiers, \
+                    "Duplicate filter id '%s' in filter set '%s'" % (f.id(), id)
+                filter_identifiers.append(f.id())
+            assert default is None or default in filter_identifiers, default
         super(FilterSet, self).__init__(filters)
         self._id = id
         self._title = title
+        self._default = default
 
     def id(self):
         """Return identifier of the filter set, string."""
@@ -606,6 +609,10 @@ class FilterSet(list):
     def title(self):
         """Return title of the filter set, basestring."""
         return self._title
+
+    def default(self):
+        """Return identifier of the filter to be selected by default."""
+        return self._default
 
 
 class GroupSpec(object):
@@ -657,7 +664,7 @@ class GroupSpec(object):
             some form types (particularly by web forms).
 
         """
-        assert is_sequence(items)
+        assert is_sequence(items), items
         assert label is None or isinstance(label, (str, unicode))
         assert type(gap) == type(0)
         assert gap >= 0
@@ -1033,24 +1040,23 @@ class ViewSpec(object):
             of one argument (the 'PresentedRow' instance) returning the 'Style' for one row (based
             on its values).
 
-          filters -- a sequence of predefined filtering conditions ('Filter'
-            instances), which should be available in the user interface.  In
-            Web applications it is additionally possible to use sequence of
-            'FilterSet' instances here in which case multiple filters are
-            presented to the user.
+          profiles -- a sequence of predefined form profiles ('Profile'
+            instances) which the user can easilly switch from the user
+            interface.
 
-          default_filter -- a string identifier of the filtering condition,
-            which should be automatically turned on for this view.  This must
-            be an existing identifier of one of the named conditions specified
-            by 'filters'.  In Web applications using multiple filters in the
-            form it is also possible to put sequence of identifiers here,
-            each of the identifier belonging to a different filter sequence, to
-            select default values of more than one of the filters.  If there is
-            no default filter, use 'None' as default_filter value.
-            
-          aggregations -- a sequence aggregation functions which should be
-            turned on automatically for this view (in forms which support
-            that).  The items are 'AGG_*' constants of 'pytis.data.Data'.
+          default_profile -- a string identifier of the form profile, which
+            should be automatically preselected in the user interface.  This
+            must be an existing identifier of one of the profiles specified by
+            'profiles'.
+
+          filter_sets -- a sequence of filter sets as 'FilterSet' instances.
+            Filter sets are only supported by web applications to present
+            multiple filter selectors which can be combined into one final
+            filtering condition.
+
+          aggregations -- a sequence aggregation functions which should be turned on automatically
+            for this view (in forms which support that).  The items are 'AGG_*' constants of
+            'pytis.data.Data'.
 
           grouping_functions -- specification of available functions aplicable
             to group by columns in an aggregated view as a sequence of
@@ -1087,9 +1093,9 @@ class ViewSpec(object):
               actions=(), sorting=None, grouping=None, group_heading=None, check=(),
               cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
-              filters=(), conditions=(), default_filter=None, aggregations=(),
-              grouping_functions=(), bindings=(), initial_folding=None, spec_name='',
-              public=None):
+              profiles=(), default_profile=None, filters=(), conditions=(), default_filter=None,
+              filter_sets=(), aggregations=(), grouping_functions=(), bindings=(),
+              initial_folding=None, spec_name='', arguments=None, public=None):
         assert isinstance(title, (str, unicode))
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1192,29 +1198,32 @@ class ViewSpec(object):
                 assert callable(f)
         if conditions:
             # `conditions' are for backwards compatibility.
-            assert not filters, "Both 'filters' and 'conditions' defined."
+            assert not filters, "When using 'filters', 'conditions' can not be used."
             filters = conditions
-        assert isinstance(filters, (tuple, list))
+        if filters:
+            # `filters' are for backwards compatibility as well.
+            if isinstance(filters[0], FilterSet):
+                filter_sets = filters
+            else:
+                assert not profiles, \
+                    "When using 'profiles', 'filters' and 'conditions' can not be used."
+                profiles = filters
+        if default_filter:
+            assert not default_profile, "When using 'default_profile', 'default_filter' can not be used."
+            default_profile = default_filter
+        assert isinstance(profiles, (tuple, list))
+        assert isinstance(filter_sets, (tuple, list))
         if __debug__:
-            filter_identifiers = []
-            for ff in filters:
-                if not isinstance(ff, FilterSet):
-                    ff = FilterSet('__single', '', [ff])
-                for f in ff:
-                    assert isinstance(f, Filter)
-                    assert f.fixed()
-                    if f.id():
-                        assert f.id() not in filter_identifiers, \
-                               ("Duplicate filter id of %s: %s" % (spec_name, f.id(),))
-                        filter_identifiers.append(f.id())
-            if default_filter is not None:
-                if is_sequence(default_filter):
-                    default_filters = default_filter
-                else:
-                    default_filters = (default_filter,)
-                for f in default_filters:
-                    assert f in filter_identifiers, \
-                           ("Default filter not found in filters of %s: %s" % (spec_name, f,))
+            for fs in filter_sets:
+                assert isinstance(fs, FilterSet)
+            profile_identifiers = []
+            for p in profiles:
+                assert isinstance(p, Profile)
+                assert p.id() not in profile_identifiers, \
+                    "Duplicate profile id of %s: %s" % (spec_name, p.id())
+                profile_identifiers.append(p.id())
+            assert default_profile is None or default_profile in profile_identifiers, \
+                "Default profile not found in profiles of %s: %s" % (spec_name, default_profile)
         assert isinstance(aggregations, (tuple, list))
         if __debug__:
             for agg in aggregations:
@@ -1260,8 +1269,9 @@ class ViewSpec(object):
         self._description = description
         self._help = help
         self._row_style = row_style
-        self._filters = tuple(filters)
-        self._default_filter = default_filter
+        self._profiles = tuple(profiles)
+        self._default_profile = default_profile
+        self._filter_sets = filter_sets
         self._aggregations = tuple(aggregations)
         self._grouping_functions = tuple(grouping_functions)
         self._bindings = tuple(bindings)
@@ -1382,22 +1392,17 @@ class ViewSpec(object):
         """Vra» výchozí styl øádku, nebo funkci, která jej vypoète."""
         return self._row_style
 
-    def filters(self):
-        """Return predefined filtering conditions.
+    def profiles(self):
+        """Return predefined form profiles as a tuple of 'Profile' instances."""
+        return self._profiles
 
-        The return value is a tuple of 'Filter' instances or a tuple of
-        sequences of 'Filter' instances.
+    def default_profile(self):
+        """Return the default profile identifier as a string."""
+        return self._default_profile
 
-        """
-        return self._filters
-
-    def default_filter(self):
-        """Return the default filter identifier.
-
-        The return value may be 'None', a string, or a sequence of strings.
-
-        """
-        return self._default_filter
+    def filter_sets(self):
+        """Return the filter sets as a tuple of 'FilterSet' instances."""
+        return self._filter_sets
 
     def aggregations(self):
         """Return default aggregation functions as a tuple."""

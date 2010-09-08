@@ -699,12 +699,12 @@ class LookupForm(InnerForm):
         # konstruktoru, naproti tomu _lf_filter reprezentuje aktuální podmínku
         # u¾ivatelského filtru.
         self._lf_condition = condition
-        if filter is None and self._view.default_filter() is not None:
-            f = find(self._view.default_filter(), self._view.filters(), key=lambda f: f.id())
+        if filter is None and self._view.default_profile() is not None:
+            f = find(self._view.default_profile(), self._view.filters(), key=lambda f: f.id())
             if f:
                 filter = f.condition()
             else:
-                raise ProgramError("Unknown default filter: %s" % self._view.default_filter())
+                raise ProgramError("Unknown default filter: %s" % self._view.default_profile())
         self._lf_filter = filter
         self._lf_last_filter = filter or self._load_condition(self._FILTER_CONDITION_PARAM)
         self._lf_search_condition = self._load_condition(self._SEARCH_CONDITION_PARAM)
@@ -823,7 +823,7 @@ class LookupForm(InnerForm):
                 name, cond = unpacked[i]
                 if cond:
                     filter_id = '_filter_%d' % (i,)
-                    user_filters.append(Filter(filter_id, name, cond, fixed=False))
+                    user_filters.append(Filter(filter_id, name, cond))
         else:
             user_filters = ()
         return tuple(user_filters)
