@@ -565,7 +565,12 @@ class DMPMenu(DMPObject):
 
     def _load_specifications(self):
         self._top_item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=None, title=u"CELÉ MENU", position='2')
-        menu = self._resolver().get('application', 'menu')
+        messages = []
+        try:
+            menu = self._resolver().get('application', 'menu')
+        except ResolverError:
+            add_message(messages, DMPMessage.WARNING_MESSAGE, "No application menu in specifications")
+            return messages
         menu[0]._items = ((pytis.form.Menu(u"Správa menu a uživatelských rolí",
                                            (pytis.extensions.run_form_mitem(u"Menu", 'menu.ApplicationMenu',
                                                                             pytis.form.BrowseForm),
@@ -579,7 +584,6 @@ class DMPMenu(DMPObject):
                                                              command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),
                                             )),)
                           + menu[0]._items)
-        messages = []
         # Load menu
         def load(menu, parent):
             if isinstance(menu, pytis.form.Menu):
