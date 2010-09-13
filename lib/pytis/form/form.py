@@ -696,7 +696,10 @@ class LookupForm(InnerForm):
         ## Compatibility with contingent external code using the old attribute
         if name == '_lf_select_count':
             return self._lf_count()
-        return super(LookupForm, self).__getattr__(name)
+        try:
+            return self.__dict__[name]
+        except KeyError:
+            raise AttributeError(name)
 
     def _lf_count(self, min_value=None, timeout=None):
         if self._lf_select_count_ is None or isinstance(self._lf_select_count_, int):
