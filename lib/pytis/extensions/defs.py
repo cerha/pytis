@@ -52,7 +52,7 @@ def get_form_defs(resolver, messages=None):
                 try:
                     module = resolver.get_module(module_name)
                 except pytis.util.ResolverFileError:
-                    add_message(messages, DMPMessage.WARNING_MESSAGE, "Module not loaded", (module,))
+                    add_message(messages, DMPMessage.WARNING_MESSAGE, "Module not loaded", (module_name,))
                     continue
                 except Exception, e:
                     add_message(messages, DMPMessage.ERROR_MESSAGE, "Error when loading module", (module, e,))
