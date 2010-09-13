@@ -653,7 +653,7 @@ class GroupSpec(object):
         for item in self._items:
             if isinstance(item, GroupSpec):
                 fields.extend(item.order())
-            elif not isinstance(item, (Button, Text)):
+            elif isinstance(item, (str, unicode)):
                 fields.append(item)
         return fields
 
