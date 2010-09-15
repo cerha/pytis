@@ -17,10 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytis.form
 import pytis.presentation
 
 from pytis.presentation import Editable
-from pytis.extensions import Field
+from pytis.extensions import Field, nextval
 
 class GlobalOutputTemplates(pytis.presentation.Specification):
     public = True
@@ -28,8 +29,8 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
     title = _("Tiskové ¹ablony")
     fields = (
         Field('id', _("Identifikátor øádku"), editable=pytis.presentation.Editable.NEVER),
-        Field('module', _("Tiskový modul"), editable=pytis.presentation.Editable.NEVER),
-        Field('specification', _("Specifikace")),
+        Field('module', _("Formuláø"), editable=pytis.presentation.Editable.NEVER),
+        Field('specification', _("Název ¹ablony")),
         Field('data', _("©ablona"), width=80, height=20, compact=True),
         )
     columns = ('module', 'specification', 'data',)
@@ -40,11 +41,19 @@ class UserOutputTemplates(pytis.presentation.Specification):
     table = 'ev_pytis_user_output_templates'
     title = _("Tiskové ¹ablony")
     fields = (
-        Field('id', _("Identifikátor øádku"), editable=pytis.presentation.Editable.NEVER),
-        Field('module', _("Tiskový modul"), editable=pytis.presentation.Editable.NEVER),
-        Field('specification', _("Specifikace")),
+        Field('id', _("Identifikátor øádku"), default=nextval('e_pytis_output_templates_id_seq'),
+              editable=pytis.presentation.Editable.NEVER),
+        Field('module', _("Formuláø")),
+        Field('specification', _("Název ¹ablony")),
         Field('data', _("©ablona"), width=80, height=20, compact=True),
         Field('username', _("U¾ivatel")),
         )
     columns = ('module', 'specification', 'username', 'data',)
-    layout = ('module', 'specification', 'username', 'data',)
+    layout = ('module', 'specification', 'data',)
+    def on_delete_record(self, row):
+        if not row['username'].value():
+            pytis.form.run_dialog(pytis.form.Warning, _("Mù¾ete mazat pouze své vlastní záznamy."))
+            return None
+        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
+            return None
+        return pytis.data.EQ(row.keys()[0], row.key()[0])
