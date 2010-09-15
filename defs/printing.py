@@ -26,20 +26,21 @@ from pytis.extensions import Field, nextval
 class GlobalOutputTemplates(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_global_output_templates'
-    title = _("Tiskové ¹ablony")
+    title = _("Pøeddefinované tiskové ¹ablony")
     fields = (
         Field('id', _("Identifikátor øádku"), editable=pytis.presentation.Editable.NEVER),
         Field('module', _("Formuláø"), editable=pytis.presentation.Editable.NEVER),
         Field('specification', _("Název ¹ablony")),
-        Field('data', _("©ablona"), width=80, height=20, compact=True),
+        Field('template', _("©ablona"), width=80, height=20, compact=True),
+        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), width=80, height=20, compact=True),
         )
-    columns = ('module', 'specification', 'data',)
-    layout = ('module', 'specification', 'data',)
+    columns = ('module', 'specification', 'template',)
+    layout = ('module', 'specification', 'template', 'rowtemplate',)
 
 class UserOutputTemplates(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_user_output_templates'
-    title = _("Tiskové ¹ablony")
+    title = _("U¾ivatelské tiskové ¹ablony")
     fields = (
         Field('id', _("Identifikátor øádku"), default=nextval('e_pytis_output_templates_id_seq'),
               editable=pytis.presentation.Editable.NEVER),
