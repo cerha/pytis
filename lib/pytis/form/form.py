@@ -746,15 +746,20 @@ class InnerForm(Form):
         # Vrať seznam položek tiskového menu.
         name = self._name
         try:
-            print_spec = self._resolver.get(name, 'print_spec') or ()
+            print_spec = list(self._resolver.get(name, 'print_spec') or ())
         except ResolverSpecError:
-            print_spec = ()
-        # Default print currently disabled, since on a huge table it may extensively cunsume
+            print_spec = []
+        # Default print currently disabled, since on a huge table it may extensively consume
         # resources and no one is using it anyway...
         #if not print_spec:
-        #    print_spec = ((_(u"Výchozí"), os.path.join('output', name)),)
-        return [MItem(title, command=BrowseForm.COMMAND_PRINT(print_spec_path=path))
+        #    print_spec = ((_("Výchozí"), os.path.join('output', name)),)
+        condition = pytis.data.EQ('module', pytis.data.Value(pytis.data.String(), name))
+        for row in pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
+            template_name = row['specification'].value()
+            print_spec.append((template_name, name+'/'+template_name,))
+        menu = [MItem(title, command=BrowseForm.COMMAND_PRINT(print_spec_path=path))
                 for title, path in print_spec]
+        return menu
 
     def _aggregation_menu(self):
         return None
