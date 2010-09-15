@@ -356,7 +356,8 @@ class DatabaseResolver(Resolver):
 
       module -- text column containing module names
       specification -- text column containing specification names
-      data -- column of any type containing the object data
+      data -- column of any type containing the object data; alternatively other
+        column names can be used as specified in the constructor
 
     Each (module, specification) value should be unique within the table.
 
@@ -368,17 +369,20 @@ class DatabaseResolver(Resolver):
     doesn't return anything reasonable for module only requests.
 
     """
-    def __init__(self, table):
+    def __init__(self, table, result_columns=('data',)):
         """
         Arguments:
 
           table -- name of the database table storing the resolved data
+          result_columns -- sequence of column names to include in the result
 
         """
         super(DatabaseResolver, self).__init__()
         assert isinstance(table, basestring), table
+        assert is_sequence(result_columns), result_columns
+        self._result_columns = result_columns
         import config
-        self._data = pytis.data.dbtable(table, ('module', 'specification', 'data'),
+        self._data = pytis.data.dbtable(table, ('module', 'specification') + result_columns,
                                         config.dbconnection)
         
     def _get_module(self, name):
@@ -396,7 +400,9 @@ class DatabaseResolver(Resolver):
         rows = self._data.select_map(identity, condition=condition)
         if not rows:
             raise ResolverSpecError(module_name, spec_name)
-        obj = rows[0]['data'].value()
+        obj = [rows[0][c].value() for c in self._result_columns]
+        if len(obj) == 1:
+            obj = obj[0]
         return obj
 
     def _get_spec(self, key):

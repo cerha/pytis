@@ -25,7 +25,8 @@ _std_table('e_pytis_output_templates',
            (P('id', TSerial),
             C('module', TString, constraints=('not null',)), # form
             C('specification', TString, constraints=('not null',)), # user template name
-            C('data', TString),
+            C('template', TString),
+            C('rowtemplate', TString),
             C('username', TString),
             ),
            """Storage of print output templates handled by a DatabaseResolver.""",
@@ -42,13 +43,15 @@ viewng('ev_pytis_global_output_templates',
        grant=db_rights,
        depends=('e_pytis_output_templates',))
 
+current_user_condition = "username=current_user or (username is null and (module, specification) not in (select module, specification from e_pytis_output_templates where templates.module=module and templates.specification=specification and username=current_user))"
+
 viewng('ev_pytis_user_output_templates',
        (SelectRelation('e_pytis_output_templates', alias='templates',
-                       condition="username=current_user or (username is null and (module, specification) not in (select module, specification from e_pytis_output_templates where templates.module=module and templates.specification=specification and username=current_user))"),
+                       condition=current_user_condition),
         ),
-       insert="insert into e_pytis_output_templates (module, specification, data, username) values (new.module, new.specification, new.data, current_user)",
+       insert="insert into e_pytis_output_templates (module, specification, template, rowtemplate, username) values (new.module, new.specification, new.template, new.rowtemplate, current_user)",
        update="""(
-       insert into e_pytis_output_templates (module, specification, data, username) values (new.module, new.specification, new.data, current_user);
+       insert into e_pytis_output_templates (module, specification, template, rowtemplate, username) values (new.module, new.specification, new.template, new.rowtemplate, current_user);
        delete from e_pytis_output_templates where id=old.id and username=current_user;
        )
        """,

@@ -45,11 +45,12 @@ class UserOutputTemplates(pytis.presentation.Specification):
               editable=pytis.presentation.Editable.NEVER),
         Field('module', _("Formuláø")),
         Field('specification', _("Název ¹ablony")),
-        Field('data', _("©ablona"), width=80, height=20, compact=True),
+        Field('template', _("©ablona"), width=80, height=20, compact=True),
+        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), width=80, height=20, compact=True),
         Field('username', _("U¾ivatel")),
         )
-    columns = ('module', 'specification', 'username', 'data',)
-    layout = ('module', 'specification', 'data',)
+    columns = ('module', 'specification', 'username', 'template',)
+    layout = ('module', 'specification', 'template', 'rowtemplate',)
     def on_delete_record(self, row):
         if not row['username'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Mù¾ete mazat pouze své vlastní záznamy."))
