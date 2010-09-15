@@ -23,8 +23,8 @@ db_rights = globals().get('Gall_pytis', None)
 
 _std_table('e_pytis_output_templates',
            (P('id', TSerial),
-            C('module', TString, constraints=('not null',)),
-            C('specification', TString, constraints=('not null',)),
+            C('module', TString, constraints=('not null',)), # form
+            C('specification', TString, constraints=('not null',)), # user template name
             C('data', TString),
             C('username', TString, default="current_user"),
             ),
@@ -33,7 +33,17 @@ _std_table('e_pytis_output_templates',
            grant=db_rights,
            depends=())
 
-viewng('ev_pytis_output_templates',
+viewng('ev_pytis_global_output_templates',
+       (SelectRelation('e_pytis_output_templates', alias='templates',
+                       condition="username is null"),
+        ),
+       insert_order=('e_pytis_output_templates',),
+       update_order=('e_pytis_output_templates',),
+       delete_order=('e_pytis_output_templates',),
+       grant=db_rights,
+       depends=('e_pytis_output_templates',))
+
+viewng('ev_pytis_user_output_templates',
        (SelectRelation('e_pytis_output_templates', alias='templates',
                        condition="username = current_user or username is null"),
         ),

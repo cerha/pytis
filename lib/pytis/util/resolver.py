@@ -384,12 +384,15 @@ class DatabaseResolver(Resolver):
     def _get_module(self, name):
         return name
 
-    def _get_object(self, key):
-        module_name, spec_name = key
+    def _database_condition(self, module_name, spec_name):
         def s(value):
             return pytis.data.Value(pytis.data.String(), value)
-        condition = pytis.data.AND(pytis.data.EQ('module', s(module_name)),
-                                   pytis.data.EQ('specification', s(spec_name)))
+        return pytis.data.AND(pytis.data.EQ('module', s(module_name)),
+                              pytis.data.EQ('specification', s(spec_name)))
+    
+    def _get_object(self, key):
+        module_name, spec_name = key
+        condition = self._database_condition(module_name, spec_name)
         rows = self._data.select_map(identity, condition=condition)
         if not rows:
             raise ResolverSpecError(module_name, spec_name)

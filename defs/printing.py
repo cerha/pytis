@@ -22,9 +22,22 @@ import pytis.presentation
 from pytis.presentation import Editable
 from pytis.extensions import Field
 
-class OutputTemplates(pytis.presentation.Specification):
+class GlobalOutputTemplates(pytis.presentation.Specification):
     public = True
-    table = 'ev_pytis_output_templates'
+    table = 'ev_pytis_global_output_templates'
+    title = _("Tiskové ¹ablony")
+    fields = (
+        Field('id', _("Identifikátor øádku"), editable=pytis.presentation.Editable.NEVER),
+        Field('module', _("Tiskový modul"), editable=pytis.presentation.Editable.NEVER),
+        Field('specification', _("Specifikace")),
+        Field('data', _("©ablona"), width=80, height=20, compact=True),
+        )
+    columns = ('module', 'specification', 'data',)
+    layout = ('module', 'specification', 'data',)
+
+class UserOutputTemplates(pytis.presentation.Specification):
+    public = True
+    table = 'ev_pytis_user_output_templates'
     title = _("Tiskové ¹ablony")
     fields = (
         Field('id', _("Identifikátor øádku"), editable=pytis.presentation.Editable.NEVER),

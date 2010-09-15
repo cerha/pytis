@@ -2748,6 +2748,7 @@ class BrowseForm(FoldableForm):
             return x
 
     class _PlainPrintResolver(PlainFileResolver):
+        
         def get(self, *args, **kwargs):
             result = PlainFileResolver.get(self, *args, **kwargs)
             if result and isinstance(result, basestring):
@@ -2756,10 +2757,23 @@ class BrowseForm(FoldableForm):
             return result
 
     class _DBPrintResolver(DatabaseResolver):
-        def __init__(self):
-            DatabaseResolver.__init__(self, 'ev_pytis_output_templates')
-        def get(self, *args, **kwargs):
-            result = DatabaseResolver.get(self, *args, **kwargs)
+        
+        def __init__(self, db_table):
+            DatabaseResolver.__init__(self, db_table)
+
+        def get(self, module_name, spec_name, **kwargs):
+            if spec_name != 'body':
+                raise ResolverSpecError(module_name, spec_name)
+            module_parts = module_name.split('/')
+            if module_parts[0] == 'output':
+                del module_parts[0]
+            if len(module_parts) > 1:
+                module_name = string.join(module_parts[:-1], '/')
+                spec_name = module_parts[-1]
+            else:
+                module_name = string.join(module_parts, '/')
+                spec_name = ''
+            result = DatabaseResolver.get(self, module_name, spec_name, **kwargs)
             if result and isinstance(result, basestring):
                 import lcg
                 result = pytis.output.StructuredText(result)
@@ -2947,8 +2961,10 @@ class BrowseForm(FoldableForm):
         parameters.update({P.P_NAME: name})
         print_resolver = P(self._resolver, parameters=parameters)
         wiki_template_resolver = self._PlainPrintResolver(config.def_dir, extension='text')
-        db_template_resolver = self._DBPrintResolver()
-        resolvers = (db_template_resolver, wiki_template_resolver, print_resolver,)
+        db_template_resolver_1 = self._DBPrintResolver('ev_pytis_user_output_templates')
+        db_template_resolver_2 = self._DBPrintResolver('ev_pytis_global_output_templates')
+        resolvers = (db_template_resolver_1, db_template_resolver_2,
+                     wiki_template_resolver, print_resolver,)
         formatter = pytis.output.Formatter(resolvers, print_spec_path, form=self,
                                            **self._print_form_kwargs())
         run_form(print_form(), name, formatter=formatter)
