@@ -44,7 +44,7 @@ viewng('ev_pytis_global_output_templates',
 
 viewng('ev_pytis_user_output_templates',
        (SelectRelation('e_pytis_output_templates', alias='templates',
-                       condition="username = current_user or username is null"),
+                       condition="username=current_user or (username is null and (module, specification) not in (select module, specification from e_pytis_output_templates where templates.module=module and templates.specification=specification and username=current_user))"),
         ),
        insert_order=('e_pytis_output_templates',),
        update="""(
