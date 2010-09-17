@@ -280,7 +280,13 @@ class PageNumber(_Mark):
         return self._total
 
     def lcg(self):
-        return lcg.PageNumber(total=self._total)
+        if self._total:
+            result = lcg.Container((lcg.PageNumber(total=False),
+                                    lcg.TextContent('/'),
+                                    lcg.PageNumber(total=True),))
+        else:
+            result = lcg.PageNumber(total=False)
+        return result
 
 class Bold(_Container):
     """Tučně sázený text."""
