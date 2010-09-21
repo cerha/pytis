@@ -448,10 +448,10 @@ class Document(_Container):
         """
         def arg(definition):
             if definition is None or isinstance(definition, lcg.Content):
-                result = definition
+                value = definition
             else:
-                result = definition.lcg()
-            return result
+                value = definition.lcg()
+            return {None: value}
         content_id = 'pytismarkup%d' % (self._counter.next(),)
         return lcg.ContentNode(id=content_id, title=' ', # let's avoid printing the id
                                content=self.lcg(),

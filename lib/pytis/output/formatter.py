@@ -1275,9 +1275,9 @@ class LCGFormatter(object):
         children = ([document.lcg_document(globals=lcg_globals) for document in body] +
                     children)
         lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children,
-                                      page_header=self._page_header.lcg(),
-                                      first_page_header=self._first_page_header.lcg(),
-                                      page_footer=self._page_footer.lcg())
+                                      page_header={None: self._page_header.lcg()},
+                                      first_page_header={None: self._first_page_header.lcg()},
+                                      page_footer={None: self._page_footer.lcg()})
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None)
         pdf = exporter.export(context)
