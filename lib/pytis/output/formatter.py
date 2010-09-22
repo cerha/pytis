@@ -1271,13 +1271,14 @@ class LCGFormatter(object):
         if self._form is not None and self._row_template is not None:
             i = 1
             row_template = self._row_template
-            parameters = self._template_parameters(row_template)
             for row in self._form.presented_rows():
                 row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
                                                    current_row=row)
                 id_ = 'pytissubdoc%d' % (i,)    
+                row_template_lcg = row_template.lcg()
+                parameters = self._template_parameters(row_template)
                 document = lcg.ContentNode(id=id_, title=' ', # let's avoid printing the id
-                                           content=row_template.lcg(), globals=row_lcg_globals,
+                                           content=row_template_lcg, globals=row_lcg_globals,
                                            **parameters)
                 children.append(document)
                 i += 1
