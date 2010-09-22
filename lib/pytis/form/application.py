@@ -854,6 +854,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.push(form)
                     message('', root=True)
                     form.show()
+                    busy_cursor(False)
                     try:
                         form_str = str(form) # Dead form doesn't speak...
                         result = form.run()
