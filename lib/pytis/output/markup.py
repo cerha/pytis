@@ -435,7 +435,8 @@ class Document(_Container):
     """
     KWARGS = {'page_header': None,
               'page_footer': None,
-              'first_page_header': None}
+              'first_page_header': None,
+              'presentation': None}
     _counter = pytis.util.Counter()
 
     def lcg_document(self, **kwargs):
@@ -747,6 +748,20 @@ class StructuredText(_Mark):
 
         """
         self._text = text
+        self._parameters = {}
 
     def lcg(self):
-        return lcg.Container(lcg.Parser().parse(self._text))
+        parser = lcg.Parser()
+        parameters = {}
+        result = lcg.Container(parser.parse(self._text, parameters))
+        self._parameters = {}
+        for k, v in parameters.items():
+            self._parameters[k] = {None: v}
+        if (not self._parameters.has_key('first_page_header') and
+            self._parameters.has_key('page_header')):
+            self._parameters['first_page_header'] = self._parameters['page_header']
+        return result
+
+    def parameters(self):
+        """Return parameters defined in the structured text."""
+        return self._parameters

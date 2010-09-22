@@ -46,6 +46,7 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 
 """
 
+import copy
 import cStringIO
 import codecs
 import config
@@ -1230,10 +1231,16 @@ class LCGFormatter(object):
         if (not isinstance(body, Document) and
             body and
             not (is_sequence(body) and body and isinstance(body[0], Document))):
-            body = Document(body,
-                            page_header=self._page_header.lcg(),
-                            first_page_header=self._first_page_header.lcg(),
-                            page_footer=self._page_footer.lcg())
+            body.lcg() # to generate parameters
+            parameters = copy.copy(self._template_parameters(body))
+            for p, a in (('page_header', self._page_header,),
+                         ('page_footer', self._page_footer,),
+                         ('first_page_header', self._first_page_header,),):
+                if not parameters.has_key(p):
+                    parameters[p] = {None: a.lcg()}
+            self._body_parameters = parameters
+            simple_parameters = dict([(k, v[None],) for k, v in parameters.items()])
+            body = Document(body, **simple_parameters)
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
@@ -1252,17 +1259,26 @@ class LCGFormatter(object):
             break
         return result
 
+    def _template_parameters(self, template):
+        if isinstance(template, StructuredText):
+            parameters = template.parameters()
+        else:
+            parameters = {}
+        return parameters
+
     def _pdf(self):
         children = []
         if self._form is not None and self._row_template is not None:
             i = 1
+            row_template = self._row_template
+            parameters = self._template_parameters(row_template)
             for row in self._form.presented_rows():
-                row_content = self._row_template.lcg()
                 row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
                                                    current_row=row)
                 id_ = 'pytissubdoc%d' % (i,)    
                 document = lcg.ContentNode(id=id_, title=' ', # let's avoid printing the id
-                                           content=row_content, globals=row_lcg_globals)
+                                           content=row_template.lcg(), globals=row_lcg_globals,
+                                           **parameters)
                 children.append(document)
                 i += 1
         lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings)
@@ -1275,9 +1291,7 @@ class LCGFormatter(object):
         children = ([document.lcg_document(globals=lcg_globals) for document in body] +
                     children)
         lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children,
-                                      page_header={None: self._page_header.lcg()},
-                                      first_page_header={None: self._first_page_header.lcg()},
-                                      page_footer={None: self._page_footer.lcg()})
+                                      **self._body_parameters)
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None)
         pdf = exporter.export(context)
