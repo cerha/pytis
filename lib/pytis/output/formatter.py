@@ -1197,6 +1197,15 @@ class LCGFormatter(object):
                 dictionary['current_row'] = current_row_dictionary
                 dictionary['data'] = _DataIterator(self._selected_resolver, form)
                 dictionary['table'] = self._make_table
+                dictionary['agg'] = agg = _ProxyDict()
+                for name, op in(('min', pytis.data.Data.AGG_MIN,),
+                                ('max', pytis.data.Data.AGG_MAX,),
+                                ('count', pytis.data.Data.AGG_COUNT,),
+                                ('sum', pytis.data.Data.AGG_SUM,),
+                                ('avg', pytis.data.Data.AGG_AVG,),):
+                    def value(op=op):
+                        return self._make_agg(op)
+                    agg[name] = value
                 if form_bindings:
                     dictionary['Binding'] = binding_dictionary = _ProxyDict()
                     for binding in form_bindings:
@@ -1219,6 +1228,20 @@ class LCGFormatter(object):
             table = pytis.output.data_table(self._selected_resolver, form.name(),
                                             condition=form.condition(), sorting=form.data_sorting())
             return table.lcg()
+        def _make_agg(self, op):
+            dictionary = _ProxyDict()
+            for column in self._form.data().columns():
+                if op == pytis.data.Data.AGG_COUNT or isinstance(column.type(), pytis.data.Number):
+                    colid = column.id()
+                    def value(colid=colid):
+                        return self._make_agg_value(op, colid)
+                    dictionary[colid] = value
+            return dictionary
+        def _make_agg_value(self, op, column):
+            form = self._form
+            data = form.data()
+            condition = form.condition()
+            return data.select_aggregate((op, column,), condition=condition).value()
         def _make_binding(self, binding, current_row):
             binding_condition = binding.condition()
             binding_column = binding.binding_column()
