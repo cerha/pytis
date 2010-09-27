@@ -1128,6 +1128,37 @@ class _ProxyDict(dict):
             callable(result)):
             result = self[key] = result()
         return result
+class _DataIterator(lcg.SubstitutionIterator):
+    def __init__(self, resolver, form):
+        name = form.name()
+        condition=form.condition()
+        sorting=form.data_sorting()        
+        if condition is None:
+            try:
+                condition = resolver.p((name, P_CONDITION))
+            except ResolverError:
+                pass
+        if sorting is None:
+            sorting = resolver.p((name, P_SORTING))
+        view = resolver.get(name, 'view_spec')
+        data_spec = resolver.get(name, 'data_spec')
+        import config
+        self._data = data_spec.create(dbconnection_spec=config.dbconnection)
+        self._data.select(condition=condition, sort=sorting)
+        self._presented_row = pytis.presentation.PresentedRow(view.fields(), self._data, None, singleline=True)
+        super(_DataIterator, self).__init__()
+    def _value(self):
+        row = self._presented_row
+        return dict([(k, row[k].value(),) for k in row.keys()])
+    def _next(self):
+        row = self._data.fetchone()
+        if row is None:
+            return False
+        self._presented_row.set_row(row)
+        return True
+    def _reset(self):
+        self._data.rewind()
+        
 class LCGFormatter(object):
     """LCG based formatter."""
 
@@ -1137,8 +1168,6 @@ class LCGFormatter(object):
 
     class _LCGGlobals(_ProxyDict):
         def __init__(self, resolvers, form, form_bindings, current_row=None):
-            dictionary = self._initial_dictionary(form, form_bindings, current_row)
-            _ProxyDict.__init__(self, dictionary)
             self._resolvers = resolvers
             name = form.name()
             for r in resolvers:
@@ -1153,6 +1182,8 @@ class LCGFormatter(object):
                 self._selected_resolver = resolvers[0]
             self._form = form
             self._form_bindings = form_bindings
+            dictionary = self._initial_dictionary(form, form_bindings, current_row)
+            _ProxyDict.__init__(self, dictionary)
         def _initial_dictionary(self, form, form_bindings, current_row):
             dictionary = _ProxyDict()
             if form is not None:
@@ -1164,6 +1195,7 @@ class LCGFormatter(object):
                     current_row_dictionary = dict([(k, current_row[k].value(),)
                                                    for k in current_row.keys()])
                 dictionary['current_row'] = current_row_dictionary
+                dictionary['data'] = _DataIterator(self._selected_resolver, form)
                 dictionary['table'] = self._make_table
                 if form_bindings:
                     dictionary['Binding'] = binding_dictionary = _ProxyDict()

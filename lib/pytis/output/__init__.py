@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2010 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,6 @@ from pytis.util import *
 from exception import *
 from resolver import *
 from markup import *
-from formatter import *
 from flibdata import *
 from flibutil import *
+from formatter import *
