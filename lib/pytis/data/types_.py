@@ -957,7 +957,7 @@ class Macaddr(String):
         return Value(self, unicode(value)), None
 
 class StructuredText(String):
-    """Text formatted using the LCG structored text markup.
+    """Text formatted using the LCG structured text markup.
 
     Fields of this type may be handled specifically in the user interface.
 
