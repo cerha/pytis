@@ -2026,7 +2026,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     allowed = Number
                 for cid in colids:
                     t = self.find_column(cid).type()
-                    assert isinstance(t, allowed)
+                    assert isinstance(t, allowed), (operation, cid, t, allowed,)
         close_select = False
         if not self._pg_is_in_select:
             self.select(condition=condition, transaction=transaction)
