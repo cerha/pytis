@@ -1296,6 +1296,8 @@ class LCGFormatter(object):
             self._body_parameters = parameters
             simple_parameters = dict([(k, v[None],) for k, v in parameters.items()])
             body = Document(body, **simple_parameters)
+        else:
+            self._body_parameters = {}
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
