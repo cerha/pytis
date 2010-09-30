@@ -1383,7 +1383,7 @@ class LCGFormatter(object):
         """Send the document as PDF to the standard input of 'printing_command'."""
         process = Popen(config.printing_command, from_child=dev_null_stream('w'))
         stream = process.to_child()
-        thread.start_new_thread(self.printout, (stream,))
+        self.printout(stream)
     
     def close(self):
         """Obsolete, no need to call this method anymore."""

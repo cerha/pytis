@@ -353,7 +353,10 @@ class PrintFormInternal(PrintForm, InnerForm):
         if not new:
             preview.restart(None)
         stream = self._current_stream = preview.ps_input_stream()
-        thread.start_new_thread(self._run_formatter, (stream,))
+        if isinstance(self._formatter, pytis.output.LoutFormatter):
+            thread.start_new_thread(self._run_formatter, (stream,))
+        else:
+            self._run_formatter(stream)
         
     def _create_controls(self):
         self._start_postscript_viewer(1.0)
