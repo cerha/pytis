@@ -2,7 +2,7 @@
 
 # Formulář s tiskovým preview a tiskem
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -422,8 +422,9 @@ class PrintFormInternal(PrintForm, InnerForm):
         if self._total_pages is None:
             self._show_page(self._preview.current_page())
             microsleep()
-        if not self._formatter_running and self._number_of_runs < 2:
-            self._start_postscript_viewer(self._zoom, new=False)
+        if isinstance(self._formatter, pytis.output.LoutFormatter):
+            if not self._formatter_running and self._number_of_runs < 2:
+                self._start_postscript_viewer(self._zoom, new=False)
 
     def _on_widget_key(self, event, widget):
         if WxKey().is_event_of_key(event, 'Enter'):
@@ -581,7 +582,8 @@ class PrintFormExternal(PrintForm, PopupForm):
         pass
     
     def run(self, *args, **kwargs):
-        self._run_formatter()
-        # Run it once again to make correct total page count in the document
         file_name = self._run_formatter()
+        if isinstance(self._formatter, pytis.output.LoutFormatter):
+            # Run it once again to make correct total page count in the document
+            file_name = self._run_formatter()
         thread.start_new_thread(self._run_viewer, (file_name,))
