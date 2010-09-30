@@ -72,7 +72,7 @@ class _Ghostscript(Tmpdir):
     def _start_gs(self, stream, zoom):
         if __debug__: log(DEBUG, 'Start Ghostscriptu:', zoom)
         zoom = 100 * zoom
-        gs_command = ('gs -dNOPAUSE -dQUIET -dSAFER -sDEVICE=bmpmono ' + \
+        gs_command = ('gs -dNOPAUSE -dQUIET -dSAFER -sDEVICE=bmpgray -dTextAlphaBits=4 ' + \
                       '-r%dx%d -sOutputFile=%s -') % \
                       (zoom, zoom, self._file_pattern)
         self._finished = False
