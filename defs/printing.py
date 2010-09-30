@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pytis.data
 import pytis.form
 import pytis.presentation
 
@@ -31,8 +32,10 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
         Field('id', _("Identifikátor øádku"), editable=pytis.presentation.Editable.NEVER),
         Field('module', _("Formuláø"), editable=pytis.presentation.Editable.NEVER),
         Field('specification', _("Název ¹ablony")),
-        Field('template', _("©ablona"), width=80, height=20, compact=True),
-        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), width=80, height=20, compact=True),
+        Field('template', _("©ablona"), type=pytis.data.StructuredText(),
+              width=80, height=20, compact=True),
+        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), type=pytis.data.StructuredText(),
+              width=80, height=20, compact=True),
         )
     columns = ('module', 'specification', 'template',)
     layout = ('module', 'specification', 'template', 'rowtemplate',)
@@ -46,8 +49,10 @@ class UserOutputTemplates(pytis.presentation.Specification):
               editable=pytis.presentation.Editable.NEVER),
         Field('module', _("Formuláø")),
         Field('specification', _("Název ¹ablony")),
-        Field('template', _("©ablona"), width=80, height=20, compact=True),
-        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), width=80, height=20, compact=True),
+        Field('template', _("©ablona"), type=pytis.data.StructuredText(),
+              width=80, height=20, compact=True),
+        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), type=pytis.data.StructuredText(),
+              width=80, height=20, compact=True),
         Field('username', _("U¾ivatel")),
         )
     columns = ('module', 'specification', 'username', 'template',)

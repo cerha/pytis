@@ -265,6 +265,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             field = ColorSelectionField
         elif isinstance(type, pytis.data.Password):
             field = PasswordField
+        elif isinstance(type, pytis.data.StructuredText):
+            field = CodeField
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
@@ -947,12 +949,21 @@ class TextField(InputField):
     def _cmd_select_all(self):
         self._ctrl.SetSelection(-1, -1)
         
-
 class StringField(TextField):
     """Textové vstupní políčko pro data typu 'pytis.data.String'."""
 
     def _maxlen(self):
         return self._type.maxlen()
+
+class CodeField(TextField):
+    """Text input field with a monospace font."""
+
+    def _create_ctrl(self):
+        control = TextField._create_ctrl(self)
+        # Set a monospace font
+        font = wx.Font(control.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
+        control.SetFont(font)
+        return control
 
 class PasswordField(StringField):
     _ORIGINAL_VALUE = u'\u2024'*8
