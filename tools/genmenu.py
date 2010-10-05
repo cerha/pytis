@@ -389,7 +389,7 @@ def process_rights(resolver, actions, rights, def_dir, spec_fullname):
                 try:
                     module = resolver.get_module(module_name)
                 except pytis.util.ResolverFileError:
-                    print 'Warning: Module not loaded: %s' % (module,)
+                    print 'Warning: Module not loaded: %s' % (module_name,)
                     continue
                 module_identifier = module_name.replace('/', '.')
                 for spec_attr in [o for o in dir(module)]:
