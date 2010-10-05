@@ -1892,7 +1892,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wildcards = ["Soubory TXT (*.txt)", "*.txt",
                      "Soubory CSV (*.csv)", "*.csv"
                      ]
-        default_filename = 'export.txt'
+        username = config.dbconnection.user()
+        if username is None:
+            username = ''
+        default_filename = 'export_%s.txt' % username
         if xls_possible:
             msg = _("Export mù¾e být proveden do XLS nebo CSV souboru.\n\n")
             msg = msg + _("Zvolte po¾adovaný formát.")
@@ -1901,7 +1904,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return
             if fileformat == 'XLS':                
                 wildcards = ["Soubory XLS (*.xls)", "*.xls"]
-                default_filename = 'export.xls'
+                default_filename = 'export_%s.xls' % username
         else:
             fileformat = 'CSV'
         export_dir = config.export_directory
