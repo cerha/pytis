@@ -213,10 +213,10 @@ class DualForm(Form, Refreshable):
     def show(self):
         # Musíme volat show obou podformuláøù, proto¾e splitter je nevolá a
         # pøitom v nich mohou být inicializaèní èi ukonèovací akce.
-        self._side_form.show()
-        self._main_form.show()
         self._splitter.Enable(True)
         self._splitter.Show(True)
+        self._side_form.show()
+        self._main_form.show()
 
     def hide(self):
         self._side_form.hide()
