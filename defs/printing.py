@@ -61,7 +61,9 @@ class UserOutputTemplates(pytis.presentation.Specification):
         if not row['username'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Mù¾ete mazat pouze své vlastní záznamy."))
             return None
-        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
+        template = row['specification'].value()
+        question = _("Opravdu chcete vymazat tiskovou sestavu %s?") % (template,)
+        if not pytis.form.run_dialog(pytis.form.Question, question):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
 
@@ -83,11 +85,13 @@ class DirectUserOutputTemplates(UserOutputTemplates):
             condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
                                        pytis.data.EQ('specification', s(specification)))
             if not data.select(condition):
-                pytis.form.run_dialog(pytis.form.Error, _("Tisková sestava neexistuje"))
+                message =  _("Tisková sestava neexistuje: ") + specification
+                pytis.form.run_dialog(pytis.form.Error, message)
                 return
             row = data.fetchone()
             if data.fetchone() is not None:
-                pytis.form.run_dialog(pytis.form.Error, _("Tisková sestava se vyskytuje ve více exempláøích"))
+                message =  _("Tisková sestava se vyskytuje ve více exempláøích: ") + specification
+                pytis.form.run_dialog(pytis.form.Error, message)
                 return
             record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
             pytis.form.delete_record(view_spec, data, None, record)
