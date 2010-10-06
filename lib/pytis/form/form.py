@@ -765,6 +765,7 @@ class InnerForm(Form):
                 for title, path in print_spec]
         def s(value):
             return pytis.data.Value(pytis.data.String(), value)
+        menu.append(MSeparator())
         menu.append(pytis.extensions.new_record_mitem(_("Nová sestava"), printing_form,
                                                       prefill=dict(module=s(name))))
         if db_print_spec:
