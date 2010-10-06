@@ -64,3 +64,31 @@ class UserOutputTemplates(pytis.presentation.Specification):
         if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete záznam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
+
+class DirectUserOutputTemplates(UserOutputTemplates):
+    def fields(self):
+        fields = pytis.presentation.Fields(UserOutputTemplates.fields)
+        overridden = [pytis.presentation.Field(inherit=fields['module'],
+                                               editable=pytis.presentation.Editable.NEVER)]
+        return fields.fields(override=overridden)
+    
+    def proc_spec(self):
+        def delete_template(module, specification):
+            def s(value):
+                return pytis.data.Value(pytis.data.String(), value)
+            data_spec = self.data_spec()
+            view_spec = self.view_spec()
+            import config
+            data = data_spec.create(dbconnection_spec=config.dbconnection)
+            condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
+                                       pytis.data.EQ('specification', s(specification)))
+            if not data.select(condition):
+                pytis.form.run_dialog(pytis.form.Error, _("Tisková sestava neexistuje"))
+                return
+            row = data.fetchone()
+            if data.fetchone() is not None:
+                pytis.form.run_dialog(pytis.form.Error, _("Tisková sestava se vyskytuje ve více exempláøích"))
+                return
+            record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
+            pytis.form.delete_record(view_spec, data, None, record)
+        return {'delete_template': delete_template}

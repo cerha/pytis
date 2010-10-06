@@ -753,12 +753,31 @@ class InnerForm(Form):
         # resources and no one is using it anyway...
         #if not print_spec:
         #    print_spec = ((_("Výchozí"), os.path.join('output', name)),)
+        db_print_spec = []
         condition = pytis.data.EQ('module', pytis.data.Value(pytis.data.String(), name))
         for row in pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
             template_name = row['specification'].value()
-            print_spec.append((template_name, name+'/'+template_name,))
+            print_item = (template_name, name+'/'+template_name,)
+            print_spec.append(print_item)
+            db_print_spec.append((name, template_name,))
+        printing_form = 'printing.DirectUserOutputTemplates'
         menu = [MItem(title, command=BrowseForm.COMMAND_PRINT(print_spec_path=path))
                 for title, path in print_spec]
+        def s(value):
+            return pytis.data.Value(pytis.data.String(), value)
+        menu.append(pytis.extensions.new_record_mitem(_("Nová sestava"), printing_form,
+                                                      prefill=dict(module=s(name))))
+        if db_print_spec:
+            mitem = pytis.extensions.run_form_mitem
+            edit_submenu = [mitem(label, printing_form, PopupEditForm,
+                                  select_row=dict(module=s(module), specification=s(label)))
+                            for module, label in db_print_spec]
+            mitem = pytis.extensions.run_procedure_mitem
+            delete_submenu = [mitem(label, printing_form, 'delete_template',
+                                    module=module, specification=label)
+                              for module, label in db_print_spec]
+            menu += [Menu(_("Editace sestav"), edit_submenu),
+                     Menu(_("Mazání sestav"), delete_submenu)]
         return menu
 
     def _aggregation_menu(self):
@@ -1638,10 +1657,8 @@ class RecordForm(LookupForm):
 
           prefill -- a dictionary of values used to prefill the current form row.  The meaning is
             the same as for the same 'PresentedRow' constructor argument.
-
           select_row -- The initially selected row -- the value is the same as the argument of the
             'select_row()' method.
-
           kwargs -- arguments passed to the parent class
 
         """
@@ -1870,11 +1887,12 @@ class RecordForm(LookupForm):
     
     # Command handling
     
-    def _cmd_new_record(self, copy=False):
+    def _cmd_new_record(self, copy=False, prefill=None):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
         import copy as copy_
-        prefill = self._prefill and copy_.copy(self._prefill) or {}
+        if prefill is None:
+            prefill = self._prefill and copy_.copy(self._prefill) or {}
         if copy:
             prefill.update(self._row_copy_prefill(self.current_row()))
         result = new_record(self._name, prefill=prefill)
