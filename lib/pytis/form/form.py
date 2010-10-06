@@ -733,8 +733,8 @@ class InnerForm(Form):
         # The aggregation menu must be created dynamically, but we can find out just once,
         # whether the menu exists for given form.
         self._has_aggregation_menu = self._aggregation_menu() is not None
-        # Print menu is static for given form instance, so we create it just once.
-        self._print_menu_ = self._print_menu()
+        # Print menu is no longer static, so we create it on demand.
+        self._print_menu_ = UNDEFINED
         
     def _on_menu_button(self, items):
         self._run_callback(self.CALL_USER_INTERACTION)
@@ -780,6 +780,11 @@ class InnerForm(Form):
                      Menu(_("Mazání sestav"), delete_submenu)]
         return menu
 
+    def _get_print_menu(self):
+        if self._print_menu_ is UNDEFINED:
+            self._print_menu_ = self._print_menu()
+        return self._print_menu_
+
     def _aggregation_menu(self):
         return None
     
@@ -800,10 +805,10 @@ class InnerForm(Form):
         return self._has_aggregation_menu
         
     def _can_print_menu(self):
-        return bool(self._print_menu_)
+        return bool(self._get_print_menu())
 
     def _cmd_print_menu(self):
-        self._on_menu_button(self._print_menu_)
+        self._on_menu_button(self._get_print_menu())
 
     
 class Refreshable:

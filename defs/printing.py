@@ -94,5 +94,7 @@ class DirectUserOutputTemplates(UserOutputTemplates):
                 pytis.form.run_dialog(pytis.form.Error, message)
                 return
             record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
-            pytis.form.delete_record(view_spec, data, None, record)
+            if pytis.form.delete_record(view_spec, data, None, record):
+                # To update the printing button of the current form
+                pytis.form.refresh()
         return {'delete_template': delete_template}

@@ -1410,6 +1410,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         self._update_grid(data_init=True, retain_row=True)
         self._show_data_status()
+        self._print_menu_ = UNDEFINED
         return True
 
     def _update_colors(self):
