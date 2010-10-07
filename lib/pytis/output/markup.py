@@ -47,10 +47,18 @@ def _something_to_lcg(something):
 
 class _Mark(object):
 
+    def __init__(self):
+        self._lcg_result = None
+        
     def lcg(self):
         """Return LCG content corresponding to the mark and its content.
         The return value is an 'lcg.Content' instance.
         """
+        if self._lcg_result is None:
+            self._lcg_result = self._lcg()
+        return self._lcg_result
+
+    def _lcg(self):
         return lcg.NoneContent()
 
 
@@ -66,6 +74,7 @@ class _Container(_Mark):
           contents -- obsah odstavce, značky a řetězce
 
         """
+        super(_Container, self).__init__()
         self._contents = []
         for c in contents:
             if is_sequence(c):
@@ -90,7 +99,7 @@ class _Container(_Mark):
     def _lcg_contents(self):
         return [_something_to_lcg(c) for c in self._contents]
         
-    def lcg(self):
+    def _lcg(self):
         return lcg.Container(self._lcg_contents(), orientation=lcg.Orientation.HORIZONTAL)
     
 
@@ -110,43 +119,43 @@ class Nbsp(_Mark):
     Značka slouží jako alternativní forma zápisu.
 
     """
-    def lcg(self):
+    def _lcg(self):
         return lcg.TextContent(" ")
 
 class Euro(_Mark):
     """Značka reprezentující znak měny Euro."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.TextContent("€")
 
 class Pound(_Mark):
     """Značka reprezentující znak libry."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.TextContent("£")
 
 class Center(_Container):
     """Značka horizontálního vycentrování svého obsahu."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.Container(self._lcg_contents(),
                              halign=lcg.HorizontalAlignment.CENTER,
                              orientation=lcg.Orientation.HORIZONTAL)
 
 class AlignLeft(_Container):
     """Značka zarovnání svého obsahu vlevo."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.Container(self._lcg_contents(),
                              halign=lcg.HorizontalAlignment.LEFT,
                              orientation=lcg.Orientation.HORIZONTAL)
 
 class AlignRight(_Container):
     """Značka zarovnání svého obsahu vpravo."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.Container(self._lcg_contents(),
                              halign=lcg.HorizontalAlignment.RIGHT,
                              orientation=lcg.Orientation.HORIZONTAL)
     
 class VCenter(_Container):
     """Značka vertikálního vycentrování svého obsahu."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.Container(self._lcg_contents(),
                              valign=lcg.VerticalAlignment.CENTER,
                              orientation=lcg.Orientation.HORIZONTAL)
@@ -157,6 +166,7 @@ class _Space(_Mark):
     HORIZONTAL = 'HORIZONTAL'
     
     def __init__(self, size, orientation):
+        super(_Space, self).__init__()
         self._size = size
         self._orientation = orientation
 
@@ -166,7 +176,7 @@ class _Space(_Mark):
     def orientation(self):
         return self._orientation
 
-    def lcg(self):
+    def _lcg(self):
         if self._orientation == self.VERTICAL:
             mark = lcg.VSpace
         elif self._orientation == self.HORIZONTAL:
@@ -217,12 +227,12 @@ class HSpace(_Space):
 
 class HLine(_Mark):
     """Značka horizontální čáry vyplňující celý dostupný prostor."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.HorizontalSeparator()
 
 class Paragraph(_Container):
     """Značka odstavce."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.Paragraph(self._lcg_contents())
 
 class List(_Container):
@@ -240,7 +250,7 @@ class List(_Container):
     
     KWARGS = {'mark': None}
 
-    def lcg(self):
+    def _lcg(self):
         if self.arg_mark == self.BULLET_MARK:
             type_ = lcg.ItemizedList.TYPE_UNORDERED
         elif self.arg_mark == self.NUMBER_MARK:
@@ -251,7 +261,7 @@ class List(_Container):
 
 class NewPage(_Mark):
     """Značka nové stránky."""
-    def lcg(self):
+    def _lcg(self):
         return lcg.NewPage()
 
 class PageNumber(_Mark):
@@ -279,7 +289,7 @@ class PageNumber(_Mark):
         """Vrať hodnotu argumentu 'total' z konstruktoru."""
         return self._total
 
-    def lcg(self):
+    def _lcg(self):
         if self._total:
             result = lcg.Container((lcg.PageNumber(total=False),
                                     lcg.TextContent('/'),
@@ -290,21 +300,21 @@ class PageNumber(_Mark):
 
 class Bold(_Container):
     """Tučně sázený text."""
-    def lcg(self):
+    def _lcg(self):
         presentation = lcg.Presentation()
         presentation.bold = True
         return lcg.Container(self._lcg_contents(), presentation=presentation)
 
 class Italic(_Container):
     """Text sázený kurzívou."""
-    def lcg(self):
+    def _lcg(self):
         presentation = lcg.Presentation()
         presentation.italic = True
         return lcg.Container(self._lcg_contents(), presentation=presentation)
 
 class Roman(_Container):
     """Standardně sázený text."""
-    def lcg(self):
+    def _lcg(self):
         presentation = lcg.Presentation()
         presentation.bold = presentation.italic = False
         return lcg.Container(self._lcg_contents(), presentation=presentation)
@@ -330,7 +340,7 @@ class FontSize(_Container):
         """Vrať velikost zadanou v konstruktoru."""
         return self._size
 
-    def lcg(self):
+    def _lcg(self):
         presentation = lcg.Presentation()
         presentation.font_size = self._size
         return lcg.Container(self._lcg_contents(), presentation=presentation)
@@ -365,7 +375,7 @@ class FontFamily(_Container):
         """Vrať rodinu fontu zadanou v konstruktoru."""
         return self._family
 
-    def lcg(self):
+    def _lcg(self):
         presentation = lcg.Presentation()
         if self._family == self.PROPORTIONAL:
             family = lcg.FontFamily.PROPORTIONAL
@@ -397,7 +407,7 @@ class Group(_Container):
               'boxed': False,
               'balance': None}
 
-    def lcg(self):
+    def _lcg(self):
         presentation = lcg.Presentation()
         if self.arg_boxed:
             presentation.boxed = True
@@ -553,7 +563,7 @@ class Table(_Mark):
         return lcg.Table(table_rows, column_widths=column_widths,
                          presentation=self._lcg_presentation())
     
-    def lcg(self):
+    def _lcg(self):
         table_rows = []
         if any([c.label is not None for c in self._columns]):
             cells = []
@@ -726,13 +736,14 @@ class Image(_Mark):
             konfigurační volbou 'def_dir'.
 
         """
+        super(Image, self).__init__()
         self._file_name = file_name
 
     def file_name(self):
         """Vrať jméno souboru zadané v konstruktoru."""
         return self._file_name
 
-    def lcg(self):
+    def _lcg(self):
         import config
         image = lcg.Image(os.path.join(config.def_dir, self._file_name))
         return lcg.InlineImage(image)
@@ -747,10 +758,11 @@ class StructuredText(_Mark):
           text -- the structured text; basestring
 
         """
+        super(StructuredText, self).__init__()
         self._text = text
         self._parameters = {}
 
-    def lcg(self):
+    def _lcg(self):
         parser = lcg.Parser()
         parameters = {}
         result = lcg.Container(parser.parse(self._text, parameters))
