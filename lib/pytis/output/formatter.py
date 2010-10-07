@@ -1129,19 +1129,9 @@ class _ProxyDict(dict):
             result = self[key] = result()
         return result
 class _DataIterator(lcg.SubstitutionIterator):
-    def __init__(self, resolver, form):
-        name = form.name()
-        condition=form.condition()
-        sorting=form.data_sorting()        
-        if condition is None:
-            try:
-                condition = resolver.p((name, P_CONDITION))
-            except ResolverError:
-                pass
-        if sorting is None:
-            sorting = resolver.p((name, P_SORTING))
-        view = resolver.get(name, 'view_spec')
-        data_spec = resolver.get(name, 'data_spec')
+    def __init__(self, resolver, form_name, condition, sorting):
+        view = resolver.get(form_name, 'view_spec')
+        data_spec = resolver.get(form_name, 'data_spec')
         import config
         self._data = data_spec.create(dbconnection_spec=config.dbconnection)
         self._data.select(condition=condition, sort=sorting)
@@ -1158,6 +1148,20 @@ class _DataIterator(lcg.SubstitutionIterator):
         return True
     def _reset(self):
         self._data.rewind()
+class _FormDataIterator(_DataIterator):
+    def __init__(self, resolver, form):
+        name = form.name()
+        condition=form.condition()
+        sorting=form.data_sorting()        
+        if condition is None:
+            try:
+                condition = resolver.p((name, P_CONDITION))
+            except ResolverError:
+                pass
+        if sorting is None:
+            sorting = resolver.p((name, P_SORTING))
+        super(_FormDataIterator, self).__init__(resolver, name,
+                                                condition=condition, sorting=sorting)
         
 class LCGFormatter(object):
     """LCG based formatter."""
@@ -1195,7 +1199,7 @@ class LCGFormatter(object):
                     current_row_dictionary = dict([(k, current_row[k].value(),)
                                                    for k in current_row.keys()])
                 dictionary['current_row'] = current_row_dictionary
-                dictionary['data'] = _DataIterator(self._selected_resolver, form)
+                dictionary['data'] = _FormDataIterator(self._selected_resolver, form)
                 dictionary['table'] = self._make_table
                 dictionary['agg'] = agg = _ProxyDict()
                 for name, op in(('min', pytis.data.Data.AGG_MIN,),
@@ -1209,7 +1213,8 @@ class LCGFormatter(object):
                 if form_bindings:
                     dictionary['Binding'] = binding_dictionary = _ProxyDict()
                     for binding in form_bindings:
-                        if pytis.form.has_access(binding.name()):
+                        form_name = binding.name()
+                        if pytis.form.has_access(form_name):
                             # I tried to use closure here, but it produced unexpected results
                             class MakeBinding(object):
                                 def __init__(self, binding, processor, current_row):
@@ -1243,6 +1248,7 @@ class LCGFormatter(object):
             condition = form.condition()
             return data.select_aggregate((op, column,), condition=condition).value()
         def _make_binding(self, binding, current_row):
+            binding_dictionary = {}
             binding_condition = binding.condition()
             binding_column = binding.binding_column()
             if binding_column and current_row is not None:
@@ -1255,7 +1261,10 @@ class LCGFormatter(object):
                 condition = pytis.data.AND()
             table = pytis.output.data_table(self._selected_resolver, binding.name(), condition=condition,
                                             sorting=())
-            return dict(table=table.lcg())
+            binding_dictionary['table'] = table.lcg()
+            binding_dictionary['data'] = _DataIterator(self._selected_resolver, binding.name(),
+                                                       condition=condition, sorting=())
+            return binding_dictionary
         
     def __init__(self, resolvers, template_id, form=None, form_bindings=None):
         """
