@@ -2804,7 +2804,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_is_in_select: 
             self.close()
         if transaction is None:
-            self._pg_begin_transaction (isolation='serializable')
+            self._pg_begin_transaction (isolation=DBPostgreSQLTransaction.SERIALIZABLE)
         self._pg_is_in_select = transaction or True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
@@ -3460,12 +3460,25 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     
     """
 
-    def __init__(self, connection_data, **kwargs):
+    SERIALIZABLE = 'serializable'
+
+    def __init__(self, connection_data, isolation=None, **kwargs):
+        """
+        Arguments:
+
+          connection_data -- instance tøídy 'DBConnection' definující
+            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+            instanci 'DBConnection'
+          isolation -- transaction isolation level, either 'None' (default
+            isolation level, i.e. read commited) or 'SERIALIZABLE' constant of
+            this class (serializable isolation level)
+
+        """
         super(DBPostgreSQLTransaction, self).__init__(
             bindings=(), key=(), connection_data=connection_data,
             **kwargs)
         self._trans_notifications = []
-        self._pg_begin_transaction()
+        self._pg_begin_transaction(isolation=isolation)
         self._open = True
         
     def _db_bindings_to_column_spec(self, __bindings):
