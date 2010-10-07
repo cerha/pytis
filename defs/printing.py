@@ -36,9 +36,12 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
               width=80, height=20, compact=True),
         Field('rowtemplate', _("©ablona pro jednotlivé øádky"), type=pytis.data.StructuredText(),
               width=80, height=20, compact=True),
+        Field('help', _("Nápovìda"), virtual=True,
+              computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
+              width=80, height=20, compact=True),
         )
     columns = ('module', 'specification', 'template',)
-    layout = ('module', 'specification', 'template', 'rowtemplate',)
+    layout = ('module', 'specification', 'template', 'rowtemplate', 'help',)
 
 class UserOutputTemplates(pytis.presentation.Specification):
     public = True
@@ -54,9 +57,12 @@ class UserOutputTemplates(pytis.presentation.Specification):
         Field('rowtemplate', _("©ablona pro jednotlivé øádky"), type=pytis.data.StructuredText(),
               width=80, height=20, compact=True),
         Field('username', _("U¾ivatel")),
+        Field('help', _("Nápovìda"), virtual=True,
+              computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
+              width=80, height=20, compact=True),
         )
     columns = ('module', 'specification', 'username', 'template',)
-    layout = ('module', 'specification', 'template', 'rowtemplate',)
+    layout = ('module', 'specification', 'template', 'rowtemplate', 'help',)
     def on_delete_record(self, row):
         if not row['username'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Mù¾ete mazat pouze své vlastní záznamy."))

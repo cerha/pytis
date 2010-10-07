@@ -1120,6 +1120,10 @@ class LoutFormatter(Tmpdir):
         """
         self._cleanup ()
 
+    @classmethod
+    def template_help(class_, module):
+        return ''
+
 
 class _ProxyDict(dict):
     def __getitem__(self, key):
@@ -1162,7 +1166,8 @@ class _FormDataIterator(_DataIterator):
             sorting = resolver.p((name, P_SORTING))
         super(_FormDataIterator, self).__init__(resolver, name,
                                                 condition=condition, sorting=sorting)
-        
+
+
 class LCGFormatter(object):
     """LCG based formatter."""
 
@@ -1397,6 +1402,53 @@ class LCGFormatter(object):
     def close(self):
         """Obsolete, no need to call this method anymore."""
         pass
+
+    @staticmethod
+    def template_help(row, module):
+        """Return help text to put into a template editing form.
+
+        Arguments:
+
+          module -- name of the specification to generate the help for, string
+
+        """
+        text = u""
+        text += _("""Promìnné pro hlavní ¹ablonu:
+  ${current_row.IDENTIFIKÁTOR_SLOUPCE} ... vlo¾ení hodnoty sloupce
+  ${table} ... vlo¾ení celé tabulky
+  ${data.IDENTIFIKÁTOR_SLOUPCE} ... vlo¾ení hodnoty v opakovaném øádku tabulky
+  
+""")
+        resolver = pytis.util.resolver()
+        try:
+            view_spec = resolver.get(module, 'view_spec')
+        except ResolverError:
+            return text
+        bindings = view_spec.bindings()
+        bindings = [b for b in bindings if pytis.form.has_access(b.name())]
+        text += _("Identifikátory sloupcù:\n")
+        for field in view_spec.fields():
+            text += _("  %s ... %s\n") % (field.id(), field.label(),)
+        text += "\n"
+        if bindings:
+            text += _("Vedlej¹í formuláøe:\n")
+            for b in bindings:
+                binding_id = re.sub('[^A-Za-z0-9_]', '_', b.id())
+                text += "  ${Binding.%s.PROMÌNNÁ} ... %s\n" % (binding_id, b.title(),)
+                text += _("  Identifikátory sloupcù:\n")
+                sub_view_spec = resolver.get(b.name(), 'view_spec')
+                for field in sub_view_spec.fields():
+                    text += _("    %s ... %s\n") % (field.id(), field.label(),)
+                text += "\n"
+        text += _("""Agregaèní promìnné:
+  ${agg.min} ... minimum
+  ${agg.max} ... maximum
+  ${agg.count} ... poèet
+  ${agg.sum} ... souèet
+  ${agg.avg} ... prùmìr
+  
+""")
+        return text
 
 
 Formatter = LCGFormatter
