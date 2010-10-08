@@ -293,7 +293,7 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
     def _format(self, context):
         blocks = self._parser.parse(context.translate(self._value().export()))
         if len(blocks) == 1 and isinstance(blocks[0], lcg.Paragraph):
-            content = lcg.Container(blocks[0].content(context))
+            content = lcg.Container(blocks[0].content())
         else:
             content = lcg.Container(blocks)
         content.set_parent(context.node())
