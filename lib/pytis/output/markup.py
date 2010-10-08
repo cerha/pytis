@@ -56,7 +56,9 @@ class _Mark(object):
         """
         if self._lcg_result is None:
             self._lcg_result = self._lcg()
-        return self._lcg_result
+        # The result is later modified by LCG processing.
+        # So we have to copy it to prevent reparent errors.
+        return copy.copy(self._lcg_result)
 
     def _lcg(self):
         return lcg.NoneContent()
