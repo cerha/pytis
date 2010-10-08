@@ -3485,7 +3485,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         return (), ()
     
     def _pdbb_create_sql_commands(self):
-        pass
+        self._pdbb_command_isolation = 'set transaction isolation level %s'
 
     def _trans_connection(self):
         return self._pg_get_connection()
