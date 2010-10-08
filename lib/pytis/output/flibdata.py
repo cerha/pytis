@@ -40,7 +40,7 @@ P_DATA= 'P_DATA'
 """Parametr resolveru identifikující datový objekt."""
 
 
-def data_table(resolver, name, condition=None, sorting=None,
+def data_table(resolver, name, condition=None, sorting=None, transaction=None,
                **long_table_args):
     """Jednoduchý tisk tabulky dat.
 
@@ -62,6 +62,7 @@ def data_table(resolver, name, condition=None, sorting=None,
         metody 'pytis.util.Data.select()'; může být též 'None', v kterémžto
         případě je specifikace získána z parametru resolveru
         '(name, P_SORTING)'
+      transaction -- transaction object to use for database operations
       long_table_args -- dodatečné argumenty předané konstruktoru třídy
         'LongTable'
     
@@ -96,10 +97,10 @@ def data_table(resolver, name, condition=None, sorting=None,
         tc.id = cid # fuj, viz `table_row' níže
         columns.append(tc)
     # Data
-    data.select(condition=condition, sort=sorting)
+    data.select(condition=condition, sort=sorting, transaction=transaction)
     # Formátování
     def table_row(*args, **kwargs):
-        row = data.fetchone()
+        row = data.fetchone(transaction=transaction)
         if row is None:
             return None
         presented_row.set_row(row)

@@ -1133,19 +1133,21 @@ class _ProxyDict(dict):
             result = self[key] = result()
         return result
 class _DataIterator(lcg.SubstitutionIterator):
-    def __init__(self, resolver, form_name, condition, sorting):
+    def __init__(self, resolver, form_name, condition, sorting, transaction):
+        self._transaction = transaction
         view = resolver.get(form_name, 'view_spec')
         data_spec = resolver.get(form_name, 'data_spec')
         import config
         self._data = data_spec.create(dbconnection_spec=config.dbconnection)
-        self._data.select(condition=condition, sort=sorting)
-        self._presented_row = pytis.presentation.PresentedRow(view.fields(), self._data, None, singleline=True)
+        self._data.select(condition=condition, sort=sorting, transaction=transaction)
+        self._presented_row = pytis.presentation.PresentedRow(view.fields(), self._data, None,
+                                                              singleline=True)
         super(_DataIterator, self).__init__()
     def _value(self):
         row = self._presented_row
         return dict([(k, row[k].value(),) for k in row.keys()])
     def _next(self):
-        row = self._data.fetchone()
+        row = self._data.fetchone(transaction=self._transaction)
         if row is None:
             return False
         self._presented_row.set_row(row)
@@ -1153,10 +1155,10 @@ class _DataIterator(lcg.SubstitutionIterator):
     def _reset(self):
         self._data.rewind()
 class _FormDataIterator(_DataIterator):
-    def __init__(self, resolver, form):
+    def __init__(self, resolver, form, transaction):
         name = form.name()
         condition=form.condition()
-        sorting=form.data_sorting()        
+        sorting=form.data_sorting()
         if condition is None:
             try:
                 condition = resolver.p((name, P_CONDITION))
@@ -1164,8 +1166,8 @@ class _FormDataIterator(_DataIterator):
                 pass
         if sorting is None:
             sorting = resolver.p((name, P_SORTING))
-        super(_FormDataIterator, self).__init__(resolver, name,
-                                                condition=condition, sorting=sorting)
+        super(_FormDataIterator, self).__init__(resolver, name, condition=condition,
+                                                sorting=sorting, transaction=transaction)
 
 
 class LCGFormatter(object):
@@ -1191,6 +1193,9 @@ class LCGFormatter(object):
                 self._selected_resolver = resolvers[0]
             self._form = form
             self._form_bindings = form_bindings
+            import config
+            T = pytis.data.DBTransactionDefault
+            self._transaction = T(connection_data=config.dbconnection, isolation=T.SERIALIZABLE)
             dictionary = self._initial_dictionary(form, form_bindings, current_row)
             _ProxyDict.__init__(self, dictionary)
         def _initial_dictionary(self, form, form_bindings, current_row):
@@ -1204,7 +1209,8 @@ class LCGFormatter(object):
                     current_row_dictionary = dict([(k, current_row[k].value(),)
                                                    for k in current_row.keys()])
                 dictionary['current_row'] = current_row_dictionary
-                dictionary['data'] = _FormDataIterator(self._selected_resolver, form)
+                dictionary['data'] = _FormDataIterator(self._selected_resolver, form,
+                                                       transaction=self._transaction)
                 dictionary['table'] = self._make_table
                 dictionary['agg'] = agg = _ProxyDict()
                 for name, op in(('min', pytis.data.Data.AGG_MIN,),
@@ -1236,7 +1242,8 @@ class LCGFormatter(object):
         def _make_table(self):
             form = self._form
             table = pytis.output.data_table(self._selected_resolver, form.name(),
-                                            condition=form.condition(), sorting=form.data_sorting())
+                                            condition=form.condition(), sorting=form.data_sorting(),
+                                            transaction=self._transaction)
             return table.lcg()
         def _make_agg(self, op):
             dictionary = _ProxyDict()
@@ -1251,7 +1258,8 @@ class LCGFormatter(object):
             form = self._form
             data = form.data()
             condition = form.condition()
-            return data.select_aggregate((op, column,), condition=condition).value()
+            return data.select_aggregate((op, column,), condition=condition,
+                                         transaction=self._transaction).value()
         def _make_binding(self, binding, current_row):
             binding_dictionary = {}
             binding_condition = binding.condition()
@@ -1265,10 +1273,11 @@ class LCGFormatter(object):
             else:
                 condition = pytis.data.AND()
             table = pytis.output.data_table(self._selected_resolver, binding.name(), condition=condition,
-                                            sorting=())
+                                            sorting=(), transaction=self._transaction)
             binding_dictionary['table'] = table.lcg()
             binding_dictionary['data'] = _DataIterator(self._selected_resolver, binding.name(),
-                                                       condition=condition, sorting=())
+                                                       condition=condition, sorting=(),
+                                                       transaction=self._transaction)
             return binding_dictionary
         
     def __init__(self, resolvers, template_id, form=None, form_bindings=None):
@@ -1413,10 +1422,10 @@ class LCGFormatter(object):
 
         """
         text = u""
-        text += _("""PromÏnnÈ pro hlavnÌ πablonu:
-  ${current_row.IDENTIFIK¡TOR_SLOUPCE} ... vloæenÌ hodnoty sloupce
-  ${table} ... vloæenÌ celÈ tabulky
-  ${data.IDENTIFIK¡TOR_SLOUPCE} ... vloæenÌ hodnoty v opakovanÈm ¯·dku tabulky
+        text += _("""Promƒõnn√© pro hlavn√≠ ≈°ablonu:
+  ${current_row.IDENTIFIK√ÅTOR_SLOUPCE} ... vlo≈æen√≠ hodnoty sloupce
+  ${table} ... vlo≈æen√≠ cel√© tabulky
+  ${data.IDENTIFIK√ÅTOR_SLOUPCE} ... vlo≈æen√≠ hodnoty v opakovan√©m ≈ô√°dku tabulky
   
 """)
         resolver = pytis.util.resolver()
@@ -1426,26 +1435,26 @@ class LCGFormatter(object):
             return text
         bindings = view_spec.bindings()
         bindings = [b for b in bindings if pytis.form.has_access(b.name())]
-        text += _("Identifik·tory sloupc˘:\n")
+        text += _("Identifik√°tory sloupc≈Ø:\n")
         for field in view_spec.fields():
             text += _("  %s ... %s\n") % (field.id(), field.label(),)
         text += "\n"
         if bindings:
-            text += _("VedlejπÌ formul·¯e:\n")
+            text += _("Vedlej≈°√≠ formul√°≈ôe:\n")
             for b in bindings:
                 binding_id = re.sub('[^A-Za-z0-9_]', '_', b.id())
-                text += "  ${Binding.%s.PROMÃNN¡} ... %s\n" % (binding_id, b.title(),)
-                text += _("  Identifik·tory sloupc˘:\n")
+                text += "  ${Binding.%s.PROMƒöNN√Å} ... %s\n" % (binding_id, b.title(),)
+                text += _("  Identifik√°tory sloupc≈Ø:\n")
                 sub_view_spec = resolver.get(b.name(), 'view_spec')
                 for field in sub_view_spec.fields():
                     text += _("    %s ... %s\n") % (field.id(), field.label(),)
                 text += "\n"
-        text += _("""AgregaËnÌ promÏnnÈ:
+        text += _("""Agregaƒçn√≠ promƒõnn√©:
   ${agg.min} ... minimum
   ${agg.max} ... maximum
-  ${agg.count} ... poËet
-  ${agg.sum} ... souËet
-  ${agg.avg} ... pr˘mÏr
+  ${agg.count} ... poƒçet
+  ${agg.sum} ... souƒçet
+  ${agg.avg} ... pr≈Ømƒõr
   
 """)
         return text
