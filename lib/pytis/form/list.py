@@ -851,7 +851,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._show_data_status()
 
     def _on_idle(self, event):
-        if is_busy_cursor():
+        if is_busy_cursor() or current_form() is not self:
+            # Prevent blocking the idle method of a popup form opened on top of the current form,
+            # such as PopupEditForm or Codebook.
             return False
         if self._selection_candidate is not None:
             row, col = self._selection_candidate
