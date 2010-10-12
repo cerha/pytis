@@ -156,7 +156,6 @@ class _Completer(wx.PopupWindow):
             listctrl.DeleteAllColumns()
             listctrl.DeleteAllItems()
         listctrl.InsertColumn(0, "")
-        listctrl.SetSize(wx.Size(1000, 1000)) # Makes GetViewRect to return best fit.
         height = None
         for i, choice in enumerate(completions):
             listctrl.InsertStringItem(i, "")
