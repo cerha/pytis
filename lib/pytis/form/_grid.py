@@ -139,7 +139,7 @@ class DataTable(object):
         assert isinstance(grouping, types.TupleType)
         self._form = form
         self._data = data
-        self._presented_row = presented_row
+        self._presented_row = copy.copy(presented_row)
         self._row_count = row_count
         self._sorting = sorting
         self._grouping = grouping
