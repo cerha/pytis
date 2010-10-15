@@ -2113,10 +2113,11 @@ class Field(object):
             widths.
           editable -- one of 'Editable' constants or a 'Computer' instance.  The constants
             determine field editability statically, the computer may be used to compute editability
-            dynamically based on the values of other fields of a record (see also notes about
-            computer specifications below).  The default value is 'Editable.ALWAYS', but certain
-            combinations of other specification parameters may lead to another default value (for
-            example if a 'computer' is defined, the default value is 'Editable.NEVER').
+            dynamically based on the values of other fields of a record and return true iff the
+            field is editable (see also notes about computer specifications below).
+            The default value is 'Editable.ALWAYS', but certain combinations of other specification
+            parameters may lead to another default value (for example if a'computer' is defined, the
+            default value is 'Editable.NEVER'). 
           compact -- true value results in the field label being displayed above the field, not on
             the left which is the default.  This way the field will span to the full width of the
             field group.
