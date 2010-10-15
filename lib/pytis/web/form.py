@@ -1336,8 +1336,11 @@ class ListView(BrowseForm):
                     continue
                 cls = 'dynamic-content'
             elif self._row[item].value() is not None:
-                text = self._row[item].export()
-                content = lcg.Container(parser.parse(text))
+                if isinstance(self._row[item].type(), pd.SimpleFormattedText):
+                    content = lcg.HtmlContent(self._export_field(context, self._fields[item]))
+                else:
+                    text = self._row[item].export()
+                    content = lcg.Container(parser.parse(text))
                 cls = 'content id-'+ item
             else:
                 continue

@@ -16,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import re
+import textwrap
+
 from pytis.web import *
 
 _ = lcg.TranslatableTextFactory('pytis')
@@ -117,6 +120,8 @@ class Field(object):
             exporter = FileFieldExporter
         elif isinstance(type, pytis.data.StructuredText):
             exporter = StructuredTextFieldExporter
+        elif isinstance(type, pytis.data.SimpleFormattedText):
+            exporter = SimpleFormattedTextFieldExporter
         elif spec.height() > 1:
             exporter = MultilineFieldExporter
         elif isinstance(type, pytis.data.String):
@@ -299,6 +304,27 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
         content.set_parent(context.node())
         return context.generator().div(content.export(context))
 
+class SimpleFormattedTextFieldExporter(MultilineFieldExporter):
+
+    _REPLACEMENTS = {" ": "&nbsp;",
+                     "\n": "<br/>",
+                     ">": "&gt;",
+                     "<": "&lt;",
+                     }
+
+    def __init__(self, *args, **kwargs):
+        super(SimpleFormattedTextFieldExporter, self).__init__(*args, **kwargs)
+        self._compiled_replacements = re.compile('|'.join(map(re.escape, self._REPLACEMENTS)))
+
+    def _format(self, context):
+        text = self._value().export()
+        # Remove trailing whitespace (usually left after copying text from screen)
+        # and wrap lines longer than 130 characters
+        text = "\n".join(["\n".join(textwrap.wrap(line.rstrip(), 130, replace_whitespace=False, drop_whitespace=False))
+                                   for line in text.splitlines()])
+        # Substitute spaces and escape HTML markup
+        text = self._compiled_replacements.sub(lambda match: self._REPLACEMENTS[match.group(0)], text)
+        return context.generator().div(text)
 
 class DateTimeFieldExporter(TextFieldExporter):
     

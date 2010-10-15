@@ -914,7 +914,6 @@ class Macaddr(String):
                             for x in range(0,len(macaddr),2)] )
         return Value(self, unicode(value)), None
 
-
 class StructuredText(String):
     """Text formatted using the LCG structored text markup.
 
@@ -923,6 +922,13 @@ class StructuredText(String):
     """
     pass
 
+class SimpleFormattedText(String):
+    """Text formatted using a minimalistic simple formatter.
+
+    Fields of this type may be handled specifically in the user interface.
+
+    """
+    pass
     
 class TreeOrderBase(Type):
     """Literal numeric value denoting the level of the item within the tree structure.
