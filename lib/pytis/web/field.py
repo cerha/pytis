@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import re
-import textwrap
+import string
 
 from pytis.web import *
 
@@ -306,25 +306,45 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
 
 class SimpleFormattedTextFieldExporter(MultilineFieldExporter):
 
-    _REPLACEMENTS = {" ": "&nbsp;",
-                     "\n": "<br/>",
-                     ">": "&gt;",
-                     "<": "&lt;",
-                     }
-
-    def __init__(self, *args, **kwargs):
-        super(SimpleFormattedTextFieldExporter, self).__init__(*args, **kwargs)
-        self._compiled_replacements = re.compile('|'.join(map(re.escape, self._REPLACEMENTS)))
-
     def _format(self, context):
         text = self._value().export()
-        # Remove trailing whitespace (usually left after copying text from screen)
-        # and wrap lines longer than 130 characters
-        text = "\n".join(["\n".join(textwrap.wrap(line.rstrip(), 130, replace_whitespace=False, drop_whitespace=False))
-                                   for line in text.splitlines()])
-        # Substitute spaces and escape HTML markup
-        text = self._compiled_replacements.sub(lambda match: self._REPLACEMENTS[match.group(0)], text)
-        return context.generator().div(text)
+        nbsp = '&nbsp;'; len_nbsp = len(nbsp)
+        lt = '&lt;'; len_lt = len(lt)
+        gt = '&gt;'; len_gt = len(gt)
+        def convert_line(line):
+            line_length = len(line)
+            i = 0
+            while i < line_length and line[i] == ' ':
+                i += 1
+            if i > 0:
+                line = nbsp*i + line[i:]
+                line_length += (len_nbsp - 1) * i
+                i = len_nbsp * i
+            while i < line_length:
+                if line[i] == '<':
+                    line = line[:i] + lt + line[i+1:]
+                    line_length += len_lt - 1
+                    i += len_lt
+                elif line[i] == '>':
+                    line = line[:i] + gt + line[i+1:]
+                    line_length += len_gt - 1
+                    i += len_gt
+                elif line[i] == ' ':
+                    j = i + 1
+                    while j < line_length and line[j] == ' ':
+                        j += 1
+                    if j > i + 1:
+                        line = line[:i] + nbsp*(j-i) + line[j:]
+                        line_length += (len_nbsp - 1) * (j - i)
+                        i += len_nbsp * (j - i)
+                    else:
+                        i += 1
+                else:
+                    i += 1
+            return line
+        lines = [convert_line(l) for l in text.splitlines()]
+        converted_text = string.join(lines, '<br>\n')
+        return context.generator().div(converted_text)
 
 class DateTimeFieldExporter(TextFieldExporter):
     
