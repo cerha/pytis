@@ -1953,7 +1953,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         def _process_table(update):
             # Export labelù
             for column in self._columns:
-                export_file.write(column.label()+'\t')
+                label = column.column_label()
+                if label is None:
+                    label = column.label()
+                export_file.write(label + '\t')
             export_file.write('\n')
             for r in range(0,number_rows):
                 if not update(int(float(r)/number_rows*100)):
@@ -1989,7 +1992,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             ws = w.add_sheet('Export')            
             # Export labelù            
             for i, column in enumerate(self._columns):
-                ws.write(0, i, unicode(column.label()))
+                label = column.column_label()
+                if label is None:
+                    label = column.label()
+                ws.write(0, i, unicode(label))
             default_style = pyxls.XFStyle()
             w.add_style(default_style)
             # Styles
