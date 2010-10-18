@@ -1003,7 +1003,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'text': String,
                         'timestamp': DateTime,
                         'timestamptz': DateTime,
-                        'interval': Time,
+                        'interval': Time, # TODO: Should be TimeInterval!
                         'tsvector': FullTextIndex,
                         'varchar': String,
                         'ltree': LTree,
@@ -1046,8 +1046,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 type_class_ = ctype
             result = type_class_(**type_kwargs)
         else:
-            assert isinstance(ctype, type_class_), \
-                   ("User type doesn't match DB type", ctype, type_class_)
+            if __debug__:
+                if isinstance(ctype, TimeInterval) and type_class_ == Time: # temporary hack
+                    pass
+                else:
+                    assert isinstance(ctype, type_class_), \
+                           ("User type doesn't match DB type", ctype, type_class_)
             result = ctype
         return result
 

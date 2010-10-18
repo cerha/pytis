@@ -37,6 +37,7 @@ instancemi samostatné tøídy 'Value'.
 
 """
 
+import datetime
 import math
 import re
 import string
@@ -1168,7 +1169,7 @@ class Date(DateTime):
 
 
 class Time(DateTime):
-    """Èas bez datumového údaje."""
+    """Time of day without the date part."""
 
     DEFAULT_FORMAT = '%H:%M:%S'
     """Implicitní formát èasu."""
@@ -1201,6 +1202,38 @@ class Time(DateTime):
     def _export(self, *args, **kwargs):
         kwargs['local'] = False
         return super(Time, self)._export(*args, **kwargs)
+
+
+class TimeInterval(Time):
+    """Amount of time between two moments."""
+    # TODO: This class is just a quick hack to make some things work right now.
+    # Neither its implementation nor its support in the database interface is complete.
+    # It should be fixed once applications are converted from incorrect use of
+    # `Time' class for time intervals (if it ever happens).
+
+    VM_TI_FORMAT =  'VM_TI_INVALID_FORMAT'
+    _VM_TI_FORMAT_MSG = _("Chybný formát")
+
+    _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
+
+    def _validate(self, string_, **kwargs):
+        assert isinstance(string_, basestring)
+        # Only day-time intervals supported
+        match = self._MATCHER.match(string_)
+        if not match:
+            return None, self._validation_error(self.VM_TI_FORMAT)
+        groups = match.groupdict()
+        days = int(groups['days'] or '0')
+        seconds = int(groups['hours']) * 3600 + int(groups['minutes']) * 60 + int(groups['seconds'])
+        days += seconds / 86400
+        seconds = seconds % 86400
+        interval = datetime.timedelta(days, seconds)
+        return Value(self, interval), None
+    
+    def _export(self, value, **kwargs):
+        assert isinstance(value, datetime.timedelta), value
+        seconds = value.days * 86400 + value.seconds
+        return '%d:%02d:%02d' % (seconds/3600, (seconds%3600)/60, seconds%60,)
 
 
 class Boolean(Type):

@@ -18,6 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import copy
+import datetime
 import string
 import time
 
@@ -310,6 +311,21 @@ class Date(_TypeCheck):
         self._test_validity(None, '2000-13-01', None)
         self._test_validity(None, '2001-02-29', None)
 tests.add(Date)
+
+
+class TimeInterval(_TypeCheck):
+    _test_instance = pytis.data.TimeInterval()
+    def test_validation(self):
+        self._test_validity(None, '0:15:01', datetime.timedelta(0, 901))
+        self._test_validity(None, '24:00:00', datetime.timedelta(1, 0))
+        self._test_validity(None, '1 day 1:00:00', datetime.timedelta(1, 3600), check_export=False)
+        self._test_validity(None, '1000 days 1:00:00', datetime.timedelta(1000, 3600), check_export=False)
+    def test_export(self):
+        value = pytis.data.Value(self._test_instance, datetime.timedelta(1, 3600))
+        exported = value.export()
+        assert exported == '25:00:00', (value, exported,)
+tests.add(TimeInterval)
+
 
 class Boolean(_TypeCheck):
     _test_instance = pytis.data.Boolean()
