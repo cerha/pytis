@@ -266,7 +266,7 @@ def wx_callback(evt_function, *args):
         try:
             if thread.get_ident() == _watcher_thread_ident or _current_event:
                 # Událost bìhem události
-                if _wx_key.is_event_of_key(event, 'Ctrl-g'): # TODO: ne natvr.
+                if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'): # TODO: ne natvr.
                     _interrupted = True
                     result = True
                 elif is_user:
