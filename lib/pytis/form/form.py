@@ -1690,7 +1690,7 @@ class RecordForm(LookupForm):
                 if not self._row.has_key(id):
                     run_dialog(Error, _("Neznámý sloupec: %s") % id)
                     return False
-            types = [self._row[id].type() for id in columns]
+            types = [self._row.type(id) for id in columns]
             line_number = 1
             data = []
             for line in fh:
@@ -2341,7 +2341,7 @@ class PopupEditForm(PopupForm, EditForm):
                 ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
                 ok_button.Enable(i == len(data)-1)
                 for id, value in data[i].items():
-                    self._row[id] = pytis.data.Value(self._row[id].type(), value.value())
+                    self._row[id] = pytis.data.Value(self._row.type(id), value.value())
             else:
                 self.set_status('progress', '')
                 run_dialog(Message, _("V¹echny záznamy byly zpracovány."))

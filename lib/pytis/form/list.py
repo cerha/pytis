@@ -351,7 +351,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         for i, c in enumerate(self._columns):
             # zarovnání
             attr = wx.grid.GridCellAttr()
-            if isinstance(self._row[c.id()].type(), pytis.data.Number):
+            if isinstance(self._row.type(c.id()), pytis.data.Number):
                 alignment = wx.ALIGN_RIGHT
             else:
                 alignment = wx.ALIGN_LEFT
@@ -414,7 +414,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._incremental_search_last_direction = pytis.data.FORWARD
         self._incremental_search_results = []
         columns = [(c.label(), c) for c in self._columns
-                   if isinstance(self._row[c.id()].type(), pytis.data.String)]
+                   if isinstance(self._row.type(c.id()), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
                       tooltip=_("Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální "
@@ -1686,7 +1686,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if col == 0:
                 return True
             else:
-                column_type = self._row[self._columns[row].id()].type()
+                column_type = self._row.type(self._columns[row].id())
                 return self._aggregation_valid(available_aggregations[col-1][0], column_type)
         last_selection = self._get_state_param('aggregation-selection', cls=tuple, item_cls=tuple)
         selection = run_dialog(CheckMatrixDialog, title=_("Zvolte sloupce..."),
@@ -1795,7 +1795,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_incremental_search(self, full=False, prefill=None):
         row, col = self._current_cell()
         col_id = self._columns[col].id()
-        if (not isinstance(self._row[col_id].type(), pytis.data.String) or
+        if (not isinstance(self._row.type(col_id), pytis.data.String) or
             not self._data.permitted(col_id, pytis.data.Permission.VIEW)):
             message(_("V tomto sloupci nelze vyhledávat inkrementálnì"), beep_=True)
             return
@@ -1867,7 +1867,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             run_dialog(Warning, msg)
             return False
         # Seznam sloupcù
-        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
+        column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         allowed = True
         # Kontrola práv        
         for cid, ctype in column_list:
@@ -1932,7 +1932,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     def _cmd_export_csv(self, filename):
         log(EVENT, 'Vyvolání CSV exportu')
-        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
+        column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         export_encoding = config.export_encoding
         db_encoding = 'utf-8'
         try:
@@ -1978,7 +1978,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cmd_export_xls(self, filename):
         log(EVENT, 'Called XLS export')
-        column_list = [(c.id(), self._row[c.id()].type()) for c in self._columns]
+        column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         import datetime
         try:
             import pyExcelerator as pyxls
@@ -2470,7 +2470,7 @@ class FoldableForm(ListForm):
         if self._folding_enabled():
             col = event.GetCol()
             column = self._columns[col]
-            if isinstance(self._row[column.id()].type(), pytis.presentation.PrettyFoldable):
+            if isinstance(self._row.type(column.id()), pytis.presentation.PrettyFoldable):
                 row = event.GetRow()
                 value = self._table.row(row).format(column.id(), pretty=True, form=self)
                 pos = value.find(pytis.presentation.PrettyFoldable.FOLDED_MARK)
@@ -2780,7 +2780,7 @@ class BrowseForm(FoldableForm):
         links = [(f, Link(cb, col))  for f, cb, col in
                  remove_duplicates([(f, cb, e.value_column()) for f, cb, e in
                                     [(f, self._row.codebook(f.id()),
-                                      self._row[f.id()].type().enumerator())
+                                      self._row.type(f.id()).enumerator())
                                      for f in self._fields] if e and cb])]
         linkdict = {}
         # Group automatic links by target spec name.
@@ -2948,7 +2948,7 @@ class SideBrowseForm(BrowseForm):
         else:
             prefill = {}
         if prefill:
-            self._prefill = dict([(column, pytis.data.Value(self._row[column].type(), value))
+            self._prefill = dict([(column, pytis.data.Value(self._row.type(column), value))
                                   for column, value in prefill.items()])
         if self._selection_condition is not None:
             self._lf_condition = self._selection_condition(row)

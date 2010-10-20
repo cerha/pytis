@@ -222,7 +222,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         assert isinstance(id, str)
         assert isinstance(inline, bool)
         spec = find(id, row.fields(), key=lambda f: f.id())
-        type = row[id].type()
+        type = row.type(id)
         if type.enumerator() is not None:
             codebook = row.codebook(id)
             selection_type = spec.selection_type()
@@ -330,7 +330,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         spec = find(id, row.fields(), key=lambda f: f.id())
         self._parent = parent
         self._row = row
-        self._type = row[id].type()
+        self._type = row.type(id)
         self._spec = spec
         self._guardian = guardian
         self._id = id = spec.id()
@@ -1497,7 +1497,7 @@ class ListField(GenericCodebookField):
             if v.export() == current:
                 select_item = i
             for j, id in enumerate(self._columns):
-                if isinstance(row[id].type(), pytis.data.Boolean):
+                if isinstance(row.type(id), pytis.data.Boolean):
                     value = row[id].value() and _("Ano") or _("Ne")
                 else:
                     value = row[id].export().replace("\n", ";")

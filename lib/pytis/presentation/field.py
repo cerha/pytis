@@ -621,6 +621,10 @@ class PresentedRow(object):
             editable = self._coldict[key].editable
             result = (editable == Editable.ALWAYS or editable == Editable.ONCE and self._new)
         return result
+    
+    def type(self, key):
+        """Return the data type of field identified by 'key'."""
+        return self._coldict[key].type
 
     def hidden_codebook(self, key):
         """Return true iff field identified by 'key' is bound to a non-readable codebook."""

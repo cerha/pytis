@@ -121,7 +121,7 @@ class FieldForm(Form):
         self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
         
     def _field(self, id):
-        return Field(self._row, self._view.field(id), self._row[id].type(), self, self._uri_provider)
+        return Field(self._row, self._view.field(id), self._row.type(id), self, self._uri_provider)
         
     def _export_field(self, context, field, editable=False):
         if editable:
@@ -413,7 +413,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 assert e[0] is None or isinstance(e[0], basestring), ('type error', e[0], errors)
                 assert isinstance(e[1], basestring), ('type error', e[1], errors)
         self._errors = errors
-        binary = [id for id in order if isinstance(self._row[id].type(), pytis.data.Binary)]
+        binary = [id for id in order if isinstance(self._row.type(id), pytis.data.Binary)]
         self._enctype = (binary and 'multipart/form-data' or None)
 
     def _has_not_null_indicator(self, field):
@@ -499,7 +499,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         for fid in layout_fields:
             if self._row.depends(fid, layout_fields):
                 active_fields.append(fid)
-            enumerator = self._row[fid].type().enumerator()
+            enumerator = self._row.type(fid).enumerator()
             if enumerator and isinstance(enumerator, pytis.data.DataEnumerator):
                 filters[fid] = self._op2str(self._row.runtime_filter(fid))
         if active_fields:
@@ -775,7 +775,7 @@ class BrowseForm(LayoutForm):
                 if not error:
                     search = pytis.data.EQ(self._key, value)
             elif params.has_key('index_search'):
-                if isinstance(self._row[sorting[0][0]].type(), pd.String):
+                if isinstance(self._row.type(sorting[0][0]), pd.String):
                     index_search_string = params['index_search']
                     search = self._index_search_condition(index_search_string)
         self._index_search_string = index_search_string
@@ -837,7 +837,7 @@ class BrowseForm(LayoutForm):
         self._filter_id = filter_id
         self._filter = filter
         # Determine whether tree emulation should be used.
-        if sorting and isinstance(self._row[sorting[0][0]].type(),
+        if sorting and isinstance(self._row.type(sorting[0][0]),
                                   (pytis.data.LTree, pytis.data.TreeOrder)):
             self._tree_order_column = sorting[0][0]
         else:
@@ -1336,7 +1336,7 @@ class ListView(BrowseForm):
                     continue
                 cls = 'dynamic-content'
             elif self._row[item].value() is not None:
-                if isinstance(self._row[item].type(), pd.SimpleFormattedText):
+                if isinstance(self._row.type(item), pd.SimpleFormattedText):
                     content = lcg.HtmlContent(self._export_field(context, self._fields[item]))
                 else:
                     text = self._row[item].export()
