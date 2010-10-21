@@ -216,11 +216,17 @@ class FieldExporter(object):
             self._format_cache_context = context
         fid = self._field.id
         field_value = self._value().value()
-        value_info = self._format_cache.get(field_value)
+        try:
+            value_info = self._format_cache.get(field_value)
+        except TypeError:               # catch unhashable keys
+            value_info = None
         if value_info is None:
             value = self._format(context)
             info = self._display(context)
-            self._format_cache[field_value] = (value, info,)
+            try:
+                self._format_cache[field_value] = (value, info,)
+            except TypeError:           # catch unhashable keys
+                pass
         else:
             value, info = value_info
         if value and self._uri_provider:
