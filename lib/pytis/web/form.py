@@ -1194,6 +1194,16 @@ class BrowseForm(LayoutForm):
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
+            if len(self._filters) > 1:
+                filter_button = g.submit(_("Apply filters"))
+                select_kwargs = {}
+                noscript_button = ''
+            else:
+                filter_button = None
+                select_kwargs = dict(onchange='this.form.submit(); return true')
+                # Translators: Button for manual selection invocation (when
+                # JavaScript is off.
+                noscript_button = g.noscript(g.submit(_("Apply")))
             filter_content = []
             for filter_set in self._filters:
                 filter_set_id = filter_set.id()
@@ -1209,13 +1219,13 @@ class BrowseForm(LayoutForm):
                                                               # combination to use for selection without
                                                               # unexpected invocation of the option.
                                                               _("(Use ALT+arrow down to select)")),
-                                                       onchange='this.form.submit(); return true',
-                                                       options=[(f.name(), f.id()) for f in filter_set]),
-                                              # Translators: Button for manual selection invocation (when
-                                              # JavaScript is off.
-                                              g.noscript(g.submit(_("Apply")))),
-                                             cls="filter"))
-            content.append(g.div(filter_content))
+                                                       options=[(f.name(), f.id()) for f in filter_set],
+                                                       **select_kwargs),
+                                              noscript_button,
+                                              ),))
+            if filter_button is not None:
+                filter_content.append(filter_button)
+            content.append(g.div(filter_content, cls="filter"))
         if limit is not None and count > self._limits[0]:
             controls = ()
             if count > 100:
