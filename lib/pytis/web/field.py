@@ -214,29 +214,31 @@ class FieldExporter(object):
         if self._format_cache_context is not context:
             self._format_cache = {}
             self._format_cache_context = context
+        fid = self._field.id
         field_value = self._value().value()
-        value = self._format_cache.get(field_value)
-        if value is None:
-            fid = self._field.id
+        value_info = self._format_cache.get(field_value)
+        if value_info is None:
             value = self._format(context)
             info = self._display(context)
-            if value and self._uri_provider:
-                g = context.generator()
-                src = self._uri_provider(self._row, fid, type=UriType.IMAGE)
-                if src:
-                    if info is not None:
-                        value += ' ('+ info +')'
-                        info = None
-                    value = g.img(src, alt=value) #, cls=cls)
-                link = self._uri_provider(self._row, fid, type=UriType.LINK)
-                if link:
-                    if type(link) in (str, unicode):
-                        value = g.link(value, link)
-                    else:
-                        value = g.link(value, link.uri(), title=link.title(), target=link.target())
+            self._format_cache[field_value] = (value, info,)
+        else:
+            value, info = value_info
+        if value and self._uri_provider:
+            g = context.generator()
+            src = self._uri_provider(self._row, fid, type=UriType.IMAGE)
+            if src:
                 if info is not None:
                     value += ' ('+ info +')'
-            self._format_cache[field_value] = value
+                    info = None
+                value = g.img(src, alt=value) #, cls=cls)
+            link = self._uri_provider(self._row, fid, type=UriType.LINK)
+            if link:
+                if type(link) in (str, unicode):
+                    value = g.link(value, link)
+                else:
+                    value = g.link(value, link.uri(), title=link.title(), target=link.target())
+            if info is not None:
+                value += ' ('+ info +')'
         return value
 
     def editor(self, context, prefill=None, error=None):
