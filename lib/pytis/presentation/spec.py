@@ -29,6 +29,8 @@ pova¾ovány za immutable, tudí¾ mohou být libovolnì sdíleny.
 
 """
 
+import re
+
 import pytis.data
 
 from pytis.util import *
@@ -562,7 +564,50 @@ class Filter(object):
     
 # For backwards compatibility
 Condition = Filter
+
+class FilterSet(list):
+    """Uniquely identified set of filters.
+
+    'FilterSet', unlike a plain list, adds some properties to a set of 'Filter'
+    instances.  This is currently used only in Web applications.
+
+    You can work with 'FilterSet' the same way as with lists and additionaly
+    you can examine the special 'FilterSet' properties (e.g. its unique
+    identifier).
+
+    """
+    _ID_MATCHER = re.compile('[a-z0-9_]+')
     
+    def __init__(self, id, title, filters):
+        """
+        Arguments:
+        
+          id -- filter set identifier as a non-empty string.  It must be unique
+            among all objects identifiers within a given form and it may
+            contain only lower-case English alphabet letters, digits and
+            underscores.
+          title -- label of the filter to be displayed to the user, basestring
+          filters -- sequence of 'Filter' instances
+        
+        """
+        assert isinstance(id, str), id
+        assert self._ID_MATCHER.match(id), id
+        assert isinstance(title, basestring)
+        assert is_sequence(filters), filters
+        assert all([isinstance(f, Filter) for f in filters]), filters
+        super(FilterSet, self).__init__(filters)
+        self._id = id
+        self._title = title
+
+    def id(self):
+        """Return identifier of the filter set, string."""
+        return self._id
+
+    def title(self):
+        """Return title of the filter set, basestring."""
+        return self._title
+
+
 class GroupSpec(object):
     """Specification of form field layout in a single record presentation.
 
@@ -988,12 +1033,20 @@ class ViewSpec(object):
             of one argument (the 'PresentedRow' instance) returning the 'Style' for one row (based
             on its values).
 
-          filters -- a sequence of predefined filtering conditions ('Filter' instances), which
-            should be available in the user interface.
+          filters -- a sequence of predefined filtering conditions ('Filter'
+            instances), which should be available in the user interface.  In
+            Web applications it is additionally possible to use sequence of
+            'FilterSet' instances here in which case multiple filters are
+            presented to the user.
 
-          default_filter -- a string identifier of the filtering condition, which should be
-            automatically turned on for this view.  This must be an existing identifier of one of
-            the named conditions specified by 'filters'.
+          default_filter -- a string identifier of the filtering condition,
+            which should be automatically turned on for this view.  This must
+            be an existing identifier of one of the named conditions specified
+            by 'filters'.  In Web applications using multiple filters in the
+            form it is also possible to put sequence of identifiers here,
+            each of the identifier belonging to a different filter sequence, to
+            select default values of more than one of the filters.  If there is
+            no default filter, use 'None' as default_filter value.
             
           aggregations -- a sequence aggregation functions which should be turned on automatically
             for this view (in forms which support that).  The items are 'AGG_*' constants of
@@ -1131,15 +1184,24 @@ class ViewSpec(object):
         assert isinstance(filters, (tuple, list))
         if __debug__:
             filter_identifiers = []
-            for f in filters:
-                assert isinstance(f, Filter)
-                assert f.fixed()
-                if f.id():
-                    assert f.id() not in filter_identifiers, \
-                           ("Duplicate filter id of %s: %s" % (spec_name, f.id(),))
-                    filter_identifiers.append(f.id())
-            assert default_filter is None or default_filter in filter_identifiers, \
-                   ("Default filter not found in filters of %s: %s" % (spec_name, default_filter,))
+            for ff in filters:
+                if not isinstance(ff, FilterSet):
+                    ff = FilterSet('__single', '', [ff])
+                for f in ff:
+                    assert isinstance(f, Filter)
+                    assert f.fixed()
+                    if f.id():
+                        assert f.id() not in filter_identifiers, \
+                               ("Duplicate filter id of %s: %s" % (spec_name, f.id(),))
+                        filter_identifiers.append(f.id())
+            if default_filter is not None:
+                if is_sequence(default_filter):
+                    default_filters = default_filter
+                else:
+                    default_filters = (default_filter,)
+                for f in default_filters:
+                    assert f in filter_identifiers, \
+                           ("Default filter not found in filters of %s: %s" % (spec_name, f,))
         assert isinstance(aggregations, (tuple, list))
         if __debug__:
             for agg in aggregations:
@@ -1307,11 +1369,20 @@ class ViewSpec(object):
         return self._row_style
 
     def filters(self):
-        """Return predefined filtering conditions as a tuple of 'Filter' instances."""
+        """Return predefined filtering conditions.
+
+        The return value is a tuple of 'Filter' instances or a tuple of
+        sequences of 'Filter' instances.
+
+        """
         return self._filters
 
     def default_filter(self):
-        """Return the default filter identifier as a string."""
+        """Return the default filter identifier.
+
+        The return value may be 'None', a string, or a sequence of strings.
+
+        """
         return self._default_filter
 
     def aggregations(self):
@@ -1343,7 +1414,6 @@ class BindingSpec(object):
     Kdy¾ je tedy napøíklad vytváøen duální formuláø 'A::B', bude ve specifikaci
     náhledu 'A' (v roli hlavního formuláøe) získána z 'binding_spec' polo¾ka
     pro náhled 'B' (v roli vedlej¹ího formuláøe).
-    
 
     """
     

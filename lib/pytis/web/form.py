@@ -713,15 +713,21 @@ class BrowseForm(LayoutForm):
             kwargs['uri_provider'] = browse_form_uri_provider
         super(BrowseForm, self).__init__(view, row, **kwargs)
         self._condition = condition
+        if filters is None:
+            filters = self._view.filters()
+        if not filters:
+            filters = ()
+        elif isinstance(filters[0], Filter):
+            filters = (FilterSet('__single', _("Filter"), filters),)
         params = {}
         if req is not None and req.param('form_name') == self._name:
             # Process request params if they belong to the current form.
-            for param, func in (('sort', str), ('dir', str),
-                                ('limit', int), ('offset', int),
-                                ('next', bool), ('prev', bool),
-                                ('search', str), ('index_search', None),
-                                ('filter', str), ('query', unicode),
-                                ('show_query_field', bool)):
+            for param, func in ((('sort', str), ('dir', str),
+                                 ('limit', int), ('offset', int),
+                                 ('next', bool), ('prev', bool),
+                                 ('search', str), ('index_search', None),
+                                 ('query', unicode), ('show_query_field', bool)) +
+                                tuple([('filter_%s' % (fs.id(),), str,) for fs in filters])):
                 if req.has_param(param):
                     value = req.param(param)
                     if func:
@@ -799,43 +805,55 @@ class BrowseForm(LayoutForm):
         self._query_condition = query_condition
         self._show_query_field = show_query_field
         self._allow_query_field = allow_query_field
-        # Determine the current set of user selectable filters.
-        if filters is None:
-            filters = self._view.filters()
-        if filters:
-            null_filter = find(None, filters, key=lambda f: f.condition())
+        # Process filters.
+        default_filter_ids = self._view.default_filter() or ()
+        if not is_sequence(default_filter_ids):
+            default_filter_ids = (default_filter_ids,)
+        self._filters = []
+        self._filter_ids = {}
+        for filter_set in filters:
+            filter_set_id = filter_set.id()
+            # Determine the current set of user selectable filters.
+            null_filter = find(None, filter_set, key=lambda f: f.condition())
             if not null_filter:
                 # Translators: Label used in filter selection box for the option which disables
                 # filtering and thus results in all records to be displayed.
-                filters = (Filter(self._NULL_FILTER_ID, _("All items"), None),) + tuple(filters)
-        self._filters = filters or ()
-        # Determine the currently selected filter.
-        filter_id = params.get('filter')
-        if filter_id is not None:
-            req.set_cookie('pytis-form-last-filter', self._name +':'+ filter_id)
-        else:
-            cookie = req.cookie('pytis-form-last-filter')
-            if cookie and cookie.startswith(self._name +':'):
-                filter_id = cookie[len(self._name)+1:]
+                null_filter = Filter(self._NULL_FILTER_ID, _("All items"), None)
+                filter_set_filters = [null_filter] + [f for f in filter_set]
+                filter_set = FilterSet(filter_set_id, filter_set.title(), filter_set_filters)
+            self._filters.append(filter_set)
+            # Determine the currently selected filter.
+            filter_id = params.get('filter_%s' % (filter_set_id,))
+            if filter_id is not None:
+                req.set_cookie('pytis-form-last-filter_%s' % (filter_set_id,),
+                               self._name +':'+ filter_id)
             else:
-                filter_id = self._view.default_filter()
-                if filter_id is None:
-                    null_filter = find(None, filters, key=lambda f: f.condition())
-                    if null_filter is not None:
-                        filter_id = null_filter.id()
-        if filter_id:
-            matching_filter = find(filter_id, self._filters, key=lambda f: f.id())
-            # Append the current user selected filter to the filter passed as 'filter' argument.
-            if matching_filter:
-                cond = matching_filter.condition()
-                if filter and cond:
-                    filter = pd.AND(filter, cond)
-                elif cond:
-                    filter = cond
-            else:
-                filter_id = None
-        self._filter_id = filter_id
+                cookie = req.cookie('pytis-form-last-filter_%s' % (filter_set_id,))
+                if cookie and cookie.startswith(self._name +':'):
+                    filter_id = cookie[len(self._name)+1:]
+                else:
+                    for f in filter_set:
+                        if f.id() in default_filter_ids:
+                            filter_id = f.id()
+                            break
+                    else:
+                        null_filter = find(None, filter_set, key=lambda f: f.condition())
+                        if null_filter is not None:
+                            filter_id = null_filter.id()
+            if filter_id:
+                matching_filter = find(filter_id, filter_set, key=lambda f: f.id())
+                # Append the current user selected filter to the filter passed as 'filter' argument.
+                if matching_filter:
+                    cond = matching_filter.condition()
+                    if filter and cond:
+                        filter = pd.AND(filter, cond)
+                    elif cond:
+                        filter = cond
+                else:
+                    filter_id = None
+            self._filter_ids[filter_set_id] = filter_id
         self._filter = filter
+        self._filters = tuple(self._filters)
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row.type(sorting[0][0]),
                                   (pytis.data.LTree, pytis.data.TreeOrder)):
@@ -1084,8 +1102,9 @@ class BrowseForm(LayoutForm):
             kwargs = dict(kwargs, sort=sort, dir=self._SORTING_DIRECTIONS[dir])
         # TODO: Excluding the 'submit' argument is actually a hack, since it is defined in Wiking
         # and should be transparent for the form.
-        args = [('form_name', self._name), ('filter', self._filter_id)] + \
-               [(k, v) for k, v in self._hidden if k != 'submit']
+        args = [('form_name', self._name)]
+        args += [('filter_%s' % (k,), v,) for k, v in self._filter_ids.items()]
+        args += [(k, v) for k, v in self._hidden if k != 'submit']
         return generator.uri(self._handler, *args, **kwargs)
 
     def _index_search_condition(self, search_string):
@@ -1160,7 +1179,7 @@ class BrowseForm(LayoutForm):
         id = (bottom and '0' or '1') + self._id
         content = []
         # Construct a list of filters for export.
-        show_filter = self._filters and (count or self._filter_id is not None)
+        show_filter = self._filters and (count or [v for v in self._filter_ids.values() if v is not None])
         show_query_field = self._show_query_field
         if not bottom:
             msg = self._message(count)
@@ -1175,23 +1194,28 @@ class BrowseForm(LayoutForm):
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
-            filter_id = 'filter-' + id
-            # Translators: Label of filter selection box.  Filtering limits the displayed records
-            # by certain criterias.
-            content.append(g.div((g.label(_("Filter")+': ', filter_id),
-                                  g.select(name='filter', id=filter_id,
-                                           selected=self._filter_id,
-                                           title=(_("Filter")+' '+
-                                                  # Translators: Tooltip text suggesting keyboard
-                                                  # combination to use for selection without
-                                                  # unexpected invocation of the option.
-                                                  _("(Use ALT+arrow down to select)")),
-                                           onchange='this.form.submit(); return true',
-                                           options=[(f.name(), f.id()) for f in self._filters]),
-                                  # Translators: Button for manual selection invocation (when
-                                  # JavaScript is off.
-                                  g.noscript(g.submit(_("Apply")))),
-                                 cls="filter"))
+            filter_content = []
+            for filter_set in self._filters:
+                filter_set_id = filter_set.id()
+                filter_name = 'filter_%s' % (filter_set_id,)
+                filter_id = filter_name + '-' + id
+                # Translators: Label of filter selection box.  Filtering limits the displayed records
+                # by certain criterias.
+                filter_content.append(g.span((g.label(filter_set.title()+': ', filter_id),
+                                              g.select(name=filter_name, id=filter_id,
+                                                       selected=self._filter_ids.get(filter_set_id),
+                                                       title=(_("Filter")+' '+
+                                                              # Translators: Tooltip text suggesting keyboard
+                                                              # combination to use for selection without
+                                                              # unexpected invocation of the option.
+                                                              _("(Use ALT+arrow down to select)")),
+                                                       onchange='this.form.submit(); return true',
+                                                       options=[(f.name(), f.id()) for f in filter_set]),
+                                              # Translators: Button for manual selection invocation (when
+                                              # JavaScript is off.
+                                              g.noscript(g.submit(_("Apply")))),
+                                             cls="filter"))
+            content.append(g.div(filter_content))
         if limit is not None and count > self._limits[0]:
             controls = ()
             if count > 100:
