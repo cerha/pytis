@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-22 10:49+0200\n"
-"PO-Revision-Date: 2010-10-21 17:52+0200\n"
+"PO-Revision-Date: 2010-10-22 10:52+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -243,7 +243,7 @@ msgstr "Hledat"
 
 #: ../lib/pytis/web/form.py:1189
 msgid "Change filters"
-msgstr ""
+msgstr "Změnit filtry"
 
 #. Translators: Button for manual selection invocation (when
 #. JavaScript is off.
