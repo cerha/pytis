@@ -30,6 +30,8 @@ All the content generation is done using the LCG framework.  See http://www.free
 
 """
 
+import string
+
 from pytis.web import *
 
 _ = lcg.TranslatableTextFactory('pytis')
@@ -111,6 +113,17 @@ class Form(lcg.Content):
             cls += ' ' + camel_case_to_lower(self._name, '-')
         return g.form(content, action=g.uri(self._handler), method=self._HTTP_METHOD, cls=cls,
                       id=self._id, enctype=self._enctype)
+
+    def heading_info(self):
+        """Return basestring to be possibly put into a document heading.
+
+        If the return value is 'None' or an empty basestring, nothing is added
+        to the document heading.  Otherwise the returned basestring may or may
+        not be added to some document heading, based on decision of the code
+        making the final document.
+
+        """
+        return None
 
 
 class FieldForm(Form):
@@ -1280,6 +1293,26 @@ class BrowseForm(LayoutForm):
                    form,
                    self._export_controls(context, bottom=True))
         return concat([c for c in content if c], separator="\n")
+
+    def heading_info(self):
+        active_filters = [(k, v) for k, v in self._filter_ids.items() if v is not None]
+        filter_labels = []
+        for filter_id, filter_value in active_filters:
+            for filter_set in self._filters:
+                if filter_set.id() == filter_id:
+                    break
+            else:
+                continue
+            for filter in filter_set:
+                if filter.id() == filter_value:
+                    if filter.condition():
+                        filter_labels.append(filter.name())
+                    break
+        if filter_labels:
+            info = _("filtered by: ") + string.join(filter_labels, ', ')
+        else:
+            info = ''
+        return info
 
 
 class ListView(BrowseForm):
