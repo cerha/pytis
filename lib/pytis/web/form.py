@@ -1309,7 +1309,10 @@ class BrowseForm(LayoutForm):
                         filter_labels.append(filter.name())
                     break
         if filter_labels:
-            info = _("filtered by: ") + string.join(filter_labels, ', ')
+            # A bit complicated in order to preserve translations
+            info = _("filtered by: ") + filter_labels[0]
+            for label in filter_labels[1:]:
+                info = info + u', ' + label
         else:
             info = ''
         return info
