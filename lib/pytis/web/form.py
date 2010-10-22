@@ -589,18 +589,15 @@ class BrowseForm(LayoutForm):
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
                  allow_query_search=None, filter=None, filters=None, message=None, req=None,
-                 arguments=None, **kwargs):
+                 arguments=None, immediate_filters=True, **kwargs):
         """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for the default columns
-            defined by specification.
-            
+            defined by specification.            
           condition -- current condition for filtering the records as 'pytis.data.Operator'
             instance or None.
-            
           sorting -- form sorting specification in the format recognized by the 'sort' argument of
             'pytis.data.Data.select()'.
-          
           limit -- maximal number of rows per page.  If the current condition produces more rows,
             the listing will be split into pages and the form will include controls for navigation
             between these pages.  None value results in an unlimited list -- all records will be
@@ -611,17 +608,14 @@ class BrowseForm(LayoutForm):
             The request parameter/cookie is checked against the 'limits' argument (see below) and
             if it is not one of the values defined there, it is ignored, so the user may only use
             one of the allowed limits. 
-
           limits -- a sequence of available 'limit' values.  These values are used to create the
             limit selection control and also determine valid values of the 'limit' request
             parameter and cookie (described above).
-            
           offset -- determines the page within paged listing.  The number indicates the offset of
             the record within all the records of the current select.  The page, which contains this
             record will be displayed if possible.  If not (the listing is shorter than given
             number), the nearest page is displayed.  The request argument 'offset' overrides this
             value if 'req' is passed.  Also request arguments 'next' and 'prev' modify this value.
-
           search -- search condition as a 'pytis.data.Operator' instance or None.  If used, the
             offset will be set automatically to ensure, that the first record matching the search
             condition will be displayed on the current page.  The request parameters 'search' or
@@ -631,17 +625,14 @@ class BrowseForm(LayoutForm):
             string and is always performed on the primary sorting column.  If no search condition
             is passed (either to the constructor or through the request), the offset is controlled
             by the 'offset' argument.
-
             Searching is ignored when the current limit is greater than the total number of
             records.
-
           query -- query search string.  If None, the form automatically displays search controls
             when the number of records exceeds one page.  If 'query' is passed, these embedded
             search conrols are disabled (it is considered, that the application has it's own search
             interface), but otherwise the form behaves as if the query was filled in its own search
             field.  The query string is split into query words by space and the form is filtered to
             contain only records containing all the words in any of its string columns.
-
           allow_query_search -- explicitly enable or disable displaying the
             query search controls.  Query search allows filtering the form
             records by a text string.  By default (when None), query search
@@ -659,7 +650,6 @@ class BrowseForm(LayoutForm):
             controls.  Passing False, on the other hand, will disable the query
             search controls altogether.  The search query string may still be
             passed programatically through the 'query' argument in this case.
-
           query -- query search string.  If None, the form displays query
             search controls automatically.  If not None, it is considered, that
             the application implements it's own search interface.  The passed
@@ -667,41 +657,42 @@ class BrowseForm(LayoutForm):
             written into the form's query search field (see
             'allow_query_search' for details).  The form search controls are
             disabled in this case as if 'allow_query_search' was False.
-
           filter -- filter condition as a 'pytis.data.Operator' instance.  This condition will be
             appended to 'condition', but the difference is that 'condition' is invisible to the
             user, but 'filter' may be indicated in the user interface.
-
           filters -- sequence of user visible named filters as 'pytis.presentation.Filter'
             instances.  These filters will be available in the user interface for user's selection.
             If None, the default set of filters defined by specification is used.  If not None, the
             filters from specification are ignored, so they need to be included in this argument
             explicitly if they should be displayed.  This argument is mostly useful to construct
             the list of filters dynamically (specification filters are static).
-
           message -- function returning a custom search result message.  If none, a default message
             will be used according to current query, such as 'Found 5 records matching the search
             expression.'.  A function of one argument (integer determining the number of records in
             the form) may be used to return a custom message as a string (possibly LCG Translatable
             object).  An example of a custom message might be 'Found 15 articles in category
             Python'.
-
           req -- instance of a class implementing the 'Request' API.  The form state (sorting,
             paging etc) will be set up according to the reqest parameters, if the request includes
             them (form controls were used to submit the form).  The constructor argument 'name'
             (defined in parent class) may be used to distinguish between multiple forms on one
             page.  If this parameter was passed, it is sent as the request argument 'form_name'.
             Thus if this argument doesn't match the form name, the request arguments are ignored.
-            
           arguments -- dictionary of table function call arguments, with
             function argument identifiers as keys and 'pytis.data.Value'
             instances as values.  Useful only when the table is actually a row
             returning function, otherwise ignored.
+          immediate_filters -- when True, filters apply immediately after their
+            selection in the corresponding combobox; when False, there is a
+            separate button for filter application.  When there is more than
+            one filter in a form, the separate filter application button is
+            always present.
 
         See the parent classes for definition of the remaining arguments.
 
         """
         self._columns = columns or view.columns()
+        self._immediate_filters = immediate_filters
         uri_provider = kwargs.pop('uri_provider')
         if uri_provider:
             def browse_form_uri_provider(row, cid=None, type=UriType.LINK):
@@ -1194,7 +1185,7 @@ class BrowseForm(LayoutForm):
                                   g.submit(_("Search"))),
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
-            if len(self._filters) > 1:
+            if not self._immediate_filters or len(self._filters) > 1:
                 filter_button = g.submit(_("Apply filters"))
                 select_kwargs = {}
                 noscript_button = ''
