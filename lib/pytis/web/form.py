@@ -1186,7 +1186,7 @@ class BrowseForm(LayoutForm):
                                  cls='query' + (show_filter and ' with-filter' or '')))
         if show_filter and not bottom:
             if not self._immediate_filters or len(self._filters) > 1:
-                filter_button = g.submit(_("Apply filters"))
+                filter_button = g.submit(_("Change filters"))
                 select_kwargs = {}
                 noscript_button = ''
             else:
