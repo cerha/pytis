@@ -871,8 +871,16 @@ class LookupForm(InnerForm):
     def _lf_sfs_columns(self):
         return sfs_columns(self._view.fields(), self._data)
 
-    def _search(self, condition, direction, row_number=None, report_failure=True):
-        self._search_adjust_data_position(row_number)
+    def _search(self, condition, direction, row_number=None, report_failure=True,
+                initial_shift=False):
+        if initial_shift:
+            if direction == pytis.data.FORWARD:
+                start_row_number = max(row_number-1, 0)
+            else:
+                start_row_number = min(row_number+1, self._lf_count(min_value=row_number+1))
+        else:
+            start_row_number = row_number
+        self._search_adjust_data_position(start_row_number)
         data = self._data
         skip = data.search(condition, direction=direction, transaction=self._transaction)
         if skip == 0:
@@ -881,6 +889,11 @@ class LookupForm(InnerForm):
                 message(_("Záznam nenalezen"), beep_=True)
             result = None
         else:
+            if initial_shift:
+                if direction == pytis.data.FORWARD:
+                    skip = skip + (start_row_number - row_number)
+                else:
+                    skip = skip + (row_number - start_row_number)
             result = skip
             log(EVENT, 'Záznam nalezen:', skip)
             self._search_skip(result, direction)

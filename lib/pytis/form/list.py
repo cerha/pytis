@@ -485,22 +485,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             stext = '*' + stext
         wmvalue = pytis.data.WMValue(pytis.data.String(), stext)
         condition = pytis.data.WM(column.id(), wmvalue, ignore_case=not case.IsChecked())
-        if newtext:
-            if direction == pytis.data.FORWARD:
-                start_row = max(row-1, 0)
-            else:
-                start_row = min(row+1, self._table.number_of_rows(min_value=row+1))
-        else:
-            start_row = row
         # TODO: Pøedhledání v aktuálním selectu
-        found = self._search(condition, direction, row_number=start_row, report_failure=False)
+        found = self._search(condition, direction, row_number=row, report_failure=False,
+                             initial_shift=newtext)
         if found is None:
             message(_("Dal¹í záznam nenalezen"), beep_=True)
         else:
             if direction == pytis.data.FORWARD:
-                new_row = start_row + found
+                new_row = row + found
             else:    
-                new_row = start_row - found
+                new_row = row - found
             self._select_cell(row=new_row)
 
     def _exit_incremental_search(self, rollback=False):
@@ -2427,10 +2421,12 @@ class FoldableForm(ListForm):
                  (len(self._lf_sorting) == 1 and
                   self._lf_sorting[0][0] == self._folding_column_id)))
     
-    def _search(self, condition, direction, row_number=None, report_failure=True):
+    def _search(self, condition, direction, row_number=None, report_failure=True,
+                initial_shift=False):
         if not self._folding_enabled():
             return super(FoldableForm, self)._search(condition, direction, row_number=row_number,
-                                                     report_failure=report_failure)
+                                                     report_failure=report_failure,
+                                                     initial_shift=initial_shift)
         if row_number is not None:
             self._table.rewind(position=row_number)
         orig_folding = self._folding
@@ -2443,7 +2439,8 @@ class FoldableForm(ListForm):
         try:
             result = super(FoldableForm, self)._search(condition, direction,
                                                        row_number=unfolded_row_number,
-                                                       report_failure=report_failure)
+                                                       report_failure=report_failure,
+                                                       initial_shift=initial_shift)
             row = self.current_row()
         finally:
             self._folding = orig_folding
