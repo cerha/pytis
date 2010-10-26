@@ -266,6 +266,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
             run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
                        title=_("Automatické otevøení ulo¾ených formuláøù"),
                        message=_("Otevírám formuláø")+' '*40) #, can_abort=True)
+            # In wx2.8, keyboard navigation doesn't work now.  The following
+            # lines raise the previous form and then back the top form, which
+            # fixes the problem.  Running a Message dialog instead also helps,
+            # but it's probably more obtrusive to the users.  Maybe you can
+            # find a better solution!
+            self._raise_form(self._windows.mru()[1])
+            self._raise_form(self._windows.mru()[1])
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         conn = config.dbconnection
