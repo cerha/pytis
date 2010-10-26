@@ -529,8 +529,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     def current_row(self):
         row = self._current_cell()[0]
-        if row < 0 or row >= self._grid.GetNumberRows():
-            # Pøi prázdné tabulce má wxGrid nastaven øádek 0.
+        if row < 0 or row >= self._table.number_of_rows(min_value=row+1):
             return None
         else:
             return self._table.row(row)
