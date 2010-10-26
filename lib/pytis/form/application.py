@@ -170,6 +170,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             keymap.define_key(key, cmd, args)
         global _application
         _application = self
+        self._initial_config = [(o, copy.copy(getattr(config, o)))
+                                for o in configurable_options() + \
+                                ('application_state', 'form_state')]
         # Read the stored configuration.
         read_config = self._spec('read_config', self._read_config)
         items = read_config()
@@ -640,6 +643,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             wxconfig.DeleteEntry(option)
         wxconfig.Flush()
 
+
     def _cleanup(self):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
         # situaci bylo mo¾no aplikaci ukonèit.
@@ -685,12 +689,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except Exception, e:
             safelog(str(e))
         try:
-            items = tuple([(o, getattr(config, o))
-                           for o in configurable_options() + \
-                           ('application_state', 'form_state') 
-                           if config.option(o).changed()])
+            items = []
+            for option, initial_value in self._initial_config:
+                current_value = getattr(config, option)
+                if current_value != initial_value:
+                    items.append((option, current_value))
             write_config = self._spec('write_config', self._write_config)
-            write_config(items)
+            write_config(tuple(items))
             log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(items))
         except Exception, e:
             safelog("Saving changed configuration failed:", str(e))
