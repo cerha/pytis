@@ -89,20 +89,22 @@ Command(InnerForm, 'RELOAD_FORM_STATE',
         "Zapomeò u¾iv. nastavení formuláøe a vra» poslednì ulo¾ené hodnoty")
 Command(InnerForm, 'RESET_FORM_STATE',
         "Zahoï ulo¾ené u¾iv. nastavení formuláøe a vra» výchozí nastavení")
-Command(LookupForm, 'FILTER_MENU',
-        "Show filtering menu for the current form")
+Command(LookupForm, 'PROFILE_MENU',
+        "Show profile menu for the current form")
 Command(LookupForm, 'FILTER',
         "Filtrování záznamù")
 Command(LookupForm, 'UNFILTER',
         "Zru¹ení filtrování záznamù")
+Command(LookupForm, 'APPLY_PROFILE',
+        "Apply given form profile on the current form (arg. 'profile')")
 Command(LookupForm, 'FILTER_BY_VALUE',
         "Vyfiltrování formuláøe podle dané hodnoty (arg. 'column_id', 'value')")
-Command(LookupForm, 'SAVE_FILTER',
-        "Save current condition as named user filter."),
-Command(LookupForm, 'UPDATE_SAVED_FILTER',
-        "Update en existing named filter by the current condition"),
-Command(LookupForm, 'DELETE_SAVED_FILTER',
-        "Delete the current saved filter."),
+Command(LookupForm, 'SAVE_PROFILE',
+        "Save the current profile as a named user profile."),
+Command(LookupForm, 'UPDATE_SAVED_PROFILE',
+        "Update an existing named profile by the current setup."),
+Command(LookupForm, 'DELETE_SAVED_PROFILE',
+        "Delete the current saved profile."),
 Command(LookupForm, 'JUMP',
         "Skok na záznam")
 Command(LookupForm, 'SEARCH',
@@ -467,8 +469,8 @@ class UICommands(object):
         LookupForm.COMMAND_SORT(),
         _("Øazení"),
         _("Urèit podmínky øazení záznamù."))
-    FILTER_MENU = UICommand(
-        LookupForm.COMMAND_FILTER_MENU(),
+    PROFILE_MENU = UICommand(
+        LookupForm.COMMAND_PROFILE_MENU(),
         _("Výbìr aktivního filtru"),
         _("Zobrazuje aktivní filtr a umo¾òuje jeho výbìr."))
     FILTER = UICommand(
@@ -559,7 +561,7 @@ TOOLBAR_COMMANDS = ((
         UICommands.AGGREGATION_MENU,
         ),(
         UICommands.FILTER,
-        UICommands.FILTER_MENU,
+        UICommands.PROFILE_MENU,
         ),(
         UICommands.PYTIS_HELP,
         UICommands.HELP,

@@ -659,15 +659,15 @@ class LookupForm(InnerForm):
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
     """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
 
-    _USER_FILTERS_PARAM = 'conditions'
+    _USER_PROFILES_PARAM = 'profiles'
     _FILTER_CONDITION_PARAM = 'filter'
     _SEARCH_CONDITION_PARAM = 'search'
     _PERSISTENT_FORM_PARAMS = InnerForm._PERSISTENT_FORM_PARAMS + \
-                              (_USER_FILTERS_PARAM,
+                              (_USER_PROFILES_PARAM,
                                _FILTER_CONDITION_PARAM,
                                _SEARCH_CONDITION_PARAM)
 
-    _UNNAMED_FILTER_LABEL = _("Nepojmenovaný filtr")
+    _UNNAMED_PROFILE_LABEL = _("Nepojmenovaný profil")
 
     
     def _init_attributes(self, sorting=None, filter=None, condition=None, arguments=None,
@@ -695,20 +695,21 @@ class LookupForm(InnerForm):
         self._lf_select_count_ = None
         self._init_sorting(sorting)
         self._lf_initial_sorting = self._lf_sorting
-        # _lf_condition reprezentuje statickou podmínku danou argumentem
-        # konstruktoru, naproti tomu _lf_filter reprezentuje aktuální podmínku
-        # u¾ivatelského filtru.
+        # _lf_condition represents the static condition given by the constructor
+        # argument, whereas _lf_filter represents the filtering condition, which
+        # is part of the current user profile.
         self._lf_condition = condition
         if filter is None and self._view.default_profile() is not None:
-            f = find(self._view.default_profile(), self._view.filters(), key=lambda f: f.id())
-            if f:
-                filter = f.condition()
+            profile = find(self._view.default_profile(), self._view.profiles(),
+                           key=lambda p: p.id())
+            if profile:
+                filter = profile.filter()
             else:
-                raise ProgramError("Unknown default filter: %s" % self._view.default_profile())
+                raise ProgramError("Unknown default profile: %s" % self._view.default_profile())
         self._lf_filter = filter
         self._lf_last_filter = filter or self._load_condition(self._FILTER_CONDITION_PARAM)
         self._lf_search_condition = self._load_condition(self._SEARCH_CONDITION_PARAM)
-        self._user_filters = self._load_user_filters()
+        self._user_profiles = self._load_user_profiles()
         self._arguments = arguments
         self._init_select(async_count=True)
 
@@ -810,23 +811,23 @@ class LookupForm(InnerForm):
         packed = self._get_state_param(key, None, tuple)
         return packed and self._unpack_condition(packed)
 
-    def _save_user_filters(self, filters):
-        packed = [(f.name(), self._pack_condition(f.condition())) for f in filters]
-        self._set_state_param(self._USER_FILTERS_PARAM, tuple(packed))
+    def _save_user_profiles(self, profiles):
+        packed = [(p.name(), self._pack_condition(p.filter())) for p in profiles]
+        self._set_state_param(self._USER_PROFILES_PARAM, tuple(packed))
 
-    def _load_user_filters(self):
-        packed = self._get_state_param(self._USER_FILTERS_PARAM, None, tuple, tuple)
+    def _load_user_profiles(self):
+        packed = self._get_state_param(self._USER_PROFILES_PARAM, None, tuple, tuple)
         if packed:
             unpacked = [(unicode(n), self._unpack_condition(c)) for n, c in packed]
-            user_filters = []
+            user_profiles = []
             for i in range(len(unpacked)):
                 name, cond = unpacked[i]
                 if cond:
-                    filter_id = '_filter_%d' % (i,)
-                    user_filters.append(Filter(filter_id, name, cond))
+                    profile_id = '_profile_%d' % (i,)
+                    user_profiles.append(Profile(profile_id, name, cond))
         else:
-            user_filters = ()
-        return tuple(user_filters)
+            user_profiles = ()
+        return tuple(user_profiles)
 
     def _default_sorting(self):
         sorting = self._view.sorting()
@@ -979,10 +980,10 @@ class LookupForm(InnerForm):
             analyze(self._lf_filter)
         return columns
 
-    def _user_filter_index(self, condition):
-        # Return the index of given filter condition in self._user_filters or None.
-        for i, f in enumerate(self._user_filters):
-            if f.condition() == condition:
+    def _user_profile_index(self, condition):
+        # Return the index of given profile condition in self._user_profiles or None.
+        for i, profile in enumerate(self._user_profiles):
+            if profile.filter() == condition:
                 return i
         return None
 
@@ -990,6 +991,23 @@ class LookupForm(InnerForm):
         self._lf_filter = condition
         self._init_select(async_count=False)
         self.select_row(self._current_key())
+
+    def _apply_profile(self, profile):
+        if profile is None:
+            sorting = None
+            filter = None
+        else:
+            filter = profile.filter()
+            sorting = profile.sorting()
+        if sorting is None:
+            sorting = self._lf_initial_sorting
+        if sorting != self._lf_sorting:
+            self._lf_sorting = sorting
+        if filter != self._lf_filter:
+            self._apply_filter(filter)
+        else:
+            # Apply sorting if filter was not applied (prevent multiple calls to select_row()).
+            self.select_row(self._current_key())
 
     def _can_filter(self, condition=None, last=False):
         return not last or self._lf_last_filter is not None
@@ -1007,32 +1025,32 @@ class LookupForm(InnerForm):
                                 col=self._current_column_id(),
                                 condition=self._lf_filter)
         if perform and condition != self._lf_filter:
-            try:
-                self.filter(condition)
-            except Exception, e:
-                self.filter(None)
-                i = self._user_filter_index(condition)
-                if i is not None:
-                    log(OPERATIONAL, "Unable to apply filter:", e)
-                    f = self._user_filters[i]
-                    answer = run_dialog(Question, icon=Question.ICON_ERROR,
-                                        title=_("Neplatný filtr"),
-                                        message=_("U¾ivatelský filtr \"%s\" je neplatný.\n"
-                                                  "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
-                                                  "a ulo¾ený filtr ji¾ nelze pou¾ít.\n\n"
-                                                  "Pøejete si filtr smazat?") % f.name())
-                    if answer:
-                        filters = list(self._user_filters)
-                        del filters[i]
-                        self._user_filters = tuple(filters)
-                    else:
-                        # The filter menu needs to be realoaded, since the current selection
-                        # doesn't match the current filter (invalid filter is selected, but no
-                        # filter is active).
-                        LookupForm._last_filter_menu_state = (None, None)
+            self.filter(condition)
+
+    def _cmd_apply_profile(self, profile):
+        try:
+            self._apply_profile(profile)
+        except Exception, e:
+            i = self._user_profile_index(profile)
+            if i is not None:
+                log(OPERATIONAL, "Unable to apply profile:", e)
+                profile = self._user_profiles[i]
+                answer = run_dialog(Question, icon=Question.ICON_ERROR,
+                                    title=_("Neplatný profil"),
+                                    message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
+                                              "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
+                                              "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
+                                              "Pøejete si profil smazat?") % profile.name())
+                if answer:
+                    profiles = list(self._user_profiles)
+                    del profiles[i]
+                    self._user_profiles = tuple(profiles)
                 else:
-                    raise
-    
+                    # The profile menu needs to be realoaded, since the current selection
+                    # doesn't match the current profile (invalid profile is selected, but no
+                    # profile is active).
+                    LookupForm._last_profile_menu_state = (None, None)
+                
     def _can_unfilter(self):
         return self._lf_filter is not None
         
@@ -1047,52 +1065,56 @@ class LookupForm(InnerForm):
             condition = pytis.data.AND(self._lf_filter, condition)
         self.COMMAND_FILTER.invoke(condition=condition)
 
-    def _can_save_filter(self, name, kbd=False):
+    def _can_save_profile(self, name, kbd=False):
         if kbd:
-            # Always allow keyboard invocation (it will be rejected later with appropriate message).
+            # Always allow keyboard invocation (it will be rejected later with
+            # appropriate message).
             return True
         else:
             # Detect command availability for the menu item.
-            names = [f.name() for f in self._view.filters() + self._user_filters]
-            return self._lf_filter is not None and name not in names
+            names = [p.name() for p in self._view.profiles() + self._user_profiles]
+            return self._current_profile() is not None and name not in names
     
-    def _cmd_save_filter(self, name, kbd=False):
+    def _cmd_save_profile(self, name, kbd=False):
+        # TODO profiles: ???
         if self._lf_filter is not None:
-            if name == self._UNNAMED_FILTER_LABEL or not name:
-                message(_("Nejprve upravte název, pod kterým chcete filtr ulo¾it."), beep_=True)
+            if name == self._UNNAMED_PROFILE_LABEL or not name:
+                message(_("Nejprve upravte název, pod kterým chcete profil ulo¾it."), beep_=True)
                 return
-            for f in self._view.filters() + self._user_filters:
-                if f.name() == name:
-                    message(_("Pojmenovaný filtr '%s' ji¾ existuje.") % name, beep_=True)
+            current_profile = self._current_profile()
+            for profile in self._view.profiles() + self._user_profiles:
+                if profile.name() == name:
+                    message(_("Pojmenovaný profil '%s' ji¾ existuje.") % name, beep_=True)
                     return
-                elif f.condition() == self._lf_filter:
-                    message(_("Shodný filtr ji¾ existuje pod názvem '%s'.") % f.name(), beep_=True)
+                elif profile == current_profile:
+                    message(_("Shodný profil ji¾ existuje pod názvem '%s'.") % profile.name(),
+                            beep_=True)
                     return
-            filter_id = '_filter_%d' % (len(self._user_filters),)
-            self._user_filters += (Filter(filter_id, name, self._lf_filter),)
-            self._save_user_filters(self._user_filters)
-            message(_("Filtr ulo¾en pod názvem '%s'.") % name)
+            profile_id = '_profile_%d' % (len(self._user_profiles),)
+            self._user_profiles += (Profile(profile_id, name, self._lf_filter),)
+            self._save_user_profiles(self._user_profiles)
+            message(_("Profil ulo¾en pod názvem '%s'.") % name)
         self.focus()
     
-    def _can_update_saved_filter(self, index):
-        # The whole submenu is disabled in 'filter_context_menu()' if needed.
+    def _can_update_saved_profile(self, index):
+        # The whole submenu is disabled in 'profile_context_menu()' if needed.
         return True
         
-    def _cmd_update_saved_filter(self, index):
-        filters = list(self._user_filters)
-        f = filters[index]
-        filters[index] = Filter(f.id(), f.name(), self._lf_filter)
-        self._user_filters = tuple(filters)
-        self._save_user_filters(self._user_filters)
+    def _cmd_update_saved_profile(self, index):
+        profiles = list(self._user_profiles)
+        profile = profiles[index]
+        profiles[index] = Profile(profile.id(), profile.name(), self._lf_filter)
+        self._user_profiles = tuple(profiles)
+        self._save_user_profiles(self._user_profiles)
     
-    def _can_delete_saved_filter(self, index):
+    def _can_delete_saved_profile(self, index):
         return index is not None
 
-    def _cmd_delete_saved_filter(self, index):
-        filters = list(self._user_filters)
-        del filters[index]
-        self._user_filters = tuple(filters)
-        self._save_user_filters(self._user_filters)
+    def _cmd_delete_saved_profile(self, index):
+        profiles = list(self._user_profiles)
+        del profiles[index]
+        self._user_profiles = tuple(profiles)
+        self._save_user_profiles(self._user_profiles)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
@@ -1117,7 +1139,6 @@ class LookupForm(InnerForm):
         sorting = self._determine_sorting(col=col, direction=direction, primary=primary)
         if sorting is not None and sorting != self._lf_sorting:
             self._lf_sorting = sorting
-            self._set_state_param('sorting', sorting)
             self.select_row(self._current_key())
         return sorting
     
@@ -1187,34 +1208,33 @@ class LookupForm(InnerForm):
     @classmethod
     def add_toolbar_ctrl(cls, toolbar, uicmd):
         cmd, kwargs = uicmd.command(), uicmd.args()
-        if cmd == LookupForm.COMMAND_FILTER_MENU:
-            # Create the filter selection combo box.  The current 'Command' implementation doesn't
-            # support command control updates other than enabling/disabling.  This example,
-            # together with the hack for DualForm.COMMAND_OTHER_FORM might serve as reference for
-            # futre generalization of command control updates.
+        if cmd == LookupForm.COMMAND_PROFILE_MENU:
+            # Create the profile selection combo box.  The current 'Command'
+            # implementation doesn't support command control updates other than
+            # enabling/disabling.  This example, together with the hack for
+            # DualForm.COMMAND_OTHER_FORM might serve as reference for futre
+            # generalization of command control updates.
             def on_change(event):
                 ctrl = event.GetEventObject()
                 selection = ctrl.GetSelection()
-                condition = ctrl.GetClientData(selection)
-                if condition:
-                    LookupForm.COMMAND_FILTER.invoke(condition=condition)
-                else:
-                    LookupForm.COMMAND_UNFILTER.invoke()
+                profile = ctrl.GetClientData(selection)
+                LookupForm.COMMAND_APPLY_PROFILE.invoke(profile=profile)
                 current_form().focus()
-            ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(), on_change=on_change)
-            cls._last_filter_menu_state = (None, None)
+            ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(),
+                            on_change=on_change)
+            cls._last_profile_menu_state = (None, None)
             def update(event):
                 enabled = cmd.enabled(**kwargs)
                 event.Enable(enabled)
                 if enabled:
                     form = current_form()
-                    last_form, last_state = cls._last_filter_menu_state
+                    last_form, last_state = cls._last_profile_menu_state
                     if form is not last_form:
                         last_state = None
-                    state = form.update_filter_menu(ctrl, last_state)
-                    cls._last_filter_menu_state = (form, state)
+                    state = form.update_profile_menu(ctrl, last_state)
+                    cls._last_profile_menu_state = (form, state)
                 elif top_window() is None and not ctrl.IsEmpty():
-                    cls._last_filter_menu_state = (None, None)
+                    cls._last_profile_menu_state = (None, None)
                     ctrl.SetSelection(wx.NOT_FOUND)
                     ctrl.Clear()
                     ctrl.SetValue('')
@@ -1223,10 +1243,10 @@ class LookupForm(InnerForm):
             wx_callback(wx.EVT_UPDATE_UI, ctrl, wxid, update)
             def on_context_menu(event):
                 form = current_form()
-                popup_menu(ctrl, form.filter_context_menu(ctrl))
+                popup_menu(ctrl, form.profile_context_menu(ctrl))
             wx_callback(wx.EVT_RIGHT_DOWN, ctrl, on_context_menu)
             def on_enter(event):
-                LookupForm.COMMAND_SAVE_FILTER.invoke(name=ctrl.GetValue())
+                LookupForm.COMMAND_SAVE_PROFILE.invoke(name=ctrl.GetValue())
             wx_callback(wx.EVT_TEXT_ENTER, ctrl, wxid, on_enter)
             def on_key_down(event):
                 event.Skip()
@@ -1238,69 +1258,76 @@ class LookupForm(InnerForm):
             toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr()) # Doesn't work...
         else:
             InnerForm.add_toolbar_ctrl(toolbar, uicmd)
+
+    def _current_profile(self):
+        if self._lf_filter is None and self._lf_sorting == self._lf_initial_sorting:
+            return None
+        else:
+            return Profile('__current__', "", filter=self._lf_filter, sorting=self._lf_sorting)
     
-    def update_filter_menu(self, ctrl, state):
-        # Update the toolbar filter selection control.
+    def update_profile_menu(self, ctrl, state):
+        # Update the toolbar profile selection control.
         # Called repeatedly in update UI event loop, so must be quite efficient...
         if state:
-            last_filter, last_filters = state
+            last_profile, last_profiles = state
         else:
-            last_filter, last_filters = None, None
-        if self._user_filters != last_filters:
-            # Update the list of available filters.
+            last_profile, last_profiles = None, None
+        current_profile = self._current_profile()
+        if self._user_profiles != last_profiles:
+            # Update the list of available profiles.
             ctrl.Clear()
-            ctrl.Append(_("V¹echny polo¾ky"), None)
-            if self._lf_filter is None:
+            ctrl.Append(_("Výchozí profil"), None)
+            if current_profile is None:
                 selected = 0
             else:
                 selected = None
             editable = False
-            for f in self._view.filters() + self._user_filters:
-                ctrl.Append(f.name(), f.condition())
-                if selected is None and f.condition() == self._lf_filter:
+            for profile in self._view.profiles() + self._user_profiles:
+                ctrl.Append(profile.name(), profile)
+                if selected is None and profile == current_profile:
                     selected = ctrl.GetCount() - 1
             if selected is None:
-                ctrl.Append(self._UNNAMED_FILTER_LABEL, self._lf_filter)
+                ctrl.Append(self._UNNAMED_PROFILE_LABEL, current_profile)
                 selected = ctrl.GetCount() - 1
                 editable = True
             ctrl.SetEditable(editable)
             ctrl.SetSelection(selected)
-        elif self._lf_filter != last_filter:
+        elif current_profile != last_profile:
             # Update the current selection only.
             editable = False
-            if self._lf_filter is None:
+            if current_profile is None:
                 ctrl.SetSelection(0)
             else:
-                for i, f in enumerate(self._view.filters() + self._user_filters):
-                    if f.condition() == self._lf_filter:
+                for i, profile in enumerate(self._view.profiles() + self._user_profiles):
+                    if profile == current_profile:
                         ctrl.SetSelection(i+1)
                         break
                 else:
-                    if ctrl.GetString(ctrl.GetCount()-1) == self._UNNAMED_FILTER_LABEL:
+                    if ctrl.GetString(ctrl.GetCount()-1) == self._UNNAMED_PROFILE_LABEL:
                         ctrl.Delete(ctrl.GetCount()-1)
-                    ctrl.Append(self._UNNAMED_FILTER_LABEL, self._lf_filter)
+                    ctrl.Append(self._UNNAMED_PROFILE_LABEL, current_profile)
                     ctrl.SetSelection(ctrl.GetCount()-1)
                     editable = True
             ctrl.SetEditable(editable)
-        return self._lf_filter, self._user_filters
+        return current_profile, self._user_profiles
 
-    def filter_context_menu(self, ctrl):
-        # Return the context menu for the toolbar filter selection control.
-        user_filter_index = self._user_filter_index(self._lf_filter)
+    def profile_context_menu(self, ctrl):
+        # Return the context menu for the toolbar profile selection control.
+        user_profile_index = self._user_profile_index(self._current_profile())
         return (
-            MItem(_("Ulo¾it"), self.COMMAND_SAVE_FILTER(name=ctrl.GetValue()),
-                  help=_("Ulo¾it souèasný filtr pod tímto názvem"), hotkey='Enter'),
-            (user_filter_index is None and ctrl.GetSelection() > len(self._view.filters()) + 1)\
-            # "Save as" is only possible for "Unnamed filter".
+            MItem(_("Ulo¾it"), self.COMMAND_SAVE_PROFILE(name=ctrl.GetValue()),
+                  help=_("Ulo¾it souèasný profil pod tímto názvem"), hotkey='Enter'),
+            (user_profile_index is None and ctrl.GetSelection() > len(self._view.profiles()) + 1)\
+            # "Save as" is only possible for "Unnamed profile".
             # It is not possible to disable a menu, so we replace it by a fake disabled item.
             and Menu(_("Ulo¾it jako"),
                      [MItem(f.name(),
-                            self.COMMAND_UPDATE_SAVED_FILTER(index=i),
+                            self.COMMAND_UPDATE_SAVED_PROFILE(index=i),
                             help=_("Aktualizovat existující ulo¾ený filtr."))
-                      for i, f in enumerate(self._user_filters)]) \
+                      for i, f in enumerate(self._user_profiles)]) \
             or MItem(_("Ulo¾it jako"), Application.COMMAND_NOTHING(enabled=False)),
             MItem(_("Smazat vybraný filtr"), 
-                  self.COMMAND_DELETE_SAVED_FILTER(index=user_filter_index),
+                  self.COMMAND_DELETE_SAVED_PROFILE(index=user_profile_index),
                   help=_("Smazat zvolený pojmenovaný filtr")),
             )
 
@@ -1314,10 +1341,10 @@ class LookupForm(InnerForm):
     def data(self):
         """Return a new instance of the data object used by the form.
 
-        The instance will have the data select initialized with the current filter condition and
-        all its attributes, such as sorting etc.  This is often practical within application
-        defined procedures, which retrieve this data object through the 'RecordForm.Record.data()'
-        method.
+        The instance will have the data select initialized with the current
+        profile parameters (filter condition, sorting etc).  This is often
+        practical within application defined procedures, which retrieve this
+        data object through the 'RecordForm.Record.data()' method.
 
         """
         data = super(LookupForm, self).data()

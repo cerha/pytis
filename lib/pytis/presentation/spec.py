@@ -512,13 +512,13 @@ class Profile(object):
 
     """
     
-    def __init__(self, id, name, condition=None, sorting=None, columns=None):
+    def __init__(self, id, name, filter=None, sorting=None, columns=None):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
             profile identifiers within a given form.
           name -- user visible profile name as a string.
-          condition -- filtering condition as a 'pytis.data.Operator' instance.
+          filter -- filtering condition as a 'pytis.data.Operator' instance.
             This condition is always applied together (in conjunction) with the
             forms default 'condition' given by it's specification (if not None).
           sorting -- sorting in the same format as accepted by the 'sort'
@@ -531,12 +531,13 @@ class Profile(object):
         """
         assert isinstance(id, basestring)
         assert isinstance(name, basestring), name
-        assert condition is None or isinstance(condition, pytis.data.Operator), condition
+        assert filter is None or isinstance(filter, pytis.data.Operator), filter
         assert sorting is None or isinstance(sorting, tuple), sorting
         self._id = id
         self._name = name
-        self._condition = condition
+        self._filter = filter
         self._sorting = sorting
+        self._columns = columns
     
     def id(self):
         """Return the unique profile identifier."""
@@ -546,18 +547,46 @@ class Profile(object):
         """Return the name passed to the constructor."""
         return self._name
 
-    def condition(self):
+    def filter(self):
         """Return the condition passed to the constructor."""
-        return self._condition
+        return self._filter
     
     def sorting(self):
         """Return the sorting specification passed to the constructor."""
         return self._sorting
 
+    def columns(self):
+        return self._columns
+
+    def __cmp__(self, other):
+        """Return true if 'other' has the same profile parameters as 'self'.
+
+        The profile identifier and name doesn't matter in the comparison, only
+        parameters, such as condition, sorting, etc. are compared.
+        
+        """
+        if not isinstance(other, Profile):
+            return -1
+        if self._filter is None:
+            if other._filter is not None:
+                return -1
+        else:
+            if not self._filter.is_same(other._filter):
+                return -1
+        if self._columns != other._columns:
+            return -1
+        return cmp(self._sorting, other._sorting)
+        
+
 # For backwards compatibility
-Filter = Profile
-"""Deprecated: Use 'Profile' instead."""
-Condition = Profile
+class Filter(Profile):
+    """Deprecated: Use 'Profile' instead."""
+    def __init__(self, id, name, condition=None):
+        super(Filter, self).__init__(id, name, filter=condition)
+    def condition(self):
+        """Return the condition passed to the constructor."""
+        return self._filter
+Condition = Filter
 """Deprecated: Use 'Profile' instead."""
 
 class FilterSet(list):
@@ -670,6 +699,7 @@ class GroupSpec(object):
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
+        self._allowed_item_types = (Button, Text, str, unicode)
         if __debug__:
             allowed_item_types = (GroupSpec, Button, Text, str, unicode)
             try:
@@ -2944,7 +2974,7 @@ class Specification(object):
     def __init__(self, resolver):
         self._resolver = resolver
         for attr in ('fields', 'arguments', 'access_rights', 'condition', 'distinct_on',
-                     'bindings', 'cb', 'sorting', 'filters', 'conditions',
+                     'bindings', 'cb', 'sorting', 'profiles', 'filters', 'conditions',
                      'initial_folding',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
