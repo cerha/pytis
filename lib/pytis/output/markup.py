@@ -418,7 +418,8 @@ class Group(_Container):
         else:
             orientation = lcg.Orientation.HORIZONTAL
         return lcg.Container(self._lcg_contents(), orientation=orientation,
-                             presentation=presentation)
+                             presentation=presentation,
+                             halign=lcg.HorizontalAlignment.LEFT)
 
 class Document(_Container):
     """Samostatná část dokumentu se samostatně číslovanými stránkami.
@@ -564,7 +565,8 @@ class Table(_Mark):
     
     def _lcg_table(self, table_rows, column_widths):
         return lcg.Table(table_rows, column_widths=column_widths,
-                         presentation=self._lcg_presentation())
+                         presentation=self._lcg_presentation(),
+                         halign=lcg.HorizontalAlignment.LEFT)
     
     def _lcg(self):
         table_rows = []
