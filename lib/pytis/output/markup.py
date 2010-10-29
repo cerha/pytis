@@ -448,6 +448,7 @@ class Document(_Container):
     KWARGS = {'page_header': None,
               'page_footer': None,
               'first_page_header': None,
+              'page_background': None,
               'presentation': None}
     _counter = pytis.util.Counter()
 
