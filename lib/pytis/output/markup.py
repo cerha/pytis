@@ -40,6 +40,9 @@ import pytis.util
 def _something_to_lcg(something):
     if isinstance(something, basestring):
         result = lcg.TextContent(something)
+    elif isinstance(something, (list, tuple,)):
+        result = lcg.Container([_something_to_lcg(s) for s in something],
+                               orientation=lcg.Orientation.HORIZONTAL)
     else:
         result = something.lcg()
     return result
@@ -77,12 +80,7 @@ class _Container(_Mark):
 
         """
         super(_Container, self).__init__()
-        self._contents = []
-        for c in contents:
-            if is_sequence(c):
-                self._contents += c
-            else:
-                self._contents.append(c)
+        self._contents = contents
         for k, v in self.KWARGS.items():
             try:
                 v = kwargs[k]
