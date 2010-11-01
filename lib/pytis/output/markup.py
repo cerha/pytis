@@ -295,7 +295,8 @@ class PageNumber(_Mark):
         if self._total:
             result = lcg.Container((lcg.PageNumber(total=False),
                                     lcg.TextContent('/'),
-                                    lcg.PageNumber(total=True),))
+                                    lcg.PageNumber(total=True),),
+                                    orientation=lcg.Orientation.HORIZONTAL)
         else:
             result = lcg.PageNumber(total=False)
         return result
