@@ -1497,11 +1497,12 @@ class ListField(GenericCodebookField):
             if v.export() == current:
                 select_item = i
             for j, id in enumerate(self._columns):
-                if isinstance(row.type(id), pytis.data.Boolean):
-                    value = row[id].value() and _("Ano") or _("Ne")
+                value = row[id]
+                if isinstance(value.type(), pytis.data.Boolean):
+                    exported_value = value.value() and _("Ano") or _("Ne")
                 else:
-                    value = row[id].export().replace("\n", ";")
-                list.SetStringItem(i, j, value)
+                    exported_value = value.export().replace("\n", ";")
+                list.SetStringItem(i, j, exported_value)
         self._set_selection(select_item)
 
     def _disable(self):
