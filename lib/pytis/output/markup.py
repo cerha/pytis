@@ -472,6 +472,7 @@ class Document(_Container):
                                page_header=arg(self.arg_page_header),
                                page_footer=arg(self.arg_page_footer),
                                first_page_header=arg(self.arg_first_page_header),
+                               page_background=arg(self.arg_page_background),
                                **kwargs)
 
 class Table(_Mark):

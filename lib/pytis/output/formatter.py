@@ -1306,23 +1306,33 @@ class LCGFormatter(object):
         self._page_background = self._resolve(template_id, 'background', default=Null())
         self._page_layout = self._resolve(template_id, 'page_layout', default={})
         body = self._resolve(template_id, 'body')
+        parameters = copy.copy(self._template_parameters(body))
+        for p, a in (('page_header', self._page_header,),
+                     ('page_footer', self._page_footer,),
+                     ('first_page_header', self._first_page_header,),
+                     ('page_background', self._page_background,),
+                     ):
+            if not parameters.has_key(p):
+                parameters[p] = {None: a.lcg()}
+        self._body_parameters = parameters
         if (not isinstance(body, Document) and
             body and
             not (is_sequence(body) and body and isinstance(body[0], Document))):
             body.lcg() # to generate parameters
-            parameters = copy.copy(self._template_parameters(body))
-            for p, a in (('page_header', self._page_header,),
-                         ('page_footer', self._page_footer,),
-                         ('first_page_header', self._first_page_header,),
-                         ('page_background', self._page_background,),
-                         ):
-                if not parameters.has_key(p):
-                    parameters[p] = {None: a.lcg()}
-            self._body_parameters = parameters
             simple_parameters = dict([(k, v[None],) for k, v in parameters.items()])
             body = Document(body, **simple_parameters)
         else:
-            self._body_parameters = {}
+            # It's unclear how to interpret this situation.  In the Lout
+            # formatter the parameters were apparently taken from
+            # specifications and applied globally, but they could also be given
+            # in the Document's (and ignored there?), with the exception of
+            # background.  So let's them add to Document's if they are not
+            # present there yet.
+            for document in body:
+                for k, v in parameters.items():
+                    name = 'arg_' + k
+                    if getattr(document, name) is None:
+                        setattr(document, name, v[None])
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
