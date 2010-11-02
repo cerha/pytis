@@ -2292,7 +2292,10 @@ class Field(object):
             the value of this field into a file.  If not None, the user interface should offer
             downloading/saving the content of the field into a file.  This may be relevant for
             binary fields, as well as for ordinary string data.
-
+          printable -- iff True, the user interface should allow the value of
+            this field to be printed as a separate document.  This is most often
+            useful with fields containing structured text content, which may be
+            directly exported into PDF.
           **kwargs -- all the remaining keyword arguments are passed to the
             constructor of field's data type instance.  These arguments
             override the values of arguments, that the system would normally
@@ -2348,8 +2351,10 @@ class Field(object):
               codebook_insert_spec=None, codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None,
-              filter_list=None, style=None, link=(), filename=None, enumerator=None,
-              value_column=None, validity_column=None, validity_condition=None, **kwargs):
+              filter_list=None, style=None, link=(), filename=None, printable=False,
+              enumerator=None, value_column=None, validity_column=None,
+              validity_condition=None,
+              **kwargs):
         def err(msg, *args):
             """Return assertion error message."""
             return "Field '%s': " % id + msg % args
@@ -2399,6 +2404,7 @@ class Field(object):
         assert style is None or isinstance(style, Style) or callable(style), \
             err("Invalid 'style' specification: %s", style)
         assert filename is None or isinstance(filename, str)
+        assert isinstance(printable, bool)
         if enumerator is None:
             enumerator = codebook
         else:
@@ -2501,6 +2507,7 @@ class Field(object):
         self._style = style
         self._links = links
         self._filename = filename
+        self._printable = printable
 
     def __str__(self):
         return "<Field for '%s'>" % self.id()
@@ -2641,6 +2648,9 @@ class Field(object):
 
     def filename(self):
         return self._filename
+
+    def printable(self):
+        return self._printable
 
     def completer(self, resolver):
         """Return field completer as a 'pytis.data.Enumerator' instance."""

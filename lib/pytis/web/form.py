@@ -146,6 +146,18 @@ class FieldForm(Form):
         else:
             formatted = field.exporter.format(context)
             if isinstance(field.type, pd.StructuredText):
+                if field.spec.printable():
+                    uri = self._uri_provider(self._row, field.id, type=UriType.PRINT)
+                    if uri:
+                        g = context.generator()
+                        img = context.resource('print-field.png')
+                        if img:
+                            label = g.img(src=context.uri(img), alt=_("Print"))
+                        else:
+                            label = _("Print")
+                        formatted = g.a(label, href=uri,
+                                        title=_("Export the contents of this field into PDF"),
+                                        cls='print-field-link') + formatted
                 wrap = context.generator().div
             else:
                 wrap = context.generator().span

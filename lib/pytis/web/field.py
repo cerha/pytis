@@ -25,13 +25,56 @@ _ = lcg.TranslatableTextFactory('pytis')
 
 
 class UriType(object):
-    """URI type for 'uri_provider' 'type' argument."""
+    """URI type for 'uri_provider' 'type' argument.
+
+    URI provider is a function passed to the form constructor (and from there to
+    the field constructors) that returns different kinds of URIs for form
+    fields.  The constants defined by this class define the different kinds of
+    links which may be queried.
+
+    """
     LINK = 'LINK'
+    """Target of a link to which the field value references.
+
+    If an URI is returned by URI provider for this URI kind and given field, the
+    field value is rendered as a link pointing to given URI.  If None is
+    returned, the field value is not rendered as a link.  The returned URI may
+    be either a string or unicode or a 'Link' instance.
+
+    """
     IMAGE = 'IMAGE'
+    """URI of an image which should be used to represent the field value.
+
+    If an URI is returned by URI provider for this URI kind and given field, the
+    field value is rendered as an image and the formatted text value of the
+    field is used as image textual title.  If None is returned, the field value
+    is not rendered as an image (the formatted textual value is displayed
+    directly).
+
+    """
+    PRINT = 'PRINT'
+    """URI of a print field link for printable fields.
+
+    If an URI is returned by URI provider for this URI kind and given field, the
+    field will render a user interface control supposed to export the field's
+    value into a PDF document.  The application is responsible for handling
+    given URI by returning an 'application/pdf' content representing the printed
+    field value.  If None is returned, the field is not supposed to be
+    printable.  The provider will only be queried for fields with printable=True
+    in their specification for this kind of URI.
     
+    """
 
 class Link(object):
-    """Link representation for 'uri_provider' returned value."""
+    """Link representation for 'uri_provider' returned value.
+
+    The value returned by URI provider (function passed to the form constructor)
+    is normally a string or unicode containing the URI.  If the URI provider
+    wants to also specify the title or target of the link (as defined by the
+    corresponding HTML A tag attributtes) it may return an instance of this
+    class instead of a string.
+    
+    """
     def __init__(self, uri, title=None, target=None):
         self._uri = uri
         self._title = title
