@@ -1180,17 +1180,18 @@ class LCGFormatter(object):
     class _LCGGlobals(_ProxyDict):
         def __init__(self, resolvers, form, form_bindings, current_row=None):
             self._resolvers = resolvers
-            name = form.name()
-            for r in resolvers:
-                try:
-                    r.get(name, 'view_spec')
-                except ResolverError:
-                    continue
-                self._selected_resolver = r
-                break
-            else:
-                log(EVENT, 'No working resolver found ' + name)
-                self._selected_resolver = resolvers[0]
+            if form is not None:
+                name = form.name()
+                for r in resolvers:
+                    try:
+                        r.get(name, 'view_spec')
+                    except ResolverError:
+                        continue
+                    self._selected_resolver = r
+                    break
+                else:
+                    log(EVENT, 'No working resolver found ' + name)
+                    self._selected_resolver = resolvers[0]
             self._form = form
             self._form_bindings = form_bindings
             import config
@@ -1241,11 +1242,15 @@ class LCGFormatter(object):
             return dictionary
         def _make_table(self):
             form = self._form
+            if form is None:
+                return lcg.NoneContent()
             table = pytis.output.data_table(self._selected_resolver, form.name(),
                                             condition=form.condition(), sorting=form.data_sorting(),
                                             transaction=self._transaction)
             return table.lcg()
         def _make_agg(self, op):
+            if self._form is None:
+                return lcg.NoneContent()
             dictionary = _ProxyDict()
             for column in self._form.data().columns():
                 if op == pytis.data.Data.AGG_COUNT or isinstance(column.type(), pytis.data.Number):
@@ -1256,6 +1261,8 @@ class LCGFormatter(object):
             return dictionary
         def _make_agg_value(self, op, column):
             form = self._form
+            if form is None:
+                return lcg.NoneContent()
             data = form.data()
             condition = form.condition()
             return data.select_aggregate((op, column,), condition=condition,
