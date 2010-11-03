@@ -186,6 +186,7 @@ class Modules(Specification):
         ('insert',  _(u"Vlo¾ení nového záznamu")),
         ('update',  _(u"Editace stávajícího záznamu")),
         ('delete',  _(u"Smazání záznamu")),
+        ('print_field', _(u"Export tisknutelných políèek do PDF")),
         )
     _SEARCH_MODULES = ()
     """Defines list of names python modules which should be searched for available Wiking modules.
