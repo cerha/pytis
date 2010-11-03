@@ -1328,11 +1328,16 @@ class LCGFormatter(object):
             # in the Document's (and ignored there?), with the exception of
             # background.  So let's them add to Document's if they are not
             # present there yet.
-            for document in body:
-                for k, v in parameters.items():
-                    name = 'arg_' + k
-                    if getattr(document, name) is None:
-                        setattr(document, name, v[None])
+            if isinstance(body, Document):
+                body_list = [body]
+            else:
+                body_list = body
+            if is_sequence(body_list):
+                for document in body_list:
+                    for k, v in parameters.items():
+                        name = 'arg_' + k
+                        if getattr(document, name) is None:
+                            setattr(document, name, v[None])
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
