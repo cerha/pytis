@@ -64,7 +64,7 @@ class _Mark(object):
         return copy.copy(self._lcg_result)
 
     def _lcg(self):
-        return lcg.NoneContent()
+        return lcg.Content()
 
 
 class _Container(_Mark):

@@ -1243,14 +1243,14 @@ class LCGFormatter(object):
         def _make_table(self):
             form = self._form
             if form is None:
-                return lcg.NoneContent()
+                return lcg.Content()
             table = pytis.output.data_table(self._selected_resolver, form.name(),
                                             condition=form.condition(), sorting=form.data_sorting(),
                                             transaction=self._transaction)
             return table.lcg()
         def _make_agg(self, op):
             if self._form is None:
-                return lcg.NoneContent()
+                return lcg.Content()
             dictionary = _ProxyDict()
             for column in self._form.data().columns():
                 if op == pytis.data.Data.AGG_COUNT or isinstance(column.type(), pytis.data.Number):
@@ -1262,7 +1262,7 @@ class LCGFormatter(object):
         def _make_agg_value(self, op, column):
             form = self._form
             if form is None:
-                return lcg.NoneContent()
+                return lcg.Content()
             data = form.data()
             condition = form.condition()
             return data.select_aggregate((op, column,), condition=condition,
