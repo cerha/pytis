@@ -1114,7 +1114,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._pdbb_column_groups is None and self._pdbb_operations is None:
             filtered_bindings = bindings
         else:
-            group_columns = [c for c in (self._pdbb_column_groups or [])]
+            group_columns = [c for c in (self._pdbb_column_groups or []) + tuple(self._distinct_on or ())]
             filtered_bindings = []
             for b in bindings:
                 if b.id() in group_columns:
@@ -1141,7 +1141,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                                  full_text_handler=self._pdbb_full_text_handler,
                                                  operations=self._pdbb_operations)
         if self._pdbb_column_groups:
-            groupby_columns = []
+            groupby_columns = list(self._distinct_on or [])
             for b in bindings:
                 if b.id() in self._pdbb_column_groups:
                     groupby_columns.append(self._pdbb_btabcol(b))

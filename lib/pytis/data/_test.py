@@ -1934,7 +1934,7 @@ tests.add(DBDataOrdering)
 
 class DBDataAggregated(DBDataDefault):
     def _aggtest(self, test_result, columns=None, condition=None, operation=None, key=None,
-                 filter_condition=None):
+                 filter_condition=None, distinct_on=None):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
         denik_spec = (B('cislo', 'denik', 'id'),
@@ -1950,7 +1950,8 @@ class DBDataAggregated(DBDataDefault):
                  self._dconnection,
                  operations=operations,
                  column_groups=column_groups,
-                 condition=filter_condition)
+                 condition=filter_condition,
+                 distinct_on=distinct_on)
         for column_id in ('madatisum', 'count'):
             column = data.find_column(column_id)
             assert column is not None, ('Aggregation column not found', column_id,)
@@ -2021,6 +2022,26 @@ class DBDataAggregated(DBDataDefault):
                       filter_condition=condition)
         condition = pytis.data.EQ('cislo', pytis.data.Value(pytis.data.Integer(), 3))
         self._aggtest(1, operation=(D.AGG_COUNT, 'madatisum',), filter_condition=condition)
+    def test_distinct(self):
+        D = pytis.data.DBDataDefault
+        B = pytis.data.DBColumnBinding
+        denik_spec = (B('cislo', 'denik', 'id'),
+                      B('datum', 'denik', 'datum',
+                        type_=pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)),
+                      B('castka', 'denik', 'castka'),
+                      B('madati', 'denik', 'madati'),
+                      )
+        operations = ((D.AGG_COUNT, 'cislo', 'count',),)
+        column_groups = ('castka',)
+        data = D(denik_spec,
+                 denik_spec[0],
+                 self._dconnection,
+                 operations=operations,
+                 column_groups=column_groups,
+                 distinct_on=('datum',))
+        data.select(columns=('count',))
+        data.fetchone()
+        data.close()
 tests.add(DBDataAggregated)
 
 
