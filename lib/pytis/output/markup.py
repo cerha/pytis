@@ -132,26 +132,25 @@ class Pound(_Mark):
     def _lcg(self):
         return lcg.TextContent("£")
 
-class Center(_Container):
+class _HAlignContainer(_Container):
+    _ALIGNMENT = None
+    def _lcg(self):
+        contents = self._lcg_contents()
+        if len(contents) > 1:
+            contents = [lcg.Container(contents, orientation=lcg.Orientation.HORIZONTAL)]
+        return lcg.Container(contents, halign=self._ALIGNMENT, orientation=lcg.Orientation.VERTICAL)
+            
+class Center(_HAlignContainer):
     """Značka horizontálního vycentrování svého obsahu."""
-    def _lcg(self):
-        return lcg.Container(self._lcg_contents(),
-                             halign=lcg.HorizontalAlignment.CENTER,
-                             orientation=lcg.Orientation.HORIZONTAL)
+    _ALIGNMENT = lcg.HorizontalAlignment.CENTER
 
-class AlignLeft(_Container):
+class AlignLeft(_HAlignContainer):
     """Značka zarovnání svého obsahu vlevo."""
-    def _lcg(self):
-        return lcg.Container(self._lcg_contents(),
-                             halign=lcg.HorizontalAlignment.LEFT,
-                             orientation=lcg.Orientation.HORIZONTAL)
+    _ALIGNMENT = lcg.HorizontalAlignment.LEFT
 
-class AlignRight(_Container):
+class AlignRight(_HAlignContainer):
     """Značka zarovnání svého obsahu vpravo."""
-    def _lcg(self):
-        return lcg.Container(self._lcg_contents(),
-                             halign=lcg.HorizontalAlignment.RIGHT,
-                             orientation=lcg.Orientation.HORIZONTAL)
+    _ALIGNMENT = lcg.HorizontalAlignment.RIGHT
     
 class VCenter(_Container):
     """Značka vertikálního vycentrování svého obsahu."""
