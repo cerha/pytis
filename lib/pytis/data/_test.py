@@ -2039,7 +2039,7 @@ class DBDataAggregated(DBDataDefault):
                  operations=operations,
                  column_groups=column_groups,
                  distinct_on=('datum',))
-        data.select(columns=('count',))
+        data.select(columns=('count',), sort=('count',))
         data.fetchone()
         data.close()
 tests.add(DBDataAggregated)

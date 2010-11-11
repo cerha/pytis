@@ -1114,7 +1114,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._pdbb_column_groups is None and self._pdbb_operations is None:
             filtered_bindings = bindings
         else:
-            group_columns = [c for c in (self._pdbb_column_groups or []) + tuple(self._distinct_on or ())]
+            group_columns = [c for c in (self._pdbb_column_groups or [])]
             filtered_bindings = []
             for b in bindings:
                 if b.id() in group_columns:
@@ -1177,8 +1177,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._distinct_on:
             distinct_columns_string = self._pdbb_sql_column_list_from_names(self._distinct_on)
             distinct_on = " DISTINCT ON (%s)" % (distinct_columns_string,)
+            distinct_on_ordering = distinct_columns_string + ', '
         else:
             distinct_on = ''
+            distinct_on_ordering = ''
         def sortspec(dir):
             items = []
             bindings = [b for b in self._key_binding
@@ -1342,10 +1344,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._SQLCommandTemplate(
                 (('declare %s scroll cursor for select *, '+
                   'row_number() over () as _number '+
-                  'from (select%s %%(columns)s from %s where (%s)%s %s order by %%(ordering)s %s) as %s '+
+                  'from (select%s %%(columns)s from %s where (%s)%s %s order by %s%%(ordering)s %s) as %s '+
                   '%%(fulltext_queries)s where %%(condition)s') %
                  (cursor_name, distinct_on, table_list, relation, filter_condition,
-                  groupby, ordering, table_names[0],)),
+                  groupby, distinct_on_ordering, ordering, table_names[0],)),
                 {'columns': column_list})
         elif distinct_on:
             self._pdbb_command_select = \
@@ -1354,9 +1356,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                   "row_number() over (order by %%(ordering)s %s) as _number "
                   "from (select%s * from %s%%(fulltext_queries)s "
                   "where %%(condition)s and (%s)%s) "
-                  "as %s %s order by %%(ordering)s %s") %
+                  "as %s %s order by %s%%(ordering)s %s") %
                  (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
-                  table_names[0], groupby, ordering,)),
+                  table_names[0], groupby, distinct_on_ordering, ordering,)),
                 {'columns': column_list})
         else:
             self._pdbb_command_select = \
@@ -1364,8 +1366,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 (("declare %s scroll cursor for select %%(columns)s, "
                   "row_number() over (order by %%(ordering)s %s) as _number "
                   "from %s%%(fulltext_queries)s "
-                  "where %%(condition)s and (%s)%s %s order by %%(ordering)s %s") %
-                 (cursor_name, ordering, table_list, relation, filter_condition, groupby, ordering,)),
+                  "where %%(condition)s and (%s)%s %s order by %s%%(ordering)s %s") %
+                 (cursor_name, ordering, table_list, relation, filter_condition, groupby,
+                  distinct_on_ordering, ordering,)),
                 {'columns': column_list})
         self._pdbb_command_close_select = \
             self._SQLCommandTemplate('close %s' % (cursor_name,))
