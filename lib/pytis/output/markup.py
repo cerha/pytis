@@ -417,7 +417,8 @@ class Group(_Container):
             orientation = lcg.Orientation.HORIZONTAL
         return lcg.Container(self._lcg_contents(), orientation=orientation,
                              presentation=presentation,
-                             halign=lcg.HorizontalAlignment.LEFT)
+                             halign=lcg.HorizontalAlignment.LEFT,
+                             valign=lcg.VerticalAlignment.TOP)
 
 class Document(_Container):
     """Samostatná část dokumentu se samostatně číslovanými stránkami.
