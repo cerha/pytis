@@ -1130,7 +1130,7 @@ class BrowseForm(LayoutForm):
     def _export_index_search_controls(self, context):
         g = context.generator()
         field = self._field(self._sorting[0][0])
-        if not isinstance(field.type, pd.String):
+        if not isinstance(field.type, pd.String) or field.type.enumerator():
             return ()
         result = []
         data = self._row.data()
