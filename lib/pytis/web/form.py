@@ -581,7 +581,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     new_filter = cls._op2str(row.runtime_filter(fid))
                     if new_filter != old_filter:
                         fdata['filter'] = new_filter
-                        fdata['enumeration'] = row.enumerate(fid)
+                        fdata['enumeration'] = [(value, translator.translate(label))
+                                                for value, label in row.enumerate(fid)]
         for fid, error in errors:
             if fields.has_key(fid):
                 fields[fid]['error'] = error
