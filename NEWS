@@ -1,10 +1,33 @@
+
+Version 1.1.0 (2010-11-22):
+
+  * Solved major problems for running the fat client with wx 2.8.
+
+  * Several fixes of display and AJAX handling in web forms.
+
+  * Common DMP library.
+
+  * Dual aggregation forms for the fat client.
+
+  * Asynchronous row counting in wx forms.
+
+  * Support for time interval values.
+ 
+  * Several gensql improvements and fixes.
+
   * Added support for ARIA properties 'aria-required' and 'aria-described-by' in web forms.
+
+  * Added support for multiple filters in web forms.
+
+  * Cache codebook display values in web forms.
 
   * Form statistics (database update needed!) and new configuration option
     `form_statistics'.
 
   * Support for setting search_path in PostgreSQL and new configuration option
     `dbschemas'.
+
+  * Many bug fixes and other minor improvements.
 
 Version 1.0.0 (2010-01-21):
  
