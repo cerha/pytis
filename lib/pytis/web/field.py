@@ -323,7 +323,7 @@ class PasswordFieldExporter(StringFieldExporter):
         if self._showform:
             return None
         else:
-            return super(PasswordFieldExporter)._format(context)
+            return super(PasswordFieldExporter, self)._format(context)
 
     def _editor(self, context, **kwargs):
         g = context.generator()
