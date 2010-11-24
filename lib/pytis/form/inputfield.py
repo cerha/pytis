@@ -1516,14 +1516,16 @@ class ListField(GenericCodebookField):
         list = self._list
         if self._selected_item is not None:
             # Deselect the old item.
-            list.SetItemBackgroundColour(self._selected_item, None)
+            fgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+            bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+            list.SetItemTextColour(self._selected_item, fgcolor)
+            list.SetItemBackgroundColour(self._selected_item, bgcolor)
         self._selected_item = i
         if i is not None:
+            # Select the new item.
+            fgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
             bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-            # TODO: This doesn't work correctly.  Only the later call has an
-            # effect (regardless which one it is).  Probably a wx problem...
-            # If solved, the text color should be also restored above.
-            # list.SetItemTextColour(i, wx.WHITE)
+            list.SetItemTextColour(i, fgcolor)
             list.SetItemBackgroundColour(i, bgcolor)
             list.SetItemState(i, wx.LIST_STATE_FOCUSED, wx.LIST_STATE_FOCUSED)
             list.EnsureVisible(i)
