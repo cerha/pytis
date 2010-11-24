@@ -1859,7 +1859,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 height = max(page_size.height, height)
             # Modify the computed size by some empiric numbers...
             width += 8 # Add space for border manually.
-            height += 41 # Add space for border and Notebook tabs.
+            height += 53 # Add space for border and Notebook tabs.
         size.width = max(size.width, width)
         size.height += height
         self._size = size
