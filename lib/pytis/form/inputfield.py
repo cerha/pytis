@@ -150,24 +150,28 @@ class _Completer(wx.PopupWindow):
     
     def update(self, completions, show):
         """Update the list of available completions."""
-        listctrl = self._list
         self._show(False)
-        if listctrl.GetColumnCount() != 0:
-            listctrl.DeleteAllColumns()
-            listctrl.DeleteAllItems()
+        listctrl = self._list
+        listctrl.ClearAll()
         listctrl.InsertColumn(0, "")
-        height = None
+        height_limit = None
+        listctrl.SetSize((17,17)) # Needed for GetViewRect to work consistently. 
         for i, choice in enumerate(completions):
             listctrl.InsertStringItem(i, "")
             listctrl.SetStringItem(i, 0, choice)
             if i == 10:
-                height = listctrl.GetViewRect()[3]
-            #width = max(listctrl.GetTextExtent(choice)[0] + 10, width)
+                height_limit = listctrl.GetViewRect()[3] + 5
         listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-        x, y, width, total_height = listctrl.GetViewRect()
-        size = wx.Size(width, height or total_height)
-        listctrl.SetSize(size)
-        self.SetClientSize(size)
+        width, height = listctrl.GetViewRect()[2:]
+        if height_limit:
+            height = height_limit
+        else:
+            # Vertical scrollbars are not displayed in this case.
+            width -= wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
+            # Actually, horizontal scrollbars are not needed too, but if we reduce the height,
+            # they show up.  Grin...
+        listctrl.SetSize((width, height))
+        self.SetClientSize((width, height))
         if completions and show:
             self._show(True)
             listctrl.Select(0)
