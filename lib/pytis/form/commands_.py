@@ -471,8 +471,8 @@ class UICommands(object):
         _("Urèit podmínky øazení záznamù."))
     PROFILE_MENU = UICommand(
         LookupForm.COMMAND_PROFILE_MENU(),
-        _("Výbìr aktivního filtru"),
-        _("Zobrazuje aktivní filtr a umo¾òuje jeho výbìr."))
+        _("Výbìr aktivního profilu"),
+        _("Zobrazuje aktivní profil a umo¾òuje výbìr z ostatních pøeddefinovaných profilù."))
     FILTER = UICommand(
         LookupForm.COMMAND_FILTER(),
         _("Filtrování"),
