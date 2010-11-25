@@ -1073,12 +1073,12 @@ class LookupForm(InnerForm):
         else:
             # Detect command availability for the menu item.
             names = [p.name() for p in self._view.profiles() + self._user_profiles]
-            return self._current_profile() is not None and name not in names
+            return self._current_profile() != self._default_profile() and name not in names
     
     def _cmd_save_profile(self, name, kbd=False):
         # TODO profiles: ???
         current_profile = self._current_profile()
-        if current_profile is not None:
+        if current_profile != self._default_profile():
             if name == self._UNNAMED_PROFILE_LABEL or not name:
                 message(_("Nejprve upravte název, pod kterým chcete profil ulo¾it."), beep_=True)
                 return
@@ -1259,11 +1259,28 @@ class LookupForm(InnerForm):
         else:
             InnerForm.add_toolbar_ctrl(toolbar, uicmd)
 
+    def _default_profile(self):
+        """Return the default specification profile as a 'Profile' instance.
+        
+        The returned instance will always have the id '__default__', empty title, but it will
+        contain all parameters as defined in the base specification.  Note, that the default
+        profile is not the same as the default selected profile -- the default profile is not one
+        of predefined profiles, the default selected profile is one of the predefined profiles
+        which is selected at startup by default.
+        
+        """
+        view = self._view
+        return Profile('__default__', "", filter=None, sorting=view.sorting())
+            
     def _current_profile(self):
-        if self._lf_filter is None and self._lf_sorting == self._lf_initial_sorting:
-            return None
-        else:
-            return Profile('__current__', "", filter=self._lf_filter, sorting=self._lf_sorting)
+        """Return the currently active profile as a 'Profile' instance.
+        
+        The returned instance will always have the id '__current__', empty title, but it will
+        contain all parameters of currently active form state.  Thus it can be used in comparisons
+        to predefined and saved profiles (only parameters are compared).
+        
+        """
+        return Profile('__current__', "", filter=self._lf_filter, sorting=self._lf_sorting)
     
     def update_profile_menu(self, ctrl, state):
         # Update the toolbar profile selection control.
@@ -1277,7 +1294,7 @@ class LookupForm(InnerForm):
             # Update the list of available profiles.
             ctrl.Clear()
             ctrl.Append(_("Výchozí profil"), None)
-            if current_profile is None:
+            if current_profile == self._default_profile():
                 selected = 0
             else:
                 selected = None
@@ -1295,7 +1312,7 @@ class LookupForm(InnerForm):
         elif current_profile != last_profile:
             # Update the current selection only.
             editable = False
-            if current_profile is None:
+            if current_profile == self._default_profile():
                 ctrl.SetSelection(0)
             else:
                 for i, profile in enumerate(self._view.profiles() + self._user_profiles):
