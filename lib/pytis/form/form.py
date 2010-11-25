@@ -980,10 +980,10 @@ class LookupForm(InnerForm):
             analyze(self._lf_filter)
         return columns
 
-    def _user_profile_index(self, condition):
-        # Return the index of given profile condition in self._user_profiles or None.
-        for i, profile in enumerate(self._user_profiles):
-            if profile.filter() == condition:
+    def _user_profile_index(self, profile):
+        """Return the index of given profile condition in self._user_profiles or None."""
+        for i, p in enumerate(self._user_profiles):
+            if p == profile:
                 return i
         return None
 
