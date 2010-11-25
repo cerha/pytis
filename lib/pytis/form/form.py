@@ -1943,6 +1943,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(group_sizer, 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 8)
         panel.SetSizer(sizer)
+        wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
         return panel
     
     def _field(self, id):
