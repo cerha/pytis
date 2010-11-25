@@ -1077,11 +1077,11 @@ class LookupForm(InnerForm):
     
     def _cmd_save_profile(self, name, kbd=False):
         # TODO profiles: ???
-        if self._lf_filter is not None:
+        current_profile = self._current_profile()
+        if current_profile is not None:
             if name == self._UNNAMED_PROFILE_LABEL or not name:
                 message(_("Nejprve upravte název, pod kterým chcete profil ulo¾it."), beep_=True)
                 return
-            current_profile = self._current_profile()
             for profile in self._view.profiles() + self._user_profiles:
                 if profile.name() == name:
                     message(_("Pojmenovaný profil '%s' ji¾ existuje.") % name, beep_=True)
