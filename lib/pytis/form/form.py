@@ -1323,12 +1323,12 @@ class LookupForm(InnerForm):
             and Menu(_("Ulo¾it jako"),
                      [MItem(f.name(),
                             self.COMMAND_UPDATE_SAVED_PROFILE(index=i),
-                            help=_("Aktualizovat existující ulo¾ený filtr."))
+                            help=_("Aktualizovat existující ulo¾ený profil."))
                       for i, f in enumerate(self._user_profiles)]) \
             or MItem(_("Ulo¾it jako"), Application.COMMAND_NOTHING(enabled=False)),
-            MItem(_("Smazat vybraný filtr"), 
+            MItem(_("Smazat vybraný profil"), 
                   self.COMMAND_DELETE_SAVED_PROFILE(index=user_profile_index),
-                  help=_("Smazat zvolený pojmenovaný filtr")),
+                  help=_("Smazat zvolený pojmenovaný profil")),
             )
 
     def filter(self, condition):
