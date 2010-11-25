@@ -183,7 +183,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         the attributes of the instance.  See also the constructor documentation for more details.
 
         """
-        self._form_state = load_form_config(self, '-')
+        self._form_state = form_profile_manager().load_profile(self, '__global_settings__')
         self._initial_form_state = copy.copy(self._form_state)
 
     def _create_view_spec(self):
@@ -381,7 +381,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._cleanup_data()
         for id in self._STATUS_FIELDS:
             set_status(id, '')
-        save_form_config(self, '-', self._form_state)
+        form_profile_manager().save_profile(self, '__global_settings__', self._form_state)
 
     def _cleanup_data(self):
         try:

@@ -188,16 +188,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             dummy_data = factory.create(connection_data=config.dbconnection)
         db_operation(test)
-        # Initialize the database storage of form configurations if the needed database table is
-        # found.  If not, form configurations will be stored as part of application state, but this
-        # is not optimal for large scale applications with lots of forms.
+        # Initialize the storage of form profile configurations.  If the
+        # database storage fails (the needed table doesn't exist in the
+        # database), form configurations will be stored as part of application
+        # state (suboptimal for large scale applications).
         try:
-            form_config_data = pytis.data.dbtable('e_pytis_form_config',
-                                                  ('id', 'username', 'form', 'profile', 'config',),
-                                                  config.dbconnection)
+            manager = DBFormProfileManager(config.dbconnection)
         except pytis.data.DBException:
-            form_config_data = None
-        self._form_config_data = form_config_data
+            form_config = self._get_state_param(self._STATE_FORM_CONFIG, {}, dict)
+            self._set_state_param(self._STATE_FORM_CONFIG, form_config)
+            manager = DictionaryFormProfileManager(form_config)
+        self._form_profile_manager = manager
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Init the recent forms list.
@@ -655,9 +656,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             wxconfig.DeleteEntry(option)
         wxconfig.Flush()
         
-    def _fullname(self, form):
-        return 'form/%s/%s//' % (form.__class__.__name__, form.name())
-    
     def _cleanup(self):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
         # situaci bylo mo¾no aplikaci ukonèit.
@@ -1202,6 +1200,92 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if success:
                 self._login_hook = None
 
+    def form_profile_manager(self):
+        return self._form_profile_manager
+
+
+class FormProfileManager(object):
+    """Generic accessor of form configuration storage.
+
+    This class just defines the generic interface of all form configuration
+    managers.  Different implementations may store the configurations
+    differently.
+
+    """
+    def save_profile(self, form, profile, config):
+        """Save user specific configuration of a form.
+
+        Arguments:
+          form -- 'Form' instance to which the given configurtation belongs.
+          profile -- string name of the form profile to which the given
+            configurtation belongs.
+          config -- dictionary of form configuration parameters.
+
+        """
+        pass
+
+    def load_profile(self, form, profile):
+        """Return previously saved user specific configuration of a form.
+
+        Arguments:
+          form -- 'Form' instance to which the given configurtation belongs.
+          profile -- string name of the form profile to which the given
+            configurtation belongs.
+
+        Returns a dictionary of form configuration parameters.  If no
+        configuration was previously saved (using 'save_profile()') or if a
+        problem occures reading it, an empty dictionary is returned.
+
+        """
+        pass
+
+
+
+class DictionaryFormProfileManager(FormProfileManager):
+    """Accessor of a simple dictionary storage of form configurations.
+
+    Form configurations are stored in a simple dictionary.  This is not optimal
+    for large scale applications with lots of forms, since the dictionary may
+    grow to huge sizes, so its lookup, storage and retrieval may take
+    unreasonable time.
+
+    The dictionary is passed to the constructor and the calling side is
+    responsible for securing its persistence!
+
+    """
+    def __init__(self, config):
+        assert isinstance(config, dict)
+        self._config = config
+
+    def _key(self, form, profile):
+        return ':'.join((form.__class__.__name__, form.name(), profile))
+
+    def save_profile(self, form, profile, config):
+        self._config[self._key(form, profile)] = config
+            
+    def load_profile(self, form, profile):
+        return self._config.get(self._key(form, profile), {})
+
+    
+class DBFormProfileManager(FormProfileManager):
+    """Accessor of the database storage of form configurations.
+
+    This manager will store form configurations in a database table, one row per form profile.
+    This is more optimal for large scale applications
+
+    The constructor will raise 'pytis.data.DBException' if the needed database table is not found.
+    This means that some other manager has to be used.
+        
+    """
+    _TABLE = 'e_pytis_form_config'
+    _COLUMNS = ('id', 'username', 'form', 'profile', 'config',)
+
+    def __init__(self, dbconnection):
+        self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
+
+    def _fullname(self, form):
+        return 'form/%s/%s//' % (form.__class__.__name__, form.name())
+
     def _form_config_key_values(self, form, profile):
         return [(key, pytis.data.Value(pytis.data.String(), value))
                 for key, value in (('username', config.dbuser),
@@ -1212,62 +1296,36 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _form_config_row(self, form, profile):
         condition = pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
                                      self._form_config_key_values(form, profile)])
-        count = self._form_config_data.select(condition=condition)
+        count = self._data.select(condition=condition)
         assert count in (0, 1)
-        return self._form_config_data.fetchone()
+        return self._data.fetchone()
 
-    def save_form_config(self, form, profile, config):
-        """Save user specific configuration of a form.
 
-        Arguments:
-          form -- 'Form' instance to which the given configurtation belongs.
-          profile -- string name of the form profile to which the given
-            configurtation belongs.
-          config -- dictionary of form configuration parameters.
-
-        """
-        if self._form_config_data:
-            row = self._form_config_row(form, profile)
-            value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
-            if row:
-                row['config'] = value
-                self._form_config_data.update(row['id'], row)
-            else:
-                values = self._form_config_key_values(form, profile)
-                row = pytis.data.Row(values + [('config', value)])
-                self._form_config_data.insert(row)
+    def save_profile(self, form, profile, config):
+        row = self._form_config_row(form, profile)
+        value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
+        if row:
+            row['config'] = value
+            self._data.update(row['id'], row)
         else:
-            state = self._get_state_param(self._STATE_FORM_CONFIG, {}, dict)
-            state[self._fullname(form)+profile] = config
-            self._set_state_param(self._STATE_FORM_CONFIG, state)
+            values = self._form_config_key_values(form, profile)
+            row = pytis.data.Row(values + [('config', value)])
+            self._data.insert(row)
 
-    def load_form_config(self, form, profile):
-        """Return prevoiusly saved user specific configuration of a form.
-
-        Arguments:
-          form -- 'Form' instance to which the given configurtation belongs.
-          profile -- string name of the form profile to which the given
-            configurtation belongs.
-
-        Returns a dictionary of form configuration parameters.  If no
-        configuration was previously saved (using 'save_form_config()') or if a
-        problem occures reading it, an empty dictionary is returned.
-
-        """
-        if self._form_config_data:
-            row = self._form_config_row(form, profile)
-            if row:
-                result = pickle.loads(str(row['config'].value()))
-                if not isinstance(result, dict):
-                    result = {}
-                    self._form_config_data.delete(row['id'])
-                return result
-            else:
-                return {}
+    def load_profile(self, form, profile):
+        row = self._form_config_row(form, profile)
+        if row:
+            result = pickle.loads(str(row['config'].value()))
+            if not isinstance(result, dict):
+                result = {}
+                self._data.delete(row['id'])
+            return result
         else:
-            state = self._get_state_param(self._STATE_FORM_CONFIG, {}, dict)
-            return state.get(self._fullname(form)+profile, {})
+            return {}
+           
+            
 
+
 # Funkce odpovídající pøíkazùm aplikace.
 
 def run_form(form_class, name, **kwargs):
@@ -1535,13 +1593,9 @@ def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
 
-def save_form_config(form, profile, config):
-    """Call 'Application.save_form_config()' on current application instance."""
-    return _application.save_form_config(form, profile, config)
-
-def load_form_config(form, profile):
-    """Call 'Application.load_form_config()' on current application instance."""
-    return _application.load_form_config(form, profile)
+def form_profile_manager():
+    """Return 'Application.form_profile_manager()' of the current application instance."""
+    return _application.form_profile_manager()
 
 # Ostatní funkce.
 
