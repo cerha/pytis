@@ -1091,7 +1091,7 @@ class LookupForm(InnerForm):
                             beep_=True)
                     return
             profile_id = '_profile_%d' % (len(self._user_profiles),)
-            self._user_profiles += (Profile(profile_id, name, self._lf_filter),)
+            self._user_profiles += (self._clone_profile(current_profile, profile_id, name),)
             self._save_user_profiles(self._user_profiles)
             message(_("Profil ulo¾en pod názvem '%s'.") % name)
         self.focus()
@@ -1103,7 +1103,7 @@ class LookupForm(InnerForm):
     def _cmd_update_saved_profile(self, index):
         profiles = list(self._user_profiles)
         profile = profiles[index]
-        profiles[index] = Profile(profile.id(), profile.name(), self._lf_filter)
+        profiles[index] = self._clone_profile(self._current_profile(), profile.id(), profile.name())
         self._user_profiles = tuple(profiles)
         self._save_user_profiles(self._user_profiles)
     
@@ -1281,6 +1281,9 @@ class LookupForm(InnerForm):
         
         """
         return Profile('__current__', "", filter=self._lf_filter, sorting=self._lf_sorting)
+
+    def _clone_profile(self, profile, id, name):
+        return Profile(id, name, filter=profile.filter(), sorting=profile.sorting())
     
     def update_profile_menu(self, ctrl, state):
         # Update the toolbar profile selection control.
