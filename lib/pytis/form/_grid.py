@@ -206,8 +206,7 @@ class DataTable(object):
 
     def _retrieve_row(self, row):
         def fetch(row, direction=pytis.data.FORWARD):
-            result = self._data.fetchone(direction=direction,
-                                         transaction=self._presented_row.transaction())
+            result = self._data.fetchone(direction=direction)
             assert result, ('Missing row', row)
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)

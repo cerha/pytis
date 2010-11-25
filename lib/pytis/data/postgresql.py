@@ -2824,6 +2824,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if row:
             result = row
         else:
+            if (transaction is None and isinstance(self._pg_is_in_select, DBPostgreSQLTransaction)):
+                transaction_ = self._pg_is_in_select
+            else:
+                transaction_ = transaction
             # Kurzory v PostgreSQL mají spoustu chyb.  Napøíklad èasto
             # kolabují pøi pøekroèení hranic dat a mnohdy správnì nefunguje
             # FETCH BACKWARD.  V následujícím kódu se sna¾íme nìkteré
@@ -2845,7 +2849,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     try:
                         result = self._pg_skip(xcount, skip_direction,
                                                exact_count=True,
-                                               transaction=transaction)
+                                               transaction=transaction_)
                     except:
                         cls, e, tb = sys.exc_info()
                         try:
@@ -2884,7 +2888,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 skip()
             try:
                 if size != 0:
-                    data_ = self._pg_fetchmany(size, FORWARD, transaction=transaction)
+                    data_ = self._pg_fetchmany(size, FORWARD, transaction=transaction_)
                 else:
                     # Don't run an unnecessary SQL command
                     data_ = None

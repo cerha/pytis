@@ -1557,7 +1557,7 @@ class DBDataDefault(_DBTest):
             if type(k) == type(0):
                 d.skip(k)
             else:
-                value = d.fetchone(transaction=transaction)[0].value()
+                value = d.fetchone()[0].value()
                 assert value == k, ('invalid select value', k, value,)
         d.close()
     def test_transaction_commit(self):

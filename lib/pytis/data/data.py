@@ -470,8 +470,7 @@ class Data(object_2_5):
 
           direction -- jedna z konstant 'FORWARD' a 'BACKWARD', urèuje, zda
             má být vrácen pøedchozí nebo následující øádek
-          transaction -- transaction object encapsulating the database
-            operation environment or 'None' (meaning default environment)
+          transaction -- deprecated, don't use anymore
 
         Ne v¹echny podtøídy jsou povinny implementovat vrácení pøedchozího
         øádku (tj. situaci, kdy 'direction==BACKWARD').  Pokud je

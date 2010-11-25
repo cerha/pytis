@@ -1810,7 +1810,7 @@ class DataEnumerator(Enumerator):
             if count > 1:
                 raise ProgramError('Insufficient runtime filter for DataEnumerator',
                                    str(the_condition))
-            row = data.fetchone(transaction=transaction)
+            row = data.fetchone()
             data.close()
             return row
         return with_lock(self._data_lock, lfunction)

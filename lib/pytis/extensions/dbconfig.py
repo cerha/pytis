@@ -76,7 +76,7 @@ class DBConfig(object):
         self._transaction = transaction
         def lfunction():
             data.select(transaction=transaction)
-            self._row = data.fetchone(transaction=transaction)
+            self._row = data.fetchone()
             data.close()
         with_lock(self._data_object_lock, lfunction)
         self._key = [self._row[c.id()] for c in data.key()]
@@ -87,7 +87,7 @@ class DBConfig(object):
     def _on_change(self):
         def lfunction():
             self._data.select(transaction=self._transaction)
-            self._row = self._data.fetchone(transaction=self._transaction)
+            self._row = self._data.fetchone()
             self._data.close()
         with_lock(self._data_object_lock, lfunction)
         self._callback(self)
@@ -272,7 +272,7 @@ def pytis_config_update(old, new):
     try:
         data.select(transaction=transaction)
         while True:
-            row = data.fetchone(transaction=transaction)
+            row = data.fetchone()
             if row is None:
                 break
             saved_config = row['config'].value()

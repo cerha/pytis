@@ -905,7 +905,7 @@ class LookupForm(InnerForm):
     def _search_skip(self, skip, direction):
         data = self._data
         data.skip(skip-1, direction=direction)
-        row = data.fetchone(direction=direction, transaction=self._transaction)
+        row = data.fetchone(direction=direction)
         self._select_row(row)
 
     def _cmd_jump(self):
@@ -1377,7 +1377,7 @@ class RecordForm(LookupForm):
         def dbop():
             data.rewind()
             data.skip(row_number)
-            return data.fetchone(transaction=self._transaction)
+            return data.fetchone()
         success, row = db_operation(dbop)
         self._init_select(async_count=True)
         if not success or not row:
@@ -1408,7 +1408,7 @@ class RecordForm(LookupForm):
             data.rewind()
             n = data.select(condition, columns=self._select_columns(),
                             transaction=self._transaction)
-            return data.fetchone(transaction=self._transaction)
+            return data.fetchone()
         success, row = db_operation(dbop, condition)
         self._init_select(async_count=True)
         return row
