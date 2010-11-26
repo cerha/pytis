@@ -27,6 +27,7 @@ u¾ivatelského rozhraní, neøe¹í obecnì start a zastavení aplikace.
 import os.path
 import string
 import sys
+import thread
 import time
 import cPickle as pickle
 
@@ -1651,6 +1652,7 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=True):
                 result = perm in rights
     return result
 
+_yield_lock = None
 def wx_yield_(full=False):
     """Zpracuj wx messages ve frontì.
 
@@ -1659,9 +1661,16 @@ def wx_yield_(full=False):
       full -- právì kdy¾ je pravdivé, zpracuj i u¾ivatelské události
 
     """
-    if full:
-        if _application is not None:
-            _application.Yield()
-    else:
-        wx.SafeYield()
-
+    global _yield_lock
+    if _yield_lock is None:
+        _yield_lock = thread.allocate_lock()
+    if not _yield_lock.acquire(0):
+        return
+    try:
+        if full:
+            if _application is not None:
+                _application.Yield()
+        else:
+            wx.SafeYield()
+    finally:
+        _yield_lock.release()
