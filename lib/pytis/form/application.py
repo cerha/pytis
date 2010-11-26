@@ -1211,6 +1211,19 @@ class FormProfileManager(object):
     managers.  Different implementations may store the configurations
     differently.
 
+    The actual form profile data are python dictionaries of arbitrary form
+    settings at this level.  There are no rules, except that the data structure
+    must be safe to pickle and unpickle (ideally they should consist just of
+    basic python data types).  They are referenced by a string identifier and
+    the upper layer is responsible for converting these structures into
+    'pytis.presentation.Profile' instances.
+
+    TODO: The conversion to 'pytis.presentation.Profile' instances might be
+    done directly by this class, but the routines must be factored out of Form
+    classes where they are now still used for other purposes.  Forms also use
+    special profiles to store other kinds of settings (see
+    '__global_settings__').
+
     """
     def save_profile(self, form, profile, config):
         """Save user specific configuration of a form.
