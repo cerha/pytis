@@ -1252,6 +1252,28 @@ class FormProfileManager(object):
         """
         pass
 
+    def drop_profile(self, form, profile):
+        """Remove the previously saved form configuration.
+
+        Arguments:
+          form -- 'Form' instance to which the given configurtation belongs.
+          profile -- string name of the form profile to which the
+            configurtation belongs.
+
+        """
+        pass
+
+    def list_profiles(self, form):
+        """Return a sequence of all previously saved form configurations.
+
+        Arguments:
+          form -- 'Form' instance to which configurtations belong.
+
+        Returns a sequence of all distinct strings previously passed to
+        'save_profile' as the 'profile' argument for given form.
+
+        """
+        pass
 
 
 class DictionaryFormProfileManager(FormProfileManager):
@@ -1274,11 +1296,24 @@ class DictionaryFormProfileManager(FormProfileManager):
         return ':'.join((form.__class__.__name__, form.name(), profile))
 
     def save_profile(self, form, profile, config):
+        profiles = self.list_profiles(form)
+        if profile != '__saved_profiles__' and profile not in profiles:
+            profiles += (profile,)
+            self.save_profile(form, '__saved_profiles__', profiles)
         self._config[self._key(form, profile)] = config
             
     def load_profile(self, form, profile):
         return self._config.get(self._key(form, profile), {})
 
+    def drop_profile(self, form, profile):
+        try:
+            del self._config[self._key(form, profile)]
+        except KeyError:
+            pass
+        
+    def list_profiles(self, form):
+        return self.load_profile(form, '__saved_profiles__') or ()
+        
     
 class DBFormProfileManager(FormProfileManager):
     """Accessor of the database storage of form configurations.
@@ -1299,34 +1334,36 @@ class DBFormProfileManager(FormProfileManager):
     def _fullname(self, form):
         return 'form/%s/%s//' % (form.__class__.__name__, form.name())
 
-    def _form_config_key_values(self, form, profile):
+    def _key_values(self, form, profile=None):
+        values = (('username', config.dbuser),
+                  ('form', self._fullname(form)))
+        if profile:
+            values += (('profile', profile),)
         return [(key, pytis.data.Value(pytis.data.String(), value))
-                for key, value in (('username', config.dbuser),
-                                   ('form', self._fullname(form)),
-                                   ('profile', profile),
-                                   )]
+                for key, value in values]
 
-    def _form_config_row(self, form, profile):
-        condition = pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
-                                     self._form_config_key_values(form, profile)])
-        count = self._data.select(condition=condition)
+    def _row_condition(self, form, profile=None):
+        return pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
+                                self._key_values(form, profile)])
+
+    def _row(self, form, profile):
+        count = self._data.select(condition=self._row_condition(form, profile))
         assert count in (0, 1)
         return self._data.fetchone()
 
-
     def save_profile(self, form, profile, config):
-        row = self._form_config_row(form, profile)
+        row = self._row(form, profile)
         value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
         if row:
             row['config'] = value
             self._data.update(row['id'], row)
         else:
-            values = self._form_config_key_values(form, profile)
+            values = self._key_values(form, profile)
             row = pytis.data.Row(values + [('config', value)])
             self._data.insert(row)
 
     def load_profile(self, form, profile):
-        row = self._form_config_row(form, profile)
+        row = self._row(form, profile)
         if row:
             result = pickle.loads(str(row['config'].value()))
             if not isinstance(result, dict):
@@ -1336,7 +1373,21 @@ class DBFormProfileManager(FormProfileManager):
         else:
             return {}
            
-            
+    def drop_profile(self, form, profile):
+        row = self._row(form, profile)
+        if row:
+            self._data.delete(row['id'])
+        
+    def list_profiles(self, form):
+        count = self._data.select(condition=self._row_condition(form))
+        profiles = []
+        while True:
+            row = self._data.fetchone()
+            if row is None:
+                break
+            profiles.append(row['profile'].value())
+        return tuple(profiles)
+
 
 
 # Funkce odpovídající pøíkazùm aplikace.
