@@ -811,23 +811,57 @@ class LookupForm(InnerForm):
         packed = self._get_state_param(key, None, tuple)
         return packed and self._unpack_condition(packed)
 
-    def _save_user_profiles(self, profiles):
-        packed = [(p.name(), self._pack_condition(p.filter())) for p in profiles]
-        self._set_state_param(self._USER_PROFILES_PARAM, tuple(packed))
+    def _pack_profile(self, profile):
+        assert isinstance(profile, Profile)
+        return dict(id=profile.id(),
+                    name=profile.name(),
+                    filter=profile.filter() and self._pack_condition(profile.filter()),
+                    sorting=profile.sorting())
+    
+    def _unpack_profile(self, packed):
+        assert isinstance(packed, dict)
+        try:
+            return Profile(id=packed['id'],
+                           name=packed['name'],
+                           filter=packed['filter'] and self._unpack_condition(packed['filter']),
+                           sorting=packed['sorting'])
+        except Exception, e:
+            log(OPERATIONAL, "Unable to restore packed profile:", (packed, str(e)))
+            return None
+        
+    def _save_user_profile(self, profile):
+        form_profile_manager().save_profile(self, profile.id(), self._pack_profile(profile))
 
+    def _remove_user_profile(self, profile):
+        form_profile_manager().drop_profile(self, profile.id())
+    
     def _load_user_profiles(self):
-        packed = self._get_state_param(self._USER_PROFILES_PARAM, None, tuple, tuple)
-        if packed:
-            unpacked = [(unicode(n), self._unpack_condition(c)) for n, c in packed]
-            user_profiles = []
-            for i in range(len(unpacked)):
-                name, cond = unpacked[i]
-                if cond:
-                    profile_id = '_profile_%d' % (i,)
-                    user_profiles.append(Profile(profile_id, name, cond))
-        else:
-            user_profiles = ()
-        return tuple(user_profiles)
+        manager = form_profile_manager()
+        profiles = []
+        for profile_id in manager.list_profiles(self):
+            if profile_id != '__global_settings__':
+                profile = self._unpack_profile(manager.load_profile(self, profile_id))
+                if profile:
+                    profiles.append(profile)
+        return tuple(profiles)
+        
+    #def _save_user_profiles(self, profiles):
+    #    packed = [(p.name(), self._pack_condition(p.filter())) for p in profiles]
+    #   self._set_state_param(self._USER_PROFILES_PARAM, tuple(packed))
+    # 
+    #def _load_user_filters_as_profiles(self):
+    #    packed = self._get_state_param(self._USER_PROFILES_PARAM, None, tuple, tuple)
+    #    if packed:
+    #        unpacked = [(unicode(n), self._unpack_condition(c)) for n, c in packed]
+    #        user_profiles = []
+    #        for i in range(len(unpacked)):
+    #            name, cond = unpacked[i]
+    #            if cond:
+    #                profile_id = '_profile_%d' % (i,)
+    #                user_profiles.append(Profile(profile_id, name, cond))
+    #    else:
+    #        user_profiles = ()
+    #    return tuple(user_profiles)
 
     def _default_sorting(self):
         sorting = self._view.sorting()
@@ -1043,6 +1077,7 @@ class LookupForm(InnerForm):
                                               "Pøejete si profil smazat?") % profile.name())
                 if answer:
                     profiles = list(self._user_profiles)
+                    self._remove_user_profile(profiles[i])
                     del profiles[i]
                     self._user_profiles = tuple(profiles)
                 else:
@@ -1091,8 +1126,9 @@ class LookupForm(InnerForm):
                             beep_=True)
                     return
             profile_id = '_profile_%d' % (len(self._user_profiles),)
-            self._user_profiles += (self._clone_profile(current_profile, profile_id, name),)
-            self._save_user_profiles(self._user_profiles)
+            profile = self._rename_profile(current_profile, profile_id, name)
+            self._user_profiles += (profile,)
+            self._save_user_profile(profile)
             message(_("Profil ulo¾en pod názvem '%s'.") % name)
         self.focus()
     
@@ -1102,19 +1138,19 @@ class LookupForm(InnerForm):
         
     def _cmd_update_saved_profile(self, index):
         profiles = list(self._user_profiles)
-        profile = profiles[index]
-        profiles[index] = self._clone_profile(self._current_profile(), profile.id(), profile.name())
+        profile = self._rename_profile(self._current_profile(), profiles[index].id(), profiles[index].name())
+        profiles[index] = profile
         self._user_profiles = tuple(profiles)
-        self._save_user_profiles(self._user_profiles)
+        self._save_user_profile(profile)
     
     def _can_delete_saved_profile(self, index):
         return index is not None
 
     def _cmd_delete_saved_profile(self, index):
         profiles = list(self._user_profiles)
+        self._remove_user_profile(profiles[index])
         del profiles[index]
         self._user_profiles = tuple(profiles)
-        self._save_user_profiles(self._user_profiles)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
@@ -1282,7 +1318,7 @@ class LookupForm(InnerForm):
         """
         return Profile('__current__', "", filter=self._lf_filter, sorting=self._lf_sorting)
 
-    def _clone_profile(self, profile, id, name):
+    def _rename_profile(self, profile, id, name):
         return Profile(id, name, filter=profile.filter(), sorting=profile.sorting())
     
     def update_profile_menu(self, ctrl, state):
