@@ -217,8 +217,10 @@ class Window(wx.Panel, Restorable):
     def hide(self):
         """Uèiò toto okno neaktivním a skryj jej."""
         self.defocus()
-        self.Show(False) # nutné i pøed uzavøením
         self.Enable(False)
+        self.Show(False) # nutné i pøed uzavøením
+        # Just an experiment motivated by random crashes on closing forms:
+        import time; time.sleep(0.1)
 
     def focus(self):
         """Nastav focus tomuto oknu."""

@@ -1661,6 +1661,8 @@ def wx_yield_(full=False):
       full -- právì kdy¾ je pravdivé, zpracuj i u¾ivatelské události
 
     """
+    if _yield_blocked:
+        return
     global _yield_lock
     if _yield_lock is None:
         _yield_lock = thread.allocate_lock()
@@ -1674,3 +1676,15 @@ def wx_yield_(full=False):
             wx.SafeYield()
     finally:
         _yield_lock.release()
+
+_yield_blocked = False
+def block_yield(block=False):
+    """Block or unblock processing of application events.
+
+    Arguments:
+
+      block -- if true, block processing of application events, otherwise unblock it
+      
+    """
+    global _yield_blocked
+    _yield_blocked = block

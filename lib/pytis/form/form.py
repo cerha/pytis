@@ -289,7 +289,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         help(self._name.replace(':','-'))
 
     def _cmd_leave_form(self):
-        return self.close()
+        block_yield(True)
+        try:
+            return self.close()
+        finally:
+            block_yield(False)
 
     # Veøejné metody
     
