@@ -712,7 +712,7 @@ class LookupForm(InnerForm):
         # profile given by the 'default_profile' specification option which is
         # applied later below.
         self._default_profile = Profile('__default__', _("Výchozí profil"),
-                                        filter=self._lf_filter, sorting=self._lf_sorting)
+                                        filter=self._lf_filter, sorting=self._data_sorting())
         initial_profile_id = self._view.default_profile()
         if filter is None and sorting is None and initial_profile_id is not None:
             current_profile = find(initial_profile_id, self._view.profiles(), key=lambda p: p.id())
