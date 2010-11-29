@@ -693,11 +693,11 @@ class LookupForm(InnerForm):
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
         self._lf_select_count_ = None
-        self._init_sorting(sorting)
-        self._lf_initial_sorting = self._lf_sorting
         # _lf_condition represents the static condition given by the constructor
         # argument, whereas _lf_filter represents the filtering condition, which
         # is part of the current user profile.
+        self._lf_sorting = self._lf_initial_sorting = \
+                           self._form_sorting(sorting or self._default_sorting())
         self._lf_condition = condition
         if filter is None and self._view.default_profile() is not None:
             profile = find(self._view.default_profile(), self._view.profiles(),
@@ -735,22 +735,6 @@ class LookupForm(InnerForm):
     def _new_form_kwargs(self):
         return dict(condition=self._lf_condition, sorting=self._lf_sorting)
 
-    def _init_sorting(self, sorting=None):
-        if sorting is None:
-            sorting = self._get_state_param('sorting', None, tuple)
-        if sorting is not None:
-            for id, direction in sorting:
-                if self._data.find_column(id) is None or direction not in \
-                       (self.SORTING_ASCENDENT, self.SORTING_DESCENDANT):
-                    sorting = None
-                    break
-        if sorting is None:
-            mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
-                       pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
-            sorting =  tuple([(cid, mapping[dir])
-                              for cid, dir in self._default_sorting()])
-        self._lf_sorting = sorting
-        
     def _form_log_info(self):
         return 'sort=%s, filter=%s' % (self._lf_sorting, self._lf_filter,)
 
@@ -907,7 +891,14 @@ class LookupForm(InnerForm):
         # otherwise segfault may happen when committing an edited line.
         return self._lf_count(timeout=0, min_value=1)
 
+    def _form_sorting(self, sorting):
+        # Convert given data sorting to form sorting constants.
+        mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
+                       pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
+        return tuple([(cid, mapping[dir]) for cid, dir in sorting])
+
     def _data_sorting(self):
+        # Convert current self._lf_sorting to data sorting constants.
         mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
                    self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
         return tuple([(cid, mapping[dir]) for cid, dir in self._lf_sorting])
@@ -1000,7 +991,7 @@ class LookupForm(InnerForm):
 
     def _on_form_state_change(self):
         super(LookupForm, self)._on_form_state_change()
-        self._init_sorting()
+        self._lf_sorting = self._form_sorting(self._default_sorting())
 
     def _compute_aggregate(self, operation, column_id, condition):
         condition = self._current_condition(filter=condition)
