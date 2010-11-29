@@ -810,7 +810,10 @@ class LookupForm(InnerForm):
         return dict(id=profile.id(),
                     name=profile.name(),
                     filter=profile.filter() and self._pack_condition(profile.filter()),
-                    sorting=profile.sorting())
+                    sorting=profile.sorting(),
+                    grouping=profile.grouping(),
+                    columns=profile.columns(),
+                    )
     
     def _unpack_profile(self, packed):
         assert isinstance(packed, dict)
@@ -818,7 +821,10 @@ class LookupForm(InnerForm):
             return Profile(id=packed['id'],
                            name=packed['name'],
                            filter=packed['filter'] and self._unpack_condition(packed['filter']),
-                           sorting=packed['sorting'])
+                           sorting=packed['sorting'],
+                           grouping=packed['grouping'],
+                           columns=packed['columns'],
+                           )
         except Exception, e:
             log(OPERATIONAL, "Unable to restore packed profile:", (packed, str(e)))
             return None
