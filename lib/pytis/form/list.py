@@ -2478,10 +2478,6 @@ class FoldableForm(ListForm):
             self._folding = self.Folding(level=None)
         return super(FoldableForm, self)._apply_filter(condition)
 
-        # ['ClientData', 'ClientObject', 'Col', 'EventObject', 'EventType',
-        # 'GetCol', 'GetEventObject', 'GetEventType', 'GetPosition', 'GetRow',
-        # 'Position' 'Row'
-    
     def _on_left_click(self, event):
         if self._folding_enabled():
             col = event.GetCol()
