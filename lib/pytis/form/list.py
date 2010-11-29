@@ -1524,16 +1524,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._data.remove_callback_on_change(self.on_data_change)
         super(ListForm, self)._cleanup_data()
 
-    def _apply_profile(self, profile):
-        if profile is None:
-            sorting = None
-            filter = None
+    def _apply_profile(self, profile, do_select=True):
+        if not do_select:
+            super(ListForm, self)._apply_profile(profile, do_select=do_select)
         else:
-            filter = profile.filter()
-            sorting = profile.sorting()
-        if sorting is None:
-            sorting = self._lf_initial_sorting
-        self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': sorting, 'filter': filter})
+            reset = dict([(attr, value) for attr, value in (('sorting', profile.sorting()),
+                                                            ('filter', profile.filter()),
+                                                            ('columns', profile.columns()))
+                          if value is not None or attr == 'filter'])
+            self._refresh(when=self.DOIT_IMMEDIATELY, reset=reset)
+            self._current_profile = profile
             
     # Zpracování pøíkazù
     

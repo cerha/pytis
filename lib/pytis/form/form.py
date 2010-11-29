@@ -702,20 +702,27 @@ class LookupForm(InnerForm):
         # not visible to the form at all -- it is applied at the level of the
         # data object.
         self._lf_condition = condition
-        if filter is None and self._view.default_profile() is not None:
-            profile = find(self._view.default_profile(), self._view.profiles(),
-                           key=lambda p: p.id())
-            if profile:
-                filter = profile.filter()
-            else:
-                raise ProgramError("Unknown default profile: %s" % self._view.default_profile())
         self._lf_filter = filter
         self._lf_last_filter = filter or self._load_condition(self._FILTER_CONDITION_PARAM)
         self._lf_search_condition = self._load_condition(self._SEARCH_CONDITION_PARAM)
-        self._user_profiles = self._load_user_profiles()
         self._arguments = arguments
+        # Store the Profile instance representing the form parameters defined
+        # by the base specification and possibly also form constructor
+        # arguments.  Note, that this is not the same as the initialy selected
+        # profile given by the 'default_profile' specification option which is
+        # applied later below.
+        self._default_profile = Profile('__default__', _("Výchozí profil"),
+                                        filter=self._lf_filter, sorting=self._lf_sorting)
+        initial_profile_id = self._view.default_profile()
+        if filter is None and sorting is None and initial_profile_id is not None:
+            current_profile = find(initial_profile_id, self._view.profiles(), key=lambda p: p.id())
+        else:
+            current_profile = self._default_profile
+        self._current_profile = current_profile
+        self._apply_profile(current_profile, do_select=False)
+        self._user_profiles = self._load_user_profiles()
         self._init_select(async_count=True)
-
+        
     def __getattr__(self, name):
         ## Compatibility with contingent external code using the old attribute
         if name == '_lf_select_count':
@@ -1013,34 +1020,28 @@ class LookupForm(InnerForm):
             analyze(self._lf_filter)
         return columns
 
-    def _user_profile_index(self, profile):
-        """Return the index of given profile condition in self._user_profiles or None."""
-        for i, p in enumerate(self._user_profiles):
-            if p == profile:
-                return i
-        return None
-
     def _apply_filter(self, condition):
         self._lf_filter = condition
         self._init_select(async_count=False)
         self.select_row(self._current_key())
 
-    def _apply_profile(self, profile):
-        if profile is None:
-            sorting = None
-            filter = None
-        else:
-            filter = profile.filter()
-            sorting = profile.sorting()
-        if sorting is None:
-            sorting = self._lf_initial_sorting
-        if sorting != self._lf_sorting:
+    def _apply_profile(self, profile, do_select=True):
+        sorting = profile.sorting()
+        if sorting is not None:
             self._lf_sorting = sorting
-        if filter != self._lf_filter:
-            self._apply_filter(filter)
         else:
-            # Apply sorting if filter was not applied (prevent multiple calls to select_row()).
-            self.select_row(self._current_key())
+            self._lf_sorting = self._lf_initial_sorting
+        filter = profile.filter()
+        if do_select:
+            if filter != self._lf_filter:
+                self._apply_filter(filter)
+            else:
+                # Apply sorting only if filter was not applied to prevent multiple
+                # calls to select_row().
+                self.select_row(self._current_key())
+        else:
+            self._lf_filter = filter
+        self._current_profile = profile
 
     def _can_filter(self, condition=None, last=False):
         return not last or self._lf_last_filter is not None
@@ -1064,26 +1065,25 @@ class LookupForm(InnerForm):
         try:
             self._apply_profile(profile)
         except Exception, e:
-            i = self._user_profile_index(profile)
-            if i is not None:
-                log(OPERATIONAL, "Unable to apply profile:", e)
-                profile = self._user_profiles[i]
-                answer = run_dialog(Question, icon=Question.ICON_ERROR,
-                                    title=_("Neplatný profil"),
-                                    message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
-                                              "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
-                                              "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
-                                              "Pøejete si profil smazat?") % profile.name())
-                if answer:
-                    profiles = list(self._user_profiles)
-                    self._remove_user_profile(profiles[i])
-                    del profiles[i]
-                    self._user_profiles = tuple(profiles)
-                else:
-                    # The profile menu needs to be realoaded, since the current selection
-                    # doesn't match the current profile (invalid profile is selected, but no
-                    # profile is active).
-                    LookupForm._last_profile_menu_state = (None, None)
+            for i, p in enumerate(self._user_profiles):
+                if p.id() == profile.id():
+                    log(OPERATIONAL, "Unable to apply profile:", e)
+                    answer = run_dialog(Question, icon=Question.ICON_ERROR,
+                                        title=_("Neplatný profil"),
+                                        message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
+                                                  "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
+                                                  "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
+                                                  "Pøejete si profil smazat?") % profile.name())
+                    if answer:
+                        profiles = list(self._user_profiles)
+                        self._remove_user_profile(profiles[i])
+                        del profiles[i]
+                        self._user_profiles = tuple(profiles)
+                    else:
+                        # The profile menu needs to be realoaded, since the current selection
+                        # doesn't match the current profile (invalid profile is selected, but no
+                        # profile is active).
+                        LookupForm._last_profile_menu_state = (None, None)
                 
     def _can_unfilter(self):
         return self._lf_filter is not None
@@ -1107,12 +1107,10 @@ class LookupForm(InnerForm):
         else:
             # Detect command availability for the menu item.
             names = [p.name() for p in self._view.profiles() + self._user_profiles]
-            return self._current_profile() != self._default_profile() and name not in names
+            return self._current_profile.id() != self._default_profile.id() and name not in names
     
     def _cmd_save_profile(self, name, kbd=False):
-        # TODO profiles: ???
-        current_profile = self._current_profile()
-        if current_profile != self._default_profile():
+        if self._current_profile.id() != self._default_profile.id():
             if name == self._UNNAMED_PROFILE_LABEL or not name:
                 message(_("Nejprve upravte název, pod kterým chcete profil ulo¾it."), beep_=True)
                 return
@@ -1120,12 +1118,12 @@ class LookupForm(InnerForm):
                 if profile.name() == name:
                     message(_("Pojmenovaný profil '%s' ji¾ existuje.") % name, beep_=True)
                     return
-                elif profile == current_profile:
+                elif profile.id() == self._current_profile.id():
                     message(_("Shodný profil ji¾ existuje pod názvem '%s'.") % profile.name(),
                             beep_=True)
                     return
             profile_id = '_profile_%d' % (len(self._user_profiles),)
-            profile = self._rename_profile(current_profile, profile_id, name)
+            profile = self._rename_profile(self._current_profile, profile_id, name)
             self._user_profiles += (profile,)
             self._save_user_profile(profile)
             message(_("Profil ulo¾en pod názvem '%s'.") % name)
@@ -1137,18 +1135,21 @@ class LookupForm(InnerForm):
         
     def _cmd_update_saved_profile(self, index):
         profiles = list(self._user_profiles)
-        profile = self._rename_profile(self._current_profile(), profiles[index].id(), profiles[index].name())
+        profile = self._rename_profile(self._current_profile, profiles[index].id(), profiles[index].name())
         profiles[index] = profile
         self._user_profiles = tuple(profiles)
         self._save_user_profile(profile)
     
     def _can_delete_saved_profile(self, index):
-        return index is not None
+        # Only allow deletion of user defined profiles.
+        return index > (len(self._view.profiles()) + 1)
 
     def _cmd_delete_saved_profile(self, index):
+        # Get the index within self._user_profiles
+        i = index - (len(self._view.profiles()) + 1)
         profiles = list(self._user_profiles)
-        self._remove_user_profile(profiles[index])
-        del profiles[index]
+        self._remove_user_profile(profiles[i])
+        del profiles[i]
         self._user_profiles = tuple(profiles)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
@@ -1294,29 +1295,6 @@ class LookupForm(InnerForm):
         else:
             InnerForm.add_toolbar_ctrl(toolbar, uicmd)
 
-    def _default_profile(self):
-        """Return the default specification profile as a 'Profile' instance.
-        
-        The returned instance will always have the id '__default__', empty title, but it will
-        contain all parameters as defined in the base specification.  Note, that the default
-        profile is not the same as the default selected profile -- the default profile is not one
-        of predefined profiles, the default selected profile is one of the predefined profiles
-        which is selected at startup by default.
-        
-        """
-        view = self._view
-        return Profile('__default__', "", filter=None, sorting=view.sorting())
-            
-    def _current_profile(self):
-        """Return the currently active profile as a 'Profile' instance.
-        
-        The returned instance will always have the id '__current__', empty title, but it will
-        contain all parameters of currently active form state.  Thus it can be used in comparisons
-        to predefined and saved profiles (only parameters are compared).
-        
-        """
-        return Profile('__current__', "", filter=self._lf_filter, sorting=self._lf_sorting)
-
     def _rename_profile(self, profile, id, name):
         return Profile(id, name, filter=profile.filter(), sorting=profile.sorting())
     
@@ -1327,62 +1305,51 @@ class LookupForm(InnerForm):
             last_profile, last_profiles = state
         else:
             last_profile, last_profiles = None, None
-        current_profile = self._current_profile()
         if self._user_profiles != last_profiles:
             # Update the list of available profiles.
             ctrl.Clear()
-            ctrl.Append(_("Výchozí profil"), None)
-            if current_profile == self._default_profile():
+            ctrl.Append(self._default_profile.name(), self._default_profile)
+            if self._current_profile.id() == self._default_profile.id():
                 selected = 0
             else:
                 selected = None
             editable = False
             for profile in self._view.profiles() + self._user_profiles:
                 ctrl.Append(profile.name(), profile)
-                if selected is None and profile == current_profile:
+                if selected is None and profile.id() == self._current_profile.id():
                     selected = ctrl.GetCount() - 1
             if selected is None:
-                ctrl.Append(self._UNNAMED_PROFILE_LABEL, current_profile)
+                ctrl.Append(self._UNNAMED_PROFILE_LABEL, self._current_profile)
                 selected = ctrl.GetCount() - 1
                 editable = True
             ctrl.SetEditable(editable)
             ctrl.SetSelection(selected)
-        elif current_profile != last_profile:
+        elif last_profile and not last_profile.id() == self._current_profile.id():
             # Update the current selection only.
             editable = False
-            if current_profile == self._default_profile():
+            if self._current_profile.id() == self._default_profile.id():
                 ctrl.SetSelection(0)
             else:
                 for i, profile in enumerate(self._view.profiles() + self._user_profiles):
-                    if profile == current_profile:
+                    if profile.id() == self._current_profile.id():
                         ctrl.SetSelection(i+1)
                         break
                 else:
                     if ctrl.GetString(ctrl.GetCount()-1) == self._UNNAMED_PROFILE_LABEL:
                         ctrl.Delete(ctrl.GetCount()-1)
-                    ctrl.Append(self._UNNAMED_PROFILE_LABEL, current_profile)
+                    ctrl.Append(self._UNNAMED_PROFILE_LABEL, self._current_profile)
                     ctrl.SetSelection(ctrl.GetCount()-1)
                     editable = True
             ctrl.SetEditable(editable)
-        return current_profile, self._user_profiles
+        return self._current_profile, self._user_profiles
 
     def profile_context_menu(self, ctrl):
         # Return the context menu for the toolbar profile selection control.
-        user_profile_index = self._user_profile_index(self._current_profile())
         return (
             MItem(_("Ulo¾it"), self.COMMAND_SAVE_PROFILE(name=ctrl.GetValue()),
                   help=_("Ulo¾it souèasný profil pod tímto názvem"), hotkey='Enter'),
-            (user_profile_index is None and ctrl.GetSelection() > len(self._view.profiles()) + 1)\
-            # "Save as" is only possible for "Unnamed profile".
-            # It is not possible to disable a menu, so we replace it by a fake disabled item.
-            and Menu(_("Ulo¾it jako"),
-                     [MItem(f.name(),
-                            self.COMMAND_UPDATE_SAVED_PROFILE(index=i),
-                            help=_("Aktualizovat existující ulo¾ený profil."))
-                      for i, f in enumerate(self._user_profiles)]) \
-            or MItem(_("Ulo¾it jako"), Application.COMMAND_NOTHING(enabled=False)),
             MItem(_("Smazat vybraný profil"), 
-                  self.COMMAND_DELETE_SAVED_PROFILE(index=user_profile_index),
+                  self.COMMAND_DELETE_SAVED_PROFILE(index=ctrl.GetSelection()),
                   help=_("Smazat zvolený pojmenovaný profil")),
             )
 
