@@ -512,7 +512,7 @@ class Profile(object):
 
     """
     
-    def __init__(self, id, name, filter=None, sorting=None, columns=None):
+    def __init__(self, id, name, filter=None, sorting=None, grouping=None, columns=None):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
@@ -524,6 +524,9 @@ class Profile(object):
           sorting -- sorting in the same format as accepted by the 'sort'
             argument of 'pytis.data.Data.select()'.  If None, the default
             sorting given by the specification applies.
+          grouping -- visual grouping of table rows in the same format as
+            accepted by the 'grouping' argument of 'ViewSpec'.  If None, the
+            grouping defined by the specification applies.
           columns -- sequence of visible form columns (string field
             identifiers) in the order in which they appear in the table.  If
             None, the columns defined by the specification are displayed.
@@ -537,6 +540,7 @@ class Profile(object):
         self._name = name
         self._filter = filter
         self._sorting = sorting
+        self._grouping = grouping
         self._columns = columns
     
     def id(self):
@@ -554,6 +558,10 @@ class Profile(object):
     def sorting(self):
         """Return the sorting specification passed to the constructor."""
         return self._sorting
+
+    def grouping(self):
+        """Return the grouping specification passed to the constructor."""
+        return self._grouping
 
     def columns(self):
         return self._columns
