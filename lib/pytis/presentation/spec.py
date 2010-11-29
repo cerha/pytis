@@ -540,7 +540,7 @@ class Profile(object):
         self._name = name
         self._filter = filter
         self._sorting = sorting
-        self._grouping = grouping
+        self._grouping = xtuple(grouping)
         self._columns = columns
     
     def id(self):
