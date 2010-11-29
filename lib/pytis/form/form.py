@@ -693,11 +693,14 @@ class LookupForm(InnerForm):
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
         self._lf_select_count_ = None
-        # _lf_condition represents the static condition given by the constructor
-        # argument, whereas _lf_filter represents the filtering condition, which
-        # is part of the current user profile.
         self._lf_sorting = self._lf_initial_sorting = \
                            self._form_sorting(sorting or self._default_sorting())
+        # _lf_condition represents a static condition given by the constructor
+        # argument, whereas _lf_filter represents the filtering condition,
+        # which is part of the current user profile.  There is also a third
+        # condition -- the one defined by the specification, but this one is
+        # not visible to the form at all -- it is applied at the level of the
+        # data object.
         self._lf_condition = condition
         if filter is None and self._view.default_profile() is not None:
             profile = find(self._view.default_profile(), self._view.profiles(),
