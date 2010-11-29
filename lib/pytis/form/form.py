@@ -1028,7 +1028,7 @@ class LookupForm(InnerForm):
     def _apply_profile(self, profile, do_select=True):
         sorting = profile.sorting()
         if sorting is not None:
-            self._lf_sorting = sorting
+            self._lf_sorting = self._form_sorting(sorting)
         else:
             self._lf_sorting = self._lf_initial_sorting
         filter = profile.filter()
