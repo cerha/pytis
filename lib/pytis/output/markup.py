@@ -290,10 +290,7 @@ class PageNumber(_Mark):
 
     def _lcg(self):
         if self._total:
-            result = lcg.Container((lcg.PageNumber(total=False),
-                                    lcg.TextContent('/'),
-                                    lcg.PageNumber(total=True),),
-                                    orientation=lcg.Orientation.HORIZONTAL)
+            result = lcg.PageNumber(total=True, separator='/')
         else:
             result = lcg.PageNumber(total=False)
         return result
