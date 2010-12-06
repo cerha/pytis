@@ -84,6 +84,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     DESCR = _("øádkový formuláø")
 
     def __init__(self, *args, **kwargs):
+        self._grid = None
         super(ListForm, self).__init__(*args, **kwargs)
         # Nastav klávesové zkratky z kontextových menu.
         for action in self._view.actions(linear=True):
@@ -136,9 +137,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _default_columns(self):
         return self._view.columns()
 
-    def _init_select(self, async_count=False):
+    def _init_select(self, async_count=False, grid_update=True):
         self._aggregation_results.reset()
-        return super(ListForm, self)._init_select(async_count=async_count)
+        result = super(ListForm, self)._init_select(async_count=async_count)
+        if grid_update and self._grid is not None:
+            self._update_grid()
+        return result
 
     def _aggregation_valid(self, operation, type):
         allowed_types = (pytis.data.Number,)
@@ -205,7 +209,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g = self._grid
         g.SetColLabelSize(height)
         g.FitInside()
-
 
     def _create_form_parts(self, sizer):
         if self.title() is not None and self._ALLOW_TITLE_BAR:
@@ -297,7 +300,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     self._set_state_param('columns', new_columns)
                     self._set_state_param('default_columns', default_columns)
             if data_init:
-                row_count = self._init_select(async_count=True)
+                row_count = self._init_select(async_count=True, grid_update=False)
             else:
                 row_count = self._lf_count(timeout=0)
                 self._data.rewind()

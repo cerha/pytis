@@ -1392,7 +1392,7 @@ class RecordForm(LookupForm):
     def _find_row_by_values(self, cols, values):
         """Vra» datový øádek odpovídající daným hodnotám.
 
-        Arguemnty:
+        Argumenty:
 
           cols -- sekvence názvù sloupcù, které mají být prohledávány.
           values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
