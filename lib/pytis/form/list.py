@@ -531,11 +531,20 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return the_row.row().columns([c.id() for c in self._data.key()])
     
     def current_row(self):
+        result = None
         row = self._current_cell()[0]
-        if row < 0 or row >= self._table.number_of_rows(min_value=row+1):
-            return None
-        else:
-            return self._table.row(row)
+        if row >= 0 and row < self._table.number_of_rows(min_value=row+1):
+            try:
+                result = self._table.row(row)
+            except:
+                # It sometimes happens, under unknown circumstances, that the
+                # data select gets changed without updating ListTable selection
+                # data.  Then `row' may actually be outside the reported number
+                # of rows limit and the table row call above may crash.  In
+                # such a case, it's probably better to return an unknown row
+                # instead of raising an error.
+                pass
+        return result
 
     def _selected_rows(self):
         g = self._grid
