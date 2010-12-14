@@ -1464,6 +1464,8 @@ class ListField(GenericCodebookField):
         wx_callback(wx.EVT_MOUSEWHEEL, list, lambda e: e.Skip())
         self._selected_item = None
         self._enumeration_changed = True
+        self._list_data = []
+        self._last_set_invalid_value = None
         return list
 
     def _on_select(self, event):
@@ -1481,7 +1483,10 @@ class ListField(GenericCodebookField):
     #    return super(ListField, self)._on_kill_focus(event)
         
     def _reload_enumeration(self):
-        current = self._get_value()
+        if self._last_set_invalid_value is not None:
+            current = self._last_set_invalid_value
+        else:
+            current = self._get_value()
         list = self._list
         list.DeleteAllItems()
         self._list_data = []
@@ -1532,6 +1537,7 @@ class ListField(GenericCodebookField):
         self._on_change()
 
     def _set_value(self, value):
+        self._last_set_invalid_value = None
         if value:
             for i, v in enumerate(self._list_data):
                 if v.export() == value:
@@ -1540,6 +1546,7 @@ class ListField(GenericCodebookField):
             else:
                 # Not in list.
                 self._set_selection(None)
+                self._last_set_invalid_value = value
                 return False
         else:
             # Empty value.
