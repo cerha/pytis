@@ -2789,7 +2789,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         Argumenty:
         
           column -- column identifier
-          prefix -- lenght of a string prefix to work on (integer).  If not 'None', only given
+          prefix -- length of a string prefix to work on (integer).  If not 'None', only given
             initial substring of column's value is considered by the query.  Only applicable for
             columns of string types.
           condition -- conditional expression as an Operator instance or 'None'

@@ -476,7 +476,7 @@ class Large(Big):
     """
 
 class Limited(Type):
-    """Mixin class for types with possibly limited maximal lenght.
+    """Mixin class for types with possibly limited maximal length.
 
     Minimal and maximal length of a value of this type can be limited by passing the
     `minlen' and `maxlen' constructor arguments.
@@ -494,7 +494,7 @@ class Limited(Type):
         Arguments:
         
           maxlen -- maximal length of a value of this type as integer or
-            'None'; 'None' denotes unlimited lenght.
+            'None'; 'None' denotes unlimited length.
              
         Other arguments are passed to the parent constructor.
 
@@ -513,17 +513,17 @@ class Limited(Type):
         return result
 
     def minlen(self):
-        """Return the minimal lenght of the value as an integer or 'None'.
+        """Return the minimal length of the value as an integer or 'None'.
 
-        'None' denotes unlimited minimal lenght.
+        'None' denotes unlimited minimal length.
         
         """
         return self._minlen
 
     def maxlen(self):
-        """Return the maximal lenght of the value as an integer or 'None'.
+        """Return the maximal length of the value as an integer or 'None'.
 
-        'None' denotes unlimited lenght.
+        'None' denotes unlimited length.
         
         """
         return self._maxlen
