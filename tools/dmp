@@ -374,7 +374,7 @@ def parse_options():
 
 def run():
     options, args = parse_options()
-    parameters = dict(configuration_file=options.config)
+    parameters = {}
     for k, v in Configuration.dbparameters.items():
         if v is not None:
             parameters[k] = v    
@@ -385,6 +385,7 @@ def run():
         command_function = OLD_COMMANDS[command]
         connection = dbapi.connect(**parameters)
     else:
+        parameters['configuration_file'] = options.config
         connection = parameters
     messages = command_function(connection, options.dry_run, command_args)
     if messages:
