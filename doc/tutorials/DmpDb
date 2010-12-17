@@ -188,6 +188,61 @@ insert into e_pytis_menu (name, title, position, fullname, help, hotkey, locked)
     menu (používá se obvykle jen pro systémové menu)
 
 
+* Skript dmp
+
+Nástroj dmp slouží ke zjednodušení běžných operací s DMP, aby je nebylo nutno
+provádět přímo SQL příkazy v databázi.
+
+Vypsání stručné nápovědy:
+
+  tools/dmp --help
+
+Přidání nové položky menu:
+
+  tools/dmp --config=.../config.py add-form FULLNAME MENU-POSITION
+
+např.:
+
+  cd pytis-demo
+  dmp --config=config.py add-form form/pytis.form.EditForm/cb.Countries// 2.1111.11205
+
+Poznámky:
+
+- Pokud v menu už položka s daným FULLNAME existuje, nová menu položka se
+  nepřidá.
+
+- Uvedená MENU-POSITION musí být volná, jinak dojde k chybě.
+
+- MENU-POSITION jsou uspořádány lexikograficky, vždy lze tedy vložit novou
+  položku mezi dvě jiné (pokud nedojde k překročení databázových limitů na
+  hodnoty).  Např. mezi položky s pozicemi 2.1111.1120 a 2.1111.1121 lze vložit
+  novou položku uvedením pozice 2.1111.11204.
+
+- Je-li uvedena volba --dry-run, všechny operace se provedou, ale na konci se
+  místo commitu příslušné transakce provede rollback a na výstup se vypíší
+  provedené SQL příkazy.  Tímto způsobem si lze akci předem reálně vyzkoušet
+  bez skutečné změny dat.
+
+Aktualizace podformulářů a akcí formuláře:
+
+  tools/dmp [ --dry-run ] --config=.../config.py update-form SPECIFICATION-NAME
+
+např.:
+
+  cd pytis-demo
+  dmp --config=config.py update-form cb.Countries
+
+Přenačtení práv ze specifikace (smazání současných práv z databáze a uložení
+nových práv do databáze dle specifikace v aplikaci):
+
+  tools/dmp [ --dry-run ] --config=.../config.py reset-rights SPECIFICATION-NAME
+
+např.:
+
+  cd pytis-demo
+  dmp --config=config.py --dry-run reset-rights cb.Countries
+
+
 * genmenu
 
 Nástroj genmenu slouží jednak k importu menu a práv při převodu aplikace na
