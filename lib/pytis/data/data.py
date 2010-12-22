@@ -1329,17 +1329,20 @@ def LTreeDescendant(x, y):
     """
     return Operator('LTreeDescendant', x, y)
 
-def RawCondition(x):
-    """Raw SQL string to use as a condition.
-
-    Avoid using this operator whenever possible and if you use it then use it
-    with caution.
+def FunctionCondition(function, *args):
+    """Function call.
 
     Arguments:
 
-      x -- the SQL string
-      
+      function -- function name as a string
+      args -- function arguments; each of the arguments is either a column
+        identifier as a string or a 'types_.Value' instance.
+
     """
+    return Operator('Function', function, *args)
+
+def RawCondition(x):
+    "Don't use this."
     return Operator('Raw', x)
 
 def reversed_sorting(sorting):

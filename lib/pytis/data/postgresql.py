@@ -1477,14 +1477,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return 'true'
         op_name, op_args, op_kwargs = \
                  condition.name(), condition.args(), condition.kwargs()
+        def colarg(colid):
+            assert isinstance(colid, str), ('Invalid column name type', colid)
+            col = self._db_column_binding(colid)
+            assert col, ('Invalid column name', colid)
+            a = self._pdbb_btabcol(col)
+            t = self.find_column(colid).type()
+            return a, t
         def relop(rel, args, kwargs):
-            def colarg(colid):
-                assert isinstance(colid, str), ('Invalid column name type', colid)
-                col = self._db_column_binding(colid)
-                assert col, ('Invalid column name', colid)
-                a = self._pdbb_btabcol(col)
-                t = self.find_column(colid).type()
-                return a, t
             assert len(args) == 2, ('Invalid number or arguments', args)
             arg1, arg2 = args
             a1, t1 = colarg(arg1)
@@ -1569,7 +1569,19 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert len(op_args) == 2, ('Invalid number of arguments', op_args)
             col, query = op_args
             expression = "%s ~ '%s'" % (col, query,)
-        elif op_name == 'Raw':
+        elif op_name == 'Function':
+            assert len(op_args) >= 1, ('Invalid number of arguments', op_args)
+            function, args = op_args[0], op_args[1:]
+            string_args = []
+            for a in args:
+                if isinstance(a, str):
+                    string_args.append(colarg(a)[0])
+                elif isinstance(a, Value):
+                    string_args.append(self._pg_value(a))
+                else:
+                    raise ProgramError("Invalid function condition argument", a)
+            expression = '%s(%s)' % (function, string.join(string_args, ', '),)
+        elif op_name == 'Raw':          # TODO: Remove.
             assert len(op_args) == 1, ('Invalid number of arguments', op_args)
             expression = op_args[0]
         else:
