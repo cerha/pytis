@@ -140,9 +140,6 @@ class FieldForm(Form):
         if editable:
             result = field.exporter.editor(context, prefill=self._prefill.get(field.id),
                                            error=dict(self._errors).get(field.id))
-            if self._has_not_null_indicator(field):
-                script = "document.getElementById('%s').setAttribute('aria-required', 'true');"
-                result += context.generator().script(script % field.unique_id)
         else:
             formatted = field.exporter.format(context)
             if isinstance(field.type, pd.StructuredText):
@@ -519,19 +516,22 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def export(self, context):
         result = super(EditForm, self).export(context)
         layout_fields = self._layout.order()
-        active_fields = []
+        field_handlers = []
         filters = {}
+        g = context.generator()
         for fid in layout_fields:
-            if self._row.depends(fid, layout_fields):
-                active_fields.append(fid)
+            field = self._fields[fid]
+            active = self._row.depends(fid, layout_fields)
+            required = self._has_not_null_indicator(field)
             enumerator = self._row.type(fid).enumerator()
             if enumerator and isinstance(enumerator, pytis.data.DataEnumerator):
                 filters[fid] = self._op2str(self._row.runtime_filter(fid))
-        if active_fields:
-            g = context.generator()
-            context.resource('prototype.js')
-            context.resource('pytis.js')
-            result += g.script(g.js_call("new pytis.FormHandler", self._id, active_fields, filters))
+            handler = field.exporter.handler(context, self._id, active, required)
+            field_handlers.append(handler)
+        context.resource('prototype.js')
+        context.resource('pytis.js')
+        result += g.script("new pytis.FormHandler('%s', [%s], %s)" %
+                           (self._id, ', '.join(field_handlers), g.js_value(filters)))
         return result
 
     @classmethod

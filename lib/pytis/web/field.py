@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006-2010 Brailcom, o.p.s.
+# Copyright (C) 2006-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -151,6 +151,12 @@ class Field(object):
             exporter = DateFieldExporter
         elif isinstance(type, pytis.data.DateTime):
             exporter = DateTimeFieldExporter
+        elif isinstance(type, pytis.data.Array):
+            inner_type = type.inner_type()
+            if inner_type.enumerator():
+                exporter = ChecklistFieldExporter
+            else:
+                raise Exception("Unsupported array field.")
         elif type.enumerator():
             selection_type = spec.selection_type()
             if selection_type == SelectionType.RADIO:
@@ -182,6 +188,7 @@ class FieldExporter(object):
     read-only and editable representation respectively (see below).
     
     """
+    _HANDLER = 'pytis.Field'
     
     def __init__(self, row, field, form, uri_provider):
         self._row = row
@@ -294,6 +301,13 @@ class FieldExporter(object):
         """Return the exported editable field control."""
         kwargs = self._editor_kwargs(context, prefill, error)
         return self._editor(context, **kwargs)
+
+    def handler(self, context, form_id, active, required):
+        """Return javascript code for creation of a field handler instance."""
+        g = context.generator()
+        return g.js_call("new %s" % self._HANDLER, form_id, self._field.unique_id,
+                         self._field.id, active, required)
+
 
 class TextFieldExporter(FieldExporter):
 
@@ -459,6 +473,7 @@ class ColorFieldExporter(StringFieldExporter):
 
 
 class BooleanFieldExporter(FieldExporter):
+    _HANDLER = 'pytis.CheckboxField'
 
     def _format(self, context):
         # Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
@@ -520,27 +535,29 @@ class CodebookFieldExporter(FieldExporter):
     def _enumeration(self, context):
         g = context.generator()
         type = self._field.type
+        if isinstance(type, pytis.data.Array):
+            type = type.inner_type()
         return [(val, type.export(val), g.escape(display).replace(' ',  '&nbsp;'))
                 for val, display in self._row.enumerate(self._field.id)]
 
 
 class RadioFieldExporter(CodebookFieldExporter):
-
-    def _editor(self, context, **kwargs):
+    _HANDLER = 'pytis.RadioField'
+    
+    def _editor(self, context, id=None, **kwargs):
         g = context.generator()
-        del kwargs['id'] # Replace by unique id for each radio button separately.
         value = self._value().value()
-        group_id = self._field.unique_id
         radios = []
         for i, (val, strval, display) in enumerate(self._enumeration(context)):
-            radio_id = group_id +'-'+ str(i)
+            radio_id = id +'-'+ str(i)
             radio = g.radio(value=strval, checked=(val==value), id=radio_id, **kwargs)
             label = g.label(display, radio_id)
             radios.append(g.div(radio + label))
-        return g.div(radios, cls='radio-group', id=group_id)
+        return g.div(radios, id=id, cls='radio-group')
 
 
 class ChoiceFieldExporter(CodebookFieldExporter):
+    _HANDLER = 'pytis.ChoiceField'
     
     def _editor(self, context, **kwargs):
         enumeration = self._enumeration(context)
@@ -552,6 +569,18 @@ class ChoiceFieldExporter(CodebookFieldExporter):
         else:
             selected = None
         return context.generator().select(options=options, selected=selected, **kwargs)
+    
+class ChecklistFieldExporter(CodebookFieldExporter):
+    _HANDLER = 'pytis.ChecklistField'
+    
+    def _editor(self, context, id=None, name=None, disabled=None, cls=None):
+        g = context.generator()
+        values = [v.value() for v in self._value().value() or ()]
+        checkboxes = [g.div(g.checkbox(id=id+'-'+str(i), name=name, value=strval,
+                                       checked=(val in values), disabled=disabled) +'&nbsp;'+
+                            g.label(display, id+'-'+str(i)))
+                      for i, (val, strval, display) in enumerate(self._enumeration(context))]
+        return g.div(checkboxes, id=id, cls='checkbox-group')
     
         
 class FileFieldExporter(TextFieldExporter):
