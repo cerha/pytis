@@ -556,7 +556,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         process it.
         
         """
-        import simplejson as json
+        try:
+            import json
+        except:
+            import simplejson as json
         request_number = req.param('_pytis_form_update_request')
         changed_field = str(req.param('_pytis_form_changed_field'))
         filters = json.loads(req.param('_pytis_form_filter_state'))
