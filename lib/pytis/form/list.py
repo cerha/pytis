@@ -856,6 +856,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._show_data_status()
 
     def _on_idle(self, event):
+        if super(ListForm, self)._on_idle(event):
+            return True
         if is_busy_cursor() or current_form() is not self:
             # Prevent blocking the idle method of a popup form opened on top of the current form,
             # such as PopupEditForm or Codebook.
@@ -2629,7 +2631,8 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         return self.Folding(level=None)
           
     def _on_idle(self, event):
-        ListForm._on_idle(self, event)
+        if ListForm._on_idle(self, event):
+            return True
         if not hasattr(self, '_focus_forced_to_grid'):
             self._grid.SetFocus()
             self._focus_forced_to_grid = True

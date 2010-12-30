@@ -328,9 +328,10 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
     def __init__(self, *args, **kwargs):
         super(PostponedSelectionDualForm, self).__init__(*args, **kwargs)
         self._selection_candidate = None
-        wx_callback(wx.EVT_IDLE, self, self._on_idle)        
 
     def _on_idle(self, event):
+        if super(PostponedSelectionDualForm, self)._on_idle(event):
+            return True
         if self._side_form is None or self._selection_candidate is None:
             pass
         elif self._selection_tick > 0:
@@ -501,7 +502,8 @@ class ShowDualForm(SideBrowseDualForm):
         self._initialization_done = False
 
     def _on_idle(self, event):
-        super(ShowDualForm, self)._on_idle(event)
+        if super(ShowDualForm, self)._on_idle(event):
+            return True
         if not self._initialization_done:
             self._initialization_done = True
             self._select_form(self._main_form, force=True)

@@ -144,6 +144,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._transaction = transaction or self._default_transaction()
         self._spec_kwargs = copy.copy(spec_kwargs)
         self._data_kwargs = copy.copy(data_kwargs)
+        self._leave_form_requested = False
         Window.__init__(self, parent)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
@@ -170,6 +171,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                                         ('info', pytis.data.Value(pytis.data.String(), self._form_log_info())),
                                         ('t_start', start_time,),
                                         ('t_show', show_time,),)
+        wx_callback(wx.EVT_IDLE, self, self._on_idle)        
         log(EVENT, 'Form created in %.3fs:' % (show_time.value() - start_time.value(),), self)
 
     def _init_attributes(self):
@@ -257,6 +259,15 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         if self._data is not None:
             self._data.sleep()
 
+    def _on_idle(self, event):
+        if self._leave_form_requested:
+            self._leave_form_requested = False
+            self._cmd_leave_form()
+            result = True
+        else:
+            result = False
+        return result
+
     # Zpracování pøíkazù
    
     def _can_reload_form_state(self):
@@ -294,6 +305,13 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             return self.close()
         finally:
             block_yield(False)
+
+    def _cmd_safe_leave_form(self):
+        # Segmentation fault may happen when closing a form using Escape key.
+        # It happens inside wx key event processing.  We try to overcome the
+        # problem by just setting a leave form flag and closing the form later,
+        # in idle event processing.
+        self._leave_form_requested = True
 
     # Veøejné metody
     

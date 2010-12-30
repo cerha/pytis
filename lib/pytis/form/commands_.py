@@ -75,6 +75,8 @@ Command(BrowseForm, 'PRINT',
         "Print the current form data")
 Command(Form, 'LEAVE_FORM',
         "Close the form")
+Command(Form, 'SAFE_LEAVE_FORM',
+        "Close the form in idle loop")
 Command(Form, 'HELP',
         "Show the form help in the help browser")
 Command(InnerForm, 'DESCRIBE',
@@ -256,7 +258,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-w',           Application.COMMAND_RAISE_RECENT_FORM),
     ('Ctrl-l',           Application.COMMAND_REFRESH),
     ('Ctrl-F1',          Form.COMMAND_HELP),
-    ('Escape',           Form.COMMAND_LEAVE_FORM),
+    ('Escape',           Form.COMMAND_SAFE_LEAVE_FORM),
     ('Ctrl-p',           BrowseForm.COMMAND_PRINT),
     ('Ctrl-p',           PrintFormInternal.COMMAND_PRINT),
     ('Ctrl-Backspace',   InnerForm.COMMAND_RELOAD_FORM_STATE),
