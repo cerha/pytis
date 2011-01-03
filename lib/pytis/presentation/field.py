@@ -1,8 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Prezentace dat v políčkách.
-# 
-# Copyright (C) 2002-2010 Brailcom, o.p.s.
+# Copyright (C) 2002-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +18,8 @@
 
 """Row data presentation layer.
 
-A _field_ in this context refers to an abstract element of the user intercace, not its concrete
-representation.
+A _field_ in this context refers to a logical element of the user intercace,
+not its concrete representation (input widget).
 
 """
 
