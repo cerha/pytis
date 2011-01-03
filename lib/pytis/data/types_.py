@@ -1266,7 +1266,6 @@ class Boolean(Type):
         super(Boolean, self).__init__(enumerator=e, not_null=not_null)
 
     def _validate(self, object, extended=False):
-        print "->", object, extended
         if extended:
             if object in ('t', '1'):
                 return Value(self, True), None
