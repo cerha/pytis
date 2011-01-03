@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -340,6 +340,20 @@ class Boolean(_TypeCheck):
         assert self._test_instance != pytis.data.String(), \
                'invalid comparison'
 tests.add(Boolean)
+
+
+class Array(_TypeCheck):
+    _test_instance = pytis.data.Array(inner_type=pytis.data.Integer(not_null=True), maxlen=3)
+    def test_validation(self):
+        self._test_validity(None, (), ())
+        value, _ = self._test_validity(None, ('1', '2', '3'), None, check_value=False)
+        assert [v.value() for v in value.value()] == [1, 2, 3]
+        assert value.export() == ('1', '2', '3'), value.export()
+    def test_cmp(self):
+        cls = self._test_instance.__class__
+        inner_type = self._test_instance.inner_type()
+        assert cls(inner_type=inner_type) == cls(inner_type=inner_type), 'comparison failed'
+tests.add(Array)
 
 
 class Enumerator(_TypeCheck):

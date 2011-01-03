@@ -1640,6 +1640,43 @@ class LTree(Type):
         assert isinstance(object, basestring)
         return WMValue(self, object), None
 
+
+class Array(Limited):
+    """Sequence of values of some other type.
+
+    The 'inner_type' constructor argument (mandatory) determines the pytis type
+    of array items.  Validation expects a sequence of strings (python tuple,
+    array or any iterable object containing strings) for validation.  These
+    strings are validated against the inner type.  The internal value is a
+    tuple of 'Value' instances of the inner type.  Export returns a tuple of
+    strings corresponding to the exported array items.
+    
+    """
+    _SPECIAL_VALUES = Limited._SPECIAL_VALUES + ((None, ''),)
+    
+    def __init__(self, inner_type, **kwargs):
+        assert isinstance(inner_type, Type)
+        self._inner_type = inner_type
+        super(Array, self).__init__(**kwargs)
+        
+    def _validate(self, object, **kwargs):
+        values = []
+        for item in object:
+            value, error = self._inner_type.validate(item, **kwargs)
+            if error:
+                return None, error
+            else:
+                values.append(value)
+        return Value(self, tuple(values)), None
+
+    def _export(self, value):
+        result = tuple([val.export() for val in value])
+        return result
+
+    def inner_type(self):
+        return self._inner_type
+
+
 
 # Pomocné tøídy
 
