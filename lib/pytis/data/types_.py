@@ -476,7 +476,7 @@ class Large(Big):
     """
 
 class Limited(Type):
-    """Mixin class for types with possibly limited maximal length.
+    """Mixin class for types with possibly limited maximal and/or minimal length.
 
     Minimal and maximal length of a value of this type can be limited by passing the
     `minlen' and `maxlen' constructor arguments.
