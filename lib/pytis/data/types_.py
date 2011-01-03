@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -427,7 +427,7 @@ class Type(object):
         special = assoc(value, self._SPECIAL_VALUES)
         if special:
             return special[1]
-        exported = apply(self._export, (value,)+args, kwargs)
+        exported = self._export(value, *args, **kwargs)
         return exported
 
     def _export(self, value):
@@ -2081,8 +2081,7 @@ class Value(_Value):
         # Abychom to zbyteènì nekomplikovali, tak cachujeme pouze exporty bez
         # argumentù.
         if args or kwargs:
-            exported = apply(self.type().export,
-                             (self.value(),) + args, kwargs)
+            exported = self.type().export(self.value(), *args, **kwargs)
         else:
             exported = self._exported
             if exported is self._VOID:
