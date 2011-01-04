@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2006-2010 Brailcom, o.p.s.
+# Copyright (C) 2006-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -523,9 +523,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             field = self._fields[fid]
             active = self._row.depends(fid, layout_fields)
             required = self._has_not_null_indicator(field)
-            enumerator = self._row.type(fid).enumerator()
-            if enumerator and isinstance(enumerator, pytis.data.DataEnumerator):
-                filters[fid] = self._op2str(self._row.runtime_filter(fid))
+            runtime_filter = self._row.runtime_filter(fid)
+            if runtime_filter is not None:
+                filters[fid] = self._op2str(runtime_filter)
             handler = field.exporter.handler(context, self._id, active, required)
             field_handlers.append(handler)
         context.resource('prototype.js')
