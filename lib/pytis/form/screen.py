@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -219,8 +219,6 @@ class Window(wx.Panel, Restorable):
         self.defocus()
         self.Enable(False)
         self.Show(False) # nutné i před uzavřením
-        # Just an experiment motivated by random crashes on closing forms:
-        import time; time.sleep(0.1)
 
     def focus(self):
         """Nastav focus tomuto oknu."""
