@@ -850,21 +850,27 @@ class PresentedRow(object):
             return ''
     
     def enumerate(self, key):
-        """Vra» výèet hodnot èíselníku daného políèka jako seznam dvojic.
+        """Return the list of valid values of an enumeration field.
 
-        Vrácený seznam obsahuje v¾dy vnitøní Pythonovou hodnotu èíselníku a k
-        ní odpovídající u¾ivatelskou hodnotu jako øetìzec.  U¾ivatelská hodnota
-        je urèena specifikací `display'.
-        
-        Vyvolání této metody pro políèko, které není èíselníkové je pova¾ováno
-        za chybu.
+        Returns a list of pairs (VALUE, DISPLAY), where VALUE is the internal
+        python value and DISPLAY is the corresponding user visible string
+        (unicode) for that value (as defined by the `display' specification).
+
+        If the field given by 'key' has no enumerator, None is returned.  The
+        inner_type's enumerator is used automatically for fields of type
+        'pytis.data.Array'.
        
         """
         column = self._coldict[key]
         if self._secret_column(column):
             return []
-        enumerator = column.type.enumerator()
-        if isinstance(enumerator, pytis.data.DataEnumerator):
+        ctype = column.type
+        if isinstance(ctype, pytis.data.Array):
+            ctype = ctype.inner_type()
+        enumerator = ctype.enumerator()
+        if enumerator is None:
+            return None
+        elif isinstance(enumerator, pytis.data.DataEnumerator):
             sorting = None
             cb_spec = self._cb_spec(column)
             if cb_spec:
