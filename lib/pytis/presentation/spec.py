@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2428,7 +2428,8 @@ class Field(object):
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
             for k in kwargs.keys():
                 assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
-                             'precision', 'format', 'mindate', 'maxdate', 'validation_messages'), \
+                             'precision', 'format', 'mindate', 'maxdate', 'validation_messages',
+                             'inner_type'), \
                              err("Invalid argument: %r", k)
             if isinstance(type, pytis.data.Type):
                 for arg, value in (('codebook', codebook),
@@ -2662,7 +2663,7 @@ class Field(object):
         return completer
     
     def type_kwargs(self, resolver):
-        """Return the keyword arguments for field's data tape construction.
+        """Return the keyword arguments for field's data type construction.
         
         This method should never be called from outside of the 'pytis.presentation' module.
 
@@ -2677,6 +2678,13 @@ class Field(object):
             enumerator = pytis.data.DataEnumerator(enumerator, **self._enumerator_kwargs)
         if enumerator:
             kwargs['enumerator'] = enumerator
+        if 'inner_type' in kwargs:
+            # This is quite a hack - it assumes all type arguments are the
+            # inner type arguments.  If not, an instance must be passed
+            # directly, but that doesn't allow the enumerator magic.
+            inner_type = kwargs.pop('inner_type')
+            if type(inner_type) == type(pytis.data.Type):
+                kwargs = {'inner_type': inner_type(**kwargs)}
         return kwargs
 
 
