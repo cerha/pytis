@@ -1659,15 +1659,30 @@ class Array(Limited):
         self._inner_type = inner_type
         super(Array, self).__init__(**kwargs)
         
-    def _validate(self, object, **kwargs):
+    def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
+                 **kwargs):
+        # We override `validate()' instead of `_validate()' here, which is
+        # discouraged in `validate()' method docstring.  The reason is that we
+        # need to pass arguments `transaction', `condition' and `arguments' to
+        # the validation of inner values.  We also don't want to cache
+        # validation results as it should be enough to cache the inner values.
         values = []
         for item in object:
-            value, error = self._inner_type.validate(item, **kwargs)
+            value, error = self._inner_type.validate(item, strict=strict, transaction=transaction,
+                                                     condition=condition, arguments=arguments,
+                                                     **kwargs)
             if error:
-                return None, error
+                return value, error
             else:
                 values.append(value)
-        return Value(self, tuple(values)), None
+        values = tuple(values)
+        if strict:
+            try:
+                self._check_constraints(values, transaction=transaction,
+                                        condition=condition, arguments=arguments)
+            except ValidationError, e:
+                return None, e
+        return Value(self, values), None
 
     def _export(self, value):
         result = tuple([val.export() for val in value])
