@@ -2,7 +2,11 @@
 
 # Formátovací prvky
 # 
+<<<<<<< HEAD
 # Copyright (C) 2002, 2003, 2004, 2005, 2010, 2011 Brailcom, o.p.s.
+=======
+# Copyright (C) 2002-2011 Brailcom, o.p.s.
+>>>>>>> Align LongTable's horizontally by default
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -724,7 +728,8 @@ class LongTable(Table):
 
     def _lcg_table(self, table_rows, column_widths):
         return lcg.Table(table_rows, column_widths=column_widths, long=True,
-                         presentation=self._lcg_presentation())
+                         presentation=self._lcg_presentation(),
+                         halign=lcg.HorizontalAlignment.LEFT)
     
 class Image(_Mark):
     """EPS obrázek."""
