@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009, 2010 Brailcom, o.p.s.
+ * Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -98,10 +98,10 @@ pytis.FormHandler = Class.create({
 			var cdata = field_data[id];
 			for (var key in cdata) {
 			    var value = cdata[key];
-		            if      (key == 'editable')    field.set_editability(value);
-			    else if (key == 'value')       field.set_value(value);
-			    else if (key == 'enumeration') field.set_enumeration(value);
-			    else if (key == 'filter')      this._filters[id] = value;
+			    if (key == 'enumeration')   field.set_enumeration(value);
+			    else if (key == 'value')    field.set_value(value);
+		            else if (key == 'editable') field.set_editability(value);
+			    else if (key == 'filter')   this._filters[id] = value;
 			}
 		    }
 		}
@@ -215,7 +215,19 @@ pytis.ChoiceField = Class.create(pytis.Field, {
 pytis.ChecklistField = Class.create(pytis.Field, {
     // Specific handler for a multi select control represented by a group of checkboxes.
 
-    set_value: function(value) {},
+    set_value: function(value) {
+	var descendants = this._element.immediateDescendants();
+	for (var i=0; i<(descendants.length); i++) {
+	    var checkbox = descendants[i].firstDescendant();
+	    checkbox.checked = false;
+	    if (value) {
+		for (var j=0; j<value.length; j++) {
+		    if (value[j] == checkbox.value)
+			checkbox.checked = true;
+		}
+	    }
+	}
+    },
 
     set_editability: function(value) {},
 
