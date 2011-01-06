@@ -68,6 +68,7 @@ pytis.FormHandler = Class.create({
 		// Disabled fields are not present in values/last_values, but also
 		// checkbox fields are not there if unchecked.
 		if ((id in values || id in last_values) && values[id] != last_values[id]) {
+		    document.body.style.cursor = "wait";
 		    this._form.request({
 			parameters: {_pytis_form_update_request: ++this._last_request_number,
 			             _pytis_form_changed_field: id,
@@ -105,6 +106,7 @@ pytis.FormHandler = Class.create({
 			}
 		    }
 		}
+		document.body.style.cursor = "default";
 	    }
 	}
     }
