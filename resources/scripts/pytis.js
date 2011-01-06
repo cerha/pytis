@@ -145,11 +145,11 @@ pytis.Field = Class.create({
     },
 
     id: function() {
-	return this._id
+	return this._id;
     },
 
     active: function() {
-	return this._active
+	return this._active;
     },
 
     value: function() {
@@ -267,11 +267,11 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 	    var id = elem.getAttribute('id')+'-'+i
 	    var text = (' '+ item[1]).escapeHTML().gsub(' ', '&nbsp;');
 	    var div = new Element('div');
-	    div.insert(new Element('input', {type: 'checkbox',
-					     value: item[0],
-					     name: this._id,
-					     id: id}));
-	    div.insert(new Element('label', {for: id}).update(text));
+	    div.insert(new Element('input', {'type': 'checkbox',
+					     'value': item[0],
+					     'name': this._id,
+					     'id': id}));
+	    div.insert(new Element('label', {'for': id}).update(text));
 	    elem.insert(div);
 	}
     }
