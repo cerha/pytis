@@ -97,12 +97,18 @@ pytis.FormHandler = Class.create({
 		    var field = this._fields[id];
  		    if (field) {
 			var cdata = field_data[id];
+			var original_value = field.value();
 			for (var key in cdata) {
 			    var value = cdata[key];
 			    if (key == 'enumeration')   field.set_enumeration(value);
 			    else if (key == 'value')    field.set_value(value);
 		            else if (key == 'editable') field.set_editability(value);
 			    else if (key == 'filter')   this._filters[id] = value;
+			}
+			if (cdata.enumeration && !cdata.value) {
+			    // Retain the value of enumeration fields even
+			    // after the enumeration changes (if possible).
+			    field.set_value(original_value);
 			}
 		    }
 		}
@@ -144,6 +150,10 @@ pytis.Field = Class.create({
 
     active: function() {
 	return this._active
+    },
+
+    value: function() {
+	return this._ctrl.value;
     },
 
     set_editability: function(value) {
@@ -217,10 +227,17 @@ pytis.ChoiceField = Class.create(pytis.Field, {
 pytis.ChecklistField = Class.create(pytis.Field, {
     // Specific handler for a multi select control represented by a group of checkboxes.
 
+    _checkboxes: function() {
+	return this._element.immediateDescendants().collect(function(item) {return item.firstDescendant()});
+    },
+    
+    value: function() {
+	var checkboxes = this._checkboxes();
+	return checkboxes.map(function(checkbox) {return checkbox.value});
+    },
+
     set_value: function(value) {
-	var descendants = this._element.immediateDescendants();
-	for (var i=0; i<(descendants.length); i++) {
-	    var checkbox = descendants[i].firstDescendant();
+	this._checkboxes().each(function(checkbox) {
 	    checkbox.checked = false;
 	    if (value) {
 		for (var j=0; j<value.length; j++) {
@@ -228,7 +245,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 			checkbox.checked = true;
 		}
 	    }
-	}
+	});
     },
 
     set_editability: function(value) {},
