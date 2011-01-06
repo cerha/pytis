@@ -248,7 +248,11 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 	});
     },
 
-    set_editability: function(value) {},
+    set_editability: function(value) {
+	this._checkboxes().each(function(checkbox) {
+	    checkbox.disabled = !value;
+	});
+    },
 
     set_enumeration: function(value) {
 	var elem = this._element;
