@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1351,10 +1351,6 @@ def FunctionCondition(function, *args):
 
     """
     return Operator('Function', function, *args)
-
-def RawCondition(x):
-    "Don't use this."
-    return Operator('Raw', x)
 
 def reversed_sorting(sorting):
     """Vrať specifikaci třídění reverzní ke specifikaci 'sorting'.
