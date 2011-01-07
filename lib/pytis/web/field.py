@@ -573,12 +573,23 @@ class ChoiceFieldExporter(CodebookFieldExporter):
 class ChecklistFieldExporter(CodebookFieldExporter):
     _HANDLER = 'pytis.ChecklistField'
     
-    def _editor(self, context, id=None, name=None, disabled=None, cls=None):
+    def _format(self, context):
+        return self._editor(context, id=self._field.unique_id, readonly=True)
+        
+    def _editor(self, context, id=None, name=None, disabled=None, readonly=False, cls=None):
         g = context.generator()
         values = [v.value() for v in self._value().value() or ()]
-        checkboxes = [g.div(g.checkbox(id=id+'-'+str(i), name=name, value=strval,
-                                       checked=(val in values), disabled=disabled) +'&nbsp;'+
-                            g.label(display, id+'-'+str(i)))
+        def checkbox(i, value, strval, display):
+            checkbox_id = id+'-'+str(i)
+            checked = value in values
+            if readonly:
+                onchange = "this.checked=" + (checked and 'true' or 'false')
+            else:
+                onchange = None
+            return (g.checkbox(id=checkbox_id, name=name, value=strval, checked=checked,
+                               disabled=disabled, onchange=onchange) +'&nbsp;'+
+                    g.label(display, checkbox_id))
+        checkboxes = [g.div(checkbox(i, val, strval, display) )
                       for i, (val, strval, display) in enumerate(self._enumeration(context))]
         return g.div(checkboxes, id=id, cls='checkbox-group')
     
