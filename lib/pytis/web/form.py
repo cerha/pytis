@@ -1234,14 +1234,15 @@ class BrowseForm(LayoutForm):
         if show_query_field and not bottom:
             query_id = 'filter-' + id
             content.append(g.div((g.label(_("Search expression") +': ', query_id),
-                                  g.field(self._query, name='query', id=query_id),
+                                  g.field(self._query, name='query', id=query_id,
+                                          cls='query-field'),
                                   g.hidden('show_query_field', '1'),
                                   # Translators: Search button label.
-                                  g.submit(_("Search"))),
+                                  g.submit(_("Search"), cls='search-button')),
                                  cls='query' + (show_filters and ' with-filter' or '')))
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
-            submit_button = g.submit(_("Change filters"))
+            submit_button = g.submit(_("Change filters"), cls='apply-filters')
             if self._immediate_filters and len(self._filters) <= 1:
                 onchange = 'this.form.submit(); return true'
                 # Leave the submit button in place for non-Javascript browsers.
@@ -1285,7 +1286,8 @@ class BrowseForm(LayoutForm):
             if pages > 1:
                 offset_id = 'offset-' + id
                 if not show_query_field and self._allow_query_field:
-                    search_button = g.submit(_("Search"), name='show_query_field', cls='search')
+                    search_button = g.submit(_("Search"), name='show_query_field',
+                                             cls='search-button')
                 else:
                     search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into
@@ -1298,9 +1300,9 @@ class BrowseForm(LayoutForm):
                                               options=[(str(i+1), i*limit) for i in range(pages)]),
                                      ' / ',
                                      g.strong(str(pages))), cls="offset"),
-                             g.span((g.submit(_("Previous"), name='prev', cls='prev',
+                             g.span((g.submit(_("Previous"), name='prev', cls='prev-page-button',
                                               title=_("Go to previous page"), disabled=(page == 0)),
-                                     g.submit(_("Next"),  name='next', cls='next',
+                                     g.submit(_("Next"),  name='next', cls='next-page-button',
                                               title=_("Go to next page"),
                                               disabled=(page+1)*limit >= count),
                                      ) + (search_button and (search_button,) or ()),
@@ -1313,7 +1315,7 @@ class BrowseForm(LayoutForm):
                                           onchange='this.form.submit(); return true',
                                           options=[(str(i), i) for i in self._limits])),
                                 cls='limit'),
-                         g.noscript(g.submit(_("Go"))))
+                         g.noscript(g.submit(_("Go"), cls='goto-page-button')))
             if controls:
                 cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
                 content.append(g.div(controls, cls=cls))
