@@ -18,15 +18,17 @@
 
 """Web forms.
 
-This module provides an implementations of Pytis forms which can be used for web interfaces to
-Pytis informations systems.  The intention is to be able to generate web forms from the same
-specification as GUI forms.
+This module provides an implementation of Pytis forms which can be used for web
+interfaces to Pytis informations systems.  The intention is to be able to
+generate web forms from the same specification as GUI forms.
 
-Pytis currently does not include support running the actual web application.  Application framework
-which makes use of pytis web forms is implemented separately.  See the Wiking project at
-http://www.freebsoft.org/wiking for more information.
+Pytis currently does not include support running the actual web application.
+Application framework which makes use of pytis web forms is implemented
+separately.  See the Wiking project at http://www.freebsoft.org/wiking for more
+information.
 
-All the content generation is done using the LCG framework.  See http://www.freebsoft.org/lcg.
+All the content generation is done using the LCG framework.  See
+http://www.freebsoft.org/lcg.
 
 """
 
@@ -53,28 +55,27 @@ class Form(lcg.Content):
                  uri_provider=None, **kwargs):
         """Arguments:
 
-          view -- presentation specification as a 'pytis.presentation.ViewSpec' instance.
-          
+          view -- presentation specification as a 'pytis.presentation.ViewSpec'
+            instance.
           row -- 'pytis.presentation.PresentedRow' instance.
-          
-          handler -- form handler URI as a string.  This URI is used in the form's 'action'
-            attribute.
-          
+          handler -- form handler URI as a string.  This URI is used in the
+            form's 'action' attribute.
           prefill -- form prefill data as a dictionary of string values.
-          
-          uri_provider -- callable object (function) returning URIs for form fields.  This makes
-            Pytis web forms independent on the application's URI scheme.  The function must accept
-            one positional argument (the 'pytis.presentation.PresentedRow' instance) and two
-            keyword arguments.  The first of them -- 'cid' -- may also be used as positional and
-            denotes the identifier of the field, for which the URI is requested.  It may be None
-            when requesting URI for the whole record.  The later argument 'type' will always be one
-            of 'UriType' constants.  It is used for distinction of the purpose, for which the uri
-            us used (eg. for a link or an image src).
-          
-          hidden -- hardcoded hidden form fields as a sequence of pairs (name, value).
-
-          name -- form name as a string or None.  This name will be sent as a hidden field and used
-            to distinguish which request parameters belong to which form.
+          uri_provider -- callable object (function) returning URIs for form
+            fields.  This makes Pytis web forms independent on the
+            application's URI scheme.  The function must accept one positional
+            argument (the 'pytis.presentation.PresentedRow' instance) and two
+            keyword arguments.  The first of them -- 'cid' -- may also be used
+            as positional and denotes the identifier of the field, for which
+            the URI is requested.  It may be None when requesting URI for the
+            whole record.  The later argument 'type' will always be one of
+            'UriType' constants.  It is used for distinction of the purpose,
+            for which the uri us used (eg. for a link or an image src).
+          hidden -- hardcoded hidden form fields as a sequence of pairs (name,
+            value).
+          name -- form name as a string or None.  This name will be sent as a
+            hidden field and used to distinguish which request parameters
+            belong to which form.
 
         """
         super(Form, self).__init__(**kwargs)
@@ -165,9 +166,10 @@ class FieldForm(Form):
         if callable(template):
             template = template(row)
         result = template.interpolate(lambda fid: self._export_field(context, self._fields[fid]))
-        # Translation is called immediately to force immediate interpolation (with the current row
-        # data).  Delayed translation (which invokes the interpolation) would use invalid row data
-        # (the 'PresentedRow' instance is reused and filled with table data row by row).
+        # Translation is called immediately to force immediate interpolation
+        # (with the current row data).  Delayed translation (which invokes the
+        # interpolation) would use invalid row data (the 'PresentedRow'
+        # instance is reused and filled with table data row by row).
         return context.translate(result)
     
 
@@ -373,10 +375,11 @@ class _SubmittableForm(Form):
     def __init__(self, view, row, submit=_("Submit"), reset=_("Undo all changes"), **kwargs):
         """Arguments:
 
-          submit -- custom submit buttons as a sequence of (label, name) pairs.  A single unnamed
-            button can be passed as just the label string.  Default is one button labeled `Submit'.
-
-          reset -- reset button label as a string or None to omit the reset button.
+          submit -- custom submit buttons as a sequence of (label, name) pairs.
+            A single unnamed button can be passed as just the label string.
+            Default is one button labeled `Submit'.
+          reset -- reset button label as a string or None to omit the reset
+            button.
             
           See the parent classes for definition of the remaining arguments.
 
@@ -410,13 +413,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def __init__(self, view, row, errors=(), **kwargs):
         """Arguments:
 
-          errors -- a sequence of error messages to display within the form (results of previous
-            attempt to commit the form).  The sequence consists of pairs (ID, MESSAGE), where ID is
-            the field identifier and MESSAGE is the error message for given field.  ID can also be
-            None for messages which don't belong to any particular field and it is also legal to
-            pass field identifiers, which don't appear in the current form or even don't exist in
-            the current specification (typically for fields which only appear in the underlying
-            database objects).
+          errors -- a sequence of error messages to display within the form
+            (results of previous attempt to commit the form).  The sequence
+            consists of pairs (ID, MESSAGE), where ID is the field identifier
+            and MESSAGE is the error message for given field.  ID can also be
+            None for messages which don't belong to any particular field and it
+            is also legal to pass field identifiers, which don't appear in the
+            current form or even don't exist in the current specification
+            (typically for fields which only appear in the underlying database
+            objects).
 
           See the parent classes for definition of the remaining arguments.
 
@@ -495,9 +500,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     @classmethod
     def _op2str(self, operator):
-        # Return a unique string representation of 'pytis.data.Operator' for storing current
-        # runtime filter state during AJAX updates.  The default 'Operator' __str__ method doesn't
-        # work for this purpose since it doesnt expose argument values.
+        # Return a unique string representation of 'pytis.data.Operator' for
+        # storing current runtime filter state during AJAX updates.  The
+        # default 'Operator' __str__ method doesn't work for this purpose since
+        # it doesnt expose argument values.
         def arg2str(arg):
             if isinstance(arg, pd.Operator):
                 return self._op2str(arg)
@@ -594,8 +600,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     
 class FilterForm(EditForm):
     """Simple form for displaying a list of fields for advanced filtering."""
-    # This form is currently only used in Wiking Biblio CatalogNews module.  The whole thing needs
-    # some further work to be generally usable ...
+    # This form is currently only used in Wiking Biblio CatalogNews module.
+    # The whole thing needs some further work to be generally usable ...
     _CSS_CLS = 'edit-form filter-form'
     
     def __init__(self, fields, row, **kwargs):
@@ -621,47 +627,57 @@ class BrowseForm(LayoutForm):
                  arguments=None, immediate_filters=True, **kwargs):
         """Arguments:
 
-          columns -- sequence of column identifiers to be displayed or None for the default columns
-            defined by specification.            
-          condition -- current condition for filtering the records as 'pytis.data.Operator'
-            instance or None.
-          sorting -- form sorting specification in the format recognized by the 'sort' argument of
-            'pytis.data.Data.select()'.
-          limit -- maximal number of rows per page.  If the current condition produces more rows,
-            the listing will be split into pages and the form will include controls for navigation
-            between these pages.  None value results in an unlimited list -- all records will be
-            printed on just one page and paging controls will be disabled.  The request parameter
-            'limit' overrides this value if 'req' is passed and it is stored as a cookie.  The
-            cookie has lower precedence than the request parameter, but still higher than the
-            'limit' constructor argument, so this argument really only serves as a default value.
-            The request parameter/cookie is checked against the 'limits' argument (see below) and
-            if it is not one of the values defined there, it is ignored, so the user may only use
-            one of the allowed limits. 
-          limits -- a sequence of available 'limit' values.  These values are used to create the
-            limit selection control and also determine valid values of the 'limit' request
-            parameter and cookie (described above).
-          offset -- determines the page within paged listing.  The number indicates the offset of
-            the record within all the records of the current select.  The page, which contains this
-            record will be displayed if possible.  If not (the listing is shorter than given
-            number), the nearest page is displayed.  The request argument 'offset' overrides this
-            value if 'req' is passed.  Also request arguments 'next' and 'prev' modify this value.
-          search -- search condition as a 'pytis.data.Operator' instance or None.  If used, the
-            offset will be set automatically to ensure, that the first record matching the search
-            condition will be displayed on the current page.  The request parameters 'search' or
-            'index_search' can be also used to initialize the search condition (if this constructor
-            argument is not used).  The request parameter 'search' is for searching by the value of
-            the key column.  The request parameter 'index_search' is for searching by a prefix
-            string and is always performed on the primary sorting column.  If no search condition
-            is passed (either to the constructor or through the request), the offset is controlled
-            by the 'offset' argument.
-            Searching is ignored when the current limit is greater than the total number of
-            records.
-          query -- query search string.  If None, the form automatically displays search controls
-            when the number of records exceeds one page.  If 'query' is passed, these embedded
-            search conrols are disabled (it is considered, that the application has it's own search
-            interface), but otherwise the form behaves as if the query was filled in its own search
-            field.  The query string is split into query words by space and the form is filtered to
-            contain only records containing all the words in any of its string columns.
+          columns -- sequence of column identifiers to be displayed or None for
+            the default columns defined by specification.
+          condition -- current condition for filtering the records as
+            'pytis.data.Operator' instance or None.
+          sorting -- form sorting specification in the format recognized by the
+            'sort' argument of 'pytis.data.Data.select()'.
+          limit -- maximal number of rows per page.  If the current condition
+            produces more rows, the listing will be split into pages and the
+            form will include controls for navigation between these pages.
+            None value results in an unlimited list -- all records will be
+            printed on just one page and paging controls will be disabled.  The
+            request parameter 'limit' overrides this value if 'req' is passed
+            and it is stored as a cookie.  The cookie has lower precedence than
+            the request parameter, but still higher than the 'limit'
+            constructor argument, so this argument really only serves as a
+            default value.  The request parameter/cookie is checked against the
+            'limits' argument (see below) and if it is not one of the values
+            defined there, it is ignored, so the user may only use one of the
+            allowed limits.
+          limits -- a sequence of available 'limit' values.  These values are
+            used to create the limit selection control and also determine valid
+            values of the 'limit' request parameter and cookie (described
+            above).
+          offset -- determines the page within paged listing.  The number
+            indicates the offset of the record within all the records of the
+            current select.  The page, which contains this record will be
+            displayed if possible.  If not (the listing is shorter than given
+            number), the nearest page is displayed.  The request argument
+            'offset' overrides this value if 'req' is passed.  Also request
+            arguments 'next' and 'prev' modify this value.
+          search -- search condition as a 'pytis.data.Operator' instance or
+            None.  If used, the offset will be set automatically to ensure,
+            that the first record matching the search condition will be
+            displayed on the current page.  The request parameters 'search' or
+            'index_search' can be also used to initialize the search condition
+            (if this constructor argument is not used).  The request parameter
+            'search' is for searching by the value of the key column.  The
+            request parameter 'index_search' is for searching by a prefix
+            string and is always performed on the primary sorting column.  If
+            no search condition is passed (either to the constructor or through
+            the request), the offset is controlled by the 'offset' argument.
+            Searching is ignored when the current limit is greater than the
+            total number of records.
+          query -- query search string.  If None, the form automatically
+            displays search controls when the number of records exceeds one
+            page.  If 'query' is passed, these embedded search conrols are
+            disabled (it is considered, that the application has it's own
+            search interface), but otherwise the form behaves as if the query
+            was filled in its own search field.  The query string is split into
+            query words by space and the form is filtered to contain only
+            records containing all the words in any of its string columns.
           allow_query_search -- explicitly enable or disable displaying the
             query search controls.  Query search allows filtering the form
             records by a text string.  By default (when None), query search
@@ -686,27 +702,33 @@ class BrowseForm(LayoutForm):
             written into the form's query search field (see
             'allow_query_search' for details).  The form search controls are
             disabled in this case as if 'allow_query_search' was False.
-          filter -- filter condition as a 'pytis.data.Operator' instance.  This condition will be
-            appended to 'condition', but the difference is that 'condition' is invisible to the
-            user, but 'filter' may be indicated in the user interface.
-          filters -- sequence of user visible named filters as 'pytis.presentation.Filter'
-            instances.  These filters will be available in the user interface for user's selection.
-            If None, the default set of filters defined by specification is used.  If not None, the
-            filters from specification are ignored, so they need to be included in this argument
-            explicitly if they should be displayed.  This argument is mostly useful to construct
-            the list of filters dynamically (specification filters are static).
-          message -- function returning a custom search result message.  If none, a default message
-            will be used according to current query, such as 'Found 5 records matching the search
-            expression.'.  A function of one argument (integer determining the number of records in
-            the form) may be used to return a custom message as a string (possibly LCG Translatable
-            object).  An example of a custom message might be 'Found 15 articles in category
-            Python'.
-          req -- instance of a class implementing the 'Request' API.  The form state (sorting,
-            paging etc) will be set up according to the reqest parameters, if the request includes
-            them (form controls were used to submit the form).  The constructor argument 'name'
-            (defined in parent class) may be used to distinguish between multiple forms on one
-            page.  If this parameter was passed, it is sent as the request argument 'form_name'.
-            Thus if this argument doesn't match the form name, the request arguments are ignored.
+          filter -- filter condition as a 'pytis.data.Operator' instance.  This
+            condition will be appended to 'condition', but the difference is
+            that 'condition' is invisible to the user, but 'filter' may be
+            indicated in the user interface.
+          filters -- sequence of user visible named filters as
+            'pytis.presentation.Filter' instances.  These filters will be
+            available in the user interface for user's selection.  If None, the
+            default set of filters defined by specification is used.  If not
+            None, the filters from specification are ignored, so they need to
+            be included in this argument explicitly if they should be
+            displayed.  This argument is mostly useful to construct the list of
+            filters dynamically (specification filters are static).
+          message -- function returning a custom search result message.  If
+            none, a default message will be used according to current query,
+            such as 'Found 5 records matching the search expression.'.  A
+            function of one argument (integer determining the number of records
+            in the form) may be used to return a custom message as a string
+            (possibly LCG Translatable object).  An example of a custom message
+            might be 'Found 15 articles in category Python'.
+          req -- instance of a class implementing the 'Request' API.  The form
+            state (sorting, paging etc) will be set up according to the reqest
+            parameters, if the request includes them (form controls were used
+            to submit the form).  The constructor argument 'name' (defined in
+            parent class) may be used to distinguish between multiple forms on
+            one page.  If this parameter was passed, it is sent as the request
+            argument 'form_name'.  Thus if this argument doesn't match the form
+            name, the request arguments are ignored.
           arguments -- dictionary of table function call arguments, with
             function argument identifiers as keys and 'pytis.data.Value'
             instances as values.  Useful only when the table is actually a row
@@ -836,8 +858,9 @@ class BrowseForm(LayoutForm):
             # Determine the current set of user selectable filters.
             null_filter = find(None, filter_set, key=lambda f: f.condition())
             if not null_filter:
-                # Translators: Label used in filter selection box for the option which disables
-                # filtering and thus results in all records to be displayed.
+                # Translators: Label used in filter selection box for the
+                # option which disables filtering and thus results in all
+                # records to be displayed.
                 null_filter = Filter(self._NULL_FILTER_ID, _("All items"), None)
                 filter_set_filters = [null_filter] + [f for f in filter_set]
                 filter_set = FilterSet(filter_set_id, filter_set.title(), filter_set_filters)
@@ -862,7 +885,8 @@ class BrowseForm(LayoutForm):
                             filter_id = null_filter.id()
             if filter_id:
                 matching_filter = find(filter_id, filter_set, key=lambda f: f.id())
-                # Append the current user selected filter to the filter passed as 'filter' argument.
+                # Append the current user selected filter to the filter passed
+                # as 'filter' argument.
                 if matching_filter:
                     cond = matching_filter.condition()
                     if filter and cond:
@@ -1011,9 +1035,10 @@ class BrowseForm(LayoutForm):
         if self._custom_message:
             msg = self._custom_message(count)
         elif self._query:
-            # Translators: This string uses plural forms.  '%d' is replaced by the number and
-            # this number also denotes the plural form used.  Please supply translations for
-            # all plural forms relevant for the target language.
+            # Translators: This string uses plural forms.  '%d' is replaced by
+            # the number and this number also denotes the plural form used.
+            # Please supply translations for all plural forms relevant for the
+            # target language.
             msg = _.ngettext("Found %d record matching the search expression.",
                              "Found %d records matching the search expression.",
                              count)
@@ -1101,15 +1126,16 @@ class BrowseForm(LayoutForm):
                 # The message about search/filter results is already printed.
                 return '' 
             else:
-                # Translators: Used in empty list forms.  "Records" refers to database records in
-                # the most generic senese possible.
+                # Translators: Used in empty list forms.  "Records" refers to
+                # database records in the most generic senese possible.
                 return g.strong(_("No records."))
         else:
             if limit is None or count <= self._limits[0]:
                 summary = _("Total records:") +' '+ g.strong(str(count))
             else:
-                # Translators: The variables '%(first)s', '%(last)s' and '%(total)s' are replaced
-                # by the numbers corresponding to the current listing range.
+                # Translators: The variables '%(first)s', '%(last)s' and
+                # '%(total)s' are replaced by the numbers corresponding to the
+                # current listing range.
                 summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
                             first=g.strong(str(first_record_offset+1)),
                             last=g.strong(str(first_record_offset+n)),
@@ -1120,8 +1146,8 @@ class BrowseForm(LayoutForm):
         if not kwargs.get('sort'):
             sort, dir = self._sorting[0]
             kwargs = dict(kwargs, sort=sort, dir=self._SORTING_DIRECTIONS[dir])
-        # TODO: Excluding the 'submit' argument is actually a hack, since it is defined in Wiking
-        # and should be transparent for the form.
+        # TODO: Excluding the 'submit' argument is actually a hack, since it is
+        # defined in Wiking and should be transparent for the form.
         args = [('form_name', self._name)]
         args += [('filter_%s' % (k,), v,) for k, v in self._filter_ids.items()]
         args += [(k, v) for k, v in self._hidden if k != 'submit']
@@ -1172,17 +1198,21 @@ class BrowseForm(LayoutForm):
             if len(values) < 3 or len(values) > 100:
                 break
             if search_string:
-                # Translators: This is a label preceding index search controls.  These controls
-                # allow the user to move in a long alphabetically sorted list by alphabetical
-                # prefix.  For example in a listing of books, one might have the following index
-                # search controls: 'Author: A, B, C, D, ...' and selecting 'A' will move us to the
-                # first author beginning with A.  At the same time the form will automatically
-                # display subordinate index search controls for all authors beginning with 'A':
-                # 'Author on "A": Ab, Ac, Ad, Af, ....'.  And this is where this label is used.
-                # '%(label)s' is replaced by the label of the controlling column. '%(prefix)s' is
-                # replaced by the selected letter or substring and 'on' has the meaning "beginning
-                # with".  Also take care to use the correct quotation marks for the target language
-                # (written as the corresponding unicode characters).
+                # Translators: This is a label preceding index search controls.
+                # These controls allow the user to move in a long
+                # alphabetically sorted list by alphabetical prefix.  For
+                # example in a listing of books, one might have the following
+                # index search controls: 'Author: A, B, C, D, ...' and
+                # selecting 'A' will move us to the first author beginning with
+                # A.  At the same time the form will automatically display
+                # subordinate index search controls for all authors beginning
+                # with 'A': 'Author on "A": Ab, Ac, Ad, Af, ....'.  And this is
+                # where this label is used.  '%(label)s' is replaced by the
+                # label of the controlling column. '%(prefix)s' is replaced by
+                # the selected letter or substring and 'on' has the meaning
+                # "beginning with".  Also take care to use the correct
+                # quotation marks for the target language (written as the
+                # corresponding unicode characters).
                 label = _('%(label)s on "%(prefix)s":', label=field.label, prefix=search_string)
             else:
                 label = field.label + ":"
@@ -1229,8 +1259,8 @@ class BrowseForm(LayoutForm):
                 filter_set_id = filter_set.id()
                 filter_name = 'filter_%s' % (filter_set_id,)
                 filter_id = filter_name + '-' + id
-                # Translators: Label of filter selection box.  Filtering limits the displayed records
-                # by certain criterias.
+                # Translators: Label of filter selection box.  Filtering limits
+                # the displayed records by certain criterias.
                 filter_content.append(g.span((g.label(filter_set.title()+': ', filter_id),
                                               g.select(name=filter_name, id=filter_id,
                                                        selected=self._filter_ids.get(filter_set_id),
@@ -1422,7 +1452,8 @@ class ListView(BrowseForm):
             # Hack: Add a fake container to force the heading level start at 4.
             container = lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
-        # We use only css class name from row_style, since other attributes are BrowseForm specific.
+        # We use only css class name from row_style, since other attributes are
+        # BrowseForm specific.
         cls = self._style(self._view.row_style(), row, n)['cls']
         return g.div(parts, id=id, cls='list-item '+cls)
 
@@ -1451,9 +1482,8 @@ class ListView(BrowseForm):
 class ItemizedView(BrowseForm):
     """Simplified listing of records in a form of itemized list.
 
-    This form behaves similarly to a regular 'BrowseForm', but the records are presented as items
-    in an unordered bullet list rather than as table rows.
-
+    This form behaves similarly to a regular 'BrowseForm', but the records are
+    presented as items in an unordered bullet list rather than as table rows.
     """
     
     _CSS_CLS = 'itemized-view'
@@ -1461,15 +1491,19 @@ class ItemizedView(BrowseForm):
     def __init__(self, view, row, columns=None, separator=', ', template=None, **kwargs):
         """Arguments:
 
-          columns -- an explicit list of fields shown for each record.  Only the first column of
-            the underlying view is shown by default, but if a sequence of column identifierrs is
-            passed, multiple values will be shown (separated by the 'separator').
-          separator -- string used to separate individual values when multiple 'columns' are shown.
-          template -- if used, the list items will be formatted using given template string.  The
-            string must be an 'lcg.TranslatableText' instance.  The final item text will be
-            produced by interpolating variables in the string by the formatted values of
-            corresponding fields.  The argument may also be a callable object (function), which
-            returns the template string when called with a 'PresentedRow' instance as an argument.
+          columns -- an explicit list of fields shown for each record.  Only
+            the first column of the underlying view is shown by default, but if
+            a sequence of column identifierrs is passed, multiple values will
+            be shown (separated by the 'separator').
+          separator -- string used to separate individual values when multiple
+          'columns' are shown.
+          template -- if used, the list items will be formatted using given
+            template string.  The string must be an 'lcg.TranslatableText'
+            instance.  The final item text will be produced by interpolating
+            variables in the string by the formatted values of corresponding
+            fields.  The argument may also be a callable object (function),
+            which returns the template string when called with a 'PresentedRow'
+            instance as an argument.
 
           See the parent classes for definition of the remaining arguments.
           
@@ -1503,22 +1537,24 @@ class ItemizedView(BrowseForm):
 class CheckRowsForm(BrowseForm, _SubmittableForm):
     """Web form with checkable boolean columns in each row.
 
-    The form is rendered as an ordinary table, but boolean columns (all or only the selected) are
-    represented by a checkbox in each row and the form has submit controls.  Thus the user can
-    modify the values in all rows and submit the changes in one step.
+    The form is rendered as an ordinary table, but boolean columns (all or only
+    the selected) are represented by a checkbox in each row and the form has
+    submit controls.  Thus the user can modify the values in all rows and
+    submit the changes in one step.
 
     *Processing the submitted form:*
 
-    Each checkbox column is represented by one query parameter.  Its name is the column identifier
-    and the values are the key column values of all checked rows.
+    Each checkbox column is represented by one query parameter.  Its name is
+    the column identifier and the values are the key column values of all
+    checked rows.
     
     """
     def __init__(self, view, row, check_columns=None, limits=(), limit=None, **kwargs):
         """Arguments:
 
-          check_columns -- a sequence of column identifiers for which the checkboxes will be
-            created.  If the argument is omitted, checkboxes will automatically appear for all
-            boolean columns.
+          check_columns -- a sequence of column identifiers for which the
+            checkboxes will be created.  If the argument is omitted, checkboxes
+            will automatically appear for all boolean columns.
 
           See the parent classes for definition of the remaining arguments.
 
