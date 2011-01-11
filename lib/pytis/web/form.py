@@ -20,7 +20,8 @@
 
 This module provides an implementation of Pytis forms which can be used for web
 interfaces to Pytis informations systems.  The intention is to be able to
-generate web forms from the same specification as GUI forms.
+generate web forms from the same specification as GUI forms implemented by the
+`pytis.forms' package.
 
 Pytis currently does not include support running the actual web application.
 Application framework which makes use of pytis web forms is implemented
@@ -695,25 +696,20 @@ class BrowseForm(LayoutForm):
             controls.  Passing False, on the other hand, will disable the query
             search controls altogether.  The search query string may still be
             passed programatically through the 'query' argument in this case.
-          query -- query search string.  If None, the form displays query
-            search controls automatically.  If not None, it is considered, that
-            the application implements it's own search interface.  The passed
-            string has exactly the same effect as if the same string was
-            written into the form's query search field (see
-            'allow_query_search' for details).  The form search controls are
-            disabled in this case as if 'allow_query_search' was False.
           filter -- filter condition as a 'pytis.data.Operator' instance.  This
             condition will be appended to 'condition', but the difference is
             that 'condition' is invisible to the user, but 'filter' may be
             indicated in the user interface.
           filters -- sequence of user visible named filters as
-            'pytis.presentation.Filter' instances.  These filters will be
-            available in the user interface for user's selection.  If None, the
-            default set of filters defined by specification is used.  If not
-            None, the filters from specification are ignored, so they need to
-            be included in this argument explicitly if they should be
-            displayed.  This argument is mostly useful to construct the list of
-            filters dynamically (specification filters are static).
+            'pytis.presentation.Filter' or 'pytis.presentation.FilterSet'
+            instances in the same form as the 'pytis.presentation.ViewsSpec'
+            argument of the same name.  These filters will be available in the
+            user interface for user's selection.  If None, the default set of
+            filters defined by specification is used.  If not None, the filters
+            from specification are ignored, so they need to be included in this
+            argument explicitly if they should be displayed.  This argument is
+            mostly useful to construct the list of filters dynamically
+            (specification filters are static).
           message -- function returning a custom search result message.  If
             none, a default message will be used according to current query,
             such as 'Found 5 records matching the search expression.'.  A
