@@ -1225,7 +1225,7 @@ class BrowseForm(LayoutForm):
         id = (bottom and '0' or '1') + self._id
         content = []
         # Construct a list of filters for export.
-        show_filter = self._filters and (count or [v for v in self._filter_ids.values() if v is not None])
+        show_filters = self._filters and (count or [v for v in self._filter_ids.values() if v is not None])
         show_query_field = self._show_query_field
         if not bottom:
             msg = self._message(count)
@@ -1238,39 +1238,39 @@ class BrowseForm(LayoutForm):
                                   g.hidden('show_query_field', '1'),
                                   # Translators: Search button label.
                                   g.submit(_("Search"))),
-                                 cls='query' + (show_filter and ' with-filter' or '')))
-        if show_filter and not bottom:
-            if not self._immediate_filters or len(self._filters) > 1:
-                filter_button = g.submit(_("Change filters"))
-                select_kwargs = {}
-                noscript_button = ''
+                                 cls='query' + (show_filters and ' with-filter' or '')))
+        if show_filters and not bottom:
+            # Translators: Button for manual filter invocation.
+            submit_button = g.submit(_("Change filters"))
+            if self._immediate_filters and len(self._filters) <= 1:
+                onchange = 'this.form.submit(); return true'
+                # Leave the submit button in place for non-Javascript browsers.
+                submit_button = g.noscript(submit_button)
             else:
-                filter_button = None
-                select_kwargs = dict(onchange='this.form.submit(); return true')
-                # Translators: Button for manual selection invocation (when
-                # JavaScript is off.
-                noscript_button = g.noscript(g.submit(_("Apply")))
+                onchange = None
             filter_content = []
             for filter_set in self._filters:
                 filter_set_id = filter_set.id()
                 filter_name = 'filter_%s' % (filter_set_id,)
                 filter_id = filter_name + '-' + id
-                # Translators: Label of filter selection box.  Filtering limits
-                # the displayed records by certain criterias.
-                filter_content.append(g.span((g.label(filter_set.title()+': ', filter_id),
-                                              g.select(name=filter_name, id=filter_id,
-                                                       selected=self._filter_ids.get(filter_set_id),
-                                                       title=(_("Filter")+' '+
-                                                              # Translators: Tooltip text suggesting keyboard
-                                                              # combination to use for selection without
-                                                              # unexpected invocation of the option.
-                                                              _("(Use ALT+arrow down to select)")),
-                                                       options=[(f.name(), f.id()) for f in filter_set],
-                                                       **select_kwargs),
-                                              noscript_button,
-                                              ),))
-            if filter_button is not None:
-                filter_content.append(filter_button)
+                filter_set_content = (
+                    g.label(filter_set.title()+': ', filter_id),
+                    g.select(name=filter_name, id=filter_id,
+                             selected=self._filter_ids.get(filter_set_id),
+                             # Translators: Label of filter selection box.
+                             # Filtering limits the displayed form records by
+                             # certain criterias.
+                             title=(_("Filter")+' '+
+                                    # Translators: Tooltip text suggesting
+                                    # keyboard combination to use for selection
+                                    # without unexpected invocation of the
+                                    # option.
+                                    _("(Use ALT+arrow down to select)")),
+                             options=[(f.name(), f.id()) for f in filter_set],
+                             onchange=onchange),
+                    )
+                filter_content.append(g.span(filter_set_content))
+            filter_content.append(submit_button)
             content.append(g.div(filter_content, cls="filter"))
         if limit is not None and count > self._limits[0]:
             controls = ()
