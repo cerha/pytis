@@ -545,7 +545,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def ajax_response(cls, req, row, layout, errors, translator):
         """Return the AJAX request response as a JSON encoded data structure.
 
-        Arguemnts:
+        Arguments:
           req -- AJAX request object as an instance of class implementing the
             pytis 'Request' API.
           row -- edited form record as a 'PresentedRow' instance.
@@ -625,7 +625,7 @@ class BrowseForm(LayoutForm):
     def __init__(self, view, row, columns=None, condition=None, sorting=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
                  allow_query_search=None, filter=None, filters=None, message=None, req=None,
-                 arguments=None, immediate_filters=True, **kwargs):
+                 arguments=None, immediate_filters=True, filter_fields=None, **kwargs):
         """Arguments:
 
           columns -- sequence of column identifiers to be displayed or None for
@@ -734,6 +734,22 @@ class BrowseForm(LayoutForm):
             separate button for filter application.  When there is more than
             one filter in a form, the separate filter application button is
             always present.
+          filter_fields -- specification of editable filter fields as a
+            sequence of tuples (filter_id, label, operator, field_id, default),
+            where 'filter_id' is a unique identifier of the filter field,
+            'label' is the field label, 'operator' is a conditional operator
+            function (a function of two arguments - field id and
+            'pytis.data.Value' instance returning a 'pytis.data.Operator'
+            instance), 'field_id' id the identifier of the field passed to the
+            'operator' and 'default' is the dafault value as and internal
+            Python value compatible with the 'field_id' field data type.  An
+            input field will be created for each of the named filter fields and
+            the form filter will automatically include also the conditions
+            given by the operators using the current field values.  Operators
+            of all filter fields are applied in conjunction and also in
+            conjunction with any other form filters/conditions.  The field
+            values are automatically stored in browser cookies, so the filters
+            should be persistent.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -906,9 +922,74 @@ class BrowseForm(LayoutForm):
         self._custom_message = message
         # Hack allowing locale dependent index search controls.
         try:
-            self._lang = req.prefered_language()
+            self._lang = str(req.prefered_language())
         except:
             self._lang = None
+        self._init_filter_fields(req, filter_fields or ())
+
+    def _init_filter_fields(self, req, filter_fields_spec):
+        columns = []
+        fields = []
+        conditions = []
+        values = []
+        errors = []
+        for filter_id, label, operator, field_id, default in filter_fields_spec:
+            fspec = pytis.presentation.Field(filter_id, label)
+            ftype = self._row.type(field_id)
+            cookie = 'pytis-filter-%s-%s' % (self._name, filter_id)
+            if req.has_param(filter_id):
+                # TODO: This validation will only work for simple fields.  It
+                # is neceddary to move the method
+                # wiking.PytisModule._validate() into pytis forms to make it
+                # work in all cases.  Now it is only hacked for the Datetime
+                # fields (by copying the relevant part of the above mentioned
+                # method).
+                if isinstance(ftype, pd.DateTime):
+                    locale_data = lcg.GettextTranslator(self._lang, fallback=True).locale_data()
+                    if isinstance(ftype, pd.Date):
+                        format = locale_data.date_format
+                    elif isinstance(ftype, pd.Time):
+                        format = locale_data.exact_time_format
+                    else:
+                        format = locale_data.date_format +' '+ locale_data.exact_time_format
+                    kwargs = dict(format=format)
+                else:
+                    kwargs = {}
+                value, error = ftype.validate(req.param(filter_id), **kwargs)
+                if error:
+                    errors.append((filter_id, error.message()))
+                    value = pytis.data.Value(ftype, None)
+                else:
+                    req.set_cookie(cookie, value.export())
+            else:
+                saved_value = req.cookie(cookie)
+                if saved_value:
+                    value, error = ftype.validate(saved_value)
+                else:
+                    value = None
+                if value is None:
+                    value = pytis.data.Value(ftype, default)
+            columns.append(pytis.data.ColumnSpec(filter_id, ftype))
+            fields.append(self._view.field(field_id).clone(fspec))
+            values.append((filter_id, value))
+            conditions.append(operator(field_id, value))
+        if fields:
+            data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
+            row = PresentedRow(fields, data, pytis.data.Row(values), resolver=self._row.resolver())
+            condition = pytis.data.AND(*conditions)
+            filter_fields = [Field(row, f, row.type(f.id()), self, self._uri_provider)
+                             for f in fields]
+        else:
+            row = None
+            condition = None
+            filter_fields = []
+        # TODO: self._errors doesn't really belong here -- it belongs to
+        # Editform, but it is used within _export_field() so we need to
+        # initialize it here or (better) fix _export_field().
+        self._errors = errors
+        self._filter_fields = filter_fields
+        self._filter_fields_condition = condition
+        self._filter_fields_row = row
 
     def _export_cell(self, context, field):
         value = self._export_field(context, field)
@@ -1018,7 +1099,8 @@ class BrowseForm(LayoutForm):
         return concat([g.th(label(f)) for f in self._column_fields])
 
     def _conditions(self, condition=None):
-        conditions = [c for c in (self._condition, self._filter, self._query_condition, condition)
+        conditions = [c for c in (self._condition, self._filter, self._query_condition, condition,
+                                  self._filter_fields_condition)
                       if c is not None]
         if len(conditions) == 0:
             return None
@@ -1225,7 +1307,9 @@ class BrowseForm(LayoutForm):
         id = (bottom and '0' or '1') + self._id
         content = []
         # Construct a list of filters for export.
-        show_filters = self._filters and (count or [v for v in self._filter_ids.values() if v is not None])
+        show_filters = (self._filters and (count or
+                                           [v for v in self._filter_ids.values() if v is not None])
+                        or self._filter_fields)
         show_query_field = self._show_query_field
         if not bottom:
             msg = self._message(count)
@@ -1243,13 +1327,17 @@ class BrowseForm(LayoutForm):
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
             submit_button = g.submit(_("Change filters"), cls='apply-filters')
-            if self._immediate_filters and len(self._filters) <= 1:
+            if self._immediate_filters and len(self._filters) <= 1 and not self._filter_fields:
                 onchange = 'this.form.submit(); return true'
                 # Leave the submit button in place for non-Javascript browsers.
                 submit_button = g.noscript(submit_button)
             else:
                 onchange = None
             filter_content = []
+            for field in self._filter_fields:
+                filter_content.extend((
+                        g.label(field.label+':', field.unique_id),
+                        self._export_field(context, field, editable=True)))
             for filter_set in self._filters:
                 filter_set_id = filter_set.id()
                 filter_name = 'filter_%s' % (filter_set_id,)
@@ -1357,6 +1445,17 @@ class BrowseForm(LayoutForm):
         else:
             info = None
         return info
+
+    def filter_field_values(self):
+        """Return the current filter field values as a list of pairs (filter_id, value).
+
+        Filter id is the id from the 'filter_fields' specification passed to
+        the constructor.  Values are 'pytis.data.Value' instances.  All fields
+        present in the 'filter_fields' specification are returned.
+
+        """
+        row = self._filter_fields_row
+        return [(key, row[key]) for key in row.keys()]
 
 
 class ListView(BrowseForm):

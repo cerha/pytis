@@ -467,6 +467,10 @@ class PresentedRow(object):
         """Set the current transaction for data operations."""
         self._transaction = transaction
     
+    def resolver(self):
+        """Return the 'resolver' passed to the constructor."""
+        return self._resolver
+
     def format(self, key, pretty=False, form=None, secure=False, **kwargs):
         """Return the string representation of the field value.
 
