@@ -432,6 +432,9 @@ class DateTimeFieldExporter(TextFieldExporter):
     
 class DateFieldExporter(DateTimeFieldExporter):
     
+    def _maxlen(self):
+        return 10
+    
     def _editor(self, context, **kwargs):
         result = super(DateFieldExporter, self)._editor(context, **kwargs)
         g = context.generator()
