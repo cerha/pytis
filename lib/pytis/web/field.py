@@ -438,7 +438,7 @@ class DateFieldExporter(DateTimeFieldExporter):
     def _editor(self, context, **kwargs):
         result = super(DateFieldExporter, self)._editor(context, **kwargs)
         g = context.generator()
-        result += g.script_write(g.button('...', id='%s-button' % kwargs['id'],
+        result += g.script_write(g.button('...', id='%s-button' % kwargs['id'], type='button',
                                           cls='selection-invocation calendar-invocation',
                                           disabled=kwargs['disabled']))
         if not kwargs['disabled']:
