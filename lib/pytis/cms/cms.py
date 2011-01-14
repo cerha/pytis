@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,7 +62,10 @@ class Languages(Specification):
               computer=computer(lambda record, lang: self._language_name(lang))),
         )
     def _language_name(self, lang):
-        t = lcg.GettextTranslator('cs', path=(lcg.config.translation_dir,), fallback=True)
+        import os
+        lcg_dir = os.environ.get('LCGDIR', '/usr/local/share/lcg')
+        translation_dir = os.path.join(lcg_dir, 'translations')
+        t = lcg.GettextTranslator('cs', path=(translation_dir,), fallback=True)
         return t.translate(lcg.language_name(lang))
     def cb(self):
         return CodebookSpec(display=lambda lang: self._language_name(lang), prefer_display=True)
