@@ -1,3 +1,28 @@
+Version 1.1.1 (2011-01-17):
+
+ * Web interface:
+   - Allow styling web form buttons.
+   - Add support for user editable filter fields.
+   - Limit the size of date field to 10 characters.
+   - Remove inappropriate usage of the non-javascript Apply filters buton.
+   - Documentation improvements.
+   - Indicate busy cursor during AJAX updates.
+   - Handle runtime filters for all filtered fields.
+   - Avoid 'simplejson' dependency in Python versions including the 'json' module.
+   - Now depends on LCG 0.5.1.
+
+ * Wx ``fat client'' interface:
+   - Work around crashes when leaving forms in wx applications.
+   - Make computed and default values also work on ListField.
+   - Work around the missing row crash.
+   - Prevent recursive yield calls.
+   - Other minor fixes for wx 2.8 compliance.
+
+ * Data layer:
+   - Typical dmp script actions documented in DmpDb.
+   - fetchone should always use the transaction from select.
+   - New `Array' data type and its experimental support in web forms.
+   - New conditional operator `FunctionCondition'.
 
 Version 1.1.0 (2010-11-22):
 
