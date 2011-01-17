@@ -208,10 +208,14 @@ class PresentedRow(object):
         row_data = [(c.id, genval(c.id, False)) for c in self._columns if not c.virtual]
         virtual = [(c.id, genval(c.id, True)) for c in self._columns if c.virtual]
         for key in self._dirty.keys():
-            # Prefill and default take precedence over the computer
-            self._dirty[key] = not (not self._new and row is None or \
-                                    row is not None and row.has_key(key) or \
-                                    prefill is not None and prefill.has_key(key) or \
+            self._dirty[key] = not (not self._new and row is None or
+                                    # If the value is contained in the data row, don't compute it.
+                                    row is not None and row.has_key(key) or
+                                    # If the value is contained in the prefill, don't compute it.
+                                    prefill is not None and prefill.has_key(key) or
+                                    # If the row is new and the field has a
+                                    # default value, use the default value
+                                    # rather than the computer.
                                     self._new and self._coldict[key].default is not None)
         self._row = pytis.data.Row(row_data)
         self._virtual = dict(virtual)
@@ -328,6 +332,8 @@ class PresentedRow(object):
         if row[key].value() != value.value():
             row[key] = value
             self._cache = {}
+            if self._dirty.get(key):
+                self._dirty[key] = False
             self._resolve_dependencies(key)
             if run_callback:
                 self._run_callback(self.CALL_CHANGE, key)
