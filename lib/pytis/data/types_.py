@@ -833,8 +833,11 @@ class Password(String):
             string = str(value.value())
             if verify is not None:
                 # User input was valid, so let's turn it into its md5 hash.
-                import md5
-                value = Value(value.type(), md5.new(string).hexdigest())
+                try:
+                    from hashlib import md5
+                except ImportError:
+                    from md5 import md5
+                value = Value(value.type(), md5(string).hexdigest())
             elif len(string) != 32 or not string.isalnum():
                 return None, self._validation_error(self.VM_INVALID_MD5)
         return value, error

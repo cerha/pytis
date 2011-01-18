@@ -216,18 +216,22 @@ class Password(_TypeCheck):
         self._test_validity(t2, 'x', 'x')
         self._test_validity(t2, '', None, kwargs={'verify': ''})
         t3 = pytis.data.Password(md5=True, minlen=4)
-        import md5
-        hash = md5.new('abcdef').hexdigest()
-        self._test_validity(t3, hash, hash)
+        try:
+            from hashlib import md5
+        except ImportError:
+            from md5 import md5
+        hashed = md5(u'abcèdef'.encode('utf-8')).hexdigest()
+        self._test_validity(t3, hashed, hashed)
         self._test_validity(t3, 'xxx', None)
-        self._test_validity(t3, hash, None, kwargs={'verify': ''})
+        self._test_validity(t3, hashed, None, kwargs={'verify': ''})
         self._test_validity(t3, 'abc', None, kwargs={'verify': 'abc'})
-        self._test_validity(t3, 'abcdef', hash, kwargs={'verify': 'abcdef'}, check_export=False)
+        self._test_validity(t3, u'abcèdef', hashed, kwargs={'verify': u'abcèdef'},
+                            check_export=False)
         t4 = pytis.data.Password(md5=True, minlen=4, not_null=True)
         self._test_validity(t4, 'xxx', None)
         self._test_validity(t4, '', None, kwargs={'verify': ''})
-        hash = md5.new('abcd').hexdigest()
-        self._test_validity(t4, 'abcd', hash, kwargs={'verify': 'abcd'}, check_export=False)
+        hashed = md5('abcd').hexdigest()
+        self._test_validity(t4, 'abcd', hashed, kwargs={'verify': 'abcd'}, check_export=False)
         t5 = pytis.data.Password(strength=None)
         self._test_validity(t5, 'x', 'x')
         t6 = pytis.data.Password(strength=True)
