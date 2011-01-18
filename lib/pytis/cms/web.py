@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -443,6 +443,8 @@ class Application(wiking.CookieAuthentication, wiking.Application):
             hash_value = user_password
             encode = 'hex'
         h = hashlib.new(hash_alg)
+        if isinstance(password, unicode):
+            password = password.encode('utf-8')
         h.update(password)
         if encode == "base64":
             encoded = binascii.b2a_base64(h.digest()).strip()
