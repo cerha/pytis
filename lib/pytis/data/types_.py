@@ -830,7 +830,9 @@ class Password(String):
             kwargs['strict'] = False
         value, error = super(Password, self).validate(object, verify=verify, **kwargs)
         if self._md5 and value and value.value() is not None:
-            string = str(value.value())
+            string = value.value()
+            if isinstance(string, unicode):
+                string = string.encode('utf-8')
             if verify is not None:
                 # User input was valid, so let's turn it into its md5 hash.
                 try:

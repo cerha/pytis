@@ -444,6 +444,8 @@ class Application(wiking.CookieAuthentication, wiking.Application):
             encode = 'hex'
         h = hashlib.new(hash_alg)
         if isinstance(password, unicode):
+            # Passwords in the database are explicitly encoded to utf-8 by the
+            # pytis.data.Password type (on validation).  
             password = password.encode('utf-8')
         h.update(password)
         if encode == "base64":
