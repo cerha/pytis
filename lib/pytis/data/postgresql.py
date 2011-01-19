@@ -2154,6 +2154,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # jakýsi hack, který nìjakým zpùsobem o¹etøí alespoò nìkteré situace,
         # aby nebyl signalizován neúspìch UPDATE v pøípadì jeho úspìchu.
         cols, vals = self._pdbb_table_row_lists(row)
+        if not cols:
+            return 0
         query_args = []
         s = []
         escape = len([v for v in vals if isinstance(v, buffer)]) != 0
