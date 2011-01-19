@@ -1285,6 +1285,17 @@ class FormProfileManager(object):
         """
         pass
 
+    def list_fullnames(self, pattern):
+        """Return a sequence form fullnames for which profiles were saved.
+
+        Arguments:
+          pattern -- wildcard pattern (using * and ? in their usual meaning)
+            to match the returned fullnames.  If None, all previously saved
+            fullnames for given user are returned.
+
+        """
+        pass
+    
 
 class DictionaryFormProfileManager(FormProfileManager):
     """Accessor of a simple dictionary storage of form configurations.
@@ -1401,6 +1412,15 @@ class DBFormProfileManager(FormProfileManager):
                 break
             profiles.append(row['profile'].value())
         return tuple(profiles)
+
+    def list_fullnames(self, pattern, transaction=None):
+        condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
+        if pattern:
+            wm = pytis.data.WM('form', pytis.data.WMValue(pytis.data.String(), pattern),
+                               ignore_case=False)
+            condition = pytis.data.AND(condition, wm)
+        values = self._data.distinct('form', condition=condition, transaction=transaction)
+        return [v.value() for v in values]
 
 
 
