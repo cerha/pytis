@@ -44,7 +44,20 @@ def run():
         usage(e.msg)
     # Disable pytis logging.
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
-    manager = DBFormProfileManager(config.dbconnection, username=username)
+    while True:
+        try:
+            manager = DBFormProfileManager(config.dbconnection, username=username)
+        except pytis.data.DBLoginException, e:
+            if config.dbconnection.password() is None:
+                import getpass
+                login = config.dbuser
+                password = getpass.getpass("Enter database password for %s: " % login)
+                config.dbconnection.update_login_data(user=login, password=password)
+            else:
+                sys.stderr.write("Login failed.\n")
+                sys.exit(1)
+        else:
+            break
     pp = pprint.PrettyPrinter()
     for fullname in manager.list_fullnames(pattern=pattern):
         print '\n' + fullname
