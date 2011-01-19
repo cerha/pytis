@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1332,7 +1332,8 @@ class DBFormProfileManager(FormProfileManager):
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
 
     def _fullname(self, form):
-        return 'form/%s/%s//' % (form.__class__.__name__, form.name())
+        cls, name = form.__class__, form.name()
+        return 'form/%s.%s/%s//' % (cls.__module__, cls.__name__, name)
 
     def _key_values(self, form, profile=None):
         values = (('username', config.dbuser),
