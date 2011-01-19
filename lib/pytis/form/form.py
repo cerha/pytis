@@ -183,7 +183,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         the attributes of the instance.  See also the constructor documentation for more details.
 
         """
-        self._form_state = form_profile_manager().load_profile(self, '__global_settings__')
+        self._form_state = form_profile_manager().load_profile(self._fullname(),
+                                                               '__global_settings__')
         self._initial_form_state = copy.copy(self._form_state)
 
     def _create_view_spec(self):
@@ -218,6 +219,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def __repr__(self):
         return str(self)
+
+    def _fullname(self):
+        cls = self.__class__
+        return 'form/%s.%s/%s//' % (cls.__module__, cls.__name__, self._name)
 
     def _get_state_param(self, name, default=None, cls=None, item_cls=None):
         try:
@@ -381,7 +386,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._cleanup_data()
         for id in self._STATUS_FIELDS:
             set_status(id, '')
-        form_profile_manager().save_profile(self, '__global_settings__', self._form_state)
+        form_profile_manager().save_profile(self._fullname(), '__global_settings__',
+                                            self._form_state)
 
     def _cleanup_data(self):
         try:
@@ -830,17 +836,19 @@ class LookupForm(InnerForm):
             return None
         
     def _save_user_profile(self, profile):
-        form_profile_manager().save_profile(self, profile.id(), self._pack_profile(profile))
+        form_profile_manager().save_profile(self._fullname(), profile.id(),
+                                            self._pack_profile(profile))
 
     def _remove_user_profile(self, profile):
-        form_profile_manager().drop_profile(self, profile.id())
+        form_profile_manager().drop_profile(self._fullname(), profile.id())
     
     def _load_user_profiles(self):
         manager = form_profile_manager()
         profiles = []
-        for profile_id in manager.list_profiles(self):
+        fullname = self._fullname()
+        for profile_id in manager.list_profiles(fullname):
             if profile_id != '__global_settings__':
-                profile = self._unpack_profile(manager.load_profile(self, profile_id))
+                profile = self._unpack_profile(manager.load_profile(fullname, profile_id))
                 if profile:
                     profiles.append(profile)
         return tuple(profiles)

@@ -373,6 +373,7 @@ def pytis_config_convert(usernames=None):
                     form = getattr(pytis.form, formname)
                 if form is None:
                     continue # Ignore obsolete forms mapped to None.
+                fullname = 'form/%s.%s/%s//' % (form.__module__, form.__name__, specname)
                 for i, (name, cond) in enumerate(state.pop('conditions', ())):
                     profile = dict(id='_profile_%d' % i,
                                    name=name,
@@ -380,10 +381,8 @@ def pytis_config_convert(usernames=None):
                                    sorting=state.get('sorting'),
                                    grouping=state.get('grouping'),
                                    columns=state.get('columns'))
-                    manager.save_profile((form, specname), profile['id'], profile,
-                                         transaction=transaction)
-                manager.save_profile((form, specname), '__global_settings__', state,
-                                     transaction=transaction)
+                    manager.save_profile(fullname, profile['id'], profile, transaction=transaction)
+                manager.save_profile(fullname, '__global_settings__', state, transaction=transaction)
                 count += 1
             print count
         data.close()
@@ -393,5 +392,3 @@ def pytis_config_convert(usernames=None):
         raise
     else:
         transaction.commit()
-
-
