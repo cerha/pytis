@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -308,5 +308,82 @@ def pytis_config_update(old, new):
     else:
         transaction.commit()
     return updated
+
+def pytis_config_convert():
+    """Convert saved form configurations (from older version) to form profiles.
+
+    This function is designed to be invoked from a shell script.  It may prompt for a database
+    password on STDIN and write results to STDOUT or STDERR.
+
+    """
+    import sys, binascii, zlib, cPickle as pickle
+    bindings = [pytis.data.DBColumnBinding(column, '_pytis_config', column)
+                for column in ('uzivatel', 'config')]
+    factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
+    while True:
+        try:
+            data = factory.create(dbconnection_spec=config.dbconnection)
+        except pytis.data.DBLoginException, e:
+            if config.dbconnection.password() is None:
+                import getpass
+                login = config.dbuser
+                password = getpass.getpass("Enter database password for %s: " % login)
+                config.dbconnection.update_login_data(user=login, password=password)
+            else:
+                sys.stderr.write("Login failed.\n")
+                sys.exit(1)
+        else:
+            break
+    from pytis.form import DBFormProfileManager
+    transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+    manager = DBFormProfileManager(config.dbconnection)
+    forms = {'MainForm': pytis.form.MultiBrowseDualForm.MainForm,
+             'TabbedBrowseForm': pytis.form.MultiSideForm.TabbedBrowseForm,
+             '_SideForm': pytis.form.AggregationDualForm._SideForm,
+             'SubForm': None}
+    try:
+        data.select(transaction=transaction)
+        print "Converting user profiles:"
+        while True:
+            row = data.fetchone(transaction=transaction)
+            if row is None:
+                break
+            saved_config = row['config'].value()
+            if not saved_config:
+                continue
+            print "  -", row['uzivatel'].value(), '...',
+            count = 0
+            unpacked = dict(pickle.loads(zlib.decompress(binascii.a2b_base64(saved_config))))
+            manager._username = row['uzivatel'].value()
+            for key, state in unpacked.get('form_state', {}).items():
+                if not state:
+                    continue
+                formname, specname = key.split('/')
+                try:
+                    form = forms[formname]
+                except KeyError:
+                    form = getattr(pytis.form, formname)
+                if form is None:
+                    continue # Ignore obsolete forms mapped to None.
+                for i, (name, condition) in enumerate(state.pop('conditions', ())):
+                    profile = dict(id='_profile_%d' % i,
+                                   name=name,
+                                   filter=condition,
+                                   sorting=state.get('sorting'),
+                                   grouping=state.get('grouping'),
+                                   columns=state.get('columns'))
+                    manager.save_profile((form, specname), profile['id'], profile,
+                                         transaction=transaction)
+                manager.save_profile((form, specname), '__global_settings__', state,
+                                     transaction=transaction)
+                count += 1
+            print count
+        data.close()
+    except:
+        transaction.rollback()
+        sys.stderr.write("Transaction ROLLED BACK.\n")
+        raise
+    else:
+        transaction.commit()
 
 

@@ -1328,15 +1328,21 @@ class DBFormProfileManager(FormProfileManager):
     _TABLE = 'e_pytis_form_config'
     _COLUMNS = ('id', 'username', 'form', 'profile', 'config',)
 
-    def __init__(self, dbconnection):
+    def __init__(self, dbconnection, username=None):
+        self._username = username or config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
 
     def _fullname(self, form):
-        cls, name = form.__class__, form.name()
+        if isinstance(form, tuple):
+            # This quick hack allows the conversion script to work without
+            # creating form instances.  It is not used during normal operation.
+            cls, name = form
+        else:
+            cls, name = form.__class__, form.name()
         return 'form/%s.%s/%s//' % (cls.__module__, cls.__name__, name)
 
     def _key_values(self, form, profile=None):
-        values = (('username', config.dbuser),
+        values = (('username', self._username),
                   ('form', self._fullname(form)))
         if profile:
             values += (('profile', profile),)
@@ -1347,40 +1353,46 @@ class DBFormProfileManager(FormProfileManager):
         return pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
                                 self._key_values(form, profile)])
 
-    def _row(self, form, profile):
-        count = self._data.select(condition=self._row_condition(form, profile))
-        assert count in (0, 1)
-        return self._data.fetchone()
+    def _row(self, form, profile, transaction=None):
+        count = self._data.select(condition=self._row_condition(form, profile),
+                                  transaction=transaction)
+        if count == 0:
+            row = None
+        else:
+            assert count == 1
+            row = self._data.fetchone(transaction=transaction)
+        self._data.close()
+        return row
 
-    def save_profile(self, form, profile, config):
-        row = self._row(form, profile)
+    def save_profile(self, form, profile, config, transaction=None):
+        row = self._row(form, profile, transaction=transaction)
         value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
         if row:
             row['config'] = value
-            self._data.update(row['id'], row)
+            self._data.update(row['id'], row, transaction=transaction)
         else:
             values = self._key_values(form, profile)
             row = pytis.data.Row(values + [('config', value)])
-            self._data.insert(row)
+            self._data.insert(row, transaction=transaction)
 
-    def load_profile(self, form, profile):
-        row = self._row(form, profile)
+    def load_profile(self, form, profile, transaction=None):
+        row = self._row(form, profile, transaction=transaction)
         if row:
             result = pickle.loads(str(row['config'].value()))
             if not isinstance(result, dict):
                 result = {}
-                self._data.delete(row['id'])
+                self._data.delete(row['id'], transaction=transaction)
             return result
         else:
             return {}
            
-    def drop_profile(self, form, profile):
+    def drop_profile(self, form, profile, transaction=None):
         row = self._row(form, profile)
         if row:
-            self._data.delete(row['id'])
+            self._data.delete(row['id'], transaction=transaction)
         
-    def list_profiles(self, form):
-        count = self._data.select(condition=self._row_condition(form))
+    def list_profiles(self, form, transaction=None):
+        count = self._data.select(condition=self._row_condition(form), transaction=transaction)
         profiles = []
         while True:
             row = self._data.fetchone()

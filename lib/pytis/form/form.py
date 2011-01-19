@@ -845,29 +845,6 @@ class LookupForm(InnerForm):
                     profiles.append(profile)
         return tuple(profiles)
 
-    # TODO: These methods are now unused.  They are only left here to remind the need to extract
-    # the old data from the previously stored user configurations.  The user defined filters may
-    # now be stored as profiles with just the 'filter' set.  Probably a standalone script can be
-    # used to convert all configurations at once.
-    #
-    #def _save_user_profiles(self, profiles):
-    #    packed = [(p.name(), self._pack_condition(p.filter())) for p in profiles]
-    #   self._set_state_param(self._USER_PROFILES_PARAM, tuple(packed))
-    # 
-    #def _load_user_filters_as_profiles(self):
-    #    packed = self._get_state_param(self._USER_PROFILES_PARAM, None, tuple, tuple)
-    #    if packed:
-    #        unpacked = [(unicode(n), self._unpack_condition(c)) for n, c in packed]
-    #        user_profiles = []
-    #        for i in range(len(unpacked)):
-    #            name, cond = unpacked[i]
-    #            if cond:
-    #                profile_id = '_profile_%d' % (i,)
-    #                user_profiles.append(Profile(profile_id, name, cond))
-    #    else:
-    #        user_profiles = ()
-    #    return tuple(user_profiles)
-
     def _default_sorting(self):
         sorting = self._view.sorting()
         if sorting is None:
