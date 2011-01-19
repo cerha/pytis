@@ -198,7 +198,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             form_config = self._get_state_param(self._STATE_FORM_CONFIG, {}, dict)
             self._set_state_param(self._STATE_FORM_CONFIG, form_config)
             manager = DictionaryFormProfileManager(form_config)
-        self._form_profile_manager = manager
+        self._profile_manager = manager
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Init the recent forms list.
@@ -1200,8 +1200,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if success:
                 self._login_hook = None
 
-    def form_profile_manager(self):
-        return self._form_profile_manager
+    def profile_manager(self):
+        return self._profile_manager
 
 
 class FormProfileManager(object):
@@ -1671,9 +1671,9 @@ def wx_frame():
     """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
     return _application.wx_frame()
 
-def form_profile_manager():
-    """Return 'Application.form_profile_manager()' of the current application instance."""
-    return _application.form_profile_manager()
+def profile_manager():
+    """Return 'Application.profile_manager()' of the current application instance."""
+    return _application.profile_manager()
 
 # Ostatní funkce.
 

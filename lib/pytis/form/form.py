@@ -183,8 +183,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         the attributes of the instance.  See also the constructor documentation for more details.
 
         """
-        self._form_state = form_profile_manager().load_profile(self._fullname(),
-                                                               '__global_settings__')
+        self._form_state = profile_manager().load_profile(self._fullname(), '__global_settings__')
         self._initial_form_state = copy.copy(self._form_state)
 
     def _create_view_spec(self):
@@ -386,8 +385,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._cleanup_data()
         for id in self._STATUS_FIELDS:
             set_status(id, '')
-        form_profile_manager().save_profile(self._fullname(), '__global_settings__',
-                                            self._form_state)
+        profile_manager().save_profile(self._fullname(), '__global_settings__', self._form_state)
 
     def _cleanup_data(self):
         try:
@@ -836,14 +834,13 @@ class LookupForm(InnerForm):
             return None
         
     def _save_user_profile(self, profile):
-        form_profile_manager().save_profile(self._fullname(), profile.id(),
-                                            self._pack_profile(profile))
+        profile_manager().save_profile(self._fullname(), profile.id(), self._pack_profile(profile))
 
     def _remove_user_profile(self, profile):
-        form_profile_manager().drop_profile(self._fullname(), profile.id())
+        profile_manager().drop_profile(self._fullname(), profile.id())
     
     def _load_user_profiles(self):
-        manager = form_profile_manager()
+        manager = profile_manager()
         profiles = []
         fullname = self._fullname()
         for profile_id in manager.list_profiles(fullname):
