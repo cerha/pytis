@@ -1862,12 +1862,14 @@ class DataEnumerator(Enumerator):
             the_condition = AND(the_condition, validity_condition)
         def lfunction():
             data = self._data
-            count = data.select(the_condition, transaction=transaction, arguments=arguments)
-            if count > 1:
-                raise ProgramError('Insufficient runtime filter for DataEnumerator',
-                                   str(the_condition))
-            row = data.fetchone()
-            data.close()
+            try:
+                count = data.select(the_condition, transaction=transaction, arguments=arguments)
+                if count > 1:
+                    raise ProgramError('Insufficient runtime filter for DataEnumerator',
+                                       str(the_condition))
+                row = data.fetchone()
+            finally:
+                data.close()
             return row
         return with_lock(self._data_lock, lfunction)
 
@@ -1887,17 +1889,18 @@ class DataEnumerator(Enumerator):
         the_condition = self._condition(condition=condition)
         def lfunction():
             result = []
-            count = self._data.select(condition=the_condition, transaction=transaction, sort=sort,
-                                      arguments=arguments)
-            if max is not None and count > max:
+            try:
+                count = self._data.select(condition=the_condition, transaction=transaction, sort=sort,
+                                          arguments=arguments)
+                if max is not None and count > max:
+                    return None
+                while True:
+                    row = self._data.fetchone()
+                    if row is None:
+                        break
+                    result.append(row[self._value_column].value())
+            finally:
                 self._data.close()
-                return None
-            while True:
-                row = self._data.fetchone()
-                if row is None:
-                    self._data.close()
-                    break
-                result.append(row[self._value_column].value())
             return tuple(result)
         result = with_lock(self._data_lock, lfunction)
         return result

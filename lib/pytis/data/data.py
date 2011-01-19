@@ -385,13 +385,15 @@ class Data(object_2_5):
           
         """
         result = []
-        self.select(transaction=transaction, **kwargs)
-        while True:
-            row = self.fetchone(transaction=transaction)
-            if row is None:
-                self.close()
-                break
-            result.append(function(row))
+        try:
+            self.select(transaction=transaction, **kwargs)
+            while True:
+                row = self.fetchone(transaction=transaction)
+                if row is None:
+                    break
+                result.append(function(row))
+        finally:
+            self.close()
         return result
 
     def select_aggregate(self, operation, condition=None, transaction=None):
@@ -446,18 +448,21 @@ class Data(object_2_5):
         """
         if columns is None:
             columns = [c.id() for c in self.columns()]
-        select_result = self.select(condition=condition, reuse=reuse,
-                                    sort=sort, columns=columns, transaction=transaction)
-        def aggregate_value(cid):
-            if (operation == self.AGG_COUNT or
-                isinstance(self.find_column(cid).type(), Number)):
-                number = self.select_aggregate((operation, cid,), condition=condition,
-                                               transaction=transaction)
-                result = (cid, number,)
-            else:
-                result = (cid, Value(Type(), None),)
-            return result
-        aggregates = [aggregate_value(cid) for cid in columns]
+        try:
+            select_result = self.select(condition=condition, reuse=reuse,
+                                        sort=sort, columns=columns, transaction=transaction)
+            def aggregate_value(cid):
+                if (operation == self.AGG_COUNT or
+                    isinstance(self.find_column(cid).type(), Number)):
+                    number = self.select_aggregate((operation, cid,), condition=condition,
+                                                   transaction=transaction)
+                    result = (cid, number,)
+                else:
+                    result = (cid, Value(Type(), None),)
+                return result
+            aggregates = [aggregate_value(cid) for cid in columns]
+        finally:
+            self.close()
         return select_result, Row(aggregates)
         
     def fetchone(self, direction=FORWARD, transaction=None):

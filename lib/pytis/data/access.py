@@ -206,15 +206,17 @@ class DBAccessRights(AccessRights):
         key = bindings[0]
         data = pytis.data.DBDataDefault(bindings, key,
                                         connection_data=connection_data)
-        data.select(condition=EQ('object', Value(String(), object_name)))
-        while True:
-            row = data.fetchone()
-            if row is None:
-                break
-            access_rights.append((row['column_'].value(),
-                                  (row['group_'].value(),
-                                   row['permission'].value())))
-        data.close()
+        try:
+            data.select(condition=EQ('object', Value(String(), object_name)))
+            while True:
+                row = data.fetchone()
+                if row is None:
+                    break
+                access_rights.append((row['column_'].value(),
+                                      (row['group_'].value(),
+                                       row['permission'].value())))
+        finally:
+            data.close()
         return access_rights
     
 
