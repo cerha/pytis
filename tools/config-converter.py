@@ -37,7 +37,7 @@ def run():
     # Avoid pytis logging during the update.
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
     # Do the actual update.
-    pytis.extensions.pytis_config_convert()
+    pytis.extensions.pytis_config_convert(sys.argv[1:] or None)
 
 if __name__ == '__main__':
     run()

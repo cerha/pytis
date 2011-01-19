@@ -309,9 +309,12 @@ def pytis_config_update(old, new):
         transaction.commit()
     return updated
 
-def pytis_config_convert():
+def pytis_config_convert(usernames=None):
     """Convert saved form configurations (from older version) to form profiles.
-
+    
+    Arguemnts:
+      usernames -- a sequence of user names to process or None to process all users.
+    
     This function is designed to be invoked from a shell script.  It may prompt for a database
     password on STDIN and write results to STDOUT or STDERR.
 
@@ -336,13 +339,18 @@ def pytis_config_convert():
             break
     from pytis.form import DBFormProfileManager
     transaction = pytis.data.DBTransactionDefault(config.dbconnection)
-    manager = DBFormProfileManager(config.dbconnection)
     forms = {'MainForm': pytis.form.MultiBrowseDualForm.MainForm,
              'TabbedBrowseForm': pytis.form.MultiSideForm.TabbedBrowseForm,
              '_SideForm': pytis.form.AggregationDualForm._SideForm,
              'SubForm': None}
+    if usernames is not None:
+        condition = pytis.data.OR(
+            *[pytis.data.EQ('uzivatel', pytis.data.Value(pytis.data.String(), username))
+              for username in usernames])
+    else:
+        condition = None
     try:
-        data.select(transaction=transaction)
+        data.select(condition=condition, transaction=transaction)
         print "Converting user profiles:"
         while True:
             row = data.fetchone(transaction=transaction)
@@ -354,7 +362,7 @@ def pytis_config_convert():
             print "  -", row['uzivatel'].value(), '...',
             count = 0
             unpacked = dict(pickle.loads(zlib.decompress(binascii.a2b_base64(saved_config))))
-            manager._username = row['uzivatel'].value()
+            manager = DBFormProfileManager(config.dbconnection, username=row['uzivatel'].value())
             for key, state in unpacked.get('form_state', {}).items():
                 if not state:
                     continue
@@ -365,10 +373,10 @@ def pytis_config_convert():
                     form = getattr(pytis.form, formname)
                 if form is None:
                     continue # Ignore obsolete forms mapped to None.
-                for i, (name, condition) in enumerate(state.pop('conditions', ())):
+                for i, (name, cond) in enumerate(state.pop('conditions', ())):
                     profile = dict(id='_profile_%d' % i,
                                    name=name,
-                                   filter=condition,
+                                   filter=cond,
                                    sorting=state.get('sorting'),
                                    grouping=state.get('grouping'),
                                    columns=state.get('columns'))
