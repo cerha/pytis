@@ -533,10 +533,9 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                 except pytis.data.DBException:
                     pass
                 else:
-                    logical_access_groups = []
                     def process(row):
-                        logical_access_groups.append(row[0].value())
-                    roles_data.select_map(process)
+                        return row[0].value()
+                    logical_access_groups = roles_data.select_map(process)
                     PostgreSQLUserGroups._logical_access_groups = logical_access_groups
         if PostgreSQLUserGroups._logical_access_groups is None:
             key = self._pgg_connection_key(connection_data)
