@@ -216,7 +216,10 @@ class DBAccessRights(AccessRights):
                                       (row['group_'].value(),
                                        row['permission'].value())))
         finally:
-            data.close()
+            try:
+                data.close()
+            except:
+                pass
         return access_rights
     
 

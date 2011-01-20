@@ -1869,7 +1869,10 @@ class DataEnumerator(Enumerator):
                                        str(the_condition))
                 row = data.fetchone()
             finally:
-                data.close()
+                try:
+                    data.close()
+                except:
+                    pass
             return row
         return with_lock(self._data_lock, lfunction)
 
@@ -1900,7 +1903,10 @@ class DataEnumerator(Enumerator):
                         break
                     result.append(row[self._value_column].value())
             finally:
-                self._data.close()
+                try:
+                    self._data.close()
+                except:
+                    pass
             return tuple(result)
         result = with_lock(self._data_lock, lfunction)
         return result

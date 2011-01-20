@@ -393,7 +393,10 @@ class Data(object_2_5):
                     break
                 result.append(function(row))
         finally:
-            self.close()
+            try:
+                self.close()
+            except:
+                pass
         return result
 
     def select_aggregate(self, operation, condition=None, transaction=None):
@@ -462,7 +465,10 @@ class Data(object_2_5):
                 return result
             aggregates = [aggregate_value(cid) for cid in columns]
         finally:
-            self.close()
+            try:
+                self.close()
+            except:
+                pass
         return select_result, Row(aggregates)
         
     def fetchone(self, direction=FORWARD, transaction=None):
