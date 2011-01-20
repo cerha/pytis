@@ -2709,7 +2709,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             raise cls, e, tb
         if transaction is None:
-            self._pg_commit_transaction()
+            self._postgresql_commit_transaction()
         result = self._pg_make_row_from_raw_data(data, template=template)
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
@@ -3361,7 +3361,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                               outside_transaction=outside_transaction
                               )
         if transaction is None:
-            self._pg_commit_transaction()
+            self._postgresql_commit_transaction()
         result = [self._pg_make_row_from_raw_data([row]) for row in data]
         log(EVENT, 'Function call result:', (self._name, result))
         return result
