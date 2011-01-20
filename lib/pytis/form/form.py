@@ -721,8 +721,6 @@ class LookupForm(InnerForm):
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
     """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
 
-    _UNNAMED_PROFILE_LABEL = _("Nepojmenovaný profil")
-    
     def _init_attributes(self, sorting=None, filter=None, condition=None, arguments=None,
                          **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
@@ -1069,9 +1067,6 @@ class LookupForm(InnerForm):
     
     def _cmd_save_profile(self, name, kbd=False):
         if self._current_profile.id() != self._default_profile.id():
-            if name == self._UNNAMED_PROFILE_LABEL or not name:
-                message(_("Nejprve upravte název, pod kterým chcete profil ulo¾it."), beep_=True)
-                return
             for profile in self._view.profiles() + self._user_profiles:
                 if profile.name() == name:
                     message(_("Pojmenovaný profil '%s' ji¾ existuje.") % name, beep_=True)
@@ -1257,50 +1252,16 @@ class LookupForm(InnerForm):
         return Profile(id, name, filter=profile.filter(), sorting=profile.sorting())
     
     def update_profile_menu(self, ctrl, state):
-        # Update the toolbar profile selection control.
-        # Called repeatedly in update UI event loop, so must be quite efficient...
-        if state:
-            last_profile, last_profiles = state
-        else:
-            last_profile, last_profiles = None, None
-        if self._user_profiles != last_profiles:
-            # Update the list of available profiles.
-            ctrl.Clear()
-            ctrl.Append(self._default_profile.name(), self._default_profile)
-            if self._current_profile.id() == self._default_profile.id():
-                selected = 0
-            else:
-                selected = None
-            editable = False
-            for profile in self._view.profiles() + self._user_profiles:
-                ctrl.Append(profile.name(), profile)
-                if selected is None and profile.id() == self._current_profile.id():
-                    selected = ctrl.GetCount() - 1
-            if selected is None:
-                ctrl.Append(self._UNNAMED_PROFILE_LABEL, self._current_profile)
-                selected = ctrl.GetCount() - 1
-                editable = True
-            ctrl.SetEditable(editable)
-            ctrl.SetSelection(selected)
-        elif last_profile and not last_profile.id() == self._current_profile.id():
-            # Update the current selection only.
-            editable = False
-            if self._current_profile.id() == self._default_profile.id():
-                ctrl.SetSelection(0)
-            else:
-                for i, profile in enumerate(self._view.profiles() + self._user_profiles):
-                    if profile.id() == self._current_profile.id():
-                        ctrl.SetSelection(i+1)
-                        break
-                else:
-                    if ctrl.GetString(ctrl.GetCount()-1) == self._UNNAMED_PROFILE_LABEL:
-                        ctrl.Delete(ctrl.GetCount()-1)
-                    ctrl.Append(self._UNNAMED_PROFILE_LABEL, self._current_profile)
-                    ctrl.SetSelection(ctrl.GetCount()-1)
-                    editable = True
-            ctrl.SetEditable(editable)
-        return self._current_profile, self._user_profiles
-
+        # Update the toolbar profile selection control for the current form
+        # instance (usually after a form change).
+        ctrl.Clear()
+        ctrl.SetEditable(False)
+        current_profile_id = self._current_profile.id()
+        for profile in (self._default_profile,) + self._view.profiles() + self._user_profiles:
+            ctrl.Append(profile.name(), profile)
+            if profile.id() == current_profile_id:
+                ctrl.SetSelection(ctrl.GetCount()-1)
+                
     def profile_context_menu(self, ctrl):
         # Return the context menu for the toolbar profile selection control.
         return (
