@@ -540,8 +540,8 @@ class Profile(object):
         self._name = name
         self._filter = filter
         self._sorting = sorting
-        self._grouping = xtuple(grouping)
         self._columns = columns
+        self._grouping = grouping and xtuple(grouping)
     
     def id(self):
         """Return the unique profile identifier."""
