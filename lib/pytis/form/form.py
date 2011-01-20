@@ -131,7 +131,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Konstanta callbacku interakce u¾ivatele."""
 
     _STATUS_FIELDS = ()
-    _PERSISTENT_FORM_PARAMS = ()
     _LOG_STATISTICS = True
     DESCR = None
 
@@ -320,10 +319,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _on_form_state_change(self):
         pass
 
-    def _persistent_form_params(self):
-        state, keys = self._form_state, self._PERSISTENT_FORM_PARAMS
-        return dict([(k, state[k]) for k in keys if k in state])
-
     def _release_data(self):
         if self._data is not None:
             self._data.sleep()
@@ -342,28 +337,21 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     # Zpracování pøíkazù
    
     def _can_reload_form_state(self):
-        def nonp(state):
-            return dict([(k,v) for k,v in state.items()
-                         if k not in self._PERSISTENT_FORM_PARAMS])
-        return nonp(self._form_state) != nonp(self._initial_form_state)
+        return self._form_state != self._initial_form_state
     
     def _cmd_reload_form_state(self):
-        persistent = self._persistent_form_params()
         # We must manipulate the existing dictionary without replacing the reference!
         self._form_state.clear()
         self._form_state.update(self._initial_form_state)
-        self._form_state.update(persistent)
         self._on_form_state_change()
         if isinstance(self, Refreshable):
             self.refresh()
 
     def _can_reset_form_state(self):
-        persistent = self._PERSISTENT_FORM_PARAMS
-        return bool([k for k in self._form_state.keys() if k not in persistent])
+        return bool(self._form_state)
         
     def _cmd_reset_form_state(self):
         self._form_state.clear()
-        self._form_state.update(self._persistent_form_params())
         self._on_form_state_change()
         if isinstance(self, Refreshable):
             self.refresh()
@@ -734,16 +722,7 @@ class LookupForm(InnerForm):
     SORTING_DESCENDANT = 'SORTING_DESCENDANT'
     """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
 
-    _USER_PROFILES_PARAM = 'profiles'
-    _FILTER_CONDITION_PARAM = 'filter'
-    _SEARCH_CONDITION_PARAM = 'search'
-    _PERSISTENT_FORM_PARAMS = InnerForm._PERSISTENT_FORM_PARAMS + \
-                              (_USER_PROFILES_PARAM,
-                               _FILTER_CONDITION_PARAM,
-                               _SEARCH_CONDITION_PARAM)
-
     _UNNAMED_PROFILE_LABEL = _("Nepojmenovaný profil")
-
     
     def _init_attributes(self, sorting=None, filter=None, condition=None, arguments=None,
                          **kwargs):
@@ -778,8 +757,8 @@ class LookupForm(InnerForm):
         # data object.
         self._lf_condition = condition
         self._lf_filter = filter
-        self._lf_last_filter = filter or self._load_condition(self._FILTER_CONDITION_PARAM)
-        self._lf_search_condition = self._load_condition(self._SEARCH_CONDITION_PARAM)
+        self._lf_last_filter = filter or self._load_condition('filter')
+        self._lf_search_condition = self._load_condition('search')
         self._arguments = arguments
         # Store the Profile instance representing the form parameters defined
         # by the base specification and possibly also form constructor
@@ -824,13 +803,15 @@ class LookupForm(InnerForm):
         return 'sort=%s, filter=%s' % (self._lf_sorting, self._lf_filter,)
 
     def _save_condition(self, key, condition):
+        # TODO: Save as some special profile?
         #self._set_state_param(key, self._pack_condition(condition))
         pass
 
     def _load_condition(self, key):
+        # TODO: See _save_condition above.
         #packed = self._get_state_param(key, None, tuple)
         #return packed and self._unpack_condition(packed)
-        pass
+        return None
 
     def _save_user_profile(self, profile):
         profile_manager().save_profile(self._fullname(), profile)
@@ -984,7 +965,7 @@ class LookupForm(InnerForm):
         if direction is not None:
             self._lf_search_condition = condition
             self._search(condition, direction)
-            self._save_condition(self._SEARCH_CONDITION_PARAM, condition)
+            self._save_condition('search', condition)
 
     def _on_form_state_change(self):
         super(LookupForm, self)._on_form_state_change()
@@ -1345,7 +1326,7 @@ class LookupForm(InnerForm):
         self._apply_filter(condition)
         if condition is not None:
             self._lf_last_filter = condition
-            self._save_condition(self._FILTER_CONDITION_PARAM, condition)
+            self._save_condition('filter', condition)
             
     def data(self):
         """Return a new instance of the data object used by the form.
