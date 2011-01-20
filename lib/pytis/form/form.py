@@ -444,7 +444,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._cleanup_data()
         for id in self._STATUS_FIELDS:
             set_status(id, '')
-        #profile_manager().save_profile(self._fullname(), '__global_settings__', self._form_state)
 
     def _cleanup_data(self):
         try:
@@ -815,9 +814,6 @@ class LookupForm(InnerForm):
 
     def _save_user_profile(self, profile):
         profile_manager().save_profile(self._fullname(), profile)
-
-    def _remove_user_profile(self, profile):
-        profile_manager().drop_profile(self._fullname(), profile)
     
     def _load_user_profiles(self):
         manager = profile_manager()
@@ -1033,25 +1029,19 @@ class LookupForm(InnerForm):
         try:
             self._apply_profile(profile)
         except Exception, e:
-            for i, p in enumerate(self._user_profiles):
-                if p.id() == profile.id():
-                    log(OPERATIONAL, "Unable to apply profile:", e)
-                    answer = run_dialog(Question, icon=Question.ICON_ERROR,
-                                        title=_("Neplatný profil"),
-                                        message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
-                                                  "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
-                                                  "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
-                                                  "Pøejete si profil smazat?") % profile.name())
-                    if answer:
-                        profiles = list(self._user_profiles)
-                        self._remove_user_profile(profiles[i])
-                        del profiles[i]
-                        self._user_profiles = tuple(profiles)
-                    else:
-                        # The profile menu needs to be realoaded, since the current selection
-                        # doesn't match the current profile (invalid profile is selected, but no
-                        # profile is active).
-                        LookupForm._last_profile_menu_state = (None, None)
+            log(OPERATIONAL, "Unable to apply profile:", e)
+            if profile in self._user_profiles:
+                delete = run_dialog(Question, icon=Question.ICON_ERROR,
+                                    title=_("Neplatný profil"),
+                                    message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
+                                              "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
+                                              "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
+                                              "Pøejete si profil smazat?") % profile.name())
+                if delete:
+                    profiles = list(self._user_profiles)
+                    profiles.remove(profile)
+                    profile_manager().drop_profile(self._fullname(), profile.id())
+                    self._user_profiles = tuple(profiles)
                 
     def _can_unfilter(self):
         return self._lf_filter is not None
@@ -1116,7 +1106,7 @@ class LookupForm(InnerForm):
         # Get the index within self._user_profiles
         i = index - (len(self._view.profiles()) + 1)
         profiles = list(self._user_profiles)
-        self._remove_user_profile(profiles[i])
+        profile_manager().drop_profile(self._fullname(), profiles[i].id())
         del profiles[i]
         self._user_profiles = tuple(profiles)
 
