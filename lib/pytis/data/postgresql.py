@@ -527,16 +527,22 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
             tables = dbtable('pg_catalog.pg_class', ('relname',), connection_data,
                              connection_name=self._connection_name)
             roles_data = None
-            if tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles'))) > 0:
+            try:
+                if tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles'))) > 0:
+                    try:
+                        roles_data = dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
+                    except pytis.data.DBException:
+                        pass
+                    else:
+                        def process(row):
+                            return row[0].value()
+                        logical_access_groups = roles_data.select_map(process)
+                        PostgreSQLUserGroups._logical_access_groups = logical_access_groups
+            finally:
                 try:
-                    roles_data = dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
-                except pytis.data.DBException:
+                    tables.close()
+                except:
                     pass
-                else:
-                    def process(row):
-                        return row[0].value()
-                    logical_access_groups = roles_data.select_map(process)
-                    PostgreSQLUserGroups._logical_access_groups = logical_access_groups
         if PostgreSQLUserGroups._logical_access_groups is None:
             key = self._pgg_connection_key(connection_data)
             groups = PostgreSQLUserGroups._access_groups.get(key, UNDEFINED)
@@ -2702,6 +2708,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             except:
                 pass
             raise cls, e, tb
+        if transaction is None:
+            self._pg_commit_transaction()
         result = self._pg_make_row_from_raw_data(data, template=template)
         #log(EVENT, 'Vrácený obsah øádku', result)
         return result
@@ -3352,6 +3360,8 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                               transaction=transaction,
                               outside_transaction=outside_transaction
                               )
+        if transaction is None:
+            self._pg_commit_transaction()
         result = [self._pg_make_row_from_raw_data([row]) for row in data]
         log(EVENT, 'Function call result:', (self._name, result))
         return result
