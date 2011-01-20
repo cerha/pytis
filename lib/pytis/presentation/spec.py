@@ -536,12 +536,14 @@ class Profile(object):
         assert isinstance(name, basestring), name
         assert filter is None or isinstance(filter, pytis.data.Operator), filter
         assert sorting is None or isinstance(sorting, tuple), sorting
+        assert grouping is None or isinstance(grouping, (basestring, tuple)), grouping
+        assert columns is None or isinstance(columns, (tuple, list)), columns
         self._id = id
         self._name = name
         self._filter = filter
         self._sorting = sorting
-        self._columns = columns
         self._grouping = grouping and xtuple(grouping)
+        self._columns = columns and tuple(columns)
     
     def id(self):
         """Return the unique profile identifier."""
