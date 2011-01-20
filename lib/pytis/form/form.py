@@ -33,6 +33,74 @@ from pytis.presentation import PresentedRow
 from pytis.form import *
 import wx
 
+class FormProfile(pytis.presentation.Profile):
+
+    def __init__(self, id, name, **kwargs):
+        self._packed_filter = None
+        super(FormProfile, self).__init__(id, name, **kwargs)
+        
+    def __getstate__(self):
+        # We prefer saving the condition in our custom format, since its safer
+        # to pickle Python builtin types than instances of application defined
+        # classes.
+        def pack(something):
+            if isinstance(something, pytis.data.Operator):
+                args = tuple([pack(arg) for arg in something.args()])
+                return (something.name(), args, something.kwargs())
+            elif isinstance(something, pytis.data.Value):
+                return [something.export()]
+            elif isinstance(something, pytis.data.WMValue):
+                return [something.value()]
+            elif isinstance(something, str):
+                return something
+            else:
+                raise ProgramError("Invalid object to pack:", something)
+        state = dict(self.__dict__)
+        if self._filter:
+            state['_filter'] = None
+            state['_packed_filter'] = pack(self._filter)
+        return state
+
+    def filter(self):
+        if self._packed_filter is not None:
+            raise ProgramError("Attempted to access unpacked profile - call 'finish()' first!")
+        return self._filter
+    
+    def finish(self, data):
+        # NOT is not allowed!
+        OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
+        def unpack(packed):
+            name, packed_args, kwargs = packed
+            assert name in OPERATORS, name
+            assert len(packed_args) == 2, len(packed_args)
+            op = getattr(pytis.data, name)
+            if name in ('AND', 'OR'):
+                args = [unpack(arg) for arg in packed_args]
+            elif isinstance(packed_args[1], list):
+                col, val = packed_args[0], packed_args[1][0]
+                type = data.find_column(col).type()
+                if name in ('WM', 'NW'):
+                    value, err = type.wm_validate(val)
+                else:
+                    value, err = type.validate(val, strict=False)
+                if err is not None:
+                    raise ProgramError("Invalid operand value:", err)
+                args = col, value
+            else:
+                args = packed_args
+                for col in args:
+                    assert isinstance(col, str) and data.find_column(col) is not None
+            return op(*args, **kwargs)
+        if self._packed_filter:
+            try:
+                self._filter = unpack(self._packed_filter)
+            except Exception, e:
+                log(OPERATIONAL, "Unable to restore saved fitler for profile '':" % self._name,
+                    (self._packed_filter, str(e)))
+            else:
+                self._packed_filter = None
+
+
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Spoleèná nadtøída formuláøù.
 
@@ -183,9 +251,9 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         the attributes of the instance.  See also the constructor documentation for more details.
 
         """
-        self._form_state = profile_manager().load_profile(self._fullname(), '__global_settings__')
+        self._form_state = {} #profile_manager().load_profile(self._fullname(), '__global_settings__')
         self._initial_form_state = copy.copy(self._form_state)
-
+        
     def _create_view_spec(self):
         t = time.time()
         spec = self._resolver.get(self._name, 'view_spec', **self._spec_kwargs)
@@ -385,7 +453,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._cleanup_data()
         for id in self._STATUS_FIELDS:
             set_status(id, '')
-        profile_manager().save_profile(self._fullname(), '__global_settings__', self._form_state)
+        #profile_manager().save_profile(self._fullname(), '__global_settings__', self._form_state)
 
     def _cleanup_data(self):
         try:
@@ -752,102 +820,30 @@ class LookupForm(InnerForm):
     def _form_log_info(self):
         return 'sort=%s, filter=%s' % (self._lf_sorting, self._lf_filter,)
 
-    def _pack_condition(self, condition):
-        # We prefer saving the condition in our custom format, since its safer
-        # to pickle Python builtin types than instances of application defined
-        # classes.
-        def pack(something):
-            if isinstance(something, pytis.data.Operator):
-                args = tuple([pack(arg) for arg in something.args()])
-                return (something.name(), args, something.kwargs())
-            elif isinstance(something, pytis.data.Value):
-                return [something.export()]
-            elif isinstance(something, pytis.data.WMValue):
-                return [something.value()]
-            elif isinstance(something, str):
-                return something
-            else:
-                raise ProgramError("Invalid object to pack:", something)
-        assert isinstance(condition, pytis.data.Operator)
-        return pack(condition)
-
-    def _unpack_condition(self, packed):
-        # NOT is not allowed!
-        OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
-        def unpack(packed):
-            name, packed_args, kwargs = packed
-            assert name in OPERATORS, name
-            assert len(packed_args) == 2, len(packed_args)
-            op = getattr(pytis.data, name)
-            if name in ('AND', 'OR'):
-                args = [unpack(arg) for arg in packed_args]
-            elif isinstance(packed_args[1], list):
-                col, val = packed_args[0], packed_args[1][0]
-                type = self._data.find_column(col).type()
-                if name in ('WM', 'NW'):
-                    value, err = type.wm_validate(val)
-                else:
-                    value, err = type.validate(val, strict=False)
-                if err is not None:
-                    raise ProgramError("Invalid operand value:", err)
-                args = col, value
-            else:
-                args = packed_args
-                for col in args:
-                    assert isinstance(col, str) and self._data.find_column(col) is not None
-            return op(*args, **kwargs)
-        try:
-            return unpack(packed)
-        except Exception, e:
-            log(OPERATIONAL, "Unable to restore packed condition:", (packed, str(e)))
-            return None
-
     def _save_condition(self, key, condition):
-        self._set_state_param(key, self._pack_condition(condition))
+        #self._set_state_param(key, self._pack_condition(condition))
+        pass
 
     def _load_condition(self, key):
-        packed = self._get_state_param(key, None, tuple)
-        return packed and self._unpack_condition(packed)
+        #packed = self._get_state_param(key, None, tuple)
+        #return packed and self._unpack_condition(packed)
+        pass
 
-    def _pack_profile(self, profile):
-        assert isinstance(profile, Profile)
-        return dict(id=profile.id(),
-                    name=profile.name(),
-                    filter=profile.filter() and self._pack_condition(profile.filter()),
-                    sorting=profile.sorting(),
-                    grouping=profile.grouping(),
-                    columns=profile.columns(),
-                    )
-    
-    def _unpack_profile(self, packed):
-        assert isinstance(packed, dict)
-        try:
-            return Profile(id=packed['id'],
-                           name=packed['name'],
-                           filter=packed['filter'] and self._unpack_condition(packed['filter']),
-                           sorting=packed['sorting'],
-                           grouping=packed['grouping'],
-                           columns=packed['columns'],
-                           )
-        except Exception, e:
-            log(OPERATIONAL, "Unable to restore packed profile:", (packed, str(e)))
-            return None
-        
     def _save_user_profile(self, profile):
-        profile_manager().save_profile(self._fullname(), profile.id(), self._pack_profile(profile))
+        profile_manager().save_profile(self._fullname(), profile)
 
     def _remove_user_profile(self, profile):
-        profile_manager().drop_profile(self._fullname(), profile.id())
+        profile_manager().drop_profile(self._fullname(), profile)
     
     def _load_user_profiles(self):
         manager = profile_manager()
         profiles = []
         fullname = self._fullname()
-        for profile_id in manager.list_profiles(fullname):
-            if profile_id != '__global_settings__':
-                profile = self._unpack_profile(manager.load_profile(fullname, profile_id))
-                if profile:
-                    profiles.append(profile)
+        for profile_id in manager.list_profile_ids(fullname):
+            profile = manager.load_profile(fullname, profile_id)
+            if profile:
+                profile.finish(self._data)
+                profiles.append(profile)
         return tuple(profiles)
 
     def _default_sorting(self):

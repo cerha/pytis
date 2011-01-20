@@ -61,11 +61,14 @@ def run():
     pp = pprint.PrettyPrinter()
     for fullname in manager.list_fullnames(pattern=pattern):
         print '\n' + fullname
-        for profile in manager.list_profiles(fullname):
-            print '  *', profile
-            for key, value in manager.load_profile(fullname, profile).items():
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
+        for profile_id in manager.list_profile_ids(fullname):
+            profile = manager.load_profile(fullname, profile_id)
+            print '  * %s: %s' % (profile.id(), profile.name().encode('utf-8'))
+            for key in ('sorting', 'columns', 'grouping', 'filter'):
+                if key == 'filter':
+                    value = profile._packed_filter
+                else:
+                    value = getattr(profile, key)()
                 indent = '\n        ' + ' ' * len(key)
                 formatted = indent.join(pp.pformat(value).splitlines())
                 print '    - %s: %s' % (key, formatted)

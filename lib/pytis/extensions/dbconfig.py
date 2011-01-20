@@ -374,16 +374,15 @@ def pytis_config_convert(usernames=None):
                 if form is None:
                     continue # Ignore obsolete forms mapped to None.
                 fullname = 'form/%s.%s/%s//' % (form.__module__, form.__name__, specname)
-                for i, (name, cond) in enumerate(state.pop('conditions', ())):
-                    profile = dict(id='_profile_%d' % i,
-                                   name=name,
-                                   filter=cond,
-                                   sorting=state.get('sorting'),
-                                   grouping=state.get('grouping'),
-                                   columns=state.get('columns'))
-                    manager.save_profile(fullname, profile['id'], profile, transaction=transaction)
-                manager.save_profile(fullname, '__global_settings__', state, transaction=transaction)
-                count += 1
+                conditions = ((u'Ulo¾ené nastavení', None),) + state.pop('conditions', ())
+                for i, (name, cond) in enumerate(conditions):
+                    profile = pytis.form.FormProfile('_profile_%d' % i, name,
+                                                     sorting=state.get('sorting'),
+                                                     grouping=state.get('grouping'),
+                                                     columns=state.get('columns'))
+                    profile._packed_filter = cond
+                    manager.save_profile(fullname, profile, transaction=transaction)
+                count += len(conditions)
             print count
         data.close()
     except:

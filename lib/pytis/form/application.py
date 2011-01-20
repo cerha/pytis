@@ -1230,57 +1230,53 @@ class FormProfileManager(object):
     '__global_settings__').
 
     """
-    def save_profile(self, fullname, profile, config):
+    def save_profile(self, fullname, profile):
         """Save user specific configuration of a form.
         
         Arguments:
 
           fullname -- unique string identification of a form to which the
             profile belongs (see 'FormProfileManager' class docuemntation).
-          profile -- string name of the form profile to which the given
-            configurtation belongs.
+          profile -- form profile as a 'pytis.form.FormProfile' instance.
           config -- dictionary of form configuration parameters.
 
         """
         pass
 
-    def load_profile(self, fullname, profile):
+    def load_profile(self, fullname, profile_id):
         """Return previously saved user specific configuration of a form.
 
         Arguments:
           fullname -- unique string identification of a form to which the
             profile belongs (see 'FormProfileManager' class docuemntation).
-          profile -- string name of the form profile to which the given
-            configurtation belongs.
+          profile_id -- string identifier of the profile to load.
 
-        Returns a dictionary of form configuration parameters.  If no
-        configuration was previously saved (using 'save_profile()') or if a
-        problem occures reading it, an empty dictionary is returned.
+        Returns a 'pytis.form.FormProfile' instance.  If no such profile is
+        found or if a problem occures reading it, None is returned.
 
         """
         pass
 
-    def drop_profile(self, fullname, profile):
+    def drop_profile(self, fullname, profile_id):
         """Remove the previously saved form configuration.
 
         Arguments:
           fullname -- unique string identification of a form to which the
             profile belongs (see 'FormProfileManager' class docuemntation).
-          profile -- string name of the form profile to which the
-            configurtation belongs.
+          profile_id -- string identifier of the profile to drop.
 
         """
         pass
 
-    def list_profiles(self, fullname):
-        """Return a sequence of all previously saved form configurations.
+    def list_profile_ids(self, fullname):
+        """Return a sequence of identifiers of all previously saved profiles.
 
         Arguments:
           fullname -- unique string identification of a form to which the
             profile belongs (see 'FormProfileManager' class docuemntation).
 
-        Returns a sequence of all distinct strings previously passed to
-        'save_profile' as the 'profile' argument for given form.
+        Returns a sequence of strings -- all distinct profile identifiers
+        previously saved using 'save_profile' for given 'fullname'.
 
         """
         pass
@@ -1313,27 +1309,28 @@ class DictionaryFormProfileManager(FormProfileManager):
         assert isinstance(config, dict)
         self._config = config
 
-    def _key(self, fullname, profile):
+    def _key(self, fullname, profile_id):
         return fullname +':'+ profile
 
-    def save_profile(self, fullname, profile, config):
-        profiles = self.list_profiles(fullname)
-        if profile != '__saved_profiles__' and profile not in profiles:
-            profiles += (profile,)
-            self.save_profile(fullname, '__saved_profiles__', profiles)
-        self._config[self._key(fullname, profile)] = config
+    def save_profile(self, fullname, profile):
+        assert profile.id() != '__saved_profiles__'
+        profile_ids = self.list_profile_ids(fullname)
+        if profile.id() not in profile_ids:
+            profile_ids += (profile.id(),)
+            self._config[self._key(fullname, '__saved_profiles__')] = profile_ids
+        self._config[self._key(fullname, profile.id())] = profile
             
-    def load_profile(self, fullname, profile):
-        return self._config.get(self._key(fullname, profile), {})
+    def load_profile(self, fullname, profile_id):
+        return self._config.get(self._key(fullname, profile_id))
 
-    def drop_profile(self, fullname, profile):
+    def drop_profile(self, fullname, profile_id):
         try:
-            del self._config[self._key(fullname, profile)]
+            del self._config[self._key(fullname, profile_id)]
         except KeyError:
             pass
         
-    def list_profiles(self, fullname):
-        return self.load_profile(fullname, '__saved_profiles__') or ()
+    def list_profile_ids(self, fullname):
+        return self._config.get(self._key(fullname, '__saved_profiles__'), ())
         
     
 class DBFormProfileManager(FormProfileManager):
@@ -1353,20 +1350,20 @@ class DBFormProfileManager(FormProfileManager):
         self._username = username or config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
 
-    def _key_values(self, fullname, profile=None):
+    def _key_values(self, fullname, profile_id=None):
         values = (('username', self._username),
                   ('form', fullname))
-        if profile:
-            values += (('profile', profile),)
+        if profile_id:
+            values += (('profile', profile_id),)
         return [(key, pytis.data.Value(pytis.data.String(), value))
                 for key, value in values]
 
-    def _row_condition(self, fullname, profile=None):
+    def _row_condition(self, fullname, profile_id=None):
         return pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
-                                self._key_values(fullname, profile)])
+                                self._key_values(fullname, profile_id)])
 
-    def _row(self, fullname, profile, transaction=None):
-        count = self._data.select(condition=self._row_condition(fullname, profile),
+    def _row(self, fullname, profile_id, transaction=None):
+        count = self._data.select(condition=self._row_condition(fullname, profile_id),
                                   transaction=transaction)
         if count == 0:
             row = None
@@ -1376,42 +1373,42 @@ class DBFormProfileManager(FormProfileManager):
         self._data.close()
         return row
 
-    def save_profile(self, fullname, profile, config, transaction=None):
-        row = self._row(fullname, profile, transaction=transaction)
-        value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
+    def save_profile(self, fullname, profile, transaction=None):
+        row = self._row(fullname, profile.id(), transaction=transaction)
+        value = pytis.data.Value(pytis.data.String(), pickle.dumps(profile))
         if row:
             row['config'] = value
             self._data.update(row['id'], row, transaction=transaction)
         else:
-            values = self._key_values(fullname, profile)
+            values = self._key_values(fullname, profile.id())
             row = pytis.data.Row(values + [('config', value)])
             self._data.insert(row, transaction=transaction)
 
-    def load_profile(self, fullname, profile, transaction=None):
-        row = self._row(fullname, profile, transaction=transaction)
+    def load_profile(self, fullname, profile_id, transaction=None):
+        row = self._row(fullname, profile_id, transaction=transaction)
         if row:
             result = pickle.loads(str(row['config'].value().encode('utf-8')))
-            if not isinstance(result, dict):
+            if not isinstance(result, pytis.form.FormProfile):
                 result = {}
                 self._data.delete(row['id'], transaction=transaction)
             return result
         else:
             return {}
            
-    def drop_profile(self, fullname, profile, transaction=None):
-        row = self._row(fullname, profile)
+    def drop_profile(self, fullname, profile_id, transaction=None):
+        row = self._row(fullname, profile_id)
         if row:
             self._data.delete(row['id'], transaction=transaction)
         
-    def list_profiles(self, fullname, transaction=None):
-        profiles = []
+    def list_profile_ids(self, fullname, transaction=None):
+        profile_ids = []
         self._data.select(condition=self._row_condition(fullname), transaction=transaction)
         while True:
             row = self._data.fetchone()
             if row is None:
                 break
-            profiles.append(row['profile'].value())
-        return tuple(profiles)
+            profile_ids.append(row['profile'].value())
+        return tuple(profile_ids)
 
     def list_fullnames(self, pattern, transaction=None):
         condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
