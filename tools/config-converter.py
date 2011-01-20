@@ -21,8 +21,10 @@ import sys, getopt, pytis.util, pytis.extensions, config
 
 def usage(msg=None):
     sys.stderr.write("Convert saved Pytis user configurations to form profiles.\n"
-                     "Usage: config-update [ options ]\n"
-                     "  options: Pytis command line options (defined by pytis configuration)\n")
+                     "Usage: config-update [options] [users]\n"
+                     "  options: Pytis command line options (defined by pytis configuration)\n"
+                     "  users: Name(s) of database users for which the conversion is to be "
+                     "         done.  If no user names are given, all users are processed.\n")
     if msg:
         sys.stderr.write(msg)
         sys.stderr.write('\n')
