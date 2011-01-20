@@ -251,7 +251,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         the attributes of the instance.  See also the constructor documentation for more details.
 
         """
-        self._form_state = {} #profile_manager().load_profile(self._fullname(), '__global_settings__')
+        key = self.__class__.__name__ +'/'+ self._name
+        self._form_state = config.form_state.get(key)
+        if not isinstance(self._form_state, dict):
+            self._form_state = config.form_state[key] = {}
         self._initial_form_state = copy.copy(self._form_state)
         
     def _create_view_spec(self):
