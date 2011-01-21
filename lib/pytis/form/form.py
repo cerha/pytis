@@ -1102,6 +1102,9 @@ class LookupForm(InnerForm):
     def _cmd_delete_saved_profile(self, ctrl):
         profile_manager().drop_profile(self._fullname(), self._current_profile.id())
         self._user_profiles.remove(self._current_profile)
+        self._apply_profile(self._default_profile)
+        ctrl.Delete(ctrl.GetSelection())
+        ctrl.SetSelection(0)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
