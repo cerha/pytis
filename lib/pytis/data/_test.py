@@ -2248,7 +2248,6 @@ class DBSearchPath(_DBTest):
     def _retrieve(self, schemas):
         connection_data = copy.copy(_connection_data)
         connection_data['schemas'] = schemas
-        connection_data['user'] = 'pdm'
         name = 'schemas_' + string.join((schemas or ['default']), '_')
         connection = pytis.data.DBConnection(alternatives={name: connection_data},
                                              **_connection_data)
