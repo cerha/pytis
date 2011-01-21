@@ -1343,8 +1343,8 @@ class DBFormProfileManager(FormProfileManager):
     This means that some other manager has to be used.
         
     """
-    _TABLE = 'e_pytis_form_config'
-    _COLUMNS = ('id', 'username', 'form', 'profile', 'config',)
+    _TABLE = 'e_pytis_form_profiles'
+    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_data',)
 
     def __init__(self, dbconnection, username=None):
         self._username = username or config.dbuser
@@ -1352,9 +1352,9 @@ class DBFormProfileManager(FormProfileManager):
 
     def _key_values(self, fullname, profile_id=None):
         values = (('username', self._username),
-                  ('form', fullname))
+                  ('fullname', fullname))
         if profile_id:
-            values += (('profile', profile_id),)
+            values += (('profile_id', profile_id),)
         return [(key, pytis.data.Value(pytis.data.String(), value))
                 for key, value in values]
 
@@ -1377,17 +1377,17 @@ class DBFormProfileManager(FormProfileManager):
         row = self._row(fullname, profile.id(), transaction=transaction)
         value = pytis.data.Value(pytis.data.String(), pickle.dumps(profile))
         if row:
-            row['config'] = value
+            row['profile_data'] = value
             self._data.update(row['id'], row, transaction=transaction)
         else:
             values = self._key_values(fullname, profile.id())
-            row = pytis.data.Row(values + [('config', value)])
+            row = pytis.data.Row(values + [('profile_data', value)])
             self._data.insert(row, transaction=transaction)
 
     def load_profile(self, fullname, profile_id, transaction=None):
         row = self._row(fullname, profile_id, transaction=transaction)
         if row:
-            result = pickle.loads(str(row['config'].value().encode('utf-8')))
+            result = pickle.loads(str(row['profile_data'].value().encode('utf-8')))
             if not isinstance(result, pytis.form.FormProfile):
                 result = {}
                 self._data.delete(row['id'], transaction=transaction)
@@ -1407,16 +1407,16 @@ class DBFormProfileManager(FormProfileManager):
             row = self._data.fetchone()
             if row is None:
                 break
-            profile_ids.append(row['profile'].value())
+            profile_ids.append(row['profile_id'].value())
         return tuple(profile_ids)
 
     def list_fullnames(self, pattern, transaction=None):
         condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
         if pattern:
-            wm = pytis.data.WM('form', pytis.data.WMValue(pytis.data.String(), pattern),
+            wm = pytis.data.WM('fullname', pytis.data.WMValue(pytis.data.String(), pattern),
                                ignore_case=False)
             condition = pytis.data.AND(condition, wm)
-        values = self._data.distinct('form', condition=condition, transaction=transaction)
+        values = self._data.distinct('fullname', condition=condition, transaction=transaction)
         return [v.value() for v in values]
 
 

@@ -50,14 +50,14 @@ function('write_pytis_config',
          depends=('_pytis_config',))
 
 
-table('e_pytis_form_config',
+table('e_pytis_form_profiles',
       (P('id', TSerial),
        C('username', TUser, constraints=('NOT NULL',)),
-       C('form', TString, constraints=('NOT NULL',)),
-       C('profile', TString, ),
-       C('config', TString, constraints=('NOT NULL',))),
-      sql='UNIQUE (username, form, profile)',
+       C('fullname', TString, constraints=('NOT NULL',)),
+       C('profile_id', TString, ),
+       C('profile_data', TString, constraints=('NOT NULL',))),
+      sql='UNIQUE (username, fullname, profile_id)',
       grant=db_rights,
       schemas=db_schemas,
-      doc="""Pytis form configuration storage."""      
+      doc="""Pytis form configuration storage."""
       )
