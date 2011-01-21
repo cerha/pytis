@@ -1055,40 +1055,46 @@ class LookupForm(InnerForm):
             condition = pytis.data.AND(self._lf_filter, condition)
         self.COMMAND_FILTER.invoke(condition=condition)
 
-    def _can_save_profile(self, name, kbd=False):
-        if kbd:
-            # Always allow keyboard invocation (it will be rejected later with
-            # appropriate message).
-            return True
-        else:
-            # Detect command availability for the menu item.
-            names = [p.name() for p in self._view.profiles() + self._user_profiles]
-            return self._current_profile.id() != self._default_profile.id() and name not in names
+    def _create_profile(self, id, name):
+        return FormProfile(id, name, filter=self._lf_filter, sorting=self._data_sorting())
+        
+    def _can_save_profile(self, ctrl, perform=False):
+        return True
     
-    def _cmd_save_profile(self, name, kbd=False):
-        if self._current_profile.id() != self._default_profile.id():
-            for profile in self._view.profiles() + self._user_profiles:
+    def _cmd_save_profile(self, ctrl, perform=False):
+        if perform:
+            name = ctrl.GetValue()
+            for i in range(ctrl.GetCount()):
+                profile = ctrl.GetClientData(i)
                 if profile.name() == name:
-                    message(_("Pojmenovaný profil '%s' ji¾ existuje.") % name, beep_=True)
-                    return
-                elif profile.id() == self._current_profile.id():
-                    message(_("Shodný profil ji¾ existuje pod názvem '%s'.") % profile.name(),
-                            beep_=True)
+                    message(_("Takto pojmenovaný profil ji¾ existuje."), beep_=True)
                     return
             profile_id = '_profile_%d' % (len(self._user_profiles),)
-            profile = self._rename_profile(self._current_profile, profile_id, name)
+            profile = self._create_profile(profile_id, name)
             self._user_profiles += (profile,)
             self._save_user_profile(profile)
+            self._current_profile = profile
             message(_("Profil ulo¾en pod názvem '%s'.") % name)
-        self.focus()
+            ctrl.SetEditable(False)
+            ctrl.Append(name, profile)
+            ctrl.SetSelection(ctrl.GetCount()-1)
+            self.focus()
+        else:
+            ctrl.SetEditable(True)
+            ctrl.SetValue('')
+            ctrl.SetFocus()
     
-    def _can_update_saved_profile(self, index):
-        # The whole submenu is disabled in 'profile_context_menu()' if needed.
-        return True
+    def _can_update_saved_profile(self):
+        current = self._current_profile
+        return (current in self._user_profiles
+                and (current.filter() != self._lf_filter
+                     or current.sorting() != self._data_sorting()))
         
-    def _cmd_update_saved_profile(self, index):
+    def _cmd_update_saved_profile(self):
+        profile = self._create_profile(self._current_profile.id(), self._current_profile.name())
         profiles = list(self._user_profiles)
-        profile = self._rename_profile(self._current_profile, profiles[index].id(), profiles[index].name())
+        index = profiles.index(self._current_profile)
+        self._current_profile = profile
         profiles[index] = profile
         self._user_profiles = tuple(profiles)
         self._save_user_profile(profile)
@@ -1211,19 +1217,17 @@ class LookupForm(InnerForm):
                 current_form().focus()
             ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(),
                             on_change=on_change)
-            cls._last_profile_menu_state = (None, None)
+            cls._last_profile_menu_form = None
             def update(event):
                 enabled = cmd.enabled(**kwargs)
                 event.Enable(enabled)
                 if enabled:
                     form = current_form()
-                    last_form, last_state = cls._last_profile_menu_state
-                    if form is not last_form:
-                        last_state = None
-                    state = form.update_profile_menu(ctrl, last_state)
-                    cls._last_profile_menu_state = (form, state)
+                    if form is not cls._last_profile_menu_form:
+                        form.update_profile_menu(ctrl)
+                        cls._last_profile_menu_form = form
                 elif top_window() is None and not ctrl.IsEmpty():
-                    cls._last_profile_menu_state = (None, None)
+                    cls._last_profile_menu_form = None
                     ctrl.SetSelection(wx.NOT_FOUND)
                     ctrl.Clear()
                     ctrl.SetValue('')
@@ -1235,7 +1239,7 @@ class LookupForm(InnerForm):
                 popup_menu(ctrl, form.profile_context_menu(ctrl))
             wx_callback(wx.EVT_RIGHT_DOWN, ctrl, on_context_menu)
             def on_enter(event):
-                LookupForm.COMMAND_SAVE_PROFILE.invoke(name=ctrl.GetValue())
+                LookupForm.COMMAND_SAVE_PROFILE.invoke(ctrl=ctrl, perform=True)
             wx_callback(wx.EVT_TEXT_ENTER, ctrl, wxid, on_enter)
             def on_key_down(event):
                 event.Skip()
@@ -1248,9 +1252,6 @@ class LookupForm(InnerForm):
         else:
             InnerForm.add_toolbar_ctrl(toolbar, uicmd)
 
-    def _rename_profile(self, profile, id, name):
-        return Profile(id, name, filter=profile.filter(), sorting=profile.sorting())
-    
     def update_profile_menu(self, ctrl, state):
         # Update the toolbar profile selection control for the current form
         # instance (usually after a form change).
@@ -1265,11 +1266,15 @@ class LookupForm(InnerForm):
     def profile_context_menu(self, ctrl):
         # Return the context menu for the toolbar profile selection control.
         return (
-            MItem(_("Ulo¾it"), self.COMMAND_SAVE_PROFILE(name=ctrl.GetValue()),
-                  help=_("Ulo¾it souèasný profil pod tímto názvem"), hotkey='Enter'),
-            MItem(_("Smazat vybraný profil"), 
+            MItem(_("Ulo¾it"), self.COMMAND_UPDATE_SAVED_PROFILE(),
+                  help=_("Aktualizovat ulo¾ený profil podle souèasného nastavením formuláøe"),
+                  hotkey='Enter'),
+            MItem(_("Ulo¾it jako nový"), self.COMMAND_SAVE_PROFILE(ctrl=ctrl),
+                  help=_("Vytvoøit nový profil podle souèasného nastavením formuláøe"),
+                  ),
+            MItem(_("Smazat profil"), 
                   self.COMMAND_DELETE_SAVED_PROFILE(index=ctrl.GetSelection()),
-                  help=_("Smazat zvolený pojmenovaný profil")),
+                  help=_("Smazat zvolený ulo¾ený profil")),
             )
 
     def filter(self, condition):
