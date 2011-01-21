@@ -1252,7 +1252,7 @@ class LookupForm(InnerForm):
         else:
             InnerForm.add_toolbar_ctrl(toolbar, uicmd)
 
-    def update_profile_menu(self, ctrl, state):
+    def update_profile_menu(self, ctrl):
         # Update the toolbar profile selection control for the current form
         # instance (usually after a form change).
         ctrl.Clear()
