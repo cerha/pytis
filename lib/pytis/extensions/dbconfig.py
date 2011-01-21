@@ -376,7 +376,15 @@ def pytis_config_convert(usernames=None):
                 fullname = 'form/%s.%s/%s//' % (form.__module__, form.__name__, specname)
                 conditions = ((u'Ulo¾ené nastavení', None),) + state.pop('conditions', ())
                 for i, (name, cond) in enumerate(conditions):
-                    profile = pytis.form.FormProfile('_profile_%d' % i, name,
+                    try:
+                        name = name.decode('iso-8859-2')
+                    except:
+                        pass
+                    try:
+                        name = name.encode('iso-8859-2')
+                    except:
+                        pass
+                    profile = pytis.form.FormProfile('_profile_%d' % i, name.strip(),
                                                      sorting=state.get('sorting'),
                                                      grouping=state.get('grouping'),
                                                      columns=state.get('columns'))
