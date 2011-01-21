@@ -822,7 +822,7 @@ class LookupForm(InnerForm):
             if profile:
                 profile.finish(self._data)
                 profiles.append(profile)
-        return tuple(profiles)
+        return profiles
 
     def _default_sorting(self):
         sorting = self._view.sorting()
@@ -1036,10 +1036,8 @@ class LookupForm(InnerForm):
                                               "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
                                               "Pøejete si profil smazat?") % profile.name())
                 if delete:
-                    profiles = list(self._user_profiles)
-                    profiles.remove(profile)
+                    self._user_profiles.remove(profile)
                     profile_manager().drop_profile(self._fullname(), profile.id())
-                    self._user_profiles = tuple(profiles)
                 
     def _can_unfilter(self):
         return self._lf_filter is not None
@@ -1071,7 +1069,7 @@ class LookupForm(InnerForm):
                     return
             profile_id = '_profile_%d' % (len(self._user_profiles),)
             profile = self._create_profile(profile_id, name)
-            self._user_profiles += (profile,)
+            self._user_profiles.append(profile)
             self._save_user_profile(profile)
             self._current_profile = profile
             message(_("Profil ulo¾en pod názvem '%s'.") % name)
@@ -1091,25 +1089,19 @@ class LookupForm(InnerForm):
                      or current.sorting() != self._data_sorting()))
         
     def _cmd_update_saved_profile(self):
-        profile = self._create_profile(self._current_profile.id(), self._current_profile.name())
-        profiles = list(self._user_profiles)
-        index = profiles.index(self._current_profile)
-        self._current_profile = profile
-        profiles[index] = profile
-        self._user_profiles = tuple(profiles)
+        current = self._current_profile
+        profile = self._create_profile(current.id(), current.name())
+        index = self._user_profiles.index(current)
+        self._user_profiles[index] = profile
         self._save_user_profile(profile)
+        self._current_profile = profile
     
-    def _can_delete_saved_profile(self, index):
-        # Only allow deletion of user defined profiles.
-        return index > (len(self._view.profiles()) + 1)
+    def _can_delete_saved_profile(self, ctrl):
+        return self._current_profile in self._user_profiles
 
-    def _cmd_delete_saved_profile(self, index):
-        # Get the index within self._user_profiles
-        i = index - (len(self._view.profiles()) + 1)
-        profiles = list(self._user_profiles)
-        profile_manager().drop_profile(self._fullname(), profiles[i].id())
-        del profiles[i]
-        self._user_profiles = tuple(profiles)
+    def _cmd_delete_saved_profile(self, ctrl):
+        profile_manager().drop_profile(self._fullname(), self._current_profile.id())
+        self._user_profiles.remove(self._current_profile)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
@@ -1258,7 +1250,8 @@ class LookupForm(InnerForm):
         ctrl.Clear()
         ctrl.SetEditable(False)
         current_profile_id = self._current_profile.id()
-        for profile in (self._default_profile,) + self._view.profiles() + self._user_profiles:
+        profiles = (self._default_profile,) + self._view.profiles() + tuple(self._user_profiles)
+        for profile in profiles:
             ctrl.Append(profile.name(), profile)
             if profile.id() == current_profile_id:
                 ctrl.SetSelection(ctrl.GetCount()-1)
@@ -1273,7 +1266,7 @@ class LookupForm(InnerForm):
                   help=_("Vytvoøit nový profil podle souèasného nastavením formuláøe"),
                   ),
             MItem(_("Smazat profil"), 
-                  self.COMMAND_DELETE_SAVED_PROFILE(index=ctrl.GetSelection()),
+                  self.COMMAND_DELETE_SAVED_PROFILE(ctrl=ctrl),
                   help=_("Smazat zvolený ulo¾ený profil")),
             )
 
