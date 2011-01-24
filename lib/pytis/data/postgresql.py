@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2708,7 +2708,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             except:
                 pass
             raise cls, e, tb
-        if transaction is None:
+        if transaction is None and not self._pg_is_in_select:
             self._postgresql_commit_transaction()
         result = self._pg_make_row_from_raw_data(data, template=template)
         #log(EVENT, 'Vrácený obsah řádku', result)
