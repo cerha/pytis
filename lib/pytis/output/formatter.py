@@ -1397,8 +1397,10 @@ class LCGFormatter(object):
                     children)
         lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children,
                                       **self._body_parameters)
+        presentation = lcg.Presentation()
+        presentation.font_name = 'DejaVu'
         exporter = lcg.pdf.PDFExporter()
-        context = exporter.context(lcg_content, None)
+        context = exporter.context(lcg_content, None, presentation=presentation)
         pdf = exporter.export(context)
         return pdf
         
