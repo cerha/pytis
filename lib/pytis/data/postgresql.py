@@ -315,7 +315,7 @@ class PostgreSQLAccessor(object_2_5):
 
     def _postgresql_begin_transaction(self):
         self._pg_query ('begin')
-        
+                
     def _postgresql_commit_transaction(self):
         self._pg_query ('commit')
         
@@ -3361,7 +3361,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                               outside_transaction=outside_transaction
                               )
         if transaction is None:
-            self._postgresql_commit_transaction()
+            self._pg_query ('commit', outside_transaction=outside_transaction)
         result = [self._pg_make_row_from_raw_data([row]) for row in data]
         log(EVENT, 'Function call result:', (self._name, result))
         return result
