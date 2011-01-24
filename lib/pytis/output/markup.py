@@ -558,7 +558,9 @@ class Table(_Mark):
     def _lcg_presentation(self):
         presentation = lcg.Presentation()
         if self._vmargin == 0:
-            presentation.table_separator_margin = lcg.UMm(0)
+            presentation.separator_margin = lcg.UMm(0)
+        else:
+            presentation.separator_margin = lcg.UFont(0.2)
         return presentation
 
     def _lcg_table_data(self):
