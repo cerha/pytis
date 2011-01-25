@@ -1399,6 +1399,15 @@ class LCGFormatter(object):
                                       **self._body_parameters)
         presentation = lcg.Presentation()
         presentation.font_name = 'DejaVu'
+        def margin(key):
+            size = self._page_layout.get(key)
+            if size is None:
+                size = UMm(10)
+            return size
+        presentation.top_margin = margin(PAGE_TOP_MARGIN)
+        presentation.bottom_margin = margin(PAGE_BOTTOM_MARGIN)
+        presentation.left_margin = margin(PAGE_LEFT_MARGIN)
+        presentation.right_margin = margin(PAGE_RIGHT_MARGIN)
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None, presentation=presentation)
         pdf = exporter.export(context)
