@@ -113,8 +113,12 @@ def run():
                 kwargs = dict([(param, state[param])
                                for param in ('sorting', 'grouping', 'columns')
                                if state.has_key(param)])
-                conditions = ((u'Ulo¾ené nastavení', None),) + state.pop('conditions', ())
-                for i, (name, cond) in enumerate(conditions):
+                if kwargs:
+                    for p in spec.profiles():
+                        profile = FormProfile(p.id(), p.name(), filter=p.filter(), **kwargs)
+                        manager.save_profile(fullname, profile, transaction=transaction)
+                        count += 1
+                for i, (name, cond) in enumerate(state.pop('conditions', ())):
                     try:
                         name = name.decode('iso-8859-2')
                     except:
@@ -125,7 +129,7 @@ def run():
                     profile = FormProfile('_profile_%d' % i, name.strip(), **kwargs)
                     profile._packed_filter = cond
                     manager.save_profile(fullname, profile, transaction=transaction)
-                count += len(conditions)
+                    count += 1
             print count
         data.close()
     except:
