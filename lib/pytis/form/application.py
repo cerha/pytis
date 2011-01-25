@@ -75,11 +75,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         aplikaèního okna a naètení konfigurace, tak¾e zde mù¾eme pracovat i s
         u¾ivatelským rozhraním.
 
-      TODO: Následující volbu by bylo vhodnìj¹í pøesunout do konfigurace.
-        
-      default_font_encoding -- implicitní kódování fontù jako odpovídající wx
-        konstanta.
-        
     Start u¾ivatelského rozhraní spoèívá ve vytvoøení instance této tøídy a
     volání její metody 'run()'.
     
@@ -196,9 +191,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if mb is None:
             return False
         # Finish and show the frame.
-        default_font_encoding = self._spec('default_font_encoding')
-        if default_font_encoding is not None:
-            wx.Font.SetDefaultEncoding(default_font_encoding)
+        wx.Font.SetDefaultEncoding(wx.FONTENCODING_ISO8859_2)
         wx_callback(wx.EVT_SIZE, frame, self._on_frame_size)
         self.SetTopWindow(frame)
         frame.Show(True)
