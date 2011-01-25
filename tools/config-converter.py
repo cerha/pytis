@@ -118,11 +118,10 @@ def run():
                     try:
                         name = name.decode('iso-8859-2')
                     except:
-                        pass
-                    try:
-                        name = name.encode('iso-8859-2')
-                    except:
-                        pass
+                        try:
+                            name = name.decode('utf-8')
+                        except:
+                            pass
                     profile = FormProfile('_profile_%d' % i, name.strip(), **kwargs)
                     profile._packed_filter = cond
                     manager.save_profile(fullname, profile, transaction=transaction)
