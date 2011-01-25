@@ -20,6 +20,8 @@
 
 import sys, getopt, sys, binascii, zlib, cPickle as pickle
 import pytis.util, pytis.data, config
+from pytis.form import DBFormProfileManager, FormProfile
+
 
 def usage(msg=None):
     sys.stderr.write("Convert saved Pytis user configurations to form profiles.\n"
@@ -65,7 +67,6 @@ def run():
                 sys.exit(1)
         else:
             break
-    from pytis.form import DBFormProfileManager
     transaction = pytis.data.DBTransactionDefault(config.dbconnection)
     forms = {'MainForm': pytis.form.MultiBrowseDualForm.MainForm,
              'TabbedBrowseForm': pytis.form.MultiSideForm.TabbedBrowseForm,
@@ -103,6 +104,15 @@ def run():
                 if form is None:
                     continue # Ignore obsolete forms mapped to None.
                 fullname = 'form/%s.%s/%s//' % (form.__module__, form.__name__, specname)
+                resolver = pytis.util.resolver()
+                try:
+                    spec = resolver.get(specname, 'view_spec')
+                except Exception, e:
+                    # Ignore configurations for specifications that no longer exist
+                    continue
+                kwargs = dict([(param, state[param])
+                               for param in ('sorting', 'grouping', 'columns')
+                               if state.has_key(param)])
                 conditions = ((u'Ulo¾ené nastavení', None),) + state.pop('conditions', ())
                 for i, (name, cond) in enumerate(conditions):
                     try:
@@ -113,10 +123,7 @@ def run():
                         name = name.encode('iso-8859-2')
                     except:
                         pass
-                    profile = pytis.form.FormProfile('_profile_%d' % i, name.strip(),
-                                                     sorting=state.get('sorting'),
-                                                     grouping=state.get('grouping'),
-                                                     columns=state.get('columns'))
+                    profile = FormProfile('_profile_%d' % i, name.strip(), **kwargs)
                     profile._packed_filter = cond
                     manager.save_profile(fullname, profile, transaction=transaction)
                 count += len(conditions)
