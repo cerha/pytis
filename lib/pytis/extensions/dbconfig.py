@@ -254,16 +254,17 @@ def pytis_config_update(old, new):
                 for column in ('uzivatel', 'config')]
     factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
     while True:
+        login = config.dbuser
+        dbname = config.dbname or login
         try:
             data = factory.create(dbconnection_spec=config.dbconnection)
         except pytis.data.DBLoginException, e:
             if config.dbconnection.password() is None:
                 import getpass
-                login = config.dbuser
-                password = getpass.getpass("Enter database password for %s: " % login)
+                password = getpass.getpass("Enter database password for %s@%s: " % (login, dbname))
                 config.dbconnection.update_login_data(user=login, password=password)
             else:
-                sys.stderr.write("Login failed.\n")
+                sys.stderr.write("Logging to database %s failed.\n" % dbname)
                 sys.exit(1)
         else:
             break
@@ -324,16 +325,17 @@ def pytis_config_convert(usernames=None):
                 for column in ('uzivatel', 'config')]
     factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
     while True:
+        login = config.dbuser
+        dbname = config.dbname or login
         try:
             data = factory.create(dbconnection_spec=config.dbconnection)
         except pytis.data.DBLoginException, e:
             if config.dbconnection.password() is None:
                 import getpass
-                login = config.dbuser
-                password = getpass.getpass("Enter database password for %s: " % login)
+                password = getpass.getpass("Enter database password for %s@%s: " % (login, dbname))
                 config.dbconnection.update_login_data(user=login, password=password)
             else:
-                sys.stderr.write("Login failed.\n")
+                sys.stderr.write("Logging to database %s failed.\n" % dbname)
                 sys.exit(1)
         else:
             break
