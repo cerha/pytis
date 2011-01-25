@@ -28,7 +28,9 @@ def usage(msg=None):
                      "  users: Name(s) of database users for which the conversion is to be\n"
                      "         done.  If no user names are given, all users are processed.\n\n"
                      "The script may prompt for a database password on STDIN if the database\n"
-                     "requires it and it was not passed as --dbpass.\n")
+                     "requires it and it was not passed as --dbpass.  The usernames are printed\n"
+                     "to STDOUT as they are processed with the total number of created profiles\n"
+                     "for given user.\n")
     if msg:
         sys.stderr.write(msg)
         sys.stderr.write('\n')
