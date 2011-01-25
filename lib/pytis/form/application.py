@@ -58,27 +58,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     resolveru (urèeném konfiguraèní volbou 'def_dir').  Pou¾itelné specifikaèní
     funkce jsou:
 
-      read_config -- vrací odkaz na funkci, která bude spu¹tìna v prùbìhu
-        inicializace aplikace.  Pokud je definována, je oèekáváno, ¾e funkce
-        naète konfiguraèní volby z externího zdroje (napø. z databáze) a pøedá
-        je jako svou návratovou hodnotu ve formì sekvence dvojic (NÁZEV,
-        HODNOTA), kde NÁZEV je v¾dy platným názvem konfiguraèní volby a HODNOTA
-        je její ulo¾ená hodnota.  V¹echny takto naètené volby budou automaticky
-        nastaveny v globální promìnné `config' a vyu¾ívány aplikací.  Pokud
-        funkce není definována, pokusí se aplikace volby naèíst vlastním
-        mechanismem.
-
-      write_config -- vrací odkaz na funkci jednoho argumentu, která bude
-        spu¹tìna v prùbìhu ukonèení aplikace.  Argumentem je sekvence dvojic,
-        stejnì jako v pøípadì návratové hodnoty funkce 'read_config'.  Od
-        funkce je oèekáváno, ¾e takto pøedané volby ulo¾í do externího úlo¾ného
-        prostoru, aby mohly být obnoveny funkcí 'read_config' pøi pøí¹tím
-        spu¹tìní aplikace.  Pokud funkce není definována, pokusí se aplikace
-        volby ulo¾it vlastním mechanismem.  Ukládané volby obsahují pouze ty
-        polo¾ky konfigurace, které byly zmìnìny za bìhu aplikace oproti svým
-        poèáteèním hodnotám naèteným z pøíkazové øádky a konfiguraèního
-        souboru.
-      
       menu -- specifikace hlavního menu aplikace ve formátu specifikaèního
         argumentu konstruktoru tøídy 'pytis.form.screen.MenuBar'.
         
@@ -176,12 +155,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                 for o in configurable_options() + \
                                 ('application_state', 'form_state')]
         # Read the stored configuration.
-        read_config = self._spec('read_config', self._read_config)
-        items = read_config()
-        for option, value in items:
+        try:
+            cfg = DBConfigurationStorage(config.dbconnection, config.dbuser)
+        except pytis.data.DBException:
+            cfg = FileConfigurationStorage(self._config_filename())
+        for option, value in cfg.read():
             if option != 'dbconnection':
                 setattr(config, option, value)
-        log(OPERATIONAL, "Konfigurace naètena: %d polo¾ek" % len(items))
+        self._configuration_stroage = cfg
         # Initialize login and password.
         def test():
             bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id) for id in ('tablename',)]
@@ -570,7 +551,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._windows.activate(form)
                 self.restore()
 
-    def _config_name(self):
+    def _config_filename(self):
         # Return a name for saving/restoring the configuration.
         # This name must be usable as a filename and should be
         # application-specific, so we will derive it from the application name
@@ -606,56 +587,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if config.application_state.has_key(name):
             del config.application_state[name]
             
-    def _stored_options(self, wxconfig):
-        options = []
-        cont, key, index = wxconfig.GetFirstEntry()
-        while cont:
-            options.append(key)
-            cont, key, index = wxconfig.GetNextEntry(index)
-        return options
-
-    def _read_config(self):
-        name = self._config_name()
-        log(OPERATIONAL, "Loading saved configuration:", name)
-        wxconfig = wx.Config(name)
-        mapping = ((pytis.data.String,  wxconfig.Read),
-                   (pytis.data.Integer, wxconfig.ReadInt),
-                   (pytis.data.Boolean, wxconfig.ReadBool))
-        items = []
-        for option in self._stored_options(wxconfig):
-            t = config.option(option).type()
-            for type, read in mapping:
-                if isinstance(t, type):
-                    value = read(option)
-                    break
-            else:
-                value = pickle.loads(str(wxconfig.Read(option)))
-            items.append((option, value))
-        return tuple(items)
-            
-    def _write_config(self, items):
-        name = self._config_name()
-        log(OPERATIONAL, "Saving configuration:", name)
-        wxconfig = wx.Config(name)
-        to_delete = self._stored_options(wxconfig)
-        mapping = ((pytis.data.String,  wxconfig.Write),
-                   (pytis.data.Integer, wxconfig.WriteInt),
-                   (pytis.data.Boolean, wxconfig.WriteBool))
-        for option, value in items:
-            t = config.option(option).type()
-            if option in to_delete:
-                to_delete.remove(option)
-            for type, write in mapping:
-                #TODO: Co None hodnoty???
-                if isinstance(t, type):
-                    write(option, value)
-                    break
-            else:
-                wxconfig.Write(option, pickle.dumps(value))
-        for option in to_delete:
-            wxconfig.DeleteEntry(option)
-        wxconfig.Flush()
-        
     def _cleanup(self):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
         # situaci bylo mo¾no aplikaci ukonèit.
@@ -701,14 +632,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except Exception, e:
             safelog(str(e))
         try:
-            items = []
+            options = []
             for option, initial_value in self._initial_config:
                 current_value = getattr(config, option)
                 if current_value != initial_value:
-                    items.append((option, current_value))
-            write_config = self._spec('write_config', self._write_config)
-            write_config(tuple(items))
-            log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(items))
+                    options.append((option, current_value))
+            self._configuration_stroage.write(options)
+            log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(options))
         except Exception, e:
             safelog("Saving changed configuration failed:", str(e))
         try:
@@ -1203,6 +1133,120 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def profile_manager(self):
         return self._profile_manager
 
+
+class ConfigurationStorage(object):
+    """Abstract specification of configuration storage interface.
+
+    Different storage backends can be created implementing the interface
+    defined by the methods 'read()' and 'write()' below.  Each backend can have
+    its specific constructor arguments.
+    
+    """
+    def read(self):
+        """Return previously stored configuration options as a tuple of (name, value) pairs."""
+
+    def write(self, options):
+        """Save the options as a tuple of (name, value) pairs."""
+
+
+class FileConfigurationStorage(ConfigurationStorage):
+
+    def __init__(self, filename):
+        self._filename = filename
+        
+    def _stored_options(self, wxconfig):
+        options = []
+        cont, key, index = wxconfig.GetFirstEntry()
+        while cont:
+            options.append(key)
+            cont, key, index = wxconfig.GetNextEntry(index)
+        return options
+
+    def read(self):
+        log(OPERATIONAL, "Loading saved configuration:", self._filename)
+        wxconfig = wx.Config(self._filename)
+        mapping = ((pytis.data.String,  wxconfig.Read),
+                   (pytis.data.Integer, wxconfig.ReadInt),
+                   (pytis.data.Boolean, wxconfig.ReadBool))
+        options = []
+        for option in self._stored_options(wxconfig):
+            t = config.option(option).type()
+            for type, read in mapping:
+                if isinstance(t, type):
+                    value = read(option)
+                    break
+            else:
+                value = pickle.loads(str(wxconfig.Read(option)))
+            options.append((option, value))
+        return tuple(options)
+            
+    def write(self, options):
+        log(OPERATIONAL, "Saving configuration:", self._filename)
+        wxconfig = wx.Config(self._filename)
+        to_delete = self._stored_options(wxconfig)
+        mapping = ((pytis.data.String,  wxconfig.Write),
+                   (pytis.data.Integer, wxconfig.WriteInt),
+                   (pytis.data.Boolean, wxconfig.WriteBool))
+        for option, value in options:
+            t = config.option(option).type()
+            if option in to_delete:
+                to_delete.remove(option)
+            for type, write in mapping:
+                #TODO: Co None hodnoty???
+                if isinstance(t, type):
+                    write(option, value)
+                    break
+            else:
+                wxconfig.Write(option, pickle.dumps(value))
+        for option in to_delete:
+            wxconfig.DeleteEntry(option)
+        wxconfig.Flush()
+
+
+class DBConfigurationStorage(ConfigurationStorage):
+    _TABLE = 'e_pytis_config'
+    _COLUMNS = ('username', 'config')
+
+    def __init__(self, dbconnection, username=None):
+        self._username = username
+        self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
+    
+    def _row(self, transaction=None):
+        condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
+        try:
+            count = self._data.select(condition=condition, transaction=transaction)
+            if count == 0:
+                row = None
+            else:
+                assert count == 1
+                row = self._data.fetchone(transaction=transaction)
+        finally:
+            try:
+                self._data.close()
+            except:
+                pass
+        return row
+
+    def read(self, transaction=None):
+        row = self._row(transaction=transaction)
+        if row:
+            return pickle.loads(str(row['config'].value().encode('utf-8')))
+        else:
+            return ()
+           
+    def write(self, config, transaction=None):
+        row = self._row(transaction=transaction)
+        value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
+        if row:
+            row['config'] = value
+            self._data.update(row['username'], row, transaction=transaction)
+        else:
+            username = pytis.data.Value(pytis.data.String(), self._username)
+            row = pytis.data.Row((('username', username),
+                                  ('config', value)))
+            self._data.insert(row, transaction=transaction)
+
+    
 
 class FormProfileManager(object):
     """Generic accessor of form configuration storage.
