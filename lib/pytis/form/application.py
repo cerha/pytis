@@ -1363,14 +1363,19 @@ class DBFormProfileManager(FormProfileManager):
                                 self._key_values(fullname, profile_id)])
 
     def _row(self, fullname, profile_id, transaction=None):
-        count = self._data.select(condition=self._row_condition(fullname, profile_id),
-                                  transaction=transaction)
-        if count == 0:
-            row = None
-        else:
-            assert count == 1
-            row = self._data.fetchone(transaction=transaction)
-        self._data.close()
+        try:
+            count = self._data.select(condition=self._row_condition(fullname, profile_id),
+                                      transaction=transaction)
+            if count == 0:
+                row = None
+            else:
+                assert count == 1
+                row = self._data.fetchone(transaction=transaction)
+        finally:
+            try:
+                self._data.close()
+            except:
+                pass
         return row
 
     def save_profile(self, fullname, profile, transaction=None):
