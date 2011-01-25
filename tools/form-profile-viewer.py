@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, getopt, pytis.util, config, pprint
+import sys, getopt, pprint
+import pytis.util, pytis.data, config
+
 from pytis.form import DBFormProfileManager
 
 def usage(msg=None):
@@ -63,7 +65,7 @@ def run():
         print '\n' + fullname
         for profile_id in manager.list_profile_ids(fullname):
             profile = manager.load_profile(fullname, profile_id)
-            print '  * %s: %s' % (profile.id(), profile.name().encode('utf-8'))
+            print '  * %s (%s):' % (profile.id(), profile.name()) #.encode('utf-8'))
             for key in ('sorting', 'columns', 'grouping', 'filter'):
                 if key == 'filter':
                     value = profile._packed_filter
