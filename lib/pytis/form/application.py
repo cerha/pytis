@@ -1310,7 +1310,7 @@ class DictionaryFormProfileManager(FormProfileManager):
         self._config = config
 
     def _key(self, fullname, profile_id):
-        return fullname +':'+ profile
+        return fullname +':'+ profile_id
 
     def save_profile(self, fullname, profile):
         assert profile.id() != '__saved_profiles__'
