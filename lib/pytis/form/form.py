@@ -779,7 +779,7 @@ class LookupForm(InnerForm):
             current_profile = self._default_profile
         self._current_profile = current_profile
         self._apply_profile(current_profile, do_select=False)
-        self._user_profiles = self._load_user_profiles()
+        self._profiles = self._load_profiles()
         self._init_select(async_count=True)
         
     def __getattr__(self, name):
@@ -818,18 +818,25 @@ class LookupForm(InnerForm):
         #return packed and self._unpack_condition(packed)
         return None
 
-    def _save_user_profile(self, profile):
+    def _save_profile(self, profile):
         profile_manager().save_profile(self._fullname(), profile)
     
-    def _load_user_profiles(self):
+    def _load_profiles(self):
         manager = profile_manager()
-        profiles = []
         fullname = self._fullname()
+        profiles = [self._default_profile]
+        for profile in self._view.profiles():
+            custom = manager.load_profile(fullname, profile.id())
+            if custom:
+                custom.finish(self._data)
+                profile = custom
+            profiles.append(profile)
         for profile_id in manager.list_profile_ids(fullname):
-            profile = manager.load_profile(fullname, profile_id)
-            if profile:
-                profile.finish(self._data)
-                profiles.append(profile)
+            if profile_id.startswith('_user_profile'):
+                profile = manager.load_profile(fullname, profile_id)
+                if profile:
+                    profile.finish(self._data)
+                    profiles.append(profile)
         return profiles
 
     def _default_sorting(self):
@@ -1024,7 +1031,8 @@ class LookupForm(InnerForm):
             self._apply_profile(profile)
         except Exception, e:
             log(OPERATIONAL, "Unable to apply profile:", e)
-            if profile in self._user_profiles:
+            # TODO: Handle also invalid customizations of predefined profiles.
+            if self._current_profile.id().startswith(self._USER_PROFILE_PREFIX):
                 delete = run_dialog(Question, icon=Question.ICON_ERROR,
                                     title=_("Neplatný profil"),
                                     message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
@@ -1032,9 +1040,10 @@ class LookupForm(InnerForm):
                                               "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
                                               "Pøejete si profil smazat?") % profile.name())
                 if delete:
-                    self._user_profiles.remove(profile)
+                    self._profiles.remove(profile)
                     profile_manager().drop_profile(self._fullname(), profile.id())
-                
+                    # TODO: Remove also related profile menu items?
+                    
     def _can_unfilter(self):
         return self._lf_filter is not None
         
@@ -1063,10 +1072,14 @@ class LookupForm(InnerForm):
                 if profile.name() == name:
                     message(_("Takto pojmenovaný profil ji¾ existuje."), beep_=True)
                     return
-            profile_id = '_profile_%d' % (len(self._user_profiles),)
+            user_profile_numbers = [int(profile.id()[len(self._USER_PROFILE_PREFIX):])
+                                    for profile in self._profiles
+                                    if profile.id().startswith(self._USER_PROFILE_PREFIX)
+                                    and profile.id()[len(self._USER_PROFILE_PREFIX):].isdigit()]
+            profile_id = self._USER_PROFILE_PREFIX + str(max(user_profile_numbers+[0])+1)
             profile = self._create_profile(profile_id, name)
-            self._user_profiles.append(profile)
-            self._save_user_profile(profile)
+            self._profiles.append(profile)
+            self._save_profile(profile)
             self._current_profile = profile
             message(_("Profil ulo¾en pod názvem '%s'.") % name)
             ctrl.SetEditable(False)
@@ -1079,25 +1092,27 @@ class LookupForm(InnerForm):
             ctrl.SetFocus()
     
     def _can_update_saved_profile(self):
-        current = self._current_profile
-        return (current in self._user_profiles
-                and (current.filter() != self._lf_filter
-                    or current.sorting() != self._lf_sorting)
+        p = self._current_profile
+        if p is not self._default_profile:
+            return False
+        else:
+            return (p.filter() != self._lf_filter or
+                    p.sorting() != self._lf_sorting)
         
     def _cmd_update_saved_profile(self):
         current = self._current_profile
+        index = self._profiles.index(current)
         profile = self._create_profile(current.id(), current.name())
-        index = self._user_profiles.index(current)
-        self._user_profiles[index] = profile
-        self._save_user_profile(profile)
+        self._profiles[index] = profile
+        self._save_profile(profile)
         self._current_profile = profile
     
     def _can_delete_saved_profile(self, ctrl):
-        return self._current_profile in self._user_profiles
+        return self._current_profile.id().startswith(self._USER_PROFILE_PREFIX)
 
     def _cmd_delete_saved_profile(self, ctrl):
         profile_manager().drop_profile(self._fullname(), self._current_profile.id())
-        self._user_profiles.remove(self._current_profile)
+        self._profiles.remove(self._current_profile)
         self._apply_profile(self._default_profile)
         ctrl.Delete(ctrl.GetSelection())
         ctrl.SetSelection(0)
@@ -1249,8 +1264,7 @@ class LookupForm(InnerForm):
         ctrl.Clear()
         ctrl.SetEditable(False)
         current_profile_id = self._current_profile.id()
-        profiles = (self._default_profile,) + self._view.profiles() + tuple(self._user_profiles)
-        for profile in profiles:
+        for profile in self._profiles:
             ctrl.Append(profile.name(), profile)
             if profile.id() == current_profile_id:
                 ctrl.SetSelection(ctrl.GetCount()-1)

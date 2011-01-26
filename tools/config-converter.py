@@ -123,7 +123,7 @@ def run():
                         manager.save_profile(fullname, profile, transaction=transaction)
                         count += 1
                 for i, (name, cond) in enumerate(state.pop('conditions', ())):
-                    profile = FormProfile('_profile_%d' % i, name.strip(), **kwargs)
+                    profile = FormProfile('_user_profile_%d' % (i+1), name.strip(), **kwargs)
                     profile._packed_filter = cond
                     manager.save_profile(fullname, profile, transaction=transaction)
                     count += 1
