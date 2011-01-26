@@ -24,12 +24,7 @@ u¾ivatelského rozhraní, neøe¹í obecnì start a zastavení aplikace.
 
 """
 
-import os.path
-import string
-import sys
-import thread
-import time
-import cPickle as pickle
+import sys, os.path, string, thread, time, base64, cPickle as pickle
 
 import config
 import pytis.data
@@ -1417,7 +1412,7 @@ class DBFormProfileManager(FormProfileManager):
 
     def save_profile(self, fullname, profile, transaction=None):
         row = self._row(fullname, profile.id(), transaction=transaction)
-        value = pytis.data.Value(pytis.data.String(), pickle.dumps(profile))
+        value = pytis.data.Value(pytis.data.String(), base64.b64encode(pickle.dumps(profile)))
         if row:
             row['profile_data'] = value
             self._data.update(row['id'], row, transaction=transaction)
@@ -1429,7 +1424,7 @@ class DBFormProfileManager(FormProfileManager):
     def load_profile(self, fullname, profile_id, transaction=None):
         row = self._row(fullname, profile_id, transaction=transaction)
         if row:
-            result = pickle.loads(str(row['profile_data'].value().encode('utf-8')))
+            result = pickle.loads(base64.b64decode(row['profile_data'].value()))
             if not isinstance(result, pytis.form.FormProfile):
                 result = {}
                 self._data.delete(row['id'], transaction=transaction)

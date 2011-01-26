@@ -119,13 +119,6 @@ def run():
                         manager.save_profile(fullname, profile, transaction=transaction)
                         count += 1
                 for i, (name, cond) in enumerate(state.pop('conditions', ())):
-                    try:
-                        name = name.decode('iso-8859-2')
-                    except:
-                        try:
-                            name = name.decode('utf-8')
-                        except:
-                            pass
                     profile = FormProfile('_profile_%d' % i, name.strip(), **kwargs)
                     profile._packed_filter = cond
                     manager.save_profile(fullname, profile, transaction=transaction)
