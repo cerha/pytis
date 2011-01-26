@@ -1376,7 +1376,7 @@ class DBFormProfileManager(FormProfileManager):
         
     """
     _TABLE = 'e_pytis_form_profiles'
-    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_data',)
+    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_name', 'profile_data',)
 
     def __init__(self, dbconnection, username=None):
         self._username = username or config.dbuser
@@ -1412,13 +1412,19 @@ class DBFormProfileManager(FormProfileManager):
 
     def save_profile(self, fullname, profile, transaction=None):
         row = self._row(fullname, profile.id(), transaction=transaction)
-        value = pytis.data.Value(pytis.data.String(), base64.b64encode(pickle.dumps(profile)))
+        pickled = pytis.data.Value(pytis.data.String(), base64.b64encode(pickle.dumps(profile)))
+        name = pytis.data.Value(pytis.data.String(), profile.name())
+        # The column 'profile_name' in the DB table is a redundant information
+        # just for occasional direct SQL manipulations or debugging.  It is
+        # ignored when loading back the profile.
         if row:
-            row['profile_data'] = value
+            row['profile_data'] = pickled
+            row['profile_name'] = name
             self._data.update(row['id'], row, transaction=transaction)
         else:
             values = self._key_values(fullname, profile.id())
-            row = pytis.data.Row(values + [('profile_data', value)])
+            row = pytis.data.Row(values + [('profile_data', pickled),
+                                           ('profile_name', name)])
             self._data.insert(row, transaction=transaction)
 
     def load_profile(self, fullname, profile_id, transaction=None):
