@@ -114,8 +114,8 @@ def run():
                                for param in ('sorting', 'grouping', 'columns')
                                if state.get(param) is not None])
                 if kwargs.has_key('sorting'):
-                    mapping = {pytis.form.LookupForm.SORTING_ASCENDENT: pytis.data.ASCENDENT,
-                               pytis.form.LookupForm.SORTING_DESCENDANT: pytis.data.DESCENDANT}
+                    mapping = {'SORTING_ASCENDENT': pytis.data.ASCENDENT,
+                               'SORTING_DESCENDANT': pytis.data.DESCENDANT}
                     kwargs['sorting'] = tuple([(cid, mapping[dir]) for cid, dir in kwargs['sorting']])
                 if kwargs:
                     for p in spec.profiles():
