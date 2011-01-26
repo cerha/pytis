@@ -714,12 +714,21 @@ class TitledForm:
 class LookupForm(InnerForm):
     """Formuláø s vyhledáváním a tøídìním."""
     
-    SORTING_NONE = 'SORTING_NONE'
-    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
-    SORTING_ASCENDENT = 'SORTING_ASCENDENT'
-    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
-    SORTING_DESCENDANT = 'SORTING_DESCENDANT'
-    """Konstanta pro argument direction pøíkazu 'COMMAND_SORT'."""
+    SORTING_NONE = 'NONE'
+    """Constant for 'COMMAND_SORT' 'direction' argument indicationg unsorting."""
+    SORTING_ASCENDENT = pytis.data.ASCENDENT
+    """Backwards compatibility alias for 'pytis.data.ASCENDENT'.
+
+    Deprecated: Use 'pytis.data.ASCENDENT' directly.
+
+    """
+    SORTING_DESCENDANT = pytis.data.DESCENDANT
+    """Backwards compatibility alias for 'pytis.data.DESCENDANT'.
+
+    Deprecated: Use 'pytis.data.DESCENDANT' directly.
+
+    """
+    _USER_PROFILE_PREFIX = '_user_profile_'
 
     def _init_attributes(self, sorting=None, filter=None, condition=None, arguments=None,
                          **kwargs):
@@ -744,8 +753,7 @@ class LookupForm(InnerForm):
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
         self._lf_select_count_ = None
-        self._lf_sorting = self._lf_initial_sorting = \
-                           self._form_sorting(sorting or self._default_sorting())
+        self._lf_sorting = self._lf_initial_sorting = sorting or self._default_sorting()
         # _lf_condition represents a static condition given by the constructor
         # argument, whereas _lf_filter represents the filtering condition,
         # which is part of the current user profile.  There is also a third
@@ -762,8 +770,8 @@ class LookupForm(InnerForm):
         # arguments.  Note, that this is not the same as the initialy selected
         # profile given by the 'default_profile' specification option which is
         # applied later below.
-        self._default_profile = Profile('__default__', _("Výchozí profil"),
-                                        filter=self._lf_filter, sorting=self._data_sorting())
+        self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
+                                        filter=self._lf_filter, sorting=self._lf_sorting)
         initial_profile_id = self._view.default_profile()
         if filter is None and sorting is None and initial_profile_id is not None:
             current_profile = find(initial_profile_id, self._view.profiles(), key=lambda p: p.id())
@@ -848,7 +856,7 @@ class LookupForm(InnerForm):
     def _init_data_select(self, data, async_count=False):
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
-                           sort=self._data_sorting(),
+                           sort=self._lf_sorting,
                            arguments=self._current_arguments(),
                            transaction=self._transaction, reuse=False,
                            async_count=async_count)
@@ -862,18 +870,6 @@ class LookupForm(InnerForm):
         # Make sure at least one line is returned (if any is actually present),
         # otherwise segfault may happen when committing an edited line.
         return self._lf_count(timeout=0, min_value=1)
-
-    def _form_sorting(self, sorting):
-        # Convert given data sorting to form sorting constants.
-        mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
-                       pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
-        return tuple([(cid, mapping[dir]) for cid, dir in sorting])
-
-    def _data_sorting(self):
-        # Convert current self._lf_sorting to data sorting constants.
-        mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
-                   self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
-        return tuple([(cid, mapping[dir]) for cid, dir in self._lf_sorting])
 
     def _sorting_columns(self):
         return [cid for cid, direction in self._lf_sorting]
@@ -963,7 +959,7 @@ class LookupForm(InnerForm):
 
     def _on_form_state_change(self):
         super(LookupForm, self)._on_form_state_change()
-        self._lf_sorting = self._form_sorting(self._default_sorting())
+        self._lf_sorting = self._default_sorting()
 
     def _compute_aggregate(self, operation, column_id, condition):
         condition = self._current_condition(filter=condition)
@@ -990,7 +986,7 @@ class LookupForm(InnerForm):
     def _apply_profile(self, profile, do_select=True):
         sorting = profile.sorting()
         if sorting is not None:
-            self._lf_sorting = self._form_sorting(sorting)
+            self._lf_sorting = sorting
         else:
             self._lf_sorting = self._lf_initial_sorting
         filter = profile.filter()
@@ -1054,7 +1050,7 @@ class LookupForm(InnerForm):
         self.COMMAND_FILTER.invoke(condition=condition)
 
     def _create_profile(self, id, name):
-        return FormProfile(id, name, filter=self._lf_filter, sorting=self._data_sorting())
+        return FormProfile(id, name, filter=self._lf_filter, sorting=self._lf_sorting)
         
     def _can_save_profile(self, ctrl, perform=False):
         return True
@@ -1086,7 +1082,7 @@ class LookupForm(InnerForm):
         current = self._current_profile
         return (current in self._user_profiles
                 and (current.filter() != self._lf_filter
-                     or current.sorting() != self._data_sorting()))
+                    or current.sorting() != self._lf_sorting)
         
     def _cmd_update_saved_profile(self):
         current = self._current_profile
@@ -1158,7 +1154,7 @@ class LookupForm(InnerForm):
                 mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
                            self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
                 direction = mapping[direction]
-            sorting = run_dialog(SortingDialog, columns, self._data_sorting(),
+            sorting = run_dialog(SortingDialog, columns, self._lf_sorting,
                                  col=col, direction=direction)
             if sorting is None:
                 return None

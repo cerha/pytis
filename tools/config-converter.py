@@ -112,7 +112,11 @@ def run():
                     continue
                 kwargs = dict([(param, state[param])
                                for param in ('sorting', 'grouping', 'columns')
-                               if state.has_key(param)])
+                               if state.get(param) is not None])
+                if kwargs.has_key('sorting'):
+                    mapping = {pytis.form.LookupForm.SORTING_ASCENDENT: pytis.data.ASCENDENT,
+                               pytis.form.LookupForm.SORTING_DESCENDANT: pytis.data.DESCENDANT}
+                    kwargs['sorting'] = tuple([(cid, mapping[dir]) for cid, dir in kwargs['sorting']])
                 if kwargs:
                     for p in spec.profiles():
                         profile = FormProfile(p.id(), p.name(), filter=p.filter(), **kwargs)

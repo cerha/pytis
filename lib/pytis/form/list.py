@@ -2806,7 +2806,7 @@ class BrowseForm(FoldableForm):
     def _formatter_parameters(self):
         name = self._name
         return {(name+'/'+pytis.output.P_CONDITION): pytis.data.AND(self._current_condition()),
-                (name+'/'+pytis.output.P_SORTING): self._data_sorting(),
+                (name+'/'+pytis.output.P_SORTING): self._lf_sorting,
                 (name+'/'+pytis.output.P_KEY): self._current_key(),
                 (name+'/'+pytis.output.P_ROW): copy.copy(self._table.row(self._current_cell()[0])),
                 (name+'/'+pytis.output.P_DATA): copy.copy(self._data)}
