@@ -397,6 +397,7 @@ class Group(_Container):
       vertical -- je-li pravdivé, budou prvky spojeny vertikálně, jinak budou
         spojeny horizontálně
       boxed -- právě když je pravdivé, budou prvky skupiny orámovány
+      box_margin -- space between the box and the content, 'Unit'
       balance -- není-li 'None', jedná se o tuple o počtu prvků shodném
         s počtem prvků skupiny, udávající vzájemný poměr velikostí pořadím
         odpovídajících prvků.  Velikost prvků ve směru orientace skupiny (dle
@@ -406,12 +407,14 @@ class Group(_Container):
     """
     KWARGS = {'vertical': False,
               'boxed': False,
+              'box_margin': None,
               'balance': None}
 
     def _lcg(self):
         presentation = lcg.Presentation()
         if self.arg_boxed:
             presentation.boxed = True
+            presentation.box_margin = self.arg_box_margin
         if self.arg_vertical:
             orientation = lcg.Orientation.VERTICAL
         else:
