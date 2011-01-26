@@ -1426,11 +1426,11 @@ class DBFormProfileManager(FormProfileManager):
         if row:
             result = pickle.loads(base64.b64decode(row['profile_data'].value()))
             if not isinstance(result, pytis.form.FormProfile):
-                result = {}
                 self._data.delete(row['id'], transaction=transaction)
+                result = None
             return result
         else:
-            return {}
+            return None
            
     def drop_profile(self, fullname, profile_id, transaction=None):
         row = self._row(fullname, profile_id)
