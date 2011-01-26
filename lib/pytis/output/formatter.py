@@ -1399,6 +1399,7 @@ class LCGFormatter(object):
                                       **self._body_parameters)
         presentation = lcg.Presentation()
         presentation.font_name = 'DejaVu'
+        presentation.font_family = lcg.FontFamily.FIXED_WIDTH
         def margin(key):
             size = self._page_layout.get(key)
             if size is None:
