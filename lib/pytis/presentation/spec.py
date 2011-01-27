@@ -588,6 +588,43 @@ class Profile(object):
         return cmp(self._sorting, other._sorting)
         
 
+class Profiles(tuple):
+    """A sequence of form profiles with an optional specification of the default profile.
+
+    Profiles can be passed as an ordinary sequence to 'ViewSpec' constructor's
+    'profiles' argument, but when you need to specify which profile is selected
+    by default in the user interface, you need to use this class and pass the
+    'default' argument to the constructor.
+
+    """
+    _ID_MATCHER = re.compile('[a-z0-9_]+')
+    
+    def __new__(cls, *args, **kwargs):
+        return tuple.__new__(cls, args)
+    
+    def __init__(self, *profiles, **kwargs):
+        """Arguments:
+        
+          profiles -- sequence of 'Profile' instances
+          default -- identifier of the profile (from 'profiles') to be selected by default
+        
+        """
+        if __debug__:
+            profile_ids = []
+            for p in profiles:
+                assert p.id() not in profile_ids, "Duplicate profile id '%s'" % p.id()
+                profile_ids.append(p.id())
+            default = kwargs.pop('default', None)
+            assert not kwargs
+            assert default is None or default in profile_ids, default
+        super(Profiles, self).__init__(*profiles)
+        self._default = default
+
+    def default(self):
+        """Return identifier of the filter to be selected by default."""
+        return self._default
+
+    
 # For backwards compatibility
 class Filter(Profile):
     """Deprecated: Use 'Profile' instead."""
@@ -627,11 +664,11 @@ class FilterSet(list):
         assert isinstance(id, str), id
         assert self._ID_MATCHER.match(id), id
         assert isinstance(title, basestring)
-        assert is_sequence(filters), filters
-        assert all([isinstance(f, Filter) for f in filters]), filters
+        assert isinstance(filters, (tuple, list)), filters
         if __debug__:
             filter_identifiers = []
             for f in filters:
+                assert isinstance(f, Filter), f
                 assert f.id() not in filter_identifiers, \
                     "Duplicate filter id '%s' in filter set '%s'" % (f.id(), id)
                 filter_identifiers.append(f.id())
@@ -1080,14 +1117,12 @@ class ViewSpec(object):
             of one argument (the 'PresentedRow' instance) returning the 'Style' for one row (based
             on its values).
 
-          profiles -- a sequence of predefined form profiles ('Profile'
-            instances) which the user can easilly switch from the user
-            interface.
-
-          default_profile -- a string identifier of the form profile, which
-            should be automatically preselected in the user interface.  This
-            must be an existing identifier of one of the profiles specified by
-            'profiles'.
+          profiles -- predefined form profiles as 'Profiles' instance or an
+            ordinary sequence of 'Profile' instances.  If used the user
+            interface will allow the user to switch between given profiles
+            easily.  You will mostly need to use a 'Profiles' instance if you
+            want to specify which of the profiles is selected in the user
+            interface by default.
 
           filter_sets -- a sequence of filter sets as 'FilterSet' instances.
             Filter sets are only supported by web applications to present
@@ -1133,9 +1168,9 @@ class ViewSpec(object):
               actions=(), sorting=None, grouping=None, group_heading=None, check=(),
               cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
-              profiles=(), default_profile=None, filters=(), conditions=(), default_filter=None,
-              filter_sets=(), aggregations=(), grouping_functions=(), bindings=(),
-              initial_folding=None, spec_name='', arguments=None, public=None):
+              profiles=(), filters=(), conditions=(), default_filter=None, filter_sets=(),
+              aggregations=(), grouping_functions=(), bindings=(), initial_folding=None,
+              spec_name='', arguments=None, public=None):
         assert isinstance(title, (str, unicode))
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1239,31 +1274,25 @@ class ViewSpec(object):
         if conditions:
             # `conditions' are for backwards compatibility.
             assert not filters, "When using 'filters', 'conditions' can not be used."
-            filters = conditions
+            assert not profiles, "When using 'profiles', 'conditions' can not be used."
+            profiles = conditions
         if filters:
-            # `filters' are for backwards compatibility as well.
+            # `filters' are for backwards compatibility.
             if isinstance(filters[0], FilterSet):
                 filter_sets = filters
+                assert default_filter is None
             else:
-                assert not profiles, \
-                    "When using 'profiles', 'filters' and 'conditions' can not be used."
-                profiles = filters
-        if default_filter:
-            assert not default_profile, "When using 'default_profile', 'default_filter' can not be used."
-            default_profile = default_filter
-        assert isinstance(profiles, (tuple, list))
+                # Filters are compatible with profiles (they only define the
+                # 'filter' property of the profile) so we can use them as
+                # profiles directly.
+                assert not profiles, "When using 'profiles', 'filters' can not be used."
+                profiles = Profiles(*filters, default=default_filter)
+        else:
+            assert default_filter is None
+        if not isinstance(profiles, Profiles):
+            assert isinstance(profiles, (tuple, list))
+            profiles = Profiles(*profiles)
         assert isinstance(filter_sets, (tuple, list))
-        if __debug__:
-            for fs in filter_sets:
-                assert isinstance(fs, FilterSet)
-            profile_identifiers = []
-            for p in profiles:
-                assert isinstance(p, Profile)
-                assert p.id() not in profile_identifiers, \
-                    "Duplicate profile id of %s: %s" % (spec_name, p.id())
-                profile_identifiers.append(p.id())
-            assert default_profile is None or default_profile in profile_identifiers, \
-                "Default profile not found in profiles of %s: %s" % (spec_name, default_profile)
         assert isinstance(aggregations, (tuple, list))
         if __debug__:
             for agg in aggregations:
@@ -1280,6 +1309,12 @@ class ViewSpec(object):
                     assert b.id() not in binding_identifiers, \
                            "Duplicate binding id of %s: %s" % (spec_name, b.id(),)
                     binding_identifiers.append(b.id())
+            for agg in aggregations:
+                assert agg in [getattr(pytis.data.Data, attr)
+                               for attr in public_attributes(pytis.data.Data)
+                               if attr.startswith('AGG_')]
+            for fs in filter_sets:
+                assert isinstance(fs, FilterSet)
         assert cleanup is None or callable(cleanup)
         assert on_new_record is None or callable(on_new_record)
         assert on_edit_record is None or callable(on_edit_record)
@@ -1309,9 +1344,8 @@ class ViewSpec(object):
         self._description = description
         self._help = help
         self._row_style = row_style
-        self._profiles = tuple(profiles)
-        self._default_profile = default_profile
-        self._filter_sets = filter_sets
+        self._profiles = profiles
+        self._filter_sets = tuple(filter_sets)
         self._aggregations = tuple(aggregations)
         self._grouping_functions = tuple(grouping_functions)
         self._bindings = tuple(bindings)
@@ -1433,12 +1467,8 @@ class ViewSpec(object):
         return self._row_style
 
     def profiles(self):
-        """Return predefined form profiles as a tuple of 'Profile' instances."""
+        """Return predefined form profiles 'Profiles' instance."""
         return self._profiles
-
-    def default_profile(self):
-        """Return the default profile identifier as a string."""
-        return self._default_profile
 
     def filter_sets(self):
         """Return the filter sets as a tuple of 'FilterSet' instances."""

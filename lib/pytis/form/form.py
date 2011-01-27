@@ -768,11 +768,11 @@ class LookupForm(InnerForm):
         # Store the Profile instance representing the form parameters defined
         # by the base specification and possibly also form constructor
         # arguments.  Note, that this is not the same as the initialy selected
-        # profile given by the 'default_profile' specification option which is
+        # profile given by the 'Profiles.default()' specification option which is
         # applied later below.
         self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
                                         filter=self._lf_filter, sorting=self._lf_sorting)
-        initial_profile_id = self._view.default_profile()
+        initial_profile_id = self._view.profiles().default()
         if filter is None and sorting is None and initial_profile_id is not None:
             current_profile = find(initial_profile_id, self._view.profiles(), key=lambda p: p.id())
         else:

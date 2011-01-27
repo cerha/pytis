@@ -807,10 +807,16 @@ class BrowseForm(LayoutForm):
             filters = self._view.filter_sets()
             profiles = self._view.profiles()
             if profiles:
-                filters += (FilterSet('profile', _("Profile"), profiles,
-                                      default=self._view.default_profile()),)
-        elif isinstance(filters[0], Filter):
-            filters = (FilterSet('__single', _("Filter"), filters),)
+                filters += (FilterSet('profile', _("Filter"),
+                                      [Filter(p.id(), p.name(), p.filter()) for p in filters],
+                                      default=profiles.default()),)
+        elif filters:
+            if isinstance(filters, Profiles):
+                filters = (FilterSet('__single', _("Filter"),
+                                     [Filter(p.id(), p.name(), p.filter()) for p in filters],
+                                     default=filters.default()),)
+            elif isinstance(filters[0], Filter):
+                filters = (FilterSet('__single', _("Filter"), filters),)
         params = {}
         if req is not None and req.param('form_name') == self._name:
             # Process request params if they belong to the current form.
