@@ -1135,11 +1135,11 @@ class ConfigurationStorage(object):
         """Return previously stored configuration options as a tuple of (name, value) pairs."""
 
     def write(self, options):
-        """Save the options as a tuple of (name, value) pairs."""
+        """Save the options passed as a tuple of (name, value) pairs."""
 
 
 class FileConfigurationStorage(ConfigurationStorage):
-
+    """File configuration storage based on 'wx.Config'."""
     _PYTIS_TYPE_MAPPING = (
         (pytis.data.String,  str),
         (pytis.data.Integer, int),
@@ -1204,6 +1204,12 @@ class FileConfigurationStorage(ConfigurationStorage):
 
 
 class DBConfigurationStorage(ConfigurationStorage):
+    """Database configuration storage backend.
+
+    The options are saved in a simple database table as a single string value
+    per user containtint the pickled sequence of options and values.
+
+    """
     _TABLE = 'e_pytis_config'
     _COLUMNS = ('username', 'config')
 
