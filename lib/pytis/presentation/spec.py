@@ -1275,12 +1275,12 @@ class ViewSpec(object):
             # `conditions' are for backwards compatibility.
             assert not filters, "When using 'filters', 'conditions' can not be used."
             assert not profiles, "When using 'profiles', 'conditions' can not be used."
-            profiles = conditions
+            filters = conditions
         if filters:
             # `filters' are for backwards compatibility.
             if isinstance(filters[0], FilterSet):
                 filter_sets = filters
-                assert default_filter is None
+                assert default_filter is None, default_filter
             else:
                 # Filters are compatible with profiles (they only define the
                 # 'filter' property of the profile) so we can use them as
@@ -1288,7 +1288,7 @@ class ViewSpec(object):
                 assert not profiles, "When using 'profiles', 'filters' can not be used."
                 profiles = Profiles(*filters, **{'default': default_filter})
         else:
-            assert default_filter is None
+            assert default_filter is None, default_filter
         if not isinstance(profiles, Profiles):
             assert isinstance(profiles, (tuple, list))
             profiles = Profiles(*profiles)
