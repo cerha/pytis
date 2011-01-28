@@ -2,7 +2,7 @@
 
 # Prostøedky pro definici a zpracování konfigurace bìhu aplikace
 # 
-# Copyright (C) 2002-2010 Brailcom, o.p.s.
+# Copyright (C) 2002-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -784,10 +784,6 @@ class Configuration(object):
 
     class _Option_form_state(HiddenOption):
         _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu formuláøù.")
-        _DEFAULT = {}
-
-    class _Option_application_state(HiddenOption):
-        _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu aplikace.")
         _DEFAULT = {}
 
     class _Option_row_focus_fg_color(ColorOption):

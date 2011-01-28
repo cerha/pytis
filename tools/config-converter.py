@@ -20,7 +20,7 @@
 
 import sys, getopt, sys, binascii, zlib, cPickle as pickle
 import pytis.util, pytis.data, config
-from pytis.form import DBFormProfileManager, FormProfile
+from pytis.form import DBConfigurationStorage, DBFormProfileManager, FormProfile
 
 
 def usage(msg=None):
@@ -128,7 +128,11 @@ def run():
                     profile._packed_filter = cond
                     manager.save_profile(fullname, profile, transaction=transaction)
                     count += 1
-            print count
+            for option, value in options.pop('application_state', {}).items():
+                options[option.replace('startup_forms', 'saved_startup_forms')] = value
+            options.pop('dbconnection', None) # Some old saved configs may include it due to an old bug.
+            cfg.write(options.items())
+            print count, len(options)
         data.close()
     except:
         transaction.rollback()

@@ -79,9 +79,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _WINDOW_MENU_TITLE = _("Okn&a")
 
     _STATE_RECENT_FORMS = 'recent_forms'
-    _STATE_STARTUP_FORMS = 'startup_forms'
-    _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
-    _STATE_FORM_CONFIG = 'form_config'
+    _STATE_STARTUP_FORMS = 'saved_startup_forms'
+    _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit' # Avoid colision with config.startup_forms!
+    _STATE_FORM_CONFIG = 'saved_form_config'
 
     def _get_command_handler_instance(cls):
         global _application
@@ -141,17 +141,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
             keymap.define_key(key, cmd, args)
         global _application
         _application = self
-        self._initial_config = [(o, copy.copy(getattr(config, o)))
-                                for o in configurable_options() + \
-                                ('application_state', 'form_state')]
+        self._initial_config = [(o, copy.copy(getattr(config, o))) for o in configurable_options()]
+        self._saved_state = {}
         # Read the stored configuration.
         try:
             cfg = DBConfigurationStorage(config.dbconnection, config.dbuser)
         except pytis.data.DBException:
             cfg = FileConfigurationStorage(self._config_filename())
         for option, value in cfg.read():
-            if option != 'dbconnection':
+            if hasattr(config, option):
                 setattr(config, option, value)
+            else:
+                self._saved_state[option] = value
         self._configuration_stroage = cfg
         # Initialize login and password.
         def test():
@@ -555,7 +556,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _get_state_param(self, name, default=None, cls=None, item_cls=None):
         try:
-            param = config.application_state[name]
+            param = self._saved_state[name]
         except KeyError:
             return default
         if cls is not None and not isinstance(param, cls):
@@ -569,11 +570,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return param
 
     def _set_state_param(self, name, value):
-        config.application_state[name] = value
+        self._saved_state[name] = value
         
     def _unset_state_param(self, name):
-        if config.application_state.has_key(name):
-            del config.application_state[name]
+        if name in self._saved_state:
+            del self._saved_state[name]
             
     def _cleanup(self):
         # Zde ignorujeme v¹emo¾né výjimky, aby i pøi pomìrnì znaènì havarijní
@@ -620,7 +621,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except Exception, e:
             safelog(str(e))
         try:
-            options = []
+            options = list(self._saved_state.items())
             for option, initial_value in self._initial_config:
                 current_value = getattr(config, option)
                 if current_value != initial_value:
@@ -1139,6 +1140,11 @@ class ConfigurationStorage(object):
 
 class FileConfigurationStorage(ConfigurationStorage):
 
+    _PYTIS_TYPE_MAPPING = (
+        (pytis.data.String,  str),
+        (pytis.data.Integer, int),
+        (pytis.data.Boolean, bool),
+        )
     def __init__(self, filename):
         self._filename = filename
         
@@ -1150,42 +1156,48 @@ class FileConfigurationStorage(ConfigurationStorage):
             cont, key, index = wxconfig.GetNextEntry(index)
         return options
 
+    def _option_type(self, option):
+        if option == 'save_forms_on_exit':
+            return bool
+        elif hasattr(config, option):
+            t = config.option(option).type()
+            for pytis_type, python_type in self._PYTIS_TYPE_MAPPING:
+                if isinstance(t, pytis_type):
+                    return python_type
+        # The value will be pickled
+        return None
+
     def read(self):
+        def read_pickled(option):
+            return pickle.loads(str(wxconfig.Read(option)))
         log(OPERATIONAL, "Loading saved configuration:", self._filename)
         wxconfig = wx.Config(self._filename)
-        mapping = ((pytis.data.String,  wxconfig.Read),
-                   (pytis.data.Integer, wxconfig.ReadInt),
-                   (pytis.data.Boolean, wxconfig.ReadBool))
+        mapping = {str: wxconfig.Read,
+                   int: wxconfig.ReadInt,
+                   bool: wxconfig.ReadBool}
         options = []
         for option in self._stored_options(wxconfig):
-            t = config.option(option).type()
-            for type, read in mapping:
-                if isinstance(t, type):
-                    value = read(option)
-                    break
-            else:
-                value = pickle.loads(str(wxconfig.Read(option)))
+            t = self._option_type(option)
+            method = mapping.get(t, read_pickled)
+            value = method(option)
             options.append((option, value))
         return tuple(options)
             
     def write(self, options):
+        def write_pickled(option, value):
+            wxconfig.Write(option, pickle.dumps(value))
         log(OPERATIONAL, "Saving configuration:", self._filename)
         wxconfig = wx.Config(self._filename)
+        mapping = {str: wxconfig.Write,
+                   int: wxconfig.WriteInt,
+                   bool: wxconfig.WriteBool}
         to_delete = self._stored_options(wxconfig)
-        mapping = ((pytis.data.String,  wxconfig.Write),
-                   (pytis.data.Integer, wxconfig.WriteInt),
-                   (pytis.data.Boolean, wxconfig.WriteBool))
         for option, value in options:
-            t = config.option(option).type()
             if option in to_delete:
                 to_delete.remove(option)
-            for type, write in mapping:
-                #TODO: Co None hodnoty???
-                if isinstance(t, type):
-                    write(option, value)
-                    break
-            else:
-                wxconfig.Write(option, pickle.dumps(value))
+            t = self._option_type(option)
+            method = mapping.get(t, write_pickled)
+            method(option, value)
         for option in to_delete:
             wxconfig.DeleteEntry(option)
         wxconfig.Flush()
