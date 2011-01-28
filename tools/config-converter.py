@@ -91,9 +91,10 @@ def run():
                 continue
             print "  -", row['uzivatel'].value(), '...',
             count = 0
-            unpacked = dict(pickle.loads(zlib.decompress(binascii.a2b_base64(saved_config))))
+            options = dict(pickle.loads(zlib.decompress(binascii.a2b_base64(saved_config))))
+            cfg = DBConfigurationStorage(config.dbconnection, username=row['uzivatel'].value())
             manager = DBFormProfileManager(config.dbconnection, username=row['uzivatel'].value())
-            for key, state in unpacked.get('form_state', {}).items():
+            for key, state in options.pop('form_state', {}).items():
                 if not state:
                     continue
                 formname, specname = key.split('/')

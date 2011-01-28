@@ -1286,7 +1286,7 @@ class ViewSpec(object):
                 # 'filter' property of the profile) so we can use them as
                 # profiles directly.
                 assert not profiles, "When using 'profiles', 'filters' can not be used."
-                profiles = Profiles(*filters, default=default_filter)
+                profiles = Profiles(*filters, **{'default': default_filter})
         else:
             assert default_filter is None
         if not isinstance(profiles, Profiles):
