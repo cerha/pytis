@@ -1305,12 +1305,12 @@ class LCGFormatter(object):
         self._coding = self._resolve(template_id, 'coding')
         self._doc_header = self._resolve(template_id, 'doc_header')
         self._doc_footer = self._resolve(template_id, 'doc_footer')
-        self._page_header = self._resolve(template_id, 'page_header', default=Null())
+        self._page_header = self._resolve(template_id, 'page_header', default=None)
         self._first_page_header = self._resolve(template_id, 'first_page_header',
                                                 default=self._page_header)
         self._page_footer = self._resolve(template_id, 'page_footer',
                                           default=Center('Strana ', PageNumber()))
-        self._page_background = self._resolve(template_id, 'background', default=Null())
+        self._page_background = self._resolve(template_id, 'background', default=None)
         self._page_layout = self._resolve(template_id, 'page_layout', default={})
         body = self._resolve(template_id, 'body')
         parameters = copy.copy(self._template_parameters(body))
@@ -1320,7 +1320,11 @@ class LCGFormatter(object):
                      ('page_background', self._page_background,),
                      ):
             if not parameters.has_key(p):
-                parameters[p] = {None: a.lcg()}
+                if a is None:
+                    value = None
+                else:
+                    value = a.lcg()
+                parameters[p] = {None: value}
         self._body_parameters = parameters
         if (not isinstance(body, Document) and
             body and
