@@ -762,8 +762,8 @@ class LookupForm(InnerForm):
         # data object.
         self._lf_condition = condition
         self._lf_filter = filter
-        self._lf_last_filter = filter or self._load_condition('filter')
-        self._lf_search_condition = self._load_condition('search')
+        self._lf_last_filter = filter
+        self._lf_search_condition = None
         self._arguments = arguments
         # Store the Profile instance representing the form parameters defined
         # by the base specification and possibly also form constructor
@@ -806,17 +806,6 @@ class LookupForm(InnerForm):
 
     def _form_log_info(self):
         return 'sort=%s, filter=%s' % (self._lf_sorting, self._lf_filter,)
-
-    def _save_condition(self, key, condition):
-        # TODO: Save as some special profile?
-        #self._set_state_param(key, self._pack_condition(condition))
-        pass
-
-    def _load_condition(self, key):
-        # TODO: See _save_condition above.
-        #packed = self._get_state_param(key, None, tuple)
-        #return packed and self._unpack_condition(packed)
-        return None
 
     def _save_profile(self, profile):
         profile_manager().save_profile(self._fullname(), profile)
@@ -962,7 +951,6 @@ class LookupForm(InnerForm):
         if direction is not None:
             self._lf_search_condition = condition
             self._search(condition, direction)
-            self._save_condition('search', condition)
 
     def _on_form_state_change(self):
         super(LookupForm, self)._on_form_state_change()
@@ -1288,7 +1276,6 @@ class LookupForm(InnerForm):
         self._apply_filter(condition)
         if condition is not None:
             self._lf_last_filter = condition
-            self._save_condition('filter', condition)
             
     def data(self):
         """Return a new instance of the data object used by the form.
