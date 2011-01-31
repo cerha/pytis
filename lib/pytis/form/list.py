@@ -2418,10 +2418,7 @@ class FoldableForm(ListForm):
     def _determine_sorting(self, col, direction, primary):
         sorting = super(FoldableForm, self)._determine_sorting(col, direction, primary)
         if sorting is () and self._folding_column_id is not None:
-            sorting = self._default_sorting()
-            mapping = {pytis.data.ASCENDENT:  self.SORTING_ASCENDENT,
-                       pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
-            sorting = tuple([(cid, mapping[dir]) for cid, dir in sorting])
+            sorting = tuple(self._default_sorting())
         return sorting
     
     def _current_condition(self, filter=None, display=False):
