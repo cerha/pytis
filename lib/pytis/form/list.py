@@ -161,7 +161,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                         and isinstance(width, types.IntType)])
         except ValueError:
             self._column_widths = {}
-    
+
+    def _apply_profile_parameters(self, profile):
+        super(ListForm, self)._apply_profile_parameters(profile)
+        self._init_columns(profile.columns())
+        self._init_grouping(profile.grouping())
+        
+    def _apply_profile(self, profile, refresh=True):
+        self._apply_profile_parameters(profile)
+        self._update_grid(init_columns=True)
+        self._refresh(when=self.DOIT_IMMEDIATELY)
+            
     def _select_columns(self):
         return [c.id() for c in self._data.columns() 
                 if not isinstance(c.type(), pytis.data.Big)]
@@ -1478,16 +1488,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._data.remove_callback_on_change(self.on_data_change)
         super(ListForm, self)._cleanup_data()
 
-    def _apply_profile_parameters(self, profile):
-        super(ListForm, self)._apply_profile_parameters(profile)
-        self._init_columns(profile.columns())
-        self._init_grouping(profile.grouping())
-        
-    def _apply_profile(self, profile, refresh=True):
-        self._apply_profile_parameters(profile)
-        self._update_grid(init_columns=True)
-        self._refresh(when=self.DOIT_IMMEDIATELY)
-            
     # Zpracování pøíkazù
     
     def can_command(self, command, **kwargs):
