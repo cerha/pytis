@@ -99,7 +99,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _init_attributes(self, select_row=0, **kwargs):
         self._aggregation_results = SimpleCache(self._get_aggregation_result)
         super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
-        self._init_column_widths()
         self._fields = self._view.fields()
         self._selection_candidate = None
         self._selection_callback_candidate = None
@@ -151,16 +150,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             grouping = self._view.grouping()
         self._grouping = grouping
             
-    def _init_column_widths(self):
-        widths = self._get_state_param('column_width', (), types.TupleType)
-        try:
-            #TODO: Should column widths be saved/restored in dialog units?
-            self._column_widths = dict([(id, width) for id, width in widths
-                                        if self._view.field(id) is not None \
-                                        and isinstance(width, types.IntType)])
-        except ValueError:
-            self._column_widths = {}
-
     def _init_aggregations(self, aggregations):
         if aggregations is None:
             aggregations = self._view.aggregations()
@@ -171,6 +160,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._init_columns(profile.columns())
         self._init_grouping(profile.grouping())
         self._init_aggregations(profile.aggregations())
+        if isinstance(profile, FormProfile):
+            self._column_widths = profile.column_widths()
+        else:
+            self._column_widths = {}
         
     def _apply_profile(self, profile, refresh=True):
         self._apply_profile_parameters(profile)
@@ -192,7 +185,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _current_state_profile_kwargs(self):
         return dict(super(ListForm, self)._current_state_profile_kwargs(),
                     columns=tuple([c.id() for c in self._columns]),
-                    grouping=self._grouping)
+                    grouping=self._grouping,
+                    column_widths=self._column_widths)
         
     def _update_label_height(self):
         height = self._label_height
@@ -1253,7 +1247,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         super(ListForm, self)._on_form_state_change()
         self._init_columns()
         self._init_grouping()
-        self._init_column_widths()
+        #self._init_column_widths()
         self._update_grid(init_columns=True)
         
     def _on_right_click(self, event):

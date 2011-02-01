@@ -35,8 +35,9 @@ import wx
 
 class FormProfile(pytis.presentation.Profile):
 
-    def __init__(self, id, name, **kwargs):
+    def __init__(self, id, name, column_widths=None, **kwargs):
         self._packed_filter = None
+        self._column_widths = column_widths or {}
         super(FormProfile, self).__init__(id, name, **kwargs)
         
     def __getstate__(self):
@@ -99,6 +100,9 @@ class FormProfile(pytis.presentation.Profile):
                     (self._packed_filter, str(e)))
             else:
                 self._packed_filter = None
+
+    def column_widths(self):
+        return self._column_widths
 
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
