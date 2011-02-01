@@ -97,7 +97,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
 
     def _init_attributes(self, select_row=0, **kwargs):
-        self._aggregations = list(self._view.aggregations())
         self._aggregation_results = SimpleCache(self._get_aggregation_result)
         super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
         self._init_column_widths()
@@ -162,13 +161,20 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         except ValueError:
             self._column_widths = {}
 
+    def _init_aggregations(self, aggregations):
+        if aggregations is None:
+            aggregations = self._view.aggregations()
+        self._aggregations = list(aggregations)
+        
     def _apply_profile_parameters(self, profile):
         super(ListForm, self)._apply_profile_parameters(profile)
         self._init_columns(profile.columns())
         self._init_grouping(profile.grouping())
+        self._init_aggregations(profile.aggregations())
         
     def _apply_profile(self, profile, refresh=True):
         self._apply_profile_parameters(profile)
+        self._update_label_height()
         self._update_grid(init_columns=True)
         self._refresh(when=self.DOIT_IMMEDIATELY)
             

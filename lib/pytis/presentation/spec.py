@@ -512,7 +512,8 @@ class Profile(object):
 
     """
     
-    def __init__(self, id, name, filter=None, sorting=None, grouping=None, columns=None):
+    def __init__(self, id, name, filter=None, sorting=None, columns=None, grouping=None,
+                 aggregations=None):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
@@ -524,12 +525,16 @@ class Profile(object):
           sorting -- sorting in the same format as accepted by the 'sort'
             argument of 'pytis.data.Data.select()'.  If None, the default
             sorting given by the specification applies.
-          grouping -- visual grouping of table rows in the same format as
-            accepted by the 'grouping' argument of 'ViewSpec'.  If None, the
-            grouping defined by the specification applies.
           columns -- sequence of visible form columns (string field
             identifiers) in the order in which they appear in the table.  If
             None, the columns defined by the specification are displayed.
+          grouping -- visual grouping of table rows in the same format as
+            accepted by the 'grouping' argument of 'ViewSpec'.  If None, the
+            grouping defined by the specification applies.
+          aggregations -- aggregation functions enabled in this profile in the
+            same format as accepted by the 'aggregations' argument of
+            'ViewSpec'.  If None, the aggregations defined by the specification
+            apply.
           
         """
         assert isinstance(id, basestring)
@@ -538,12 +543,14 @@ class Profile(object):
         assert sorting is None or isinstance(sorting, tuple), sorting
         assert grouping is None or isinstance(grouping, (basestring, tuple)), grouping
         assert columns is None or isinstance(columns, (tuple, list)), columns
+        assert aggregations is None or isinstance(aggregations, (tuple, list)), aggregations
         self._id = id
         self._name = name
         self._filter = filter
         self._sorting = sorting
         self._grouping = grouping and xtuple(grouping)
         self._columns = columns and tuple(columns)
+        self._aggregations = aggregations and tuple(aggregations)
     
     def id(self):
         """Return the unique profile identifier."""
@@ -567,6 +574,9 @@ class Profile(object):
 
     def columns(self):
         return self._columns
+
+    def aggregations(self):
+        return self._aggregations
 
     def __cmp__(self, other):
         """Return true if 'other' has the same profile parameters as 'self'.
