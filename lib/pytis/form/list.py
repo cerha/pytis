@@ -1109,10 +1109,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         event.Skip()
 
     def _remember_column_size(self, col):
-        id = self._columns[col].id()
-        self._column_widths[id] = self._grid.GetColSize(col)
-        saved_value = tuple(self._column_widths.items())
-        self._set_state_param('column_width', saved_value)
+        self._column_widths[self._columns[col].id()] = self._grid.GetColSize(col)
         
     def _on_label_paint(self, event):
         def triangle(x, y, r=4, reversed=True):
@@ -1605,7 +1602,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             cols = self._sorting_columns()
             l = min(len(cols), len(self._grouping))
             self._grouping = tuple(cols[:l])
-            self._set_state_param('grouping', self._grouping)
             # Make the changes visible.
             self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': sorting})
         return sorting
@@ -1755,7 +1751,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return
         else:
             self._grouping = ()
-        self._set_state_param('grouping', self._grouping)
         self._update_grid()
     
     def _cmd_incremental_search(self, full=False, prefill=None):
