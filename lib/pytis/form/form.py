@@ -1074,8 +1074,21 @@ class LookupForm(InnerForm):
         self.COMMAND_FILTER.invoke(condition=condition)
 
     def _create_profile(self, id, name):
-        return FormProfile(id, name, filter=self._lf_filter, sorting=self._lf_sorting)
+        return FormProfile(id, name, **self._current_state_profile_kwargs())
+
+    def _current_state_profile_kwargs(self):
+        """Return the profile parameters representing the current state of the form.
+
+        The returned dictionary is passed to 'FormProfile' constructor as
+        keyword arguments.  Note, that the profile instance stored in
+        `self._current_profile' may not have the same parameters if the user
+        changed them since he switched to that profile (`self._current_profile'
+        instance is not updated when the form state changes, it representes the
+        currently saved state).
         
+        """
+        return dict(filter=self._lf_filter, sorting=self._lf_sorting)
+         
     def _can_save_profile(self, ctrl, perform=False):
         return True
     

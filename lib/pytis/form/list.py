@@ -173,8 +173,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
 
-    def _current_profile_params(self):
-        return dict(super(ListForm, self)._current_profile_params(),
+    def _current_state_profile_kwargs(self):
+        return dict(super(ListForm, self)._current_state_profile_kwargs(),
                     columns=tuple([c.id() for c in self._columns]),
                     grouping=self._grouping)
         
