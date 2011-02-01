@@ -730,17 +730,29 @@ class LookupForm(InnerForm):
     """
     _USER_PROFILE_PREFIX = '_user_profile_'
 
-    def _init_attributes(self, sorting=None, filter=None, condition=None, arguments=None,
-                         **kwargs):
+    def _init_attributes(self, filter=None, sorting=None, columns=None, grouping=None,
+                         condition=None, arguments=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
 
-          sorting -- specification of initial sorting, same as the argument
-            'sort' of 'pytis.data.Data.select()'.
           filter -- initial filter condition as a 'pytis.data.Operator'
             instance.  This filter is indicated to the user and can be modified
-            as any other user-defined filter.
+            as any other user-defined filter (as opposed to the 'condition'
+            defined below).  If not None, overrides the filter of the default
+            form profile.
+          sorting -- specification of initial form sorting in the same format
+            as the argument 'sorting' of the 'Profile' constructor.  If not
+            None, overrides the sorting of the default form profile.
+          columns -- specification of initial form columns in the same format
+            as the argument 'columns' of the 'Profile' constructor.  If not
+            None, overrides the columns of the default form profile.  Columns
+            are actually used only by some derived classes (table forms).
+          grouping -- specification of initial visual grouping of table rows in
+            the same format as the argument 'grouping' of the 'Profile'
+            constructor.  If not None, overrides the grouping of the default
+            form profile.  Grouping is actually used only by some derived
+            classes (table forms).
           condition -- 'pytis.data.Operator' instance filtering the rows of the
             underlying data object.  This filter is not indicated to the user
             nor is there a chance to turn it off.
@@ -752,8 +764,23 @@ class LookupForm(InnerForm):
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
-        self._lf_select_count_ = None
-        self._lf_sorting = self._lf_initial_sorting = sorting or self._default_sorting()
+        assert columns is None or isinstance(columns, (list, tuple))
+        # Create a Profile instance representing the form constructor
+        # arguments.  Note, that the default profile is not necessarily the
+        # initially selected profile.
+        self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
+                                        filter=filter, sorting=sorting, columns=columns,
+                                        grouping=grouping)
+        self._profiles = self._load_profiles()
+        initial_profile_id = self._view.profiles().default()
+        if initial_profile_id:
+            current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
+        else:
+            current_profile = self._default_profile
+        # _apply_profile_parameters() will initialize all the profile related attributes.
+        self._apply_profile_parameters(current_profile)
+        self._lf_initial_sorting = self._lf_sorting
+        self._lf_last_filter = self._lf_filter
         # _lf_condition represents a static condition given by the constructor
         # argument, whereas _lf_filter represents the filtering condition,
         # which is part of the current user profile.  There is also a third
@@ -761,25 +788,9 @@ class LookupForm(InnerForm):
         # not visible to the form at all -- it is applied at the level of the
         # data object.
         self._lf_condition = condition
-        self._lf_filter = filter
-        self._lf_last_filter = filter
         self._lf_search_condition = None
         self._arguments = arguments
-        # Store the Profile instance representing the form parameters defined
-        # by the base specification and possibly also form constructor
-        # arguments.  Note, that this is not the same as the initialy selected
-        # profile given by the 'Profiles.default()' specification option which is
-        # applied later below.
-        self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
-                                        filter=self._lf_filter, sorting=self._lf_sorting)
-        initial_profile_id = self._view.profiles().default()
-        if filter is None and sorting is None and initial_profile_id is not None:
-            current_profile = find(initial_profile_id, self._view.profiles(), key=lambda p: p.id())
-        else:
-            current_profile = self._default_profile
-        self._current_profile = current_profile
-        self._apply_profile(current_profile, do_select=False)
-        self._profiles = self._load_profiles()
+        self._lf_select_count_ = None
         self._init_select(async_count=True)
         
     def __getattr__(self, name):
@@ -978,23 +989,39 @@ class LookupForm(InnerForm):
         self._init_select(async_count=False)
         self.select_row(self._current_key())
 
-    def _apply_profile(self, profile, do_select=True):
+    def _apply_profile_parameters(self, profile):
+        """Set the form state attributes according to given 'Profile' instance.
+
+        This method doesn't actually refresh the form display.  It only sets
+
+        the profile related form attributes to match the parameters of given
+        profile.  Only the attributes recognized by the class are set in the
+        base class.  Derived classes, which also have attributes for other
+        profile parameters should override this method to set their specific
+        attributes too.
+        
+        Note: The attribute '_current_profile' always contains the 'Profile'
+        instance passed to the last '_apply_profile_parameters()' call.  It is
+        not updated when the form state later changes due to user actions.
+        
+        """
         sorting = profile.sorting()
-        if sorting is not None:
-            self._lf_sorting = sorting
-        else:
-            self._lf_sorting = self._lf_initial_sorting
-        filter = profile.filter()
-        if do_select:
-            if filter != self._lf_filter:
-                self._apply_filter(filter)
-            else:
-                # Apply sorting only if filter was not applied to prevent multiple
-                # calls to select_row().
-                self.select_row(self._current_key())
-        else:
-            self._lf_filter = filter
+        if sorting is None:
+            sorting = self._default_sorting()
         self._current_profile = profile
+        self._lf_filter = profile.filter()
+        self._lf_sorting = sorting
+        
+    def _apply_profile(self, profile, refresh=True):
+        """Change the current form state according to given 'Profile' instance.
+
+        Call '_apply_profile_parameters()' and redraw the form to match the new
+        state.
+
+        """
+        self._apply_profile_parameters(profile)
+        self._init_select(async_count=False)
+        self.select_row(self._current_key())
 
     def _can_filter(self, condition=None, last=False):
         return not last or self._lf_last_filter is not None

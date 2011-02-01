@@ -96,29 +96,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=self._get_row_number(self._row.row()))
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
 
-    def _init_attributes(self, columns=None, grouping=None, select_row=0, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
-
-        Argumenty:
-
-          columns -- pokud není None, bude formuláø pou¾ívat dané sloupce.
-            Jinak je pou¾it seznam sloupcù daný specifikací.  Hodnotou je
-            sekvence identifikátorù sloupcù obsa¾enýh ve specifikaci.
-
-          grouping -- id sloupce vizuálního seskupování nebo None.
-            
-          kwargs -- argumenty pøedané konstruktoru pøedka.
-
-        """
+    def _init_attributes(self, select_row=0, **kwargs):
         self._aggregations = list(self._view.aggregations())
         self._aggregation_results = SimpleCache(self._get_aggregation_result)
         super(ListForm, self)._init_attributes(_singleline=True, select_row=select_row, **kwargs)
-        assert columns is None or is_sequence(columns)
-        # Inicializace atributù závislých na u¾ivatelském nastavení.
-        self._init_columns(columns)
-        self._init_grouping(grouping)
         self._init_column_widths()
-        # Inicializace ostatních atributù.
         self._fields = self._view.fields()
         self._selection_candidate = None
         self._selection_callback_candidate = None
@@ -129,14 +111,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._column_to_move = None
         self._column_move_target = None
         self._mouse_dragged = False
-        self._check_default_columns = not columns
         self._search_panel = None
         self._last_updated_row_count = 0
         self._grid = None
-        
-    def _default_columns(self):
-        return self._view.columns()
 
+    def _default_columns(self):
+        """Return the default form columns as a sequence of field identifiers (strings)."""
+        return self._view.columns()
+    
     def _init_select(self, async_count=False, grid_update=True):
         self._aggregation_results.reset()
         result = super(ListForm, self)._init_select(async_count=async_count)
@@ -162,21 +144,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _init_columns(self, columns=None):
         if not columns:
-            default_columns = self._default_columns()
-            columns = []
-            for id in self._get_state_param('columns', default_columns, types.TupleType):
-                f = self._view.field(id)
-                if f and not f.disable_column():
-                    columns.append(id)
-            if not columns:
-                columns = default_columns
+            columns = self._default_columns()
         self._columns = [self._view.field(id) for id in columns]
-    
+        
     def _init_grouping(self, grouping=None):
-        if grouping is None:
-            grouping = self._get_state_param('grouping', None, types.TupleType)
-            if grouping and None in [self._view.field(cid) for cid in grouping]:
-                grouping = None
         if grouping is None:
             grouping = self._view.grouping()
         self._grouping = grouping
@@ -202,6 +173,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
 
+    def _current_profile_params(self):
+        return dict(super(ListForm, self)._current_profile_params(),
+                    columns=tuple([c.id() for c in self._columns]),
+                    grouping=self._grouping)
+        
     def _update_label_height(self):
         height = self._label_height
         if self._aggregations:
@@ -880,17 +856,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 if the_row is not None:
                     self._run_callback(self.CALL_SELECTION, the_row)
                     self._post_selection_hook(the_row)
-        if self._check_default_columns:
-            self._check_default_columns = False
-            columns = self._default_columns()
-            if columns != self._get_state_param('default_columns', columns):
-                msg = _("Specifikace sloupcù formuláøe byla zmìnìna.\n"
-                        "Va¹e u¾ivatelské nastavení sloupcù je ji¾ zastaralé.\n"
-                        "Chcete pou¾ít nové výchozí nastavení sloupcù?")
-                if run_dialog(Question, msg):
-                    self.COMMAND_RESET_FORM_STATE.invoke()
-                else:
-                    self._set_state_param('default_columns', columns)
         # Update grid when lazy row count computation is in progress; we
         # mustn't do it much often otherwise row count computation gets disrupted
         # and slowed down significantly.  Hence the timeout value below.
@@ -1524,12 +1489,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._data.remove_callback_on_change(self.on_data_change)
         super(ListForm, self)._cleanup_data()
 
-    def _apply_profile(self, profile, do_select=True):
-        super(ListForm, self)._apply_profile(profile, do_select=False)
-        self._init_grouping(profile.grouping())
+    def _apply_profile_parameters(self, profile):
+        super(ListForm, self)._apply_profile_parameters(profile)
         self._init_columns(profile.columns())
-        if do_select:
-            self._refresh(when=self.DOIT_IMMEDIATELY)
+        self._init_grouping(profile.grouping())
+        
+    def _apply_profile(self, profile, refresh=True):
+        self._apply_profile_parameters(profile)
+        self._update_grid(init_columns=True)
+        self._refresh(when=self.DOIT_IMMEDIATELY)
             
     # Zpracování pøíkazù
     
