@@ -246,16 +246,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         t = self._table
         notify = self._notify_grid
         current_row = self._table.current_row()
-        old_columns = tuple([c.id() for c in self._columns])
         # Uprav velikost gridu
         g.BeginBatch()
         try:
             if init_columns:
-                deleted = len(self._columns)
-                self._init_columns()
-                inserted = len(self._columns)
-                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, deleted)
-                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, inserted)
+                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_DELETED, 0, g.GetNumberCols())
+                notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, 0, len(self._columns))
             if delete_column is not None:
                 i = self._columns.index(delete_column)
                 del self._columns[i]
@@ -266,15 +262,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     i = len(self._columns)
                 self._columns.insert(i, insert_column)
                 notify(wx.grid.GRIDTABLE_NOTIFY_COLS_INSERTED, i, 1)
-            new_columns = tuple([c.id() for c in self._columns])
-            if new_columns != old_columns and not init_columns:
-                default_columns = self._default_columns()
-                if new_columns == default_columns:
-                    self._unset_state_param('columns')
-                    self._unset_state_param('default_columns')
-                else:
-                    self._set_state_param('columns', new_columns)
-                    self._set_state_param('default_columns', default_columns)
             if data_init:
                 row_count = self._init_select(async_count=True, grid_update=False)
             else:
@@ -287,14 +274,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                      inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
             old_row_count = g.GetNumberRows()
             self._update_grid_length(g, row_count, current_row)
-            if new_columns != old_columns or init_columns:
+            if insert_column is not None or delete_column is not None or init_columns:
                 self._init_col_attr()
         finally:
             g.EndBatch()
         # Závìreèné úpravy
         self._update_colors()
         self._resize_columns()
-        if row_count != old_row_count or new_columns != old_columns or init_columns:
+        if row_count != old_row_count or insert_column is not None or delete_column is not None \
+                or init_columns:
             # Force scrollbar update by generating a size event.
             #g.SetSize(g.GetSize())
             g.FitInside()
@@ -1247,8 +1235,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _on_form_state_change(self):
         super(ListForm, self)._on_form_state_change()
+        self._init_columns()
         self._init_grouping()
-        self._init_column_widths() 
+        self._init_column_widths()
         self._update_grid(init_columns=True)
         
     def _on_right_click(self, event):
