@@ -625,16 +625,28 @@ class Profiles(tuple):
         return self._default
 
     
-# For backwards compatibility
 class Filter(Profile):
-    """Deprecated: Use 'Profile' instead."""
+    """Predefined filter specification to be used within 'FilterSet'.
+
+    Filter is actually just a special case of Profile, which only defines the
+    filtering condition.
+
+    They can also be used within the deprecated 'filters' parameter of
+    'ViewSpec' for backwards compatibility, but such specifications should be
+    updated to use 'profiles' instead.
+    
+    """
     def __init__(self, id, name, condition=None):
+        assert condition is not None
         super(Filter, self).__init__(id, name, filter=condition)
+        
     def condition(self):
         """Return the condition passed to the constructor."""
         return self._filter
+        
 Condition = Filter
 """Deprecated: Use 'Profile' instead."""
+
 
 class FilterSet(list):
     """Uniquely identified set of filters.
