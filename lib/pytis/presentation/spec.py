@@ -513,7 +513,7 @@ class Profile(object):
     """
     
     def __init__(self, id, name, filter=None, sorting=None, columns=None, grouping=None,
-                 aggregations=None):
+                 aggregations=None, folding=None):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
@@ -534,6 +534,8 @@ class Profile(object):
           aggregations -- aggregation functions enabled in this profile in the
             same format as accepted by the 'aggregations' argument of
             'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
+          folding -- folding specification ('FoldableForm.Folding' instance)
+            If None, the 'ViewSpec' folding applies.
           
         """
         assert isinstance(id, basestring)
@@ -550,6 +552,7 @@ class Profile(object):
         self._grouping = grouping and xtuple(grouping)
         self._columns = columns and tuple(columns)
         self._aggregations = aggregations and tuple(aggregations)
+        self._folding = folding
     
     def id(self):
         """Return the unique profile identifier."""
@@ -576,6 +579,9 @@ class Profile(object):
 
     def aggregations(self):
         return self._aggregations
+
+    def folding(self):
+        return self._folding
 
     def __cmp__(self, other):
         """Return true if 'other' has the same profile parameters as 'self'.

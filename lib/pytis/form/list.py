@@ -2333,10 +2333,8 @@ class FoldableForm(ListForm):
         # refresh it?
         self._refresh_folding()
 
-    def _init_folding(self):
+    def _init_folding(self, folding_state=None):
         self._folding = self._default_folding()
-        self._initial_folding = copy.copy(self._folding)
-        folding_state = self._get_state_param('folding')
         if folding_state is None:
             view_folding = self._view.folding()
             if view_folding is not None:
@@ -2357,6 +2355,20 @@ class FoldableForm(ListForm):
                 break
         return folding_column_id
 
+    def _apply_profile_parameters(self, profile):
+        super(FoldableForm, self)._apply_profile_parameters(profile)
+        folding_state = profile.folding()
+        if isinstance(folding_state, self.Folding):
+            # HACK: Profiles from specification contain a 'Folding' instance,
+            # while saved profiles contain a 'Folding._FoldingState' instance.
+            # A single specification should be used in both cases.
+            folding_state = folding_state.folding_state()
+        self._init_folding(folding_state)
+
+    def _profile_parameters_to_save(self):
+        return dict(super(FoldableForm, self)._profile_parameters_to_save(),
+                    folding=self._folding.folding_state())
+    
     def _default_sorting(self):
         sorting = self._view.sorting()
         if sorting is None:
@@ -2457,8 +2469,6 @@ class FoldableForm(ListForm):
         self._init_folding()
 
     def _refresh_folding(self):
-        if self._folding != self._init_folding:
-            self._set_state_param('folding', self._folding.folding_state())
         self.refresh()
         
     def _can_expand_or_collapse_subtree(self, level=None):
