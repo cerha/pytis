@@ -524,17 +524,16 @@ class Profile(object):
             forms default 'condition' given by it's specification (if not None).
           sorting -- sorting in the same format as accepted by the 'sort'
             argument of 'pytis.data.Data.select()'.  If None, the default
-            sorting given by the specification applies.
+            'ViewSpec' sorting applies.
           columns -- sequence of visible form columns (string field
             identifiers) in the order in which they appear in the table.  If
-            None, the columns defined by the specification are displayed.
+            None, the 'ViewSpec' columns are displayed.
           grouping -- visual grouping of table rows in the same format as
             accepted by the 'grouping' argument of 'ViewSpec'.  If None, the
-            grouping defined by the specification applies.
+            'ViewSpec' grouping applies.
           aggregations -- aggregation functions enabled in this profile in the
             same format as accepted by the 'aggregations' argument of
-            'ViewSpec'.  If None, the aggregations defined by the specification
-            apply.
+            'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
           
         """
         assert isinstance(id, basestring)
