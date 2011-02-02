@@ -2338,7 +2338,7 @@ class FoldableForm(ListForm):
         self._initial_folding = copy.copy(self._folding)
         folding_state = self._get_state_param('folding')
         if folding_state is None:
-            view_folding = self._view.initial_folding()
+            view_folding = self._view.folding()
             if view_folding is not None:
                 folding_state = view_folding.folding_state()
         if folding_state is not None:

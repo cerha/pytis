@@ -1166,7 +1166,7 @@ class ViewSpec(object):
             
           bindings -- a sequence of binding specifications as 'Binding' instances.
 
-          initial_folding -- 'FoldableForm.Folding' instance defining initial
+          folding -- 'FoldableForm.Folding' instance defining initial
             folding.  'None' means use the standard folding.
             
           arguments -- sequence of 'DBBinding' instances defining table
@@ -1190,8 +1190,8 @@ class ViewSpec(object):
               cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), conditions=(), default_filter=None, filter_sets=(),
-              aggregations=(), grouping_functions=(), bindings=(), initial_folding=None,
-              spec_name='', arguments=None, public=None):
+              aggregations=(), grouping_functions=(), bindings=(),
+              initial_folding=None, folding=None, spec_name='', arguments=None, public=None):
         assert isinstance(title, (str, unicode))
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1370,7 +1370,8 @@ class ViewSpec(object):
         self._aggregations = tuple(aggregations)
         self._grouping_functions = tuple(grouping_functions)
         self._bindings = tuple(bindings)
-        self._initial_folding = initial_folding
+        self._folding = folding or initial_folding
+        self._arguments = arguments
         
     def _linearize_actions(self, spec):
         actions = []
@@ -1507,9 +1508,9 @@ class ViewSpec(object):
         """Return bindings as a tuple."""
         return self._bindings
 
-    def initial_folding(self):
+    def folding(self):
         """Return initial folding as a 'FoldableForm.Folding' instance or 'None'."""
-        return self._initial_folding
+        return self._folding
 
     
 class BindingSpec(object):
@@ -2942,7 +2943,7 @@ class Specification(object):
     prints = None
     """A sequence of print specifications as pairs (TITLE, NAME)."""
 
-    initial_folding = None
+    folding = None
     """'FoldableForm.Folding' instance defining initial folding.
 
     'None' means use the standard folding.
@@ -3036,7 +3037,7 @@ class Specification(object):
         self._resolver = resolver
         for attr in ('fields', 'arguments', 'access_rights', 'condition', 'distinct_on',
                      'bindings', 'cb', 'sorting', 'profiles', 'filters', 'conditions',
-                     'initial_folding',):
+                     'folding', 'initial_folding',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if callable(value):
