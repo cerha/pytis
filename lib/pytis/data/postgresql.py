@@ -825,10 +825,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pdbb_btabcol(self, binding, full_text_handler=None, convert_ltree=False, operations=None):
         """Vra» sloupec z 'binding' zformátovaný pro SQL."""
         def column_type():
-            try:
+            if self._arguments is None:
                 t = self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
                                               type_kwargs=binding.kwargs())
-            except DBException:
+            else:
                 t = None
             return t
         result = None
