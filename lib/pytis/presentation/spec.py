@@ -3199,10 +3199,6 @@ class Specification(object):
         """
         return self.access_rights
 
-    def initial_folding_spec(self):
-        """Return initial folding."""
-        return self.initial_folding
-
     @classmethod
     def data_access_rights(class_, name):
         """Return form 'name' AccessRights read from the database.
