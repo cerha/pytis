@@ -1123,12 +1123,14 @@ class LookupForm(InnerForm):
             ctrl.SetFocus()
     
     def _can_update_saved_profile(self):
-        p = self._current_profile
-        if p is not self._default_profile:
-            return False
-        else:
-            return (p.filter() != self._lf_filter or
-                    p.sorting() != self._lf_sorting)
+        if self._current_profile is not self._default_profile:
+            for param, current_value in self._profile_parameters_to_save().items():
+                value = getattr(self._current_profile, param)()
+                if value is None:
+                    value = getattr(self._default_profile, param)()
+                if current_value != value:
+                    return True
+        return False
         
     def _cmd_update_saved_profile(self):
         current = self._current_profile
