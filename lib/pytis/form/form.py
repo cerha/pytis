@@ -1045,8 +1045,9 @@ class LookupForm(InnerForm):
         if perform and condition != self._lf_filter:
             self.filter(condition)
 
-    def _cmd_apply_profile(self, profile):
+    def _cmd_apply_profile(self, index):
         try:
+            profile = self._profiles[index]
             self._apply_profile(profile)
         except Exception, e:
             log(OPERATIONAL, "Unable to apply profile:", e)
@@ -1099,11 +1100,9 @@ class LookupForm(InnerForm):
     def _cmd_save_profile(self, ctrl, perform=False):
         if perform:
             name = ctrl.GetValue()
-            for i in range(ctrl.GetCount()):
-                profile = ctrl.GetClientData(i)
-                if profile.name() == name:
-                    message(_("Takto pojmenovaný profil ji¾ existuje."), beep_=True)
-                    return
+            if name in [profile.name() for profile in self._profiles]:
+                message(_("Takto pojmenovaný profil ji¾ existuje."), beep_=True)
+                return
             user_profile_numbers = [int(profile.id()[len(self._USER_PROFILE_PREFIX):])
                                     for profile in self._profiles
                                     if profile.id().startswith(self._USER_PROFILE_PREFIX)
@@ -1249,9 +1248,7 @@ class LookupForm(InnerForm):
             # generalization of command control updates.
             def on_change(event):
                 ctrl = event.GetEventObject()
-                selection = ctrl.GetSelection()
-                profile = ctrl.GetClientData(selection)
-                LookupForm.COMMAND_APPLY_PROFILE.invoke(profile=profile)
+                LookupForm.COMMAND_APPLY_PROFILE.invoke(index=ctrl.GetSelection())
                 current_form().focus()
             ctrl = wx_combo(toolbar, (), size=(270, 25), tooltip=uicmd.title(),
                             on_change=on_change)
@@ -1297,7 +1294,7 @@ class LookupForm(InnerForm):
         ctrl.SetEditable(False)
         current_profile_id = self._current_profile.id()
         for profile in self._profiles:
-            ctrl.Append(profile.name(), profile)
+            ctrl.Append(profile.name())
             if profile.id() == current_profile_id:
                 ctrl.SetSelection(ctrl.GetCount()-1)
                 
