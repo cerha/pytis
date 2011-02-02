@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,13 +96,13 @@ Command(LookupForm, 'FILTER',
 Command(LookupForm, 'UNFILTER',
         "Zru¹ení filtrování záznamù")
 Command(LookupForm, 'APPLY_PROFILE',
-        "Apply given form profile on the current form (arg. 'profile')")
+        "Apply given form profile on the current form (arg. 'index')")
 Command(LookupForm, 'FILTER_BY_VALUE',
         "Vyfiltrování formuláøe podle dané hodnoty (arg. 'column_id', 'value')")
 Command(LookupForm, 'SAVE_PROFILE',
-        "Save the current profile as a named user profile."),
+        "Save the current form state as a new profile."),
 Command(LookupForm, 'UPDATE_SAVED_PROFILE',
-        "Update an existing named profile by the current setup."),
+        "Update the existing profile according to the current form state."),
 Command(LookupForm, 'DELETE_SAVED_PROFILE',
         "Delete the current saved profile."),
 Command(LookupForm, 'JUMP',
