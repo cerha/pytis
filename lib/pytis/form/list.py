@@ -171,6 +171,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._update_grid(init_columns=True)
         self._refresh(when=self.DOIT_IMMEDIATELY)
             
+    def _profile_parameters_to_save(self):
+        return dict(super(ListForm, self)._profile_parameters_to_save(),
+                    columns=tuple([c.id() for c in self._columns]),
+                    grouping=self._grouping,
+                    aggregations=self._aggregations,
+                    column_widths=self._column_widths)
+        
     def _select_columns(self):
         return [c.id() for c in self._data.columns() 
                 if not isinstance(c.type(), pytis.data.Big)]
@@ -182,12 +189,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             width = max(column.column_width(), len(column.column_label()))
             return dlg2px(self._grid, 4*width + 8)
 
-    def _profile_parameters_to_save(self):
-        return dict(super(ListForm, self)._profile_parameters_to_save(),
-                    columns=tuple([c.id() for c in self._columns]),
-                    grouping=self._grouping,
-                    column_widths=self._column_widths)
-        
     def _update_label_height(self):
         height = self._label_height
         if self._aggregations:
