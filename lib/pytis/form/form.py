@@ -457,7 +457,9 @@ class InnerForm(Form):
         
     def _on_menu_button(self, items):
         self._run_callback(self.CALL_USER_INTERACTION)
-        popup_menu(wx_focused_window(), items, self._get_keymap())
+        parent = wx_focused_window()
+        if parent:
+            popup_menu(parent, items, self._get_keymap())
 
     def _print_menu(self):
         # Vra» seznam polo¾ek tiskového menu.
