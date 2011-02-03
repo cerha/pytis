@@ -258,7 +258,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         self._form_state = config.form_state.get(key)
         if not isinstance(self._form_state, dict):
             self._form_state = config.form_state[key] = {}
-        self._initial_form_state = copy.copy(self._form_state)
         
     def _create_view_spec(self):
         t = time.time()
@@ -316,13 +315,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _set_state_param(self, name, value):
         self._form_state[name] = value
 
-    def _unset_state_param(self, name):
-        if self._form_state.has_key(name):
-            del self._form_state[name]
-
-    def _on_form_state_change(self):
-        pass
-
     def _release_data(self):
         if self._data is not None:
             self._data.sleep()
@@ -340,26 +332,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     # Zpracování pøíkazù
    
-    def _can_reload_form_state(self):
-        return self._form_state != self._initial_form_state
-    
-    def _cmd_reload_form_state(self):
-        # We must manipulate the existing dictionary without replacing the reference!
-        self._form_state.clear()
-        self._form_state.update(self._initial_form_state)
-        self._on_form_state_change()
-        if isinstance(self, Refreshable):
-            self.refresh()
-
-    def _can_reset_form_state(self):
-        return bool(self._form_state)
-        
-    def _cmd_reset_form_state(self):
-        self._form_state.clear()
-        self._on_form_state_change()
-        if isinstance(self, Refreshable):
-            self.refresh()
-        
     def _cmd_help(self):
         help(self._name.replace(':','-'))
 
@@ -946,10 +918,6 @@ class LookupForm(InnerForm):
             self._lf_search_condition = condition
             self._search(condition, direction)
 
-    def _on_form_state_change(self):
-        super(LookupForm, self)._on_form_state_change()
-        self._lf_sorting = self._default_sorting()
-
     def _compute_aggregate(self, operation, column_id, condition):
         condition = self._current_condition(filter=condition)
         return self._data.select_aggregate((operation, column_id), condition,
@@ -1118,6 +1086,23 @@ class LookupForm(InnerForm):
         ctrl.Delete(ctrl.GetSelection())
         ctrl.SetSelection(0)
 
+    def _can_reload_profile(self):
+        return self._current_profile_changed()
+    
+    def _cmd_reload_profile(self):
+        self._apply_profile(self._current_profile)
+        
+    def _can_reset_profile(self):
+        return self._current_profile is not self._default_profile \
+            and not isinstance(self._current_profile, FormProfile)
+        
+    def _cmd_reset_profile(self):
+        index = self._profiles.index(self._current_profile)
+        profile = find(self._current_profile.id(), self._view.profiles(), key=lambda p: p.id())
+        profile_manager().drop_profile(self._fullname(), self._current_profile.id())
+        self._profiles[index] = profile
+        self._apply_profile(profile)
+        
     def _can_filter(self, condition=None, last=False):
         return not last or self._lf_last_filter is not None
         
@@ -1312,8 +1297,16 @@ class LookupForm(InnerForm):
             MItem(_("Smazat profil"), 
                   self.COMMAND_DELETE_SAVED_PROFILE(ctrl=ctrl),
                   help=_("Smazat zvolený ulo¾ený profil")),
+            MSeparator(),
+            MItem(_("Vrátit poslední ulo¾ené nastavení profilu"),
+                  help=_("Zahodit zmìny nastavení formuláøe provedené "
+                         "od posledního ulo¾ení profilu."),
+                  command=LookupForm.COMMAND_RELOAD_PROFILE),
+            MItem(_("Vrátit výchozí nastavení profilu"),
+                  help=_("Zahodit v¹echny ulo¾ené u¾ivatelské zmìny nastavení formuláøe."),
+                  command=LookupForm.COMMAND_RESET_PROFILE),
             )
-
+    
     def filter(self, condition):
         """Apply given filtering condition.  Return true if successfull."""
         self._apply_filter(condition)

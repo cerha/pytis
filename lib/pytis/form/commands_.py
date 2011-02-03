@@ -85,26 +85,26 @@ Command(InnerForm, 'AGGREGATION_MENU',
         "Show aggregation menu for the current form")
 Command(InnerForm, 'PRINT_MENU',
         "Show print menu for the current form")
-Command(InnerForm, 'RELOAD_FORM_STATE',
-        "Zapomeò u¾iv. nastavení formuláøe a vra» poslednì ulo¾ené hodnoty")
-Command(InnerForm, 'RESET_FORM_STATE',
-        "Zahoï ulo¾ené u¾iv. nastavení formuláøe a vra» výchozí nastavení")
-Command(LookupForm, 'PROFILE_MENU',
-        "Show profile menu for the current form")
 Command(LookupForm, 'FILTER',
         "Filtrování záznamù")
 Command(LookupForm, 'UNFILTER',
         "Zru¹ení filtrování záznamù")
+Command(LookupForm, 'PROFILE_MENU',
+        "Show profile menu for the current form")
 Command(LookupForm, 'APPLY_PROFILE',
         "Apply given form profile on the current form (arg. 'index')")
-Command(LookupForm, 'FILTER_BY_VALUE',
-        "Vyfiltrování formuláøe podle dané hodnoty (arg. 'column_id', 'value')")
 Command(LookupForm, 'SAVE_PROFILE',
         "Save the current form state as a new profile."),
 Command(LookupForm, 'UPDATE_SAVED_PROFILE',
         "Update the existing profile according to the current form state."),
 Command(LookupForm, 'DELETE_SAVED_PROFILE',
         "Delete the current saved profile."),
+Command(LookupForm, 'RELOAD_PROFILE',
+        "Reinitialize the form to the last saved state of the current profile.")
+Command(LookupForm, 'RESET_PROFILE',
+        "Discard all saved profile changes and load the original settings (only for predefined profiles)")
+Command(LookupForm, 'FILTER_BY_VALUE',
+        "Vyfiltrování formuláøe podle dané hodnoty (arg. 'column_id', 'value')")
 Command(LookupForm, 'JUMP',
         "Skok na záznam")
 Command(LookupForm, 'SEARCH',
@@ -263,8 +263,6 @@ DEFAULT_KEYMAP = (
     ('Escape',           Form.COMMAND_SAFE_LEAVE_FORM),
     ('Ctrl-p',           BrowseForm.COMMAND_PRINT),
     ('Ctrl-p',           PrintFormInternal.COMMAND_PRINT),
-    ('Ctrl-Backspace',   InnerForm.COMMAND_RELOAD_FORM_STATE),
-    ('Ctrl-Shift-Backspace', InnerForm.COMMAND_RESET_FORM_STATE),
     ('F6',               RecordForm.COMMAND_NEW_RECORD),
     ('Ctrl-F6',          RecordForm.COMMAND_NEW_RECORD(copy=True)),
     ('Alt-F6',           RecordForm.COMMAND_IMPORT_INTERACTIVE),
@@ -282,6 +280,8 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Prior',       LookupForm.COMMAND_FIRST_RECORD),
     ('Ctrl-End',         LookupForm.COMMAND_LAST_RECORD),
     ('Ctrl-Next',        LookupForm.COMMAND_LAST_RECORD),
+    ('Ctrl-Backspace',   LookupForm.COMMAND_RELOAD_PROFILE),
+    ('Ctrl-Shift-Backspace', LookupForm.COMMAND_RESET_PROFILE),
     ('Ctrl-F3',          ListForm.COMMAND_INCREMENTAL_SEARCH),
     ('Alt-F3',           ListForm.COMMAND_INCREMENTAL_SEARCH(full=True)),
     ('Enter',            ListForm.COMMAND_ACTIVATE),
@@ -418,8 +418,8 @@ COMMAND_ICONS = (
     (LookupForm.COMMAND_SEARCH(next=True),                 'search-forward'),
     (LookupForm.COMMAND_SEARCH,                            'search'),
     (LookupForm.COMMAND_JUMP,                              'jump'),
-    (InnerForm.COMMAND_RESET_FORM_STATE,                   'reset-form-state'),
-    (InnerForm.COMMAND_RELOAD_FORM_STATE,                  'reload-form-state'),
+    (LookupForm.COMMAND_RESET_PROFILE,                      'reset-profile'),
+    (LookupForm.COMMAND_RELOAD_PROFILE,                     'reload-profile'),
     )
 
 
@@ -525,14 +525,6 @@ class UICommands(object):
         ListForm.COMMAND_AGGREGATED_VIEW(),
         _("Zobrazit agregovaný náhled"),
         _("Zobrazit duální formuláø se zvolenými agregaèními funkcemi."))
-    RELOAD_FORM_STATE = UICommand(
-        InnerForm.COMMAND_RELOAD_FORM_STATE(),
-        _("Vrátit pøedchozí nastavení formuláøe"),
-        _("Zahodit zmìny nastavení formuláøe provedené bìhem tohoto spu¹tìní aplikace"))
-    RESET_FORM_STATE = UICommand(
-        InnerForm.COMMAND_RESET_FORM_STATE(),
-        _("Vrátit výchozí nastavení formuláøe"),
-        _("Zahodit ve¹keré u¾ivatelské nastavení formuláøe"))
     OTHER_FORM = UICommand(
         DualForm.COMMAND_OTHER_FORM(),
         _("Pøepnout aktivní formuláø duálního formuláøe"),
@@ -594,7 +586,4 @@ FORM_MENU_COMMANDS = ((
         ),(
         UICommands.EXPORT_FILE,
         UICommands.IMPORT_INTERACTIVE,
-        ),(
-        UICommands.RELOAD_FORM_STATE,
-        UICommands.RESET_FORM_STATE,
 ))

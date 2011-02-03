@@ -916,11 +916,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                [CheckItem(c.column_label(),
                           command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=col),
                           state=lambda c=c: c in self._columns)
-                for c in columns if c and not c.disable_column()] + \
-               [MSeparator(),
-                MItem(_("Vrátit výchozí nastavení formuláøe"),
-                      command=InnerForm.COMMAND_RESET_FORM_STATE),
-                ]
+                for c in columns if c and not c.disable_column()]
 
     def _aggregation_menu(self):
         return [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
@@ -1240,13 +1236,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._popup_menu(menu)
         event.Skip()
 
-    def _on_form_state_change(self):
-        super(ListForm, self)._on_form_state_change()
-        self._init_columns()
-        self._init_grouping()
-        #self._init_column_widths()
-        self._update_grid(init_columns=True)
-        
     def _on_right_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         selected = len(self._selected_rows())
@@ -2463,10 +2452,6 @@ class FoldableForm(ListForm):
         node = self._table.row(row)[self._folding_column_id].value()
         if self._folding.expand_or_collapse(node, level=level):
             self._refresh_folding()
-
-    def _on_form_state_change(self):
-        super(FoldableForm, self)._on_form_state_change()
-        self._init_folding()
 
     def _refresh_folding(self):
         self.refresh()
