@@ -175,7 +175,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return dict(super(ListForm, self)._profile_parameters_to_save(),
                     columns=tuple([c.id() for c in self._columns]),
                     grouping=self._grouping,
-                    aggregations=self._aggregations,
+                    aggregations=tuple(self._aggregations),
                     column_widths=self._column_widths)
         
     def _select_columns(self):
