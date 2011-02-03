@@ -822,27 +822,6 @@ class LookupForm(InnerForm):
     def _form_log_info(self):
         return 'sort=%s, filter=%s' % (self._lf_sorting, self._lf_filter,)
 
-    def _save_profile(self, profile):
-        profile_manager().save_profile(self._fullname(), profile)
-    
-    def _load_profiles(self):
-        manager = profile_manager()
-        fullname = self._fullname()
-        profiles = [self._default_profile]
-        for profile in self._view.profiles():
-            custom = manager.load_profile(fullname, profile.id())
-            if custom:
-                custom.finish(self._data)
-                profile = custom
-            profiles.append(profile)
-        for profile_id in manager.list_profile_ids(fullname):
-            if profile_id.startswith('_user_profile'):
-                profile = manager.load_profile(fullname, profile_id)
-                if profile:
-                    profile.finish(self._data)
-                    profiles.append(profile)
-        return profiles
-
     def _default_sorting(self):
         sorting = self._view.sorting()
         if sorting is None:
@@ -993,6 +972,27 @@ class LookupForm(InnerForm):
         self._init_select(async_count=False)
         self.select_row(self._current_key())
 
+    def _save_profile(self, profile):
+        profile_manager().save_profile(self._fullname(), profile)
+    
+    def _load_profiles(self):
+        manager = profile_manager()
+        fullname = self._fullname()
+        profiles = [self._default_profile]
+        for profile in self._view.profiles():
+            custom = manager.load_profile(fullname, profile.id())
+            if custom:
+                custom.finish(self._data)
+                profile = custom
+            profiles.append(profile)
+        for profile_id in manager.list_profile_ids(fullname):
+            if profile_id.startswith('_user_profile'):
+                profile = manager.load_profile(fullname, profile_id)
+                if profile:
+                    profile.finish(self._data)
+                    profiles.append(profile)
+        return profiles
+
     def _apply_profile_parameters(self, profile):
         """Set the form state attributes according to given 'Profile' instance.
 
@@ -1027,24 +1027,32 @@ class LookupForm(InnerForm):
         self._init_select(async_count=False)
         self.select_row(self._current_key())
 
-    def _can_filter(self, condition=None, last=False):
-        return not last or self._lf_last_filter is not None
-        
-    def _cmd_filter(self, condition=None, last=False):
-        # Returns True if applied successfully, False on invalid condition, None when not applied.
-        if last:
-            condition = self._lf_last_filter
-        if condition:
-            perform = True
-        else:
-            perform, condition = \
-                     run_dialog(FilterDialog, self._lf_sfs_columns(),
-                                self.current_row(), self._compute_aggregate,
-                                col=self._current_column_id(),
-                                condition=self._lf_filter)
-        if perform and condition != self._lf_filter:
-            self.filter(condition)
+    def _create_profile(self, id, name):
+        return FormProfile(id, name, **self._profile_parameters_to_save())
 
+    def _profile_parameters_to_save(self):
+        """Return the profile parameters representing the current state of the form.
+
+        The returned dictionary is passed to 'FormProfile' constructor as
+        keyword arguments when saving a profile.  Note, that the profile
+        instance stored in `self._current_profile' may not have the same
+        parameters if the user changed them since he switched to that profile
+        (`self._current_profile' instance is not updated when the form state
+        changes, it representes the previously saved state).
+        
+        """
+        return dict(filter=self._lf_filter, sorting=self._lf_sorting)
+
+    def _current_profile_changed(self):
+        if self._current_profile is not self._default_profile:
+            for param, current_value in self._profile_parameters_to_save().items():
+                value = getattr(self._current_profile, param)()
+                if value is None:
+                    value = getattr(self._default_profile, param)()
+                if current_value != value:
+                    return True
+        return False
+    
     def _cmd_apply_profile(self, index):
         try:
             profile = self._profiles[index]
@@ -1063,40 +1071,7 @@ class LookupForm(InnerForm):
                     self._profiles.remove(profile)
                     profile_manager().drop_profile(self._fullname(), profile.id())
                     # TODO: Remove also related profile menu items?
-                    
-    def _can_unfilter(self):
-        return self._lf_filter is not None
-        
-    def _cmd_unfilter(self):
-        self.filter(None)
 
-    def _cmd_filter_by_value(self, column_id, value):
-        if column_id not in [c.id() for c in self._lf_sfs_columns()]:
-            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
-        condition = pytis.data.EQ(column_id, value)
-        if self._lf_filter is not None:
-            condition = pytis.data.AND(self._lf_filter, condition)
-        self.COMMAND_FILTER.invoke(condition=condition)
-
-    def _create_profile(self, id, name):
-        return FormProfile(id, name, **self._profile_parameters_to_save())
-
-    def _profile_parameters_to_save(self):
-        """Return the profile parameters representing the current state of the form.
-
-        The returned dictionary is passed to 'FormProfile' constructor as
-        keyword arguments when saving a profile.  Note, that the profile
-        instance stored in `self._current_profile' may not have the same
-        parameters if the user changed them since he switched to that profile
-        (`self._current_profile' instance is not updated when the form state
-        changes, it representes the previously saved state).
-        
-        """
-        return dict(filter=self._lf_filter, sorting=self._lf_sorting)
-         
-    def _can_save_profile(self, ctrl, perform=False):
-        return True
-    
     def _cmd_save_profile(self, ctrl, perform=False):
         if perform:
             name = ctrl.GetValue()
@@ -1123,14 +1098,7 @@ class LookupForm(InnerForm):
             ctrl.SetFocus()
     
     def _can_update_saved_profile(self):
-        if self._current_profile is not self._default_profile:
-            for param, current_value in self._profile_parameters_to_save().items():
-                value = getattr(self._current_profile, param)()
-                if value is None:
-                    value = getattr(self._default_profile, param)()
-                if current_value != value:
-                    return True
-        return False
+        return self._current_profile_changed()
         
     def _cmd_update_saved_profile(self):
         current = self._current_profile
@@ -1149,6 +1117,38 @@ class LookupForm(InnerForm):
         self._apply_profile(self._default_profile)
         ctrl.Delete(ctrl.GetSelection())
         ctrl.SetSelection(0)
+
+    def _can_filter(self, condition=None, last=False):
+        return not last or self._lf_last_filter is not None
+        
+    def _cmd_filter(self, condition=None, last=False):
+        # Returns True if applied successfully, False on invalid condition, None when not applied.
+        if last:
+            condition = self._lf_last_filter
+        if condition:
+            perform = True
+        else:
+            perform, condition = \
+                     run_dialog(FilterDialog, self._lf_sfs_columns(),
+                                self.current_row(), self._compute_aggregate,
+                                col=self._current_column_id(),
+                                condition=self._lf_filter)
+        if perform and condition != self._lf_filter:
+            self.filter(condition)
+
+    def _can_unfilter(self):
+        return self._lf_filter is not None
+        
+    def _cmd_unfilter(self):
+        self.filter(None)
+
+    def _cmd_filter_by_value(self, column_id, value):
+        if column_id not in [c.id() for c in self._lf_sfs_columns()]:
+            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
+        condition = pytis.data.EQ(column_id, value)
+        if self._lf_filter is not None:
+            condition = pytis.data.AND(self._lf_filter, condition)
+        self.COMMAND_FILTER.invoke(condition=condition)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Zmìò tøídìní.
