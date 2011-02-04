@@ -101,6 +101,9 @@ class FormProfile(pytis.presentation.Profile):
             else:
                 self._packed_filter = None
 
+    def rename(self, name):
+        self._name = name
+
     def column_widths(self):
         return self._column_widths
 
@@ -766,6 +769,7 @@ class LookupForm(InnerForm):
         self._apply_profile_parameters(default_profile)
         self._default_profile_parameters = self._profile_parameters_to_save()
         self._apply_profile_parameters(current_profile)
+        self._on_profile_ctrl_enter = None
         self._lf_initial_sorting = self._lf_sorting
         self._lf_last_filter = self._lf_filter
         # _lf_condition represents a static condition given by the constructor
@@ -1054,8 +1058,8 @@ class LookupForm(InnerForm):
                     profile_manager().drop_profile(self._fullname(), profile.id())
                     # TODO: Remove also related profile menu items?
 
-    def _cmd_save_profile(self, ctrl, perform=False):
-        if perform:
+    def _cmd_save_profile(self, ctrl):
+        def perform():
             name = ctrl.GetValue()
             if name in [profile.name() for profile in self._profiles]:
                 message(_("Takto pojmenovaný profil ji¾ existuje."), beep_=True)
@@ -1074,11 +1078,34 @@ class LookupForm(InnerForm):
             ctrl.Append(name, profile)
             ctrl.SetSelection(ctrl.GetCount()-1)
             self.focus()
-        else:
-            ctrl.SetEditable(True)
-            ctrl.SetValue('')
-            ctrl.SetFocus()
+        ctrl.SetEditable(True)
+        ctrl.SetValue('')
+        ctrl.SetFocus()
+        self._on_profile_ctrl_enter = perform
     
+    def _can_rename_profile(self, ctrl, perform=False):
+        return self._current_profile.id().startswith(self._USER_PROFILE_PREFIX)
+
+    def _cmd_rename_profile(self, ctrl, perform=False):
+        def perform():
+            name = ctrl.GetValue()
+            if name in [p.name() for p in self._profiles if p is not self._current_profile]:
+                message(_("Takto pojmenovaný profil ji¾ existuje."), beep_=True)
+                return
+            self._current_profile.rename(name)
+            self._save_profile(self._current_profile)
+            message(_("Profil ulo¾en pod názvem '%s'.") % name)
+            # ctrl.SetString() doesn't seem to work so recreate the items.
+            ctrl.Clear()
+            for profile in self._profiles:
+                ctrl.Append(profile.name())
+            ctrl.SetSelection(self._profiles.index(self._current_profile))
+            self.focus()
+        ctrl.SetEditable(True)
+        ctrl.SelectAll() 
+        ctrl.SetFocus()
+        self._on_profile_ctrl_enter = perform
+
     def _can_update_saved_profile(self):
         return self._current_profile_changed()
         
@@ -1272,7 +1299,7 @@ class LookupForm(InnerForm):
                 popup_menu(ctrl, form.profile_context_menu(ctrl))
             wx_callback(wx.EVT_RIGHT_DOWN, ctrl, on_context_menu)
             def on_enter(event):
-                LookupForm.COMMAND_SAVE_PROFILE.invoke(ctrl=ctrl, perform=True)
+                current_form().on_profile_ctrl_enter(ctrl)
             wx_callback(wx.EVT_TEXT_ENTER, ctrl, wxid, on_enter)
             def on_key_down(event):
                 event.Skip()
@@ -1289,13 +1316,11 @@ class LookupForm(InnerForm):
         # Update the toolbar profile selection control for the current form
         # instance (usually after a form change).
         if self.__class__._last_profile_menu_form is not self:
-            ctrl.Clear()
             ctrl.SetEditable(False)
-            current_profile_id = self._current_profile.id()
+            ctrl.Clear()
             for profile in self._profiles:
                 ctrl.Append(profile.name())
-                if profile.id() == current_profile_id:
-                    ctrl.SetSelection(ctrl.GetCount()-1)
+            ctrl.SetSelection(self._profiles.index(self._current_profile))
             self.__class__._last_profile_menu_form = self
         if self._current_profile_changed():
             color = wx.Color(255, 0, 0)
@@ -1313,18 +1338,27 @@ class LookupForm(InnerForm):
             MItem(_("Ulo¾it jako nový"), self.COMMAND_SAVE_PROFILE(ctrl=ctrl),
                   help=_("Vytvoøit nový profil podle souèasného nastavením formuláøe"),
                   ),
-            MItem(_("Smazat profil"), 
+            MItem(_("Pøejmenovat"), self.COMMAND_RENAME_PROFILE(ctrl=ctrl),
+                  help=_("Upravit a ulo¾it název aktuálního profilu"),
+                  ),
+            MItem(_("Smazat"), 
                   self.COMMAND_DELETE_SAVED_PROFILE(ctrl=ctrl),
                   help=_("Smazat zvolený ulo¾ený profil")),
             MSeparator(),
-            MItem(_("Vrátit poslední ulo¾ené nastavení profilu"),
+            MItem(_("Vrátit poslední ulo¾ené nastavení"),
                   help=_("Zahodit zmìny nastavení formuláøe provedené "
                          "od posledního ulo¾ení profilu."),
                   command=LookupForm.COMMAND_RELOAD_PROFILE),
-            MItem(_("Vrátit výchozí nastavení profilu"),
+            MItem(_("Vrátit výchozí nastavení aplikace"),
                   help=_("Zahodit v¹echny ulo¾ené u¾ivatelské zmìny nastavení formuláøe."),
                   command=LookupForm.COMMAND_RESET_PROFILE),
             )
+
+    def on_profile_ctrl_enter(self, ctrl):
+        func = self._on_profile_ctrl_enter
+        if func:
+            self._on_profile_ctrl_enter = None
+            func()
     
     def filter(self, condition):
         """Apply given filtering condition.  Return true if successfull."""

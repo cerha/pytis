@@ -99,6 +99,8 @@ Command(LookupForm, 'UPDATE_SAVED_PROFILE',
         "Update the existing profile according to the current form state."),
 Command(LookupForm, 'DELETE_SAVED_PROFILE',
         "Delete the current saved profile."),
+Command(LookupForm, 'RENAME_PROFILE',
+        "Rename the saved user defined profile."),
 Command(LookupForm, 'RELOAD_PROFILE',
         "Reinitialize the form to the last saved state of the current profile.")
 Command(LookupForm, 'RESET_PROFILE',
