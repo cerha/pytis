@@ -124,17 +124,17 @@ class Nbsp(_Mark):
 
     """
     def _lcg(self):
-        return lcg.TextContent(" ")
+        return lcg.TextContent(u" ")
 
 class Euro(_Mark):
     """Značka reprezentující znak měny Euro."""
     def _lcg(self):
-        return lcg.TextContent("€")
+        return lcg.TextContent(u"€")
 
 class Pound(_Mark):
     """Značka reprezentující znak libry."""
     def _lcg(self):
-        return lcg.TextContent("£")
+        return lcg.TextContent(u"£")
 
 class _HAlignContainer(_Container):
     _ALIGNMENT = None
