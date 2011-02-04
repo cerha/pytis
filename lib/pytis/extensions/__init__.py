@@ -25,8 +25,8 @@ import pytis.data, pytis.form
 from dbconfig import *
 from dbutils import *
 from misc import *
-from types import *
-from types import _TreeOrder
+from deftypes import *
+from deftypes import _TreeOrder
 from spec import *
 from defs import *
 from dmp import dmp_add_form, dmp_commit, dmp_import, dmp_reset_rights, dmp_update_form
