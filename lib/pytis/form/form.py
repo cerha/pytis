@@ -1258,9 +1258,7 @@ class LookupForm(InnerForm):
                 event.Enable(enabled)
                 if enabled:
                     form = current_form()
-                    if form is not cls._last_profile_menu_form:
-                        form.update_profile_menu(ctrl)
-                        cls._last_profile_menu_form = form
+                    form.update_profile_menu(ctrl)
                 elif top_window() is None and not ctrl.IsEmpty():
                     cls._last_profile_menu_form = None
                     ctrl.SetSelection(wx.NOT_FOUND)
@@ -1290,13 +1288,21 @@ class LookupForm(InnerForm):
     def update_profile_menu(self, ctrl):
         # Update the toolbar profile selection control for the current form
         # instance (usually after a form change).
-        ctrl.Clear()
-        ctrl.SetEditable(False)
-        current_profile_id = self._current_profile.id()
-        for profile in self._profiles:
-            ctrl.Append(profile.name())
-            if profile.id() == current_profile_id:
-                ctrl.SetSelection(ctrl.GetCount()-1)
+        if self.__class__._last_profile_menu_form is not self:
+            ctrl.Clear()
+            ctrl.SetEditable(False)
+            current_profile_id = self._current_profile.id()
+            for profile in self._profiles:
+                ctrl.Append(profile.name())
+                if profile.id() == current_profile_id:
+                    ctrl.SetSelection(ctrl.GetCount()-1)
+            self.__class__._last_profile_menu_form = self
+        if self._current_profile_changed():
+            color = wx.Color(255, 0, 0)
+        else:
+            color = wx.Color(0, 0, 0)
+        # TODO: This doesn't work.  The ComboBox widget ignores color settings.
+        ctrl.SetForegroundColour(color)
                 
     def profile_context_menu(self, ctrl):
         # Return the context menu for the toolbar profile selection control.
