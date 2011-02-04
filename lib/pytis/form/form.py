@@ -755,7 +755,16 @@ class LookupForm(InnerForm):
             current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
         else:
             current_profile = self._profiles[0]
-        # _apply_profile_parameters() will initialize all the profile related attributes.
+        # The profile instances may contain None values to denote default
+        # values.  We need to remember the corresponding real values to be able
+        # to compare profiles with the current form state in
+        # '_current_profile_changed()'.  We rely on the fact that
+        # '_apply_profile_parameters()' substitutes None values by their
+        # corresponding default values and we don't want to repeat this logic
+        # anywhere else.  Thus we first apply the default profile, store the
+        # resulting profile parameters and only then apply the current profile.
+        self._apply_profile_parameters(default_profile)
+        self._default_profile_parameters = self._profile_parameters_to_save()
         self._apply_profile_parameters(current_profile)
         self._lf_initial_sorting = self._lf_sorting
         self._lf_last_filter = self._lf_filter
@@ -1015,10 +1024,14 @@ class LookupForm(InnerForm):
 
     def _current_profile_changed(self):
         for param, current_value in self._profile_parameters_to_save().items():
-            value = getattr(self._current_profile, param)()
-            if value is None:
-                value = getattr(self._profiles[0], param)()
-            if current_value != value:
+            if hasattr(self._current_profile, param):
+                original_value = getattr(self._current_profile, param)()
+            else:
+                # Some FormProfile specific parameters, such as column_widths are not in Profile.
+                original_value = None
+            if original_value is None:
+                original_value = self._default_profile_parameters[param]
+            if current_value != original_value:
                 return True
         return False
     
