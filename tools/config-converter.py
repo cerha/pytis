@@ -120,6 +120,9 @@ def run():
                                'SORTING_DESCENDANT': pytis.data.DESCENDANT}
                     kwargs['sorting'] = tuple([(cid, mapping[dir]) for cid, dir in kwargs['sorting']])
                 if kwargs:
+                    profile = FormProfile('__default_profile__', _("Výchozí profil"), **kwargs)
+                    manager.save_profile(fullname, profile, transaction=transaction)
+                    count += 1
                     for p in spec.profiles():
                         profile = FormProfile(p.id(), p.name(), filter=p.filter(), **kwargs)
                         manager.save_profile(fullname, profile, transaction=transaction)
@@ -129,6 +132,7 @@ def run():
                     profile._packed_filter = cond
                     manager.save_profile(fullname, profile, transaction=transaction)
                     count += 1
+                    
             for option, value in options.pop('application_state', {}).items():
                 options[option.replace('startup_forms', 'saved_startup_forms')] = value
             options.pop('dbconnection', None) # Some old saved configs may include it due to an old bug.
