@@ -583,25 +583,6 @@ class Profile(object):
     def folding(self):
         return self._folding
 
-    def __cmp__(self, other):
-        """Return true if 'other' has the same profile parameters as 'self'.
-
-        The profile identifier and name doesn't matter in the comparison, only
-        parameters, such as condition, sorting, etc. are compared.
-        
-        """
-        if not isinstance(other, Profile):
-            return -1
-        if self._filter is None:
-            if other._filter is not None:
-                return -1
-        else:
-            if not self._filter.is_same(other._filter):
-                return -1
-        if self._columns != other._columns:
-            return -1
-        return cmp(self._sorting, other._sorting)
-        
 
 class Profiles(tuple):
     """A sequence of form profiles with an optional specification of the default profile.
