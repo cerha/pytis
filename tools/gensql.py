@@ -2372,7 +2372,7 @@ class _GviewsqlRaw(_GsqlSpec):
         sys.stdout.write(
             _gsql_warning("Raw SQL commands not considered: %s" %
                           self.name()))
-        return super(_GsqlRaw, self).reoutput()
+        return super(_GviewsqlRaw, self).reoutput()
 
     def db_update(self, connection):
         return _gsql_warning('Raw command not considered: %s' % self.name())
