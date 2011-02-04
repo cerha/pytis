@@ -161,7 +161,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._init_grouping(profile.grouping())
         self._init_aggregations(profile.aggregations())
         if isinstance(profile, FormProfile):
-            self._column_widths = profile.column_widths()
+            self._column_widths = dict(profile.column_widths())
         else:
             self._column_widths = {}
         
@@ -176,7 +176,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     columns=tuple([c.id() for c in self._columns]),
                     grouping=self._grouping,
                     aggregations=tuple(self._aggregations),
-                    column_widths=self._column_widths)
+                    column_widths=dict(self._column_widths))
         
     def _select_columns(self):
         return [c.id() for c in self._data.columns() 
