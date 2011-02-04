@@ -1058,7 +1058,7 @@ class LookupForm(InnerForm):
                     profile_manager().drop_profile(self._fullname(), profile.id())
                     # TODO: Remove also related profile menu items?
 
-    def _cmd_save_profile(self, ctrl):
+    def _cmd_save_new_profile(self, ctrl):
         def perform():
             name = ctrl.GetValue()
             if name in [profile.name() for profile in self._profiles]:
@@ -1333,7 +1333,7 @@ class LookupForm(InnerForm):
             MItem(_("Ulo¾it"), self.COMMAND_UPDATE_SAVED_PROFILE(),
                   help=_("Aktualizovat ulo¾ený profil podle souèasného nastavením formuláøe"),
                   hotkey='Enter'),
-            MItem(_("Ulo¾it jako nový"), self.COMMAND_SAVE_PROFILE(ctrl=ctrl),
+            MItem(_("Ulo¾it jako nový"), self.COMMAND_SAVE_NEW_PROFILE(ctrl=ctrl),
                   help=_("Vytvoøit nový profil podle souèasného nastavením formuláøe"),
                   ),
             MItem(_("Pøejmenovat"), self.COMMAND_RENAME_PROFILE(ctrl=ctrl),

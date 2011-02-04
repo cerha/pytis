@@ -93,7 +93,7 @@ Command(LookupForm, 'PROFILE_MENU',
         "Show profile menu for the current form")
 Command(LookupForm, 'APPLY_PROFILE',
         "Apply given form profile on the current form (arg. 'index')")
-Command(LookupForm, 'SAVE_PROFILE',
+Command(LookupForm, 'SAVE_NEW_PROFILE',
         "Save the current form state as a new profile."),
 Command(LookupForm, 'UPDATE_SAVED_PROFILE',
         "Update the existing profile according to the current form state."),
