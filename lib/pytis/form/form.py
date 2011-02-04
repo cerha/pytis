@@ -1105,10 +1105,10 @@ class LookupForm(InnerForm):
         ctrl.SetFocus()
         self._on_profile_ctrl_enter = perform
 
-    def _can_update_saved_profile(self):
+    def _can_update_profile(self):
         return self._current_profile_changed()
         
-    def _cmd_update_saved_profile(self):
+    def _cmd_update_profile(self):
         current = self._current_profile
         index = self._profiles.index(current)
         profile = self._create_profile(current.id(), current.name())
@@ -1116,10 +1116,10 @@ class LookupForm(InnerForm):
         self._save_profile(profile)
         self._current_profile = profile
     
-    def _can_delete_saved_profile(self, ctrl):
+    def _can_delete_profile(self, ctrl):
         return self._current_profile.id().startswith(self._USER_PROFILE_PREFIX)
 
-    def _cmd_delete_saved_profile(self, ctrl):
+    def _cmd_delete_profile(self, ctrl):
         profile_manager().drop_profile(self._fullname(), self._current_profile.id())
         self._profiles.remove(self._current_profile)
         self._apply_profile(self._profiles[0])
@@ -1330,26 +1330,26 @@ class LookupForm(InnerForm):
     def profile_context_menu(self, ctrl):
         # Return the context menu for the toolbar profile selection control.
         return (
-            MItem(_("Ulo¾it"), self.COMMAND_UPDATE_SAVED_PROFILE(),
-                  help=_("Aktualizovat ulo¾ený profil podle souèasného nastavením formuláøe"),
-                  hotkey='Enter'),
-            MItem(_("Ulo¾it jako nový"), self.COMMAND_SAVE_NEW_PROFILE(ctrl=ctrl),
-                  help=_("Vytvoøit nový profil podle souèasného nastavením formuláøe"),
-                  ),
-            MItem(_("Pøejmenovat"), self.COMMAND_RENAME_PROFILE(ctrl=ctrl),
-                  help=_("Upravit a ulo¾it název aktuálního profilu"),
-                  ),
+            MItem(_("Ulo¾it"),
+                  LookupForm.COMMAND_UPDATE_PROFILE(),
+                  help=_("Aktualizovat ulo¾ený profil podle souèasného nastavením formuláøe")),
+            MItem(_("Ulo¾it jako nový"),
+                  LookupForm.COMMAND_SAVE_NEW_PROFILE(ctrl=ctrl),
+                  help=_("Vytvoøit nový profil podle souèasného nastavením formuláøe")),
+            MItem(_("Pøejmenovat"),
+                  LookupForm.COMMAND_RENAME_PROFILE(ctrl=ctrl),
+                  help=_("Upravit a ulo¾it název aktuálního profilu")),
             MItem(_("Smazat"), 
-                  self.COMMAND_DELETE_SAVED_PROFILE(ctrl=ctrl),
+                  LookupForm.COMMAND_DELETE_PROFILE(ctrl=ctrl),
                   help=_("Smazat zvolený ulo¾ený profil")),
             MSeparator(),
             MItem(_("Vrátit poslední ulo¾ené nastavení"),
+                  LookupForm.COMMAND_RELOAD_PROFILE,
                   help=_("Zahodit zmìny nastavení formuláøe provedené "
-                         "od posledního ulo¾ení profilu."),
-                  command=LookupForm.COMMAND_RELOAD_PROFILE),
+                         "od posledního ulo¾ení profilu.")),
             MItem(_("Vrátit výchozí nastavení aplikace"),
-                  help=_("Zahodit v¹echny ulo¾ené u¾ivatelské zmìny nastavení formuláøe."),
-                  command=LookupForm.COMMAND_RESET_PROFILE),
+                  command=LookupForm.COMMAND_RESET_PROFILE,
+                  help=_("Zahodit v¹echny ulo¾ené u¾ivatelské zmìny nastavení formuláøe.")),
             )
 
     def on_profile_ctrl_enter(self, ctrl):
