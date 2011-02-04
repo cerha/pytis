@@ -27,6 +27,7 @@ hodit.
 from pytis.extensions import *
 
 import re
+import types
 
 def smssend(tel, message, server='192.168.1.55'):
     import os, os.path, commands
@@ -63,6 +64,9 @@ def smssend(tel, message, server='192.168.1.55'):
 	return msg
     return None
 
+
+# TODO: this procedure is obsolete and superceeded with send_mail and should be removed
+#       after checking its use in applications
 def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
     """Ode¹le email"""
 
@@ -82,118 +86,38 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
     except:
         print 'ERROR: e-mail se nepodaøilo odeslat'
         return 1
-    
 
-def send_mail(to, address, subject, msg, sendmail_command='/usr/lib/sendmail',
-              html=False, key=None, gpg_options=('--always-trust',)):
+# TODO: argument sendmail_command should be removed when all applications reflect this change    
+def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859-2',
+              sendmail_command=None):
     """Ode¹le jeden email s mo¾ností kryptování pomocí gpg/pgp klíèe."""
-   
-    def setup_gpg_options(gpg, options=()):
-        gpg.options.armor = 1
-        gpg.options.meta_interactive = 0
-        gpg.options.extra_args.append('--no-secmem-warning')
-        for o in options:            
-            gpg.options.extra_args.append(o)
-
-    def gpg_create_keyring(gpg, key, keyring):
-        proc = gpg.run(['--import'], create_fhs=['stdin', 'stderr'])
-        proc.handles['stdin'].write(key)
-        proc.handles['stdin'].close()
-        out = proc.handles['stderr'].read()
-        proc.handles['stderr'].close()
-        proc.wait()
-        return keyring
-
-    def gpg_encrypt_string(gpg, string, to):
-        if isinstance(to, types.StringType):
-            to = (to,)        
-        gpg.options.recipients = to   # a list!        
-        proc = gpg.run(['--encrypt'], create_fhs=['stdin', 'stdout'])        
-        proc.handles['stdin'].write(string)       
-        proc.handles['stdin'].close()
-        output = proc.handles['stdout'].read()
-        proc.handles['stdout'].close()        
-        proc.wait()
-        return output
-
-    import os
     assert isinstance(to, types.StringTypes)
     assert isinstance(address, types.StringTypes)
     assert isinstance(subject, types.StringTypes)
     assert isinstance(msg, types.StringTypes)
-    # O¹etøení pøípadného pou¾ití UNICODE
-    to = str(to)
-    address = str(address)
-    if html:
-        msg = ("Content-Type: text/html;charset=ISO-8859-2\n"
-               "Content-Transfer-Encoding: 8bit\n\n") + msg
-    if key:
-        try:
-            import tempfile, GnuPGInterface
-            keyring = tempfile.mkstemp()[1]
-            gpg = GnuPGInterface.GnuPG()        
-            gpg_options = ('--always-trust', '--no-default-keyring',
-                           '--keyring=%s' % keyring)
-            setup_gpg_options(gpg, gpg_options)
-            gpg_create_keyring(gpg, key, keyring)
-            msg = gpg_encrypt_string(gpg, msg, to)
-            if not  isinstance(msg, types.StringType):
-                print "What GnuPG gave back is not a string!"
-                return 1
+    def get_utf8_argument(arg):
+        if isinstance(arg, types.StringType):
             try:
-                os.remove(keyring)
+                arg = unicode(arg, charset)
             except:
-                pass
-        except:
-            print "Couldn't encrypt message for %s" % to
-            return 1
-    if key and html:
-        import email.Message
-        import email.Utils
-            
-        # Main header
-        mainMsg=email.Message.Message()
-        mainMsg["To"]=to
-        mainMsg["From"]=address
-        mainMsg["Subject"]=subject
-        mainMsg["Date"]=email.Utils.formatdate(localtime=1)
-        mainMsg["Mime-version"]="1.0"
-        mainMsg["Content-type"]="Multipart/encrypted"
-        mainMsg["Content-transfer-encoding"]="8bit"
-        mainMsg.preamble="This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)"
-        # Part 1
-        firstSubMsg=email.Message.Message()
-        firstSubMsg["Content-Type"]="application/pgp-encrypted"
-        firstSubMsg["Content-Description"]="PGP/MIME version identification"
-        firstSubMsg.set_payload("Version: 1\n")
-        # Part 2
-        secondSubMsg=email.Message.Message()
-        secondSubMsg.add_header("Content-Type", "application/octet-stream",
-                                name="encrypted.html.pgp")
-        secondSubMsg.add_header("Content-Description",
-                                "OpenPGP encrypted message")
-        secondSubMsg.add_header("Content-Disposition", "inline",
-                                filename="encrypted.html.pgp")
-        secondSubMsg.set_payload(msg)
-        # Pøidání èástí do main
-        mainMsg.attach(firstSubMsg)
-        mainMsg.attach(secondSubMsg)
-        msg = mainMsg.as_string()
-    else:
-        header = 'From: %s\n' % address
-        header += 'To: %s\n' % to
-        header += 'Subject: %s\n' % subject
-        if html:
-            header += 'Content-Type: text/html; charset=iso-8859-2\n'
-        msg = header + '\n' + msg
-    try:
-        s = os.popen('%s %s' % (sendmail_command, to),'w')
-        s.write(msg)
-        s.close()
-    except:        
-        print "Couldn't send message for %s" % to
-        return 1
-    return 0
+                raise ProgramError("Cannot convert argument to unicode for charset %s" % (charset))
+        return arg.encode('UTF-8')
+    # Pøevedení na UTF-8
+    to = get_utf8_argument(to)
+    address = get_utf8_argument(address)
+    subject = get_utf8_argument(subject)
+    msg = get_utf8_argument(msg)
+    if key is not None:
+        # Budeme vytváøet kryptovaný email
+        from pytis.extensions.email_ import GPGEmail
+        mail = GPGEmail(to, address, subject, msg, html=html, key=key, charset='UTF-8')
+    else:    
+        # Budeme vytváøet jednoduchý nekryptovaný mail
+        from pytis.extensions.email_ import SimpleEmail
+        mail = SimpleEmail(to, address, subject, msg, html=html, charset='UTF-8')
+    result = mail.send()    
+    return result
+
 
 # Additional constraints
             
