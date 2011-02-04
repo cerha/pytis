@@ -746,15 +746,15 @@ class LookupForm(InnerForm):
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
-        self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
-                                        filter=filter, sorting=sorting, columns=columns,
-                                        grouping=grouping)
-        self._profiles = self._load_profiles()
+        default_profile = Profile('__default_profile__', _("Výchozí profil"),
+                                  filter=filter, sorting=sorting, columns=columns,
+                                  grouping=grouping)
+        self._profiles = self._load_profiles(default_profile)
         initial_profile_id = self._view.profiles().default()
         if initial_profile_id:
             current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
         else:
-            current_profile = self._default_profile
+            current_profile = self._profiles[0]
         # _apply_profile_parameters() will initialize all the profile related attributes.
         self._apply_profile_parameters(current_profile)
         self._lf_initial_sorting = self._lf_sorting
@@ -945,18 +945,18 @@ class LookupForm(InnerForm):
     def _save_profile(self, profile):
         profile_manager().save_profile(self._fullname(), profile)
     
-    def _load_profiles(self):
+    def _load_profiles(self, default_profile):
         manager = profile_manager()
         fullname = self._fullname()
-        profiles = [self._default_profile]
-        for profile in self._view.profiles():
+        profiles = []
+        for profile in (default_profile,) + tuple(self._view.profiles()):
             custom = manager.load_profile(fullname, profile.id())
             if custom:
                 custom.finish(self._data)
                 profile = custom
             profiles.append(profile)
         for profile_id in manager.list_profile_ids(fullname):
-            if profile_id.startswith('_user_profile'):
+            if profile_id.startswith(self._USER_PROFILE_PREFIX):
                 profile = manager.load_profile(fullname, profile_id)
                 if profile:
                     profile.finish(self._data)
@@ -1014,13 +1014,12 @@ class LookupForm(InnerForm):
         return dict(filter=self._lf_filter, sorting=self._lf_sorting)
 
     def _current_profile_changed(self):
-        if self._current_profile is not self._default_profile:
-            for param, current_value in self._profile_parameters_to_save().items():
-                value = getattr(self._current_profile, param)()
-                if value is None:
-                    value = getattr(self._default_profile, param)()
-                if current_value != value:
-                    return True
+        for param, current_value in self._profile_parameters_to_save().items():
+            value = getattr(self._current_profile, param)()
+            if value is None:
+                value = getattr(self._profiles[0], param)()
+            if current_value != value:
+                return True
         return False
     
     def _cmd_apply_profile(self, index):
@@ -1084,7 +1083,7 @@ class LookupForm(InnerForm):
     def _cmd_delete_saved_profile(self, ctrl):
         profile_manager().drop_profile(self._fullname(), self._current_profile.id())
         self._profiles.remove(self._current_profile)
-        self._apply_profile(self._default_profile)
+        self._apply_profile(self._profiles[0])
         ctrl.Delete(ctrl.GetSelection())
         ctrl.SetSelection(0)
 
@@ -1095,8 +1094,7 @@ class LookupForm(InnerForm):
         self._apply_profile(self._current_profile)
         
     def _can_reset_profile(self):
-        return self._current_profile is not self._default_profile \
-            and not isinstance(self._current_profile, FormProfile)
+        return not isinstance(self._current_profile, FormProfile)
         
     def _cmd_reset_profile(self):
         index = self._profiles.index(self._current_profile)
