@@ -1097,8 +1097,7 @@ class LookupForm(InnerForm):
             message(_("Profil ulo¾en pod názvem '%s'.") % name)
             # ctrl.SetString() doesn't seem to work so recreate the items.
             ctrl.Clear()
-            for profile in self._profiles:
-                ctrl.Append(profile.name())
+            ctrl.AppendItems([profile.name() for profile in self._profiles])
             ctrl.SetSelection(self._profiles.index(self._current_profile))
             self.focus()
         ctrl.SetEditable(True)
@@ -1318,8 +1317,7 @@ class LookupForm(InnerForm):
         if self.__class__._last_profile_menu_form is not self:
             ctrl.SetEditable(False)
             ctrl.Clear()
-            for profile in self._profiles:
-                ctrl.Append(profile.name())
+            ctrl.AppendItems([profile.name() for profile in self._profiles])
             ctrl.SetSelection(self._profiles.index(self._current_profile))
             self.__class__._last_profile_menu_form = self
         if self._current_profile_changed():
