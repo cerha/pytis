@@ -554,6 +554,16 @@ class Profile(object):
         self._aggregations = aggregations and tuple(aggregations)
         self._folding = folding
     
+    def __str__(self):
+        parameters = ['%s=%s' % (key[1:], value)
+                      for key, value in self.__dict__.items()
+                      if key not in ('_id', '_name', '_packed_filter')]
+        try:
+            return "<%s id='%s' %s>" % (self.__class__.__name__, self._id, ', '.join(parameters))
+        except AttributeError:
+            return '<%s.%s object at 0x%x>' % (self.__class__.__module__, self.__class__.__name__,
+                                               id(self))
+
     def id(self):
         """Return the unique profile identifier."""
         return self._id
@@ -583,11 +593,6 @@ class Profile(object):
     def folding(self):
         return self._folding
 
-    def __str__(self):
-        parameters = ['%s=%s' % (key[1:], value)
-                      for key, value in self.__dict__.items()
-                      if key not in ('_id', '_name', '_packed_filter')]
-        return "<%s id='%s' %s>" % (self.__class__.__name__, self._id, ', '.join(parameters))
 
 class Profiles(tuple):
     """A sequence of form profiles with an optional specification of the default profile.
