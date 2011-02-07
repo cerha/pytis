@@ -59,6 +59,22 @@ class FormProfile(pytis.presentation.Profile):
     """
     def __init__(self, id, name, column_widths=None,
                  group_by_columns=None, aggregation_columns=None, form_size=None,   **kwargs):
+        """Specific keyword arguments:
+
+          column_widths -- dictionary of pixel widths of form columns keyed by
+            column identifiers
+          group_by_columns -- tuple of group by columns (their string
+            identifiers) for an aggregated view of given form
+          aggregation_columns -- tuple of aggregation column specifications,
+            where each item is a pair of string column identifier and the
+            aggregation function as one of pytis.data.Data AGG_* constants.
+            May only be used if 'group_by_columns' are also defiend.
+          form_size -- prefered form size in pixels as a tuple of two integers
+             (width, height) or None if undefined.
+
+        All other arguments the sam as for the parent class.
+
+        """
         self._packed_filter = None
         self._column_widths = column_widths or {}
         self._group_by_columns = group_by_columns
