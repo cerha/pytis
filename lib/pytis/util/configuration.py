@@ -782,10 +782,6 @@ class Configuration(object):
                    "aplikace.")
         _DEFAULT = None
 
-    class _Option_form_state(HiddenOption):
-        _DESCR = _("Tato volba je vyu¾ívána pro ukládání stavu formuláøù.")
-        _DEFAULT = {}
-
     class _Option_row_focus_fg_color(ColorOption):
         _DESCR = _("Barva textu aktivního øádku tabulkového formuláøe.")
         _DEFAULT = '#ffffff'

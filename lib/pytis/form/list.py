@@ -3031,11 +3031,6 @@ class AggregationForm(BrowseForm):
         return [c for c in super(AggregationForm, self)._lf_sfs_columns()
                 if c.id() in self._select_columns()]
 
-    def _get_state_param(self, name, default=None, cls=None, item_cls=None):
-        # Avoid saving state params.  Temporary hack to avoid errors when loading aggregated form
-        # with a diffrent group_by/aggregation columns selection than the previously saved.
-        return default
-        
     def title(self):
         labels = [self._view.field(fid).label() for fid in self._group_by_column_ids()]
         return super(AggregationForm, self).title() + _(" - agregováno pøes ") + ', '.join(labels)

@@ -294,10 +294,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         the attributes of the instance.  See also the constructor documentation for more details.
 
         """
-        key = self.__class__.__name__ +'/'+ self._name
-        self._form_state = config.form_state.get(key)
-        if not isinstance(self._form_state, dict):
-            self._form_state = config.form_state[key] = {}
+        pass
         
     def _create_view_spec(self):
         t = time.time()
@@ -335,25 +332,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _fullname(self):
         cls = self.__class__
         return 'form/%s.%s/%s//' % (cls.__module__, cls.__name__, self._name)
-
-    def _get_state_param(self, name, default=None, cls=None, item_cls=None):
-        try:
-            param = self._form_state[name]
-        except KeyError:
-            return default
-        if cls is not None and not isinstance(param, cls):
-            log(OPERATIONAL, "Invalid saved form attribute value:", name)
-            return default
-        if item_cls is not None:
-            assert cls is tuple
-            for item in param:
-                if not isinstance(item, item_cls):
-                    log(OPERATIONAL, "Invalid saved form attribute value:", name)
-                    return default
-        return param
-
-    def _set_state_param(self, name, value):
-        self._form_state[name] = value
 
     def _release_data(self):
         if self._data is not None:
