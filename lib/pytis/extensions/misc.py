@@ -90,7 +90,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
 # TODO: argument sendmail_command should be removed when all applications reflect this change    
 def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859-2',
               sendmail_command=None):
-    """Ode¹le jeden email s mo¾ností kryptování pomocí gpg/pgp klíèe."""
+    """Send an email with the possibility to encrypt it with a GPG/PGP key."""
     assert isinstance(to, types.StringTypes)
     assert isinstance(address, types.StringTypes)
     assert isinstance(subject, types.StringTypes)
@@ -108,15 +108,20 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
     subject = get_utf8_argument(subject)
     msg = get_utf8_argument(msg)
     if key is not None:
-        # Budeme vytváøet kryptovaný email
+        # We will create GPG encrypted email
         from pytis.extensions.email_ import GPGEmail
         mail = GPGEmail(to, address, subject, msg, html=html, key=key, charset='UTF-8')
     else:    
-        # Budeme vytváøet jednoduchý nekryptovaný mail
+        # We will create simple text/html email
         from pytis.extensions.email_ import SimpleEmail
         mail = SimpleEmail(to, address, subject, msg, html=html, charset='UTF-8')
-    result = mail.send()    
-    return result
+    result = mail.send()
+    if not result:
+        # Sending email failed -- return an error message
+        return mail.get_error_msg()
+    else:
+        # Success - return no error message
+        return None
 
 
 # Additional constraints
