@@ -164,10 +164,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._column_widths = dict(profile.column_widths())
             self._group_by_columns = profile.group_by_columns()
             self._aggregation_columns = profile.aggregation_columns()
+            self._form_size = profile.form_size()
         else:
             self._column_widths = {}
             self._group_by_columns = None
             self._aggregation_columns = None
+            self._form_size = None
         
     def _apply_profile(self, profile, refresh=True):
         self._apply_profile_parameters(profile)
@@ -182,7 +184,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     aggregations=tuple(self._aggregations),
                     column_widths=dict(self._column_widths),
                     group_by_columns=self._group_by_columns,
-                    aggregation_columns=self._aggregation_columns)
+                    aggregation_columns=self._aggregation_columns,
+                    form_size=self.GetSize())
         
     def _select_columns(self):
         return [c.id() for c in self._data.columns() 
@@ -1413,7 +1416,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return total
 
     def size(self):
-        return wx.Size(self._total_width(), self._total_height())
+        """Return the prefered form size in pixels as a tuple of two integers (width, height).
+
+        In this class, the returned size is the form size saved with the
+        current profile or None if the current profile is not a user saved
+        profile but a predefined profile form specification.
+
+        """
+        return self._form_size
 
     def _total_height(self):
         g = self._grid
@@ -2617,6 +2627,18 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
 
     def _on_dclick(self, event):
         return self.COMMAND_ACTIVATE.invoke()
+
+    def size(self):
+        """Return the prefered form size in pixels as a tuple of two integers (width, height).
+
+        In this class, the returned size is always the total size of the form
+        (wide to fit all displayed columns and high to fit all rows).  The
+        calling side is responsible to limit the returned size to fit the
+        current context (screen).
+
+        """
+        return (self._total_width(), self._total_height())
+
 
 class SelectRowsForm(CodebookForm):
     """Øádkový pop-up formuláø vracející tuple v¹ech vybraných øádkù."""

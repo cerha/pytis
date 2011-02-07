@@ -58,11 +58,12 @@ class FormProfile(pytis.presentation.Profile):
 
     """
     def __init__(self, id, name, column_widths=None,
-                 group_by_columns=None, aggregation_columns=None, **kwargs):
+                 group_by_columns=None, aggregation_columns=None, form_size=None,   **kwargs):
         self._packed_filter = None
         self._column_widths = column_widths or {}
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
+        self._form_size = form_size
         super(FormProfile, self).__init__(id, name, **kwargs)
         
     def __getstate__(self):
@@ -139,6 +140,9 @@ class FormProfile(pytis.presentation.Profile):
     
     def aggregation_columns(self):
         return self._aggregation_columns
+
+    def form_size(self):
+        return self._form_size
 
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
@@ -464,7 +468,15 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """Return a new instance of the data object used by the form."""
         return self._create_data_object()
         
+    def size(self):
+        """Return the prefered form size in pixels as a tuple of two integers (width, height).
 
+        None may be returned if the prefered form size is not defined or known.
+
+        """
+        return None
+
+    
 class InnerForm(Form):
     """Formuláø, který zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
 
@@ -2338,14 +2350,15 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         return self._view.layout().caption()
 
     def size(self):
-        """Return the ideal total size of the form in pixels as a tuple of two integers.
+        """Return the prefered form size in pixels as a tuple of two integers (width, height).
 
-        The returned size represents the total size of the form needed to display all fields
-        without scrolling.  The current real size may be greater or smaller depending on the size
-        of the window where the form is displayed.
+        The returned size in this class represents the total size of the form
+        needed to display all fields without scrolling.  The current real size
+        may be greater or smaller depending on the size of the window where the
+        form is displayed.
         
         """
-        return self._size
+        return (self._size.width, self._size.height) 
 
     def field(self, id):
         """Return the 'InputField' instance for the field 'id'.
@@ -2376,7 +2389,7 @@ class PopupEditForm(PopupForm, EditForm):
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
         # will appear.
-        size = copy.copy(self.size())
+        size = wx.Size(*self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
 

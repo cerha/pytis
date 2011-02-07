@@ -260,28 +260,21 @@ class DualForm(Form, Refreshable):
         if active:
             active.focus()
 
-    def _initial_sash_position(self, mode, size):
-        def dim(size, mode):
-            if mode == wx.SPLIT_HORIZONTAL:
+    def _initial_sash_position(self, total_size):
+        def dimension(size):
+            if size is None:
+                r = self._view.sash_ratio()
+                size = wx.Size(total_size.width * r, total_size.height * r)
+            if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
                 return size.height
             else:
                 return size.width
-        self._splitter_position_initialized = True
-        saved_position = self._get_state_param('sash_position', -1, int)
-        if saved_position > 0:
-            return min(saved_position, dim(size, mode))
-        if isinstance(self._main_form, EditForm):
-            return min(dim(self._main_form.size(), mode), dim(size, mode) - 200)
-        elif isinstance(self._side_form, EditForm):
-            return max(dim(size, mode) - dim(self._side_form.size(), mode), 200)
-        elif mode == wx.SPLIT_HORIZONTAL:
-            return size.height * self._view.sash_ratio()
+        if isinstance(self._side_form, EditForm):
+            return max(dimension(total_size) - dimension(self._side_form.size()), 200)
         else:
-            return min(self._main_form.size().width, size.width - 200)
+            return min(dimension(self._main_form.size()), dimension(total_size) - 200)
 
     def _on_sash_changed(self, event):
-        position = event.GetSashPosition()
-        self._set_state_param('sash_position', position)
         # Sometimes the form is not redrawn correctly...
         self._main_form.Refresh()
         self._active_form.focus()
@@ -289,10 +282,10 @@ class DualForm(Form, Refreshable):
 
     def _on_size(self, event):
         size = event.GetSize()
-        mode = self._splitter.GetSplitMode()
         self._splitter.SetSize(size)
         if not self._splitter_position_initialized:
-            position = self._initial_sash_position(mode, size)
+            self._splitter_position_initialized = True
+            position = self._initial_sash_position(size)
             self._splitter.SetSashPosition(position)
         event.Skip()
 
@@ -451,7 +444,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
     def _initial_orientation(self):
         return Orientation.HORIZONTAL
     
-    def _initial_sash_position(self, mode, size):
+    def _initial_sash_position(self, size):
         return size.height / 2 
         
     def _create_main_form(self, parent, **kwargs):
@@ -889,7 +882,7 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _initial_orientation(self):
         return Orientation.HORIZONTAL
         
-    def _initial_sash_position(self, mode, size):
+    def _initial_sash_position(self, size):
         return size.height / 2 
 
     def _create_main_form(self, parent, binding=None, **kwargs):
