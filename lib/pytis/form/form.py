@@ -34,10 +34,35 @@ from pytis.form import *
 import wx
 
 class FormProfile(pytis.presentation.Profile):
+    """Form profile specification that can be saved and restored.
 
-    def __init__(self, id, name, column_widths=None, **kwargs):
+    Unlike 'pytis.presentation.Profile' (the base class), instances of this
+    class can be safely pickled and unpickled (see notes below) and define also
+    some additional profile attributes which are not exposed to specifications
+    but the user interface needs to save/restore them.
+
+    Thus instances of this class are used to save and restore user defined form
+    profiles as well as user customizations of predefined form profiles
+    originally defined in specifications.
+
+    Important note: Pickling and unpickling is unfortunately not a symmetrical
+    operation.  After unpickling an instance, the method 'finish()' must be
+    called to unpack stored pytis conditions (the 'filter' attribute of the
+    profile).  This is because 'pytis.data.Operator()' instances refer to
+    values with data type instances, which are often bound to data objects.  To
+    prevent pickling of whole such structures of living objects, the filtering
+    condition is stored in a packed form which doesn't refer to data types and
+    objects.  A form's data object is needed to unpack the profile after
+    unpickling.  This is why 'finish()' must be called passing it the data
+    object of the form.
+
+    """
+    def __init__(self, id, name, column_widths=None,
+                 group_by_columns=None, aggregation_columns=None, **kwargs):
         self._packed_filter = None
         self._column_widths = column_widths or {}
+        self._group_by_columns = group_by_columns
+        self._aggregation_columns = aggregation_columns
         super(FormProfile, self).__init__(id, name, **kwargs)
         
     def __getstate__(self):
@@ -62,12 +87,12 @@ class FormProfile(pytis.presentation.Profile):
             state['_packed_filter'] = pack(self._filter)
         return state
 
-    def filter(self):
-        if self._packed_filter is not None:
-            raise ProgramError("Attempted to access unpacked profile - call 'finish()' first!")
-        return self._filter
-    
+    def rename(self, name):
+        """Change the name of the profile to given 'name' (string)."""
+        self._name = name
+
     def finish(self, data):
+        """Finish the instance after unpickling (see the class docstring for more information)."""
         # NOT is not allowed!
         OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
         def unpack(packed):
@@ -101,9 +126,11 @@ class FormProfile(pytis.presentation.Profile):
             else:
                 self._packed_filter = None
 
-    def rename(self, name):
-        self._name = name
-
+    def filter(self):
+        if self._packed_filter is not None:
+            raise ProgramError("Attempted to access unpacked profile - call 'finish()' first!")
+        return self._filter
+    
     def column_widths(self):
         return self._column_widths
     
