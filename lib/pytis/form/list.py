@@ -162,8 +162,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._init_aggregations(profile.aggregations())
         if isinstance(profile, FormProfile):
             self._column_widths = dict(profile.column_widths())
+            self._group_by_columns = profile.group_by_columns()
+            self._aggregation_columns = profile.aggregation_columns()
         else:
             self._column_widths = {}
+            self._group_by_columns = None
+            self._aggregation_columns = None
         
     def _apply_profile(self, profile, refresh=True):
         self._apply_profile_parameters(profile)
@@ -176,7 +180,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     columns=tuple([c.id() for c in self._columns]),
                     grouping=self._grouping,
                     aggregations=tuple(self._aggregations),
-                    column_widths=dict(self._column_widths))
+                    column_widths=dict(self._column_widths),
+                    group_by_columns=self._group_by_columns,
+                    aggregation_columns=self._aggregation_columns)
         
     def _select_columns(self):
         return [c.id() for c in self._data.columns() 
@@ -1637,22 +1643,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cmd_aggregated_view(self):
         grouping_functions = self._view.grouping_functions()
-        group_by_columns = self._get_state_param('group-by-columns', (),
-                                                 cls=tuple, item_cls=tuple)
-        aggregation_columns = self._get_state_param('aggregation-columns', (),
-                                                    cls=tuple, item_cls=tuple)
         result = run_dialog(AggregationSetupDialog,
                             aggregation_functions=self._available_aggregations(),
                             grouping_functions=grouping_functions,
                             columns=[(c.id(), c.label(), self._row.type(c.id()))
                                      for c in self._columns],
                             aggregation_valid=self._aggregation_valid,
-                            group_by_columns=group_by_columns,
-                            aggregation_columns=aggregation_columns)
+                            group_by_columns=self._group_by_columns,
+                            aggregation_columns=self._aggregation_columns)
         if result is not None:
-            group_by_columns, aggregation_columns = result
-            self._set_state_param('group-by-columns', group_by_columns)
-            self._set_state_param('aggregation-columns', aggregation_columns)
+            self._group_by_columns, self._aggregation_columns = result
             # Compose the aggregated data object inner condition from the
             # current user filter and the hardcoded condition from
             # specification.
@@ -1664,9 +1664,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     condition = spec_condition
             run_form(AggregationDualForm, self._name,
-                     group_by_columns=group_by_columns,
+                     group_by_columns=self._group_by_columns,
                      grouping_functions=grouping_functions,
-                     aggregation_columns=aggregation_columns,
+                     aggregation_columns=self._aggregation_columns,
                      aggregation_condition=condition)
         
     def _cmd_filter_by_cell(self):
@@ -2954,7 +2954,7 @@ class AggregationForm(BrowseForm):
         labels = dict([(f.id(), f.label()) for f in fields])
         agg_labels = dict(self._available_aggregations())
         column_groups = []
-        for column_id, function in self._group_by_columns:
+        for column_id, function in self._af_group_by_columns:
             if function is None:
                 column_groups.append(column_id)
             else:
@@ -2989,7 +2989,7 @@ class AggregationForm(BrowseForm):
 
     def _group_by_column_ids(self):
         return [self._group_by_column_id(column_id, function)
-                for column_id, function in self._group_by_columns]
+                for column_id, function in self._af_group_by_columns]
     
     def _init_columns(self, columns=None):
         if columns is None:

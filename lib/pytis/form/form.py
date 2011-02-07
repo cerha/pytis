@@ -106,6 +106,12 @@ class FormProfile(pytis.presentation.Profile):
 
     def column_widths(self):
         return self._column_widths
+    
+    def group_by_columns(self):
+        return self._group_by_columns
+    
+    def aggregation_columns(self):
+        return self._aggregation_columns
 
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
