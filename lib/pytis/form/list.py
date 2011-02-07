@@ -2942,10 +2942,10 @@ class AggregationForm(BrowseForm):
         # We can't process these arguments in _init_attributes() since they are
         # needed in _create_view_spec() and _create_data_object() which are
         # called before _init_attributes().
-        self._aggregation_columns = kwargs.pop('aggregation_columns')
-        self._group_by_columns = tuple(kwargs.pop('group_by_columns'))
-        self._grouping_functions = tuple(kwargs.pop('grouping_functions'))
-        self._aggregation_condition = kwargs.pop('aggregation_condition', None)
+        self._af_group_by_columns = tuple(kwargs.pop('group_by_columns'))
+        self._af_aggregation_columns = kwargs.pop('aggregation_columns')
+        self._af_aggregation_condition = kwargs.pop('aggregation_condition', None)
+        self._af_grouping_functions = tuple(kwargs.pop('grouping_functions'))
         super(AggregationForm, self).__init__(*args, **kwargs)
     
     def _create_view_spec(self):
@@ -2958,21 +2958,21 @@ class AggregationForm(BrowseForm):
             if function is None:
                 column_groups.append(column_id)
             else:
-                spec = find(function, self._grouping_functions, key=lambda x: x[0])
+                spec = find(function, self._af_grouping_functions, key=lambda x: x[0])
                 label, input_type, return_type = spec[1:]
                 func_column_id = self._group_by_column_id(column_id, function)
                 label = labels[column_id] +' :: '+ label
                 column_groups.append((func_column_id, return_type, function, column_id))
                 fields.append(Field(func_column_id, label, type=return_type))
         operations = []
-        for column_id, op in self._aggregation_columns:
+        for column_id, op in self._af_aggregation_columns:
             agg_column_id = self._aggregation_column_id(column_id, op)
             label = labels[column_id] +'/'+ agg_labels[op]
             operations.append((op, column_id, agg_column_id))
             fields.append(Field(agg_column_id, label))
         self._data_kwargs['operations'] = tuple(operations)
         self._data_kwargs['column_groups'] = tuple(column_groups)
-        self._data_kwargs['condition'] = self._aggregation_condition
+        self._data_kwargs['condition'] = self._af_aggregation_condition
         return ViewSpec(view.title(), fields)
 
     def _can_aggregated_view(self):
@@ -3002,7 +3002,7 @@ class AggregationForm(BrowseForm):
         
     def _select_columns(self):
         aggregation_columns = [self._aggregation_column_id(column_id, op)
-                               for column_id, op in self._aggregation_columns]
+                               for column_id, op in self._af_aggregation_columns]
         return tuple(self._group_by_column_ids() + aggregation_columns)
 
     def _lf_sfs_columns(self):
@@ -3023,8 +3023,8 @@ class AggregationForm(BrowseForm):
 
     def side_form_condition(self, row):
         """Return the side form filtering condition for given main form row."""
-        conditions = [self._aggregation_condition]
-        for column_id, function in self._group_by_columns:
+        conditions = [self._af_aggregation_condition]
+        for column_id, function in self._af_group_by_columns:
             if function is None:
                 condition = pytis.data.EQ(column_id, row[column_id])
             else:
