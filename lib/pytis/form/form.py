@@ -366,6 +366,19 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             result = False
         return result
 
+    def _cleanup(self):
+        super(Form, self)._cleanup()
+        self._cleanup_data()
+        for id in self._STATUS_FIELDS:
+            set_status(id, '')
+
+    def _cleanup_data(self):
+        try:
+            self._data.close()
+        except:
+            pass
+        self._data = None
+        
     # Zpracování pøíkazù
    
     def _cmd_help(self):
@@ -451,18 +464,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """Return a new instance of the data object used by the form."""
         return self._create_data_object()
         
-    def _cleanup(self):
-        super(Form, self)._cleanup()
-        self._cleanup_data()
-        for id in self._STATUS_FIELDS:
-            set_status(id, '')
-
-    def _cleanup_data(self):
-        try:
-            self._data.close()
-        except:
-            pass
-        self._data = None
 
 class InnerForm(Form):
     """Formuláø, který zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
