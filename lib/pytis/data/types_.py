@@ -108,8 +108,6 @@ class Type(object):
             return result
 
     _type_table = _TypeTable()
-    _remote_type_table = None
-    _remote_type_table_cache = {}
 
     VM_NULL_VALUE = 'VM_NULL_VALUE'
     VM_INVALID_VALUE =  'VM_INVALID_VALUE'
@@ -184,7 +182,6 @@ class Type(object):
         self._validation_messages = dict(vm)
         if validation_messages is not None:
             self._validation_messages.update(validation_messages)
-        self._fetched = True
         # Cachujeme na úrovni instancí, proto¾e ty jsou stejnì sdílené, viz
         # `__new__'.
         self._validation_cache = LimitedCache(self._validating_provider,
@@ -236,45 +233,6 @@ class Type(object):
         if type(state) != type(0):
             raise InvalidAccessError('Invalid type identifier', state)
         self._id = state
-        self._fetched = False
-
-    def __getattr__(self, name):
-        if self._fetched:
-            raise AttributeError(name)
-        assert self._id is not None, ('Improper type instance', self)
-        id = self._id
-        cache = self._remote_type_table_cache
-        if cache.has_key(id):
-            t = cache[id]
-            if t.__class__ != self.__class__:
-                raise ('Incorrect type class', self, t.__class__,
-                       self.__class__)
-        else:
-            remote_table = Type._remote_type_table
-            if remote_table is None:
-                import config
-                server = config.server
-                if server is None:
-                    raise AttributeError(name)
-                import pytis.remote, Pyro.core
-                uri = 'PYROLOC://%s/%s' % (server, pytis.remote.NAME_TYPE_TABLE)
-                remote_table = Type._remote_type_table = \
-                               Pyro.core.getProxyForURI(uri)
-            class_module, class_name_, args, kwargs = \
-               remote_table.get(id)
-            if class_module != self.__class__.__module__ or \
-                   class_name_ != self.__class__.__name__:
-                raise Exception('Invalid type class', id, class_module,
-                                class_name_, self.__class__.__name__)
-            t = self.__class__(*args, **kwargs)
-            cache[id] = t
-        self.__dict__.update(t.__dict__)
-        self._id = id
-        self._fetched = True
-        try:
-            return self.__dict__[name]
-        except KeyError:
-            raise AttributeError(name)
 
     def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
