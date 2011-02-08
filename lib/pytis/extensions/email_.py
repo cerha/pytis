@@ -81,7 +81,7 @@ class SimpleEmail(object):
 
     def _create_message(self):
         """Return basic instance of Message."""
-        self.msg = Message()
+        self.msg = self.get_content_text(self.content, self.html, sefl.charset):
 
     def _flatten_for_header(self, header):
         if not isinstance(header, (str, unicode)):
@@ -145,8 +145,9 @@ class SimpleEmail(object):
         return MIMEText(data, subtype, _charset=charset)
             
     def create_content(self):
-        self.msg.set_payload(self.get_content_text(self.content, html=self.html,
-                                                   charset=self.charset)) 
+        pass
+        # mime_text = self.get_content_text(self.content, html=self.html, charset=self.charset)        
+        # self.msg.attach(mime_text) 
 
     def get_message(self):
         self.create_message()
@@ -215,6 +216,10 @@ class GPGEmail(SimpleEmail):
                                            smtp=smtp, charset=charset)
         self.key = key
 
+    def _create_message(self):
+        """Return basic instance of Message."""
+        self.msg = Message()
+        
     def _setup_gpg(self):
         "Setup GPG process. Returns initialized gpg instance."
         try:
