@@ -1008,7 +1008,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'text': String,
                         'timestamp': DateTime,
                         'timestamptz': DateTime,
-                        'interval': Time, # TODO: Should be TimeInterval!
+                        'interval': TimeInterval,
                         'tsvector': FullTextIndex,
                         'varchar': String,
                         'ltree': LTree,
