@@ -81,7 +81,7 @@ class SimpleEmail(object):
 
     def _create_message(self):
         """Return basic instance of Message."""
-        self.msg = self.get_content_text(self.content, self.html, sefl.charset):
+        self.msg = self.get_content_text(self.content, self.html, self.charset)
 
     def _flatten_for_header(self, header):
         if not isinstance(header, (str, unicode)):
