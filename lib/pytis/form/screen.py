@@ -31,7 +31,7 @@ import copy
 import string
 
 from pytis.form import *
-import wx
+import wx, wx.combo
 import pytis.presentation
 
 _WX_COLORS = {}
@@ -1433,7 +1433,187 @@ class InfoWindow(object):
         view = wx_text_view(frame, text, format)
         frame.Show(True)
         
+
+class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
+    """Profile selection menu implemented using wx.ListCtrl.
+
+    This class implements the 'wx.combo.ComboPopup' API and thus can be used as
+    a popup selection of the 'ProfileSelector' control, which is derived form
+    'wx.combo.ComboCtrl'.
+
+    """
+    def __init__(self):
+        self.PostCreate(wx.PreListCtrl())
+        wx.combo.ComboPopup.__init__(self)
+        self._current_item = -1
+
+    def _on_motion(self, event):
+        item, flags = self.HitTest(event.GetPosition())
+        if item >= 0:
+            self.Select(item)
+            self._current_item = item
+
+    def _on_left_down(self, event):
+        self.Dismiss()
+        if self._current_item >= 0:
+            LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._current_item)
+
+    # The following methods implement the ComboPopup API.
+
+    def Create(self, parent):
+        # Create the popup child control. Return True for success.
+        wx.ListCtrl.Create(self, parent, style=wx.LC_LIST|wx.LC_SINGLE_SEL|wx.SIMPLE_BORDER)
+        self.Bind(wx.EVT_LEFT_DOWN, self._on_left_down)
+        self.Bind(wx.EVT_MOTION, self._on_motion)
+        return True
+
+    def GetControl(self):
+        # Return the widget that is to be used for the popup.
+        return self
+
+    def GetAdjustedSize(self, minWidth, prefHeight, maxHeight):
+        # Called just prior to displaying the popup.
+        # Fill menu items before each popup and delete them on dismiss to
+        # avoid having to update the menu during form profile list update.
+        form = current_form()
+        profiles = form.profiles()
+        width, height = (0, 0)
+        for i, profile in enumerate(profiles):
+            self.InsertStringItem(i, profile.name())
+            w, h = self.GetItemRect(i)[2:]
+            height += h
+            width = max(width, w)
+        self.Select(profiles.index(form.current_profile()))
+        # Leave 6 px vertically and 30 px horizontally for padding.
+        return wx.Size(max(width+30, minWidth), min(height+6, maxHeight))
+
+    def SetStringValue(self, value):
+        # Called just prior to displaying the popup, but after GetAdjustedSize.
+        pass
+
+    def GetStringValue(self):
+        # Return a string representation of the current item.
+        selected = self.GetFirstSelected()
+        if selected != -1:
+            return self.GetItemText(selected)
+        else:
+            return ''
+
+    def OnPopup(self):
+        # Called immediately after the popup is shown.
+        wx.combo.ComboPopup.OnPopup(self)
+
+    def OnDismiss(self):
+        # Called when popup is dismissed.
+        wx.combo.ComboPopup.OnDismiss(self)
+        self.Select(wx.NOT_FOUND)
+        self.DeleteAllItems()
+
+
+class ProfileSelector(wx.combo.ComboCtrl):
+    """Toolbar control for form profile selection and management."""
+    
+    def __init__(self, parent, size):
+        wx.combo.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=size)
+        self._popup = ProfileSelectorPopup()
+        self.SetPopupControl(self._popup)
+        self._on_enter_perform = None
+        ctrl = self.GetTextCtrl()
+        ctrl.SetEditable(False)
+        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
+        wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
+        wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
+        wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), self._on_enter)
+        wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
+        wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
+            
+    def _on_ui_event(self, event):
+        enabled = LookupForm.COMMAND_PROFILE_MENU.enabled()
+        event.Enable(enabled)
+        ctrl = self.GetTextCtrl()
+        popup = self._popup
+        if enabled:
+            if not ctrl.IsEditable():
+                form = current_form()
+                current_profile = form.current_profile()
+                if current_profile and ctrl.GetValue() != current_profile.name():
+                    ctrl.SetValue(current_profile.name())
+            if LookupForm.COMMAND_UPDATE_PROFILE.enabled():
+                # Indicate changed profile by color (update is enabled for changed profiles).
+                color = wx.Color(200, 0, 0)
+            else:
+                color = wx.Color(0, 0, 0)
+            ctrl.SetForegroundColour(color)
+        elif top_window() is None and popup.GetItemCount() != 0:
+            ctrl.SetValue('')
+
+    def _on_context_menu(self, event):
+        menu = (
+            MItem(_("Ulo¾it"),
+                  LookupForm.COMMAND_UPDATE_PROFILE(),
+                  help=_("Aktualizovat ulo¾ený profil podle souèasného nastavením formuláøe")),
+            MItem(_("Ulo¾it jako nový"),
+                  Application.COMMAND_HANDLED_ACTION(
+                    # Name must be edited first and 'cmd' will be invoked after confirmation.
+                    handler=self._edit_profile_name,
+                    enabled=self._edit_profile_name_enabled,
+                    cmd=LookupForm.COMMAND_SAVE_NEW_PROFILE,
+                    clear=True),
+                  help=_("Vytvoøit nový profil podle souèasného nastavením formuláøe")),
+            MItem(_("Pøejmenovat"),
+                  Application.COMMAND_HANDLED_ACTION(
+                    # Name must be edited first and 'cmd' will be invoked after confirmation.
+                    handler=self._edit_profile_name,
+                    enabled=self._edit_profile_name_enabled,
+                    cmd=LookupForm.COMMAND_RENAME_PROFILE),
+                  help=_("Upravit a ulo¾it název aktuálního profilu")),
+            MItem(_("Smazat"), 
+                  LookupForm.COMMAND_DELETE_PROFILE(),
+                  help=_("Smazat zvolený ulo¾ený profil")),
+            MSeparator(),
+            MItem(_("Vrátit poslední ulo¾ené nastavení"),
+                  LookupForm.COMMAND_RELOAD_PROFILE,
+                  help=_("Zahodit zmìny nastavení formuláøe provedené "
+                         "od posledního ulo¾ení profilu.")),
+            MItem(_("Vrátit výchozí nastavení aplikace"),
+                  command=LookupForm.COMMAND_RESET_PROFILE,
+                  help=_("Zahodit v¹echny ulo¾ené u¾ivatelské zmìny nastavení formuláøe.")),
+            )
+        popup_menu(self, menu)
+
+    def _edit_profile_name(self, cmd, clear=False):
+        ctrl = self.GetTextCtrl()
+        def perform():
+            name=self.GetValue()
+            ctrl.SetEditable(False)
+            cmd.invoke(name=name)
+        ctrl.SetEditable(True)
+        if clear:
+            ctrl.SetValue('')
+        else:
+            ctrl.SelectAll()
+        ctrl.SetFocus()
+        message(_("Zadejte název profilu a potvrïte stiskem ENTER."))
+        self._on_enter_perform = perform
+
+    def _edit_profile_name_enabled(self, cmd, clear=False):
+        return cmd.enabled(name=self.GetValue())
         
+    def _on_enter(self, event):
+        func = self._on_enter_perform
+        if func:
+            self._on_enter_perform = None
+            func()
+        else:
+            event.Skip()
+        
+    def _on_key_down(self, event):
+        event.Skip()
+        code = event.GetKeyCode()
+        if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            current_form().focus()
+            
+
 # Pøevodní funkce
         
 def char2px(window, x, y):
