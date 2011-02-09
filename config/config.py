@@ -22,10 +22,6 @@
 # k aktuálnímu adresáøi.
 #logo = './icons/logo.bmp'
 
-# Jméno stroje (øetìzec), na kterém bì¾í Pyro server. Mù¾e být té¾ 'None', pak
-# se klient nepøipojuje na server a pou¾ívá lokální konfiguraci.
-#server = None
-
 # Shellový pøíkaz sendmail vèetnì celé cesty.
 #sendmail_command = '/usr/lib/sendmail'
 

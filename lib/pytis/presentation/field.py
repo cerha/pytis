@@ -113,9 +113,6 @@ class PresentedRow(object):
 
         """
         assert isinstance(fields, (tuple, list))
-        # TODO: pytis.remote vy¾aduje inicializaci Pyro, co¾ není v¾dy to pravé oøechové.  `data'
-        # by stejnì mìlo být jednotného typu, je tøeba to nìjak promyslet.
-        #assert isinstance(data, pytis.data.Data) or isinstance(data, pytis.remote.RemoteData)
         assert row is None or isinstance(row, (PresentedRow, pytis.data.Row))
         assert prefill is None or isinstance(prefill, dict)
         assert isinstance(singleline, bool)

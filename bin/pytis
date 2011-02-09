@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -141,29 +141,6 @@ def run_application():
         locale.setlocale(locale.LC_NUMERIC, config.lc_numeric)
     except locale.Error:
         locale.setlocale(locale.LC_NUMERIC, 'C')
-    server = config.server
-    if server:
-        import pytis.data, pytis.util
-        class ClientResolver(pytis.util.FileResolver):
-            def __init__(self, remote_resolver):
-                super(ClientResolver, self).__init__(config.def_dir)
-                self._remote_resolver = remote_resolver
-            def get(self, file_name, spec_name):
-                super_ = super(ClientResolver, self)
-                result = super_.get(file_name, spec_name)
-                if spec_name == 'data_spec':
-                    # I pro tento pøípad je nutno vý¹e volat `get', aby byly
-                    # nata¾eny v¹echny potøebné tøídy a moduly.
-                    result = self._remote_resolver.get(file_name, spec_name)
-                return result
-        import Pyro.core, Pyro.naming
-        Pyro.core.initClient()
-        locator = Pyro.naming.NameServerLocator()
-        #ns = locator.getNS(host=name_server)
-        #resolver_uri = ns.resolve(pytis.remote.NAME_RESOLVER)
-        resolver_uri = 'PYROLOC://%s/%s' % (server, pytis.remote.NAME_RESOLVER)
-        remote_resolver = Pyro.core.getProxyForURI(resolver_uri)
-        pytis.util.set_resolver(ClientResolver(remote_resolver))
     pytis.form.Application().run()
 
 if __name__ == '__main__':

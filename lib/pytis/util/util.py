@@ -1547,11 +1547,7 @@ def format_traceback():
     """Vra» zformátovaný traceback aktuální výjimky, jako string."""
     import traceback
     einfo = __, einstance, tb = sys.exc_info()
-    if 'Pyro' in sys.modules:
-        import Pyro
-        tblist = Pyro.util.getPyroTraceback(einstance)
-    else:
-        tblist = apply(traceback.format_exception, einfo)
+    tblist = apply(traceback.format_exception, einfo)
     tbstring = string.join(tblist, '')
     return tbstring
 

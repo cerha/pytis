@@ -482,12 +482,6 @@ class Configuration(object):
                  "adresáøi.")
         _DEFAULT = './icons/logo.bmp'
 
-    class _Option_server(StringOption, CommandlineOption):
-        _DESCR = _("Jméno stroje (øetìzec), na kterém bì¾í Pyro server.")
-        _DOC = _("Mù¾e být té¾ 'None', pak se klient nepøipojuje na server "
-                 "a pou¾ívá lokální konfiguraci.")
-        _DEFAULT = None
-
     # Databáze
     
     class _Option_dbuser(StringOption, CommandlineOption):

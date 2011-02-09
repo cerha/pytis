@@ -29,11 +29,6 @@ import sys, os.path, string, thread, time, base64, cPickle as pickle
 import config
 import pytis.data
 import pytis.form
-if config.server:
-    try:
-        import Pyro.util
-    except ImportError:
-        pass
 from pytis.form import *
 import wx
 import wx.html
@@ -1801,12 +1796,8 @@ def create_data_object(name, spec_kwargs={}, kwargs={}):
     """
     factory = resolver().get(name, 'data_spec', **spec_kwargs)
     import config
-    if __debug__ and config.server:
-        import pytis.remote
-        assert isinstance(factory, (pytis.data.DataFactory, pytis.remote.RemoteDataFactory))
-    else:    
-        import pytis.data    
-        assert isinstance(factory, pytis.data.DataFactory)
+    import pytis.data    
+    assert isinstance(factory, pytis.data.DataFactory)
     if issubclass(factory.class_(), pytis.data.DBData):
         kwargs = dict(kwargs, connection_data=config.dbconnection)
     t = time.time()
