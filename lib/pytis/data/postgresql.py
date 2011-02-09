@@ -825,12 +825,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pdbb_btabcol(self, binding, full_text_handler=None, convert_ltree=False, operations=None):
         """Vra» sloupec z 'binding' zformátovaný pro SQL."""
         def column_type():
-            if self._arguments is None:
-                t = self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
-                                              type_kwargs=binding.kwargs())
-            else:
-                t = None
-            return t
+            return self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
+                                             type_kwargs=binding.kwargs(), noerror=True)
         result = None
         if operations is not None:
             for aggregate, id_, name in operations:
@@ -954,7 +950,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         PostgreSQLStandardBindingHandler._pdbb_table_column_data[table_key] = table_data
         return table_data
         
-    def _pdbb_get_table_type(self, table, column, ctype=None, type_kwargs=None):
+    def _pdbb_get_table_type(self, table, column, ctype=None, type_kwargs=None, noerror=False):
         table_key = self._pdbb_unique_table_id(table)
         table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table_key)
         if table_data is None:
@@ -972,6 +968,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         try:
             type_, size_string, not_null = lookup_column(table_data.basic())
         except:
+            if noerror:
+                return None
             raise pytis.data.DBException("Unknown column '%s' in table '%s'" % (column, table),
                                          None, table, column)
         try:
