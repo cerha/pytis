@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -261,8 +261,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _on_idle(self, event):
         if self._leave_form_requested:
-            self._leave_form_requested = False
-            self._cmd_leave_form()
+            try:
+                self._cmd_leave_form()
+            finally:
+                self._leave_form_requested = False
             result = True
         else:
             result = False

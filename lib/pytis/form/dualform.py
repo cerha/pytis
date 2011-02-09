@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -301,6 +301,13 @@ class DualForm(Form, Refreshable):
             self._main_form.refresh()
         if isinstance(self._side_form, Refreshable):
             self._side_form.refresh()
+
+    def _cmd_safe_leave_form(self):
+        super(DualForm, self)._cmd_safe_leave_form()
+        # Prevent certain actions to happen in the side form when the form is
+        # being closed.
+        self._side_form._leave_form_requested = True
+
         
 class ImmediateSelectionDualForm(DualForm):
     """Duální formulář s okamžitou obnovou vedlejšího formuláře."""
@@ -644,6 +651,11 @@ class MultiForm(Form, Refreshable):
         event.Skip()
     
     def _on_page_change(self, event=None):
+        if self._leave_form_requested:
+            # Prevent (possibly expensive) database queries on NotebookEvent
+            # called when the form is being closed asynchronously from _on_idle
+            # method.
+            return
         if event:
             #event.Skip()
             selection = event.GetSelection()
@@ -896,7 +908,6 @@ class MultiBrowseDualForm(BrowseDualForm):
         if self._selected_binding:
             form.select_binding(self._selected_binding)
         return form
-    
         
     def _on_main_activation(self, alternate=False):
         if alternate:
