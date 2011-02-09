@@ -37,7 +37,7 @@ tests = TestSuite()
 import sys
 # O¹klivý hack kvùli o¹etøení defaultního kódování
 # proto¾e site.py ma¾e ze 'sys' metodu setdefaultencoding
-reload(sys)
+imp.reload(sys)
 sys.setdefaultencoding('iso-8859-2')
 
 

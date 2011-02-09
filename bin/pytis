@@ -26,7 +26,7 @@ import sys
 
 # O¹klivý hack kvùli o¹etøení výchozího kódování proto¾e site.py metodu `setdefaultencoding()' z
 # modulu `sys' vyma¾e.
-reload(sys)
+imp.reload(sys)
 sys.setdefaultencoding('iso-8859-2')
 
 _EXIT_OK = 0
