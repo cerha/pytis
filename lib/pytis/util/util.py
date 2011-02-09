@@ -678,7 +678,7 @@ class Structure (object):
     def __hash__(self):
         value = 0
         for attribute in self._attributes:
-            value = value ^ hash(gettattr(self, attribute.name()))
+            value = value ^ hash(getattr(self, attribute.name()))
         return value
 
 
