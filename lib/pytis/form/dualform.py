@@ -302,11 +302,11 @@ class DualForm(Form, Refreshable):
         if isinstance(self._side_form, Refreshable):
             self._side_form.refresh()
 
-    def _cmd_safe_leave_form(self):
-        super(DualForm, self)._cmd_safe_leave_form()
+    def close(self, force=False):
         # Prevent certain actions to happen in the side form when the form is
         # being closed.
         self._side_form._leave_form_requested = True
+        return super(DualForm, self).close(force=force)
 
         
 class ImmediateSelectionDualForm(DualForm):
