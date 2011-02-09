@@ -112,9 +112,10 @@ def run():
                     # Ignore configurations for specifications that no longer exist
                     continue
                 kwargs = dict([(param, state[param])
-                               for param in ('sorting', 'grouping', 'columns', 'folding',
-                                             'column_width')
+                               for param in ('sorting', 'grouping', 'columns', 'folding')
                                if state.get(param) is not None])
+                if state.has_key('column_width'):
+                    kwargs['column_widths'] = state['column_width']
                 if kwargs.has_key('sorting'):
                     mapping = {'SORTING_ASCENDENT': pytis.data.ASCENDENT,
                                'SORTING_DESCENDANT': pytis.data.DESCENDANT}
