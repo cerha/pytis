@@ -1255,7 +1255,7 @@ class MenuBar(wx.MenuBar):
                 self._check_duplicate_keys(m)
         elif isinstance(menu, MItem):
             k = xtuple(menu.hotkey())
-            if k != (None,):
+            if k != (None,) and k != (u'',):
                 cmd = (menu.command(), menu.args())
                 if k in self._keys and self._keys[k] != cmd:
                     log(OPERATIONAL, _("Duplicitní klávesa polo¾ky menu:"),
