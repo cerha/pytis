@@ -22,6 +22,7 @@
 # (èíslováno od 0).  Jedná-li se o obsah øádku, nazývá se pøíslu¹ná promìnná
 # obvykle `the_row'.  Matoucí jméno `row' bylo pøevzato z wxWindows.
 
+import collections
 import copy
 import time
 import types
@@ -387,7 +388,7 @@ class DataTable(object):
             for c in self._columns:
                 cid = c.id
                 s = c.style
-                if callable(s):
+                if isinstance(s, collections.Callable):
                     style_dict[cid] = s(the_row)
                 value_dict[cid] = the_row.format(cid, pretty=True, form=self._form, secure=True)
             # Grouping column may not be in self._columns.
@@ -395,7 +396,7 @@ class DataTable(object):
                 if gcol not in value_dict:
                     value_dict[gcol] = the_row.format(gcol, pretty=True, form=self._form, secure=True)
             # If row_style is defined, lets compute it.
-            if callable(self._row_style):
+            if isinstance(self._row_style, collections.Callable):
                 style_dict[None] = self._row_style(the_row)
             self._cache[row] = cached_things = [value_dict, style_dict]
         cached_row = cached_things[style and 1 or 0]
@@ -615,10 +616,10 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
             style = self._plain_style
         else:
             row_style = self._row_style
-            if callable(row_style):
+            if isinstance(row_style, collections.Callable):
                 row_style = self._cached_value(row, None, style=True)
             style = column.style
-            if callable(style):
+            if isinstance(style, collections.Callable):
                 style = self._cached_value(row, column.id, style=True)
             if row_style:
                 style += row_style

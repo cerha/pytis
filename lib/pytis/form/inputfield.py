@@ -26,6 +26,7 @@ The actual class representing each field is determined by its specification and 
 
 """
 
+import collections
 import pytis.data
 from pytis.form import *
 import wx.lib.colourselect
@@ -803,7 +804,7 @@ class TextField(InputField):
             return self._stored_post_process_func
         except:            
             pp_spec = self.spec().post_process()
-            if callable(pp_spec):
+            if isinstance(pp_spec, collections.Callable):
                 self._stored_post_process_func = pp_spec
             else:
                 mapping = {

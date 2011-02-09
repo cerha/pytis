@@ -33,6 +33,7 @@ http://www.freebsoft.org/lcg.
 
 """
 
+import collections
 import string
 
 from pytis.web import *
@@ -173,7 +174,7 @@ class FieldForm(Form):
         return result
 
     def _interpolate(self, context, template, row):
-        if callable(template):
+        if isinstance(template, collections.Callable):
             template = template(row)
         result = template.interpolate(lambda fid: self._export_field(context, self._fields[fid]))
         # Translation is called immediately to force immediate interpolation
@@ -256,7 +257,7 @@ class LayoutForm(FieldForm):
         content = self._GroupContent()
         subgroup_number = 0
         for i, item in enumerate(group.items()):
-            if callable(item):
+            if isinstance(item, collections.Callable):
                 item = item(self._row)
             if isinstance(item, (str, unicode)):
                 field = self._fields[item]
@@ -1098,7 +1099,7 @@ class BrowseForm(LayoutForm):
                 return '#%02x%02x%02x' % c
             else:
                 return c
-        if callable(style):
+        if isinstance(style, collections.Callable):
             style = style(row)
         cls = []
         if field is None: # For row style only
@@ -1623,7 +1624,7 @@ class ListView(BrowseForm):
         if layout.layout():
             parts.append(self._export_group(context, layout.layout()))
         for item in layout.content():
-            if callable(item):
+            if isinstance(item, collections.Callable):
                 content = item(self._row)
                 if content is None:
                     continue
@@ -1701,7 +1702,7 @@ class ItemizedView(BrowseForm):
             columns = (view.columns()[0],) # Include just the first column by default.
         super(ItemizedView, self).__init__(view, row, columns=columns, **kwargs)
         assert isinstance(separator, basestring)
-        assert template is None or isinstance(template, lcg.TranslatableText) or callable(template)
+        assert template is None or isinstance(template, (lcg.TranslatableText, collections.Callable))
         self._separator = separator
         self._template = template
         

@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 # 
-# Copyright (C) 2002, 2003, 2004, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ budou vlo¾eny tak, jak jsou, vèetnì mezer a odøádkování, a sekvence obsahující
 elementy ke spojení dohromady.
 
 """
+
+import collections
 
 from pytis.output import *
 
@@ -518,7 +520,7 @@ class LongTable(Table):
 
         """
         super(LongTable, self).__init__(columns)
-        assert callable(row_generator)
+        assert isinstance(row_generator, collections.Callable)
         self._row_generator = row_generator
         self._row_generator_init = row_generator_init
         self._separator_height = separator_height

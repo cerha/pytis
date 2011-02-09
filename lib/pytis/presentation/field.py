@@ -23,6 +23,7 @@ not its concrete representation (input widget).
 
 """
 
+import collections
 import copy
 
 import pytis.data
@@ -187,7 +188,7 @@ class PresentedRow(object):
                     col = self._coldict[key]
                     default = col.default
                     if self._new and default is not None:
-                        if callable(default):
+                        if isinstance(default, collections.Callable):
                             default = default()
                         value = pytis.data.Value(col.type, default)
                     else:
@@ -699,7 +700,7 @@ class PresentedRow(object):
     
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
-        assert function is None or callable(function), ('Invalid callback function', function)
+        assert function is None or isinstance(function, collections.Callable), ('Invalid callback function', function)
         try:
             callbacks = self._callbacks[kind]
         except KeyError:

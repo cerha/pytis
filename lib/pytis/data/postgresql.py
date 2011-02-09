@@ -25,6 +25,7 @@ k databázi zaji¹»ují rozhraní dále implementovaná v jiných zdrojových souborech.
 
 """
 
+import collections
 import copy
 import operator
 import re
@@ -751,7 +752,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for k, v in self._arguments.items():
                 if k not in args:
                     args[k] = v
-            if callable(self._template):
+            if isinstance(self._template, collections.Callable):
                 self._template = self._template()
             return self._template % args
 

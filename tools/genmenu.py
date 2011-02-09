@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import copy
 import optparse
 import os
@@ -52,7 +53,7 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
     cmd = pytis.form.Application.COMMAND_RUN_PROCEDURE
     if groups is not None:
         assert isinstance(groups, (tuple, list))
-        assert enabled is None or callable(enabled)
+        assert enabled is None or isinstance(enabled, collections.Callable)
         if groups is not None:
             if enabled is not None:
                 enabled = "Both groups and enabled specified"

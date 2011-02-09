@@ -2,7 +2,7 @@
 
 # Cache
 # 
-# Copyright (C) 2002, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2006, 2007, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ Modul nabízí tøídy umo¾òující provádìt rùzné typy cachování.
 
 """
 
+import collections
 import UserDict
 
 from pytis.util import *
@@ -46,7 +47,7 @@ class _Cache(object, UserDict.UserDict):
           
         """
         UserDict.UserDict.__init__(self)
-        assert callable(provider)
+        assert isinstance(provider, collections.Callable)
         self._provider = provider
         self._validator = validator
 

@@ -27,6 +27,7 @@ jednotlivých tøíd.
 """
 
 import copy
+import collections
 import time
 
 import pytis.data
@@ -1793,7 +1794,7 @@ class RecordForm(LookupForm):
         if not pytis.data.is_in_groups(action.access_groups()):
             return False
         enabled = action.enabled()
-        if callable(enabled):
+        if isinstance(enabled, collections.Callable):
             args = self._context_action_args(action)
             kwargs = action.kwargs()
             return enabled(*args, **kwargs)
@@ -2048,7 +2049,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políèek."""
         if self._focus_field:
-            if callable(self._focus_field):
+            if isinstance(self._focus_field, collections.Callable):
                 focused = self._focus_field(self._row)
             else:
                 focused = self._focus_field

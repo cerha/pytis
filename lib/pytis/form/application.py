@@ -24,7 +24,14 @@ u¾ivatelského rozhraní, neøe¹í obecnì start a zastavení aplikace.
 
 """
 
-import sys, os.path, string, thread, time, base64, cPickle as pickle
+import base64
+import collections
+import os.path
+import string
+import sys
+import thread
+import time
+import cPickle as pickle
 
 import config
 import pytis.data
@@ -743,7 +750,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Dokumentace viz funkce run_form().
         result = None
         try:
-            if callable(name):
+            if isinstance(name, collections.Callable):
                 name = name()
                 if name is None:
                     return None

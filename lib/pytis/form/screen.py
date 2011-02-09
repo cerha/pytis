@@ -27,6 +27,7 @@ i tøídy, které tyto specifikace následnì zpracovávají.
 
 """
 
+import collections
 import copy
 import string
 
@@ -750,7 +751,7 @@ class CallbackHandler:
             
         """
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
-        assert function is None or callable(function), ('Invalid callback function', function)
+        assert function is None or isinstance(function, collections.Callable), ('Invalid callback function', function)
         self._callbacks[kind] = function
         if __debug__:
             log(DEBUG, 'Callback registered:', (kind, function))
@@ -1077,7 +1078,10 @@ class MItem(_TitledMenuObject):
         elif command == 'RUN_PROCEDURE':
             proc_name = args.pop('proc_name')
             spec_name = args.pop('spec_name')
-            if not args or (len(args) == 1 and 'enabled' in args and not callable(args['enabled'])):
+            if (not args or
+                (len(args) == 1 and
+                 'enabled' in args and
+                 not isinstance(args['enabled'], collections.Callable))):
                 return ('proc/%s/%s/%s' % (proc_name, spec_name, command_proc,))
         if args and not command_proc:
             return None
@@ -1192,7 +1196,7 @@ class CheckItem(MItem):
           V¹echny ostatní arguemnty jsou sthodné jako v konstruktoru pøedka.
 
         """
-        assert callable(state)
+        assert isinstance(state, collections.Callable)
         self._state = state
         super(CheckItem, self).__init__(title, command, **kwargs)
 

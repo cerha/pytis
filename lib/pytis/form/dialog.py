@@ -29,6 +29,7 @@ se vyskytující dialogové operace.
 
 """
 
+import collections
 import types
 import pytis.data
 from pytis.form import *
@@ -861,7 +862,7 @@ class OperationDialog(Message):
         super_(OperationDialog).__init__(self, parent, message=message,
                                          title=title, icon=self.ICON_TIP,
                                          buttons=(), default=None)
-        assert callable(function)
+        assert isinstance(function, collections.Callable)
         assert is_sequence(args)
         assert is_dictionary(kwargs)
         self._function = function

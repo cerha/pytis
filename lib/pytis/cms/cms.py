@@ -25,6 +25,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 """
 
+import collections
 import socket
 import lcg
 import config
@@ -165,7 +166,7 @@ class Modules(Specification):
                     existing_actions[row['name'].value()] = row['action_id']
             data.close()
             actions = [attr[7:] for attr in dir(module)
-                       if attr.startswith('action_') and callable(getattr(module, attr))]
+                       if attr.startswith('action_') and isinstance(getattr(module, attr), collections.Callable)]
             default_actions = [a[0] for a in self._DEFAULT_ACTIONS]
             # Order default actions first and in the order of self._DEFAULT_ACTIONS.
             order = lambda a: a in default_actions and (default_actions.index(a)+1) or a

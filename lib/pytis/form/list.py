@@ -28,6 +28,7 @@ wxWindows.
 # (èíslováno od 0).  Jedná-li se o obsah øádku, nazývá se pøíslu¹ná promìnná
 # obvykle `the_row'.  Matoucí jméno `row' bylo pøevzato z wxWindows.
 
+import collections
 import copy
 import string
 import time
@@ -2814,7 +2815,7 @@ class BrowseForm(FoldableForm):
                 hlp = _("Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
                       % (row.format(f.id(), secure=''), f.column_label())
                 icon = 'link'
-            if callable(enabled):
+            if isinstance(enabled, collections.Callable):
                 enabled = enabled(row)
             if not enabled:
                 cmd = Application.COMMAND_NOTHING(enabled=False)

@@ -40,6 +40,7 @@ Aby modul plnil svùj úèel, je nutno zajistit následující:
 
 """
 
+import collections
 import os
 import sys
 import thread
@@ -189,8 +190,8 @@ def wx_callback(evt_function, *args):
 
     """
     evt_function_args, callback = args[:-1], args[-1]
-    assert callable(evt_function)
-    assert callable(callback)
+    assert isinstance(evt_function, collections.Callable)
+    assert isinstance(callback, collections.Callable)
     def process_event(event, callback=callback):
         def system_callback():
             # Pøi zamykání atd. se vyu¾ívá toho, ¾e v existují jen dvì vlákna
