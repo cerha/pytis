@@ -1465,6 +1465,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         size = event.GetSize()
         if size.width != self._grid.GetSize().width:
             self._resize_columns(size)
+        if self._default_profile_parameters['form_size'] == (20, 20):
+            # Fix the initial size computed before the form was actually sized.
+            self._default_profile_parameters.update(form_size=self.GetSize())
         event.Skip()
 
     def _close_editors(self):
