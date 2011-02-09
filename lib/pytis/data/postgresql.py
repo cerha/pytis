@@ -612,9 +612,10 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                 for d in self._notif_data_objects.values():
                     notiflist = notiflist + d
                 if __debug__:
-                    log(DEBUG, 'Notifikace k registraci:', notiflist)                    
-                notiflist = reduce(lambda x, y: x + y,
-                                   self._notif_data_objects.values(), [])
+                    log(DEBUG, 'Notifikace k registraci:', notiflist)
+                notiflist = []
+                for list_ in self._notif_data_objects.values():
+                    notiflist += list_
                 try:
                     # connection do poolu nikdy nevracíme, tak¾e na nìj mù¾eme
                     # navìsit, co je nám libo.

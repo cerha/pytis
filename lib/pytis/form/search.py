@@ -27,6 +27,7 @@ konkrétní pou¾ití.
 
 """
 
+import functools
 import pytis.data
 from pytis.form import *
 from pytis.presentation import *
@@ -290,7 +291,7 @@ class SFDialog(SFSDialog):
         if name in self._LOGICAL_OPERATORS_MAP:
             op = self._LOGICAL_OPERATORS_MAP[name]
             conds = [self._decompose_condition(arg, level=level+1) for arg in args]
-            return reduce(lambda a, b: (a + ((op, level),)) + b, conds)
+            return functools.reduce(lambda a, b: (a + ((op, level),)) + b, conds)
         elif name in self._RELATIONAL_OPERATORS_MAP:
             if len(args) != 2:
                 raise Exception("Wrong number of arguments: "+ str(args))

@@ -51,8 +51,10 @@ kontroly.
 """
 
 import copy
+import functools
 import getopt
 import inspect
+import operator
 import re
 import string
 import sys
@@ -1947,7 +1949,7 @@ class _GsqlView(_GsqlSpec):
         is_union = is_sequence(columns)        
         if self._key_columns is None:
             if is_union:
-                tables = reduce(lambda x,y: x+y, self._tables )
+                tables = functools.reduce(operator.add, self._tables)
             else:
                 tables = self._tables
             key_columns = []

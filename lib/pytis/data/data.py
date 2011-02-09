@@ -36,6 +36,7 @@ implementaci.
 
 """
 
+import functools
 import copy
 import string
 import types
@@ -987,7 +988,7 @@ class MemData(Data):
             return lambda row: not func(row)
         elif op_name == 'AND':
             fctns = [self._condition2pyfunc(c) for c in condition.args()]
-            return lambda row: reduce(lambda r, f: r and f(row), fctns, True)
+            return lambda row: functools.reduce(lambda r, f: r and f(row), fctns, True)
         else:
             t = condition.translation()
             if t is not None:

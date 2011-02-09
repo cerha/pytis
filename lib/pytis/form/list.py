@@ -28,6 +28,7 @@ wxWindows.
 # (èíslováno od 0).  Jedná-li se o obsah øádku, nazıvá se pøíslu¹ná promìnná
 # obvykle `the_row'.  Matoucí jméno `row' bylo pøevzato z wxWindows.
 
+import functools
 import collections
 import copy
 import string
@@ -1006,7 +1007,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         x = event.GetX() + self._scroll_x_offset()
         col = g.XToCol(x)
         if col != -1:
-            x1 = reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
+            x1 = functools.reduce(lambda x, i: x + g.GetColSize(i), range(col), 0)
             x2 = x1 + g.GetColSize(col)
             if x > x1+2 and x < x2-2:
                 self._column_to_move = col
@@ -1104,7 +1105,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         #if config.stretch_tables:
         #    g = self._grid
         #    n = g.GetNumberCols()
-        #    w = reduce(lambda x, i: x + g.GetColSize(i), range(n), 0)
+        #    w = functools.reduce(lambda x, i: x + g.GetColSize(i), range(n), 0)
         #    x = g.GetSize().x
         #    if w < x:
         #        col = n-1

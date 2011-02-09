@@ -31,8 +31,6 @@ Access rights violation is signalized exclusively using the
 
 """
 
-import operator
-
 from pytis.data import *
 from pytis.util import *
 
@@ -266,10 +264,10 @@ class RestrictedData(Data):
         if condition is None:
             return []
         elif condition.logical():
-            return reduce(operator.add,
-                          map(self._check_access_condition_columns,
-                              condition.args()),
-                          [])
+            result = []
+            for a in condition.args():
+                result+= self._check_access_condition_columns(a)
+            return result
         elif condition.name == 'IN':
             column, data, table_column, table_condition = condition.args()
             # Toto nefunguje pro vzdálený pøístup, ale nelze svítit...

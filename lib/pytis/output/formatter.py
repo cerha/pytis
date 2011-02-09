@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@ Hlavní tøídou modulu je tøída 'Formatter'.  Ta zaji¹»uje naètení a zpracování
 
 """
 
+import functools
 import config
 import cStringIO
 import operator
@@ -745,7 +746,7 @@ class LoutFormatter(Tmpdir):
             if len(balance) != nelements:
                 raise TemplateException(_("Balance neodpovídá poètu prvkù"),
                                     balance, template)
-            sum = reduce(operator.__add__, balance)
+            sum = functools.reduce(operator.__add__, balance)
             if sum <= 0 or some(lambda x: x < 0, balance):
                 raise TemplateException(_("Chybné èíslo v balanci"),
                                     balance, template)

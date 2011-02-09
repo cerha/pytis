@@ -36,6 +36,7 @@ Tento modul je výjimeèný ve dvou smìrech:
 
 """
 
+import functools
 import cgitb
 import codecs
 import copy
@@ -897,7 +898,7 @@ def flatten(list):
     """
     result = []
     if is_sequence(list):
-        result = result + reduce(operator.add, map(flatten, list), [])
+        result = result + functools.reduce(operator.add, map(flatten, list), [])
     else:
         result.append(list)
     return result
@@ -1015,7 +1016,7 @@ def public_attributes(class_):
     except KeyError:
         pass
     attrs = map(dir, _mro(class_))
-    att = reduce(operator.add, attrs)
+    att = functools.reduce(operator.add, attrs)
     public = tuple(filter(lambda s: not s or s[0] != '_', att))
     result = remove_duplicates(list(public))
     result = tuple(result)
@@ -1050,8 +1051,9 @@ def direct_public_members(obj):
     def public_members(cls):
         return [(name, value) for name, value in inspect.getmembers(cls)
                 if name and not name.startswith('_')]
-    super_members = reduce(operator.add, [public_members(b)
-                                          for b in cls.__bases__], [])
+    super_members = functools.reduce(operator.add,
+                                     [public_members(b) for b in cls.__bases__],
+                                     [])
     result = [name for name, value in public_members(cls)
               if find(value, [x[1] for x in super_members]) is None]
     return tuple(result)
@@ -1149,7 +1151,7 @@ def hash_attr(self, attributes):
         if isinstance(obj, list):
             obj = tuple(obj)
         return hash(obj)
-    return reduce (operator.xor, map(lambda a: h(dict[a]), attributes))
+    return functools.reduce(operator.xor, map(lambda a: h(dict[a]), attributes))
 
 
 def is_sequence(x):
