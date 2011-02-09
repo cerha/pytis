@@ -61,14 +61,14 @@ class FormProfile(pytis.presentation.Profile):
                  group_by_columns=None, aggregation_columns=None, form_size=None,   **kwargs):
         """Specific keyword arguments:
 
-          column_widths -- dictionary of pixel widths of form columns keyed by
-            column identifiers
           group_by_columns -- tuple of group by columns (their string
             identifiers) for an aggregated view of given form
           aggregation_columns -- tuple of aggregation column specifications,
             where each item is a pair of string column identifier and the
             aggregation function as one of pytis.data.Data AGG_* constants.
             May only be used if 'group_by_columns' are also defiend.
+          column_widths -- dictionary of pixel widths of form columns keyed by
+            column identifiers
           form_size -- prefered form size in pixels as a tuple of two integers
              (width, height) or None if undefined.
 
@@ -76,9 +76,9 @@ class FormProfile(pytis.presentation.Profile):
 
         """
         self._packed_filter = None
-        self._column_widths = column_widths or {}
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
+        self._column_widths = column_widths or {}
         self._form_size = form_size
         super(FormProfile, self).__init__(id, name, **kwargs)
         
@@ -148,15 +148,15 @@ class FormProfile(pytis.presentation.Profile):
             raise ProgramError("Attempted to access unpacked profile - call 'finish()' first!")
         return self._filter
     
-    def column_widths(self):
-        return self._column_widths
-    
     def group_by_columns(self):
         return self._group_by_columns
     
     def aggregation_columns(self):
         return self._aggregation_columns
 
+    def column_widths(self):
+        return self._column_widths
+    
     def form_size(self):
         return self._form_size
 
@@ -1070,7 +1070,8 @@ class LookupForm(InnerForm):
             if hasattr(self._current_profile, param):
                 original_value = getattr(self._current_profile, param)()
             else:
-                # Some FormProfile specific parameters, such as column_widths are not in Profile.
+                # If the current profile is a 'Profile' instance, it lacks the
+                # 'FormProfile' specific parameters.
                 original_value = None
             if original_value is None:
                 original_value = self._default_profile_parameters[param]
