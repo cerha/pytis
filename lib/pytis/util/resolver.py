@@ -37,7 +37,6 @@ _current_resolver = None
 def resolver():
     """Vra» resolver pro získání specifikaèních instancí na základì jména."""
     global _current_resolver
-    _current_resolver
     if _current_resolver is None:
         import config
         _current_resolver = FileResolver(config.def_dir)

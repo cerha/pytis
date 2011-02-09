@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -161,10 +161,10 @@ def run_tests(module, tests=None, verbosity=2):
       verbosity -- argument pro 'unittest.TextTestRunner', integer
 
     """
-    test_module = getattr(module, '_test')
+    test_module = module._test
     suite = unittest.TestSuite()
     if tests is None:
-        test_case = getattr(test_module, 'get_tests')()
+        test_case = test_module.get_tests()
         suite.addTest(test_case)
     else:
         for t in tests:

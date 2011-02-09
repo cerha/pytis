@@ -2732,11 +2732,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if __debug__: log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
         return condition
 
-    def _pg_connection_maker(self):
-        def maker():
-            self._pg_new_connection(self._pg_connection_data(), self)
-        return maker
-
     def _pg_restore_select(self):
         row_number = self._pg_last_select_row_number
         if row_number is None and self._pg_last_select_transaction is not None:

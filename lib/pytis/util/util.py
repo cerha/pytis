@@ -1224,7 +1224,6 @@ def with_lock(lock, function):
 
     """
     if __debug__:
-        import pytis.util
         _with_lock_lock.acquire()
         try:
             thread_id = thread.get_ident()
@@ -1621,7 +1620,7 @@ def exception_info(einfo=None):
                 if where == 'global':
                     name = 'global ' + name
                 elif where == 'local':
-                    name = name
+                    pass
                 else:
                     name = where + name.split('.')[-1]
                 dump.append('%s = %s' % (name, deepstr(value)))
