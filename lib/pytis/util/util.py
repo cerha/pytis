@@ -674,6 +674,12 @@ class Structure (object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        value = 0
+        for attribute in self._attributes:
+            value = value ^ hash(gettattr(self, attribute.name()))
+        return value
+
 
 class object_2_5(object):
     """Base class emulating Python 2.5 'object' class.
