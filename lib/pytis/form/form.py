@@ -58,7 +58,7 @@ class FormProfile(pytis.presentation.Profile):
 
     """
     def __init__(self, id, name, column_widths=None,
-                 group_by_columns=None, aggregation_columns=None, form_size=None,   **kwargs):
+                 group_by_columns=None, aggregation_columns=None, **kwargs):
         """Specific keyword arguments:
 
           group_by_columns -- tuple of group by columns (their string
@@ -69,8 +69,6 @@ class FormProfile(pytis.presentation.Profile):
             May only be used if 'group_by_columns' are also defiend.
           column_widths -- dictionary of pixel widths of form columns keyed by
             column identifiers
-          form_size -- prefered form size in pixels as a tuple of two integers
-             (width, height) or None if undefined.
 
         All other arguments the sam as for the parent class.
 
@@ -79,7 +77,6 @@ class FormProfile(pytis.presentation.Profile):
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
         self._column_widths = column_widths or {}
-        self._form_size = form_size
         super(FormProfile, self).__init__(id, name, **kwargs)
         
     def __getstate__(self):
@@ -157,9 +154,6 @@ class FormProfile(pytis.presentation.Profile):
     def column_widths(self):
         return self._column_widths
     
-    def form_size(self):
-        return self._form_size
-
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Spoleèná nadtøída formuláøù.

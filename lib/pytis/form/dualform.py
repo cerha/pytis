@@ -29,6 +29,22 @@ import pytis.output
 from pytis.form import *
 import wx
 
+class DualFormProfile(FormProfile):
+    """Special profile for storing dual form specific parameters.
+    
+    Dual forms actually don't have any user visible profiles, that the user
+    could switch etc.  They just store the internal state automatically
+    using profile manager.
+    
+    """
+    def __init__(self, id, sash_position):
+        assert isinstance(sash_position, int)
+        super(DualFormProfile, self).__init__(id, id)
+        self._sash_position = sash_position
+
+    def sash_position(self):
+        return self._sash_position
+
 
 class DualForm(Form, Refreshable):
     """Formuláø slo¾ený ze dvou spolupracujících formuláøù.
@@ -262,19 +278,24 @@ class DualForm(Form, Refreshable):
 
     def _initial_sash_position(self, total_size):
         def dimension(size):
-            if size is None:
-                r = self._view.sash_ratio()
-                size = wx.Size(total_size.width * r, total_size.height * r)
             if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
                 return size.height
             else:
                 return size.width
-        if isinstance(self._side_form, EditForm):
+        profile = profile_manager().load_profile(self._fullname(), '__dualform__')
+        if profile and profile.sash_position():
+            return min(profile.sash_position(), dimension(total_size))
+        elif isinstance(self._main_form, EditForm):
+            return min(dimension(self._main_form.size()), dimension(total_size) - 200)
+        elif isinstance(self._side_form, EditForm):
             return max(dimension(total_size) - dimension(self._side_form.size()), 200)
         else:
-            return min(dimension(self._main_form.size()), dimension(total_size) - 200)
-
+            r = self._view.sash_ratio()
+            return dimension(wx.Size(total_size.width * r, total_size.height * r))
+            
     def _on_sash_changed(self, event):
+        profile = DualFormProfile('__dualform__', sash_position=event.GetSashPosition())
+        profile_manager().save_profile(self._fullname(), profile)
         # Sometimes the form is not redrawn correctly...
         self._main_form.Refresh()
         self._active_form.focus()

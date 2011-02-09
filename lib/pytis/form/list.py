@@ -164,12 +164,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._group_by_columns = profile.group_by_columns()
             self._aggregation_columns = profile.aggregation_columns()
             self._column_widths = dict(profile.column_widths())
-            self._form_size = profile.form_size()
         else:
             self._group_by_columns = None
             self._aggregation_columns = None
             self._column_widths = {}
-            self._form_size = None
         
     def _apply_profile(self, profile, refresh=True):
         self._apply_profile_parameters(profile)
@@ -183,8 +181,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     grouping=self._grouping,
                     aggregations=tuple(self._aggregations),
                     group_by_columns=self._group_by_columns,
-                    aggregation_columns=self._aggregation_columns,
-                    form_size=self.GetSize())
+                    aggregation_columns=self._aggregation_columns)
         
     def _select_columns(self):
         return [c.id() for c in self._data.columns() 
@@ -1414,16 +1411,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             total += self._column_width(c)
         return total
 
-    def size(self):
-        """Return the prefered form size in pixels as a tuple of two integers (width, height).
-
-        In this class, the returned size is the form size saved with the
-        current profile or None if the current profile is not a user saved
-        profile but a predefined profile form specification.
-
-        """
-        return self._form_size
-
     def _total_height(self):
         g = self._grid
         height = g.GetColLabelSize()
@@ -1464,9 +1451,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         size = event.GetSize()
         if size.width != self._grid.GetSize().width:
             self._resize_columns(size)
-        if self._default_profile_parameters['form_size'] == (20, 20):
-            # Fix the initial size computed before the form was actually sized.
-            self._default_profile_parameters.update(form_size=self.GetSize())
         event.Skip()
 
     def _close_editors(self):
