@@ -2,7 +2,7 @@
 
 # Zpracování událostí
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -293,7 +293,7 @@ def wx_callback(evt_function, *args):
             top_level_exception()
             return
         return result
-    apply(evt_function, evt_function_args + (process_event,))
+    evt_function(*(evt_function_args + (process_event,)))
 
 
 def unlock_callbacks():

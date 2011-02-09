@@ -1768,12 +1768,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         neq = OR(neq, EQ(cid, nullval))
                     conds.append(neq)
                 if conds:
-                    conditions.append(apply(AND, conds))
+                    conditions.append(AND(*conds))
                 processed.append(cid)
             if mayeq:
                 eqs = [EQ(c, row[c], ignore_case=False) for c in processed]
-                conditions.append(apply(AND, eqs))
-            return apply(OR, conditions)
+                conditions.append(AND(*eqs))
+            return OR(*conditions)
         select_cond = self._pg_last_select_condition
         common_cond = AND(select_cond,
                           sorting_condition(sorting, True, row, False))
@@ -2726,7 +2726,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         keycols = map(lambda b: b.id(), self._key_binding)
         assert len(keycols) == len(key), ('Invalid key length', key, keycols)
         ands = map(EQ, keycols, key)
-        condition = apply(AND, ands)
+        condition = AND(*ands)
         if __debug__: log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
         return condition
 

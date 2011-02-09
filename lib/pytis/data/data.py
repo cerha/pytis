@@ -607,7 +607,7 @@ class Data(object_2_5):
 
         """
         eqs = map(lambda c, k: EQ(c.id(), k), self.key(), key)
-        condition = apply(AND, eqs)
+        condition = AND(*eqs)
         return self.search(condition, direction=direction)
 
     def close(self):
@@ -1266,7 +1266,7 @@ def OR(*args):
     other operators.
       
     """
-    t = NOT(apply(AND, map(NOT, args)))
+    t = NOT(AND(*map(NOT, args)))
     return Operator('OR', *args, **{'translation': t})
 
 def IN(column_id, data, table_column_id, table_condition):

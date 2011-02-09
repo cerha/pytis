@@ -1804,7 +1804,7 @@ class RecordForm(LookupForm):
         args = self._context_action_args(action)
         kwargs = action.kwargs()
         log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
-        apply(action.handler(), args, kwargs)
+        action.handler()(*args, **kwargs)
         # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celý
         # dualform.  Jinak refreshujeme jen sebe sama.
         dual = self._dualform()

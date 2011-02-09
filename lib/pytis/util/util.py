@@ -718,8 +718,8 @@ def some(predicate, *sequences):
         zazipováním vzniknou sekvence argumentù pro volání funkce 'predicate'
 
     """
-    for elt in apply(zip, sequences):
-        if apply(predicate, elt):
+    for elt in zip(*sequences):
+        if predicate(*elt):
             return True
     else:
         return False
@@ -1301,7 +1301,7 @@ def catch(tag, function, *args, **kwargs):
       
     """
     try:
-        result = apply(function, args, kwargs)
+        result = function(*args, **kwargs)
     except _Throw, e:
         if e.tag() == tag:
             result = e.value()
@@ -1547,7 +1547,7 @@ def format_traceback():
     """Vra» zformátovaný traceback aktuální výjimky, jako string."""
     import traceback
     einfo = __, einstance, tb = sys.exc_info()
-    tblist = apply(traceback.format_exception, einfo)
+    tblist = traceback.format_exception(*einfo)
     tbstring = string.join(tblist, '')
     return tbstring
 

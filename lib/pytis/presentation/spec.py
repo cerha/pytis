@@ -1821,7 +1821,7 @@ class Computer(object):
         self._depends = depends
 
     def __call__(self, *args, **kwargs):
-        return apply(self._function, args, kwargs)
+        return self._function(*args, **kwargs)
 
     def function(self):
         """Vra» funkci zadanou v konstruktoru."""
