@@ -83,10 +83,7 @@ def pg_encoding(enc):
                         'ascii': 'sql_ascii',
                         }
     enc = enc.lower().strip()
-    if ENCODING_MAPPING.has_key(enc):
-        return ENCODING_MAPPING[enc]
-    else:
-        return enc
+    return ENCODING_MAPPING.get(enc, enc)
 
 
 class PostgreSQLResult(object):
@@ -752,7 +749,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         def format(self, arguments):
             args = copy.copy(arguments)
             for k, v in self._arguments.items():
-                if not args.has_key(k):
+                if k not in args:
                     args[k] = v
             if callable(self._template):
                 self._template = self._template()
@@ -1048,11 +1045,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if ctype is None or type(ctype) == type(pytis.data.Type):
             if type_kwargs is None:
                 type_kwargs = {}
-            if not_null in (1, 'T') and not type_kwargs.has_key('not_null'):
+            if not_null in (1, 'T') and 'not_null' not in type_kwargs:
                 type_kwargs['not_null'] = True
-            if not type_kwargs.has_key('unique') and type_class_ != Boolean:
+            if 'unique' not in type_kwargs and type_class_ != Boolean:
                 type_kwargs['unique'] = unique
-            if type_class_ == String and not type_kwargs.has_key('maxlen'):
+            if type_class_ == String and 'maxlen' not in type_kwargs:
                 if type_ != 'text':
                     try:
                         size = int(size_string) - 4
@@ -1061,7 +1058,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if size < 0:
                         size = None
                     type_kwargs['maxlen'] = size
-            elif type_class_ == Float and not type_kwargs.has_key('precision'):
+            elif type_class_ == Float and 'precision' not in type_kwargs:
                 spec = int(size_string)
                 precision = (spec & 0xFFFF) - 4
                 if precision < 0 or precision > 100:
@@ -1580,8 +1577,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 a2 = self._pdbb_coalesce(t1, val)
                 t2 = arg2.type()
                 a2null = val is 'NULL' # fuj
-            if kwargs.has_key('ignore_case') and kwargs['ignore_case'] and \
-                   isinstance(t1, String) and isinstance(t2, String):
+            if kwargs.get('ignore_case') and isinstance(t1, String) and isinstance(t2, String):
                 fix_case = lambda x: 'lower(%s)' % x
             else:
                 fix_case = lambda x: x
@@ -1597,7 +1593,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                      'LTreeAncestor': '@>',
                      'LTreeDescendant': '<@',
                      }
-        if operators.has_key(op_name):
+        if op_name in operators:
             expression = relop(operators[op_name], op_args, op_kwargs)
         elif op_name in ('WM', 'NW'):
             cid, spec = op_args[0], op_args[1].value()

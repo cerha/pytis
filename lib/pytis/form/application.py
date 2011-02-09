@@ -322,11 +322,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                             if pos != -1:
                                 key = line[:pos].lower().strip()
                                 values[key] = line[pos+1:].strip()
-                        if values.has_key('default topic') and \
-                           values.has_key('title'):
+                        if 'default topic' in values and 'title' in values:
                             title = values['title']
                             index = os.path.splitext(values['default topic'])[0]
-                            if values.has_key('charset'):
+                            if 'charset' in values:
                                 title = unicode(title, values['charset'])
                             result.append((filename, index, title))
 
@@ -769,11 +768,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 busy_cursor(False)
                 self._raise_form(form)
                 message(_('Formuláø "%s" nalezen na zásobníku oken.') % form.title())
-                if kwargs.has_key('select_row'):
+                if 'select_row' in kwargs:
                     form.select_row(kwargs['select_row'])
-                if kwargs.has_key('filter'):
+                if 'filter' in kwargs:
                     form.filter(kwargs['filter'])
-                if kwargs.has_key('binding'):
+                if 'binding' in kwargs:
                     form.select_binding(kwargs['binding'])
                 return result
             if issubclass(form_class, PopupForm):
@@ -881,7 +880,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             spec = resolver().get(spec_name, 'proc_spec')
             assert is_dictionary(spec), \
                    _("Specifikace procedur 'proc_spec' musí vracet slovník!")
-            assert spec.has_key(proc_name), \
+            assert proc_name in spec, \
                   _("Specifikace procedur neobsahuje definici '%s'") % proc_name
             proc = spec[proc_name]
             if block_refresh_:
@@ -1532,8 +1531,7 @@ def run_procedure(spec_name, proc_name, *args, **kwargs):
     Návratová hodnota procedury je návratovou hodnotou volání této metody.
 
     """
-    assert not kwargs.has_key('args'), \
-           "The keyword argument 'args' is reserved for internal use!"
+    assert 'args' not in kwargs, "The keyword argument 'args' is reserved for internal use!"
     return Application.COMMAND_RUN_PROCEDURE.invoke(spec_name=spec_name,
                                                     proc_name=proc_name,
                                                     args=args, **kwargs)

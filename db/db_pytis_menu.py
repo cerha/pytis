@@ -377,7 +377,7 @@ def e_pytis_menu_trigger():
                     position = row['position'].split('.')
                     next_position = row['next_position'].split('.')
                     position_stamp = tuple(position[:-1])
-                    if not sequences.has_key(position_stamp):
+                    if position_stamp not in sequences:
                         sequences[position_stamp] = []
                     sequences[position_stamp].append((position, next_position,))
                 import string
@@ -1174,7 +1174,7 @@ def pytis_update_actions_structure():
         add_row('label/1', 'label/1', None, '8')
         for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):
             fullname, shortname = row['fullname'], row['shortname']
-            if actions.has_key(shortname):
+            if shortname in actions:
                 continue
             add_row(fullname, shortname, None, position)
             position_components = position.split('.')

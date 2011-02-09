@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2010 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@ class _MenuItemReader(lcg.Reader):
                 else:
                     names = (name,) + _refered_names(name)
                 global _used_defs, _menu_items
-                if _menu_items.has_key(name):
+                if name in _menu_items:
                     _menu_items[name].append(self)
                 else:
                     _menu_items[name] = [self]
@@ -248,7 +248,7 @@ class _DescrReader(lcg.StructuredTextReader):
 
     def _descr(self):
         global _menu_items
-        if _menu_items.has_key(id):
+        if id in _menu_items:
             return ", ".join([i.menu_path_title() for i in _menu_items[id]])
         else:
             return None
@@ -256,7 +256,7 @@ class _DescrReader(lcg.StructuredTextReader):
     def _info(self):
         # Create a list of relevant menu items
         global _menu_items
-        if _menu_items.has_key(self._name):
+        if self._name in _menu_items:
             links = [i.menu_path() for i in _menu_items[self._name]]
             if len(links) > 1:
                 menu_items = lcg.ul(links)

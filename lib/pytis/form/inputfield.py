@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -386,7 +386,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         
     def _skip_navigation_callback(self, widget):
         def cb(e):
-            if not self._unregistered_widgets.has_key(widget):
+            if widget not in self._unregistered_widgets:
                 e.Skip()
                 flag = e.GetDirection() and wx.NavigationKeyEvent.IsForward or 0
                 wx.CallAfter(lambda : widget.Navigate(flag))
@@ -511,7 +511,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         if not self._callback_registered:
             wx_callback(wx.EVT_NAVIGATION_KEY, control, self._skip_navigation_callback(control))
             self._callback_registered = True
-        if self._unregistered_widgets.has_key(control):
+        if control in self._unregistered_widgets:
             del(self._unregistered_widgets[control])
 
     def _unregister_skip_navigation_callback(self):
@@ -1312,7 +1312,7 @@ class GenericCodebookField(InputField):
             prefill = {}
         spec = self.spec().codebook_insert_spec() or self._cb_name
         result = new_record(spec, prefill=prefill, transaction=self._row.transaction())
-        if result and result.has_key(value_column):
+        if result and value_column in result:
             self._set_value(result[value_column].export())
         
     def _cmd_invoke_codebook_form(self):

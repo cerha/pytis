@@ -1982,7 +1982,7 @@ class DBDataAggregated(DBDataDefault):
             if key is not None:
                 row = data.row(key=ival(key), columns=columns)
                 for k, v in test_result:
-                    assert row.has_key(k), ('Missing column', k,)
+                    assert k in row, ('Missing column', k,)
                     assert row[k].value() == v, ('Invalid value', v,)
             elif operation is None:
                 count = data.select(columns=columns, condition=condition, sort=sort)

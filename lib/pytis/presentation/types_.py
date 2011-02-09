@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -119,7 +119,7 @@ class PrettyFoldable(PrettyTreeOrder):
             if folding == '':
                 return ''
             if (self._tree_column_nsub_id and
-                row.has_key(self._tree_column_nsub_id) and
+                self._tree_column_nsub_id in row and
                 not row[self._tree_column_nsub_id].value()):
                 mark = self.NON_FOLDABLE_MARK + ' '
             elif folding == 0:

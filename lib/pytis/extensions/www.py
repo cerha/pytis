@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005, 2006, 2009 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006, 2009, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -215,7 +215,7 @@ def form_validate(spec, prefill):
     failed = []
     row = []
     for c in data.columns():
-        if prefill.has_key(c.id()):
+        if c.id() in prefill:
             value, error = c.type().validate(prefill[c.id()])
             if error:
                 failed.append(c.id())

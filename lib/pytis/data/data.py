@@ -1613,9 +1613,12 @@ class Row:
         for k in range(n):
             self[i+k] = data[k]
 
-    def has_key(self, key):
+    def __contains__(self, key):
         """Vra» pravdu, právì kdy¾ øádek obsahuje sloupec jména 'key'."""
         return key in self.keys()
+    
+    def has_key(self, key):
+        return self.__contains__(key)
 
     def keys(self):
         """Vra» seznam názvù v¹ech sloupcù jako strings.
@@ -1679,7 +1682,7 @@ class Row:
         for k in dict.keys():
             assert isinstance(dict[k], Value), \
                    ('Invalid column value', dict[k])
-            if self.has_key(k):
+            if k in self:
                 self[k] = dict[k]
 
 
@@ -1779,10 +1782,7 @@ class DataFactory(object):
     _get_data_object = staticmethod(_get_data_object)
 
     def access_rights(self):
-        if self._kwargs.has_key('access_rights'):
-            return self._kwargs['access_rights']
-        else:
-            return None
+        return self._kwargs.get('access_rights', None)
 
     # "Podrobné" porovnávání data factories je pøíli¹ nároèné na CPU.
 #     def __cmp__(self, other):

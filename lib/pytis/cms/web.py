@@ -187,9 +187,9 @@ class Menu(wiking.PytisModule):
         # translations of titles and descriptions.  Then construct the menu structure.
         for row in self._menu_item_rows(req, published=True, sorting=self._sorting):
             menu_item_id = row['menu_item_id'].value()
-            if not translations.has_key(menu_item_id):
+            if menu_item_id not in translations:
                 parent = row['parent'].value()
-                if not children.has_key(parent):
+                if parent not in children:
                     children[parent] = []
                 children[parent].append(row)
                 translations[menu_item_id] = ({}, {})
@@ -572,7 +572,7 @@ class EmbeddablePytisModule(wiking.PytisRssModule, EmbeddableModule):
 
     def _document(self, req, content, record=None, **kwargs):
         globals = self._module('Menu').globals(req)
-        if kwargs.has_key('globals') and kwargs['globals'] is not None:
+        if 'globals' in kwargs and kwargs['globals'] is not None:
             kwargs['globals'].update(globals)
         else:
             kwargs['globals'] = globals

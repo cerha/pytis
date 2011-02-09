@@ -875,7 +875,7 @@ class Configuration(object):
             command_line_options = self._parse_command_line_options(command_line)
         self.__dict__['command_line_options'] = command_line_options
         for o in ('config_file', 'user_config_file'):
-            if options.has_key(o):
+            if o in options:
                 opt = options[o]
                 opt.init_value()
                 v = opt.value()
@@ -929,9 +929,9 @@ class Configuration(object):
         options = self._options
         cloptions = self.command_line_options
         for o in dir(confmodule):
-            if options.has_key(o):
+            if o in options:
                 opt = options[o]
-                if not cloptions.has_key(opt.long_option()):
+                if opt.long_option() not in cloptions:
                     value = confmodule.__dict__[o]
                     opt.set_value(value, initialization=False)
         for o in self._options.values():
@@ -987,7 +987,7 @@ class Configuration(object):
         if name == 'user_config_file':
             self.__dict__['_user_config_file'] = value
             self.__dict__['_user_config_mtime'] = 0
-        if self.__dict__['_options'].has_key(name):
+        if name in self.__dict__['_options']:
             self.__dict__['_options'][name].set_value(value)
         elif hasattr(self, name):
             self.__dict__[name] = value
@@ -1012,9 +1012,9 @@ class Configuration(object):
         options = self._options
         clopt = self.command_line_options
         for o in dict.keys():
-            if options.has_key(o) and dict[o] != None:
+            if o in options and dict[o] != None:
                 opt = options[o]
-                if override_cmdline or not clopt.has_key(opt.long_option()):
+                if override_cmdline or opt.long_option() not in clopt:
                     opt.set_value(dict[o])
 
     def dump_config_template(self, stream):

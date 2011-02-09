@@ -1000,7 +1000,7 @@ class DMPRoles(DMPObject):
                     purpose = 'user'
                 else:
                     purpose = 'appl'
-                if not roles_by_names.has_key(role):
+                if role not in roles_by_names:
                     new_role = self.Role(name=role, purposeid=purpose)
                     self._roles.append(new_role)
                     roles_by_names[role] = new_role
@@ -1195,7 +1195,7 @@ class DMPActions(DMPObject):
 
     def _add_action(self, action):
         fullname = action.fullname()
-        if self._fullnames.has_key(fullname):
+        if fullname in self._fullnames:
             return
         self._actions.append(action)
         self._fullnames[fullname] = action
@@ -1303,7 +1303,7 @@ class DMPActions(DMPObject):
             if subforms_only and action.fullname().split('/')[0] != 'sub':
                 continue
             if (original_actions is not None and
-                original_actions._fullnames.has_key(action.fullname())):
+                action.fullname() in original_actions._fullnames):
                 continue
             row = pytis.data.Row((('fullname', S(action.fullname()),),
                                   ('shortname', S(action.shortname()),),
@@ -1364,7 +1364,7 @@ class DMPActions(DMPObject):
         for action in original_actions.items():
             if (action.specifications_match(specifications) and
                 action.kind() == 'action' and
-                not self._fullnames.has_key(action.fullname())):
+                action.fullname() not in self._fullnames):
                 condition = pytis.data.EQ('fullname', self._s_(action.fullname()))
                 self._delete_data(transaction_, condition)
         if fake:

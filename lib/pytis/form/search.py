@@ -2,7 +2,7 @@
 
 # Prvky u¾ivatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -287,11 +287,11 @@ class SFDialog(SFSDialog):
         if not isinstance(operator, pytis.data.Operator):
             raise Exception("Invalid condition: "+ repr(operator))
         name, args = operator.name(), operator.args()
-        if self._LOGICAL_OPERATORS_MAP.has_key(name):
+        if name in self._LOGICAL_OPERATORS_MAP:
             op = self._LOGICAL_OPERATORS_MAP[name]
             conds = [self._decompose_condition(arg, level=level+1) for arg in args]
             return reduce(lambda a, b: (a + ((op, level),)) + b, conds)
-        elif self._RELATIONAL_OPERATORS_MAP.has_key(name):
+        elif name in self._RELATIONAL_OPERATORS_MAP:
             if len(args) != 2:
                 raise Exception("Wrong number of arguments: "+ str(args))
             arg1, arg2 = args
@@ -407,7 +407,7 @@ class SFDialog(SFSDialog):
                 arg2 = pytis.data.Value(col1.type(), None)
             else:
                 val = wval.GetValue()
-                if self._WM_OPERATORS.has_key(op) and (val.find('*') >= 0 or val.find('?') >= 0):
+                if op in self._WM_OPERATORS and (val.find('*') >= 0 or val.find('?') >= 0):
                     op = self._WM_OPERATORS[op]
                     value, err = col1.type().wm_validate(val)
                 else:

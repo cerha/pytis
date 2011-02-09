@@ -597,7 +597,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     # Values of disabled fields are not in the request, so send them always...
                     if not req.has_param(fid) or localized_value != req.param(fid):
                         fdata['value'] = localized_value
-                if filters.has_key(fid):
+                if fid in filters:
                     old_filter = filters[fid]
                     new_filter = cls._op2str(row.runtime_filter(fid))
                     if new_filter != old_filter:
@@ -619,7 +619,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                 fdata['links'] = dict([(value, link(value))
                                                        for (value, display) in enumeration])
         for fid, error in errors:
-            if fields.has_key(fid):
+            if fid in fields:
                 fields[fid]['error'] = error
         return json.dumps(dict(request_number=request_number, fields=fields))
 
@@ -1358,7 +1358,7 @@ class BrowseForm(LayoutForm):
                 if count:
                     i = 0;
                     while i < len(values) \
-                              and (values[i][-1].lower() in (u'á',u'è',u'ï',u'é',u'ì') \
+                              and (values[i][-1].lower() in (u'ĂĄ',u'Ă¨',u'ĂŻ',u'ĂŠ',u'ĂŹ') \
                                    or values[i][-1].lower() < u'i'):
                         i += 1
                     values.insert(i, search_ch_string)
@@ -1752,7 +1752,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
         assert isinstance(check_columns, (list, tuple)), check_columns
         if __debug__:
             for cid in check_columns:
-                assert self._row.has_key(cid), cid
+                assert cid in self._row, cid
         if check_columns is None:
             check_columns = tuple([field.id for field in self._column_fields
                                    if isinstance(field.type, pd.Boolean)])

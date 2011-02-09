@@ -333,7 +333,7 @@ class DBConnection:
         self._database = database
         self._sslmode = sslmode
         self._schemas = schemas
-        if not alternatives.has_key(None):
+        if None not in alternatives:
             # Add the default connection to the alternatives if it is not already there, to be able
             # to `select()' back to it.
             alternatives[None] = self._options()

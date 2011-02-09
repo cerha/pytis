@@ -1234,7 +1234,7 @@ class ViewSpec(object):
                     elif callable(item):
                         pass
                     else:
-                        assert self._field_dict.has_key(item), \
+                        assert item in self._field_dict, \
                                ("Unknown field in layout of %s: %r" % (spec_name, item,))
                         if self._field_dict[item].width() == 0:
                             log(OPERATIONAL,
@@ -1248,7 +1248,7 @@ class ViewSpec(object):
                                ('editable', f.editable())):
                     if isinstance(c, Computer):
                         for dep in c.depends():
-                            assert self._field_dict.has_key(dep), \
+                            assert dep in self._field_dict, \
                                    _("Unknown field id '%s' in dependencies "
                                      "for '%s' specification of '%s'.") % \
                                      (dep, s, f.id())
@@ -1260,7 +1260,7 @@ class ViewSpec(object):
             if __debug__:
                 assert is_sequence(columns)
                 for c in columns:
-                    assert isinstance(c, str) and self._field_dict.has_key(c),\
+                    assert isinstance(c, str) and c in self._field_dict,\
                            (_("Unknown column id in 'columns' specification of %s: %r") %
                             (spec_name, c,))
                     f = self._field_dict[c]
@@ -2559,7 +2559,7 @@ class Field(object):
         if column_label is None:
             column_label = label
         self._column_label = column_label
-        if (enumerator or codebook) and not kwargs.has_key('not_null'):
+        if (enumerator or codebook) and 'not_null' not in kwargs:
             # Enumeration fields are NOT NULL by default.  It is not very intuitive, but
             # we must keep it for backwards compatibility.
             kwargs['not_null'] = True
@@ -3004,7 +3004,7 @@ class Specification(object):
             shortname_rights = access_rights.get(shortname)
             columns = (shortname_rights or {}).get(right)
             if columns is None:
-                if not user_rights.has_key(shortname):
+                if shortname not in user_rights:
                     if shortname_rights is None:
                         shortname_rights = access_rights[shortname] = {}
                     shortname_rights[right] = shortname_rights.get(right, []) + [colname]
@@ -3024,7 +3024,7 @@ class Specification(object):
                                    pytis.data.LE('status', pytis.data.Value(pytis.data.Integer(), 0)))
         for value in actions_data.distinct('shortname', condition=condition):
             shortname = value.value()
-            if not access_rights.has_key(shortname):
+            if shortname not in access_rights:
                 access_rights[shortname] = pytis.data.AccessRights()
         # That's all
         Specification._access_rights = access_rights
@@ -3065,9 +3065,9 @@ class Specification(object):
                 self._view_spec_kwargs[arg] = value()
         #if self.__class__.__doc__:
             #parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
-            #if not self._view_spec_kwargs.has_key('description'):
+            #if 'description' not in self._view_spec_kwargs:
             #    self._view_spec_kwargs['description'] = parts[0]
-            #if not self._view_spec_kwargs.has_key('help') and len(parts) > 1:
+            #if 'help' not in self._view_spec_kwargs and len(parts) > 1:
             #    self._view_spec_kwargs['help'] = parts[1]
 
     def _action_spec_name(self):

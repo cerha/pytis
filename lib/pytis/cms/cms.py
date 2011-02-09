@@ -174,7 +174,7 @@ class Modules(Specification):
             result = run_dialog(CheckListDialog, title=_("Nalezené akce"),
                                 message=_("Za¹krtnìte akce, které chcete zpøístupnit webovým "
                                           "u¾ivatelùm:"),
-                                items=zip([existing_actions.has_key(a) for a in actions],
+                                items=zip([a in existing_actions for a in actions],
                                           actions, descriptions),
                                 columns=(_("Akce"), _("Popis")))
             if result is not None:

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -392,7 +392,7 @@ class DataTable(object):
                 value_dict[cid] = the_row.format(cid, pretty=True, form=self._form, secure=True)
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:
-                if not value_dict.has_key(gcol):
+                if gcol not in value_dict:
                     value_dict[gcol] = the_row.format(gcol, pretty=True, form=self._form, secure=True)
             # If row_style is defined, lets compute it.
             if callable(self._row_style):

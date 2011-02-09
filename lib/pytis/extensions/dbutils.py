@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -168,14 +168,8 @@ def dbfunction(name, *args, **kwargs):
         nejsou vyplněna.
       transaction -- instance pytis.data.DBTransactionDefault        
     """
-    if kwargs.has_key('proceed_with_empty_values'):
-        proceed_with_empty_values = kwargs['proceed_with_empty_values']
-    else:
-        proceed_with_empty_values = False
-    if kwargs.has_key('transaction'):
-        transaction = kwargs['transaction']
-    else:
-        transaction = None
+    proceed_with_empty_values = kwargs.get('proceed_with_empty_values', False)
+    transaction = kwargs.get('transaction')
     if not proceed_with_empty_values:
         for id, v in args:
             value = v.value()

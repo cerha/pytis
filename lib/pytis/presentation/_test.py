@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -245,9 +245,9 @@ class PresentedRow_(unittest.TestCase):
         assert enabled[0] is False
     def test_has_key(self):
         row = PresentedRow(self._fields, self._data, None)
-        assert row.has_key('a')
-        assert row.has_key('inc')
-        assert not row.has_key('blabla')
+        assert 'a' in row
+        assert 'inc' in row
+        assert 'blabla' not in row
     def test_changed(self):
         row = PresentedRow(self._fields, self._data, None)
         assert not row.changed()

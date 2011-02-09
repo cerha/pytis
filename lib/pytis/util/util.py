@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ import thread
 import types as pytypes
 
 import __builtin__
-if not __builtin__.__dict__.has_key('_'):
+if '_' not in __builtin__.__dict__:
     __builtin__.__dict__['_'] = lambda x: x
 
 
@@ -624,7 +624,7 @@ class Structure (object):
         for member in self._attributes:
             name = member.name()
             value = UNDEFINED
-            if kwargs.has_key (name):
+            if name in kwargs:
                 value = kwargs[name]
                 assert isinstance(value, member.type()) or value == member.default(), \
                        ("Invalid attribute type", name, value, member.type())
@@ -1547,7 +1547,7 @@ def format_traceback():
     """Vrať zformátovaný traceback aktuální výjimky, jako string."""
     import traceback
     einfo = __, einstance, tb = sys.exc_info()
-    if sys.modules.has_key('Pyro'):
+    if 'Pyro' in sys.modules:
         import Pyro
         tblist = Pyro.util.getPyroTraceback(einstance)
     else:

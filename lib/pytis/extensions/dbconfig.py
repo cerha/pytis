@@ -106,9 +106,12 @@ class DBConfig(object):
         self._row[key] = pytis.data.Value(type, value)
         self._data.update(self._key, self._row, transaction=self._transaction)
 
-    def has_key(self, key):
-        return self._row.has_key(key)
+    def __contains__(self, key):
+        return key in self._row
 
+    def has_key(self, key):
+        return self.__contains__(key)
+    
     def keys(self):
         return self._row.keys()
 
@@ -130,7 +133,7 @@ def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, transaction=
 
     """
     dbconfig = DBConfig(cfgspec, transaction=transaction)
-    if not dbconfig.has_key(column):
+    if column not in dbconfig:
         return pytis.data.Value(None, None)
     value = dbconfig.value(column)
     if value.type().enumerator():

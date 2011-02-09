@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2009 Brailcom, o.p.s.
+# Copyright (C) 2001-2009, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ specifikace jednotlivých prvků rozhraní.
 from pytis.util import *
 from pytis.presentation import *
 
-if os.environ.has_key('WXVER'):
+if 'WXVER' in os.environ:
     version = os.environ["WXVER"]
 else:
     try:

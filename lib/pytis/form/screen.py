@@ -756,9 +756,7 @@ class CallbackHandler:
             log(DEBUG, 'Callback registered:', (kind, function))
 
     def get_callback(self, kind):
-        if self._callbacks.has_key(kind):
-            return self._callbacks[kind]
-        return None
+        return self._callbacks.get(kind)
 
     def _run_callback(self, kind, *args, **kwargs):
         """Vyvolej funkci pro o¹etøení callbacku 'kind'.
@@ -940,7 +938,7 @@ class Menu(_TitledMenuObject):
                                                       item.command().enabled(**item.args()),))
                     if isinstance(item, (RadioItem, CheckItem)):
                         wxitem.Check(item.state())
-                    if hotkey_str.has_key(item):
+                    if item in hotkey_str:
                         hotkey_items.append((item, wxitem, wx_title, width))
                     max_label_width = max(width + max_hotkey_width, max_label_width)
                 elif isinstance(item, Menu):
@@ -1062,7 +1060,7 @@ class MItem(_TitledMenuObject):
             form_class = args.pop('form_class', None)
             form_name = args.pop('name', None)
             extra = []
-            if args.has_key('binding'):
+            if 'binding' in args:
                 extra.append('binding=%s' % (args['binding'],)); del args['binding']
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
@@ -1079,7 +1077,7 @@ class MItem(_TitledMenuObject):
         elif command == 'RUN_PROCEDURE':
             proc_name = args.pop('proc_name')
             spec_name = args.pop('spec_name')
-            if not args or (len(args) == 1 and args.has_key('enabled') and not callable(args['enabled'])):
+            if not args or (len(args) == 1 and 'enabled' in args and not callable(args['enabled'])):
                 return ('proc/%s/%s/%s' % (proc_name, spec_name, command_proc,))
         if args and not command_proc:
             return None
@@ -1259,7 +1257,7 @@ class MenuBar(wx.MenuBar):
             k = xtuple(menu.hotkey())
             if k != (None,):
                 cmd = (menu.command(), menu.args())
-                if self._keys.has_key(k) and self._keys[k] != cmd:
+                if k in self._keys and self._keys[k] != cmd:
                     log(OPERATIONAL, _("Duplicitní klávesa polo¾ky menu:"),
                         (k, menu.title(), cmd))
                     log(OPERATIONAL, _("Kolidující pøíkaz:"), self._keys[k])

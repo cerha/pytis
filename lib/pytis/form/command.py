@@ -2,7 +2,7 @@
 
 # Definice u¾ivatelských pøíkazù
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -383,7 +383,7 @@ def command_icon(command, args):
     else:
         for iargs, icon in icons:
             for k, v in iargs.items():
-                if not args.has_key(k) or args[k] != v:
+                if k not in args or args[k] != v:
                     break
             else:
                 return icon

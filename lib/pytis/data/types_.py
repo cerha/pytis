@@ -87,7 +87,7 @@ class Type(object):
         def id_of_initargs(self, class_, args, kwargs):
             table = self._init_args_to_id
             key = self._key(class_, args, kwargs)
-            if table.has_key(key):
+            if key in table:
                 result = table[key]
             else:
                 result = table[key] = self._id_counter.next()
@@ -103,7 +103,7 @@ class Type(object):
         def get_instance(self, class_, *args, **kwargs):
             table = self._init_args_to_type
             key = self._key(class_, args, kwargs)
-            if table.has_key(key):
+            if key in table:
                 result = table[key]
             else:
                 result = table[key] = class_.__new__(class_)
@@ -1972,7 +1972,7 @@ class DataEnumerator(Enumerator):
 
     def add_callback_on_change(self, callback):
         # We don't want this co cause data object creation.  See also __getattr__().
-        if self.__dict__.has_key('_data'):
+        if '_data' in self.__dict__:
             self._data.add_callback_on_change(callback)
         else:
             self._change_callbacks.append(callback)

@@ -2,7 +2,7 @@
 
 # Access rights
 # 
-# Copyright (C) 2002, 2004, 2005, 2006, 2007, 2009 Brailcom, o.p.s.
+# Copyright (C) 2002, 2004, 2005, 2006, 2007, 2009, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -115,7 +115,7 @@ class AccessRights(object):
                         if None in groups:
                             table_p[c] = (None,)
                             table_p[True] = (None,)
-                        elif table_p.has_key(c):
+                        elif c in table_p:
                             table_p[c] = table_p[c] + groups
                             table_p[True] = table_p[True] + groups
                         else:

@@ -2007,7 +2007,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         for col in self._data.columns():
             if col.type().not_null() and col.id() not in cols \
                    and (self._prefill is None \
-                        or not self._prefill.has_key(col.id())) \
+                        or col.id() not in self._prefill) \
                    and self._view.field(col.id()) is not None:
                 # We silently presume, that when a not null column is not in
                 # fields, it probably has a default value (if not, it would be
@@ -2215,7 +2215,7 @@ class FoldableForm(ListForm):
                     next_key = path[0]
                     state_subnodes = state.subnodes()
                     if state_level is None and level is None:
-                        if state_subnodes.has_key(next_key):
+                        if next_key in state_subnodes:
                             new_state = state.copy(level=state_level, subnodes=copy.copy(state_subnodes))
                             del new_state.subnodes()[next_key]
                         else:

@@ -1855,7 +1855,7 @@ class RecordForm(LookupForm):
         try:
             columns = [str(id.strip()) for id in fh.readline().split(separator)]
             for id in columns:
-                if not self._row.has_key(id):
+                if id not in self._row:
                     run_dialog(Error, _("Neznámý sloupec: %s") % id)
                     return False
             types = [self._row.type(id) for id in columns]
@@ -2260,7 +2260,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             fid = f.id()
             if (self._mode == self.MODE_EDIT and
                 not self._row.permitted(fid, pytis.data.Permission.VIEW) and
-                self._row.has_key(fid) and not self._row[fid].value()):
+                fid in self._row and not self._row[fid].value()):
                 self._row[fid] = self._row.original_row()[fid]
             elif self._mode == self.MODE_INSERT or self._row.field_changed(fid):
                 if f.enabled() and not f.validate():
@@ -2593,7 +2593,7 @@ class PopupEditForm(PopupForm, EditForm):
         return PopupForm.run(self, lock_key=key)
 
     def set_status(self, field, message):
-        if self._status_fields.has_key(field):
+        if field in self._status_fields:
             self._status_fields[field].SetLabel(unicode(message or ''))
             return True
         else:

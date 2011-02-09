@@ -3,7 +3,7 @@
 #
 # Nástroj pro zpracování specifikací databází
 # 
-# Copyright (C) 2002, 2003, 2005, 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -750,7 +750,7 @@ class _GsqlTable(_GsqlSpec):
                 if find(c.name, vcolumns, key=lambda c: c.name) is None:
                     vcolumns.append(ViewColumn(c.name))
             kwargs = view.kwargs
-            if not kwargs.has_key('key_columns'):
+            if 'key_columns' not in kwargs:
                 kwargs['key_columns'] = None
             vcolumns = map(self._full_column_name, vcolumns)
             vcolumns = filter(lambda x: self._column_column(x) not in
@@ -759,11 +759,11 @@ class _GsqlTable(_GsqlSpec):
             vcolumns = filter(lambda x: x.name not in view.exclude, vcolumns)
             args = (view.name or self, vcolumns)
             
-            if not kwargs.has_key('doc'):
+            if 'doc' not in kwargs:
                 kwargs['doc'] = self._doc
-            if not kwargs.has_key('grant'):
+            if 'grant' not in kwargs:
                 kwargs['grant'] = self._grant
-            if not kwargs.has_key('depends'):
+            if 'depends' not in kwargs:
                 kwargs['depends'] = (self._name,)                
             else:
                 if self._name not in kwargs['depends']:
@@ -1093,7 +1093,7 @@ class _GsqlTable(_GsqlSpec):
             # default
             MAPPINGS = {'user': '"current_user"()',
                         'session_user': '"session_user"()'}
-            if MAPPINGS.has_key(default):
+            if default in MAPPINGS:
                 default = MAPPINGS[default]
             dbcolumn_default = dbcolumn.get('default')
             if dbcolumn_default is not None and not dbcolumn.get('primaryp'):
@@ -1112,7 +1112,7 @@ class _GsqlTable(_GsqlSpec):
             i = 0
             while True:
                 name = 'tmp%d' % i
-                if not dbcolumns.has_key(name):
+                if name not in dbcolumns:
                     return name
                 i = i + 1
         def column_name(column):
@@ -1952,7 +1952,7 @@ class _GsqlView(_GsqlSpec):
                 tables = self._tables
             key_columns = []
             for t in tables:
-                if table_keys.has_key(t):
+                if t in table_keys:
                     key_columns = key_columns + table_keys[t]
             self._key_columns = key_columns
         if self._join is None:
@@ -2263,7 +2263,7 @@ class _GsqlRaw(_GsqlSpec):
           kwargs -- argumenty pøedané konstruktoru pøedka
 
         """
-        if not kwargs.has_key('name'):
+        if 'name' not in kwargs:
             kwargs['name'] = None
         super(_GsqlRaw, self).__init__(**kwargs)
         self._sql = sql
@@ -2432,7 +2432,7 @@ class _GsqlDefs(UserDict.UserDict):
     def add(self, spec):
         name = spec.name()
         if isinstance(spec, _GsqlTable):
-            if not self._table_keys.has_key(name):
+            if name not in self._table_keys:
                 self._table_keys[name] = spec.key_columns()
             for v in spec._views:
                 vname = v.name()
@@ -2442,7 +2442,7 @@ class _GsqlDefs(UserDict.UserDict):
                     self._update_unresolved()
                 else:
                     self._unresolved.append(vname)
-        if self.has_key(name):
+        if name in self:
             _signal_error("Duplicate objects for name `%s': %s %s\n" %
                           (name, spec, self[name],))
         self[name] = spec
@@ -2522,7 +2522,7 @@ class _GsqlDefs(UserDict.UserDict):
                 sql_type = c._SQL_NAME
                 classes.append(c)
                 sql_types_classes[sql_type] = c
-                if not names.has_key(sql_type):
+                if sql_type not in names:
                     db_names = c.db_all_names(connection)
                     names[sql_type] = db_names
                     for d in db_names:

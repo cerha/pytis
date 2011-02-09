@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2007, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ class Logger(object):
                 except:
                     pass
             l = frame.f_locals
-            if l.has_key('self'):
+            if 'self' in l:
                 s = l['self']
                 try:
                     class_ = s.__class__

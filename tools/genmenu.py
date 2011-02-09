@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -107,7 +107,7 @@ def super_menu_id(menu, menu_items):
     base_id = 'menu/%s' % (id_title,)
     menu_id = base_id
     i = 1
-    while menu_items.has_key(menu_id):
+    while menu_id in menu_items:
         menu_id = base_id + str(i)
         i += 1
     return menu_id
@@ -254,7 +254,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             if action.description is None:
                 action.description = menu.help()
         menu_id = action_id
-        while menu_items.has_key(menu_id):
+        while menu_id in menu_items:
             menu_id = menu_id + '+'
         help = menu.help()
         hotkey = menu.hotkey()
@@ -352,7 +352,7 @@ def process_rights(resolver, actions, rights, def_dir, spec_fullname):
                                      ]
     for action in action_list:
         action_name = action.name
-        if rights.has_key(action_name):
+        if action_name in rights:
             continue
         action_components = action.name.split('/')
         if len(action_components) == 2 and action_components[0] == 'RUN_FORM':
@@ -399,7 +399,7 @@ def process_rights(resolver, actions, rights, def_dir, spec_fullname):
                             print 'Warning: Public specification starting with underscore: %s.%s' % (module_identifier, spec_attr,)
                         spec_name = module_identifier + '.' + spec.__name__
                         action_shortname = 'form/'+spec_name
-                        if actions_shortnames.has_key(action_shortname):
+                        if action_shortname in actions_shortnames:
                             try:
                                 del actions_extra_shortnames[action_shortname]
                             except KeyError:
@@ -533,7 +533,7 @@ def fill_rights(cursor, rights, check_rights=None, spec_name=None):
                 permissions = [p.lower() for p in permissions]
                 for group in groups:
                     if check_rights is None:
-                        if group and not roles.has_key(group):
+                        if group and group not in roles:
                             cursor.execute(("insert into e_pytis_roles (name, description, purposeid) "
                                             "values (%s, %s, %s)"),
                                            (group, "", 'appl',))
@@ -542,7 +542,7 @@ def fill_rights(cursor, rights, check_rights=None, spec_name=None):
                         for c in columns:
                             if check_rights is None:
                                 key = (action_name, group, permission, c,)
-                                if already_stored.has_key(key):
+                                if key in already_stored:
                                     continue
                                 cursor.execute(("insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
                                                 "values (%s, %s, %s, %s, %s, %s, 0)"),
@@ -614,7 +614,7 @@ def check_rights(cursor, rights, update, spec_fullname):
                         else:
                             gg = group
                         rights_args = (pg_escape(action_name), pg_escape(gg), permission, cc,)
-                        if rights_seen.has_key(rights_args):
+                        if rights_args in rights_seen:
                             continue
                         if update:
                             print (("Update: insert into e_pytis_action_rights (shortname, roleid, rightid, system, granted, colname, status) "
@@ -670,7 +670,7 @@ def transfer_roles(cursor, present_roles):
                 purpose = 'user'
             else:
                 purpose = 'appl'
-            if not present_roles.has_key(role):
+            if role not in present_roles:
                 cursor.execute("insert into e_pytis_roles (name, purposeid) values (%s, %s)",
                                (role, purpose,))
             elif purpose != 'appl':

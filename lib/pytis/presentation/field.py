@@ -183,10 +183,10 @@ class PresentedRow(object):
                             for k, v in prefill.items()])
         self._cache = {}
         def genval(key, virtual):
-            if row is None or not row.has_key(key):
-                if prefill and prefill.has_key(key):
+            if row is None or key not in row:
+                if prefill and key in prefill:
                     value = prefill[key]
-                elif self._coldict.has_key(key):
+                elif key in self._coldict:
                     col = self._coldict[key]
                     default = col.default
                     if self._new and default is not None:
@@ -197,10 +197,10 @@ class PresentedRow(object):
                         value = col.type.default_value()
                 else:
                     value = self._data.find_column(key).type().default_value()
-            elif prefill and prefill.has_key(key):
+            elif prefill and key in prefill:
                 value = prefill[key]
             else:
-                if self._coldict.has_key(key):
+                if key in self._coldict:
                     value = row[key].retype(self._coldict[key].type)
                 else:
                     value = row[key]
@@ -210,9 +210,9 @@ class PresentedRow(object):
         for key in self._dirty.keys():
             self._dirty[key] = not (not self._new and row is None or
                                     # If the value is contained in the data row, don't compute it.
-                                    row is not None and row.has_key(key) or
+                                    row is not None and key in row or
                                     # If the value is contained in the prefill, don't compute it.
-                                    prefill is not None and prefill.has_key(key) or
+                                    prefill is not None and key in prefill or
                                     # If the row is new and the field has a
                                     # default value, use the default value
                                     # rather than the computer.
@@ -264,7 +264,7 @@ class PresentedRow(object):
                 value_dict[key] = None
             dirty_dict[key] = True
             for dep in self._all_deps(computer):
-                if dependency_dict.has_key(dep):
+                if dep in dependency_dict:
                     dependency_dict[dep].append(key)
                 else:
                     dependency_dict[dep] = [key]
@@ -297,11 +297,11 @@ class PresentedRow(object):
         je chování metody nedefinováno.
         
         """
-        if self._row.has_key(key):
+        if key in self._row:
             value = self._row[key]
         else:
             value = self._virtual[key]
-        if not lazy and self._dirty.has_key(key) and self._dirty[key]:
+        if not lazy and self._dirty.get(key):
             column = self._coldict[key]
             # Reset the dirty flag before calling the computer to allow the computer to retrieve
             # the original value without recursion.
@@ -310,7 +310,7 @@ class PresentedRow(object):
             new_value = pytis.data.Value(column.type, func(self))
             if new_value.value() != value.value():
                 value = new_value
-                if self._row.has_key(key):
+                if key in self._row:
                     self._row[key] = value
                 else:
                     self._virtual[key] = value
@@ -323,11 +323,11 @@ class PresentedRow(object):
         column = self._coldict[key]
         assert value.type() == column.type, \
                "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
-        if self._row.has_key(key):
+        if key in self._row:
             row = self._row
         else:
             row = self._virtual
-        if self._invalid.has_key(key):
+        if key in self._invalid:
             del self._invalid[key]
         if row[key].value() != value.value():
             row[key] = value
@@ -358,13 +358,13 @@ class PresentedRow(object):
     def _resolve_dependencies(self, key=None):
         # Recompute dependencies for all fields when the key is None or recompute
         # just fields depending on given field (after its change).
-        if key is not None and self._dependent.has_key(key):
+        if key is not None and key in self._dependent:
             for k in self._dependent[key]:
                 self._dirty[k] = True
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._recompute_editability(key)
         self._notify_runtime_filter_change(key)
-        if self._callbacks and key is not None and self._dependent.has_key(key):
+        if self._callbacks and key is not None and key in self._dependent:
             # Call 'chage_callback' for all remaining dirty fields.  Some fields may already have
             # been recomputed during the editability and runtime filter recomputations.  The
             # callbacks for those fields have already been generated, but here we neen to handle
@@ -376,7 +376,7 @@ class PresentedRow(object):
     def _recompute_editability(self, key=None):
         if key is None:
             keys = self._editable.keys()
-        elif self._editability_dependent.has_key(key):
+        elif key in self._editability_dependent:
             keys = self._editability_dependent[key]
         else:
             return
@@ -542,10 +542,13 @@ class PresentedRow(object):
         """Return the list of all field specifications as 'Field' instances."""
         return self._fields
         
-    def has_key(self, key):
+    def __contains__(self, key):
         """Return true if a field of given key is contained within the row."""
-        return self._coldict.has_key(key)
+        return key in self._coldict
         
+    def has_key(self, key):
+        return self.__contains__(key)
+    
     def keys(self):
         """Return the list of identifiers of all fields contained within the row."""
         return [c.id for c in self._columns]
@@ -606,9 +609,9 @@ class PresentedRow(object):
         happened yet.
 
         """
-        return not self._row.has_key(key) or \
+        return key not in self._row or \
                self._row[key].value() != self._original_row[key].value() or \
-               self._invalid.has_key(key)
+               key in self._invalid
 
     def editable(self, key):
         """Vra» pravdu, právì kdy¾ je políèko dané 'key' editovatelné.
@@ -620,7 +623,7 @@ class PresentedRow(object):
             return False
         if self.hidden_codebook(key):
             return False
-        if self._editable.has_key(key):
+        if key in self._editable:
             if self._editability_dirty[key]:
                 result = self._compute_editability(key)
             else:
@@ -677,14 +680,14 @@ class PresentedRow(object):
             value, error = column.type.validate(string, transaction=self._transaction,
                                                 strict=False, **kwargs)
         if not error:
-            if self._invalid.has_key(key):
+            if key in self._invalid:
                 del self._invalid[key]
             if string != self.format(key):
                 self.__setitem__(key, value, run_callback=False)
         else:
             if string != self.format(key):
                 self._invalid[key] = string
-            elif self._invalid.has_key(key):
+            elif key in self._invalid:
                 del self._invalid[key]
         return result
 
@@ -704,7 +707,7 @@ class PresentedRow(object):
             callbacks = self._callbacks[kind]
         except KeyError:
             callbacks = self._callbacks[kind] = {}
-        if callbacks.has_key(key):
+        if key in callbacks:
             raise ProgramError("Callback already registered:", kind, key, callbacks[key])
         callbacks[key] = function
 
@@ -1018,7 +1021,7 @@ class PresentedRow(object):
                      self._editability_dependent,
                      self._runtime_filter_dependent,
                      self._runtime_arguments_dependent):
-            if deps.has_key(key):
+            if key in deps:
                 for k in deps[key]:
                     if k in keys:
                         return True
