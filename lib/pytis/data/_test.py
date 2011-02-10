@@ -212,10 +212,7 @@ class Password(_TypeCheck):
         self._test_validity(t2, 'x', 'x')
         self._test_validity(t2, '', None, kwargs={'verify': ''})
         t3 = pytis.data.Password(md5=True, minlen=4)
-        try:
-            from hashlib import md5
-        except ImportError:
-            from md5 import md5
+        from hashlib import md5
         hashed = md5(u'abcčdef'.encode('utf-8')).hexdigest()
         self._test_validity(t3, hashed, hashed)
         self._test_validity(t3, 'xxx', None)
