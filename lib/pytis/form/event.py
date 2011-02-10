@@ -106,9 +106,9 @@ def top_level_exception():
                 while True:
                     address = run_dialog(InputDialog, prompt=_(u"Vaše e-mailová adresa: "),
                                          value=address, input_width=30,
-                                         message=_(u"Pokud svou adresu nastavíte ve formuláři "
-                                                   "Nastavení uživatelského rozhraní, nebudete "
-                                                   "již příště dotazováni."))
+                                         message=_(u"Pokud svou adresu nastavíte ve formuláři " +
+                                                   u"Nastavení uživatelského rozhraní, nebudete " +
+                                                   u"již příště dotazováni."))
                     if address is None or address and address.strip() != '':
                         break
             if address:

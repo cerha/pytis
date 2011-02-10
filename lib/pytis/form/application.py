@@ -901,10 +901,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_help(self, topic=None):
         """Zobraz dané téma v prohlížeči nápovědy."""
         if not self._help_files:
-            msg = _(u"Žádný soubor s nápovědou nebyl nalezen.\n"
-                    "Konfigurační volba 'help_dir' nyní ukazuje na:\n%s\n"
-                    "Zkontrolujte zda je cesta správná\n"
-                    "a zda adresář obsahuje soubory nápovědy.")
+            msg = _(u"Žádný soubor s nápovědou nebyl nalezen.\n" +
+                    u"Konfigurační volba 'help_dir' nyní ukazuje na:\n%s\n" +
+                    u"Zkontrolujte zda je cesta správná\n" +
+                    u"a zda adresář obsahuje soubory nápovědy.")
             self.run_dialog(Warning, msg % config.help_dir)
             return
         if self._help_controller is None:
@@ -1069,7 +1069,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         """
         if __debug__:
             if log_:
-                log(DEBUG, "Nastavení pole stavové řádky:", data=(id, message))
+                log(DEBUG, u"Nastavení pole stavové řádky:", data=(id, message))
 
         modal = self._modals.top()
         if root or not isinstance(modal, Form) \
@@ -1691,13 +1691,13 @@ def delete_record_question(msg=None):
     Vrať pravdu, právě když uživatel odpoví kladně.
     
     """
-    log(EVENT, 'Dialog mazání řádku')
+    log(EVENT, u'Dialog mazání řádku')
     if msg == None:
         msg = _(u"Opravdu chcete záznam zcela vymazat?")        
     if not run_dialog(Question, msg):
-        log(EVENT, 'Mazání řádku uživatelem zamítnuto')
+        log(EVENT, u'Mazání řádku uživatelem zamítnuto')
         return False
-    log(EVENT, 'Mazání řádku uživatelem potvrzeno')
+    log(EVENT, u'Mazání řádku uživatelem potvrzeno')
     return True
 
 # Funkce, které jsou obrazem veřejných metod aktuální aplikace.

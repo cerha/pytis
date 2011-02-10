@@ -1820,16 +1820,16 @@ class RecordForm(LookupForm):
             msg = _(u"Nemáte práva pro vkládání záznamů do této tabulky.")
             message(msg, beep_=True)
             return False
-        msg = _(u"Nejprve vyberte soubor obsahující importovaná data. "
-                "Poté budete moci zkontrolovat a potvrdit každý záznam.\n\n"
-                "*Formát vstupního souboru:*\n\n"
-                "Každý řádek obsahuje seznam hodnot oddělených zvoleným "
-                "znakem, nebo skupinou znaků (vyplňte níže). "
-                "Tabelátor zapište jako ='\\t'=.\n\n"
-                "První řádek obsahuje identifikátory sloupců a určuje tedy "
-                "význam a pořadí hodnot v následujících (datových) řádcích.\n\n"
-                "Identifikátory jednotlivých sloupců jsou následující:\n\n" + \
-                "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
+        msg = _(u"Nejprve vyberte soubor obsahující importovaná data. " +
+                u"Poté budete moci zkontrolovat a potvrdit každý záznam.\n\n" +
+                u"*Formát vstupního souboru:*\n\n" +
+                u"Každý řádek obsahuje seznam hodnot oddělených zvoleným " +
+                u"znakem, nebo skupinou znaků (vyplňte níže). " +
+                u"Tabelátor zapište jako ='\\t'=.\n\n" +
+                u"První řádek obsahuje identifikátory sloupců a určuje tedy " +
+                u"význam a pořadí hodnot v následujících (datových) řádcích.\n\n" +
+                u"Identifikátory jednotlivých sloupců jsou následující:\n\n" +
+                u"\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
                            [self._view.field(id)
                             for id in self._view.layout().order()]]))
         separator = run_dialog(InputDialog, 
@@ -1866,8 +1866,8 @@ class RecordForm(LookupForm):
                 line_number += 1
                 values = line.rstrip('\r\n').split(separator)
                 if len(values) != len(columns):
-                    msg = _(u"Chyba dat na řádku %d:\n"
-                            "Počet hodnot neodpovídá počtu sloupců.")
+                    msg = _(u"Chyba dat na řádku %d:\n" +
+                            u"Počet hodnot neodpovídá počtu sloupců.")
                     run_dialog(Error, msg % line_number)
                     return False
                 row_data = []
@@ -2527,8 +2527,8 @@ class PopupEditForm(PopupForm, EditForm):
         i = self._inserted_data_pointer
         data = self._inserted_data
         if data is not None and i <= len(data):
-            msg = _(u"Ještě nebyly zpracovány všechny řádky vstupních dat.\n"
-                    "Chcete opravdu ukončit vkládání?")
+            msg = _(u"Ještě nebyly zpracovány všechny řádky vstupních dat.\n" +
+                    u"Chcete opravdu ukončit vkládání?")
             if not run_dialog(Question, msg, default=False):
                 return False
         return super(PopupEditForm, self)._exit_check()
@@ -2550,8 +2550,8 @@ class PopupEditForm(PopupForm, EditForm):
                         command=self.COMMAND_LEAVE_FORM()))
         if self._mode == self.MODE_INSERT and self._multi_insert:
             buttons += (dict(id=wx.ID_FORWARD, label=_(u"Další"), #icon=wx.ART_GO_FORWARD, 
-                             tooltip=_(u"Uložit záznam a reinicializovat formulář"
-                                       " pro vložení dalšího záznamu"),
+                             tooltip=_(u"Uložit záznam a reinicializovat formulář" +
+                                       u" pro vložení dalšího záznamu"),
                              command=self.COMMAND_COMMIT_RECORD(next=True)),)
         if self._inserted_data is not None:
             buttons += (dict(label=_(u"Přeskočit"),

@@ -362,10 +362,10 @@ class Configuration(object):
 
     class _Option_user_config_file(StringOption, HiddenOption):
         _DESCR = _(u"Umístění doplňujícího konfiguračního souboru uživatele.")
-        _DOC = _(u"Tento soubor, pokud, existuje, je načítán navíc ke "
-                 "standardní konfiguraci a v něm definované volby mají vyšší "
-                 "prioritu než volby ve standardním konfiguračním souboru. "
-                 "Užitečné převážně pro ladění.")
+        _DOC = _(u"Tento soubor, pokud, existuje, je načítán navíc ke " +
+                 u"standardní konfiguraci a v něm definované volby mají vyšší " +
+                 u"prioritu než volby ve standardním konfiguračním souboru. " +
+                 u"Užitečné převážně pro ladění.")
         def default(self):
             config_file = self._configuration.config_file
             if config_file:
@@ -387,30 +387,29 @@ class Configuration(object):
         
     class _Option_debug(BooleanOption, CommandlineOption):
         _DESCR = _(u"Příznak ladícího režimu.")
-        _DOC = _(u"Je-li zapnut, aplikace může běžet s více kontrolami "
-                 "a vypisovat spoustu informací, obvykle však za cenu svého "
-                 "výrazného zpomalení.")
+        _DOC = _(u"Je-li zapnut, aplikace může běžet s více kontrolami " +
+                 u"a vypisovat spoustu informací, obvykle však za cenu svého " +
+                 u"výrazného zpomalení.")
         _DEFAULT = False
         
     class _Option_debug_on_error(BooleanOption, CommandlineOption):
         _DESCR = _(u"Příznak vyvolání debuggeru při chybě.")
-        _DOC = _(u"Dojde-li k odchycení neočekávané výjimky a tato volba je "
-                 "zapnuta, je vyvolán interaktivní debugger.  Je-li zapnuta "
-                 "volba 'debug', je implicitně zapnuta i tato volba.  Užitečné "
-                 "pouze pro ladění.")
+        _DOC = _(u"Dojde-li k odchycení neočekávané výjimky a tato volba je " +
+                 u"zapnuta, je vyvolán interaktivní debugger.  Je-li zapnuta " +
+                 u"volba 'debug', je implicitně zapnuta i tato volba.  Užitečné " +
+                 u"pouze pro ladění.")
         
         def default(self):
             return self._configuration.debug
 
     class _Option_debug_memory(BooleanOption, CommandlineOption):
         _DESCR = _(u"Příznak výpisu ladících informací o paměti.")
-        _DOC = _(u"Je-li zapnuta, aplikace vypisuje informativní hlášky "
-                 "garbage collectoru a jiné údaje o paměti.")
+        _DOC = _(u"Je-li zapnuta, aplikace vypisuje informativní hlášky " +
+                 u"garbage collectoru a jiné údaje o paměti.")
         _DEFAULT = False
 
     class _Option_bug_report_address(StringOption):
-        _DESCR = _(u"E-mailová adresa, na kterou mají být posílána oznámení "
-                   "o chybě.")
+        _DESCR = _(u"E-mailová adresa, na kterou mají být posílána oznámení o chybě.")
         _DEFAULT = ''
 
     class _Option_bug_report_subject(StringOption):
@@ -419,9 +418,9 @@ class Configuration(object):
 
     class _Option_profile(BooleanOption, CommandlineOption):
         _DESCR = _(u"Příznak profilování.")
-        _DOC = _(u"Je-li zapnut, aplikace se spustí v profilovacím režimu "
-                 "a ukládá informace o trvání jednotlivých volání do souboru. "
-                 "Zapnutí této volby velmi výrazně zpomaluje běh aplikace.")
+        _DOC = _(u"Je-li zapnut, aplikace se spustí v profilovacím režimu " +
+                 u"a ukládá informace o trvání jednotlivých volání do souboru. " +
+                 u"Zapnutí této volby velmi výrazně zpomaluje běh aplikace.")
         _DEFAULT = False
         
     class _Option_test_run_interactive(BooleanOption, HiddenOption):
@@ -436,15 +435,14 @@ class Configuration(object):
 
     class _Option_def_dir(FileOption, CommandlineOption):
         _DESCR = _(u"Adresář obsahující definiční soubory.")
-        _DOC = _(u"Adresář může být zadán absolutně i relativně vzhledem "
-                 "k aktuálnímu adresáři.")
+        _DOC = _(u"Adresář může být zadán absolutně i relativně vzhledem " +
+                 u"k aktuálnímu adresáři.")
         _DEFAULT = './defs'
         _ENVIRONMENT = ('PYTISDEFDIR',)
 
     class _Option_help_dir(FileOption, CommandlineOption):
         _DESCR = _(u"Adresář obsahující soubory s nápovědou.")
-        _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu "
-                 "adresáři.")
+        _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.")
         _ENVIRONMENT = ('PYTISHELPDIR',)
         _DEFAULT = './help'
 
@@ -456,8 +454,7 @@ class Configuration(object):
 
     class _Option_icon_dir(FileOption):
         _DESCR = _(u"Adresář s obrázkovými soubory.")
-        _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu "
-                 "adresáři.")
+        _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.")
         _DEFAULT = './icons'
 
     class _Option_tmp_dir(StringOption):
@@ -478,8 +475,7 @@ class Configuration(object):
 
     class _Option_logo(FileOption, CommandlineOption):
         _DESCR = _(u"Cesta k souboru s logem.")
-        _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu "
-                 "adresáři.")
+        _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.")
         _DEFAULT = './icons/logo.bmp'
 
     # Databáze
@@ -566,26 +562,26 @@ class Configuration(object):
         _DEFAULT = True
 
     class _Option_max_pool_connections(NumericOption):
-        _DESCR = _(u"Maximum number of database connections stored in a pool "
-                   "for a single connection specification. "
-                   "If None then there is no limit.")
+        _DESCR = _(u"Maximum number of database connections stored in a pool " +
+                   u"for a single connection specification. " +
+                   u"If None then there is no limit.")
         _DEFAULT = None
 
     class _Option_connection_limit(NumericOption):
-        _DESCR = _(u"Maximum number of concurrently open database connections "
-                   "for a single connection specification in a database pool. "
-                   "If None then there is no limit.")
+        _DESCR = _(u"Maximum number of concurrently open database connections " +
+                   u"for a single connection specification in a database pool. " +
+                   u"If None then there is no limit.")
         _DEFAULT = None
 
     # Logovací volby
 
     class _Option_log_logger(Option):
         _DESCR = _(u"Specifikace logovací třídy.")
-        _DOC = _(u"Trojice (CLASS, ARGS, KWARGS), kde CLASS je logovací třída a "
-                 "ARGS, resp. KWARGS, jsou argumenty, resp. klíčované "
-                 "argumenty, jejího konstruktoru.  Standardní dostupné třídy "
-                 "jsou SyslogLogger a StreamLogger.  Více o nich lze nalézt "
-                 "v jejich dokumentaci.")
+        _DOC = _(u"Trojice (CLASS, ARGS, KWARGS), kde CLASS je logovací třída a " +
+                 u"ARGS, resp. KWARGS, jsou argumenty, resp. klíčované " +
+                 u"argumenty, jejího konstruktoru.  Standardní dostupné třídy " +
+                 u"jsou SyslogLogger a StreamLogger.  Více o nich lze nalézt " +
+                 u"v jejich dokumentaci.")
         
         _DEFAULT_STRING = '(log.StreamLogger, (sys.stderr,), {})'
         def default(self):
@@ -593,10 +589,8 @@ class Configuration(object):
             return (log.StreamLogger, (sys.stderr,), {})
 
     class _Option_log_exclude(Option):
-        _DESCR = _(u"Seznam typů logovacích hlášek, které mají být "
-                   "odfiltrovány.")
-        _DOC = _(u"V seznamu lze použít konstanty 'OPERATIONAL', 'ACTION', "
-                 "'EVENT' a 'DEBUG'.")
+        _DESCR = _(u"Seznam typů logovacích hlášek, které mají být odfiltrovány.")
+        _DOC = _(u"V seznamu lze použít konstanty 'OPERATIONAL', 'ACTION', 'EVENT' a 'DEBUG'.")
         _DEFAULT_STRING = '[DEBUG]'
         def default(self):
             if self._configuration.debug:
@@ -606,29 +600,26 @@ class Configuration(object):
                 return [log.DEBUG]
 
     class _Option_log_one_line_preferred(BooleanOption):
-        _DESCR = _(u"Určuje, zda je preferováno stručné nebo jednotné "
-                   "formátování.")
-        _DOC = _(u"Je-li tato volba nastavena na pravdu, jsou krátká data "
-                 "v logovacích hláškách doporučujících stručnost připojena "
-                 "ihned za hlášku místo vypsání na samostatný řádek.")
+        _DESCR = _(u"Určuje, zda je preferováno stručné nebo jednotné formátování.")
+        _DOC = _(u"Je-li tato volba nastavena na pravdu, jsou krátká data " +
+                 u"v logovacích hláškách doporučujících stručnost připojena " +
+                 u"ihned za hlášku místo vypsání na samostatný řádek.")
         _DEFAULT = True
 
     class _Option_log_module_filter(StringOption):
-        _DESCR = _(u"Prefix jména modulu, jehož debugovací hlášky jsou "
-                   "propuštěny.")
-        _DOC = _(u"Debugovací logovací hlášky modulů s jiným prefixem jsou "
-                 "odfiltrovány.  Není-li definováno, jsou propuštěny všechny "
-                 "hlášky (nestanoví-li jiný filtr jinak).  Užitečné pouze pro "
-                 "ladění.")
+        _DESCR = _(u"Prefix jména modulu, jehož debugovací hlášky jsou propuštěny.")
+        _DOC = _(u"Debugovací logovací hlášky modulů s jiným prefixem jsou " +
+                 u"odfiltrovány.  Není-li definováno, jsou propuštěny všechny " +
+                 u"hlášky (nestanoví-li jiný filtr jinak).  Užitečné pouze pro " +
+                 u"ladění.")
         _DEFAULT = ''
         _DEFAULT_STRING = "'pytis.data'"
 
     class _Option_log_class_filter(Option):
-        _DESCR = _(u"Sekvence jmen tříd, jejichž debugovací hlášky jsou "
-                   "propuštěny.")
-        _DOC = _(u"Debugovací logovací hlášky ostatních tříd jsou odfiltrovány. "
-                 "Je-li 'None', jsou propuštěny všechny hlášky (nestanoví-li "
-                 "jiný filtr jinak).  Užitečné pouze pro ladění.")
+        _DESCR = _(u"Sekvence jmen tříd, jejichž debugovací hlášky jsou propuštěny.")
+        _DOC = _(u"Debugovací logovací hlášky ostatních tříd jsou odfiltrovány. " +
+                 u"Je-li 'None', jsou propuštěny všechny hlášky (nestanoví-li " +
+                 u"jiný filtr jinak).  Užitečné pouze pro ladění.")
         _DEFAULT = None
         _DEFAULT_STRING = "('pytis.data.DBDefaultClass',)"
             
@@ -636,21 +627,20 @@ class Configuration(object):
 
     class _Option_printing_command(StringOption):
         _DESCR = _(u"Shellový příkaz pro provedení tisku, včetně argumentů.")
-        _DOC = _(u"Příkaz musí být schopen převzít tisková data ze "
-                 "standardního vstupu.")
+        _DOC = _(u"Příkaz musí být schopen převzít tisková data ze standardního vstupu.")
         _DEFAULT = 'lpr'
 
     class _Option_lout_command(StringOption):
         _DESCR = _(u"Jméno programu Lout, s cestou nebo bez ní.")
-        _DOC = _(u"Bude použito při konstrukci příkazové řádky Lout. "
-                 "Nejedná-li se o originální Lout, musí být argumenty "
-                 "programu s Loutem kompatibilní.")
+        _DOC = _(u"Bude použito při konstrukci příkazové řádky Lout. " +
+                 u"Nejedná-li se o originální Lout, musí být argumenty " +
+                 u"programu s Loutem kompatibilní.")
         _DEFAULT = 'lout'
 
     class _Option_postscript_viewer(StringOption):
-        _DESCR = _(u"Shell command to be used for displaying print preview PostScript files. "
-                   "It must take the name of the file to be displayed as its first argument. "
-                   "If this option value is empty, Pytis internal viewer is used.")
+        _DESCR = _(u"Shell command to be used for displaying print preview PostScript files. " +
+                   u"It must take the name of the file to be displayed as its first argument. " +
+                   u"If this option value is empty, Pytis internal viewer is used.")
         _DEFAULT = ''
         #_DEFAULT = 'gv'
 
@@ -664,50 +654,50 @@ class Configuration(object):
         _DEFAULT = 'localhost'
         
     class _Option_image_viewer(StringOption):
-        _DESCR = _(u"Shellový příkaz pro spuštění prohlížeče obrázků.  Pokud "
-                   "příkaz obsahuje řetězec %f, bude tento nahrazen názvem "
-                   "otevíraného souboru, jinak je soubor připojen na konec "
-                   "příkazu.")
+        _DESCR = _(u"Shellový příkaz pro spuštění prohlížeče obrázků.  Pokud " +
+                   u"příkaz obsahuje řetězec %f, bude tento nahrazen názvem " +
+                   u"otevíraného souboru, jinak je soubor připojen na konec " +
+                   u"příkazu.")
         _DEFAULT = 'run-mailcap'
         
     # Ostatní konfigurační volby
 
     class _Option_application_name(StringOption):
         _DESCR = _(u"Jméno aplikace.")
-        _DOC = _(u"Jméno může být libovolné, používá se např. jako titulek "
-                 "okna nebo při logování.  Od něho je také odvozeno jméno "
-                 "výchozího souboru pro ukládání uživatelských změn v "
-                 "konfiguraci (po vypuštění speciálních znaků a diakritiky)")
+        _DOC = _(u"Jméno může být libovolné, používá se např. jako titulek " +
+                 u"okna nebo při logování.  Od něho je také odvozeno jméno " +
+                 u"výchozího souboru pro ukládání uživatelských změn v " +
+                 u"konfiguraci (po vypuštění speciálních znaků a diakritiky)")
         _DEFAULT = 'Pytis'
 
     class _Option_date_time_format(StringOption):
         _DESCR = _(u"Formát společně uvedeného data a času.")
-        _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' "
-                 "konstruktoru třídy 'pytis.data.DateTime'.")
+        _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' " +
+                 u"konstruktoru třídy 'pytis.data.DateTime'.")
         _DEFAULT = pytis.data.DateTime.DEFAULT_FORMAT
 
     class _Option_date_format(StringOption):
         _DESCR = _(u"Formát data.")
-        _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' "
-                 "konstruktoru třídy 'pytis.data.Date'.")
+        _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' " +
+                 u"konstruktoru třídy 'pytis.data.Date'.")
         _DEFAULT = pytis.data.Date.DEFAULT_FORMAT
 
     class _Option_time_format(StringOption):
         _DESCR = _(u"Formát času.")
-        _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' "
-                 "konstruktoru třídy 'pytis.data.Time'.")
+        _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' " +
+                 u"konstruktoru třídy 'pytis.data.Time'.")
         _DEFAULT = pytis.data.Time.DEFAULT_FORMAT
 
     class _Option_lc_numeric(StringOption):
         _DESCR = _(u"Numeric locale.")
-        _DOC = _(u"Hodnota musí být string reprezentující locale pro "
-                 "formátování číselných položek.")
+        _DOC = _(u"Hodnota musí být string reprezentující locale pro " +
+                 u"formátování číselných položek.")
         _DEFAULT = 'C'
 
     class _Option_export_directory(StringOption):
         _DESCR = _(u"Adresář pro export do CSV souborů.")
-        _DOC = _(u"Hodnota udává cestu k adresáři, kde se budou ukládat textové "
-                 "CSV soubory.")
+        _DOC = _(u"Hodnota udává cestu k adresáři, kde se budou ukládat textové " +
+                 u"CSV soubory.")
         _DEFAULT = '/tmp'
 
     class _Option_export_encoding(StringOption):
@@ -721,18 +711,18 @@ class Configuration(object):
         _DEFAULT = 20000
 
     class _Option_initial_fetch_size(NumericOption):
-        _DESCR = _(u"Počet řádků, které se přednačtou do cache při prvním "
-                   "selectu z datového objektu.")
+        _DESCR = _(u"Počet řádků, které se přednačtou do cache při prvním " +
+                   u"selectu z datového objektu.")
         _DEFAULT = 100
 
     class _Option_fetch_size(NumericOption):
-        _DESCR = _(u"Počet řádků, které se přinačítají do cache při dalších "
-                   "selectech z datového objektu.")
+        _DESCR = _(u"Počet řádků, které se přinačítají do cache při dalších " +
+                   u"selectech z datového objektu.")
         _DEFAULT = 100
 
     class _Option_sender_address(StringOption):
-        _DESCR = _(u"E-mailová adresa odesílatele použitá např. jako odchozí adresa bug-reportů "
-                   " apod.")
+        _DESCR = _(u"E-mailová adresa odesílatele použitá např. jako odchozí adresa bug-reportů " +
+                   u" apod.")
         _DEFAULT = None
 
     class _Option_clipboard_primary_selection(BooleanOption):
@@ -744,8 +734,8 @@ class Configuration(object):
         _DEFAULT = True
 
     class _Option_form_statistics(BooleanOption):
-        _DESCR = _(u"Flag určující, zda mají být do databáze ukládány statistické informace "
-                   "o otevíraných formulářích.")
+        _DESCR = _(u"Flag určující, zda mají být do databáze ukládány statistické informace " +
+                   u"o otevíraných formulářích.")
         _DEFAULT = False
         
     # Volby přizpůsobení uživatelského rozhraní
@@ -763,8 +753,8 @@ class Configuration(object):
         _DEFAULT = True
         
     class _Option_auto_menu_accel(BooleanOption):
-        _DESCR = _(u"Automaticky doplnit položky menu prefixy akcelerátorových kláves (změna "
-                   "vyžaduje restart aplikace).")
+        _DESCR = _(u"Automaticky doplnit položky menu prefixy akcelerátorových kláves (změna " +
+                   u"vyžaduje restart aplikace).")
         _DEFAULT = True
         
     class _Option_cache_spec_onstart(BooleanOption):
@@ -772,8 +762,7 @@ class Configuration(object):
         _DEFAULT = True
 
     class _Option_startup_forms(StringOption, CommandlineOption):
-        _DESCR = _(u"Seznam formulářů, které mají být otevřeny po spuštění "
-                   "aplikace.")
+        _DESCR = _(u"Seznam formulářů, které mají být otevřeny po spuštění aplikace.")
         _DEFAULT = None
 
     class _Option_row_focus_fg_color(ColorOption):
@@ -782,8 +771,8 @@ class Configuration(object):
         
     class _Option_row_focus_bg_color(ColorOption):
         _DESCR = _(u"Barva pozadí aktivního řádku tabulkového formuláře.")
-        _DOC   = _(u"Pokud barva není nastavena, bude použita systémová barva "
-                   "zvýraznění.  Barva je reprezentována řetězcem '#RRGGBB'.")
+        _DOC   = _(u"Pokud barva není nastavena, bude použita systémová barva " +
+                   u"zvýraznění.  Barva je reprezentována řetězcem '#RRGGBB'.")
         _DEFAULT = None
         
     class _Option_row_nofocus_fg_color(ColorOption):
@@ -812,11 +801,11 @@ class Configuration(object):
 
     class _Option_grouping_background_downgrade(ColorOption):
         _DESCR = _(u"Ztmavení barvy skupiny při seskupování řádků.")
-        _DOC = _(u"Protože barva pozadí řádků není vždy bílá, je tato hodnota "
-                 "chápána jako relativní.  O kolik je zvolená barva tmavší "
-                 "než bílá, o tolik bude výsledná barva skupiny tmavší, než "
-                 "barva pozadí ostatních řádků.  Barva je reprezentována "
-                 "řetězcem '#RRGGBB'.")
+        _DOC = _(u"Protože barva pozadí řádků není vždy bílá, je tato hodnota " +
+                 u"chápána jako relativní.  O kolik je zvolená barva tmavší " +
+                 u"než bílá, o tolik bude výsledná barva skupiny tmavší, než " +
+                 u"barva pozadí ostatních řádků.  Barva je reprezentována " +
+                 u"řetězcem '#RRGGBB'.")
         _DEFAULT = '#eceef0'
 
     class _Option_field_disabled_color(ColorOption):

@@ -403,8 +403,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                    if isinstance(self._row.type(c.id()), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
-                      tooltip=_(u"Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální "
-                                "vyhledávání je možné pouze nad sloupci s řetězcovými hodnotami)."),
+                      tooltip=_(u"Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální " +
+                                u"vyhledávání je možné pouze nad sloupci s řetězcovými hodnotami)."),
                       height=HEIGHT),
             wx_text_ctrl(panel, tooltip=_(u"Zadejte hledaný text."),
                          on_text=lambda e: self._incremental_search(newtext=True),
@@ -414,12 +414,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             wx_button(panel, icon=wx.ART_GO_FORWARD, height=HEIGHT, tooltip=_(u"Najít následující"),
                       command=self.COMMAND_SEARCH(next=True)),
             wx_checkbox(panel, label=_(u"hledat i uvnitř řetězce"),
-                        tooltip=_(u"Zaškrtněnte, pokud chcete vyhledávat kdekoliv uvnitř řetězců. "
-                                  "Jinak bude vyhledáváno pouze od počátku řetězce."),
+                        tooltip=_(u"Zaškrtněnte, pokud chcete vyhledávat kdekoliv uvnitř řetězců. " +
+                                  u"Jinak bude vyhledáváno pouze od počátku řetězce."),
                         checked=full),
             wx_checkbox(panel, label=_(u"rozlišovat velikost písmen"),
-                        tooltip=_(u"Zaškrtněnte, pokud chcete aby vyhledávání respektovalo malá a "
-                                  "velká písmena."),
+                        tooltip=_(u"Zaškrtněnte, pokud chcete aby vyhledávání respektovalo malá a " +
+                                  u"velká písmena."),
                         checked=False),
             wx_button(panel, tooltip=_(u"Skrýt vyhledávací panel"), icon=wx.ART_CROSS_MARK,
                       callback=lambda e: self._exit_incremental_search(), noborder=True),
@@ -1995,7 +1995,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cmd_insert_line(self, before=False, copy=False):
         row = self._current_cell()[0]
-        log(EVENT, 'Vložení nového řádku:', (row, before, copy))
+        log(EVENT, u'Vložení nového řádku:', (row, before, copy))
         if not self._data.permitted(True, pytis.data.Permission.INSERT):
             message(_(u"Nemáte přístupová práva pro vkládání záznamů do této tabulky!"), beep_=True)
             return False
@@ -2014,15 +2014,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 # We silently presume, that when a not null column is not in
                 # fields, it probably has a default value (if not, it would be
                 # an error anyway), so we can continue.
-                msg = _(u"Povinný sloupec '%s' není zobrazen.\n"
-                        "Není možné vkládat řádky v in-line režimu.\n"
-                        "Přidejte sloupec nebo vložte záznam přes formulář (F6).")
+                msg = _(u"Povinný sloupec '%s' není zobrazen.\n" +
+                        u"Není možné vkládat řádky v in-line režimu.\n" +
+                        u"Přidejte sloupec nebo vložte záznam přes formulář (F6).")
                 label = self._view.field(col.id()).column_label()
                 run_dialog(Warning, msg % label)
                 return False
         table = self._table
         if table.editing():
-            log(EVENT, 'Pokus o vložení nového řádku během editace')
+            log(EVENT, u'Pokus o vložení nového řádku během editace')
             return False
         self._last_insert_copy = copy
         oldg = self._grid
@@ -2039,11 +2039,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=row, col=0, invoke_callback=False)
         if not self._is_editable_cell(row, 0) \
                and not self._find_next_editable_cell():
-            log(EVENT, 'Žádný sloupec není editovatelný')
+            log(EVENT, u'Žádný sloupec není editovatelný')
             return False
         self._edit_cell()
         self._update_selection_colors()
-        log(EVENT, 'Řádek vložen')
+        log(EVENT, u'Řádek vložen')
         return True
 
     def _can_line_commit(self):
@@ -2587,8 +2587,8 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
                 if cols:
                     col_id = cols[0]
                 else:
-                    message(_(u"Nelze začít inkrementální vyhledávání. "
-                              "Číselník neobsahuje žádný setříděný sloupec!"),
+                    message(_(u"Nelze začít inkrementální vyhledávání. " +
+                              u"Číselník neobsahuje žádný setříděný sloupec!"),
                             beep_=True)
             col = find(col_id, self._columns, key=lambda c:c.id())
             if col is not None:
@@ -2692,8 +2692,7 @@ class BrowseForm(FoldableForm):
                   help=_(u"Upravit hodnotu v režimu inline editace")),
             MItem(_(u"Filtrovat podle buňky"),
                   command=ListForm.COMMAND_FILTER_BY_CELL,
-                  help=_(u"Vyfiltrovat řádky obsahující v tomto sloupci "
-                         "stejnou hodnotu")),
+                  help=_(u"Vyfiltrovat řádky obsahující v tomto sloupci stejnou hodnotu")),
             MItem(_(u"Zkopírovat obsah buňky"),
                   command=ListForm.COMMAND_COPY_CELL,
                   help=_(u"Zkopírovat hodnotu do schránky.")),
@@ -2709,12 +2708,12 @@ class BrowseForm(FoldableForm):
                   help=_(u"Odstranit záznam z databáze.")),
             MItem(_(u"Náhled"),
                   command=ListForm.COMMAND_ACTIVATE,
-                  help=_(u"Otevřít náhledový formulář s možností procházení "
-                         "záznamů"), icon='show-record'),
+                  help=_(u"Otevřít náhledový formulář s možností procházení záznamů"),
+                  icon='show-record'),
             MItem(_(u"Duální náhled"),
                   command=ListForm.COMMAND_ACTIVATE(alternate=True),
-                  help=_(u"Otevřít formulář s tabulkou nahoře a náhledem "
-                         "v dolní části."), icon='show-record'),
+                  help=_(u"Otevřít formulář s tabulkou nahoře a náhledem v dolní části."),
+                  icon='show-record'),
             )
         actions = self._action_mitems(self._view.actions())
         if actions:
@@ -2844,7 +2843,7 @@ class BrowseForm(FoldableForm):
         return menu
     
     def _cmd_print(self, print_spec_path=None):
-        log(EVENT, 'Vyvolání tiskového formuláře:', print_spec_path)
+        log(EVENT, u'Vyvolání tiskového formuláře:', print_spec_path)
         name = self._name
         if not print_spec_path:
             try:

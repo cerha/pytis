@@ -714,10 +714,10 @@ class DBExceptions(unittest.TestCase):
         assert de.exception() == None
         de = pytis.data.DBSystemException(None)
         m = de.message()
-        assert type(m) == type('') and len(m) > 0, ('Invalid message', m)
+        assert isinstance(m, basestring) and len(m) > 0, ('Invalid message', m)
         de = pytis.data.DBLoginException()
         m = de.message()
-        assert type(m) == type('') and len(m) > 0, ('Invalid message', m)
+        assert isinstance(m, basestring) and len(m) > 0, ('Invalid message', m)
 tests.add(DBExceptions)
 
 
@@ -2346,7 +2346,7 @@ class TutorialTest(_DBBaseTest):
             assert new_key, 'validation not working'
             new_row_data = []
             for c, v in zip(tab_data.columns(),
-                            ('9', 'pěkný řádek', 'devet')):
+                            ('9', u'pěkný řádek', 'devet')):
                 new_row_data.append ((c.id(), c.type().validate(v)[0]))
             new_row = pytis.data.Row(new_row_data)
             # TODO: Momenálně nechodí.  Opravit.
