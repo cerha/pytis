@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005, 2006, 2009, 2011 Brailcom, o.p.s.
 #
@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Nástroje pro generování HTML na základì dat z pytisu."""
+"""NÃ¡stroje pro generovÃ¡nÃ­ HTML na zÃ¡kladÄ› dat z pytisu."""
 
 import pytis.data
 from pytis.util import *
@@ -31,22 +31,22 @@ class BaseDBTable(object):
     def __init__(self, spec, columns, condition=None, sort=(),
                  show_headers=True, klass=None,
                  **attrs):
-        """Vytvoø tabulku, její¾ obsah je získán z databázového objektu.
+        """VytvoÅ™ tabulku, jejÃ­Å¾ obsah je zÃ­skÃ¡n z databÃ¡zovÃ©ho objektu.
 
         Argumenty:
 
-        spec -- název specifikace
-        columns -- seznam sloupcù, které se pou¾ijí v HTML tabulce
-        condition -- podmínka odpovídající argumentu volání
+        spec -- nÃ¡zev specifikace
+        columns -- seznam sloupcÅ¯, kterÃ© se pouÅ¾ijÃ­ v HTML tabulce
+        condition -- podmÃ­nka odpovÃ­dajÃ­cÃ­ argumentu volÃ¡nÃ­
                      pytis.data.select()
-        sort -- øazení odpovídající argumentu volání pytis.data.select()
-        show_headers -- pokud je True, zobrazí se záhlaví sloupcù, na základì
-                        'label' z jednotlivıch políèek
-        klass -- None nebo funkce jednoho argumentu, kterım je øádek tabulky
-                 a která vrací None nebo odpovídající styl
+        sort -- Å™azenÃ­ odpovÃ­dajÃ­cÃ­ argumentu volÃ¡nÃ­ pytis.data.select()
+        show_headers -- pokud je True, zobrazÃ­ se zÃ¡hlavÃ­ sloupcÅ¯, na zÃ¡kladÄ›
+                        'label' z jednotlivÃ½ch polÃ­Äek
+        klass -- None nebo funkce jednoho argumentu, kterÃ½m je Å™Ã¡dek tabulky
+                 a kterÃ¡ vracÃ­ None nebo odpovÃ­dajÃ­cÃ­ styl
         attrs -- atributy pro HyperText.TABLE
         
-        Vrací instanci HyperText.TABLE.
+        VracÃ­ instanci HyperText.TABLE.
         """        
         self._spec = spec
         self._columns = columns
@@ -208,7 +208,7 @@ def browsable_db_table(*args, **kwargs):
 
 
 def form_validate(spec, prefill):
-    # Sestavíme datovı objekt
+    # SestavÃ­me datovÃ½ objekt
     data = data_object(spec)
     if not data:
         return None, None
@@ -231,21 +231,21 @@ def form_validate(spec, prefill):
 def PopupCB(spec, name, column, returned_column,
             selected=None,
             condition=None, sort=(), **attrs):
-    """Generuje popup list na základì hodnot z èíselníku.
+    """Generuje popup list na zÃ¡kladÄ› hodnot z ÄÃ­selnÃ­ku.
 
     Argumenty:
 
-      spec -- název specifikace
-      name -- jméno pro HTML widget
+      spec -- nÃ¡zev specifikace
+      name -- jmÃ©no pro HTML widget
       label -- popis pro HTML widget
-      column -- název sloupce èíselníku, jeho¾ hodnoty se budou zobrazovat
-      returned_column -- název sloupce èíselníku, jeho¾ hodnoty se budou vracet
-      selected -- None nebo seznam hodnot, které budou mít v HTML hodnotu
+      column -- nÃ¡zev sloupce ÄÃ­selnÃ­ku, jehoÅ¾ hodnoty se budou zobrazovat
+      returned_column -- nÃ¡zev sloupce ÄÃ­selnÃ­ku, jehoÅ¾ hodnoty se budou vracet
+      selected -- None nebo seznam hodnot, kterÃ© budou mÃ­t v HTML hodnotu
                   selected
-      sort -- øazení odpovídající argumentu volání pytis.data.select()    
-      condition -- podmínka odpovídající argumentu volání pytis.data.select()
+      sort -- Å™azenÃ­ odpovÃ­dajÃ­cÃ­ argumentu volÃ¡nÃ­ pytis.data.select()    
+      condition -- podmÃ­nka odpovÃ­dajÃ­cÃ­ argumentu volÃ¡nÃ­ pytis.data.select()
 
-    Vrací instanci HyperText.Select nebo None v pøípadì neúspìchu.
+    VracÃ­ instanci HyperText.Select nebo None v pÅ™Ã­padÄ› neÃºspÄ›chu.
     """
     dbrows = dbselect(spec, condition=condition, sort=sort)
     if len(dbrows) == 0:

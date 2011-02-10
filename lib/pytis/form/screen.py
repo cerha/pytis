@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,14 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Specifikace a zpracování u¾ivatelskıch prvkù hlavní obrazovky.
+"""Specifikace a zpracovÃ¡nÃ­ uÅ¾ivatelskÃ½ch prvkÅ¯ hlavnÃ­ obrazovky.
 
-Modul zavádí prvky spoleèné pro v¹echny formuláøe: menu, stavovı øádek,
-nápovìdu, atd.  Tyto prvky se mohou vyskytovat ve v¹ech formuláøích, av¹ak
-v ka¾dém mohou mít jinı obsah.
+Modul zavÃ¡dÃ­ prvky spoleÄnÃ© pro vÅ¡echny formulÃ¡Å™e: menu, stavovÃ½ Å™Ã¡dek,
+nÃ¡povÄ›du, atd.  Tyto prvky se mohou vyskytovat ve vÅ¡ech formulÃ¡Å™Ã­ch, avÅ¡ak
+vÂ kaÅ¾dÃ©m mohou mÃ­t jinÃ½ obsah.
 
-Modul definuje jak tøídy slou¾ící ke specifikaci konkrétních prvkù, tak
-i tøídy, které tyto specifikace následnì zpracovávají.
+Modul definuje jak tÅ™Ã­dy slouÅ¾Ã­cÃ­ ke specifikaci konkrÃ©tnÃ­ch prvkÅ¯, tak
+iÂ tÅ™Ã­dy, kterÃ© tyto specifikace nÃ¡slednÄ› zpracovÃ¡vajÃ­.
 
 """
 
@@ -49,15 +49,15 @@ def init_colors():
         wxcolour = wx.TheColourDatabase.FindColour(name)
         _WX_COLOR_DB[name] = WxColor(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue())
     
-### Pomocné funkce
+### PomocnÃ© funkce
 
 def beep():
-    """Pípni."""
+    """PÃ­pni."""
     wx.Bell()
 
 
 def microsleep(miliseconds=100):
-    """Èekej a nic nedìlej po dobu 'miliseconds'."""
+    """ÄŒekej a nic nedÄ›lej po dobu 'miliseconds'."""
     wx.MicroSleep(miliseconds)
 
 
@@ -66,10 +66,10 @@ def busy_cursor(enable):
 
     Argumenty:
 
-      enable -- je-li pravdivé, bude kurzor zapnut, v opaèném pøípadì bude
+      enable -- je-li pravdivÃ©, bude kurzor zapnut, vÂ opaÄnÃ©m pÅ™Ã­padÄ› bude
         vypnut
 
-    Poznámka: Hlavní okno aplikace automaticky busy cursor vypíná v idle
+    PoznÃ¡mka: HlavnÃ­ okno aplikace automaticky busy cursor vypÃ­nÃ¡ vÂ idle
     handleru.
 
     """
@@ -81,14 +81,14 @@ def busy_cursor(enable):
             wx.EndBusyCursor()
 
 def is_busy_cursor():
-    """Vra» pravdu, právì kdy¾ je nastaven busy cursor."""
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ je nastaven busy cursor."""
     return wx.IsBusy()
 
 
 def modal(window):
-    """Vra» pravdu právì kdy¾ je 'window' modálním oknem.
+    """VraÅ¥ pravdu prÃ¡vÄ› kdyÅ¾ je 'window' modÃ¡lnÃ­m oknem.
 
-    'window' je pova¾ováno za modální, jestli¾e je instancí tøídy 'PopupForm'
+    'window' je povaÅ¾ovÃ¡no za modÃ¡lnÃ­, jestliÅ¾e je instancÃ­ tÅ™Ã­dy 'PopupForm'
     nebo 'Dialog'.
 
     """
@@ -108,51 +108,51 @@ def copy_to_clipboard(text):
         
 def hotkey_string(hotkey):
     """Return the human readable hotkey representation of Keymap.lookup_command() result."""
-    return ' '.join([k.replace(' ', _("Mezerník")) for k in hotkey])
+    return ' '.join([k.replace(' ', _(u"MezernÃ­k")) for k in hotkey])
 
 
-### Pomocné tøídy
+### PomocnÃ© tÅ™Ã­dy
 
 
 class Restorable:
-    """Prvek s obnovitelnım stavem.
+    """Prvek sÂ obnovitelnÃ½m stavem.
 
-    Potomci této tøídy se pova¾ují za objekty schopné popsat svùj stav a
-    pozdìji tento stav dle onoho popisu obnovit.  K získání popisu stavu,
-    resp. obnovení stavu, slou¾í metoda 'save()', resp. 'restore()'.
+    Potomci tÃ©to tÅ™Ã­dy se povaÅ¾ujÃ­ za objekty schopnÃ© popsat svÅ¯j stav a
+    pozdÄ›ji tento stav dle onoho popisu obnovit.  KÂ zÃ­skÃ¡nÃ­ popisu stavu,
+    resp. obnovenÃ­ stavu, slouÅ¾Ã­ metoda 'save()', resp. 'restore()'.
 
-    Tuto tøídu by mìly dìdit v¹echny pøímé statické dìti aplikaèního okna.
+    Tuto tÅ™Ã­du by mÄ›ly dÄ›dit vÅ¡echny pÅ™Ã­mÃ© statickÃ© dÄ›ti aplikaÄnÃ­ho okna.
     
     """
     def save(self):
-        """Vra» informaci o aktuálním stavu prvku pro jeho pozdìj¹í obnovení.
+        """VraÅ¥ informaci oÂ aktuÃ¡lnÃ­m stavu prvku pro jeho pozdÄ›jÅ¡Ã­ obnovenÃ­.
 
-        Vrácená hodnota mù¾e bıt cokoliv, co je schopna zpracovat metoda
+        VrÃ¡cenÃ¡ hodnota mÅ¯Å¾e bÃ½t cokoliv, co je schopna zpracovat metoda
         'restore()'.
 
-        V této tøídì metoda vrací 'None'.
+        VÂ tÃ©to tÅ™Ã­dÄ› metoda vracÃ­ 'None'.
         
         """
         return None
         
     def restore(self, state):
-        """Obnov stav prvku na základì 'state'.
+        """Obnov stav prvku na zÃ¡kladÄ› 'state'.
 
         Argumenty:
 
-          state -- informace o stavu vrácená døíve metodou 'save()'
+          state -- informace oÂ stavu vrÃ¡cenÃ¡ dÅ™Ã­ve metodou 'save()'
 
-        V této tøídì metoda nedìlá nic.
+        VÂ tÃ©to tÅ™Ã­dÄ› metoda nedÄ›lÃ¡ nic.
         
         """
         pass
 
 
 class Window(wx.Panel, Restorable):
-    """Vymìnitelné okno.
+    """VymÄ›nitelnÃ© okno.
 
-    Tato tøída by mìla podporovat v¹echny akce, které jsou nutné k umístìní
-    okna do aplikace a poskytovat pro tyto akce jednotné rozhraní.
+    Tato tÅ™Ã­da by mÄ›la podporovat vÅ¡echny akce, kterÃ© jsou nutnÃ© k umÃ­stÄ›nÃ­
+    okna do aplikace a poskytovat pro tyto akce jednotnÃ© rozhranÃ­.
 
     """
 
@@ -163,7 +163,7 @@ class Window(wx.Panel, Restorable):
 
         Argumenty:
 
-          parent -- rodièovské okno.  Instance 'wx.Window'.
+          parent -- rodiÄovskÃ© okno.  Instance 'wx.Window'.
         
         """
         assert isinstance(parent, wx.Window), parent
@@ -172,18 +172,18 @@ class Window(wx.Panel, Restorable):
         self._hide_form_requested = False
         
     def _exit_check(self):
-        "Proveï kontrolu pøed uzavøením a vra» pravdu, je-li mo¾no pokraèovat."
+        "ProveÄ kontrolu pÅ™ed uzavÅ™enÃ­m a vraÅ¥ pravdu, je-li moÅ¾no pokraÄovat."
         return True
 
     def _cleanup(self):
-        "Proveï úklidové akce pøed uzavøením okna."
+        "ProveÄ ÃºklidovÃ© akce pÅ™ed uzavÅ™enÃ­m okna."
         pass
     
     def close(self, force=False):
         return self._close(force=force)
 
     def _close(self, force=False):
-        """Definitivnì uzavøi okno a zru¹ ve¹kerı jeho obsah."""
+        """DefinitivnÄ› uzavÅ™i okno a zruÅ¡ veÅ¡kerÃ½ jeho obsah."""
         if force or self._exit_check():
             self.hide()
             try:
@@ -196,14 +196,14 @@ class Window(wx.Panel, Restorable):
             return False
     
     def parent(self):
-        """Vra» rodièovské okno zadané v konstruktoru."""
+        """VraÅ¥ rodiÄovskÃ© okno zadanÃ© vÂ konstruktoru."""
         return self._parent
 
     def resize(self, size=None):
         """Nastav velikost okna na velikost danou jako tuple (x, y).
 
-        Pokud není velikost udána, je okno automaticky nastaveno na velikost
-        svého rodièovského okna.
+        Pokud nenÃ­ velikost udÃ¡na, je okno automaticky nastaveno na velikost
+        svÃ©ho rodiÄovskÃ©ho okna.
 
         """
         if size is None:
@@ -211,19 +211,19 @@ class Window(wx.Panel, Restorable):
         self.SetSize(size)
         
     def show(self):
-        """Zobraz (vykresli) toto okno a uèiò jej aktivním."""
+        """Zobraz (vykresli) toto okno a uÄiÅˆ jej aktivnÃ­m."""
         self.Enable(True)
         self.Show(True)
         self.focus()
 
     def hide(self):
-        """Uèiò toto okno neaktivním a skryj jej."""
+        """UÄiÅˆ toto okno neaktivnÃ­m a skryj jej."""
         orig_hide_form_requested = self._hide_form_requested
         self._hide_form_requested = True
         try:
             self.defocus()
             self.Enable(False)
-            self.Show(False) # nutné i pøed uzavøením
+            self.Show(False) # nutnÃ© iÂ pÅ™ed uzavÅ™enÃ­m
         finally:
             self._hide_form_requested = orig_hide_form_requested
             
@@ -235,21 +235,21 @@ class Window(wx.Panel, Restorable):
         self.SetFocus()
         
     def defocus(self):
-        """Zru¹ focus tomuto oknu."""
+        """ZruÅ¡ focus tomuto oknu."""
         if Window._focused_window is self:
             Window._focused_window = None
 
             
 def focused_window():
-    """Vra» zaostøené okno nebo 'None', není-li jaké."""
+    """VraÅ¥ zaostÅ™enÃ© okno nebo 'None', nenÃ­-li jakÃ©."""
     return Window._focused_window
 
 
 class WxKey:
-    """Práce s reprezentací kláves.
+    """PrÃ¡ce sÂ reprezentacÃ­ klÃ¡ves.
 
-    Tøída umo¾òuje porovnat událost s definicí klávesy.  V budoucnu mohou bıt
-    její funkce roz¹íøeny.
+    TÅ™Ã­da umoÅ¾Åˆuje porovnat udÃ¡lost sÂ definicÃ­ klÃ¡vesy.  VÂ budoucnu mohou bÃ½t
+    jejÃ­ funkce rozÅ¡Ã­Å™eny.
 
     """
     _M_ALT = 'ALT'
@@ -259,7 +259,7 @@ class WxKey:
     _RTRANS_TABLE = None
 
     def __init__(self):
-        # Musí to bıt a¾ tady, kvùli (ne)importùm wx na serveru
+        # MusÃ­ to bÃ½t aÅ¾ tady, kvÅ¯li (ne)importÅ¯m wx na serveru
         table = (('Insert',    wx.WXK_INSERT),
                  ('Delete',    wx.WXK_DELETE),
                  ('Backspace', wx.WXK_BACK),
@@ -321,18 +321,18 @@ class WxKey:
         return result
 
     def is_true_key(self, event):
-        """Vra» pravdu, práve kdy¾ 'event' neodpovídá jen modifikátoru."""
+        """VraÅ¥ pravdu, prÃ¡ve kdyÅ¾ 'event' neodpovÃ­dÃ¡ jen modifikÃ¡toru."""
         code = event.GetKeyCode()
-        # Chybí symboly pro Meta a Alt, tak¾e natvrdo 307...
+        # ChybÃ­ symboly pro Meta a Alt, takÅ¾e natvrdo 307...
         return code not in (wx.WXK_SHIFT, wx.WXK_CONTROL, 307)
         
     def is_event_of_key(self, event, key):
-        """Vra» pravdu, právì kdy¾ 'event' byla vyvolána 'key'.
+        """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'event' byla vyvolÃ¡na 'key'.
 
         Argument:
 
           event -- instance wx.Event
-          key -- string definující klávesu dle specifikace v modulu 'command'
+          key -- string definujÃ­cÃ­ klÃ¡vesu dle specifikace vÂ modulu 'command'
 
         """
         if not isinstance(event, wx.KeyEvent) or key is None:
@@ -348,17 +348,17 @@ class WxKey:
             else:
                 raise ProgramError('Unhandled modifier', modifier)
         else:
-            # zde nepou¾ívat event.HasModifiers(), proto¾e ta vrací
-            # pøi zapnutém NumLocku v¾dy pravdu.
+            # zde nepouÅ¾Ã­vat event.HasModifiers(), protoÅ¾e ta vracÃ­
+            # pÅ™i zapnutÃ©m NumLocku vÅ¾dy pravdu.
             if event.AltDown() or event.ControlDown():
                 return False
         return code == event.GetKeyCode()
 
     def event_key(self, event):
-        """Vra» stringovou podobu klávesové události 'event'.
+        """VraÅ¥ stringovou podobu klÃ¡vesovÃ© udÃ¡losti 'event'.
 
-        Ne v¹echny události musí vracet rozumnou nebo správnou stringovou
-        podobu, podporovány jsou pouze rozeznávané klávesové události.
+        Ne vÅ¡echny udÃ¡losti musÃ­ vracet rozumnou nebo sprÃ¡vnou stringovou
+        podobu, podporovÃ¡ny jsou pouze rozeznÃ¡vanÃ© klÃ¡vesovÃ© udÃ¡losti.
         
         """
         prefix = ''
@@ -383,43 +383,43 @@ class WxKey:
     
 
 class WxColor(wx.Colour):
-    """Stejné jako pøedek, av¹ak definuje rozumné porovnání."""
+    """StejnÃ© jako pÅ™edek, avÅ¡ak definuje rozumnÃ© porovnÃ¡nÃ­."""
     
     def __cmp__(self, other):
-        """Vra» shodu, právì kdy¾ 'self' a 'other' mají shodné RGB slo¾ky."""
+        """VraÅ¥ shodu, prÃ¡vÄ› kdyÅ¾ 'self' a 'other' majÃ­ shodnÃ© RGB sloÅ¾ky."""
         try:
             result = cmp(self.Red(), other.Red()) or \
                      cmp(self.Green(), other.Green()) or \
                      cmp(self.Blue(), other.Blue())
         except AttributeError:
-            # Je-li `other' barvou, mù¾e bıt ve wxWindows ledacos, proto nelze
-            # zaøadit nìjakı rozumnı test na tøídu instance.
+            # Je-li `other' barvou, mÅ¯Å¾e bÃ½t ve wxWindows ledacos, proto nelze
+            # zaÅ™adit nÄ›jakÃ½ rozumnÃ½ test na tÅ™Ã­du instance.
             result = compare_objects(self, other)
         return result
 
 
 def color2wx(color):
-    """Vra» barvu ve formì akceptované wxWindows.
+    """VraÅ¥ barvu ve formÄ› akceptovanÃ© wxWindows.
 
-    Pokud odpovídající barva není známa, vra» 'None'.
+    Pokud odpovÃ­dajÃ­cÃ­ barva nenÃ­ znÃ¡ma, vraÅ¥ 'None'.
     
     Argumenty:
 
-      color -- po¾adovaná barva, jedna z konstant tøídy
-        'pytis.presentation.Color' nebo název barvy z databáze barev
+      color -- poÅ¾adovanÃ¡ barva, jedna zÂ konstant tÅ™Ã­dy
+        'pytis.presentation.Color' nebo nÃ¡zev barvy z databÃ¡ze barev
         (instance wxTheColourDatabase)
 
     """
     return _WX_COLORS.get(color, None) or _WX_COLOR_DB.get(color, None) or wx.NamedColor(color)
 
-### Univerzální handlery
+### UniverzÃ¡lnÃ­ handlery
 
 
 class Keymap:
-    """Klávesová mapa.
+    """KlÃ¡vesovÃ¡ mapa.
 
-    Klávesová mapa umo¾òuje definovat pøiøazení pøíkazù a pøípadnì jejich
-    argumentù klávesám.
+    KlÃ¡vesovÃ¡ mapa umoÅ¾Åˆuje definovat pÅ™iÅ™azenÃ­ pÅ™Ã­kazÅ¯ a pÅ™Ã­padnÄ› jejich
+    argumentÅ¯ klÃ¡vesÃ¡m.
 
     """
     def __init__(self, parent=None):
@@ -427,10 +427,10 @@ class Keymap:
 
         Argumenty:
 
-          parent -- rodièovská klávesová mapa; buï 'None' (pak klávesová mapa
-            je èistá), nebo instance 'Keymap' (pak se podìdí v¹echny klávesy
-            z dané klávesové mapy, pokud nejsou pøedefinovány).  Argument není
-            nutno klíèovat.
+          parent -- rodiÄovskÃ¡ klÃ¡vesovÃ¡ mapa; buÄ 'None' (pak klÃ¡vesovÃ¡ mapa
+            je ÄistÃ¡), nebo instance 'Keymap' (pak se podÄ›dÃ­ vÅ¡echny klÃ¡vesy
+            zÂ danÃ© klÃ¡vesovÃ© mapy, pokud nejsou pÅ™edefinovÃ¡ny).  Argument nenÃ­
+            nutno klÃ­Äovat.
 
         """
         if parent is None:
@@ -462,40 +462,40 @@ class Keymap:
                 prefix)
 
     def define_key(self, key, command, args={}):
-        """Pøiøaï klávese 'key' pøíkaz 'command' s argumenty '**kwargs'.
+        """PÅ™iÅ™aÄ klÃ¡vese 'key' pÅ™Ã­kaz 'command' sÂ argumenty '**kwargs'.
 
         Argumenty:
 
-          key -- øetìzec, resp. sekvence øetìzcù, definující klávesu,
-            resp. sekvenci kláves; popis viz ní¾e
+          key -- Å™etÄ›zec, resp. sekvence Å™etÄ›zcÅ¯, definujÃ­cÃ­ klÃ¡vesu,
+            resp. sekvenci klÃ¡ves; popis viz nÃ­Å¾e
             
-          command -- pøiøazenı pøíkaz, instance tøídy 'Command'
+          command -- pÅ™iÅ™azenÃ½ pÅ™Ã­kaz, instance tÅ™Ã­dy 'Command'
           
-          args -- parametry pøíkazu, pøedané pøi jeho vyvolání obslu¾né metodì
+          args -- parametry pÅ™Ã­kazu, pÅ™edanÃ© pÅ™i jeho vyvolÃ¡nÃ­ obsluÅ¾nÃ© metodÄ›
 
-        Pøiøazované klávesy jsou øetìzce sestavené dle následujících pravidel:
+        PÅ™iÅ™azovanÃ© klÃ¡vesy jsou Å™etÄ›zce sestavenÃ© dle nÃ¡sledujÃ­cÃ­ch pravidel:
 
-        - Klávesa odpovídající znaku anglické abecedy je reprezentována
-          øetìzcem rovnım tomuto znaku.  Velikost písmen je brána v potaz (viz.
-          také dále modifikátor Shift).
+        - KlÃ¡vesa odpovÃ­dajÃ­cÃ­ znaku anglickÃ© abecedy je reprezentovÃ¡na
+          Å™etÄ›zcem rovnÃ½m tomuto znaku.  Velikost pÃ­smen je brÃ¡na v potaz (viz.
+          takÃ© dÃ¡le modifikÃ¡tor Shift).
 
-        - Funkèní klávesy F1 a¾ F12 se zapisují øetìzci 'F1' a¾ 'F12'.
+        - FunkÄnÃ­ klÃ¡vesy F1 aÅ¾ F12 se zapisujÃ­ Å™etÄ›zci 'F1' aÅ¾ 'F12'.
 
-        - ©ipky se zapisují øetìzci 'Up', 'Down', 'Left', 'Right'.
+        - Å ipky se zapisujÃ­ Å™etÄ›zci 'Up', 'Down', 'Left', 'Right'.
 
-        - Klávesy 'Escape', 'Enter', 'Tab', 'Insert', 'Delete', 'Backspace',
-          'Home', 'End', 'Prior' a 'Next' se zapisují stejnojmennımi øetìzci.
+        - KlÃ¡vesy 'Escape', 'Enter', 'Tab', 'Insert', 'Delete', 'Backspace',
+          'Home', 'End', 'Prior' a 'Next' se zapisujÃ­ stejnojmennÃ½mi Å™etÄ›zci.
 
-        - Klávesa s modifikátorem Control je zapsána ve formátu 'Ctrl-<KEY>',
-          kde '<KEY>' je zápis klávesy bez tohoto modifikátoru.
+        - KlÃ¡vesa sÂ modifikÃ¡torem Control je zapsÃ¡na ve formÃ¡tu 'Ctrl-<KEY>',
+          kde '<KEY>' je zÃ¡pis klÃ¡vesy bez tohoto modifikÃ¡toru.
 
-        - Klávesa s modifikátorem Alt je zapsána ve formátu 'Alt-<KEY>', kde
-          '<KEY>' je zápis klávesy bez tohoto modifikátoru.
+        - KlÃ¡vesa sÂ modifikÃ¡torem Alt je zapsÃ¡na ve formÃ¡tu 'Alt-<KEY>', kde
+          '<KEY>' je zÃ¡pis klÃ¡vesy bez tohoto modifikÃ¡toru.
 
-        - Klávesa s modifikátorem Shift je zapsána ve formátu 'Shift-<KEY>'.
+        - KlÃ¡vesa sÂ modifikÃ¡torem Shift je zapsÃ¡na ve formÃ¡tu 'Shift-<KEY>'.
           
-        - Lze pou¾ívat více modifikátorù souèasnì.  Potom jsou modifikátory
-          zapisovány v¾dy v poøadí Ctrl, Alt, Shift (napø. tedy Ctrl-Alt-s nebo
+        - Lze pouÅ¾Ã­vat vÃ­ce modifikÃ¡torÅ¯ souÄasnÄ›.  Potom jsou modifikÃ¡tory
+          zapisovÃ¡ny vÅ¾dy v poÅ™adÃ­ Ctrl, Alt, Shift (napÅ™. tedy Ctrl-Alt-s nebo
           Alt-Shift-Tab, nikoliv potom Alt-Ctrl-x).
 
         """
@@ -504,18 +504,18 @@ class Keymap:
             self._define_key(key, command, args)
 
     def lookup_key(self, key):
-        """Vra» definici asociovanou s klávesou 'key'.
+        """VraÅ¥ definici asociovanou sÂ klÃ¡vesou 'key'.
 
         Argumenty:
 
-          key -- string popisující klávesu v notaci uvedené v docstringu tøídy
+          key -- string popisujÃ­cÃ­ klÃ¡vesu vÂ notaci uvedenÃ© vÂ docstringu tÅ™Ã­dy
 
-        Vrací: Je-li na klávesu napojen pøíkaz, vra» dvojici (COMMAND, ARGS),
-          kde COMMAND je instance tøídy 'Command' a ARGS jsou jeho argumenty
-          jako dictionary pro pøedání obslu¾né metodì.  Je-li na klávesu
-          pøipojena klávesová mapa (v pøípadì víceklávesovıch definic), je
-          vrácena tato mapa jako instance tøídy 'Keymap'.  Není-li klávesa
-          definována, vra» 'None'.
+        VracÃ­: Je-li na klÃ¡vesu napojen pÅ™Ã­kaz, vraÅ¥ dvojici (COMMAND, ARGS),
+          kde COMMAND je instance tÅ™Ã­dy 'Command' a ARGS jsou jeho argumenty
+          jako dictionary pro pÅ™edÃ¡nÃ­ obsluÅ¾nÃ© metodÄ›.  Je-li na klÃ¡vesu
+          pÅ™ipojena klÃ¡vesovÃ¡ mapa (vÂ pÅ™Ã­padÄ› vÃ­ceklÃ¡vesovÃ½ch definic), je
+          vrÃ¡cena tato mapa jako instance tÅ™Ã­dy 'Keymap'.  NenÃ­-li klÃ¡vesa
+          definovÃ¡na, vraÅ¥ 'None'.
 
         """
         try:
@@ -524,17 +524,17 @@ class Keymap:
             return None
 
     def lookup_command(self, command, args={}):
-        """Vra» klávesovou zkratku asociovanou s danım pøíkazem a argumenty.
+        """VraÅ¥ klÃ¡vesovou zkratku asociovanou sÂ danÃ½m pÅ™Ã­kazem a argumenty.
 
         Argumenty:
 
-          command -- pøíkaz, instance tøídy 'Command'
-          args -- argumenty pøíkazu jako dictionary.
+          command -- pÅ™Ã­kaz, instance tÅ™Ã­dy 'Command'
+          args -- argumenty pÅ™Ã­kazu jako dictionary.
 
-        Vrací: Je-li pøíkaz s danımi argumenty napojen na nìjakou klávesu, vra»
-          definici klávesové zkratky jako tuple (v¾dy, by» jednoprvkovı).
-          Není-li pro pøíkaz s danımi argumenty klávesa definována (pøedchozím
-          voláním metody 'define_key()'), vra» 'None'.
+        VracÃ­: Je-li pÅ™Ã­kaz s danÃ½mi argumenty napojen na nÄ›jakou klÃ¡vesu, vraÅ¥
+          definici klÃ¡vesovÃ© zkratky jako tuple (vÅ¾dy, byÅ¥ jednoprvkovÃ½).
+          NenÃ­-li pro pÅ™Ã­kaz s danÃ½mi argumenty klÃ¡vesa definovÃ¡na (pÅ™edchozÃ­m
+          volÃ¡nÃ­m metody 'define_key()'), vraÅ¥ 'None'.
 
         """
         for key, keydef in self._keymap.items():
@@ -548,7 +548,7 @@ class Keymap:
         return None
 
     def keys(self):
-        """Vra» seznam v¹ech platnıch kláves, jako tuple øetìzcù."""
+        """VraÅ¥ seznam vÅ¡ech platnÃ½ch klÃ¡ves, jako tuple Å™etÄ›zcÅ¯."""
         return self._keymap.keys()
     
     def __str__(self):
@@ -556,16 +556,16 @@ class Keymap:
     
 
 class KeyHandler:
-    """Tøída schopná pøevádìt klávesové události na pøíkazy.
+    """TÅ™Ã­da schopnÃ¡ pÅ™evÃ¡dÄ›t klÃ¡vesovÃ© udÃ¡losti na pÅ™Ã­kazy.
 
-    Tøída v konstruktoru registruje pro zpracování kláves metodu
-    'on_key_down()', která zaji¹»uje pøevod na klávesy na pøíkaz a vyvolání
-    jeho obslu¾né metody.  Ve tøídì se vytvoøí klávesová mapa poskládaná
-    z kláves pøíkazù instance oné tøídy plus v¹ech jejích poruèníkù.  Pøi
-    konfliktu kláves mají pøednost ty bli¾¹í dané tøídì.
+    TÅ™Ã­da vÂ konstruktoru registruje pro zpracovÃ¡nÃ­ klÃ¡ves metodu
+    'on_key_down()', kterÃ¡ zajiÅ¡Å¥uje pÅ™evod na klÃ¡vesy na pÅ™Ã­kaz a vyvolÃ¡nÃ­
+    jeho obsluÅ¾nÃ© metody.  Ve tÅ™Ã­dÄ› se vytvoÅ™Ã­ klÃ¡vesovÃ¡ mapa posklÃ¡danÃ¡
+    zÂ klÃ¡ves pÅ™Ã­kazÅ¯ instance onÃ© tÅ™Ã­dy plus vÅ¡ech jejÃ­ch poruÄnÃ­kÅ¯.  PÅ™i
+    konfliktu klÃ¡ves majÃ­ pÅ™ednost ty bliÅ¾Å¡Ã­ danÃ© tÅ™Ã­dÄ›.
 
-    Tøída je urèena k \"pøidìdìní\" ve v¹ech tøídách, které chtìjí samy
-    odchytávat klávesové události.
+    TÅ™Ã­da je urÄena kÂ \"pÅ™idÄ›dÄ›nÃ­\" ve vÅ¡ech tÅ™Ã­dÃ¡ch, kterÃ© chtÄ›jÃ­ samy
+    odchytÃ¡vat klÃ¡vesovÃ© udÃ¡losti.
 
     """
 
@@ -574,9 +574,9 @@ class KeyHandler:
 
         Argumenty:
 
-          widgets -- wx widget, nebo jejich sekvence, pro kterı má bıt
-            definován handler klávesy; mù¾e bıt i 'None', v kterém¾to pøípadì
-            bude oním widgetem 'self'
+          widgets -- wx widget, nebo jejich sekvence, pro kterÃ½ mÃ¡ bÃ½t
+            definovÃ¡n handler klÃ¡vesy; mÅ¯Å¾e bÃ½t iÂ 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ›
+            bude onÃ­m widgetem 'self'
 
         """
         if widgets is None:
@@ -597,20 +597,20 @@ class KeyHandler:
         self._key_guardian = key_guardian
 
     def _handle_keys(self, *widgets):
-        """Registruj se pro o¹etøení klávesovıch událostí danıch UI prvkù."""
+        """Registruj se pro oÅ¡etÅ™enÃ­ klÃ¡vesovÃ½ch udÃ¡lostÃ­ danÃ½ch UI prvkÅ¯."""
         for widget in widgets:
             wx_callback(wx.EVT_KEY_DOWN, widget, self.on_key_down)
         
     def _init_commands(self):
-        # Nemù¾eme `_commands' inicializovat hned v konstruktoru, proto¾e
-        # tou dobou je¹tì nemusí bıt v¹echny pøíkazy ve tøídì definovány.
+        # NemÅ¯Å¾eme `_commands' inicializovat hned vÂ konstruktoru, protoÅ¾e
+        # tou dobou jeÅ¡tÄ› nemusÃ­ bÃ½t vÅ¡echny pÅ™Ã­kazy ve tÅ™Ã­dÄ› definovÃ¡ny.
         commands = []
         for attrname in public_attributes(self.__class__):
             if starts_with(attrname, 'COMMAND_'):
                 command = getattr(self.__class__, attrname)
                 if isinstance(command, Command):
                     commands.append(command)
-        # Do atributu pøiøazujeme a¾ nyní, aby to bylo odolnìj¹í vláknùm
+        # Do atributu pÅ™iÅ™azujeme aÅ¾ nynÃ­, aby to bylo odolnÄ›jÅ¡Ã­ vlÃ¡knÅ¯m
         self._commands = commands
 
     def _maybe_invoke_command(self, key_commands):
@@ -619,17 +619,17 @@ class KeyHandler:
                 self._init_commands()
             if command in self._commands and command.enabled(**kwargs):
                 if __debug__:
-                    log(DEBUG, 'Nalezen pøíkaz klávesy', (command, kwargs))
+                    log(DEBUG, 'Nalezen pÅ™Ã­kaz klÃ¡vesy', (command, kwargs))
                 command.invoke(**kwargs)
                 return True
                     
         else:
             guardian = self._key_guardian
             if guardian is None:
-                if __debug__: log(DEBUG, '®ádnı dal¹í poruèník')
+                if __debug__: log(DEBUG, 'Å½Ã¡dnÃ½ dalÅ¡Ã­ poruÄnÃ­k')
                 return False
             else:
-                if __debug__: log(DEBUG, 'Pøedání poruèníkovi:', guardian)
+                if __debug__: log(DEBUG, 'PÅ™edÃ¡nÃ­ poruÄnÃ­kovi:', guardian)
                 return guardian._maybe_invoke_command(key_commands)
 
     def _get_keymap(self):
@@ -641,45 +641,45 @@ class KeyHandler:
                 gkeymap = guardian._get_keymap()
             self.keymap = Keymap(gkeymap)
             if __debug__:
-                log(DEBUG, 'Vytvoøena klávesová mapa', (self, self.keymap))
+                log(DEBUG, 'VytvoÅ™ena klÃ¡vesovÃ¡ mapa', (self, self.keymap))
         return self.keymap
 
     def define_key(self, key, command, args):
-        """Definuj klávesovou zkratku v klávesové mapì této instance.
+        """Definuj klÃ¡vesovou zkratku v klÃ¡vesovÃ© mapÄ› tÃ©to instance.
 
-        Klávesová mapa nemusí bıt dostupná v dobì inicializace instance, tak¾e
-        není mo¾né definovat klávesové zkratky pøímo.  Tato metoda zaruèuje, ¾e
-        pøedané klávesové zkratky budou døíve nebo pozdìji správnì uplatnìny.
+        KlÃ¡vesovÃ¡ mapa nemusÃ­ bÃ½t dostupnÃ¡ v dobÄ› inicializace instance, takÅ¾e
+        nenÃ­ moÅ¾nÃ© definovat klÃ¡vesovÃ© zkratky pÅ™Ã­mo.  Tato metoda zaruÄuje, Å¾e
+        pÅ™edanÃ© klÃ¡vesovÃ© zkratky budou dÅ™Ã­ve nebo pozdÄ›ji sprÃ¡vnÄ› uplatnÄ›ny.
 
-        Argumenty jsou shodé jako v metodì 'Keymap.define_key()'.
+        Argumenty jsou shodÃ© jako v metodÄ› 'Keymap.define_key()'.
         
         """
         keymap = self._get_keymap()
         keymap.define_key(key, command, args)
         
     def on_key_down(self, event, dont_skip=False):
-        """Zpracuj klávesovou událost 'event'.
+        """Zpracuj klÃ¡vesovou udÃ¡lost 'event'.
 
-        Pokud existuje v instanci pøíkaz napojenı na danou klávesu, zavolej
-        jeho obslu¾nou metodu.  Pokud takovı pøíkaz neexistuje nebo pokud
-        obslu¾ná metoda odmítne pøíkaz zpracovat (vrátí nepravdu), ponech
-        'event' k dal¹ímu zpracování.
+        Pokud existuje vÂ instanci pÅ™Ã­kaz napojenÃ½ na danou klÃ¡vesu, zavolej
+        jeho obsluÅ¾nou metodu.  Pokud takovÃ½ pÅ™Ã­kaz neexistuje nebo pokud
+        obsluÅ¾nÃ¡ metoda odmÃ­tne pÅ™Ã­kaz zpracovat (vrÃ¡tÃ­ nepravdu), ponech
+        'event' kÂ dalÅ¡Ã­mu zpracovÃ¡nÃ­.
 
         Argumenty:
 
-          event -- klávesová wx událost
-          dont_skip -- právì kdy¾ je pravdivé, není proveden skip události,
-            i kdy¾ neodpovídá ¾ádnému pøíkazu
+          event -- klÃ¡vesovÃ¡ wx udÃ¡lost
+          dont_skip -- prÃ¡vÄ› kdyÅ¾ je pravdivÃ©, nenÃ­ proveden skip udÃ¡losti,
+            iÂ kdyÅ¾ neodpovÃ­dÃ¡ Å¾Ã¡dnÃ©mu pÅ™Ã­kazu
 
-        Vrací: Pravdu, právì kdy¾ událost byla úspì¹nì pøevedena na pøíkaz.
+        VracÃ­: Pravdu, prÃ¡vÄ› kdyÅ¾ udÃ¡lost byla ÃºspÄ›Å¡nÄ› pÅ™evedena na pÅ™Ã­kaz.
 
         """
-        if __debug__: log(DEBUG, 'Stisk klávesy:', event)
+        if __debug__: log(DEBUG, 'Stisk klÃ¡vesy:', event)
         wk = self._wx_key
         if not wk.is_true_key(event):
             return
         message(None)
-        if __debug__: log(DEBUG, 'Událost zpracovává:', str(self))
+        if __debug__: log(DEBUG, 'UdÃ¡lost zpracovÃ¡vÃ¡:', str(self))
         guardian = self._key_guardian
         if self._commands is None:
             self._init_commands()
@@ -687,19 +687,19 @@ class KeyHandler:
            not isinstance(last_user_event(), wx.KeyEvent):
             self._current_keymap = self._get_keymap()
         if __debug__:
-            log(DEBUG, 'Aktuální klávesová mapa:', str(self._current_keymap))
+            log(DEBUG, 'AktuÃ¡lnÃ­ klÃ¡vesovÃ¡ mapa:', str(self._current_keymap))
         key = wk.event_key(event)
         keydef = self._current_keymap.lookup_key(key)
         if isinstance(keydef, Keymap):
-            if __debug__: log(DEBUG, 'Prefixová klávesa', keydef)
+            if __debug__: log(DEBUG, 'PrefixovÃ¡ klÃ¡vesa', keydef)
             self._prefix_key_sequence.append(key)
-            message('Prefixová klávesa: %s (%s)' % \
+            message('PrefixovÃ¡ klÃ¡vesa: %s (%s)' % \
                     (' '.join(self._prefix_key_sequence),
                      ', '.join(keydef.keys())))
             self._current_keymap = keydef
             return True
         else:
-            # Pozor, wxWindows je debilní a ne v¾dy pøedává události rodièùm!
+            # Pozor, wxWindows je debilnÃ­ a ne vÅ¾dy pÅ™edÃ¡vÃ¡ udÃ¡losti rodiÄÅ¯m!
             self._current_keymap = None
             self._prefix_key_sequence = []
             if keydef is not None:
@@ -707,47 +707,47 @@ class KeyHandler:
                 if result:
                     return result
             if guardian:
-                if __debug__: log(DEBUG, 'Klávesa pøedána vı¹e')
+                if __debug__: log(DEBUG, 'KlÃ¡vesa pÅ™edÃ¡na vÃ½Å¡e')
                 return guardian.on_key_down(event, dont_skip)
             if dont_skip:
-                if __debug__: log(DEBUG, 'Klávesa ignorována')
+                if __debug__: log(DEBUG, 'KlÃ¡vesa ignorovÃ¡na')
             else:
-                if __debug__: log(DEBUG, 'Klávesová událost pøeskoèena')
+                if __debug__: log(DEBUG, 'KlÃ¡vesovÃ¡ udÃ¡lost pÅ™eskoÄena')
                 event.Skip()
         return False
 
 
 class CallbackHandler:
-    """Mixin tøída pro prvky podporující nastavování a spou¹tìní callbackù.
+    """Mixin tÅ™Ã­da pro prvky podporujÃ­cÃ­ nastavovÃ¡nÃ­ a spouÅ¡tÄ›nÃ­ callbackÅ¯.
 
-    Tøída, která podìdí 'CallbackHandler', získá metody 'set_callback()' a
-    '_run_callback()'.  Metoda 'set_callback()' je urèena pro pou¾ití ze
-    strany u¾ivatele odvozené tøídy -- nastavuje funkci, která má bıt vyvolána
-    pro o¹etøení urèité akce.  Naproti tomu metoda '_run_callback()' je urèena
-    pro pou¾ití uvnitø odvozené tøídy v místech, kde má bıt tato funkce
-    vyvolána.
+    TÅ™Ã­da, kterÃ¡ podÄ›dÃ­ 'CallbackHandler', zÃ­skÃ¡ metody 'set_callback()' a
+    '_run_callback()'.  Metoda 'set_callback()' je urÄena pro pouÅ¾itÃ­ ze
+    strany uÅ¾ivatele odvozenÃ© tÅ™Ã­dy -- nastavuje funkci, kterÃ¡ mÃ¡ bÃ½t vyvolÃ¡na
+    pro oÅ¡etÅ™enÃ­ urÄitÃ© akce.  Naproti tomu metoda '_run_callback()' je urÄena
+    pro pouÅ¾itÃ­ uvnitÅ™ odvozenÃ© tÅ™Ã­dy v mÃ­stech, kde mÃ¡ bÃ½t tato funkce
+    vyvolÃ¡na.
 
-    Odvozená tøída musí definovat konstanty s prefixem 'CALL_', jejich¾ hodnoty
-    slou¾í k rozli¹ení jednotlivıch druhù callbackù.
+    OdvozenÃ¡ tÅ™Ã­da musÃ­ definovat konstanty s prefixem 'CALL_', jejichÅ¾ hodnoty
+    slouÅ¾Ã­ k rozliÅ¡enÃ­ jednotlivÃ½ch druhÅ¯ callbackÅ¯.
 
     """
     def __init__(self):
         self._callbacks = {}
 
     def set_callback(self, kind, function):
-        # Toto musí bıt samostatná metoda a nejen parametr konstruktoru mimo
-        # jiné kvùli cyklickım callbackovım závislostem v duálním formuláøi.
+        # Toto musÃ­ bÃ½t samostatnÃ¡ metoda a nejen parametr konstruktoru mimo
+        # jinÃ© kvÅ¯li cyklickÃ½m callbackovÃ½m zÃ¡vislostem vÂ duÃ¡lnÃ­m formulÃ¡Å™i.
         """Nastav 'function' pro callback 'kind'.
 
-        Pokud byla pro callback 'kind' pøedtím nastavena jiná funkce, je toto
-        pøedchozí nastavení zru¹eno.
+        Pokud byla pro callback 'kind' pÅ™edtÃ­m nastavena jinÃ¡ funkce, je toto
+        pÅ™edchozÃ­ nastavenÃ­ zruÅ¡eno.
 
         Argumenty:
 
-          kind -- druh callbacku, jedna z 'CALL_*' konstant tøídy
-          function -- funkce, která má bıt vyvolána.  Poèet a vıznam argumentù
-            je dán odvozenou tøídou a mìl by bıt zdokumentovám v rámci
-            její dokumentace.
+          kind -- druh callbacku, jedna zÂ 'CALL_*' konstant tÅ™Ã­dy
+          function -- funkce, kterÃ¡ mÃ¡ bÃ½t vyvolÃ¡na.  PoÄet a vÃ½znam argumentÅ¯
+            je dÃ¡n odvozenou tÅ™Ã­dou a mÄ›l by bÃ½t zdokumentovÃ¡m v rÃ¡mci
+            jejÃ­ dokumentace.
             
         """
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
@@ -760,19 +760,19 @@ class CallbackHandler:
         return self._callbacks.get(kind)
 
     def _run_callback(self, kind, *args, **kwargs):
-        """Vyvolej funkci pro o¹etøení callbacku 'kind'.
+        """Vyvolej funkci pro oÅ¡etÅ™enÃ­ callbacku 'kind'.
 
-        Pokud nebyla funkce pro o¹etøení daného callbacku pøedtím nastavena
-        metodou 'set_callback()', nedìlej nic a vra» 'False', jinak vracej
+        Pokud nebyla funkce pro oÅ¡etÅ™enÃ­ danÃ©ho callbacku pÅ™edtÃ­m nastavena
+        metodou 'set_callback()', nedÄ›lej nic a vraÅ¥ 'False', jinak vracej
         'True'.
 
         Argumenty:
         
-          kind -- druh callbacku, jedna z 'CALL_*' konstant tøídy
+          kind -- druh callbacku, jedna zÂ 'CALL_*' konstant tÅ™Ã­dy
           
-          args, kwargs -- argumenty volané funkce.  Poèet a vıznam argumentù je
-            dán odvozenou tøídou a mìl by bıt zdokumentovám v rámci dokumentace
-            callbackové konstanty.
+          args, kwargs -- argumenty volanÃ© funkce.  PoÄet a vÃ½znam argumentÅ¯ je
+            dÃ¡n odvozenou tÅ™Ã­dou a mÄ›l by bÃ½t zdokumentovÃ¡m v rÃ¡mci dokumentace
+            callbackovÃ© konstanty.
             
         """
         try:
@@ -788,7 +788,7 @@ class CallbackHandler:
 
 
 #=============================#
-# Specializované prvky        #
+# SpecializovanÃ© prvky        #
 #=============================#
 
 
@@ -796,14 +796,14 @@ class CallbackHandler:
 
 
 class _MenuObject(object):
-    """Spoleènı pøedek v¹ech tøíd specifikujících strukturu menu."""
+    """SpoleÄnÃ½ pÅ™edek vÅ¡ech tÅ™Ã­d specifikujÃ­cÃ­ch strukturu menu."""
 
 
 class MSeparator(_MenuObject):
-    """Oddìlovaè polo¾ek menu.
+    """OddÄ›lovaÄ poloÅ¾ek menu.
 
-    Pokud se mezi polo¾kami menu vyskytne instance této tøídy, bude na jejím
-    místì vytvoøen vizuální oddìlovaè.
+    Pokud se mezi poloÅ¾kami menu vyskytne instance tÃ©to tÅ™Ã­dy, bude na jejÃ­m
+    mÃ­stÄ› vytvoÅ™en vizuÃ¡lnÃ­ oddÄ›lovaÄ.
     
     """
 
@@ -815,17 +815,17 @@ class _TitledMenuObject(_MenuObject):
 
         Argumenty:
 
-          title -- název menu, string
+          title -- nÃ¡zev menu, string
           
-        'title' je v¾dy pova¾ován za jazykovì závislı text a tudí¾ automaticky
-        podléhá jazykové konverzi.
+        'title' je vÅ¾dy povaÅ¾ovÃ¡n za jazykovÄ› zÃ¡vislÃ½ text a tudÃ­Å¾ automaticky
+        podlÃ©hÃ¡ jazykovÃ© konverzi.
           
         """
         assert isinstance(title, types.StringTypes)
         self._title = title
         
     def title(self, raw=False):
-        """Vra» titulek menu zadanı v konstruktoru jako string."""
+        """VraÅ¥ titulek menu zadanÃ½ vÂ konstruktoru jako string."""
         if raw:
             return self._title
         else:
@@ -835,13 +835,13 @@ class _TitledMenuObject(_MenuObject):
 class Menu(_TitledMenuObject):
     """Specifikace menu.
 
-    Menu je dáno svım popisem a polo¾kami.  Polo¾ky mohou bıt buï vlastní
-    aktivaèní polo¾ky (instance tøídy 'MItem'), oddìlovaèe (instance tøídy
-    'MSeparator') nebo vnoøená menu (instance tøídy 'Menu').  U této tøídy
-    nerozli¹ujeme, zda se jedná o pull-down menu, pop-up menu nebo vnoøené
-    menu, specifikace je stejná pro v¹echny typy menu.
+    Menu je dÃ¡no svÃ½m popisem a poloÅ¾kami.  PoloÅ¾ky mohou bÃ½t buÄ vlastnÃ­
+    aktivaÄnÃ­ poloÅ¾ky (instance tÅ™Ã­dy 'MItem'), oddÄ›lovaÄe (instance tÅ™Ã­dy
+    'MSeparator') nebo vnoÅ™enÃ¡ menu (instance tÅ™Ã­dy 'Menu').  UÂ tÃ©to tÅ™Ã­dy
+    nerozliÅ¡ujeme, zda se jednÃ¡ oÂ pull-down menu, pop-up menu nebo vnoÅ™enÃ©
+    menu, specifikace je stejnÃ¡ pro vÅ¡echny typy menu.
 
-    Z vytvoøené instance této tøídy lze potom vytvoøit instanci wxMenu pomocí
+    Z vytvoÅ™enÃ© instance tÃ©to tÅ™Ã­dy lze potom vytvoÅ™it instanci wxMenu pomocÃ­
     metody 'create()'.
 
     """ 
@@ -866,7 +866,7 @@ class Menu(_TitledMenuObject):
         super(Menu, self).__init__(title)
 
     def items(self):
-        """Vra» sekvenci polo¾ek menu zadanou v konstruktoru."""
+        """VraÅ¥ sekvenci poloÅ¾ek menu zadanou vÂ konstruktoru."""
         return self._items
 
     def _on_highlight_item(self, menu, event):
@@ -878,16 +878,16 @@ class Menu(_TitledMenuObject):
         event.Skip()
         
     def create(self, parent, keymap=None):
-        """Vytvoø menu dle specifikace a vra» instanci 'wx.Menu'.
+        """VytvoÅ™ menu dle specifikace a vraÅ¥ instanci 'wx.Menu'.
 
-        Tato metoda zkonstruuje menu vèetnì v¹ech vnoøenıch podmenu, pøièem¾
-        zabezpeèí ve¹keré navázání událostí apod.
+        Tato metoda zkonstruuje menu vÄetnÄ› vÅ¡ech vnoÅ™enÃ½ch podmenu, pÅ™iÄemÅ¾
+        zabezpeÄÃ­ veÅ¡kerÃ© navÃ¡zÃ¡nÃ­ udÃ¡lostÃ­ apod.
         
         Argumenty:
 
-          parent -- wx rodiè vytváøené instance 'wx.Menu'
-          keymap -- klávesová mapa (instance 'Keymap'), která má bıt
-             synchronizována s klávesovımi zkratkami polo¾ek menu.
+          parent -- wx rodiÄ vytvÃ¡Å™enÃ© instance 'wx.Menu'
+          keymap -- klÃ¡vesovÃ¡ mapa (instance 'Keymap'), kterÃ¡ mÃ¡ bÃ½t
+             synchronizovÃ¡na s klÃ¡vesovÃ½mi zkratkami poloÅ¾ek menu.
         
         """
         self._wx_menu = menu = wx.Menu()
@@ -928,10 +928,10 @@ class Menu(_TitledMenuObject):
                     wxitem = item.create(parent, menu)
                     wxitem.SetText(wx_title)
                     menu.AppendItem(wxitem)
-                    # Toto je zde zejména kvùli nake¹ování datovıch specifikací
-                    # pro vıpoèet 'Command.enabled()' pøi startu aplikace.  Polo¾ky
-                    # jsou správnì aktivovány i bez toho, ale první zobrazení menu
-                    # je pomalej¹í.
+                    # Toto je zde zejmÃ©na kvÅ¯li nakeÅ¡ovÃ¡nÃ­ datovÃ½ch specifikacÃ­
+                    # pro vÃ½poÄet 'Command.enabled()' pÅ™i startu aplikace.  PoloÅ¾ky
+                    # jsou sprÃ¡vnÄ› aktivovÃ¡ny i bez toho, ale prvnÃ­ zobrazenÃ­ menu
+                    # je pomalejÅ¡Ã­.
                     menu.Enable(wxitem.GetId(), item.command().enabled(**item.args()))
                     if __debug__:
                         if config.debug:
@@ -963,10 +963,10 @@ class Menu(_TitledMenuObject):
 
 
 class MItem(_TitledMenuObject):
-    """Specifikace polo¾ky menu.
+    """Specifikace poloÅ¾ky menu.
 
-    Tøída nic nevytváøí, pouze si pamatuje parametry a pøedává je tøídì Menu,
-    která provádí tvorbu menu.
+    TÅ™Ã­da nic nevytvÃ¡Å™Ã­, pouze si pamatuje parametry a pÅ™edÃ¡vÃ¡ je tÅ™Ã­dÄ› Menu,
+    kterÃ¡ provÃ¡dÃ­ tvorbu menu.
     
     """
     _WX_KIND = wx.ITEM_NORMAL
@@ -978,36 +978,36 @@ class MItem(_TitledMenuObject):
 
         Argumenty:
 
-          title -- titulek menu, neprázdnı øetìzec
+          title -- titulek menu, neprÃ¡zdnÃ½ Å™etÄ›zec
           
-          command -- instance tøídy 'Command' odpovídající pøíkazu, kterı má
-            bıt pøi aktivaci této polo¾ky menu vyvolán.  Zde mù¾e bıt pøedána
-            také dvojice (COMMAND, ARGS).  V tom pøípadì je instance pøíkazu
-            prvním prvkem této dvojice a druhı prvek nahrazuje argument 'args',
-            kterı tímto ji¾ nesmí bıt pøedán.  Nakonec mù¾e bıt tímto
-            argumentem string, kterı je pak identifikátorem specifikace ze
-            specifikaèního modulu 'app_commands'; tato specifikace je funkcí
-            vracející kı¾enou dvojici (COMMANDS, ARGS).
+          command -- instance tÅ™Ã­dy 'Command' odpovÃ­dajÃ­cÃ­ pÅ™Ã­kazu, kterÃ½ mÃ¡
+            bÃ½t pÅ™i aktivaci tÃ©to poloÅ¾ky menu vyvolÃ¡n.  Zde mÅ¯Å¾e bÃ½t pÅ™edÃ¡na
+            takÃ© dvojice (COMMAND, ARGS).  V tom pÅ™Ã­padÄ› je instance pÅ™Ã­kazu
+            prvnÃ­m prvkem tÃ©to dvojice a druhÃ½ prvek nahrazuje argument 'args',
+            kterÃ½ tÃ­mto jiÅ¾ nesmÃ­ bÃ½t pÅ™edÃ¡n.  Nakonec mÅ¯Å¾e bÃ½t tÃ­mto
+            argumentem string, kterÃ½ je pak identifikÃ¡torem specifikace ze
+            specifikaÄnÃ­ho modulu 'app_commands'; tato specifikace je funkcÃ­
+            vracejÃ­cÃ­ kÃ½Å¾enou dvojici (COMMANDS, ARGS).
             
-          args -- dictionary argumentù pøíkazu 'command'.
+          args -- dictionary argumentÅ¯ pÅ™Ã­kazu 'command'.
           
-          help -- øetìzec obsahující jednoøádkovou nápovìdu, zobrazovanı ve
-            stavovém øádku pøi prùchodu pøes polo¾ku; mù¾e bıt prázdnı
+          help -- Å™etÄ›zec obsahujÃ­cÃ­ jednoÅ™Ã¡dkovou nÃ¡povÄ›du, zobrazovanÃ½ ve
+            stavovÃ©m Å™Ã¡dku pÅ™i prÅ¯chodu pÅ™es poloÅ¾ku; mÅ¯Å¾e bÃ½t prÃ¡zdnÃ½
             
-          hotkey -- horká klávesa, která má bıt s danım pøíkazem a argumenty
-            spojena, string nebo sekvence stringù dle specifikace v modulu
+          hotkey -- horkÃ¡ klÃ¡vesa, kterÃ¡ mÃ¡ bÃ½t s danÃ½m pÅ™Ã­kazem a argumenty
+            spojena, string nebo sekvence stringÅ¯ dle specifikace vÂ modulu
             'command'
             
-          icon -- explicitnì definovaná ikona polo¾ky menu.  Jedná se o
-            identifikátor ikony pou¾itelnı jako argument funkce 'get_icon'.
-            Pokud není urèena, bude automaticky pou¾ita ikona podle typu
-            pøíkazu (je-li pro pøíkaz definována).
+          icon -- explicitnÄ› definovanÃ¡ ikona poloÅ¾ky menu.  JednÃ¡ se o
+            identifikÃ¡tor ikony pouÅ¾itelnÃ½ jako argument funkce 'get_icon'.
+            Pokud nenÃ­ urÄena, bude automaticky pouÅ¾ita ikona podle typu
+            pÅ™Ã­kazu (je-li pro pÅ™Ã­kaz definovÃ¡na).
             
-        Je-li uveden argument 'hotkey' a nejsou pøedávány ¾ádné 'args', je
-        'command' automaticky nastavena tato klávesa.
+        Je-li uveden argument 'hotkey' a nejsou pÅ™edÃ¡vÃ¡ny Å¾Ã¡dnÃ© 'args', je
+        'command' automaticky nastavena tato klÃ¡vesa.
           
-        'title' a 'help' jsou v¾dy pova¾ovány za jazykovì závislé texty
-        a tudí¾ automaticky podléhají jazykové konverzi.
+        'title' a 'help' jsou vÅ¾dy povaÅ¾ovÃ¡ny za jazykovÄ› zÃ¡vislÃ© texty
+        a tudÃ­Å¾ automaticky podlÃ©hajÃ­ jazykovÃ© konverzi.
 
         """
         if is_sequence(command):
@@ -1153,23 +1153,23 @@ class MItem(_TitledMenuObject):
         return item
 
     def command(self):
-        """Vra» command zadanı v konstruktoru."""
+        """VraÅ¥ command zadanÃ½ vÂ konstruktoru."""
         return self._command
 
     def args(self):
-        """Vra» argumenty command zadané v konstruktoru."""
+        """VraÅ¥ argumenty command zadanÃ© vÂ konstruktoru."""
         return self._args
 
     def hotkey(self):
-        """Vra» horkou klávesu polo¾ky jako tuple øetìzcù.
+        """VraÅ¥ horkou klÃ¡vesu poloÅ¾ky jako tuple Å™etÄ›zcÅ¯.
 
-        Pokud nemá polo¾ka pøiøazenu horkou klávesu, vra» tuple '(None,)'.
+        Pokud nemÃ¡ poloÅ¾ka pÅ™iÅ™azenu horkou klÃ¡vesu, vraÅ¥ tuple '(None,)'.
 
         """
         return self._hotkey
 
     def help(self):
-        """Vra» text nápovìdy polo¾ky zadanı v konstruktoru."""
+        """VraÅ¥ text nÃ¡povÄ›dy poloÅ¾ky zadanÃ½ vÂ konstruktoru."""
         return self._help
 
     def icon(self):
@@ -1182,7 +1182,7 @@ class MItem(_TitledMenuObject):
     
 
 class CheckItem(MItem):
-    """Polo¾ka menu, která mù¾e bıt ve stavu ON/OFF."""
+    """PoloÅ¾ka menu, kterÃ¡ mÅ¯Å¾e bÃ½t ve stavu ON/OFF."""
     _WX_KIND = wx.ITEM_CHECK
     
     def __init__(self, title, command, state=None, **kwargs):
@@ -1190,10 +1190,10 @@ class CheckItem(MItem):
 
         Arguemnty:
 
-          state -- funkce (volaná bez argumentù), která vrací True/False podle
-            toho, zda je stav této polo¾ky 'zapnuto', nebo 'vypnuto'.
+          state -- funkce (volanÃ¡ bez argumentÅ¯), kterÃ¡ vracÃ­ True/False podle
+            toho, zda je stav tÃ©to poloÅ¾ky 'zapnuto', nebo 'vypnuto'.
 
-          V¹echny ostatní arguemnty jsou sthodné jako v konstruktoru pøedka.
+          VÅ¡echny ostatnÃ­ arguemnty jsou sthodnÃ© jako v konstruktoru pÅ™edka.
 
         """
         assert isinstance(state, collections.Callable)
@@ -1212,35 +1212,35 @@ class CheckItem(MItem):
         
         
 class RadioItem(CheckItem):
-    """Polo¾ka menu tvoøící pøepínatelnou skupinu."""
-    # wx.ITEM_RADIO zpùsobuje SEGFAULT.  CheckItem se v¹ak, zdá se, chová úplnì
-    # stejnì, tak¾e to vlastnì vùbec nevadí...
+    """PoloÅ¾ka menu tvoÅ™Ã­cÃ­ pÅ™epÃ­natelnou skupinu."""
+    # wx.ITEM_RADIO zpÅ¯sobuje SEGFAULT.  CheckItem se vÅ¡ak, zdÃ¡ se, chovÃ¡ ÃºplnÄ›
+    # stejnÄ›, takÅ¾e to vlastnÄ› vÅ¯bec nevadÃ­...
     #_WX_KIND = wx.ITEM_RADIO
     pass
 
 
 class MenuBar(wx.MenuBar):
-    """Wx implementace pull-down menu hlavního aplikaèního okna.
+    """Wx implementace pull-down menu hlavnÃ­ho aplikaÄnÃ­ho okna.
 
-    Tøída zkonstruuje menubar a vlo¾í jej do zadaného framu.  Menubar je
-    zkonstruován na základì specifikace, která se skládá z instancí 'Menu'
-    urèujících jednotlivé polo¾ky menubaru.
+    TÅ™Ã­da zkonstruuje menubar a vloÅ¾Ã­ jej do zadanÃ©ho framu.  Menubar je
+    zkonstruovÃ¡n na zÃ¡kladÄ› specifikace, kterÃ¡ se sklÃ¡dÃ¡ zÂ instancÃ­ 'Menu'
+    urÄujÃ­cÃ­ch jednotlivÃ© poloÅ¾ky menubaru.
 
-    Menubar je jednotnı pro celou aplikaci.
+    Menubar je jednotnÃ½ pro celou aplikaci.
     
     """
     
     def __init__(self, parent, menus, keymap=None):
-        """Vytvoø menubar na základì sekvence 'menus' a vlo¾ do 'parent'.
+        """VytvoÅ™ menubar na zÃ¡kladÄ› sekvence 'menus' a vloÅ¾ do 'parent'.
 
         Argumenty:
         
-          parent -- instance tøídy 'wxFrame', do které má bıt menubar vlo¾en
-          menus -- sekvence instancí tøídy 'Menu' definující jednotlivá
-            menu v menu baru; menu se v menu baru vytvoøí ve stejném poøadí,
-            v jakém jsou v této sekvenci uvedena
-          keymap -- klávesová mapa (instance 'Keymap'), která má bıt
-            synchronizována s klávesovımi zkratkami polo¾ek menu.
+          parent -- instance tÅ™Ã­dy 'wxFrame', do kterÃ© mÃ¡ bÃ½t menubar vloÅ¾en
+          menus -- sekvence instancÃ­ tÅ™Ã­dy 'Menu' definujÃ­cÃ­ jednotlivÃ¡
+            menu vÂ menu baru; menu se vÂ menu baru vytvoÅ™Ã­ ve stejnÃ©m poÅ™adÃ­,
+            vÂ jakÃ©m jsou vÂ tÃ©to sekvenci uvedena
+          keymap -- klÃ¡vesovÃ¡ mapa (instance 'Keymap'), kterÃ¡ mÃ¡ bÃ½t
+            synchronizovÃ¡na s klÃ¡vesovÃ½mi zkratkami poloÅ¾ek menu.
          
         """
         wx.MenuBar.__init__(self)
@@ -1262,9 +1262,9 @@ class MenuBar(wx.MenuBar):
             if k != (None,) and k != (u'',):
                 cmd = (menu.command(), menu.args())
                 if k in self._keys and self._keys[k] != cmd:
-                    log(OPERATIONAL, _("Duplicitní klávesa polo¾ky menu:"),
+                    log(OPERATIONAL, _(u"DuplicitnÃ­ klÃ¡vesa poloÅ¾ky menu:"),
                         (k, menu.title(), cmd))
-                    log(OPERATIONAL, _("Kolidující pøíkaz:"), self._keys[k])
+                    log(OPERATIONAL, _(u"KolidujÃ­cÃ­ pÅ™Ã­kaz:"), self._keys[k])
                 else:
                     self._keys[k] = cmd
                     
@@ -1272,18 +1272,18 @@ class MenuBar(wx.MenuBar):
 
 
 class StatusBar(wx.StatusBar):
-    """Tøída realizující stavovı øádek.
+    """TÅ™Ã­da realizujÃ­cÃ­ stavovÃ½ Å™Ã¡dek.
 
-    Stavovı øádek slou¾í pro zobrazování krátkıch zpráv u¾ivateli a zobrazování
-    stavovıch informací.  Mù¾e bıt rozdìlen do více polí, z nich¾ ka¾dé slou¾í
-    k zobrazení samostatné informace.  Tato tøída roz¹iøuje tøídu
-    'wxStatusBar' z wxWindows, mìly by v¹ak bıt volány pouze její vlastní
-    metody a ne metody podìdìné z tøídy 'wxStatusBar'.
+    StavovÃ½ Å™Ã¡dek slouÅ¾Ã­ pro zobrazovÃ¡nÃ­ krÃ¡tkÃ½ch zprÃ¡v uÅ¾ivateli a zobrazovÃ¡nÃ­
+    stavovÃ½ch informacÃ­.  MÅ¯Å¾e bÃ½t rozdÄ›len do vÃ­ce polÃ­, zÂ nichÅ¾ kaÅ¾dÃ© slouÅ¾Ã­
+    kÂ zobrazenÃ­ samostatnÃ© informace.  Tato tÅ™Ã­da rozÅ¡iÅ™uje tÅ™Ã­du
+    'wxStatusBar' zÂ wxWindows, mÄ›ly by vÅ¡ak bÃ½t volÃ¡ny pouze jejÃ­ vlastnÃ­
+    metody a ne metody podÄ›dÄ›nÃ© zÂ tÅ™Ã­dy 'wxStatusBar'.
 
-    Stavovı øádek je definován svım rozdìlením na pole, z nich¾ ka¾dé má své
-    jméno a ¹íøku.  V tìchto polích lze zobrazovat zprávy metodou 'message()'.
+    StavovÃ½ Å™Ã¡dek je definovÃ¡n svÃ½m rozdÄ›lenÃ­m na pole, zÂ nichÅ¾ kaÅ¾dÃ© mÃ¡ svÃ©
+    jmÃ©no a Å¡Ã­Å™ku.  VÂ tÄ›chto polÃ­ch lze zobrazovat zprÃ¡vy metodou 'message()'.
     
-    Pøíklad pou¾ití:
+    PÅ™Ã­klad pouÅ¾itÃ­:
     
        frame = wx.Frame(None, title='Pokus')
 
@@ -1308,20 +1308,20 @@ class StatusBar(wx.StatusBar):
             self.Start(1000 * timeout, True)
     
     def __init__(self, parent, fields):
-        """Inicializuj StatusBar a vytvoø pojmenovaná pole.
+        """Inicializuj StatusBar a vytvoÅ™ pojmenovanÃ¡ pole.
 
         Argumenty:
         
-          parent -- rodièovské okno
-          fields -- sekvence specifikací polí
+          parent -- rodiÄovskÃ© okno
+          fields -- sekvence specifikacÃ­ polÃ­
 
-        Ka¾dá polo¾ka sekvence 'fields' je dvojice (ID, WIDTH), kde ID je jméno
-        pole jako neprázdnı string a WIDTH je jeho ¹íøka v dialogovıch
-        jednotkách.  Je-li WIDTH rovno None, pole je rozta¾eno na maximální
-        mo¾nou ¹íøku po odeètení ¹íøek ostatních polí; WIDTH smí bıt None pouze
-        pro jediné pole.  ID pole jednoznaènì identifikuje a k poli se jeho
-        prostøednictvím pøistupuje v metodách této tøídy.  ®ádná dvì pole nesmí
-        mít stejné ID.
+        KaÅ¾dÃ¡ poloÅ¾ka sekvence 'fields' je dvojice (ID, WIDTH), kde ID je jmÃ©no
+        pole jako neprÃ¡zdnÃ½ string a WIDTH je jeho Å¡Ã­Å™ka v dialogovÃ½ch
+        jednotkÃ¡ch.  Je-li WIDTH rovno None, pole je roztaÅ¾eno na maximÃ¡lnÃ­
+        moÅ¾nou Å¡Ã­Å™ku po odeÄtenÃ­ Å¡Ã­Å™ek ostatnÃ­ch polÃ­; WIDTH smÃ­ bÃ½t None pouze
+        pro jedinÃ© pole.  ID pole jednoznaÄnÄ› identifikuje a kÂ poli se jeho
+        prostÅ™ednictvÃ­m pÅ™istupuje vÂ metodÃ¡ch tÃ©to tÅ™Ã­dy.  Å½Ã¡dnÃ¡ dvÄ› pole nesmÃ­
+        mÃ­t stejnÃ© ID.
         
         """
         super(StatusBar, self).__init__(parent, -1)
@@ -1347,13 +1347,13 @@ class StatusBar(wx.StatusBar):
         self.SetStatusWidths(widths)
 
     def _field_number(self, id):
-        """Vra» poøadové èíslo pole 'id' pro wxWindows.
+        """VraÅ¥ poÅ™adovÃ© ÄÃ­slo pole 'id' pro wxWindows.
 
         Argumenty:
         
            id -- id pole jako string
 
-        Pokud pole pojmenované 'id' neexistuje, vyvolej vıjimku 'KeyError'.
+        Pokud pole pojmenovanÃ© 'id' neexistuje, vyvolej vÃ½jimku 'KeyError'.
 
         """
         return self._field_numbers[id]
@@ -1364,11 +1364,11 @@ class StatusBar(wx.StatusBar):
         Argumenty:
         
           id -- id pole jako string
-          message -- string, kterı má bıt novım obsahem pole; mù¾e bıt
-            i 'None', v kterém¾to pøípadì bude pøedchozí hlá¹ení smazáno
-          timeout -- pokud je zadáno, zpráva zmizí po zadaném poètu sekund
+          message -- string, kterÃ½ mÃ¡ bÃ½t novÃ½m obsahem pole; mÅ¯Å¾e bÃ½t
+            iÂ 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› bude pÅ™edchozÃ­ hlÃ¡Å¡enÃ­ smazÃ¡no
+          timeout -- pokud je zadÃ¡no, zprÃ¡va zmizÃ­ po zadanÃ©m poÄtu sekund
           
-        Pokud stavová øádka dané pole neobsahuje, vra» nepravdu, jinak vracej
+        Pokud stavovÃ¡ Å™Ã¡dka danÃ© pole neobsahuje, vraÅ¥ nepravdu, jinak vracej
         pravdu.
            
         """
@@ -1397,13 +1397,13 @@ class StatusBar(wx.StatusBar):
         return True
 
     def get_message(self, id):
-        """Vra» text pole 'id' jako string.
+        """VraÅ¥ text pole 'id' jako string.
 
         Argumenty:
         
-           id -- identifikátor pole jako øetìzec
+           id -- identifikÃ¡tor pole jako Å™etÄ›zec
 
-        Pokud pole daného 'id' neexistuje, je vrácena hodnota None.
+        Pokud pole danÃ©ho 'id' neexistuje, je vrÃ¡cena hodnota None.
 
         """
         try:
@@ -1413,24 +1413,24 @@ class StatusBar(wx.StatusBar):
       
 
 class InfoWindow(object):
-    """Nemodální okno pro zobrazení textovıch informací."""
+    """NemodÃ¡lnÃ­ okno pro zobrazenÃ­ textovÃ½ch informacÃ­."""
     
     def __init__(self, title, text, format=TextFormat.PLAIN, _name='info'):
-        """Zobraz nemodální okno nezávislé na hlavním oknì aplikace.
+        """Zobraz nemodÃ¡lnÃ­ okno nezÃ¡vislÃ© na hlavnÃ­m oknÄ› aplikace.
         
         Argumenty:
         
-          title -- titulek okna jako øetìzec.
-          text -- text, kterı bude zobrazen v oknì.  Zpùsob zpravování je urèen
+          title -- titulek okna jako Å™etÄ›zec.
+          text -- text, kterÃ½ bude zobrazen v oknÄ›.  ZpÅ¯sob zpravovÃ¡nÃ­ je urÄen
             argumentem 'format'.
-          format -- vstupní formát textu, jako konstanta 'TextFormat'.  V
-            pøípadì prostého textu ('TextFormat.PLAIN') zùstane øádkování i
-            ve¹keré dal¹í formátování nedotèeno (je ponecháno na volající
-            stranì).  V pøípadì formátu 'TextFormat.HTML' je vstupní text
-            pova¾ován pøímo za text s HTML zanèkováním.  Text v¹ak není sám o
-            sobì platnım HTML dokumentem.  Neobsahuje hlavièku, ani znaèky
-            <html> a <body>.  Jde jen o zformátovanı text, kterı bude vsazen do
-            tìla automaticky vytvoøeného dokumentu.
+          format -- vstupnÃ­ formÃ¡t textu, jako konstanta 'TextFormat'.  V
+            pÅ™Ã­padÄ› prostÃ©ho textu ('TextFormat.PLAIN') zÅ¯stane Å™Ã¡dkovÃ¡nÃ­ i
+            veÅ¡kerÃ© dalÅ¡Ã­ formÃ¡tovÃ¡nÃ­ nedotÄeno (je ponechÃ¡no na volajÃ­cÃ­
+            stranÄ›).  V pÅ™Ã­padÄ› formÃ¡tu 'TextFormat.HTML' je vstupnÃ­ text
+            povaÅ¾ovÃ¡n pÅ™Ã­mo za text s HTML zanÄkovÃ¡nÃ­m.  Text vÅ¡ak nenÃ­ sÃ¡m o
+            sobÄ› platnÃ½m HTML dokumentem.  Neobsahuje hlaviÄku, ani znaÄky
+            <html> a <body>.  Jde jen o zformÃ¡tovanÃ½ text, kterÃ½ bude vsazen do
+            tÄ›la automaticky vytvoÅ™enÃ©ho dokumentu.
 
         """
         assert isinstance(title, types.StringTypes)
@@ -1498,8 +1498,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
             if profile is current:
                 self.Select(i)
         if first_user_profile:
-            for i, label in ((0, _("Systémové profily")),
-                             (first_user_profile + 1, _("U¾ivatelské profily"))):
+            for i, label in ((0, _("SystÃ©movÃ© profily")),
+                             (first_user_profile + 1, _("UÅ¾ivatelskÃ© profily"))):
                 self.InsertStringItem(i, '- ' + label + ' -')
                 self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
                 self.SetItemData(i, -1)
@@ -1572,35 +1572,35 @@ class ProfileSelector(wx.combo.ComboCtrl):
 
     def _on_context_menu(self, event):
         menu = (
-            MItem(_("Ulo¾it"),
+            MItem(_("UloÅ¾it"),
                   LookupForm.COMMAND_UPDATE_PROFILE(),
-                  help=_("Aktualizovat ulo¾enı profil podle souèasného nastavení formuláøe")),
-            MItem(_("Ulo¾it jako novı"),
+                  help=_("Aktualizovat uloÅ¾enÃ½ profil podle souÄasnÃ©ho nastavenÃ­ formulÃ¡Å™e")),
+            MItem(_("UloÅ¾it jako novÃ½"),
                   Application.COMMAND_HANDLED_ACTION(
                     # Name must be edited first and 'cmd' will be invoked after confirmation.
                     handler=self._edit_profile_name,
                     enabled=self._edit_profile_name_enabled,
                     cmd=LookupForm.COMMAND_SAVE_NEW_PROFILE,
                     clear=True),
-                  help=_("Vytvoøit novı profil podle souèasného nastavením formuláøe")),
-            MItem(_("Pøejmenovat"),
+                  help=_("VytvoÅ™it novÃ½ profil podle souÄasnÃ©ho nastavenÃ­ formulÃ¡Å™e")),
+            MItem(_("PÅ™ejmenovat"),
                   Application.COMMAND_HANDLED_ACTION(
                     # Name must be edited first and 'cmd' will be invoked after confirmation.
                     handler=self._edit_profile_name,
                     enabled=self._edit_profile_name_enabled,
                     cmd=LookupForm.COMMAND_RENAME_PROFILE),
-                  help=_("Upravit a ulo¾it název aktuálního profilu")),
+                  help=_("Upravit a uloÅ¾it nÃ¡zev aktuÃ¡lnÃ­ho profilu")),
             MItem(_("Smazat"), 
                   LookupForm.COMMAND_DELETE_PROFILE(),
-                  help=_("Smazat zvolenı ulo¾enı profil")),
+                  help=_("Smazat zvolenÃ½ uloÅ¾enÃ½ profil")),
             MSeparator(),
-            MItem(_("Vrátit poslední ulo¾ené nastavení"),
+            MItem(_("VrÃ¡tit poslednÃ­ uloÅ¾enÃ© nastavenÃ­"),
                   LookupForm.COMMAND_RELOAD_PROFILE,
-                  help=_("Zahodit zmìny nastavení formuláøe provedené "
-                         "od posledního ulo¾ení profilu.")),
-            MItem(_("Vrátit vıchozí nastavení aplikace"),
+                  help=_("Zahodit zmÄ›ny nastavenÃ­ formulÃ¡Å™e provedenÃ© "
+                         "od poslednÃ­ho uloÅ¾enÃ­ profilu.")),
+            MItem(_("VrÃ¡tit vÃ½chozÃ­ nastavenÃ­ aplikace"),
                   command=LookupForm.COMMAND_RESET_PROFILE,
-                  help=_("Zahodit v¹echny ulo¾ené u¾ivatelské zmìny nastavení formuláøe.")),
+                  help=_("Zahodit vÅ¡echny uloÅ¾enÃ© uÅ¾ivatelskÃ© zmÄ›ny nastavenÃ­ formulÃ¡Å™e.")),
             )
         popup_menu(self, menu)
 
@@ -1616,7 +1616,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
         else:
             ctrl.SelectAll()
         ctrl.SetFocus()
-        message(_("Zadejte název profilu a potvrïte stiskem ENTER."))
+        message(_("Zadejte nÃ¡zev profilu a potvrÄte stiskem ENTER."))
         self._on_enter_perform = perform
 
     def _edit_profile_name_enabled(self, cmd, clear=False):
@@ -1637,45 +1637,45 @@ class ProfileSelector(wx.combo.ComboCtrl):
             current_form().focus()
             
 
-# Pøevodní funkce
+# PÅ™evodnÃ­ funkce
         
 def char2px(window, x, y):
-    """Pøepoèítej znakovı rozmìr na pixely a vra» instanci 'wx.Size'.
+    """PÅ™epoÄÃ­tej znakovÃ½ rozmÄ›r na pixely a vraÅ¥ instanci 'wx.Size'.
 
-    Vstupní rozmìr je chápán jako ¹íøka a vı¹ka \"bì¾ného\" znaku.
+    VstupnÃ­ rozmÄ›r je chÃ¡pÃ¡n jako Å¡Ã­Å™ka a vÃ½Å¡ka \"bÄ›Å¾nÃ©ho\" znaku.
 
     Argumenty:
     
-      window -- okno, podle jeho¾ fontu má bıt rozmìr vypoèítán.
-      x -- ¹íøka; poèet znakù
-      y -- vı¹ka; poèet znakù
+      window -- okno, podle jehoÅ¾ fontu mÃ¡ bÃ½t rozmÄ›r vypoÄÃ­tÃ¡n.
+      x -- Å¡Ã­Å™ka; poÄet znakÅ¯
+      y -- vÃ½Å¡ka; poÄet znakÅ¯
 
-    Vrací: Rozmìry v pixelech jako instanci 'wx.Size'.
+    VracÃ­: RozmÄ›ry v pixelech jako instanci 'wx.Size'.
     
     """
 
     return dlg2px(window, 4*x, 8*y)
 
 def dlg2px(window, x, y=None):
-    """Pøepoèítej znakovı rozmìr na pixely.
+    """PÅ™epoÄÃ­tej znakovÃ½ rozmÄ›r na pixely.
 
-    Vstupní rozmìr je chápán jako ¹íøka a vı¹ka \"bì¾ného\" znaku.
+    VstupnÃ­ rozmÄ›r je chÃ¡pÃ¡n jako Å¡Ã­Å™ka a vÃ½Å¡ka \"bÄ›Å¾nÃ©ho\" znaku.
 
-    Tento pøepoèet by nás mìl odstínit od závislosti na pou¾itém vıstupním
-    zaøízení / systémovıch nastaveních. Poskytuje mo¾nost získat rozmìry
-    v pixelech odpovídající aktuálním rozmìrùm znakù v daném oknì.
+    Tento pÅ™epoÄet by nÃ¡s mÄ›l odstÃ­nit od zÃ¡vislosti na pouÅ¾itÃ©m vÃ½stupnÃ­m
+    zaÅ™Ã­zenÃ­ / systÃ©movÃ½ch nastavenÃ­ch. Poskytuje moÅ¾nost zÃ­skat rozmÄ›ry
+    vÂ pixelech odpovÃ­dajÃ­cÃ­ aktuÃ¡lnÃ­m rozmÄ›rÅ¯m znakÅ¯ v danÃ©m oknÄ›.
     
-    Funkènost je v této implementaci zalo¾ená na tzv. \"dialog units\"
-    z wxWindows, tak¾e pøípadnou dal¹í dokumentaci je nutno hledat tam.
+    FunkÄnost je v tÃ©to implementaci zaloÅ¾enÃ¡ na tzv. \"dialog units\"
+    zÂ wxWindows, takÅ¾e pÅ™Ã­padnou dalÅ¡Ã­ dokumentaci je nutno hledat tam.
 
     Argumenty:
     
-      window -- okno, podle jeho¾ fontu má bıt rozmìr vypoèítán.
-      x -- ¹íøka; jednotkou je 1/4 ¹íøky znaku; integer
-      y -- vı¹ka; jednotkou je 1/8 vı¹ky znaku; integer
+      window -- okno, podle jehoÅ¾ fontu mÃ¡ bÃ½t rozmÄ›r vypoÄÃ­tÃ¡n.
+      x -- Å¡Ã­Å™ka; jednotkou je 1/4 Å¡Ã­Å™ky znaku; integer
+      y -- vÃ½Å¡ka; jednotkou je 1/8 vÃ½Å¡ky znaku; integer
 
-    Vrací: Rozmìry v pixelech jako instanci wxSize, pokud byl zadán i y-ovı
-      rozmìr.  Pokud je volán pouze s x-ovım rozmìrem, vrátí rovnou integer.
+    VracÃ­: RozmÄ›ry v pixelech jako instanci wxSize, pokud byl zadÃ¡n i y-ovÃ½
+      rozmÄ›r.  Pokud je volÃ¡n pouze s x-ovÃ½m rozmÄ›rem, vrÃ¡tÃ­ rovnou integer.
     
     """
     if y == None:
@@ -1700,16 +1700,16 @@ def acceskey_prefix(i):
 
 
 def orientation2wx(orientation):
-    """Pøeveï konstantu tøídy 'Orientation' na wx reprezentaci."""
+    """PÅ™eveÄ konstantu tÅ™Ã­dy 'Orientation' na wx reprezentaci."""
     if orientation == spec.Orientation.VERTICAL:
         return wx.VERTICAL
     elif orientation == spec.Orientation.HORIZONTAL:
         return wx.HORIZONTAL
     else:
-        raise ProgramError("Neplatná hodnota Orientation:", orientation)
+        raise ProgramError("NeplatnÃ¡ hodnota Orientation:", orientation)
 
 def border_style2wx(style):
-    """Pøeveï konstantu tøídy 'BorderStyle' na wx reprezentaci."""
+    """PÅ™eveÄ konstantu tÅ™Ã­dy 'BorderStyle' na wx reprezentaci."""
     mapping = {
         spec.BorderStyle.ALL: wx.ALL,
         spec.BorderStyle.TOP: wx.TOP,
@@ -1720,9 +1720,9 @@ def border_style2wx(style):
     try:
         return mapping[style]
     except KeyError:
-        raise ProgramError("Neplatná hodnota BorderStyle:", orientation)
+        raise ProgramError("NeplatnÃ¡ hodnota BorderStyle:", orientation)
 
-# Pomocné funkce
+# PomocnÃ© funkce
 
 def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
@@ -1747,15 +1747,15 @@ def popup_menu(parent, items, keymap=None, position=None):
 
 
 def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
-    """Najdi vra» po¾adovanou ikonu jako instanci 'wx.Bitmap'.
+    """Najdi vraÅ¥ poÅ¾adovanou ikonu jako instanci 'wx.Bitmap'.
 
     Argumenty:
 
-      icon_id -- mù¾e to bıt buïto jedna z konstant 'wx.ART_*' nebo øetìzec.
-        Pokud jde o wx konstantu, je vrácena pøíslu¹ná systémová ikona
-        odpovídající aktuálnì zvolenému tématu.  Pokud jde o øetìzec, je
-        vyhledávána ikona stejného jména (k nìmu¾ je automaticky pøipojena
-        pøípona '.png') v adresáøi urèeném konfiguraèní volbou
+      icon_id -- mÅ¯Å¾e to bÃ½t buÄto jedna z konstant 'wx.ART_*' nebo Å™etÄ›zec.
+        Pokud jde o wx konstantu, je vrÃ¡cena pÅ™Ã­sluÅ¡nÃ¡ systÃ©movÃ¡ ikona
+        odpovÃ­dajÃ­cÃ­ aktuÃ¡lnÄ› zvolenÃ©mu tÃ©matu.  Pokud jde o Å™etÄ›zec, je
+        vyhledÃ¡vÃ¡na ikona stejnÃ©ho jmÃ©na (k nÄ›muÅ¾ je automaticky pÅ™ipojena
+        pÅ™Ã­pona '.png') v adresÃ¡Å™i urÄenÃ©m konfiguraÄnÃ­ volbou
         'config.icon_dir'.
 
       type, size -- only relevant when icon_id as a 'wx.ART_*' constant.
@@ -1781,7 +1781,7 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
 
     
 def wx_focused_window():
-    """Vra» aktuálnì zaostøené wx okno, jako instanci 'wx.Window'."""
+    """VraÅ¥ aktuÃ¡lnÄ› zaostÅ™enÃ© wx okno, jako instanci 'wx.Window'."""
     return wx.Window_FindFocus()
 
     

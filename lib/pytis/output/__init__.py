@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2002, 2005 Brailcom, o.p.s.
 #
@@ -16,10 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Formátování vıstupù, zejména pro tisk.
+"""FormÃ¡tovÃ¡nÃ­ vÃ½stupÅ¯, zejmÃ©na pro tisk.
 
-Tento modul poskytuje v¹echny funkce potøebné pro jednoduché sestavení vıstupu.
-Konkrétnì definuje jednoduché znaèkování textu a provádí jeho formátování.
+Tento modul poskytuje vÅ¡echny funkce potÅ™ebnÃ© pro jednoduchÃ© sestavenÃ­ vÃ½stupu.
+KonkrÃ©tnÄ› definuje jednoduchÃ© znaÄkovÃ¡nÃ­ textu a provÃ¡dÃ­ jeho formÃ¡tovÃ¡nÃ­.
 
 """
 

@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2010, 2011 Brailcom, o.p.s.
 #
@@ -73,7 +73,7 @@ class _MenuItemReader(lcg.Reader):
 
     def _title(self):
         # TODO: This is a workaround until the specifications use 8-bit strings.
-        return unicode(self._item.title(), 'iso-8859-2')
+        return unicode(self._item.title(), 'utf-8')
 
     def _menu_path(self):
         if self._parent is None or self._parent.id() == 'menu':
@@ -96,13 +96,13 @@ class _MenuItemReader(lcg.Reader):
         if hotkey and hotkey[0] is not None:
             key = ' '.join(hotkey)
         else:
-            key = _("NenÌ definov·na")
+            key = _(u"Nen√≠ definov√°na")
         if command.doc():
             cmd = "%s (%s)" % (command.doc(), command.name())
         else:
             cmd = command.name()
-        info = [("Kl·vesov· zkratka", key),
-                ("P¯Ìkaz", cmd)]
+        info = [("Kl√°vesov√° zkratka", key),
+                ("P≈ô√≠kaz", cmd)]
         if command in (pytis.form.Application.COMMAND_RUN_FORM,
                        pytis.form.Application.COMMAND_NEW_RECORD):
             name = args['name']
@@ -110,7 +110,7 @@ class _MenuItemReader(lcg.Reader):
                 form =  args['form_class']
             else:
                 form = pytis.form.PopupEditForm
-            info.append(("Typ formul·¯e",
+            info.append(("Typ formul√°≈ôe",
                          '%s (%s)' % (form.DESCR.capitalize(), form.__name__)))
             if not issubclass(form, pytis.form.ConfigForm):
                 if name.find('::') != -1:
@@ -123,7 +123,7 @@ class _MenuItemReader(lcg.Reader):
                     _menu_items[name].append(self)
                 else:
                     _menu_items[name] = [self]
-                info.append(("N·hled", "[%s] (%s)" % (name, name)))
+                info.append(("N√°hled", "[%s] (%s)" % (name, name)))
                 if issubclass(form, pytis.form.MultiBrowseDualForm):
                     view = pytis.util.resolver().get(name, 'view_spec')
                     bindings = []
@@ -131,13 +131,13 @@ class _MenuItemReader(lcg.Reader):
                         _menu_items[b.name()] = [self]
                         bindings.append("[%s %s]" % (b.name(), b.title()))
                         names += (b.name(),)
-                    info.append(("PostrannÌ formul·¯e", ', '.join(bindings)))
+                    info.append(("Postrann√≠ formul√°≈ôe", ', '.join(bindings)))
                 for n in names:
                     if n not in _used_defs:
                         _used_defs.append(n)
         else:
             a = ', '.join(['%s=%r' % x for x in args.items()])
-            info.append(("Argumenty p¯Ìkazu", a or _("Æ·dnÈ")))
+            info.append(("Argumenty p≈ô√≠kazu", a or _(u"≈Ω√°dn√©")))
         return lcg.fieldset(info, formatted=True)
 
 
@@ -171,7 +171,7 @@ class MenuReader(_MenuReader):
         if '..' not in sys.path:
             sys.path.append('..')
         menu = pytis.util.resolver().get('application', 'menu')
-        item = pytis.form.Menu(_("P¯ehled menu"), menu)
+        item = pytis.form.Menu(_(u"P≈ôehled menu"), menu)
         super(MenuReader, self).__init__(id, item, *args, **kwargs)
 
 
@@ -209,15 +209,15 @@ class MenuOverviewReader(MenuReader):
                 if help_src:
                     help = lcg.Container(lcg.Parser().parse(help_src))
                 else:
-                    help = lcg.p(_("Popis nenÌ k dispozici."))
-                content = lcg.coerce((lcg.fieldset((('Titulek formul·¯e', title),
-                                                    ('N·zev specifikace', name))),
+                    help = lcg.p(_(u"Popis nen√≠ k dispozici."))
+                content = lcg.coerce((lcg.fieldset((('Titulek formul√°≈ôe', title),
+                                                    ('N√°zev specifikace', name))),
                                       lcg.p(help)))
                 if actions:
-                    content = lcg.coerce((content, "*Akce kontextovÈho menu:*", lcg.dl(actions)),
+                    content = lcg.coerce((content, "*Akce kontextov√©ho menu:*", lcg.dl(actions)),
                                          formatted=True)
             else:
-                content = lcg.p("NenÌ obyËejn˝ n·hled.")
+                content = lcg.p("Nen√≠ obyƒçejn√Ω n√°hled.")
         return lcg.Section(item.title(), content)
                 
     def _content(self):
@@ -263,19 +263,19 @@ class _DescrReader(lcg.StructuredTextReader):
             else:
                 menu_items = links[0]
         else:
-            menu_items = _("Æ·dnÈ")
-        return ((_("N·zev specifikace"), self._name),
-                (_("Menu"), menu_items))
+            menu_items = _(u"≈Ω√°dn√©")
+        return ((_(u"N√°zev specifikace"), self._name),
+                (_(u"Menu"), menu_items))
         
     def _default_description_text(self):
         help = self._view_spec.help()
         if help:
             return lcg.Container(lcg.Parser().parse(help))
         else:
-            return lcg.p(_("Popis nenÌ k dispozici."))
+            return lcg.p(_(u"Popis nen√≠ k dispozici."))
 
     def _content(self):
-        content = [lcg.Section("Z·kladnÌ informace",
+        content = [lcg.Section("Z√°kladn√≠ informace",
                                lcg.fieldset(self._info(), formatted=True))]
         if os.path.exists(self._input_file(self._name, lang='cs', ext='txt')):
             text = self._read_file(self._name, lang='cs', ext='txt')
@@ -300,11 +300,11 @@ class _SingleDescrReader(_DescrReader):
         bindings = [(lcg.WikiText("[%s %s]" % (b.name(), b.title())), lcg.WikiText(b.descr() or ''))
                     for b in view.bindings()]
         for (title, items, f) in (
-            ("Akce kontextovÈho menu", actions,  lcg.dl),
-            ("PolÌËka formul·¯e",      fields,   lcg.dl),
-            ("PostrannÌ formul·¯e",    bindings, lcg.dl),
-            ("SouvisejÌcÌ n·hledy",    related,  lcg.ul)):
-            c = items and f(items, formatted=True) or lcg.TextContent("Æ·dnÈ")
+            ("Akce kontextov√©ho menu", actions,  lcg.dl),
+            ("Pol√≠ƒçka formul√°≈ôe",      fields,   lcg.dl),
+            ("Postrann√≠ formul√°≈ôe",    bindings, lcg.dl),
+            ("Souvisej√≠c√≠ n√°hledy",    related,  lcg.ul)):
+            c = items and f(items, formatted=True) or lcg.TextContent("≈Ω√°dn√©")
             content.append(lcg.Section(title, c))
         if not self._data_spec.access_rights():
             return content
@@ -315,7 +315,7 @@ class _SingleDescrReader(_DescrReader):
                               pytis.data.Permission.UPDATE,
                               pytis.data.Permission.DELETE,
                               pytis.data.Permission.EXPORT)]
-        content.append(lcg.Section("P¯Ìstupov· pr·va", lcg.fieldset(perms, formatted=True)))
+        content.append(lcg.Section("P≈ô√≠stupov√° pr√°va", lcg.fieldset(perms, formatted=True)))
         return content
     
 
@@ -336,8 +336,8 @@ class _DualDescrReader(_DescrReader):
     def _info(self):
         main, side = self._name.split('::')
         return super(_DualDescrReader, self)._info() + \
-               ((_("HornÌ formul·¯"), "[%s]" % main),
-                (_("DolnÌ formul·¯"), "[%s]" % side))
+               ((_(u"Horn√≠ formul√°≈ô"), "[%s]" % main),
+                (_(u"Doln√≠ formul√°≈ô"), "[%s]" % side))
     
     def _content(self):
         content = super(_DualDescrReader, self)._content()
@@ -346,7 +346,7 @@ class _DualDescrReader(_DescrReader):
         main_groups = main_rights.permitted_groups(pytis.data.Permission.VIEW, None)
         groups = [str(g) for g in side_rights.permitted_groups(pytis.data.Permission.VIEW, None)
                   if g in main_groups]
-        content.append(lcg.Section("P¯Ìstupov· pr·va", lcg.p(', '.join(groups or '-'))))
+        content.append(lcg.Section("P≈ô√≠stupov√° pr√°va", lcg.p(', '.join(groups or '-'))))
         return content
         
     def _default_description_text(self):
@@ -359,9 +359,9 @@ class _DualDescrReader(_DescrReader):
             return lcg.Container(lcg.Parser().parse(help))
         else:
             main, side = self._name.split('::')
-            text = _("HlavnÌm formul·¯em tohoto du·lnÌho formul·¯e je [%s].  V dolnÌ Ë·sti "
-                     "se zobrazujÌ souvisejÌcÌ z·znamy formul·¯e [%s].  Oba formul·¯e jsou "
-                     "propojeny p¯es shodu hodnot sloupeËk˘ '%s' = '%s'.") % \
+            text = _(u"Hlavn√≠m formul√°≈ôem tohoto du√°ln√≠ho formul√°≈ôe je [%s].  V doln√≠ ƒç√°sti "
+                     "se zobrazuj√≠ souvisej√≠c√≠ z√°znamy formul√°≈ôe [%s].  Oba formul√°≈ôe jsou "
+                     "propojeny p≈ôes shodu hodnot sloupeƒçk≈Ø '%s' = '%s'.") % \
                      (main, side, clabel(b.binding_column(), self._main_spec),
                       clabel(b.side_binding_column(), self._side_spec))
             return lcg.p(text, formatted=True)
@@ -379,7 +379,7 @@ class DescrReader(lcg.FileReader):
     """
 
     def _title(self):
-        return u"N·povÏda k jednotliv˝m n·hled˘m"
+        return u"N√°povƒõda k jednotliv√Ωm n√°hled≈Øm"
 
     def _content(self):
         return lcg.NodeIndex(depth=1)

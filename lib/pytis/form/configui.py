@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -16,28 +16,28 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Formuláøe pro editaci konfiguraèních voleb v u¾ivatelském rozhraní.
+"""FormulÃ¡Å™e pro editaci konfiguraÄnÃ­ch voleb v uÅ¾ivatelskÃ©m rozhranÃ­.
 
-Formuláøe nejsou vázány na ¾ádnou specifikaci.  Datovı objekt i prezentaèní
-specifikace jsou generovány automaticky pøi vytvoøení formuláøe.  Layout je
-zvolen podle argumentu 'name' konstruktoru formuláøe jako jedna z polo¾ek
-konstanty '_LAYOUT' definované ní¾e.  Tak¾e vıbìr specifikace z resolveru,
-bì¾nı u jinıch formuláøù je zde nahrazen vıbìrem layoutu z pøeddefinovanıch
-layoutù a vygenerováním zbylıch specifikaèních parametrù podle vlastností
-konfiguraèních voleb obsa¾enıch v tomto layoutu.
+FormulÃ¡Å™e nejsou vÃ¡zÃ¡ny na Å¾Ã¡dnou specifikaci.  DatovÃ½ objekt i prezentaÄnÃ­
+specifikace jsou generovÃ¡ny automaticky pÅ™i vytvoÅ™enÃ­ formulÃ¡Å™e.  Layout je
+zvolen podle argumentu 'name' konstruktoru formulÃ¡Å™e jako jedna z poloÅ¾ek
+konstanty '_LAYOUT' definovanÃ© nÃ­Å¾e.  TakÅ¾e vÃ½bÄ›r specifikace z resolveru,
+bÄ›Å¾nÃ½ u jinÃ½ch formulÃ¡Å™Å¯ je zde nahrazen vÃ½bÄ›rem layoutu z pÅ™eddefinovanÃ½ch
+layoutÅ¯ a vygenerovÃ¡nÃ­m zbylÃ½ch specifikaÄnÃ­ch parametrÅ¯ podle vlastnostÃ­
+konfiguraÄnÃ­ch voleb obsaÅ¾enÃ½ch v tomto layoutu.
 
 """
 
 from pytis.form import *
 
 _LAYOUT = (
-    ('ui', LayoutSpec(_("Nastavení u¾ivatelského rozhraní"), VGroup(
-    LVGroup(_("Barvy"),
-            HGroup(LVGroup(_("Aktivní øádek"),
+    ('ui', LayoutSpec(_(u"NastavenÃ­ uÅ¾ivatelskÃ©ho rozhranÃ­"), VGroup(
+    LVGroup(_(u"Barvy"),
+            HGroup(LVGroup(_(u"AktivnÃ­ Å™Ã¡dek"),
                            'row_focus_fg_color','row_focus_bg_color'),
-                   LVGroup(_("Neaktivní øádek"),
+                   LVGroup(_(u"NeaktivnÃ­ Å™Ã¡dek"),
                            'row_nofocus_fg_color', 'row_nofocus_bg_color'),
-                   LVGroup(_("Editovanı øádek"),
+                   LVGroup(_(u"EditovanÃ½ Å™Ã¡dek"),
                            'row_edit_fg_color','row_edit_bg_color'),
                    ),
             'cell_highlight_color',
@@ -47,40 +47,40 @@ _LAYOUT = (
             'field_denied_color',
             'field_invalid_color',
             ),
-    LVGroup(_("Chování"),
+    LVGroup(_(u"ChovÃ¡nÃ­"),
             'stretch_tables',
             'show_tooltips',
             'auto_menu_accel',
             'show_splash',
             'cache_spec_onstart'),
-    LVGroup(_("Ostatní"),
+    LVGroup(_(u"OstatnÃ­"),
             'sender_address'),
     ))),
-    ('export', LayoutSpec(_("Nastavení exportu"),
+    ('export', LayoutSpec(_(u"NastavenÃ­ exportu"),
                           VGroup('export_directory','export_encoding')),
      ))
 
 _LABELS = {
-    'row_focus_fg_color':    _("Text"),
-    'row_focus_bg_color':    _("Pozadí"),
-    'row_nofocus_fg_color':  _("Text"),
-    'row_nofocus_bg_color':  _("Pozadí"),
-    'row_edit_fg_color':     _("Text"),
-    'row_edit_bg_color':     _("Pozadí"),
-    'cell_highlight_color':  _("Zvıraznìní aktivní buòky"),
-    'grid_line_color':       _("Møí¾ka tabulky"),
-    'grouping_background_downgrade': _("Ztmavení øádkù pøi seskupování"),
-    'field_disabled_color':  _("Neaktivní vstupní políèko"),
-    'field_denied_color':    _("Zakázané vstupní políèko"),
-    'field_invalid_color':   _("Nevalidní vstupní políèko"),
-    'show_splash':           _("Zobrazovat úvodní dialog"),
-    'show_tooltips':         _("Zobrazovat bublinovou nápovìdu"),
-    'auto_menu_accel':       _("Automaticky èíslovat menu akceleraèními klávesami"),
-    'stretch_tables':        _("Rozpínat tabulky na ¹íøku okna"),
-    'cache_spec_onstart':    _("Naèítat specifikace pøi startu"),
-    'sender_address':        _("E-mailová adresa"),
-    'export_directory':      _("Vıchozí adresáø"),
-    'export_encoding':       _("Kódování exportovanıch dat"),
+    'row_focus_fg_color':    _(u"Text"),
+    'row_focus_bg_color':    _(u"PozadÃ­"),
+    'row_nofocus_fg_color':  _(u"Text"),
+    'row_nofocus_bg_color':  _(u"PozadÃ­"),
+    'row_edit_fg_color':     _(u"Text"),
+    'row_edit_bg_color':     _(u"PozadÃ­"),
+    'cell_highlight_color':  _(u"ZvÃ½raznÄ›nÃ­ aktivnÃ­ buÅˆky"),
+    'grid_line_color':       _(u"MÅ™Ã­Å¾ka tabulky"),
+    'grouping_background_downgrade': _(u"ZtmavenÃ­ Å™Ã¡dkÅ¯ pÅ™i seskupovÃ¡nÃ­"),
+    'field_disabled_color':  _(u"NeaktivnÃ­ vstupnÃ­ polÃ­Äko"),
+    'field_denied_color':    _(u"ZakÃ¡zanÃ© vstupnÃ­ polÃ­Äko"),
+    'field_invalid_color':   _(u"NevalidnÃ­ vstupnÃ­ polÃ­Äko"),
+    'show_splash':           _(u"Zobrazovat ÃºvodnÃ­ dialog"),
+    'show_tooltips':         _(u"Zobrazovat bublinovou nÃ¡povÄ›du"),
+    'auto_menu_accel':       _(u"Automaticky ÄÃ­slovat menu akceleraÄnÃ­mi klÃ¡vesami"),
+    'stretch_tables':        _(u"RozpÃ­nat tabulky na Å¡Ã­Å™ku okna"),
+    'cache_spec_onstart':    _(u"NaÄÃ­tat specifikace pÅ™i startu"),
+    'sender_address':        _(u"E-mailovÃ¡ adresa"),
+    'export_directory':      _(u"VÃ½chozÃ­ adresÃ¡Å™"),
+    'export_encoding':       _(u"KÃ³dovÃ¡nÃ­ exportovanÃ½ch dat"),
 }
 
 _FIELDSPEC_KWARGS = {
@@ -89,29 +89,29 @@ _FIELDSPEC_KWARGS = {
 }
 
 def config_menu_items(hotkeys={}):
-    """Vra» seznam polo¾ek menu pro otevøení konfiguraèních formuláøù.
+    """VraÅ¥ seznam poloÅ¾ek menu pro otevÅ™enÃ­ konfiguraÄnÃ­ch formulÃ¡Å™Å¯.
 
-    Vrací tuple instancí 'MItem', z nich¾ ka¾dá otevírá jeden ze standardnì
-    definovanıch formuláøù pro editaci konfiguraèních voleb.  Pou¾itím této
-    funkce v definici menu aplikace budou automaticky do menu pøidávány polo¾ky
-    standardních konfiguraèních formuláøù bez nutnosti zmìn v aplikaci pøi
-    aktualizaci systému Pytis.
+    VracÃ­ tuple instancÃ­ 'MItem', z nichÅ¾ kaÅ¾dÃ¡ otevÃ­rÃ¡ jeden ze standardnÄ›
+    definovanÃ½ch formulÃ¡Å™Å¯ pro editaci konfiguraÄnÃ­ch voleb.  PouÅ¾itÃ­m tÃ©to
+    funkce v definici menu aplikace budou automaticky do menu pÅ™idÃ¡vÃ¡ny poloÅ¾ky
+    standardnÃ­ch konfiguraÄnÃ­ch formulÃ¡Å™Å¯ bez nutnosti zmÄ›n v aplikaci pÅ™i
+    aktualizaci systÃ©mu Pytis.
 
     """
     items = [MItem(layout.caption(),
                    command=pytis.form.Application.COMMAND_RUN_FORM,
                    args=dict(form_class=ConfigForm, name=name),
                    hotkey=hotkeys.get(name),
-                   help=(_('Otevøít konfiguraèní formuláø "%s"') % \
+                   help=(_('OtevÅ™Ã­t konfiguraÄnÃ­ formulÃ¡Å™ "%s"') % \
                          layout.caption()),
                    icon='config-'+name)
              for name, layout in _LAYOUT]
     return tuple(items)
 
 def configurable_options():
-    """Vra» seznam v¹ech voleb nastavitelnıch pomocí konfiguraèních formuláøù.
+    """VraÅ¥ seznam vÅ¡ech voleb nastavitelnÃ½ch pomocÃ­ konfiguraÄnÃ­ch formulÃ¡Å™Å¯.
 
-    Vrací tuple øetìzcù odpovídajících názvùm konfiguraèních voleb.
+    VracÃ­ tuple Å™etÄ›zcÅ¯ odpovÃ­dajÃ­cÃ­ch nÃ¡zvÅ¯m konfiguraÄnÃ­ch voleb.
 
     """
     options = ()
@@ -120,7 +120,7 @@ def configurable_options():
     return options
 
 class _ConfigData(pytis.data.RestrictedData):
-    """Fale¹ná datová tøída."""
+    """FaleÅ¡nÃ¡ datovÃ¡ tÅ™Ã­da."""
     
     def __init__(self, columns, **kwargs):
         super(_ConfigData, self).__init__(columns=columns, key=columns[0], **kwargs)
@@ -147,17 +147,17 @@ class _ConfigData(pytis.data.RestrictedData):
         
 
 class ConfigForm(PopupEditForm):
-    """Formuláø pro editaci konfiguraèních voleb.
+    """FormulÃ¡Å™ pro editaci konfiguraÄnÃ­ch voleb.
 
-    Argument 'name' konstruktoru zde nemá obvyklı vıznam.  Slou¾í jako klíè do
-    seznamu layoutù definovaného vı¹e (konstanta '_LAYOUT').  Datová i
-    prezentaèní specifikace pro tento layout jsou vytvoøeny automaticky.
+    Argument 'name' konstruktoru zde nemÃ¡ obvyklÃ½ vÃ½znam.  SlouÅ¾Ã­ jako klÃ­Ä do
+    seznamu layoutÅ¯ definovanÃ©ho vÃ½Å¡e (konstanta '_LAYOUT').  DatovÃ¡ i
+    prezentaÄnÃ­ specifikace pro tento layout jsou vytvoÅ™eny automaticky.
     
-    Formuláø po svém ukonèení automaticky aktualizuje konfiguraci novımi
+    FormulÃ¡Å™ po svÃ©m ukonÄenÃ­ automaticky aktualizuje konfiguraci novÃ½mi
     hodnotami.
 
     """
-    DESCR = _("konfiguraèní formuláø")
+    DESCR = _(u"konfiguraÄnÃ­ formulÃ¡Å™")
     
     def __init__(self, *args, **kwargs):
         super(ConfigForm, self).__init__(*args, **dict(kwargs, mode=self.MODE_EDIT, select_row=0))
@@ -176,7 +176,7 @@ class ConfigForm(PopupEditForm):
         fields = [Field(option, _LABELS.get(option, option), descr=descr(option),
                         **_FIELDSPEC_KWARGS.get(option, {}))
                   for option in self._layout().order()]
-        return ViewSpec(_("Nastavení u¾ivatelského rozhraní"),
+        return ViewSpec(_(u"NastavenÃ­ uÅ¾ivatelskÃ©ho rozhranÃ­"),
                         fields, layout=self._layout(), **self._spec_kwargs)
 
     def _create_data_object(self):
@@ -189,7 +189,7 @@ class ConfigForm(PopupEditForm):
     
     def _buttons(self):
         button = dict(id=wx.ID_APPLY,
-                      tooltip=_("Uplatnit zmìny bez uzavøení formuláøe"),
+                      tooltip=_(u"Uplatnit zmÄ›ny bez uzavÅ™enÃ­ formulÃ¡Å™e"),
                       command=self.COMMAND_COMMIT_RECORD(close=False))
         buttons = super(ConfigForm, self)._buttons()
         return (buttons[0], button) + buttons[1:]

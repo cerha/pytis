@@ -1,7 +1,7 @@
 #! /usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 #
-# Nástroj pro zpracování specifikací databází
+# NÃ¡stroj pro zpracovÃ¡nÃ­ specifikacÃ­ databÃ¡zÃ­
 # 
 # Copyright (C) 2002, 2003, 2005, 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -19,33 +19,33 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Tento program slou¾í ke zpracování specifikace struktury databáze.
+"""Tento program slouÅ¾Ã­ ke zpracovÃ¡nÃ­ specifikace struktury databÃ¡ze.
 
-Poskytuje následující funkce:
+Poskytuje nÃ¡sledujÃ­cÃ­ funkce:
 
-- Generování SQL pøíkazù pro inicializaci obsahu databáze.
+- GenerovÃ¡nÃ­ SQL pÅ™Ã­kazÅ¯ pro inicializaci obsahu databÃ¡ze.
 
-- Kontrola specifikace proti obsahu databáze a generování SQL pøíkazù pro
-  aktualizaci obsahu databáze.
+- Kontrola specifikace proti obsahu databÃ¡ze a generovÃ¡nÃ­ SQL pÅ™Ã­kazÅ¯ pro
+  aktualizaci obsahu databÃ¡ze.
 
-- Rùzné konzistenèní kontroly.
+- RÅ¯znÃ© konzistenÄnÃ­ kontroly.
 
-(Ne v¹echny tyto funkce jsou v souèasné dobì implementovány.)
+(Ne vÅ¡echny tyto funkce jsou vÂ souÄasnÃ© dobÄ› implementovÃ¡ny.)
 
-Pro informaci o pou¾ití programu jej spus»te s argumentem '--help'.
+Pro informaci oÂ pouÅ¾itÃ­ programu jej spusÅ¥te sÂ argumentem '--help'.
 
-Specifikaèní soubor databáze má podobu pythonového modulu.  Pøi jeho zpracování
-je takovı modul naèten s namespace tohoto programu, není tedy nutno nic
-zvlá¹tního importovat (a je potøeba dávat pozor na konflikty jmen).
+SpecifikaÄnÃ­ soubor databÃ¡ze mÃ¡ podobu pythonovÃ©ho modulu.  PÅ™i jeho zpracovÃ¡nÃ­
+je takovÃ½ modul naÄten sÂ namespace tohoto programu, nenÃ­ tedy nutno nic
+zvlÃ¡Å¡tnÃ­ho importovat (aÂ je potÅ™eba dÃ¡vat pozor na konflikty jmen).
 
-Ve specifikaci je mo¾no pou¾ívat v¹echny veøejné symboly definované v tomto
-programu.  Pomocí specifikaèních tøíd lze definovat zejména tabulky, views,
-sekvence a funkce.  Pro definici tìchto objektù se nepou¾ívají pøímo
-konstruktory odpovídajících tøíd, nıbr¾ obalující funkce, viz napøíklad
-'table()', 'view()', 'sequence()', 'function()'.  Pokud pro nìjakı objekt
-nebo úèel není definován pøíslu¹nı specifikaèní objekt, lze vyu¾ít funkce
-'sql_raw()' a 'sql_raw_input()', umo¾òující zadat pøímo SQL pøíkazy.  Na
-objekty zadané pøímo prostøednictvím SQL pøíkazù nejsou aplikovány ¾ádné
+Ve specifikaci je moÅ¾no pouÅ¾Ã­vat vÅ¡echny veÅ™ejnÃ© symboly definovanÃ© vÂ tomto
+programu.  PomocÃ­ specifikaÄnÃ­ch tÅ™Ã­d lze definovat zejmÃ©na tabulky, views,
+sekvence a funkce.  Pro definici tÄ›chto objektÅ¯ se nepouÅ¾Ã­vajÃ­ pÅ™Ã­mo
+konstruktory odpovÃ­dajÃ­cÃ­ch tÅ™Ã­d, nÃ½brÅ¾ obalujÃ­cÃ­ funkce, viz napÅ™Ã­klad
+'table()', 'view()', 'sequence()', 'function()'.  Pokud pro nÄ›jakÃ½ objekt
+nebo ÃºÄel nenÃ­ definovÃ¡n pÅ™Ã­sluÅ¡nÃ½ specifikaÄnÃ­ objekt, lze vyuÅ¾Ã­t funkce
+'sql_raw()' a 'sql_raw_input()', umoÅ¾ÅˆujÃ­cÃ­ zadat pÅ™Ã­mo SQL pÅ™Ã­kazy.  Na
+objekty zadanÃ© pÅ™Ã­mo prostÅ™ednictvÃ­m SQL pÅ™Ã­kazÅ¯ nejsou aplikovÃ¡ny Å¾Ã¡dnÃ©
 kontroly.
 
 """
@@ -76,7 +76,7 @@ def _signal_error(message):
     exit_code = _EXIT_ERROR
 
 class GensqlError(Exception):
-    """Vıjimka signalizovaná tímto programem pøi chybách specifikace."""
+    """VÃ½jimka signalizovanÃ¡ tÃ­mto programem pÅ™i chybÃ¡ch specifikace."""
     
 
 def _gsql_escape(s):
@@ -149,21 +149,21 @@ class _GsqlSpec(object):
 
         Argumenty:
 
-          name -- jméno objektu, string nebo 'None' (v kterém¾to pøípadì je
-            jméno vygenerováno)
-          depends -- sekvence instancí '_GsqlSpec' nebo jejich jmen (strings),
-            na kterıch definice objektu závisí.  V¹echny tyto objekty musí bıt
-            v databázi vytvoøeny døíve ne¾ tento objekt.  Øada závislostí mù¾e
-            bıt rozpoznávána automaticky, nìkteré v¹ak nikoliv, zejména ty,
-            které vyplıvají z nahrubo zadanıch SQL pøíkazù, a ty je pak nutno
-            uvést explicitnì v tomto argumentu.  Druhotnım kritériem øazení
-            objektù je vedle závislostí jejich sériové èíslo.
-          doc -- dokumentace objektu, string nebo 'None' (¾ádná dokumentace)
-          grant -- specifikace pøístupovıch práv objektu pro pøíkaz GRANT;
-            sekvence dvouprvkovıch sekvencí tvaru (SPEC, GROUP), kde SPEC je
-            string SQL specifikace druhu pøístupu (napøíklad 'INSERT' nebo
-            'ALL') a GROUP je SQL string urèující odpovídající skupinu
-            u¾ivatelù
+          name -- jmÃ©no objektu, string nebo 'None' (vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je
+            jmÃ©no vygenerovÃ¡no)
+          depends -- sekvence instancÃ­ '_GsqlSpec' nebo jejich jmen (strings),
+            na kterÃ½ch definice objektu zÃ¡visÃ­.  VÅ¡echny tyto objekty musÃ­ bÃ½t
+            vÂ databÃ¡zi vytvoÅ™eny dÅ™Ã­ve neÅ¾ tento objekt.  Å˜ada zÃ¡vislostÃ­ mÅ¯Å¾e
+            bÃ½t rozpoznÃ¡vÃ¡na automaticky, nÄ›kterÃ© vÅ¡ak nikoliv, zejmÃ©na ty,
+            kterÃ© vyplÃ½vajÃ­ zÂ nahrubo zadanÃ½ch SQL pÅ™Ã­kazÅ¯, aÂ ty je pak nutno
+            uvÃ©st explicitnÄ› vÂ tomto argumentu.  DruhotnÃ½m kritÃ©riem Å™azenÃ­
+            objektÅ¯ je vedle zÃ¡vislostÃ­ jejich sÃ©riovÃ© ÄÃ­slo.
+          doc -- dokumentace objektu, string nebo 'None' (Å¾Ã¡dnÃ¡ dokumentace)
+          grant -- specifikace pÅ™Ã­stupovÃ½ch prÃ¡v objektu pro pÅ™Ã­kaz GRANT;
+            sekvence dvouprvkovÃ½ch sekvencÃ­ tvaru (SPEC, GROUP), kde SPEC je
+            string SQL specifikace druhu pÅ™Ã­stupu (napÅ™Ã­klad 'INSERT' nebo
+            'ALL') a GROUP je SQL string urÄujÃ­cÃ­ odpovÃ­dajÃ­cÃ­ skupinu
+            uÅ¾ivatelÅ¯
 
         """
         self._serial_number = self._counter.next()
@@ -207,7 +207,7 @@ class _GsqlSpec(object):
         return 'REVOKE ALL ON %s FROM PUBLIC%s;\n' % (self.name(), groups)
 
     def name(self):
-        """Vra» jméno objektu zadané v konstruktoru."""
+        """VraÅ¥ jmÃ©no objektu zadanÃ© vÂ konstruktoru."""
         return self._name
 
     def extra_names(self):
@@ -219,26 +219,26 @@ class _GsqlSpec(object):
         return ()
 
     def depends(self):
-        """Vra» tuple objektù, na kterıch tento objekt závisí.
+        """VraÅ¥ tuple objektÅ¯, na kterÃ½ch tento objekt zÃ¡visÃ­.
 
-        Závislostní tuple je zkonstruováno z argumentu konstruktoru 'depends'.
+        ZÃ¡vislostnÃ­ tuple je zkonstruovÃ¡no zÂ argumentu konstruktoru 'depends'.
 
         """
         return self._depends
 
     def serial_number(self):
-        """Vra» poøadové èíslo objektu.
+        """VraÅ¥ poÅ™adovÃ© ÄÃ­slo objektu.
 
-        Poøadová èísla jsou objektùm pøiøazována postupnì dle poøadí jejich
+        PoÅ™adovÃ¡ ÄÃ­sla jsou objektÅ¯m pÅ™iÅ™azovÃ¡na postupnÄ› dle poÅ™adÃ­ jejich
         definic.
 
         """
         return self._serial_number
 
     def output(self, *args, **kwargs):
-        """Vra» string obsahující SQL pøíkazy nutné k vygenerování objektu.
+        """VraÅ¥ string obsahujÃ­cÃ­ SQL pÅ™Ã­kazy nutnÃ© kÂ vygenerovÃ¡nÃ­ objektu.
 
-        V této tøídì metoda vyvolává vıjimku 'ProgramError'.
+        VÂ tÃ©to tÅ™Ã­dÄ› metoda vyvolÃ¡vÃ¡ vÃ½jimku 'ProgramError'.
 
         """
         output = self._output(*args, **kwargs)
@@ -259,28 +259,28 @@ class _GsqlSpec(object):
         return "SET search_path TO %s;\n" % (search_path,)
 
     def outputall(self):
-        """Vra» string obsahující SQL pøíkazy nutné k vygenerování objektu
-        vèetnì dat.
+        """VraÅ¥ string obsahujÃ­cÃ­ SQL pÅ™Ã­kazy nutnÃ© kÂ vygenerovÃ¡nÃ­ objektu
+        vÄetnÄ› dat.
 
 
         """
         return self.output()
 
     def reoutput(self):
-        """Vra» string obsahující SQL pøíkazy pro redefinici objektu.
+        """VraÅ¥ string obsahujÃ­cÃ­ SQL pÅ™Ã­kazy pro redefinici objektu.
 
-        Pro tøídy, pro které redefinice objektu nemá smysl, vrací prázdnı
-        øetìzec.
+        Pro tÅ™Ã­dy, pro kterÃ© redefinice objektu nemÃ¡ smysl, vracÃ­ prÃ¡zdnÃ½
+        Å™etÄ›zec.
 
         """
         return ''
 
     def db_all_names(class_, connection):
-        """Vra» sekvenci jmen v¹ech objektù v databázi daného typu.
+        """VraÅ¥ sekvenci jmen vÅ¡ech objektÅ¯ vÂ databÃ¡zi danÃ©ho typu.
 
         Argumenty:
 
-          connection -- PgConnection objekt zpøístupòující pøíslu¹nou databázi
+          connection -- PgConnection objekt zpÅ™Ã­stupÅˆujÃ­cÃ­ pÅ™Ã­sluÅ¡nou databÃ¡zi
           
         """
         data = connection.query(("select relname from pg_class, pg_namespace "+
@@ -295,24 +295,24 @@ class _GsqlSpec(object):
     db_all_names = classmethod(db_all_names)
 
     def db_update(self, connection):
-        """Vra» SQL pøíkazy potøebné k updatu databáze dle aktuální definice.
+        """VraÅ¥ SQL pÅ™Ã­kazy potÅ™ebnÃ© kÂ updatu databÃ¡ze dle aktuÃ¡lnÃ­ definice.
 
-        Metoda pøedpokládá, ¾e objekt odpovídajícího jména a typu v databázi
+        Metoda pÅ™edpoklÃ¡dÃ¡, Å¾e objekt odpovÃ­dajÃ­cÃ­ho jmÃ©na a typu vÂ databÃ¡zi
         existuje.
 
         Argumenty:
         
-          connection -- PgConnection objekt zpøístupòující pøíslu¹nou databázi
+          connection -- PgConnection objekt zpÅ™Ã­stupÅˆujÃ­cÃ­ pÅ™Ã­sluÅ¡nou databÃ¡zi
 
         """
         return '-- %s up to date\n' % self.name()
 
     def db_remove(class_, name):
-        """Vra» SQL pøíkazy (string) potøebné k odstranìní objektu z databáze.
+        """VraÅ¥ SQL pÅ™Ã­kazy (string) potÅ™ebnÃ© kÂ odstranÄ›nÃ­ objektu zÂ databÃ¡ze.
 
         Argumenty:
 
-          name -- jméno objektu, kterı má bıt odstranìn; string
+          name -- jmÃ©no objektu, kterÃ½ mÃ¡ bÃ½t odstranÄ›n; string
           
         """
         class_sql_name = class_._SQL_NAME
@@ -325,7 +325,7 @@ class _GsqlSpec(object):
 
 
 class Column(object):
-    """Úlo¾ná tøída specifikace sloupce."""
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace sloupce."""
     
     def __init__(self, name, type, constraints=(), references=None,
                  default=None, index=None, doc=None):
@@ -333,19 +333,19 @@ class Column(object):
 
         Argumenty:
 
-          name -- jméno sloupce, SQL string
-          type -- typ sloupce, buï instance tøídy 'pytis.data.Type', nebo SQL
+          name -- jmÃ©no sloupce, SQL string
+          type -- typ sloupce, buÄ instance tÅ™Ã­dy 'pytis.data.Type', nebo SQL
             string
-          constraints -- sekvence omezení na sloupec, SQL strings; zde se
-            neuvádí 'PRIMARY KEY', definice sloupce primárního klíèe se
-            provádí tøídou 'PrimaryColumn'
-          references -- odkazovaná tabulka sloupce (\"REFERENCES\"), SQL
+          constraints -- sekvence omezenÃ­ na sloupec, SQL strings; zde se
+            neuvÃ¡dÃ­ 'PRIMARY KEY', definice sloupce primÃ¡rnÃ­ho klÃ­Äe se
+            provÃ¡dÃ­ tÅ™Ã­dou 'PrimaryColumn'
+          references -- odkazovanÃ¡ tabulka sloupce (\"REFERENCES\"), SQL
             strings
-          default -- implicitní hodnota sloupce, SQL string
+          default -- implicitnÃ­ hodnota sloupce, SQL string
           index -- if 'True', create index for this column; if a dictionary
             then it defines additional index options, currently only
             'method=METHOD' is supported where METHOD is the index method
-          doc -- dokumentace sloupce, string nebo 'None' (¾ádná dokumentace)
+          doc -- dokumentace sloupce, string nebo 'None' (Å¾Ã¡dnÃ¡ dokumentace)
 
         """
         self.name = name
@@ -357,15 +357,15 @@ class Column(object):
         self.doc = doc
 
 class PrimaryColumn(Column):
-    """Úlo¾ná tøída specifikace sloupce, kterı je primárním klíèem.
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace sloupce, kterÃ½ je primÃ¡rnÃ­m klÃ­Äem.
 
-    Stejné jako 'Column', av¹ak slou¾í exkluzivnì pro definici sloupcù, které
-    jsou primárními klíèi.
+    StejnÃ© jako 'Column', avÅ¡ak slouÅ¾Ã­ exkluzivnÄ› pro definici sloupcÅ¯, kterÃ©
+    jsou primÃ¡rnÃ­mi klÃ­Äi.
 
     """
 
 class ViewColumn(object):
-    """Úlo¾ná tøída specifikace sloupce view."""
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace sloupce view."""
 
     def __init__(self, name, alias=None, sql=None, type=None,
                  insert='', update=''):
@@ -373,25 +373,25 @@ class ViewColumn(object):
 
         Argumenty:
 
-          name -- jméno sloupce, SQL string ve tvaru 'TABULKA.SLOUPEC'.  Ve
-            view neasociovanıch s konkrétní jedinou tabulkou mù¾e bıt té¾
-            sekvence jmen sloupcù, potom bude odpovídající view sjednocením
-            více tabulek prostøednictvím operátoru UNION a v 'name' nezmínìné
-            tabulky budou na místì tohoto sloupce generovat NULL.
-          alias -- pøezdívka sloupce (\"AS\"), SQL string nebo 'None'; je-li
+          name -- jmÃ©no sloupce, SQL string ve tvaru 'TABULKA.SLOUPEC'.  Ve
+            view neasociovanÃ½ch sÂ konkrÃ©tnÃ­ jedinou tabulkou mÅ¯Å¾e bÃ½t tÃ©Å¾
+            sekvence jmen sloupcÅ¯, potom bude odpovÃ­dajÃ­cÃ­ view sjednocenÃ­m
+            vÃ­ce tabulek prostÅ™ednictvÃ­m operÃ¡toru UNION a vÂ 'name' nezmÃ­nÄ›nÃ©
+            tabulky budou na mÃ­stÄ› tohoto sloupce generovat NULL.
+          alias -- pÅ™ezdÃ­vka sloupce (\"AS\"), SQL string nebo 'None'; je-li
             'None', bude nastaveno na hodnotu 'name'.
-          sql -- obecnı SQL string umo¾òující specifikaci view sloupce jako SQL
-            vırazu; je-li specifikován, musí bıt také specifikován alias a name
-            musí bıt None.
-          type -- explicitnì urèenı typ -- hlavní vyu¾ití je pro UNIONY, kde se
-            vyskytují NULL hodnoty.  
-          insert -- øetìzec, kterı se pou¾ije pro vlo¾ení hodnoty do sloupce
-            tabulky pro defaultnì generovanı insert rule. Je-li '', pou¾ije se
-            standardní new hodnota, je-li None, nebude se sloupec v insert rulu
+          sql -- obecnÃ½ SQL string umoÅ¾ÅˆujÃ­cÃ­ specifikaci view sloupce jako SQL
+            vÃ½razu; je-li specifikovÃ¡n, musÃ­ bÃ½t takÃ© specifikovÃ¡n alias a name
+            musÃ­ bÃ½t None.
+          type -- explicitnÄ› urÄenÃ½ typ -- hlavnÃ­ vyuÅ¾itÃ­ je pro UNIONY, kde se
+            vyskytujÃ­ NULL hodnoty.  
+          insert -- Å™etÄ›zec, kterÃ½ se pouÅ¾ije pro vloÅ¾enÃ­ hodnoty do sloupce
+            tabulky pro defaultnÄ› generovanÃ½ insert rule. Je-li '', pouÅ¾ije se
+            standardnÃ­ new hodnota, je-li None, nebude se sloupec v insert rulu
             vyskytovat.
-          update -- øetìzec, kterı se pou¾ije pro aktualizaci hodnoty sloupce
-            tabulky pro defaultnì generovanı update rule. Je-li '', pou¾ije se
-            standardní new hodnota, je-li None, nebude se sloupec v update rulu
+          update -- Å™etÄ›zec, kterÃ½ se pouÅ¾ije pro aktualizaci hodnoty sloupce
+            tabulky pro defaultnÄ› generovanÃ½ update rule. Je-li '', pouÅ¾ije se
+            standardnÃ­ new hodnota, je-li None, nebude se sloupec v update rulu
             vyskytovat.
 
         """
@@ -419,7 +419,7 @@ class ViewColumn(object):
 
 
 class JoinType(object):
-    """Specifikaèní tøída pro typy joinù."""
+    """SpecifikaÄnÃ­ tÅ™Ã­da pro typy joinÅ¯."""
     FROM = 'FROM'
     INNER = 'INNER'
     LEFT_OUTER = 'LEFT_OUTER'
@@ -435,7 +435,7 @@ class JoinType(object):
                  }
     
 class SelectRelation(object):
-    """Úlo¾ná tøída specifikace relace pro select."""
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace relace pro select."""
     def __init__(self, relation, alias=None,
                  key_column=None, exclude_columns=(), column_aliases=(),
                  jointype=JoinType.FROM, condition=None,
@@ -445,21 +445,21 @@ class SelectRelation(object):
         """Specifikace relace pro SQL select.
         Argumenty:
 
-          relation -- název tabulky nebo view, pøíp. instance Select pro
-            pou¾ití jako subselect ve ViewNG.
-          alias -- alias pro pou¾ití pøi vıbìru sloupcù.
-          key_column -- název sloupce, kterı je pro danou relaci klíèem.
-          exclude_columns -- seznam názvù sloupcù, které nemají bıt do view
-            zahrnuty. Je-li None, budou pou¾ity v¹echny sloupce ze v¹ech
-            relací (pozor na konflikty jmen!). Pokud je v seznamu
-            znak '*', tıká se specifikace v¹ech sloupcù dané relace.
-          columns_aliases -- seznam dvojic (column, alias) uvádìjící
-            alias pro uvedenı sloupec.
+          relation -- nÃ¡zev tabulky nebo view, pÅ™Ã­p. instance Select pro
+            pouÅ¾itÃ­ jako subselect ve ViewNG.
+          alias -- alias pro pouÅ¾itÃ­ pÅ™i vÃ½bÄ›ru sloupcÅ¯.
+          key_column -- nÃ¡zev sloupce, kterÃ½ je pro danou relaci klÃ­Äem.
+          exclude_columns -- seznam nÃ¡zvÅ¯ sloupcÅ¯, kterÃ© nemajÃ­ bÃ½t do view
+            zahrnuty. Je-li None, budou pouÅ¾ity vÅ¡echny sloupce ze vÅ¡ech
+            relacÃ­ (pozor na konflikty jmen!). Pokud je v seznamu
+            znak '*', tÃ½kÃ¡ se specifikace vÅ¡ech sloupcÅ¯ danÃ© relace.
+          columns_aliases -- seznam dvojic (column, alias) uvÃ¡dÄ›jÃ­cÃ­
+            alias pro uvedenÃ½ sloupec.
           jointype -- typ joinu.
-          condition -- podmínka, která se pou¾ije ve specifikaci ON
-            nebo v pøípadì typu FROM jako WHERE.
-          schema -- není-li 'None', jde o øetìzec urèující schéma, které se má
-            pou¾ít pro tuto relaci
+          condition -- podmÃ­nka, kterÃ¡ se pouÅ¾ije ve specifikaci ON
+            nebo v pÅ™Ã­padÄ› typu FROM jako WHERE.
+          schema -- nenÃ­-li 'None', jde o Å™etÄ›zec urÄujÃ­cÃ­ schÃ©ma, kterÃ© se mÃ¡
+            pouÅ¾Ã­t pro tuto relaci
         """
         assert jointype != JoinType.CROSS or \
                condition is None
@@ -479,7 +479,7 @@ class SelectRelation(object):
 
 
 class SelectSetType(object):
-    """Specifikaèní tøída pro typy kombinace selectù."""
+    """SpecifikaÄnÃ­ tÅ™Ã­da pro typy kombinace selectÅ¯."""
     UNION = 'UNION'
     INTERSECT = 'INTERSECT'
     EXCEPT = 'EXCEPT'
@@ -488,7 +488,7 @@ class SelectSetType(object):
     EXCEPT_ALL = 'EXCEPT_ALL'
 
 class SelectSet(object):
-    """Úlo¾ná tøída specifikace kombinace selectù."""
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace kombinace selectÅ¯."""
     _FORMAT_SET = {
         SelectSetType.UNION: 'UNION',
         SelectSetType.INTERSECT: 'INTERSECT',
@@ -500,12 +500,12 @@ class SelectSet(object):
     def __init__(self, select, 
                  settype=None
                  ):
-        """Úlo¾ná tøída specifikace kombinace selectù.
+        """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace kombinace selectÅ¯.
         Argumenty:
 
-          select -- název pojmenovaného selectu nebo instance
+          select -- nÃ¡zev pojmenovanÃ©ho selectu nebo instance
             Select.
-          settype -- typ spojení selectù - konstanta tøídy SelectSetType. 
+          settype -- typ spojenÃ­ selectÅ¯ - konstanta tÅ™Ã­dy SelectSetType. 
         """
         self.select = select
         self.settype = settype    
@@ -521,9 +521,9 @@ class SelectSet(object):
         self.select.sort_columns(aliases)
 
 class TableView(object):
-    """Úlo¾ná tøída specifikace view asociovaného s tabulkou.
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace view asociovanÃ©ho sÂ tabulkou.
 
-    Tato tøída se vyu¾ívá pouze ve specifikaci tøídy '_GsqlTable'.
+    Tato tÅ™Ã­da se vyuÅ¾Ã­vÃ¡ pouze ve specifikaci tÅ™Ã­dy '_GsqlTable'.
 
     """
 
@@ -532,17 +532,17 @@ class TableView(object):
 
         Argumenty:
         
-          columns -- stejné jako v '_GsqlView.__init__()', v¾dy jsou
-            automaticky pøidány v¹echny definované sloupce tabulky neuvedené
-            v argumentu 'exclude'
-          exclude -- sekvence jmen sloupcù (SQL strings) dané tabulky, které
-            nemají bıt do view zahrnuty; smí bıt té¾ 'None', v kterém¾to
-            pøípadì je ekvivalentní prázdné sekvenci
-          name -- jméno view; smí bıt té¾ 'None', v kterém¾to pøípadì je jméno
-            odvozeno ze jména tabulky
-          kwargs -- klíèové argumenty pøedané konstruktoru tøídy '_GsqlView';
-            smí se jednat pouze o volitelné argumenty onoho konstruktoru,
-            povinné argumenty jsou doplnìny ve tøídì '_GsqlTable' automaticky
+          columns -- stejnÃ© jako vÂ '_GsqlView.__init__()', vÅ¾dy jsou
+            automaticky pÅ™idÃ¡ny vÅ¡echny definovanÃ© sloupce tabulky neuvedenÃ©
+            vÂ argumentu 'exclude'
+          exclude -- sekvence jmen sloupcÅ¯ (SQL strings) danÃ© tabulky, kterÃ©
+            nemajÃ­ bÃ½t do view zahrnuty; smÃ­ bÃ½t tÃ©Å¾ 'None', vÂ kterÃ©mÅ¾to
+            pÅ™Ã­padÄ› je ekvivalentnÃ­ prÃ¡zdnÃ© sekvenci
+          name -- jmÃ©no view; smÃ­ bÃ½t tÃ©Å¾ 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je jmÃ©no
+            odvozeno ze jmÃ©na tabulky
+          kwargs -- klÃ­ÄovÃ© argumenty pÅ™edanÃ© konstruktoru tÅ™Ã­dy '_GsqlView';
+            smÃ­ se jednat pouze oÂ volitelnÃ© argumenty onoho konstruktoru,
+            povinnÃ© argumenty jsou doplnÄ›ny ve tÅ™Ã­dÄ› '_GsqlTable' automaticky
 
         """
         assert is_sequence(columns)
@@ -564,9 +564,9 @@ class _GsqlType(_GsqlSpec):
 
         Argumenty:
 
-          name -- název typu
-          columns -- specifikace sloupcù a jejich typù, sekvence instancí
-            tøídy Column
+          name -- nÃ¡zev typu
+          columns -- specifikace sloupcÅ¯ a jejich typÅ¯, sekvence instancÃ­
+            tÅ™Ã­dy Column
         """    
         super(_GsqlType, self).__init__(name, **kwargs)
         self._columns = columns
@@ -588,27 +588,27 @@ class _GsqlType(_GsqlSpec):
 
 
 class ArgumentType(object):
-    """Úlo¾ná tøída specifikace typu argumentu pro funkce.
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace typu argumentu pro funkce.
 
-    Tato tøída se vyu¾ívá pouze ve specifikaci tøídy '_GsqlFunction'.
+    Tato tÅ™Ã­da se vyuÅ¾Ã­vÃ¡ pouze ve specifikaci tÅ™Ã­dy '_GsqlFunction'.
     """
     def __init__(self, typ, name='', out=False):
         """Nastav atributy.
 
         Argumenty:
         
-          typ -- název typu, instance pytis.data.Type nebo _GsqlType.
-          name -- volitelné jméno argumentu
-          out -- je-li True, jde o vıstupní argument
+          typ -- nÃ¡zev typu, instance pytis.data.Type nebo _GsqlType.
+          name -- volitelnÃ© jmÃ©no argumentu
+          out -- je-li True, jde o vÃ½stupnÃ­ argument
         """
         self.typ = typ
         self.name = name
         self.out = out
 
 class ReturnType(object):
-    """Úlo¾ná tøída specifikace návratového typu.
+    """ÃšloÅ¾nÃ¡ tÅ™Ã­da specifikace nÃ¡vratovÃ©ho typu.
 
-    Tato tøída se vyu¾ívá pouze ve specifikaci tøídy '_GsqlFunction'.
+    Tato tÅ™Ã­da se vyuÅ¾Ã­vÃ¡ pouze ve specifikaci tÅ™Ã­dy '_GsqlFunction'.
 
     """
     def __init__(self, name, setof=False):
@@ -616,14 +616,14 @@ class ReturnType(object):
 
         Argumenty:
         
-          name -- název typu, instance pytis.data.Type nebo _GsqlType.
-          setof -- je-li True, jde o návratovı typ SETOF
+          name -- nÃ¡zev typu, instance pytis.data.Type nebo _GsqlType.
+          setof -- je-li True, jde o nÃ¡vratovÃ½ typ SETOF
         """
         self.name = name
         self.setof = setof
 
 class _GsqlSchema(_GsqlSpec):
-    """Specifikace SQL schématu."""
+    """Specifikace SQL schÃ©matu."""
     
     _SQL_NAME = 'SCHEMA'
     
@@ -632,9 +632,9 @@ class _GsqlSchema(_GsqlSpec):
 
         Argumenty:
 
-          name -- jméno schématu, SQL string
-          owner -- volitelnı øetìzec udávající vlastníka schématu.
-            Pozor, uvede-li se, pak musí bıt vytváøení provedeno superuserem.
+          name -- jmÃ©no schÃ©matu, SQL string
+          owner -- volitelnÃ½ Å™etÄ›zec udÃ¡vajÃ­cÃ­ vlastnÃ­ka schÃ©matu.
+            Pozor, uvede-li se, pak musÃ­ bÃ½t vytvÃ¡Å™enÃ­ provedeno superuserem.
         """
         super(_GsqlSchema, self).__init__(name, **kwargs)
         self._owner = owner
@@ -664,50 +664,50 @@ class _GsqlTable(_GsqlSpec):
 
         Argumenty:
 
-          name -- jméno tabulky, SQL string
-          columns -- specifikace sloupcù tabulky, sekvence instancí tøídy
+          name -- jmÃ©no tabulky, SQL string
+          columns -- specifikace sloupcÅ¯ tabulky, sekvence instancÃ­ tÅ™Ã­dy
             'Column'
-          inherits -- sekvence jmen podìdìnıch tabulek (SQL strings) nebo
-            'None' (nedìdí se ¾ádná tabulka)
-          sql -- SQL string SQL definic pøidanı za definici sloupcù, lze jej
-            vyu¾ít pro doplnìní SQL konstrukcí souvisejících se sloupci, které
-            nelze zadat jinım zpùsobem
-          schemas -- není-li 'None', definuje schémata, ve kterıch má bıt
-            tabulka vytvoøena, jde o sekvenci øetìzcù obsahujících textové
-            definice postgresové search_path urèující search_path nastavenou
-            pøi vytváøení tabulky, tabulka je samostatnì vytvoøena pro ka¾dı
-            z prvkù této sekvence
-          on_insert -- doplòující akce, které mají bıt provedeny pøi vlo¾ení
-            záznamu do tabulky, SQL string
-          on_update -- doplòující akce, které mají bıt provedeny pøi updatu
-            záznamu tabulky, SQL string
-          on_delete -- doplòující akce, které mají bıt provedeny pøi smazání
-            záznamu z tabulky, SQL string
-          view -- specifikace view asociovaného s tabulkou, instance tøídy
-            'TableView'.  Takové view mù¾e obsahovat pouze sloupce z této
-            tabulky a také pøebírá následující její vlastnosti (nejsou-li
-            v definici view uvedeny explicitnì): klíèové sloupce, dokumentaci,
-            specifikaci pøístupovıch práv.  Smí bıt té¾ sekvence instancí tøídy
-            'TableView', pak je definován odpovídající poèet views.
-            Vícetabulková view, je nutno specifikovat pomocí tøídy
+          inherits -- sekvence jmen podÄ›dÄ›nÃ½ch tabulek (SQL strings) nebo
+            'None' (nedÄ›dÃ­ se Å¾Ã¡dnÃ¡ tabulka)
+          sql -- SQL string SQL definic pÅ™idanÃ½ za definici sloupcÅ¯, lze jej
+            vyuÅ¾Ã­t pro doplnÄ›nÃ­ SQL konstrukcÃ­ souvisejÃ­cÃ­ch se sloupci, kterÃ©
+            nelze zadat jinÃ½m zpÅ¯sobem
+          schemas -- nenÃ­-li 'None', definuje schÃ©mata, ve kterÃ½ch mÃ¡ bÃ½t
+            tabulka vytvoÅ™ena, jde o sekvenci Å™etÄ›zcÅ¯ obsahujÃ­cÃ­ch textovÃ©
+            definice postgresovÃ© search_path urÄujÃ­cÃ­ search_path nastavenou
+            pÅ™i vytvÃ¡Å™enÃ­ tabulky, tabulka je samostatnÄ› vytvoÅ™ena pro kaÅ¾dÃ½
+            z prvkÅ¯ tÃ©to sekvence
+          on_insert -- doplÅˆujÃ­cÃ­ akce, kterÃ© majÃ­ bÃ½t provedeny pÅ™i vloÅ¾enÃ­
+            zÃ¡znamu do tabulky, SQL string
+          on_update -- doplÅˆujÃ­cÃ­ akce, kterÃ© majÃ­ bÃ½t provedeny pÅ™i updatu
+            zÃ¡znamu tabulky, SQL string
+          on_delete -- doplÅˆujÃ­cÃ­ akce, kterÃ© majÃ­ bÃ½t provedeny pÅ™i smazÃ¡nÃ­
+            zÃ¡znamu zÂ tabulky, SQL string
+          view -- specifikace view asociovanÃ©ho sÂ tabulkou, instance tÅ™Ã­dy
+            'TableView'.  TakovÃ© view mÅ¯Å¾e obsahovat pouze sloupce zÂ tÃ©to
+            tabulky a takÃ© pÅ™ebÃ­rÃ¡ nÃ¡sledujÃ­cÃ­ jejÃ­ vlastnosti (nejsou-li
+            vÂ definici view uvedeny explicitnÄ›): klÃ­ÄovÃ© sloupce, dokumentaci,
+            specifikaci pÅ™Ã­stupovÃ½ch prÃ¡v.  SmÃ­ bÃ½t tÃ©Å¾ sekvence instancÃ­ tÅ™Ã­dy
+            'TableView', pak je definovÃ¡n odpovÃ­dajÃ­cÃ­ poÄet views.
+            VÃ­cetabulkovÃ¡ view, je nutno specifikovat pomocÃ­ tÅ™Ã­dy
             '_GsqlView'.
-          init_values -- sekvence iniciálních hodnot vlo¾enıch do
-            tabulky. ka¾dı prvek je sekvence SQL strings odpovídající sloupcùm
-            z argumentu 'init_columns' nebo v¹em sloupcùm tabulky v daném
-            poøadí
-          init_columns -- sekvence jmen sloupcù nebo instancí tøídy 'Column',
-            pro nì¾ jsou definovány 'init_values'; je-li prázdnou sekvencí,
-            jsou to v¹echny sloupce tabulky
-          tablespace -- název tablespace, ve kterém bude tabulka vytvoøena  
-          upd_log_trigger -- název trigger funkce, která bude logovat zmìny v
-            záznamech, nebo None, pokud se nemá logovat.
+          init_values -- sekvence iniciÃ¡lnÃ­ch hodnot vloÅ¾enÃ½ch do
+            tabulky. kaÅ¾dÃ½ prvek je sekvence SQL strings odpovÃ­dajÃ­cÃ­ sloupcÅ¯m
+            zÂ argumentu 'init_columns' nebo vÅ¡em sloupcÅ¯m tabulky vÂ danÃ©m
+            poÅ™adÃ­
+          init_columns -- sekvence jmen sloupcÅ¯ nebo instancÃ­ tÅ™Ã­dy 'Column',
+            pro nÄ›Å¾ jsou definovÃ¡ny 'init_values'; je-li prÃ¡zdnou sekvencÃ­,
+            jsou to vÅ¡echny sloupce tabulky
+          tablespace -- nÃ¡zev tablespace, ve kterÃ©m bude tabulka vytvoÅ™ena  
+          upd_log_trigger -- nÃ¡zev trigger funkce, kterÃ¡ bude logovat zmÄ›ny v
+            zÃ¡znamech, nebo None, pokud se nemÃ¡ logovat.
           indexes -- sequence of multicolumn index definitions; each element of
             the sequence is a tuple of the form (COLUMNS, OPTIONS), where
             COLUMNS is sequence of column names and OPTIONS is (possibly empty)
             dictionary of index options.  Currently the only supported index
             option is 'method=METHOD' where 'METHOD' is a string defining the
             index method.
-          kwargs -- argumenty pøedané konstruktoru pøedka
+          kwargs -- argumenty pÅ™edanÃ© konstruktoru pÅ™edka
 
         """
         super(_GsqlTable, self).__init__(name, **kwargs)
@@ -828,7 +828,7 @@ class _GsqlTable(_GsqlSpec):
         return string.join(init_inserts)
 
     def name(self):
-        """Vra» jméno tabulky zadané v konstruktoru."""
+        """VraÅ¥ jmÃ©no tabulky zadanÃ© vÂ konstruktoru."""
         return self._name
     
     def extra_names(self):
@@ -840,11 +840,11 @@ class _GsqlTable(_GsqlSpec):
         return names
 
     def columns(self):
-        """Vra» specifikaci sloupcù zadanou v konstruktoru."""
+        """VraÅ¥ specifikaci sloupcÅ¯ zadanou vÂ konstruktoru."""
         return self._columns
 
     def key_columns(self):
-        """Vra» seznam názvù klíèovıch sloupcù."""
+        """VraÅ¥ seznam nÃ¡zvÅ¯ klÃ­ÄovÃ½ch sloupcÅ¯."""
         kcols = []
         for c in self._columns:
             if isinstance(c, PrimaryColumn):
@@ -1183,9 +1183,9 @@ class Select(_GsqlSpec):
         """Inicializuj instanci.
         Argumenty:
 
-          relations -- sekvence instancí tøídy SelectRelation nebo SelectSet.
-          include_columns -- seznam instancí tøídy ViewColumn, které budou
-            pøidány ke sloupcùm z relations (typicky vırazové sloupce).
+          relations -- sekvence instancÃ­ tÅ™Ã­dy SelectRelation nebo SelectSet.
+          include_columns -- seznam instancÃ­ tÅ™Ã­dy ViewColumn, kterÃ© budou
+            pÅ™idÃ¡ny ke sloupcÅ¯m z relations (typicky vÃ½razovÃ© sloupce).
           group_by -- string pro klauzuli GROUP BY.  
           having -- string pro klauzuli HAVING.  
           order_by -- string pro klauzuli GROUP BY.  
@@ -1263,7 +1263,7 @@ class Select(_GsqlSpec):
             else:    
                 condition = rel.condition
             return JoinType.TEMPLATES[jtype] % (relation, alias, condition)
-        # První relace je FROM a podmínka nebude pou¾ita
+        # PrvnÃ­ relace je FROM a podmÃ­nka nebude pouÅ¾ita
         wherecondition = self._relations[0].condition
         joins = [format_relation(i,r) for i,r in enumerate(self._relations)]
         result = '\n '.join(joins)
@@ -1378,7 +1378,7 @@ class Select(_GsqlSpec):
     
 
 class _GsqlViewNG(Select):
-    """Specifikace view (nová)."""
+    """Specifikace view (novÃ¡)."""
     
     _SQL_NAME = 'VIEW'
     _PGSQL_TYPE = 'v'
@@ -1394,46 +1394,46 @@ class _GsqlViewNG(Select):
         """Inicializuj instanci.
         Argumenty:
 
-          name -- jméno view jako SQL string
-          relations -- sekvence instancí tøídy SelectRelation
-          schemas -- není-li 'None', definuje schémata, ve kterıch má bıt
-            view vytvoøeno, jde o sekvenci øetìzcù obsahujících textové
-            definice postgresové search_path urèující search_path nastavenou
-            pøi vytváøení view, view je samostatnì vytvoøeno pro ka¾dı
-            z prvkù této sekvence
-          insert -- specifikace akce nad view pøi provedení operace INSERT.
-            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
-            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
-            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
-            provedené navíc po vlo¾ení pøedanıch hodnot sloupcù do tabulky
-            prvního sloupce view.
-          update -- specifikace akce nad view pøi provedení operace UPDATE.
-            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
-            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
-            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
-            provedené navíc po updatu pøedanıch hodnot sloupcù v tabulce
-            prvního sloupce view.
-          delete -- specifikace akce nad view pøi provedení operace DELETE.
-            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
-            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
-            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
-            provedené navíc po smazání daného záznamu z tabulky prvního sloupce
+          name -- jmÃ©no view jako SQL string
+          relations -- sekvence instancÃ­ tÅ™Ã­dy SelectRelation
+          schemas -- nenÃ­-li 'None', definuje schÃ©mata, ve kterÃ½ch mÃ¡ bÃ½t
+            view vytvoÅ™eno, jde o sekvenci Å™etÄ›zcÅ¯ obsahujÃ­cÃ­ch textovÃ©
+            definice postgresovÃ© search_path urÄujÃ­cÃ­ search_path nastavenou
+            pÅ™i vytvÃ¡Å™enÃ­ view, view je samostatnÄ› vytvoÅ™eno pro kaÅ¾dÃ½
+            z prvkÅ¯ tÃ©to sekvence
+          insert -- specifikace akce nad view pÅ™i provedenÃ­ operace INSERT.
+            Je-li 'None', je operace blokovÃ¡na, neprovÃ¡dÃ­ se pÅ™i nÃ­ nic.  Je-li
+            string, jednÃ¡ se oÂ SQL string definujÃ­cÃ­ kompletnÃ­ DO INSTEAD akci.
+            Je-li sekvencÃ­ SQL strings, definujÃ­ tyto strings SQL pÅ™Ã­kazy
+            provedenÃ© navÃ­c po vloÅ¾enÃ­ pÅ™edanÃ½ch hodnot sloupcÅ¯ do tabulky
+            prvnÃ­ho sloupce view.
+          update -- specifikace akce nad view pÅ™i provedenÃ­ operace UPDATE.
+            Je-li 'None', je operace blokovÃ¡na, neprovÃ¡dÃ­ se pÅ™i nÃ­ nic.  Je-li
+            string, jednÃ¡ se oÂ SQL string definujÃ­cÃ­ kompletnÃ­ DO INSTEAD akci.
+            Je-li sekvencÃ­ SQL strings, definujÃ­ tyto strings SQL pÅ™Ã­kazy
+            provedenÃ© navÃ­c po updatu pÅ™edanÃ½ch hodnot sloupcÅ¯ vÂ tabulce
+            prvnÃ­ho sloupce view.
+          delete -- specifikace akce nad view pÅ™i provedenÃ­ operace DELETE.
+            Je-li 'None', je operace blokovÃ¡na, neprovÃ¡dÃ­ se pÅ™i nÃ­ nic.  Je-li
+            string, jednÃ¡ se oÂ SQL string definujÃ­cÃ­ kompletnÃ­ DO INSTEAD akci.
+            Je-li sekvencÃ­ SQL strings, definujÃ­ tyto strings SQL pÅ™Ã­kazy
+            provedenÃ© navÃ­c po smazÃ¡nÃ­ danÃ©ho zÃ¡znamu zÂ tabulky prvnÃ­ho sloupce
             view.
-          insert_order -- None nebo sekvence názvù SelectRelation. Pokud je None,
-            budou defaultní inserty v insert rulu provedeny pro jednotlivé
-            relace v poøadí jejich uvedení, pokud je uvedena sekvence názvù,
-            budou provedeny v uvedeném poøadí. Vynecháním názvu SelectRelation
-            se docílí toho, ¾e insert pro danou relaci nebude vùbec proveden.
-          update_order -- None nebo sekvence názvù SelectRelation. Pokud je None,
-            budou defaultní updaty v update rulu provedeny pro jednotlivé
-            relace v poøadí jejich uvedení, pokud je uvedena sekvence názvù,
-            budou provedeny v uvedeném poøadí. Vynecháním názvu SelectRelation
-            se docílí toho, ¾e update pro danou relaci nebude vùbec proveden.
-          delete_order -- None nebo sekvence názvù SelectRelation. Pokud je None,
-            budou defaultní delety v delete rulu provedeny pro jednotlivé
-            relace v poøadí jejich uvedení, pokud je uvedena sekvence názvù,
-            budou provedeny v uvedeném poøadí. Vynecháním názvu SelectRelation
-            se docílí toho, ¾e delete pro danou relaci nebude vùbec proveden.
+          insert_order -- None nebo sekvence nÃ¡zvÅ¯ SelectRelation. Pokud je None,
+            budou defaultnÃ­ inserty v insert rulu provedeny pro jednotlivÃ©
+            relace v poÅ™adÃ­ jejich uvedenÃ­, pokud je uvedena sekvence nÃ¡zvÅ¯,
+            budou provedeny v uvedenÃ©m poÅ™adÃ­. VynechÃ¡nÃ­m nÃ¡zvu SelectRelation
+            se docÃ­lÃ­ toho, Å¾e insert pro danou relaci nebude vÅ¯bec proveden.
+          update_order -- None nebo sekvence nÃ¡zvÅ¯ SelectRelation. Pokud je None,
+            budou defaultnÃ­ updaty v update rulu provedeny pro jednotlivÃ©
+            relace v poÅ™adÃ­ jejich uvedenÃ­, pokud je uvedena sekvence nÃ¡zvÅ¯,
+            budou provedeny v uvedenÃ©m poÅ™adÃ­. VynechÃ¡nÃ­m nÃ¡zvu SelectRelation
+            se docÃ­lÃ­ toho, Å¾e update pro danou relaci nebude vÅ¯bec proveden.
+          delete_order -- None nebo sekvence nÃ¡zvÅ¯ SelectRelation. Pokud je None,
+            budou defaultnÃ­ delety v delete rulu provedeny pro jednotlivÃ©
+            relace v poÅ™adÃ­ jejich uvedenÃ­, pokud je uvedena sekvence nÃ¡zvÅ¯,
+            budou provedeny v uvedenÃ©m poÅ™adÃ­. VynechÃ¡nÃ­m nÃ¡zvu SelectRelation
+            se docÃ­lÃ­ toho, Å¾e delete pro danou relaci nebude vÅ¯bec proveden.
         """
         #assert relations[0].jointype == JoinType.FROM
         super(ViewNG, self).__init__(relations, **kwargs)
@@ -1629,45 +1629,45 @@ class _GsqlView(_GsqlSpec):
 
         Argumenty:
 
-          name -- jméno view jako SQL string; mù¾e bıt té¾ instance tøídy
-            '_GsqlTable', v kterém¾to pøípadì je jméno view zkonstruováno ze
-            jména tabulky pøidáním písmene 'v' pøed první podtr¾ítko v názvu
-            tabulky nebo na jeho konec, pokud ¾ádné podtr¾ítko neobsahuje
-          columns -- specifikace sloupcù view, sekvence instancí tøídy
+          name -- jmÃ©no view jako SQL string; mÅ¯Å¾e bÃ½t tÃ©Å¾ instance tÅ™Ã­dy
+            '_GsqlTable', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je jmÃ©no view zkonstruovÃ¡no ze
+            jmÃ©na tabulky pÅ™idÃ¡nÃ­m pÃ­smene 'v' pÅ™ed prvnÃ­ podtrÅ¾Ã­tko vÂ nÃ¡zvu
+            tabulky nebo na jeho konec, pokud Å¾Ã¡dnÃ© podtrÅ¾Ã­tko neobsahuje
+          columns -- specifikace sloupcÅ¯ view, sekvence instancÃ­ tÅ™Ã­dy
             'ViewColumn'
-          table_alias -- pokud není None, urèuje pomocí sekvence
-            dvojic (TAB, ALIAS) aliasy k tabulkám, které se ve view pou¾ívají
-          key_columns -- sekvence jmen klíèovıch sloupcù view, tj. sloupcù
-            jednoznaènì identifikujících záznam, strings
-          join -- urèuje zpùsob spojení tabulek, je-li view slo¾eno z více
-            tabulek.  Je-li 'None', není na spojení tabulek kladena ¾ádná
-            podmínka; je-li string, jedná se o SQL string urèující podmínku
-            spojení tabulek; je-li sekvence dvojic '(COL1, COL2)', ka¾dá
-            z tìchto dvojic urèuje relaèní spojení tabulek prostøednictvím
-            danıch sloupcù, které musí bıt uvedeny svım názvem vèetnì tabulky
-            jako SQL strings.  Je-li view sjednocením více tabulek, má argument
-            stejnou podobu a¾ na to, ¾e je sekvencí vı¹e uvedenıch specifikací
-            (není-li 'None'), v poøadí odpovídajícím poøadí tabulek ve
-            specifikaci sloupcù.
-          insert -- specifikace akce nad view pøi provedení operace INSERT.
-            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
-            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
-            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
-            provedené navíc po vlo¾ení pøedanıch hodnot sloupcù do tabulky
-            prvního sloupce view.
-          update -- specifikace akce nad view pøi provedení operace UPDATE.
-            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
-            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
-            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
-            provedené navíc po updatu pøedanıch hodnot sloupcù v tabulce
-            prvního sloupce view.
-          delete -- specifikace akce nad view pøi provedení operace DELETE.
-            Je-li 'None', je operace blokována, neprovádí se pøi ní nic.  Je-li
-            string, jedná se o SQL string definující kompletní DO INSTEAD akci.
-            Je-li sekvencí SQL strings, definují tyto strings SQL pøíkazy
-            provedené navíc po smazání daného záznamu z tabulky prvního sloupce
+          table_alias -- pokud nenÃ­ None, urÄuje pomocÃ­ sekvence
+            dvojic (TAB, ALIAS) aliasy k tabulkÃ¡m, kterÃ© se ve view pouÅ¾Ã­vajÃ­
+          key_columns -- sekvence jmen klÃ­ÄovÃ½ch sloupcÅ¯ view, tj. sloupcÅ¯
+            jednoznaÄnÄ› identifikujÃ­cÃ­ch zÃ¡znam, strings
+          join -- urÄuje zpÅ¯sob spojenÃ­ tabulek, je-li view sloÅ¾eno zÂ vÃ­ce
+            tabulek.  Je-li 'None', nenÃ­ na spojenÃ­ tabulek kladena Å¾Ã¡dnÃ¡
+            podmÃ­nka; je-li string, jednÃ¡ se oÂ SQL string urÄujÃ­cÃ­ podmÃ­nku
+            spojenÃ­ tabulek; je-li sekvence dvojic '(COL1, COL2)', kaÅ¾dÃ¡
+            zÂ tÄ›chto dvojic urÄuje relaÄnÃ­ spojenÃ­ tabulek prostÅ™ednictvÃ­m
+            danÃ½ch sloupcÅ¯, kterÃ© musÃ­ bÃ½t uvedeny svÃ½m nÃ¡zvem vÄetnÄ› tabulky
+            jako SQL strings.  Je-li view sjednocenÃ­m vÃ­ce tabulek, mÃ¡ argument
+            stejnou podobu aÅ¾ na to, Å¾e je sekvencÃ­ vÃ½Å¡e uvedenÃ½ch specifikacÃ­
+            (nenÃ­-li 'None'), vÂ poÅ™adÃ­ odpovÃ­dajÃ­cÃ­m poÅ™adÃ­ tabulek ve
+            specifikaci sloupcÅ¯.
+          insert -- specifikace akce nad view pÅ™i provedenÃ­ operace INSERT.
+            Je-li 'None', je operace blokovÃ¡na, neprovÃ¡dÃ­ se pÅ™i nÃ­ nic.  Je-li
+            string, jednÃ¡ se oÂ SQL string definujÃ­cÃ­ kompletnÃ­ DO INSTEAD akci.
+            Je-li sekvencÃ­ SQL strings, definujÃ­ tyto strings SQL pÅ™Ã­kazy
+            provedenÃ© navÃ­c po vloÅ¾enÃ­ pÅ™edanÃ½ch hodnot sloupcÅ¯ do tabulky
+            prvnÃ­ho sloupce view.
+          update -- specifikace akce nad view pÅ™i provedenÃ­ operace UPDATE.
+            Je-li 'None', je operace blokovÃ¡na, neprovÃ¡dÃ­ se pÅ™i nÃ­ nic.  Je-li
+            string, jednÃ¡ se oÂ SQL string definujÃ­cÃ­ kompletnÃ­ DO INSTEAD akci.
+            Je-li sekvencÃ­ SQL strings, definujÃ­ tyto strings SQL pÅ™Ã­kazy
+            provedenÃ© navÃ­c po updatu pÅ™edanÃ½ch hodnot sloupcÅ¯ vÂ tabulce
+            prvnÃ­ho sloupce view.
+          delete -- specifikace akce nad view pÅ™i provedenÃ­ operace DELETE.
+            Je-li 'None', je operace blokovÃ¡na, neprovÃ¡dÃ­ se pÅ™i nÃ­ nic.  Je-li
+            string, jednÃ¡ se oÂ SQL string definujÃ­cÃ­ kompletnÃ­ DO INSTEAD akci.
+            Je-li sekvencÃ­ SQL strings, definujÃ­ tyto strings SQL pÅ™Ã­kazy
+            provedenÃ© navÃ­c po smazÃ¡nÃ­ danÃ©ho zÃ¡znamu zÂ tabulky prvnÃ­ho sloupce
             view.
-          kwargs -- argumenty pøedané konstruktoru pøedka
+          kwargs -- argumenty pÅ™edanÃ© konstruktoru pÅ™edka
 
         """
         assert is_sequence(table_alias) or table_alias is None
@@ -1702,7 +1702,7 @@ class _GsqlView(_GsqlSpec):
 
 
     def _split_columns(self):
-        """Rozdìlí sloupce na jednoduché a slo¾ené (UNION)."""       
+        """RozdÄ›lÃ­ sloupce na jednoduchÃ© a sloÅ¾enÃ© (UNION)."""       
         if not self._complexp:
             return self._columns, None
         simple_columns = []
@@ -1729,8 +1729,8 @@ class _GsqlView(_GsqlSpec):
 
       
     def _make_tables(self):
-        """Vytvoøí seznam tabulek pro klauzuli from
-           a seznam jmen pou¾itıch tabulek."""       
+        """VytvoÅ™Ã­ seznam tabulek pro klauzuli from
+           a seznam jmen pouÅ¾itÃ½ch tabulek."""       
         column_tables = []
         if self._complexp:
             for i in range(self._complex_len):
@@ -2015,29 +2015,29 @@ class _GsqlFunction(_GsqlSpec):
 
         Argumenty:
 
-          name -- jméno funkce, SQL string nebo pythonová funkce (v kterém¾to
-            pøípadì je jméno SQL funkce shodné s jejím)
-          arguments -- sekvence argumentù funkce ve správném poøadí;
-            ka¾dı prvek sekvence je buï instance tøídy 'pytis.data.Type',
-            SQL string nebo instance tøídy ArgumentType
-          output_type -- typ návratové hodnoty funkce; instance tøídy
-            'pytis.data.Type', SQL string, nebo instance tøídy ReturnType
-            nebo None (poèítá-li se se specifikováním návratové hodnoty pomocí
-            modifikátoru 'out' v 'arguments')
-          use_functions -- sekvence pythonovıch funkcí, jejich¾ definice mají
-            bıt pøidány pøed definici funkce samotné
-          schemas -- není-li 'None', definuje schémata, ve kterıch má bıt
-            funkce vytvoøena, jde o sekvenci øetìzcù obsahujících textové
-            definice postgresové search_path urèující search_path nastavenou
-            pøi vytváøení funkce, funkce je samostatnì vytvoøena pro ka¾dı
-            z prvkù této sekvence
-          body -- definice funkce; mù¾e bıt buï SQL string obsahující tìlo
-            funkce ve formì SQL pøíkazù, nebo pythonová funkce s dostupnım
-            zdrojovım kódem tvoøící tìlo funkce v jazyce plpython, nebo 'None',
-            v kterém¾to pøípadì je funkce pythonová a musí bıt hodnotou
+          name -- jmÃ©no funkce, SQL string nebo pythonovÃ¡ funkce (vÂ kterÃ©mÅ¾to
+            pÅ™Ã­padÄ› je jmÃ©no SQL funkce shodnÃ© sÂ jejÃ­m)
+          arguments -- sekvence argumentÅ¯ funkce ve sprÃ¡vnÃ©m poÅ™adÃ­;
+            kaÅ¾dÃ½ prvek sekvence je buÄ instance tÅ™Ã­dy 'pytis.data.Type',
+            SQL string nebo instance tÅ™Ã­dy ArgumentType
+          output_type -- typ nÃ¡vratovÃ© hodnoty funkce; instance tÅ™Ã­dy
+            'pytis.data.Type', SQL string, nebo instance tÅ™Ã­dy ReturnType
+            nebo None (poÄÃ­tÃ¡-li se se specifikovÃ¡nÃ­m nÃ¡vratovÃ© hodnoty pomocÃ­
+            modifikÃ¡toru 'out' v 'arguments')
+          use_functions -- sekvence pythonovÃ½ch funkcÃ­, jejichÅ¾ definice majÃ­
+            bÃ½t pÅ™idÃ¡ny pÅ™ed definici funkce samotnÃ©
+          schemas -- nenÃ­-li 'None', definuje schÃ©mata, ve kterÃ½ch mÃ¡ bÃ½t
+            funkce vytvoÅ™ena, jde o sekvenci Å™etÄ›zcÅ¯ obsahujÃ­cÃ­ch textovÃ©
+            definice postgresovÃ© search_path urÄujÃ­cÃ­ search_path nastavenou
+            pÅ™i vytvÃ¡Å™enÃ­ funkce, funkce je samostatnÄ› vytvoÅ™ena pro kaÅ¾dÃ½
+            z prvkÅ¯ tÃ©to sekvence
+          body -- definice funkce; mÅ¯Å¾e bÃ½t buÄ SQL string obsahujÃ­cÃ­ tÄ›lo
+            funkce ve formÄ› SQL pÅ™Ã­kazÅ¯, nebo pythonovÃ¡ funkce sÂ dostupnÃ½m
+            zdrojovÃ½m kÃ³dem tvoÅ™Ã­cÃ­ tÄ›lo funkce vÂ jazyce plpython, nebo 'None',
+            vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je funkce pythonovÃ¡ a musÃ­ bÃ½t hodnotou
             argumentu 'name'
           security_definer -- if True, add 'SECURITY DEFINER' to function definition
-          kwargs -- argumenty pøedané konstruktoru pøedka
+          kwargs -- argumenty pÅ™edanÃ© konstruktoru pÅ™edka
 
         """
         if isinstance(name, str):
@@ -2090,7 +2090,7 @@ class _GsqlFunction(_GsqlSpec):
                 lines = [l for l in lines if l.strip() != '']
                 return _gsql_escape(string.join(lines[skip:], ''))
             source_list = map(get_source, tuple(self._use_functions)+(body,))
-            # plpython nemá rád prázdné øádky
+            # plpython nemÃ¡ rÃ¡d prÃ¡zdnÃ© Å™Ã¡dky
             source_text = string.join(source_list, '')
             result = "'%s' LANGUAGE plpythonu" % source_text
         return result
@@ -2203,14 +2203,14 @@ class _GsqlSequence(_GsqlSpec):
 
         Argumenty:
 
-          name -- jméno sekvence, SQL string
+          name -- jmÃ©no sekvence, SQL string
           increment, minvalue, maxvalue, start, cycle -- viz 'create sequence'
-          schemas -- není-li 'None', definuje schémata, ve kterıch má bıt
-            databázová sekvence vytvoøena, jde o tuple nebo list øetìzcù
-            obsahujících textové definice postgresové search_path urèující
-            search_path nastavenou pøi vytváøení databázové sekvence, tabulka
-            je samostatnì vytvoøena pro ka¾dı z prvkù tohoto tuple nebo listu
-          kwargs -- argumenty pøedané konstruktoru pøedka
+          schemas -- nenÃ­-li 'None', definuje schÃ©mata, ve kterÃ½ch mÃ¡ bÃ½t
+            databÃ¡zovÃ¡ sekvence vytvoÅ™ena, jde o tuple nebo list Å™etÄ›zcÅ¯
+            obsahujÃ­cÃ­ch textovÃ© definice postgresovÃ© search_path urÄujÃ­cÃ­
+            search_path nastavenou pÅ™i vytvÃ¡Å™enÃ­ databÃ¡zovÃ© sekvence, tabulka
+            je samostatnÄ› vytvoÅ™ena pro kaÅ¾dÃ½ z prvkÅ¯ tohoto tuple nebo listu
+          kwargs -- argumenty pÅ™edanÃ© konstruktoru pÅ™edka
 
         """
         super(_GsqlSequence, self).__init__(name, **kwargs)
@@ -2245,24 +2245,24 @@ class _GsqlSequence(_GsqlSpec):
 
 
 class _GsqlRaw(_GsqlSpec):
-    """Prosté SQL pøíkazy."""
+    """ProstÃ© SQL pÅ™Ã­kazy."""
     
     def __init__(self, sql, file_name=None, schemas=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
 
-          sql -- SQL pøíkazy, SQL string
-          file_name -- byly-li SQL pøíkazy naèteny jako kompletní obsah
-            nìjakého SQL souboru, je tento argument jménem onoho souboru
-            (v jakékoliv podobì, tento argument má pouze funkci dokumentaèní);
-            v jiném pøípadì je 'None'
-          schemas -- není-li 'None', definuje schémata, ve kterıch mají bıt
-            pøíkazy provedeny, jde o sekvenci øetìzcù obsahujících textové
-            definice postgresové search_path urèující search_path nastavenou
-            pøi provádìní pøíkazù, pøíkazy jsou samostatnì provedeny pro ka¾dı
-            z prvkù této sekvence
-          kwargs -- argumenty pøedané konstruktoru pøedka
+          sql -- SQL pÅ™Ã­kazy, SQL string
+          file_name -- byly-li SQL pÅ™Ã­kazy naÄteny jako kompletnÃ­ obsah
+            nÄ›jakÃ©ho SQL souboru, je tento argument jmÃ©nem onoho souboru
+            (vÂ jakÃ©koliv podobÄ›, tento argument mÃ¡ pouze funkci dokumentaÄnÃ­);
+            vÂ jinÃ©m pÅ™Ã­padÄ› je 'None'
+          schemas -- nenÃ­-li 'None', definuje schÃ©mata, ve kterÃ½ch majÃ­ bÃ½t
+            pÅ™Ã­kazy provedeny, jde o sekvenci Å™etÄ›zcÅ¯ obsahujÃ­cÃ­ch textovÃ©
+            definice postgresovÃ© search_path urÄujÃ­cÃ­ search_path nastavenou
+            pÅ™i provÃ¡dÄ›nÃ­ pÅ™Ã­kazÅ¯, pÅ™Ã­kazy jsou samostatnÄ› provedeny pro kaÅ¾dÃ½
+            z prvkÅ¯ tÃ©to sekvence
+          kwargs -- argumenty pÅ™edanÃ© konstruktoru pÅ™edka
 
         """
         if 'name' not in kwargs:
@@ -2298,7 +2298,7 @@ class _GsqlRaw(_GsqlSpec):
 
 
 class _GviewsqlRaw(_GsqlSpec):
-    """View definované prostımi SQL pøíkazy."""
+    """View definovanÃ© prostÃ½mi SQL pÅ™Ã­kazy."""
    
     def __init__(self, name, columns, fromitems, where=None, 
                  groupby=None, having=None,
@@ -2308,16 +2308,16 @@ class _GviewsqlRaw(_GsqlSpec):
 
         Argumenty:
 
-          name -- název view
-          columns -- textovì vyjmenované sloupce
-          fromitems -- textovì vyjmenované relace a joins
-          where -- textovì vyjmenované podmínky
-          groupby -- textovì vyjmenované GROUP BY
-          having -- textovì vyjmenované HAVING
-          insert -- None nebo textovì vyjmenované akce pro insert rule
-          update -- None nebo textovì vyjmenované akce pro update rule
-          delete -- None nebo textovì vyjmenované akce pro delete rule
-          kwargs -- argumenty pøedané konstruktoru pøedka
+          name -- nÃ¡zev view
+          columns -- textovÄ› vyjmenovanÃ© sloupce
+          fromitems -- textovÄ› vyjmenovanÃ© relace a joins
+          where -- textovÄ› vyjmenovanÃ© podmÃ­nky
+          groupby -- textovÄ› vyjmenovanÃ© GROUP BY
+          having -- textovÄ› vyjmenovanÃ© HAVING
+          insert -- None nebo textovÄ› vyjmenovanÃ© akce pro insert rule
+          update -- None nebo textovÄ› vyjmenovanÃ© akce pro update rule
+          delete -- None nebo textovÄ› vyjmenovanÃ© akce pro delete rule
+          kwargs -- argumenty pÅ™edanÃ© konstruktoru pÅ™edka
         """
         super(_GviewsqlRaw, self).__init__(name, **kwargs)
         self._columns = columns
@@ -2423,7 +2423,7 @@ class _GsqlDefs(UserDict.UserDict):
                 i = self._resolved.index(o)
                 break
         self._resolved.insert(i, name)
-        # Pro tables a views updatujeme seznam sloupcù
+        # Pro tables a views updatujeme seznam sloupcÅ¯
         spec = self[name]
         if isinstance(spec, _GsqlTable) or isinstance(spec, _GsqlView):
             self._relation_columns[name] = spec.columns()
@@ -2643,47 +2643,47 @@ def _gsql_process(class_, args, kwargs):
     return spec
 
 def sqltype(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlType."""
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GsqlType."""
     return _gsql_process(_GsqlType, args, kwargs)
 
 def schema(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlSchema."""
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GsqlSchema."""
     return _gsql_process(_GsqlSchema, args, kwargs)
 
 def table(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlTable."""
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GsqlTable."""
     return _gsql_process(_GsqlTable, args, kwargs)
 
 def view(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlView."""
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GsqlView."""
     return _gsql_process(_GsqlView, args, kwargs)
 
 def viewng(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlViewNG."""
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GsqlViewNG."""
     return _gsql_process(_GsqlViewNG, args, kwargs)
 
 
 def function(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlFunction.
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GsqlFunction.
     """
     return _gsql_process(_GsqlFunction, args, kwargs)
 
 def sequence(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GsqlSequence.
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GsqlSequence.
     """
     return _gsql_process(_GsqlSequence, args, kwargs)
 
 
 def sql_raw(text, name=None, depends=(), **kwargs):
-    """Specifikace prostıch SQL pøíkazù.
+    """Specifikace prostÃ½ch SQL pÅ™Ã­kazÅ¯.
 
     Argumenty:
 
-      text -- string obsahující kı¾ené SQL pøíkazy
-      depends -- stejné jako v '_GsqlSpec.__init__()'
+      text -- string obsahujÃ­cÃ­ kÃ½Å¾enÃ© SQL pÅ™Ã­kazy
+      depends -- stejnÃ© jako vÂ '_GsqlSpec.__init__()'
 
-    Tato funkce by mìla bıt pou¾ívána jen ve vıjimeènıch pøípadech, nebo» v ní
-    obsa¾enı kód je mimo dosah v¹ech kontrol.
+    Tato funkce by mÄ›la bÃ½t pouÅ¾Ã­vÃ¡na jen ve vÃ½jimeÄnÃ½ch pÅ™Ã­padech, neboÅ¥ vÂ nÃ­
+    obsaÅ¾enÃ½ kÃ³d je mimo dosah vÅ¡ech kontrol.
       
     """
     kwargs = copy.copy(kwargs)
@@ -2692,20 +2692,20 @@ def sql_raw(text, name=None, depends=(), **kwargs):
 
 
 def view_sql_raw(*args, **kwargs):
-    """Z hlediska specifikace ekvivalentní volání konstruktoru '_GviewsqlRaw."""
+    """ZÂ hlediska specifikace ekvivalentnÃ­ volÃ¡nÃ­ konstruktoru '_GviewsqlRaw."""
     return _gsql_process(_GviewsqlRaw, args, kwargs)
 
 
 def sql_raw_include(file_name, depends=(), **kwargs):
-    """Specifikace souboru obsahujícího SQL pøíkazy, kterı má bıt naèten.
+    """Specifikace souboru obsahujÃ­cÃ­ho SQL pÅ™Ã­kazy, kterÃ½ mÃ¡ bÃ½t naÄten.
 
-    Tento soubor je beze zmìny zahrnut do vıslednıch SQL pøíkazù.
+    Tento soubor je beze zmÄ›ny zahrnut do vÃ½slednÃ½ch SQL pÅ™Ã­kazÅ¯.
 
     Argumenty:
 
-      file_name -- jméno kı¾eného SQL souboru; absolutní nebo relativní vùèi
-        aktuálnímu adresáøi
-      depends -- stejné jako v '_GsqlSpec.__init__()'
+      file_name -- jmÃ©no kÃ½Å¾enÃ©ho SQL souboru; absolutnÃ­ nebo relativnÃ­ vÅ¯Äi
+        aktuÃ¡lnÃ­mu adresÃ¡Å™i
+      depends -- stejnÃ© jako vÂ '_GsqlSpec.__init__()'
 
     """
     f = open(file_name)
@@ -2717,14 +2717,14 @@ def sql_raw_include(file_name, depends=(), **kwargs):
 
 
 def include(file_name):
-    """Zpracuj pythonovı soubor 'file_name'.
+    """Zpracuj pythonovÃ½ soubor 'file_name'.
 
-    Soubor je zpracován prostøednictvím volání 'execfile()'.
+    Soubor je zpracovÃ¡n prostÅ™ednictvÃ­m volÃ¡nÃ­ 'execfile()'.
     
     Argumenty:
 
-      file_name -- jméno kı¾eného pythonového souboru; absolutní nebo relativní
-        vùèi aktuálnímu adresáøi
+      file_name -- jmÃ©no kÃ½Å¾enÃ©ho pythonovÃ©ho souboru; absolutnÃ­ nebo relativnÃ­
+        vÅ¯Äi aktuÃ¡lnÃ­mu adresÃ¡Å™i
 
     """
     execfile(file_name, copy.copy(globals()))

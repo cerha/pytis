@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2004, 2005, 2006, 2011 Brailcom, o.p.s.
 #
@@ -16,14 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Pomùcky pro testování.
+"""PomÅ¯cky pro testovÃ¡nÃ­.
 
-Modul definuje tøídy, které mírnì usnadòují vytváøení sad testù v na¹ich
+Modul definuje tÅ™Ã­dy, kterÃ© mÃ­rnÄ› usnadÅˆujÃ­ vytvÃ¡Å™enÃ­ sad testÅ¯ vÂ naÅ¡ich
 souborech '_test.py'.
 
 """
-# Tento modul je vyèlenìn z util.py, aby je neèinil závislım na PyUnit, které
-# není pro bìh systému zapotøebí.
+# Tento modul je vyÄlenÄ›n zÂ util.py, aby je neÄinil zÃ¡vislÃ½m na PyUnit, kterÃ©
+# nenÃ­ pro bÄ›h systÃ©mu zapotÅ™ebÃ­.
 
 
 import string
@@ -35,22 +35,22 @@ from pytis.util import *
 
 
 class TestSuite(unittest.TestSuite):
-    """Mírnì vylep¹ená tøída 'unittest.TestSuite'.
+    """MÃ­rnÄ› vylepÅ¡enÃ¡ tÅ™Ã­da 'unittest.TestSuite'.
 
-    Cílem tøídy je je¹tì více zestruènit nìkteré èasto pou¾ívané operace
-    v na¹em kódu.  Oproti podìdìné tøídì poskytuje doplòující metodu 'add'.
+    CÃ­lem tÅ™Ã­dy je jeÅ¡tÄ› vÃ­ce zestruÄnit nÄ›kterÃ© Äasto pouÅ¾Ã­vanÃ© operace
+    vÂ naÅ¡em kÃ³du.  Oproti podÄ›dÄ›nÃ© tÅ™Ã­dÄ› poskytuje doplÅˆujÃ­cÃ­ metodu 'add'.
 
-    U¾iteèné (pouze) pro tvorbu testù.
+    UÅ¾iteÄnÃ© (pouze) pro tvorbu testÅ¯.
     
     """
     def add(self, class_):
-        """Pøidej do testù v¹echny metody tøídy 'class_' s prefixem 'check_'.
+        """PÅ™idej do testÅ¯ vÅ¡echny metody tÅ™Ã­dy 'class_' sÂ prefixem 'check_'.
 
-        Nepøidávej metody, které jsou beze zmìny podìdìny od pøedka.  Je-li
-        'config.run_interactive_tests' nepravda, nepøidávej metody zaèínající
+        NepÅ™idÃ¡vej metody, kterÃ© jsou beze zmÄ›ny podÄ›dÄ›ny od pÅ™edka.  Je-li
+        'config.run_interactive_tests' nepravda, nepÅ™idÃ¡vej metody zaÄÃ­najÃ­cÃ­
         prefixem 'check_interactive_'.
         
-        Testy jsou pøidány jako samostatná test suite.
+        Testy jsou pÅ™idÃ¡ny jako samostatnÃ¡ test suite.
         
         """
         tests = [x for x in direct_public_members(class_)
@@ -63,10 +63,10 @@ class TestSuite(unittest.TestSuite):
 
 
 class InteractiveTestCase(unittest.TestCase):
-    """Základní tøída pro interaktivní testy.
+    """ZÃ¡kladnÃ­ tÅ™Ã­da pro interaktivnÃ­ testy.
 
-    Tøída definuje novou metodu 'ask_user()' pro interakci s obsluhou
-    testování.
+    TÅ™Ã­da definuje novou metodu 'ask_user()' pro interakci sÂ obsluhou
+    testovÃ¡nÃ­.
     
     """
     def _format_instructions(self, instructions):
@@ -95,26 +95,26 @@ class InteractiveTestCase(unittest.TestCase):
                     print
                     return False
         else:
-            raw_input(_("Stiskni Enter..."))
+            raw_input(_(u"Stiskni Enter..."))
             return True
 
     def ask_user(self, instructions, question):
-        """Vypi¹ 'instructions' a zeptej se, zda test uspìl.
+        """VypiÅ¡ 'instructions' a zeptej se, zda test uspÄ›l.
 
         Argumenty:
 
-          instructions -- libovolnı string, kterı bude u¾ivateli vypsán jako
-            instrukce, co má udìlat a co má zkontrolovat
-          question -- jednoøádkovı string jako otázka polo¾ená u¾ivateli nebo
-            'None'; string se neukonèuje otazníkem, ten bude doplnìn
+          instructions -- libovolnÃ½ string, kterÃ½ bude uÅ¾ivateli vypsÃ¡n jako
+            instrukce, co mÃ¡ udÄ›lat a co mÃ¡ zkontrolovat
+          question -- jednoÅ™Ã¡dkovÃ½ string jako otÃ¡zka poloÅ¾enÃ¡ uÅ¾ivateli nebo
+            'None'; string se neukonÄuje otaznÃ­kem, ten bude doplnÄ›n
             automaticky
 
-        Jestli¾e 'question' je 'None', jsou u¾ivateli pouze vypsány
-        'instructions' a u¾ivatel je po¾ádán o odklepnutí.  Jestli¾e 'question'
-        je string, je u¾ivatel po¾ádán o odpovìï ANO/NE.
+        JestliÅ¾e 'question' je 'None', jsou uÅ¾ivateli pouze vypsÃ¡ny
+        'instructions' a uÅ¾ivatel je poÅ¾Ã¡dÃ¡n oÂ odklepnutÃ­.  JestliÅ¾e 'question'
+        je string, je uÅ¾ivatel poÅ¾Ã¡dÃ¡n oÂ odpovÄ›Ä ANO/NE.
 
-        Metoda nic nevrací, v pøípadì kladné odpovìdi na otázku neudìlá nic
-        zvlá¹tního, v pøípadì záporné odpovìdi automaticky provede 'fail()'.
+        Metoda nic nevracÃ­, vÂ pÅ™Ã­padÄ› kladnÃ© odpovÄ›di na otÃ¡zku neudÄ›lÃ¡ nic
+        zvlÃ¡Å¡tnÃ­ho, vÂ pÅ™Ã­padÄ› zÃ¡pornÃ© odpovÄ›di automaticky provede 'fail()'.
 
         """
         self._print_instructions(self._format_instructions(instructions))
@@ -123,12 +123,12 @@ class InteractiveTestCase(unittest.TestCase):
 
 
 def transform_args():
-    """Vra» seznam ztransformovanıch argumentù pøíkazového øádku.
+    """VraÅ¥ seznam ztransformovanÃ½ch argumentÅ¯ pÅ™Ã­kazovÃ©ho Å™Ã¡dku.
 
-    Jsou provádìny následující transformace:
+    Jsou provÃ¡dÄ›ny nÃ¡sledujÃ­cÃ­ transformace:
 
-    - Ka¾dı argument, kterı odpovídá potomku tøídy 'unittest.TestCase', nahraï
-      seznamem metod této tøídy zaèínajících prefixem 'check_'.
+    - KaÅ¾dÃ½ argument, kterÃ½ odpovÃ­dÃ¡ potomku tÅ™Ã­dy 'unittest.TestCase', nahraÄ
+      seznamem metod tÃ©to tÅ™Ã­dy zaÄÃ­najÃ­cÃ­ch prefixem 'check_'.
 
     """
     import __main__
@@ -149,15 +149,15 @@ def transform_args():
 
 
 def run_tests(module, tests=None, verbosity=2):
-    """Spus» \"interaktivnì\" testy modulu 'module'.
+    """SpusÅ¥ \"interaktivnÄ›\" testy modulu 'module'.
 
     Argumenty:
 
-      module -- testovanı modul, napø. 'pytis.data'
-      tests -- sekvence po¾adovanıch testù nebo 'None', ka¾dı èlen sekvence je
-        string obsahující jméno tøídy (bez modulu) nebo jméno metody tøídy (bez
-        modulu, ale vèetnì jména tøídy); je-li argument 'None', spustí se
-        v¹echny testy daného modulu
+      module -- testovanÃ½ modul, napÅ™. 'pytis.data'
+      tests -- sekvence poÅ¾adovanÃ½ch testÅ¯ nebo 'None', kaÅ¾dÃ½ Älen sekvence je
+        string obsahujÃ­cÃ­ jmÃ©no tÅ™Ã­dy (bez modulu) nebo jmÃ©no metody tÅ™Ã­dy (bez
+        modulu, ale vÄetnÄ› jmÃ©na tÅ™Ã­dy); je-li argument 'None', spustÃ­ se
+        vÅ¡echny testy danÃ©ho modulu
       verbosity -- argument pro 'unittest.TextTestRunner', integer
 
     """

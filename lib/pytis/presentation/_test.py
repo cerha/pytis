@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -109,7 +109,7 @@ class PresentedRow_(unittest.TestCase):
                                  ('c', 88),
                                  ('d', 176),
                                  ('sum', 188)))
-        # TODO: dodìlat
+        # TODO: dodÄ›lat
     def test_prefill(self):
         row = PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'a': 'xx', 'b': 3, 'd': 77})

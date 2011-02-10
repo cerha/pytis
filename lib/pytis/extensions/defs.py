@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2006, 2007, 2009, 2010 Brailcom, o.p.s.
 #
@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Funkce pro naËÌt·nÌ, caching, kontrolu a reporty z defs˘.""" 
+"""Funkce pro naƒç√≠t√°n√≠, caching, kontrolu a reporty z defs≈Ø.""" 
 
 import pytis.data
 import pytis.util
@@ -107,7 +107,7 @@ def get_menu_defs():
                 fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm'):
                 specs.append(shortname[5:])
     specs = remove_duplicates(specs)
-    # ZjistÌme i varianty podle konstanty VARIANTS
+    # Zjist√≠me i varianty podle konstanty VARIANTS
     variants = []
     for m in specs:
         try:
@@ -127,24 +127,24 @@ def _get_default_select(spec):
                              if view.field(k.id()) is not None])
         success, select_count = pytis.form.db_operation(data.select, sort=sorting, reuse=False)
         if not success:
-            log(EVENT, 'Selh·nÌ datab·zovÈ operace')
+            log(EVENT, 'Selh√°n√≠ datab√°zov√© operace')
             return None
         return select_count
     resolver = pytis.util.resolver()
     try:
         view = resolver.get(spec, 'view_spec')                
     except:
-        log(OPERATIONAL, "Nepoda¯ilo se vytvo¯it view_spec")
+        log(OPERATIONAL, "Nepoda≈ôilo se vytvo≈ôit view_spec")
         return None
     try:
         data = data_object(spec)
     except:
-        log(OPERATIONAL, "Nepoda¯ilo se vytvo¯it datov˝ objekt")
+        log(OPERATIONAL, "Nepoda≈ôilo se vytvo≈ôit datov√Ω objekt")
         return None
     data = data_object(spec)
     select_count = init_select(view, data)
     if select_count:
-        print "Default select pro specifikaci %s vracÌ %s ¯·dk˘" % (spec,
+        print "Default select pro specifikaci %s vrac√≠ %s ≈ô√°dk≈Ø" % (spec,
                                                                     select_count)
         import time
         start_time = time.time()
@@ -152,7 +152,7 @@ def _get_default_select(spec):
 
         
 def check_form():
-    """Zept· se na n·zev specifikace a zobrazÌ jejÌ report."""
+    """Zept√° se na n√°zev specifikace a zobraz√≠ jej√≠ report."""
     resolver = pytis.util.resolver()
     spec = pytis.form.run_dialog(pytis.form.InputDialog,
                                  message="Kontrola defsu",
@@ -169,22 +169,22 @@ def check_form():
         data = data_spec.create(dbconnection_spec=config.dbconnection)
         # Title
         obsah = "Title: %s\n" % (view_spec.title())
-        # N·zev tabulky
+        # N√°zev tabulky
         obsah += "Tabulka: %s\n\n" % (data.table(data.columns()[0].id()))
-        # PolÌËka v bindings
-        obsah += "PolÌËka v data_spec:\n%s\n\n" % \
+        # Pol√≠ƒçka v bindings
+        obsah += "Pol√≠ƒçka v data_spec:\n%s\n\n" % \
                  "\n".join(["  - %s" % c.id()
                             for c in data.columns() if c.id() != 'oid'])
-        # PolÌËka ve fields
-        obsah += "PolÌËka ve fields:\n%s\n\n" % \
+        # Pol√≠ƒçka ve fields
+        obsah += "Pol√≠ƒçka ve fields:\n%s\n\n" % \
                  "\n".join(["  - %s" % f.id() for f in view_spec.fields()])
-        # Actions - TODO: Bude t¯eba zohlednit vno¯enÈ seznamy a ActionGroup.
-        #obsah += "\n\nAkce kontextovÈho menu:\n\n"
+        # Actions - TODO: Bude t≈ôeba zohlednit vno≈ôen√© seznamy a ActionGroup.
+        #obsah += "\n\nAkce kontextov√©ho menu:\n\n"
         #actions = view_spec.actions()
         #if actions:                
         #    obsah += "\n".join([a.title() for a in actions])
         #else:
-        #    obsah += "Nejsou definov·ny"
+        #    obsah += "Nejsou definov√°ny"
         # Default select
         _get_default_select(spec)
         pytis.form.run_dialog(pytis.form.Message, "DEFS: %s" % spec, report=obsah)
@@ -238,7 +238,7 @@ class MenuChecker(object):
             except ResolverError, e:
                 return errors + [str(e)]
             if not spec.public:
-                errors.append("Neve¯ejn· specifikace v menu.")
+                errors.append("Neve≈ôejn√° specifikace v menu.")
         return errors
     
     def check_bindings(self, main, side):
@@ -280,9 +280,9 @@ class MenuChecker(object):
                             users = [users]
                         for u in users:
                             if u not in self._application_roles:
-                                errors.append(("Pr·vo update nebo insert pro polÌËko %(field)s n·hledu %(view)s "
-                                               "je v rozporu s pr·vem view ËÌselnÌku %(codebook)s. "
-                                               "T˝k· se to tÏchto rolÌ: %(roles)s.") %
+                                errors.append(("Pr√°vo update nebo insert pro pol√≠ƒçko %(field)s n√°hledu %(view)s "
+                                               "je v rozporu s pr√°vem view ƒç√≠seln√≠ku %(codebook)s. "
+                                               "T√Ωk√° se to tƒõchto rol√≠: %(roles)s.") %
                                               dict(codebook=codebook, view=spec_name, field=f.id(), roles=users))
                                 break
         except Exception, e:
@@ -323,7 +323,7 @@ class MenuChecker(object):
             fields = view_spec.fields()
             success, data = pytis.form.db_operation(data_spec.create, dbconnection_spec=self._dbconn)
             if not success:
-                return errors + ["Nepoda¯ilo se vytvo¯it datov˝ objekt."]
+                return errors + ["Nepoda≈ôilo se vytvo≈ôit datov√Ω objekt."]
             data.select()
             row = data.fetchone()
             if row:
@@ -343,16 +343,16 @@ class MenuChecker(object):
     def interactive_check(self):
         errors = []
         specnames = self._specification_names(errors)
-        width = max([len(s) for s in specnames]) + len('PoslednÌ chyba v: ') + 6
+        width = max([len(s) for s in specnames]) + len('Posledn√≠ chyba v: ') + 6
         def check_specs(update, specnames):
             check_spec = self._check_spec
             total = len(specnames)
             last_error = ''
-            step = 1 # aktualizujeme jen po kaæd˝ch 'step' procentech...
+            step = 1 # aktualizujeme jen po ka≈æd√Ωch 'step' procentech...
             for n, name in enumerate(specnames):
-                newmsg = "\n".join(("Kontroluji datovÈ specifikace...",
+                newmsg = "\n".join(("Kontroluji datov√© specifikace...",
                                     "Specifikace: " + name,
-                                    "PoslednÌ chyba v: " + last_error))
+                                    "Posledn√≠ chyba v: " + last_error))
                 status = int(float(n)/total*100/step)
                 if not update(status*step, newmsg=newmsg):
                     break
@@ -365,11 +365,11 @@ class MenuChecker(object):
                     errors.append("Specifikace %s: %s" % (name, error))
                     last_error = "%s\n%s...)" % (name, error[:width-4])
         pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
-                              message='Kontroluji datovÈ specifikace...'.ljust(width) + '\n\n\n\n',
+                              message='Kontroluji datov√© specifikace...'.ljust(width) + '\n\n\n\n',
                               elapsed_time=True, can_abort=True)
         if errors:
             errors = remove_duplicates(errors)
-            pytis.form.run_dialog(pytis.form.Message, "Chyby ve specifikacÌch",
+            pytis.form.run_dialog(pytis.form.Message, "Chyby ve specifikac√≠ch",
                                   report="\n".join(errors))
 
     def batch_check(self, reporter):
@@ -396,7 +396,7 @@ class AppChecker(MenuChecker):
         return remove_duplicates(menu_specs + form_specs)
             
 def check_menus_defs():
-    """Zkontroluje vπechny specifikace uvedenÈ v menu aplikace."""
+    """Zkontroluje v≈°echny specifikace uveden√© v menu aplikace."""
     MenuChecker().interactive_check()
 
 cmd_check_menus_defs = (pytis.form.Application.COMMAND_HANDLED_ACTION,
@@ -415,7 +415,7 @@ def cache_spec(*args, **kwargs):
             
         total = len(specs)        
         last_status = 0
-        step = 5 # aktualizujeme jen po kaæd˝ch 'step' procentech...
+        step = 5 # aktualizujeme jen po ka≈æd√Ωch 'step' procentech...
         for n, name in enumerate(specs):
             status = int(float(n)/total*100/step)
             if status != last_status:
@@ -424,8 +424,8 @@ def cache_spec(*args, **kwargs):
                     break
             for x in name.split('::'):
                 cache(x)
-    msg = '\n'.join(('NaËÌt·m specifikace (p¯eruπte pomocÌ Esc).', '',
-                     'NaËÌt·nÌ je moæno trvale vypnout pomocÌ dialogu',
-                     '"NastavenÌ uæivatelskÈho rozhranÌ"'))
+    msg = '\n'.join(('Naƒç√≠t√°m specifikace (p≈ôeru≈°te pomoc√≠ Esc).', '',
+                     'Naƒç√≠t√°n√≠ je mo≈æno trvale vypnout pomoc√≠ dialogu',
+                     '"Nastaven√≠ u≈æivatelsk√©ho rozhran√≠"'))
     pytis.form.run_dialog(pytis.form.ProgressDialog, do, args=(get_menu_defs(),),
                           message=msg, elapsed_time=True, can_abort=True)

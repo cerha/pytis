@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Formátovací prvky
+# FormÃ¡tovacÃ­ prvky
 # 
 # Copyright (C) 2002, 2003, 2004, 2005, 2011 Brailcom, o.p.s.
 #
@@ -18,16 +18,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Definice formátovacích znaèek.
+"""Definice formÃ¡tovacÃ­ch znaÄek.
 
-Tento soubor definuje prvky sestavující vıslednı tiskovı dokument.  Prvky
-jednak definují formátování a jednak umo¾òují vkládat externí data do
-dokumentu.  Jsou pou¾ívány v definièních souborech vıstupních sestav.
+Tento soubor definuje prvky sestavujÃ­cÃ­ vÃ½slednÃ½ tiskovÃ½ dokument.  Prvky
+jednak definujÃ­ formÃ¡tovÃ¡nÃ­ a jednak umoÅ¾ÅˆujÃ­ vklÃ¡dat externÃ­ data do
+dokumentu.  Jsou pouÅ¾Ã­vÃ¡ny vÂ definiÄnÃ­ch souborech vÃ½stupnÃ­ch sestav.
 
-Ka¾dá veøejná tøída modulu odpovídá formátovací znaèce pou¾itelné v definici
-dokumentu.  Kromì tìchto tøíd je je¹tì mo¾no pou¾ívat obyèejné øetìzce, které
-budou vlo¾eny tak, jak jsou, vèetnì mezer a odøádkování, a sekvence obsahující
-elementy ke spojení dohromady.
+KaÅ¾dÃ¡ veÅ™ejnÃ¡ tÅ™Ã­da modulu odpovÃ­dÃ¡ formÃ¡tovacÃ­ znaÄce pouÅ¾itelnÃ© vÂ definici
+dokumentu.  KromÄ› tÄ›chto tÅ™Ã­d je jeÅ¡tÄ› moÅ¾no pouÅ¾Ã­vat obyÄejnÃ© Å™etÄ›zce, kterÃ©
+budou vloÅ¾eny tak, jak jsou, vÄetnÄ› mezer a odÅ™Ã¡dkovÃ¡nÃ­, aÂ sekvence obsahujÃ­cÃ­
+elementy ke spojenÃ­ dohromady.
 
 """
 
@@ -37,13 +37,13 @@ from pytis.output import *
 
 
 class Unit(object):
-    """Velikost explicitnì vyjádøená v urèitıch jednotkách.
+    """Velikost explicitnÄ› vyjÃ¡dÅ™enÃ¡ vÂ urÄitÃ½ch jednotkÃ¡ch.
 
-    Instance potomkù této tøídy mohou bıt pou¾ity kdekoliv, kde je mo¾no pøedat
-    absolutní délkové jednotky, místo implicitnì uva¾ovanıch jednotek.
+    Instance potomkÅ¯ tÃ©to tÅ™Ã­dy mohou bÃ½t pouÅ¾ity kdekoliv, kde je moÅ¾no pÅ™edat
+    absolutnÃ­ dÃ©lkovÃ© jednotky, mÃ­sto implicitnÄ› uvaÅ¾ovanÃ½ch jednotek.
 
-    Tato tøída je bázová, k pøímému pou¾ití jsou urèeni a¾ její potomci,
-    odpovídající konkrétním jednotkám.
+    Tato tÅ™Ã­da je bÃ¡zovÃ¡, kÂ pÅ™Ã­mÃ©mu pouÅ¾itÃ­ jsou urÄeni aÅ¾ jejÃ­ potomci,
+    odpovÃ­dajÃ­cÃ­ konkrÃ©tnÃ­m jednotkÃ¡m.
 
     """
     def __init__(self, size):
@@ -51,54 +51,54 @@ class Unit(object):
 
         Argumenty:
 
-          size -- velikost v danıch jednotkách, float
+          size -- velikost vÂ danÃ½ch jednotkÃ¡ch, float
 
         """
         self._size = size
 
     def __nonzero__(self):
-        """Vra» pravdu, právì kdy¾ velikost je nenulová."""
+        """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ velikost je nenulovÃ¡."""
         return self._size != 0
     
     def __add__(self, other):
-        """Vra» instanci stejné tøídy s velikostí zvìt¹enou o 'other'.
+        """VraÅ¥ instanci stejnÃ© tÅ™Ã­dy sÂ velikostÃ­ zvÄ›tÅ¡enou oÂ 'other'.
 
         Argumenty:
 
-          other -- float nebo int udávající velikost, o kterou má bıt v nové
-            instanci zvìt¹ena velikost aktuální instance
+          other -- float nebo int udÃ¡vajÃ­cÃ­ velikost, oÂ kterou mÃ¡ bÃ½t vÂ novÃ©
+            instanci zvÄ›tÅ¡ena velikost aktuÃ¡lnÃ­ instance
 
         """
         assert isinstance(other, float) or isinstance(other, int)
         return self.__class__(self._size + other)
 
     def __mul__(self, other):
-        """Vra» instanci stejné tøídy s velikostí vynásobenou 'other'.
+        """VraÅ¥ instanci stejnÃ© tÅ™Ã­dy sÂ velikostÃ­ vynÃ¡sobenou 'other'.
 
         Argumenty:
 
-          other -- float nebo int udávající násobek, kterım má bıt pro novou
-            instanci vynásobena velikost aktuální instance
+          other -- float nebo int udÃ¡vajÃ­cÃ­ nÃ¡sobek, kterÃ½m mÃ¡ bÃ½t pro novou
+            instanci vynÃ¡sobena velikost aktuÃ¡lnÃ­ instance
 
         """
         assert isinstance(other, float) or isinstance(other, int)
         return self.__class__(self._size * other)        
 
     def size(self):
-        """Vra» velikost zadanou v konstruktoru."""
+        """VraÅ¥ velikost zadanou vÂ konstruktoru."""
         return self._size
 
 class UMm(Unit):
     """Milimetry."""
 
 class UPoint(Unit):
-    """Tiskové body (1/72 palce)."""
+    """TiskovÃ© body (1/72 palce)."""
     
 class UFont(Unit):
-    """Jednotky odpovídající velikosti aktuálního fontu."""
+    """Jednotky odpovÃ­dajÃ­cÃ­ velikosti aktuÃ¡lnÃ­ho fontu."""
     
 class USpace(Unit):
-    """Jednotky odpovídající preferované mezislovní mezeøe aktuálního fontu."""
+    """Jednotky odpovÃ­dajÃ­cÃ­ preferovanÃ© mezislovnÃ­ mezeÅ™e aktuÃ¡lnÃ­ho fontu."""
     
 
 class _Mark(object):
@@ -114,7 +114,7 @@ class _Container(_Mark):
 
         Argumenty:
 
-          contents -- obsah odstavce, znaèky a øetìzce
+          contents -- obsah odstavce, znaÄky a Å™etÄ›zce
 
         """
         self._contents = contents
@@ -126,49 +126,49 @@ class _Container(_Mark):
                 pass
             self.__dict__['arg_' + k] = v
         if kwargs:
-            raise TemplateException(_("Chybné argumenty prvku"),
+            raise TemplateException(_(u"ChybnÃ© argumenty prvku"),
                                     self.__class__, kwargs.keys())
 
     def contents(self):
-        """Vra» obsah odstavce zadanı v konstruktoru."""
+        """VraÅ¥ obsah odstavce zadanÃ½ vÂ konstruktoru."""
         return self._contents
 
 
 class Null(_Mark):
     """Nic.
 
-    Pou¾ití této znaèky se pøedpokládá v místech, kde nemá bıt nic, tj. ani
-    prázdnı øetìzec.  Pøíkladem takového místa, kde pou¾ití takové znaèky dává
-    smysl, je patièka stránky.
+    PouÅ¾itÃ­ tÃ©to znaÄky se pÅ™edpoklÃ¡dÃ¡ vÂ mÃ­stech, kde nemÃ¡ bÃ½t nic, tj. ani
+    prÃ¡zdnÃ½ Å™etÄ›zec.  PÅ™Ã­kladem takovÃ©ho mÃ­sta, kde pouÅ¾itÃ­ takovÃ© znaÄky dÃ¡vÃ¡
+    smysl, je patiÄka strÃ¡nky.
 
     """
 
 class Nbsp(_Mark):
-    """Znaèka reprezentující znak nezalomitelné mezery.
+    """ZnaÄka reprezentujÃ­cÃ­ znak nezalomitelnÃ© mezery.
 
-    Tento znak lze zapsat i v obyèejném stringovém zápisu textu jako ' '.
-    Znaèka slou¾í jako alternativní forma zápisu.
+    Tento znak lze zapsat iÂ vÂ obyÄejnÃ©m stringovÃ©m zÃ¡pisu textu jako 'Â '.
+    ZnaÄka slouÅ¾Ã­ jako alternativnÃ­ forma zÃ¡pisu.
 
     """
 
 class Euro(_Mark):
-    """Znaèka reprezentující znak mìny Euro."""
+    """ZnaÄka reprezentujÃ­cÃ­ znak mÄ›ny Euro."""
 
 class Pound(_Mark):
-    """Znaèka reprezentující znak libry."""
+    """ZnaÄka reprezentujÃ­cÃ­ znak libry."""
 
 class Center(_Container):
-    """Znaèka horizontálního vycentrování svého obsahu."""
+    """ZnaÄka horizontÃ¡lnÃ­ho vycentrovÃ¡nÃ­ svÃ©ho obsahu."""
 
 class AlignLeft(_Container):
-    """Znaèka zarovnání svého obsahu vlevo."""
+    """ZnaÄka zarovnÃ¡nÃ­ svÃ©ho obsahu vlevo."""
 
 class AlignRight(_Container):
-    """Znaèka zarovnání svého obsahu vpravo."""
+    """ZnaÄka zarovnÃ¡nÃ­ svÃ©ho obsahu vpravo."""
     
 
 class VCenter(_Container):
-    """Znaèka horizontálního vycentrování svého obsahu."""
+    """ZnaÄka horizontÃ¡lnÃ­ho vycentrovÃ¡nÃ­ svÃ©ho obsahu."""
 
 
 class _Space(_Mark):
@@ -187,73 +187,73 @@ class _Space(_Mark):
         return self._orientation
 
 class VSpace(_Space):
-    """Znaèka prázdného vertikálního objektu dané ¹íøky."""
+    """ZnaÄka prÃ¡zdnÃ©ho vertikÃ¡lnÃ­ho objektu danÃ© Å¡Ã­Å™ky."""
     
     def __init__(self, height):
         """Inicializuj instanci.
 
         Argumenty:
 
-          height -- po¾adovaná vı¹ka objektu v milimetrech, nezáporné èíslo;
-            mù¾e bıt té¾ 'None', v kterém¾to pøípadì objekt bude mít nejvìt¹í
-            rozumnou vı¹ku, pøièem¾ \"nejvìt¹í rozumná vı¹ka\" není nijak
-            exaktnì definována
+          height -- poÅ¾adovanÃ¡ vÃ½Å¡ka objektu vÂ milimetrech, nezÃ¡pornÃ© ÄÃ­slo;
+            mÅ¯Å¾e bÃ½t tÃ©Å¾ 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› objekt bude mÃ­t nejvÄ›tÅ¡Ã­
+            rozumnou vÃ½Å¡ku, pÅ™iÄemÅ¾ \"nejvÄ›tÅ¡Ã­ rozumnÃ¡ vÃ½Å¡ka\" nenÃ­ nijak
+            exaktnÄ› definovÃ¡na
 
         """
         super(VSpace, self).__init__(height, self.VERTICAL)
 
 class HSpace(_Space):
-    """Znaèka prázdného horizontálního objektu dané ¹íøky."""
+    """ZnaÄka prÃ¡zdnÃ©ho horizontÃ¡lnÃ­ho objektu danÃ© Å¡Ã­Å™ky."""
     
     def __init__(self, width):
         """Inicializuj instanci.
 
         Argumenty:
 
-          width -- po¾adovaná ¹íøka objektu v milimetrech, nezáporné èíslo;
-            mù¾e bıt té¾ 'None', v kterém¾to pøípadì objekt bude mít nejvìt¹í
-            rozumnou ¹íøku, pøièem¾ \"nejvìt¹í rozumná ¹íøka\" není nijak
-            exaktnì definována
+          width -- poÅ¾adovanÃ¡ Å¡Ã­Å™ka objektu vÂ milimetrech, nezÃ¡pornÃ© ÄÃ­slo;
+            mÅ¯Å¾e bÃ½t tÃ©Å¾ 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› objekt bude mÃ­t nejvÄ›tÅ¡Ã­
+            rozumnou Å¡Ã­Å™ku, pÅ™iÄemÅ¾ \"nejvÄ›tÅ¡Ã­ rozumnÃ¡ Å¡Ã­Å™ka\" nenÃ­ nijak
+            exaktnÄ› definovÃ¡na
 
         """
         super(HSpace, self).__init__(width, self.HORIZONTAL)
 
 
 class HLine(_Mark):
-    """Znaèka horizontální èáry vyplòující celı dostupnı prostor."""
+    """ZnaÄka horizontÃ¡lnÃ­ ÄÃ¡ry vyplÅˆujÃ­cÃ­ celÃ½ dostupnÃ½ prostor."""
 
 
 class Paragraph(_Container):
-    """Znaèka odstavce."""
+    """ZnaÄka odstavce."""
 
 
 class List(_Container):
     """Seznam.
 
-    Polo¾ky seznamu jsou uvozeny znaèkou specifikovanou klíèovım argumentem
-    konstruktoru 'mark'.  Není-li tento argument zadán, polo¾ky nemají ¾ádné
-    zvlá¹tní uvození.
+    PoloÅ¾ky seznamu jsou uvozeny znaÄkou specifikovanou klÃ­ÄovÃ½m argumentem
+    konstruktoru 'mark'.  NenÃ­-li tento argument zadÃ¡n, poloÅ¾ky nemajÃ­ Å¾Ã¡dnÃ©
+    zvlÃ¡Å¡tnÃ­ uvozenÃ­.
     
     """
     NUMBER_MARK = 'NUMBER_MARK'
-    """Polo¾ky seznamu uvozené vzestupnımi arabskımi èíslicemi od 1."""
+    """PoloÅ¾ky seznamu uvozenÃ© vzestupnÃ½mi arabskÃ½mi ÄÃ­slicemi odÂ 1."""
     BULLET_MARK = 'BULLET_MARK'
-    """Polo¾ky seznamu uvozené puntíkem."""
+    """PoloÅ¾ky seznamu uvozenÃ© puntÃ­kem."""
     
     KWARGS = {'mark': None}
     
 
 class NewPage(_Mark):
-    """Znaèka nové stránky."""
+    """ZnaÄka novÃ© strÃ¡nky."""
 
 
 class PageNumber(_Mark):
-    """Znaèka generující èíslo aktuální stránky.
+    """ZnaÄka generujÃ­cÃ­ ÄÃ­slo aktuÃ¡lnÃ­ strÃ¡nky.
 
-    Vygenerované èíslo je poøadové èíslo poèínaje od 1, zapsané arabskımi
-    èíslicemi.
+    VygenerovanÃ© ÄÃ­slo je poÅ™adovÃ© ÄÃ­slo poÄÃ­naje odÂ 1, zapsanÃ© arabskÃ½mi
+    ÄÃ­slicemi.
 
-    Tato znaèka smí bıt pou¾ita jen uvnitø hlavièek a patièek stránek.
+    Tato znaÄka smÃ­ bÃ½t pouÅ¾ita jen uvnitÅ™ hlaviÄek a patiÄek strÃ¡nek.
 
     """
     def __init__(self, total=False):
@@ -261,98 +261,98 @@ class PageNumber(_Mark):
 
         Argumenty:
 
-          total -- právì kdy¾ je pravdivé, uveï kromì aktuální stránky
-            i celkovı poèet stran
+          total -- prÃ¡vÄ› kdyÅ¾ je pravdivÃ©, uveÄ kromÄ› aktuÃ¡lnÃ­ strÃ¡nky
+            iÂ celkovÃ½ poÄet stran
 
         """
         super(PageNumber, self).__init__()
         self._total = total
 
     def total(self):
-        """Vra» hodnotu argumentu 'total' z konstruktoru."""
+        """VraÅ¥ hodnotu argumentu 'total' zÂ konstruktoru."""
         return self._total
 
 
 class Bold(_Container):
-    """Tuènì sázenı text."""
+    """TuÄnÄ› sÃ¡zenÃ½ text."""
 
 
 class Italic(_Container):
-    """Text sázenı kurzívou."""
+    """Text sÃ¡zenÃ½ kurzÃ­vou."""
 
 
 class Roman(_Container):
-    """Standardnì sázenı text."""
+    """StandardnÄ› sÃ¡zenÃ½ text."""
 
 
 class FontSize(_Container):
-    """Standardnì sázenı text."""
+    """StandardnÄ› sÃ¡zenÃ½ text."""
     
     def __init__(self, size, *contents):
         """Definuj text.
 
         Argumenty:
 
-          size -- float urèující relativní velikost fontu vzhledem
-            k aktuálnímu, na daném místì pou¾itému fontu; 1.0 znaèí shodnou
+          size -- float urÄujÃ­cÃ­ relativnÃ­ velikost fontu vzhledem
+            kÂ aktuÃ¡lnÃ­mu, na danÃ©m mÃ­stÄ› pouÅ¾itÃ©mu fontu; 1.0 znaÄÃ­ shodnou
             velikost
-          contents -- znaèky, na které je zmìna velikosti fontu aplikována
+          contents -- znaÄky, na kterÃ© je zmÄ›na velikosti fontu aplikovÃ¡na
 
         """
         super_(FontSize).__init__(self, *contents)
         self._size = size
         
     def size(self):
-        """Vra» velikost zadanou v konstruktoru."""
+        """VraÅ¥ velikost zadanou vÂ konstruktoru."""
         return self._size
 
 
 class FontFamily(_Container):
-    """Text sázenı zadanou rodinou fontu.
+    """Text sÃ¡zenÃ½ zadanou rodinou fontu.
 
-    Tato znaèka zároveò nastaví základní øez fontu.
+    Tato znaÄka zÃ¡roveÅˆ nastavÃ­ zÃ¡kladnÃ­ Å™ez fontu.
 
     """
     
     PROPORTIONAL = 'PROPORTIONAL'
-    """Standardní proporcionální font (napøíklad Times)."""
+    """StandardnÃ­ proporcionÃ¡lnÃ­ font (napÅ™Ã­klad Times)."""
     SANS_SERIF = 'SANS_SERIF'
-    """Standardní bezpatkovı proporcionální font(napøíklad Helvetica)."""
+    """StandardnÃ­ bezpatkovÃ½ proporcionÃ¡lnÃ­ font(napÅ™Ã­klad Helvetica)."""
     FIXED_WIDTH = 'FIXED_WIDTH'
-    """Standardní neproporcionální font (napøíklad Courier)."""
+    """StandardnÃ­ neproporcionÃ¡lnÃ­ font (napÅ™Ã­klad Courier)."""
 
     def __init__(self, family, *contents):
         """Definuj text.
 
         Argumenty:
 
-          family -- jedna z konstant této tøídy urèující rodinu pou¾itého fontu
-          contents -- znaèky, na které je zmìna velikosti fontu aplikována
+          family -- jedna zÂ konstant tÃ©to tÅ™Ã­dy urÄujÃ­cÃ­ rodinu pouÅ¾itÃ©ho fontu
+          contents -- znaÄky, na kterÃ© je zmÄ›na velikosti fontu aplikovÃ¡na
 
         """
         super_(FontFamily).__init__(self, *contents)
         self._family = family
         
     def family(self):
-        """Vra» rodinu fontu zadanou v konstruktoru."""
+        """VraÅ¥ rodinu fontu zadanou vÂ konstruktoru."""
         return self._family
 
 
 class Group(_Container):
-    """Spojení obsahu do skupiny.
+    """SpojenÃ­ obsahu do skupiny.
 
-    Na rozdíl od prostého u¾ití tuple, tato znaèka umo¾òuje specifikovat rùzné
-    parametry tohoto spojení pomocí pøedanıch klíèovanıch argumentù.  Tìmito
-    argumenty mohou bıt:
+    Na rozdÃ­l od prostÃ©ho uÅ¾itÃ­ tuple, tato znaÄka umoÅ¾Åˆuje specifikovat rÅ¯znÃ©
+    parametry tohoto spojenÃ­ pomocÃ­ pÅ™edanÃ½ch klÃ­ÄovanÃ½ch argumentÅ¯.  TÄ›mito
+    argumenty mohou bÃ½t:
 
-      vertical -- je-li pravdivé, budou prvky spojeny vertikálnì, jinak budou
-        spojeny horizontálnì
-      boxed -- právì kdy¾ je pravdivé, budou prvky skupiny orámovány
-      balance -- není-li 'None', jedná se o tuple o poètu prvkù shodném
-        s poètem prvkù skupiny, udávající vzájemnı pomìr velikostí poøadím
-        odpovídajících prvkù.  Velikost prvkù ve smìru orientace skupiny (dle
-        argumentu 'vertical') bude patøiènì upravena, velikost prvkù s udanım
-        pomìrem 0 zùstane nezmìnìna.
+      vertical -- je-li pravdivÃ©, budou prvky spojeny vertikÃ¡lnÄ›, jinak budou
+        spojeny horizontÃ¡lnÄ›
+      boxed -- prÃ¡vÄ› kdyÅ¾ je pravdivÃ©, budou prvky skupiny orÃ¡movÃ¡ny
+      balance -- nenÃ­-li 'None', jednÃ¡ se oÂ tuple oÂ poÄtu prvkÅ¯ shodnÃ©m
+        sÂ poÄtem prvkÅ¯ skupiny, udÃ¡vajÃ­cÃ­ vzÃ¡jemnÃ½ pomÄ›r velikostÃ­ poÅ™adÃ­m
+        odpovÃ­dajÃ­cÃ­ch prvkÅ¯.  Velikost prvkÅ¯ ve smÄ›ru orientace skupiny (dle
+        argumentu 'vertical') bude patÅ™iÄnÄ› upravena, velikost prvkÅ¯ sÂ udanÃ½m
+        pomÄ›rem 0 zÅ¯stane nezmÄ›nÄ›na.
       
     """
     KWARGS = {'vertical': False,
@@ -361,27 +361,27 @@ class Group(_Container):
 
 
 class Document(_Container):
-    """Samostatná èást dokumentu se samostatnì èíslovanımi stránkami.
+    """SamostatnÃ¡ ÄÃ¡st dokumentu se samostatnÄ› ÄÃ­slovanÃ½mi strÃ¡nkami.
 
-    Dokument je uvozen, resp. ukonèen, obvyklou hlavièkou, resp. patièkou.
-    Stránky uvnitø dokumentu mají své vlastní èíslování poèínaje od 1.  Pomocí
-    této znaèky lze vytvoøit \"nìkolik dokumentù v jednom\".
+    Dokument je uvozen, resp. ukonÄen, obvyklou hlaviÄkou, resp. patiÄkou.
+    StrÃ¡nky uvnitÅ™ dokumentu majÃ­ svÃ© vlastnÃ­ ÄÃ­slovÃ¡nÃ­ poÄÃ­naje odÂ 1.  PomocÃ­
+    tÃ©to znaÄky lze vytvoÅ™it \"nÄ›kolik dokumentÅ¯ vÂ jednom\".
 
-    Tato znaèka smí bıt pou¾ita pouze jako znaèka obalující celı obsah
-    dokumentu nebo jako znaèka v¹ech prvkù sekvence definující kompletní obsah
-    dokumentu.  Není-li znaèka pou¾ita vùbec, je jí celı dokument obalen
+    Tato znaÄka smÃ­ bÃ½t pouÅ¾ita pouze jako znaÄka obalujÃ­cÃ­ celÃ½ obsah
+    dokumentu nebo jako znaÄka vÅ¡ech prvkÅ¯ sekvence definujÃ­cÃ­ kompletnÃ­ obsah
+    dokumentu.  NenÃ­-li znaÄka pouÅ¾ita vÅ¯bec, je jÃ­ celÃ½ dokument obalen
     automaticky.
 
-    Znaèce lze pøedat následující argumenty:
+    ZnaÄce lze pÅ™edat nÃ¡sledujÃ­cÃ­ argumenty:
 
-      page_header -- znaèky specifikující hlavièku ka¾dé stránky nebo 'None'
-        indikující implicitní hlavièku stránky danou specifikaèní funkcí
+      page_header -- znaÄky specifikujÃ­cÃ­ hlaviÄku kaÅ¾dÃ© strÃ¡nky nebo 'None'
+        indikujÃ­cÃ­ implicitnÃ­ hlaviÄku strÃ¡nky danou specifikaÄnÃ­ funkcÃ­
         'page_header'
-      page_footer -- znaèky specifikující patièku ka¾dé stránky nebo 'None'
-        indikující implicitní patièku stránky danou specifikaèní funkcí
+      page_footer -- znaÄky specifikujÃ­cÃ­ patiÄku kaÅ¾dÃ© strÃ¡nky nebo 'None'
+        indikujÃ­cÃ­ implicitnÃ­ patiÄku strÃ¡nky danou specifikaÄnÃ­ funkcÃ­
         'page_footer'
-      first_page_header -- znaèky specifikující hlavièku první stránky nebo
-        'None' indikující hlavièku stránky danou specifikaèní funkcí
+      first_page_header -- znaÄky specifikujÃ­cÃ­ hlaviÄku prvnÃ­ strÃ¡nky nebo
+        'None' indikujÃ­cÃ­ hlaviÄku strÃ¡nky danou specifikaÄnÃ­ funkcÃ­
         'first_page_header'
 
     """
@@ -391,20 +391,20 @@ class Document(_Container):
 
 
 class Table(_Mark):
-    """Nejvı¹e jednostránková tabulka s pøedpøipravenımi daty.
+    """NejvÃ½Å¡e jednostrÃ¡nkovÃ¡ tabulka sÂ pÅ™edpÅ™ipravenÃ½mi daty.
 
-    Pro formátování vìt¹ích tabulek lze pou¾ít znaèku 'LongTable'.
+    Pro formÃ¡tovÃ¡nÃ­ vÄ›tÅ¡Ã­ch tabulek lze pouÅ¾Ã­t znaÄku 'LongTable'.
 
     """
     class Column:
-        """Specifikaèní tøída sloupce tabulky."""
+        """SpecifikaÄnÃ­ tÅ™Ã­da sloupce tabulky."""
         
         ALIGN_LEFT = 'ALIGN_LEFT'
-        """Zarovnání obsahu sloupce nalevo."""
+        """ZarovnÃ¡nÃ­ obsahu sloupce nalevo."""
         ALIGN_CENTER = 'ALIGN_CENTER'
-        """Centrování obsahu sloupce."""
+        """CentrovÃ¡nÃ­ obsahu sloupce."""
         ALIGN_RIGHT = 'ALIGN_RIGHT'
-        """Zarovnání obsahu sloupce napravo."""
+        """ZarovnÃ¡nÃ­ obsahu sloupce napravo."""
         
         def __init__(self, label=None, width=None, alignment=ALIGN_LEFT,
                      label_alignment=ALIGN_CENTER):
@@ -412,15 +412,15 @@ class Table(_Mark):
 
             Argumenty:
 
-              label -- záhlaví sloupce, formátovací element; smí bıt té¾
-                'None', v kterém¾to pøípadì sloupec nemá ¾ádné záhlaví a
-                nemá-li ¾ádnı sloupec záhlaví, nebude záhlaví vùbec generováno
-              width -- ¹íøka sloupce ve znacích, pøirozené èíslo nebo 'None'
-                (v kterém¾to pøípadì je ¹íøka sloupce urèena automaticky)
-              alignment -- zpùsob zarovnání obsahu sloupce, jedna z 'ALIGN_*'
-                konstant tøídy
-              alignment -- zpùsob zarovnání hlavièky sloupce, jedna z 'ALIGN_*'
-                konstant tøídy
+              label -- zÃ¡hlavÃ­ sloupce, formÃ¡tovacÃ­ element; smÃ­ bÃ½t tÃ©Å¾
+                'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› sloupec nemÃ¡ Å¾Ã¡dnÃ© zÃ¡hlavÃ­ a
+                nemÃ¡-li Å¾Ã¡dnÃ½ sloupec zÃ¡hlavÃ­, nebude zÃ¡hlavÃ­ vÅ¯bec generovÃ¡no
+              width -- Å¡Ã­Å™ka sloupce ve znacÃ­ch, pÅ™irozenÃ© ÄÃ­slo nebo 'None'
+                (vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je Å¡Ã­Å™ka sloupce urÄena automaticky)
+              alignment -- zpÅ¯sob zarovnÃ¡nÃ­ obsahu sloupce, jedna zÂ 'ALIGN_*'
+                konstant tÅ™Ã­dy
+              alignment -- zpÅ¯sob zarovnÃ¡nÃ­ hlaviÄky sloupce, jedna zÂ 'ALIGN_*'
+                konstant tÅ™Ã­dy
 
             """
             self.label = label
@@ -433,17 +433,17 @@ class Table(_Mark):
 
         Argumenty:
 
-          columns -- sekvence instancí tøídy 'Table.Column', musí mít
-            nejménì 1 a nejvı¹e 26 prvkù
-          data -- neprázdná sekvence neprázdnıch sekvencí, odpovídá øádkùm
-            (vnìj¹í sekvence) formátovanım do sloupcù (vnitøní sekvence);
-            v¹echny vnitøní sekvence musí mít délku shodnou s délkou argumentu
-            'columns'.  Místo vnitøní sekvence smí bıt kdekoliv 'None', na
-            takovém místì bude místo øádku tabulky vygenerována horizontální
-            èára.
-          vmargin (jako klíèovanı argument) -- je-li 'None', je mezi øádky
-            tabulky ponechána implicitní mezera; je-li 0, není mezi øádky
-            tabulky ¾ádná mezera; jiné hodnoty argumentu nejsou povoleny
+          columns -- sekvence instancÃ­ tÅ™Ã­dy 'Table.Column', musÃ­ mÃ­t
+            nejmÃ©nÄ› 1 a nejvÃ½Å¡e 26Â prvkÅ¯
+          data -- neprÃ¡zdnÃ¡ sekvence neprÃ¡zdnÃ½ch sekvencÃ­, odpovÃ­dÃ¡ Å™Ã¡dkÅ¯m
+            (vnÄ›jÅ¡Ã­ sekvence) formÃ¡tovanÃ½m do sloupcÅ¯ (vnitÅ™nÃ­ sekvence);
+            vÅ¡echny vnitÅ™nÃ­ sekvence musÃ­ mÃ­t dÃ©lku shodnou sÂ dÃ©lkou argumentu
+            'columns'.  MÃ­sto vnitÅ™nÃ­ sekvence smÃ­ bÃ½t kdekoliv 'None', na
+            takovÃ©m mÃ­stÄ› bude mÃ­sto Å™Ã¡dku tabulky vygenerovÃ¡na horizontÃ¡lnÃ­
+            ÄÃ¡ra.
+          vmargin (jako klÃ­ÄovanÃ½ argument) -- je-li 'None', je mezi Å™Ã¡dky
+            tabulky ponechÃ¡na implicitnÃ­ mezera; je-li 0, nenÃ­ mezi Å™Ã¡dky
+            tabulky Å¾Ã¡dnÃ¡ mezera; jinÃ© hodnoty argumentu nejsou povoleny
 
         """
         super(Table, self).__init__()
@@ -452,43 +452,43 @@ class Table(_Mark):
         vmargin = kwargs.get('vmargin')
         assert vmargin in (None, 0)
         if len(columns) > 26:
-            raise TemplateException(_("Více ne¾ 26 sloupcù v tabulce"))
+            raise TemplateException(_(u"VÃ­ce neÅ¾ 26 sloupcÅ¯ vÂ tabulce"))
         self._columns = columns
         self._data = data
         self._vmargin = vmargin
         
     def columns(self):
-        """Vra» specifikaci sloupcù tabulky zadanou v konstruktoru."""
+        """VraÅ¥ specifikaci sloupcÅ¯ tabulky zadanou vÂ konstruktoru."""
         return self._columns
 
     def data(self):
-        """Vra» obsah argumentu 'data' zadaného v '__init__()'."""
+        """VraÅ¥ obsah argumentu 'data' zadanÃ©ho vÂ '__init__()'."""
         return self._data
 
     def vmargin(self):
-        """Vra» hodnotu argumentu 'vmargin' zadaného v '__init__()'."""
+        """VraÅ¥ hodnotu argumentu 'vmargin' zadanÃ©ho vÂ '__init__()'."""
         return self._vmargin
     
 
 class LongTable(Table):
-    """Tabulka, potenciálnì vícestránková.
+    """Tabulka, potenciÃ¡lnÄ› vÃ­cestrÃ¡nkovÃ¡.
 
-    Tabulka je dána svımi sloupci a funkcí generující její øádky.  Délka
-    tabulky není omezena, pøekroèí-li tabulka hranice stránky, pokraèuje na
-    stránkách dal¹í, pøièem¾ na ka¾dé dal¹í stránce je uvozena stejnou
-    hlavièkou jako na svém zaèátku.
+    Tabulka je dÃ¡na svÃ½mi sloupci a funkcÃ­ generujÃ­cÃ­ jejÃ­ Å™Ã¡dky.  DÃ©lka
+    tabulky nenÃ­ omezena, pÅ™ekroÄÃ­-li tabulka hranice strÃ¡nky, pokraÄuje na
+    strÃ¡nkÃ¡ch dalÅ¡Ã­, pÅ™iÄemÅ¾ na kaÅ¾dÃ© dalÅ¡Ã­ strÃ¡nce je uvozena stejnou
+    hlaviÄkou jako na svÃ©m zaÄÃ¡tku.
 
-    Pro krátké tabulky s víceménì fixním poètem øádkù lze pou¾ít znaèku
+    Pro krÃ¡tkÃ© tabulky sÂ vÃ­cemÃ©nÄ› fixnÃ­m poÄtem Å™Ã¡dkÅ¯ lze pouÅ¾Ã­t znaÄku
     'Table'.
 
     """
     class Column(Table.Column):
-        """Specifikaèní tøída sloupce dlouhé tabulky."""
+        """SpecifikaÄnÃ­ tÅ™Ã­da sloupce dlouhÃ© tabulky."""
         
         def __init__(self, label, width, **kwargs):
-            """Stejné jako v pøedkovi a¾ na argumenty 'label' a 'width'.
+            """StejnÃ© jako vÂ pÅ™edkovi aÅ¾ na argumenty 'label' a 'width'.
 
-            Argumenty 'label' a 'width' jsou povinné a nesmí bıt 'None'.
+            Argumenty 'label' a 'width' jsou povinnÃ© a nesmÃ­ bÃ½t 'None'.
 
             """
             Table.Column.__init__(self, label, width, **kwargs)
@@ -500,23 +500,23 @@ class LongTable(Table):
 
         Argumenty:
 
-          columns -- sekvence instancí tøídy 'LongTable.Column', musí mít
-            nejménì 1 a nejvı¹e 26 prvkù
-          row_generator -- funkce generující øádky datové tabulky.  Funkce je
-            opakovanì volána, bez argumentù, a musí v¾dy vrátit novı øádek
-            tabulky, v podobì sekvencí formátovacích elementù odpovídajících
-            sloupcùm tabulky, vèetnì poøadí.  Pokud funkce vrátí 'None', je
-            tabulka ukonèena.
-          row_generator_init -- funkce volaná bez argumentù pøed prvním voláním
+          columns -- sekvence instancÃ­ tÅ™Ã­dy 'LongTable.Column', musÃ­ mÃ­t
+            nejmÃ©nÄ› 1 a nejvÃ½Å¡e 26Â prvkÅ¯
+          row_generator -- funkce generujÃ­cÃ­ Å™Ã¡dky datovÃ© tabulky.  Funkce je
+            opakovanÄ› volÃ¡na, bez argumentÅ¯, aÂ musÃ­ vÅ¾dy vrÃ¡tit novÃ½ Å™Ã¡dek
+            tabulky, vÂ podobÄ› sekvencÃ­ formÃ¡tovacÃ­ch elementÅ¯ odpovÃ­dajÃ­cÃ­ch
+            sloupcÅ¯m tabulky, vÄetnÄ› poÅ™adÃ­.  Pokud funkce vrÃ¡tÃ­ 'None', je
+            tabulka ukonÄena.
+          row_generator_init -- funkce volanÃ¡ bez argumentÅ¯ pÅ™ed prvnÃ­m volÃ¡nÃ­m
             'row_generator', nebo 'None'
-          separator_height -- tlou¹»ka oddìlovací èáry mezi záhlavím tabulky a
-            jejími øádky v bodech, jako float
-          line_separator_height -- tlou¹»ka oddìlovací èáry za ka¾dım øádkem
-            tabulky v bodech, jako float
-          separator_margin -- vzdálenost oddìlovací èáry záhlaví tabulky od
-            záhlaví v bodech, jako float
-          line_separator_margin -- vzdálenost oddìlovací èáry od ka¾dého øádku
-            tabulky v bodech, jako float
+          separator_height -- tlouÅ¡Å¥ka oddÄ›lovacÃ­ ÄÃ¡ry mezi zÃ¡hlavÃ­m tabulky a
+            jejÃ­mi Å™Ã¡dky vÂ bodech, jako float
+          line_separator_height -- tlouÅ¡Å¥ka oddÄ›lovacÃ­ ÄÃ¡ry za kaÅ¾dÃ½m Å™Ã¡dkem
+            tabulky vÂ bodech, jako float
+          separator_margin -- vzdÃ¡lenost oddÄ›lovacÃ­ ÄÃ¡ry zÃ¡hlavÃ­ tabulky od
+            zÃ¡hlavÃ­ vÂ bodech, jako float
+          line_separator_margin -- vzdÃ¡lenost oddÄ›lovacÃ­ ÄÃ¡ry od kaÅ¾dÃ©ho Å™Ã¡dku
+            tabulky vÂ bodech, jako float
 
         """
         super(LongTable, self).__init__(columns)
@@ -529,44 +529,44 @@ class LongTable(Table):
         self._line_separator_margin = line_separator_margin
 
     def row_generator(self):
-        """Vra» funkci generující øádku tabulky zadanou v konstruktoru."""
+        """VraÅ¥ funkci generujÃ­cÃ­ Å™Ã¡dku tabulky zadanou vÂ konstruktoru."""
         return self._row_generator
 
     def row_generator_init(self):
-        """Vra» argument 'row_generator_init' metody '__init__()'."""
+        """VraÅ¥ argument 'row_generator_init' metody '__init__()'."""
         return self._row_generator_init
 
     def separator_height(self):
-        """Vra» tlou¹»ku oddìlovací èáry záhlaví zadanou v konstruktoru."""
+        """VraÅ¥ tlouÅ¡Å¥ku oddÄ›lovacÃ­ ÄÃ¡ry zÃ¡hlavÃ­ zadanou vÂ konstruktoru."""
         return self._separator_height
     
     def line_separator_height(self):
-        """Vra» tlou¹»ku oddìlovací èáry øádkù zadanou v konstruktoru."""
+        """VraÅ¥ tlouÅ¡Å¥ku oddÄ›lovacÃ­ ÄÃ¡ry Å™Ã¡dkÅ¯ zadanou vÂ konstruktoru."""
         return self._line_separator_height
 
     def separator_margin(self):
-        """Vra» vzdálenost oddìlovací èáry záhlaví zadanou v konstruktoru."""
+        """VraÅ¥ vzdÃ¡lenost oddÄ›lovacÃ­ ÄÃ¡ry zÃ¡hlavÃ­ zadanou vÂ konstruktoru."""
         return self._separator_margin
     
     def line_separator_margin(self):
-        """Vra» vzdálenost oddìlovací èáry øádkù zadanou v konstruktoru."""
+        """VraÅ¥ vzdÃ¡lenost oddÄ›lovacÃ­ ÄÃ¡ry Å™Ã¡dkÅ¯ zadanou vÂ konstruktoru."""
         return self._line_separator_margin
 
 
 class Image(_Mark):
-    """EPS obrázek."""
+    """EPS obrÃ¡zek."""
     
     def __init__(self, file_name):
         """Inicializuj instanci.
 
         Argumenty:
 
-          file_name -- jméno souboru obrázku, relativní k adresáøi definovanému
-            konfiguraèní volbou 'def_dir'.
+          file_name -- jmÃ©no souboru obrÃ¡zku, relativnÃ­ kÂ adresÃ¡Å™i definovanÃ©mu
+            konfiguraÄnÃ­ volbou 'def_dir'.
 
         """
         self._file_name = file_name
 
     def file_name(self):
-        """Vra» jméno souboru zadané v konstruktoru."""
+        """VraÅ¥ jmÃ©no souboru zadanÃ© vÂ konstruktoru."""
         return self._file_name

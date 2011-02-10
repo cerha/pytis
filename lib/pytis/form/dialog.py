@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,16 +16,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Dialogová okna.
+"""DialogovÃ¡ okna.
 
-Dialogová okna slou¾í jako nepøehlédnutelná upozornìní nebo otázky pro
-u¾ivatele.  U¾ivateli je znemo¾nìno pokraèovat práci a¾ do doby, ne¾ potvrdí
-zobrazené hlá¹ení nebo odpoví na otázku.
+DialogovÃ¡ okna slouÅ¾Ã­ jako nepÅ™ehlÃ©dnutelnÃ¡ upozornÄ›nÃ­ nebo otÃ¡zky pro
+uÅ¾ivatele.  UÅ¾ivateli je znemoÅ¾nÄ›no pokraÄovat prÃ¡ci aÅ¾ do doby, neÅ¾ potvrdÃ­
+zobrazenÃ© hlÃ¡Å¡enÃ­ nebo odpovÃ­ na otÃ¡zku.
 
-V¹echny dialogy vychází z abstraktní tøídy 'Dialog'.
+VÅ¡echny dialogy vychÃ¡zÃ­ zÂ abstraktnÃ­ tÅ™Ã­dy 'Dialog'.
 
-Modul dále obsahuje nìkolik pomocnıch funkcí vyu¾ívajících dialogy pro vícekrát
-se vyskytující dialogové operace.
+Modul dÃ¡le obsahuje nÄ›kolik pomocnÃ½ch funkcÃ­ vyuÅ¾Ã­vajÃ­cÃ­ch dialogy pro vÃ­cekrÃ¡t
+se vyskytujÃ­cÃ­ dialogovÃ© operace.
 
 """
 
@@ -39,16 +39,16 @@ from wx.lib import masked
 import wx.lib.mixins.listctrl
 
 class Dialog(KeyHandler, CommandHandler, object):
-    """Abstraktní tøída, která je základem v¹ech dialogù.
+    """AbstraktnÃ­ tÅ™Ã­da, kterÃ¡ je zÃ¡kladem vÅ¡ech dialogÅ¯.
 
-    V¹echny dialogy musí bıt potomky této tøídy.  Vytvoøení instance dialogu
-    je¹tì neznamená jeho vyvolání, pro to slou¾í metoda 'run()'.  Metodu
-    'run()' lze na jednu instanci volat teoreticky i vícekrát.  Instance
-    dialogu v¹ak sama o sobì neobsahuje ¾ádné objekty u¾ivatelského rozhraní,
-    pouze si pamatuje jejich vlastnosti.  K vytvoøení okna a jeho prvkù dochází
-    a¾ pøi volání metody 'run()'.
+    VÅ¡echny dialogy musÃ­ bÃ½t potomky tÃ©to tÅ™Ã­dy.  VytvoÅ™enÃ­ instance dialogu
+    jeÅ¡tÄ› neznamenÃ¡ jeho vyvolÃ¡nÃ­, pro to slouÅ¾Ã­ metoda 'run()'.  Metodu
+    'run()' lze na jednu instanci volat teoreticky i vÃ­cekrÃ¡t.  Instance
+    dialogu vÅ¡ak sama o sobÄ› neobsahuje Å¾Ã¡dnÃ© objekty uÅ¾ivatelskÃ©ho rozhranÃ­,
+    pouze si pamatuje jejich vlastnosti.  K vytvoÅ™enÃ­ okna a jeho prvkÅ¯ dochÃ¡zÃ­
+    aÅ¾ pÅ™i volÃ¡nÃ­ metody 'run()'.
     
-    Tato tøída pouze definuje abstraktní metodu 'run()'.
+    Tato tÅ™Ã­da pouze definuje abstraktnÃ­ metodu 'run()'.
     
     """
     def _get_command_handler_instance(cls):
@@ -61,20 +61,20 @@ class Dialog(KeyHandler, CommandHandler, object):
         self._key_guardian = None
         
     def run(self):
-        """Vyvolej dialog a poèkej na odpovìï.
+        """Vyvolej dialog a poÄkej na odpovÄ›Ä.
 
-        Vrací: Hodnotu závislou na typu dialogu.
+        VracÃ­: Hodnotu zÃ¡vislou na typu dialogu.
 
-        V této tøídì metoda nedìlá nic a v¾dy vrací pravdu.
+        VÂ tÃ©to tÅ™Ã­dÄ› metoda nedÄ›lÃ¡ nic a vÅ¾dy vracÃ­ pravdu.
 
         """
         return True
 
 class GenericDialog(Dialog):
-    """Obecnı dialog s tlaèítky.
+    """ObecnÃ½ dialog s tlaÄÃ­tky.
 
-    Univerzální dialogová tøída, od které je mo¾no odvodit specializované tøídy
-    konkrétních dialogù pomocí pøedefinování nìkterıch metod.
+    UniverzÃ¡lnÃ­ dialogovÃ¡ tÅ™Ã­da, od kterÃ© je moÅ¾no odvodit specializovanÃ© tÅ™Ã­dy
+    konkrÃ©tnÃ­ch dialogÅ¯ pomocÃ­ pÅ™edefinovÃ¡nÃ­ nÄ›kterÃ½ch metod.
     
     """    
     _COMMIT_BUTTON = None
@@ -87,20 +87,20 @@ class GenericDialog(Dialog):
 
         Argumenty:
 
-          parent -- wx rodiè; instance 'wx.Frame' nebo 'wx.Dialog'
-          title -- titulek dialogového okna jako string
-          buttons -- sekvence názvù tlaèítek dialogu, strings
-          default -- název pøedvoleného tlaèítka (string obsa¾enı v 'buttons',
+          parent -- wx rodiÄ; instance 'wx.Frame' nebo 'wx.Dialog'
+          title -- titulek dialogovÃ©ho okna jako string
+          buttons -- sekvence nÃ¡zvÅ¯ tlaÄÃ­tek dialogu, strings
+          default -- nÃ¡zev pÅ™edvolenÃ©ho tlaÄÃ­tka (string obsaÅ¾enÃ½ v 'buttons',
             nebo 'None')
-          report -- Text reportu, kterı má bıt zobrazen v oknì dialogu.  Jedná
-            se o del¹í text, kterı bude automaticky scrollovatelnı.  Je mo¾né
-            zobrazit také komplexní text s HTML èi Wiki formátováním.  V
-            takovém pøípadì je nutné toto indikovat argumentem 'report_format'.
-            Pro vstupní formát platí stejná pravidla, jako v pøípadì tøídy
+          report -- Text reportu, kterÃ½ mÃ¡ bÃ½t zobrazen v oknÄ› dialogu.  JednÃ¡
+            se o delÅ¡Ã­ text, kterÃ½ bude automaticky scrollovatelnÃ½.  Je moÅ¾nÃ©
+            zobrazit takÃ© komplexnÃ­ text s HTML Äi Wiki formÃ¡tovÃ¡nÃ­m.  V
+            takovÃ©m pÅ™Ã­padÄ› je nutnÃ© toto indikovat argumentem 'report_format'.
+            Pro vstupnÃ­ formÃ¡t platÃ­ stejnÃ¡ pravidla, jako v pÅ™Ã­padÄ› tÅ™Ã­dy
             'InfoWindow'.
-          report_format -- konstanta tøídy 'TextFormat' urèující jak má bıt
-            nakládáno se vstupním textem argumentu 'report'.  V pøípadì, ¾e
-            není ¾ádnı report specifikován, je tento argument irelevantní.
+          report_format -- konstanta tÅ™Ã­dy 'TextFormat' urÄujÃ­cÃ­ jak mÃ¡ bÃ½t
+            naklÃ¡dÃ¡no se vstupnÃ­m textem argumentu 'report'.  V pÅ™Ã­padÄ›, Å¾e
+            nenÃ­ Å¾Ã¡dnÃ½ report specifikovÃ¡n, je tento argument irelevantnÃ­.
           report_size -- report window size as a pair of integers (width,
             height) in characters.  If any of the numbers is 'None' given size
             will be will automatically accommodate to the size of the contents
@@ -124,13 +124,13 @@ class GenericDialog(Dialog):
         self._shown = False
 
     def _create_dialog(self):
-        """Vytvoø celı dialog (postupnì okno, jeho obsah a tlaèítka).
+        """VytvoÅ™ celÃ½ dialog (postupnÄ› okno, jeho obsah a tlaÄÃ­tka).
         
-        Nejprve je vytvoøeno okno dialogu jako takové ('wx.Dialog') a potom
-        je zavolána metoda `_create_dialog_elements'.
+        Nejprve je vytvoÅ™eno okno dialogu jako takovÃ© ('wx.Dialog') a potom
+        je zavolÃ¡na metoda `_create_dialog_elements'.
 
-        Tuto metodu by nemìlo bıt tøeba pøedefinovávat. Ve vìt¹inì pøípadù by
-        mìlo staèit pøedefinovat metodu '_create_content()'.
+        Tuto metodu by nemÄ›lo bÃ½t tÅ™eba pÅ™edefinovÃ¡vat. Ve vÄ›tÅ¡inÄ› pÅ™Ã­padÅ¯ by
+        mÄ›lo staÄit pÅ™edefinovat metodu '_create_content()'.
 
         """
         style = self._STYLE
@@ -141,26 +141,26 @@ class GenericDialog(Dialog):
         self._handle_keys(dialog)
 
     def _create_dialog_elements(self, dialog):
-        """Vlo¾ do dialogu jeho vnitøní prvky.
+        """VloÅ¾ do dialogu jeho vnitÅ™nÃ­ prvky.
         
-        Pomocí sizerù je do dialogu vlo¾en hlavní obsah (vısledek metody
-        '_create_content()') a tlaèítka (vısledek metody '_create_buttons()').
+        PomocÃ­ sizerÅ¯ je do dialogu vloÅ¾en hlavnÃ­ obsah (vÃ½sledek metody
+        '_create_content()') a tlaÄÃ­tka (vÃ½sledek metody '_create_buttons()').
 
-        Tuto metodu by nemìlo bıt tøeba pøedefinovávat. Ve vìt¹inì pøípadù by
-        mìlo staèit pøedefinovat metodu '_create_content()' a/nebo
+        Tuto metodu by nemÄ›lo bÃ½t tÅ™eba pÅ™edefinovÃ¡vat. Ve vÄ›tÅ¡inÄ› pÅ™Ã­padÅ¯ by
+        mÄ›lo staÄit pÅ™edefinovat metodu '_create_content()' a/nebo
         '_create_buttons()'.
 
         """
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._create_content(sizer)
-        # vytvoø tlaèítka a poskládej je vedle sebe
+        # vytvoÅ™ tlaÄÃ­tka a posklÃ¡dej je vedle sebe
         button_sizer = wx.BoxSizer()
         for b in self._create_buttons():
             button_sizer.Add(b, 0, wx.ALL, 8)
-            # registruj handlery událostí
+            # registruj handlery udÃ¡lostÃ­
             wx_callback(wx.EVT_BUTTON, dialog, b.GetId(), self._on_button)
             self._handle_keys(b)
-        # poskládej obsah a tlaèítka do top-level sizeru (nad sebe)
+        # posklÃ¡dej obsah a tlaÄÃ­tka do top-level sizeru (nad sebe)
         if self._report is not None:
             report = wx_text_view(dialog, self._report,
                                   format=self._report_format,
@@ -168,7 +168,7 @@ class GenericDialog(Dialog):
             sizer.Add(report, 1, wx.EXPAND)
         sizer.Add(button_sizer, 0, wx.CENTER)
         wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
-        # dokonèi ...
+        # dokonÄi ...
         sizer.SetSizeHints(dialog)
         dialog.SetAutoLayout(True)
         dialog.SetSizer(sizer)
@@ -236,24 +236,24 @@ class GenericDialog(Dialog):
         self._end_modal(event.GetId())
     
     def _button_label(self, id):
-        # Vra» nápis tlaèítka s danım id.
+        # VraÅ¥ nÃ¡pis tlaÄÃ­tka s danÃ½m id.
         try:
             return self._button_label_dict[id]
         except KeyError:
             return None
 
     def _button_id(self, label):
-        # Vra» id tlaèítka s danım nápisem.
+        # VraÅ¥ id tlaÄÃ­tka s danÃ½m nÃ¡pisem.
         for id, l in self._button_label_dict.items():
             if l == label:
                 return id
         return None
 
     def _customize_result(self, result):
-        """Vra» návratovou hodnotu podle vısledku ukonèeného dialogu.
+        """VraÅ¥ nÃ¡vratovou hodnotu podle vÃ½sledku ukonÄenÃ©ho dialogu.
 
-        V této tøídì jednodu¹e vrací nápis tlaèítka, kterım byl dialog ukonèen
-        ('None' v pøípadì, ¾e byl ukonèen jinım zpùsobem ne¾ tlaèítkem).
+        V tÃ©to tÅ™Ã­dÄ› jednoduÅ¡e vracÃ­ nÃ¡pis tlaÄÃ­tka, kterÃ½m byl dialog ukonÄen
+        ('None' v pÅ™Ã­padÄ›, Å¾e byl ukonÄen jinÃ½m zpÅ¯sobem neÅ¾ tlaÄÃ­tkem).
 
         """
         return self._button_label(result)
@@ -283,9 +283,9 @@ class GenericDialog(Dialog):
         help(topic=self._HELP_TOPIC)
 
     def run(self):
-        """Zobraz dialog a po jeho ukonèení vra» jeho návratovou hodnotu.
+        """Zobraz dialog a po jeho ukonÄenÃ­ vraÅ¥ jeho nÃ¡vratovou hodnotu.
 
-        Návratová hodnota závisí na typu dialogu, resp. na jeho metodì
+        NÃ¡vratovÃ¡ hodnota zÃ¡visÃ­ na typu dialogu, resp. na jeho metodÄ›
         '_customize_result()'.
 
         """
@@ -296,11 +296,11 @@ class GenericDialog(Dialog):
         return result
 
     def rebuild(self):
-        """Znovu vytvoø obsah dialogu bez jeho uzavøení.
+        """Znovu vytvoÅ™ obsah dialogu bez jeho uzavÅ™enÃ­.
 
-        Tato metoda je urèena k pou¾ití v pøípadech, kdy je bìhem zobrazení
-        modálního dialogu nutno zmìnit jeho obsah, napøíklad pøidat nebo
-        odebrat (nikoliv pouze zapnout nebo vypnout) nìkteré prvky.
+        Tato metoda je urÄena kÂ pouÅ¾itÃ­ vÂ pÅ™Ã­padech, kdy je bÄ›hem zobrazenÃ­
+        modÃ¡lnÃ­ho dialogu nutno zmÄ›nit jeho obsah, napÅ™Ã­klad pÅ™idat nebo
+        odebrat (nikoliv pouze zapnout nebo vypnout) nÄ›kterÃ© prvky.
 
         """
         dialog = self._dialog
@@ -320,48 +320,48 @@ class GenericDialog(Dialog):
         self._dialog.SetFocus()
         
 class Message(GenericDialog):
-    """Dialog zobrazující zprávu a vracející odpovìï.
+    """Dialog zobrazujÃ­cÃ­ zprÃ¡vu a vracejÃ­cÃ­ odpovÄ›Ä.
 
-    Tato tøída pouze zobrazuje zprávu a tlaèítko pro akceptování dialogu.
+    Tato tÅ™Ã­da pouze zobrazuje zprÃ¡vu a tlaÄÃ­tko pro akceptovÃ¡nÃ­ dialogu.
 
-    Vrácená hodnota metody 'run()' je jednodu¹e nápis tlaèítka, kterım byl
-    dialog ukonèen (None v pøípadì, ¾e byl ukonèen jinım zpùsobem ne¾
-    tlaèítkem).
+    VrÃ¡cenÃ¡ hodnota metody 'run()' je jednoduÅ¡e nÃ¡pis tlaÄÃ­tka, kterÃ½m byl
+    dialog ukonÄen (None v pÅ™Ã­padÄ›, Å¾e byl ukonÄen jinÃ½m zpÅ¯sobem neÅ¾
+    tlaÄÃ­tkem).
 
     """
     ICON_INFO = wx.ART_INFORMATION
-    "Ikona pro informativní zprávy (¾árovka)"
+    "Ikona pro informativnÃ­ zprÃ¡vy (Å¾Ã¡rovka)"
     ICON_QUESTION =  wx.ART_QUESTION
-    "Ikona s otazníkem."
+    "Ikona s otaznÃ­kem."
     ICON_WARNING = wx.ART_WARNING
-    "Ikona s vykøièníkem."
+    "Ikona s vykÅ™iÄnÃ­kem."
     ICON_ERROR = wx.ART_ERROR
-    "Ikona pro chybové zprávy."
+    "Ikona pro chybovÃ© zprÃ¡vy."
     ICON_TIP = wx.ART_TIP
     "Ikona pro tipy, rady apod."
     ICON_QUIT = wx.ART_QUIT
-    "Ikona opu¹tìní aplikace."
+    "Ikona opuÅ¡tÄ›nÃ­ aplikace."
 
     BUTTON_OK = _('Ok')
-    "Nápis pro potvrzovací tlaèítko." 
-    BUTTON_CANCEL = _('Zru¹it')
-    "Nápis pro opou¹tìcí tlaèítko." 
+    "NÃ¡pis pro potvrzovacÃ­ tlaÄÃ­tko." 
+    BUTTON_CANCEL = _('ZruÅ¡it')
+    "NÃ¡pis pro opouÅ¡tÄ›cÃ­ tlaÄÃ­tko." 
     BUTTON_YES = _('Ano')
-    "Nápis pro tlaèítko souhlasu." 
+    "NÃ¡pis pro tlaÄÃ­tko souhlasu." 
     BUTTON_NO = _('Ne')
-    "Nápis pro tlaèítko nesouhlasu." 
+    "NÃ¡pis pro tlaÄÃ­tko nesouhlasu." 
     
     _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
     
-    def __init__(self, parent, message, icon=ICON_INFO, title=_('Zpráva'),
+    def __init__(self, parent, message, icon=ICON_INFO, title=_('ZprÃ¡va'),
                  buttons=(BUTTON_OK,), default=_(BUTTON_OK), **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
 
           'parent', 'buttons', 'title' a 'default' -- jako u 'GenericDialog'.
-          'message' -- Zpráva zobrazená v tìle dialogu (string).
-          'icon' -- Jedna z ICON_* konstant tøídy ('ICON_INFO' atd.).
+          'message' -- ZprÃ¡va zobrazenÃ¡ v tÄ›le dialogu (string).
+          'icon' -- Jedna z ICON_* konstant tÅ™Ã­dy ('ICON_INFO' atd.).
           
         """
         super_(Message).__init__(self, parent, title, buttons,
@@ -374,7 +374,7 @@ class Message(GenericDialog):
         self._icon = icon
 
     def _create_content(self, sizer):
-        """Vytvoø obsah - to co bude vyplòovat plochu okna nad tlaèítky."""
+        """VytvoÅ™ obsah - to co bude vyplÅˆovat plochu okna nad tlaÄÃ­tky."""
         message = wx.StaticText(self._dialog, -1, self._message)
         icon = self._icon and self._create_icon(self._icon)
         if icon is not None:
@@ -387,16 +387,16 @@ class Message(GenericDialog):
 
     
 class Warning(Message):
-    """Dialog pro zobrazení varovné zprávy."""
+    """Dialog pro zobrazenÃ­ varovnÃ© zprÃ¡vy."""
 
-    def __init__(self, parent, message, title=_('Varování'), **kwargs):
+    def __init__(self, parent, message, title=_('VarovÃ¡nÃ­'), **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
 
 
-          Odpovídají stejnım argumentùm rodièovské tøídy s tím, ¾e následující
-          argumenty tato tøída definuje v¾dy napevno:
+          OdpovÃ­dajÃ­ stejnÃ½m argumentÅ¯m rodiÄovskÃ© tÅ™Ã­dy s tÃ­m, Å¾e nÃ¡sledujÃ­cÃ­
+          argumenty tato tÅ™Ã­da definuje vÅ¾dy napevno:
 
             icon = 'Message.ICON_WARNING'
             buttons = ('Message.BUTTON_OK',)
@@ -411,7 +411,7 @@ class Warning(Message):
 
 
 class Error(Message):
-    """Dialog pro zobrazení chybové zprávy."""
+    """Dialog pro zobrazenÃ­ chybovÃ© zprÃ¡vy."""
 
     def __init__(self, parent, message, title=_('Chyba'), **kwargs):
         """Inicializuj dialog.
@@ -419,8 +419,8 @@ class Error(Message):
         Argumenty:
 
 
-          Odpovídají stejnım argumentùm rodièovské tøídy s tím, ¾e následující
-          argumenty tato tøída definuje v¾dy napevno:
+          OdpovÃ­dajÃ­ stejnÃ½m argumentÅ¯m rodiÄovskÃ© tÅ™Ã­dy s tÃ­m, Å¾e nÃ¡sledujÃ­cÃ­
+          argumenty tato tÅ™Ã­da definuje vÅ¾dy napevno:
 
             icon = 'Message.ICON_ERROR'
             buttons = ('Message.BUTTON_OK',)
@@ -435,39 +435,39 @@ class Error(Message):
 
 
 class MultiQuestion(Message):
-    """Dialog vy¾adující odpovìï na otázku vıbìrem z tlaèítek."""
+    """Dialog vyÅ¾adujÃ­cÃ­ odpovÄ›Ä na otÃ¡zku vÃ½bÄ›rem zÂ tlaÄÃ­tek."""
     def __init__(self, parent, message, buttons, default=None,
-                 title=_("Otázka"), icon=Message.ICON_QUESTION, **kwargs):
+                 title=_(u"OtÃ¡zka"), icon=Message.ICON_QUESTION, **kwargs):
         super_(MultiQuestion).__init__(self, parent, message, title=title, buttons=buttons,
                                        default=default, icon=icon, **kwargs)
     
 
 class Question(MultiQuestion):
-    """Dialog vy¾adující odpovìï ano/ne na zobrazenou zprávu (otázku).
+    """Dialog vyÅ¾adujÃ­cÃ­ odpovÄ›Ä ano/ne na zobrazenou zprÃ¡vu (otÃ¡zku).
 
-    Metoda 'run()' vrací: Pravdu, právì kdy¾ u¾ivatel odpoví na danou
-    otázku kladnì - stiskne tlaèítko s nápisem 'Message.BUTTON_YES'.
+    Metoda 'run()' vracÃ­: Pravdu, prÃ¡vÄ› kdyÅ¾ uÅ¾ivatel odpovÃ­ na danou
+    otÃ¡zku kladnÄ› - stiskne tlaÄÃ­tko s nÃ¡pisem 'Message.BUTTON_YES'.
 
     """
     def __init__(self, parent, message, default=True,
-                 title=_("Otázka"), icon=Message.ICON_QUESTION,
+                 title=_(u"OtÃ¡zka"), icon=Message.ICON_QUESTION,
                  **kwargs):
         """Inicializuj dialog.
         
         Argumenty:
 
-          default -- pokud je pravda, bude pøedvolenım tlaèítkem tlaèítko
-            'Message.BUTTON_YES'. Jinak je pøedvolená odpovìï
-            'Message.BUTTON_NO' (implicitnì).
+          default -- pokud je pravda, bude pÅ™edvolenÃ½m tlaÄÃ­tkem tlaÄÃ­tko
+            'Message.BUTTON_YES'. Jinak je pÅ™edvolenÃ¡ odpovÄ›Ä
+            'Message.BUTTON_NO' (implicitnÄ›).
         
-          Ostatní argumenty odpovídají stejnım argumentùm rodièovské tøídy s
-          tím, ¾e následující argumenty tato tøída definuje v¾dy napevno:
+          OstatnÃ­ argumenty odpovÃ­dajÃ­ stejnÃ½m argumentÅ¯m rodiÄovskÃ© tÅ™Ã­dy s
+          tÃ­m, Å¾e nÃ¡sledujÃ­cÃ­ argumenty tato tÅ™Ã­da definuje vÅ¾dy napevno:
 
             buttons = ('Message.BUTTON_YES', 'Message.BUTTON_NO')
 
-        Klíèovı argument 'default' mù¾e bıt uvádìn i bez explicitního
-        pojmenování, tak¾e musí bıt do budoucna zaruèeno jeho zachování vèetnì
-        poøadí.
+        KlÃ­ÄovÃ½ argument 'default' mÅ¯Å¾e bÃ½t uvÃ¡dÄ›n i bez explicitnÃ­ho
+        pojmenovÃ¡nÃ­, takÅ¾e musÃ­ bÃ½t do budoucna zaruÄeno jeho zachovÃ¡nÃ­ vÄetnÄ›
+        poÅ™adÃ­.
             
         """
         if default:
@@ -487,39 +487,39 @@ class Question(MultiQuestion):
 
         
 class InputDialog(Message):
-    """Dialog pro zadání textu.
+    """Dialog pro zadÃ¡nÃ­ textu.
 
-    Dialog kromì zprávy obsahuje i textové vstupní pole a tlaèítka 'Ok' a
-    'Zru¹it'.  Návratovou hodnotou dialogu je zadanı string, byl-li odeslán
-    tlaèítkem 'OK' èi stiskem klávesy Enter, nebo 'None', byl-li dialog opu¹tìn
-    jinak (tlaèítko 'Zru¹it', klávesa Escape apod.).
+    Dialog kromÄ› zprÃ¡vy obsahuje iÂ textovÃ© vstupnÃ­ pole a tlaÄÃ­tka 'Ok' a
+    'ZruÅ¡it'.  NÃ¡vratovou hodnotou dialogu je zadanÃ½ string, byl-li odeslÃ¡n
+    tlaÄÃ­tkem 'OK' Äi stiskem klÃ¡vesy Enter, nebo 'None', byl-li dialog opuÅ¡tÄ›n
+    jinak (tlaÄÃ­tko 'ZruÅ¡it', klÃ¡vesa Escape apod.).
 
     """
     _COMMIT_BUTTON = Message.BUTTON_OK
 
     
     def __init__(self, parent, message=None, value=None, prompt=None,
-                 title=_("Zadejte hodnotu"), passwd=False,
+                 title=_(u"Zadejte hodnotu"), passwd=False,
                  input_width=None, input_height=1, allow_empty=True, **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
 
-          prompt -- vızva pøipojená pøed políèko (string) nebo 'None'
-          value -- pøednastavená hodnota textového vstupního políèka (string)
-          passwd -- pokud má pravdivou hodnotu, bude se textové políèko
-            chovat joko políèko pro vstup hesla (vepsané znaky budou
-            zobrazovány jako hvìzdièky)
-          input_width -- ¹íøka vstupního prvku ve znacích nebo
-            'None' (v kterém¾to pøípadì se pou¾ije implicitní velikost)
-          input_height -- vı¹ka vstupního políèka ve znacích
-          allow_empty -- pokud je pravda (implicitnì ano), je prázdnı vstup
-            akceptován, jinak dialog vy¾aduje zadání nìjaké hodnoty
+          prompt -- vÃ½zva pÅ™ipojenÃ¡ pÅ™ed polÃ­Äko (string) nebo 'None'
+          value -- pÅ™ednastavenÃ¡ hodnota textovÃ©ho vstupnÃ­ho polÃ­Äka (string)
+          passwd -- pokud mÃ¡ pravdivou hodnotu, bude se textovÃ© polÃ­Äko
+            chovat joko polÃ­Äko pro vstup hesla (vepsanÃ© znaky budou
+            zobrazovÃ¡ny jako hvÄ›zdiÄky)
+          input_width -- Å¡Ã­Å™ka vstupnÃ­ho prvku ve znacÃ­ch nebo
+            'None' (v kterÃ©mÅ¾to pÅ™Ã­padÄ› se pouÅ¾ije implicitnÃ­ velikost)
+          input_height -- vÃ½Å¡ka vstupnÃ­ho polÃ­Äka ve znacÃ­ch
+          allow_empty -- pokud je pravda (implicitnÄ› ano), je prÃ¡zdnÃ½ vstup
+            akceptovÃ¡n, jinak dialog vyÅ¾aduje zadÃ¡nÃ­ nÄ›jakÃ© hodnoty
 
-          Klíèové argumenty jsou pøedány konstruktoru tøídy
+          KlÃ­ÄovÃ© argumenty jsou pÅ™edÃ¡ny konstruktoru tÅ™Ã­dy
           wx.pytis.masked.TextCtrl.
-          Zbıvající argumenty odpovídají stejnım argumentùm rodièovské tøídy
-          s tím, ¾e následující argumenty tato tøída definuje v¾dy napevno:
+          ZbÃ½vajÃ­cÃ­ argumenty odpovÃ­dajÃ­ stejnÃ½m argumentÅ¯m rodiÄovskÃ© tÅ™Ã­dy
+          s tÃ­m, Å¾e nÃ¡sledujÃ­cÃ­ argumenty tato tÅ™Ã­da definuje vÅ¾dy napevno:
 
             buttons = ('Message.BUTTON_OK', 'Message.BUTTON_CANCEL')
             default = None
@@ -583,38 +583,38 @@ class InputDialog(Message):
 
         
 class Password(InputDialog):
-    """Dialog pro zadání hesla.
+    """Dialog pro zadÃ¡nÃ­ hesla.
 
-    Speciální pøípad dialogu 'InputDialog' urèenı pro zadávání hesla.
+    SpeciÃ¡lnÃ­ pÅ™Ã­pad dialogu 'InputDialog' urÄenÃ½ pro zadÃ¡vÃ¡nÃ­ hesla.
     
     """
-    def __init__(self, parent, message=None, title=_("Zadejte heslo"),
+    def __init__(self, parent, message=None, title=_(u"Zadejte heslo"),
                  prompt=_('Heslo:'), icon=None):
         """Inicializuj dialog.
 
         Argumenty:
 
-          Argumenty odpovídají stejnım argumentùm rodièovské tøídy s tím, ¾e
-          argument 'passwd' je nastaven v¾dy na pravdivou hodnotu.
+          Argumenty odpovÃ­dajÃ­ stejnÃ½m argumentÅ¯m rodiÄovskÃ© tÅ™Ã­dy s tÃ­m, Å¾e
+          argument 'passwd' je nastaven vÅ¾dy na pravdivou hodnotu.
           
         """
         super_(Password).__init__(self, parent, message=message, title=title,
                                   prompt=prompt, passwd=True, icon=icon)
 
 class Login(InputDialog):
-    """Dialog pro zadání u¾ivatelského jména a hesla.
+    """Dialog pro zadÃ¡nÃ­ uÅ¾ivatelskÃ©ho jmÃ©na a hesla.
 
     """
     def __init__(self, parent, message=None, title=_(u"Zadejte heslo"),
-                 login='', icon=None, login_prompt=_(u"U¾ivatelské jméno:"), 
+                 login='', icon=None, login_prompt=_(u"UÅ¾ivatelskÃ© jmÃ©no:"), 
                  passwd_prompt=_(u"Heslo:")):
         """Inicializuj dialog.
 
-        Speciální argumenty:
+        SpeciÃ¡lnÃ­ argumenty:
 
-          login -- pøedvyplnìná hodnota u¾ivatelského jména.
-          login_prompt -- vızva pro zadání u¾ivatelského jména.
-          passwd_prompt -- vızva pro zadání hesla.
+          login -- pÅ™edvyplnÄ›nÃ¡ hodnota uÅ¾ivatelskÃ©ho jmÃ©na.
+          login_prompt -- vÃ½zva pro zadÃ¡nÃ­ uÅ¾ivatelskÃ©ho jmÃ©na.
+          passwd_prompt -- vÃ½zva pro zadÃ¡nÃ­ hesla.
           
         """
         super_(Password).__init__(self, parent, message=message, title=title,
@@ -650,9 +650,9 @@ class Login(InputDialog):
 
 
 class InputDate(InputDialog):
-    """Dialog pro zadání datumu.
+    """Dialog pro zadÃ¡nÃ­ datumu.
 
-    Speciální pøípad dialogu 'InputDialog' urèenı pro zadávání datumu.
+    SpeciÃ¡lnÃ­ pÅ™Ã­pad dialogu 'InputDialog' urÄenÃ½ pro zadÃ¡vÃ¡nÃ­ datumu.
     
     """    
     def __init__(self, *args, **kwargs):
@@ -681,14 +681,14 @@ class InputDate(InputDialog):
 
 
 class InputNumeric(InputDialog):
-    """Dialog pro zadávání èísel.
+    """Dialog pro zadÃ¡vÃ¡nÃ­ ÄÃ­sel.
 
-    Speciální pøípad dialogu 'InputDialog' urèenı pro zadávání èísel.
+    SpeciÃ¡lnÃ­ pÅ™Ã­pad dialogu 'InputDialog' urÄenÃ½ pro zadÃ¡vÃ¡nÃ­ ÄÃ­sel.
     
     """
   
     def __init__(self, parent, message=None, value=None, prompt=None,
-                 title=_("Zadejte hodnotu"), integer_width=10,
+                 title=_(u"Zadejte hodnotu"), integer_width=10,
                  allow_empty=False, decimal_width=0,
                  min_value=None, max_value=None, allow_negative=True,
                  select_on_entry=False, signed_colour="Red"
@@ -705,7 +705,7 @@ class InputNumeric(InputDialog):
         self._signed_colour = signed_colour
         self._value = value
         self._integer_width = integer_width
-        # Zji¹tìní desetinného oddìlovaèe a oddìlovaèe tísícù
+        # ZjiÅ¡tÄ›nÃ­ desetinnÃ©ho oddÄ›lovaÄe a oddÄ›lovaÄe tÃ­sÃ­cÅ¯
         import locale
         self._decimal_point = locale.localeconv()['decimal_point']
         self._thousands_sep = locale.localeconv()['thousands_sep']
@@ -779,10 +779,10 @@ class InputNumeric(InputDialog):
 
 
 class RunFormDialog(InputDialog):
-    """Dialog pro spu¹tìní formuláøe.
+    """Dialog pro spuÅ¡tÄ›nÃ­ formulÃ¡Å™e.
 
-    Umo¾ní u¾ivateli vybrat tøídu formuláøe a zadat název specifikace.  Ty
-    potom vrátí v tuplu jako vısledek volání své metody 'run()'.
+    UmoÅ¾nÃ­ uÅ¾ivateli vybrat tÅ™Ã­du formulÃ¡Å™e a zadat nÃ¡zev specifikace.  Ty
+    potom vrÃ¡tÃ­ v tuplu jako vÃ½sledek volÃ¡nÃ­ svÃ© metody 'run()'.
     
     """
     _BROWSE_FORM = "BrowseForm"
@@ -792,17 +792,17 @@ class RunFormDialog(InputDialog):
     _MULTI_BROWSE_DUAL_FORM = "MultiBrowseDualForm"
     _CODEBOOK_FORM = "CodebookForm"
 
-    def __init__(self, parent, title=_("Zobrazit formuláø")):
+    def __init__(self, parent, title=_(u"Zobrazit formulÃ¡Å™")):
         """Inicializuj dialog.
 
         Argumenty:
 
-          Argumenty odpovídají stejnım argumentùm rodièovské tøídy.
+          Argumenty odpovÃ­dajÃ­ stejnÃ½m argumentÅ¯m rodiÄovskÃ© tÅ™Ã­dy.
           
         """
         super_(RunFormDialog).__init__(self, parent, message=None,
                                        title=title, input_width=25,
-                                       prompt=_("Název specifikace:"),
+                                       prompt=_(u"NÃ¡zev specifikace:"),
                                        icon=self.ICON_TIP)
         self._FORM_CLASS_MAPPING = {
             self._BROWSE_DUAL_FORM: pytis.form.BrowseDualForm,
@@ -816,7 +816,7 @@ class RunFormDialog(InputDialog):
 
     def _create_content(self, sizer):
         super(RunFormDialog, self)._create_content(sizer)
-        label = wx.StaticText(self._dialog, -1, _("Tøída formuláøe:"))
+        label = wx.StaticText(self._dialog, -1, _(u"TÅ™Ã­da formulÃ¡Å™e:"))
         choices = [self._BROWSE_FORM, self._EDIT_FORM, self._INSERT_FORM,
                    self._BROWSE_DUAL_FORM, self._MULTI_BROWSE_DUAL_FORM, self._CODEBOOK_FORM]
         control = wx.Choice(self._dialog, -1, (-1,-1), (-1,-1), choices=choices)
@@ -839,24 +839,24 @@ class RunFormDialog(InputDialog):
 
         
 class OperationDialog(Message):
-    """Dialog pro spu¹tìní dlouhotrvající operace.
+    """Dialog pro spuÅ¡tÄ›nÃ­ dlouhotrvajÃ­cÃ­ operace.
     
-    Spu¹tìním dialogu metodou 'run()' bude zobrazen modální dialog a spu¹tìna
-    funkce zadaná v konstruktoru.  Dialog je ukonèen automaticky po skonèení
-    funkce.  Do té doby u¾ivatel nemù¾e dìlat nic, ne¾ èekat...
+    SpuÅ¡tÄ›nÃ­m dialogu metodou 'run()' bude zobrazen modÃ¡lnÃ­ dialog a spuÅ¡tÄ›na
+    funkce zadanÃ¡ v konstruktoru.  Dialog je ukonÄen automaticky po skonÄenÃ­
+    funkce.  Do tÃ© doby uÅ¾ivatel nemÅ¯Å¾e dÄ›lat nic, neÅ¾ Äekat...
     
     """
     def __init__(self, parent, function, args=(), kwargs={},
-                 title=_("Provádí se operace"),
-                 message=_("Èekejte prosím...")):
+                 title=_(u"ProvÃ¡dÃ­ se operace"),
+                 message=_(u"ÄŒekejte prosÃ­m...")):
         """Inicializuj dialog.
 
         Argumenty:
 
-          parent, title, message -- odpovídají stejnım argumentùm rodiè. tøídy.
-          function -- funkce, která má bıt spu¹tìna.
-          args -- argumenty spou¹tìné funkce jako tuple.
-          kwargs -- klíèové argumenty spou¹tìné funkce jako dictionary.
+          parent, title, message -- odpovÃ­dajÃ­ stejnÃ½m argumentÅ¯m rodiÄ. tÅ™Ã­dy.
+          function -- funkce, kterÃ¡ mÃ¡ bÃ½t spuÅ¡tÄ›na.
+          args -- argumenty spouÅ¡tÄ›nÃ© funkce jako tuple.
+          kwargs -- klÃ­ÄovÃ© argumenty spouÅ¡tÄ›nÃ© funkce jako dictionary.
           
         """
         super_(OperationDialog).__init__(self, parent, message=message,
@@ -879,43 +879,43 @@ class OperationDialog(Message):
 
 
 class ProgressDialog(OperationDialog):
-    """Dialog pro spu¹tìní dlouhotrvající operace s ProgressBarem.
+    """Dialog pro spuÅ¡tÄ›nÃ­ dlouhotrvajÃ­cÃ­ operace s ProgressBarem.
     
-    Spu¹tìním dialogu metodou 'run()' bude zobrazen modální dialog a spu¹tìna
-    funkce zadaná v konstruktoru s argumenty pøedanımi konstruktoru.
+    SpuÅ¡tÄ›nÃ­m dialogu metodou 'run()' bude zobrazen modÃ¡lnÃ­ dialog a spuÅ¡tÄ›na
+    funkce zadanÃ¡ v konstruktoru s argumenty pÅ™edanÃ½mi konstruktoru.
 
-    Navíc bude funkci v¾dy pøedán první argument, kterım je funkce
-    aktualizující stav progress baru.  Za její volání v prùbìhu operace je
-    funkce vykonávající operaci zodpovìdná.  Aktualizaèní funkce vy¾aduje jeden
-    argument, kterım je stav operace v procentech (integer).  Aktualizaèní
-    funkce také vrací nepravdivou hodnotu, pokud má bıt operace ukonèena
-    (u¾ivatelské pøeru¹ení, je-li povoleno).  Za ukonèení je v¹ak opìt
-    zodpovìdná funkce vykonávající operaci.  Druhım nepovinnım argumentem je
-    klíèovı argument 'newmsg'.  Pokud je pøedán neprázdnı øetìzec, bude také
-    aktualizována zpráva zobrazená na dialogu (tato zpráva nahradí pùvodní
-    zprávu zadanou v konstruktoru).
+    NavÃ­c bude funkci vÅ¾dy pÅ™edÃ¡n prvnÃ­ argument, kterÃ½m je funkce
+    aktualizujÃ­cÃ­ stav progress baru.  Za jejÃ­ volÃ¡nÃ­ v prÅ¯bÄ›hu operace je
+    funkce vykonÃ¡vajÃ­cÃ­ operaci zodpovÄ›dnÃ¡.  AktualizaÄnÃ­ funkce vyÅ¾aduje jeden
+    argument, kterÃ½m je stav operace v procentech (integer).  AktualizaÄnÃ­
+    funkce takÃ© vracÃ­ nepravdivou hodnotu, pokud mÃ¡ bÃ½t operace ukonÄena
+    (uÅ¾ivatelskÃ© pÅ™eruÅ¡enÃ­, je-li povoleno).  Za ukonÄenÃ­ je vÅ¡ak opÄ›t
+    zodpovÄ›dnÃ¡ funkce vykonÃ¡vajÃ­cÃ­ operaci.  DruhÃ½m nepovinnÃ½m argumentem je
+    klÃ­ÄovÃ½ argument 'newmsg'.  Pokud je pÅ™edÃ¡n neprÃ¡zdnÃ½ Å™etÄ›zec, bude takÃ©
+    aktualizovÃ¡na zprÃ¡va zobrazenÃ¡ na dialogu (tato zprÃ¡va nahradÃ­ pÅ¯vodnÃ­
+    zprÃ¡vu zadanou v konstruktoru).
 
-    Po ukonèení dialogu (a» u¾ z dùvodu u¾ivatelského pøeru¹ení, èi dokonèení
-    operace) je vrácena návratová hodnota funkce vykonávající operaci.
+    Po ukonÄenÃ­ dialogu (aÅ¥ uÅ¾ z dÅ¯vodu uÅ¾ivatelskÃ©ho pÅ™eruÅ¡enÃ­, Äi dokonÄenÃ­
+    operace) je vrÃ¡cena nÃ¡vratovÃ¡ hodnota funkce vykonÃ¡vajÃ­cÃ­ operaci.
 
     """
     def __init__(self, parent, function, args=(), kwargs={},
-                 title=_("Provádí se operace"), message=_("Èekejte prosím..."),
+                 title=_(u"ProvÃ¡dÃ­ se operace"), message=_(u"ÄŒekejte prosÃ­m..."),
                  elapsed_time=False, estimated_time=False,
                  remaining_time=False, can_abort=False):
         """Inicializuj dialog.
 
         Argumenty:
 
-          parent, function, args, kwargs, message, title -- stejné, jako u
-            rodièovské tøídy, pouze 'function' musí navíc pøijímat odkaz na
-            aktualizaèní funkci jako první argument (viz dokumentace tøídy).
-          elapsed_time -- Pokud je 'True', zobrazí se ubìhlı èas
-          estimated_time -- Pokud je 'True', zobrazí se pøedpokládanı èas
-          remaining_time -- Pokud je 'True', zobrazí se zbıvající èas
-          can_abort -- Pokud je 'True', bude mo¾no vykonávání funkce pøeru¹it,
-            pokud to funkce vykonávající operaci umo¾òuje (viz. docstring
-            tøídy).
+          parent, function, args, kwargs, message, title -- stejnÃ©, jako u
+            rodiÄovskÃ© tÅ™Ã­dy, pouze 'function' musÃ­ navÃ­c pÅ™ijÃ­mat odkaz na
+            aktualizaÄnÃ­ funkci jako prvnÃ­ argument (viz dokumentace tÅ™Ã­dy).
+          elapsed_time -- Pokud je 'True', zobrazÃ­ se ubÄ›hlÃ½ Äas
+          estimated_time -- Pokud je 'True', zobrazÃ­ se pÅ™edpoklÃ¡danÃ½ Äas
+          remaining_time -- Pokud je 'True', zobrazÃ­ se zbÃ½vajÃ­cÃ­ Äas
+          can_abort -- Pokud je 'True', bude moÅ¾no vykonÃ¡vÃ¡nÃ­ funkce pÅ™eruÅ¡it,
+            pokud to funkce vykonÃ¡vajÃ­cÃ­ operaci umoÅ¾Åˆuje (viz. docstring
+            tÅ™Ã­dy).
           
         """
 
@@ -948,11 +948,11 @@ class ProgressDialog(OperationDialog):
 
 
 class RepeatedOperationDialog(ProgressDialog):
-    """Dialog pro opakované spou¹tìní operace nad seznamem argumentù.
+    """Dialog pro opakovanÃ© spouÅ¡tÄ›nÃ­ operace nad seznamem argumentÅ¯.
 
-    Tento dialog je speciálním pøípadem pou¾ití 'ProgressDialog' pro cyklické
-    spou¹tìní operace nad seznamem argumentù.  U¾ivatel pouze nemusí psát
-    funkci provádìjící cyklus a aktualizující ProgressBar.
+    Tento dialog je speciÃ¡lnÃ­m pÅ™Ã­padem pouÅ¾itÃ­ 'ProgressDialog' pro cyklickÃ©
+    spouÅ¡tÄ›nÃ­ operace nad seznamem argumentÅ¯.  UÅ¾ivatel pouze nemusÃ­ psÃ¡t
+    funkci provÃ¡dÄ›jÃ­cÃ­ cyklus a aktualizujÃ­cÃ­ ProgressBar.
     
     """
     def __init__(self, parent, function, args=(), step=None, **kwargs):
@@ -963,10 +963,10 @@ class RepeatedOperationDialog(ProgressDialog):
           function --
           args --
           kwargs --
-          step -- celé èíslo, udávající poèet procent, po kterıch je
-            progressbar aktualizován.  Pokud je step
+          step -- celÃ© ÄÃ­slo, udÃ¡vajÃ­cÃ­ poÄet procent, po kterÃ½ch je
+            progressbar aktualizovÃ¡n.  Pokud je step
 
-          Ostatní argumenty jsou shodné jako u rodièovské tøídy.
+          OstatnÃ­ argumenty jsou shodnÃ© jako u rodiÄovskÃ© tÅ™Ã­dy.
           
         """
         assert step is None or \
@@ -992,37 +992,37 @@ class RepeatedOperationDialog(ProgressDialog):
     
     
 class Calendar(GenericDialog):
-    """Dialog zobrazující kalendáø, umo¾òující vıbìr dne.
+    """Dialog zobrazujÃ­cÃ­ kalendÃ¡Å™, umoÅ¾ÅˆujÃ­cÃ­ vÃ½bÄ›r dne.
 
-    Datum na kalendáøi mù¾e bıt pøednastaven parametrem konstruktoru. Metoda
-    'run()' vrací vybranı datum jako instanci 'mx.mxDateTime', nebo None, pokud
-    byl dialog opu¹tìn.
+    Datum na kalendÃ¡Å™i mÅ¯Å¾e bÃ½t pÅ™ednastaven parametrem konstruktoru. Metoda
+    'run()' vracÃ­ vybranÃ½ datum jako instanci 'mx.mxDateTime', nebo None, pokud
+    byl dialog opuÅ¡tÄ›n.
     
     """
     _COMMIT_BUTTON = Message.BUTTON_OK
 
-    def __init__(self, parent, date, title=_("Kalendáø"),
+    def __init__(self, parent, date, title=_(u"KalendÃ¡Å™"),
                  enable_year=True, enable_month=True, monday_first=True):
         """Inicializuj dialog.
 
         Argumenty:
 
-          parent -- wx rodiè; instance 'wx.Frame' nebo 'wx.Dialog'
-          date -- pøednastavenı datum jako instance 'mxDateTime'.
-          title -- titulek dialogového okna jako string
-          enable_year -- kdy¾ je pravda, zobrazí vıbìr roku; boolean
-          enable_month -- kdy¾ je pravda, zobrazí vıbìr mìsíce; boolean
-          monday_first -- kdy¾ je pravda, bude pondìlí prvním dnem v tıdnu;
+          parent -- wx rodiÄ; instance 'wx.Frame' nebo 'wx.Dialog'
+          date -- pÅ™ednastavenÃ½ datum jako instance 'mxDateTime'.
+          title -- titulek dialogovÃ©ho okna jako string
+          enable_year -- kdyÅ¾ je pravda, zobrazÃ­ vÃ½bÄ›r roku; boolean
+          enable_month -- kdyÅ¾ je pravda, zobrazÃ­ vÃ½bÄ›r mÄ›sÃ­ce; boolean
+          monday_first -- kdyÅ¾ je pravda, bude pondÄ›lÃ­ prvnÃ­m dnem v tÃ½dnu;
             boolean
 
-        Pokud argument date neobsahuje øetìzec, kterı je mo¾né zpracovat pomocí
-        'wx.DateTime.ParseDate()', bude datum nastaven na dne¹ní datum. 
+        Pokud argument date neobsahuje Å™etÄ›zec, kterÃ½ je moÅ¾nÃ© zpracovat pomocÃ­
+        'wx.DateTime.ParseDate()', bude datum nastaven na dneÅ¡nÃ­ datum. 
 
         """
         super_(Calendar).__init__(self, parent, title=title,
                                   buttons=(Message.BUTTON_OK,
                                            Message.BUTTON_CANCEL))
-        # vytvoø kalendáø
+        # vytvoÅ™ kalendÃ¡Å™
         style = wx.DIALOG_MODAL| \
                 calendar.CAL_SHOW_HOLIDAYS| \
                 calendar.CAL_SHOW_SURROUNDING_WEEKS 
@@ -1068,22 +1068,22 @@ class Calendar(GenericDialog):
 
     
 class ColorSelector(GenericDialog):
-    """Dialog umo¾òující vıbìr barvy.
+    """Dialog umoÅ¾ÅˆujÃ­cÃ­ vÃ½bÄ›r barvy.
 
-    Vıchozí barva mù¾e bıt pøednastavena parametrem konstruktoru.  Metoda
-    'run()' vrací barvu jako øetìzec '#RRGGBB', nebo None, pokud byl dialog
-    opu¹tìn.
+    VÃ½chozÃ­ barva mÅ¯Å¾e bÃ½t pÅ™ednastavena parametrem konstruktoru.  Metoda
+    'run()' vracÃ­ barvu jako Å™etÄ›zec '#RRGGBB', nebo None, pokud byl dialog
+    opuÅ¡tÄ›n.
     
     """
 
-    def __init__(self, parent, color=None, title=_("Vıbìr barvy")):
+    def __init__(self, parent, color=None, title=_(u"VÃ½bÄ›r barvy")):
         """Inicializuj dialog.
 
         Argumenty:
 
-          parent -- wx rodiè; instance 'wx.Frame' nebo 'wx.Dialog'
-          color -- pøednastavená barva, jako øetìzec '#RRGGBB'.
-          title -- titulek dialogového okna jako string
+          parent -- wx rodiÄ; instance 'wx.Frame' nebo 'wx.Dialog'
+          color -- pÅ™ednastavenÃ¡ barva, jako Å™etÄ›zec '#RRGGBB'.
+          title -- titulek dialogovÃ©ho okna jako string
 
         """
         super_(ColorSelector).__init__(self, parent, title=title, buttons=())
@@ -1106,25 +1106,25 @@ class ColorSelector(GenericDialog):
 
 
 class BugReport(GenericDialog):
-    """Dialog pro zobrazení neoèekávané vıjimky.
+    """Dialog pro zobrazenÃ­ neoÄekÃ¡vanÃ© vÃ½jimky.
 
-    Dialog nabízí u¾ivateli mo¾nost vıbìru reakce na vıjimku, vèetnì mo¾nosti
-    odeslání oznámení o chybì.
+    Dialog nabÃ­zÃ­ uÅ¾ivateli moÅ¾nost vÃ½bÄ›ru reakce na vÃ½jimku, vÄetnÄ› moÅ¾nosti
+    odeslÃ¡nÃ­ oznÃ¡menÃ­ oÂ chybÄ›.
 
-    Dialog vrací jednu z následujících hodnot:
+    Dialog vracÃ­ jednu zÂ nÃ¡sledujÃ­cÃ­ch hodnot:
 
-      None -- po¾aduje-li u¾ivatel ukonèení aplikace
-      prázdnı string -- po¾aduje-li u¾ivatel chybu ignorovat
-      neprázdnı string -- po¾aduje-li u¾ivatel poslat oznámení o chybì s textem
+      None -- poÅ¾aduje-li uÅ¾ivatel ukonÄenÃ­ aplikace
+      prÃ¡zdnÃ½ string -- poÅ¾aduje-li uÅ¾ivatel chybu ignorovat
+      neprÃ¡zdnÃ½ string -- poÅ¾aduje-li uÅ¾ivatel poslat oznÃ¡menÃ­ oÂ chybÄ› sÂ textem
         stringu
     
     """
-    # Existuje sice wxPython.pytis.ErrorDialogs, ale to vypadá jako tì¾kı a
-    # nepøíli¹ funkèní hack.
+    # Existuje sice wxPython.pytis.ErrorDialogs, ale to vypadÃ¡ jako tÄ›Å¾kÃ½ a
+    # nepÅ™Ã­liÅ¡ funkÄnÃ­ hack.
 
-    _IGNORE_LABEL = _("Ignorovat")
-    _REPORT_LABEL = _("Poslat oznámení o chybì")
-    _EXIT_LABEL = _("Ukonèit aplikaci")
+    _IGNORE_LABEL = _(u"Ignorovat")
+    _REPORT_LABEL = _(u"Poslat oznÃ¡menÃ­ oÂ chybÄ›")
+    _EXIT_LABEL = _(u"UkonÄit aplikaci")
     _COMMIT_BUTTON = _EXIT_LABEL
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
@@ -1133,12 +1133,12 @@ class BugReport(GenericDialog):
 
         Argumenty:
 
-          parent -- wx rodiè; instance 'wx.Frame' nebo 'wx.Dialog'
-          einfo -- informace o vıjimce ve tvaru vraceném funkcí
+          parent -- wx rodiÄ; instance 'wx.Frame' nebo 'wx.Dialog'
+          einfo -- informace oÂ vÃ½jimce ve tvaru vracenÃ©m funkcÃ­
             'sys.exc_info()'
 
         """
-        super_(BugReport).__init__(self, parent, _("Neoèekávaná chyba"),
+        super_(BugReport).__init__(self, parent, _(u"NeoÄekÃ¡vanÃ¡ chyba"),
                                    buttons=(self._IGNORE_LABEL,
                                             self._REPORT_LABEL,
                                             self._EXIT_LABEL),
@@ -1147,7 +1147,7 @@ class BugReport(GenericDialog):
 
     def _create_content(self, sizer):
         dialog = self._dialog
-        label = wx.StaticText(dialog, -1, _("Nevy¹lo to"))
+        label = wx.StaticText(dialog, -1, _(u"NevyÅ¡lo to"))
         font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, encoding=wx.FONTENCODING_DEFAULT)
         label.SetFont(font)
         icon = self._create_icon(Message.ICON_ERROR)
@@ -1177,7 +1177,7 @@ class BugReport(GenericDialog):
             font = wx.Font(traceback.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
             traceback.SetFont(font)
             for line in exception_info(self._einfo).splitlines():
-                # Pøíli¹ "dlouhı" text se nemusí povést do políèka vlo¾it...
+                # PÅ™Ã­liÅ¡ "dlouhÃ½" text se nemusÃ­ povÃ©st do polÃ­Äka vloÅ¾it...
                 traceback.AppendText(line+'\n')
         self._traceback = traceback
         self._want_focus = traceback
@@ -1497,9 +1497,9 @@ class ExitDialog(Question):
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
-    def __init__(self, parent, title=_("Ukonèit aplikaci"),
-                 message=_("Opravdu chcete ukonèit aplikaci?"), icon=Message.ICON_QUIT,
-                 save_label=_("Zapamatovat oznaèené formuláøe pro pøí¹tí spu¹tìní"),
+    def __init__(self, parent, title=_(u"UkonÄit aplikaci"),
+                 message=_(u"Opravdu chcete ukonÄit aplikaci?"), icon=Message.ICON_QUIT,
+                 save_label=_(u"Zapamatovat oznaÄenÃ© formulÃ¡Å™e pro pÅ™Ã­Å¡tÃ­ spuÅ¡tÄ›nÃ­"),
                  save_state=True, save_columns=(), save_items=()):
         """Arguments:
 
@@ -1543,50 +1543,50 @@ class ExitDialog(Question):
 
     
 class FileDialog(Dialog):
-    """Dialog pro vıbìr souboru.
+    """Dialog pro vÃ½bÄ›r souboru.
 
-    Zobrazí dialog s mo¾ností procházení adresáøù a vıbìru souboru.
+    ZobrazÃ­ dialog s moÅ¾nostÃ­ prochÃ¡zenÃ­ adresÃ¡Å™Å¯ a vÃ½bÄ›ru souboru.
 
     """
     OPEN = 'OPEN'
-    """Konstanta urèující dialog pro otevøení existujícího souboru."""  
+    """Konstanta urÄujÃ­cÃ­ dialog pro otevÅ™enÃ­ existujÃ­cÃ­ho souboru."""  
     SAVE = 'SAVE'
-    """Konstanta urèující dialog pro zadání jména souboru pro ulo¾ení."""  
+    """Konstanta urÄujÃ­cÃ­ dialog pro zadÃ¡nÃ­ jmÃ©na souboru pro uloÅ¾enÃ­."""  
 
     _last_directory = {}
 
     def __init__(self, parent, title=None, dir=None, file=None, mode=OPEN,
-                 wildcards=(_("V¹echny soubory")+" (*.*)|*.*",),
+                 wildcards=(_(u"VÅ¡echny soubory")+" (*.*)|*.*",),
                  multi=False, overwrite_prompt=True):
         """Inicializuj dialog.
 
         Argumenty:
 
-          parent -- wx rodiè; instance 'wx.Frame' nebo 'wx.Dialog'
-          title -- titulek dialogového okna jako string; pokud je None, bude
-            doplnìn vıchozí titulek v závislosti na argumentu 'mode'.
-          dir -- pøednastavená cesta; øetìzec, nebo None.
-          file -- pøednastavenı název souboru; øetìzec, nebo None.
-          mode -- typ dialogu; jedna z konstant 'OPEN' a 'CLOSE' tøídy.
-          wildcards -- seznam masek souborù a popisù, podle kterıch bude mo¾no
-            filtrovat; jedná se o sekvenci, kde ka¾dı lichı prvek urèuje popis
-            a ka¾dı sudı prvek je wildcard øetìzcem, podle kterého budou
-            soubory filtrovány, pokud je zvolen; vıchozí filtrování je podle
-            první dvojice. pøíklad: ("BMP soubory (*.bmp)", "*.bmp",
+          parent -- wx rodiÄ; instance 'wx.Frame' nebo 'wx.Dialog'
+          title -- titulek dialogovÃ©ho okna jako string; pokud je None, bude
+            doplnÄ›n vÃ½chozÃ­ titulek v zÃ¡vislosti na argumentu 'mode'.
+          dir -- pÅ™ednastavenÃ¡ cesta; Å™etÄ›zec, nebo None.
+          file -- pÅ™ednastavenÃ½ nÃ¡zev souboru; Å™etÄ›zec, nebo None.
+          mode -- typ dialogu; jedna z konstant 'OPEN' a 'CLOSE' tÅ™Ã­dy.
+          wildcards -- seznam masek souborÅ¯ a popisÅ¯, podle kterÃ½ch bude moÅ¾no
+            filtrovat; jednÃ¡ se o sekvenci, kde kaÅ¾dÃ½ lichÃ½ prvek urÄuje popis
+            a kaÅ¾dÃ½ sudÃ½ prvek je wildcard Å™etÄ›zcem, podle kterÃ©ho budou
+            soubory filtrovÃ¡ny, pokud je zvolen; vÃ½chozÃ­ filtrovÃ¡nÃ­ je podle
+            prvnÃ­ dvojice. pÅ™Ã­klad: ("BMP soubory (*.bmp)", "*.bmp",
                                      "GIF soubory (*.gif)", "*.gif")
-          multi -- pokud je pravda, bude mo¾no vybrat více souborù najednou;
-            relevantní poouze pro 'mode'='OPEN'.
-          overwrite_prompt -- pokud je pravda, bude pøi vıbìru existujícího
-            souboru pro ukládání zobrazena otázka, zda má bıt soubor pøepsán;
-            relevantní poouze pro 'mode'='SAVE'; pokud je pravda, bude
-            návratovou hodnotou metody 'run()' tuple.
+          multi -- pokud je pravda, bude moÅ¾no vybrat vÃ­ce souborÅ¯ najednou;
+            relevantnÃ­ poouze pro 'mode'='OPEN'.
+          overwrite_prompt -- pokud je pravda, bude pÅ™i vÃ½bÄ›ru existujÃ­cÃ­ho
+            souboru pro uklÃ¡dÃ¡nÃ­ zobrazena otÃ¡zka, zda mÃ¡ bÃ½t soubor pÅ™epsÃ¡n;
+            relevantnÃ­ poouze pro 'mode'='SAVE'; pokud je pravda, bude
+            nÃ¡vratovou hodnotou metody 'run()' tuple.
 
         """
         super_(FileDialog).__init__(self, parent)
         assert mode in (FileDialog.OPEN, FileDialog.SAVE)
         if title is None:
-            title = {FileDialog.OPEN: _("Otevøít soubor"),
-                     FileDialog.SAVE: _("Ulo¾it soubor")}[mode]
+            title = {FileDialog.OPEN: _(u"OtevÅ™Ã­t soubor"),
+                     FileDialog.SAVE: _(u"UloÅ¾it soubor")}[mode]
         assert dir is None or isinstance(dir, types.StringTypes)
         assert file is None or isinstance(file, types.StringTypes)
         self._title = unicode(title)
@@ -1598,10 +1598,10 @@ class FileDialog(Dialog):
         self._overwrite_prompt = overwrite_prompt
 
     def run(self):
-        """Zobraz dialog a vra» cestu k vybranému souboru jeko øetìzec.
+        """Zobraz dialog a vraÅ¥ cestu k vybranÃ©mu souboru jeko Å™etÄ›zec.
 
-        Pokud je argument konstruktoru 'multi' pravdivı, bude vrácen tuple
-        øetìzcù.
+        Pokud je argument konstruktoru 'multi' pravdivÃ½, bude vrÃ¡cen tuple
+        Å™etÄ›zcÅ¯.
 
         """
         dir = self._dir or FileDialog._last_directory.get(self._mode, '')

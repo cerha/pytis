@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2005, 2006, 2008, 2009, 2011 Brailcom, o.p.s.
 #
@@ -16,13 +16,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Resolvery jmennıch odkazù.
+"""Resolvery jmennÃ½ch odkazÅ¯.
 
-Motivací pro zavedení resolveru je mo¾nost vzájemného provázání jednotlivıch
-formuláøù, specifikací a prvkù u¾ivatelského rozhraní (menu, tlaèítka apod.) na
-základì jmen bez nutnosti vytváøet instance v¹ech odkazovanıch objektù pøi
-vytváøení objektu na nì se odkazujícího. Instance odkazovanıch objektù jsou
-vytvoøeny a¾ pøi jejich skuteèné potøebì pouze na základì znalosti jména.
+MotivacÃ­ pro zavedenÃ­ resolveru je moÅ¾nost vzÃ¡jemnÃ©ho provÃ¡zÃ¡nÃ­ jednotlivÃ½ch
+formulÃ¡Å™Å¯, specifikacÃ­ a prvkÅ¯ uÅ¾ivatelskÃ©ho rozhranÃ­ (menu, tlaÄÃ­tka apod.) na
+zÃ¡kladÄ› jmen bez nutnosti vytvÃ¡Å™et instance vÅ¡ech odkazovanÃ½ch objektÅ¯ pÅ™i
+vytvÃ¡Å™enÃ­ objektu na nÄ› se odkazujÃ­cÃ­ho. Instance odkazovanÃ½ch objektÅ¯ jsou
+vytvoÅ™eny aÅ¾ pÅ™i jejich skuteÄnÃ© potÅ™ebÄ› pouze na zÃ¡kladÄ› znalosti jmÃ©na.
 
 """
 
@@ -35,7 +35,7 @@ global _current_resolver
 _current_resolver = None
 
 def resolver():
-    """Vra» resolver pro získání specifikaèních instancí na základì jména."""
+    """VraÅ¥ resolver pro zÃ­skÃ¡nÃ­ specifikaÄnÃ­ch instancÃ­ na zÃ¡kladÄ› jmÃ©na."""
     global _current_resolver
     if _current_resolver is None:
         import config
@@ -43,11 +43,11 @@ def resolver():
     return _current_resolver
 
 def set_resolver(resolver):
-    """Nastav vıchozí resolver vracenı funkcí 'resolver()'.
+    """Nastav vÃ½chozÃ­ resolver vracenÃ½ funkcÃ­ 'resolver()'.
 
-    Vıchozí resolver je vytvoøen automaticky jako instance 'FileResolver' nad
-    adresáøem danım konfiguraèní volbou 'def_dir'.  Pokud chceme pou¾ít jinı
-    resolver, je tøeba jej nastavit touto funkcí pøed inicializací aplikace.
+    VÃ½chozÃ­ resolver je vytvoÅ™en automaticky jako instance 'FileResolver' nad
+    adresÃ¡Å™em danÃ½m konfiguraÄnÃ­ volbou 'def_dir'.  Pokud chceme pouÅ¾Ã­t jinÃ½
+    resolver, je tÅ™eba jej nastavit touto funkcÃ­ pÅ™ed inicializacÃ­ aplikace.
 
     """
     assert isinstance(resolver, Resolver)
@@ -58,22 +58,22 @@ def set_resolver(resolver):
 class ResolverError(Exception):
     """Chyba resolvace.
 
-    Tato tøída je spoleènım základem v¹ech tøíd signalizujících chybu
+    Tato tÅ™Ã­da je spoleÄnÃ½m zÃ¡kladem vÅ¡ech tÅ™Ã­d signalizujÃ­cÃ­ch chybu
     resolvace.
     
     """
 
 
 class ResolverModuleError(ResolverError):
-    """Vıjimka vyvolávaná pøi nedostupnosti ¾ádaného specifikaèního modulu."""
+    """VÃ½jimka vyvolÃ¡vanÃ¡ pÅ™i nedostupnosti Å¾Ã¡danÃ©ho specifikaÄnÃ­ho modulu."""
 
     def __init__(self, module_name, *args):
-        """Inicializuj vıjimku.
+        """Inicializuj vÃ½jimku.
 
         Argumenty:
 
-          module_name -- jméno nenalezeného specifikaèního modulu, string
-          args -- dal¹í argumenty pøedané konstruktoru pøedka
+          module_name -- jmÃ©no nenalezenÃ©ho specifikaÄnÃ­ho modulu, string
+          args -- dalÅ¡Ã­ argumenty pÅ™edanÃ© konstruktoru pÅ™edka
 
         """
         msg = 'Specification module not found: %s, %s' % (module_name, args)
@@ -81,16 +81,16 @@ class ResolverModuleError(ResolverError):
     
 
 class ResolverFileError(ResolverError):
-    """Vıjimka vyvolávaná nelze-li naèíst ¾ádanı specifikaèní soubor."""
+    """VÃ½jimka vyvolÃ¡vanÃ¡ nelze-li naÄÃ­st Å¾Ã¡danÃ½ specifikaÄnÃ­ soubor."""
     
     def __init__(self, file_name, path, exception):
-        """Inicializuj vıjimku.
+        """Inicializuj vÃ½jimku.
 
         Argumenty:
 
-          file_name -- jméno nenalezeného specifikaèního souboru, string
-          path -- cesta ke specifikaèním souborùm, string
-          exception -- vıjimka, která problém signalizovala, instance tøídy
+          file_name -- jmÃ©no nenalezenÃ©ho specifikaÄnÃ­ho souboru, string
+          path -- cesta ke specifikaÄnÃ­m souborÅ¯m, string
+          exception -- vÃ½jimka, kterÃ¡ problÃ©m signalizovala, instance tÅ™Ã­dy
             'Exception' nebo 'None'
           
         """
@@ -99,15 +99,15 @@ class ResolverFileError(ResolverError):
 
 
 class ResolverSpecError(ResolverError):
-    """Vıjimka vyvolaná není-li ve specifikaèním modulu ¾ádaná funkce."""
+    """VÃ½jimka vyvolanÃ¡ nenÃ­-li ve specifikaÄnÃ­m modulu Å¾Ã¡danÃ¡ funkce."""
     
     def __init__(self, module_name, spec_name):
-        """Inicializuj vıjimku.
+        """Inicializuj vÃ½jimku.
 
         Argumenty:
 
-          module_name -- jméno specifikaèního modulu, string
-          spec_name -- jméno specfikaèní funkce, string
+          module_name -- jmÃ©no specifikaÄnÃ­ho modulu, string
+          spec_name -- jmÃ©no specfikaÄnÃ­ funkce, string
           
         """
         msg = 'Specification not found: %s, %s' % (module_name, spec_name)
@@ -115,13 +115,13 @@ class ResolverSpecError(ResolverError):
 
 
 class Resolver(object):
-    """Resolver umo¾òuje získat specifikaèní objekt na základì modulu a jména.
+    """Resolver umoÅ¾Åˆuje zÃ­skat specifikaÄnÃ­ objekt na zÃ¡kladÄ› modulu a jmÃ©na.
 
-    Modulem se rozumí objekt, mù¾e a nemusí jím bıt pythonovı modul,
-    poskytující specifikace prostøednictvím funkcí vracejících instance
-    specifikaèních objektù.  Specifikaèní jména odpovídají jménùm callable
-    objektù modulu, resolver je schopen vracet pøímo tyto objekty (metoda
-    'get_object()') nebo jimi vytvoøené instance (metoda 'get()').
+    Modulem se rozumÃ­ objekt, mÅ¯Å¾e a nemusÃ­ jÃ­m bÃ½t pythonovÃ½ modul,
+    poskytujÃ­cÃ­ specifikace prostÅ™ednictvÃ­m funkcÃ­ vracejÃ­cÃ­ch instance
+    specifikaÄnÃ­ch objektÅ¯.  SpecifikaÄnÃ­ jmÃ©na odpovÃ­dajÃ­ jmÃ©nÅ¯m callable
+    objektÅ¯ modulu, resolver je schopen vracet pÅ™Ã­mo tyto objekty (metoda
+    'get_object()') nebo jimi vytvoÅ™enÃ© instance (metoda 'get()').
 
     """
     def __init__(self):
@@ -166,18 +166,18 @@ class Resolver(object):
         return class_(*args, **dict(kwargs_items))
         
     def get_object(self, module_name, spec_name):
-        """Vra» po¾adovanı objekt z daného specifikaèního modulu.
+        """VraÅ¥ poÅ¾adovanÃ½ objekt z danÃ©ho specifikaÄnÃ­ho modulu.
 
         Argumenty:
 
-          module_name -- jméno specifikaèního modulu
-          spec_name -- jméno objektu ze specifikaèního modulu, neprázdnı
+          module_name -- jmÃ©no specifikaÄnÃ­ho modulu
+          spec_name -- jmÃ©no objektu ze specifikaÄnÃ­ho modulu, neprÃ¡zdnÃ½
             string
         
-        Není-li modul 'module_name' nalezen, je vyvolána vıjimka
-        'ResolverModuleError'.  Je-li modul nalezen, av¹ak není v nìm
-        nalezena tøída daná 'spec_name' nebo pokud 'spec_name' zaèíná
-        podtr¾ítkem, je vyvolána vıjimka 'ResolverSpecError'.
+        NenÃ­-li modul 'module_name' nalezen, je vyvolÃ¡na vÃ½jimka
+        'ResolverModuleError'.  Je-li modul nalezen, avÅ¡ak nenÃ­ vÂ nÄ›m
+        nalezena tÅ™Ã­da danÃ¡ 'spec_name' nebo pokud 'spec_name' zaÄÃ­nÃ¡
+        podtrÅ¾Ã­tkem, je vyvolÃ¡na vÃ½jimka 'ResolverSpecError'.
 
         """
         if not spec_name or spec_name[0] == '_':
@@ -186,68 +186,68 @@ class Resolver(object):
         return self._object_cache[key]
 
     def get_module(self, module_name):
-        """Vra» po¾adovanı modul.
+        """VraÅ¥ poÅ¾adovanÃ½ modul.
 
         Argumenty:
 
-          module_name -- jméno specifikaèního modulu
+          module_name -- jmÃ©no specifikaÄnÃ­ho modulu
         
-        Není-li modul 'module_name' nalezen, je vyvolána vıjimka
+        NenÃ­-li modul 'module_name' nalezen, je vyvolÃ¡na vÃ½jimka
         'ResolverModuleError'.
 
         """
         return self._get_module(module_name)
 
     def get_instance(self, module_name, spec_name, *args, **kwargs):
-        # Nestaèí nám pouhé 'get_object', proto¾e tøída jako taková obsahuje
-        # svùj modul, co¾ mù¾e èinit potí¾e pøi vzdáleném pøístupu pøes Pyro.
-        """Vra» instanci po¾adované tøídy z daného specifikaèního modulu.
+        # NestaÄÃ­ nÃ¡m pouhÃ© 'get_object', protoÅ¾e tÅ™Ã­da jako takovÃ¡ obsahuje
+        # svÅ¯j modul, coÅ¾ mÅ¯Å¾e Äinit potÃ­Å¾e pÅ™i vzdÃ¡lenÃ©m pÅ™Ã­stupu pÅ™es Pyro.
+        """VraÅ¥ instanci poÅ¾adovanÃ© tÅ™Ã­dy z danÃ©ho specifikaÄnÃ­ho modulu.
 
         Argumenty:
 
-          module_name -- jméno specifikaèního modulu
-          spec_name -- jméno veøejné tøídy ze specifikaèního modulu, neprázdnı
+          module_name -- jmÃ©no specifikaÄnÃ­ho modulu
+          spec_name -- jmÃ©no veÅ™ejnÃ© tÅ™Ã­dy ze specifikaÄnÃ­ho modulu, neprÃ¡zdnÃ½
             string
 
-        Instance tøídy je vytvoøena voláním jejího konstruktoru s argumenty
+        Instance tÅ™Ã­dy je vytvoÅ™ena volÃ¡nÃ­m jejÃ­ho konstruktoru sÂ argumenty
         'args' a 'kwargs'.
         
-        Není-li modul 'module_name' nalezen, je vyvolána vıjimka
-        'ResolverModuleError'.  Je-li modul nalezen, av¹ak není v nìm
-        nalezena tøída daná 'spec_name' nebo pokud 'spec_name' zaèíná
-        podtr¾ítkem, je vyvolána vıjimka 'ResolverSpecError'.
+        NenÃ­-li modul 'module_name' nalezen, je vyvolÃ¡na vÃ½jimka
+        'ResolverModuleError'.  Je-li modul nalezen, avÅ¡ak nenÃ­ vÂ nÄ›m
+        nalezena tÅ™Ã­da danÃ¡ 'spec_name' nebo pokud 'spec_name' zaÄÃ­nÃ¡
+        podtrÅ¾Ã­tkem, je vyvolÃ¡na vÃ½jimka 'ResolverSpecError'.
 
         """
         key = (module_name, spec_name, tuple(args), tuple(kwargs.items()))
         return self._instance_cache[key]
 
     def get(self, module_name, spec_name, **kwargs):
-        """Vra» specifikaci 'spec_name' ze specifikaèního modulu 'module_name'.
+        """VraÅ¥ specifikaci 'spec_name' ze specifikaÄnÃ­ho modulu 'module_name'.
 
         Argumenty:
 
-          module_name -- jméno specifikaèního modulu.          
-          spec_name -- jméno specifikaèní funkce/metoda.
-          kwargs -- klíèové argumenty specifikaèní funkce/metody.
+          module_name -- jmÃ©no specifikaÄnÃ­ho modulu.          
+          spec_name -- jmÃ©no specifikaÄnÃ­ funkce/metoda.
+          kwargs -- klÃ­ÄovÃ© argumenty specifikaÄnÃ­ funkce/metody.
 
-        Pokud 'module_name' neobsahuje teèky, jde pøímo o jméno modulu.  V
-        tomto modulu je vyhledána funkce 'spec_name', ta je spu¹tìna s instancí
-        resolveru jako prvním pozièním argumentem a danımi klíèovımi argumenty
-        a vısledek je vrácen.
+        Pokud 'module_name' neobsahuje teÄky, jde pÅ™Ã­mo o jmÃ©no modulu.  V
+        tomto modulu je vyhledÃ¡na funkce 'spec_name', ta je spuÅ¡tÄ›na s instancÃ­
+        resolveru jako prvnÃ­m poziÄnÃ­m argumentem a danÃ½mi klÃ­ÄovÃ½mi argumenty
+        a vÃ½sledek je vrÃ¡cen.
 
-        Pokud 'module_name' obsahuje teèky, jde o název modulu a tøídy v nìm
-        obsa¾ené.  Název modulu mù¾e v tomto pøípadì také obsahovat názvy
-        adresáøù (oddìlené rovnì¾ teèkami).  Napøíklad název
-        'ucetnictvi.denik.UcetniDenik' znamená, ¾e v adresáøi 'ucetnictvi' bude
-        hledán soubor 'denik.py' a v nìm tøída 'UcetniDenik'.  Pokud je tøída
-        nalezena, je vytvoøena její instance (konstruktoru je pøedána instance
-        resolveru jako první pozièní argument) a nad ní zavolána metoda
-        'spec_name', té jsou pøedány dané klíèové argumenty a vısledek je
-        vrácen.
+        Pokud 'module_name' obsahuje teÄky, jde o nÃ¡zev modulu a tÅ™Ã­dy v nÄ›m
+        obsaÅ¾enÃ©.  NÃ¡zev modulu mÅ¯Å¾e v tomto pÅ™Ã­padÄ› takÃ© obsahovat nÃ¡zvy
+        adresÃ¡Å™Å¯ (oddÄ›lenÃ© rovnÄ›Å¾ teÄkami).  NapÅ™Ã­klad nÃ¡zev
+        'ucetnictvi.denik.UcetniDenik' znamenÃ¡, Å¾e v adresÃ¡Å™i 'ucetnictvi' bude
+        hledÃ¡n soubor 'denik.py' a v nÄ›m tÅ™Ã­da 'UcetniDenik'.  Pokud je tÅ™Ã­da
+        nalezena, je vytvoÅ™ena jejÃ­ instance (konstruktoru je pÅ™edÃ¡na instance
+        resolveru jako prvnÃ­ poziÄnÃ­ argument) a nad nÃ­ zavolÃ¡na metoda
+        'spec_name', tÃ© jsou pÅ™edÃ¡ny danÃ© klÃ­ÄovÃ© argumenty a vÃ½sledek je
+        vrÃ¡cen.
           
-        Není-li modul 'module_name' nalezen, je vyvolána vıjimka
-        'ResolverModuleError'.  Je-li modul nalezen, av¹ak není v nìm
-        nalezena specifikace 'spec_name', je vyvolána vıjimka
+        NenÃ­-li modul 'module_name' nalezen, je vyvolÃ¡na vÃ½jimka
+        'ResolverModuleError'.  Je-li modul nalezen, avÅ¡ak nenÃ­ vÂ nÄ›m
+        nalezena specifikace 'spec_name', je vyvolÃ¡na vÃ½jimka
         'ResolverSpecError'.
         
         """        
@@ -256,10 +256,10 @@ class Resolver(object):
         
 
 class FileResolver(Resolver):
-    """Resolver natahující moduly ze specifikaèních souborù.
+    """Resolver natahujÃ­cÃ­ moduly ze specifikaÄnÃ­ch souborÅ¯.
 
-    Specifikaèní soubory jsou hledány v adresáøi zadaném v konstruktoru
-    resolveru.  Jména specifikaèních souborù musí zaèínat velkım písmenem.
+    SpecifikaÄnÃ­ soubory jsou hledÃ¡ny v adresÃ¡Å™i zadanÃ©m v konstruktoru
+    resolveru.  JmÃ©na specifikaÄnÃ­ch souborÅ¯ musÃ­ zaÄÃ­nat velkÃ½m pÃ­smenem.
 
     """
     def __init__(self, path):
@@ -267,8 +267,8 @@ class FileResolver(Resolver):
 
         Argumenty:
 
-          path -- cesta ke specifikaèním souborùm; string, nebo sekvence
-            stringù
+          path -- cesta ke specifikaÄnÃ­m souborÅ¯m; string, nebo sekvence
+            stringÅ¯
 
         """
         super(FileResolver, self).__init__()
@@ -291,14 +291,14 @@ class FileResolver(Resolver):
 
 
 class ProxyResolver(Resolver):
-    """Resolver vyu¾ívající pro získávání dat jinı resolver.
+    """Resolver vyuÅ¾Ã­vajÃ­cÃ­ pro zÃ­skÃ¡vÃ¡nÃ­ dat jinÃ½ resolver.
 
-    Tento resolver umo¾òuje \"øetìzit\" instance resolverù.  V konstruktoru je
-    zadána instance jiného resolveru a proxy resolver z ní vytahuje v¹echny
+    Tento resolver umoÅ¾Åˆuje \"Å™etÄ›zit\" instance resolverÅ¯.  VÂ konstruktoru je
+    zadÃ¡na instance jinÃ©ho resolveru a proxy resolver zÂ nÃ­ vytahuje vÅ¡echny
     specifikace.
 
-    Hlavní smysl této tøídy je umo¾nit dynamicky roz¹íøit existující instanci
-    resolveru a dal¹í specifikace.
+    HlavnÃ­ smysl tÃ©to tÅ™Ã­dy je umoÅ¾nit dynamicky rozÅ¡Ã­Å™it existujÃ­cÃ­ instanci
+    resolveru a dalÅ¡Ã­ specifikace.
 
     """
     def __init__(self, resolver, **kwargs):
@@ -306,9 +306,9 @@ class ProxyResolver(Resolver):
 
         Argumenty:
 
-          resolver -- resolver, ze kterého jsou specifikace získávány, instance
-            tøídy 'Resolver'
-          kwargs -- pøedává se konstruktoru pøedka
+          resolver -- resolver, ze kterÃ©ho jsou specifikace zÃ­skÃ¡vÃ¡ny, instance
+            tÅ™Ã­dy 'Resolver'
+          kwargs -- pÅ™edÃ¡vÃ¡ se konstruktoru pÅ™edka
 
         """
         super(ProxyResolver, self).__init__(**kwargs)

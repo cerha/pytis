@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -417,7 +417,7 @@ def process_rights(resolver, actions, rights, def_dir, spec_fullname):
                             add_rights(spec_name, action, action_name)
                     elif isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec_attr != 'Specification':
                         print 'Note: Private specification, ignored: %s.%s' % (module_identifier, spec_attr,)
-    actions['label/1'] = Action('label/1', None, title="SAMOSTATN… AKCE")
+    actions['label/1'] = Action('label/1', None, title="SAMOSTATN√â AKCE")
     if actions_extra_shortnames:
         print 'Warning: Actions without met specifications: %s' % (actions_extra_shortnames.keys(),)
     return rights
@@ -763,20 +763,20 @@ def run():
     config.def_dir = def_dir
     resolver = pytis.util.resolver()
     menu = resolver.get('application', 'menu')
-    menu[0]._items = ((pytis.form.Menu(_("Spr·va menu a uæivatelsk˝ch rolÌ"),
-                                       (pytis.extensions.run_form_mitem(_("Menu"), 'menu.ApplicationMenu',
+    menu[0]._items = ((pytis.form.Menu(_(u"Spr√°va menu a u≈æivatelsk√Ωch rol√≠"),
+                                       (pytis.extensions.run_form_mitem(_(u"Menu"), 'menu.ApplicationMenu',
                                                                         pytis.form.BrowseForm),
-                                        pytis.extensions.run_form_mitem(_("Pr·va menu"), 'menu.ApplicationMenuM',
+                                        pytis.extensions.run_form_mitem(_(u"Pr√°va menu"), 'menu.ApplicationMenuM',
                                                                         pytis.form.MultiBrowseDualForm),
-                                        pytis.extensions.run_form_mitem(_("UæivatelskÈ role"), 'menu.ApplicationRoles',
+                                        pytis.extensions.run_form_mitem(_(u"U≈æivatelsk√© role"), 'menu.ApplicationRoles',
                                                                         pytis.form.MultiBrowseDualForm),
-                                        pytis.extensions.run_procedure_mitem(_("Aplikace zmÏn pr·v"),
+                                        pytis.extensions.run_procedure_mitem(_(u"Aplikace zmƒõn pr√°v"),
                                                                              'menu.ApplicationMenuRights', 'commit_changes'),
-                                        pytis.form.MItem(_("P¯enaËtenÌ menu a pr·v"),
+                                        pytis.form.MItem(_(u"P≈ôenaƒçten√≠ menu a pr√°v"),
                                                          command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),
                                         )),)
                       + menu[0]._items)
-    top = Menu(name=None, title=_("CEL… MENU"), parent=None, position='2', action=None, system=True)
+    top = Menu(name=None, title=_(u"CEL√â MENU"), parent=None, position='2', action=None, system=True)
     menu_items = {}
     actions = {}
     rights = {}

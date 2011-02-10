@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2004, 2005, 2006, 2007, 2011 Brailcom, o.p.s.
 #
@@ -16,30 +16,30 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Logování.
+"""LogovÃ¡nÃ­.
 
-Logování slou¾í k zaznamenávání následujících informací:
+LogovÃ¡nÃ­ slouÅ¾Ã­ kÂ zaznamenÃ¡vÃ¡nÃ­ nÃ¡sledujÃ­cÃ­ch informacÃ­:
 
-- Informace pro administrátora o stavu systému.
+- Informace pro administrÃ¡tora o stavu systÃ©mu.
 
-- Záznam u¾ivatelskıch akcí pro pøípadnou pozdìj¹í diagnostiku problémù.
+- ZÃ¡znam uÅ¾ivatelskÃ½ch akcÃ­ pro pÅ™Ã­padnou pozdÄ›jÅ¡Ã­ diagnostiku problÃ©mÅ¯.
 
-- Zmìny v¹ech dat.
+- ZmÄ›ny vÅ¡ech dat.
 
-- Ladící informace potøebné pouze bìhem vıvoje programu, které se nikdy
-  nelogují za ostrého bìhu aplikace.
+- LadÃ­cÃ­ informace potÅ™ebnÃ© pouze bÄ›hem vÃ½voje programu, kterÃ© se nikdy
+  nelogujÃ­ za ostrÃ©ho bÄ›hu aplikace.
 
-Modul umo¾òuje zaznamenávání tìchto informací prostøednictvím funkce 'log'.
-Ka¾dé volání této funkce je definováno svım typem, slovním popisem události a
-nepovinnì libovolnım datovım objektem, kterı obsahuje data vztahující se k dané
+Modul umoÅ¾Åˆuje zaznamenÃ¡vÃ¡nÃ­ tÄ›chto informacÃ­ prostÅ™ednictvÃ­m funkce 'log'.
+KaÅ¾dÃ© volÃ¡nÃ­ tÃ©to funkce je definovÃ¡no svÃ½m typem, slovnÃ­m popisem udÃ¡losti a
+nepovinnÄ› libovolnÃ½m datovÃ½m objektem, kterÃ½ obsahuje data vztahujÃ­cÃ­ se kÂ danÃ©
 informaci.
 
-Co se druhù informací tıèe, modul definuje konstantu pro ka¾dı typ informace
-z vı¹e uvedeného seznamu.
+Co se druhÅ¯ informacÃ­ tÃ½Äe, modul definuje konstantu pro kaÅ¾dÃ½ typ informace
+zÂ vÃ½Å¡e uvedenÃ©ho seznamu.
 
-Konfigurace modulu je dána promìnnou 'config'.
+Konfigurace modulu je dÃ¡na promÄ›nnou 'config'.
 
-Tento modul je doporuèeno importovat následujícím zpùsobem:
+Tento modul je doporuÄeno importovat nÃ¡sledujÃ­cÃ­m zpÅ¯sobem:
 
   from pytis.util import *
 
@@ -61,27 +61,27 @@ from util import *
 
 
 OPERATIONAL = 'OPR'
-"""Provozní hlá¹ka, související se stavem systému."""
+"""ProvoznÃ­ hlÃ¡Å¡ka, souvisejÃ­cÃ­ se stavem systÃ©mu."""
 ACTION = 'ACT'
-"""Vıznamná hlá¹ka tıkající se zmìny u¾ivatelského rozhraní nebo dat."""
+"""VÃ½znamnÃ¡ hlÃ¡Å¡ka tÃ½kajÃ­cÃ­ se zmÄ›ny uÅ¾ivatelskÃ©ho rozhranÃ­ nebo dat."""
 EVENT = 'EVT'
-"""Ménì vıznamná hlá¹ka tıkající se u¾ivatelské akce nebo dat."""
+"""MÃ©nÄ› vÃ½znamnÃ¡ hlÃ¡Å¡ka tÃ½kajÃ­cÃ­ se uÅ¾ivatelskÃ© akce nebo dat."""
 DEBUG = 'DBG'
-"""Interní hlá¹ka pro ladìní, neloguje se pøi ostrém spu¹tìní aplikace."""
+"""InternÃ­ hlÃ¡Å¡ka pro ladÄ›nÃ­, neloguje se pÅ™i ostrÃ©m spuÅ¡tÄ›nÃ­ aplikace."""
 
 
 class Logger(object):
-    """Abstraktní tøída pro logování.
+    """AbstraktnÃ­ tÅ™Ã­da pro logovÃ¡nÃ­.
 
-    Tøída obsahuje jedinou veøejnou metodu 'log()', prostøednictvím které je
-    mo¾no logování kompletnì obslou¾it.
+    TÅ™Ã­da obsahuje jedinou veÅ™ejnou metodu 'log()', prostÅ™ednictvÃ­m kterÃ© je
+    moÅ¾no logovÃ¡nÃ­ kompletnÄ› obslouÅ¾it.
 
-    Tato tøída zaji¹»uje potøebnou logovací infrastrukturu, neposílá v¹ak
-    hlá¹ky na ¾ádnı vıstup.  Zasílání hlá¹ek do konkrétních cílù je zále¾itostí
-    potomkù tøídy.
+    Tato tÅ™Ã­da zajiÅ¡Å¥uje potÅ™ebnou logovacÃ­ infrastrukturu, neposÃ­lÃ¡ vÅ¡ak
+    hlÃ¡Å¡ky na Å¾Ã¡dnÃ½ vÃ½stup.  ZasÃ­lÃ¡nÃ­ hlÃ¡Å¡ek do konkrÃ©tnÃ­ch cÃ­lÅ¯ je zÃ¡leÅ¾itostÃ­
+    potomkÅ¯ tÅ™Ã­dy.
 
-    Pro obecné logování je lépe nevyu¾ívat tuto tøídu nebo její potomky pøímo,
-    nıbr¾ pou¾ít funkci 'log.log()'.
+    Pro obecnÃ© logovÃ¡nÃ­ je lÃ©pe nevyuÅ¾Ã­vat tuto tÅ™Ã­du nebo jejÃ­ potomky pÅ™Ã­mo,
+    nÃ½brÅ¾ pouÅ¾Ã­t funkci 'log.log()'.
 
     """
     def __init__(self):
@@ -116,10 +116,10 @@ class Logger(object):
         frame = inspect.currentframe().f_back.f_back.f_back
         if frame:
             if __debug__ and False:
-                # TODO/Python: Zji¹»ování jména modulu je velmi pomalé (chyba
+                # TODO/Python: ZjiÅ¡Å¥ovÃ¡nÃ­ jmÃ©na modulu je velmi pomalÃ© (chyba
                 # modulu `inspect').
                 try:
-                    # TODO: Z neznámého dùvodu od jisté doby nefunguje zji¹tìní
+                    # TODO: ZÂ neznÃ¡mÃ©ho dÅ¯vodu od jistÃ© doby nefunguje zjiÅ¡tÄ›nÃ­
                     # modulu pro pytis.form.
                     module = inspect.getmodule(frame).__name__
                 except:
@@ -214,12 +214,12 @@ class Logger(object):
 
         Argumenty:
 
-          kind -- druh hlá¹ky, jedna z konstant modulu 'log'
-          message -- slovní hlá¹ka, string; jestli¾e tento string konèí
-            dvojteèkou, 'data' mají jednoøádkovou reprezentaci a konfiguraèní
-            volba 'one_line_preferred' je pravda, jsou data do logu zapsána na
-            stejnı øádek jako 'message'
-          data -- libovolná data; tento argument není nutno klíèovat
+          kind -- druh hlÃ¡Å¡ky, jedna z konstant modulu 'log'
+          message -- slovnÃ­ hlÃ¡Å¡ka, string; jestliÅ¾e tento string konÄÃ­
+            dvojteÄkou, 'data' majÃ­ jednoÅ™Ã¡dkovou reprezentaci a konfiguraÄnÃ­
+            volba 'one_line_preferred' je pravda, jsou data do logu zapsÃ¡na na
+            stejnÃ½ Å™Ã¡dek jako 'message'
+          data -- libovolnÃ¡ data; tento argument nenÃ­ nutno klÃ­Äovat
 
         """        
         assert kind in (OPERATIONAL, ACTION, EVENT, DEBUG), \
@@ -234,19 +234,19 @@ class Logger(object):
 
 
 class StreamLogger(Logger):
-    """Logger posílající hlá¹ení do streamu.
+    """Logger posÃ­lajÃ­cÃ­ hlÃ¡Å¡enÃ­ do streamu.
 
-    Cílovı stream je tøídì pøedán v konstruktoru.  Tøída není zodpovìdná za
-    hlídání chyb streamu ani neprovádí ¾ádné akce v pøípadì, ¾e stream je vnì
-    tøídy uzavøen.
+    CÃ­lovÃ½ stream je tÅ™Ã­dÄ› pÅ™edÃ¡n vÂ konstruktoru.  TÅ™Ã­da nenÃ­ zodpovÄ›dnÃ¡ za
+    hlÃ­dÃ¡nÃ­ chyb streamu ani neprovÃ¡dÃ­ Å¾Ã¡dnÃ© akce vÂ pÅ™Ã­padÄ›, Å¾e stream je vnÄ›
+    tÅ™Ã­dy uzavÅ™en.
 
     """
     def __init__(self, stream):
-        """Inicializuj logování.
+        """Inicializuj logovÃ¡nÃ­.
 
         Argumenty:
 
-          stream -- otevøenı file object, do kterého lze logovat
+          stream -- otevÅ™enÃ½ file object, do kterÃ©ho lze logovat
           
         """
         super(StreamLogger, self).__init__()
@@ -260,7 +260,7 @@ class StreamLogger(Logger):
 
 class SyslogLogger(Logger):
 
-    """Logger posílající hlá¹ení syslogu."""
+    """Logger posÃ­lajÃ­cÃ­ hlÃ¡Å¡enÃ­ syslogu."""
 
     _MAX_MESSAGE_LENGTH = 1020
 
@@ -311,13 +311,13 @@ class SyslogLogger(Logger):
 
 
 class LoggingInterface:
-    """Rozhraní ke standardnímu logovacímu objektu.
+    """RozhranÃ­ ke standardnÃ­mu logovacÃ­mu objektu.
 
-    Tato tøída není urèena k instanciaci mimo modul 'pytis.util.log'.
+    Tato tÅ™Ã­da nenÃ­ urÄena kÂ instanciaci mimo modul 'pytis.util.log'.
     
     """
     def __init__(self):
-        self._logger = None # nelze inicializovat teï, kvùli závislostem modulù
+        self._logger = None # nelze inicializovat teÄ, kvÅ¯li zÃ¡vislostem modulÅ¯
         self._hooks = []
 
     def __call__(self, kind, message, data=None):
@@ -325,15 +325,15 @@ class LoggingInterface:
 
         Argumenty:
 
-          kind -- druh hlá¹ky, jedna z konstant modulu
-          message -- slovní hlá¹ka, string
-          data -- libovolná data, tento argument není nutno klíèovat
+          kind -- druh hlÃ¡Å¡ky, jedna z konstant modulu
+          message -- slovnÃ­ hlÃ¡Å¡ka, string
+          data -- libovolnÃ¡ data, tento argument nenÃ­ nutno klÃ­Äovat
 
-        Pokud je '__debug__' nepravda a 'kind' je 'DEBUG', 'message' není
-        zalogováno.
+        Pokud je '__debug__' nepravda a 'kind' je 'DEBUG', 'message' nenÃ­
+        zalogovÃ¡no.
 
         """
-        if __debug__ or kind is not DEBUG: # optimalizaèní zále¾itost
+        if __debug__ or kind is not DEBUG: # optimalizaÄnÃ­ zÃ¡leÅ¾itost
             logger = self._logger
             if not logger:
                 import config
@@ -347,20 +347,20 @@ class LoggingInterface:
             hook()
 
     def add_hook(self, hook):
-        """Pøidej 'hook' ke ka¾dému logování.
+        """PÅ™idej 'hook' ke kaÅ¾dÃ©mu logovÃ¡nÃ­.
 
         Argumenty:
 
-          hook -- funkce bez argumentù, která je zavolána pøi ka¾dém volání
-            metody '__call__()', bez ohledu na to, zda nìjaká zpráva byla
-            skuteènì zalogována
+          hook -- funkce bez argumentÅ¯, kterÃ¡ je zavolÃ¡na pÅ™i kaÅ¾dÃ©m volÃ¡nÃ­
+            metody '__call__()', bez ohledu na to, zda nÄ›jakÃ¡ zprÃ¡va byla
+            skuteÄnÄ› zalogovÃ¡na
 
-        Logovací hooky lze vyu¾ít k opakovanému vykonání nìjaké èinnosti
-        v kterékoliv èásti kódu.  My¹lenka vychází z toho, ¾e ve¹kerı kód by
-        mìl na v¹ech dùle¾itıch místech, a také dostateènì èasto èasovì,
-        logovat.  Navì¹ení volání nìèeho na logování je pak nenásilnou metodou,
-        jak zajistit opakované volání nìjakého kódu i v pøípadì, kdy je
-        z jakéhokoliv dùvodu nevhodné tak èinit ve vedlej¹ím threadu.
+        LogovacÃ­ hooky lze vyuÅ¾Ã­t kÂ opakovanÃ©mu vykonÃ¡nÃ­ nÄ›jakÃ© Äinnosti
+        vÂ kterÃ©koliv ÄÃ¡sti kÃ³du.  MyÅ¡lenka vychÃ¡zÃ­ zÂ toho, Å¾e veÅ¡kerÃ½ kÃ³d by
+        mÄ›l na vÅ¡ech dÅ¯leÅ¾itÃ½ch mÃ­stech, aÂ takÃ© dostateÄnÄ› Äasto ÄasovÄ›,
+        logovat.  NavÄ›Å¡enÃ­ volÃ¡nÃ­ nÄ›Äeho na logovÃ¡nÃ­ je pak nenÃ¡silnou metodou,
+        jak zajistit opakovanÃ© volÃ¡nÃ­ nÄ›jakÃ©ho kÃ³du iÂ vÂ pÅ™Ã­padÄ›, kdy je
+        zÂ jakÃ©hokoliv dÅ¯vodu nevhodnÃ© tak Äinit ve vedlejÅ¡Ã­m threadu.
 
         """
         self._hooks.append(hook)

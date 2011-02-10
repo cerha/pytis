@@ -1,8 +1,8 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Formuláø s tiskovım preview a tiskem
+# FormulÃ¡Å™ sÂ tiskovÃ½m preview a tiskem
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Formuláø s tiskovım preview a tiskem.
+"""FormulÃ¡Å™ sÂ tiskovÃ½m preview a tiskem.
 
-Tento soubor definuje pøíslu¹nı formuláø a napojení tisku pøes wxWindows.
-Neøe¹í tvorbu tiskovıch sestav jako takovıch, to je zále¾itost modulu
+Tento soubor definuje pÅ™Ã­sluÅ¡nÃ½ formulÃ¡Å™ a napojenÃ­ tisku pÅ™es wxWindows.
+NeÅ™eÅ¡Ã­ tvorbu tiskovÃ½ch sestav jako takovÃ½ch, to je zÃ¡leÅ¾itost modulu
 'pytis.output'.
 
-Poznámka: Vısti¾nìj¹í ne¾ 'lib*output' by bylo 'lib*print', to je v¹ak
-v konfliktu s klíèovım slovem Pythonu.
+PoznÃ¡mka: VÃ½stiÅ¾nÄ›jÅ¡Ã­ neÅ¾ 'lib*output' by bylo 'lib*print', to je vÅ¡ak
+vÂ konfliktu sÂ klÃ­ÄovÃ½m slovem Pythonu.
 
 """
 
@@ -41,16 +41,16 @@ import config
 
 
 class PostscriptException(Exception):
-    """Vıjimka vyvolávaná pøi jakékoliv chybì interpretace PS dat."""
+    """VÃ½jimka vyvolÃ¡vanÃ¡ pÅ™i jakÃ©koliv chybÄ› interpretace PS dat."""
     def __init__(self, *args):
         log(EVENT, 'Chyba interpretace PostScriptu')
         super(PostscriptException, self).__init__(*args)
 
 
 class _Ghostscript(Tmpdir):
-    # Pou¾íváme vyrendrování PostScriptu do souborù po stránkách.  To sice
-    # není optimální, je to v¹ak nejjednodu¹¹í, zejména s ohledem na potí¾e
-    # s wxWindows.
+    # PouÅ¾Ã­vÃ¡me vyrendrovÃ¡nÃ­ PostScriptu do souborÅ¯ po strÃ¡nkÃ¡ch.  To sice
+    # nenÃ­ optimÃ¡lnÃ­, je to vÅ¡ak nejjednoduÅ¡Å¡Ã­, zejmÃ©na sÂ ohledem na potÃ­Å¾e
+    # sÂ wxWindows.
 
     def __init__(self, stream, zoom):
         super(_Ghostscript, self).__init__(prefix='pytisps')
@@ -79,37 +79,37 @@ class _Ghostscript(Tmpdir):
         process = self._process = Popen(gs_command, to_child=stream,
                                         from_child=dev_null_stream('w'))
         self._stream = process.to_child()
-        if __debug__: log(DEBUG, 'Ghostscript nastartován:', zoom)
+        if __debug__: log(DEBUG, 'Ghostscript nastartovÃ¡n:', zoom)
 
     def page_image(self, number):        
-        if __debug__: log(DEBUG, 'Stránka od Ghostscriptu:', number)
+        if __debug__: log(DEBUG, 'StrÃ¡nka od Ghostscriptu:', number)
         try:
             file_name = self._file_pattern % number
             next_file_name = self._file_pattern % (number+1)
             if not os.access(file_name, os.R_OK):
-                if __debug__: log(DEBUG, 'Stránka není k dispozici:', number)
+                if __debug__: log(DEBUG, 'StrÃ¡nka nenÃ­ kÂ dispozici:', number)
                 return None
             if not self.finished() and \
                    not os.access(next_file_name, os.R_OK):
                 if number == 1:
                     if __debug__:
-                        log(DEBUG, 'Èekám na vygenerování první stránky')
+                        log(DEBUG, 'ÄŒekÃ¡m na vygenerovÃ¡nÃ­ prvnÃ­ strÃ¡nky')
                     while not self.finished() and \
                           not os.access(next_file_name, os.R_OK):
                         pass
-                    if __debug__: log(DEBUG, 'Èekání ukonèeno')
+                    if __debug__: log(DEBUG, 'ÄŒekÃ¡nÃ­ ukonÄeno')
                     if not os.access(file_name, os.R_OK):
                         if __debug__:
-                            log(DEBUG, 'První stránka není k dispozici')
+                            log(DEBUG, 'PrvnÃ­ strÃ¡nka nenÃ­ kÂ dispozici')
                         return None
                 else:
                     if __debug__:
-                        log(DEBUG, 'Stránka není k dispozici:', number)
+                        log(DEBUG, 'StrÃ¡nka nenÃ­ kÂ dispozici:', number)
                     return None
-            if __debug__: log(DEBUG, 'Vracím stránku:', number)
+            if __debug__: log(DEBUG, 'VracÃ­m strÃ¡nku:', number)
             return wx.Image(file_name)
         except:
-            # wxImage nahazuje chybové okno bez ohledu na o¹etøení vıjimky zde
+            # wxImage nahazuje chybovÃ© okno bez ohledu na oÅ¡etÅ™enÃ­ vÃ½jimky zde
             return None
 
     def number_of_pages(self):
@@ -139,25 +139,25 @@ class _Ghostscript(Tmpdir):
 
 
 class PostscriptViewer(wx.ScrolledWindow):
-    """Posuvné okno zobrazující postscriptová data."""
+    """PosuvnÃ© okno zobrazujÃ­cÃ­ postscriptovÃ¡ data."""
     
     def __init__(self, parent, stream, zoom):
-        """Inicializuj prohlí¾eèku.
+        """Inicializuj prohlÃ­Å¾eÄku.
 
         Argumenty:
 
-          parent -- rodiè prohlí¾eèky, instance 'wx.Window'
-          stream -- stream poskytující postscriptová data, která mají bıt
+          parent -- rodiÄ prohlÃ­Å¾eÄky, instance 'wx.Window'
+          stream -- stream poskytujÃ­cÃ­ postscriptovÃ¡ data, kterÃ¡ majÃ­ bÃ½t
             zobrazena
-          zoom -- kladnı integer nebo float odpovídající po¾adovanému zvìt¹ení
-            náhledu, pøièem¾ standardní velikost je 1, men¹í hodnoty znamenají
-            zmen¹ení, vìt¹í hodnoty znamenají zvìt¹ení
+          zoom -- kladnÃ½ integer nebo float odpovÃ­dajÃ­cÃ­ poÅ¾adovanÃ©mu zvÄ›tÅ¡enÃ­
+            nÃ¡hledu, pÅ™iÄemÅ¾ standardnÃ­ velikost je 1, menÅ¡Ã­ hodnoty znamenajÃ­
+            zmenÅ¡enÃ­, vÄ›tÅ¡Ã­ hodnoty znamenajÃ­ zvÄ›tÅ¡enÃ­
                     
         """
-        if __debug__: log(DEBUG, 'Startuji PostScriptovou prohlí¾eèku:', zoom)
-        # Náhled nelze zoomovat "za bìhu", proto¾e jednou nastavené scrollbary
-        # ve wxScrolledWindow nelze zmìnit, museli bychom si udìlat
-        # scrollování vlastní.
+        if __debug__: log(DEBUG, 'Startuji PostScriptovou prohlÃ­Å¾eÄku:', zoom)
+        # NÃ¡hled nelze zoomovat "za bÄ›hu", protoÅ¾e jednou nastavenÃ© scrollbary
+        # ve wxScrolledWindow nelze zmÄ›nit, museli bychom si udÄ›lat
+        # scrollovÃ¡nÃ­ vlastnÃ­.
         assert zoom > 0
         wx.ScrolledWindow.__init__(self, parent, -1)
         self._zoom = zoom
@@ -173,24 +173,24 @@ class PostscriptViewer(wx.ScrolledWindow):
         self._gs = gs = _Ghostscript(stream, self._zoom)
         
     def _wait_for_gs(self):
-        if __debug__: log(DEBUG, 'Èekání na dokonèení bìhu Ghostscriptu')
+        if __debug__: log(DEBUG, 'ÄŒekÃ¡nÃ­ na dokonÄenÃ­ bÄ›hu Ghostscriptu')
         while not self._gs.finished():
             time.sleep(1)
-        if __debug__: log(DEBUG, 'Bìh Ghostscriptu je dokonèen')
+        if __debug__: log(DEBUG, 'BÄ›h Ghostscriptu je dokonÄen')
 
     def current_page(self):
-        """Vra» èíslo aktuálnì zobrazené stránky, poèínaje od 1."""
+        """VraÅ¥ ÄÃ­slo aktuÃ¡lnÄ› zobrazenÃ© strÃ¡nky, poÄÃ­naje odÂ 1."""
         return self._current_page
 
     def number_of_pages(self, current=False):
-        """Vra» poèet stránek dokumentu.
+        """VraÅ¥ poÄet strÃ¡nek dokumentu.
 
-        Je-li argument 'current' pravdivı, vra» nikoliv poèet stránek celého
-        dokumentu, nıbr¾ pouze poèet aktuálnì vygenerovanıch stránek dokumentu.
+        Je-li argument 'current' pravdivÃ½, vraÅ¥ nikoliv poÄet strÃ¡nek celÃ©ho
+        dokumentu, nÃ½brÅ¾ pouze poÄet aktuÃ¡lnÄ› vygenerovanÃ½ch strÃ¡nek dokumentu.
 
-        Vrací: Dvojici (NUMBER_OF_PAGES, FINAL), kde NUMBER_OF_PAGES je
-        odpovídající poèet stran a FINAL je pravdivé právì tehdy, je-li
-        NUMBER_OF_PAGES èíslo koneèné.
+        VracÃ­: Dvojici (NUMBER_OF_PAGES, FINAL), kde NUMBER_OF_PAGES je
+        odpovÃ­dajÃ­cÃ­ poÄet stran a FINAL je pravdivÃ© prÃ¡vÄ› tehdy, je-li
+        NUMBER_OF_PAGES ÄÃ­slo koneÄnÃ©.
         
         """
         if not current:
@@ -198,29 +198,29 @@ class PostscriptViewer(wx.ScrolledWindow):
         return self._gs.number_of_pages()
     
     def show_page(self, page_number):
-        """Zobraz stránku èíslo `page_number'.
+        """Zobraz strÃ¡nku ÄÃ­slo `page_number'.
 
-        Stránky jsou èíslovány od 1.  Jestli¾e je èíslo stránky men¹í ne¾ 1,
-        zobraz stranu èíslo 1.  Jestli¾e je èíslo stránky vìt¹í ne¾ poèet
-        stránek dokumentu, zobraz poslední stránku.
+        StrÃ¡nky jsou ÄÃ­slovÃ¡ny odÂ 1.  JestliÅ¾e je ÄÃ­slo strÃ¡nky menÅ¡Ã­ neÅ¾Â 1,
+        zobraz stranu ÄÃ­sloÂ 1.  JestliÅ¾e je ÄÃ­slo strÃ¡nky vÄ›tÅ¡Ã­ neÅ¾ poÄet
+        strÃ¡nek dokumentu, zobraz poslednÃ­ strÃ¡nku.
 
-        Vrací: Èíslo skuteènì zobrazené stránky.
+        VracÃ­: ÄŒÃ­slo skuteÄnÄ› zobrazenÃ© strÃ¡nky.
 
         """
-        if __debug__: log(DEBUG, 'Zobrazení stránky:', page_number)
+        if __debug__: log(DEBUG, 'ZobrazenÃ­ strÃ¡nky:', page_number)
         while True:
             npages, final = self.number_of_pages(current=True)
             if final or npages >= 1:
-                if __debug__: log(DEBUG, 'Nìjaké stránky u¾ jsou na skladì')
+                if __debug__: log(DEBUG, 'NÄ›jakÃ© strÃ¡nky uÅ¾ jsou na skladÄ›')
                 break
-            if __debug__: log(DEBUG, 'mikrospánek')
+            if __debug__: log(DEBUG, 'mikrospÃ¡nek')
             microsleep()
         if npages < 1:
-            if __debug__: log(DEBUG, 'Vıstup nemá ¾ádnou stránku')
+            if __debug__: log(DEBUG, 'VÃ½stup nemÃ¡ Å¾Ã¡dnou strÃ¡nku')
             return 0
         gs = self._gs
         if page_number < 1:
-            if __debug__: log(DEBUG, 'Vynucené zobrazení první stránky')
+            if __debug__: log(DEBUG, 'VynucenÃ© zobrazenÃ­ prvnÃ­ strÃ¡nky')
             page_number = 1
         elif page_number > npages:
             npages, final = self.number_of_pages()
@@ -231,14 +231,14 @@ class PostscriptViewer(wx.ScrolledWindow):
                     gs = self._gs_old
                 else:
                     page_number = npages
-            if __debug__: log(DEBUG, 'Vynucené zobrazení poslední stránky')
+            if __debug__: log(DEBUG, 'VynucenÃ© zobrazenÃ­ poslednÃ­ strÃ¡nky')
         if page_number != self._current_page or self._restarted:
             if gs is self._gs:
                 self._restarted = False
             self._current_page = page_number
             image = self._gs.page_image(page_number)
             if image is None:
-                if __debug__: log(DEBUG, 'Stránka nenaètena')
+                if __debug__: log(DEBUG, 'StrÃ¡nka nenaÄtena')
                 return 0
             self._current_page_bitmap = image.ConvertToBitmap()
             # Scrollbars
@@ -251,27 +251,27 @@ class PostscriptViewer(wx.ScrolledWindow):
                 width, height = image.GetWidth(), image.GetHeight()
             hs, vs = width/hsteps, height/vsteps
             if hs and vs:
-                # TODO: Bráníme se dìlení nulou. Nemìli bychom v¹ak pøesto
-                # scrollbary v takovém pøípadì nìjak nastravit?
+                # TODO: BrÃ¡nÃ­me se dÄ›lenÃ­ nulou. NemÄ›li bychom vÅ¡ak pÅ™esto
+                # scrollbary v takovÃ©m pÅ™Ã­padÄ› nÄ›jak nastravit?
                 self.SetScrollbars(hs, vs, width/hs + 1, height/vs + 1)
             self.Refresh()
-        if __debug__: log(DEBUG, 'Zobrazena stránka:', page_number)
+        if __debug__: log(DEBUG, 'Zobrazena strÃ¡nka:', page_number)
         return page_number
 
     def current_zoom(self):
-        """Vra» hodnotu zoom z konstruktoru."""
+        """VraÅ¥ hodnotu zoom zÂ konstruktoru."""
         return self._zoom
 
     def ps_input_stream(self):
-        """Vra» vstupní stream interpretu Postscriptu."""
+        """VraÅ¥ vstupnÃ­ stream interpretu Postscriptu."""
         return self._gs.input_stream()
 
     def restart(self, stream):
-        """Spus» nové zobrazení dat.
+        """SpusÅ¥ novÃ© zobrazenÃ­ dat.
 
         Argumenty:
 
-          stream -- stejné jako v konstruktoru
+          stream -- stejnÃ© jako vÂ konstruktoru
 
         """
         self._restarted = True
@@ -305,8 +305,8 @@ class PrintForm(Form):
     """Common ancestor of both internal and external print previewers."""
 
 class PrintFormInternal(PrintForm, InnerForm):
-    """Formuláø zobrazující preview tisku s mo¾ností jeho provedení."""
-    DESCR = "tisková sestava"
+    """FormulÃ¡Å™ zobrazujÃ­cÃ­ preview tisku sÂ moÅ¾nostÃ­ jeho provedenÃ­."""
+    DESCR = "tiskovÃ¡ sestava"
     
     def __init__(self, parent, resolver, name, formatter,
                  guardian=None, **kwargs):
@@ -314,17 +314,17 @@ class PrintFormInternal(PrintForm, InnerForm):
 
         Argumenty:
 
-          parent -- instance 'wxFrame', do kterého formuláø patøí
-          resolver -- resolver jmennıch odkazù, instance tøídy
+          parent -- instance 'wxFrame', do kterÃ©ho formulÃ¡Å™ patÅ™Ã­
+          resolver -- resolver jmennÃ½ch odkazÅ¯, instance tÅ™Ã­dy
             'pytis.util.Resolver'
-          name -- jméno specifikaèního souboru pro resolver; string
-          formatter -- formátovaè vıstupu, instance tøídy
+          name -- jmÃ©no specifikaÄnÃ­ho souboru pro resolver; string
+          formatter -- formÃ¡tovaÄ vÃ½stupu, instance tÅ™Ã­dy
             'pytis.output.Formatter'
-          guardian -- formuláø (instance libovolné tøídy), ve kterém je
-            formuláø vlo¾en z hlediska struktury aplikace; není-li zadán, je
-            pou¾it 'parent'.  Tento parametr je vyu¾íván napøíklad pøi zasílání
-            klávesovıch událostí \"nahoru\".  Typicky je to formuláø, kterı
-            tuto instanci vytváøí.
+          guardian -- formulÃ¡Å™ (instance libovolnÃ© tÅ™Ã­dy), ve kterÃ©m je
+            formulÃ¡Å™ vloÅ¾en zÂ hlediska struktury aplikace; nenÃ­-li zadÃ¡n, je
+            pouÅ¾it 'parent'.  Tento parametr je vyuÅ¾Ã­vÃ¡n napÅ™Ã­klad pÅ™i zasÃ­lÃ¡nÃ­
+            klÃ¡vesovÃ½ch udÃ¡lostÃ­ \"nahoru\".  Typicky je to formulÃ¡Å™, kterÃ½
+            tuto instanci vytvÃ¡Å™Ã­.
 
         """
         Form.__init__(self, parent, resolver, name, guardian=guardian)
@@ -337,14 +337,14 @@ class PrintFormInternal(PrintForm, InnerForm):
         wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _run_formatter(self, stream):
-        if __debug__: log(DEBUG, 'Spou¹tím formátovaè')
+        if __debug__: log(DEBUG, 'SpouÅ¡tÃ­m formÃ¡tovaÄ')
         try:
             self._formatter_running = True
             self._formatter.printout(stream)
             self._number_of_runs = self._number_of_runs + 1
             self._formatter_running = False
         finally:
-            if __debug__: log(DEBUG, 'Konec formátování')
+            if __debug__: log(DEBUG, 'Konec formÃ¡tovÃ¡nÃ­')
 
     def _start_postscript_viewer(self, zoom, new=True):
         if new:
@@ -358,7 +358,7 @@ class PrintFormInternal(PrintForm, InnerForm):
     def _create_controls(self):
         self._start_postscript_viewer(1.0)
         preview = self._preview
-        if __debug__: log(DEBUG, 'Zobrazuji první stránku')
+        if __debug__: log(DEBUG, 'Zobrazuji prvnÃ­ strÃ¡nku')
         preview.show_page(1)
         # Control widgets
         control_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -408,7 +408,7 @@ class PrintFormInternal(PrintForm, InnerForm):
         sizer.Add(control_sizer, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         self.SetSizer(sizer)
         sizer.Fit(self)
-        # Klávesy
+        # KlÃ¡vesy
         wx_callback(wx.EVT_KEY_DOWN, preview, self.on_key_down)
         wx_callback(wx.EVT_KEY_DOWN, self, self.on_key_down)
         wx_callback(wx.EVT_KEY_DOWN, self._page_indicator_ctrl,
@@ -437,7 +437,7 @@ class PrintFormInternal(PrintForm, InnerForm):
             event.Skip()
 
     def _show_page(self, page_number):
-        if __debug__: log(DEBUG, 'Po¾adavek na zobrazení stránky:', page_number)
+        if __debug__: log(DEBUG, 'PoÅ¾adavek na zobrazenÃ­ strÃ¡nky:', page_number)
         preview = self._preview
         current_page = preview.current_page()
         real_page_number = preview.show_page(page_number)
@@ -451,7 +451,7 @@ class PrintFormInternal(PrintForm, InnerForm):
             self._total_pages_ctrl.SetValue(npages_string)
             if final:
                 self._total_pages = npages
-                message(_("Vıstup zformátován"))
+                message(_(u"VÃ½stup zformÃ¡tovÃ¡n"))
 
     def _on_goto_page(self, event):
         page_number_string = self._page_indicator_ctrl.GetValue()
@@ -476,10 +476,10 @@ class PrintFormInternal(PrintForm, InnerForm):
         self._show_page(self._preview.current_page() + 1)
 
     def _zoom(self, zoom):
-        if __debug__: log(DEBUG, 'Po¾adavek na zoom:', zoom)
+        if __debug__: log(DEBUG, 'PoÅ¾adavek na zoom:', zoom)
         if zoom < 10:
             zoom = 10
-        elif zoom > 300:                # víc u¾ dává poèítaèi pøíli¹ zahulit
+        elif zoom > 300:                # vÃ­c uÅ¾ dÃ¡vÃ¡ poÄÃ­taÄi pÅ™Ã­liÅ¡ zahulit
             zoom = 300
         self._zoom_ctrl.SetValue("%d" % zoom)
         preview = self._preview
@@ -491,14 +491,14 @@ class PrintFormInternal(PrintForm, InnerForm):
             self._current_stream.close()
         except IOError:
             pass
-        # Novı náhled
-        if __debug__: log(DEBUG, 'Restart náhledu')
+        # NovÃ½ nÃ¡hled
+        if __debug__: log(DEBUG, 'Restart nÃ¡hledu')
         self._start_postscript_viewer(zoom/100.0)
         self._preview.show_page(1)
         sizer.Prepend(self._preview, 1, wx.EXPAND|wx.FIXED_MINSIZE)
         self.SetSize(self.GetSize())
         self._show_page(page)
-        if __debug__: log(DEBUG, 'Náhled restartován')
+        if __debug__: log(DEBUG, 'NÃ¡hled restartovÃ¡n')
         
     def _on_zoom(self, event):
         zoom_string = self._zoom_ctrl.GetValue()
@@ -519,12 +519,12 @@ class PrintFormInternal(PrintForm, InnerForm):
         self._zoom(zoom)
 
     def _on_print_(self, __event=None):
-        log(ACTION, "Spu¹tìn tisk:", self._name)
+        log(ACTION, "SpuÅ¡tÄ›n tisk:", self._name)
         process = Popen(config.printing_command,
                         from_child=dev_null_stream('w'))
         stream = process.to_child()
         thread.start_new_thread(self._run_formatter, (stream,))
-        message(_("Spu¹tìn tisk"))
+        message(_(u"SpuÅ¡tÄ›n tisk"))
 
     def _on_size(self, event):
         size = event.GetSize()

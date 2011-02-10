@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -35,11 +35,6 @@ _connection_data = {'database': 'test'}
 tests = TestSuite()
 
 import sys
-# O¹klivı hack kvùli o¹etøení defaultního kódování
-# proto¾e site.py ma¾e ze 'sys' metodu setdefaultencoding
-imp.reload(sys)
-sys.setdefaultencoding('iso-8859-2')
-
 
 
 #############
@@ -221,12 +216,12 @@ class Password(_TypeCheck):
             from hashlib import md5
         except ImportError:
             from md5 import md5
-        hashed = md5(u'abcèdef'.encode('utf-8')).hexdigest()
+        hashed = md5(u'abcÄdef'.encode('utf-8')).hexdigest()
         self._test_validity(t3, hashed, hashed)
         self._test_validity(t3, 'xxx', None)
         self._test_validity(t3, hashed, None, kwargs={'verify': ''})
         self._test_validity(t3, 'abc', None, kwargs={'verify': 'abc'})
-        self._test_validity(t3, u'abcèdef', hashed, kwargs={'verify': u'abcèdef'},
+        self._test_validity(t3, u'abcÄdef', hashed, kwargs={'verify': u'abcÄdef'},
                             check_export=False)
         t4 = pytis.data.Password(md5=True, minlen=4, not_null=True)
         self._test_validity(t4, 'xxx', None)
@@ -365,7 +360,7 @@ tests.add(Array)
 
 
 class Enumerator(_TypeCheck):
-    # Netestováno, nebo» tøída není pou¾ívána pøímo, staèí testovat potomky
+    # NetestovÃ¡no, neboÅ¥ tÅ™Ã­da nenÃ­ pouÅ¾Ã­vÃ¡na pÅ™Ã­mo, staÄÃ­ testovat potomky
     pass
 
 class DataEnumerator(unittest.TestCase):
@@ -855,15 +850,15 @@ class _DBTest(_DBBaseTest):
         _DBBaseTest.tearDown(self)        
 
 class DBDataPostgreSQL(_DBTest):
-    # Testujeme v rámci testování potomka 'DBDataDefault'.
+    # Testujeme vÂ rÃ¡mci testovÃ¡nÃ­ potomka 'DBDataDefault'.
     pass
 
 class DBDataPyPgSQL(_DBTest):
-    # Testujeme v rámci testování potomka 'DBDataDefault'.
+    # Testujeme vÂ rÃ¡mci testovÃ¡nÃ­ potomka 'DBDataDefault'.
     pass
 
 class PostgreSQLStandardBindingHandler(_DBTest):
-    # Testujeme v rámci testování potomka 'DBDataDefault'.
+    # Testujeme vÂ rÃ¡mci testovÃ¡nÃ­ potomka 'DBDataDefault'.
     pass
 
 class DBDataDefault(_DBTest):
@@ -1017,7 +1012,7 @@ class DBDataDefault(_DBTest):
                 d.sleep()
         _DBTest.tearDown(self)
     def test_constructor(self):
-        # Ji¾ otestováno v setUp
+        # JiÅ¾ otestovÃ¡no vÂ setUp
         pass
     def test_row(self):
         I = pytis.data.Integer()
@@ -1871,8 +1866,8 @@ class DBDataFetchBuffer(_DBBaseTest):
         self._check_skip_fetch(d1, (('s',fsize2+3),))
         self._check_skip_fetch(d1, (('s',10*fsize2),), noresult=True)
         # small table
-        # Z neznámého dùvodu to pøi ukonèení vytuhne (testy ale probìhnou bez
-        # problémù...  TODO: Co s tím??
+        # Z neznÃ¡mÃ©ho dÅ¯vodu to pÅ™i ukonÄenÃ­ vytuhne (testy ale probÄ›hnou bez
+        # problÃ©mÅ¯...  TODO: Co s tÃ­m??
         #self._check_skip_fetch(d2, (('s', 3), ('f', 1), ('s', -2), ('f',-1)))
         #self._check_skip_fetch(d2, (('s', 4), ('f', 1), ('s', -2), ('f',-1)))
 tests.add(DBDataFetchBuffer)
@@ -2354,10 +2349,10 @@ class TutorialTest(_DBBaseTest):
             assert new_key, 'validation not working'
             new_row_data = []
             for c, v in zip(tab_data.columns(),
-                            ('9', 'pìknı øádek', 'devet')):
+                            ('9', 'pÄ›knÃ½ Å™Ã¡dek', 'devet')):
                 new_row_data.append ((c.id(), c.type().validate(v)[0]))
             new_row = pytis.data.Row(new_row_data)
-            # TODO: Momenálnì nechodí.  Opravit.
+            # TODO: MomenÃ¡lnÄ› nechodÃ­.  Opravit.
             #assert tab_data.insert(new_row)[1], 'line not inserted'
             #assert tab_data.delete(new_key), 'line not deleted'
             #result, success = tab_data.update(old_key, new_row)

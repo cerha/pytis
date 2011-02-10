@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,13 +16,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Interaktivní formuláøe pro práci s daty.
+"""InteraktivnÃ­ formulÃ¡Å™e pro prÃ¡ci sÂ daty.
 
-Základem v¹ech formuláøù je tøída 'Form'.  Dále tento modul obsahuje její
-potomky pro konkrétní pou¾ití -- jednoduché editaèní formuláøe (pro zobrazení a
-editaci jednoho záznamu).  Jednoduché seznamové formuláøe a duální formuláøe
-jsou v oddìlenıch modulech 'list' a 'dualform'.  Blí¾e viz dokumentace
-jednotlivıch tøíd.
+ZÃ¡kladem vÅ¡ech formulÃ¡Å™Å¯ je tÅ™Ã­da 'Form'.  DÃ¡le tento modul obsahuje jejÃ­
+potomky pro konkrÃ©tnÃ­ pouÅ¾itÃ­ -- jednoduchÃ© editaÄnÃ­ formulÃ¡Å™e (pro zobrazenÃ­ a
+editaci jednoho zÃ¡znamu).  JednoduchÃ© seznamovÃ© formulÃ¡Å™e a duÃ¡lnÃ­ formulÃ¡Å™e
+jsou v oddÄ›lenÃ½ch modulech 'list' a 'dualform'.  BlÃ­Å¾e viz dokumentace
+jednotlivÃ½ch tÅ™Ã­d.
 
 """
 
@@ -216,33 +216,33 @@ class FormProfile(pytis.presentation.Profile):
     
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
-    """Spoleèná nadtøída formuláøù.
+    """SpoleÄnÃ¡ nadtÅ™Ã­da formulÃ¡Å™Å¯.
 
-    Formuláø si podle jména specifikace pøedaného konstruktoru vy¾ádá od
-    resolveru pøíslu¹nou datovou a prezentaèní specifikaci.  Z datové
-    specifikace vytvoøí datovı objekt (instance tøídy odvozené z
-    'pytis.data.Data').  Datovı objekt a prezentaèní specifikace jsou potom
-    ulo¾eny ve formì atributù instance formuláøe ('self._view' a 'self._data')
+    FormulÃ¡Å™ si podle jmÃ©na specifikace pÅ™edanÃ©ho konstruktoru vyÅ¾Ã¡dÃ¡ od
+    resolveru pÅ™Ã­sluÅ¡nou datovou a prezentaÄnÃ­ specifikaci.  Z datovÃ©
+    specifikace vytvoÅ™Ã­ datovÃ½ objekt (instance tÅ™Ã­dy odvozenÃ© z
+    'pytis.data.Data').  DatovÃ½ objekt a prezentaÄnÃ­ specifikace jsou potom
+    uloÅ¾eny ve formÄ› atributÅ¯ instance formulÃ¡Å™e ('self._view' a 'self._data')
 
-    Instance tøíd odvozenıch z této tøídy jsou potom vytváøeny na základì
-    interpretace prezentaèní specifikace a pracují s daty s pomocí datového
-    objektu a jeho API (které je nezávislé na konkrétním zdroji dat).
+    Instance tÅ™Ã­d odvozenÃ½ch z tÃ©to tÅ™Ã­dy jsou potom vytvÃ¡Å™eny na zÃ¡kladÄ›
+    interpretace prezentaÄnÃ­ specifikace a pracujÃ­ s daty s pomocÃ­ datovÃ©ho
+    objektu a jeho API (kterÃ© je nezÃ¡vislÃ© na konkrÃ©tnÃ­m zdroji dat).
 
-    Form je potomkem 'Window', díky èemu¾ je mo¾né jej ukládat na zásobník oken
-    aplikace a provádìt dal¹í operace, jako zaostøování, skrıvání, zobrazování
+    Form je potomkem 'Window', dÃ­ky ÄemuÅ¾ je moÅ¾nÃ© jej uklÃ¡dat na zÃ¡sobnÃ­k oken
+    aplikace a provÃ¡dÄ›t dalÅ¡Ã­ operace, jako zaostÅ™ovÃ¡nÃ­, skrÃ½vÃ¡nÃ­, zobrazovÃ¡nÃ­
     apod.
 
-    Pou¾ívané specifikaèní funkce:
+    PouÅ¾Ã­vanÃ© specifikaÄnÃ­ funkce:
 
       print_spec -- sekvence dvojic (POPIS, SOUBOR), kde POPIS je string se
-        struènım slovním popisem specifikace (vyu¾ívanım napøíklad jako titulek
-        polo¾ky menu) a SOUBOR je string udávající jméno souboru se
-        specifikací, relativní k adresáøi s definièními soubory, bez pøípony
+        struÄnÃ½m slovnÃ­m popisem specifikace (vyuÅ¾Ã­vanÃ½m napÅ™Ã­klad jako titulek
+        poloÅ¾ky menu) a SOUBOR je string udÃ¡vajÃ­cÃ­ jmÃ©no souboru se
+        specifikacÃ­, relativnÃ­ kÂ adresÃ¡Å™i sÂ definiÄnÃ­mi soubory, bez pÅ™Ã­pony
 
     """
 
     CALL_USER_INTERACTION = 'CALL_USER_INTERACTION'
-    """Konstanta callbacku interakce u¾ivatele."""
+    """Konstanta callbacku interakce uÅ¾ivatele."""
 
     _STATUS_FIELDS = ()
     _LOG_STATISTICS = True
@@ -256,7 +256,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def descr(cls):
-        """Vra» textovı popis typu formuláøe jako øetìzec."""
+        """VraÅ¥ textovÃ½ popis typu formulÃ¡Å™e jako Å™etÄ›zec."""
         if cls.DESCR is not None:
             return cls.DESCR
         else:
@@ -268,14 +268,14 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
         Argumenty:
         
-          parent -- instance 'wxFrame', do kterého formuláø patøí
-          resolver -- resolver jmennıch odkazù, instance 'pytis.util.Resolver' 
-          name -- jméno specifikaèního souboru pro resolver; string
-          guardian -- formuláø (instance libovolné tøídy), ve kterém je
-            formuláø vlo¾en z hlediska struktury aplikace; není-li zadán, je
-            pou¾it 'parent'.  Tento parametr je vyu¾íván napøíklad pøi zasílání
-            klávesovıch událostí \"nahoru\".  Typicky je to formuláø, kterı
-            tuto instanci vytváøí.
+          parent -- instance 'wxFrame', do kterÃ©ho formulÃ¡Å™ patÅ™Ã­
+          resolver -- resolver jmennÃ½ch odkazÅ¯, instance 'pytis.util.Resolver' 
+          name -- jmÃ©no specifikaÄnÃ­ho souboru pro resolver; string
+          guardian -- formulÃ¡Å™ (instance libovolnÃ© tÅ™Ã­dy), ve kterÃ©m je
+            formulÃ¡Å™ vloÅ¾en zÂ hlediska struktury aplikace; nenÃ­-li zadÃ¡n, je
+            pouÅ¾it 'parent'.  Tento parametr je vyuÅ¾Ã­vÃ¡n napÅ™Ã­klad pÅ™i zasÃ­lÃ¡nÃ­
+            klÃ¡vesovÃ½ch udÃ¡lostÃ­ \"nahoru\".  Typicky je to formulÃ¡Å™, kterÃ½
+            tuto instanci vytvÃ¡Å™Ã­.
           transaction -- transaction to use when manipulating data
           spec_kwargs -- dictionary of keyword arguments passed to the view
             specification constructor.
@@ -292,37 +292,37 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             initialization before the form is actually used for the first
             time.  You must do it using 'full_init()' method and you may call
             the method only once for the given form instance.
-          kwargs -- viz ní¾e.
+          kwargs -- viz nÃ­Å¾e.
 
-        Resolver je pou¾it k získání datové a prezentaèní specifikace a
-        následnému vytvoøení datového objektu. Ten je potom spoleènì s
-        prezentaèní specifikací ulo¾en v podobì atributù vytváøené instance.
+        Resolver je pouÅ¾it k zÃ­skÃ¡nÃ­ datovÃ© a prezentaÄnÃ­ specifikace a
+        nÃ¡slednÃ©mu vytvoÅ™enÃ­ datovÃ©ho objektu. Ten je potom spoleÄnÄ› s
+        prezentaÄnÃ­ specifikacÃ­ uloÅ¾en v podobÄ› atributÅ¯ vytvÃ¡Å™enÃ© instance.
 
-        Odkaz na resolver samotnı je také zapamatován pro pozdìj¹í pou¾ití
-        (vytváøení dal¹ích formuláøù).
+        Odkaz na resolver samotnÃ½ je takÃ© zapamatovÃ¡n pro pozdÄ›jÅ¡Ã­ pouÅ¾itÃ­
+        (vytvÃ¡Å™enÃ­ dalÅ¡Ã­ch formulÃ¡Å™Å¯).
           
-        Inicializace je rozdìlena do nìkolika krokù.  Nejprve jsou zpracovány
-        v¹echny argumenty spoleèné v¹em formuáøovım tøídám.  Ty zpracovává
-        konstruktor bázové tøídy 'Form'.  Jejich zpracování by nemìlo bıt
-        pøedefinováváno v odvozenıch tøídách a ani ¾ádné dal¹í argumenty by
-        nemìly bıt pøidávány.  Konstruktor je mo¾no pøedefinovat a provádìt
-        nìjaké doplòující akce, ale argumenty by nemìly bıt mìnìny.
+        Inicializace je rozdÄ›lena do nÄ›kolika krokÅ¯.  Nejprve jsou zpracovÃ¡ny
+        vÅ¡echny argumenty spoleÄnÃ© vÅ¡em formuÃ¡Å™ovÃ½m tÅ™Ã­dÃ¡m.  Ty zpracovÃ¡vÃ¡
+        konstruktor bÃ¡zovÃ© tÅ™Ã­dy 'Form'.  Jejich zpracovÃ¡nÃ­ by nemÄ›lo bÃ½t
+        pÅ™edefinovÃ¡vÃ¡no v odvozenÃ½ch tÅ™Ã­dÃ¡ch a ani Å¾Ã¡dnÃ© dalÅ¡Ã­ argumenty by
+        nemÄ›ly bÃ½t pÅ™idÃ¡vÃ¡ny.  Konstruktor je moÅ¾no pÅ™edefinovat a provÃ¡dÄ›t
+        nÄ›jakÃ© doplÅˆujÃ­cÃ­ akce, ale argumenty by nemÄ›ly bÃ½t mÄ›nÄ›ny.
 
-        Po zpracování spoleènıch argumwentù jsou naèteny specifikace a vytvoøen
-        datovı objekt.
+        Po zpracovÃ¡nÃ­ spoleÄnÃ½ch argumwentÅ¯ jsou naÄteny specifikace a vytvoÅ™en
+        datovÃ½ objekt.
 
-        Poté jsou zpracovávány klíèové argumenty.  Ka¾dá odvozená tøída mù¾e
-        definovat své vlastní klíèové argumenty.  Ty potom zpracuje
-        pøedefinováním metody '_init_attributes()'.  Ta ji¾ mù¾e vyu¾ívat
-        inicializovaného datového objetu a specifikací a pøípadnì initializovat
-        dal¹í atributy tøídy.  Metoda '_init_attributes()' by mìla v¾dy
-        zpracovávat pouze klíèové argumenty, které jsou specifické pro danou
-        tøídu.  Zbylé pøedá metodì rodièovské tøídy konstrukcí **kwargs.  Takto
-        by mìlo bıt zaruèeno, ¾e dojde postupnì ke zpracování v¹ech argumentù.
+        PotÃ© jsou zpracovÃ¡vÃ¡ny klÃ­ÄovÃ© argumenty.  KaÅ¾dÃ¡ odvozenÃ¡ tÅ™Ã­da mÅ¯Å¾e
+        definovat svÃ© vlastnÃ­ klÃ­ÄovÃ© argumenty.  Ty potom zpracuje
+        pÅ™edefinovÃ¡nÃ­m metody '_init_attributes()'.  Ta jiÅ¾ mÅ¯Å¾e vyuÅ¾Ã­vat
+        inicializovanÃ©ho datovÃ©ho objetu a specifikacÃ­ a pÅ™Ã­padnÄ› initializovat
+        dalÅ¡Ã­ atributy tÅ™Ã­dy.  Metoda '_init_attributes()' by mÄ›la vÅ¾dy
+        zpracovÃ¡vat pouze klÃ­ÄovÃ© argumenty, kterÃ© jsou specifickÃ© pro danou
+        tÅ™Ã­du.  ZbylÃ© pÅ™edÃ¡ metodÄ› rodiÄovskÃ© tÅ™Ã­dy konstrukcÃ­ **kwargs.  Takto
+        by mÄ›lo bÃ½t zaruÄeno, Å¾e dojde postupnÄ› ke zpracovÃ¡nÃ­ vÅ¡ech argumentÅ¯.
 
-        Teprve po zpravování argumentù konstruktoru a inicializaci atributù je
-        vytváøen vlastní obsah formuláøe (viz. '_create_form()').  Toto by mìlo
-        bıt dodr¾ováno i v odvozenıch tøídách.
+        Teprve po zpravovÃ¡nÃ­ argumentÅ¯ konstruktoru a inicializaci atributÅ¯ je
+        vytvÃ¡Å™en vlastnÃ­ obsah formulÃ¡Å™e (viz. '_create_form()').  Toto by mÄ›lo
+        bÃ½t dodrÅ¾ovÃ¡no i v odvozenÃ½ch tÅ™Ã­dÃ¡ch.
         
         """
         self._name = name
@@ -453,7 +453,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             pass
         self._data = None
         
-    # Zpracování pøíkazù
+    # ZpracovÃ¡nÃ­ pÅ™Ã­kazÅ¯
    
     def _cmd_help(self):
         help(self._name.replace(':','-'))
@@ -472,24 +472,24 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         # in idle event processing.
         self._leave_form_requested = True
 
-    # Veøejné metody
+    # VeÅ™ejnÃ© metody
     
     def name(self):
-        """Vra» název specifikace formuláøe."""
+        """VraÅ¥ nÃ¡zev specifikace formulÃ¡Å™e."""
         return self._name
 
     def title(self):
-        """Vra» titulek ze specifikace formuláøe jako øetìzec."""
+        """VraÅ¥ titulek ze specifikace formulÃ¡Å™e jako Å™etÄ›zec."""
         return self._view.title()
 
     def guardian(self):
-        """Vra» guardian zadané v konstruktoru (nebo parent)."""
+        """VraÅ¥ guardian zadanÃ© vÂ konstruktoru (nebo parent)."""
         return self._guardian
 
     def check_permission(self, perm, quiet=True):
-        """Vra» pravdu, pokud má u¾ivatel daná práva k datovému objektu.
+        """VraÅ¥ pravdu, pokud mÃ¡ uÅ¾ivatel danÃ¡ prÃ¡va k datovÃ©mu objektu.
 
-        Argumentem je konstanta  tøídy 'pytis.data.Permission'.
+        Argumentem je konstanta  tÅ™Ã­dy 'pytis.data.Permission'.
 
         """
         VIEW   = pytis.data.Permission.VIEW
@@ -508,20 +508,20 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                 result = False
         if not result and not quiet:
             msg = {
-                VIEW:   "Nemáte právo k zobrazení formuláøe.",
-                INSERT: "Nemáte právo vlo¾it novı záznam.",
-                UPDATE: "Nemáte právo zmìnit existující záznam.",
-                DELETE: "Nemáte právo smazat existující záznam.",
-                EXPORT: "Nemáte právo k exportu do CSV.",
+                VIEW:   "NemÃ¡te prÃ¡vo kÂ zobrazenÃ­ formulÃ¡Å™e.",
+                INSERT: "NemÃ¡te prÃ¡vo vloÅ¾it novÃ½ zÃ¡znam.",
+                UPDATE: "NemÃ¡te prÃ¡vo zmÄ›nit existujÃ­cÃ­ zÃ¡znam.",
+                DELETE: "NemÃ¡te prÃ¡vo smazat existujÃ­cÃ­ zÃ¡znam.",
+                EXPORT: "NemÃ¡te prÃ¡vo k exportu do CSV.",
                 }[perm]
             message(msg, beep_=True)
         return result
 
     def set_status(self, field, message):
-        """Zobraz zprávu `message' v poli `id' stavové øádky formuláøe.
+        """Zobraz zprÃ¡vu `message' v poli `id' stavovÃ© Å™Ã¡dky formulÃ¡Å™e.
 
-        Má-li formuláø vlastní stavovou øádku a v ní pole `id' zobraz v nìm
-        danou zprávu a vra» pravdu.  V opaèném pøípadì vra» nepravdu.
+        MÃ¡-li formulÃ¡Å™ vlastnÃ­ stavovou Å™Ã¡dku a v nÃ­ pole `id' zobraz v nÄ›m
+        danou zprÃ¡vu a vraÅ¥ pravdu.  V opaÄnÃ©m pÅ™Ã­padÄ› vraÅ¥ nepravdu.
 
         """
         return False
@@ -570,18 +570,18 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     
 class InnerForm(Form):
-    """Formuláø, kterı zpracuje pøíkazy samostatnì i unvitø duálního formuláøe.
+    """FormulÃ¡Å™, kterÃ½ zpracuje pÅ™Ã­kazy samostatnÄ› i unvitÅ™ duÃ¡lnÃ­ho formulÃ¡Å™e.
 
-    Tato formuláøová tøída je zde pøedev¹ím kvùli definici a zpracování
-    pøíkazù.  Pokud je aktuálním formuláøem jednoduchı formuláø, je zpracování
-    pøíkazu pøedáno tomuto formuláøi.  Pokud je v¹ak aktuálním formuláøem
-    duální formuláø, je tøeba rozhodnout, zda bude pøíkaz zpracován pøímo
-    duálním formuláøem, nebo jeho aktivním podformuláøem.  Pøíkazy tøídy 'Form'
-    jsou zpracovávány v¾dy formuláøem nejvy¹¹í úrovnì (duálním formuláøem
-    samotnım, pokud je aktuálním formuláøem duální formuláø).
+    Tato formulÃ¡Å™ovÃ¡ tÅ™Ã­da je zde pÅ™edevÅ¡Ã­m kvÅ¯li definici a zpracovÃ¡nÃ­
+    pÅ™Ã­kazÅ¯.  Pokud je aktuÃ¡lnÃ­m formulÃ¡Å™em jednoduchÃ½ formulÃ¡Å™, je zpracovÃ¡nÃ­
+    pÅ™Ã­kazu pÅ™edÃ¡no tomuto formulÃ¡Å™i.  Pokud je vÅ¡ak aktuÃ¡lnÃ­m formulÃ¡Å™em
+    duÃ¡lnÃ­ formulÃ¡Å™, je tÅ™eba rozhodnout, zda bude pÅ™Ã­kaz zpracovÃ¡n pÅ™Ã­mo
+    duÃ¡lnÃ­m formulÃ¡Å™em, nebo jeho aktivnÃ­m podformulÃ¡Å™em.  PÅ™Ã­kazy tÅ™Ã­dy 'Form'
+    jsou zpracovÃ¡vÃ¡ny vÅ¾dy formulÃ¡Å™em nejvyÅ¡Å¡Ã­ ÃºrovnÄ› (duÃ¡lnÃ­m formulÃ¡Å™em
+    samotnÃ½m, pokud je aktuÃ¡lnÃ­m formulÃ¡Å™em duÃ¡lnÃ­ formulÃ¡Å™).
 
-    Pøíkazy definované touto tøídou a tøídami z ní odvozenımi jsou v¹ak v¾dy
-    pøedávány aktivnímu vnitønímu formuláøi.
+    PÅ™Ã­kazy definovanÃ© touto tÅ™Ã­dou a tÅ™Ã­dami z nÃ­ odvozenÃ½mi jsou vÅ¡ak vÅ¾dy
+    pÅ™edÃ¡vÃ¡ny aktivnÃ­mu vnitÅ™nÃ­mu formulÃ¡Å™i.
     
     """
     def _get_command_handler_instance(cls):
@@ -603,7 +603,7 @@ class InnerForm(Form):
             popup_menu(parent, items, self._get_keymap())
 
     def _print_menu(self):
-        # Vra» seznam polo¾ek tiskového menu.
+        # VraÅ¥ seznam poloÅ¾ek tiskovÃ©ho menu.
         name = self._name
         try:
             print_spec = self._resolver.get(name, 'print_spec') or ()
@@ -612,7 +612,7 @@ class InnerForm(Form):
         # Default print currently disabled, since on a huge table it may extensively cunsume
         # resources and no one is using it anyway...
         #if not print_spec:
-        #    print_spec = ((_("Vıchozí"), os.path.join('output', name)),)
+        #    print_spec = ((_(u"VÃ½chozÃ­"), os.path.join('output', name)),)
         return [MItem(title, command=BrowseForm.COMMAND_PRINT(print_spec_path=path))
                 for title, path in print_spec]
 
@@ -623,7 +623,7 @@ class InnerForm(Form):
         title = self._view.title()
         description = self._view.help() or self._view.description()
         text = "= "+ title +" =\n\n" + description
-        InfoWindow(_("Popis náhledu %s") % title, text=text, format=TextFormat.WIKI)
+        InfoWindow(_(u"Popis nÃ¡hledu %s") % title, text=text, format=TextFormat.WIKI)
         
     def _can_describe(self):
         description = self._view.help() or self._view.description()
@@ -643,48 +643,48 @@ class InnerForm(Form):
 
     
 class Refreshable:
-    """Tøída zaji¹»ující existenci metody 'refresh()' s danım vıznamem.
+    """TÅ™Ã­da zajiÅ¡Å¥ujÃ­cÃ­ existenci metody 'refresh()' sÂ danÃ½m vÃ½znamem.
 
-    Tuto tøídu by mìly dìdit v¹echny formuláøe, které mají bıt obnoveny pøi
-    zmìnì dat (typicky zpùsobené jinım formuláøem vı¹e na zásobníku rámcù).
+    Tuto tÅ™Ã­du by mÄ›ly dÄ›dit vÅ¡echny formulÃ¡Å™e, kterÃ© majÃ­ bÃ½t obnoveny pÅ™i
+    zmÄ›nÄ› dat (typicky zpÅ¯sobenÃ© jinÃ½m formulÃ¡Å™em vÃ½Å¡e na zÃ¡sobnÃ­ku rÃ¡mcÅ¯).
     
     """
 
     DOIT_IMMEDIATELY = 'DOIT_IMMEDIATELY'
-    """Konstanta pro 'refresh()' pro okam¾itı update.
+    """Konstanta pro 'refresh()' pro okamÅ¾itÃ½ update.
 
-    Není-li seznam právì editován, je update proveden okam¾itì.  Jinak je
-    u¾ivatel dotázán, zda má bıt update proveden ihned; odpoví-li u¾ivatel
-    negativnì, je update proveden a¾ po ukonèení editace.
+    NenÃ­-li seznam prÃ¡vÄ› editovÃ¡n, je update proveden okamÅ¾itÄ›.  Jinak je
+    uÅ¾ivatel dotÃ¡zÃ¡n, zda mÃ¡ bÃ½t update proveden ihned; odpovÃ­-li uÅ¾ivatel
+    negativnÄ›, je update proveden aÅ¾ po ukonÄenÃ­ editace.
 
     """
     DOIT_AFTEREDIT = 'DOIT_AFTEREDIT'
-    """Konstanta pro 'refresh()' pro update po skonèení editace.
+    """Konstanta pro 'refresh()' pro update po skonÄenÃ­ editace.
 
-    Není-li seznam právì editován, je update proveden okam¾itì.  Jinak je
-    proveden a¾ po ukonèení editace.
+    NenÃ­-li seznam prÃ¡vÄ› editovÃ¡n, je update proveden okamÅ¾itÄ›.  Jinak je
+    proveden aÅ¾ po ukonÄenÃ­ editace.
     
     """
     DOIT_IFNEEDED = 'DOIT_IFNEEDED'
-    """Konstanta pro 'refresh()' pro podmínìnı update.
+    """Konstanta pro 'refresh()' pro podmÃ­nÄ›nÃ½ update.
 
-    Update je proveden pouze tehdy, je-li známo, ¾e do¹lo ke zmìnì dat.
-    V takovém pøípadì je proveden okam¾itì pouze tehdy, jestli¾e seznam není
-    práve editován a v poslední dobì nebyl proveden ¾ádnı jinı update;
-    v opaèném pøípadì je update odlo¾en \"a¾ na vhodnìj¹í chvíli\" (nicménì
+    Update je proveden pouze tehdy, je-li znÃ¡mo, Å¾e doÅ¡lo ke zmÄ›nÄ› dat.
+    VÂ takovÃ©m pÅ™Ã­padÄ› je proveden okamÅ¾itÄ› pouze tehdy, jestliÅ¾e seznam nenÃ­
+    prÃ¡ve editovÃ¡n a vÂ poslednÃ­ dobÄ› nebyl proveden Å¾Ã¡dnÃ½ jinÃ½ update;
+    vÂ opaÄnÃ©m pÅ™Ã­padÄ› je update odloÅ¾en \"aÅ¾ na vhodnÄ›jÅ¡Ã­ chvÃ­li\" (nicmÃ©nÄ›
     proveden bude).
 
     """
     _block_refresh = 0
 
     def block_refresh(cls, function, *args, **kwargs):
-        """Zablokuj ve¹kerı refresh po dobu provádìní funkce 'function'.
+        """Zablokuj veÅ¡kerÃ½ refresh po dobu provÃ¡dÄ›nÃ­ funkce 'function'.
 
-        V¹echny argumenty jsou pøedány volané funkci.
+        VÅ¡echny argumenty jsou pÅ™edÃ¡ny volanÃ© funkci.
         
-        Vrací: vısledek vrácenı volanou funkcí.
+        VracÃ­: vÃ½sledek vrÃ¡cenÃ½ volanou funkcÃ­.
 
-        Refresh je zablokován globálnì, pro v¹echny existující formuláøe.
+        Refresh je zablokovÃ¡n globÃ¡lnÄ›, pro vÅ¡echny existujÃ­cÃ­ formulÃ¡Å™e.
         
         """
         Refreshable._block_refresh += 1
@@ -696,52 +696,52 @@ class Refreshable:
     block_refresh = classmethod(block_refresh)
     
     def refresh(self, when=None):
-        """Aktualizuj data formuláøe z datového zdroje.
+        """Aktualizuj data formulÃ¡Å™e zÂ datovÃ©ho zdroje.
 
-        Pøekresli data ve formuláøi v okam¾iku daném argumentem 'when'.
+        PÅ™ekresli data ve formulÃ¡Å™i vÂ okamÅ¾iku danÃ©m argumentem 'when'.
 
         Argumenty:
 
-          when -- urèuje, zda a kdy má bıt aktualizace provedena, musí to bıt
-            jedna z 'DOIT_*' konstant tøídy.  Implicitní hodnota je
+          when -- urÄuje, zda a kdy mÃ¡ bÃ½t aktualizace provedena, musÃ­ to bÃ½t
+            jedna zÂ 'DOIT_*' konstant tÅ™Ã­dy.  ImplicitnÃ­ hodnota je
             'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
 
-        Vrací: Pravdu, právì kdy¾ byla aktualizace provedena.
+        VracÃ­: Pravdu, prÃ¡vÄ› kdyÅ¾ byla aktualizace provedena.
 
         """
         level = Refreshable._block_refresh
         if level == 0:
             self._refresh(when=when)
         elif level > 0:
-            log(OPERATIONAL, "Refresh neproveden kvùli blokaci:", level)
+            log(OPERATIONAL, "Refresh neproveden kvÅ¯li blokaci:", level)
         else:
-            raise ProgramError("Nepøípustná hodnota _block_refresh:", level)
+            raise ProgramError("NepÅ™Ã­pustnÃ¡ hodnota _block_refresh:", level)
 
     def _refresh(self, when=None):
-        """Proveï vlastní refresh.
+        """ProveÄ vlastnÃ­ refresh.
 
-        Tuto metodu nech» pøedefinují odvozené tøídy.
+        Tuto metodu nechÅ¥ pÅ™edefinujÃ­ odvozenÃ© tÅ™Ã­dy.
 
         """
         pass
 
 
 class PopupForm:
-    """Formuláø nacházející se v samostatném framu.
+    """FormulÃ¡Å™ nachÃ¡zejÃ­cÃ­ se vÂ samostatnÃ©m framu.
 
-    Tato tøída je urèena k vlo¾ení mezi pøedky tøídy, její¾ instance mají bıt
-    vytváøeny v samostatnıch framech.  Pro získání framu slou¾í metoda
+    Tato tÅ™Ã­da je urÄena kÂ vloÅ¾enÃ­ mezi pÅ™edky tÅ™Ã­dy, jejÃ­Å¾ instance majÃ­ bÃ½t
+    vytvÃ¡Å™eny vÂ samostatnÃ½ch framech.  Pro zÃ­skÃ¡nÃ­ framu slouÅ¾Ã­ metoda
     '_popup_frame'.
 
     """
     def _popup_frame(self, parent):
-        """Vra» frame instance.
+        """VraÅ¥ frame instance.
 
-        Pokud frame je¹tì neexistuje, vytvoø jej.
+        Pokud frame jeÅ¡tÄ› neexistuje, vytvoÅ™ jej.
 
         Argumenty:
         
-          parent -- rodièovské okno, instance 'wx.Window'
+          parent -- rodiÄovskÃ© okno, instance 'wx.Window'
 
         """
         try:
@@ -762,7 +762,7 @@ class PopupForm:
                 event.Veto()
 
     def close(self, force=False):
-        # Tím se zavolá _on_frame_close() a tam provedeme zbytek.
+        # TÃ­m se zavolÃ¡ _on_frame_close() a tam provedeme zbytek.
         return self._popup_frame_.Close(force=force)
         
     def run(self, lock_key=None):
@@ -796,10 +796,10 @@ class PopupForm:
 
 
 class TitledForm:
-    """Mix-in tøída pro formuláøe s titulkem.
+    """Mix-in tÅ™Ã­da pro formulÃ¡Å™e sÂ titulkem.
     
-    Lze vyu¾ít buïto pouze metodu '_create_caption()', která vytváøí samotnı
-    text titulku, nebo metodu '_create_title_bar()', která pøidává 3d panel.
+    Lze vyuÅ¾Ã­t buÄto pouze metodu '_create_caption()', kterÃ¡ vytvÃ¡Å™Ã­ samotnÃ½
+    text titulku, nebo metodu '_create_title_bar()', kterÃ¡ pÅ™idÃ¡vÃ¡ 3d panel.
 
     """    
     _TITLE_BORDER_WIDTH = 2
@@ -820,7 +820,7 @@ class TitledForm:
         return caption
 
     def _create_title_bar(self):
-        """Vytvoø 3d panel s nadpisem formuláøe."""
+        """VytvoÅ™ 3d panel s nadpisem formulÃ¡Å™e."""
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         caption = self._create_caption(panel)
         box = wx.BoxSizer()
@@ -831,7 +831,7 @@ class TitledForm:
 
 
 class LookupForm(InnerForm):
-    """Formuláø s vyhledáváním a tøídìním."""
+    """FormulÃ¡Å™ sÂ vyhledÃ¡vÃ¡nÃ­m a tÅ™Ã­dÄ›nÃ­m."""
     
     SORTING_NONE = 'NONE'
     """Constant for 'COMMAND_SORT' 'direction' argument indicationg unsorting."""
@@ -887,7 +887,7 @@ class LookupForm(InnerForm):
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
-        self._default_profile = Profile('__default_profile__', _("Vıchozí profil"),
+        self._default_profile = Profile('__default_profile__', _("VÃ½chozÃ­ profil"),
                                         filter=filter, sorting=sorting, columns=columns,
                                         grouping=grouping)
         self._profiles, self._invalid_profiles = self._load_profiles()
@@ -987,7 +987,7 @@ class LookupForm(InnerForm):
         success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
                                                        async_count)
         if not success:
-            log(EVENT, 'Selhání databázové operace')
+            log(EVENT, 'SelhÃ¡nÃ­ databÃ¡zovÃ© operace')
             raise self.InitError()
         # Make sure at least one line is returned (if any is actually present),
         # otherwise segfault may happen when committing an edited line.
@@ -1025,9 +1025,9 @@ class LookupForm(InnerForm):
         data = self._data
         skip = data.search(condition, direction=direction, transaction=self._transaction)
         if skip == 0:
-            log(EVENT, 'Záznam nenalezen')
+            log(EVENT, 'ZÃ¡znam nenalezen')
             if report_failure:
-                message(_("Záznam nenalezen"), beep_=True)
+                message(_(u"ZÃ¡znam nenalezen"), beep_=True)
             result = None
         else:
             if initial_shift:
@@ -1036,7 +1036,7 @@ class LookupForm(InnerForm):
                 else:
                     skip = skip + (row_number - start_row_number)
             result = skip
-            log(EVENT, 'Záznam nalezen:', skip)
+            log(EVENT, 'ZÃ¡znam nalezen:', skip)
             self._search_skip(result, direction)
         return result
 
@@ -1052,8 +1052,8 @@ class LookupForm(InnerForm):
     def _cmd_jump(self):
         max_value = self._lf_count()
         if max_value > 0:
-            prompt = _("Záznam èíslo (1-%s):") % (max_value,)
-            result = run_dialog(InputNumeric, message=_("Skok na záznam"), prompt=prompt,
+            prompt = _(u"ZÃ¡znam ÄÃ­slo (1-%s):") % (max_value,)
+            result = run_dialog(InputNumeric, message=_(u"Skok na zÃ¡znam"), prompt=prompt,
                                 min_value=1, max_value=max_value)
             row = result.value()
             if row is not None:
@@ -1202,11 +1202,11 @@ class LookupForm(InnerForm):
         # anyway.  But the form will attempt to load it again next time.
         for profile in profiles:
             if run_dialog(Question, icon=Question.ICON_ERROR,
-                          title=_("Neplatnı profil"),
-                          message=_("U¾ivatelskı profil \"%s\" je neplatnı.\n"
-                                    "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
-                                    "a ulo¾enı profil ji¾ nelze pou¾ít.\n\n"
-                                    "Pøejete si profil smazat?") % profile.name()):
+                          title=_("NeplatnÃ½ profil"),
+                          message=_("UÅ¾ivatelskÃ½ profil \"%s\" je neplatnÃ½.\n"
+                                    "PravdÄ›podobnÄ› doÅ¡lo ke zmÄ›nÄ› definice nÃ¡hledu\n"
+                                    "a uloÅ¾enÃ½ profil jiÅ¾ nelze pouÅ¾Ã­t.\n\n"
+                                    "PÅ™ejete si profil smazat?") % profile.name()):
                 profile_manager().drop_profile(self._fullname(), profile.id())
     
     def _cmd_apply_profile(self, index):
@@ -1215,7 +1215,7 @@ class LookupForm(InnerForm):
 
     def _cmd_save_new_profile(self, name):
         if name in [profile.name() for profile in self._profiles]:
-            message(_("Takto pojmenovanı profil ji¾ existuje."), beep_=True)
+            message(_("Takto pojmenovanÃ½ profil jiÅ¾ existuje."), beep_=True)
             return
         user_profile_numbers = [int(profile.id()[len(self._USER_PROFILE_PREFIX):])
                                 for profile in self._profiles
@@ -1226,7 +1226,7 @@ class LookupForm(InnerForm):
         self._profiles.append(profile)
         self._save_profile(profile)
         self._current_profile = profile
-        message(_("Profil ulo¾en pod názvem '%s'.") % name)
+        message(_("Profil uloÅ¾en pod nÃ¡zvem '%s'.") % name)
         self.focus()
 
     def _can_rename_profile(self, name):
@@ -1234,11 +1234,11 @@ class LookupForm(InnerForm):
 
     def _cmd_rename_profile(self, name):
         if name in [p.name() for p in self._profiles if p is not self._current_profile]:
-            message(_("Takto pojmenovanı profil ji¾ existuje."), beep_=True)
+            message(_("Takto pojmenovanÃ½ profil jiÅ¾ existuje."), beep_=True)
             return
         self._current_profile.rename(name)
         self._save_profile(self._current_profile)
-        message(_("Profil ulo¾en pod názvem '%s'.") % name)
+        message(_("Profil uloÅ¾en pod nÃ¡zvem '%s'.") % name)
         self.focus()
 
     def _can_update_profile(self):
@@ -1301,30 +1301,30 @@ class LookupForm(InnerForm):
 
     def _cmd_filter_by_value(self, column_id, value):
         if column_id not in [c.id() for c in self._lf_sfs_columns()]:
-            message(_("Podle tohoto sloupce nelze filtrovat."), beep_=True)
+            message(_(u"Podle tohoto sloupce nelze filtrovat."), beep_=True)
         condition = pytis.data.EQ(column_id, value)
         if self._lf_filter is not None:
             condition = pytis.data.AND(self._lf_filter, condition)
         self.COMMAND_FILTER.invoke(condition=condition)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
-        """Zmìò tøídìní.
+        """ZmÄ›Åˆ tÅ™Ã­dÄ›nÃ­.
 
         Argumenty:
 
-          col -- id sloupce, podle kterého má bıt seznam setøídìn, nebo
-            'None' pro globální zmìny (napøíklad vypnutí ve¹kerého tøídìní)
-          direction -- smìr tøídìní (sestupnì/vzestupnì/vùbec).  Hodnota daná
-            konstantou 'LookupForm.SORTING_NONE' znaèí po¾adavek na zru¹ení
-            tøídìní.  Jinak je oèekávána jedna z konstant
-            'LookupForm.SORTING_ASCENDENT' (pro sestupné tøídìní), nebo
-            'LookupForm.SORTING_DESCENDANT' (pro vzestupné tøídìní).
-          primary -- právì kdy¾ je pravdivé, bude danı sloupec zvolen jako
-            primární a *jedinı* tøídící sloupec.  V opaèném pøípadì bude pouze
-            pøidán na konec stávajícího seznamu tøídících sloupcù.
+          col -- id sloupce, podle kterÃ©ho mÃ¡ bÃ½t seznam setÅ™Ã­dÄ›n, nebo
+            'None' pro globÃ¡lnÃ­ zmÄ›ny (napÅ™Ã­klad vypnutÃ­ veÅ¡kerÃ©ho tÅ™Ã­dÄ›nÃ­)
+          direction -- smÄ›r tÅ™Ã­dÄ›nÃ­ (sestupnÄ›/vzestupnÄ›/vÅ¯bec).  Hodnota danÃ¡
+            konstantou 'LookupForm.SORTING_NONE' znaÄÃ­ poÅ¾adavek na zruÅ¡enÃ­
+            tÅ™Ã­dÄ›nÃ­.  Jinak je oÄekÃ¡vÃ¡na jedna z konstant
+            'LookupForm.SORTING_ASCENDENT' (pro sestupnÃ© tÅ™Ã­dÄ›nÃ­), nebo
+            'LookupForm.SORTING_DESCENDANT' (pro vzestupnÃ© tÅ™Ã­dÄ›nÃ­).
+          primary -- prÃ¡vÄ› kdyÅ¾ je pravdivÃ©, bude danÃ½ sloupec zvolen jako
+            primÃ¡rnÃ­ a *jedinÃ½* tÅ™Ã­dÃ­cÃ­ sloupec.  V opaÄnÃ©m pÅ™Ã­padÄ› bude pouze
+            pÅ™idÃ¡n na konec stÃ¡vajÃ­cÃ­ho seznamu tÅ™Ã­dÃ­cÃ­ch sloupcÅ¯.
         
-        Pøi nejednoznaèné kombinaci argumentù 'col' a 'direction' je
-        automaticky vyvolán dialog pro vıbìr tøídících kritérií.
+        PÅ™i nejednoznaÄnÃ© kombinaci argumentÅ¯ 'col' a 'direction' je
+        automaticky vyvolÃ¡n dialog pro vÃ½bÄ›r tÅ™Ã­dÃ­cÃ­ch kritÃ©riÃ­.
         
         """
         sorting = self._determine_sorting(col=col, direction=direction, primary=primary)
@@ -1334,7 +1334,7 @@ class LookupForm(InnerForm):
         return sorting
     
     def _can_sort(self, col=None, direction=None, primary=False):
-        # `col' je zde identifikátor sloupce.
+        # `col' je zde identifikÃ¡tor sloupce.
         sorting_columns = tuple(self._sorting_columns())
         if direction == self.SORTING_NONE:
             return sorting_columns and (col is None or col in sorting_columns)
@@ -1372,7 +1372,7 @@ class LookupForm(InnerForm):
         elif col is not None:
             if (not self._data.find_column(col) or
                 not self._data.permitted(col, pytis.data.Permission.VIEW)):
-                message(_("Podle tohoto sloupce nelze tøídit"),
+                message(_(u"Podle tohoto sloupce nelze tÅ™Ã­dit"),
                         beep_=True)
                 return None
             pos = self._sorting_position(col)
@@ -1394,7 +1394,7 @@ class LookupForm(InnerForm):
             raise ProgramError("Invalid sorting arguments:", (col, direction))
         return sorting
         
-    # Veøejné metody
+    # VeÅ™ejnÃ© metody
     
     @classmethod
     def add_toolbar_ctrl(cls, toolbar, uicmd):
@@ -1417,11 +1417,11 @@ class LookupForm(InnerForm):
         self._apply_filter(condition)
         if not self._current_profile.id().startswith(self._USER_PROFILE_PREFIX) \
                 and condition != self._current_profile.filter():
-            name = _(u"Nepojmenovanı profil")
+            name = _(u"NepojmenovanÃ½ profil")
             i = 1
             while name in [profile.name() for profile in self._profiles]:
                 i += 1
-                name = _(u"Nepojmenovanı profil") + " <%d>" % i
+                name = _(u"NepojmenovanÃ½ profil") + " <%d>" % i
             self.COMMAND_SAVE_NEW_PROFILE.invoke(name=name)
             
     def data(self, init_select=True):
@@ -1447,9 +1447,9 @@ class LookupForm(InnerForm):
         return data
             
     def condition(self):
-        """Vra» specifikaci aktuální podmínky vıbìru dat.
+        """VraÅ¥ specifikaci aktuÃ¡lnÃ­ podmÃ­nky vÃ½bÄ›ru dat.
 
-        Podmínka je vrácena v podobì po¾adované argumentem 'condition'
+        PodmÃ­nka je vrÃ¡cena vÂ podobÄ› poÅ¾adovanÃ© argumentem 'condition'
         metody 'pytis.data.Data.select()'.
 
         """
@@ -1469,12 +1469,12 @@ class LookupForm(InnerForm):
         
 
 class RecordForm(LookupForm):
-    """Formuláø schopnı nìjakım zpùsobem zobrazit aktuální záznam."""
+    """FormulÃ¡Å™ schopnÃ½ nÄ›jakÃ½m zpÅ¯sobem zobrazit aktuÃ¡lnÃ­ zÃ¡znam."""
 
     CALL_SELECTION = 'CALL_SELECTION'
-    """Konstanta callbacku vıbìru (zmìny aktuálního) záznamu.
+    """Konstanta callbacku vÃ½bÄ›ru (zmÄ›ny aktuÃ¡lnÃ­ho) zÃ¡znamu.
 
-    Argumentem callbackové funkce je novì vybranı záznam jako instance
+    Argumentem callbackovÃ© funkce je novÄ› vybranÃ½ zÃ¡znam jako instance
     'RecordForm.Record'.
     
     """
@@ -1522,7 +1522,7 @@ class RecordForm(LookupForm):
         return None
 
     def _find_row_by_number(self, row_number):
-        # row_number starts with 0
+        # row_number starts withÂ 0
         data = self._data
         current_row_number = data.last_row_number()
         def dbop():
@@ -1540,16 +1540,16 @@ class RecordForm(LookupForm):
             return row
     
     def _find_row_by_values(self, cols, values):
-        """Vra» datovı øádek odpovídající danım hodnotám.
+        """VraÅ¥ datovÃ½ Å™Ã¡dek odpovÃ­dajÃ­cÃ­ danÃ½m hodnotÃ¡m.
 
         Argumenty:
 
-          cols -- sekvence názvù sloupcù, které mají bıt prohledávány.
-          values -- sekvence hodnot sloupcù jako instancí 'pytis.data.Value' v
-            poøadí odpovídajícím 'cols'.
+          cols -- sekvence nÃ¡zvÅ¯ sloupcÅ¯, kterÃ© majÃ­ bÃ½t prohledÃ¡vÃ¡ny.
+          values -- sekvence hodnot sloupcÅ¯ jako instancÃ­ 'pytis.data.Value' v
+            poÅ™adÃ­ odpovÃ­dajÃ­cÃ­m 'cols'.
 
-        Pro obì sekvence platí, ¾e pokud jsou jednoprvkové, mohou bıt hodnoty
-        pøedány i pøímo, bez obalení do sekvenèního typu.
+        Pro obÄ› sekvence platÃ­, Å¾e pokud jsou jednoprvkovÃ©, mohou bÃ½t hodnoty
+        pÅ™edÃ¡ny i pÅ™Ã­mo, bez obalenÃ­ do sekvenÄnÃ­ho typu.
 
         """
         cols = xtuple(cols)
@@ -1580,9 +1580,9 @@ class RecordForm(LookupForm):
             return None
     
     def _get_row_number(self, row):
-        """Vra» èíslo øádku odpovídající dané instanci 'pytis.data.Row'.
+        """VraÅ¥ ÄÃ­slo Å™Ã¡dku odpovÃ­dajÃ­cÃ­ danÃ© instanci 'pytis.data.Row'.
 
-        Pokud odpovídaící øádek není nalezen, vra» None.
+        Pokud odpovÃ­daÃ­cÃ­ Å™Ã¡dek nenÃ­ nalezen, vraÅ¥ None.
 
         """
         data = self._data
@@ -1636,13 +1636,13 @@ class RecordForm(LookupForm):
         success, locked = db_operation(self._data.lock_row, key, transaction=self._transaction)
         if success and locked != None:
             log(EVENT, 'Record is locked')
-            run_dialog(Message, _("Záznam je zamèen"))
+            run_dialog(Message, _(u"ZÃ¡znam je zamÄen"))
             return False
         else:
             return True
 
     def _check_record(self, row):
-        # Proveï kontrolu integrity dané instance PresentedRow.
+        # ProveÄ kontrolu integrity danÃ© instance PresentedRow.
         for check in self._view.check():
             result = check(row)
             if result is not None:
@@ -1651,10 +1651,10 @@ class RecordForm(LookupForm):
                     message(msg)
                 else:
                     failed_id = result
-                    # TODO: Tím bychom pøepsali zprávu nastavenou uvnitø
-                    # 'check()'.  Pokud ale ¾ádná zpráva nebyla nastavena,
-                    # u¾ivatel netu¹í...
-                    #message(_("Kontrola integrity selhala!"))
+                    # TODO: TÃ­m bychom pÅ™epsali zprÃ¡vu nastavenou uvnitÅ™
+                    # 'check()'.  Pokud ale Å¾Ã¡dnÃ¡ zprÃ¡va nebyla nastavena,
+                    # uÅ¾ivatel netuÅ¡Ã­...
+                    #message(_(u"Kontrola integrity selhala!"))
                 log(EVENT, 'Kontrola integrity selhala:', failed_id)
                 return failed_id
         return None
@@ -1695,7 +1695,7 @@ class RecordForm(LookupForm):
         return prefill
 
     def _dualform(self):
-        # Pokud je formuláø souèástí duálního formuláøe, vra» jej, jinak None.
+        # Pokud je formulÃ¡Å™ souÄÃ¡stÃ­ duÃ¡lnÃ­ho formulÃ¡Å™e, vraÅ¥ jej, jinak None.
         top = top_window()
         if isinstance(top, DualForm) and self in (top.active_form(), top.inactive_form()):
             return top
@@ -1742,7 +1742,7 @@ class RecordForm(LookupForm):
         result = new_record(self._name, prefill=prefill)
         if result:
             if not self.select_row(result.row(), quiet=True):
-                msg = _("Vlo¾enı záznam se neobjevil v aktuálním náhledu.")
+                msg = _(u"VloÅ¾enÃ½ zÃ¡znam se neobjevil v aktuÃ¡lnÃ­m nÃ¡hledu.")
                 run_dialog(Warning, msg)
     
     def _can_edit_record(self):
@@ -1755,11 +1755,11 @@ class RecordForm(LookupForm):
         on_edit_record = self._view.on_edit_record()
         if on_edit_record is not None:
             on_edit_record(row=row)
-            # TODO: _signal_update vyvolá refresh.  To je tu jen pro pøípad, ¾e
-            # byla u¾ivatelská procedura o¹etøena jinak ne¾ vyvoláním
-            # formuláøe.  Proto¾e to samo u¾ je hack, tak a» si radìji také
-            # tvùrce provádí refresh sám, proto¾e tady je volán ve v¹ech
-            # ostatních pøípadech zbyteènì a zdr¾uje.
+            # TODO: _signal_update vyvolÃ¡ refresh.  To je tu jen pro pÅ™Ã­pad, Å¾e
+            # byla uÅ¾ivatelskÃ¡ procedura oÅ¡etÅ™ena jinak neÅ¾ vyvolÃ¡nÃ­m
+            # formulÃ¡Å™e.  ProtoÅ¾e to samo uÅ¾ je hack, tak aÅ¥ si radÄ›ji takÃ©
+            # tvÅ¯rce provÃ¡dÃ­ refresh sÃ¡m, protoÅ¾e tady je volÃ¡n ve vÅ¡ech
+            # ostatnÃ­ch pÅ™Ã­padech zbyteÄnÄ› a zdrÅ¾uje.
             self._signal_update()
         else:
             name = self._name
@@ -1804,9 +1804,9 @@ class RecordForm(LookupForm):
     def _cmd_context_action(self, action):
         args = self._context_action_args(action)
         kwargs = action.kwargs()
-        log(EVENT, 'Vyvolávám handler kontextové akce.', (args, kwargs))
+        log(EVENT, 'VyvolÃ¡vÃ¡m handler kontextovÃ© akce.', (args, kwargs))
         action.handler()(*args, **kwargs)
-        # Hack: Pokud jsme souèástí duálního formuláøe, chceme refreshnout celı
+        # Hack: Pokud jsme souÄÃ¡stÃ­ duÃ¡lnÃ­ho formulÃ¡Å™e, chceme refreshnout celÃ½
         # dualform.  Jinak refreshujeme jen sebe sama.
         dual = self._dualform()
         if dual:
@@ -1817,39 +1817,39 @@ class RecordForm(LookupForm):
 
     def _cmd_import_interactive(self):
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
-            msg = _("Nemáte práva pro vkládání záznamù do této tabulky.")
+            msg = _(u"NemÃ¡te prÃ¡va pro vklÃ¡dÃ¡nÃ­ zÃ¡znamÅ¯ do tÃ©to tabulky.")
             message(msg, beep_=True)
             return False
-        msg = _("Nejprve vyberte soubor obsahující importovaná data. "
-                "Poté budete moci zkontrolovat a potvrdit ka¾dı záznam.\n\n"
-                "*Formát vstupního souboru:*\n\n"
-                "Ka¾dı øádek obsahuje seznam hodnot oddìlenıch zvolenım "
-                "znakem, nebo skupinou znakù (vyplòte ní¾e). "
-                "Tabelátor zapi¹te jako ='\\t'=.\n\n"
-                "První øádek obsahuje identifikátory sloupcù a urèuje tedy "
-                "vıznam a poøadí hodnot v následujících (datovıch) øádcích.\n\n"
-                "Identifikátory jednotlivıch sloupcù jsou následující:\n\n" + \
+        msg = _(u"Nejprve vyberte soubor obsahujÃ­cÃ­ importovanÃ¡ data. "
+                "PotÃ© budete moci zkontrolovat a potvrdit kaÅ¾dÃ½ zÃ¡znam.\n\n"
+                "*FormÃ¡t vstupnÃ­ho souboru:*\n\n"
+                "KaÅ¾dÃ½ Å™Ã¡dek obsahuje seznam hodnot oddÄ›lenÃ½ch zvolenÃ½m "
+                "znakem, nebo skupinou znakÅ¯ (vyplÅˆte nÃ­Å¾e). "
+                "TabelÃ¡tor zapiÅ¡te jako ='\\t'=.\n\n"
+                "PrvnÃ­ Å™Ã¡dek obsahuje identifikÃ¡tory sloupcÅ¯ a urÄuje tedy "
+                "vÃ½znam a poÅ™adÃ­ hodnot v nÃ¡sledujÃ­cÃ­ch (datovÃ½ch) Å™Ã¡dcÃ­ch.\n\n"
+                "IdentifikÃ¡tory jednotlivÃ½ch sloupcÅ¯ jsou nÃ¡sledujÃ­cÃ­:\n\n" + \
                 "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
                            [self._view.field(id)
                             for id in self._view.layout().order()]]))
         separator = run_dialog(InputDialog, 
-                               title=_("Hromadné vkládání dat"),
+                               title=_(u"HromadnÃ© vklÃ¡dÃ¡nÃ­ dat"),
                                report=msg, report_format=TextFormat.WIKI,
-                               prompt="Oddìlovaè", value='|')
+                               prompt="OddÄ›lovaÄ", value='|')
         if not separator:
             if separator is not None:
-                message(_("Nebyl zadán oddìlovaè."), beep_=True)
+                message(_(u"Nebyl zadÃ¡n oddÄ›lovaÄ."), beep_=True)
             return False
         separator = separator.replace('\\t', '\t')
         while 1:
             filename = run_dialog(FileDialog)
             if filename is None:
-                message(_("Nebyl zadán soubor. Proces ukonèen."), beep_=True)
+                message(_(u"Nebyl zadÃ¡n soubor. Proces ukonÄen."), beep_=True)
                 return False
             try:
                 fh = open(filename)
             except IOError, e:
-                msg = _("Nepodaøilo se otevøít soubor '%s': %s")
+                msg = _(u"NepodaÅ™ilo se otevÅ™Ã­t soubor '%s': %s")
                 run_dialog(Error, msg % (filename, str(e)))
                 continue
             break
@@ -1857,7 +1857,7 @@ class RecordForm(LookupForm):
             columns = [str(id.strip()) for id in fh.readline().split(separator)]
             for id in columns:
                 if id not in self._row:
-                    run_dialog(Error, _("Neznámı sloupec: %s") % id)
+                    run_dialog(Error, _(u"NeznÃ¡mÃ½ sloupec: %s") % id)
                     return False
             types = [self._row.type(id) for id in columns]
             line_number = 1
@@ -1866,15 +1866,15 @@ class RecordForm(LookupForm):
                 line_number += 1
                 values = line.rstrip('\r\n').split(separator)
                 if len(values) != len(columns):
-                    msg = _("Chyba dat na øádku %d:\n"
-                            "Poèet hodnot neodpovídá poètu sloupcù.")
+                    msg = _(u"Chyba dat na Å™Ã¡dku %d:\n"
+                            "PoÄet hodnot neodpovÃ­dÃ¡ poÄtu sloupcÅ¯.")
                     run_dialog(Error, msg % line_number)
                     return False
                 row_data = []
                 for id, type, val in zip(columns, types, values):
                     value, error = type.validate(val, transaction=self._transaction)
                     if error:
-                        msg = _("Chyba dat na øádku %d, sloupec '%s':\n%s") % \
+                        msg = _(u"Chyba dat na Å™Ã¡dku %d, sloupec '%s':\n%s") % \
                               (line_number, id, error.message())
                         run_dialog(Error, msg)
                         return False
@@ -1894,33 +1894,33 @@ class RecordForm(LookupForm):
         return self.Record(self, fields, data, row, transaction=self._transaction, **kwargs)
     
     def select_row(self, position, quiet=False):
-        """Vyber øádek dle 'position'.
+        """Vyber Å™Ã¡dek dle 'position'.
 
-        Argument 'position' mù¾e mít nìkterou z následujících hodnot:
+        Argument 'position' mÅ¯Å¾e mÃ­t nÄ›kterou zÂ nÃ¡sledujÃ­cÃ­ch hodnot:
         
-          None -- nebude vybrán ¾ádnı øádek.
-          Nezápornı integer -- bude vybrán øádek pøíslu¹ného poøadí, pøièem¾
-            øádky jsou èíslovány od 0.
-          Datovı klíè -- bude vybrán øádek s tímto klíèem, kterım je instance
-            tøídy 'pytis.data.Value' nebo jejich tuple.
-          Slovník hodnot -- bude vybrán první nalezenı øádek obsahující
-            hodnoty slovníku (instance 'pytis.data.Value') v sloupcích urèenıch
-            klíèi slovníku.
-          Instance tøídy 'pytis.data.Row' -- bude pøeveden na datovı klíè a
-            zobrazen odpovídající øádek.  Instance musí bıt kompatibilní
-            s datovım objektem formuláøe.
+          None -- nebude vybrÃ¡n Å¾Ã¡dnÃ½ Å™Ã¡dek.
+          NezÃ¡pornÃ½ integer -- bude vybrÃ¡n Å™Ã¡dek pÅ™Ã­sluÅ¡nÃ©ho poÅ™adÃ­, pÅ™iÄemÅ¾
+            Å™Ã¡dky jsou ÄÃ­slovÃ¡ny odÂ 0.
+          DatovÃ½ klÃ­Ä -- bude vybrÃ¡n Å™Ã¡dek sÂ tÃ­mto klÃ­Äem, kterÃ½m je instance
+            tÅ™Ã­dy 'pytis.data.Value' nebo jejich tuple.
+          SlovnÃ­k hodnot -- bude vybrÃ¡n prvnÃ­ nalezenÃ½ Å™Ã¡dek obsahujÃ­cÃ­
+            hodnoty slovnÃ­ku (instance 'pytis.data.Value') v sloupcÃ­ch urÄenÃ½ch
+            klÃ­Äi slovnÃ­ku.
+          Instance tÅ™Ã­dy 'pytis.data.Row' -- bude pÅ™eveden na datovÃ½ klÃ­Ä a
+            zobrazen odpovÃ­dajÃ­cÃ­ Å™Ã¡dek.  Instance musÃ­ bÃ½t kompatibilnÃ­
+            sÂ datovÃ½m objektem formulÃ¡Å™e.
         
-        Pokud takovı záznam neexistuje, zobraz chybovı dialog.  Argumentem
-        'quiet' lze zobrazení chybového dialogu potlaèit.  Tím lze nenalezení
-        øádku ti¹e ignorovat, nebo o¹etøit vlastním zpùsobem na základì
-        návratové hodnoty.
+        Pokud takovÃ½ zÃ¡znam neexistuje, zobraz chybovÃ½ dialog.  Argumentem
+        'quiet' lze zobrazenÃ­ chybovÃ©ho dialogu potlaÄit.  TÃ­m lze nenalezenÃ­
+        Å™Ã¡dku tiÅ¡e ignorovat, nebo oÅ¡etÅ™it vlastnÃ­m zpÅ¯sobem na zÃ¡kladÄ›
+        nÃ¡vratovÃ© hodnoty.
 
-        Vıbìrem je my¹lena akce relevantní pro danı typ formuláøe (odvozené
-        tøídy).  Tedy napøíklad vysvícení øádku v tabulce, zobrazení záznamu v
-        náhledovém formuláøi apod.
+        VÃ½bÄ›rem je myÅ¡lena akce relevantnÃ­ pro danÃ½ typ formulÃ¡Å™e (odvozenÃ©
+        tÅ™Ã­dy).  Tedy napÅ™Ã­klad vysvÃ­cenÃ­ Å™Ã¡dku v tabulce, zobrazenÃ­ zÃ¡znamu v
+        nÃ¡hledovÃ©m formulÃ¡Å™i apod.
 
-        Vrací: Pravdu, pokud byl záznam úspì¹nì nalezen a vybrán, nepravdu v
-        opaèném pøípadì.
+        VracÃ­: Pravdu, pokud byl zÃ¡znam ÃºspÄ›Å¡nÄ› nalezen a vybrÃ¡n, nepravdu v
+        opaÄnÃ©m pÅ™Ã­padÄ›.
         
         """
         row = self._data_row(position)
@@ -1928,14 +1928,14 @@ class RecordForm(LookupForm):
             position is not None and
             (not is_sequence(position) or len(position) != 1 or position[0].value() is not None) and
             row is None):
-            run_dialog(Warning, _("Záznam nenalezen"))
+            run_dialog(Warning, _(u"ZÃ¡znam nenalezen"))
             return False
         return self._select_row(row, quiet=quiet)
 
     def current_row(self):
-        """Vra» instanci PresentedRow právì aktivního øádku.
+        """VraÅ¥ instanci PresentedRow prÃ¡vÄ› aktivnÃ­ho Å™Ã¡dku.
 
-        Není-li vybrán ¾ádnı øádek, vra» 'None'.
+        NenÃ­-li vybrÃ¡n Å¾Ã¡dnÃ½ Å™Ã¡dek, vraÅ¥ 'None'.
 
         """
         return self._row
@@ -1944,10 +1944,10 @@ class RecordForm(LookupForm):
         return ()
 
     def current_key(self):
-        """Vra» klíè aktuálnì vybraného øádku.
+        """VraÅ¥ klÃ­Ä aktuÃ¡lnÄ› vybranÃ©ho Å™Ã¡dku.
 
-        Vrací: Sekvenci instancí tøídy 'pytis.data.Value' nebo 'None', pokud
-        není vybrán ¾ádnı øádek.
+        VracÃ­: Sekvenci instancÃ­ tÅ™Ã­dy 'pytis.data.Value' nebo 'None', pokud
+        nenÃ­ vybrÃ¡n Å¾Ã¡dnÃ½ Å™Ã¡dek.
 
         """
         return self._current_key()
@@ -1956,36 +1956,36 @@ class RecordForm(LookupForm):
         return False
 
     def prefill(self):
-        """Vra» data pro pøedvyplnìní nového záznamu."""
+        """VraÅ¥ data pro pÅ™edvyplnÄ›nÃ­ novÃ©ho zÃ¡znamu."""
         return self._prefill
     
 
-### Editaèní formuláø
+### EditaÄnÃ­ formulÃ¡Å™
 
 
 class EditForm(RecordForm, TitledForm, Refreshable):
-    """Formuláø pro editaci v¹ech vlastností jednoho záznamu.
+    """FormulÃ¡Å™ pro editaci vÅ¡ech vlastnostÃ­ jednoho zÃ¡znamu.
 
-    Formuláø je vytvoøen poskládáním jednotlivıch vstupních políèek danıch
-    specifikací do møí¾ky.  Pole mohou bıt rùznì seskupována a jejich rozlo¾ení
-    je urèeno specifikaèní tøídou 'LayoutSpec' resp. 'GroupSpec'.
+    FormulÃ¡Å™ je vytvoÅ™en posklÃ¡dÃ¡nÃ­m jednotlivÃ½ch vstupnÃ­ch polÃ­Äek danÃ½ch
+    specifikacÃ­ do mÅ™Ã­Å¾ky.  Pole mohou bÃ½t rÅ¯znÄ› seskupovÃ¡na a jejich rozloÅ¾enÃ­
+    je urÄeno specifikaÄnÃ­ tÅ™Ã­dou 'LayoutSpec' resp. 'GroupSpec'.
 
-    Ka¾dé vstupní pole je reprezentováno objektem tøídy 'InputField'.  To se
-    stará o interakci s u¾ivatelem, validaci vstupních dat apod.
+    KaÅ¾dÃ© vstupnÃ­ pole je reprezentovÃ¡no objektem tÅ™Ã­dy 'InputField'.  To se
+    starÃ¡ o interakci s uÅ¾ivatelem, validaci vstupnÃ­ch dat apod.
 
-    Formuláø mù¾e slou¾it jak k prohlí¾ení èi editaci stávajících dat, tak
-    i k vytváøení novıch záznamù (viz argument konstruktoru 'mode').
+    FormulÃ¡Å™ mÅ¯Å¾e slouÅ¾it jak kÂ prohlÃ­Å¾enÃ­ Äi editaci stÃ¡vajÃ­cÃ­ch dat, tak
+    iÂ kÂ vytvÃ¡Å™enÃ­ novÃ½ch zÃ¡znamÅ¯ (viz argument konstruktoru 'mode').
  
     """
 
     _LOG_STATISTICS = False
 
     MODE_INSERT = 'MODE_INSERT'
-    """Mód formuláøe pro vkládání novıch záznamù."""
+    """MÃ³d formulÃ¡Å™e pro vklÃ¡dÃ¡nÃ­ novÃ½ch zÃ¡znamÅ¯."""
     MODE_EDIT = 'MODE_EDIT'
-    """Mód formuláøe pro editaci stávajících záznamù."""
+    """MÃ³d formulÃ¡Å™e pro editaci stÃ¡vajÃ­cÃ­ch zÃ¡znamÅ¯."""
     MODE_VIEW = 'MODE_VIEW'
-    """Mód formuláøe pro zobrazení záznamù bez mo¾nosti editace."""
+    """MÃ³d formulÃ¡Å™e pro zobrazenÃ­ zÃ¡znamÅ¯ bez moÅ¾nosti editace."""
     
     def _full_init(self, *args, **kwargs):
         super(EditForm, self)._full_init(*args, **kwargs)
@@ -2047,7 +2047,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self._fields = []
 
     def _set_focus_field(self, event=None):
-        """Inicalizuj dialog nastavením hodnot políèek."""
+        """Inicalizuj dialog nastavenÃ­m hodnot polÃ­Äek."""
         if self._focus_field:
             if isinstance(self._focus_field, collections.Callable):
                 focused = self._focus_field(self._row)
@@ -2196,11 +2196,11 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 bstyle = bstyle & ~(wx.LEFT|wx.TOP|wx.BOTTOM)
             sizer.Add(x, 0, wx.ALIGN_TOP|bstyle, border)
         if len(pack) != 0:
-            # pøidej zbylı sled políèek (pokud nìjakı byl)
+            # pÅ™idej zbylÃ½ sled polÃ­Äek (pokud nÄ›jakÃ½ byl)
             sizer.Add(self._pack_fields(parent, pack, space, gap),
                       0, wx.ALIGN_TOP|border_style, border)
-        # pokud má skupina orámování, pøidáme ji je¹tì do sizeru s horním
-        # odsazením, jinak je horní odsazení pøíli¹ malé.
+        # pokud mÃ¡ skupina orÃ¡movÃ¡nÃ­, pÅ™idÃ¡me ji jeÅ¡tÄ› do sizeru s hornÃ­m
+        # odsazenÃ­m, jinak je hornÃ­ odsazenÃ­ pÅ™Ã­liÅ¡ malÃ©.
         if group.label() is not None:
             s = wx.BoxSizer(orientation)
             s.Add(sizer, 0, wx.TOP, 2)
@@ -2267,7 +2267,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 if f.enabled() and not f.validate():
                     f.set_focus()
                     return False
-        # Ovìøení integrity záznamu (funkce check).
+        # OvÄ›Å™enÃ­ integrity zÃ¡znamu (funkce check).
         failed_id = self._check_record(self._row)
         if failed_id:
             f = self._field(failed_id)
@@ -2277,7 +2277,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 log(OPERATIONAL, "Unknown field returned by check():", failed_id)
             return False
         transaction = self._transaction
-        # Vytvoøení datového øádku.
+        # VytvoÅ™enÃ­ datovÃ©ho Å™Ã¡dku.
         rdata = self._record_data(self._row, permission=permission,
                                   updated=(self._mode == self.MODE_EDIT))
         if not rdata.keys():
@@ -2295,7 +2295,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             op, args = self._data.update, (self._current_key(), rdata)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
-        # Provedení operace
+        # ProvedenÃ­ operace
         if transaction is not None:
             success, result = db_op(transaction.set_point, ('commitform',),
                                     in_transaction=True, quiet=True)
@@ -2341,9 +2341,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             else:
                 success = True
             if success:
-                msg = _("Ulo¾ení záznamu se nezdaøilo")
+                msg = _(u"UloÅ¾enÃ­ zÃ¡znamu se nezdaÅ™ilo")
             else:
-                msg = _("Transakce pøeru¹ena, nelze pokraèovat")
+                msg = _(u"Transakce pÅ™eruÅ¡ena, nelze pokraÄovat")
             if type(result) == type(()) and \
                isinstance(result[0], (str, unicode)):
                 msg = "%s\n\n%s" % (result[0], msg)
@@ -2352,8 +2352,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _exit_check(self):
         if self.changed():
-            q = _("Data byla zmìnìna a nebyla ulo¾ena!") + "\n" + \
-                _("Opravdu chcete uzavøít formuláø?")
+            q = _(u"Data byla zmÄ›nÄ›na a nebyla uloÅ¾ena!") + "\n" + \
+                _(u"Opravdu chcete uzavÅ™Ã­t formulÃ¡Å™?")
             if not run_dialog(Question, q):
                 return False
         return True
@@ -2371,7 +2371,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _cmd_navigate(self, back=False):
         if self._mode != self.MODE_VIEW:
-            # Vygeneruj událost navigace mezi políèky.
+            # Vygeneruj udÃ¡lost navigace mezi polÃ­Äky.
             w = wx_focused_window()
             if not w:
                 self._fields[0].set_focus()
@@ -2415,9 +2415,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     
 class PopupEditForm(PopupForm, EditForm):
-    """Stejné jako 'EditForm', av¹ak v popup podobì."""
+    """StejnÃ© jako 'EditForm', avÅ¡ak vÂ popup podobÄ›."""
 
-    DESCR = _("editaèní formuláø")
+    DESCR = _(u"editaÄnÃ­ formulÃ¡Å™")
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
@@ -2475,9 +2475,9 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _create_status_bar(self):
         # We use our own statusbar implementation
-        spec = (('message', None, _("Oznamovací oblast")),)
+        spec = (('message', None, _(u"OznamovacÃ­ oblast")),)
         if self._inserted_data is not None:
-            spec += (('progress', 9, _("Ukazatel pozice hromadného vkládání")),)
+            spec += (('progress', 9, _(u"Ukazatel pozice hromadnÃ©ho vklÃ¡dÃ¡nÃ­")),)
         box = wx.BoxSizer()
         self._status_fields = dict(
             [(id, self._create_status_bar_field(box, width, descr))
@@ -2519,7 +2519,7 @@ class PopupEditForm(PopupForm, EditForm):
                     self._row[id] = pytis.data.Value(self._row.type(id), value.value())
             else:
                 self.set_status('progress', '')
-                run_dialog(Message, _("V¹echny záznamy byly zpracovány."))
+                run_dialog(Message, _(u"VÅ¡echny zÃ¡znamy byly zpracovÃ¡ny."))
                 self._inserted_data = None
         self._set_focus_field()
 
@@ -2527,8 +2527,8 @@ class PopupEditForm(PopupForm, EditForm):
         i = self._inserted_data_pointer
         data = self._inserted_data
         if data is not None and i <= len(data):
-            msg = _("Je¹tì nebyly zpracovány v¹echny øádky vstupních dat.\n"
-                    "Chcete opravdu ukonèit vkládání?")
+            msg = _(u"JeÅ¡tÄ› nebyly zpracovÃ¡ny vÅ¡echny Å™Ã¡dky vstupnÃ­ch dat.\n"
+                    "Chcete opravdu ukonÄit vklÃ¡dÃ¡nÃ­?")
             if not run_dialog(Question, msg, default=False):
                 return False
         return super(PopupEditForm, self)._exit_check()
@@ -2536,26 +2536,26 @@ class PopupEditForm(PopupForm, EditForm):
     def _on_skip_button(self, event):
         i = self._inserted_data_pointer
         if self._inserted_data is None:
-            message(_("Není dal¹í záznam"), beep_=True)
+            message(_(u"NenÃ­ dalÅ¡Ã­ zÃ¡znam"), beep_=True)
         else:
-            message(_("Záznam %d/%d pøeskoèen") % (i, len(self._inserted_data)))
+            message(_(u"ZÃ¡znam %d/%d pÅ™eskoÄen") % (i, len(self._inserted_data)))
             self._load_next_row()
     
     def _buttons(self):
         buttons = (dict(id=wx.ID_OK,
-                        tooltip=_("Ulo¾it záznam a uzavøít formuláø"),
+                        tooltip=_(u"UloÅ¾it zÃ¡znam a uzavÅ™Ã­t formulÃ¡Å™"),
                         command=self.COMMAND_COMMIT_RECORD()),
                    dict(id=wx.ID_CANCEL,
-                        tooltip=_("Uzavøít formuláø bez ulo¾ení dat"),
+                        tooltip=_(u"UzavÅ™Ã­t formulÃ¡Å™ bez uloÅ¾enÃ­ dat"),
                         command=self.COMMAND_LEAVE_FORM()))
         if self._mode == self.MODE_INSERT and self._multi_insert:
-            buttons += (dict(id=wx.ID_FORWARD, label=_("Dal¹í"), #icon=wx.ART_GO_FORWARD, 
-                             tooltip=_("Ulo¾it záznam a reinicializovat formuláø"
-                                       " pro vlo¾ení dal¹ího záznamu"),
+            buttons += (dict(id=wx.ID_FORWARD, label=_(u"DalÅ¡Ã­"), #icon=wx.ART_GO_FORWARD, 
+                             tooltip=_(u"UloÅ¾it zÃ¡znam a reinicializovat formulÃ¡Å™"
+                                       " pro vloÅ¾enÃ­ dalÅ¡Ã­ho zÃ¡znamu"),
                              command=self.COMMAND_COMMIT_RECORD(next=True)),)
         if self._inserted_data is not None:
-            buttons += (dict(label=_("Pøeskoèit"),
-                             tooltip=_("Pøeskoèit tento záznam bez ulo¾ení"),
+            buttons += (dict(label=_(u"PÅ™eskoÄit"),
+                             tooltip=_(u"PÅ™eskoÄit tento zÃ¡znam bez uloÅ¾enÃ­"),
                              callback=self._on_skip_button),)
         return buttons
         
@@ -2576,7 +2576,7 @@ class PopupEditForm(PopupForm, EditForm):
     def _cmd_commit_record(self, close=True, next=False):
         result = super(PopupEditForm, self)._cmd_commit_record(close=close and not next)
         if result and next:
-            message(_("Záznam ulo¾en"))
+            message(_(u"ZÃ¡znam uloÅ¾en"))
             self._load_next_row()
         return result
         
@@ -2608,22 +2608,22 @@ class PopupEditForm(PopupForm, EditForm):
 
 class PopupInsertForm(PopupEditForm):
     
-    DESCR = _("vkládací formuláø")
+    DESCR = _(u"vklÃ¡dacÃ­ formulÃ¡Å™")
     
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
         
         
 class ShowForm(EditForm):
-    """Formuláø pro zobrazení náhledu.
+    """FormulÃ¡Å™ pro zobrazenÃ­ nÃ¡hledu.
 
-    Layout je stejnı jako u editaèního formuláøe (resp. 'EditForm'),
-    pouze titulek má stejnı vzhled, jako titulek formuláøù typu 'ListForm'.
-    Urèen pro zobrazení v duálním formuláøi.
+    Layout je stejnÃ½ jako u editaÄnÃ­ho formulÃ¡Å™e (resp. 'EditForm'),
+    pouze titulek mÃ¡ stejnÃ½ vzhled, jako titulek formulÃ¡Å™Å¯ typu 'ListForm'.
+    UrÄen pro zobrazenÃ­ v duÃ¡lnÃ­m formulÃ¡Å™i.
 
     """
 
-    DESCR = _("náhledovı formuláø")
+    DESCR = _(u"nÃ¡hledovÃ½ formulÃ¡Å™")
 
     def _init_attributes(self, mode=EditForm.MODE_VIEW, select_row=0,**kwargs):
         super_(ShowForm)._init_attributes(self, mode=mode, select_row=select_row, **kwargs)
@@ -2634,12 +2634,12 @@ class ShowForm(EditForm):
 
         
 class BrowsableShowForm(ShowForm):
-    """Listovací formuláø pro zobrazení náhledu.
+    """ListovacÃ­ formulÃ¡Å™ pro zobrazenÃ­ nÃ¡hledu.
 
-    Formuláø je needitovatelnı, ale umo¾òuje pohyb po záznamech tabulky, nad
-    kterou je vytvoøen, vyhledávání atd.  Z u¾ivatelského hlediska jde v
-    podstatì o redukci prohlí¾ecích mo¾ností formuláøe typu 'BrowseForm' na
-    jeden záznam zobrazenı v Layoutu editaèního formuláøe.
+    FormulÃ¡Å™ je needitovatelnÃ½, ale umoÅ¾Åˆuje pohyb po zÃ¡znamech tabulky, nad
+    kterou je vytvoÅ™en, vyhledÃ¡vÃ¡nÃ­ atd.  Z uÅ¾ivatelskÃ©ho hlediska jde v
+    podstatÄ› o redukci prohlÃ­Å¾ecÃ­ch moÅ¾nostÃ­ formulÃ¡Å™e typu 'BrowseForm' na
+    jeden zÃ¡znam zobrazenÃ½ v Layoutu editaÄnÃ­ho formulÃ¡Å™e.
     
     """
 
@@ -2652,11 +2652,11 @@ class BrowsableShowForm(ShowForm):
         if not back:
             row_number += 1
             if row_number == self._lf_count(min_value=row_number+1):
-                message(_("Poslední záznam"), beep_=True)
+                message(_(u"PoslednÃ­ zÃ¡znam"), beep_=True)
                 return
         else:
             if row_number == 0:
-                message(_("První záznam"), beep_=True)
+                message(_(u"PrvnÃ­ zÃ¡znam"), beep_=True)
                 return
             row_number -= 1
         self._select_row(self._find_row_by_number(row_number))

@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,16 +16,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Tøídy pro specifikaci prezentaèní vlastností formuláøù.
+"""TÅ™Ã­dy pro specifikaci prezentaÄnÃ­ vlastnostÃ­ formulÃ¡Å™Å¯.
 
-Tøída 'ViewSpec' zastøe¹uje ostatní specifikaèní tøídy definované tímto
+TÅ™Ã­da 'ViewSpec' zastÅ™eÅ¡uje ostatnÃ­ specifikaÄnÃ­ tÅ™Ã­dy definovanÃ© tÃ­mto
 modulem ('Field', 'GroupSpec', ...).
 
-Vytvoøení instance formuláøové tøídy je potom v podstatì interpretací
-pøíslu¹nıch specifikací.
+VytvoÅ™enÃ­ instance formulÃ¡Å™ovÃ© tÅ™Ã­dy je potom v podstatÄ› interpretacÃ­
+pÅ™Ã­sluÅ¡nÃ½ch specifikacÃ­.
 
-V¹echny tøídy tohoto modulu mají specifikaèní charakter a jejich instance jsou
-pova¾ovány za immutable, tudí¾ mohou bıt libovolnì sdíleny.
+VÅ¡echny tÅ™Ã­dy tohoto modulu majÃ­ specifikaÄnÃ­ charakter a jejich instance jsou
+povaÅ¾ovÃ¡ny za immutable, tudÃ­Å¾ mohou bÃ½t libovolnÄ› sdÃ­leny.
 
 """
 
@@ -38,18 +38,18 @@ from pytis.util import *
 from pytis.presentation import *
 
 class TextFormat(object):
-    """Konstanty pro definici vstupního formátu textu."""
+    """Konstanty pro definici vstupnÃ­ho formÃ¡tu textu."""
     PLAIN = 'PLAIN'
     HTML = 'HTML'
     WIKI = 'WIKI'
 
 
 class BorderStyle(object):
-    """Vıètová tøída definující konstanty pro styl orámování."""
+    """VÃ½ÄtovÃ¡ tÅ™Ã­da definujÃ­cÃ­ konstanty pro styl orÃ¡movÃ¡nÃ­."""
     ALL    = 'ALL'
     """Mezera je kolem dokola."""
     TOP    = 'TOP'
-    """Mezera je jen nahoøe."""
+    """Mezera je jen nahoÅ™e."""
     BOTTOM = 'BOTTOM'
     """Mezera je jen dole."""
     LEFT   = 'LEFT'
@@ -310,9 +310,9 @@ class ActionContext(object):
     a dialog).  The handler wil receive no positional argument.
 
     """
-    # TODO: Zde by je¹tì mohla bıt jedna hodnota, která by umo¾nila definovat
-    # univerzální akce, které pracují implicitnì s aktuálním øádkem, ale pokud
-    # existuje vıbìr, tak s vıbìrem.
+    # TODO: Zde by jeÅ¡tÄ› mohla bÃ½t jedna hodnota, kterÃ¡ by umoÅ¾nila definovat
+    # univerzÃ¡lnÃ­ akce, kterÃ© pracujÃ­ implicitnÄ› s aktuÃ¡lnÃ­m Å™Ã¡dkem, ale pokud
+    # existuje vÃ½bÄ›r, tak s vÃ½bÄ›rem.
     
 
 class _ActionItem(object):
@@ -322,7 +322,7 @@ class _ActionItem(object):
         self._title = title
 
     def title(self, raw=False):
-        """Vra» název akce."""
+        """VraÅ¥ nÃ¡zev akce."""
         title = self._title
         if not raw:
             title = title.replace("&", "")
@@ -389,10 +389,10 @@ class Action(_ActionItem):
             forms, so the argument only has effect in web applications.
           access_groups -- Depracated: DMP now implements full dynamic action
             access management.  The original docstring was: seznam
-            u¾ivatelskıch skupin, které mají právo akci vyvolat.  Akce se pro
-            ostatní u¾ivatele stane automaticky neaktivní.  Teprve pokud
-            u¾ivatel patøí do jedné z vyjmenovanıch skupin, je dostupnost akce
-            zji¹tìna pomocí funkce 'enabled' (pouze wx formuláøe).
+            uÅ¾ivatelskÃ½ch skupin, kterÃ© majÃ­ prÃ¡vo akci vyvolat.  Akce se pro
+            ostatnÃ­ uÅ¾ivatele stane automaticky neaktivnÃ­.  Teprve pokud
+            uÅ¾ivatel patÅ™Ã­ do jednÃ© z vyjmenovanÃ½ch skupin, je dostupnost akce
+            zjiÅ¡tÄ›na pomocÃ­ funkce 'enabled' (pouze wx formulÃ¡Å™e).
           kwargs -- dictionary of additional keyword arguments passed to the
             action handler (and 'enabled' and 'visible' functions if defined
             dynamically) in runtime.  In Wiking web applications these
@@ -465,11 +465,11 @@ class Action(_ActionItem):
     
 
 class ActionGroup(_ActionItem):
-    """Definice pojmenované logické skupiny akcí.
+    """Definice pojmenovanÃ© logickÃ© skupiny akcÃ­.
 
-    Skupiny akcí slou¾í k logickému seskupení souvisejících akcí.  V
-    u¾ivatelském rozhraní se takto definované akce napøíklad zobrazí jako
-    samostatné podmenu v menu akcí.
+    Skupiny akcÃ­ slouÅ¾Ã­ k logickÃ©mu seskupenÃ­ souvisejÃ­cÃ­ch akcÃ­.  V
+    uÅ¾ivatelskÃ©m rozhranÃ­ se takto definovanÃ© akce napÅ™Ã­klad zobrazÃ­ jako
+    samostatnÃ© podmenu v menu akcÃ­.
 
     """
     def __init__(self, title, *actions):
@@ -477,10 +477,10 @@ class ActionGroup(_ActionItem):
 
         Argumenty:
         
-          title -- název skupiny jako øetìzec
+          title -- nÃ¡zev skupiny jako Å™etÄ›zec
 
-          actions -- obsah této skupiny.  Zde platí rekurzívnì stejná pravidla
-            jako pro stejnojmennnı argument konstruktoru ViesSpec.
+          actions -- obsah tÃ©to skupiny.  Zde platÃ­ rekurzÃ­vnÄ› stejnÃ¡ pravidla
+            jako pro stejnojmennnÃ½ argument konstruktoru ViesSpec.
 
         """
         assert isinstance(actions, (list, tuple))
@@ -495,7 +495,7 @@ class ActionGroup(_ActionItem):
         super(ActionGroup, self).__init__(title)
         
     def actions(self):
-        """Vra» seznam akcí jako tuple."""
+        """VraÅ¥ seznam akcÃ­ jako tuple."""
         return self._actions
 
     
@@ -805,27 +805,27 @@ class GroupSpec(object):
         return fields
 
     def label(self):
-        """Vra» název skupiny."""
+        """VraÅ¥ nÃ¡zev skupiny."""
         return self._label
 
     def orientation(self):
-        """Vra» orientaci skládání prvkù; konstanta tøídy 'Orientation'."""
+        """VraÅ¥ orientaci sklÃ¡dÃ¡nÃ­ prvkÅ¯; konstanta tÅ™Ã­dy 'Orientation'."""
         return self._orientation
 
     def gap(self):
-        """Vra» ¹íøku mezery vertikální mezi políèky v du."""
+        """VraÅ¥ Å¡Ã­Å™ku mezery vertikÃ¡lnÃ­ mezi polÃ­Äky v du."""
         return self._gap
 
     def space(self):
-        """Vra» ¹íøku mezery mezi políèkem a jeho labelem v du."""
+        """VraÅ¥ Å¡Ã­Å™ku mezery mezi polÃ­Äkem a jeho labelem v du."""
         return self._space
 
     def border(self):
-        """Vra» ¹íøku mezery kolem celé skupiny v du."""
+        """VraÅ¥ Å¡Ã­Å™ku mezery kolem celÃ© skupiny v du."""
         return self._border
 
     def border_style(self):
-        """Vra» styl mezery kolem skupiny jako konstantu 'BorderStyle'."""
+        """VraÅ¥ styl mezery kolem skupiny jako konstantu 'BorderStyle'."""
         return self._border_style
 
 
@@ -872,9 +872,9 @@ class TabGroup(GroupSpec):
         
 
 class HGroup(GroupSpec):
-    """Horizontální seskupení políèek.
+    """HorizontÃ¡lnÃ­ seskupenÃ­ polÃ­Äek.
 
-    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+    Tato tÅ™Ã­da je pouze pohodlnÄ›jÅ¡Ã­m rozhranÃ­m k tÅ™Ã­dÄ› 'GroupSpec'.
 
     """
     def __init__(self, *items, **kwargs):
@@ -882,9 +882,9 @@ class HGroup(GroupSpec):
 
         
 class VGroup(GroupSpec):
-    """Vertikální seskupení políèek.
+    """VertikÃ¡lnÃ­ seskupenÃ­ polÃ­Äek.
 
-    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+    Tato tÅ™Ã­da je pouze pohodlnÄ›jÅ¡Ã­m rozhranÃ­m k tÅ™Ã­dÄ› 'GroupSpec'.
 
     """
     def __init__(self, *items, **kwargs):
@@ -892,9 +892,9 @@ class VGroup(GroupSpec):
 
         
 class LHGroup(HGroup):
-    """Horizontální seskupení políèek s nadpisem a orámováním.
+    """HorizontÃ¡lnÃ­ seskupenÃ­ polÃ­Äek s nadpisem a orÃ¡movÃ¡nÃ­m.
 
-    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+    Tato tÅ™Ã­da je pouze pohodlnÄ›jÅ¡Ã­m rozhranÃ­m k tÅ™Ã­dÄ› 'GroupSpec'.
 
     """
     def __init__(self, label, *items, **kwargs):
@@ -903,9 +903,9 @@ class LHGroup(HGroup):
 
         
 class LVGroup(VGroup):
-    """Vertikální seskupení políèek s labelem a orámováním.
+    """VertikÃ¡lnÃ­ seskupenÃ­ polÃ­Äek s labelem a orÃ¡movÃ¡nÃ­m.
 
-    Tato tøída je pouze pohodlnìj¹ím rozhraním k tøídì 'GroupSpec'.
+    Tato tÅ™Ã­da je pouze pohodlnÄ›jÅ¡Ã­m rozhranÃ­m k tÅ™Ã­dÄ› 'GroupSpec'.
 
     """
     def __init__(self, label, *items, **kwargs):
@@ -916,30 +916,30 @@ class LVGroup(VGroup):
 class LayoutSpec(object):
     """Deprecated: Use 'GroupSpec' directly to specify 'ViewSpec' 'layout'."""
     def __init__(self, caption, group, order=None):
-        """Inicializace a doplnìní defaultních hodnot atributù.
+        """Inicializace a doplnÄ›nÃ­ defaultnÃ­ch hodnot atributÅ¯.
 
         Argumenty:
         
-          caption -- nadpis editaèního formuláøe jednoho záznamu
+          caption -- nadpis editaÄnÃ­ho formulÃ¡Å™e jednoho zÃ¡znamu
           
-          group -- specifikace skupiny políèek nejvı¹¹í úrovnì; instance
-            'GroupSpec'. Tato skupina mù¾e obsahovat dal¹í vnoøené skupiny
-            (viz dokumentace tøídy 'GroupSpec').
+          group -- specifikace skupiny polÃ­Äek nejvÃ½Å¡Å¡Ã­ ÃºrovnÄ›; instance
+            'GroupSpec'. Tato skupina mÅ¯Å¾e obsahovat dalÅ¡Ã­ vnoÅ™enÃ© skupiny
+            (viz dokumentace tÅ™Ã­dy 'GroupSpec').
             
-          order -- specifikace poøadí procházení mezi políèky jako sekvence
-            øatìzcù - identifikátorù políèek.  Pokud není None, je poøadí
-            procházení políèek urèeno poøadím jejich identifikátorù v této
-            sekvenci.  V takovém pøípadì musí sekvence obsahovat identifikátory
-            v¹ech políèek obsa¾enıch v 'group'.  Pokud je ponechána vıchozí
-            hodnota 'None', je poøadí procházení dáno poøadím políèek v
-            'group' pøi procházení stromu do hloubky.  Tento vıchozí zpùsob
-            urèení poøadí v naprosté vìt¹inì pøípadú vyhovuje a je z pohledu
-            u¾ivatele nejpøirozenìj¹í, proto se pou¾ítí tohoto argumentu
-            doporuèuje jen v nevyhnutelnıch pøípadech!  Prioritním øe¹ením by
-            v¾dy mìla bıt reorganizace skupin formuláøe.
+          order -- specifikace poÅ™adÃ­ prochÃ¡zenÃ­ mezi polÃ­Äky jako sekvence
+            Å™atÄ›zcÅ¯ - identifikÃ¡torÅ¯ polÃ­Äek.  Pokud nenÃ­ None, je poÅ™adÃ­
+            prochÃ¡zenÃ­ polÃ­Äek urÄeno poÅ™adÃ­m jejich identifikÃ¡torÅ¯ v tÃ©to
+            sekvenci.  V takovÃ©m pÅ™Ã­padÄ› musÃ­ sekvence obsahovat identifikÃ¡tory
+            vÅ¡ech polÃ­Äek obsaÅ¾enÃ½ch v 'group'.  Pokud je ponechÃ¡na vÃ½chozÃ­
+            hodnota 'None', je poÅ™adÃ­ prochÃ¡zenÃ­ dÃ¡no poÅ™adÃ­m polÃ­Äek v
+            'group' pÅ™i prochÃ¡zenÃ­ stromu do hloubky.  Tento vÃ½chozÃ­ zpÅ¯sob
+            urÄenÃ­ poÅ™adÃ­ v naprostÃ© vÄ›tÅ¡inÄ› pÅ™Ã­padÃº vyhovuje a je z pohledu
+            uÅ¾ivatele nejpÅ™irozenÄ›jÅ¡Ã­, proto se pouÅ¾Ã­tÃ­ tohoto argumentu
+            doporuÄuje jen v nevyhnutelnÃ½ch pÅ™Ã­padech!  PrioritnÃ­m Å™eÅ¡enÃ­m by
+            vÅ¾dy mÄ›la bÃ½t reorganizace skupin formulÃ¡Å™e.
 
-        'caption' je v¾dy pova¾ován za jazykovì závislı text a tudí¾ automaticky
-        podléhá jazykové konverzi.
+        'caption' je vÅ¾dy povaÅ¾ovÃ¡n za jazykovÄ› zÃ¡vislÃ½ text a tudÃ­Å¾ automaticky
+        podlÃ©hÃ¡ jazykovÃ© konverzi.
 
         """
         assert caption is None or isinstance(caption, (str, unicode))
@@ -954,43 +954,43 @@ class LayoutSpec(object):
             for id in order:
                 assert is_string(id)
                 assert id in found, \
-                       (_("Invalid field id in 'order' specification:"), id)
+                       (_(u"Invalid field id in 'order' specification:"), id)
             for id in found:
                 assert id in order, \
-                       (_("Field id missing in 'order' specification:"), id)
+                       (_(u"Field id missing in 'order' specification:"), id)
             assert len(found) == len(order), \
-                   _("Duplicate field id in 'order' spcification.")
+                   _(u"Duplicate field id in 'order' spcification.")
         self._order = tuple(order)
 
     def caption(self):
-        """Vra» nadpis pro editaèní formuláø jednoho záznamu."""
+        """VraÅ¥ nadpis pro editaÄnÃ­ formulÃ¡Å™ jednoho zÃ¡znamu."""
         return self._caption
 
     def group(self):
-        """Vra» skupinu políèek nejvı¹¹í úrovnì; instance 'GroupSpec'."""
+        """VraÅ¥ skupinu polÃ­Äek nejvÃ½Å¡Å¡Ã­ ÃºrovnÄ›; instance 'GroupSpec'."""
         return self._group
     
     def order(self):
-        """Vra» tuple id v¹ech políèek editaèního formuláøe v poøadí procházení.
+        """VraÅ¥ tuple id vÅ¡ech polÃ­Äek editaÄnÃ­ho formulÃ¡Å™e v poÅ™adÃ­ prochÃ¡zenÃ­.
         
-        Pokud nebylo poøadí v konstruktoru urèeno, odpovídá poøadí ve skupinách.
+        Pokud nebylo poÅ™adÃ­ v konstruktoru urÄeno, odpovÃ­dÃ¡ poÅ™adÃ­ ve skupinÃ¡ch.
 
         """
         return self._order
 
 
 class ViewSpec(object):
-    """Kompletující specifikace prezentaèních vlastnoostí pro formuláøe.
+    """KompletujÃ­cÃ­ specifikace prezentaÄnÃ­ch vlastnoostÃ­ pro formulÃ¡Å™e.
 
-    Instance této tøídy zná ve¹keré prezentaèní vlasnosti urèité entity
-    (tabulky z pohledu aplikace).  Tøída definuje API pro pøístup k tìmto
-    vlastnostem.  Toto API je vyu¾íváno formuláøovımi tøídami.
+    Instance tÃ©to tÅ™Ã­dy znÃ¡ veÅ¡kerÃ© prezentaÄnÃ­ vlasnosti urÄitÃ© entity
+    (tabulky z pohledu aplikace).  TÅ™Ã­da definuje API pro pÅ™Ã­stup k tÄ›mto
+    vlastnostem.  Toto API je vyuÅ¾Ã­vÃ¡no formulÃ¡Å™ovÃ½mi tÅ™Ã­dami.
 
-    Ka¾dá instance této tøídy definuje vlastnosti pro v¹echny zpùsoby
-    zobrazení (editaèní formuláø, editaèní seznam, apod.).
+    KaÅ¾dÃ¡ instance tÃ©to tÅ™Ã­dy definuje vlastnosti pro vÅ¡echny zpÅ¯soby
+    zobrazenÃ­ (editaÄnÃ­ formulÃ¡Å™, editaÄnÃ­ seznam, apod.).
 
-    Ka¾dı typ formuláøe z potom vyu¾ívá ze specifikace pouze tu èást, která je
-    pro nìj relevantní.
+    KaÅ¾dÃ½ typ formulÃ¡Å™e zÂ potom vyuÅ¾Ã­vÃ¡ ze specifikace pouze tu ÄÃ¡st, kterÃ¡ je
+    pro nÄ›j relevantnÃ­.
 
     """
 
@@ -1018,22 +1018,22 @@ class ViewSpec(object):
 
           list_layout -- specification of list layout as a 'ListLayout' instance or None.
           
-          columns -- specifikace sloupcù tabulkového formuláøe, sekvence
-            indentifikátorù políèek z 'fields'.  Pokud není urèeno, bude
-            vıchozí seznam sloupcù obsahovat v¹echna políèka z fields, která
-            nemají 'column_width' nastaveno na nulu nebo 'disable_column' na
+          columns -- specifikace sloupcÅ¯ tabulkovÃ©ho formulÃ¡Å™e, sekvence
+            indentifikÃ¡torÅ¯ polÃ­Äek z 'fields'.  Pokud nenÃ­ urÄeno, bude
+            vÃ½chozÃ­ seznam sloupcÅ¯ obsahovat vÅ¡echna polÃ­Äka z fields, kterÃ¡
+            nemajÃ­ 'column_width' nastaveno na nulu nebo 'disable_column' na
             True.
             
-          actions -- specifikace dostupnıch u¾ivatelskıch akcí jako sekvence
-            instancí 'Action', vnoøenıch sekvencí, nebo instancí 'ActionGroup'.
-            V nejjednodu¹¹ím pøípadì jde o prostı seznam instancí 'Action'.
-            Pokud chceme ovlivnit reprezentaci seznamu dostupnıch akcí v
-            u¾ivatelském rozhraní, je mo¾né akce seskupit do vnoøenách tuplù èi
-            listù.  Takto vytvoøené skupiny akcí budou oddìleny separátorem.
-            Dále je mo¾né vytvoøit vnoøenou pojmenovanou skupinu
-            (reprezentovanou jako samostatné podmenu) pou¾itím instance
-            'ActionGroup'.  Prvky v rámci ka¾dé 'ActionGroup' lze dále
-            seskupovat stejnım zpùsobem.
+          actions -- specifikace dostupnÃ½ch uÅ¾ivatelskÃ½ch akcÃ­ jako sekvence
+            instancÃ­ 'Action', vnoÅ™enÃ½ch sekvencÃ­, nebo instancÃ­ 'ActionGroup'.
+            V nejjednoduÅ¡Å¡Ã­m pÅ™Ã­padÄ› jde o prostÃ½ seznam instancÃ­ 'Action'.
+            Pokud chceme ovlivnit reprezentaci seznamu dostupnÃ½ch akcÃ­ v
+            uÅ¾ivatelskÃ©m rozhranÃ­, je moÅ¾nÃ© akce seskupit do vnoÅ™enÃ¡ch tuplÅ¯ Äi
+            listÅ¯.  Takto vytvoÅ™enÃ© skupiny akcÃ­ budou oddÄ›leny separÃ¡torem.
+            DÃ¡le je moÅ¾nÃ© vytvoÅ™it vnoÅ™enou pojmenovanou skupinu
+            (reprezentovanou jako samostatnÃ© podmenu) pouÅ¾itÃ­m instance
+            'ActionGroup'.  Prvky v rÃ¡mci kaÅ¾dÃ© 'ActionGroup' lze dÃ¡le
+            seskupovat stejnÃ½m zpÅ¯sobem.
                         
           sorting -- default sorting in the same format as accepted by the 'sort' argument of
             'pytis.data.Data.select()'.  If None, the records will be sorted by the key column.
@@ -1057,20 +1057,20 @@ class ViewSpec(object):
             interpolation of formatted row values within given string (with python string
             formatting syntax).
 
-          check -- funkce pro ovìøení integrity dat celého záznamu.  Jedná se o
-            funkci jednoho argumentu, jím¾ je instance tøídy `PresentedRow',
-            reprezentující aktuální hodnoty v¹ech políèek formuláøe.  Namísto
-            jediné funkce lze pøedat také seznam takovıch funkcí -- v tom
-            pøípadì budou funkce volány v poøadí, ve kterém jsou uvedeny.  Na
-            rozdíl od validace hodnot políèek, která závisí na datovém typu a
-            má k dispozici pouze vlastní obsah políèka, má tato funkce k
-            dispozici i hodnoty ostatních políèek, tak¾e je vhodná pro ovìøení
-            vzájemné sluèitelnosti tìchto hodnot.  Tato funkce vrací None,
-            pokud je v¹e v poøádku a formuláø mù¾e bıt v tomto stavu odeslán,
-            nebo id políèka, jeho¾ hodnota zpùsobila neplatnost záznamu.
-            Formuláø by potom mìl u¾ivatele vrátit do editace daného polèka.
-            Je mo¾né vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová
-            zpráva, která má bıt zobrazena u¾ivateli.
+          check -- funkce pro ovÄ›Å™enÃ­ integrity dat celÃ©ho zÃ¡znamu.  JednÃ¡ se o
+            funkci jednoho argumentu, jÃ­mÅ¾ je instance tÅ™Ã­dy `PresentedRow',
+            reprezentujÃ­cÃ­ aktuÃ¡lnÃ­ hodnoty vÅ¡ech polÃ­Äek formulÃ¡Å™e.  NamÃ­sto
+            jedinÃ© funkce lze pÅ™edat takÃ© seznam takovÃ½ch funkcÃ­ -- v tom
+            pÅ™Ã­padÄ› budou funkce volÃ¡ny v poÅ™adÃ­, ve kterÃ©m jsou uvedeny.  Na
+            rozdÃ­l od validace hodnot polÃ­Äek, kterÃ¡ zÃ¡visÃ­ na datovÃ©m typu a
+            mÃ¡ k dispozici pouze vlastnÃ­ obsah polÃ­Äka, mÃ¡ tato funkce k
+            dispozici i hodnoty ostatnÃ­ch polÃ­Äek, takÅ¾e je vhodnÃ¡ pro ovÄ›Å™enÃ­
+            vzÃ¡jemnÃ© sluÄitelnosti tÄ›chto hodnot.  Tato funkce vracÃ­ None,
+            pokud je vÅ¡e v poÅ™Ã¡dku a formulÃ¡Å™ mÅ¯Å¾e bÃ½t v tomto stavu odeslÃ¡n,
+            nebo id polÃ­Äka, jehoÅ¾ hodnota zpÅ¯sobila neplatnost zÃ¡znamu.
+            FormulÃ¡Å™ by potom mÄ›l uÅ¾ivatele vrÃ¡tit do editace danÃ©ho polÄka.
+            Je moÅ¾nÃ© vrÃ¡tit takÃ© dvojici (ID, MESSAGE), kde MESSAGE je chybovÃ¡
+            zprÃ¡va, kterÃ¡ mÃ¡ bÃ½t zobrazena uÅ¾ivateli.
             
           cleanup -- a function for final actions after inserting/updating a record.  The function
             must accept two arguments -- the first one is the row after performing the database
@@ -1085,18 +1085,18 @@ class ViewSpec(object):
             abort the operation by rollback of the transaction (if the underlying database engine
             supports it).
             
-          on_new_record -- akce vlo¾ení nového záznamu.  Pokud je None, bude
-            provedena vıchozí akce (otevøení PopupEditForm nad danou
-            specifikací).  Pøedáním funkce lze pøedefinovat pøidání nového
-            záznamu v daném náhledu libovolnou vlastní funkcionalitou.  Funkce
-            musí akceptovat klíèovı argument 'prefill' (viz.
+          on_new_record -- akce vloÅ¾enÃ­ novÃ©ho zÃ¡znamu.  Pokud je None, bude
+            provedena vÃ½chozÃ­ akce (otevÅ™enÃ­ PopupEditForm nad danou
+            specifikacÃ­).  PÅ™edÃ¡nÃ­m funkce lze pÅ™edefinovat pÅ™idÃ¡nÃ­ novÃ©ho
+            zÃ¡znamu v danÃ©m nÃ¡hledu libovolnou vlastnÃ­ funkcionalitou.  Funkce
+            musÃ­ akceptovat klÃ­ÄovÃ½ argument 'prefill' (viz.
             'pytis.form.new_record()').
             
-          on_edit_record -- akce editace záznamu.  Pokud je None, bude
-            provedena vıchozí akce (otevøení PopupEditForm nad danou
-            specifikací).  Pøedáním funkce jednoho klíèového argumentu,
-            jím¾ je instance 'PresentedRow', lze pøedefinovat editaci záznamu
-            libovolnou vlastní funkcionalitou.
+          on_edit_record -- akce editace zÃ¡znamu.  Pokud je None, bude
+            provedena vÃ½chozÃ­ akce (otevÅ™enÃ­ PopupEditForm nad danou
+            specifikacÃ­).  PÅ™edÃ¡nÃ­m funkce jednoho klÃ­ÄovÃ©ho argumentu,
+            jÃ­mÅ¾ je instance 'PresentedRow', lze pÅ™edefinovat editaci zÃ¡znamu
+            libovolnou vlastnÃ­ funkcionalitou.
             
           on_delete_record -- user defined record deletion function.  If defined, it must be a
             function of one argument (the current record as a PresentedRow instance) which will be
@@ -1250,7 +1250,7 @@ class ViewSpec(object):
                     if isinstance(c, Computer):
                         for dep in c.depends():
                             assert dep in self._field_dict, \
-                                   _("Unknown field id '%s' in dependencies "
+                                   _(u"Unknown field id '%s' in dependencies "
                                      "for '%s' specification of '%s'.") % \
                                      (dep, s, f.id())
         # Initialize `columns' specification parameter
@@ -1262,11 +1262,11 @@ class ViewSpec(object):
                 assert is_sequence(columns)
                 for c in columns:
                     assert isinstance(c, str) and c in self._field_dict,\
-                           (_("Unknown column id in 'columns' specification of %s: %r") %
+                           (_(u"Unknown column id in 'columns' specification of %s: %r") %
                             (spec_name, c,))
                     f = self._field_dict[c]
                     assert not f.disable_column(), \
-                           _("Disabled column in columns of %s: %s") % (spec_name, c,)
+                           _(u"Disabled column in columns of %s: %s") % (spec_name, c,)
         # Initialize other specification parameters
         if sorting is not None:
             assert is_sequence(sorting)
@@ -1397,93 +1397,93 @@ class ViewSpec(object):
         return ViewSpec(**kwargs)
 
     def title(self):
-        """Vra» název náhledu jako øetìzec."""
+        """VraÅ¥ nÃ¡zev nÃ¡hledu jako Å™etÄ›zec."""
         return self._title
 
     def singular(self):
-        """Vra» název pro jednu polo¾ku náhledu jako øetìzec."""
+        """VraÅ¥ nÃ¡zev pro jednu poloÅ¾ku nÃ¡hledu jako Å™etÄ›zec."""
         return self._singular
 
     def fields(self):
-        """Vra» tuple specifikací v¹ech políèek v layoutu."""
+        """VraÅ¥ tuple specifikacÃ­ vÅ¡ech polÃ­Äek v layoutu."""
         return self._fields
         
     def field(self, id):
-        """Vra» specifikaci políèka daného 'id' jako instanci 'Field'.
+        """VraÅ¥ specifikaci polÃ­Äka danÃ©ho 'id' jako instanci 'Field'.
 
-        Pokud takové políèko neexistuje, vra» 'None'.
+        Pokud takovÃ© polÃ­Äko neexistuje, vraÅ¥ 'None'.
         
         """
         return self._field_dict.get(id)
         
     def layout(self):
-        """Vra» specifikaci rozvr¾ení editaèního formuláøe."""
+        """VraÅ¥ specifikaci rozvrÅ¾enÃ­ editaÄnÃ­ho formulÃ¡Å™e."""
         return self._layout
 
     def list_layout(self):
         return self._list_layout
     
     def columns(self):
-        """Vra» tuple identifikátorù sloupcù pro tabulkovı formuláø."""
+        """VraÅ¥ tuple identifikÃ¡torÅ¯ sloupcÅ¯ pro tabulkovÃ½ formulÃ¡Å™."""
         return self._columns
 
     def actions(self, linear=False):
-        """Vra» specifikaci akcí."""
+        """VraÅ¥ specifikaci akcÃ­."""
         if linear:
             return self._linearize_actions(self._actions)
         else:
             return self._actions
 
     def sorting(self):
-        """Vra» specifikaci vıchozího øazení."""
+        """VraÅ¥ specifikaci vÃ½chozÃ­ho Å™azenÃ­."""
         return self._sorting
 
     def grouping(self):
-        """Vra» tuple id sloupcù vıchozího vizuálního seskupování."""
+        """VraÅ¥ tuple id sloupcÅ¯ vÃ½chozÃ­ho vizuÃ¡lnÃ­ho seskupovÃ¡nÃ­."""
         return self._grouping
 
     def group_heading(self):
-        """Vra» id sloupce záhlaví skupiny."""
+        """VraÅ¥ id sloupce zÃ¡hlavÃ­ skupiny."""
         return self._group_heading
 
     def cleanup(self):
-        """Vra» funkci provádìjící akce pøi uzavøení formuláøe."""
+        """VraÅ¥ funkci provÃ¡dÄ›jÃ­cÃ­ akce pÅ™i uzavÅ™enÃ­ formulÃ¡Å™e."""
         return self._cleanup
 
     def check(self):
-        """Vra» tuple funkcí provádìjících kontrolu integrity záznamu."""
+        """VraÅ¥ tuple funkcÃ­ provÃ¡dÄ›jÃ­cÃ­ch kontrolu integrity zÃ¡znamu."""
         return self._check
 
     def on_new_record(self):
-        """Vra» funkci provádìjící vlo¾ení nového záznamu, nebo None."""
+        """VraÅ¥ funkci provÃ¡dÄ›jÃ­cÃ­ vloÅ¾enÃ­ novÃ©ho zÃ¡znamu, nebo None."""
         return self._on_new_record
 
     def on_edit_record(self):
-        """Vra» funkci provádìjící editaci záznamu, nebo None."""
+        """VraÅ¥ funkci provÃ¡dÄ›jÃ­cÃ­ editaci zÃ¡znamu, nebo None."""
         return self._on_edit_record
 
     def on_delete_record(self):
-        """Vra» funkci provádìjící mazání záznamu, nebo None."""
+        """VraÅ¥ funkci provÃ¡dÄ›jÃ­cÃ­ mazÃ¡nÃ­ zÃ¡znamu, nebo None."""
         return self._on_delete_record
 
     def redirect(self):
-        """Vra» funkci zaji¹»ující pøesmìrování na jinı název specifikace."""
+        """VraÅ¥ funkci zajiÅ¡Å¥ujÃ­cÃ­ pÅ™esmÄ›rovÃ¡nÃ­ na jinÃ½ nÃ¡zev specifikace."""
         return self._redirect
         
     def focus_field(self):
-        """Vra» øetìzec nebo funkci, urèující políèko formuláøe s fokusem."""
+        """VraÅ¥ Å™etÄ›zec nebo funkci, urÄujÃ­cÃ­ polÃ­Äko formulÃ¡Å™e s fokusem."""
         return self._focus_field
 
     def description(self):
-        """Vra» struènı popis náhledu."""
+        """VraÅ¥ struÄnÃ½ popis nÃ¡hledu."""
         return self._description
 
     def help(self):
-        """Vra» podrobnou nápovìdu."""
+        """VraÅ¥ podrobnou nÃ¡povÄ›du."""
         return self._help
     
     def row_style(self):
-        """Vra» vıchozí styl øádku, nebo funkci, která jej vypoète."""
+        """VraÅ¥ vÃ½chozÃ­ styl Å™Ã¡dku, nebo funkci, kterÃ¡ jej vypoÄte."""
         return self._row_style
 
     def profiles(self):
@@ -1512,21 +1512,21 @@ class ViewSpec(object):
 
     
 class BindingSpec(object):
-    """Specifikace vazby dvou náhledù pøi propojení do duálního formuláøe.
+    """Specifikace vazby dvou nÃ¡hledÅ¯ pÅ™i propojenÃ­ do duÃ¡lnÃ­ho formulÃ¡Å™e.
 
-    Definuje vlastnosti napojení dvou formuláøù pøi jejich spojení do duálního
-    formuláøe.  Definována je jak datová vazba, tak nìkteré prezentaèní
-    vlastnosti spojení.
+    Definuje vlastnosti napojenÃ­ dvou formulÃ¡Å™Å¯ pÅ™i jejich spojenÃ­ do duÃ¡lnÃ­ho
+    formulÃ¡Å™e.  DefinovÃ¡na je jak datovÃ¡ vazba, tak nÄ›kterÃ© prezentaÄnÃ­
+    vlastnosti spojenÃ­.
 
-    Pou¾ití je následující:
+    PouÅ¾itÃ­ je nÃ¡sledujÃ­cÃ­:
 
-    Funkce 'binding_spec' ve specifikaci libovolného náhledu vrací slovník
-    v¹ech mo¾nıch spojení tohoto náhledu s dal¹ími jinımi náhledy.  Slovník je
-    klíèován názvy specifikací a hodnotou je právì instance 'BindingSpec'.
+    Funkce 'binding_spec' ve specifikaci libovolnÃ©ho nÃ¡hledu vracÃ­ slovnÃ­k
+    vÅ¡ech moÅ¾nÃ½ch spojenÃ­ tohoto nÃ¡hledu s dalÅ¡Ã­mi jinÃ½mi nÃ¡hledy.  SlovnÃ­k je
+    klÃ­ÄovÃ¡n nÃ¡zvy specifikacÃ­ a hodnotou je prÃ¡vÄ› instance 'BindingSpec'.
 
-    Kdy¾ je tedy napøíklad vytváøen duální formuláø 'A::B', bude ve specifikaci
-    náhledu 'A' (v roli hlavního formuláøe) získána z 'binding_spec' polo¾ka
-    pro náhled 'B' (v roli vedlej¹ího formuláøe).
+    KdyÅ¾ je tedy napÅ™Ã­klad vytvÃ¡Å™en duÃ¡lnÃ­ formulÃ¡Å™ 'A::B', bude ve specifikaci
+    nÃ¡hledu 'A' (v roli hlavnÃ­ho formulÃ¡Å™e) zÃ­skÃ¡na z 'binding_spec' poloÅ¾ka
+    pro nÃ¡hled 'B' (v roli vedlejÅ¡Ã­ho formulÃ¡Å™e).
 
     """
     
@@ -1759,15 +1759,15 @@ class SelectionType(object):
     
    
 class PostProcess(object):
-    "Vıètová tøída definující konstanty pro zpùsob zpracování u¾iv. vstupu."
+    "VÃ½ÄtovÃ¡ tÅ™Ã­da definujÃ­cÃ­ konstanty pro zpÅ¯sob zpracovÃ¡nÃ­ uÅ¾iv. vstupu."
     UPPER = 'UPPER'
-    """Pøeveï ve¹kerá písmena na velká."""
+    """PÅ™eveÄ veÅ¡kerÃ¡ pÃ­smena na velkÃ¡."""
     LOWER = 'LOWER'
-    """Pøeveï ve¹kerá písmena na malá."""
+    """PÅ™eveÄ veÅ¡kerÃ¡ pÃ­smena na malÃ¡."""
 
     
 class TextFilter(object):
-    """Vıètová tøída definující konstanty pro zpùsob filtrování u¾iv. vstupu.
+    """VÃ½ÄtovÃ¡ tÅ™Ã­da definujÃ­cÃ­ konstanty pro zpÅ¯sob filtrovÃ¡nÃ­ uÅ¾iv. vstupu.
     """
     ASCII = 'ASCII'
     """Non-ASCII characters are filtered out."""
@@ -1794,24 +1794,24 @@ class TextFilter(object):
 
 
 class Computer(object):
-    """Specifikace funkce pro dopoèítání hodnoty sloupce."""
+    """Specifikace funkce pro dopoÄÃ­tÃ¡nÃ­ hodnoty sloupce."""
     
     def __init__(self, function, depends=None):
         """Inicializuj specifikaci.
 
         Argumenty:
 
-          function -- libovolná funkce vracející hodnotu kompatibilní s vnitøní
-            hodnotou datového typu odpovídajícího sloupci, pro kterı je
-            pou¾ita.
+          function -- libovolnÃ¡ funkce vracejÃ­cÃ­ hodnotu kompatibilnÃ­ s vnitÅ™nÃ­
+            hodnotou datovÃ©ho typu odpovÃ­dajÃ­cÃ­ho sloupci, pro kterÃ½ je
+            pouÅ¾ita.
             
-          depends -- seznam sloupcù, na kterıch dané poèítané políèko závisí.
-            Mìl by obsahovat v¹echny sloupce, které poèítací funkce pou¾ívá pro
-            urèení vısledné hodnoty.  Hodnota potom bude pøepoèítána pouze
-            pøi zmìnì v uvedenıch políèkách. Pokud je uveden prázdnı seznam,
-            nebude hodnota pøepoèítána nikdy (stále v¹ak bude vypoèítána pøi
-            inicializaci formuláøe). Jedná se o seznam identifikátorù sloupcù
-            jako øetìzcù.
+          depends -- seznam sloupcÅ¯, na kterÃ½ch danÃ© poÄÃ­tanÃ© polÃ­Äko zÃ¡visÃ­.
+            MÄ›l by obsahovat vÅ¡echny sloupce, kterÃ© poÄÃ­tacÃ­ funkce pouÅ¾Ã­vÃ¡ pro
+            urÄenÃ­ vÃ½slednÃ© hodnoty.  Hodnota potom bude pÅ™epoÄÃ­tÃ¡na pouze
+            pÅ™i zmÄ›nÄ› v uvedenÃ½ch polÃ­ÄkÃ¡ch. Pokud je uveden prÃ¡zdnÃ½ seznam,
+            nebude hodnota pÅ™epoÄÃ­tÃ¡na nikdy (stÃ¡le vÅ¡ak bude vypoÄÃ­tÃ¡na pÅ™i
+            inicializaci formulÃ¡Å™e). JednÃ¡ se o seznam identifikÃ¡torÅ¯ sloupcÅ¯
+            jako Å™etÄ›zcÅ¯.
 
         """
         import re
@@ -1826,11 +1826,11 @@ class Computer(object):
         return self._function(*args, **kwargs)
 
     def function(self):
-        """Vra» funkci zadanou v konstruktoru."""
+        """VraÅ¥ funkci zadanou vÂ konstruktoru."""
         return self._function
 
     def depends(self):
-        """Vra» seznam id sloupcù, ne kterıch poèítaná hodnota závisí."""
+        """VraÅ¥ seznam id sloupcÅ¯, ne kterÃ½ch poÄÃ­tanÃ¡ hodnota zÃ¡visÃ­."""
         return self._depends    
 
 
@@ -1874,20 +1874,20 @@ def computer(function):
     
 
 class CbComputer(Computer):
-    """Specializovanı computer, kterı získává hodnotu z èíselníku.
+    """SpecializovanÃ½ computer, kterÃ½ zÃ­skÃ¡vÃ¡ hodnotu z ÄÃ­selnÃ­ku.
     
-    Tento computer automaticky poskytuje dopoèítávací funkci, která získává
-    hodnotu z nìkterého sloupce èíselníku navázaného na jiné políèko stejného
-    náhledu.  Toho lze vyu¾ít u políèek, která ve skuteènosti jen zobrazují
-    doplòující informace z èíselníku.
+    Tento computer automaticky poskytuje dopoÄÃ­tÃ¡vacÃ­ funkci, kterÃ¡ zÃ­skÃ¡vÃ¡
+    hodnotu z nÄ›kterÃ©ho sloupce ÄÃ­selnÃ­ku navÃ¡zanÃ©ho na jinÃ© polÃ­Äko stejnÃ©ho
+    nÃ¡hledu.  Toho lze vyuÅ¾Ã­t u polÃ­Äek, kterÃ¡ ve skuteÄnosti jen zobrazujÃ­
+    doplÅˆujÃ­cÃ­ informace z ÄÃ­selnÃ­ku.
 
-    Stejného efektu by sice ¹lo dosáhnout i pou¾itím standardního computeru s
-    pøíslu¹nou dopoèítávací funkcí, ale tím by se u¾ivatelské rozhraní
-    nedozvìdìlo nic o vazbì dopoèítávaného políèka na políèko s enumerátorem a
-    nebylo by schopno poskytnout dal¹í u¾iteèné funkce, jako napøíklad otevøení
-    náhledu èíselníku jako akce kontextového menu buòky, zobrazení klíèe
-    èíselníku pøi aktivaci buòky, automatické urèení datového typu virtuálního
-    políèka apod.
+    StejnÃ©ho efektu by sice Å¡lo dosÃ¡hnout i pouÅ¾itÃ­m standardnÃ­ho computeru s
+    pÅ™Ã­sluÅ¡nou dopoÄÃ­tÃ¡vacÃ­ funkcÃ­, ale tÃ­m by se uÅ¾ivatelskÃ© rozhranÃ­
+    nedozvÄ›dÄ›lo nic o vazbÄ› dopoÄÃ­tÃ¡vanÃ©ho polÃ­Äka na polÃ­Äko s enumerÃ¡torem a
+    nebylo by schopno poskytnout dalÅ¡Ã­ uÅ¾iteÄnÃ© funkce, jako napÅ™Ã­klad otevÅ™enÃ­
+    nÃ¡hledu ÄÃ­selnÃ­ku jako akce kontextovÃ©ho menu buÅˆky, zobrazenÃ­ klÃ­Äe
+    ÄÃ­selnÃ­ku pÅ™i aktivaci buÅˆky, automatickÃ© urÄenÃ­ datovÃ©ho typu virtuÃ¡lnÃ­ho
+    polÃ­Äka apod.
 
     """
     def __init__(self, field, column, default=None):
@@ -1927,11 +1927,11 @@ class CbComputer(Computer):
         return self._default
 
     def field(self):
-        """Vra» id políèka, jeho¾ enumerátor je pou¾it."""
+        """VraÅ¥ id polÃ­Äka, jehoÅ¾ enumerÃ¡tor je pouÅ¾it."""
         return self._field
     
     def column(self):
-        """Vra» id sloupce datového objektu enumerátoru, kterı udává hodnotu."""
+        """VraÅ¥ id sloupce datovÃ©ho objektu enumerÃ¡toru, kterÃ½ udÃ¡vÃ¡ hodnotu."""
         return self._column
     
     
@@ -2027,27 +2027,27 @@ class CodebookSpec(object):
     
 
 class FormType(object):
-    """Specifikace abstraktního typu formuláøe podle úèelu jeho otevøení.
+    """Specifikace abstraktnÃ­ho typu formulÃ¡Å™e podle ÃºÄelu jeho otevÅ™enÃ­.
 
-    Tyto konstanty slou¾í k urèení zpùsobu otevøení náhledu.  Díky této
-    abstrakci je specifikace nezávislá na pou¾itıch tøídách u¾ivatelského
-    rozhraní.  Definujeme pouze úèel, za kterım je formuláø otevírán a necháme
-    u¾ivatelské rozhraní rozhodnout, kterı konkrétní formuláø je v dané situaci
-    nejvhodnìj¹í.
+    Tyto konstanty slouÅ¾Ã­ k urÄenÃ­ zpÅ¯sobu otevÅ™enÃ­ nÃ¡hledu.  DÃ­ky tÃ©to
+    abstrakci je specifikace nezÃ¡vislÃ¡ na pouÅ¾itÃ½ch tÅ™Ã­dÃ¡ch uÅ¾ivatelskÃ©ho
+    rozhranÃ­.  Definujeme pouze ÃºÄel, za kterÃ½m je formulÃ¡Å™ otevÃ­rÃ¡n a nechÃ¡me
+    uÅ¾ivatelskÃ© rozhranÃ­ rozhodnout, kterÃ½ konkrÃ©tnÃ­ formulÃ¡Å™ je v danÃ© situaci
+    nejvhodnÄ›jÅ¡Ã­.
 
     """
     
     BROWSE = 'BROWSE'
-    """Otevøení øádkového náhledu v podobì tabulky."""
+    """OtevÅ™enÃ­ Å™Ã¡dkovÃ©ho nÃ¡hledu v podobÄ› tabulky."""
     
     VIEW = 'VIEW'
-    """Otevøení needitovatelného náhledu jednoho záznamu."""
+    """OtevÅ™enÃ­ needitovatelnÃ©ho nÃ¡hledu jednoho zÃ¡znamu."""
     
     EDIT = 'EDIT'
-    """Otevøení editaèního formuláøe jednoho záznamu."""
+    """OtevÅ™enÃ­ editaÄnÃ­ho formulÃ¡Å™e jednoho zÃ¡znamu."""
     
     INSERT = 'INSERT'
-    """Otevøení editaèního formuláøe pro vlo¾ení nového záznamu."""
+    """OtevÅ™enÃ­ editaÄnÃ­ho formulÃ¡Å™e pro vloÅ¾enÃ­ novÃ©ho zÃ¡znamu."""
 
 
 class Link(object):
@@ -2073,15 +2073,15 @@ class Link(object):
             shown along with the refered record.  A binding with given identifier must exist in the
             'bindings' specification of 'name'.
 
-          label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
-            pojmenován automaticky a zaøazen mezi automaticky generované
-            odkazy.  Pokud je titulek uveden, bude v u¾ivatelském rozhraní
-            odkaz uveden samostatnì pøed v¹emi automaticky generovanımi odkazy.
+          label -- titulek odkazu v menu.  Pokud nenÃ­ uveden, bude odkaz
+            pojmenovÃ¡n automaticky a zaÅ™azen mezi automaticky generovanÃ©
+            odkazy.  Pokud je titulek uveden, bude v uÅ¾ivatelskÃ©m rozhranÃ­
+            odkaz uveden samostatnÄ› pÅ™ed vÅ¡emi automaticky generovanÃ½mi odkazy.
             
-          enabled -- funkce, vracející pravdu, pokud má bıt odkaz aktivní a
-            nepravdu v opaèném pøípadì.  Funkci je pøedán jeden argument --
-            instance `PresentedRow' aktuálního øádku.  Namísto funkce mù¾e bıt
-            pøedána té¾ pøímo boolean hodnota, která dostupnost akce urèuje
+          enabled -- funkce, vracejÃ­cÃ­ pravdu, pokud mÃ¡ bÃ½t odkaz aktivnÃ­ a
+            nepravdu v opaÄnÃ©m pÅ™Ã­padÄ›.  Funkci je pÅ™edÃ¡n jeden argument --
+            instance `PresentedRow' aktuÃ¡lnÃ­ho Å™Ã¡dku.  NamÃ­sto funkce mÅ¯Å¾e bÃ½t
+            pÅ™edÃ¡na tÃ©Å¾ pÅ™Ã­mo boolean hodnota, kterÃ¡ dostupnost akce urÄuje
             staticky.
             
         """
@@ -2099,15 +2099,15 @@ class Link(object):
         self._enabled = enabled
                 
     def name(self):
-        """Vra» název specifikace odkazovaného náhledu."""
+        """VraÅ¥ nÃ¡zev specifikace odkazovanÃ©ho nÃ¡hledu."""
         return self._name
 
     def column(self):
-        """Vra» id odpovídajícího sloupce v odkazovaném náhledu."""
+        """VraÅ¥ id odpovÃ­dajÃ­cÃ­ho sloupce v odkazovanÃ©m nÃ¡hledu."""
         return self._column
 
     def type(self):
-        """Vra» konstantu typu formuláøe, kterı má bıt otevøen."""
+        """VraÅ¥ konstantu typu formulÃ¡Å™e, kterÃ½ mÃ¡ bÃ½t otevÅ™en."""
         return self._type
 
     def binding(self):
@@ -2115,11 +2115,11 @@ class Link(object):
         return self._binding
 
     def label(self):
-        """Vra» typ formuláøe, kterı má bıt otevøen."""
+        """VraÅ¥ typ formulÃ¡Å™e, kterÃ½ mÃ¡ bÃ½t otevÅ™en."""
         return self._label
 
     def enabled(self):
-        """Vra» funkci k zji¹tìní dostupnosti akce, nebo pøímo bool hodnotu."""
+        """VraÅ¥ funkci k zjiÅ¡tÄ›nÃ­ dostupnosti akce, nebo pÅ™Ã­mo bool hodnotu."""
         return self._enabled
     
 
@@ -2376,26 +2376,26 @@ class Field(object):
           orientation -- field orientation as one of 'Orientation' class constants; relevant only
             for certain field types, such as radio buttons, which may be arranged vertically or
             horizontally..
-          post_process -- funkce upravující vkládanı text bìhem psaní.  Jedná
-            se o funkci jednoho argumentu, kterım je øetìzcová hodnota políèka.
-            Vrácená hodnota je potom nastavena jako nová hodnota políèka.  Tato
-            funkce je volána pøi ka¾dé zmìnì hodnoty textového políèka.
-            Pøíkladem postprocessingu mù¾e bıt zmìna velikosti písmen, pokud
-            chceme, aby textové políèko mohlo obsahovat jen velká písmena.
-            Hodnotou tohoto argumentu mù¾e bıt také nìkterá z konstant tøídy
-            'PostProcess', èím¾ je u¹etøeno psaní nìkterıch èasto pou¾ívanıch
-            funkcí.
-          filter -- specifikace jednoho z pøednastavenıch filtrù znakù
-            propou¹tìnıch do textového políèka z u¾ivatelského vstupu.  Jedna
-            z konstant tøídy 'TextFilter'.
-          filter_list -- sekvence povolenıch, nebo zakázanıch znakù.
-            Relevantní jen pro 'filter' typu 'INCLUDE_LIST' nebo
+          post_process -- funkce upravujÃ­cÃ­ vklÃ¡danÃ½ text bÄ›hem psanÃ­.  JednÃ¡
+            se o funkci jednoho argumentu, kterÃ½m je Å™etÄ›zcovÃ¡ hodnota polÃ­Äka.
+            VrÃ¡cenÃ¡ hodnota je potom nastavena jako novÃ¡ hodnota polÃ­Äka.  Tato
+            funkce je volÃ¡na pÅ™i kaÅ¾dÃ© zmÄ›nÄ› hodnoty textovÃ©ho polÃ­Äka.
+            PÅ™Ã­kladem postprocessingu mÅ¯Å¾e bÃ½t zmÄ›na velikosti pÃ­smen, pokud
+            chceme, aby textovÃ© polÃ­Äko mohlo obsahovat jen velkÃ¡ pÃ­smena.
+            Hodnotou tohoto argumentu mÅ¯Å¾e bÃ½t takÃ© nÄ›kterÃ¡ zÂ konstant tÅ™Ã­dy
+            'PostProcess', ÄÃ­mÅ¾ je uÅ¡etÅ™eno psanÃ­ nÄ›kterÃ½ch Äasto pouÅ¾Ã­vanÃ½ch
+            funkcÃ­.
+          filter -- specifikace jednoho z pÅ™ednastavenÃ½ch filtrÅ¯ znakÅ¯
+            propouÅ¡tÄ›nÃ½ch do textovÃ©ho polÃ­Äka z uÅ¾ivatelskÃ©ho vstupu.  Jedna
+            zÂ konstant tÅ™Ã­dy 'TextFilter'.
+          filter_list -- sekvence povolenÃ½ch, nebo zakÃ¡zanÃ½ch znakÅ¯.
+            RelevantnÃ­ jen pro 'filter' typu 'INCLUDE_LIST' nebo
             'EXCLUDE_LIST'.
-          style -- instance tøídy 'Style' urèující vizuální styl políèka
-            nebo funkce dvou argumentù vracející instanci tøídy 'Style'.
-            Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
-            a aktuální datovı øádek jako instance 'PresentedRow'.  Pokud je
-            'None', bude pou¾it vıchozí styl øádku (viz. argument 'row_style'
+          style -- instance tÅ™Ã­dy 'Style' urÄujÃ­cÃ­ vizuÃ¡lnÃ­ styl polÃ­Äka
+            nebo funkce dvou argumentÅ¯ vracejÃ­cÃ­ instanci tÅ™Ã­dy 'Style'.
+            JednÃ¡-li se oÂ funkci, jsou jejÃ­mi argumenty id sloupce jako string
+            a aktuÃ¡lnÃ­ datovÃ½ Å™Ã¡dek jako instance 'PresentedRow'.  Pokud je
+            'None', bude pouÅ¾it vÃ½chozÃ­ styl Å™Ã¡dku (viz. argument 'row_style'
             konstruktoru 'ViewSpec').
           link -- specification of a link, or a series of links to other forms related to the
             current field value.  The value is a 'Link' instance or their sequence.  The links will
@@ -2419,34 +2419,34 @@ class Field(object):
             completely by passing a 'pytis.data.Type' instance as the 'type'
             argument.  See also 'type' argument's documentation.
 
-        Je-li specifikován argument 'computer' a jeho hodnota není 'None', pak
-        hodnota sloupce, pokud ji nelze pøevzít z datového objektu, je
-        poèítána.  Takovı sloupec mù¾e bıt plnì \"virtuální\", tj. není
-        pøítomen v datovém objektu a jeho hodnota je v¾dy poèítána, nebo mù¾e
-        bıt v datovém objektu, av¹ak hodnota je dopoèítávána v prùbìhu editace
-        (i novì vytvoøeného) záznamu.  Pou¾ití plnì virtuálních sloupcù není
-        doporuèováno z dùvodu vıkonnostních problémù v rozsáhlej¹ích
-        tabulkovıch náhledech.  U plnì virtuálních políèek je také nutné urèit
-        explicitnì datovı typ pomocí specifikátoru 'type', proto¾e není mo¾né
-        jej pøevzít automaticky z datového objektu.  Jedinou vıjimkou jsou
-        dopoèítávaná virtuální políèka typu 'CbComputer', kde je typ pøevzat z
-        datového objektu enumerátoru.
+        Je-li specifikovÃ¡n argument 'computer' a jeho hodnota nenÃ­ 'None', pak
+        hodnota sloupce, pokud ji nelze pÅ™evzÃ­t zÂ datovÃ©ho objektu, je
+        poÄÃ­tÃ¡na.  TakovÃ½ sloupec mÅ¯Å¾e bÃ½t plnÄ› \"virtuÃ¡lnÃ­\", tj. nenÃ­
+        pÅ™Ã­tomen vÂ datovÃ©m objektu a jeho hodnota je vÅ¾dy poÄÃ­tÃ¡na, nebo mÅ¯Å¾e
+        bÃ½t vÂ datovÃ©m objektu, avÅ¡ak hodnota je dopoÄÃ­tÃ¡vÃ¡na v prÅ¯bÄ›hu editace
+        (i novÄ› vytvoÅ™enÃ©ho) zÃ¡znamu.  PouÅ¾itÃ­ plnÄ› virtuÃ¡lnÃ­ch sloupcÅ¯ nenÃ­
+        doporuÄovÃ¡no z dÅ¯vodu vÃ½konnostnÃ­ch problÃ©mÅ¯ v rozsÃ¡hlejÅ¡Ã­ch
+        tabulkovÃ½ch nÃ¡hledech.  U plnÄ› virtuÃ¡lnÃ­ch polÃ­Äek je takÃ© nutnÃ© urÄit
+        explicitnÄ› datovÃ½ typ pomocÃ­ specifikÃ¡toru 'type', protoÅ¾e nenÃ­ moÅ¾nÃ©
+        jej pÅ™evzÃ­t automaticky z datovÃ©ho objektu.  Jedinou vÃ½jimkou jsou
+        dopoÄÃ­tÃ¡vanÃ¡ virtuÃ¡lnÃ­ polÃ­Äka typu 'CbComputer', kde je typ pÅ™evzat z
+        datovÃ©ho objektu enumerÃ¡toru.
 
-        Dopoèítávání pomocí 'computer' nelze zamìòovat s vıpoètem vıchozí
-        hodnoty (specifikátor 'default').  Vıpoèet vıchozí hodnoty je proveden
-        pouze jednou pøi vytváøení nového øádku.  Funkce pro vıpoèet vıchozí
-        hodnoty nezná hodnotu ostatních políèek a v prùbìhu editace se ji¾
-        neuplatòuje.  Computer naproti tomu pøepoèítává hodnotu políèka v¾dy,
-        kdy¾ dojde ke zmìnì hodnoty políèka, na kterém je závislı (viz
-        dokumentace tøídy 'Computer').
+        DopoÄÃ­tÃ¡vÃ¡nÃ­ pomocÃ­ 'computer' nelze zamÄ›Åˆovat s vÃ½poÄtem vÃ½chozÃ­
+        hodnoty (specifikÃ¡tor 'default').  VÃ½poÄet vÃ½chozÃ­ hodnoty je proveden
+        pouze jednou pÅ™i vytvÃ¡Å™enÃ­ novÃ©ho Å™Ã¡dku.  Funkce pro vÃ½poÄet vÃ½chozÃ­
+        hodnoty neznÃ¡ hodnotu ostatnÃ­ch polÃ­Äek a v prÅ¯bÄ›hu editace se jiÅ¾
+        neuplatÅˆuje.  Computer naproti tomu pÅ™epoÄÃ­tÃ¡vÃ¡ hodnotu polÃ­Äka vÅ¾dy,
+        kdyÅ¾ dojde ke zmÄ›nÄ› hodnoty polÃ­Äka, na kterÃ©m je zÃ¡vislÃ½ (viz
+        dokumentace tÅ™Ã­dy 'Computer').
 
-        Závislosti poèítanıch políèek mohou bıt i tranzitivní (poèítaná políèka
-        mohou záviset na jinıch poèítanıch políèkách), ale graf závislostí musí
-        tvoøit strom (nesmí vzniknout cyklus).
+        ZÃ¡vislosti poÄÃ­tanÃ½ch polÃ­Äek mohou bÃ½t i tranzitivnÃ­ (poÄÃ­tanÃ¡ polÃ­Äka
+        mohou zÃ¡viset na jinÃ½ch poÄÃ­tanÃ½ch polÃ­ÄkÃ¡ch), ale graf zÃ¡vislostÃ­ musÃ­
+        tvoÅ™it strom (nesmÃ­ vzniknout cyklus).
         
-        V ka¾dém pøípadì je poèítanı sloupec implicitnì needitovatelnı
-        ('Editable.NEVER'), pokud není explicitnì nastaven jako editovatelnı
-        pomocí specifikátoru 'editable'.
+        VÂ kaÅ¾dÃ©m pÅ™Ã­padÄ› je poÄÃ­tanÃ½ sloupec implicitnÄ› needitovatelnÃ½
+        ('Editable.NEVER'), pokud nenÃ­ explicitnÄ› nastaven jako editovatelnÃ½
+        pomocÃ­ specifikÃ¡toru 'editable'.
 
         """
         for key, value in (('id', id), ('label', label) ,('column_label', column_label)):
@@ -2537,7 +2537,7 @@ class Field(object):
             # Temporary: The following test replaces the commented out assertion above.  The
             # assertion would break older applications, so we just log for now.
             if enumerator_kwargs and isinstance(enumerator, pytis.data.Enumerator):
-                log_("'enumerator' defined as Enumerator instance and '%s' passed.",
+                log_(u"'enumerator' defined as Enumerator instance and '%s' passed.",
                      enumerator_kwargs.keys()[0])
             for lnk in links:
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
@@ -2554,7 +2554,7 @@ class Field(object):
                     #assert not value, err("'type' defined as Type instance and '%s' passed.", arg)
                     # Temporary: Assertion would break older applications, so we just log for now.
                     if value:
-                        log_("'type' defined as Type instance and '%s' passed.", arg)
+                        log_(u"'type' defined as Type instance and '%s' passed.", arg)
         self._id = id
         self._dbcolumn = dbcolumn or id
         if label is None:
@@ -2829,22 +2829,22 @@ class Fields(object):
     
 
 class Specification(object):
-    """Souhrnná specifikaèní tøída sestavující specifikace automaticky.
+    """SouhrnnÃ¡ specifikaÄnÃ­ tÅ™Ã­da sestavujÃ­cÃ­ specifikace automaticky.
 
-    Tato tøída zjednodu¹uje vytváøení specifikací tím, ¾e definuje vlastní
-    pravidla pro sestavování jak prezentaèní tak datové specifikace pouze na
-    základì jediné specifikace políèek a nìkterıch dal¹ích vlastností.
+    Tato tÅ™Ã­da zjednoduÅ¡uje vytvÃ¡Å™enÃ­ specifikacÃ­ tÃ­m, Å¾e definuje vlastnÃ­
+    pravidla pro sestavovÃ¡nÃ­ jak prezentaÄnÃ­ tak datovÃ© specifikace pouze na
+    zÃ¡kladÄ› jedinÃ© specifikace polÃ­Äek a nÄ›kterÃ½ch dalÅ¡Ã­ch vlastnostÃ­.
 
-    Pou¾ití: Specifikaci vytvoøíme odvozením specifikaèní tøídy náhledu od této
-    tøídy a pøedefinováním jejich veøejnıch atributù.  To ulehèuje tvorbu
-    variant náhledù s vyu¾itím dìdiènosti.
+    PouÅ¾itÃ­: Specifikaci vytvoÅ™Ã­me odvozenÃ­m specifikaÄnÃ­ tÅ™Ã­dy nÃ¡hledu od tÃ©to
+    tÅ™Ã­dy a pÅ™edefinovÃ¡nÃ­m jejich veÅ™ejnÃ½ch atributÅ¯.  To ulehÄuje tvorbu
+    variant nÃ¡hledÅ¯ s vyuÅ¾itÃ­m dÄ›diÄnosti.
 
-    Vıznam atributù: Nìkteré atrubuty jsou definovány pøímo touto tøídou --
-    jejich vıznam je zdokumentován v rámci jejich dokumentaèních øetìzcù.
-    V¹echny ostatní veøejné atributy, které odvozená tøída definuje budou
-    pøedány jako stejnojmenné argumenty konstruktoru 'ViewSpec'.  Vıchozí
-    hodnotou argumentu 'help' pro 'ViewSpec' je dokumentaèní øetìzec
-    specifikaèní tøídy.
+    VÃ½znam atributÅ¯: NÄ›kterÃ© atrubuty jsou definovÃ¡ny pÅ™Ã­mo touto tÅ™Ã­dou --
+    jejich vÃ½znam je zdokumentovÃ¡n v rÃ¡mci jejich dokumentaÄnÃ­ch Å™etÄ›zcÅ¯.
+    VÅ¡echny ostatnÃ­ veÅ™ejnÃ© atributy, kterÃ© odvozenÃ¡ tÅ™Ã­da definuje budou
+    pÅ™edÃ¡ny jako stejnojmennÃ© argumenty konstruktoru 'ViewSpec'.  VÃ½chozÃ­
+    hodnotou argumentu 'help' pro 'ViewSpec' je dokumentaÄnÃ­ Å™etÄ›zec
+    specifikaÄnÃ­ tÅ™Ã­dy.
 
     Set 'public' attribute to True in specifications intended to serve for
     making forms or running procedures in the user interface.
@@ -2864,13 +2864,13 @@ class Specification(object):
     """
     
     table = None
-    """Název datové tabulky jako øetìzec.
+    """NÃ¡zev datovÃ© tabulky jako Å™etÄ›zec.
 
-    Pokud název není urèen, bude odvozen automaticky z názvu specifikaèní
-    tøídy.  Kapitálky jsou pøevedeny na slova oddìlená podtr¾ítkem, tak¾e
-    napø. pro specifikaèní tøídu 'UcetniOsnova' bude název tabulky
-    'ucetni_osnova'.  Z hlediska pøehlednosti je doporuèováno volit toto jmenné
-    schéma a vyhnout se tak explicitnímu urèování názvù tabulek.
+    Pokud nÃ¡zev nenÃ­ urÄen, bude odvozen automaticky z nÃ¡zvu specifikaÄnÃ­
+    tÅ™Ã­dy.  KapitÃ¡lky jsou pÅ™evedeny na slova oddÄ›lenÃ¡ podtrÅ¾Ã­tkem, takÅ¾e
+    napÅ™. pro specifikaÄnÃ­ tÅ™Ã­du 'UcetniOsnova' bude nÃ¡zev tabulky
+    'ucetni_osnova'.  Z hlediska pÅ™ehlednosti je doporuÄovÃ¡no volit toto jmennÃ©
+    schÃ©ma a vyhnout se tak explicitnÃ­mu urÄovÃ¡nÃ­ nÃ¡zvÅ¯ tabulek.
 
     """
 
@@ -2911,7 +2911,7 @@ class Specification(object):
     """Sequence of column names to filter distinct rows of the underlying data object."""
     
     data_cls = pytis.data.DBDataDefault
-    """Datová tøída pou¾itá pro vytvoøení datového objektu."""
+    """DatovÃ¡ tÅ™Ã­da pouÅ¾itÃ¡ pro vytvoÅ™enÃ­ datovÃ©ho objektu."""
 
     connection = None
     """Name of the database connection to use.
@@ -3163,7 +3163,7 @@ class Specification(object):
                       for field in fields if field.id() not in exclude])
     
     def view_spec(self):
-        """Vra» prezentaèní specifikaci jako instanci 'ViewSpec'."""
+        """VraÅ¥ prezentaÄnÃ­ specifikaci jako instanci 'ViewSpec'."""
         try:
             spec = self._view_spec
         except AttributeError:
@@ -3172,7 +3172,7 @@ class Specification(object):
         return spec
         
     def data_spec(self):
-        """Vra» datovou specifikaci jako instanci datové tøídy."""
+        """VraÅ¥ datovou specifikaci jako instanci datovÃ© tÅ™Ã­dy."""
         try:
             spec = self._data_spec
         except AttributeError:
@@ -3180,15 +3180,15 @@ class Specification(object):
         return spec
         
     def cb_spec(self):
-        """Vra» specifikaci èíselníku jako instanci 'CodebookSpec'."""
+        """VraÅ¥ specifikaci ÄÃ­selnÃ­ku jako instanci 'CodebookSpec'."""
         return self.cb
     
     def binding_spec(self):
-        """Vra» specifikaci navázání v duálním formuláøi jako slovník."""
+        """VraÅ¥ specifikaci navÃ¡zÃ¡nÃ­ v duÃ¡lnÃ­m formulÃ¡Å™i jako slovnÃ­k."""
         return self.bindings
 
     def print_spec(self):
-        """Vra» sekvenci specifikací tiskovıch náhledù."""
+        """VraÅ¥ sekvenci specifikacÃ­ tiskovÃ½ch nÃ¡hledÅ¯."""
         return self.prints
 
     def access_spec(self):

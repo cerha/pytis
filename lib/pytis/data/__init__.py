@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2005, 2006, 2007 Brailcom, o.p.s.
 #
@@ -16,16 +16,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Modul pro práci s datovımi zdroji.
+"""Modul pro prÃ¡ci sÂ datovÃ½mi zdroji.
 
-Úèelem modulu je odstínit vıvojáøe aplikace od low-level práce s datovımi
-zdroji.  Modul zavádí:
+ÃšÄelem modulu je odstÃ­nit vÃ½vojÃ¡Å™e aplikace od low-level prÃ¡ce sÂ datovÃ½mi
+zdroji.  Modul zavÃ¡dÃ­:
 
 - Typovou abstrakci, viz modul 'types_'.
 
-- Abstrakci datového zdroje, viz modul 'data'.
+- Abstrakci datovÃ©ho zdroje, viz modul 'data'.
 
-- Podporu pro práci s datovımi zdroji napojenımi na relaèní databáze, viz modul
+- Podporu pro prÃ¡ci sÂ datovÃ½mi zdroji napojenÃ½mi na relaÄnÃ­ databÃ¡ze, viz modul
   'dbdata'.
 
 """

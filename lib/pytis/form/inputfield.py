@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -50,7 +50,7 @@ class _TextValidator(wx.PyValidator):
         if self._filter is not None \
                and key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 \
                and not self._filter(chr(key)):
-            message(_("Nepovolený znak!"), beep_=True)
+            message(_(u"NepovolenÃ½ znak!"), beep_=True)
             return True
         else: 
             event.Skip()
@@ -180,19 +180,19 @@ class _Completer(wx.PopupWindow):
 
 
 class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
-    """Abstraktní tøída vstupního pole.
+    """AbstraktnÃ­ tÅ™Ã­da vstupnÃ­ho pole.
 
-    Vstupní políèko není samo o sobì wx prvkem. Odpovídající prvky
-    u¾ivatelského rozhraní lze získat metodami 'label()' a 'widget()'.
-    Políèko je rozdìleno na èásti widget a label, aby mohly být tyto dvì èásti
-    umístìny do gridu...
+    VstupnÃ­ polÃ­Äko nenÃ­ samo o sobÄ› wx prvkem. OdpovÃ­dajÃ­cÃ­ prvky
+    uÅ¾ivatelskÃ©ho rozhranÃ­ lze zÃ­skat metodami 'label()' a 'widget()'.
+    PolÃ­Äko je rozdÄ›leno na ÄÃ¡sti widget a label, aby mohly bÃ½t tyto dvÄ› ÄÃ¡sti
+    umÃ­stÄ›ny do gridu...
 
-    Tato tøída není sama o sobì instanciovatelná! Odvozením dal¹í
-    tøídy a pøedefinováním dále popsaných metod v¹ak lze vytvoøit políèka
-    s libvolným chováním realizovaná libovolným UI prvkem.
+    Tato tÅ™Ã­da nenÃ­ sama o sobÄ› instanciovatelnÃ¡! OdvozenÃ­m dalÅ¡Ã­
+    tÅ™Ã­dy a pÅ™edefinovÃ¡nÃ­m dÃ¡le popsanÃ½ch metod vÅ¡ak lze vytvoÅ™it polÃ­Äka
+    s libvolnÃ½m chovÃ¡nÃ­m realizovanÃ¡ libovolnÃ½m UI prvkem.
 
-    Tøída je 'CallbackHandler'. Argument callbackové funkce závisí na typu
-    callbacku a je zdokumentován v dokumentaci callbackové konstanty.
+    TÅ™Ã­da je 'CallbackHandler'. Argument callbackovÃ© funkce zÃ¡visÃ­ na typu
+    callbacku a je zdokumentovÃ¡n v dokumentaci callbackovÃ© konstanty.
     
     """
 
@@ -201,11 +201,11 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     _DEFAULT_BACKGROUND_COLOR = None
 
     CALL_FIELD_CHANGE = 'CALL_FIELD_CHANGE'
-    """Callback volaný pøi ka¾dé zmìnì hodnoty. Argumentem je instance políèka.
+    """Callback volanÃ½ pÅ™i kaÅ¾dÃ© zmÄ›nÄ› hodnoty. Argumentem je instance polÃ­Äka.
 
-    Callback je volán pouze pøi interaktivní (u¾ivatelem vyvolané) zmìnì
-    hodnoty a pøi inicializaci hodnoty políèka.  Ostatní programové nastavování
-    hodnoty callback nevyvolává.
+    Callback je volÃ¡n pouze pÅ™i interaktivnÃ­ (uÅ¾ivatelem vyvolanÃ©) zmÄ›nÄ›
+    hodnoty a pÅ™i inicializaci hodnoty polÃ­Äka.  OstatnÃ­ programovÃ© nastavovÃ¡nÃ­
+    hodnoty callback nevyvolÃ¡vÃ¡.
     
     """
 
@@ -426,8 +426,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _menu(self):
         # Return a tuple of popup menu items ('MItem' instances).
         return (UICommand(InputField.COMMAND_RESET(),
-                          _("Vrátit pùvodní hodnotu"),
-                          _("Vrátit ve¹keré provedené zmìny.")),)
+                          _(u"VrÃ¡tit pÅ¯vodnÃ­ hodnotu"),
+                          _(u"VrÃ¡tit veÅ¡kerÃ© provedenÃ© zmÄ›ny.")),)
                         
     def _on_context_menu(self, event=None):
         def handler(uicmd):
@@ -487,7 +487,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _on_set_focus(self, event):
         self._want_focus = False
         last = InputField._last_focused()
-        # TODO: Zkusit to pøes `wx.Window.SetFocusFromKbd()'
+        # TODO: Zkusit to pÅ™es `wx.Window.SetFocusFromKbd()'
         if last is not None and last is not self and last.enabled() and last._modified():
             if not last.validate(interactive=False):
                 last.set_focus()
@@ -668,8 +668,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         if error:
             if interactive:
                 log(EVENT, 'Invalid field:', self.id())
-                run_dialog(Error, title=_("Chyba validace"),
-                           message=_('Chyba validace políèka!\n\n%s: %s') % \
+                run_dialog(Error, title=_(u"Chyba validace"),
+                           message=_('Chyba validace polÃ­Äka!\n\n%s: %s') % \
                            (self.spec().label(), error.message()))
             else:
                 message(error.message(), beep_=True)
@@ -708,10 +708,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         
         
 class Unlabeled:
-    """Mix-in tøída pro políèka .
+    """Mix-in tÅ™Ã­da pro polÃ­Äka .
 
-    Nìkteré prvky mají label spojen pøímo s controlem, tak¾e label zobrazený
-    v gridu musí být prázdný.
+    NÄ›kterÃ© prvky majÃ­ label spojen pÅ™Ã­mo s controlem, takÅ¾e label zobrazenÃ½
+    v gridu musÃ­ bÃ½t prÃ¡zdnÃ½.
 
     """
     def _create_label(self):
@@ -720,7 +720,7 @@ class Unlabeled:
 
 
 class TextField(InputField):
-    """Textové vstupní políèko."""
+    """TextovÃ© vstupnÃ­ polÃ­Äko."""
     
     NUMBERS = map(str, range(10))
     SIGNS = ['-', '+']
@@ -740,7 +740,7 @@ class TextField(InputField):
         if maxlen is not None:
             control.SetMaxLength(maxlen)
             wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid,
-                        lambda e: message(_("Pøekroèena maximální délka."), beep_=True))
+                        lambda e: message(_(u"PÅ™ekroÄena maximÃ¡lnÃ­ dÃ©lka."), beep_=True))
         filter = self._filter()
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
@@ -764,7 +764,7 @@ class TextField(InputField):
         return style
     
     def _maxlen(self):
-        """Vra» maximální délku zadaného textu."""
+        """VraÅ¥ maximÃ¡lnÃ­ dÃ©lku zadanÃ©ho textu."""
         return None
 
     def _on_enter_key(self, event):
@@ -794,10 +794,10 @@ class TextField(InputField):
         super(TextField, self)._on_change(event=event)
 
     def _post_process_func(self):
-        """Vra» funkci odpovídající specifikaci postprocessingu políèka.
+        """VraÅ¥ funkci odpovÃ­dajÃ­cÃ­ specifikaci postprocessingu polÃ­Äka.
 
-        Vrací: Funkci jednoho argumentu (pùvodní text), která vrací
-        øetìzec (zmìnìný text).
+        VracÃ­: Funkci jednoho argumentu (pÅ¯vodnÃ­ text), kterÃ¡ vracÃ­
+        Å™etÄ›zec (zmÄ›nÄ›nÃ½ text).
         
         """
         try:
@@ -817,13 +817,13 @@ class TextField(InputField):
             return self._stored_post_process_func
 
     def _filter(self):
-        """Vra» filtraèní funkci odpovídající specifikaci políèka.
+        """VraÅ¥ filtraÄnÃ­ funkci odpovÃ­dajÃ­cÃ­ specifikaci polÃ­Äka.
         
-        Vrací: Funkci jednoho argumentu, která vrací pravdu, pokud znak
-        odpovídá specifikaci filtru pro dané políèko, nepravdu v opaèném
-        pøípadì.
+        VracÃ­: Funkci jednoho argumentu, kterÃ¡ vracÃ­ pravdu, pokud znak
+        odpovÃ­dÃ¡ specifikaci filtru pro danÃ© polÃ­Äko, nepravdu v opaÄnÃ©m
+        pÅ™Ã­padÄ›.
 
-        Pokud políèko nemá nastavenu filtraci, vrací None.
+        Pokud polÃ­Äko nemÃ¡ nastavenu filtraci, vracÃ­ None.
         
         """
         filter_spec = self.spec().filter()
@@ -866,16 +866,16 @@ class TextField(InputField):
     def _menu(self):
         return super(TextField, self)._menu() + \
                (None,
-                UICommand(TextField.COMMAND_CUT(), _("Vyjmout"),
-                          _("Vyjmout oznaèený text a ulo¾it jej do schránky.")),
-                UICommand(TextField.COMMAND_COPY(), _("Kopírovat"),
-                          _("Zkopírovat oznaèený text do schránky.")),
-                UICommand(TextField.COMMAND_PASTE(), _("Vlo¾it"),
-                          _("Vlo¾it text ze schránky do políèka.")),
-                UICommand(TextField.COMMAND_SELECT_ALL(), _("Vybrat v¹e"),
-                          _("Oznaèit celou hodnotu.")))
+                UICommand(TextField.COMMAND_CUT(), _(u"Vyjmout"),
+                          _(u"Vyjmout oznaÄenÃ½ text a uloÅ¾it jej do schrÃ¡nky.")),
+                UICommand(TextField.COMMAND_COPY(), _(u"KopÃ­rovat"),
+                          _(u"ZkopÃ­rovat oznaÄenÃ½ text do schrÃ¡nky.")),
+                UICommand(TextField.COMMAND_PASTE(), _(u"VloÅ¾it"),
+                          _(u"VloÅ¾it text ze schrÃ¡nky do polÃ­Äka.")),
+                UICommand(TextField.COMMAND_SELECT_ALL(), _(u"Vybrat vÅ¡e"),
+                          _(u"OznaÄit celou hodnotu.")))
 
-    # Zpracování pøíkazù
+    # ZpracovÃ¡nÃ­ pÅ™Ã­kazÅ¯
     
     def _can_cut(self):
         return self._ctrl.CanCut()
@@ -903,7 +903,7 @@ class TextField(InputField):
         
 
 class StringField(TextField):
-    """Textové vstupní políèko pro data typu 'pytis.data.String'."""
+    """TextovÃ© vstupnÃ­ polÃ­Äko pro data typu 'pytis.data.String'."""
 
     def _maxlen(self):
         return self._type.maxlen()
@@ -1000,7 +1000,7 @@ class SpinnableField(InputField):
         
     
 class NumericField(TextField, SpinnableField):
-    """Textové vstupní políèko pro data typu 'pytis.data.Number'."""
+    """TextovÃ© vstupnÃ­ polÃ­Äko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
 
@@ -1008,7 +1008,7 @@ class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
     def _create_ctrl(self):
-        """Vra» instanci 'wx.CheckBox'."""
+        """VraÅ¥ instanci 'wx.CheckBox'."""
         if self._inline:
             label = ''
         else:
@@ -1133,7 +1133,7 @@ class Invocable(object, CommandHandler):
     INVOKE_SELECTION command.
     
     """
-    _INVOKE_TITLE = _("Vybrat hodnotu")
+    _INVOKE_TITLE = _(u"Vybrat hodnotu")
     _INVOKE_HELP = None
     _INVOKE_ICON = 'invoke-selection'
     
@@ -1197,8 +1197,8 @@ class DateField(Invocable, TextField, SpinnableField):
     """
 
     _DEFAULT_WIDTH = 10
-    _INVOKE_TITLE = _("Vybrat z kalendáøe")
-    _INVOKE_HELP = _("Zobrazit kalendáø pro výbìr datumu.")
+    _INVOKE_TITLE = _(u"Vybrat z kalendÃ¡Å™e")
+    _INVOKE_HELP = _(u"Zobrazit kalendÃ¡Å™ pro vÃ½bÄ›r datumu.")
     _SPIN_STEP = mx.DateTime.oneDay
     
     def _on_invoke_selection(self, alternate=False):
@@ -1221,11 +1221,11 @@ class TimeField(TextField, SpinnableField):
     
 
 class ColorSelectionField(Invocable, TextField):
-    """Vstupní pole pro výbìr barvy."""
+    """VstupnÃ­ pole pro vÃ½bÄ›r barvy."""
 
     _DEFAULT_WIDTH = 7
-    _INVOKE_TITLE = _("Vybrat barvu")
-    _INVOKE_HELP = _("Zobrazit dialog pro výbìr barev.")
+    _INVOKE_TITLE = _(u"Vybrat barvu")
+    _INVOKE_HELP = _(u"Zobrazit dialog pro vÃ½bÄ›r barev.")
     
     def _on_invoke_selection(self, alternate=False):
         color = run_dialog(ColorSelector, self._get_value())
@@ -1243,7 +1243,7 @@ class ColorSelectionField(Invocable, TextField):
 
     
 class GenericCodebookField(InputField):
-    """Spoleèná nadtøída èíselníkových políèek."""
+    """SpoleÄnÃ¡ nadtÅ™Ã­da ÄÃ­selnÃ­kovÃ½ch polÃ­Äek."""
 
     def _init_attributes(self):
         cb_name = self._row.codebook(self._id)
@@ -1260,7 +1260,7 @@ class GenericCodebookField(InputField):
                                     self._on_enumeration_change)
         
     def _on_enumeration_change(self):
-        # Callback mù¾e být volán i kdy¾ u¾ je list mrtev.
+        # Callback mÅ¯Å¾e bÃ½t volÃ¡n i kdyÅ¾ uÅ¾ je list mrtev.
         if not self._readonly:
             self._needs_validation = True
             self._enumeration_changed = True
@@ -1290,7 +1290,7 @@ class GenericCodebookField(InputField):
         return self._row.runtime_arguments(self.id())
     
     def _run_codebook_form(self, begin_search=None):
-        """Zobraz èíselník a po jeho skonèení nastav hodnotu políèka."""
+        """Zobraz ÄÃ­selnÃ­k a po jeho skonÄenÃ­ nastav hodnotu polÃ­Äka."""
         enumerator = self._type.enumerator()
         validity_condition = enumerator.validity_condition()
         runtime_filter_condition = self._row.runtime_filter(self.id())
@@ -1321,24 +1321,24 @@ class GenericCodebookField(InputField):
     
 
 class CodebookField(Invocable, GenericCodebookField, TextField):
-    """Vstupní pole pro data navázaná na èíselník.
+    """VstupnÃ­ pole pro data navÃ¡zanÃ¡ na ÄÃ­selnÃ­k.
 
-    Bude pou¾ito v pøípadì, ¾e datový typ definuje enumerátor typu
-    'pytis.data.DataEnumerator' a prezentaèní specifikace políèka definuje
-    navázaný èíselník (viz. argument 'codebook' konstruktoru 'Field').
+    Bude pouÅ¾ito v pÅ™Ã­padÄ›, Å¾e datovÃ½ typ definuje enumerÃ¡tor typu
+    'pytis.data.DataEnumerator' a prezentaÄnÃ­ specifikace polÃ­Äka definuje
+    navÃ¡zanÃ½ ÄÃ­selnÃ­k (viz. argument 'codebook' konstruktoru 'Field').
 
-    Jako akci pro vyvolání výbìru definuje zobrazení formuláøe
-    'pytis.form.CodebookForm'.  Název specifikace èíselníku je dán vý¹e
-    zmínìným specifikátorem 'codebook'.  Dal¹í vlastnosti èíselníkového
-    formuláøe jsou dány jednak specifikací 'cb_spec' v odkazované specifikaci a
-    jednak pøímo specifikací 'view_spec' tamté¾.
+    Jako akci pro vyvolÃ¡nÃ­ vÃ½bÄ›ru definuje zobrazenÃ­ formulÃ¡Å™e
+    'pytis.form.CodebookForm'.  NÃ¡zev specifikace ÄÃ­selnÃ­ku je dÃ¡n vÃ½Å¡e
+    zmÃ­nÄ›nÃ½m specifikÃ¡torem 'codebook'.  DalÅ¡Ã­ vlastnosti ÄÃ­selnÃ­kovÃ©ho
+    formulÃ¡Å™e jsou dÃ¡ny jednak specifikacÃ­ 'cb_spec' v odkazovanÃ© specifikaci a
+    jednak pÅ™Ã­mo specifikacÃ­ 'view_spec' tamtÃ©Å¾.
 
-    K políèku mù¾e být volitelnì pøidru¾en displej, který slou¾í k zobrazení
-    popisu vybrané (aktuální) hodnoty èíselníku. 
+    K polÃ­Äku mÅ¯Å¾e bÃ½t volitelnÄ› pÅ™idruÅ¾en displej, kterÃ½ slouÅ¾Ã­ k zobrazenÃ­
+    popisu vybranÃ© (aktuÃ¡lnÃ­) hodnoty ÄÃ­selnÃ­ku. 
 
     """
-    _INVOKE_TITLE = _("Vybrat z èíselníku")
-    _INVOKE_HELP = _("Zobrazit èíselník hodnot s mo¾ností výbìru.")
+    _INVOKE_TITLE = _(u"Vybrat z ÄÃ­selnÃ­ku")
+    _INVOKE_HELP = _(u"Zobrazit ÄÃ­selnÃ­k hodnot s moÅ¾nostÃ­ vÃ½bÄ›ru.")
 
     def _init_attributes(self):
         self._insert_button = None
@@ -1346,7 +1346,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         super(CodebookField, self)._init_attributes()
         
     def _create_widget(self):
-        """Zavolej '_create_widget()' tøídy Invocable a pøidej displej."""
+        """Zavolej '_create_widget()' tÅ™Ã­dy Invocable a pÅ™idej displej."""
         widget = super(CodebookField, self)._create_widget()
         spec = self.spec()
         cb_spec = self._cb_spec
@@ -1369,7 +1369,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 sizer.Add(display, 0, wx.FIXED_MINSIZE)
         if spec.allow_codebook_insert():
             button = self._create_button('+', icon='new-record')
-            button.SetToolTipString(_("Vlo¾it nový záznam do èíselníku"))
+            button.SetToolTipString(_(u"VloÅ¾it novÃ½ zÃ¡znam do ÄÃ­selnÃ­ku"))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
             sizer.Add(button, 0, wx.FIXED_MINSIZE)
@@ -1379,8 +1379,8 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _menu(self):
         return super(CodebookField, self)._menu() + \
                (UICommand(self.COMMAND_INVOKE_SELECTION(alternate=True),
-                          _("Vyhledávat v èíselníku"),
-                          _("Zobrazit èíselník se zapnutým inkrementálním vyhledáváním.")),)
+                          _(u"VyhledÃ¡vat v ÄÃ­selnÃ­ku"),
+                          _(u"Zobrazit ÄÃ­selnÃ­k se zapnutÃ½m inkrementÃ¡lnÃ­m vyhledÃ¡vÃ¡nÃ­m.")),)
 
     def _maxlen(self):
         try:
@@ -1428,10 +1428,10 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     
 
 class ListField(GenericCodebookField):
-    """Èíselníkové políèko zobrazující data èíselníku jako souèást formuláøe.
+    """ÄŒÃ­selnÃ­kovÃ© polÃ­Äko zobrazujÃ­cÃ­ data ÄÃ­selnÃ­ku jako souÄÃ¡st formulÃ¡Å™e.
 
-    Pokud je 'selection_type' èíselníkového políèka ve specifikaci urèen jako 'LIST', bude ve
-    formuláøi pou¾it tento typ vstupního pole.
+    Pokud je 'selection_type' ÄÃ­selnÃ­kovÃ©ho polÃ­Äka ve specifikaci urÄen jako 'LIST', bude ve
+    formulÃ¡Å™i pouÅ¾it tento typ vstupnÃ­ho pole.
 
     """
     _DEFAULT_WIDTH = 30
@@ -1439,13 +1439,13 @@ class ListField(GenericCodebookField):
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
 
     def _create_ctrl(self):
-        # Naètu specifikace.
+        # NaÄtu specifikace.
         view_spec = resolver().get(self._cb_name, 'view_spec')
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
-        # Vytvoøím vlastní seznamový widget.
+        # VytvoÅ™Ã­m vlastnÃ­ seznamovÃ½ widget.
         style=wx.LC_REPORT|wx.SIMPLE_BORDER|wx.LC_SINGLE_SEL
         list = wx.ListCtrl(self._parent, -1, style=style)
-        # Nastavím záhlaví sloupcù.
+        # NastavÃ­m zÃ¡hlavÃ­ sloupcÅ¯.
         total_width = 0
         for i, id in enumerate(columns):
             col = view_spec.field(id)
@@ -1509,7 +1509,7 @@ class ListField(GenericCodebookField):
             for j, id in enumerate(self._columns):
                 value = row[id]
                 if isinstance(value.type(), pytis.data.Boolean):
-                    exported_value = value.value() and _("Ano") or _("Ne")
+                    exported_value = value.value() and _(u"Ano") or _(u"Ne")
                 else:
                     exported_value = value.export().replace("\n", ";")
                 list.SetStringItem(i, j, exported_value)
@@ -1562,24 +1562,24 @@ class ListField(GenericCodebookField):
             return ''
 
     def _menu(self):
-        return (UICommand(self.COMMAND_SELECT(), _("Vybrat"),
-                          _("Zvolit tuto polo¾ku jako aktivní.")),
-                UICommand(self.COMMAND_SHOW_SELECTED(), _("Najít vybranou polo¾ku"),
-                          _("Nalistovat v seznamu vybranou polo¾ku.")),
+        return (UICommand(self.COMMAND_SELECT(), _(u"Vybrat"),
+                          _(u"Zvolit tuto poloÅ¾ku jako aktivnÃ­.")),
+                UICommand(self.COMMAND_SHOW_SELECTED(), _(u"NajÃ­t vybranou poloÅ¾ku"),
+                          _(u"Nalistovat v seznamu vybranou poloÅ¾ku.")),
                 None,
-                UICommand(self.COMMAND_INVOKE_CODEBOOK_FORM(), _("Zobrazit èíselník"),
-                          _("Otevøít èíselníkový formuláø.")),
-                UICommand(self.COMMAND_EDIT_SELECTED(), _("Upravit vybraný záznam"),
-                          _("Otevøít vybraný záznam v editaèním formuláøi.")),
-                UICommand(self.COMMAND_DELETE_SELECTED(), _("Smazat vybraný záznam"),
-                          _("Vymazat vybraný záznam z èíselníku.")),
-                UICommand(self.COMMAND_NEW_CODEBOOK_RECORD(), _("Vlo¾it nový záznam do èíselníku"),
-                          _("Otevøít formuláø pro vlo¾ení nového záznamu do èíselníku.")),
+                UICommand(self.COMMAND_INVOKE_CODEBOOK_FORM(), _(u"Zobrazit ÄÃ­selnÃ­k"),
+                          _(u"OtevÅ™Ã­t ÄÃ­selnÃ­kovÃ½ formulÃ¡Å™.")),
+                UICommand(self.COMMAND_EDIT_SELECTED(), _(u"Upravit vybranÃ½ zÃ¡znam"),
+                          _(u"OtevÅ™Ã­t vybranÃ½ zÃ¡znam v editaÄnÃ­m formulÃ¡Å™i.")),
+                UICommand(self.COMMAND_DELETE_SELECTED(), _(u"Smazat vybranÃ½ zÃ¡znam"),
+                          _(u"Vymazat vybranÃ½ zÃ¡znam z ÄÃ­selnÃ­ku.")),
+                UICommand(self.COMMAND_NEW_CODEBOOK_RECORD(), _(u"VloÅ¾it novÃ½ zÃ¡znam do ÄÃ­selnÃ­ku"),
+                          _(u"OtevÅ™Ã­t formulÃ¡Å™ pro vloÅ¾enÃ­ novÃ©ho zÃ¡znamu do ÄÃ­selnÃ­ku.")),
                 UICommand(Application.COMMAND_RUN_FORM(form_class=BrowseForm,
                                                        name=self._cb_name,
                                                        select_row=self._select_row_arg()),
-                          _("Zobrazit celou tabulku"),
-                          _("Otevøít náhled èíselníku v samostatném øádkovém formuláøi.")),
+                          _(u"Zobrazit celou tabulku"),
+                          _(u"OtevÅ™Ã­t nÃ¡hled ÄÃ­selnÃ­ku v samostatnÃ©m Å™Ã¡dkovÃ©m formulÃ¡Å™i.")),
                 )
 
     def _current_row(self):
@@ -1622,7 +1622,7 @@ class ListField(GenericCodebookField):
         data = create_data_object(self._cb_name)
         transaction = self._row.transaction()
         row = self._current_row()
-        question = _("Opravdu chcete polo¾ku %s zcela vymazat z èíselníku?") % self._row[self._id].export()
+        question = _(u"Opravdu chcete poloÅ¾ku %s zcela vymazat z ÄÃ­selnÃ­ku?") % self._row[self._id].export()
         delete_record(view, data, transaction, row, question=question)
         self._reload_enumeration()
         
@@ -1638,8 +1638,8 @@ class ListField(GenericCodebookField):
 class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""
     
-    _INVOKE_TITLE = _("Vybrat soubor")
-    _INVOKE_HELP = _("Zobrazit dialog pro procházení systému souborù.")
+    _INVOKE_TITLE = _(u"Vybrat soubor")
+    _INVOKE_HELP = _(u"Zobrazit dialog pro prochÃ¡zenÃ­ systÃ©mu souborÅ¯.")
     _INVOKE_ICON = wx.ART_FILE_OPEN
 
     _last_load_dir = None
@@ -1687,19 +1687,19 @@ class FileField(Invocable, InputField):
         # want the Invocable menu items.
         return super(Invocable, self)._menu() + \
                (None,
-                UICommand(FileField.COMMAND_LOAD(), _("Nastavit ze souboru"),
-                          _("Nahradit hodnotu políèka daty ze souboru. ")),
-                UICommand(FileField.COMMAND_SAVE(), _("Ulo¾it do souboru"),
-                          _("Ulo¾it objekt z databáze jako soubor.")),
-                UICommand(FileField.COMMAND_CLEAR(), _("Vynulovat"),
-                          _("Nastavit prázdnou hodnotu.")),
+                UICommand(FileField.COMMAND_LOAD(), _(u"Nastavit ze souboru"),
+                          _(u"Nahradit hodnotu polÃ­Äka daty ze souboru. ")),
+                UICommand(FileField.COMMAND_SAVE(), _(u"UloÅ¾it do souboru"),
+                          _(u"UloÅ¾it objekt z databÃ¡ze jako soubor.")),
+                UICommand(FileField.COMMAND_CLEAR(), _(u"Vynulovat"),
+                          _(u"Nastavit prÃ¡zdnou hodnotu.")),
                 )
 
     def _can_load(self):
         return self._enabled
         
     def _cmd_load(self):
-        msg = _("Vyberte soubor pro políèko '%s'") % self.spec().label()
+        msg = _(u"Vyberte soubor pro polÃ­Äko '%s'") % self.spec().label()
         dir = FileField._last_load_dir or FileField._last_save_dir or ''
         dlg = wx.FileDialog(self._parent, message=msg, style=wx.OPEN,
                             defaultDir=dir)
@@ -1715,17 +1715,17 @@ class FileField(Invocable, InputField):
             except pytis.data.ValidationError, e:
                 message(e.message(), beep_=True)
             except IOError, e:
-                message(_("Chyba pøi ètení souboru:")+' '+str(e), beep_=True)
+                message(_(u"Chyba pÅ™i ÄtenÃ­ souboru:")+' '+str(e), beep_=True)
             else:
                 self._on_set_value()
                 self._on_change()
-                message(_("Soubor naèten."))
+                message(_(u"Soubor naÄten."))
         
     def _can_save(self):
         return self._buffer is not None
         
     def _cmd_save(self):
-        msg = _("Ulo¾it hodnotu políèka '%s'") % self.spec().label()
+        msg = _(u"UloÅ¾it hodnotu polÃ­Äka '%s'") % self.spec().label()
         dir = FileField._last_save_dir or FileField._last_load_dir or ''
         dlg = wx.FileDialog(self._parent, style=wx.SAVE, message=msg,
                             defaultDir=dir)
@@ -1735,9 +1735,9 @@ class FileField(Invocable, InputField):
             try:
                 self._buffer.save(path)
             except IOError, e:
-                message(_("Chyba pøi zápisu souboru:")+' '+str(e), beep_=True)
+                message(_(u"Chyba pÅ™i zÃ¡pisu souboru:")+' '+str(e), beep_=True)
             else:
-                message(_("Soubor ulo¾en."))
+                message(_(u"Soubor uloÅ¾en."))
         
     def _can_clear(self):
         return self._enabled and self._buffer is not None

@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011 Brailcom, o.p.s.
 #
@@ -16,16 +16,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Pomùcky pro operace s datovımi objekty a daty obecnì.""" 
+"""PomÅ¯cky pro operace s datovÃ½mi objekty a daty obecnÄ›.""" 
 
 from pytis.extensions import *
 
 import config
 
 def data_object(spec):
-    """Vra» sestavenı datovı objekt na základì názvu specifikace.
+    """VraÅ¥ sestavenÃ½ datovÃ½ objekt na zÃ¡kladÄ› nÃ¡zvu specifikace.
 
-    Argumentem je název specifikace datového objektu nebo pøímo instance tøídy
+    Argumentem je nÃ¡zev specifikace datovÃ©ho objektu nebo pÅ™Ã­mo instance tÅ™Ã­dy
     'pytis.data.DataFactory'
     
     """
@@ -35,7 +35,7 @@ def data_object(spec):
         return config.dbconnection
     success, data = pytis.form.db_operation(spec.create, dbconnection_spec=conn_spec)
     #if not success:
-    #    errmsg = "Nepodaøilo se vytvoøit datovı objekt pro %s!" % (spec)
+    #    errmsg = "NepodaÅ™ilo se vytvoÅ™it datovÃ½ objekt pro %s!" % (spec)
     #    raise ProgramError(errmsg)
     return data
 
@@ -44,16 +44,16 @@ data_create = data_object
 
 
 def dbselect(spec, condition=None, sort=(), transaction=None):
-    """Vra» øádky dané db tabulky jako sekvenci.
+    """VraÅ¥ Å™Ã¡dky danÃ© db tabulky jako sekvenci.
 
     Argumenty:
 
-      spec -- název specifikace datového objektu nebo pøímo instance tøídy
+      spec -- nÃ¡zev specifikace datovÃ©ho objektu nebo pÅ™Ã­mo instance tÅ™Ã­dy
         'pytis.data.DataFactory'
-      condition, sort, transaction -- argumenty volání
+      condition, sort, transaction -- argumenty volÃ¡nÃ­
         'pytis.data.postgresql.select()'.
         
-    Vrací v¹echny øádky vrácené z databáze jako list.
+    VracÃ­ vÅ¡echny Å™Ã¡dky vrÃ¡cenÃ© z databÃ¡ze jako list.
     
     """
     data = data_object(spec)
@@ -69,21 +69,21 @@ def dbselect(spec, condition=None, sort=(), transaction=None):
 
 
 def dbinsert(spec, row, transaction=None):
-    """Provede insert do tabulky dané specifikací.
+    """Provede insert do tabulky danÃ© specifikacÃ­.
 
     Argumenty:
 
-      spec -- název specifikace datového objektu nad kterım má bıt proveden
+      spec -- nÃ¡zev specifikace datovÃ©ho objektu nad kterÃ½m mÃ¡ bÃ½t proveden
         insert.
-      row -- sekvence dvouprvkovıch sekvencí (id, value) nebo instance
+      row -- sekvence dvouprvkovÃ½ch sekvencÃ­ (id, value) nebo instance
         pytis.data.Row
       transaction -- instance pytis.data.DBTransactionDefault  
         
-    Vrací poèet vlo¾enıch øádkù.
+    VracÃ­ poÄet vloÅ¾enÃ½ch Å™Ã¡dkÅ¯.
     
     """
     assert isinstance(row, pytis.data.Row) or is_sequence(row), \
-           _("Argument must be a sequence or Row instance.", row)
+           _(u"Argument must be a sequence or Row instance.", row)
     if is_sequence(row):
         for item in row:
             if not is_sequence(item) or len(item) != 2:                
@@ -103,14 +103,14 @@ def dbinsert(spec, row, transaction=None):
 
 
 def dbupdate(row, values=(), transaction=None):
-    """Provede update nad pøedanım øádkem.
+    """Provede update nad pÅ™edanÃ½m Å™Ã¡dkem.
 
     Argumenty:
 
-      row -- pøedaná instance aktuálního PresentedRow
-      values -- sekvence dvouprvkovıch sekvencí ('id', value) ,
-        kde 'id' je øetìzcovı identifikátor políèka a value je
-        instance, kterou se bude políèko aktualizovat
+      row -- pÅ™edanÃ¡ instance aktuÃ¡lnÃ­ho PresentedRow
+      values -- sekvence dvouprvkovÃ½ch sekvencÃ­ ('id', value) ,
+        kde 'id' je Å™etÄ›zcovÃ½ identifikÃ¡tor polÃ­Äka a value je
+        instance, kterou se bude polÃ­Äko aktualizovat
       transaction -- instance pytis.data.DBTransactionDefault  
     """
     data = row.data()
@@ -128,44 +128,44 @@ row_update = dbupdate
 
 def dbupdate_many(spec, condition=None, update_row=None,
                   transaction=None):
-    """Provede update nad tabulkou danou specifikací.
+    """Provede update nad tabulkou danou specifikacÃ­.
 
     Argumenty:
 
-      spec -- specifikace datového objektu nad kterım má bıt proveden
+      spec -- specifikace datovÃ©ho objektu nad kterÃ½m mÃ¡ bÃ½t proveden
         select; string'
-      condition -- podmínka updatovaní.
-      update_row -- øádek kterım se provede update,
+      condition -- podmÃ­nka updatovanÃ­.
+      update_row -- Å™Ã¡dek kterÃ½m se provede update,
       transaction -- instance pytis.data.DBTransactionDefault        
         
-    Vrací poèet updatovanıch øádkù.
+    VracÃ­ poÄet updatovanÃ½ch Å™Ã¡dkÅ¯.
     
     """
     if not isinstance(condition, pytis.data.Operator):
-        errmsg = "Nebyla pøedána podmínka pro update_many."
+        errmsg = "Nebyla pÅ™edÃ¡na podmÃ­nka pro update_many."
         raise ProgramError(errmsg)        
     if not isinstance(update_row, pytis.data.Row):
-        errmsg = "Nebyl pøedán øádek pro update_many."
+        errmsg = "Nebyl pÅ™edÃ¡n Å™Ã¡dek pro update_many."
         raise ProgramError(errmsg)
     data = data_object(spec)
     return data.update_many(condition, update_row, transaction=transaction) 
 
 
 def dbfunction(name, *args, **kwargs):
-    """Zavolej databázovou funkci a vra» vısledek jako Pythonovou hodnotu.
+    """Zavolej databÃ¡zovou funkci a vraÅ¥ vÃ½sledek jako Pythonovou hodnotu.
 
     Argumenty:
 
-      name -- název funkce.
-      args -- argumenty volání funkce; sekvence dvouprvkovıch tuplù, kde první
-        prvek je název argumentu a druhı jeho hodnota jako instance 'Value'.
-      proceed_with_empty_values -- pokud je pravdivé, volá databázovou funkci
-        v¾dy.  V opaèném pøípadì (vıvchozí chování) testuje, zda v¹echny
-        argumenty obsahují neprázdnou hodnotu (jejich vnitøí hodnota není None
-        ani prázdnı øetìzec) a pokud test neprojde, vrátí None bez volání
-        databázové funkce.  To znamená úsporu pokud je tato funkce pou¾ita v
-        computeru políèka, které je závislé na jinıch políèkách, která je¹tì
-        nejsou vyplnìna.
+      name -- nÃ¡zev funkce.
+      args -- argumenty volÃ¡nÃ­ funkce; sekvence dvouprvkovÃ½ch tuplÅ¯, kde prvnÃ­
+        prvek je nÃ¡zev argumentu a druhÃ½ jeho hodnota jako instance 'Value'.
+      proceed_with_empty_values -- pokud je pravdivÃ©, volÃ¡ databÃ¡zovou funkci
+        vÅ¾dy.  V opaÄnÃ©m pÅ™Ã­padÄ› (vÃ½vchozÃ­ chovÃ¡nÃ­) testuje, zda vÅ¡echny
+        argumenty obsahujÃ­ neprÃ¡zdnou hodnotu (jejich vnitÅ™Ã­ hodnota nenÃ­ None
+        ani prÃ¡zdnÃ½ Å™etÄ›zec) a pokud test neprojde, vrÃ¡tÃ­ None bez volÃ¡nÃ­
+        databÃ¡zovÃ© funkce.  To znamenÃ¡ Ãºsporu pokud je tato funkce pouÅ¾ita v
+        computeru polÃ­Äka, kterÃ© je zÃ¡vislÃ© na jinÃ½ch polÃ­ÄkÃ¡ch, kterÃ¡ jeÅ¡tÄ›
+        nejsou vyplnÄ›na.
       transaction -- instance pytis.data.DBTransactionDefault        
     """
     proceed_with_empty_values = kwargs.get('proceed_with_empty_values', False)
@@ -186,9 +186,9 @@ def dbfunction(name, *args, **kwargs):
 
 
 def nextval(seq):
-    """Vra» funkci pro vıpoèet vıchozí hodnoty sloupce z dané sekvence.
+    """VraÅ¥ funkci pro vÃ½poÄet vÃ½chozÃ­ hodnoty sloupce z danÃ© sekvence.
 
-    Argumentem je název sekvence v databázi.  Vhodné pro zjednodu¹ení
+    Argumentem je nÃ¡zev sekvence v databÃ¡zi.  VhodnÃ© pro zjednoduÅ¡enÃ­
     specifikace 'default' ve fieldspec.
     
     """
@@ -199,18 +199,18 @@ def nextval(seq):
 
 
 def enum(name, **kwargs):
-    """Vytvoø instanci 'DataEnumerator' nad danou specifikací.
+    """VytvoÅ™ instanci 'DataEnumerator' nad danou specifikacÃ­.
 
-    Takto vytvoøenı enumerátor lze pou¾ít jako argument 'enumerator'
-    konstruktoru datového typu.  Argument 'name' je øetìzec urèující název
-    specifikace, ze které bude získán datovı objekt enumerátoru.
+    Takto vytvoÅ™enÃ½ enumerÃ¡tor lze pouÅ¾Ã­t jako argument 'enumerator'
+    konstruktoru datovÃ©ho typu.  Argument 'name' je Å™etÄ›zec urÄujÃ­cÃ­ nÃ¡zev
+    specifikace, ze kterÃ© bude zÃ­skÃ¡n datovÃ½ objekt enumerÃ¡toru.
     
     """
     data_spec = pytis.util.resolver().get(name, 'data_spec')
     return pytis.data.DataEnumerator(data_spec, **kwargs)
 
 
-# Pozor, stejná metoda metoda je definována i v pytis.data.access
+# Pozor, stejnÃ¡ metoda metoda je definovÃ¡na i v pytis.data.access
 def is_in_groups(groups):
     if isinstance(groups, types.StringType):
         groups = xtuple(groups)

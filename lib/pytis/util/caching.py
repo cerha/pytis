@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Cache
 # 
@@ -18,9 +18,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Implementace rùznıch cachí.
+"""Implementace rÅ¯znÃ½ch cachÃ­.
 
-Modul nabízí tøídy umo¾òující provádìt rùzné typy cachování.
+Modul nabÃ­zÃ­ tÅ™Ã­dy umoÅ¾ÅˆujÃ­cÃ­ provÃ¡dÄ›t rÅ¯znÃ© typy cachovÃ¡nÃ­.
 
 """
 
@@ -31,19 +31,19 @@ from pytis.util import *
 
 
 class _Cache(object, UserDict.UserDict):
-    """Bázovı objekt pro v¹echny cache."""
+    """BÃ¡zovÃ½ objekt pro vÅ¡echny cache."""
 
     def __init__(self, provider, validator=None):
         """Inicializuj instanci.
 
         Argumenty:
 
-          provider -- funkce jednoho argumentu, kterım je klíè, vracející
-            hodnotu odpovídající danému klíèi
-          validator -- funkce jednoho argumentu, kterım je klíè, vracející
-            pravdu právì kdy¾ polo¾ka odpovídající klíèi je platná; mù¾e bıt
-            té¾ 'None', v kterém¾to pøípadì jsou v¹echny polo¾ky automaticky
-            pova¾ovány za platné
+          provider -- funkce jednoho argumentu, kterÃ½m je klÃ­Ä, vracejÃ­cÃ­
+            hodnotu odpovÃ­dajÃ­cÃ­ danÃ©mu klÃ­Äi
+          validator -- funkce jednoho argumentu, kterÃ½m je klÃ­Ä, vracejÃ­cÃ­
+            pravdu prÃ¡vÄ› kdyÅ¾ poloÅ¾ka odpovÃ­dajÃ­cÃ­ klÃ­Äi je platnÃ¡; mÅ¯Å¾e bÃ½t
+            tÃ©Å¾ 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› jsou vÅ¡echny poloÅ¾ky automaticky
+            povaÅ¾ovÃ¡ny za platnÃ©
           
         """
         UserDict.UserDict.__init__(self)
@@ -52,11 +52,11 @@ class _Cache(object, UserDict.UserDict):
         self._validator = validator
 
     def __getitem__(self, key):
-        """Vra» hodnotu odpovídající klíèi 'key'.
+        """VraÅ¥ hodnotu odpovÃ­dajÃ­cÃ­ klÃ­Äi 'key'.
 
-        Pokud hodnota není v cache pøítomna, pou¾ij pro její získání funkci
-        'provider' a ulo¾ ji do cache.  Metoda sama o sobì nevyvolává ¾ádnou
-        vıjimku.
+        Pokud hodnota nenÃ­ vÂ cache pÅ™Ã­tomna, pouÅ¾ij pro jejÃ­ zÃ­skÃ¡nÃ­ funkci
+        'provider' a uloÅ¾ ji do cache.  Metoda sama oÂ sobÄ› nevyvolÃ¡vÃ¡ Å¾Ã¡dnou
+        vÃ½jimku.
 
         """
         try:
@@ -68,23 +68,23 @@ class _Cache(object, UserDict.UserDict):
         return result
 
     def __setitem__(self, key, value):
-        """Ulo¾ 'value' s 'key' do cache."""
+        """UloÅ¾ 'value' sÂ 'key' do cache."""
         super(_Cache, self).__setitem__(key, value)
 
     def reset(self):
-        """Kompletnì zru¹ aktuální obsah cache."""
+        """KompletnÄ› zruÅ¡ aktuÃ¡lnÃ­ obsah cache."""
         self.data = {}
 
 
 class SimpleCache(_Cache):
-    """Jednoduchá cache s neomezenım poètem ulo¾enıch polo¾ek."""
+    """JednoduchÃ¡ cache sÂ neomezenÃ½m poÄtem uloÅ¾enÃ½ch poloÅ¾ek."""
 
 
 class LimitedCache(_Cache):
-    """Cache s omezenım poètem polo¾ek.
+    """Cache sÂ omezenÃ½m poÄtem poloÅ¾ek.
 
-    V konstruktoru je zadán maximální poèet polo¾ek cache, kterı není nikdy
-    pøekroèen.
+    VÂ konstruktoru je zadÃ¡n maximÃ¡lnÃ­ poÄet poloÅ¾ek cache, kterÃ½ nenÃ­ nikdy
+    pÅ™ekroÄen.
 
     """
     def __init__(self, provider, limit=1000):
@@ -92,8 +92,8 @@ class LimitedCache(_Cache):
 
         Argumenty:
 
-          provider -- stejné jako v pøedkovi
-          limit -- nezápornı integer urèující maximální povolenı poèet polo¾ek
+          provider -- stejnÃ© jako vÂ pÅ™edkovi
+          limit -- nezÃ¡pornÃ½ integer urÄujÃ­cÃ­ maximÃ¡lnÃ­ povolenÃ½ poÄet poloÅ¾ek
             cache
           
         """
@@ -124,10 +124,10 @@ class LimitedCache(_Cache):
 
 
 class RangeCache(_Cache):
-    """Cache s celoèíselnımi klíèi ukládající souvislé úseky dat.
+    """Cache sÂ celoÄÃ­selnÃ½mi klÃ­Äi uklÃ¡dajÃ­cÃ­ souvislÃ© Ãºseky dat.
 
-    Tyto úseky jsou dány souvislımi intervaly klíèù, dané velikosti.
-    V podstatì se tedy jedná o pole cachovanıch hodnot.
+    Tyto Ãºseky jsou dÃ¡ny souvislÃ½mi intervaly klÃ­ÄÅ¯, danÃ© velikosti.
+    VÂ podstatÄ› se tedy jednÃ¡ oÂ pole cachovanÃ½ch hodnot.
 
     """
     def __init__(self, provider, size=1000):
@@ -135,8 +135,8 @@ class RangeCache(_Cache):
 
         Argumenty:
 
-          provider -- stejné jako v pøedkovi
-          size -- nezápornı integer, maximální velikost cachovaného úseku dat
+          provider -- stejnÃ© jako vÂ pÅ™edkovi
+          size -- nezÃ¡pornÃ½ integer, maximÃ¡lnÃ­ velikost cachovanÃ©ho Ãºseku dat
 
         """
         super(RangeCache, self).__init__(self, provider)

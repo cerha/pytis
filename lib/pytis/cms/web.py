@@ -200,7 +200,7 @@ class Menu(wiking.PytisModule):
                 descriptions[lang] = row['description'].value()
         return [item(row) for row in children[None]]
                # TODO: Add hidden menu items for static mapping items.
-               #[MenuItem('_doc', _("Wiking Documentation"), hidden=True)]
+               #[MenuItem('_doc', _(u"Wiking Documentation"), hidden=True)]
 
     def _document_title(self, req, record):
         if record:

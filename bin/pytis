@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -24,10 +24,10 @@ import imp
 import os
 import sys
 
-# O¹klivı hack kvùli o¹etøení vıchozího kódování proto¾e site.py metodu `setdefaultencoding()' z
-# modulu `sys' vyma¾e.
+# OÅ¡klivÃ½ hack kvÅ¯li oÅ¡etÅ™enÃ­ vÃ½chozÃ­ho kÃ³dovÃ¡nÃ­ protoÅ¾e site.py metodu `setdefaultencoding()' z
+# modulu `sys' vymaÅ¾e.
 imp.reload(sys)
-sys.setdefaultencoding('iso-8859-2')
+sys.setdefaultencoding('utf-8')
 
 _EXIT_OK = 0
 _EXIT_USAGE = 1
@@ -40,20 +40,20 @@ _profile = 0 # FALSE
 
 def _usage(optexception=None):
     _USAGE = _("""
-Pou¾ití: pytis [OPTION ...]
+PouÅ¾itÃ­: pytis [OPTION ...]
 
 Volby:
 
-  --config FILE       konfiguraèní soubor aplikace
-  --dbuser USER       pøihla¹uj se do databáze jako USER
-  --defdir DIR        hledej definièní soubory v adresáøi DIR
-  --server HOST       name server, ke kterému se má program pøipojovat
+  --config FILE       konfiguraÄnÃ­ soubor aplikace
+  --dbuser USER       pÅ™ihlaÅ¡uj se do databÃ¡ze jako USER
+  --defdir DIR        hledej definiÄnÃ­ soubory v adresÃ¡Å™i DIR
+  --server HOST       name server, ke kterÃ©mu se mÃ¡ program pÅ™ipojovat
 
-  --help              vypi¹ tuto nápovìdu a skonèi
-  --debug             zapni debugovací logování
-  --debug-on-error    pøi odchycení neoèekávané vıjimky spus» debugger
-  --debug-memory      vypisuj informace o pamìti
-  --profile           spus» program v profileru a zapi¹ vısledky do `%s'
+  --help              vypiÅ¡ tuto nÃ¡povÄ›du a skonÄi
+  --debug             zapni debugovacÃ­ logovÃ¡nÃ­
+  --debug-on-error    pÅ™i odchycenÃ­ neoÄekÃ¡vanÃ© vÃ½jimky spusÅ¥ debugger
+  --debug-memory      vypisuj informace oÂ pamÄ›ti
+  --profile           spusÅ¥ program vÂ profileru a zapiÅ¡ vÃ½sledky do `%s'
 
 """ % (_PROFILE))
     if optexception:
@@ -63,24 +63,24 @@ Volby:
     sys.exit(_EXIT_USAGE)
 
 def _install_gettext():
-    import pytis.util as util             # a¾ po konfiguraci
+    import pytis.util as util             # aÅ¾ po konfiguraci
     import config
     try:
         gettext.install('ebas')
     except IOError, e:
-        util.log(util.OPERATIONAL, 'Nelze otevøít jazykovı soubor', e.args)
+        util.log(util.OPERATIONAL, 'Nelze otevÅ™Ã­t jazykovÃ½ soubor', e.args)
         import __builtin__
         __builtin__.__dict__['_'] = util.identity    
 
 def go():
-    import pytis.util as util             # a¾ po konfiguraci
+    import pytis.util as util             # aÅ¾ po konfiguraci
     import config
     try:
         config.add_command_line_options(sys.argv)
     except getopt.GetoptError, e:
         _usage(e)
     if not util.in_x():
-        sys.stderr.write(_("Nedostupné prostøedí X Window\n"))
+        sys.stderr.write(_("NedostupnÃ© prostÅ™edÃ­ X Window\n"))
         return
     import config
     if config.help:
@@ -132,10 +132,10 @@ def gg():
 def run_application():
     gc.enable() # pro jistotu
     import locale
-    import pytis.form # musí bıt a¾ za zpracováním voleb
-    # O¹etøení chyby Pythonu zpùsobující chybné parsování reálnıch èísel ve
-    # zdrojovıch textech po importu wxWindows.
-    # ??? Mo¾ná je to ji¾ opraveno, zdá se, ¾e se tato chyba ji¾ neprojevuje.
+    import pytis.form # musÃ­ bÃ½t aÅ¾ za zpracovÃ¡nÃ­m voleb
+    # OÅ¡etÅ™enÃ­ chyby Pythonu zpÅ¯sobujÃ­cÃ­ chybnÃ© parsovÃ¡nÃ­ reÃ¡lnÃ½ch ÄÃ­sel ve
+    # zdrojovÃ½ch textech po importu wxWindows.
+    # ??? MoÅ¾nÃ¡ je to jiÅ¾ opraveno, zdÃ¡ se, Å¾e se tato chyba jiÅ¾ neprojevuje.
     import config
     try:
         locale.setlocale(locale.LC_NUMERIC, config.lc_numeric)
@@ -144,5 +144,5 @@ def run_application():
     pytis.form.Application().run()
 
 if __name__ == '__main__':
-    sys.argv[0] = 'pytis'               # kvùli zpracování voleb pøíkazové øádky
+    sys.argv[0] = 'pytis'               # kvÅ¯li zpracovÃ¡nÃ­ voleb pÅ™Ã­kazovÃ© Å™Ã¡dky
     go()

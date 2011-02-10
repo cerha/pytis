@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005-2011 Brailcom, o.p.s.
 #
@@ -15,11 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if sys.getdefaultencoding() != 'iso-8859-2':
-    reload(sys)
-    sys.setdefaultencoding('iso-8859-2')
-
 import pytis.data, pytis.form
 
 from dbconfig import *
@@ -34,8 +29,8 @@ from dmp import dmp_add_member, dmp_add_form, dmp_commit, dmp_import, dmp_reset_
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
 
-# Vìt¹ina defsù poèítají s tím, ¾e importem pytis.extensions jsou importovány i
-# v¹echny identifikátory z pytis.form.  Èasem by bylo dobré se toho zbavit a
-# pou¾ívat celé názvy `pytis.forms.*'.  Zde je import ka¾dopádnì a¾ na konci,
-# abychom "nezasvinili" jmennı prostor modulù.
+# VÄ›tÅ¡ina defsÅ¯ poÄÃ­tajÃ­ s tÃ­m, Å¾e importem pytis.extensions jsou importovÃ¡ny i
+# vÅ¡echny identifikÃ¡tory z pytis.form.  ÄŒasem by bylo dobrÃ© se toho zbavit a
+# pouÅ¾Ã­vat celÃ© nÃ¡zvy `pytis.forms.*'.  Zde je import kaÅ¾dopÃ¡dnÄ› aÅ¾ na konci,
+# abychom "nezasvinili" jmennÃ½ prostor modulÅ¯.
 from pytis.form import *

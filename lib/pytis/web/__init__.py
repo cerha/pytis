@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Copyright (C) 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,25 +37,25 @@ _ = lcg.TranslatableTextFactory('pytis')
 # TODO: This hack is necessary as long as pytis default language is Czech.
 pd = pytis.data
 # Translators: All the messages below are validation errors.
-pd.Type._VM_NULL_VALUE_MSG = _("Empty value")
-pd.Type._VM_INVALID_VALUE_MSG = _("Invalid value")
-pd.Limited._VM_MINLEN_MSG = _("Minimal length %(minlen)s characters not satisfied")
-pd.Limited._VM_MAXLEN_MSG = _("Maximal length %(maxlen)s characters exceeded")
-pd.Integer._VM_NONINTEGER_MSG = _("Not an integer")
-pd.Float._VM_INVALID_NUMBER_MSG = _("Invalid number")
-pd.String._VM_MINLEN_MSG = _("Minimal length %(minlen)s characters not satisfied")
-pd.String._VM_MAXLEN_MSG = _("String exceeds max length %(maxlen)s characters")
-pd.Password._VM_PASSWORD_MSG = _("Enter the password twice to eliminate typos")
-pd.Password._VM_PASSWORD_VERIFY_MSG = _("Passwords don't match")
-pd.Password._VM_MIX_CHARACTERS_MSG = _("Please use mix of letters and non-letters in your password")
-pd.RegexString._VM_FORMAT_MSG = _("Invalid format")
-pd.Color._VM_FORMAT_MSG = _("Invalid color format ('#RGB' or '#RRGGBB')")
-pd.DateTime._VM_DT_FORMAT_MSG = _("Invalid date or time format")
-pd.DateTime._VM_DT_VALUE_MSG = _("Invalid date or time")
-pd.DateTime._VM_DT_AGE_MSG = _("Date outside the allowed range")
-pd.Binary._VM_MINLEN_MSG = _("Minimal size %(minlen)s not satisfied")
-pd.Binary._VM_MAXLEN_MSG = _("Maximal size %(maxlen)s exceeded")
-pd.Image._VM_MAXSIZE_MSG = _("Maximal pixel size %(maxsize)s exceeded")
-pd.Image._VM_MINSIZE_MSG = _("Minimal pixel size %(minsize)s exceeded")
+pd.Type._VM_NULL_VALUE_MSG = _(u"Empty value")
+pd.Type._VM_INVALID_VALUE_MSG = _(u"Invalid value")
+pd.Limited._VM_MINLEN_MSG = _(u"Minimal length %(minlen)s characters not satisfied")
+pd.Limited._VM_MAXLEN_MSG = _(u"Maximal length %(maxlen)s characters exceeded")
+pd.Integer._VM_NONINTEGER_MSG = _(u"Not an integer")
+pd.Float._VM_INVALID_NUMBER_MSG = _(u"Invalid number")
+pd.String._VM_MINLEN_MSG = _(u"Minimal length %(minlen)s characters not satisfied")
+pd.String._VM_MAXLEN_MSG = _(u"String exceeds max length %(maxlen)s characters")
+pd.Password._VM_PASSWORD_MSG = _(u"Enter the password twice to eliminate typos")
+pd.Password._VM_PASSWORD_VERIFY_MSG = _(u"Passwords don't match")
+pd.Password._VM_MIX_CHARACTERS_MSG = _(u"Please use mix of letters and non-letters in your password")
+pd.RegexString._VM_FORMAT_MSG = _(u"Invalid format")
+pd.Color._VM_FORMAT_MSG = _(u"Invalid color format ('#RGB' or '#RRGGBB')")
+pd.DateTime._VM_DT_FORMAT_MSG = _(u"Invalid date or time format")
+pd.DateTime._VM_DT_VALUE_MSG = _(u"Invalid date or time")
+pd.DateTime._VM_DT_AGE_MSG = _(u"Date outside the allowed range")
+pd.Binary._VM_MINLEN_MSG = _(u"Minimal size %(minlen)s not satisfied")
+pd.Binary._VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
+pd.Image._VM_MAXSIZE_MSG = _(u"Maximal pixel size %(maxsize)s exceeded")
+pd.Image._VM_MINSIZE_MSG = _(u"Minimal pixel size %(minsize)s exceeded")
 # Translators: This is the last validation error message.
-pd.Image._VM_FORMAT_MSG = _("Unsupported format %(format)s; valid formats: %(formats)s")
+pd.Image._VM_FORMAT_MSG = _(u"Unsupported format %(format)s; valid formats: %(formats)s")

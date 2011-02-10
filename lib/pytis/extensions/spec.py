@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005, 2006, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
 #
@@ -16,12 +16,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Funkce a tøídy pro zjednodu¹ení a zpøehlednìní tvorby specifikaèních souborù.
+"""Funkce a tÅ™Ã­dy pro zjednoduÅ¡enÃ­ a zpÅ™ehlednÄ›nÃ­ tvorby specifikaÄnÃ­ch souborÅ¯.
 
-Do tohoto modulu patøí v¹e, co nìjakım zpùsobem obaluje API Pytisu.  Jedná se
-vìt¹inou o funkce, které se hodí v rùznıch konkrétních situacích, kde vyjádøení
-nìjaké konstrukce vy¾aduje slo¾itìj¹í zápis, ale proto¾e se tato konstrukce
-èasto opakuje, je mo¾né ji parametrizovanì vytvoøit automaticky.
+Do tohoto modulu patÅ™Ã­ vÅ¡e, co nÄ›jakÃ½m zpÅ¯sobem obaluje API Pytisu.  JednÃ¡ se
+vÄ›tÅ¡inou o funkce, kterÃ© se hodÃ­ v rÅ¯znÃ½ch konkrÃ©tnÃ­ch situacÃ­ch, kde vyjÃ¡dÅ™enÃ­
+nÄ›jakÃ© konstrukce vyÅ¾aduje sloÅ¾itÄ›jÅ¡Ã­ zÃ¡pis, ale protoÅ¾e se tato konstrukce
+Äasto opakuje, je moÅ¾nÃ© ji parametrizovanÄ› vytvoÅ™it automaticky.
 
 """ 
 
@@ -31,7 +31,7 @@ from pytis.presentation import *
 import collections
 import config
 
-# Zkratky na èasto pou¾ívané identifikátory.
+# Zkratky na Äasto pouÅ¾Ã­vanÃ© identifikÃ¡tory.
     
 ASC = pytis.data.ASCENDENT
 DESC = pytis.data.DESCENDANT
@@ -61,25 +61,25 @@ FIELD_STYLE_WARNING = Style(foreground=Color.RED)
 # Backwards compatibility alias.
 FieldStyle = Style
 
-# Funkce pro zjednodu¹ení vytváøení polo¾ek menu.
+# Funkce pro zjednoduÅ¡enÃ­ vytvÃ¡Å™enÃ­ poloÅ¾ek menu.
 
 def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_FORM
     args = dict(form_class=form_class, name=name, **kwargs)
     descr = {
-        pytis.form.BrowseForm:          "øádkovı formuláø",
-        pytis.form.PopupEditForm:       "editaèní formuláø",
-        pytis.form.Form:                "duální øádkovı formuláø",
-        pytis.form.CodebookForm:        "èíselníkovı formuláø",
-        pytis.form.DescriptiveDualForm: "duální náhledovı formuláø",
-        }.get(form_class, "formuláø")
-    help = _('Otevøít %s "%s"') % (descr, title.replace('&', ''))
+        pytis.form.BrowseForm:          "Å™Ã¡dkovÃ½ formulÃ¡Å™",
+        pytis.form.PopupEditForm:       "editaÄnÃ­ formulÃ¡Å™",
+        pytis.form.Form:                "duÃ¡lnÃ­ Å™Ã¡dkovÃ½ formulÃ¡Å™",
+        pytis.form.CodebookForm:        "ÄÃ­selnÃ­kovÃ½ formulÃ¡Å™",
+        pytis.form.DescriptiveDualForm: "duÃ¡lnÃ­ nÃ¡hledovÃ½ formulÃ¡Å™",
+        }.get(form_class, "formulÃ¡Å™")
+    help = _('OtevÅ™Ã­t %s "%s"') % (descr, title.replace('&', ''))
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
 def new_record_mitem(title, name, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_NEW_RECORD
     args = dict(kwargs, name=name)
-    help = _('Otevøít vstupní formuláø "%s"') % title
+    help = _('OtevÅ™Ã­t vstupnÃ­ formulÃ¡Å™ "%s"') % title
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):
@@ -117,7 +117,7 @@ def ef(title, name, hotkey=None, **kwargs):
                           **kwargs)
 
 
-# Dal¹í funkce pro zjednodu¹ení èasto pou¾ívanıch konstrukcí
+# DalÅ¡Ã­ funkce pro zjednoduÅ¡enÃ­ Äasto pouÅ¾Ã­vanÃ½ch konstrukcÃ­
 
 def get_value(value, default=None):
     """Return the Python value of given 'pytis.data.Value' instance.
@@ -146,14 +146,14 @@ def format_value(value, default=None):
         return value.export()
 
 def rp_handler(spec_name, proc_name, *args, **kwargs):
-    """Vra» handler u¾ivatelské akce, kterı spustí proceduru s danımi argumenty.
+    """VraÅ¥ handler uÅ¾ivatelskÃ© akce, kterÃ½ spustÃ­ proceduru s danÃ½mi argumenty.
 
-    Vrácenı handler vyvolá proceduru 'proc_name' ze specifikace 'spec_name' a
-    pøedá jí v¹echny hodnoty aktuálního øádku odpovídající klíèùm pøedanım v
-    'args'.  Args je tedy seznamem identifikátorù sloupcù.  Hodnoty jsou
-    proceduøe pøedány jako pozièní argumenty v daném poøadí.
+    VrÃ¡cenÃ½ handler vyvolÃ¡ proceduru 'proc_name' ze specifikace 'spec_name' a
+    pÅ™edÃ¡ jÃ­ vÅ¡echny hodnoty aktuÃ¡lnÃ­ho Å™Ã¡dku odpovÃ­dajÃ­cÃ­ klÃ­ÄÅ¯m pÅ™edanÃ½m v
+    'args'.  Args je tedy seznamem identifikÃ¡torÅ¯ sloupcÅ¯.  Hodnoty jsou
+    proceduÅ™e pÅ™edÃ¡ny jako poziÄnÃ­ argumenty v danÃ©m poÅ™adÃ­.
 
-    Klíèové argumenty jsou pøedány beze zmìn.
+    KlÃ­ÄovÃ© argumenty jsou pÅ™edÃ¡ny beze zmÄ›n.
     
     """
     if __debug__:
@@ -165,21 +165,21 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
 
 
 def cb2colvalue(value, column=None, transaction=None):
-    """Pøeveï hodnotu políèka na hodnotu uvedeného sloupce navázaného èíselníku.
+    """PÅ™eveÄ hodnotu polÃ­Äka na hodnotu uvedenÃ©ho sloupce navÃ¡zanÃ©ho ÄÃ­selnÃ­ku.
     
     Argumenty:
 
-      value -- Instance `Value', její¾ typ má definován enumerátor typu
+      value -- Instance `Value', jejÃ­Å¾ typ mÃ¡ definovÃ¡n enumerÃ¡tor typu
         'pytis.data.DataEnumerator'.
-      column -- název sloupce èíselníku poskytujícího vıslednou hodnotu.
-      transaction -- transakce pro pøedání datovım operacím.
+      column -- nÃ¡zev sloupce ÄÃ­selnÃ­ku poskytujÃ­cÃ­ho vÃ½slednou hodnotu.
+      transaction -- transakce pro pÅ™edÃ¡nÃ­ datovÃ½m operacÃ­m.
 
-    Pokud odpovídající øádek není nalezen, bude vrácena instance 'Value'
-    stejného typu, jako je typ argumentu 'value' s hodnotou nastavenou na
-    'None'.  Takováto hodnota nemusí bıt validní hodnotou typu, ale
-    zjednodu¹uje se tím práce s vısledkem.  Pokud je zapotøebí korektnìj¹ího
-    chování, je doporuèeno pou¾ít pøímo metodu 'DataEnumerator.row()'
-    (napøíklad voláním 'value.type().enumerator().row(value.value())'.
+    Pokud odpovÃ­dajÃ­cÃ­ Å™Ã¡dek nenÃ­ nalezen, bude vrÃ¡cena instance 'Value'
+    stejnÃ©ho typu, jako je typ argumentu 'value' s hodnotou nastavenou na
+    'None'.  TakovÃ¡to hodnota nemusÃ­ bÃ½t validnÃ­ hodnotou typu, ale
+    zjednoduÅ¡uje se tÃ­m prÃ¡ce s vÃ½sledkem.  Pokud je zapotÅ™ebÃ­ korektnÄ›jÅ¡Ã­ho
+    chovÃ¡nÃ­, je doporuÄeno pouÅ¾Ã­t pÅ™Ã­mo metodu 'DataEnumerator.row()'
+    (napÅ™Ã­klad volÃ¡nÃ­m 'value.type().enumerator().row(value.value())'.
         
     """
     assert isinstance(value, pytis.data.Value)
@@ -198,23 +198,23 @@ def cb2colvalue(value, column=None, transaction=None):
 
 def run_cb(spec, begin_search=None, condition=None, sort=(),
            columns=None, select_row=0, multirow=False, transaction=None):
-    """Vyvolá èíselník urèenı specifikací.
+    """VyvolÃ¡ ÄÃ­selnÃ­k urÄenÃ½ specifikacÃ­.
 
     Argumenty:
 
-      spec -- název specifikace èíselníku.
-      begin_search -- None nebo jméno sloupce, nad kterım se má vyvolat
-        inkrementální vyhledávání.
-      condition -- podmínka pro filtrování záznamù.
-      sort -- øazení (viz pytis.data.select())
-      columns -- seznam sloupcù, pokud se má li¹it od seznamu uvedeného
+      spec -- nÃ¡zev specifikace ÄÃ­selnÃ­ku.
+      begin_search -- None nebo jmÃ©no sloupce, nad kterÃ½m se mÃ¡ vyvolat
+        inkrementÃ¡lnÃ­ vyhledÃ¡vÃ¡nÃ­.
+      condition -- podmÃ­nka pro filtrovÃ¡nÃ­ zÃ¡znamÅ¯.
+      sort -- Å™azenÃ­ (viz pytis.data.select())
+      columns -- seznam sloupcÅ¯, pokud se mÃ¡ liÅ¡it od seznamu uvedenÃ©ho
         ve specifikaci.
-      select_row -- øádek, na kterı se má nastavit kurzor.
-      multirow -- umo¾ní vıbìr více øádkù.
-      transaction -- transakce pro pøedání CodebookFormu.
+      select_row -- Å™Ã¡dek, na kterÃ½ se mÃ¡ nastavit kurzor.
+      multirow -- umoÅ¾nÃ­ vÃ½bÄ›r vÃ­ce Å™Ã¡dkÅ¯.
+      transaction -- transakce pro pÅ™edÃ¡nÃ­ CodebookFormu.
     
-    Vrací None (pokud není vybrán ¾ádnı øádek) nebo vybranı øádek nebo
-    tuple vybranıch øádkù (pokud je argument multirow nastaven).
+    VracÃ­ None (pokud nenÃ­ vybrÃ¡n Å¾Ã¡dnÃ½ Å™Ã¡dek) nebo vybranÃ½ Å™Ã¡dek nebo
+    tuple vybranÃ½ch Å™Ã¡dkÅ¯ (pokud je argument multirow nastaven).
     
     """
     if multirow:
@@ -231,7 +231,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
 
 def help_window(inputfile=None, format=TextFormat.PLAIN):
     if not inputfile:
-        pytis.form.run_dialog(pytis.form.Warning, _("Textovı soubor nenalezen"))
+        pytis.form.run_dialog(pytis.form.Warning, _(u"TextovÃ½ soubor nenalezen"))
         return
     path = os.path.join(config.help_dir, inputfile)
     if not os.path.exists(path):
@@ -245,11 +245,11 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
         f = open(path, 'r')
     except IOError, e:
         pytis.form.run_dialog(pytis.form.Error,
-                              _("Nemohu otevøít soubor nápovìdy: %s") % e)
+                              _(u"Nemohu otevÅ™Ã­t soubor nÃ¡povÄ›dy: %s") % e)
     else:
         text = f.read()
         f.close()
-        pytis.form.InfoWindow("Nápovìda", text=text, format=format)
+        pytis.form.InfoWindow(_(u"NÃ¡povÄ›da"), text=text, format=format)
         
 
 def run_any_form():
@@ -261,15 +261,15 @@ cmd_run_any_form = \
 
 
 def printdirect(resolver, spec, print_spec, row, **kwargs):
-    """Tiskni specifikaci pomocí pøíkazu config.printing_command.
+    """Tiskni specifikaci pomocÃ­ pÅ™Ã­kazu config.printing_command.
 
     Argumenty:
 
-      spec -- název specifikace pro PrintResolver
-      print_spec -- název tiskové specifikace pro pytis.output.Formatter
-      row -- øádek s daty pro PrintResolver
+      spec -- nÃ¡zev specifikace pro PrintResolver
+      print_spec -- nÃ¡zev tiskovÃ© specifikace pro pytis.output.Formatter
+      row -- Å™Ã¡dek s daty pro PrintResolver
 
-      Klíèové argumenty jsou dále pøedány PrintResolver pro pou¾ití v tiskové proceduøe.
+      KlÃ­ÄovÃ© argumenty jsou dÃ¡le pÅ™edÃ¡ny PrintResolver pro pouÅ¾itÃ­ v tiskovÃ© proceduÅ™e.
     """
         
     import pytis.output
@@ -297,7 +297,7 @@ def printdirect(resolver, spec, print_spec, row, **kwargs):
                 result = self._Spec()
             return result
         
-    log(EVENT, 'Vyvolání tiskového formuláøe')
+    log(EVENT, 'VyvolÃ¡nÃ­ tiskovÃ©ho formulÃ¡Å™e')
     spec_path = os.path.join('output', print_spec)
     P = _PrintResolver    
     parameters = {(spec+'/'+pytis.output.P_ROW): row}
@@ -325,10 +325,10 @@ class ReusableSpec:
         pass
 
     def fields(self, *args):
-        """Vra» seznam specifikací sloupcù vyjmenovanıch sloupcù.
+        """VraÅ¥ seznam specifikacÃ­ sloupcÅ¯ vyjmenovanÃ½ch sloupcÅ¯.
 
-        Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
-        v¹ech sloupcù.  Vrací sekvenci instancí 'Field'.
+        Pokud nejsou vyjmenovÃ¡ny Å¾Ã¡dnÃ© identifikÃ¡tory sloupcÅ¯, vrÃ¡tÃ­ seznam
+        vÅ¡ech sloupcÅ¯.  VracÃ­ sekvenci instancÃ­ 'Field'.
 
         """
         if len(args) == 0:
@@ -337,10 +337,10 @@ class ReusableSpec:
             return filter(lambda f: f.id() in args, self._fields)
 
     def bindings(self, *args):
-        """Vra» seznam specifikací sloupcù vyjmenovanıch sloupcù.
+        """VraÅ¥ seznam specifikacÃ­ sloupcÅ¯ vyjmenovanÃ½ch sloupcÅ¯.
 
-        Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
-        v¹ech sloupcù.  Vrací sekvenci instancí 'pytis.data.DBColumnBinding'.
+        Pokud nejsou vyjmenovÃ¡ny Å¾Ã¡dnÃ© identifikÃ¡tory sloupcÅ¯, vrÃ¡tÃ­ seznam
+        vÅ¡ech sloupcÅ¯.  VracÃ­ sekvenci instancÃ­ 'pytis.data.DBColumnBinding'.
 
         """
         if len(args) == 0:
@@ -350,10 +350,10 @@ class ReusableSpec:
 
 
     def fields_complement(self, *args):
-        """Vra» seznam specifikací sloupcù, které nejsou vyjmenovány.
+        """VraÅ¥ seznam specifikacÃ­ sloupcÅ¯, kterÃ© nejsou vyjmenovÃ¡ny.
 
-        Pokud nejsou vyjmenovány ¾ádné identifikátory sloupcù, vrátí seznam
-        v¹ech sloupcù.  Vrací sekvenci instancí 'Field'.
+        Pokud nejsou vyjmenovÃ¡ny Å¾Ã¡dnÃ© identifikÃ¡tory sloupcÅ¯, vrÃ¡tÃ­ seznam
+        vÅ¡ech sloupcÅ¯.  VracÃ­ sekvenci instancÃ­ 'Field'.
 
         """
         if len(args) == 0:

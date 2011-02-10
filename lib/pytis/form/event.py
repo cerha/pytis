@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Zpracování událostí
+# ZpracovÃ¡nÃ­ udÃ¡lostÃ­
 # 
 # Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011 Brailcom, o.p.s.
 #
@@ -18,25 +18,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Zpracování událostí.
+"""ZpracovÃ¡nÃ­ udÃ¡lostÃ­.
 
-Hlavním cílem tohoto modulu je umo¾nit vyøízení wx události bìhem zpracování
-jiné wx události.  Události ve wxWindows jsou blokující, bìhem zpracování
-události musí dal¹í události èekat na její dokonèení.  To má nìkteré nepøíjemné
-dùsledky, jako napøíklad nemo¾nost prùbì¾né aktualizace obsahu oken nebo
-mo¾nost pøeru¹ení dlouhotrvajícího zpracování události u¾ivatelem.  Modul se
-sna¾í tyto potí¾e obejít.
+HlavnÃ­m cÃ­lem tohoto modulu je umoÅ¾nit vyÅ™Ã­zenÃ­ wx udÃ¡losti bÄ›hem zpracovÃ¡nÃ­
+jinÃ© wx udÃ¡losti.  UdÃ¡losti ve wxWindows jsou blokujÃ­cÃ­, bÄ›hem zpracovÃ¡nÃ­
+udÃ¡losti musÃ­ dalÅ¡Ã­ udÃ¡losti Äekat na jejÃ­ dokonÄenÃ­.  To mÃ¡ nÄ›kterÃ© nepÅ™Ã­jemnÃ©
+dÅ¯sledky, jako napÅ™Ã­klad nemoÅ¾nost prÅ¯bÄ›Å¾nÃ© aktualizace obsahu oken nebo
+moÅ¾nost pÅ™eruÅ¡enÃ­ dlouhotrvajÃ­cÃ­ho zpracovÃ¡nÃ­ udÃ¡losti uÅ¾ivatelem.  Modul se
+snaÅ¾Ã­ tyto potÃ­Å¾e obejÃ­t.
 
-Aby modul plnil svùj úèel, je nutno zajistit následující:
+Aby modul plnil svÅ¯j ÃºÄel, je nutno zajistit nÃ¡sledujÃ­cÃ­:
 
-- V¹echna pøiøazení callbackù ('EVT_*' funkce) musí bıt provádìna
-  prostøednictvím funkce 'wx_callback()'.
+- VÅ¡echna pÅ™iÅ™azenÃ­ callbackÅ¯ ('EVT_*' funkce) musÃ­ bÃ½t provÃ¡dÄ›na
+  prostÅ™ednictvÃ­m funkce 'wx_callback()'.
 
-- Na nìjakém místì, nejlépe v top-level kódu u¾ivatelského rozhraní, je nutno
-  spustit hlídací vlákno zavoláním funkce 'interrupt_watcher()'.
+- Na nÄ›jakÃ©m mÃ­stÄ›, nejlÃ©pe vÂ top-level kÃ³du uÅ¾ivatelskÃ©ho rozhranÃ­, je nutno
+  spustit hlÃ­dacÃ­ vlÃ¡kno zavolÃ¡nÃ­m funkce 'interrupt_watcher()'.
 
-- Je nutno zajistit periodické volání funkce 'yield_()'.  Mnohdy je mo¾no
-  vıhodnì vyu¾ít háèek ve funkci 'pytis.util.log()'.
+- Je nutno zajistit periodickÃ© volÃ¡nÃ­ funkce 'yield_()'.  Mnohdy je moÅ¾no
+  vÃ½hodnÄ› vyuÅ¾Ã­t hÃ¡Äek ve funkci 'pytis.util.log()'.
 
 """
 
@@ -49,15 +49,15 @@ from pytis.form import *
 import wx
 
 class UserBreakException(Exception):
-    """Vıjimka vyvolávaná pøi pøeru¹ení zpracování události.
+    """VÃ½jimka vyvolÃ¡vanÃ¡ pÅ™i pÅ™eruÅ¡enÃ­ zpracovÃ¡nÃ­ udÃ¡losti.
 
-    Tato vıjimka je pou¾ívána jednoúèelovì pro signalizaci pøeru¹ení zpracování
-    události u¾ivatelem.
+    Tato vÃ½jimka je pouÅ¾Ã­vÃ¡na jednoÃºÄelovÄ› pro signalizaci pÅ™eruÅ¡enÃ­ zpracovÃ¡nÃ­
+    udÃ¡losti uÅ¾ivatelem.
 
     """
     def __init__(self, *args):
         super(UserBreakException, self).__init__(*args)
-        message(_("Stop"), beep_=True)
+        message(_(u"Stop"), beep_=True)
 
 
 _current_event = None
@@ -68,7 +68,7 @@ _wx_key = None
 
 
 def top_level_exception():
-    """Zpracuj aktuálnì vyvolanou vıjimku aplikace."""
+    """Zpracuj aktuÃ¡lnÄ› vyvolanou vÃ½jimku aplikace."""
     einfo = sys.exc_info()
     if issubclass(einfo[0], SystemExit):
         sys.exit()
@@ -86,7 +86,7 @@ def top_level_exception():
     elif text:
         to = config.bug_report_address
         if not to:
-            run_dialog(Message, _("Není známa cílová adresa. Je nutno nastavit konfiguraèní volbu "
+            run_dialog(Message, _(u"NenÃ­ znÃ¡ma cÃ­lovÃ¡ adresa. Je nutno nastavit konfiguraÄnÃ­ volbu "
                                   "`bug_report_address'."))
         else:
             tb = einfo[2]
@@ -104,11 +104,11 @@ def top_level_exception():
                 else:    
                     address = '%s@%s' % (username, domain)
                 while True:
-                    address = run_dialog(InputDialog, prompt=_("Va¹e e-mailová adresa: "),
+                    address = run_dialog(InputDialog, prompt=_(u"VaÅ¡e e-mailovÃ¡ adresa: "),
                                          value=address, input_width=30,
-                                         message=_("Pokud svou adresu nastavíte ve formuláøi "
-                                                   "Nastavení u¾ivatelského rozhraní, nebudete "
-                                                   "ji¾ pøí¹tì dotazováni."))
+                                         message=_(u"Pokud svou adresu nastavÃ­te ve formulÃ¡Å™i "
+                                                   "NastavenÃ­ uÅ¾ivatelskÃ©ho rozhranÃ­, nebudete "
+                                                   "jiÅ¾ pÅ™Ã­Å¡tÄ› dotazovÃ¡ni."))
                     if address is None or address and address.strip() != '':
                         break
             if address:
@@ -138,9 +138,9 @@ def top_level_exception():
                         except:
                             pass
                 except Exception, e:
-                    run_dialog(Error, _("Oznámení se nezdaøilo odeslat:\n") + unicode(e))
+                    run_dialog(Error, _(u"OznÃ¡menÃ­ se nezdaÅ™ilo odeslat:\n") + unicode(e))
                 else:
-                    run_dialog(Message, _("Oznámení o chybì odesláno"))
+                    run_dialog(Message, _(u"OznÃ¡menÃ­ oÂ chybÄ› odeslÃ¡no"))
     if config.debug_on_error:
         import pdb
         pdb.post_mortem(sys.exc_info()[2])
@@ -149,22 +149,22 @@ def top_level_exception():
 
 _last_user_event = None
 def last_user_event():
-    """Vra» poslední pøijatou u¾ivatelskou událost jako instanci 'wx.Event'.
+    """VraÅ¥ poslednÃ­ pÅ™ijatou uÅ¾ivatelskou udÃ¡lost jako instanci 'wx.Event'.
 
-    Pøed prvním voláním u¾ivatelské události vra» 'None'.
+    PÅ™ed prvnÃ­m volÃ¡nÃ­m uÅ¾ivatelskÃ© udÃ¡losti vraÅ¥ 'None'.
     
     """
     return _last_user_event
 
 
 def _is_user_event(event):
-    # Sem nelze pøidat jen tak jakoukoliv událost, proto¾e nìkteré u¾ivatelské
-    # události nastávají vesmìs bìhem jinıch u¾ivatelskıch událostí, a pak by
-    # mohlo dojít k rùznım nepøíjemnım efektùm.
+    # Sem nelze pÅ™idat jen tak jakoukoliv udÃ¡lost, protoÅ¾e nÄ›kterÃ© uÅ¾ivatelskÃ©
+    # udÃ¡losti nastÃ¡vajÃ­ vesmÄ›s bÄ›hem jinÃ½ch uÅ¾ivatelskÃ½ch udÃ¡lostÃ­, aÂ pak by
+    # mohlo dojÃ­t kÂ rÅ¯znÃ½m nepÅ™Ã­jemnÃ½m efektÅ¯m.
     if isinstance(event, (wx.KeyEvent, wx.MenuEvent, wx.MouseEvent)):
         return True
-    # Instance wxCommandEvent pova¾ujeme za user_event, kromì událostí gridu
-    # a vıbìru z menu (napø. vıbìr z popup menu)
+    # Instance wxCommandEvent povaÅ¾ujeme za user_event, kromÄ› udÃ¡lostÃ­ gridu
+    # a vÃ½bÄ›ru z menu (napÅ™. vÃ½bÄ›r z popup menu)
     if isinstance(event, wx.CommandEvent) and \
        not isinstance(event, (wx.grid.GridEvent, wx.UpdateUIEvent)) and \
        event.GetEventType() != wx.wxEVT_COMMAND_MENU_SELECTED:
@@ -177,14 +177,14 @@ _system_callback_lock = None
 _system_callback_thread_ident = None
 _system_callback_access_lock = thread.allocate_lock()
 def wx_callback(evt_function, *args):
-    """Obal wx callback hlídacím kódem.
+    """Obal wx callback hlÃ­dacÃ­m kÃ³dem.
 
-    Funkce zavolá 'evt_function' s argumenty 'args'.  Poslední prvek 'args'
-    musí bıt callback o¹etøující pøíslu¹nou událost.  Tento callback je obalen
-    kódem, kterı zaji¹»uje o¹etøení události i v pøípadì, kdy právì probíhá
-    zpracování jiné události.
+    Funkce zavolÃ¡ 'evt_function' sÂ argumenty 'args'.  PoslednÃ­ prvek 'args'
+    musÃ­ bÃ½t callback oÅ¡etÅ™ujÃ­cÃ­ pÅ™Ã­sluÅ¡nou udÃ¡lost.  Tento callback je obalen
+    kÃ³dem, kterÃ½ zajiÅ¡Å¥uje oÅ¡etÅ™enÃ­ udÃ¡losti iÂ vÂ pÅ™Ã­padÄ›, kdy prÃ¡vÄ› probÃ­hÃ¡
+    zpracovÃ¡nÃ­ jinÃ© udÃ¡losti.
 
-    Pøíklad typického volání funkce:
+    PÅ™Ã­klad typickÃ©ho volÃ¡nÃ­ funkce:
 
       wx_callback(EVT_BUTTON, (self, button.GetId(), self.on_button))
 
@@ -194,9 +194,9 @@ def wx_callback(evt_function, *args):
     assert isinstance(callback, collections.Callable)
     def process_event(event, callback=callback):
         def system_callback():
-            # Pøi zamykání atd. se vyu¾ívá toho, ¾e v existují jen dvì vlákna
-            # zpracovávající události a ¾e v rámci jednoho vlákna dochází pouze
-            # k sekvenènímu nebo cibulovitému øazení událostí.
+            # PÅ™i zamykÃ¡nÃ­ atd. se vyuÅ¾Ã­vÃ¡ toho, Å¾e vÂ existujÃ­ jen dvÄ› vlÃ¡kna
+            # zpracovÃ¡vajÃ­cÃ­ udÃ¡losti a Å¾e vÂ rÃ¡mci jednoho vlÃ¡kna dochÃ¡zÃ­ pouze
+            # kÂ sekvenÄnÃ­mu nebo cibulovitÃ©mu Å™azenÃ­ udÃ¡lostÃ­.
             STATE_CURRENT = 'STATE_CURRENT'
             STATE_FREE = 'STATE_FREE'
             STATE_BLOCKED = 'STATE_BLOCKED'
@@ -205,54 +205,54 @@ def wx_callback(evt_function, *args):
             try:
                 ident = thread.get_ident()
                 if _system_callback_thread_ident == ident:
-                    # Jsme uvnitø vlastní slupky, jsme v pohodì
+                    # Jsme uvnitÅ™ vlastnÃ­ slupky, jsme vÂ pohodÄ›
                     state = STATE_CURRENT
                 elif _system_callback_thread_ident is None and \
                      _system_callback_lock is None:
-                    # Nikdo jinı nemá zájem, uzmeme to
+                    # Nikdo jinÃ½ nemÃ¡ zÃ¡jem, uzmeme to
                     _system_callback_thread_ident = ident
                     state = STATE_FREE
                 else:
-                    # Máme konkurenci -- vytvoøíme si synchronizaèní zámek pro
-                    # oznámení uvolnìní cesty
+                    # MÃ¡me konkurenci -- vytvoÅ™Ã­me si synchronizaÄnÃ­ zÃ¡mek pro
+                    # oznÃ¡menÃ­ uvolnÄ›nÃ­ cesty
                     _system_callback_lock = lock = thread.allocate_lock()
                     _system_callback_lock.acquire()
                     state = STATE_BLOCKED
             finally:
                 _system_callback_access_lock.release()
             if state == STATE_BLOCKED:
-                # Èekáme na uvolnìní cesty
+                # ÄŒekÃ¡me na uvolnÄ›nÃ­ cesty
                 lock.acquire()
                 lock.release()
                 _system_callback_access_lock.acquire()
                 try:
-                    # Je¹tì stále je to ná¹ synchronizaèní zámek?  Uvolni jej!
+                    # JeÅ¡tÄ› stÃ¡le je to nÃ¡Å¡ synchronizaÄnÃ­ zÃ¡mek?  Uvolni jej!
                     if _system_callback_lock is lock:
                         _system_callback_lock = None
-                    # Teï jsme na koni my
+                    # TeÄ jsme na koni my
                     _system_callback_thread_ident = ident
                     state = STATE_FREE
                 finally:
                     _system_callback_access_lock.release()
             try:
-                # To hlavní...
+                # To hlavnÃ­...
                 result = callback(event)
             finally:
                 _system_callback_access_lock.acquire()
                 try:
-                    # Jako první usurpátoøi musíme uvolnit informace o své
+                    # Jako prvnÃ­ usurpÃ¡toÅ™i musÃ­me uvolnit informace oÂ svÃ©
                     # cibuli ...
                     if state == STATE_FREE:
                         _system_callback_thread_ident = None
                         if _system_callback_lock is not None:
                             while True:
                                 try:
-                                    # ... a poslat signál pøípadnému èekateli
+                                    # ... a poslat signÃ¡l pÅ™Ã­padnÃ©mu Äekateli
                                     _system_callback_lock.release()
                                     break
                                 except thread.error:
-                                    # To je pøípad, kdy èekatel je¹tì nestaèil
-                                    # na svùj zámek zavolat acquire
+                                    # To je pÅ™Ã­pad, kdy Äekatel jeÅ¡tÄ› nestaÄil
+                                    # na svÅ¯j zÃ¡mek zavolat acquire
                                     pass
                 finally:
                     _system_callback_access_lock.release()
@@ -263,10 +263,10 @@ def wx_callback(evt_function, *args):
             message('')
         if not isinstance(event, (wx.IdleEvent, wx.UpdateUIEvent)):
             if __debug__:
-                log(DEBUG, 'Zpracování události:', (event, event.__class__))
+                log(DEBUG, 'ZpracovÃ¡nÃ­ udÃ¡losti:', (event, event.__class__))
         try:
             if thread.get_ident() == _watcher_thread_ident or _current_event:
-                # Událost bìhem události
+                # UdÃ¡lost bÄ›hem udÃ¡losti
                 if _wx_key and _wx_key.is_event_of_key(event, 'Ctrl-g'): # TODO: ne natvr.
                     _interrupted = True
                     result = True
@@ -275,20 +275,20 @@ def wx_callback(evt_function, *args):
                 else:
                     result = system_callback()
             elif is_user and modal(top_window()):
-                # Událost vyvolaná u¾ivatelskım pøíkazem v modálním oknì
+                # UdÃ¡lost vyvolanÃ¡ uÅ¾ivatelskÃ½m pÅ™Ã­kazem vÂ modÃ¡lnÃ­m oknÄ›
                 result = callback(event)
             elif is_user:
-                # Událost vyvolaná u¾ivatelskım pøíkazem
+                # UdÃ¡lost vyvolanÃ¡ uÅ¾ivatelskÃ½m pÅ™Ã­kazem
                 _interrupted = False
                 _current_event = event
                 try:
                     result = callback(event)
                 finally:
-                    _interrupted = False # událost konèí -> nebude co pøeru¹it
+                    _interrupted = False # udÃ¡lost konÄÃ­ -> nebude co pÅ™eruÅ¡it
                     _current_event = None
                     _last_user_event = event
             else:
-                # Standardní "systémová" událost
+                # StandardnÃ­ "systÃ©movÃ¡" udÃ¡lost
                 result = system_callback()
         except:
             top_level_exception()
@@ -298,15 +298,15 @@ def wx_callback(evt_function, *args):
 
 
 def unlock_callbacks():
-    """Uvolni uzamèení u¾ivatelskıch událostí callbackem."""
+    """Uvolni uzamÄenÃ­ uÅ¾ivatelskÃ½ch udÃ¡lostÃ­ callbackem."""
     global _current_event
     _current_event = None
 
 
 def yield_():
-    """Zkontroluj, zda u¾ivatel ne¾ádá pøeru¹ení zpracování události.
+    """Zkontroluj, zda uÅ¾ivatel neÅ¾Ã¡dÃ¡ pÅ™eruÅ¡enÃ­ zpracovÃ¡nÃ­ udÃ¡losti.
 
-    ®ádá-li, vyvolej 'UserBreakException'.
+    Å½Ã¡dÃ¡-li, vyvolej 'UserBreakException'.
 
     """
     global _interrupted
@@ -316,7 +316,7 @@ def yield_():
 
 
 def interrupt_watcher():
-    """Spus» vlákno sledující wx události bìhem zpracování jiné wx události."""
+    """SpusÅ¥ vlÃ¡kno sledujÃ­cÃ­ wx udÃ¡losti bÄ›hem zpracovÃ¡nÃ­ jinÃ© wx udÃ¡losti."""
     lock = thread.allocate_lock()
     lock.acquire()
     def watcher():
@@ -332,13 +332,13 @@ def interrupt_watcher():
             else:
                 last_event = _current_event
     thread.start_new_thread(watcher, ())
-    # Èekání na dokonèení inicializace watcheru
+    # ÄŒekÃ¡nÃ­ na dokonÄenÃ­ inicializace watcheru
     lock.acquire()
     lock.release()
     
 def interrupt_init(_main_thread_ident_=thread.get_ident(),
                    _watcher_thread_ident_=None):
-    """Inicializuj zpracování pøeru¹ení události pro aktuální thread."""
+    """Inicializuj zpracovÃ¡nÃ­ pÅ™eruÅ¡enÃ­ udÃ¡losti pro aktuÃ¡lnÃ­ thread."""
     global _wx_key, _main_thread_ident, _watcher_thread_ident
     _wx_key = WxKey()
     _main_thread_ident = _main_thread_ident_

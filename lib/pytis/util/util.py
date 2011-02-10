@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,23 +16,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Rùzné u¾iteèné pomùcky usnadòující psaní pythonovıch programù.
+"""RÅ¯znÃ© uÅ¾iteÄnÃ© pomÅ¯cky usnadÅˆujÃ­cÃ­ psanÃ­ pythonovÃ½ch programÅ¯.
 
-Modul obsahuje víceménì triviální funkce, které svım charakterem nepatøí jinam
-a které slou¾í primárnì pro zjednodu¹ení zápisu èasto u¾ívanıch konstrukcí.
-Pokud se nìjakı tématickı okruh pomùcek rozmno¾í, mù¾e bıt pøesunut do
-samostatného modulu.
+Modul obsahuje vÃ­cemÃ©nÄ› triviÃ¡lnÃ­ funkce, kterÃ© svÃ½m charakterem nepatÅ™Ã­ jinam
+a kterÃ© slouÅ¾Ã­ primÃ¡rnÄ› pro zjednoduÅ¡enÃ­ zÃ¡pisu Äasto uÅ¾Ã­vanÃ½ch konstrukcÃ­.
+Pokud se nÄ›jakÃ½ tÃ©matickÃ½ okruh pomÅ¯cek rozmnoÅ¾Ã­, mÅ¯Å¾e bÃ½t pÅ™esunut do
+samostatnÃ©ho modulu.
 
-Tento modul je vıjimeènı ve dvou smìrech:
+Tento modul je vÃ½jimeÄnÃ½ ve dvou smÄ›rech:
 
-1. Vzhledem k triviálnímu charakteru zde obsa¾enıch funkcí a vzhledem k tomu,
-   ¾e jejich primárním úèelem je zkrátit a zèitelnit kód, je povoleno jej
-   importovat následujícím zpùsobem:
+1. Vzhledem kÂ triviÃ¡lnÃ­mu charakteru zde obsaÅ¾enÃ½ch funkcÃ­ a vzhledem kÂ tomu,
+   Å¾e jejich primÃ¡rnÃ­m ÃºÄelem je zkrÃ¡tit a zÄitelnit kÃ³d, je povoleno jej
+   importovat nÃ¡sledujÃ­cÃ­m zpÅ¯sobem:
    
      from util import *
 
-2. Definuje symbol '_' jako exportovanou promìnnou.  To je z podobnıch dùvodù
-   jako vı¹e a s ohledem na bì¾nì pou¾ívané konvence gettextu.
+2. Definuje symbol '_' jako exportovanou promÄ›nnou.  To je zÂ podobnÃ½ch dÅ¯vodÅ¯
+   jako vÃ½Å¡e a sÂ ohledem na bÄ›Å¾nÄ› pouÅ¾Ã­vanÃ© konvence gettextu.
 
 """
 
@@ -55,51 +55,51 @@ if '_' not in __builtin__.__dict__:
     __builtin__.__dict__['_'] = lambda x: x
 
 
-### Tøídy
+### TÅ™Ã­dy
 
 class ProgramError(Exception):
-    """Vıjimka signalizující programovou chybu.
+    """VÃ½jimka signalizujÃ­cÃ­ programovou chybu.
 
-    Programová chyba je chyba, která by teoreticky nemìla nikdy nastat.
-    Vznikla chybou programu, a» u¾ pøímo v místì, kde je detekována, nebo
-    chybnım voláním kódu zvnì (napøíklad nedodr¾ení typù argumentù metody).
+    ProgramovÃ¡ chyba je chyba, kterÃ¡ by teoreticky nemÄ›la nikdy nastat.
+    Vznikla chybou programu, aÅ¥ uÅ¾ pÅ™Ã­mo vÂ mÃ­stÄ›, kde je detekovÃ¡na, nebo
+    chybnÃ½m volÃ¡nÃ­m kÃ³du zvnÄ› (napÅ™Ã­klad nedodrÅ¾enÃ­ typÅ¯ argumentÅ¯ metody).
 
-    Programovou chybou naopak není systémová chyba, její¾ vznik lze za urèitıch
-    okolností oèekávat, ani chyba zpùsobená akcemi u¾ivatele (napøíklad chybnì
-    zadaná data na vstupu).
+    Programovou chybou naopak nenÃ­ systÃ©movÃ¡ chyba, jejÃ­Å¾ vznik lze za urÄitÃ½ch
+    okolnostÃ­ oÄekÃ¡vat, ani chyba zpÅ¯sobenÃ¡ akcemi uÅ¾ivatele (napÅ™Ã­klad chybnÄ›
+    zadanÃ¡ data na vstupu).
 
-    Tato vıjimka by nemìla bıt odchytávána, s vıjimkou funkcí pro o¹etøení
-    havárie programu.  Její vıskyt znamená, ¾e program se dostal do
-    nedefinovaného stavu a mìl by bıt ukonèen.  (V urèitıch, v dokumentaèních
-    øetìzcích jasnì definovanıch, pøípadech tento po¾adavek nemusí bıt striktní
-    a mù¾e znamenat pouze lokální zhroucení tıkající se urèitého modulu,
-    pøípadnì i s mo¾ností uzdravení reinicializací.)
+    Tato vÃ½jimka by nemÄ›la bÃ½t odchytÃ¡vÃ¡na, sÂ vÃ½jimkou funkcÃ­ pro oÅ¡etÅ™enÃ­
+    havÃ¡rie programu.  JejÃ­ vÃ½skyt znamenÃ¡, Å¾e program se dostal do
+    nedefinovanÃ©ho stavu a mÄ›l by bÃ½t ukonÄen.  (VÂ urÄitÃ½ch, vÂ dokumentaÄnÃ­ch
+    Å™etÄ›zcÃ­ch jasnÄ› definovanÃ½ch, pÅ™Ã­padech tento poÅ¾adavek nemusÃ­ bÃ½t striktnÃ­
+    a mÅ¯Å¾e znamenat pouze lokÃ¡lnÃ­ zhroucenÃ­ tÃ½kajÃ­cÃ­ se urÄitÃ©ho modulu,
+    pÅ™Ã­padnÄ› iÂ sÂ moÅ¾nostÃ­ uzdravenÃ­ reinicializacÃ­.)
 
-    Vıjimka pouze dìdí obecnou vıjimkovou tøídu a nedefinuje nic nového.
+    VÃ½jimka pouze dÄ›dÃ­ obecnou vÃ½jimkovou tÅ™Ã­du a nedefinuje nic novÃ©ho.
     
     """
     pass
 
 
 class InvalidAccessError(Exception):
-    """Signalizace neautorizovaného pøístupu.
+    """Signalizace neautorizovanÃ©ho pÅ™Ã­stupu.
 
-    Tato vıjimka je typicky vyvolávána na stranì vzdáleného serveru, pokud se
-    klient pokou¹í volat vzdálenou metodu bez potøebné dodateèné autorizace
-    nebo s argumenty chybnıch typù.
+    Tato vÃ½jimka je typicky vyvolÃ¡vÃ¡na na stranÄ› vzdÃ¡lenÃ©ho serveru, pokud se
+    klient pokouÅ¡Ã­ volat vzdÃ¡lenou metodu bez potÅ™ebnÃ© dodateÄnÃ© autorizace
+    nebo sÂ argumenty chybnÃ½ch typÅ¯.
 
     """
     def __init__(self, *args):
         import pytis.util
-        pytis.util.log(pytis.util.OPERATIONAL, 'Neoprávnìnı pøístup', args)
+        pytis.util.log(pytis.util.OPERATIONAL, 'NeoprÃ¡vnÄ›nÃ½ pÅ™Ã­stup', args)
         super_(InvalidAccessError).__init__(self, *args)
 
 
 class FileError(Exception):
-    """Vıjimka vyvolávaná po chybì pøi práci se soubory.
+    """VÃ½jimka vyvolÃ¡vanÃ¡ po chybÄ› pÅ™i prÃ¡ci se soubory.
 
-    Nejedná se o duplikát 'os.OSError', pou¾ívá se napøíklad pokud nelze
-    z nìjakého zvlá¹tního dùvodu vytvoøit doèasnı soubor.
+    NejednÃ¡ se oÂ duplikÃ¡t 'os.OSError', pouÅ¾Ã­vÃ¡ se napÅ™Ã­klad pokud nelze
+    zÂ nÄ›jakÃ©ho zvlÃ¡Å¡tnÃ­ho dÅ¯vodu vytvoÅ™it doÄasnÃ½ soubor.
 
     """
     pass
@@ -112,12 +112,12 @@ class NotImplementedException(Exception):
 
     
 class Counter:
-    """Jednoduchı èítaè.
+    """JednoduchÃ½ ÄÃ­taÄ.
 
-    Po svém vytvoøení je inicializován na hodnotu 0 nebo hodnotu zadanou v konstruktoru
-    a pøi ka¾dém ètení metodou 'next()' je tato hodnota zvı¹ena.
+    Po svÃ©m vytvoÅ™enÃ­ je inicializovÃ¡n na hodnotu 0 nebo hodnotu zadanou v konstruktoru
+    a pÅ™i kaÅ¾dÃ©m ÄtenÃ­ metodou 'next()' je tato hodnota zvÃ½Å¡ena.
 
-    Tøída není thread-safe.
+    TÅ™Ã­da nenÃ­ thread-safe.
 
     """
     def __init__(self, value=0):
@@ -125,20 +125,20 @@ class Counter:
         self._value = value
 
     def next(self):
-        """Zvy¹ hodnotu èítaèe o 1 a vra» ji."""
+        """ZvyÅ¡ hodnotu ÄÃ­taÄe oÂ 1 a vraÅ¥ ji."""
         self._value = self._value + 1
         return self._value
 
     def current(self):
-        """Vra» aktuální hodnotu èítaèe bez jejího zvı¹ení."""
+        """VraÅ¥ aktuÃ¡lnÃ­ hodnotu ÄÃ­taÄe bez jejÃ­ho zvÃ½Å¡enÃ­."""
         return self._value
         
     def reset(self):
-        """Nastav hodnotu èítaèe na 0."""
+        """Nastav hodnotu ÄÃ­taÄe na 0."""
         self._value = 0
 
 
-_emergency_encoder = codecs.getencoder('iso-8859-2')
+_emergency_encoder = codecs.getencoder('utf-8')
 def safe_encoding_write(stream, string):
     try:
         stream.write(string)
@@ -148,38 +148,38 @@ def safe_encoding_write(stream, string):
 
 
 class Pipe:
-    """Jednoduchá roura umo¾òující zápis a ètení stringovıch dat.
+    """JednoduchÃ¡ roura umoÅ¾ÅˆujÃ­cÃ­ zÃ¡pis a ÄtenÃ­ stringovÃ½ch dat.
 
-    Typické pou¾ití této tøídy je kdy¾ jedna funkce si ¾ádá stream pro zápis,
-    druhá pro ètení a je zapotøebí tyto dvì funkce propojit rourou.  Tøída
-    neposkytuje ¾ádnı komfort, omezuje se pouze na nejzákladnìj¹í funkce.  Je
-    v¹ak thread-safe.
+    TypickÃ© pouÅ¾itÃ­ tÃ©to tÅ™Ã­dy je kdyÅ¾ jedna funkce si Å¾Ã¡dÃ¡ stream pro zÃ¡pis,
+    druhÃ¡ pro ÄtenÃ­ a je zapotÅ™ebÃ­ tyto dvÄ› funkce propojit rourou.  TÅ™Ã­da
+    neposkytuje Å¾Ã¡dnÃ½ komfort, omezuje se pouze na nejzÃ¡kladnÄ›jÅ¡Ã­ funkce.  Je
+    vÅ¡ak thread-safe.
 
     """
-    # Implementace této tøídy byla pùvodnì jednodu¹¹í, vyu¾ívala Queue.Queue.
-    # To v sobì ov¹em skrıvalo nepøíjemnı vıkonnostní problém: Ve frontì se
-    # mù¾e ocitnout spousta krátkıch øetìzcù a jsou-li èteny na konci v¹echny
-    # naráz, trvá to velmi dlouho.  Bylo tedy nutné pou¾ít mechanismus, kdy
-    # se nepracuje se zámky pøi ètení ka¾dého vlo¾eného stringu a nesèítá se
-    # mnoho krátkıch stringù do jednoho velkého (je zde nepøíjemná kvadratická
-    # èasová slo¾itost vzhledem k poètu stringù).
+    # Implementace tÃ©to tÅ™Ã­dy byla pÅ¯vodnÄ› jednoduÅ¡Å¡Ã­, vyuÅ¾Ã­vala Queue.Queue.
+    # To vÂ sobÄ› ovÅ¡em skrÃ½valo nepÅ™Ã­jemnÃ½ vÃ½konnostnÃ­ problÃ©m: Ve frontÄ› se
+    # mÅ¯Å¾e ocitnout spousta krÃ¡tkÃ½ch Å™etÄ›zcÅ¯ a jsou-li Äteny na konci vÅ¡echny
+    # narÃ¡z, trvÃ¡ to velmi dlouho.  Bylo tedy nutnÃ© pouÅ¾Ã­t mechanismus, kdy
+    # se nepracuje se zÃ¡mky pÅ™i ÄtenÃ­ kaÅ¾dÃ©ho vloÅ¾enÃ©ho stringu a nesÄÃ­tÃ¡ se
+    # mnoho krÃ¡tkÃ½ch stringÅ¯ do jednoho velkÃ©ho (je zde nepÅ™Ã­jemnÃ¡ kvadratickÃ¡
+    # ÄasovÃ¡ sloÅ¾itost vzhledem kÂ poÄtu stringÅ¯).
 
     # Invarianty:
-    # - v¾dy pracuje nejvı¹e jeden ètenáø
-    # - manipulace s bufferem kdekoliv je v¾dy kryta zámkem _buffer_lock
-    # - zámek _empty_lock je nastaven pouze na zaèátku do prvního zápisu
-    #   nebo volání close, a pak u¾ nikdy není nastaven na dobu del¹í ne¾
-    #   okam¾ik
-    # - zámek _read_lock smí uvolnit pouze dr¾itel zámku _read_lock_lock
+    # - vÅ¾dy pracuje nejvÃ½Å¡e jeden ÄtenÃ¡Å™
+    # - manipulace sÂ bufferem kdekoliv je vÅ¾dy kryta zÃ¡mkem _buffer_lock
+    # - zÃ¡mek _empty_lock je nastaven pouze na zaÄÃ¡tku do prvnÃ­ho zÃ¡pisu
+    #   nebo volÃ¡nÃ­ close, aÂ pak uÅ¾ nikdy nenÃ­ nastaven na dobu delÅ¡Ã­ neÅ¾
+    #   okamÅ¾ik
+    # - zÃ¡mek _read_lock smÃ­ uvolnit pouze drÅ¾itel zÃ¡mku _read_lock_lock
     
     def __init__(self, cc=()):
         """Inicializuj rouru.
 
         Argumenty:
 
-          cc -- stream nebo sekvence streamù, do kterıch budou kopírována
-            v¹echna do roury zapisovaná data; bude-li volána metoda 'close()',
-            budou uzavøeny i tyto streamy
+          cc -- stream nebo sekvence streamÅ¯, do kterÃ½ch budou kopÃ­rovÃ¡na
+            vÅ¡echna do roury zapisovanÃ¡ data; bude-li volÃ¡na metoda 'close()',
+            budou uzavÅ™eny iÂ tyto streamy
 
         """
         self._cc = xtuple(cc)
@@ -200,11 +200,11 @@ class Pipe:
             self._empty_lock_lock.release()
 
     def write(self, string_):
-        """Stejné jako v pøípadì tøídy 'file'.
+        """StejnÃ© jako vÂ pÅ™Ã­padÄ› tÅ™Ã­dy 'file'.
 
-        Zápis po zavolání metody 'close()' vyvolá vıjimku 'ValueError'.
-        K tému¾ mù¾e dojít, pokud byl v konstruktoru specifikován kopírovací
-        stream a je ji¾ uzavøen.
+        ZÃ¡pis po zavolÃ¡nÃ­ metody 'close()' vyvolÃ¡ vÃ½jimku 'ValueError'.
+        KÂ tÃ©muÅ¾ mÅ¯Å¾e dojÃ­t, pokud byl vÂ konstruktoru specifikovÃ¡n kopÃ­rovacÃ­
+        stream a je jiÅ¾ uzavÅ™en.
 
         """
         if self._closed:
@@ -221,8 +221,8 @@ class Pipe:
         with_lock(self._buffer_lock, lfunction)
 
     def read(self, size=-1):
-        """Stejné jako v pøípadì tøídy 'file'."""
-        # TODO: Z nepochopitelnıch dùvodù je zde pøedávání size nutné.
+        """StejnÃ© jako vÂ pÅ™Ã­padÄ› tÅ™Ã­dy 'file'."""
+        # TODO: Z nepochopitelnÃ½ch dÅ¯vodÅ¯ je zde pÅ™edÃ¡vÃ¡nÃ­ size nutnÃ©.
         def lfunction(size=size):
             result = ''
             buffer = self._buffer
@@ -256,11 +256,11 @@ class Pipe:
         return with_lock(self._read_lock, lfunction)
 
     def close(self):
-        """Stejné jako v pøípadì tøídy 'file'.
+        """StejnÃ© jako vÂ pÅ™Ã­padÄ› tÅ™Ã­dy 'file'.
 
-        Tato metoda pøitom uzavírá pouze zápisovı konec roury a cc stream
-        (byl-li v konstruktoru zadán) a ponechává data pro ètení.  Uvolnit data
-        lze následnım zavoláním metody 'read()' bez argumentù.
+        Tato metoda pÅ™itom uzavÃ­rÃ¡ pouze zÃ¡pisovÃ½ konec roury a cc stream
+        (byl-li vÂ konstruktoru zadÃ¡n) a ponechÃ¡vÃ¡ data pro ÄtenÃ­.  Uvolnit data
+        lze nÃ¡slednÃ½m zavolÃ¡nÃ­m metody 'read()' bez argumentÅ¯.
 
         """
         self._closed = True
@@ -273,37 +273,37 @@ class Pipe:
 
 
 class Popen:
-    """Tøída umo¾òující spou¹tìní programù a komunikaci s nimi.
+    """TÅ™Ã­da umoÅ¾ÅˆujÃ­cÃ­ spouÅ¡tÄ›nÃ­ programÅ¯ a komunikaci sÂ nimi.
 
-    Pøi vytváøení instance tøídy je vytvoøen novı proces, se kterım je mo¾no
-    komunikovat pomocí zadanıch nebo novì vytvoøenıch streamù, blí¾e viz metoda
+    PÅ™i vytvÃ¡Å™enÃ­ instance tÅ™Ã­dy je vytvoÅ™en novÃ½ proces, se kterÃ½m je moÅ¾no
+    komunikovat pomocÃ­ zadanÃ½ch nebo novÄ› vytvoÅ™enÃ½ch streamÅ¯, blÃ­Å¾e viz metoda
     '__init__()'.
 
-    Streamy pro komunikaci s procesem jsou dostupné prostøednictvím metod
-    'from_child()' a 'to_child()'.  Process id spu¹tìného programu je
-    dostupné pøes metodu 'pid()'.
+    Streamy pro komunikaci sÂ procesem jsou dostupnÃ© prostÅ™ednictvÃ­m metod
+    'from_child()' a 'to_child()'.  Process id spuÅ¡tÄ›nÃ©ho programu je
+    dostupnÃ© pÅ™es metodu 'pid()'.
     
     """
     def __init__(self, command, to_child=None, from_child=None,
                  directory=None):
-        """Spus» 'command' v samostatném procesu.
+        """SpusÅ¥ 'command' vÂ samostatnÃ©m procesu.
 
         Argumenty:
 
-          command -- string nebo sekvence stringù definující spou¹tìnı pøíkaz a
+          command -- string nebo sekvence stringÅ¯ definujÃ­cÃ­ spouÅ¡tÄ›nÃ½ pÅ™Ã­kaz a
             jeho argumenty
-          to_child -- file descriptor nebo file object obsahující file
-            descriptor otevøené pro zápis, prostøednictvím kterého bude
-            zapisováno na standardní vstup spu¹tìného procesu; mù¾e bıt té¾
-            'None', v kterém¾to pøípadì bude pro tyto úèely vytvoøena nová
+          to_child -- file descriptor nebo file object obsahujÃ­cÃ­ file
+            descriptor otevÅ™enÃ© pro zÃ¡pis, prostÅ™ednictvÃ­m kterÃ©ho bude
+            zapisovÃ¡no na standardnÃ­ vstup spuÅ¡tÄ›nÃ©ho procesu; mÅ¯Å¾e bÃ½t tÃ©Å¾
+            'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› bude pro tyto ÃºÄely vytvoÅ™ena novÃ¡
             roura
-          from_child -- file descriptor nebo file object obsahující file
-            descriptor otevøené pro ètení, prostøednictvím kterého bude
-            dostupnı standardní vıstup spu¹tìného procesu; mù¾e bıt té¾ 'None',
-            v kterém¾to pøípadì bude pro tyto úèely vytvoøena nová roura
-          directory -- existující adresáø (coby string), ve kterém má bıt
-            proces spu¹tìn, nebo 'None', v kterém¾to pøípadì je proces spu¹tìn
-            v aktuálním adresáøi
+          from_child -- file descriptor nebo file object obsahujÃ­cÃ­ file
+            descriptor otevÅ™enÃ© pro ÄtenÃ­, prostÅ™ednictvÃ­m kterÃ©ho bude
+            dostupnÃ½ standardnÃ­ vÃ½stup spuÅ¡tÄ›nÃ©ho procesu; mÅ¯Å¾e bÃ½t tÃ©Å¾ 'None',
+            vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› bude pro tyto ÃºÄely vytvoÅ™ena novÃ¡ roura
+          directory -- existujÃ­cÃ­ adresÃ¡Å™ (coby string), ve kterÃ©m mÃ¡ bÃ½t
+            proces spuÅ¡tÄ›n, nebo 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je proces spuÅ¡tÄ›n
+            vÂ aktuÃ¡lnÃ­m adresÃ¡Å™i
 
         """
         if to_child is None:
@@ -360,27 +360,27 @@ class Popen:
         self._pid = pid
 
     def from_child(self):
-        """Vra» file object pro ètení ze standardního vıstupu procesu."""
+        """VraÅ¥ file object pro ÄtenÃ­ ze standardnÃ­ho vÃ½stupu procesu."""
         return self._from_child
 
     def to_child(self):
-        """Vra» file object pro zápis na standardní vstup procesu."""
+        """VraÅ¥ file object pro zÃ¡pis na standardnÃ­ vstup procesu."""
         return self._to_child
 
     def pid(self):
-        """Vra» process id spu¹tìného programu."""
+        """VraÅ¥ process id spuÅ¡tÄ›nÃ©ho programu."""
         return self._pid
 
     def wait(self):
-        """Èekej na dokonèení podprocesu."""
+        """ÄŒekej na dokonÄenÃ­ podprocesu."""
         os.waitpid(self.pid(), 0)
 
 
 class Tmpdir(object):
-    """Tøída vytváøející pro dobu své existence doèasnı adresáø.
+    """TÅ™Ã­da vytvÃ¡Å™ejÃ­cÃ­ pro dobu svÃ© existence doÄasnÃ½ adresÃ¡Å™.
 
-    Tøída zaji¹»uje vytvoøení doèasného adresáøe pøi svém vzniku a jeho smazání
-    vèetnì v¹ech souborù v nìm obsa¾enıch pøi svém zániku.
+    TÅ™Ã­da zajiÅ¡Å¥uje vytvoÅ™enÃ­ doÄasnÃ©ho adresÃ¡Å™e pÅ™i svÃ©m vzniku a jeho smazÃ¡nÃ­
+    vÄetnÄ› vÅ¡ech souborÅ¯ vÂ nÄ›m obsaÅ¾enÃ½ch pÅ™i svÃ©m zÃ¡niku.
 
     """
 
@@ -389,7 +389,7 @@ class Tmpdir(object):
 
         Argumenty:
 
-          prefix -- prefix jména adresáøe, string
+          prefix -- prefix jmÃ©na adresÃ¡Å™e, string
 
         """
         self._tmpdir = mktempdir(prefix=prefix)
@@ -411,9 +411,9 @@ class Tmpdir(object):
     
 
 class Stack(object):
-    """Obecnı zásobník.
+    """ObecnÃ½ zÃ¡sobnÃ­k.
 
-    Datová struktura typu LIFO, umo¾òující pracovat s prvky libovolného typu.
+    DatovÃ¡ struktura typu LIFO, umoÅ¾ÅˆujÃ­cÃ­ pracovat s prvky libovolnÃ©ho typu.
 
     """
 
@@ -426,25 +426,25 @@ class Stack(object):
         return '<%s contents=%s>' % (classname, contents)
 
     def push(self, item):
-        """Pøidej prvek na vrchol zásobníku.
+        """PÅ™idej prvek na vrchol zÃ¡sobnÃ­ku.
 
-        Argumentem mù¾e bıt libovolnı objekt.
+        Argumentem mÅ¯Å¾e bÃ½t libovolnÃ½ objekt.
 
         """
         self._list.append(item)
         
     def pop(self):
-        """Odeber objekt z vrcholu zásobníku.
+        """Odeber objekt z vrcholu zÃ¡sobnÃ­ku.
 
-        Pøi pokusu o odebrání z prázdného zásobníku vyvolej `IndexError'.
+        PÅ™i pokusu o odebrÃ¡nÃ­ z prÃ¡zdnÃ©ho zÃ¡sobnÃ­ku vyvolej `IndexError'.
         
         """
         return self._list.pop()
             
     def top(self):
-        """Vra» nejvrchnìj¹í prvek ze zásobníku.
+        """VraÅ¥ nejvrchnÄ›jÅ¡Ã­ prvek ze zÃ¡sobnÃ­ku.
 
-        Pokud je zásobník prázdnı, vra» None.
+        Pokud je zÃ¡sobnÃ­k prÃ¡zdnÃ½, vraÅ¥ None.
         
         """
         if self.empty():
@@ -452,24 +452,24 @@ class Stack(object):
         return self._list[-1]
 
     def empty(self):
-        """Vra» pravdu, je-li zásobník prázdnı."""
+        """VraÅ¥ pravdu, je-li zÃ¡sobnÃ­k prÃ¡zdnÃ½."""
         return len(self._list) == 0
         
 
 class XStack(Stack):
-    """Zásobník s aktivním prvkem a dal¹ími roz¹íøenımi mo¾nostmi.
+    """ZÃ¡sobnÃ­k s aktivnÃ­m prvkem a dalÅ¡Ã­mi rozÅ¡Ã­Å™enÃ½mi moÅ¾nostmi.
 
-    Roz¹iøuje mo¾nosti zásobníku o:
+    RozÅ¡iÅ™uje moÅ¾nosti zÃ¡sobnÃ­ku o:
 
-      * aktivaci libovolného prvku
-      * zji¹tìní aktivního prvku
-      * zji¹tìní seznamu v¹ech prvkù
-      * vyjmutí libovolného prvku ze zásobníku
-      * zji¹tìní poøadí poslednì aktivovanıch prvkù (MRU)
+      * aktivaci libovolnÃ©ho prvku
+      * zjiÅ¡tÄ›nÃ­ aktivnÃ­ho prvku
+      * zjiÅ¡tÄ›nÃ­ seznamu vÅ¡ech prvkÅ¯
+      * vyjmutÃ­ libovolnÃ©ho prvku ze zÃ¡sobnÃ­ku
+      * zjiÅ¡tÄ›nÃ­ poÅ™adÃ­ poslednÄ› aktivovanÃ½ch prvkÅ¯ (MRU)
 
-    Omezení: V zásobníku nesmí bıt pøítomen jeden objekt souèasnì vícekrát,
-    resp. zásobník nesmí obsahovat dva ekvivalentní prvky.  V
-    takovém pøípadì není chování zásobníku definováno.
+    OmezenÃ­: V zÃ¡sobnÃ­ku nesmÃ­ bÃ½t pÅ™Ã­tomen jeden objekt souÄasnÄ› vÃ­cekrÃ¡t,
+    resp. zÃ¡sobnÃ­k nesmÃ­ obsahovat dva ekvivalentnÃ­ prvky.  V
+    takovÃ©m pÅ™Ã­padÄ› nenÃ­ chovÃ¡nÃ­ zÃ¡sobnÃ­ku definovÃ¡no.
 
     New elements are pushed just below the currently active element on the
     stack, not to the top of the stack as in the superclass.
@@ -493,10 +493,10 @@ class XStack(Stack):
         self.activate(item)
 
     def pop(self):
-        """Odeber objekt z vrcholu zásobníku.
+        """Odeber objekt z vrcholu zÃ¡sobnÃ­ku.
 
-        Pøi odebrání aktivního prvku se stává aktivním prvkem vrchní prvek
-        zásobníku.
+        PÅ™i odebrÃ¡nÃ­ aktivnÃ­ho prvku se stÃ¡vÃ¡ aktivnÃ­m prvkem vrchnÃ­ prvek
+        zÃ¡sobnÃ­ku.
         
         """
         item = self.top()
@@ -510,8 +510,8 @@ class XStack(Stack):
 
         If 'item' is currently the active element, 
 
-        Pokud byl vyjmutı prvek aktivním prvkem, je aktivován následující prvek
-        (pokud neexistuje, tak pøedcházející).
+        Pokud byl vyjmutÃ½ prvek aktivnÃ­m prvkem, je aktivovÃ¡n nÃ¡sledujÃ­cÃ­ prvek
+        (pokud neexistuje, tak pÅ™edchÃ¡zejÃ­cÃ­).
         
         """
         if item is self.top():
@@ -524,24 +524,24 @@ class XStack(Stack):
             self.activate(to_activate)
 
     def items(self):
-        """Vra» seznam v¹ech prvkù jako tuple.
+        """VraÅ¥ seznam vÅ¡ech prvkÅ¯ jako tuple.
 
-        Prvek ``top'' je poslední.
+        Prvek ``top'' je poslednÃ­.
 
         """
         return tuple(self._list)
 
     def mru(self):
-        """Vra» seznam prvkù seøazenı podle poslední aktivace.
+        """VraÅ¥ seznam prvkÅ¯ seÅ™azenÃ½ podle poslednÃ­ aktivace.
 
-        Aktivní prvek je první, za ním následuje prvek, kterı byl aktivní pøed
-        tím, ne¾ se aktivní prvek stal aktivním, atd.
+        AktivnÃ­ prvek je prvnÃ­, za nÃ­m nÃ¡sleduje prvek, kterÃ½ byl aktivnÃ­ pÅ™ed
+        tÃ­m, neÅ¾ se aktivnÃ­ prvek stal aktivnÃ­m, atd.
         
         """
         return tuple(self._mru)
 
     def activate(self, item):
-        """Aktivuj danı prvek."""
+        """Aktivuj danÃ½ prvek."""
         assert item in self._list or item is None and self.empty()
         self._active = item
         if item is not None:
@@ -550,7 +550,7 @@ class XStack(Stack):
             self._mru.insert(0, item)            
         
     def active(self):
-        """Vra» právì aktivní prvek"""
+        """VraÅ¥ prÃ¡vÄ› aktivnÃ­ prvek"""
         assert self._active in self._list or \
                self._active is None and self.empty()
         return self._active
@@ -697,32 +697,32 @@ class object_2_5(object):
 ### Funkce
 
 def identity(x):
-    """Vra» 'x'."""
+    """VraÅ¥ 'x'."""
     return x
 
 
 def is_(x, y):
-    """Vra» pravdu, právì kdy¾ je 'x' identické s 'y' ve smyslu operátoru 'is'.
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ je 'x' identickÃ© sÂ 'y' ve smyslu operÃ¡toru 'is'.
 
-    'x' a 'y' mohou bıt libovolné objekty.
+    'x' a 'y' mohou bÃ½t libovolnÃ© objekty.
 
     """
     return x is y
 
 def xor(x, y):
-    """Vra» pravdivostní hodnotu exkluzivního OR vırazù 'x' a 'y'."""
+    """VraÅ¥ pravdivostnÃ­ hodnotu exkluzivnÃ­ho OR vÃ½razÅ¯ 'x' a 'y'."""
     return (x and not y) or (not x and y)
 
 
 def some(predicate, *sequences):
-    """Vra» pravdu, právì kdy¾ nìjakı prvek 'sequences' splòuje 'predicate'.
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ nÄ›jakÃ½ prvek 'sequences' splÅˆuje 'predicate'.
 
     Argumenty:
 
-      predicate -- funkce s poètem argumentù rovnım poètu prvkù 'sequences'
-        vracející pravdu nebo nepravdu
-      sequences -- sekvence vzájemnì stejnì dlouhıch sekvencí, jejich¾
-        zazipováním vzniknou sekvence argumentù pro volání funkce 'predicate'
+      predicate -- funkce sÂ poÄtem argumentÅ¯ rovnÃ½m poÄtu prvkÅ¯ 'sequences'
+        vracejÃ­cÃ­ pravdu nebo nepravdu
+      sequences -- sekvence vzÃ¡jemnÄ› stejnÄ› dlouhÃ½ch sekvencÃ­, jejichÅ¾
+        zazipovÃ¡nÃ­m vzniknou sekvence argumentÅ¯ pro volÃ¡nÃ­ funkce 'predicate'
 
     """
     for elt in zip(*sequences):
@@ -733,10 +733,10 @@ def some(predicate, *sequences):
 
         
 def xtuple(x):
-    """Vra» 'x' jako tuple.
+    """VraÅ¥ 'x' jako tuple.
 
-    Je-li 'x' sekvence, vra» tuple, jeho¾ prvky se shodují s prvky 'x'.  Jinak
-    vra» tuple, jeho¾ jedinım prvkem je 'x'.
+    Je-li 'x' sekvence, vraÅ¥ tuple, jehoÅ¾ prvky se shodujÃ­ sÂ prvky 'x'.  Jinak
+    vraÅ¥ tuple, jehoÅ¾ jedinÃ½m prvkem je 'x'.
     
     """
     if is_sequence(x):
@@ -746,10 +746,10 @@ def xtuple(x):
 
 
 def xlist(x):
-    """Vra» 'x' jako list.
+    """VraÅ¥ 'x' jako list.
 
-    Je-li 'x' sekvence, vra» list, jeho¾ prvky se shodují s prvky 'x'.  Jinak
-    vra» list, jeho¾ jedinım prvkem je 'x'.
+    Je-li 'x' sekvence, vraÅ¥ list, jehoÅ¾ prvky se shodujÃ­ sÂ prvky 'x'.  Jinak
+    vraÅ¥ list, jehoÅ¾ jedinÃ½m prvkem je 'x'.
     
     """
     if is_sequence(x):
@@ -759,18 +759,18 @@ def xlist(x):
 
 
 def safedel(object, element):
-    """Aplikuj operátor 'del' na 'element' of 'object' bez signalizace chyby.
+    """Aplikuj operÃ¡tor 'del' na 'element' of 'object' bez signalizace chyby.
 
-    Provádí pøíkaz 'del object[element]', av¹ak odchytává pøípadnou vıjimku
-    'KeyError', resp. 'IndexError', místo ní nedìlá nic.
+    ProvÃ¡dÃ­ pÅ™Ã­kaz 'del object[element]', avÅ¡ak odchytÃ¡vÃ¡ pÅ™Ã­padnou vÃ½jimku
+    'KeyError', resp. 'IndexError', mÃ­sto nÃ­ nedÄ›lÃ¡ nic.
     
     Argumenty:
 
-      object -- dictionary nebo list, ze kterého má bıt odstranìn 'element'
-      element -- pro 'object' dictionary libovolnı objekt, kterı je klíèem
-        'object'; pro 'object' list libovolnı nezápornı integer
+      object -- dictionary nebo list, ze kterÃ©ho mÃ¡ bÃ½t odstranÄ›n 'element'
+      element -- pro 'object' dictionary libovolnÃ½ objekt, kterÃ½ je klÃ­Äem
+        'object'; pro 'object' list libovolnÃ½ nezÃ¡pornÃ½ integer
 
-    Vrací: 'object'.
+    VracÃ­: 'object'.
 
     """
     if isinstance(object, dict):
@@ -787,12 +787,12 @@ def safedel(object, element):
         
     
 def position(element, sequence, key=identity):
-    """Vra» pozici 'element' v 'sequence'.
+    """VraÅ¥ pozici 'element' vÂ 'sequence'.
 
-    Pokud se 'element' v 'sequence' nenachází, vra» 'None'.
+    Pokud se 'element' vÂ 'sequence' nenachÃ¡zÃ­, vraÅ¥ 'None'.
     
-    Porovnání prvkù je provádìno operátorem '=='.  Hodnoty prvkù 'sequence'
-    jsou získávány funkcí 'key', která musí jako svùj jedinı argument pøijímat
+    PorovnÃ¡nÃ­ prvkÅ¯ je provÃ¡dÄ›no operÃ¡torem '=='.  Hodnoty prvkÅ¯ 'sequence'
+    jsou zÃ­skÃ¡vÃ¡ny funkcÃ­ 'key', kterÃ¡ musÃ­ jako svÅ¯j jedinÃ½ argument pÅ™ijÃ­mat
     prvky 'sequence'.
 
     """
@@ -809,17 +809,17 @@ else:
     _eq = (lambda x, y: x == y)
 
 def find(element, sequence, key=identity, test=_eq):
-    """Vra» nejlevìj¹í prvek 'sequence' rovnající se 'element'.
+    """VraÅ¥ nejlevÄ›jÅ¡Ã­ prvek 'sequence' rovnajÃ­cÃ­ se 'element'.
     
-    Pokud se 'element' v 'sequence' nenachází, vra» 'None'.
+    Pokud se 'element' vÂ 'sequence' nenachÃ¡zÃ­, vraÅ¥ 'None'.
 
     Argumenty:
 
-      key -- funkce jednoho argumentu, kterım je prvek 'sequence', vracející
-        hodnotu pro porovnání s 'element'
-      test -- funkce dvou argumentù, z nich¾ první je 'element' a druhı prvek
-        'sequence' po aplikaci 'key'.  Je-li zadáno, provádí se porovnání touto
-        funkcí, jinak se porovnání provádí operátorem '=='.
+      key -- funkce jednoho argumentu, kterÃ½m je prvek 'sequence', vracejÃ­cÃ­
+        hodnotu pro porovnÃ¡nÃ­ sÂ 'element'
+      test -- funkce dvou argumentÅ¯, zÂ nichÅ¾ prvnÃ­ je 'element' a druhÃ½ prvek
+        'sequence' po aplikaci 'key'.  Je-li zadÃ¡no, provÃ¡dÃ­ se porovnÃ¡nÃ­ touto
+        funkcÃ­, jinak se porovnÃ¡nÃ­ provÃ¡dÃ­ operÃ¡torem '=='.
 
     """
     for elt in sequence:
@@ -830,39 +830,39 @@ def find(element, sequence, key=identity, test=_eq):
 
 
 def assoc(item, alist):
-    """Vra» nejlevìj¹í prvek z 'alist', jeho¾ první prvek se rovná 'item'.
+    """VraÅ¥ nejlevÄ›jÅ¡Ã­ prvek zÂ 'alist', jehoÅ¾ prvnÃ­ prvek se rovnÃ¡ 'item'.
 
-    Pokud takovı prvek neexistuje, vra» 'None'.  Porovnání se provádí
-    operátorem '='.
+    Pokud takovÃ½ prvek neexistuje, vraÅ¥ 'None'.  PorovnÃ¡nÃ­ se provÃ¡dÃ­
+    operÃ¡torem '='.
     
-    'alist' musí bıt sekvence neprázdnıch sekvencí.
+    'alist' musÃ­ bÃ½t sekvence neprÃ¡zdnÃ½ch sekvencÃ­.
 
     """
     return find(item, alist, key=(lambda x: x[0]))
 
 
 def rassoc(item, alist):
-    """Vra» nejlevìj¹í prvek z 'alist', jeho¾ druhı prvek se rovná 'item'.
+    """VraÅ¥ nejlevÄ›jÅ¡Ã­ prvek zÂ 'alist', jehoÅ¾ druhÃ½ prvek se rovnÃ¡ 'item'.
 
-    Pokud takovı prvek neexistuje, vra» 'None'.  Porovnání se provádí
-    operátorem '='.
+    Pokud takovÃ½ prvek neexistuje, vraÅ¥ 'None'.  PorovnÃ¡nÃ­ se provÃ¡dÃ­
+    operÃ¡torem '='.
     
-    'alist' musí bıt sekvence dvouprvkovıch sekvencí.
+    'alist' musÃ­ bÃ½t sekvence dvouprvkovÃ½ch sekvencÃ­.
 
     """
     return find(item, alist, key=(lambda x: x[1]))
 
 
 def remove_duplicates(list, keep_order=False):
-    """Vra» prvky 'list', av¹ak bez jejich násobnıch vıskytù.
+    """VraÅ¥ prvky 'list', avÅ¡ak bez jejich nÃ¡sobnÃ½ch vÃ½skytÅ¯.
 
-    Násobnost se testuje porovnáním prvkù pomocí operátoru '='.
+    NÃ¡sobnost se testuje porovnÃ¡nÃ­m prvkÅ¯ pomocÃ­ operÃ¡toru '='.
     
     Argumenty:
 
-      keep_order -- pøi vıchozí hodnotì funkce nezachovává poøadí prvkù, ale
-        algoritmus je optimalizován.  Pokud potøebujeme poøadí zachovat, musíme
-        oèekávat vy¹¹í nároènost algoritmu.
+      keep_order -- pÅ™i vÃ½chozÃ­ hodnotÄ› funkce nezachovÃ¡vÃ¡ poÅ™adÃ­ prvkÅ¯, ale
+        algoritmus je optimalizovÃ¡n.  Pokud potÅ™ebujeme poÅ™adÃ­ zachovat, musÃ­me
+        oÄekÃ¡vat vyÅ¡Å¡Ã­ nÃ¡roÄnost algoritmu.
 
     """
     if not list:
@@ -886,14 +886,14 @@ def remove_duplicates(list, keep_order=False):
 
 
 def flatten(list):
-    """Vra» 'list' bez vnoøenıch sekvencí.
+    """VraÅ¥ 'list' bez vnoÅ™enÃ½ch sekvencÃ­.
 
     Argumenty:
 
-      list -- libovolná sekvence
+      list -- libovolnÃ¡ sekvence
 
-    Vrací: Sekvenci tvoøenou prvky sekvence 'list', pøièem¾ ka¾dı prvek, kterı
-      je sám sekvencí, je ve vrácené sekvenci rekurzivnì nahrazen svımi prvky.
+    VracÃ­: Sekvenci tvoÅ™enou prvky sekvence 'list', pÅ™iÄemÅ¾ kaÅ¾dÃ½ prvek, kterÃ½
+      je sÃ¡m sekvencÃ­, je ve vrÃ¡cenÃ© sekvenci rekurzivnÄ› nahrazen svÃ½mi prvky.
 
     """
     result = []
@@ -905,13 +905,13 @@ def flatten(list):
 
 
 def nreverse(list):
-    """Vra» prvky 'list' v opaèném poøadí.
+    """VraÅ¥ prvky 'list' vÂ opaÄnÃ©m poÅ™adÃ­.
 
     Argumenty:
 
-      list -- libovolnı list
+      list -- libovolnÃ½ list
 
-    Funkce je destruktivní, tj. hodnota 'list' je v ní zmìnìna.
+    Funkce je destruktivnÃ­, tj. hodnota 'list' je vÂ nÃ­ zmÄ›nÄ›na.
 
     """
     list.reverse()
@@ -919,7 +919,7 @@ def nreverse(list):
 
 
 def starts_with(string, prefix):
-    """Vra» pravdu, právì kdy¾ 'string' zaèíná 'prefix'.
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'string' zaÄÃ­nÃ¡ 'prefix'.
 
     Argumenty:
 
@@ -931,7 +931,7 @@ def starts_with(string, prefix):
 
 
 def super_(class_):
-    """Vra» prvního pøedka tøídy 'class_'."""
+    """VraÅ¥ prvnÃ­ho pÅ™edka tÅ™Ã­dy 'class_'."""
     return class_.__bases__[0]
 
 
@@ -951,13 +951,13 @@ def _mro(class_):
 
 
 def next_subclass(class_, instance):
-    """Vra» potomka následujícího 'class_' v hierarchii dìdiènosti 'instance'.
+    """VraÅ¥ potomka nÃ¡sledujÃ­cÃ­ho 'class_' vÂ hierarchii dÄ›diÄnosti 'instance'.
 
-    Pokud má tøída 'instance' atribut '__mro__', je pou¾it tento.  V opaèném
-    pøípadì je tento atribut tøídy vytvoøen prohledáváním pøedkù 'instance' do
-    hloubky.  'instance' musí bıt instancí 'class_'.
+    Pokud mÃ¡ tÅ™Ã­da 'instance' atribut '__mro__', je pouÅ¾it tento.  VÂ opaÄnÃ©m
+    pÅ™Ã­padÄ› je tento atribut tÅ™Ã­dy vytvoÅ™en prohledÃ¡vÃ¡nÃ­m pÅ™edkÅ¯ 'instance' do
+    hloubky.  'instance' musÃ­ bÃ½t instancÃ­ 'class_'.
 
-    Vrací: Odpovídající tøídu; pokud taková není tak 'None'.
+    VracÃ­: OdpovÃ­dajÃ­cÃ­ tÅ™Ã­du; pokud takovÃ¡ nenÃ­ tak 'None'.
     
     """
     iclass = instance.__class__
@@ -975,11 +975,11 @@ def next_subclass(class_, instance):
 
 
 def sameclass(o1, o2, strict=False):
-    """Vra» pravdu, právì kdy¾ 'o1' a 'o2' jsou instance té¾e tøídy.
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'o1' a 'o2' jsou instance tÃ©Å¾e tÅ™Ã­dy.
 
-    Je-li argument 'strict' pravdivı, musí se rovnat tøídy obou objektù 'o1' a
-    'o2' ve smyslu operátoru '=='.  V opaèném pøípadì postaèí rovnost jmen tøíd
-    a jejich modulù.
+    Je-li argument 'strict' pravdivÃ½, musÃ­ se rovnat tÅ™Ã­dy obou objektÅ¯ 'o1' a
+    'o2' ve smyslu operÃ¡toru '=='.  VÂ opaÄnÃ©m pÅ™Ã­padÄ› postaÄÃ­ rovnost jmen tÅ™Ã­d
+    a jejich modulÅ¯.
 
     """
     try:
@@ -999,15 +999,15 @@ def sameclass(o1, o2, strict=False):
 
 _public_attributes = {}
 def public_attributes(class_):
-    """Vra» tuple v¹ech jmen veøejnıch atributù tøídy 'class_'.
+    """VraÅ¥ tuple vÅ¡ech jmen veÅ™ejnÃ½ch atributÅ¯ tÅ™Ã­dy 'class_'.
 
-    Vrácená jména jsou strings a obsahují i podìdìné atributy.  Nejsou mezi
-    nimi v¹ak ¾ádná jména zaèínající podtr¾ítkem.  Jména atributù jsou ve
-    vrácené sekvenci v poøadí dìdiènosti poèínaje od 'class_'.  Mohou se v nich
+    VrÃ¡cenÃ¡ jmÃ©na jsou strings a obsahujÃ­ iÂ podÄ›dÄ›nÃ© atributy.  Nejsou mezi
+    nimi vÅ¡ak Å¾Ã¡dnÃ¡ jmÃ©na zaÄÃ­najÃ­cÃ­ podtrÅ¾Ã­tkem.  JmÃ©na atributÅ¯ jsou ve
+    vrÃ¡cenÃ© sekvenci vÂ poÅ™adÃ­ dÄ›diÄnosti poÄÃ­naje od 'class_'.  Mohou se vÂ nich
     vyskytovat duplicity.
 
-    Dojde-li od posledního volání této funkce v 'class_' ke zmìnì atributù,
-    tato zmìna nemusí bıt zohlednìna.
+    Dojde-li od poslednÃ­ho volÃ¡nÃ­ tÃ©to funkce vÂ 'class_' ke zmÄ›nÄ› atributÅ¯,
+    tato zmÄ›na nemusÃ­ bÃ½t zohlednÄ›na.
 
     """
     global _public_attributes
@@ -1037,11 +1037,11 @@ def argument_names(callable):
     return tuple(args)
 
 def direct_public_members(obj):
-    """Vra» tuple v¹ech pøímıch veøejnıch atributù a metod tøídy objektu 'obj'.
+    """VraÅ¥ tuple vÅ¡ech pÅ™Ã­mÃ½ch veÅ™ejnÃ½ch atributÅ¯ a metod tÅ™Ã­dy objektu 'obj'.
 
-    Pøímımi èleny tøídy jsou my¹leny ty, které nejsou shodné se stejnojmennım
-    èlenem nìkterého pøedka tøídy.  Veøejnımi èleny tøídy jsou my¹leny ty,
-    jejich¾ název nezaèíná podtr¾ítkem.
+    PÅ™Ã­mÃ½mi Äleny tÅ™Ã­dy jsou myÅ¡leny ty, kterÃ© nejsou shodnÃ© se stejnojmennÃ½m
+    Älenem nÄ›kterÃ©ho pÅ™edka tÅ™Ã­dy.  VeÅ™ejnÃ½mi Äleny tÅ™Ã­dy jsou myÅ¡leny ty,
+    jejichÅ¾ nÃ¡zev nezaÄÃ­nÃ¡ podtrÅ¾Ã­tkem.
 
     """
     if isinstance(obj, (pytypes.ClassType, type,)):
@@ -1060,21 +1060,21 @@ def direct_public_members(obj):
 
 
 def compare_objects(o1, o2):
-    """Porovnej 'o1' a 'o2' a vra» vısledek.
+    """Porovnej 'o1' a 'o2' a vraÅ¥ vÃ½sledek.
 
-    Vısledek odpovídá pravidlùm pro special metodu '__cmp__'.
+    VÃ½sledek odpovÃ­dÃ¡ pravidlÅ¯m pro special metodu '__cmp__'.
 
-    Pro porovnání platí následující pravidla:
+    Pro porovnÃ¡nÃ­ platÃ­ nÃ¡sledujÃ­cÃ­ pravidla:
 
-    - Jestli¾e jsou oba objekty 'None', rovnají se.
+    - JestliÅ¾e jsou oba objekty 'None', rovnajÃ­ se.
 
-    - Jestli¾e jeden z objektù je instance tøídy a druhı není instancí tøídy,
-      instance je vìt¹í.
+    - JestliÅ¾e jeden zÂ objektÅ¯ je instance tÅ™Ã­dy a druhÃ½ nenÃ­ instancÃ­ tÅ™Ã­dy,
+      instance je vÄ›tÅ¡Ã­.
 
-    - Jestli¾e oba objekty jsou instance rùznıch tøíd, vrátí se vısledek
-      porovnání 'id' jejich tøíd.
+    - JestliÅ¾e oba objekty jsou instance rÅ¯znÃ½ch tÅ™Ã­d, vrÃ¡tÃ­ se vÃ½sledek
+      porovnÃ¡nÃ­ 'id' jejich tÅ™Ã­d.
 
-    - Neplatí-li ¾ádná z pøedchozích podmínek, vrátí se vısledek volání
+    - NeplatÃ­-li Å¾Ã¡dnÃ¡ zÂ pÅ™edchozÃ­ch podmÃ­nek, vrÃ¡tÃ­ se vÃ½sledek volÃ¡nÃ­
       'cmp(o1, o2)'.
       
     """
@@ -1104,18 +1104,18 @@ def compare_objects(o1, o2):
 
 
 def compare_attr(self, other, attributes):
-    """Vra» celkovı vısledek porovnání atributù objektù 'self' a 'other'.
+    """VraÅ¥ celkovÃ½ vÃ½sledek porovnÃ¡nÃ­ atributÅ¯ objektÅ¯ 'self' a 'other'.
 
-    Funkce porovnává tøídy objektù 'self' a 'other' a v pøípadì shody pak
-    uvedené atributy.  Návratová hodnota se øídí pravidly pro funkci 'cmp'.
+    Funkce porovnÃ¡vÃ¡ tÅ™Ã­dy objektÅ¯ 'self' a 'other' a vÂ pÅ™Ã­padÄ› shody pak
+    uvedenÃ© atributy.  NÃ¡vratovÃ¡ hodnota se Å™Ã­dÃ­ pravidly pro funkci 'cmp'.
 
     Argumenty:
 
-      self, other -- instance tøíd
-      attributes -- sekvence jmen atributù instancí (strings), které mají bıt
-        porovnávány
+      self, other -- instance tÅ™Ã­d
+      attributes -- sekvence jmen atributÅ¯ instancÃ­ (strings), kterÃ© majÃ­ bÃ½t
+        porovnÃ¡vÃ¡ny
 
-    Funkce je typicky urèena k pou¾ití v metodì '__cmp__'.
+    Funkce je typicky urÄena kÂ pouÅ¾itÃ­ vÂ metodÄ› '__cmp__'.
 
     """
     if sameclass(self, other):
@@ -1134,16 +1134,16 @@ def compare_attr(self, other, attributes):
 
 
 def hash_attr(self, attributes):
-    """Vra» hash-kód instance 'self'.
+    """VraÅ¥ hash-kÃ³d instance 'self'.
 
-    Kód je vytváøen dle hodnot 'attributes' instance, v souladu s pythonovımi
-    pravidly pro hash kód.
+    KÃ³d je vytvÃ¡Å™en dle hodnot 'attributes' instance, vÂ souladu sÂ pythonovÃ½mi
+    pravidly pro hash kÃ³d.
 
     Argumenty:
 
-      self -- instance tøídy, pro ní¾ má bıt hash kód vytvoøen
-      attributes -- sekvence jmen atributù (strings), jejich¾ hodnoty mají bıt
-        pøi vytváøení kódu uva¾ovány
+      self -- instance tÅ™Ã­dy, pro nÃ­Å¾ mÃ¡ bÃ½t hash kÃ³d vytvoÅ™en
+      attributes -- sekvence jmen atributÅ¯ (strings), jejichÅ¾ hodnoty majÃ­ bÃ½t
+        pÅ™i vytvÃ¡Å™enÃ­ kÃ³du uvaÅ¾ovÃ¡ny
     
     """
     dict = self.__dict__
@@ -1155,42 +1155,42 @@ def hash_attr(self, attributes):
 
 
 def is_sequence(x):
-    """Vra» pravdu, právì kdy¾ 'x' je list nebo tuple."""
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'x' je list nebo tuple."""
     t = type(x)
     return t == pytypes.TupleType or t == pytypes.ListType
 
 
 def is_dictionary(x):
-    """Vra» pravdu, právì kdy¾ 'x' je dictionary."""
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'x' je dictionary."""
     return type(x) == pytypes.DictionaryType
 
 def is_string(x):
-    """Vra» pravdu, právì kdy¾ 'x' je bì¾nı øetìzec."""
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'x' je bÄ›Å¾nÃ½ Å™etÄ›zec."""
     return isinstance(x, pytypes.StringType)
 
 def is_unicode(x):
-    """Vra» pravdu, právì kdy¾ 'x' je unicode øetìzec."""
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'x' je unicode Å™etÄ›zec."""
     return isinstance(x, pytypes.UnicodeType)
 
 def is_anystring(x):
-    """Vra» pravdu, právì kdy¾ 'x' je unicode øetìzec nebo bì¾nı øetìzec."""
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ 'x' je unicode Å™etÄ›zec nebo bÄ›Å¾nÃ½ Å™etÄ›zec."""
     return isinstance(x, pytypes.StringTypes)
 
 def ecase(value, *settings):
-    """Vra» hodnotu ze 'settings' odpovídající 'value'.
+    """VraÅ¥ hodnotu ze 'settings' odpovÃ­dajÃ­cÃ­ 'value'.
 
-    Pokud 'value' není v 'settings' obsa¾eno, vyvolej vıjimku 'ProgramError'.
-    Je-li v 'settings' 'value' obsa¾eno vícekrát, je uva¾ován první vıskyt.
+    Pokud 'value' nenÃ­ vÂ 'settings' obsaÅ¾eno, vyvolej vÃ½jimku 'ProgramError'.
+    Je-li vÂ 'settings' 'value' obsaÅ¾eno vÃ­cekrÃ¡t, je uvaÅ¾ovÃ¡n prvnÃ­ vÃ½skyt.
     
     Argumenty:
 
-      value -- libovolnı objekt; je porovnáván s prvními prvky prvkù 'settings'
-        operátorem '='
-      settings -- sekvence dvojic (KEY, VALUE), kde KEY odpovídá nìkteré
-        z mo¾nıch hodnot 'value' a VALUE je hodnota, kterou má funkce vrátit
-        v pøípadì shody KEY a 'value' vrátit
+      value -- libovolnÃ½ objekt; je porovnÃ¡vÃ¡n sÂ prvnÃ­mi prvky prvkÅ¯ 'settings'
+        operÃ¡torem '='
+      settings -- sekvence dvojic (KEY, VALUE), kde KEY odpovÃ­dÃ¡ nÄ›kterÃ©
+        zÂ moÅ¾nÃ½ch hodnot 'value' a VALUE je hodnota, kterou mÃ¡ funkce vrÃ¡tit
+        vÂ pÅ™Ã­padÄ› shody KEY a 'value' vrÃ¡tit
 
-    Vrací: VALUE z dvojice ze 'settings', její¾ KEY odpovídá 'value'.
+    VracÃ­: VALUE zÂ dvojice ze 'settings', jejÃ­Å¾ KEY odpovÃ­dÃ¡ 'value'.
 
     """
     s = assoc(value, settings)
@@ -1266,15 +1266,15 @@ def with_locks(locks, function):
 
     
 class _Throw(Exception):
-    """Vıjimka pro nelokální pøechody."""
+    """VÃ½jimka pro nelokÃ¡lnÃ­ pÅ™echody."""
     
     def __init__(self, tag, value):
         """Inicializuj instanci.
 
         Argumenty:
 
-          tag -- string identifikující pøechod
-          value -- návratová hodnota pøechodu, libovolnı objekt
+          tag -- string identifikujÃ­cÃ­ pÅ™echod
+          value -- nÃ¡vratovÃ¡ hodnota pÅ™echodu, libovolnÃ½ objekt
 
         """
         Exception.__init__(self)
@@ -1282,29 +1282,29 @@ class _Throw(Exception):
         self._value = value
 
     def tag(self):
-        """Vra» tag zadané v konstruktoru."""
+        """VraÅ¥ tag zadanÃ© vÂ konstruktoru."""
         return self._tag
 
     def value(self):
-        """Vra» hodnotu 'value' zadanou v konstruktoru."""
+        """VraÅ¥ hodnotu 'value' zadanou vÂ konstruktoru."""
         return self._value
 
 def catch(tag, function, *args, **kwargs):
-    """Volej 'function' s o¹etøením nelokálního pøechodu.
+    """Volej 'function' sÂ oÅ¡etÅ™enÃ­m nelokÃ¡lnÃ­ho pÅ™echodu.
 
     Argumenty:
 
-      tag -- string identifikující pøechod
-      function -- funkce, která má bıt zavolána
+      tag -- string identifikujÃ­cÃ­ pÅ™echod
+      function -- funkce, kterÃ¡ mÃ¡ bÃ½t zavolÃ¡na
       args -- argumenty 'function'
-      kwargs -- klíèované argumenty 'function'
+      kwargs -- klÃ­ÄovanÃ© argumenty 'function'
 
-    Jsou o¹etøeny pouze pøechody s tagem 'tag', ostatní odchyceny nejsou.
+    Jsou oÅ¡etÅ™eny pouze pÅ™echody sÂ tagem 'tag', ostatnÃ­ odchyceny nejsou.
     
-    Vrací: Nedo¹lo-li k pøechodu, je vrácena návratová hodnota 'function'.
-    Do¹lo-li k pøechodu, je vrácena hodnota z pøechodu pøedaná funkci 'throw_'.
+    VracÃ­: NedoÅ¡lo-li kÂ pÅ™echodu, je vrÃ¡cena nÃ¡vratovÃ¡ hodnota 'function'.
+    DoÅ¡lo-li kÂ pÅ™echodu, je vrÃ¡cena hodnota zÂ pÅ™echodu pÅ™edanÃ¡ funkci 'throw_'.
 
-    Viz té¾ funkce 'throw_'.
+    Viz tÃ©Å¾ funkce 'throw_'.
       
     """
     try:
@@ -1317,25 +1317,25 @@ def catch(tag, function, *args, **kwargs):
     return result
     
 def throw(tag, value=None):
-    """Vyvolej nelokální pøechod identifikovanı 'tag'.
+    """Vyvolej nelokÃ¡lnÃ­ pÅ™echod identifikovanÃ½ 'tag'.
 
     Argumenty:
 
-      tag -- string identifikující pøechod
-      value -- návratová hodnota pøechodu, libovolnı objekt
+      tag -- string identifikujÃ­cÃ­ pÅ™echod
+      value -- nÃ¡vratovÃ¡ hodnota pÅ™echodu, libovolnÃ½ objekt
 
-    Viz té¾ funkce 'catch'.
+    Viz tÃ©Å¾ funkce 'catch'.
 
     """
     raise _Throw(tag, value)
 
 
 def copy_stream(input, output, close=False, in_thread=False, _catch=False):
-    """Zkopíruj data ze streamu 'input' do streamu 'output'.
+    """ZkopÃ­ruj data ze streamu 'input' do streamu 'output'.
 
-    Poèáteèní pozice ve streamech nejsou nijak nastavovány, to je starostí
-    volajícího.  Je-li argument 'close' pravdivı, je stream 'output' po
-    ukonèení kopírování uzavøen; v opaèném pøípadì není uzavøen ¾ádnı stream.
+    PoÄÃ¡teÄnÃ­ pozice ve streamech nejsou nijak nastavovÃ¡ny, to je starostÃ­
+    volajÃ­cÃ­ho.  Je-li argument 'close' pravdivÃ½, je stream 'output' po
+    ukonÄenÃ­ kopÃ­rovÃ¡nÃ­ uzavÅ™en; vÂ opaÄnÃ©m pÅ™Ã­padÄ› nenÃ­ uzavÅ™en Å¾Ã¡dnÃ½ stream.
 
     """
     if in_thread:
@@ -1347,7 +1347,7 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
             DEBUG = pytis.util.DEBUG
             log = pytis.util.log
             if __debug__:
-                log(DEBUG, 'Kopíruji stream:', (input, output))
+                log(DEBUG, 'KopÃ­ruji stream:', (input, output))
             while True:
                 data = input.read(4096)
                 if not data:
@@ -1359,7 +1359,7 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
                     pass
                 safe_encoding_write(output, data)
             if __debug__:
-                log(DEBUG, 'Stream zkopírován:', (input, output))
+                log(DEBUG, 'Stream zkopÃ­rovÃ¡n:', (input, output))
         except:
             if not _catch:
                 raise
@@ -1372,15 +1372,15 @@ def copy_stream(input, output, close=False, in_thread=False, _catch=False):
 
 
 def dev_null_stream(mode):
-    """Vra» bezdatovı stream.
+    """VraÅ¥ bezdatovÃ½ stream.
 
-    Vrácenı stream je plnohodnotné file object a funguje jako zaøízení
-    '/dev/null' -- neposkytuje ¾ádná data a v¹echna pøijatá data zahazuje.
+    VrÃ¡cenÃ½ stream je plnohodnotnÃ© file object a funguje jako zaÅ™Ã­zenÃ­
+    '/dev/null' -- neposkytuje Å¾Ã¡dnÃ¡ data a vÅ¡echna pÅ™ijatÃ¡ data zahazuje.
 
     Argumenty:
 
-      mode -- jeden ze stringù 'r' (nech» je vrácenı stream otevøen pro ètení)
-        nebo 'w' (nech» je vrácenı stream otevøen pro zápis)
+      mode -- jeden ze stringÅ¯ 'r' (nechÅ¥ je vrÃ¡cenÃ½ stream otevÅ™en pro ÄtenÃ­)
+        nebo 'w' (nechÅ¥ je vrÃ¡cenÃ½ stream otevÅ™en pro zÃ¡pis)
 
     """
     assert mode in ('r', 'w')
@@ -1389,17 +1389,17 @@ def dev_null_stream(mode):
 
 _mktempdir_counter = None
 def mktempdir(prefix='pytis'):
-    """Vytvoø podadresáø v adresáøi pro doèasné soubory.
+    """VytvoÅ™ podadresÃ¡Å™ vÂ adresÃ¡Å™i pro doÄasnÃ© soubory.
 
-    Adresáø pro doèasné soubory je dán konfigurací.  Jméno podadresáøe se
-    skládá ze zadaného 'prefix', kterım musí bıt string, a generované pøípony.
+    AdresÃ¡Å™ pro doÄasnÃ© soubory je dÃ¡n konfiguracÃ­.  JmÃ©no podadresÃ¡Å™e se
+    sklÃ¡dÃ¡ ze zadanÃ©ho 'prefix', kterÃ½m musÃ­ bÃ½t string, aÂ generovanÃ© pÅ™Ã­pony.
 
-    Podadresáø je vytvoøen s pøístupovımi právy 0700.  Není-li mo¾né adresáø
-    z nìjakého dùvodu vytvoøit, je vyvolána vıjimka 'FileError'.
+    PodadresÃ¡Å™ je vytvoÅ™en sÂ pÅ™Ã­stupovÃ½mi prÃ¡vy 0700.  NenÃ­-li moÅ¾nÃ© adresÃ¡Å™
+    zÂ nÄ›jakÃ©ho dÅ¯vodu vytvoÅ™it, je vyvolÃ¡na vÃ½jimka 'FileError'.
     
-    Vrací: Jméno vytvoøeného adresáøe vèetnì kompletní cesty.  ®ádná dvì volání
-    této funkce nevrátí stejné jméno; to v¹ak neplatí v pøípadì pou¾ití
-    threads, proto¾e funkce není thread-safe.
+    VracÃ­: JmÃ©no vytvoÅ™enÃ©ho adresÃ¡Å™e vÄetnÄ› kompletnÃ­ cesty.  Å½Ã¡dnÃ¡ dvÄ› volÃ¡nÃ­
+    tÃ©to funkce nevrÃ¡tÃ­ stejnÃ© jmÃ©no; to vÅ¡ak neplatÃ­ vÂ pÅ™Ã­padÄ› pouÅ¾itÃ­
+    threads, protoÅ¾e funkce nenÃ­ thread-safe.
     
     """
     import config
@@ -1426,7 +1426,7 @@ def mktempdir(prefix='pytis'):
 
 
 def in_x():
-    """Vra» pravdu, právì kdy¾ je k dispozici prostøedí X Window."""
+    """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ je kÂ dispozici prostÅ™edÃ­ XÂ Window."""
     return os.getenv('DISPLAY')
 
 
@@ -1453,25 +1453,25 @@ def camel_case_to_lower(string, separator='-'):
 
 
 
-# Rùzné
+# RÅ¯znÃ©
 
 
 UNDEFINED = object()
-"""Objekt reprezentující nedefinovanou hodnotu.
+"""Objekt reprezentujÃ­cÃ­ nedefinovanou hodnotu.
 
-Typicky se pou¾ívá jako implicitní hodnota volitelnıch argumentù, aby nebylo
-nutno provádìt jejich definici a zkoumání prostøednictvím **kwargs.
+Typicky se pouÅ¾Ã­vÃ¡ jako implicitnÃ­ hodnota volitelnÃ½ch argumentÅ¯, aby nebylo
+nutno provÃ¡dÄ›t jejich definici a zkoumÃ¡nÃ­ prostÅ™ednictvÃ­m **kwargs.
 
 """
 
 
-# Funkce pro ladìní
+# Funkce pro ladÄ›nÃ­
 
 
 def debugger():
-    """Vyvolej interaktivní debugger.
+    """Vyvolej interaktivnÃ­ debugger.
 
-    U¾iteèné pouze pro ladìní.
+    UÅ¾iteÄnÃ© pouze pro ladÄ›nÃ­.
 
     """
     import pdb
@@ -1480,9 +1480,9 @@ def debugger():
 
 _mem_info = None
 def mem_info():
-    """Vypi¹ na standardní chybovı vıstup informaci o pamìti.
+    """VypiÅ¡ na standardnÃ­ chybovÃ½ vÃ½stup informaci oÂ pamÄ›ti.
 
-    U¾iteèné pouze pro ladìní.
+    UÅ¾iteÄnÃ© pouze pro ladÄ›nÃ­.
 
     """
     global _mem_info
@@ -1525,9 +1525,9 @@ def ipython():
 
 
 def deepstr(obj):
-    """Vra» stringovou podobu 'obj'.
+    """VraÅ¥ stringovou podobu 'obj'.
 
-    Je-li 'obj' sekvence, aplikuj se rekurzivnì na její prvky.
+    Je-li 'obj' sekvence, aplikuj se rekurzivnÄ› na jejÃ­ prvky.
 
     """
     if is_sequence(obj):
@@ -1551,7 +1551,7 @@ def deepstr(obj):
 
 
 def format_traceback():
-    """Vra» zformátovanı traceback aktuální vıjimky, jako string."""
+    """VraÅ¥ zformÃ¡tovanÃ½ traceback aktuÃ¡lnÃ­ vÃ½jimky, jako string."""
     import traceback
     einfo = __, einstance, tb = sys.exc_info()
     tblist = traceback.format_exception(*einfo)
@@ -1560,22 +1560,22 @@ def format_traceback():
 
     
 def exception_info(einfo=None):
-    """Vra» podrobnı vıpis informací o aktuální vıjimce, jako string.
+    """VraÅ¥ podrobnÃ½ vÃ½pis informacÃ­ oÂ aktuÃ¡lnÃ­ vÃ½jimce, jako string.
 
-    Tento vıpis je zalo¾en na funkcích modulu 'cgitb', av¹ak místo HTML vrací
-    obyèejnı textovı string.
+    Tento vÃ½pis je zaloÅ¾en na funkcÃ­ch modulu 'cgitb', avÅ¡ak mÃ­sto HTML vracÃ­
+    obyÄejnÃ½ textovÃ½ string.
 
     Argumenty:
 
-      einfo -- informace o vıjimce ve tvaru vraceném funkcí 'sys.exc_info()',
-        nebo 'None' (v kterém¾to pøípadì je tato informace získána automaticky)
+      einfo -- informace oÂ vÃ½jimce ve tvaru vracenÃ©m funkcÃ­ 'sys.exc_info()',
+        nebo 'None' (vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je tato informace zÃ­skÃ¡na automaticky)
 
     """
     # Inicializace
     etype, evalue, etb = einfo or sys.exc_info()
     context = 5
     import os, types, time, traceback, linecache, inspect
-    # Sestavení hlavièky
+    # SestavenÃ­ hlaviÄky
     if type(etype) is types.ClassType:
         etype = etype.__name__
     date = time.ctime(time.time())
@@ -1640,13 +1640,13 @@ def exception_info(einfo=None):
 
 
 def stack_info(depth=None):
-    """Vra» obsah zásobníku volání, jako string.
+    """VraÅ¥ obsah zÃ¡sobnÃ­ku volÃ¡nÃ­, jako string.
 
-    String je zformátovanı podobnì jako Pythonovı traceback.  Poslední volání
-    je na konci.  Argument 'depth' mù¾e omezit hloubku jen na urèitı poèet
+    String je zformÃ¡tovanÃ½ podobnÄ› jako PythonovÃ½ traceback.  PoslednÃ­ volÃ¡nÃ­
+    je na konci.  Argument 'depth' mÅ¯Å¾e omezit hloubku jen na urÄitÃ½ poÄet
     frames.
 
-    Funkce je typicky urèena k ladìní.
+    Funkce je typicky urÄena k ladÄ›nÃ­.
     
     """
     stack = inspect.stack()[1:]

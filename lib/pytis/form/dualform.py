@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,11 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Duální formuláøe.
+"""DuÃ¡lnÃ­ formulÃ¡Å™e.
 
-Duální formuláøe rozdìlují okno na dvì èásti, z nich¾ ka¾dá obsahuje jeden
-jednoduchı formuláø, pøièem¾ data horního a dolního formuláøe jsou nìjakım
-zpùsobem závislá.  Blí¾e viz dokumentace jednotlivıch tøíd.
+DuÃ¡lnÃ­ formulÃ¡Å™e rozdÄ›lujÃ­ okno na dvÄ› ÄÃ¡sti, z nichÅ¾ kaÅ¾dÃ¡ obsahuje jeden
+jednoduchÃ½ formulÃ¡Å™, pÅ™iÄemÅ¾ data hornÃ­ho a dolnÃ­ho formulÃ¡Å™e jsou nÄ›jakÃ½m
+zpÅ¯sobem zÃ¡vislÃ¡.  BlÃ­Å¾e viz dokumentace jednotlivÃ½ch tÅ™Ã­d.
 
 """
 
@@ -47,42 +47,42 @@ class DualFormProfile(FormProfile):
 
 
 class DualForm(Form, Refreshable):
-    """Formuláø slo¾enı ze dvou spolupracujících formuláøù.
+    """FormulÃ¡Å™ sloÅ¾enÃ½ ze dvou spolupracujÃ­cÃ­ch formulÃ¡Å™Å¯.
 
-    Duální formuláø je rozdìlen na dvì èásti umístìné nad sebou.  V horní èásti
-    je hlavní (øídící) formuláø, v dolní èásti je vedlej¹í (podøízenı)
-    formuláø.  Kromì vzájemné spolupráce jsou formuláøe nezávislé, mají vlastní
-    aktivaèní kategorii a sadu tlaèítek.  Mezi formuláøi lze libovolnì
-    pøecházet.
+    DuÃ¡lnÃ­ formulÃ¡Å™ je rozdÄ›len na dvÄ› ÄÃ¡sti umÃ­stÄ›nÃ© nad sebou.  VÂ hornÃ­ ÄÃ¡sti
+    je hlavnÃ­ (Å™Ã­dÃ­cÃ­) formulÃ¡Å™, vÂ dolnÃ­ ÄÃ¡sti je vedlejÅ¡Ã­ (podÅ™Ã­zenÃ½)
+    formulÃ¡Å™.  KromÄ› vzÃ¡jemnÃ© spoluprÃ¡ce jsou formulÃ¡Å™e nezÃ¡vislÃ©, majÃ­ vlastnÃ­
+    aktivaÄnÃ­ kategorii a sadu tlaÄÃ­tek.  Mezi formulÃ¡Å™i lze libovolnÄ›
+    pÅ™echÃ¡zet.
 
-    Duální formuláø funguje jako celek, nerealizuje obecné dìlení okna aplikace
-    dvì samostatné èásti.  Pokud nìkterı podformuláøú duálního formuláøe vyvolá
-    novı formuláø, kterı má bıt vlo¾en do okna aplikace,  je tento novı
-    formuláø vlo¾en do stejného okna, ve kterém je ulo¾en duální formuláø.
+    DuÃ¡lnÃ­ formulÃ¡Å™ funguje jako celek, nerealizuje obecnÃ© dÄ›lenÃ­ okna aplikace
+    dvÄ› samostatnÃ© ÄÃ¡sti.  Pokud nÄ›kterÃ½ podformulÃ¡Å™Ãº duÃ¡lnÃ­ho formulÃ¡Å™e vyvolÃ¡
+    novÃ½ formulÃ¡Å™, kterÃ½ mÃ¡ bÃ½t vloÅ¾en do okna aplikace,Â  je tento novÃ½
+    formulÃ¡Å™ vloÅ¾en do stejnÃ©ho okna, ve kterÃ©m je uloÅ¾en duÃ¡lnÃ­ formulÃ¡Å™.
 
-    Hlavní a vedlej¹í formuláøe o své pøítomnosti v duálním formuláøi ani o své
-    spolupráci neví.  Duální formuláø je z jejich pohledu zcela transparentní.
+    HlavnÃ­ a vedlejÅ¡Ã­ formulÃ¡Å™e oÂ svÃ© pÅ™Ã­tomnosti vÂ duÃ¡lnÃ­m formulÃ¡Å™i ani oÂ svÃ©
+    spoluprÃ¡ci nevÃ­.  DuÃ¡lnÃ­ formulÃ¡Å™ je zÂ jejich pohledu zcela transparentnÃ­.
 
-    Tato tøída je základem v¹ech konfigurací dvojice formuláøù.  Pøedpokládá se
-    vyu¾ití následujících konfigurací:
+    Tato tÅ™Ã­da je zÃ¡kladem vÅ¡ech konfiguracÃ­ dvojice formulÃ¡Å™Å¯.  PÅ™edpoklÃ¡dÃ¡ se
+    vyuÅ¾itÃ­ nÃ¡sledujÃ­cÃ­ch konfiguracÃ­:
 
-    - Hlavní formuláø je 'BrowseForm', vedlej¹í formuláø je 'EditForm'.
-      Pøíkladem této konfigurace je listování seznamem polo¾ek (hlavní
-      formuláø) s editací aktuálnì vybrané polo¾ky (vedlej¹í formuláø).
+    - HlavnÃ­ formulÃ¡Å™ je 'BrowseForm', vedlejÅ¡Ã­ formulÃ¡Å™ je 'EditForm'.
+      PÅ™Ã­kladem tÃ©to konfigurace je listovÃ¡nÃ­ seznamem poloÅ¾ek (hlavnÃ­
+      formulÃ¡Å™) sÂ editacÃ­ aktuÃ¡lnÄ› vybranÃ© poloÅ¾ky (vedlejÅ¡Ã­ formulÃ¡Å™).
 
-    - Hlavní formuláø je 'EditForm', vedlej¹í formuláø je 'BrowseForm'.
-      Pøíkladem této konfigurace je editace faktury, kde celkové údaje
-      o faktuøe jsou v hlavním formuláøi, zatímco seznam fakturovanıch polo¾ek
-      je ve vedlej¹ím formuláøi.
+    - HlavnÃ­ formulÃ¡Å™ je 'EditForm', vedlejÅ¡Ã­ formulÃ¡Å™ je 'BrowseForm'.
+      PÅ™Ã­kladem tÃ©to konfigurace je editace faktury, kde celkovÃ© Ãºdaje
+      oÂ faktuÅ™e jsou vÂ hlavnÃ­m formulÃ¡Å™i, zatÃ­mco seznam fakturovanÃ½ch poloÅ¾ek
+      je ve vedlejÅ¡Ã­m formulÃ¡Å™i.
 
-    - Oba formuláøe jsou typu 'BrowseForm'.  Pøíkladem této konfigurace je
-      editace seznamu faktur (v hlavním formuláøi) kombinovaná s editací
-      polo¾ek (ve vedlej¹ím formuláøi) aktuálnì vybrané faktury.
+    - Oba formulÃ¡Å™e jsou typu 'BrowseForm'.  PÅ™Ã­kladem tÃ©to konfigurace je
+      editace seznamu faktur (vÂ hlavnÃ­m formulÃ¡Å™i) kombinovanÃ¡ sÂ editacÃ­
+      poloÅ¾ek (ve vedlejÅ¡Ã­m formulÃ¡Å™i) aktuÃ¡lnÄ› vybranÃ© faktury.
 
-    Tyto konkrétní konfigurace jsou realizovány potomky této tøídy.
+    Tyto konkrÃ©tnÃ­ konfigurace jsou realizovÃ¡ny potomky tÃ©to tÅ™Ã­dy.
 
     """
-    DESCR = _("duální formuláø")
+    DESCR = _(u"duÃ¡lnÃ­ formulÃ¡Å™")
 
     @classmethod
     def add_toolbar_ctrl(cls, toolbar, uicmd):
@@ -115,10 +115,10 @@ class DualForm(Form, Refreshable):
             Form.add_toolbar_ctrl(toolbar, uicmd)
     
     def _full_init(self, *args, **kwargs):
-        """Inicializuj duální formuláø.
+        """Inicializuj duÃ¡lnÃ­ formulÃ¡Å™.
 
-        Argumenty jsou stejné jako v pøedkovi, specifikují v¹ak hlavní formuláø
-        duálního formuláøe.
+        Argumenty jsou stejnÃ© jako vÂ pÅ™edkovi, specifikujÃ­ vÅ¡ak hlavnÃ­ formulÃ¡Å™
+        duÃ¡lnÃ­ho formulÃ¡Å™e.
         
         """
         super(DualForm, self)._full_init(*args, **kwargs)
@@ -126,10 +126,10 @@ class DualForm(Form, Refreshable):
         wx_callback(wx.EVT_SIZE, self, self._on_size)
 
     def _init_attributes(self, **kwargs):
-        """Zpracuj klíèové argumenty konstruktoru a inicializuj atributy.
+        """Zpracuj klÃ­ÄovÃ© argumenty konstruktoru a inicializuj atributy.
 
-        V¹echny klíèové argumenty jsou posléze pøedány konstruktoru hlavního
-        formuláøe.
+        VÅ¡echny klÃ­ÄovÃ© argumenty jsou poslÃ©ze pÅ™edÃ¡ny konstruktoru hlavnÃ­ho
+        formulÃ¡Å™e.
         
         """
         super(DualForm, self)._init_attributes()
@@ -147,17 +147,17 @@ class DualForm(Form, Refreshable):
         return self._resolver.get(main, 'binding_spec')[side]
 
     def _create_data_object(self):
-        # Hlavní i vedlej¹í formuláø mají svùj datovı objekt.
+        # HlavnÃ­ i vedlejÅ¡Ã­ formulÃ¡Å™ majÃ­ svÅ¯j datovÃ½ objekt.
         return None
 
     def _create_form(self):
-        # Vytvoø rozdìlené okno
+        # VytvoÅ™ rozdÄ›lenÃ© okno
         self._splitter = splitter = wx.SplitterWindow(self._parent, -1)
         wx_callback(wx.EVT_SPLITTER_DOUBLECLICKED, splitter,
                     splitter.GetId(), lambda e: True)
         wx_callback(wx.EVT_SPLITTER_SASH_POS_CHANGED, splitter,
                     splitter.GetId(), self._on_sash_changed)
-        # Vytvoø formuláøe
+        # VytvoÅ™ formulÃ¡Å™e
         self._main_form = self._create_main_form(splitter, **self._unprocessed_kwargs)
         self._side_form = self._create_side_form(splitter)
         if self._orientation == Orientation.HORIZONTAL:
@@ -206,29 +206,29 @@ class DualForm(Form, Refreshable):
         
 
     def title(self):
-        """Vra» název formuláøe jako øetìzec."""
+        """VraÅ¥ nÃ¡zev formulÃ¡Å™e jako Å™etÄ›zec."""
         return self._view.title() or ' / '.join((self._main_form.title(), self._side_form.title()))
 
     def select_row(self, *args, **kwargs):
         if hasattr(self._main_form, 'select_row'):
             return self._main_form.select_row(*args, **kwargs)
         else:
-            log(EVENT, "Hlavní formuláø nepodporuje metodu `select_row()'!")
+            log(EVENT, "HlavnÃ­ formulÃ¡Å™ nepodporuje metodu `select_row()'!")
         
     def _cmd_other_form(self):
         self._select_form(self._other_form(self._active_form))
 
     def active_form(self):
-        """Vra» aktivní formuláø tohoto duálního formuláøe."""
+        """VraÅ¥ aktivnÃ­ formulÃ¡Å™ tohoto duÃ¡lnÃ­ho formulÃ¡Å™e."""
         return self._active_form
 
     def inactive_form(self):
-        """Vra» neaktivní formuláø tohoto duálního formuláøe."""
+        """VraÅ¥ neaktivnÃ­ formulÃ¡Å™ tohoto duÃ¡lnÃ­ho formulÃ¡Å™e."""
         return self._other_form(self._active_form)
 
     def show(self):
-        # Musíme volat show obou podformuláøù, proto¾e splitter je nevolá a
-        # pøitom v nich mohou bıt inicializaèní èi ukonèovací akce.
+        # MusÃ­me volat show obou podformulÃ¡Å™Å¯, protoÅ¾e splitter je nevolÃ¡ a
+        # pÅ™itom vÂ nich mohou bÃ½t inicializaÄnÃ­ Äi ukonÄovacÃ­ akce.
         self._splitter.Enable(True)
         self._splitter.Show(True)
         self._side_form.show()
@@ -328,7 +328,7 @@ class DualForm(Form, Refreshable):
 
         
 class ImmediateSelectionDualForm(DualForm):
-    """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
+    """DuÃ¡lnÃ­ formulÃ¡Å™ s okamÅ¾itou obnovou vedlejÅ¡Ã­ho formulÃ¡Å™e."""
     
     def _full_init(self, *args, **kwargs):
         self._selection_data = None
@@ -346,7 +346,7 @@ class ImmediateSelectionDualForm(DualForm):
     
     
 class PostponedSelectionDualForm(ImmediateSelectionDualForm):
-    """Duální formuláø se zpo¾dìnou obnovou vedlej¹ího formuláøe."""
+    """DuÃ¡lnÃ­ formulÃ¡Å™ se zpoÅ¾dÄ›nou obnovou vedlejÅ¡Ã­ho formulÃ¡Å™e."""
     
     _SELECTION_TICK = 2
 
@@ -382,7 +382,7 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
 
     
 class SideBrowseDualForm(PostponedSelectionDualForm):
-    """Duální formuláø s vedlej¹ím formuláøem 'SideBrowseForm'."""
+    """DuÃ¡lnÃ­ formulÃ¡Å™ sÂ vedlejÅ¡Ã­m formulÃ¡Å™em 'SideBrowseForm'."""
         
     def _create_side_form(self, parent):
         return SideBrowseForm(parent, self._resolver, self._side_name, guardian=self,
@@ -419,11 +419,11 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
 
 
 class BrowseDualForm(SideBrowseDualForm):
-    """Duální formuláø s hlavním formuláøem 'BrowseForm'.
+    """DuÃ¡lnÃ­ formulÃ¡Å™ sÂ hlavnÃ­m formulÃ¡Å™em 'BrowseForm'.
     
-    Hlavním formuláøem je instance tøídy 'BrowseForm', vedlej¹ím formuláøem je
-    instance tøídy 'SideBrowseForm'.  Formuláøe jsou vzájemnì propojeny
-    prostøednictvím vazebních sloupcù danıch specifikací `BindingSpec'.
+    HlavnÃ­m formulÃ¡Å™em je instance tÅ™Ã­dy 'BrowseForm', vedlejÅ¡Ã­m formulÃ¡Å™em je
+    instance tÅ™Ã­dy 'SideBrowseForm'.  FormulÃ¡Å™e jsou vzÃ¡jemnÄ› propojeny
+    prostÅ™ednictvÃ­m vazebnÃ­ch sloupcÅ¯ danÃ½ch specifikacÃ­ `BindingSpec'.
     
     """
 
@@ -513,7 +513,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
 
         
 class ShowDualForm(SideBrowseDualForm):
-    """Duální formuláø s hlavním formuláøem 'BrowsableShowForm'.
+    """DuÃ¡lnÃ­ formulÃ¡Å™ sÂ hlavnÃ­m formulÃ¡Å™em 'BrowsableShowForm'.
 
     """
     def _full_init(self, *args, **kwargs):
@@ -535,14 +535,14 @@ class ShowDualForm(SideBrowseDualForm):
 
 
 class BrowseShowDualForm(ImmediateSelectionDualForm):
-    """Duální formuláø s øádkovım seznamem nahoøe a náhledem dole.
+    """DuÃ¡lnÃ­ formulÃ¡Å™ sÂ Å™Ã¡dkovÃ½m seznamem nahoÅ™e a nÃ¡hledem dole.
 
-    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a formuláøe s roz¹iøujícími
-    informacemi.  Podle specifikace vazby a dolního formuláøe mù¾e jít jak o detaily k aktuálnímu
-    záznamu, tak o souhrnné informace (napø. vısledky agregací nad daty horního formuláøe atd.).
+    Tento formulÃ¡Å™ slouÅ¾Ã­ kÂ souÄasnÃ©mu zobrazenÃ­ pÅ™ehledu poloÅ¾ek a formulÃ¡Å™e s rozÅ¡iÅ™ujÃ­cÃ­mi
+    informacemi.  Podle specifikace vazby a dolnÃ­ho formulÃ¡Å™e mÅ¯Å¾e jÃ­t jak o detaily k aktuÃ¡lnÃ­mu
+    zÃ¡znamu, tak o souhrnnÃ© informace (napÅ™. vÃ½sledky agregacÃ­ nad daty hornÃ­ho formulÃ¡Å™e atd.).
 
     """
-    DESCR = _("duální náhled")
+    DESCR = _(u"duÃ¡lnÃ­ nÃ¡hled")
     
     def _create_main_form(self, parent, **kwargs):
         return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
@@ -567,12 +567,12 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
 
         
 class DescriptiveDualForm(BrowseShowDualForm):
-    """Duální formuláø s øádkovım seznamem nahoøe a náhledem dole.
+    """DuÃ¡lnÃ­ formulÃ¡Å™ sÂ Å™Ã¡dkovÃ½m seznamem nahoÅ™e a nÃ¡hledem dole.
 
-    Tento formuláø slou¾í k souèasnému zobrazení pøehledu polo¾ek a podrobnému
-    zobrazení aktuální polo¾ky.  Náhled není urèen k editaci této polo¾ky.  Jde
-    vlastnì o speciální pøípad formuláøe rodièovské øídy, kdy náhled v dolním
-    formuláøi je dán stejnou specifikací, jako horní formuláø.
+    Tento formulÃ¡Å™ slouÅ¾Ã­ kÂ souÄasnÃ©mu zobrazenÃ­ pÅ™ehledu poloÅ¾ek a podrobnÃ©mu
+    zobrazenÃ­ aktuÃ¡lnÃ­ poloÅ¾ky.  NÃ¡hled nenÃ­ urÄen kÂ editaci tÃ©to poloÅ¾ky.  Jde
+    vlastnÄ› o speciÃ¡lnÃ­ pÅ™Ã­pad formulÃ¡Å™e rodiÄovskÃ© Å™Ã­dy, kdy nÃ¡hled v dolnÃ­m
+    formulÃ¡Å™i je dÃ¡n stejnou specifikacÃ­, jako hornÃ­ formulÃ¡Å™.
 
     """
     class _SideForm(ShowForm):
@@ -726,7 +726,7 @@ class MultiForm(Form, Refreshable):
                     if old_form and old_form is not form and old_form.initialized():
                         old_form._release_data()
             elif event:
-                message(_("Formuláø není dostupnı"), beep_=True)
+                message(_(u"FormulÃ¡Å™ nenÃ­ dostupnÃ½"), beep_=True)
                 event.Veto()
                 old_selection = event.GetOldSelection()
                 if old_selection != -1:
@@ -783,7 +783,7 @@ class MultiForm(Form, Refreshable):
                 self._set_notebook_selection(i)
                 return
             i += d
-        msg = back and _("®ádnı pøedchozí aktivní formuláø") or _("®ádnı dal¹í aktivní formuláø")
+        msg = back and _(u"Å½Ã¡dnÃ½ pÅ™edchozÃ­ aktivnÃ­ formulÃ¡Å™") or _(u"Å½Ã¡dnÃ½ dalÅ¡Ã­ aktivnÃ­ formulÃ¡Å™")
         message(msg, beep_=True)
         
     def show(self):
@@ -932,7 +932,7 @@ class MultiSideForm(MultiForm):
                 self._init_subform(form)
                 self._set_notebook_selection(i)
                 return True
-        message(_("Po¾adovanı vedlej¹í formuláø není dostupnı"), beep_=True)
+        message(_(u"PoÅ¾adovanÃ½ vedlejÅ¡Ã­ formulÃ¡Å™ nenÃ­ dostupnÃ½"), beep_=True)
         return False
     
 
@@ -945,7 +945,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         given argument after the form is created.
 
     """
-    DESCR = _("vícenásobnı duální formuláø")
+    DESCR = _(u"vÃ­cenÃ¡sobnÃ½ duÃ¡lnÃ­ formulÃ¡Å™")
     class MainForm(BrowseForm):
         def bindings(self):
             return self._view.bindings()

@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,42 +16,42 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""Implementace tabulkovıch dat pro relaèní databázové stroje.
+"""Implementace tabulkovÃ½ch dat pro relaÄnÃ­ databÃ¡zovÃ© stroje.
 
-Základem modulu je abstraktní tøída 'DBData'.  Ta je potomkem tøídy
-'data.Data' a obohacuje ji o specifikaci napojení tabulkovıch dat do relaèní
-databáze a roz¹iøuje nìkteré ji metody.
+ZÃ¡kladem modulu je abstraktnÃ­ tÅ™Ã­da 'DBData'.  Ta je potomkem tÅ™Ã­dy
+'data.Data' a obohacuje ji oÂ specifikaci napojenÃ­ tabulkovÃ½ch dat do relaÄnÃ­
+databÃ¡ze a rozÅ¡iÅ™uje nÄ›kterÃ© ji metody.
 
-Jednotliví potomci tøídy 'DBData' implementují databázovı pøístup pro
-jednotlivé databázové stroje (na úrovni SQL) a jejich potomci pak pro
-konkrétní pythonová rozhraní k tìmto strojùm.
+JednotlivÃ­ potomci tÅ™Ã­dy 'DBData' implementujÃ­ databÃ¡zovÃ½ pÅ™Ã­stup pro
+jednotlivÃ© databÃ¡zovÃ© stroje (na Ãºrovni SQL) a jejich potomci pak pro
+konkrÃ©tnÃ­ pythonovÃ¡ rozhranÃ­ kÂ tÄ›mto strojÅ¯m.
 
-Rùzné databázové tøídy plní následující role:
+RÅ¯znÃ© databÃ¡zovÃ© tÅ™Ã­dy plnÃ­ nÃ¡sledujÃ­cÃ­ role:
 
-- Pøeklad po¾adavkù do SQL pøíslu¹ného databázového stroje.
+- PÅ™eklad poÅ¾adavkÅ¯ do SQL pÅ™Ã­sluÅ¡nÃ©ho databÃ¡zovÃ©ho stroje.
 
-- Implementace komunikace s databází pomocí pythonového modulu.
+- Implementace komunikace sÂ databÃ¡zÃ­ pomocÃ­ pythonovÃ©ho modulu.
 
 - Interpretace column bindings.
 
-Ka¾dá z tìchto rolí je realizována samostatnou tøídou.
+KaÅ¾dÃ¡ zÂ tÄ›chto rolÃ­ je realizovÃ¡na samostatnou tÅ™Ã­dou.
 
-Kromì toho modul obsahuje pomocnou tøídu 'DBConnection' pro specifikaci
-databázového spojení, pomocné tøídy zalo¾ené na 'DBBinding' pro specifikaci
-napojení uvnitø 'DBData' a databázové vıjimky odvozené ze tøídy
-'DBException'.  Tøídì 'DBBinding' a jejím potomkùm je tøeba vìnovat
-obzvlá¹tní pozornost, pomocí nich se definují nejdùle¾itìj¹í vìci tıkající se
+KromÄ› toho modul obsahuje pomocnou tÅ™Ã­du 'DBConnection' pro specifikaci
+databÃ¡zovÃ©ho spojenÃ­, pomocnÃ© tÅ™Ã­dy zaloÅ¾enÃ© na 'DBBinding' pro specifikaci
+napojenÃ­ uvnitÅ™ 'DBData' a databÃ¡zovÃ© vÃ½jimky odvozenÃ© ze tÅ™Ã­dy
+'DBException'.  TÅ™Ã­dÄ› 'DBBinding' a jejÃ­m potomkÅ¯m je tÅ™eba vÄ›novat
+obzvlÃ¡Å¡tnÃ­ pozornost, pomocÃ­ nich se definujÃ­ nejdÅ¯leÅ¾itÄ›jÅ¡Ã­ vÄ›ci tÃ½kajÃ­cÃ­ se
 tabulky.
 
 """
 
 
-# TODO: V implementaci se poèítá s tím, ¾e z databáze nedostaneme nesmysly
-# (z dùvodu jiného ne¾ programátorské chyby).  Tyto situace sice obecnì
-# o¹etøujeme metáním DBException, to ale nestaèí, proto¾e taková situace mù¾e
-# vzniknout i nìjakım problémem na DB serveru.  Je tedy v budoucnu
-# bezpodmíneènì nutno tyto situace øádnì o¹etøovat a pro¹etøovat.  Nejprve je
-# ov¹em nutno definovat nìjakı mechanismus o¹etøování chyb.
+# TODO: VÂ implementaci se poÄÃ­tÃ¡ s tÃ­m, Å¾e zÂ databÃ¡ze nedostaneme nesmysly
+# (zÂ dÅ¯vodu jinÃ©ho neÅ¾ programÃ¡torskÃ© chyby).  Tyto situace sice obecnÄ›
+# oÅ¡etÅ™ujeme metÃ¡nÃ­m DBException, to ale nestaÄÃ­, protoÅ¾e takovÃ¡ situace mÅ¯Å¾e
+# vzniknout iÂ nÄ›jakÃ½m problÃ©mem na DB serveru.  Je tedy vÂ budoucnu
+# bezpodmÃ­neÄnÄ› nutno tyto situace Å™Ã¡dnÄ› oÅ¡etÅ™ovat a proÅ¡etÅ™ovat.  Nejprve je
+# ovÅ¡em nutno definovat nÄ›jakÃ½ mechanismus oÅ¡etÅ™ovÃ¡nÃ­ chyb.
 
 
 import gc
@@ -61,51 +61,51 @@ import weakref
 from pytis.data import *
 
 
-### Obecné tøídy
+### ObecnÃ© tÅ™Ã­dy
 
 
 class DBData(Data):
-    """Tabulková data mapovaná do relaèní databáze.
+    """TabulkovÃ¡ data mapovanÃ¡ do relaÄnÃ­ databÃ¡ze.
 
-    Tøída roz¹iøuje svého pøedka o specifikaci napojení sloupcù tabulkovıch dat
-    do relaèní databáze (blí¾e viz metoda '__init__') a o nìkteré argumenty
-    jeho veøejnıch metod.  Zavádí také veøejnou metodu 'sleep'.
+    TÅ™Ã­da rozÅ¡iÅ™uje svÃ©ho pÅ™edka oÂ specifikaci napojenÃ­ sloupcÅ¯ tabulkovÃ½ch dat
+    do relaÄnÃ­ databÃ¡ze (blÃ­Å¾e viz metoda '__init__') a oÂ nÄ›kterÃ© argumenty
+    jeho veÅ™ejnÃ½ch metod.  ZavÃ¡dÃ­ takÃ© veÅ™ejnou metodu 'sleep'.
 
-    Tato tøída je nezávislá na konkrétním pou¾itém databázovém stroji a
-    pythonovém modulu.  Závislé vìci jsou implementovány v potomcích této
-    tøídy, pøièem¾ se doporuèuje v nejbli¾¹í podtøídì napsat potomky pro
-    jednotlivé databázové stroje (tj. realizovat metody na úrovni SQL a jinıch
-    vlastností daného databázového stroje) a teprve nad nimi definovat tøídy
-    odpovídajícím jednotlivım pythonovım modulùm.  Je té¾ mo¾né vyu¾ít
-    vícenásobné dìdiènosti a definovat napøíklad \"odboèující\" tøídu pro
+    Tato tÅ™Ã­da je nezÃ¡vislÃ¡ na konkrÃ©tnÃ­m pouÅ¾itÃ©m databÃ¡zovÃ©m stroji a
+    pythonovÃ©m modulu.  ZÃ¡vislÃ© vÄ›ci jsou implementovÃ¡ny vÂ potomcÃ­ch tÃ©to
+    tÅ™Ã­dy, pÅ™iÄemÅ¾ se doporuÄuje vÂ nejbliÅ¾Å¡Ã­ podtÅ™Ã­dÄ› napsat potomky pro
+    jednotlivÃ© databÃ¡zovÃ© stroje (tj. realizovat metody na Ãºrovni SQL a jinÃ½ch
+    vlastnostÃ­ danÃ©ho databÃ¡zovÃ©ho stroje) a teprve nad nimi definovat tÅ™Ã­dy
+    odpovÃ­dajÃ­cÃ­m jednotlivÃ½m pythonovÃ½m modulÅ¯m.  Je tÃ©Å¾ moÅ¾nÃ© vyuÅ¾Ã­t
+    vÃ­cenÃ¡sobnÃ© dÄ›diÄnosti a definovat napÅ™Ã­klad \"odboÄujÃ­cÃ­\" tÅ™Ã­du pro
     DB-SIG API.
 
-    V¹echny metody této tøídy pøístupující k datùm mohou metat 'DBException'.
+    VÅ¡echny metody tÃ©to tÅ™Ã­dy pÅ™Ã­stupujÃ­cÃ­ kÂ datÅ¯m mohou metat 'DBException'.
     
     """
     def __init__(self, bindings, ordering=None, distinct_on=(), arguments=None,
                  **kwargs):
-        """Inicializuj tabulku s napojením do databáze.
+        """Inicializuj tabulku sÂ napojenÃ­m do databÃ¡ze.
 
         Argumenty:
         
-          bindings -- sekvence instancí tøídy 'DBBinding'
-          ordering -- stejné jako v pøedkovi
+          bindings -- sekvence instancÃ­ tÅ™Ã­dy 'DBBinding'
+          ordering -- stejnÃ© jako vÂ pÅ™edkovi
           distinct_on -- sequence of column names to add as a DISTINCT TO part
             to SELECT commands
           arguments -- sequence of 'DBBinding' instances defining table
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
-          kwargs -- k pøedání pøedkovi
+          kwargs -- k pÅ™edÃ¡nÃ­ pÅ™edkovi
 
-        Sloupce datové tabulky se urèí automaticky na základì 'bindings'.
-        Jejich typy jsou urèeny typy odpovídajících dat v databázi(pøesné
-        mapování závisí na potomcích tøídy a není zde specifikováno).  Klíèovım
-        sloupcem tabulky je první sloupec z 'bindings', kterı je klíèovım
-        sloupcem v databázi.
+        Sloupce datovÃ© tabulky se urÄÃ­ automaticky na zÃ¡kladÄ› 'bindings'.
+        Jejich typy jsou urÄeny typy odpovÃ­dajÃ­cÃ­ch dat vÂ databÃ¡zi(pÅ™esnÃ©
+        mapovÃ¡nÃ­ zÃ¡visÃ­ na potomcÃ­ch tÅ™Ã­dy a nenÃ­ zde specifikovÃ¡no).  KlÃ­ÄovÃ½m
+        sloupcem tabulky je prvnÃ­ sloupec zÂ 'bindings', kterÃ½ je klÃ­ÄovÃ½m
+        sloupcem vÂ databÃ¡zi.
 
-        ®ádné dva prvky 'bindings' by nemìly mít shodné id, s vıjimkou skrytıch
-        bindings, která mají jako id prázdnı øetìzec.
+        Å½Ã¡dnÃ© dva prvky 'bindings' by nemÄ›ly mÃ­t shodnÃ© id, sÂ vÃ½jimkou skrytÃ½ch
+        bindings, kterÃ¡ majÃ­ jako id prÃ¡zdnÃ½ Å™etÄ›zec.
         
         """
         assert is_sequence(bindings), ('Invalid binding type', bindings)
@@ -121,10 +121,10 @@ class DBData(Data):
             assert not filter(lambda b: not isinstance(b, DBBinding),
                               arguments), \
                    ('Invalid "argument" type', arguments)
-        if __debug__: log(DEBUG, 'Bindings databázové instance', self._bindings)
+        if __debug__: log(DEBUG, 'Bindings databÃ¡zovÃ© instance', self._bindings)
         columns, key = self._db_bindings_to_column_spec(self._bindings)
-        if __debug__: log(DEBUG, 'Sloupce databázové instance:', columns)
-        if __debug__: log(DEBUG, 'Klíè databázové instance:', key)
+        if __debug__: log(DEBUG, 'Sloupce databÃ¡zovÃ© instance:', columns)
+        if __debug__: log(DEBUG, 'KlÃ­Ä databÃ¡zovÃ© instance:', key)
         self._distinct_on = distinct_on
         try:
             del kwargs['key']
@@ -133,16 +133,16 @@ class DBData(Data):
         super(DBData, self).__init__(columns=columns, key=key, ordering=ordering, **kwargs)
 
     def _db_bindings_to_column_spec(self, bindings):
-        """Vra» dvojici (COLUMNS, KEY) odpovídající argumentùm 'Data.__init__'.
+        """VraÅ¥ dvojici (COLUMNS, KEY) odpovÃ­dajÃ­cÃ­ argumentÅ¯m 'Data.__init__'.
 
-        V této tøídì metoda vrátí jednodu¹e seznam sloupcù v podobì instancí
-        'ColumnSpec' s názvy odpovídajícími identifikátorùm 'bindings' (i co
-        se tıèe jejich poøadí), pøièem¾ typ v¹ech sloupcù je nastaven na
-        nejobecnìj¹í typ 'types_.Type'.  Jako KEY je vrácen první sloupec
-        uvedenı v 'bindings'; pokud jsou 'bindings' prázdné, je vráceno 'None'.
+        VÂ tÃ©to tÅ™Ã­dÄ› metoda vrÃ¡tÃ­ jednoduÅ¡e seznam sloupcÅ¯ vÂ podobÄ› instancÃ­
+        'ColumnSpec' sÂ nÃ¡zvy odpovÃ­dajÃ­cÃ­mi identifikÃ¡torÅ¯m 'bindings' (iÂ co
+        se tÃ½Äe jejich poÅ™adÃ­), pÅ™iÄemÅ¾ typ vÅ¡ech sloupcÅ¯ je nastaven na
+        nejobecnÄ›jÅ¡Ã­ typ 'types_.Type'.  Jako KEY je vrÃ¡cen prvnÃ­ sloupec
+        uvedenÃ½ vÂ 'bindings'; pokud jsou 'bindings' prÃ¡zdnÃ©, je vrÃ¡ceno 'None'.
 
-        Tato implementace metody je velmi hrubá a metoda je urèena
-        k pøedefinování v potomcích tøídy.
+        Tato implementace metody je velmi hrubÃ¡ a metoda je urÄena
+        kÂ pÅ™edefinovÃ¡nÃ­ vÂ potomcÃ­ch tÅ™Ã­dy.
 
         """
         columns = map(lambda b: ColumnSpec(b.id(), Type()), bindings)
@@ -153,13 +153,13 @@ class DBData(Data):
         return columns, key
 
     def _db_column_binding(self, col_id):
-        """Vra» binding sloupce 'col_id'.
+        """VraÅ¥ binding sloupce 'col_id'.
 
-        Pokud pro 'col_id' není ¾ádné binding definováno, vra» 'None'.
+        Pokud pro 'col_id' nenÃ­ Å¾Ã¡dnÃ© binding definovÃ¡no, vraÅ¥ 'None'.
 
         Argumenty:
         
-          col_id -- identifikace tabulkového sloupce jako string
+          col_id -- identifikace tabulkovÃ©ho sloupce jako string
           
         """
         for b in self._bindings:
@@ -168,7 +168,7 @@ class DBData(Data):
         return None
 
     def table(self, col_id):
-        """Vra» tabulku sloupce 'col_id'.
+        """VraÅ¥ tabulku sloupce 'col_id'.
 
         Argumenty:
 
@@ -180,22 +180,22 @@ class DBData(Data):
         return None
 
     def sleep(self):
-        """Uvolni systémové zdroje vyu¾ívané instancí a umo¾ni její zru¹ení.
+        """Uvolni systÃ©movÃ© zdroje vyuÅ¾Ã­vanÃ© instancÃ­ a umoÅ¾ni jejÃ­ zruÅ¡enÃ­.
 
-        Pokud instance vyu¾ívá nìkteré nedostatkové systémové zdroje jako
-        napøíklad spojení do databáze nebo procesy, tato metoda by je mìla
-        uvolnit.  Druhou funkcí metody je uvolnit prostøedky (napøíklad hlídací
-        procesy), které znemo¾òují zru¹ení instance.
+        Pokud instance vyuÅ¾Ã­vÃ¡ nÄ›kterÃ© nedostatkovÃ© systÃ©movÃ© zdroje jako
+        napÅ™Ã­klad spojenÃ­ do databÃ¡ze nebo procesy, tato metoda by je mÄ›la
+        uvolnit.  Druhou funkcÃ­ metody je uvolnit prostÅ™edky (napÅ™Ã­klad hlÃ­dacÃ­
+        procesy), kterÃ© znemoÅ¾ÅˆujÃ­ zruÅ¡enÃ­ instance.
 
-        Tato metoda by mìla bıt volána v¾dy, kdy¾ je trvale nebo na del¹í dobu
-        ukonèeno pou¾ívání instance.
+        Tato metoda by mÄ›la bÃ½t volÃ¡na vÅ¾dy, kdyÅ¾ je trvale nebo na delÅ¡Ã­ dobu
+        ukonÄeno pouÅ¾Ã­vÃ¡nÃ­ instance.
 
-        Zavoláním této metody se neznemo¾òuje dal¹í pou¾ití instance, lze
-        nadále vyu¾ívat v¹echny její veøejné metody.  Je-li pak ov¹em tøeba
-        opìt uvolnit zdroje, je nutno tuto metodu zavolat znovu.
+        ZavolÃ¡nÃ­m tÃ©to metody se neznemoÅ¾Åˆuje dalÅ¡Ã­ pouÅ¾itÃ­ instance, lze
+        nadÃ¡le vyuÅ¾Ã­vat vÅ¡echny jejÃ­ veÅ™ejnÃ© metody.  Je-li pak ovÅ¡em tÅ™eba
+        opÄ›t uvolnit zdroje, je nutno tuto metodu zavolat znovu.
 
         """
-        if __debug__: log(DEBUG, 'Uspání')
+        if __debug__: log(DEBUG, 'UspÃ¡nÃ­')
         self.close()
 
     def arguments(self):
@@ -206,7 +206,7 @@ class DBData(Data):
 class DBConnectionPool:
 
     def __init__(self, connection_creator, connection_closer):
-        if __debug__: log(DEBUG, 'Vytváøím novı pool')
+        if __debug__: log(DEBUG, 'VytvÃ¡Å™Ã­m novÃ½ pool')
         self._lock = thread.allocate_lock()
         self._pool = {}
         self._connection_creator = connection_creator
@@ -214,10 +214,10 @@ class DBConnectionPool:
         self._allocated_connections = {}
 
     def __del__(self):
-        # Pro jistotu uzavíráme v¹echna spojení, pøesto¾e by to mìlo bıt
-        # zbyteèné a zaji¹tìno automaticky v pyPgSQL; tøeba to pomù¾e
-        # problému pozùstalıch spojení.  Navíc pro jistotu zamykáme, co
-        # kdyby ...
+        # Pro jistotu uzavÃ­rÃ¡me vÅ¡echna spojenÃ­, pÅ™estoÅ¾e by to mÄ›lo bÃ½t
+        # zbyteÄnÃ© a zajiÅ¡tÄ›no automaticky vÂ pyPgSQL; tÅ™eba to pomÅ¯Å¾e
+        # problÃ©mu pozÅ¯stalÃ½ch spojenÃ­.  NavÃ­c pro jistotu zamykÃ¡me, co
+        # kdybyÂ ...
         def lfunction():
             for c in flatten(self._pool.values()):
                 try:
@@ -248,24 +248,24 @@ class DBConnectionPool:
                 allocated_connections = self._allocated_connections[spec_id] \
                     = weakref.WeakKeyDictionary()
             if connections:
-                if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
+                if __debug__: log(DEBUG, 'SpojenÃ­ kÂ dispozici', connections)
                 c = connections.pop()
             else:
                 gc.collect()
                 if (config.connection_limit is not None and
                     len(allocated_connections) >= config.connection_limit):
                     if __debug__:
-                        log(EVENT, "Pøehled evidovanıch spojení:")
+                        log(EVENT, "PÅ™ehled evidovanÃ½ch spojenÃ­:")
                         for c in allocated_connections.keys():
-                            log(EVENT, "Spojení:", c.connection_info('last_access'))
-                    raise DBSystemException(_("Pøíli¹ mnoho databázovıch spojení"))
+                            log(EVENT, "SpojenÃ­:", c.connection_info('last_access'))
+                    raise DBSystemException(_(u"PÅ™Ã­liÅ¡ mnoho databÃ¡zovÃ½ch spojenÃ­"))
                 else:
                     c = self._connection_creator(connection_spec)
-                    if __debug__: log(DEBUG, 'Vytvoøeno nové spojení:', c)
+                    if __debug__: log(DEBUG, 'VytvoÅ™eno novÃ© spojenÃ­:', c)
                     allocated_connections[c] = True
             return c
         c = with_lock(self._lock, lfunction)
-        if __debug__: log(DEBUG, 'Pøedávám spojení:', c)
+        if __debug__: log(DEBUG, 'PÅ™edÃ¡vÃ¡m spojenÃ­:', c)
         return c
 
     def put_back(self, connection_spec, connection):
@@ -281,21 +281,21 @@ class DBConnectionPool:
                 len(connections) < config.max_pool_connections):
                 connections.append(connection)
         with_lock(self._lock, lfunction)
-        if __debug__: log(DEBUG, 'Do poolu vráceno spojení:', connection)
+        if __debug__: log(DEBUG, 'Do poolu vrÃ¡ceno spojenÃ­:', connection)
 
 
-### Specifikaèní tøídy
+### SpecifikaÄnÃ­ tÅ™Ã­dy
 
     
 class DBConnection:
-    """Specifikace parametrù pro pøipojení do databáze.
+    """Specifikace parametrÅ¯ pro pÅ™ipojenÃ­ do databÃ¡ze.
 
-    Jedná se èistì o specifikaci, tøída sama ¾ádné operace tıkající se napojení
-    do databáze neprovádí ani neudr¾uje skuteènı objekt spojení.  Pro popis
-    parametrù spojení viz metoda '__init__'.
+    JednÃ¡ se ÄistÄ› o specifikaci, tÅ™Ã­da sama Å¾Ã¡dnÃ© operace tÃ½kajÃ­cÃ­ se napojenÃ­
+    do databÃ¡ze neprovÃ¡dÃ­ ani neudrÅ¾uje skuteÄnÃ½ objekt spojenÃ­.  Pro popis
+    parametrÅ¯ spojenÃ­ viz metoda '__init__'.
 
-    Tato tøída je mínìna jako immutable a tudí¾ mù¾e bıt libovolnì sdílena.
-    Pro malé úpravy specifikace lze vyu¾ít metodu 'modified()'.
+    Tato tÅ™Ã­da je mÃ­nÄ›na jako immutable a tudÃ­Å¾ mÅ¯Å¾e bÃ½t libovolnÄ› sdÃ­lena.
+    Pro malÃ© Ãºpravy specifikace lze vyuÅ¾Ã­t metodu 'modified()'.
 
     """
     _OPTIONS = ('user', 'password', 'host', 'port', 'database', 'sslmode', 'schemas',)
@@ -351,23 +351,23 @@ class DBConnection:
         return "<%s %s>" % (self.__class__.__name__, ", ".join(options))
 
     def user(self):
-        """Vra» databázového u¾ivatele jako string nebo 'None'."""
+        """VraÅ¥ databÃ¡zovÃ©ho uÅ¾ivatele jako string nebo 'None'."""
         return self._user
 
     def password(self):
-        """Vra» heslo databázového u¾ivatele jako string nebo 'None'."""
+        """VraÅ¥ heslo databÃ¡zovÃ©ho uÅ¾ivatele jako string nebo 'None'."""
         return self._password
 
     def host(self):
-        """Vra» jméno databázového serveru jako string nebo 'None'."""
+        """VraÅ¥ jmÃ©no databÃ¡zovÃ©ho serveru jako string nebo 'None'."""
         return self._host
 
     def port(self):
-        """Vra» jméno portu na serveru jako integer nebo 'None'."""
+        """VraÅ¥ jmÃ©no portu na serveru jako integer nebo 'None'."""
         return self._port
 
     def database(self):
-        """Vra» jméno databáze jako string nebo 'None'."""
+        """VraÅ¥ jmÃ©no databÃ¡ze jako string nebo 'None'."""
         return self._database
 
     def sslmode(self):
@@ -378,10 +378,10 @@ class DBConnection:
         return self._schemas
 
     def __cmp__(self, other):
-        """Vra» 0, právì kdy¾ 'self' a 'other' definují toté¾ spojení.
+        """VraÅ¥ 0, prÃ¡vÄ› kdyÅ¾ 'self' a 'other' definujÃ­ totÃ©Å¾ spojenÃ­.
 
-        Dvì instance této tøídy reprezentují toté¾ spojení, právì kdy¾ se
-        rovnají odpovídající si parametry zadané jejich konstruktorùm.
+        DvÄ› instance tÃ©to tÅ™Ã­dy reprezentujÃ­ totÃ©Å¾ spojenÃ­, prÃ¡vÄ› kdyÅ¾ se
+        rovnajÃ­ odpovÃ­dajÃ­cÃ­ si parametry zadanÃ© jejich konstruktorÅ¯m.
 
         """
         return compare_attr(self, other, ['_'+option for option in self._OPTIONS])
@@ -430,42 +430,42 @@ class DBConnection:
 
 
 class DBBinding:
-    """Definice napojení dat do databáze.
+    """Definice napojenÃ­ dat do databÃ¡ze.
 
-    Tato definice je vyu¾ívána tøídou 'DBData' a jejími potomky.
+    Tato definice je vyuÅ¾Ã­vÃ¡na tÅ™Ã­dou 'DBData' a jejÃ­mi potomky.
     
-    Tato tøída je pouze abstraktním základem, kterı definuje pouze stringovı
-    identifikátor instance napojení.  Mechanismy pro skuteèné definice
-    databázovıch napojení poskytují a¾ potomci této tøídy.
+    Tato tÅ™Ã­da je pouze abstraktnÃ­m zÃ¡kladem, kterÃ½ definuje pouze stringovÃ½
+    identifikÃ¡tor instance napojenÃ­.  Mechanismy pro skuteÄnÃ© definice
+    databÃ¡zovÃ½ch napojenÃ­ poskytujÃ­ aÅ¾ potomci tÃ©to tÅ™Ã­dy.
 
-    Tøída je specifikována jako immutable a jako taková mù¾e bıt libovolnì
-    sdílena.
+    TÅ™Ã­da je specifikovÃ¡na jako immutable a jako takovÃ¡ mÅ¯Å¾e bÃ½t libovolnÄ›
+    sdÃ­lena.
     
     """
     def __init__(self, id):
-        """Definuj napojení.
+        """Definuj napojenÃ­.
 
         Argumenty:
         
-          id -- identifikátor napojení, libovolnı string
+          id -- identifikÃ¡tor napojenÃ­, libovolnÃ½ string
           
         """
         assert isinstance(id, str)
         self._id = id
 
     def id(self):
-        """Vra» identifikátor napojení zadanı v konstruktoru."""
+        """VraÅ¥ identifikÃ¡tor napojenÃ­ zadanÃ½ vÂ konstruktoru."""
         return self._id
 
 
 class DBColumnBinding(DBBinding):
-    """Vazba 1-1 tabulkového sloupce na databázovı sloupec.
+    """Vazba 1-1 tabulkovÃ©ho sloupce na databÃ¡zovÃ½ sloupec.
 
-    Tato vazba je dána jménem databázové tabulky a jejího sloupce, na kterı
-    se tabulkovı sloupec mapuje.
+    Tato vazba je dÃ¡na jmÃ©nem databÃ¡zovÃ© tabulky a jejÃ­ho sloupce, na kterÃ½
+    se tabulkovÃ½ sloupec mapuje.
     
-    Tøída je specifikována jako immutable a jako taková mù¾e bıt libovolnì
-    sdílena.
+    TÅ™Ã­da je specifikovÃ¡na jako immutable a jako takovÃ¡ mÅ¯Å¾e bÃ½t libovolnÄ›
+    sdÃ­lena.
     
     """
     def __init__(self, id, table, column, related_to=None, type_=None, **kwargs):
@@ -474,26 +474,26 @@ class DBColumnBinding(DBBinding):
         Argumenty:
         
           id -- id sloupce
-          table -- jméno databázové tabulky, do které má bıt tabulkovı sloupec napojen, jako string
-          column -- jméno sloupce databázové tabulky, na kterı má bıt tabulkovı sloupec napojen,
-            jako string nebo sekvence (viz ní¾e)
-          related_to -- instance 'DBColumnBinding' specifikující, se kterım sloupcem jiné
-            databázové tabulky je tento sloupec v relaci; pokud s ¾ádnım, je hodnotou 'None'
-          type_ -- explicitnì specifikovanı typ sloupce jako instance tøídy 'Type' nebo 'None'.
-            Je-li 'None', bude typ sloupce urèen automaticky dle informací získanıch pøímo
-            z databáze.  V opaèném pøípadì bude typem hodnota tohoto argumentu, která musí
-            odpovídat typu sloupce v databázi (bıt jeho specializací).
-          **kwargs -- explicitnì definované klíèové argumenty typu.  Pokud jsou definovány
-            libovolné klíèové argumenty, budou tyto pøedány konstruktoru implicitního datového
-            typu.  Typ v takovém pøípadì nesmí bıt explicitnì urèen argumentem 'type_'.
+          table -- jmÃ©no databÃ¡zovÃ© tabulky, do kterÃ© mÃ¡ bÃ½t tabulkovÃ½ sloupec napojen, jako string
+          column -- jmÃ©no sloupce databÃ¡zovÃ© tabulky, na kterÃ½ mÃ¡ bÃ½t tabulkovÃ½ sloupec napojen,
+            jako string nebo sekvence (viz nÃ­Å¾e)
+          related_to -- instance 'DBColumnBinding' specifikujÃ­cÃ­, se kterÃ½m sloupcem jinÃ©
+            databÃ¡zovÃ© tabulky je tento sloupec vÂ relaci; pokud sÂ Å¾Ã¡dnÃ½m, je hodnotou 'None'
+          type_ -- explicitnÄ› specifikovanÃ½ typ sloupce jako instance tÅ™Ã­dy 'Type' nebo 'None'.
+            Je-li 'None', bude typ sloupce urÄen automaticky dle informacÃ­ zÃ­skanÃ½ch pÅ™Ã­mo
+            zÂ databÃ¡ze.  VÂ opaÄnÃ©m pÅ™Ã­padÄ› bude typem hodnota tohoto argumentu, kterÃ¡ musÃ­
+            odpovÃ­dat typu sloupce vÂ databÃ¡zi (bÃ½t jeho specializacÃ­).
+          **kwargs -- explicitnÄ› definovanÃ© klÃ­ÄovÃ© argumenty typu.  Pokud jsou definovÃ¡ny
+            libovolnÃ© klÃ­ÄovÃ© argumenty, budou tyto pÅ™edÃ¡ny konstruktoru implicitnÃ­ho datovÃ©ho
+            typu.  Typ v takovÃ©m pÅ™Ã­padÄ› nesmÃ­ bÃ½t explicitnÄ› urÄen argumentem 'type_'.
 
-        Napojení mù¾e bıt *skryté*, co¾ znamená, ¾e pøímo neodpovídá ¾ádnému sloupci datové
-        tabulky.  To se mù¾e stát napøíklad v pøípadì, ¾e binding je definováno *pouze* kvùli
-        specifikaci relace mezi tabulkami (prostøednictvím argumentu 'related_to').  U skrytého
-        napojení nezále¾í na hodnotì pøíslu¹ného sloupce a tudí¾ k tìmto hodnotám ani nelze
-        pøistupovat.  Napojení je pova¾ováno za skryté, právì kdy¾ øetìzec 'id' je prázdnı.
+        NapojenÃ­ mÅ¯Å¾e bÃ½t *skrytÃ©*, coÅ¾ znamenÃ¡, Å¾e pÅ™Ã­mo neodpovÃ­dÃ¡ Å¾Ã¡dnÃ©mu sloupci datovÃ©
+        tabulky.  To se mÅ¯Å¾e stÃ¡t napÅ™Ã­klad vÂ pÅ™Ã­padÄ›, Å¾e binding je definovÃ¡no *pouze* kvÅ¯li
+        specifikaci relace mezi tabulkami (prostÅ™ednictvÃ­m argumentu 'related_to').  UÂ skrytÃ©ho
+        napojenÃ­ nezÃ¡leÅ¾Ã­ na hodnotÄ› pÅ™Ã­sluÅ¡nÃ©ho sloupce a tudÃ­Å¾ kÂ tÄ›mto hodnotÃ¡m ani nelze
+        pÅ™istupovat.  NapojenÃ­ je povaÅ¾ovÃ¡no za skrytÃ©, prÃ¡vÄ› kdyÅ¾ Å™etÄ›zec 'id' je prÃ¡zdnÃ½.
 
-        'related_to' je obecnì nesymetrická relace pøibli¾nì odpovídající specifikátoru REFERENCES.
+        'related_to' je obecnÄ› nesymetrickÃ¡ relace pÅ™ibliÅ¾nÄ› odpovÃ­dajÃ­cÃ­ specifikÃ¡toru REFERENCES.
 
         """
         DBBinding.__init__(self, id)
@@ -517,27 +517,27 @@ class DBColumnBinding(DBBinding):
         self._is_hidden = not id
 
     def table(self):
-        """Vra» jméno napojené databázové tabulky jako string."""
+        """VraÅ¥ jmÃ©no napojenÃ© databÃ¡zovÃ© tabulky jako string."""
         return self._table
 
     def column(self):
-        """Vra» jméno napojeného sloupce jako string."""
+        """VraÅ¥ jmÃ©no napojenÃ©ho sloupce jako string."""
         return self._column
 
     def related_to(self):
-        """Vra» instanci DBColumnBinding napojeného sloupce nebo 'None'."""
+        """VraÅ¥ instanci DBColumnBinding napojenÃ©ho sloupce nebo 'None'."""
         return self._related_to
 
     def type(self):
-        """Vra» instanci typu sloupce z konstruktoru nebo 'None'."""
+        """VraÅ¥ instanci typu sloupce zÂ konstruktoru nebo 'None'."""
         return self._type
     
     def kwargs(self):
-        """Vra» slovník klíèovıch argumentù konstruktoru dat. typu sloupce."""
+        """VraÅ¥ slovnÃ­k klÃ­ÄovÃ½ch argumentÅ¯ konstruktoru dat. typu sloupce."""
         return self._kwargs
     
     def is_hidden(self):
-        """Vra» pravdu, právì kdy¾ sloupec není pøítomen v datové tabulce."""
+        """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ sloupec nenÃ­ pÅ™Ã­tomen vÂ datovÃ© tabulce."""
         return self._is_hidden
 
     def __str__(self):
@@ -553,36 +553,36 @@ class DBColumnBinding(DBBinding):
 
 
 
-### Databázové vıjimky
+### DatabÃ¡zovÃ© vÃ½jimky
 
 
 class DBException(Exception):
-    """Vıjimka nahazovaná v pøípadì vzniku databázové chyby.
+    """VÃ½jimka nahazovanÃ¡ vÂ pÅ™Ã­padÄ› vzniku databÃ¡zovÃ© chyby.
 
-    V¹echny databázové vıjimky metané ven ze tøídy 'DBData' jsou tohoto typu.
+    VÅ¡echny databÃ¡zovÃ© vÃ½jimky metanÃ© ven ze tÅ™Ã­dy 'DBData' jsou tohoto typu.
 
-    Tøída ve svém konstruktoru automaticky zaloguje základní informace
-    o vıjimce.
+    TÅ™Ã­da ve svÃ©m konstruktoru automaticky zaloguje zÃ¡kladnÃ­ informace
+    oÂ vÃ½jimce.
 
     """
     def __init__(self, message, exception=None, *args):
-        """Inicializuj vıjimku a zaloguj informace o ní.
+        """Inicializuj vÃ½jimku a zaloguj informace oÂ nÃ­.
 
         Argumenty:
 
-          message -- lidsky èitelné oznámení o chybì, string; mù¾e bıt té¾
-            'None', v kterém¾to pøípadì se doplní standardní zpráva
-            o databázové chybì, to je v¹ak vhodné pou¾ívat pouze v pøípadì, kdy
-            nemá smysl u¾ivateli sdìlovat bli¾¹í popis chyby
-          exception -- vıjimka, která tuto vıjimku zpùsobila, instance tøídy
-            'Exception'; nebo 'None' (neznamená nutnì, ¾e chyba nebyla
-            zpùsobena vıjimkou, tato vıjimka pouze nemusí bıt podstatná)
-          args -- libovolné dal¹í argumenty, které mají bıt spolu s 'message' a
-            'exception' pøedány konstruktoru nadtøídy
+          message -- lidsky ÄitelnÃ© oznÃ¡menÃ­ oÂ chybÄ›, string; mÅ¯Å¾e bÃ½t tÃ©Å¾
+            'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› se doplnÃ­ standardnÃ­ zprÃ¡va
+            oÂ databÃ¡zovÃ© chybÄ›, to je vÅ¡ak vhodnÃ© pouÅ¾Ã­vat pouze vÂ pÅ™Ã­padÄ›, kdy
+            nemÃ¡ smysl uÅ¾ivateli sdÄ›lovat bliÅ¾Å¡Ã­ popis chyby
+          exception -- vÃ½jimka, kterÃ¡ tuto vÃ½jimku zpÅ¯sobila, instance tÅ™Ã­dy
+            'Exception'; nebo 'None' (neznamenÃ¡ nutnÄ›, Å¾e chyba nebyla
+            zpÅ¯sobena vÃ½jimkou, tato vÃ½jimka pouze nemusÃ­ bÃ½t podstatnÃ¡)
+          args -- libovolnÃ© dalÅ¡Ã­ argumenty, kterÃ© majÃ­ bÃ½t spolu sÂ 'message' a
+            'exception' pÅ™edÃ¡ny konstruktoru nadtÅ™Ã­dy
 
         """
         if message == None:
-            message = _("Databázová chyba")
+            message = _(u"DatabÃ¡zovÃ¡ chyba")
         super_(DBException).__init__(self, message, exception, *args)
         log(OPERATIONAL, 'Database exception', (message,) + args)
         if exception:
@@ -591,54 +591,54 @@ class DBException(Exception):
         self._exception = exception
 
     def message(self):
-        """Vra» lidsky èitelnou zprávu zadanou v konstruktoru, jako string."""
+        """VraÅ¥ lidsky Äitelnou zprÃ¡vu zadanou vÂ konstruktoru, jako string."""
         return self._message
 
     def exception(self):
-        """Vra» databázovou vıjimku zadanou v konstruktoru nebo 'None'."""
+        """VraÅ¥ databÃ¡zovou vÃ½jimku zadanou vÂ konstruktoru nebo 'None'."""
         return self._exception
 
 
 class DBSystemException(DBException):
-    """Vıjimka nahazovaná v pøípadì vzniku systémové databázové chyby.
+    """VÃ½jimka nahazovanÃ¡ vÂ pÅ™Ã­padÄ› vzniku systÃ©movÃ© databÃ¡zovÃ© chyby.
 
-    Systémová chyba je chyba související se systémovımi prostøedky, napøíklad
-    chyba spojení do databáze.  Viz té¾ 'DBUserException'.
+    SystÃ©movÃ¡ chyba je chyba souvisejÃ­cÃ­ se systÃ©movÃ½mi prostÅ™edky, napÅ™Ã­klad
+    chyba spojenÃ­ do databÃ¡ze.  Viz tÃ©Å¾ 'DBUserException'.
 
-    Databázové rozhraní generuje v pøípadì databázovıch chyb
-    'DBSystemException' pouze tehdy, je-li schopno rozpoznat, ¾e se jedná
-    o systémovou chybu.  To znamená, ¾e systémová chyba mù¾e bıt signalizována
-    i jako prostá 'DBException'.
+    DatabÃ¡zovÃ© rozhranÃ­ generuje vÂ pÅ™Ã­padÄ› databÃ¡zovÃ½ch chyb
+    'DBSystemException' pouze tehdy, je-li schopno rozpoznat, Å¾e se jednÃ¡
+    oÂ systÃ©movou chybu.  To znamenÃ¡, Å¾e systÃ©movÃ¡ chyba mÅ¯Å¾e bÃ½t signalizovÃ¡na
+    iÂ jako prostÃ¡ 'DBException'.
     
     """
 
 
 class DBUserException(DBException):
-    """Vıjimka nahazovaná v pøípadì vzniku u¾ivatelské databázové chyby.
+    """VÃ½jimka nahazovanÃ¡ vÂ pÅ™Ã­padÄ› vzniku uÅ¾ivatelskÃ© databÃ¡zovÃ© chyby.
 
-    U¾ivatelská chyba je chyba zpùsobená syntakticky nebo sémanticky chybnou
-    databázovou operací, napøíklad chybnım pou¾itím SQL pøíkazu nebo pokusem
-    o poru¹ení referenèní integrity.  Viz té¾ 'DBSystemException'.
+    UÅ¾ivatelskÃ¡ chyba je chyba zpÅ¯sobenÃ¡ syntakticky nebo sÃ©manticky chybnou
+    databÃ¡zovou operacÃ­, napÅ™Ã­klad chybnÃ½m pouÅ¾itÃ­m SQL pÅ™Ã­kazu nebo pokusem
+    oÂ poruÅ¡enÃ­ referenÄnÃ­ integrity.  Viz tÃ©Å¾ 'DBSystemException'.
 
-    Databázové rozhraní generuje v pøípadì databázovıch chyb
-    'DBUserException' pouze tehdy, je-li schopno rozpoznat, ¾e se jedná
-    o u¾ivatelskou chybu.  To znamená, ¾e u¾ivatelská chyba mù¾e bıt
-    signalizována i jako prostá 'DBException'.
+    DatabÃ¡zovÃ© rozhranÃ­ generuje vÂ pÅ™Ã­padÄ› databÃ¡zovÃ½ch chyb
+    'DBUserException' pouze tehdy, je-li schopno rozpoznat, Å¾e se jednÃ¡
+    oÂ uÅ¾ivatelskou chybu.  To znamenÃ¡, Å¾e uÅ¾ivatelskÃ¡ chyba mÅ¯Å¾e bÃ½t
+    signalizovÃ¡na iÂ jako prostÃ¡ 'DBException'.
     
     """
 
 
 class DBLoginException(DBException):
-    """Databázová vıjimka zpùsobená chybnou autentizací jménem a heslem.
+    """DatabÃ¡zovÃ¡ vÃ½jimka zpÅ¯sobenÃ¡ chybnou autentizacÃ­ jmÃ©nem a heslem.
 
-    Tato vıjimka je vyvolávána pouze pøi uvedeném zpùsobu autentizace, jestli¾e
-    u¾ivatel zadá chybné jméno nebo heslo.
+    Tato vÃ½jimka je vyvolÃ¡vÃ¡na pouze pÅ™i uvedenÃ©m zpÅ¯sobu autentizace, jestliÅ¾e
+    uÅ¾ivatel zadÃ¡ chybnÃ© jmÃ©no nebo heslo.
 
     """
     def __init__(self):
-        """Inicializuj databázovou vıjimku s patøiènımi argumenty."""
+        """Inicializuj databÃ¡zovou vÃ½jimku sÂ patÅ™iÄnÃ½mi argumenty."""
         super_(DBLoginException).__init__\
-          (self, _("Chybné u¾ivatelské jméno nebo heslo"))
+          (self, _(u"ChybnÃ© uÅ¾ivatelskÃ© jmÃ©no nebo heslo"))
 
 
 class DBLockException(DBException):

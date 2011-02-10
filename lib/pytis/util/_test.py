@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2003, 2004, 2008 Brailcom, o.p.s.
 #

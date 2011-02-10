@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2005 Brailcom, o.p.s.
 #
@@ -31,49 +31,49 @@ tests = pytis.util.test.TestSuite()
 # list.py        #
 #================#
 
-# Co je potøeba (bohu¾el ruènì, proto¾e tvorba testù je soustavnì
-# ignorována :-((((((( ) otestovat po zmìnách v inline editaci:
+# Co je potÅ™eba (bohuÅ¾el ruÄnÄ›, protoÅ¾e tvorba testÅ¯ je soustavnÄ›
+# ignorovÃ¡naÂ :-((((((( ) otestovat po zmÄ›nÃ¡ch vÂ inline editaci:
 #
-# - Vstup do editace políèka patøiènou klávesou.
-# - Do editace políèka nelze vstoupit ¾ádnou jinou klávesou ani clickem èi
+# - Vstup do editace polÃ­Äka patÅ™iÄnou klÃ¡vesou.
+# - Do editace polÃ­Äka nelze vstoupit Å¾Ã¡dnou jinou klÃ¡vesou ani clickem Äi
 #   double-clickem.
-# - Zru¹ení editace políèka s vrácením obsahu klávesou Escape.
-# - Po zru¹ení editace políèka kurzor zùstane na onom políèku.
-# - Potvrzení editace políèka klávesou Enter.
-# - Po potvrzení editace políèka se kurzor pøesune na dal¹í políèko vpravo.
-#   Pokud takové políèko ji¾ není, pak: Jedná-li se o editaci existujícího
-#   øádku, kurzor pøeskoèí na první sloupec tého¾ øádku; jedná-li se o novı
-#   øádek, kurzor se zeptá na potvrzení jeho vlo¾ení -- je-li zamítnuto, skoèí
-#   na první sloupec, jinak je vlo¾en dal¹í novı øádek (èistı nebo kopie, podle
-#   zpùsobu posledního vlo¾ení nového øádku) a kurzor skoèí na jeho první
+# - ZruÅ¡enÃ­ editace polÃ­Äka sÂ vrÃ¡cenÃ­m obsahu klÃ¡vesou Escape.
+# - Po zruÅ¡enÃ­ editace polÃ­Äka kurzor zÅ¯stane na onom polÃ­Äku.
+# - PotvrzenÃ­ editace polÃ­Äka klÃ¡vesou Enter.
+# - Po potvrzenÃ­ editace polÃ­Äka se kurzor pÅ™esune na dalÅ¡Ã­ polÃ­Äko vpravo.
+#   Pokud takovÃ© polÃ­Äko jiÅ¾ nenÃ­, pak: JednÃ¡-li se oÂ editaci existujÃ­cÃ­ho
+#   Å™Ã¡dku, kurzor pÅ™eskoÄÃ­ na prvnÃ­ sloupec tÃ©hoÅ¾ Å™Ã¡dku; jednÃ¡-li se oÂ novÃ½
+#   Å™Ã¡dek, kurzor se zeptÃ¡ na potvrzenÃ­ jeho vloÅ¾enÃ­ -- je-li zamÃ­tnuto, skoÄÃ­
+#   na prvnÃ­ sloupec, jinak je vloÅ¾en dalÅ¡Ã­ novÃ½ Å™Ã¡dek (ÄistÃ½ nebo kopie, podle
+#   zpÅ¯sobu poslednÃ­ho vloÅ¾enÃ­ novÃ©ho Å™Ã¡dku) a kurzor skoÄÃ­ na jeho prvnÃ­
 #   sloupec.
-# - Je-li editován novı øádek, po pøesunu kurzoru po potvrzení políèka je nové
-#   políèko v re¾imu editace.
-# - My¹í klik pøesune kurzor na kliknuté políèko a vyselektuje øádek tohoto
-#   políèka, bez dal¹ích akcí (pokud se nejedná o pøeru¹ení editace).
-# - Pøi jakémkoliv pokusu o opu¹tìní rozeditovaného øádku naskoèí dialog
-#   s dotazem na zru¹ení editace.  Pøi kladné odpovìdi jsou vráceny pùvodní
-#   hodnoty øádku a provedena po¾adovaná akce, v opaèném pøípadì akce provedena
-#   není a kurzor zùstane na své pozici.
-# - Vıjimka: Pokud vısledkem editace nejsou ¾ádné zmìny (tıká se editace
-#   existujícího i nového øádku), dialog nenaskakuje a akce se provede.
-# - Do tìchto pokusù o opu¹tìní editace se poèítá i opu¹tìní formuláøe a
-#   ukonèení aplikace, av¹ak s tím rozdílem, ¾e se nelze vrátit do editace, je
-#   ji mo¾no pouze potrvdit nebo stornovat.
-# - Pøi zru¹ení nového editovaného øádku dojde ke správnému urèení poètu øádku
+# - Je-li editovÃ¡n novÃ½ Å™Ã¡dek, po pÅ™esunu kurzoru po potvrzenÃ­ polÃ­Äka je novÃ©
+#   polÃ­Äko vÂ reÅ¾imu editace.
+# - MyÅ¡Ã­ klik pÅ™esune kurzor na kliknutÃ© polÃ­Äko a vyselektuje Å™Ã¡dek tohoto
+#   polÃ­Äka, bez dalÅ¡Ã­ch akcÃ­ (pokud se nejednÃ¡ oÂ pÅ™eruÅ¡enÃ­ editace).
+# - PÅ™i jakÃ©mkoliv pokusu oÂ opuÅ¡tÄ›nÃ­ rozeditovanÃ©ho Å™Ã¡dku naskoÄÃ­ dialog
+#   sÂ dotazem na zruÅ¡enÃ­ editace.  PÅ™i kladnÃ© odpovÄ›di jsou vrÃ¡ceny pÅ¯vodnÃ­
+#   hodnoty Å™Ã¡dku a provedena poÅ¾adovanÃ¡ akce, vÂ opaÄnÃ©m pÅ™Ã­padÄ› akce provedena
+#   nenÃ­ a kurzor zÅ¯stane na svÃ© pozici.
+# - VÃ½jimka: Pokud vÃ½sledkem editace nejsou Å¾Ã¡dnÃ© zmÄ›ny (tÃ½kÃ¡ se editace
+#   existujÃ­cÃ­ho iÂ novÃ©ho Å™Ã¡dku), dialog nenaskakuje a akce se provede.
+# - Do tÄ›chto pokusÅ¯ oÂ opuÅ¡tÄ›nÃ­ editace se poÄÃ­tÃ¡ iÂ opuÅ¡tÄ›nÃ­ formulÃ¡Å™e a
+#   ukonÄenÃ­ aplikace, avÅ¡ak sÂ tÃ­m rozdÃ­lem, Å¾e se nelze vrÃ¡tit do editace, je
+#   ji moÅ¾no pouze potrvdit nebo stornovat.
+# - PÅ™i zruÅ¡enÃ­ novÃ©ho editovanÃ©ho Å™Ã¡dku dojde ke sprÃ¡vnÃ©mu urÄenÃ­ poÄtu Å™Ã¡dku
 #   gridu.
-# - Lze vlo¾it novı prázdnı øádek patøiènou klávesou pøed aktuální záznam.
-# - Lze vlo¾it novı prázdnı øádek patøiènou klávesou za aktuální záznam.
-# - Lze vlo¾it kopii aktuálního øádku patøiènou klávesou za aktuální záznam.
-# - Pøi jakémkoliv zalo¾ení nového øádku je kurzor na jeho prvním sloupci a
-#   ono políèko je automaticky v re¾imu editace.
-# - Klávesa ulo¾ení øádku (nebo obdobná akce provedená pøes dialog s dotazem)
-#   øádek ulo¾ení provede.
-# - Klávesa smazání øádku smazání provede.
-# - Pøi smazání editovaného øádku dojde ke správnému urèení poètu øádkù gridu.
-# - Pøi zadání nesprávné hodnoty do políèka naskoèí ihned po potvrzení políèka
-#   varovné dialogové okno a po jeho odklepnutí dojde k návratu do editace
-#   políèka.
+# - Lze vloÅ¾it novÃ½ prÃ¡zdnÃ½ Å™Ã¡dek patÅ™iÄnou klÃ¡vesou pÅ™ed aktuÃ¡lnÃ­ zÃ¡znam.
+# - Lze vloÅ¾it novÃ½ prÃ¡zdnÃ½ Å™Ã¡dek patÅ™iÄnou klÃ¡vesou za aktuÃ¡lnÃ­ zÃ¡znam.
+# - Lze vloÅ¾it kopii aktuÃ¡lnÃ­ho Å™Ã¡dku patÅ™iÄnou klÃ¡vesou za aktuÃ¡lnÃ­ zÃ¡znam.
+# - PÅ™i jakÃ©mkoliv zaloÅ¾enÃ­ novÃ©ho Å™Ã¡dku je kurzor na jeho prvnÃ­m sloupci a
+#   ono polÃ­Äko je automaticky vÂ reÅ¾imu editace.
+# - KlÃ¡vesa uloÅ¾enÃ­ Å™Ã¡dku (nebo obdobnÃ¡ akce provedenÃ¡ pÅ™es dialog sÂ dotazem)
+#   Å™Ã¡dek uloÅ¾enÃ­ provede.
+# - KlÃ¡vesa smazÃ¡nÃ­ Å™Ã¡dku smazÃ¡nÃ­ provede.
+# - PÅ™i smazÃ¡nÃ­ editovanÃ©ho Å™Ã¡dku dojde ke sprÃ¡vnÃ©mu urÄenÃ­ poÄtu Å™Ã¡dkÅ¯ gridu.
+# - PÅ™i zadÃ¡nÃ­ nesprÃ¡vnÃ© hodnoty do polÃ­Äka naskoÄÃ­ ihned po potvrzenÃ­ polÃ­Äka
+#   varovnÃ© dialogovÃ© okno a po jeho odklepnutÃ­ dojde kÂ nÃ¡vratu do editace
+#   polÃ­Äka.
 
 
 ################

@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -27,16 +27,16 @@ import pytis.util
 class FormShortStatistics(Specification):
     public = True
     table = 'ev_pytis_form_short_summary'
-    title = _("Pøehled pou¾ívanıch formuláøù")
+    title = _(u"PÅ™ehled pouÅ¾Ã­vanÃ½ch formulÃ¡Å™Å¯")
     fields = (
-        Field('form', _("Jméno formuláøe")),
-        Field('class', _("Tøída formuláøe")),
-        Field('n_users', _("Poèet u¾ivatelù")),
-        Field('n_open', _("Poèet otevøení")),
-        Field('avg_start', _("Prùmìrná doba startu")),
-        Field('last_used', _("Poslední spu¹tìní")),
+        Field('form', _(u"JmÃ©no formulÃ¡Å™e")),
+        Field('class', _(u"TÅ™Ã­da formulÃ¡Å™e")),
+        Field('n_users', _(u"PoÄet uÅ¾ivatelÅ¯")),
+        Field('n_open', _(u"PoÄet otevÅ™enÃ­")),
+        Field('avg_start', _(u"PrÅ¯mÄ›rnÃ¡ doba startu")),
+        Field('last_used', _(u"PoslednÃ­ spuÅ¡tÄ›nÃ­")),
         )
-    bindings = (Binding('users', _("U¾ivatelé"), 'statistics.FormUsers',
+    bindings = (Binding('users', _(u"UÅ¾ivatelÃ©"), 'statistics.FormUsers',
                         condition=(lambda row: pytis.data.AND(pytis.data.EQ('form', row['form']),
                                                               pytis.data.EQ('class', row['class'])))),
                 )
@@ -44,17 +44,17 @@ class FormShortStatistics(Specification):
 class FormStatistics(Specification):
     public = True
     table = 'ev_pytis_form_summary'
-    title = _("Podrobnı pøehled pou¾ívanıch formuláøù")
+    title = _(u"PodrobnÃ½ pÅ™ehled pouÅ¾Ã­vanÃ½ch formulÃ¡Å™Å¯")
     fields = (
-        Field('form', _("Jméno formuláøe")),
-        Field('class', _("Tøída formuláøe")),
-        Field('info', _("Parametry formuláøe")),
-        Field('n_users', _("Poèet u¾ivatelù")),
-        Field('n_open', _("Poèet otevøení")),
-        Field('avg_start', _("Prùmìrná doba startu")),
-        Field('last_used', _("Poslední spu¹tìní")),
+        Field('form', _(u"JmÃ©no formulÃ¡Å™e")),
+        Field('class', _(u"TÅ™Ã­da formulÃ¡Å™e")),
+        Field('info', _(u"Parametry formulÃ¡Å™e")),
+        Field('n_users', _(u"PoÄet uÅ¾ivatelÅ¯")),
+        Field('n_open', _(u"PoÄet otevÅ™enÃ­")),
+        Field('avg_start', _(u"PrÅ¯mÄ›rnÃ¡ doba startu")),
+        Field('last_used', _(u"PoslednÃ­ spuÅ¡tÄ›nÃ­")),
         )
-    bindings = (Binding('users', _("U¾ivatelé"), 'statistics.FormUsers',
+    bindings = (Binding('users', _(u"UÅ¾ivatelÃ©"), 'statistics.FormUsers',
                         condition=(lambda row: pytis.data.AND(pytis.data.EQ('form', row['form']),
                                                               pytis.data.EQ('class', row['class']),
                                                               pytis.data.EQ('info', row['info'])))),
@@ -63,53 +63,53 @@ class FormStatistics(Specification):
 class FormUsers(Specification):
     public = True
     table = 'ev_pytis_form_users'
-    title = _("U¾ivatelé formuláøe")
+    title = _(u"UÅ¾ivatelÃ© formulÃ¡Å™e")
     fields = (
-        Field('login', _("Login")),
-        Field('form', _("Jméno formuláøe")),
-        Field('class', _("Tøída formuláøe")),
-        Field('info', _("Parametry formuláøe")),
-        Field('n_open', _("Poèet otevøení")),
-        Field('last_used', _("Poslední spu¹tìní")),
+        Field('login', _(u"Login")),
+        Field('form', _(u"JmÃ©no formulÃ¡Å™e")),
+        Field('class', _(u"TÅ™Ã­da formulÃ¡Å™e")),
+        Field('info', _(u"Parametry formulÃ¡Å™e")),
+        Field('n_open', _(u"PoÄet otevÅ™enÃ­")),
+        Field('last_used', _(u"PoslednÃ­ spuÅ¡tÄ›nÃ­")),
         )
     columns = ('login', 'info', 'n_open', 'last_used',)
 
 class FormUserList(Specification):
     public = True
     table = 'ev_pytis_form_user_list'
-    title = _("U¾ivatelé")
+    title = _(u"UÅ¾ivatelÃ©")
     fields = (
-        Field('login', _("Login")),
+        Field('login', _(u"Login")),
         )
-    bindings = (Binding('users', _("Formuláøe"), 'statistics.FormUserStatistics',
+    bindings = (Binding('users', _(u"FormulÃ¡Å™e"), 'statistics.FormUserStatistics',
                         condition=(lambda row: pytis.data.EQ('login', row['login']))),
                 )
 
 class FormUserStatistics(Specification):
     public = True
     table = 'ev_pytis_form_users'
-    title = _("Formuláøe u¾ivatele")
+    title = _(u"FormulÃ¡Å™e uÅ¾ivatele")
     fields = (
-        Field('login', _("Login")),
-        Field('form', _("Jméno formuláøe")),
-        Field('class', _("Tøída formuláøe")),
-        Field('info', _("Parametry formuláøe")),
-        Field('n_open', _("Poèet otevøení")),
-        Field('last_used', _("Poslední spu¹tìní")),
+        Field('login', _(u"Login")),
+        Field('form', _(u"JmÃ©no formulÃ¡Å™e")),
+        Field('class', _(u"TÅ™Ã­da formulÃ¡Å™e")),
+        Field('info', _(u"Parametry formulÃ¡Å™e")),
+        Field('n_open', _(u"PoÄet otevÅ™enÃ­")),
+        Field('last_used', _(u"PoslednÃ­ spuÅ¡tÄ›nÃ­")),
         )
     columns = ('form', 'class', 'info', 'n_open', 'last_used',)
 
 class FormUserStatisticsNoinfo(Specification):
     public = True
     table = 'ev_pytis_form_users_noinfo'
-    title = _("Formuláøe u¾ivatele")
+    title = _(u"FormulÃ¡Å™e uÅ¾ivatele")
     fields = (
-        Field('shortname', _("Akce")),
-        Field('login', _("Login")),
-        Field('form', _("Jméno formuláøe")),
-        Field('class', _("Tøída formuláøe")),
-        Field('n_open', _("Poèet otevøení")),
-        Field('last_used', _("Poslední spu¹tìní")),
+        Field('shortname', _(u"Akce")),
+        Field('login', _(u"Login")),
+        Field('form', _(u"JmÃ©no formulÃ¡Å™e")),
+        Field('class', _(u"TÅ™Ã­da formulÃ¡Å™e")),
+        Field('n_open', _(u"PoÄet otevÅ™enÃ­")),
+        Field('last_used', _(u"PoslednÃ­ spuÅ¡tÄ›nÃ­")),
         )
     columns = ('login', 'class', 'n_open', 'last_used',)
     
@@ -118,4 +118,4 @@ class FormUserStatisticsNoinfo(Specification):
             pytis.form.run_form(pytis.form.PopupEditForm, 'Nastaveni.BvUsersCfg',
                                 select_row=pytis.extensions.cfg_param('id', cfgspec='Nastaveni.BvUsersCfg'))
         except pytis.util.ResolverFileError:
-            pytis.form.run_dialog(pytis.form.Warning, _("Tato databáze neobsahuje u¾ivatelskou konfiguraci"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Tato databÃ¡ze neobsahuje uÅ¾ivatelskou konfiguraci"))

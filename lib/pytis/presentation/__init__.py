@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Transformace a prezentace dat
 # 
@@ -20,10 +20,10 @@
 
 """Transformace a prezentace dat.
 
-Tento modul má za úkol øe¹it zpracování dat, které nepøíslu¹í ani modulu
-'pytis.data' ani konkrétní podobì u¾ivatelského rozhraní.  Typickımi funkcemi
-tohoto modulu jsou poèítání hodnot \"virtuálních\" políèek, pøevod hodnot
-rùzného druhu do stringové podoby nebo formátování stringového textu.
+Tento modul mÃ¡ za Ãºkol Å™eÅ¡it zpracovÃ¡nÃ­ dat, kterÃ© nepÅ™Ã­sluÅ¡Ã­ ani modulu
+'pytis.data' ani konkrÃ©tnÃ­ podobÄ› uÅ¾ivatelskÃ©ho rozhranÃ­.  TypickÃ½mi funkcemi
+tohoto modulu jsou poÄÃ­tÃ¡nÃ­ hodnot \"virtuÃ¡lnÃ­ch\" polÃ­Äek, pÅ™evod hodnot
+rÅ¯znÃ©ho druhu do stringovÃ© podoby nebo formÃ¡tovÃ¡nÃ­ stringovÃ©ho textu.
 
 """
 

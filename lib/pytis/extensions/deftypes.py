@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 # Copyright (C) 2001, 2002, 2003, 2005, 2009 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Definice odvozených datových typù.""" 
+"""Definice odvozenÃ½ch datovÃ½ch typÅ¯.""" 
 
 from pytis.extensions import *
 

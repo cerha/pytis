@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Definice u¾ivatelskıch pøíkazù
+# Definice uÅ¾ivatelskÃ½ch pÅ™Ã­kazÅ¯
 # 
 # Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
 #
@@ -18,10 +18,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Tøídy slou¾ící k definici pøíkazù.
+"""TÅ™Ã­dy slouÅ¾Ã­cÃ­ kÂ definici pÅ™Ã­kazÅ¯.
 
-Tento modul definuje tøídy slou¾ící k definici a zpracování pøíkazù.  Vlastní
-definice v¹ech dostupnıch pøíkazù aplikace je potom soustøedìna centrálnì v
+Tento modul definuje tÅ™Ã­dy slouÅ¾Ã­cÃ­ k definici a zpracovÃ¡nÃ­ pÅ™Ã­kazÅ¯.  VlastnÃ­
+definice vÅ¡ech dostupnÃ½ch pÅ™Ã­kazÅ¯ aplikace je potom soustÅ™edÄ›na centrÃ¡lnÄ› v
 modulu 'commands_'.
 
 """
@@ -29,19 +29,19 @@ modulu 'commands_'.
 from pytis.form import *
 
 class CommandHandler:
-    """Mix-in tøída, kterou musí dìdit tøídy definující vlastní pøíkazy.
+    """Mix-in tÅ™Ã­da, kterou musÃ­ dÄ›dit tÅ™Ã­dy definujÃ­cÃ­ vlastnÃ­ pÅ™Ã­kazy.
 
-    Tato tøída pøidává schopnost zpracovat pøíkazy (instance 'Command') a
-    zjistit, zda je konkrétní pøíkaz v danou chvíli dostupnı.
+    Tato tÅ™Ã­da pÅ™idÃ¡vÃ¡ schopnost zpracovat pÅ™Ã­kazy (instance 'Command') a
+    zjistit, zda je konkrÃ©tnÃ­ pÅ™Ã­kaz v danou chvÃ­li dostupnÃ½.
 
-    TODO: Doplnit pøehled úèelu jednotlivıch metod a zpùsobu vyhledání instance
+    TODO: Doplnit pÅ™ehled ÃºÄelu jednotlivÃ½ch metod a zpÅ¯sobu vyhledÃ¡nÃ­ instance
     handleru.
 
     """
     
     @classmethod
     def _get_command_handler_instance(cls):
-        """Najdi v aplikaci aktivní prvek, kterı je schopen zpracovat pøíkaz."""
+        """Najdi v aplikaci aktivnÃ­ prvek, kterÃ½ je schopen zpracovat pÅ™Ã­kaz."""
         raise ProgramError("This method must be overriden in a derived class.")
 
     @classmethod
@@ -56,12 +56,12 @@ class CommandHandler:
     
     @classmethod
     def command_enabled(cls, command, **kwargs):
-        """Vra» pravdu, pokud je danı pøíkaz aktivní (smí bıt vyvolán).
+        """VraÅ¥ pravdu, pokud je danÃ½ pÅ™Ã­kaz aktivnÃ­ (smÃ­ bÃ½t vyvolÃ¡n).
         
-        Pøíkazy, které nejsou kompatibilní s aktivním prvkem aplikace (instancí
-        'CommandHandler') jsou automaticky neaktivní.  Pokud je kompatibilní
-        instance 'CommandHandler' nalezena, je dostupnost pøíkazu dále
-        vyhodnocena voláním metody 'can_command' této instance.
+        PÅ™Ã­kazy, kterÃ© nejsou kompatibilnÃ­ s aktivnÃ­m prvkem aplikace (instancÃ­
+        'CommandHandler') jsou automaticky neaktivnÃ­.  Pokud je kompatibilnÃ­
+        instance 'CommandHandler' nalezena, je dostupnost pÅ™Ã­kazu dÃ¡le
+        vyhodnocena volÃ¡nÃ­m metody 'can_command' tÃ©to instance.
 
         """
         handler, kwargs = cls._command_handler(command, **kwargs)
@@ -75,9 +75,9 @@ class CommandHandler:
 
     @classmethod
     def invoke_command(cls, command, **kwargs):
-        """Vyhledej instanci handleru pøíkazu a pøíkaz proveï.
+        """Vyhledej instanci handleru pÅ™Ã­kazu a pÅ™Ã­kaz proveÄ.
 
-        Vrací: Návratovou hodnotu obslu¾né rutiny daného pøíkazu.
+        VracÃ­: NÃ¡vratovou hodnotu obsluÅ¾nÃ© rutiny danÃ©ho pÅ™Ã­kazu.
 
         """
         handler, kwargs = cls._command_handler(command, **kwargs)
@@ -112,37 +112,37 @@ class CommandHandler:
         wx_callback(wx.EVT_UPDATE_UI, frame, id, lambda e: e.Enable(cmd.enabled(**kwargs)))
     
     def on_command(self, command, **kwargs):
-        """Zpracuj pøíkaz 'command' s parametry 'kwargs'.
+        """Zpracuj pÅ™Ã­kaz 'command' sÂ parametry 'kwargs'.
 
         Argumenty:
 
           command -- instance 'Command'.
 
-          kwargs -- argumenty, se kterámi byl pøíkaz 'command' vyvolán.
+          kwargs -- argumenty, se kterÃ¡mi byl pÅ™Ã­kaz 'command' vyvolÃ¡n.
 
-        Obslu¾dá rutina pøíkazu je nalezena automaticky podle názvu pøíkazu.
-        Napøíkad pro pøíkaz 'Application.COMMAND_RUN_FORM' je hledána metoda
-        'Application._cmd_run_form()'.  Této metodì jsou pøedány v¹echny
-        argumenty, se kterımi byl pøíkaz vyvolán.
+        ObsluÅ¾dÃ¡ rutina pÅ™Ã­kazu je nalezena automaticky podle nÃ¡zvu pÅ™Ã­kazu.
+        NapÅ™Ã­kad pro pÅ™Ã­kaz 'Application.COMMAND_RUN_FORM' je hledÃ¡na metoda
+        'Application._cmd_run_form()'.  TÃ©to metodÄ› jsou pÅ™edÃ¡ny vÅ¡echny
+        argumenty, se kterÃ½mi byl pÅ™Ã­kaz vyvolÃ¡n.
 
-        Ka¾dá tøída, pro kterou jsou definovány pøíkazy, by tak mìla definovat
-        v¹echny odpovídající obslu¾né rutiny.  Druhou mo¾ností je pøedefinování
-        této metody a implementace vlastního mechanismu zpracování pøíkazù.
+        KaÅ¾dÃ¡ tÅ™Ã­da, pro kterou jsou definovÃ¡ny pÅ™Ã­kazy, by tak mÄ›la definovat
+        vÅ¡echny odpovÃ­dajÃ­cÃ­ obsluÅ¾nÃ© rutiny.  Druhou moÅ¾nostÃ­ je pÅ™edefinovÃ¡nÃ­
+        tÃ©to metody a implementace vlastnÃ­ho mechanismu zpracovÃ¡nÃ­ pÅ™Ã­kazÅ¯.
         
-        Vrací: Návratovou hodnotu obslu¾né rutiny daného pøíkazu.
+        VracÃ­: NÃ¡vratovou hodnotu obsluÅ¾nÃ© rutiny danÃ©ho pÅ™Ã­kazu.
 
         """
         handler = getattr(self, '_cmd_' + command.name().lower())
         return handler(**kwargs)
 
     def can_command(self, command, **kwargs):
-        """Vra» pravdu, pokud je pøíkaz aktivní a mù¾e bıt proveden.
+        """VraÅ¥ pravdu, pokud je pÅ™Ã­kaz aktivnÃ­ a mÅ¯Å¾e bÃ½t proveden.
 
-        Pokud je pøíkaz aktivní, znamená to, ¾e jeho provedení má v daném
-        kontextu smysl, u¾ivatel má dostateèná pøístupová práva atd.
+        Pokud je pÅ™Ã­kaz aktivnÃ­, znamenÃ¡ to, Å¾e jeho provedenÃ­ mÃ¡ v danÃ©m
+        kontextu smysl, uÅ¾ivatel mÃ¡ dostateÄnÃ¡ pÅ™Ã­stupovÃ¡ prÃ¡va atd.
 
-        Pøíkazy, pro nì¾ je definována metoda 'can_<command_name>' a ta vrátí
-        False, jsou neaktivní.
+        PÅ™Ã­kazy, pro nÄ›Å¾ je definovÃ¡na metoda 'can_<command_name>' a ta vrÃ¡tÃ­
+        False, jsou neaktivnÃ­.
 
         """
         can_method_name = '_can_' + command.name().lower()
@@ -157,12 +157,12 @@ class CommandHandler:
 
     
 class Command(object):
-    """Reprezentace obecného pøíkazu u¾ivatelského rozhraní.
+    """Reprezentace obecnÃ©ho pÅ™Ã­kazu uÅ¾ivatelskÃ©ho rozhranÃ­.
 
-    Ka¾dı pøíkaz je vázán na urèitı typ prvku u¾ivatelského rozhraní aplikace
-    (formuláø, dialog, vstupní políèko), nad jeho¾ instancí mù¾e bıt vyvolán.
-    Tøída ka¾dého takového prvku u¾ivatelského rozhraní, která chce vlastní
-    pøíkazy definovat, musí bıt odvozena od tøídy 'CommandHandler'.
+    KaÅ¾dÃ½ pÅ™Ã­kaz je vÃ¡zÃ¡n na urÄitÃ½ typ prvku uÅ¾ivatelskÃ©ho rozhranÃ­ aplikace
+    (formulÃ¡Å™, dialog, vstupnÃ­ polÃ­Äko), nad jehoÅ¾ instancÃ­ mÅ¯Å¾e bÃ½t vyvolÃ¡n.
+    TÅ™Ã­da kaÅ¾dÃ©ho takovÃ©ho prvku uÅ¾ivatelskÃ©ho rozhranÃ­, kterÃ¡ chce vlastnÃ­
+    pÅ™Ã­kazy definovat, musÃ­ bÃ½t odvozena od tÅ™Ã­dy 'CommandHandler'.
 
     """
 
@@ -182,26 +182,26 @@ class Command(object):
         return class_._commands.get(name)
     
     def __init__(self, handler, name, doc=None, log_=True):
-        """Definuj pøíkaz.
+        """Definuj pÅ™Ã­kaz.
 
         Argumenty:
 
-          handler -- Tøída prvku u¾ivatelského rozhraní, kterı pøíkaz
-            zpracovává.  Tøída musí bıt potomkem tøídy 'CommandHandler'.  Více
-            také viz. vı¹e (dokumentace tøídy 'Command').
-          name -- název pøíkazu.  Neprázdnı øetìzec, pou¾itelnı jako Pythonovı
-            identifikáítor, mezi názvy pøíkazù unikátní.  Název je pou¾it pro
-            vytvoøení konstanty (viz. ní¾e), tak¾e dal¹ím po¾adavkem je, aby
-            ve¹kerá písmena byla velká.
-          doc -- dokumentaèní øetìzec pøíkazu.  Struènı popis z pohledu vıvojáøe
-            (ne pro zobrazení v u¾ivatelském rozhraní).
-          log_ -- právì kdy¾ je pravdivé, je vyvolání pøíkazu logováno jako
-            EVENT, jinak je logováno pouze jako DEBUG
+          handler -- TÅ™Ã­da prvku uÅ¾ivatelskÃ©ho rozhranÃ­, kterÃ½ pÅ™Ã­kaz
+            zpracovÃ¡vÃ¡.  TÅ™Ã­da musÃ­ bÃ½t potomkem tÅ™Ã­dy 'CommandHandler'.  VÃ­ce
+            takÃ© viz. vÃ½Å¡e (dokumentace tÅ™Ã­dy 'Command').
+          name -- nÃ¡zev pÅ™Ã­kazu.  NeprÃ¡zdnÃ½ Å™etÄ›zec, pouÅ¾itelnÃ½ jako PythonovÃ½
+            identifikÃ¡Ã­tor, mezi nÃ¡zvy pÅ™Ã­kazÅ¯ unikÃ¡tnÃ­.  NÃ¡zev je pouÅ¾it pro
+            vytvoÅ™enÃ­ konstanty (viz. nÃ­Å¾e), takÅ¾e dalÅ¡Ã­m poÅ¾adavkem je, aby
+            veÅ¡kerÃ¡ pÃ­smena byla velkÃ¡.
+          doc -- dokumentaÄnÃ­ Å™etÄ›zec pÅ™Ã­kazu.  StruÄnÃ½ popis z pohledu vÃ½vojÃ¡Å™e
+            (ne pro zobrazenÃ­ v uÅ¾ivatelskÃ©m rozhranÃ­).
+          log_ -- prÃ¡vÄ› kdyÅ¾ je pravdivÃ©, je vyvolÃ¡nÃ­ pÅ™Ã­kazu logovÃ¡no jako
+            EVENT, jinak je logovÃ¡no pouze jako DEBUG
 
-        Po definici pøíkazu je ka¾dı pøíkaz automaticky dostupnı jako veøejná
-        konstanta své obslu¾né tøídy (dané argumentem 'handler').  Název této
-        konstanty je v¾dy COMMAND_ + 'name' ('name' je název pøíkazu zadanı v
-        konstruktoru).  Naøíklad tedy 'Application.COMMAND_EXIT', nebo
+        Po definici pÅ™Ã­kazu je kaÅ¾dÃ½ pÅ™Ã­kaz automaticky dostupnÃ½ jako veÅ™ejnÃ¡
+        konstanta svÃ© obsluÅ¾nÃ© tÅ™Ã­dy (danÃ© argumentem 'handler').  NÃ¡zev tÃ©to
+        konstanty je vÅ¾dy COMMAND_ + 'name' ('name' je nÃ¡zev pÅ™Ã­kazu zadanÃ½ v
+        konstruktoru).  NaÅ™Ã­klad tedy 'Application.COMMAND_EXIT', nebo
         'LookupForm.COMMAND_SORT'.
 
         """
@@ -221,59 +221,59 @@ class Command(object):
         Command._commands[name] = self
 
     def __call__(self, **kwargs):
-        """Umo¾òuje pohodlnì vytvoøit definici pøíkazu a jeho argumentù.
+        """UmoÅ¾Åˆuje pohodlnÄ› vytvoÅ™it definici pÅ™Ã­kazu a jeho argumentÅ¯.
 
-        Vrací dvojici (COMMAND, ARGS), kde COMMAND je instance pøíkazu a ARGS
-        jsou jeho argumenty jako slovník.
+        VracÃ­ dvojici (COMMAND, ARGS), kde COMMAND je instance pÅ™Ã­kazu a ARGS
+        jsou jeho argumenty jako slovnÃ­k.
 
-        Této vlastnosti lze vyu¾ít napøíklad pro zjednodu¹ení zápisu
-        klávesovıch map apod., kde pøíkaz a jeho argumenty tvoøí nedílnou
+        TÃ©to vlastnosti lze vyuÅ¾Ã­t napÅ™Ã­klad pro zjednoduÅ¡enÃ­ zÃ¡pisu
+        klÃ¡vesovÃ½ch map apod., kde pÅ™Ã­kaz a jeho argumenty tvoÅ™Ã­ nedÃ­lnou
         dvojici.
 
         """
         return (self, kwargs)
         
     def handler(self):
-        """Vra» tøídu u¾ivatelského rozhraní, která tento pøíkaz zpracovává."""
+        """VraÅ¥ tÅ™Ã­du uÅ¾ivatelskÃ©ho rozhranÃ­, kterÃ¡ tento pÅ™Ã­kaz zpracovÃ¡vÃ¡."""
         return self._handler
 
     def name(self):
-        """Vra» název pøíkazu zadanı v konstruktoru."""
+        """VraÅ¥ nÃ¡zev pÅ™Ã­kazu zadanÃ½ v konstruktoru."""
         return self._name
     
     def id(self):
-        """Vra» identifikátor pøíkazu jako øetìzec.
+        """VraÅ¥ identifikÃ¡tor pÅ™Ã­kazu jako Å™etÄ›zec.
 
-        Identifikátor je vhodnı napø. pro logování.  Pøíkazy jsou rozpoznávány
-        dle konkrétních instancí, ne podle svého identifikátoru.
+        IdentifikÃ¡tor je vhodnÃ½ napÅ™. pro logovÃ¡nÃ­.  PÅ™Ã­kazy jsou rozpoznÃ¡vÃ¡ny
+        dle konkrÃ©tnÃ­ch instancÃ­, ne podle svÃ©ho identifikÃ¡toru.
     
         """
         return self._id
 
     def doc(self):
-        """Vra» dokumentaèní øetìzec pøíkazu jako string, nebo None."""
+        """VraÅ¥ dokumentaÄnÃ­ Å™etÄ›zec pÅ™Ã­kazu jako string, nebo None."""
         return self._doc
     
     def enabled(self, **kwargs):
-        """Vra» pravdu, pokud je pøíkaz aktivní (smí bıt vyvolán).
+        """VraÅ¥ pravdu, pokud je pÅ™Ã­kaz aktivnÃ­ (smÃ­ bÃ½t vyvolÃ¡n).
 
-        Zji¹tìní dostupnosti pøíkazu je ponecháno na metodì 'command_enabled'
-        tøídy 'CommandHandler' pro kterou je tento pøíkaz definován.
+        ZjiÅ¡tÄ›nÃ­ dostupnosti pÅ™Ã­kazu je ponechÃ¡no na metodÄ› 'command_enabled'
+        tÅ™Ã­dy 'CommandHandler' pro kterou je tento pÅ™Ã­kaz definovÃ¡n.
 
         """
         return self._handler.command_enabled(self, **kwargs)
 
     def invoke(self, **kwargs):
-        """Vyvolej v aplikaci zpracování pøíkazu s danımi argumenty."""
+        """Vyvolej v aplikaci zpracovÃ¡nÃ­ pÅ™Ã­kazu s danÃ½mi argumenty."""
         if self.enabled(**kwargs):
             if self._log:
                 kind = EVENT
             else:
                 kind = DEBUG
-            log(kind, 'Vyvolán pøíkaz:', (self, kwargs))
+            log(kind, 'VyvolÃ¡n pÅ™Ã­kaz:', (self, kwargs))
             return self._handler.invoke_command(self, **kwargs)
         else:
-            message(_("Vyvolání pøíkazu zamítnuto: %s") % self.id(), beep_=True)
+            message(_(u"VyvolÃ¡nÃ­ pÅ™Ã­kazu zamÃ­tnuto: %s") % self.id(), beep_=True)
             return False
     
     def __cmp__(self, other):

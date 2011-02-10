@@ -1,211 +1,211 @@
-# Pøíznak cachování specifikací pøi startu aplikace.
+# PÅ™Ã­znak cachovÃ¡nÃ­ specifikacÃ­ pÅ™i startu aplikace.
 #cache_spec_onstart = True
 
-# Port databázového serveru.
+# Port databÃ¡zovÃ©ho serveru.
 #dbport = None
 
-# Pøíznak zobrazování úvodního uvítacího dialogu.
+# PÅ™Ã­znak zobrazovÃ¡nÃ­ ÃºvodnÃ­ho uvÃ­tacÃ­ho dialogu.
 #show_splash = True
 
-# Barva møí¾ky tabulkového formuláøe. Barva je reprezentována øetìzcem
+# Barva mÅ™Ã­Å¾ky tabulkovÃ©ho formulÃ¡Å™e. Barva je reprezentovÃ¡na Å™etÄ›zcem
 # '#RRGGBB'.
 #grid_line_color = '#6482be'
 
-# Barva záhlaví tabulky pøi zapnutém filtrování. Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva zÃ¡hlavÃ­ tabulky pÅ™i zapnutÃ©m filtrovÃ¡nÃ­. Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #filter_color = '#82c882'
 
-# E-mailová adresa, na kterou mají bıt posílána oznámení o chybì.
+# E-mailovÃ¡ adresa, na kterou majÃ­ bÃ½t posÃ­lÃ¡na oznÃ¡menÃ­ oÂ chybÄ›.
 #bug_report_address = ''
 
-# Cesta k souboru s logem. Mù¾e bıt zadán absolutnì i relativnì vzhledem
-# k aktuálnímu adresáøi.
+# Cesta k souboru s logem. MÅ¯Å¾e bÃ½t zadÃ¡n absolutnÄ› iÂ relativnÄ› vzhledem
+# kÂ aktuÃ¡lnÃ­mu adresÃ¡Å™i.
 #logo = './icons/logo.bmp'
 
-# Shellovı pøíkaz sendmail vèetnì celé cesty.
+# ShellovÃ½ pÅ™Ã­kaz sendmail vÄetnÄ› celÃ© cesty.
 #sendmail_command = '/usr/lib/sendmail'
 
-# Poèet øádkù, které se pøinaèítají do cache pøi dal¹ích selectech z datového
+# PoÄet Å™Ã¡dkÅ¯, kterÃ© se pÅ™inaÄÃ­tajÃ­ do cache pÅ™i dalÅ¡Ã­ch selectech z datovÃ©ho
 # objektu.
 #fetch_size = 100
 
-# Numeric locale. Hodnota musí bıt string reprezentující locale pro formátování
-# èíselnıch polo¾ek.
+# Numeric locale. Hodnota musÃ­ bÃ½t string reprezentujÃ­cÃ­ locale pro formÃ¡tovÃ¡nÃ­
+# ÄÃ­selnÃ½ch poloÅ¾ek.
 #lc_numeric = 'C'
 
-# Barva pozadí needitovatelného vstupního políèka. Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva pozadÃ­ needitovatelnÃ©ho vstupnÃ­ho polÃ­Äka. Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #field_disabled_color = '#c0c0c0'
 
-# Jméno tabulky, do které mají bıt logovány DML SQL pøíkazy.
+# JmÃ©no tabulky, do kterÃ© majÃ­ bÃ½t logovÃ¡ny DML SQL pÅ™Ã­kazy.
 #dblogtable = ''
 
-# Poèet øádkù, které se pøednaètou do cache pøi prvním selectu z datového
+# PoÄet Å™Ã¡dkÅ¯, kterÃ© se pÅ™ednaÄtou do cache pÅ™i prvnÃ­m selectu z datovÃ©ho
 # objektu.
 #initial_fetch_size = 100
 
-# Pøíznak vyvolání debuggeru pøi chybì. Dojde-li k odchycení neoèekávané
-# vıjimky a tato volba je zapnuta, je vyvolán interaktivní debugger.  Je-li
-# zapnuta volba 'debug', je implicitnì zapnuta i tato volba.  U¾iteèné pouze
-# pro ladìní.
+# PÅ™Ã­znak vyvolÃ¡nÃ­ debuggeru pÅ™i chybÄ›. Dojde-li kÂ odchycenÃ­ neoÄekÃ¡vanÃ©
+# vÃ½jimky a tato volba je zapnuta, je vyvolÃ¡n interaktivnÃ­ debugger.  Je-li
+# zapnuta volba 'debug', je implicitnÄ› zapnuta iÂ tato volba.  UÅ¾iteÄnÃ© pouze
+# pro ladÄ›nÃ­.
 #debug_on_error = False
 
-# Kódování exportovanıch dat. Hodnota musí bıt jedním z podporovanıch kódování
+# KÃ³dovÃ¡nÃ­ exportovanÃ½ch dat. Hodnota musÃ­ bÃ½t jednÃ­m z podporovanÃ½ch kÃ³dovÃ¡nÃ­
 # v Pythonu.
 #export_encoding = 'iso8859-2'
 
-# Adresáø s obrázkovımi soubory. Mù¾e bıt zadán absolutnì i relativnì vzhledem
-# k aktuálnímu adresáøi.
+# AdresÃ¡Å™ sÂ obrÃ¡zkovÃ½mi soubory. MÅ¯Å¾e bÃ½t zadÃ¡n absolutnÄ› iÂ relativnÄ› vzhledem
+# kÂ aktuÃ¡lnÃ­mu adresÃ¡Å™i.
 #icon_dir = './icons'
 
-# Sekvence jmen tøíd, jejich¾ debugovací hlá¹ky jsou propu¹tìny. Debugovací
-# logovací hlá¹ky ostatních tøíd jsou odfiltrovány. Je-li 'None', jsou
-# propu¹tìny v¹echny hlá¹ky (nestanoví-li jinı filtr jinak).  U¾iteèné pouze
-# pro ladìní.
+# Sekvence jmen tÅ™Ã­d, jejichÅ¾ debugovacÃ­ hlÃ¡Å¡ky jsou propuÅ¡tÄ›ny. DebugovacÃ­
+# logovacÃ­ hlÃ¡Å¡ky ostatnÃ­ch tÅ™Ã­d jsou odfiltrovÃ¡ny. Je-li 'None', jsou
+# propuÅ¡tÄ›ny vÅ¡echny hlÃ¡Å¡ky (nestanovÃ­-li jinÃ½ filtr jinak).  UÅ¾iteÄnÃ© pouze
+# pro ladÄ›nÃ­.
 #log_class_filter = ('pytis.data.DBDefaultClass',)
 
-# Barva pozadí editovaného øádku. Barva je reprezentována øetìzcem '#RRGGBB'.
+# Barva pozadÃ­ editovanÃ©ho Å™Ã¡dku. Barva je reprezentovÃ¡na Å™etÄ›zcem '#RRGGBB'.
 #row_edit_bg_color = '#c80000'
 
-# Subject mailu oznámení o chybì aplikace.
+# Subject mailu oznÃ¡menÃ­ oÂ chybÄ› aplikace.
 #bug_report_subject = 'Bug report: Unexpected exception'
 
-# U¾ivatelské jméno (login) pro databázové spojení.
+# UÅ¾ivatelskÃ© jmÃ©no (login) pro databÃ¡zovÃ© spojenÃ­.
 #dbuser = getpass.getuser()
 
-# Barva pozadí aktivního øádku tabulkového formuláøe. Pokud barva není
-# nastavena, bude pou¾ita systémová barva zvıraznìní.  Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva pozadÃ­ aktivnÃ­ho Å™Ã¡dku tabulkovÃ©ho formulÃ¡Å™e. Pokud barva nenÃ­
+# nastavena, bude pouÅ¾ita systÃ©movÃ¡ barva zvÃ½raznÄ›nÃ­.  Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #row_focus_bg_color = None
 
-# Pozadí políèka needitovatelného kvùli pøístupovım právùm. Barva je
-# reprezentována øetìzcem '#RRGGBB'.
+# PozadÃ­ polÃ­Äka needitovatelnÃ©ho kvÅ¯li pÅ™Ã­stupovÃ½m prÃ¡vÅ¯m. Barva je
+# reprezentovÃ¡na Å™etÄ›zcem '#RRGGBB'.
 #field_inaccessible_color = '#e0e4f0'
 
-# Pøíznak profilování. Je-li zapnut, aplikace se spustí v profilovacím re¾imu a
-# ukládá informace o trvání jednotlivıch volání do souboru. Zapnutí této volby
-# velmi vıraznì zpomaluje bìh aplikace.
+# PÅ™Ã­znak profilovÃ¡nÃ­. Je-li zapnut, aplikace se spustÃ­ vÂ profilovacÃ­m reÅ¾imu a
+# uklÃ¡dÃ¡ informace oÂ trvÃ¡nÃ­ jednotlivÃ½ch volÃ¡nÃ­ do souboru. ZapnutÃ­ tÃ©to volby
+# velmi vÃ½raznÄ› zpomaluje bÄ›h aplikace.
 #profile = False
 
-# Adresáø obsahující definièní soubory. Adresáø mù¾e bıt zadán absolutnì
-# i relativnì vzhledem k aktuálnímu adresáøi.
+# AdresÃ¡Å™ obsahujÃ­cÃ­ definiÄnÃ­ soubory. AdresÃ¡Å™ mÅ¯Å¾e bÃ½t zadÃ¡n absolutnÄ›
+# iÂ relativnÄ› vzhledem kÂ aktuÃ¡lnÃ­mu adresÃ¡Å™i.
 #def_dir = './defs'
 
-# Adresáø pro doèasné pomocné soubory.
+# AdresÃ¡Å™ pro doÄasnÃ© pomocnÃ© soubory.
 #tmp_dir = '/tmp'
 
-# Barva textu neaktivního øádku tabulkového formuláøe. Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva textu neaktivnÃ­ho Å™Ã¡dku tabulkovÃ©ho formulÃ¡Å™e. Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #row_nofocus_fg_color = '#000000'
 
-# Pøíznak ladícího re¾imu. Je-li zapnut, aplikace mù¾e bì¾et s více kontrolami
-# a vypisovat spoustu informací, obvykle v¹ak za cenu svého vırazného
-# zpomalení.
+# PÅ™Ã­znak ladÃ­cÃ­ho reÅ¾imu. Je-li zapnut, aplikace mÅ¯Å¾e bÄ›Å¾et sÂ vÃ­ce kontrolami
+# a vypisovat spoustu informacÃ­, obvykle vÅ¡ak za cenu svÃ©ho vÃ½raznÃ©ho
+# zpomalenÃ­.
 #debug = False
 
-# Specifikace logovací tøídy. Trojice (CLASS, ARGS, KWARGS), kde CLASS je
-# logovací tøída a ARGS, resp. KWARGS, jsou argumenty, resp. klíèované
-# argumenty, jejího konstruktoru.  Standardní dostupné tøídy jsou SyslogLogger
-# a StreamLogger.  Více o nich lze nalézt v jejich dokumentaci.
+# Specifikace logovacÃ­ tÅ™Ã­dy. Trojice (CLASS, ARGS, KWARGS), kde CLASS je
+# logovacÃ­ tÅ™Ã­da a ARGS, resp. KWARGS, jsou argumenty, resp. klÃ­ÄovanÃ©
+# argumenty, jejÃ­ho konstruktoru.  StandardnÃ­ dostupnÃ© tÅ™Ã­dy jsou SyslogLogger
+# a StreamLogger.  VÃ­ce oÂ nich lze nalÃ©zt vÂ jejich dokumentaci.
 #log_logger = (log.StreamLogger, (sys.stderr,), {})
 
-# Adresáø pro export do CSV souborù. Hodnota udává cestu k adresáøi, kde se
-# budou ukládat textové CSV soubory.
+# AdresÃ¡Å™ pro export do CSV souborÅ¯. Hodnota udÃ¡vÃ¡ cestu k adresÃ¡Å™i, kde se
+# budou uklÃ¡dat textovÃ© CSV soubory.
 #export_directory = '/tmp'
 
-# Heslo pro pøihlá¹ení k databázi.
+# Heslo pro pÅ™ihlÃ¡Å¡enÃ­ k databÃ¡zi.
 #dbpass = None
 
-# Formát èasu. Øetìzec ve tvaru vy¾adovaném parametrem `format' konstruktoru
-# tøídy 'pytis.data.Time'.
+# FormÃ¡t Äasu. Å˜etÄ›zec ve tvaru vyÅ¾adovanÃ©m parametrem `format' konstruktoru
+# tÅ™Ã­dy 'pytis.data.Time'.
 #time_format = '%H:%M:%S'
 
-# Adresáø obsahující soubory s nápovìdou. Mù¾e bıt zadán absolutnì i relativnì
-# vzhledem k aktuálnímu adresáøi.
+# AdresÃ¡Å™ obsahujÃ­cÃ­ soubory s nÃ¡povÄ›dou. MÅ¯Å¾e bÃ½t zadÃ¡n absolutnÄ› iÂ relativnÄ›
+# vzhledem kÂ aktuÃ¡lnÃ­mu adresÃ¡Å™i.
 #help_dir = './help'
 
-# Seznam formuláøù, které mají bıt otevøeny po spu¹tìní aplikace.
+# Seznam formulÃ¡Å™Å¯, kterÃ© majÃ­ bÃ½t otevÅ™eny po spuÅ¡tÄ›nÃ­ aplikace.
 #startup_forms = None
 
-# Pøíznak vıpisu ladících informací o pamìti. Je-li zapnuta, aplikace vypisuje
-# informativní hlá¹ky garbage collectoru a jiné údaje o pamìti.
+# PÅ™Ã­znak vÃ½pisu ladÃ­cÃ­ch informacÃ­ oÂ pamÄ›ti. Je-li zapnuta, aplikace vypisuje
+# informativnÃ­ hlÃ¡Å¡ky garbage collectoru a jinÃ© Ãºdaje oÂ pamÄ›ti.
 #debug_memory = False
 
-# Urèuje, zda je preferováno struèné nebo jednotné formátování. Je-li tato
-# volba nastavena na pravdu, jsou krátká data v logovacích hlá¹kách
-# doporuèujících struènost pøipojena ihned za hlá¹ku místo vypsání na
-# samostatnı øádek.
+# UrÄuje, zda je preferovÃ¡no struÄnÃ© nebo jednotnÃ© formÃ¡tovÃ¡nÃ­. Je-li tato
+# volba nastavena na pravdu, jsou krÃ¡tkÃ¡ data vÂ logovacÃ­ch hlÃ¡Å¡kÃ¡ch
+# doporuÄujÃ­cÃ­ch struÄnost pÅ™ipojena ihned za hlÃ¡Å¡ku mÃ­sto vypsÃ¡nÃ­ na
+# samostatnÃ½ Å™Ã¡dek.
 #log_one_line_preferred = True
 
-# Ztmavení barvy skupiny pøi seskupování øádkù. Proto¾e barva pozadí øádkù není
-# v¾dy bílá, je tato hodnota chápána jako relativní.  O kolik je zvolená barva
-# tmav¹í ne¾ bílá, o tolik bude vısledná barva skupiny tmav¹í, ne¾ barva pozadí
-# ostatních øádkù.  Barva je reprezentována øetìzcem '#RRGGBB'.
+# ZtmavenÃ­ barvy skupiny pÅ™i seskupovÃ¡nÃ­ Å™Ã¡dkÅ¯. ProtoÅ¾e barva pozadÃ­ Å™Ã¡dkÅ¯ nenÃ­
+# vÅ¾dy bÃ­lÃ¡, je tato hodnota chÃ¡pÃ¡na jako relativnÃ­.  O kolik je zvolenÃ¡ barva
+# tmavÅ¡Ã­ neÅ¾ bÃ­lÃ¡, o tolik bude vÃ½slednÃ¡ barva skupiny tmavÅ¡Ã­, neÅ¾ barva pozadÃ­
+# ostatnÃ­ch Å™Ã¡dkÅ¯.  Barva je reprezentovÃ¡na Å™etÄ›zcem '#RRGGBB'.
 #grouping_background_downgrade = '#eceef0'
 
-# Jméno aplikaèní databáze.
+# JmÃ©no aplikaÄnÃ­ databÃ¡ze.
 #dbname = 'pytis'
 
-# Adresáø obsahující dokumentaci.
+# AdresÃ¡Å™ obsahujÃ­cÃ­ dokumentaci.
 #doc_dir = './docs'
 
-# Formát data. Øetìzec ve tvaru vy¾adovaném parametrem `format' konstruktoru
-# tøídy 'pytis.data.Date'.
+# FormÃ¡t data. Å˜etÄ›zec ve tvaru vyÅ¾adovanÃ©m parametrem `format' konstruktoru
+# tÅ™Ã­dy 'pytis.data.Date'.
 #date_format = '%Y-%m-%d'
 
-# Seznam typù logovacích hlá¹ek, které mají bıt odfiltrovány. V seznamu lze
-# pou¾ít konstanty 'OPERATIONAL', 'ACTION', 'EVENT' a 'DEBUG'.
+# Seznam typÅ¯ logovacÃ­ch hlÃ¡Å¡ek, kterÃ© majÃ­ bÃ½t odfiltrovÃ¡ny. VÂ seznamu lze
+# pouÅ¾Ã­t konstanty 'OPERATIONAL', 'ACTION', 'EVENT' a 'DEBUG'.
 #log_exclude = [DEBUG]
 
-# Prefix jména modulu, jeho¾ debugovací hlá¹ky jsou propu¹tìny. Debugovací
-# logovací hlá¹ky modulù s jinım prefixem jsou odfiltrovány.  Není-li
-# definováno, jsou propu¹tìny v¹echny hlá¹ky (nestanoví-li jinı filtr jinak).
-# U¾iteèné pouze pro ladìní.
+# Prefix jmÃ©na modulu, jehoÅ¾ debugovacÃ­ hlÃ¡Å¡ky jsou propuÅ¡tÄ›ny. DebugovacÃ­
+# logovacÃ­ hlÃ¡Å¡ky modulÅ¯ sÂ jinÃ½m prefixem jsou odfiltrovÃ¡ny.  NenÃ­-li
+# definovÃ¡no, jsou propuÅ¡tÄ›ny vÅ¡echny hlÃ¡Å¡ky (nestanovÃ­-li jinÃ½ filtr jinak).
+# UÅ¾iteÄnÃ© pouze pro ladÄ›nÃ­.
 #log_module_filter = 'pytis.data'
 
-# Formát spoleènì uvedeného data a èasu. Øetìzec ve tvaru vy¾adovaném
-# parametrem `format' konstruktoru tøídy 'pytis.data.DateTime'.
+# FormÃ¡t spoleÄnÄ› uvedenÃ©ho data a Äasu. Å˜etÄ›zec ve tvaru vyÅ¾adovanÃ©m
+# parametrem `format' konstruktoru tÅ™Ã­dy 'pytis.data.DateTime'.
 #date_time_format = '%Y-%m-%d %H:%M:%S'
 
-# Roztahovat sloupce tabulek, aby vyu¾ily celou ¹íøku okna.
+# Roztahovat sloupce tabulek, aby vyuÅ¾ily celou Å¡Ã­Å™ku okna.
 #stretch_tables = True
 
-# Shellovı pøíkaz pro provedení tisku, vèetnì argumentù. Pøíkaz musí bıt
-# schopen pøevzít tisková data ze standardního vstupu.
+# ShellovÃ½ pÅ™Ã­kaz pro provedenÃ­ tisku, vÄetnÄ› argumentÅ¯. PÅ™Ã­kaz musÃ­ bÃ½t
+# schopen pÅ™evzÃ­t tiskovÃ¡ data ze standardnÃ­ho vstupu.
 #printing_command = 'lpr'
 
-# Jméno databázového serveru.
+# JmÃ©no databÃ¡zovÃ©ho serveru.
 #dbhost = 'localhost'
 
-# Barva textu aktivního øádku tabulkového formuláøe. Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva textu aktivnÃ­ho Å™Ã¡dku tabulkovÃ©ho formulÃ¡Å™e. Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #row_focus_fg_color = '#ffffff'
 
-# Barva textu editovaného øádku tabulkového formuláøe. Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva textu editovanÃ©ho Å™Ã¡dku tabulkovÃ©ho formulÃ¡Å™e. Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #row_edit_fg_color = '#ffffff'
 
-# Barva pozadí neaktivního øádku tabulkového formuláøe. Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva pozadÃ­ neaktivnÃ­ho Å™Ã¡dku tabulkovÃ©ho formulÃ¡Å™e. Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #row_nofocus_bg_color = '#b6b6b6'
 
-# Pøíznak zobrazování bublinové nápovìdy.
+# PÅ™Ã­znak zobrazovÃ¡nÃ­ bublinovÃ© nÃ¡povÄ›dy.
 #show_tooltips = True
 
-# Jméno aplikace. Jméno mù¾e bıt libovolné, pou¾ívá se napø. jako titulek okna
-# nebo pøi logování.  Od nìho je také odvozeno jméno vıchozího souboru pro
-# ukládání u¾ivatelskıch zmìn v konfiguraci (po vypu¹tìní speciálních znakù a
+# JmÃ©no aplikace. JmÃ©no mÅ¯Å¾e bÃ½t libovolnÃ©, pouÅ¾Ã­vÃ¡ se napÅ™. jako titulek okna
+# nebo pÅ™i logovÃ¡nÃ­.  Od nÄ›ho je takÃ© odvozeno jmÃ©no vÃ½chozÃ­ho souboru pro
+# uklÃ¡dÃ¡nÃ­ uÅ¾ivatelskÃ½ch zmÄ›n v konfiguraci (po vypuÅ¡tÄ›nÃ­ speciÃ¡lnÃ­ch znakÅ¯ a
 # diakritiky)
 #application_name = 'Pytis'
 
-# Velikost cache pro øádky datového objektu. Velikost je celé èíslo, které
-# udává poèet øádkù cache.
+# Velikost cache pro Å™Ã¡dky datovÃ©ho objektu. Velikost je celÃ© ÄÃ­slo, kterÃ©
+# udÃ¡vÃ¡ poÄet Å™Ã¡dkÅ¯ cache.
 #cache_size = 20000
 
-# Barva zvıraznìní aktivní buòky tabulkového formuláøe. Barva je reprezentována
-# øetìzcem '#RRGGBB'.
+# Barva zvÃ½raznÄ›nÃ­ aktivnÃ­ buÅˆky tabulkovÃ©ho formulÃ¡Å™e. Barva je reprezentovÃ¡na
+# Å™etÄ›zcem '#RRGGBB'.
 #cell_highlight_color = '#ffa000'
 
-# Flag urèující, zda má bıt spou¹tìn dohlí¾eè zmìn dat.
+# Flag urÄujÃ­cÃ­, zda mÃ¡ bÃ½t spouÅ¡tÄ›n dohlÃ­Å¾eÄ zmÄ›n dat.
 #dblisten = True
 

@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -16,11 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Pomocné tøídy pro seznamové formuláøe."""
+"""PomocnÃ© tÅ™Ã­dy pro seznamovÃ© formulÃ¡Å™e."""
 
-# Terminologická poznámka: Promìnné s názvem `row' obvykle znaèí èíslo øádku
-# (èíslováno od 0).  Jedná-li se o obsah øádku, nazıvá se pøíslu¹ná promìnná
-# obvykle `the_row'.  Matoucí jméno `row' bylo pøevzato z wxWindows.
+# TerminologickÃ¡ poznÃ¡mka: PromÄ›nnÃ© sÂ nÃ¡zvem `row' obvykle znaÄÃ­ ÄÃ­slo Å™Ã¡dku
+# (ÄÃ­slovÃ¡no odÂ 0).  JednÃ¡-li se oÂ obsah Å™Ã¡dku, nazÃ½vÃ¡ se pÅ™Ã­sluÅ¡nÃ¡ promÄ›nnÃ¡
+# obvykle `the_row'.  MatoucÃ­ jmÃ©no `row' bylo pÅ™evzato zÂ wxWindows.
 
 import collections
 import copy
@@ -39,25 +39,25 @@ from pytis.presentation import PresentedRow
 import config
 
 class DataTable(object):
-    # Tato tøída není a¾ tak triviální, jak bychom si mo¾ná pøáli.
-    # Po¾adavky na ni jsou následující:
-    # - základní práce s tabulkovımi daty
-    # - mo¾nost pøítomnosti jednoho øádku navíc, nepøítomného v datech, na
-    #   nìjakém místì v tabulce
-    # - znalost pùvodních dat editovaného øádku
-    # - znalost aktuálních (zeditovanıch) dat editovaného øádku
-    # - znalost a¾ tøí hodnot právì editovaného políèka: hodnota pùvodní
-    #   (z databáze), platná hodnota zeditovaná, odeslaná nezvalidovaná
-    #   hodnota urèená k opravné editaci u¾ivatelem
-    # - schopnost práce s poèítanımi sloupci
+    # Tato tÅ™Ã­da nenÃ­ aÅ¾ tak triviÃ¡lnÃ­, jak bychom si moÅ¾nÃ¡ pÅ™Ã¡li.
+    # PoÅ¾adavky na ni jsou nÃ¡sledujÃ­cÃ­:
+    # - zÃ¡kladnÃ­ prÃ¡ce sÂ tabulkovÃ½mi daty
+    # - moÅ¾nost pÅ™Ã­tomnosti jednoho Å™Ã¡dku navÃ­c, nepÅ™Ã­tomnÃ©ho vÂ datech, na
+    #   nÄ›jakÃ©m mÃ­stÄ› vÂ tabulce
+    # - znalost pÅ¯vodnÃ­ch dat editovanÃ©ho Å™Ã¡dku
+    # - znalost aktuÃ¡lnÃ­ch (zeditovanÃ½ch) dat editovanÃ©ho Å™Ã¡dku
+    # - znalost aÅ¾ tÅ™Ã­ hodnot prÃ¡vÄ› editovanÃ©ho polÃ­Äka: hodnota pÅ¯vodnÃ­
+    #   (zÂ databÃ¡ze), platnÃ¡ hodnota zeditovanÃ¡, odeslanÃ¡ nezvalidovanÃ¡
+    #   hodnota urÄenÃ¡ kÂ opravnÃ© editaci uÅ¾ivatelem
+    # - schopnost prÃ¡ce sÂ poÄÃ­tanÃ½mi sloupci
     
-    # Uvnitø tøídy pracujeme zásadnì s vnitøními hodnotami, nikoliv
-    # hodnotami u¾ivatelskımi.  *Jediné* metody, které pracují
-    # s u¾ivatelskou reprezentací, jsou `GetValue' a `SetValue'.
+    # UvnitÅ™ tÅ™Ã­dy pracujeme zÃ¡sadnÄ› sÂ vnitÅ™nÃ­mi hodnotami, nikoliv
+    # hodnotami uÅ¾ivatelskÃ½mi.  *JedinÃ©* metody, kterÃ© pracujÃ­
+    # sÂ uÅ¾ivatelskou reprezentacÃ­, jsou `GetValue' a `SetValue'.
     
-    # Necachujeme ¾ádná data, udr¾ujeme pouze poslední øádek a data
-    # o editaci jednoho øádku; cachování vìt¹ího mno¾ství dat vzhledem ke
-    # zpùsobu pou¾ití tabulky nedává pøíli¹ velkı smysl.
+    # Necachujeme Å¾Ã¡dnÃ¡ data, udrÅ¾ujeme pouze poslednÃ­ Å™Ã¡dek a data
+    # oÂ editaci jednoho Å™Ã¡dku; cachovÃ¡nÃ­ vÄ›tÅ¡Ã­ho mnoÅ¾stvÃ­ dat vzhledem ke
+    # zpÅ¯sobu pouÅ¾itÃ­ tabulky nedÃ¡vÃ¡ pÅ™Ã­liÅ¡ velkÃ½ smysl.
     
     class _CurrentRow:
         def __init__(self, row, the_row):
@@ -150,13 +150,13 @@ class DataTable(object):
         self._plain_style = pytis.presentation.Style()
         # Zpracuj sloupce
         self._update_columns(columns)
-        # Vytvoø cache
+        # VytvoÅ™ cache
         self._cache = self._DisplayCache()
         self._attr_cache = {}
         self._font_cache = {}
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        # Nastav øádek
+        # Nastav Å™Ã¡dek
         self.rewind()
         self._edited_row = None
 
@@ -179,14 +179,14 @@ class DataTable(object):
         
     def _panic(self):
         if __debug__:
-            log(DEBUG, 'Zpanikaøení gridové tabulky')
+            log(DEBUG, 'ZpanikaÅ™enÃ­ gridovÃ© tabulky')
 
     def _get_row(self, row, autoadjust=False):
         """Return the row number 'row' from the database as a 'PresentedRow' instance.
         
         Arguments:
         
-        row -- row number within the *database select*, starting from 0
+        row -- row number within the *database select*, starting fromÂ 0
         autoadjust -- when true, 'row' is decreased by one if it is located behind an edited *new*
           row.  Also when the 'row', equals to the number of the currently edited row (whether new
           or existing), this edited row is returned.
@@ -217,11 +217,11 @@ class DataTable(object):
             data = self._data
             data.rewind()
             if row > 0:
-                # Tento fetch pouze zabezpeèí pøednaètení bufferu v dopøedném
-                # smìru od zaèátku dat.  To je potøeba, proto¾e grid 
-                # naèítá øádky od konce a bez tohoto hacku by buffer obsahoval
-                # pouze zobrazené øádky.  Lépe by to v¹ak bylo o¹etøit lep¹í
-                # strategií plnìní bufferu v dbdata.py ...
+                # Tento fetch pouze zabezpeÄÃ­ pÅ™ednaÄtenÃ­ bufferu v dopÅ™ednÃ©m
+                # smÄ›ru od zaÄÃ¡tku dat.  To je potÅ™eba, protoÅ¾e grid 
+                # naÄÃ­tÃ¡ Å™Ã¡dky od konce a bez tohoto hacku by buffer obsahoval
+                # pouze zobrazenÃ© Å™Ã¡dky.  LÃ©pe by to vÅ¡ak bylo oÅ¡etÅ™it lepÅ¡Ã­
+                # strategiÃ­ plnÄ›nÃ­ bufferu v dbdata.py ...
                 fetch(0)
                 data.skip(row-1, direction=pytis.data.FORWARD)
             fetch(row)
@@ -289,17 +289,17 @@ class DataTable(object):
     ## Public methods
 
     def row(self, row):
-        """Vra» øádek èíslo 'row' jako instanci tøídy 'PresentedRow'.
+        """VraÅ¥ Å™Ã¡dek ÄÃ­slo 'row' jako instanci tÅ™Ã­dy 'PresentedRow'.
         
-        Vrácenı øádek zahrnuje zmìny provedené pøípadnou editací a
-        obsahuje pouze sloupce datového objektu (nepoèítané i poèítané),
-        tak¾e je mo¾né jej pøímo pou¾ít v databázovıch operacích.
+        VrÃ¡cenÃ½ Å™Ã¡dek zahrnuje zmÄ›ny provedenÃ© pÅ™Ã­padnou editacÃ­ a
+        obsahuje pouze sloupce datovÃ©ho objektu (nepoÄÃ­tanÃ© iÂ poÄÃ­tanÃ©),
+        takÅ¾e je moÅ¾nÃ© jej pÅ™Ã­mo pouÅ¾Ã­t vÂ databÃ¡zovÃ½ch operacÃ­ch.
         
-        Jestli¾e øádek daného èísla neexistuje, vra» 'None'.
+        JestliÅ¾e Å™Ã¡dek danÃ©ho ÄÃ­sla neexistuje, vraÅ¥ 'None'.
         
         Argumenty:
         
-        row -- nezápornı integer, první øádek má èíslo 0
+        row -- nezÃ¡pornÃ½ integer, prvnÃ­ Å™Ã¡dek mÃ¡ ÄÃ­sloÂ 0
         
         """
         if row < 0 or row >= self.number_of_rows(min_value=row+1):
@@ -307,9 +307,9 @@ class DataTable(object):
         return self._get_row(row, autoadjust=True)
 
     def rewind(self, position=None):
-        """Pøesuò datové ukazovátko na zaèátek dat.
+        """PÅ™esuÅˆ datovÃ© ukazovÃ¡tko na zaÄÃ¡tek dat.
         
-        Jestli¾e 'position' není 'None', pøesuò ukazovátko na 'position'.
+        JestliÅ¾e 'position' nenÃ­ 'None', pÅ™esuÅˆ ukazovÃ¡tko na 'position'.
         
         """
         if self._current_row is None:
@@ -336,10 +336,10 @@ class DataTable(object):
         self._grouping = grouping
         self._prefill = prefill
         self._update_columns(columns)
-        # Sma¾ cache
+        # SmaÅ¾ cache
         self._group_cache = {0: False}
         self._group_value_cache = {}
-        # Nastav øádek
+        # Nastav Å™Ã¡dek
         self.rewind()
         if inserted_row_number is None:
             self._edited_row = None
@@ -347,14 +347,14 @@ class DataTable(object):
             self._edited_row = self._init_edited_row(inserted_row_number, prefill=inserted_row_prefill, new=True)
         
     def close(self):
-        # Tato metoda je nutná kvùli jistému podivnému chování wxWindows,
-        # kdy wxWindows s tabulkou pracuje i po jejím zru¹ení.
+        # Tato metoda je nutnÃ¡ kvÅ¯li jistÃ©mu podivnÃ©mu chovÃ¡nÃ­ wxWindows,
+        # kdy wxWindows sÂ tabulkou pracuje iÂ po jejÃ­m zruÅ¡enÃ­.
         self._data = None
-        # TODO: Následující (a mo¾ná i ta pøedcházející) operace jsou
-        # jsou v principu zbyteèné, ale proto¾e z neznámıch dùvodù
-        # nedochází pøi uzavøení formuláøe k likvidaci nìjakıch blí¾e
-        # neurèenıch dat, patrnì i z této tabulky, tak radìji vıznamná
-        # data instance ma¾eme ruènì...
+        # TODO: NÃ¡sledujÃ­cÃ­ (aÂ moÅ¾nÃ¡ iÂ ta pÅ™edchÃ¡zejÃ­cÃ­) operace jsou
+        # jsou v principu zbyteÄnÃ©, ale protoÅ¾e zÂ neznÃ¡mÃ½ch dÅ¯vodÅ¯
+        # nedochÃ¡zÃ­ pÅ™i uzavÅ™enÃ­ formulÃ¡Å™e kÂ likvidaci nÄ›jakÃ½ch blÃ­Å¾e
+        # neurÄenÃ½ch dat, patrnÄ› iÂ zÂ tÃ©to tabulky, tak radÄ›ji vÃ½znamnÃ¡
+        # data instance maÅ¾eme ruÄnÄ›...
         self._form = None
         self._fields = None
         self._columns = None
@@ -403,17 +403,17 @@ class DataTable(object):
         return cached_row[col_id]
 
     def edit_row(self, row):
-        """Zahaj editaci øádku èíslo 'row'.
+        """Zahaj editaci Å™Ã¡dku ÄÃ­slo 'row'.
         
-        Pokud ji¾ nìjakı øádek editován je, jeho editace je zru¹ena a obsah
-        vrácen do pùvodního stavu (ov¹em bez pøekreslení, to musí bıt
-        zaji¹tìno jinak!).
+        Pokud jiÅ¾ nÄ›jakÃ½ Å™Ã¡dek editovÃ¡n je, jeho editace je zruÅ¡ena a obsah
+        vrÃ¡cen do pÅ¯vodnÃ­ho stavu (ovÅ¡em bez pÅ™ekreslenÃ­, to musÃ­ bÃ½t
+        zajiÅ¡tÄ›no jinak!).
         
         Argumenty:
         
-          row -- nezápornı integer urèující èíslo editovaného øádku
-            poèínaje od 0, nebo 'None' znaèící ¾e nemá bıt editován ¾ádnı
-            øádek
+          row -- nezÃ¡pornÃ½ integer urÄujÃ­cÃ­ ÄÃ­slo editovanÃ©ho Å™Ã¡dku
+            poÄÃ­naje odÂ 0, nebo 'None' znaÄÃ­cÃ­ Å¾e nemÃ¡ bÃ½t editovÃ¡n Å¾Ã¡dnÃ½
+            Å™Ã¡dek
 
         """
         if row is None:
@@ -423,13 +423,13 @@ class DataTable(object):
             self._edited_row = self._init_edited_row(row, data_row=self._get_row(row).row())
 
     def editing(self):
-        """Vra» informaci o editovaném øádku nebo 'None'.
+        """VraÅ¥ informaci oÂ editovanÃ©m Å™Ã¡dku nebo 'None'.
         
-        Pokud není editován ¾ádnı øádek, vra» 'None'.  Jinak vra» instanci
-        tøídy 'EditInfo' s informacemi o èísle editovaného øádku, zda je
-        tento øádek novı, zda je jeho aktuální obsah rùznı od jeho
-        pùvodního obsahu, zda jsou v¹echny sloupce validní, pùvodní obsah
-        øádku (jako instanci 'pytis.data.Row') a aktuální obsah øádku (jako
+        Pokud nenÃ­ editovÃ¡n Å¾Ã¡dnÃ½ Å™Ã¡dek, vraÅ¥ 'None'.  Jinak vraÅ¥ instanci
+        tÅ™Ã­dy 'EditInfo' sÂ informacemi oÂ ÄÃ­sle editovanÃ©ho Å™Ã¡dku, zda je
+        tento Å™Ã¡dek novÃ½, zda je jeho aktuÃ¡lnÃ­ obsah rÅ¯znÃ½ od jeho
+        pÅ¯vodnÃ­ho obsahu, zda jsou vÅ¡echny sloupce validnÃ­, pÅ¯vodnÃ­ obsah
+        Å™Ã¡dku (jako instanci 'pytis.data.Row') a aktuÃ¡lnÃ­ obsah Å™Ã¡dku (jako
         instanci 'PresentedRow').
 
         """
@@ -451,10 +451,10 @@ class DataTable(object):
         return self._columns[col].label
 
     def current_row(self):
-        """Vra» èíslo aktuálního øádku datového objektu tabulky.
+        """VraÅ¥ ÄÃ­slo aktuÃ¡lnÃ­ho Å™Ã¡dku datovÃ©ho objektu tabulky.
         
-        Øádky jsou èíslovány od 0.  Pokud èíslo aktuálního øádku není
-        známo, vra» 'None'.
+        Å˜Ã¡dky jsou ÄÃ­slovÃ¡ny odÂ 0.  Pokud ÄÃ­slo aktuÃ¡lnÃ­ho Å™Ã¡dku nenÃ­
+        znÃ¡mo, vraÅ¥ 'None'.
 
         """
         current = self._current_row
@@ -488,9 +488,9 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
             
         def _wx_type(self, t):
             if self._TYPE_MAPPING is None:
-                # Musíme inicializovat a¾ zde kvùli neXovému serveru.
-                # Nepou¾íváme mapování pro Float, proto¾e to by nám zru¹ilo
-                # na¹e formátování èísel.
+                # MusÃ­me inicializovat aÅ¾ zde kvÅ¯li neXovÃ©mu serveru.
+                # NepouÅ¾Ã­vÃ¡me mapovÃ¡nÃ­ pro Float, protoÅ¾e to by nÃ¡m zruÅ¡ilo
+                # naÅ¡e formÃ¡tovÃ¡nÃ­ ÄÃ­sel.
                 self.__class__._TYPE_MAPPING = {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
             return self._TYPE_MAPPING.get(t.__class__, wx.grid.GRID_VALUE_STRING)
                             
@@ -503,7 +503,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
                            sorting=sorting, grouping=grouping, prefill=prefill, row_style=row_style)
         self._init_group_bg_downgrade()
         
-    # Pomocné metody
+    # PomocnÃ© metody
         
     def _panic(self):
         DataTable._panic(self)
@@ -541,7 +541,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         super(ListTable, self).update(*args, **kwargs)
         self._init_group_bg_downgrade()
 
-    # Povinné wx gridové metody
+    # PovinnÃ© wx gridovÃ© metody
     
     def GetNumberRows(self):
         ## We have to get only approximate number of rows here.  The reason is
@@ -557,8 +557,8 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return False
     
     def GetValue(self, row, col, inputfield=False):
-        # `row' a `col' jsou èíslovány od 0.
-        # Je tabulka ji¾ uzavøena?
+        # `row' a `col' jsou ÄÃ­slovÃ¡ny od 0.
+        # Je tabulka jiÅ¾ uzavÅ™ena?
         if not self._data or col >= self.GetNumberCols():
             return ''
         column = self._columns[col]
@@ -570,7 +570,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         else:
             value = self._cached_value(row, column.id)
         if not inputfield and column.wxtype == wx.grid.GRID_VALUE_BOOL:
-            # wx pro boolean sloupce rozeznává pouze následující *stringové* hodnoty:
+            # wx pro boolean sloupce rozeznÃ¡vÃ¡ pouze nÃ¡sledujÃ­cÃ­ *stringovÃ©* hodnoty:
             if value == 'T':
                 value = '1'
             else:
@@ -578,27 +578,27 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return value
 
     def SetValue(self, row, col, value):
-        # Tato metoda neodpovídá specifikaci gridu, ale to nevadí, proto¾e
-        # políèka editujeme vıhradnì pøes na¹e editory.
+        # Tato metoda neodpovÃ­dÃ¡ specifikaci gridu, ale to nevadÃ­, protoÅ¾e
+        # polÃ­Äka editujeme vÃ½hradnÄ› pÅ™es naÅ¡e editory.
         assert isinstance(value, pytis.data.Value), ('Value not a value', value)
         edited = self._edited_row
         if edited == None:
-            # K této situaci dochází, kdy¾ se kliknutím my¹i opou¹tí
-            # rozeditované políèko øádku, jemu¾ je¹tì nebyla zmìnìna ¾ádná
-            # hodnota.  V takovém pøípadì na¹e metody editaci nakrásno
-            # ukonèí a wxWindows po provedené zmìnì øádku vesele zavolá
-            # SetValue ...
+            # KÂ tÃ©to situaci dochÃ¡zÃ­, kdyÅ¾ se kliknutÃ­m myÅ¡i opouÅ¡tÃ­
+            # rozeditovanÃ© polÃ­Äko Å™Ã¡dku, jemuÅ¾ jeÅ¡tÄ› nebyla zmÄ›nÄ›na Å¾Ã¡dnÃ¡
+            # hodnota.  VÂ takovÃ©m pÅ™Ã­padÄ› naÅ¡e metody editaci nakrÃ¡sno
+            # ukonÄÃ­ a wxWindows po provedenÃ© zmÄ›nÄ› Å™Ã¡dku vesele zavolÃ¡
+            # SetValueÂ ...
             return
-        # Nastav hodnotu editovanému sloupci
+        # Nastav hodnotu editovanÃ©mu sloupci
         cid = self._columns[col].id
         edited.update(cid, value)
-        log(EVENT, 'Nastavena hodnota editovaného políèka:',
+        log(EVENT, 'Nastavena hodnota editovanÃ©ho polÃ­Äka:',
             (row, col, value))
 
-    # Nepovinné wx gridové metody
+    # NepovinnÃ© wx gridovÃ© metody
 
     #def GetColLabelValue(self, col):
-    # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
+    # NynÃ­ implementovÃ¡no pomocÃ­ `ListForm._on_column_header_paint()'.
 
     def GetTypeName(self, row, col):
         # wx.grid.GRID_VALUE_BOOL causes segfault on doubleclicking a column, so we rather blaim 
@@ -609,7 +609,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return wx.grid.GRID_VALUE_STRING
     
     def GetAttr(self, row, col, kind):
-        if row >= self.number_of_rows(min_value=row+1) or col >= self.number_of_columns(): # mù¾e se stát...
+        if row >= self.number_of_rows(min_value=row+1) or col >= self.number_of_columns(): # mÅ¯Å¾e se stÃ¡t...
             return None
         column = self._columns[col]
         if column.id in self._secret_columns:
@@ -644,11 +644,11 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
 
 
 class TableRowIterator(object):
-    """Vytvoøí iterátor nad tabulkou, kterı postupnì vrací urèené øádky.
+    """VytvoÅ™Ã­ iterÃ¡tor nad tabulkou, kterÃ½ postupnÄ› vracÃ­ urÄenÃ© Å™Ã¡dky.
 
     Argumenty konstruktoru:
       table -- instance ListTable
-      rows -- sekvence celıch èísel urèujících jednotlivé øádky
+      rows -- sekvence celÃ½ch ÄÃ­sel urÄujÃ­cÃ­ch jednotlivÃ© Å™Ã¡dky
     
     """
     def __init__(self, table, rows):
@@ -679,7 +679,7 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         self._registration = registration
         self._field = None
 
-    # Povinné metody
+    # PovinnÃ© metody
 
     def Create(self, parent, id, evt_handler):
         self._field = InputField.create(parent, self._row, self._id,
@@ -712,22 +712,22 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
     def Clone(self):
         return InputFieldCellEditor()
 
-    # Ostatní metody
+    # OstatnÃ­ metody
     
     def field(self):
-        """Vra» svùj 'InputField'."""
+        """VraÅ¥ svÅ¯j 'InputField'."""
         return self._field
         
     def IsAcceptedKey(self, event):
-        # TODO/wx: Z neznámıch dùvodù není voláno.
-        if __debug__: log(DEBUG, 'Neuvìøitelné -- voláno IsAcceptedKey')
+        # TODO/wx: ZÂ neznÃ¡mÃ½ch dÅ¯vodÅ¯ nenÃ­ volÃ¡no.
+        if __debug__: log(DEBUG, 'NeuvÄ›Å™itelnÃ© -- volÃ¡no IsAcceptedKey')
         return False
     
     def close(self):
-        """Proveï ukonèovací akce.
+        """ProveÄ ukonÄovacÃ­ akce.
 
-        Tuto metodu je nutno volat explicitnì, nebo» definování metod
-        `Close()' a `Destroy()' nemá ¾ádnı úèinek.
+        Tuto metodu je nutno volat explicitnÄ›, neboÅ¥ definovÃ¡nÃ­ metod
+        `Close()' a `Destroy()' nemÃ¡ Å¾Ã¡dnÃ½ ÃºÄinek.
 
         """
         self.SetControl(None)

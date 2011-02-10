@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Resolver pro specifikace vıstupu
+# Resolver pro specifikace vÃ½stupu
 # 
 # Copyright (C) 2002, 2005 Brailcom, o.p.s.
 #
@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Resolver pro specifikace vıstupu.
+"""Resolver pro specifikace vÃ½stupu.
 
 """
 
@@ -26,25 +26,25 @@ from pytis.output import *
 
 
 class OutputResolver(ProxyResolver):
-    """Resolver pøedávanı specifikacím vıstupu.
+    """Resolver pÅ™edÃ¡vanÃ½ specifikacÃ­m vÃ½stupu.
 
-    Tento resolver jednak poskytuje standardní specifikace a jednak
-    zpøístupòuje ¹ablonám parametry, prostøednictvím metody
-    'output_parameter()' nebo jejího aliasu 'p()'.
+    Tento resolver jednak poskytuje standardnÃ­ specifikace a jednak
+    zpÅ™Ã­stupÅˆuje Å¡ablonÃ¡m parametry, prostÅ™ednictvÃ­m metody
+    'output_parameter()' nebo jejÃ­ho aliasu 'p()'.
     
     """
     OUTPUT_PARAMETERS = 'output-parameters'
-    """Jméno modulu parametrù vıstupu."""
+    """JmÃ©no modulu parametrÅ¯ vÃ½stupu."""
 
     def __init__(self, resolver, parameters={}):
         """Inicializuj instanci.
 
         Argumenty:
 
-          resolver -- standardní resolver specifikací, pøedanı konstruktoru
-            pøedka
-          parameters -- dictionary parametrù vıstupu, klíèe musí bıt neprázdné
-            strings, hodnoty mohou bıt libovolné objekty
+          resolver -- standardnÃ­ resolver specifikacÃ­, pÅ™edanÃ½ konstruktoru
+            pÅ™edka
+          parameters -- dictionary parametrÅ¯ vÃ½stupu, klÃ­Äe musÃ­ bÃ½t neprÃ¡zdnÃ©
+            strings, hodnoty mohou bÃ½t libovolnÃ© objekty
 
         """
         super(OutputResolver, self).__init__(resolver)
@@ -74,12 +74,12 @@ class OutputResolver(ProxyResolver):
         return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
     
     def output_parameter(self, name, **kwargs):
-        """Vra» hodnotu parametru vıstupu 'name'.
+        """VraÅ¥ hodnotu parametru vÃ½stupu 'name'.
 
         Argumenty:
 
-          name -- identifikátor parametru, neprázdnı string nebo tuple strings
-            dávajících po spojení jednoznaènı string
+          name -- identifikÃ¡tor parametru, neprÃ¡zdnÃ½ string nebo tuple strings
+            dÃ¡vajÃ­cÃ­ch po spojenÃ­ jednoznaÄnÃ½ string
 
         """
         if is_sequence(name):

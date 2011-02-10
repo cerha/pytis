@@ -1,8 +1,8 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Formátovací funkce pro datové objekty
+# FormÃ¡tovacÃ­ funkce pro datovÃ© objekty
 # 
-# Copyright (C) 2002-2010 Brailcom, o.p.s.
+# Copyright (C) 2002-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Formátovací funkce pro datové objekty.
+"""FormÃ¡tovacÃ­ funkce pro datovÃ© objekty.
 
 """
 
@@ -27,42 +27,42 @@ import pytis.presentation
 
 
 P_NAME = 'P_NAME'
-"""Parametr resolveru identifikující specifikaèní soubor."""
+"""Parametr resolveru identifikujÃ­cÃ­ specifikaÄnÃ­ soubor."""
 P_KEY = 'P_KEY'
-"""Parametr resolveru identifikující datovı klíè."""
+"""Parametr resolveru identifikujÃ­cÃ­ datovÃ½ klÃ­Ä."""
 P_ROW = 'P_ROW'
-"""Parametr resolveru identifikující datovı øádek."""
+"""Parametr resolveru identifikujÃ­cÃ­ datovÃ½ Å™Ã¡dek."""
 P_CONDITION = 'P_CONDITION'
-"""Parametr resolveru identifikující podmínku pro 'pytis.data.Data.select()'."""
+"""Parametr resolveru identifikujÃ­cÃ­ podmÃ­nku pro 'pytis.data.Data.select()'."""
 P_SORTING = 'P_SORTING'
-"""Parametr resolveru identifikující tøídìní pro 'pytis.data.Data.select()'."""
+"""Parametr resolveru identifikujÃ­cÃ­ tÅ™Ã­dÄ›nÃ­ pro 'pytis.data.Data.select()'."""
 P_DATA= 'P_DATA'
-"""Parametr resolveru identifikující datovı objekt."""
+"""Parametr resolveru identifikujÃ­cÃ­ datovÃ½ objekt."""
 
 
 def data_table(resolver, name, condition=None, sorting=None,
                **long_table_args):
-    """Jednoduchı tisk tabulky dat.
+    """JednoduchÃ½ tisk tabulky dat.
 
-    Zadaná tabulka bude jednoduchım zpùsobem zformátována na vıstup.  Vıbìr dat
-    je specifikován argumenty pøedanımi konstruktoru pou¾itého formátovaèe.
-    Pro prezentaèní podobu tabulky jsou pøimìøenì pou¾ity specifikace v jejím
+    ZadanÃ¡ tabulka bude jednoduchÃ½m zpÅ¯sobem zformÃ¡tovÃ¡na na vÃ½stup.  VÃ½bÄ›r dat
+    je specifikovÃ¡n argumenty pÅ™edanÃ½mi konstruktoru pouÅ¾itÃ©ho formÃ¡tovaÄe.
+    Pro prezentaÄnÃ­ podobu tabulky jsou pÅ™imÄ›Å™enÄ› pouÅ¾ity specifikace vÂ jejÃ­m
     view.
 
     Argumenty:
 
-      resolver -- resolver specifikací, instance tøídy 'pytis.util.Resolver'
-      name -- identifikátor datového objektu a view pro resolver (jako
-        string), stejnı jako napøíklad ve formuláøích
-      condition -- podmínka vıbìru øádkù tabulky ve formátu argumentu
-        'condition' metody 'pytis.util.Data.select()'; mù¾e bıt té¾ 'None',
-        v kterém¾to pøípadì je podmínka získána z parametru resolveru
+      resolver -- resolver specifikacÃ­, instance tÅ™Ã­dy 'pytis.util.Resolver'
+      name -- identifikÃ¡tor datovÃ©ho objektu a view pro resolver (jako
+        string), stejnÃ½ jako napÅ™Ã­klad ve formulÃ¡Å™Ã­ch
+      condition -- podmÃ­nka vÃ½bÄ›ru Å™Ã¡dkÅ¯ tabulky ve formÃ¡tu argumentu
+        'condition' metody 'pytis.util.Data.select()'; mÅ¯Å¾e bÃ½t tÃ©Å¾ 'None',
+        vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je podmÃ­nka zÃ­skÃ¡na zÂ parametru resolveru
         '(name, P_CONDITION)'
-      sorting -- specifikace tøídìní øádkù tabulky ve formátu argumentu 'sort'
-        metody 'pytis.util.Data.select()'; mù¾e bıt té¾ 'None', v kterém¾to
-        pøípadì je specifikace získána z parametru resolveru
+      sorting -- specifikace tÅ™Ã­dÄ›nÃ­ Å™Ã¡dkÅ¯ tabulky ve formÃ¡tu argumentu 'sort'
+        metody 'pytis.util.Data.select()'; mÅ¯Å¾e bÃ½t tÃ©Å¾ 'None', vÂ kterÃ©mÅ¾to
+        pÅ™Ã­padÄ› je specifikace zÃ­skÃ¡na zÂ parametru resolveru
         '(name, P_SORTING)'
-      long_table_args -- dodateèné argumenty pøedané konstruktoru tøídy
+      long_table_args -- dodateÄnÃ© argumenty pÅ™edanÃ© konstruktoru tÅ™Ã­dy
         'LongTable'
     
     """
@@ -93,11 +93,11 @@ def data_table(resolver, name, condition=None, sorting=None,
         else:
             alignment = LongTable.Column.ALIGN_LEFT
         tc = LongTable.Column(label, width, alignment=alignment)
-        tc.id = cid # fuj, viz `table_row' ní¾e
+        tc.id = cid # fuj, viz `table_row' nÃ­Å¾e
         columns.append(tc)
     # Data
     data.select(condition=condition, sort=sorting)
-    # Formátování
+    # FormÃ¡tovÃ¡nÃ­
     def table_row(*args, **kwargs):
         row = data.fetchone()
         if row is None:
@@ -110,23 +110,23 @@ def data_table(resolver, name, condition=None, sorting=None,
     
 
 def data_item(resolver, name, column, key=None):
-    """Exportovaná hodnota polo¾ky záznamu datového objektu.
+    """ExportovanÃ¡ hodnota poloÅ¾ky zÃ¡znamu datovÃ©ho objektu.
 
-    Jinak øeèeno, tato funkce zpùsobí vlo¾ení pøíslu¹né \"buòky\" dat na
-    vıstup.  Aby toto bylo mo¾no udìlat, musí bıt známa pøíslu¹ná datová buòka.
-    Ta je identifikována pøímo záznamem nebo jeho klíèem a identifikátorem
+    Jinak Å™eÄeno, tato funkce zpÅ¯sobÃ­ vloÅ¾enÃ­ pÅ™Ã­sluÅ¡nÃ© \"buÅˆky\" dat na
+    vÃ½stup.  Aby toto bylo moÅ¾no udÄ›lat, musÃ­ bÃ½t znÃ¡ma pÅ™Ã­sluÅ¡nÃ¡ datovÃ¡ buÅˆka.
+    Ta je identifikovÃ¡na pÅ™Ã­mo zÃ¡znamem nebo jeho klÃ­Äem a identifikÃ¡torem
     sloupce.
 
     Argumenty:
 
-      resolver -- resolver specifikací, instance tøídy 'pytis.util.Resolver'
-      name -- identifikátor datového objektu a view pro resolver (jako
-        string), stejnı jako napøíklad ve formuláøích
-      column -- stringovı identifikátor sloupce datového objektu, jeho¾
-        hodnota bude vlo¾ena na vıstup
-      key -- klíè øádku (ve formì parametru pro 'pytis.data.Data.row()'); mù¾e
-        bıt té¾ 'None', v kterém¾to pøípadì je klíè získán z parametru
-        resolveru '(name, P_KEY)' nebo je získán pøímo datovı øádek z parametru
+      resolver -- resolver specifikacÃ­, instance tÅ™Ã­dy 'pytis.util.Resolver'
+      name -- identifikÃ¡tor datovÃ©ho objektu a view pro resolver (jako
+        string), stejnÃ½ jako napÅ™Ã­klad ve formulÃ¡Å™Ã­ch
+      column -- stringovÃ½ identifikÃ¡tor sloupce datovÃ©ho objektu, jehoÅ¾
+        hodnota bude vloÅ¾ena na vÃ½stup
+      key -- klÃ­Ä Å™Ã¡dku (ve formÄ› parametru pro 'pytis.data.Data.row()'); mÅ¯Å¾e
+        bÃ½t tÃ©Å¾ 'None', vÂ kterÃ©mÅ¾to pÅ™Ã­padÄ› je klÃ­Ä zÃ­skÃ¡n zÂ parametru
+        resolveru '(name, P_KEY)' nebo je zÃ­skÃ¡n pÅ™Ã­mo datovÃ½ Å™Ã¡dek zÂ parametru
         resolveru '(name, P_ROW)'
 
     """
@@ -152,6 +152,6 @@ def data_item(resolver, name, column, key=None):
     try:
         value = presented_row.format(column, secure=True)
     except KeyError:
-        raise TemplateException(_("Chybnı odkaz na sloupec"),
+        raise TemplateException(_(u"ChybnÃ½ odkaz na sloupec"),
                                 name, column)
     return value

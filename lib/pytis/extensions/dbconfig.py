@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011 Brailcom, o.p.s.
 #
@@ -16,16 +16,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Pomùcky pro práci s konfigurací v Pytis aplikacích.
+"""PomÅ¯cky pro prÃ¡ci s konfiguracÃ­ v Pytis aplikacÃ­ch.
 
-Kromì standardních konfiguraèních voleb Pytisu jsou v aplikacích èasto potøeba
-hodnoty jednak globálních nastavení (spoleènıch pro v¹echny u¾ivatele) a jednak
-u¾ivatelskıch nastavení.  Tyto hodnoty jsou vìt¹inou specifické pro danou
-aplikaci a je tøeba zajistit pøístup k nim i v rámci databázovıch procedur a
-jinıch datovıch operací.  Proto jsou øe¹eny pomocí databázové konfiguraèní
-tabulky, která vrací v¾dy jeden øádek obsahující v¹echny dostupné volby.  Ní¾e
-definované tøídy a funkce zjednodu¹ují práci s tìmito hodnotami v rámci
-pythonového kódu ve specifikacích aplikace.
+KromÄ› standardnÃ­ch konfiguraÄnÃ­ch voleb Pytisu jsou v aplikacÃ­ch Äasto potÅ™eba
+hodnoty jednak globÃ¡lnÃ­ch nastavenÃ­ (spoleÄnÃ½ch pro vÅ¡echny uÅ¾ivatele) a jednak
+uÅ¾ivatelskÃ½ch nastavenÃ­.  Tyto hodnoty jsou vÄ›tÅ¡inou specifickÃ© pro danou
+aplikaci a je tÅ™eba zajistit pÅ™Ã­stup k nim i v rÃ¡mci databÃ¡zovÃ½ch procedur a
+jinÃ½ch datovÃ½ch operacÃ­.  Proto jsou Å™eÅ¡eny pomocÃ­ databÃ¡zovÃ© konfiguraÄnÃ­
+tabulky, kterÃ¡ vracÃ­ vÅ¾dy jeden Å™Ã¡dek obsahujÃ­cÃ­ vÅ¡echny dostupnÃ© volby.  NÃ­Å¾e
+definovanÃ© tÅ™Ã­dy a funkce zjednoduÅ¡ujÃ­ prÃ¡ci s tÄ›mito hodnotami v rÃ¡mci
+pythonovÃ©ho kÃ³du ve specifikacÃ­ch aplikace.
 
 """ 
 
@@ -37,17 +37,17 @@ import config
 
 
 class DBConfig(object):
-    """Konfigurace spojená s datovım objektem.
+    """Konfigurace spojenÃ¡ s datovÃ½m objektem.
 
-    Konfigurace vnitønì pracuje s datovım objektem vytvoøenım nad specifikací
-    urèenou argumentem konstruktoru.  Pøedpokládá se, ¾e datovı objekt vrací
-    v¾dy jen jeden øádek (na úrovni SQL omezenı napø na aktuálního u¾ivatele).
-    Hodnotu datového sloupeèku je potom mo¾né z tohoto objektu získat jako ze
-    slovníku.
+    Konfigurace vnitÅ™nÄ› pracuje s datovÃ½m objektem vytvoÅ™enÃ½m nad specifikacÃ­
+    urÄenou argumentem konstruktoru.  PÅ™edpoklÃ¡dÃ¡ se, Å¾e datovÃ½ objekt vracÃ­
+    vÅ¾dy jen jeden Å™Ã¡dek (na Ãºrovni SQL omezenÃ½ napÅ™ na aktuÃ¡lnÃ­ho uÅ¾ivatele).
+    Hodnotu datovÃ©ho sloupeÄku je potom moÅ¾nÃ© z tohoto objektu zÃ­skat jako ze
+    slovnÃ­ku.
 
-    Zápis hodnoty do slovníku vyvolá zapsání zmìnìné hodnoty do databáze.
-    Pøípadné zmìny dat na úrvni databáze nejsou tímto objektem v souèasné
-    implementaci reflektovány.
+    ZÃ¡pis hodnoty do slovnÃ­ku vyvolÃ¡ zapsÃ¡nÃ­ zmÄ›nÄ›nÃ© hodnoty do databÃ¡ze.
+    PÅ™Ã­padnÃ© zmÄ›ny dat na Ãºrvni databÃ¡ze nejsou tÃ­mto objektem v souÄasnÃ©
+    implementaci reflektovÃ¡ny.
 
     """
     _data_object_cache = {}
@@ -58,11 +58,11 @@ class DBConfig(object):
 
         Argumenty:
 
-          name -- urèuje název specifikace datového objektu pro resolver.
+          name -- urÄuje nÃ¡zev specifikace datovÃ©ho objektu pro resolver.
 
-          callback -- pokud není None, bude daná funkce volána pøi ka¾dé zmìnì
-            v datovém objektu.  Jde o funkci jednoho argumentu, kterım je
-            (aktualizovaná) instance 'DBConfig'.
+          callback -- pokud nenÃ­ None, bude danÃ¡ funkce volÃ¡na pÅ™i kaÅ¾dÃ© zmÄ›nÄ›
+            v datovÃ©m objektu.  Jde o funkci jednoho argumentu, kterÃ½m je
+            (aktualizovanÃ¡) instance 'DBConfig'.
 
         """
         key = (name, transaction)
@@ -93,11 +93,11 @@ class DBConfig(object):
         self._callback(self)
 
     def value(self, key):
-        """Vra» hodnotu 'key' jako instanci 'pytis.data.Value'."""
+        """VraÅ¥ hodnotu 'key' jako instanci 'pytis.data.Value'."""
         return self._row[key]
         
     def __getitem__(self, key):
-        """Vra» hodnotu 'key' jako Pythonovou hodnotu."""
+        """VraÅ¥ hodnotu 'key' jako Pythonovou hodnotu."""
         return self._row[key].value()
 
     def __setitem__(self, key, value):
@@ -120,16 +120,16 @@ class DBConfig(object):
 
 
 def cfg_param(column, cfgspec='Nastaveni.BvCfg', value_column=None, transaction=None):
-    """Vrací instanci Value pro konfiguraèní parametr.
+    """VracÃ­ instanci Value pro konfiguraÄnÃ­ parametr.
 
     Argumenty:
 
-      column -- název sloupce v konfiguraèní tabulce uvedené ve specifikaci
-        udané druhım parametrem.
-      cfgspec -- volitelnı název specifikace s vazbou na konfiguraèní tabulku.
-      value_column -- pokud je po¾adavanı sloupec Codebook, umo¾òuje získat
-        hodnotu u¾ivatelského sloupce.
-      transaction -- transakce pro datové operace  
+      column -- nÃ¡zev sloupce v konfiguraÄnÃ­ tabulce uvedenÃ© ve specifikaci
+        udanÃ© druhÃ½m parametrem.
+      cfgspec -- volitelnÃ½ nÃ¡zev specifikace s vazbou na konfiguraÄnÃ­ tabulku.
+      value_column -- pokud je poÅ¾adavanÃ½ sloupec Codebook, umoÅ¾Åˆuje zÃ­skat
+        hodnotu uÅ¾ivatelskÃ©ho sloupce.
+      transaction -- transakce pro datovÃ© operace  
 
     """
     dbconfig = DBConfig(cfgspec, transaction=transaction)

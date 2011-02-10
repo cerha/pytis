@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Vıjimky související s formátováním vıstupu
+# VÃ½jimky souvisejÃ­cÃ­ sÂ formÃ¡tovÃ¡nÃ­m vÃ½stupu
 # 
 # Copyright (C) 2002 Brailcom, o.p.s.
 #
@@ -18,12 +18,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Vıjimkové tøídy související s formátováním vıstupu."""
+"""VÃ½jimkovÃ© tÅ™Ã­dy souvisejÃ­cÃ­ sÂ formÃ¡tovÃ¡nÃ­m vÃ½stupu."""
 
 
 class FormattingException(Exception):
-    """Vıjimka signalizovaná pøi jakémkoliv problému formátování ¹ablony."""
+    """VÃ½jimka signalizovanÃ¡ pÅ™i jakÃ©mkoliv problÃ©mu formÃ¡tovÃ¡nÃ­ Å¡ablony."""
 
 
 class TemplateException(FormattingException):
-    """Vıjimka signalizovaná pøi chybì ¹ablony."""
+    """VÃ½jimka signalizovanÃ¡ pÅ™i chybÄ› Å¡ablony."""

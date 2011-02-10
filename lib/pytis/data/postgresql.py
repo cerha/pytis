@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -17,11 +17,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-"""Obecná implementace databázového rozhraní pro PostgreSQL.
+"""ObecnÃ¡ implementace databÃ¡zovÃ©ho rozhranÃ­ pro PostgreSQL.
 
-Tato èást je nezávislá na konkrétní pou¾ité knihovnì pro pøístup k PostgreSQL,
-tvoøí jen obecné rozhraní skládající napøíklad SQL pøíkazy.  Fyzickı pøístup
-k databázi zaji¹»ují rozhraní dále implementovaná v jinıch zdrojovıch souborech.
+Tato ÄÃ¡st je nezÃ¡vislÃ¡ na konkrÃ©tnÃ­ pouÅ¾itÃ© knihovnÄ› pro pÅ™Ã­stup kÂ PostgreSQL,
+tvoÅ™Ã­ jen obecnÃ© rozhranÃ­ sklÃ¡dajÃ­cÃ­ napÅ™Ã­klad SQL pÅ™Ã­kazy.  FyzickÃ½ pÅ™Ã­stup
+kÂ databÃ¡zi zajiÅ¡Å¥ujÃ­ rozhranÃ­ dÃ¡le implementovanÃ¡ vÂ jinÃ½ch zdrojovÃ½ch souborech.
 
 """
 
@@ -43,8 +43,8 @@ from pytis.data import *
 import pytis.data
 
 
-# Modifikace tabulek se oznamuje zasláním notifikace `MODIF_table', kde `table'
-# je jméno modifikované tabulky.
+# Modifikace tabulek se oznamuje zaslÃ¡nÃ­m notifikace `MODIF_table', kde `table'
+# je jmÃ©no modifikovanÃ© tabulky.
 
 
 def pg_escape(string_):
@@ -88,10 +88,10 @@ def pg_encoding(enc):
 
 
 class PostgreSQLResult(object):
-    """Na pou¾itém backendu nezávislá reprezentace vısledku SQL pøíkazu.
+    """Na pouÅ¾itÃ©m backendu nezÃ¡vislÃ¡ reprezentace vÃ½sledku SQL pÅ™Ã­kazu.
 
-    Pøedpokládá se pøedefinování této tøídy v potomcích PostgreSQLAccessor dle
-    potøeb konkrétního pou¾itého backendu.
+    PÅ™edpoklÃ¡dÃ¡ se pÅ™edefinovÃ¡nÃ­ tÃ©to tÅ™Ã­dy vÂ potomcÃ­ch PostgreSQLAccessor dle
+    potÅ™eb konkrÃ©tnÃ­ho pouÅ¾itÃ©ho backendu.
 
     """
     def __init__(self, data):
@@ -99,68 +99,68 @@ class PostgreSQLResult(object):
         
         Argumenty:
 
-          data -- datovı objekt odpovídající vısledku; jedná-li se o sekvenci
-            sekvencí stringù, fungují standardní metody v této tøídì, v opaèném
-            pøípadì je nutno tyto metody pøedefinovat
+          data -- datovÃ½ objekt odpovÃ­dajÃ­cÃ­ vÃ½sledku; jednÃ¡-li se oÂ sekvenci
+            sekvencÃ­ stringÅ¯, fungujÃ­ standardnÃ­ metody vÂ tÃ©to tÅ™Ã­dÄ›, vÂ opaÄnÃ©m
+            pÅ™Ã­padÄ› je nutno tyto metody pÅ™edefinovat
         
-        Pøíklady standardních hodnot 'data':
+        PÅ™Ã­klady standardnÃ­ch hodnot 'data':
         
           (('1', 'prvni'), ('2', 'druhy'), ('3', 'treti'))
           ()
           [['42']]
 
         """
-        # Poznámka ke specifikaci: Reprezentace dat øetìzci se mù¾e zdát
-        # ponìkud nevhodná, proto¾e u nìkterıch rozhraní to mù¾e znamenat
-        # konverzi dat na nìjakı typ a pak zpìt na øetìzec.  To je ov¹em cena,
-        # kterou rádi zaplatíme za srozumitelnost celé zále¾itosti.  Problémem
-        # není ani mrhání CPU cykly, proto¾e kód pobì¾í na klientech, kteøí
-        # se stejnì vesmìs flákají.
+        # PoznÃ¡mka ke specifikaci: Reprezentace dat Å™etÄ›zci se mÅ¯Å¾e zdÃ¡t
+        # ponÄ›kud nevhodnÃ¡, protoÅ¾e uÂ nÄ›kterÃ½ch rozhranÃ­ to mÅ¯Å¾e znamenat
+        # konverzi dat na nÄ›jakÃ½ typ a pak zpÄ›t na Å™etÄ›zec.  To je ovÅ¡em cena,
+        # kterou rÃ¡di zaplatÃ­me za srozumitelnost celÃ© zÃ¡leÅ¾itosti.  ProblÃ©mem
+        # nenÃ­ ani mrhÃ¡nÃ­ CPU cykly, protoÅ¾e kÃ³d pobÄ›Å¾Ã­ na klientech, kteÅ™Ã­
+        # se stejnÄ› vesmÄ›s flÃ¡kajÃ­.
         self._data = data
         
     def __getitem__(self, row):
-        """Vra» hodnotu vısledku z øádku 'row'.
+        """VraÅ¥ hodnotu vÃ½sledku zÂ Å™Ã¡dku 'row'.
 
-        Návratovou hodnotou je reprezentace dat øádku jako indexovatelnı objekt
-        s hodnotami typu string odpovídajícími jednotlivım sloupcùm vısledku.
+        NÃ¡vratovou hodnotou je reprezentace dat Å™Ã¡dku jako indexovatelnÃ½ objekt
+        sÂ hodnotami typu string odpovÃ­dajÃ­cÃ­mi jednotlivÃ½m sloupcÅ¯m vÃ½sledku.
         """
         return self._data[row]
 
     def __nonzero__(self):
-        """Vra» True právì kdy¾ objekt obsahuje nìjaká data.
+        """VraÅ¥ True prÃ¡vÄ› kdyÅ¾ objekt obsahuje nÄ›jakÃ¡ data.
         """
         return len(self) > 0
 
     def __len__(self):
-        """Vra» poèet øádkù dat.
+        """VraÅ¥ poÄet Å™Ã¡dkÅ¯ dat.
         """
         return len(self._data)
     
 
 class PostgreSQLAccessor(object_2_5):
-    """Tøída pro low-level pøístup k PostgreSQL.
+    """TÅ™Ã­da pro low-level pÅ™Ã­stup kÂ PostgreSQL.
 
-    Tato tøída je zodpovìdná za komunikaci s PostgreSQL realizovanou
-    prostøednictvím konkrétní backendové knihovny.  Konkrétnì má na starosti
-    tyto vìci: otevírání a uzavírání spojení do databáze, zasílání SQL pøíkazù
-    databázovému stroji, pøevod vısledkù SQL pøíkazù do obecné na pou¾itém
-    backendu nezávislé podoby.
+    Tato tÅ™Ã­da je zodpovÄ›dnÃ¡ za komunikaci sÂ PostgreSQL realizovanou
+    prostÅ™ednictvÃ­m konkrÃ©tnÃ­ backendovÃ© knihovny.  KonkrÃ©tnÄ› mÃ¡ na starosti
+    tyto vÄ›ci: otevÃ­rÃ¡nÃ­ a uzavÃ­rÃ¡nÃ­ spojenÃ­ do databÃ¡ze, zasÃ­lÃ¡nÃ­ SQL pÅ™Ã­kazÅ¯
+    databÃ¡zovÃ©mu stroji, pÅ™evod vÃ½sledkÅ¯ SQL pÅ™Ã­kazÅ¯ do obecnÃ© na pouÅ¾itÃ©m
+    backendu nezÃ¡vislÃ© podoby.
 
-    Pøístup k PostgreSQL prostøednictvím konkrétního backendu se realizuje
-    podìdìním této tøídy a pøedefinováním jejích metod.
+    PÅ™Ã­stup kÂ PostgreSQL prostÅ™ednictvÃ­m konkrÃ©tnÃ­ho backendu se realizuje
+    podÄ›dÄ›nÃ­m tÃ©to tÅ™Ã­dy a pÅ™edefinovÃ¡nÃ­m jejÃ­ch metod.
 
     """
 
     class _postgresql_Connection(object):
-        """Spojení do databáze.
+        """SpojenÃ­ do databÃ¡ze.
         """
         def __init__(self, connection, connection_data):
             """
 
             Argumenty:
 
-              connection -- spojení do databázového stroje
-              connection_data -- specifikace parametrù spojení
+              connection -- spojenÃ­ do databÃ¡zovÃ©ho stroje
+              connection_data -- specifikace parametrÅ¯ spojenÃ­
               
             """
             self._connection = connection
@@ -180,14 +180,14 @@ class PostgreSQLAccessor(object_2_5):
             self._connection_info[key] = value
 
     class _postgresql_Result(object):
-        """Vısledek SQL pøíkazu.
+        """VÃ½sledek SQL pÅ™Ã­kazu.
         """
         def __init__(self, result):
             """
 
             Argumenty:
 
-              result -- vısledek SQL pøíkazu v podobì závislé na pou¾itém
+              result -- vÃ½sledek SQL pÅ™Ã­kazu vÂ podobÄ› zÃ¡vislÃ© na pouÅ¾itÃ©m
                backendu
                
             """
@@ -197,14 +197,14 @@ class PostgreSQLAccessor(object_2_5):
             return self._result
     
     def _postgresql_new_connection(self, connection_data):
-        """Vytvoø, inicializuj a vra» nové spojení do databáze.
+        """VytvoÅ™, inicializuj a vraÅ¥ novÃ© spojenÃ­ do databÃ¡ze.
 
-        Návratovou hodnotou je instance '_postgresql_Connection'.
+        NÃ¡vratovou hodnotou je instance '_postgresql_Connection'.
 
         Argumenty:
 
-          connection_data -- dictionary obsahující pøihla¹ovací údaje jako
-            stroj, port, u¾ivatel, heslo, atd.
+          connection_data -- dictionary obsahujÃ­cÃ­ pÅ™ihlaÅ¡ovacÃ­ Ãºdaje jako
+            stroj, port, uÅ¾ivatel, heslo, atd.
             
         """
         connection = self._postgresql_open_connection(connection_data)
@@ -213,46 +213,46 @@ class PostgreSQLAccessor(object_2_5):
 
     @classmethod
     def _postgresql_open_connection(class_, connection_data):
-        """Vytvoø a vra» nové spojení do databáze.
+        """VytvoÅ™ a vraÅ¥ novÃ© spojenÃ­ do databÃ¡ze.
 
-        Návratovou hodnotou je instance '_postgresql_Connection'.
+        NÃ¡vratovou hodnotou je instance '_postgresql_Connection'.
 
         Argumenty:
 
-          connection_data -- dictionary obsahující pøihla¹ovací údaje jako
-            stroj, port, u¾ivatel, heslo, atd.
+          connection_data -- dictionary obsahujÃ­cÃ­ pÅ™ihlaÅ¡ovacÃ­ Ãºdaje jako
+            stroj, port, uÅ¾ivatel, heslo, atd.
 
-        Tato metoda musí bıt pøedefinována v podtøídì.
+        Tato metoda musÃ­ bÃ½t pÅ™edefinovÃ¡na vÂ podtÅ™Ã­dÄ›.
 
         """
-        raise ProgramError(_("Volána neimplementovaná metoda"))
+        raise ProgramError(_(u"VolÃ¡na neimplementovanÃ¡ metoda"))
 
     @classmethod
     def _postgresql_close_connection(class_, connection):
-        """Uzavøi spojení do databáze.
+        """UzavÅ™i spojenÃ­ do databÃ¡ze.
 
         Argumenty:
 
-          connection -- spojení, které má bıt uzavøeno, instance
+          connection -- spojenÃ­, kterÃ© mÃ¡ bÃ½t uzavÅ™eno, instance
             '_postgresql_Connection'
 
-        V této tøídì metoda nedìlá nic.
+        VÂ tÃ©to tÅ™Ã­dÄ› metoda nedÄ›lÃ¡ nic.
         
         """
         pass
     
     def _postgresql_initialize_connection(self, connection):
-        """Proveï potøebné inicializace nového spojení 'connection'.
+        """ProveÄ potÅ™ebnÃ© inicializace novÃ©ho spojenÃ­ 'connection'.
 
-        Pozor, tato metoda mù¾e bıt volána z jakékoliv instance tøídy, nesmí
-        tedy zde bıt nic specifického pro konkrétní instanci.
+        Pozor, tato metoda mÅ¯Å¾e bÃ½t volÃ¡na zÂ jakÃ©koliv instance tÅ™Ã­dy, nesmÃ­
+        tedy zde bÃ½t nic specifickÃ©ho pro konkrÃ©tnÃ­ instanci.
         
         """
         self._postgresql_initialize_transactions(connection)
         self._postgresql_initialize_coding(connection)
         
     def _postgresql_initialize_transactions(self, connection):
-        """Nastav zpùsob provádìní transakcí pro konkrétní backend."""
+        """Nastav zpÅ¯sob provÃ¡dÄ›nÃ­ transakcÃ­ pro konkrÃ©tnÃ­ backend."""
         pass
 
     def _postgresql_initialize_coding(self, connection):
@@ -297,19 +297,19 @@ class PostgreSQLAccessor(object_2_5):
         This method is required to be redefined in a subclass.
 
         """
-        raise ProgramError(_("Unimplemented method"))
+        raise ProgramError(_(u"Unimplemented method"))
 
     def _postgresql_transform_query_result(self, result):
-        """Vra» instanci 'PostgreSQLResult' odpovídající vısledku 'result'.
+        """VraÅ¥ instanci 'PostgreSQLResult' odpovÃ­dajÃ­cÃ­ vÃ½sledku 'result'.
 
         Argumenty:
 
           result -- instance '_postgresql_Result'
 
-        Tato metoda musí bıt pøedefinována v podtøídì.
+        Tato metoda musÃ­ bÃ½t pÅ™edefinovÃ¡na vÂ podtÅ™Ã­dÄ›.
         
         """
-        raise ProgramError(_("Volána neimplementovaná metoda"))
+        raise ProgramError(_(u"VolÃ¡na neimplementovanÃ¡ metoda"))
 
     def _postgresql_begin_transaction(self):
         self._pg_query ('begin')
@@ -322,11 +322,11 @@ class PostgreSQLAccessor(object_2_5):
 
 
 class PostgreSQLConnector(PostgreSQLAccessor):
-    """Tøída pro pøístup k PostgreSQL na vy¹¹í úrovni.
+    """TÅ™Ã­da pro pÅ™Ã­stup kÂ PostgreSQL na vyÅ¡Å¡Ã­ Ãºrovni.
 
-    Tøída roz¹iøuje funkce nadtøídy o funkce vy¹¹í úrovnì jako jsou správa
-    spojení, SQL inicializace pøi otevírání spojení nebo zpracování vısledkù
-    SQL pøíkazù.
+    TÅ™Ã­da rozÅ¡iÅ™uje funkce nadtÅ™Ã­dy oÂ funkce vyÅ¡Å¡Ã­ ÃºrovnÄ› jako jsou sprÃ¡va
+    spojenÃ­, SQL inicializace pÅ™i otevÃ­rÃ¡nÃ­ spojenÃ­ nebo zpracovÃ¡nÃ­ vÃ½sledkÅ¯
+    SQL pÅ™Ã­kazÅ¯.
 
     """
 
@@ -342,7 +342,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         """
         import config
         self._pg_encoding = None
-        # Logování
+        # LogovÃ¡nÃ­
         if config.dblogtable:
             self._pdbb_logging_command = \
                 "insert into %s (command) values ('%%s')" % config.dblogtable
@@ -419,7 +419,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             try:
                 query.encode(self._pg_encoding)
             except UnicodeEncodeError:
-                raise DBUserException(_("Data obsahují znaky, které nelze reprezentovat v kódování databáze"))
+                raise DBUserException(_(u"Data obsahujÃ­ znaky, kterÃ© nelze reprezentovat v kÃ³dovÃ¡nÃ­ databÃ¡ze"))
         if type(query) is pytypes.UnicodeType:
             query = query.encode('utf-8')
         assert transaction is None or not outside_transaction, \
@@ -431,7 +431,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         else:
             connection = transaction._trans_connection()
         self._pg_query_counter += 1
-        # Proveï dotaz
+        # ProveÄ dotaz
         if __debug__:
             log(DEBUG, 'SQL query', query)
         def lfunction(connection=connection):
@@ -442,21 +442,21 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                                                             outside_transaction,
                                                             query_args=query_args)
             finally:
-                # Vra» DB spojení zpìt
+                # VraÅ¥ DB spojenÃ­ zpÄ›t
                 if connection and transaction is None and outside_transaction:
                     self._pg_return_connection(connection)                  
             if backup and self._pdbb_logging_command:
                 assert not outside_transaction, \
                     ('Backed up SQL command outside transaction', query)
-                # Zde nemù¾e dojít k vıznamné zámìnì poøadí zalogovanıch
-                # pøíkazù, proto¾e v¹echny DML pøíkazy jsou uzavøeny
-                # v transakcích a ty konfliktní jsou díky serializaci
-                # automaticky správnì øazeny.
+                # Zde nemÅ¯Å¾e dojÃ­t kÂ vÃ½znamnÃ© zÃ¡mÄ›nÄ› poÅ™adÃ­ zalogovanÃ½ch
+                # pÅ™Ã­kazÅ¯, protoÅ¾e vÅ¡echny DML pÅ™Ã­kazy jsou uzavÅ™eny
+                # vÂ transakcÃ­ch a ty konfliktnÃ­ jsou dÃ­ky serializaci
+                # automaticky sprÃ¡vnÄ› Å™azeny.
                 self._postgresql_query(connection,
                                        (self._pdbb_logging_command %
                                         (pg_escape(query),)),
                                        False)
-            # Získej a vra» data
+            # ZÃ­skej a vraÅ¥ data
             return self._postgresql_transform_query_result(result)
         data = with_lock(self._pg_query_lock, lfunction)
         if __debug__:
@@ -465,7 +465,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
 
 class PostgreSQLUserGroups(PostgreSQLConnector):
-    """Tøída pro zji¹»ování skupin u¾ivatele."""
+    """TÅ™Ã­da pro zjiÅ¡Å¥ovÃ¡nÃ­ skupin uÅ¾ivatele."""
     
     _access_groups = {}
     _access_groups_data_objects = {}
@@ -504,17 +504,17 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         return groups
 
     def access_groups(self):
-        """Vra» sekvenci jmen skupin, do kterıch patøí pøihlá¹enı u¾ivatel.
+        """VraÅ¥ sekvenci jmen skupin, do kterÃ½ch patÅ™Ã­ pÅ™ihlÃ¡Å¡enÃ½ uÅ¾ivatel.
 
-        Nejsou-li skupiny u¾ivatele známy, vra» 'None'.
+        Nejsou-li skupiny uÅ¾ivatele znÃ¡my, vraÅ¥ 'None'.
 
         Argumenty:
 
-          connection_data -- specifikace spojení, jeho¾ skupiny mají bıt
-            vráceny
+          connection_data -- specifikace spojenÃ­, jehoÅ¾ skupiny majÃ­ bÃ½t
+            vrÃ¡ceny
 
-        Sekvence jmen skupin je updatována pøi ka¾dém vytvoøení nového
-        spojení.  Jména skupin jsou strings.
+        Sekvence jmen skupin je updatovÃ¡na pÅ™i kaÅ¾dÃ©m vytvoÅ™enÃ­ novÃ©ho
+        spojenÃ­.  JmÃ©na skupin jsou strings.
 
         """
         connection_data = self._pg_connection_data()
@@ -573,11 +573,11 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
     class _PgNotifier(PostgreSQLConnector):
 
-        # Jsou tu dva zámky -- pozor na uváznutí!
+        # Jsou tu dva zÃ¡mky -- pozor na uvÃ¡znutÃ­!
 
         def __init__(self, connection_data, connection_name=None):
             if __debug__:
-                log(DEBUG, 'Vytvoøení notifikátoru')
+                log(DEBUG, 'VytvoÅ™enÃ­ notifikÃ¡toru')
             PostgreSQLConnector.__init__(self, connection_data,
                                          connection_name=connection_name)
             self._notif_data_lock = thread.allocate_lock()
@@ -589,8 +589,8 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             self._pg_query('listen "%s"' % notification)
             
         def _notif_register(self, notification):
-            # Zamykáme zde kvùli mo¾nosti souèasného vyvolání této metody
-            # z `register' i naslouchacího threadu.
+            # ZamykÃ¡me zde kvÅ¯li moÅ¾nosti souÄasnÃ©ho vyvolÃ¡nÃ­ tÃ©to metody
+            # zÂ `register' iÂ naslouchacÃ­ho threadu.
             if __debug__:
                 log(DEBUG, 'Registruji notifikaci:', notification)
             def lfunction():
@@ -598,27 +598,27 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                 self._notif_do_registration(notification)
             with_lock(self._notif_connection_lock, lfunction)
             if __debug__:
-                log(DEBUG, 'Notifikace zaregistrována:', notification)
+                log(DEBUG, 'Notifikace zaregistrovÃ¡na:', notification)
 
         def _notif_listen(self):
             if __debug__:
-                log(DEBUG, 'Novı listener')
+                log(DEBUG, 'NovÃ½ listener')
             error_pause = 1
             self._notif_init_connection()
             while True:
                 if __debug__:
-                    log(DEBUG, 'Napichuji se na nové spojení')
+                    log(DEBUG, 'Napichuji se na novÃ© spojenÃ­')
                 notiflist = []
                 for d in self._notif_data_objects.values():
                     notiflist = notiflist + d
                 if __debug__:
-                    log(DEBUG, 'Notifikace k registraci:', notiflist)
+                    log(DEBUG, 'Notifikace kÂ registraci:', notiflist)
                 notiflist = []
                 for list_ in self._notif_data_objects.values():
                     notiflist += list_
                 try:
-                    # connection do poolu nikdy nevracíme, tak¾e na nìj mù¾eme
-                    # navìsit, co je nám libo.
+                    # connection do poolu nikdy nevracÃ­me, takÅ¾e na nÄ›j mÅ¯Å¾eme
+                    # navÄ›sit, co je nÃ¡m libo.
                     for n in remove_duplicates(notiflist):
                         self._notif_register(n)
                 except pytis.data.DBException, e:
@@ -628,11 +628,11 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                 self._notif_listen_loop()
 
         def _notif_listen_loop(self):
-            raise Exception("Volána neimplementovaná metoda")
+            raise Exception("VolÃ¡na neimplementovanÃ¡ metoda")
 
         def _notif_invoke_callbacks(self, notifications):
             if __debug__:
-                log(DEBUG, 'Volám callbacky')
+                log(DEBUG, 'VolÃ¡m callbacky')
             def lfunction():
                 return copy.copy(self._notif_data_objects)
             data_objects = with_lock(self._notif_data_lock, lfunction)
@@ -640,7 +640,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                 for n in ns:
                     if n in notifications:
                         if __debug__:
-                            log(DEBUG, 'Volám callbacky datového objektu:', d)
+                            log(DEBUG, 'VolÃ¡m callbacky datovÃ©ho objektu:', d)
                         d._call_on_change_callbacks()
                         break
 
@@ -657,14 +657,14 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             with_lock(self._notif_data_lock, lfunction)
             self._notif_register(notification)
             if __debug__:
-                log(DEBUG, 'Notifikace zaregistrována')
+                log(DEBUG, 'Notifikace zaregistrovÃ¡na')
 
     def __init__(self, connection_data, **kwargs):
         """
         Argumenty:
 
-          connection_data -- údaje o spojení, stejné jako ve tøídì 'PostgreSQLConnector'
-          kwargs -- k pøedání pøedkovi
+          connection_data -- Ãºdaje oÂ spojenÃ­, stejnÃ© jako ve tÅ™Ã­dÄ› 'PostgreSQLConnector'
+          kwargs -- k pÅ™edÃ¡nÃ­ pÅ™edkovi
         
         """
         self._pg_notifications = []
@@ -704,37 +704,37 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
 
 class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
-    """Interpretace sémantiky specifikace napojení do databáze.
+    """Interpretace sÃ©mantiky specifikace napojenÃ­ do databÃ¡ze.
 
-    Tato tøída øe¹í problematiku naplnìní vıznamu specifikace napojení sloupcù
-    datové tabulky na data v databázi PostgreSQL.  Nedìdí ¾ádnou datovou
-    tøídu, pouze implementuje metody tıkající se interpretace specifikace
-    sloupcù, je tudí¾ vhodná k podìdìní v nìkterém z potomkù 'data.DBData'.
+    Tato tÅ™Ã­da Å™eÅ¡Ã­ problematiku naplnÄ›nÃ­ vÃ½znamu specifikace napojenÃ­ sloupcÅ¯
+    datovÃ© tabulky na data vÂ databÃ¡zi PostgreSQL.  NedÄ›dÃ­ Å¾Ã¡dnou datovou
+    tÅ™Ã­du, pouze implementuje metody tÃ½kajÃ­cÃ­ se interpretace specifikace
+    sloupcÅ¯, je tudÃ­Å¾ vhodnÃ¡ kÂ podÄ›dÄ›nÃ­ vÂ nÄ›kterÃ©m zÂ potomkÅ¯ 'data.DBData'.
 
-    Souèasná implementace této tøídy podporuje sloupcovou specifikaèní tøídu
-    'DBColumnBinding' a jen tuto tøídu.  Pro bindings navíc platí následující
+    SouÄasnÃ¡ implementace tÃ©to tÅ™Ã­dy podporuje sloupcovou specifikaÄnÃ­ tÅ™Ã­du
+    'DBColumnBinding' a jen tuto tÅ™Ã­du.  Pro bindings navÃ­c platÃ­ nÃ¡sledujÃ­cÃ­
     pravidla:
 
-    - Musí bıt specifikováno alespoò jedno binding.
+    - MusÃ­ bÃ½t specifikovÃ¡no alespoÅˆ jedno binding.
 
-    - Modifikovat (insert, update, delete) lze pouze tabulku klíèe.
+    - Modifikovat (insert, update, delete) lze pouze tabulku klÃ­Äe.
 
-    - V¹echny slo¾ky klíèe musí bıt z té¾e tabulky.
+    - VÅ¡echny sloÅ¾ky klÃ­Äe musÃ­ bÃ½t zÂ tÃ©Å¾e tabulky.
 
-    Poslední pravidlo se mù¾e zdát pøíli¹ omezující, av¹ak není tomu tak,
-    proto¾e práci s vícenásobnımi tabulkami je lep¹í a jednodu¹¹í implementovat
-    pomocí rules na serveru, ne¾ pomocí tohoto aplikaèního rozhraní.  Je pouze
-    zapotøebí, aby databázovı stroj tuto funkcionalitu podporoval a aby tato
+    PoslednÃ­ pravidlo se mÅ¯Å¾e zdÃ¡t pÅ™Ã­liÅ¡ omezujÃ­cÃ­, avÅ¡ak nenÃ­ tomu tak,
+    protoÅ¾e prÃ¡ci sÂ vÃ­cenÃ¡sobnÃ½mi tabulkami je lepÅ¡Ã­ a jednoduÅ¡Å¡Ã­ implementovat
+    pomocÃ­ rules na serveru, neÅ¾ pomocÃ­ tohoto aplikaÄnÃ­ho rozhranÃ­.  Je pouze
+    zapotÅ™ebÃ­, aby databÃ¡zovÃ½ stroj tuto funkcionalitu podporoval a aby tato
     podpora fungovala.
  
-    **Pozor**: Metody modifikující tabulku se nestarají o obecné udr¾ení
-    integrity dat, tj. ohlídání vlastností klíèù nebo referenèní integrity je
-    ponecháno na databázovém stroji.  Pøedpokládá se, ¾e v pøípadì poru¹ení
-    pravidel definovanıch v databázovém stroji je pøíslu¹ná transakce
-    stornována.  Stejnì tak metoda 'delete' pracuje na tom principu, ¾e vyma¾e
-    øádek *pouze z tabulky primárního klíèe* napojení; pøedpokládá se, ¾e data
-    v ostatních tabulkách budou smazána automaticky databázovım strojem v rámci
-    pravidel zachování referenèní integrity.
+    **Pozor**: Metody modifikujÃ­cÃ­ tabulku se nestarajÃ­ oÂ obecnÃ© udrÅ¾enÃ­
+    integrity dat, tj. ohlÃ­dÃ¡nÃ­ vlastnostÃ­ klÃ­ÄÅ¯ nebo referenÄnÃ­ integrity je
+    ponechÃ¡no na databÃ¡zovÃ©m stroji.  PÅ™edpoklÃ¡dÃ¡ se, Å¾e vÂ pÅ™Ã­padÄ› poruÅ¡enÃ­
+    pravidel definovanÃ½ch vÂ databÃ¡zovÃ©m stroji je pÅ™Ã­sluÅ¡nÃ¡ transakce
+    stornovÃ¡na.  StejnÄ› tak metoda 'delete' pracuje na tom principu, Å¾e vymaÅ¾e
+    Å™Ã¡dek *pouze zÂ tabulky primÃ¡rnÃ­ho klÃ­Äe* napojenÃ­; pÅ™edpoklÃ¡dÃ¡ se, Å¾e data
+    vÂ ostatnÃ­ch tabulkÃ¡ch budou smazÃ¡na automaticky databÃ¡zovÃ½m strojem vÂ rÃ¡mci
+    pravidel zachovÃ¡nÃ­ referenÄnÃ­ integrity.
     
     """
     _PDBB_CURSOR_NAME = 'selection'
@@ -830,7 +830,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_create_sql_commands()
         
     def _pdbb_tabcol(self, table_name, column_name, column_id):
-        """Vra» zadanı sloupec zformátovanı pro SQL."""
+        """VraÅ¥ zadanÃ½ sloupec zformÃ¡tovanÃ½ pro SQL."""
         if table_name:
             result = '%s.%s' % (table_name, column_name)
         else:                           # aggregate or so, alias must be used
@@ -839,7 +839,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pdbb_btabcol(self, binding, full_text_handler=None, convert_ltree=False, operations=None,
                       column_groups=None):
-        """Vra» sloupec z 'binding' zformátovanı pro SQL."""
+        """VraÅ¥ sloupec zÂ 'binding' zformÃ¡tovanÃ½ pro SQL."""
         def column_type():
             return self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
                                              type_kwargs=binding.kwargs(), noerror=True)
@@ -874,7 +874,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
         
     def _pdbb_coalesce(self, ctype, value):
-        """Vra» string 'value' zabezpeèenı pro typ sloupce 'ctype' v SQL."""
+        """VraÅ¥ string 'value' zabezpeÄenÃ½ pro typ sloupce 'ctype' vÂ SQL."""
         if ctype is None or isinstance(ctype, String) or value == 'NULL':
             default = "''"
             cast = ''
@@ -1013,7 +1013,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     
     def _pdbb_get_type(self, type_, size_string, not_null, serial,
                        ctype=None, unique=False, type_kwargs=None):
-        # Zde lze doplnit dal¹í pou¾ívané standardní typy z PostgreSQL
+        # Zde lze doplnit dalÅ¡Ã­ pouÅ¾Ã­vanÃ© standardnÃ­ typy zÂ PostgreSQL
         TYPE_MAPPING = {'bool': Boolean,
                         'bpchar': String,
                         'char': String,
@@ -1087,7 +1087,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         key = []
         columns = []
         for b in bindings:
-            if not b.id():              # skrytı sloupec
+            if not b.id():              # skrytÃ½ sloupec
                 continue
             if self._arguments is None:
                 t = self._pdbb_get_table_type(b.table(), b.column(), b.type(), type_kwargs=b.kwargs())
@@ -1147,12 +1147,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return '%s(%s)' % (group[2], string.join(args, ', '),)
         
     def _pdbb_create_sql_commands(self):
-        """Vytvoø ¹ablony SQL pøíkazù pou¾ívané ve veøejnıch metodách."""
+        """VytvoÅ™ Å¡ablony SQL pÅ™Ã­kazÅ¯ pouÅ¾Ã­vanÃ© ve veÅ™ejnÃ½ch metodÃ¡ch."""
         bindings = self._bindings
         for b in bindings:
             assert isinstance(b, DBColumnBinding), \
                    ('Unsupported binding specification', b)
-        # Pøiprav parametry
+        # PÅ™iprav parametry
         operations = (self._pdbb_operations or [])
         aggregate_columns = [o[2] for o in operations]
         group_columns = []
@@ -1370,7 +1370,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # when using cross-class transactions and additionally to avoid
         # conflicts when using data instance cache.
         cursor_name = '%s_%%(selection)s' % (self._PDBB_CURSOR_NAME,)
-        # Vytvoø ¹ablony pøíkazù
+        # VytvoÅ™ Å¡ablony pÅ™Ã­kazÅ¯
         self._pdbb_command_row = \
           self._SQLCommandTemplate(
             ('select %%(columns)s from %s where %s%s %s order by %s %%(supplement)s' %
@@ -1688,7 +1688,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pdbb_fulltext_query_name(self, column_name):
         return '_pytis_ftq__%s' % (column_name,)
         
-    # Metody související s exportovanımi metodami DB operací
+    # Metody souvisejÃ­cÃ­ sÂ exportovanÃ½mi metodami DB operacÃ­
     
     def _pdbb_table_row_lists(self, row):
         table_bindings = filter(lambda b, t=self._key_binding[0].table(): \
@@ -1736,11 +1736,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Invalid direction', direction)
         def sorting_condition(sorting, forwards, row, mayeq):
             # - forwards je True:
-            #   pak je row øádek, na kterém stojíme a hledáme v¹echny øádky
-            #   v smìru pohybu vyhledávání
+            #   pak je row Å™Ã¡dek, na kterÃ©m stojÃ­me a hledÃ¡me vÅ¡echny Å™Ã¡dky
+            #   v smÄ›ru pohybu vyhledÃ¡vÃ¡nÃ­
             # - forwards je False:
-            #   pak je row øádek vyhledávanı øádek a hledáme v¹echny øádky,
-            #   které jsou v protismìru pohybu vyhledávání.
+            #   pak je row Å™Ã¡dek vyhledÃ¡vanÃ½ Å™Ã¡dek a hledÃ¡me vÅ¡echny Å™Ã¡dky,
+            #   kterÃ© jsou v protismÄ›ru pohybu vyhledÃ¡vÃ¡nÃ­.
             if row is None:
                 return None
             sdirection = ecase(direction,
@@ -1780,7 +1780,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         common_cond = AND(select_cond,
                           sorting_condition(sorting, True, row, False))
         sort_string = self._pdbb_sort2sql(sorting)
-        # Najdi první øádek splòující po¾adovanou podmínku
+        # Najdi prvnÃ­ Å™Ã¡dek splÅˆujÃ­cÃ­ poÅ¾adovanou podmÃ­nku
         search_cond = AND(common_cond, condition)
         cond_string = self._pdbb_condition2sql(search_cond)
         if direction == FORWARD:            
@@ -1797,7 +1797,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         data_ = self._pg_query(query, transaction=transaction)
         if not data_:
             return 0
-        # Zjisti vzdálenost mezi aktuálním a vyhledanım øádkem
+        # Zjisti vzdÃ¡lenost mezi aktuÃ¡lnÃ­m a vyhledanÃ½m Å™Ã¡dkem
         row_found = self._pg_make_row_from_raw_data(
             data_, template=self._pg_make_row_template_limited)
         search_cond = AND(common_cond,
@@ -2093,7 +2093,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                               transaction=transaction)
     
     def _pg_fetchmany (self, count, direction, transaction=None):
-        """Vra» 'count' øádkù selectu jako raw data."""
+        """VraÅ¥ 'count' Å™Ã¡dkÅ¯ selectu jako raw data."""
         args = {'number': count, 'selection': self._pdbb_selection_number}
         if direction == FORWARD:
             query = self._pdbb_command_fetch_forward.format(args)
@@ -2104,7 +2104,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return self._pg_query(query, transaction=transaction)
 
     def _pg_skip(self, count, direction, exact_count=False, transaction=None):
-        """Pøeskoè 'count' øádkù v 'direction' a vra» jejich poèet nebo 'None'.
+        """PÅ™eskoÄ 'count' Å™Ã¡dkÅ¯ vÂ 'direction' a vraÅ¥ jejich poÄet nebo 'None'.
         """
         args = {'number': count, 'selection': self._pdbb_selection_number}
         if direction == FORWARD:
@@ -2122,7 +2122,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return None
         
     def _pg_insert(self, row, after=None, before=None, transaction=None):
-        """Vlo¾ 'row' a vra» jej jako nová raw data nebo vra» 'None'."""
+        """VloÅ¾ 'row' a vraÅ¥ jej jako novÃ¡ raw data nebo vraÅ¥ 'None'."""
         ordering = self._ordering
         if ordering:
             ocol = self._ordering[0]
@@ -2216,16 +2216,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return result
     
     def _pg_update(self, condition, row, transaction=None):
-        """Updatuj øádky identifikované 'condition'.
+        """Updatuj Å™Ã¡dky identifikovanÃ© 'condition'.
 
-        Vrací: Poèet updatovanıch øádkù.
+        VracÃ­: PoÄet updatovanÃ½ch Å™Ã¡dkÅ¯.
 
         """
-        # TODO: Pøi pou¾ití RULEs v PostgreSQL UPDATE vrací v¾dy 0.  Toto
-        # chování je sporné, nicménì v tuto chvíli PostgreSQL nenabízí ¾ádné
-        # pøímé øe¹ení, jak vısledek UPDATE zjistit.  Proto zde aplikujeme
-        # jakısi hack, kterı nìjakım zpùsobem o¹etøí alespoò nìkteré situace,
-        # aby nebyl signalizován neúspìch UPDATE v pøípadì jeho úspìchu.
+        # TODO: PÅ™i pouÅ¾itÃ­ RULEs vÂ PostgreSQL UPDATE vracÃ­ vÅ¾dyÂ 0.  Toto
+        # chovÃ¡nÃ­ je spornÃ©, nicmÃ©nÄ› vÂ tuto chvÃ­li PostgreSQL nenabÃ­zÃ­ Å¾Ã¡dnÃ©
+        # pÅ™Ã­mÃ© Å™eÅ¡enÃ­, jak vÃ½sledek UPDATE zjistit.  Proto zde aplikujeme
+        # jakÃ½si hack, kterÃ½ nÄ›jakÃ½m zpÅ¯sobem oÅ¡etÅ™Ã­ alespoÅˆ nÄ›kterÃ© situace,
+        # aby nebyl signalizovÃ¡n neÃºspÄ›ch UPDATE vÂ pÅ™Ã­padÄ› jeho ÃºspÄ›chu.
         cols, vals = self._pdbb_table_row_lists(row)
         if not cols:
             return 0
@@ -2271,9 +2271,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise DBSystemException('Unexpected UPDATE value', None, result)
 
     def _pg_delete (self, condition, transaction=None):
-        """Sma¾ øádek identifikovanı podmínkou 'condition'.
+        """SmaÅ¾ Å™Ã¡dek identifikovanÃ½ podmÃ­nkou 'condition'.
 
-        Vrací: Poèet smazanıch øádkù.
+        VracÃ­: PoÄet smazanÃ½ch Å™Ã¡dkÅ¯.
 
         """
         sql_condition = self._pdbb_condition2sql(condition)
@@ -2289,28 +2289,28 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise DBSystemException('Unexpected DELETE value', None, result)
 
     def _pg_send_notifications(self):
-        """Roze¹li notifikace o modifikaci tohoto datového objektu."""
+        """RozeÅ¡li notifikace oÂ modifikaci tohoto datovÃ©ho objektu."""
         self._pg_query(self._pdbb_command_notify, outside_transaction=True)
 
 
 class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
-    """Datová tabulka s napojením do PostgreSQL.
+    """DatovÃ¡ tabulka sÂ napojenÃ­m do PostgreSQL.
 
-    Tato tøída pøekládá po¾adavky do SQL, není v¹ak implementaènì závislá na
-    konkrétním pou¾itém postgresovém modulu pro Python.
+    Tato tÅ™Ã­da pÅ™eklÃ¡dÃ¡ poÅ¾adavky do SQL, nenÃ­ vÅ¡ak implementaÄnÄ› zÃ¡vislÃ¡ na
+    konkrÃ©tnÃ­m pouÅ¾itÃ©m postgresovÃ©m modulu pro Python.
     
     """
-    # TODO: Tato tøída je mamut a mìla by bıt rozdìlena na nìkolik men¹ích èástí
+    # TODO: Tato tÅ™Ã­da je mamut a mÄ›la by bÃ½t rozdÄ›lena na nÄ›kolik menÅ¡Ã­ch ÄÃ¡stÃ­
 
     _PG_LOCK_TABLE = '_rowlocks_real'
     _PG_LOCK_TABLE_LOCK = '_rowlocks_real'
-    _PG_LOCK_TIMEOUT = 30         # perioda updatu v sekundách
+    _PG_LOCK_TIMEOUT = 30         # perioda updatu vÂ sekundÃ¡ch
 
     class _PgBuffer:
-        # Døíve to bıval buffer, nyní se pøemìòuje na "buffer-cache".
+        # DÅ™Ã­ve to bÃ½val buffer, nynÃ­ se pÅ™emÄ›Åˆuje na "buffer-cache".
 
         def __init__(self):
-            if __debug__: log(DEBUG, 'Novı buffer')
+            if __debug__: log(DEBUG, 'NovÃ½ buffer')
             self.reset()
 
         def _number_of_rows(self, row_count_info, min_value=None):
@@ -2321,25 +2321,25 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return number
             
         def reset(self):
-            """Kompletnì resetuj buffer."""
+            """KompletnÄ› resetuj buffer."""
             if __debug__:
                 log(DEBUG, 'Resetuji buffer')
             self._buffer = []
-            # _dbpointer ... pozice ukazovátka kursoru v databázi, na kterı
-            #   prvek kursoru poèínaje od 0 ukazuje
-            # _dbposition ... pozice zaèátku bufferu v databázi, èíslo prvku
-            #   kurzoru poèínaje 0, kterı odpovídá prvnímu prvku bufferu
-            # _pointer ... pozice ukazovátka v bufferu, ukazuje na poslední
-            #   pøeètenı prvek, nemusí v¾dy ukazovat dovnitø bufferu
+            # _dbpointer ... pozice ukazovÃ¡tka kursoru vÂ databÃ¡zi, na kterÃ½
+            #   prvek kursoru poÄÃ­naje od 0 ukazuje
+            # _dbposition ... pozice zaÄÃ¡tku bufferu vÂ databÃ¡zi, ÄÃ­slo prvku
+            #   kurzoru poÄÃ­najeÂ 0, kterÃ½ odpovÃ­dÃ¡ prvnÃ­mu prvku bufferu
+            # _pointer ... pozice ukazovÃ¡tka vÂ bufferu, ukazuje na poslednÃ­
+            #   pÅ™eÄtenÃ½ prvek, nemusÃ­ vÅ¾dy ukazovat dovnitÅ™ bufferu
             self._dbposition = 0
             self._dbpointer = self._pointer = -1
 
         def current(self):
-            """Vra» aktuální øádek a jeho pozici v databázi poèínaje od 0.
+            """VraÅ¥ aktuÃ¡lnÃ­ Å™Ã¡dek a jeho pozici vÂ databÃ¡zi poÄÃ­naje od 0.
 
-            Vısledek je vrácen jako dvojice (ROW, POSITION).  Je-li aktuální
-            øádek mimo buffer, je ROW 'None'.  Je-li aktuální pozice mimo
-            buffer, je POSITION je -1 nebo poèet øádkù selectu.
+            VÃ½sledek je vrÃ¡cen jako dvojice (ROW, POSITION).  Je-li aktuÃ¡lnÃ­
+            Å™Ã¡dek mimo buffer, je ROW 'None'.  Je-li aktuÃ¡lnÃ­ pozice mimo
+            buffer, je POSITION je -1 nebo poÄet Å™Ã¡dkÅ¯ selectu.
 
             """
             buffer = self._buffer
@@ -2352,10 +2352,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return row, position
 
         def fetch(self, direction, row_count_info):
-            """Vra» øádek nebo 'None' a updatuj ukazovátka.
+            """VraÅ¥ Å™Ã¡dek nebo 'None' a updatuj ukazovÃ¡tka.
 
-            Pokud øádek není v bufferu, je vráceno 'None' a pøedpokládá se
-            následné volání metod 'correction()' a 'fill()'.
+            Pokud Å™Ã¡dek nenÃ­ vÂ bufferu, je vrÃ¡ceno 'None' a pÅ™edpoklÃ¡dÃ¡ se
+            nÃ¡slednÃ© volÃ¡nÃ­ metod 'correction()' a 'fill()'.
 
             """
             buffer = self._buffer
@@ -2369,11 +2369,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             if pointer < 0 or pointer >= len(buffer):
                 if __debug__: log(DEBUG, 'Buffer miss:', pointer)
                 pos = self._dbposition + pointer
-                # Interní ukazovátko po obyèejném minutí neupdatujeme, proto¾e
-                # pøijde fill a pokus o znovuvyta¾ení hodnoty, s novım updatem
-                # ukazovátka.  Av¹ak pokud jsme kompletnì mimo rozsah dat, není
-                # tato zdr¾enlivost namístì a je nutno ukazovátko posunout na
-                # správnou pozici, tj. mimo rozsah dat.
+                # InternÃ­ ukazovÃ¡tko po obyÄejnÃ©m minutÃ­ neupdatujeme, protoÅ¾e
+                # pÅ™ijde fill a pokus oÂ znovuvytaÅ¾enÃ­ hodnoty, sÂ novÃ½m updatem
+                # ukazovÃ¡tka.  AvÅ¡ak pokud jsme kompletnÄ› mimo rozsah dat, nenÃ­
+                # tato zdrÅ¾enlivost namÃ­stÄ› a je nutno ukazovÃ¡tko posunout na
+                # sprÃ¡vnou pozici, tj. mimo rozsah dat.
                 if pos < 0:
                     self._pointer = -1 - self._dbposition
                 elif pos >= self._number_of_rows(row_count_info, pos+1):
@@ -2385,24 +2385,24 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return result
 
         def correction(self, direction, row_count_info):
-            """Vra» argument pro DB operaci SKIP pøed naplnìním bufferu.
+            """VraÅ¥ argument pro DB operaci SKIP pÅ™ed naplnÄ›nÃ­m bufferu.
 
-            Kladná návratová hodnota odpovídá posunu vpøed, záporná posunu
-            zpìt.
+            KladnÃ¡ nÃ¡vratovÃ¡ hodnota odpovÃ­dÃ¡ posunu vpÅ™ed, zÃ¡pornÃ¡ posunu
+            zpÄ›t.
             
-            Databázové ukazovátko je updatováno jako kdyby SKIP byl proveden.
+            DatabÃ¡zovÃ© ukazovÃ¡tko je updatovÃ¡no jako kdyby SKIP byl proveden.
 
             """
-            if __debug__: log(DEBUG, '®ádost o korekci:',
+            if __debug__: log(DEBUG, 'Å½Ã¡dost oÂ korekci:',
                 (self._dbpointer, self._dbposition, self._pointer, direction))
             pointer = self._pointer
             buflen = len(self._buffer)
             pos = self._dbposition + pointer
             if pointer > buflen or pointer < -1:
-                # Dostali jsme se daleko za buffer, je nutno provést DB skip.
-                # TODO: zde by mohlo bıt dobré nastavit pozici tak, aby byla
-                # naètena je¹tì nìjaká data proti smìru bufferu.  Jak to ale
-                # udìlat èistì?
+                # Dostali jsme se daleko za buffer, je nutno provÃ©st DB skip.
+                # TODO: zde by mohlo bÃ½t dobrÃ© nastavit pozici tak, aby byla
+                # naÄtena jeÅ¡tÄ› nÄ›jakÃ¡ data proti smÄ›ru bufferu.  Jak to ale
+                # udÄ›lat ÄistÄ›?
                 if pos >= 0:
                     pos = min(pos, self._number_of_rows(row_count_info, pos))
                 else:
@@ -2414,39 +2414,39 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._dbposition = self._dbpointer + 1
             elif (direction == FORWARD and pointer >= buflen - 1) or \
                  (direction == BACKWARD and pointer <= 1):
-                # Jsme u hranice bufferu, provedeme DB skip bez mazání bufferu.
-                # Rozsah v podmínce je zvolen tak, aby o¹etøil i pøedchozí
+                # Jsme uÂ hranice bufferu, provedeme DB skip bez mazÃ¡nÃ­ bufferu.
+                # Rozsah vÂ podmÃ­nce je zvolen tak, aby oÅ¡etÅ™il iÂ pÅ™edchozÃ­
                 # buffer miss.
                 correction = pos - self._dbpointer
                 self._dbpointer = self._dbpointer + correction
             else:
-                # Jsme uvnitø bufferu, ¾ádnı DB skip se nekoná.
+                # Jsme uvnitÅ™ bufferu, Å¾Ã¡dnÃ½ DB skip se nekonÃ¡.
                 correction = 0
-            if __debug__: log(DEBUG, 'Urèená korekce:', correction)
+            if __debug__: log(DEBUG, 'UrÄenÃ¡ korekce:', correction)
             return correction
 
         def goto(self, position):
-            """Updatuj databázovou pozici nastavenou bez vìdomí bufferu.
+            """Updatuj databÃ¡zovou pozici nastavenou bez vÄ›domÃ­ bufferu.
 
             Argumenty:
 
-              position -- èíslo prvku cursoru zaèínajícího od 0, na kterı
-                ukazovátko databázového kurzoru právì ukazuje
+              position -- ÄÃ­slo prvku cursoru zaÄÃ­najÃ­cÃ­ho odÂ 0, na kterÃ½
+                ukazovÃ¡tko databÃ¡zovÃ©ho kurzoru prÃ¡vÄ› ukazuje
 
             """
             self._pointer = position - self._dbposition
             self._dbpointer = position
             
         def skip(self, count, direction, row_count_info):
-            """Proveï skip.
+            """ProveÄ skip.
 
             Argumenty:
 
-              count -- poèet øádkù, o kolik se má skok provést
-              direction -- jedna ze smìrovıch konstant modulu
-              row_count_info -- informace o poètu øádkù v aktuálním selectu
+              count -- poÄet Å™Ã¡dkÅ¯, oÂ kolik se mÃ¡ skok provÃ©st
+              direction -- jedna ze smÄ›rovÃ½ch konstant modulu
+              row_count_info -- informace o poÄtu Å™Ã¡dkÅ¯ v aktuÃ¡lnÃ­m selectu
 
-            Vrací: Poèet skuteènì pøeskoèenıch øádkù ve smìru 'direction'.
+            VracÃ­: PoÄet skuteÄnÄ› pÅ™eskoÄenÃ½ch Å™Ã¡dkÅ¯ ve smÄ›ru 'direction'.
             
             """
             pointer = self._pointer
@@ -2468,12 +2468,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return result
         
         def fill(self, rows, direction, extra_move=False):
-            """Naplò se daty 'rows' a updatuj ukazovátka."""
-            # extra_move je tu kvùli tomu, ¾e pokud dojde ve fetchmany
-            # k pøekroèení hranic dat je¹tì pøed získáním po¾adovaného poètu
-            # øádkù, musí bıt dbpointer pøesunut je¹tì o jednu pozici dál (mimo
+            """NaplÅˆ se daty 'rows' a updatuj ukazovÃ¡tka."""
+            # extra_move je tu kvÅ¯li tomu, Å¾e pokud dojde ve fetchmany
+            # kÂ pÅ™ekroÄenÃ­ hranic dat jeÅ¡tÄ› pÅ™ed zÃ­skÃ¡nÃ­m poÅ¾adovanÃ©ho poÄtu
+            # Å™Ã¡dkÅ¯, musÃ­ bÃ½t dbpointer pÅ™esunut jeÅ¡tÄ› oÂ jednu pozici dÃ¡l (mimo
             # data).
-            if __debug__: log(DEBUG, 'Plním buffer:', direction)            
+            if __debug__: log(DEBUG, 'PlnÃ­m buffer:', direction)            
             n = len(rows)
             buffer = self._buffer
             buflen = len(buffer)
@@ -2515,9 +2515,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return self._dbpointer
 
         def copy(self):
-            """Vra» \"rozumnou\" kopii instance."""
-            # Nepou¾íváme postupy modulu `copy', proto¾e potøebujeme nìco mezi
-            # hlubokou a mìlkou kopií.
+            """VraÅ¥ \"rozumnou\" kopii instance."""
+            # NepouÅ¾Ã­vÃ¡me postupy modulu `copy', protoÅ¾e potÅ™ebujeme nÄ›co mezi
+            # hlubokou a mÄ›lkou kopiÃ­.
             copy_ = self.__class__()
             copy_._buffer = copy.copy(self._buffer)
             copy_._pointer = self._pointer
@@ -2551,21 +2551,21 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                    (self._dbpointer, self._dbposition, self._pointer, bufstr)
 
     def __init__(self, bindings, key, connection_data, **kwargs):
-        """Inicializuj databázovou tabulku dle uvedenıch specifikací.
+        """Inicializuj databÃ¡zovou tabulku dle uvedenÃ½ch specifikacÃ­.
 
         Argumenty:
         
-          bindings -- stejné jako v pøedkovi
-          key -- binding klíèového sloupce datové tabulky, musí bıt jeden
-            z prvkù 'bindings' nebo sekvence prvkù z 'bindings'
-          connection_data -- instance tøídy 'DBConnection' definující
-            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+          bindings -- stejnÃ© jako vÂ pÅ™edkovi
+          key -- binding klÃ­ÄovÃ©ho sloupce datovÃ© tabulky, musÃ­ bÃ½t jeden
+            zÂ prvkÅ¯ 'bindings' nebo sekvence prvkÅ¯ zÂ 'bindings'
+          connection_data -- instance tÅ™Ã­dy 'DBConnection' definujÃ­cÃ­
+            parametry pÅ™ipojenÃ­, nebo funkce bez argumentÅ¯ vracejÃ­cÃ­ takovou
             instanci 'DBConnection'
-          kwargs -- pøedá se pøedkovi
+          kwargs -- pÅ™edÃ¡ se pÅ™edkovi
         
         """
         if __debug__:
-            log(DEBUG, 'Vytváøím databázovou tabulku')
+            log(DEBUG, 'VytvÃ¡Å™Ã­m databÃ¡zovou tabulku')
         if is_sequence(key):
             self._key_binding = tuple(key)
         else:
@@ -2587,13 +2587,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           self._pg_create_make_row_template(filtered_columns,
                                             column_groups=getattr(self, '_pdbb_column_groups'))
         self._pg_make_row_template_limited = None
-        # NASTAVENÍ CACHE
-        # Proto¾e pro rùzné parametry (rychlost linky mezi serverem a klientem,
-        # velikost pamìti atd.), je vhodné rùzné nastavení cache,
-        # budeme parametry nastavovat z konfiguraèního souboru.
-        # Pozor, config.cache_size je vyu¾íváno pøímo v _PgBuffer.
-        # Zde tyto hodnoty zapamatujeme jako atributy objektu, proto¾e jsou
-        # potøeba v kritickıch èástech kódu a ètení konfigurace pøeci jen trvá.
+        # NASTAVENÃ CACHE
+        # ProtoÅ¾e pro rÅ¯znÃ© parametry (rychlost linky mezi serverem a klientem,
+        # velikost pamÄ›ti atd.), je vhodnÃ© rÅ¯znÃ© nastavenÃ­ cache,
+        # budeme parametry nastavovat z konfiguraÄnÃ­ho souboru.
+        # Pozor, config.cache_size je vyuÅ¾Ã­vÃ¡no pÅ™Ã­mo v _PgBuffer.
+        # Zde tyto hodnoty zapamatujeme jako atributy objektu, protoÅ¾e jsou
+        # potÅ™eba v kritickÃ½ch ÄÃ¡stech kÃ³du a ÄtenÃ­ konfigurace pÅ™eci jen trvÃ¡.
         import config
         self._pg_initial_fetch_size = config.initial_fetch_size
         self._pg_fetch_size = config.fetch_size
@@ -2604,7 +2604,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         connections = self._pg_connections()
         if __debug__:
             if len(connections) >= 3:
-                log(DEBUG, 'Podezøele velká hloubka spojení:', len(connections))
+                log(DEBUG, 'PodezÅ™ele velkÃ¡ hloubka spojenÃ­:', len(connections))
         connection = self._pg_get_connection(outside_transaction=True)
         connections.append(connection)
         
@@ -2631,7 +2631,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_is_in_select is True:
             self._pg_is_in_select = False
 
-    # Pomocné metody
+    # PomocnÃ© metody
 
     def _pg_create_make_row_template(self, columns, column_groups=None):
         template = []
@@ -2723,13 +2723,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def _pg_key_condition(self, key):
-        if __debug__: log(DEBUG, 'Vytváøím podmínku z klíèe:', key)
+        if __debug__: log(DEBUG, 'VytvÃ¡Å™Ã­m podmÃ­nku zÂ klÃ­Äe:', key)
         key = xtuple(key)
         keycols = map(lambda b: b.id(), self._key_binding)
         assert len(keycols) == len(key), ('Invalid key length', key, keycols)
         ands = map(EQ, keycols, key)
         condition = AND(*ands)
-        if __debug__: log(DEBUG, 'Podmínka z klíèe vytvoøena:', condition)
+        if __debug__: log(DEBUG, 'PodmÃ­nka zÂ klÃ­Äe vytvoÅ™ena:', condition)
         return condition
 
     def _pg_restore_select(self):
@@ -2756,10 +2756,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_number_of_rows = number
         return number
 
-    # Veøejné metody a jimi pøímo volané abstraktní metody
+    # VeÅ™ejnÃ© metody a jimi pÅ™Ã­mo volanÃ© abstraktnÃ­ metody
 
     def row(self, key, columns=None, transaction=None, arguments={}):
-        #log(EVENT, 'Zji¹tìní obsahu øádku:', key)
+        #log(EVENT, 'ZjiÅ¡tÄ›nÃ­ obsahu Å™Ã¡dku:', key)
         # TODO: Temporary compatibility hack.  The current internal db code
         # uses multikeys, but user code does not anymore.  Before we rewrite
         # the internal parts to use single keys only, we should allow both
@@ -2783,7 +2783,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if transaction is None and not self._pg_is_in_select:
             self._postgresql_commit_transaction()
         result = self._pg_make_row_from_raw_data(data, template=template)
-        #log(EVENT, 'Vrácenı obsah øádku', result)
+        #log(EVENT, 'VrÃ¡cenÃ½ obsah Å™Ã¡dku', result)
         return result
         
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
@@ -2877,7 +2877,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return select_result, Row(aggregates)
         
     def distinct(self, column, prefix=None, condition=None, sort=ASCENDENT, transaction=None):
-        """Vra» sekvenci v¹ech nestejnıch hodnot daného sloupce.
+        """VraÅ¥ sekvenci vÅ¡ech nestejnÃ½ch hodnot danÃ©ho sloupce.
 
         Argumenty:
         
@@ -2894,24 +2894,24 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return self._pg_distinct(column, prefix, condition, sort, transaction=transaction)
 
     def fetchone(self, direction=FORWARD, transaction=None):
-        """Stejné jako v nadtøídì.
+        """StejnÃ© jako vÂ nadtÅ™Ã­dÄ›.
 
-        Metoda automaticky nereaguje na notifikace o zmìnì dat souvisejících
-        tabulek a pokraèuje (nedojde-li k pøeru¹ení transakce) v dodávce
-        starıch dat.  Automatické pøenaèítání dat pøi zmìnì by mohlo vést
-        k vıkonnostním problémùm, jeho provádìní je tedy ponecháno na uvá¾ení
-        aplikace, která se mù¾e nechat o zmìnách informovat registrací
-        prostøednictvím metody 'add_callback_on_change()'.
+        Metoda automaticky nereaguje na notifikace oÂ zmÄ›nÄ› dat souvisejÃ­cÃ­ch
+        tabulek a pokraÄuje (nedojde-li kÂ pÅ™eruÅ¡enÃ­ transakce) vÂ dodÃ¡vce
+        starÃ½ch dat.  AutomatickÃ© pÅ™enaÄÃ­tÃ¡nÃ­ dat pÅ™i zmÄ›nÄ› by mohlo vÃ©st
+        kÂ vÃ½konnostnÃ­m problÃ©mÅ¯m, jeho provÃ¡dÄ›nÃ­ je tedy ponechÃ¡no na uvÃ¡Å¾enÃ­
+        aplikace, kterÃ¡ se mÅ¯Å¾e nechat oÂ zmÄ›nÃ¡ch informovat registracÃ­
+        prostÅ™ednictvÃ­m metody 'add_callback_on_change()'.
 
         """
         if __debug__:
-            log(DEBUG, 'Vyta¾ení øádku ze selectu ve smìru:', direction)
+            log(DEBUG, 'VytaÅ¾enÃ­ Å™Ã¡dku ze selectu ve smÄ›ru:', direction)
         assert direction in(FORWARD, BACKWARD), \
                ('Invalid direction', direction)
         if not self._pg_is_in_select:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
-        # Tady zaèíná opravdové vyta¾ení aktuálních dat
+        # Tady zaÄÃ­nÃ¡ opravdovÃ© vytaÅ¾enÃ­ aktuÃ¡lnÃ­ch dat
         buffer = self._pg_buffer
         row = buffer.fetch(direction, self._pdbb_select_rows)
         if row:
@@ -2921,10 +2921,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 transaction_ = self._pg_is_in_select
             else:
                 transaction_ = transaction
-            # Kurzory v PostgreSQL mají spoustu chyb.  Napøíklad èasto
-            # kolabují pøi pøekroèení hranic dat a mnohdy správnì nefunguje
-            # FETCH BACKWARD.  V následujícím kódu se sna¾íme nìkteré
-            # nejèastìj¹í chyby PostgreSQL obejít.
+            # Kurzory vÂ PostgreSQL majÃ­ spoustu chyb.  NapÅ™Ã­klad Äasto
+            # kolabujÃ­ pÅ™i pÅ™ekroÄenÃ­ hranic dat a mnohdy sprÃ¡vnÄ› nefunguje
+            # FETCH BACKWARD.  V nÃ¡sledujÃ­cÃ­m kÃ³du se snaÅ¾Ã­me nÄ›kterÃ©
+            # nejÄastÄ›jÅ¡Ã­ chyby PostgreSQL obejÃ­t.
             def stop_counting():
                 if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                     self._pg_number_of_rows.stop()
@@ -3006,7 +3006,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 result = None
             start_counting()
         self._pg_last_fetch_row = result
-        if __debug__: log(DEBUG, 'Vrácenı øádek', str(result))
+        if __debug__: log(DEBUG, 'VrÃ¡cenÃ½ Å™Ã¡dek', str(result))
         return result
     
     def last_row_number(self):
@@ -3022,7 +3022,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return self._pdbb_condition2sql(self._pg_last_select_condition)
 
     def skip(self, count, direction=FORWARD):
-        if __debug__: log(DEBUG, 'Pøeskoèení øádkù:', (direction, count))
+        if __debug__: log(DEBUG, 'PÅ™eskoÄenÃ­ Å™Ã¡dkÅ¯:', (direction, count))
         assert type(count) == type(0) and count >= 0, \
                ('Invalid count', count)
         assert direction in (FORWARD, BACKWARD), \
@@ -3031,7 +3031,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                                       self._pg_number_of_rows)
         if count > 0:
             self._pg_last_fetch_row = None
-        if __debug__: log(DEBUG, 'Pøeskoèeno øádkù:', result)
+        if __debug__: log(DEBUG, 'PÅ™eskoÄeno Å™Ã¡dkÅ¯:', result)
         return result
 
     def rewind(self):
@@ -3043,13 +3043,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self.skip(pos+1, BACKWARD)
         
     def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
-        """Vyhledej ve smìru 'direction' první øádek od 'row' dle 'condition'.
+        """Vyhledej ve smÄ›ru 'direction' prvnÃ­ Å™Ã¡dek od 'row' dle 'condition'.
 
-        Vrací: Vzdálenost od øádku 'row' jako kladnı integer nebo 0, pokud
-        takovı øádek neexistuje.
+        VracÃ­: VzdÃ¡lenost od Å™Ã¡dku 'row' jako kladnÃ½ integer nebo 0, pokud
+        takovÃ½ Å™Ã¡dek neexistuje.
 
         """
-        if __debug__: log(DEBUG, 'Hledání øádku:', (condition, direction))
+        if __debug__: log(DEBUG, 'HledÃ¡nÃ­ Å™Ã¡dku:', (condition, direction))
         assert direction in (FORWARD, BACKWARD), \
                ('Invalid direction', direction)
         if not self._pg_is_in_select:
@@ -3080,7 +3080,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     pass
                 self._pg_is_in_select = False
                 raise cls, e, tb
-        if __debug__: log(DEBUG, 'Vısledek hledání:', result)
+        if __debug__: log(DEBUG, 'VÃ½sledek hledÃ¡nÃ­:', result)
         return result
 
     def close(self):
@@ -3110,8 +3110,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if transaction is None:
             self._pg_begin_transaction ()
         try:
-            # Jestli¾e je definováno ordering, které je souèástí klíèe, bude
-            # novì vlo¾enı øádek nutnì unikátní.
+            # JestliÅ¾e je definovÃ¡no ordering, kterÃ© je souÄÃ¡stÃ­ klÃ­Äe, bude
+            # novÄ› vloÅ¾enÃ½ Å™Ã¡dek nutnÄ› unikÃ¡tnÃ­.
             if (not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) \
                    and self._pg_already_present(row, transaction=transaction):
                 msg = 'Row with this key already exists'
@@ -3321,15 +3321,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
 
 class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
-    """Èítaè ulo¾enı v PostgreSQL."""
+    """ÄŒÃ­taÄ uloÅ¾enÃ½ vÂ PostgreSQL."""
     
     def __init__(self, name, connection_data, **kwargs):
         """Initialize the instance.
 
         Arguments:
           name -- identifier of the counter in the database as a string
-          connection_data -- instance tøídy 'DBConnection' definující
-            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+          connection_data -- instance tÅ™Ã­dy 'DBConnection' definujÃ­cÃ­
+            parametry pÅ™ipojenÃ­, nebo funkce bez argumentÅ¯ vracejÃ­cÃ­ takovou
             instanci 'DBConnection'
           kwargs -- passed to 'PostgreSQLConnector' constructor.
 
@@ -3344,7 +3344,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         try:
             number = int(result[0][0])
         except Exception, e:
-            raise pytis.data.DBException(_("Chybná hodnota èítaèe z databáze"), e)
+            raise pytis.data.DBException(_(u"ChybnÃ¡ hodnota ÄÃ­taÄe z databÃ¡ze"), e)
         return number
 
 
@@ -3356,9 +3356,9 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         """
         Arguments:
 
-          name -- jméno funkce jako neprázdnı string
-          connection_data -- instance tøídy 'DBConnection' definující
-            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+          name -- jmÃ©no funkce jako neprÃ¡zdnÃ½ string
+          connection_data -- instance tÅ™Ã­dy 'DBConnection' definujÃ­cÃ­
+            parametry pÅ™ipojenÃ­, nebo funkce bez argumentÅ¯ vracejÃ­cÃ­ takovou
             instanci 'DBConnection'
           result_columns -- sequence of 'ColumnSpec' instances describing the result
             rows; if 'None', columns and their types are determined

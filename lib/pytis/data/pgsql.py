@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"Implementace datovÈho rozhranÌ pro PostgreSQL prost¯ednictvÌm pyPgSQL."
+"Implementace datov√©ho rozhran√≠ pro PostgreSQL prost≈ôednictv√≠m pyPgSQL."
 
 import select
 
@@ -41,9 +41,9 @@ class _PgsqlAccessor(PostgreSQLAccessor):
             value = accessor(connection_data)
             if value != None:
                 connection_string += " %s='%s'" % (option, pg_escape(str(value)))
-        # Otev¯i spojenÌ
+        # Otev≈ôi spojen√≠
         if __debug__:
-            log(DEBUG, 'P¯ipojovacÌ ¯etÏzec:', connection_string)
+            log(DEBUG, 'P≈ôipojovac√≠ ≈ôetƒõzec:', connection_string)
         try:
             connection = libpq.PQconnectdb(connection_string)
         except libpq.DatabaseError, e:
@@ -52,7 +52,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                 if msg.find('password') != -1 or \
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
-            raise DBException(_("Nelze se p¯ipojit k datab·zi"), e)
+            raise DBException(_(u"Nelze se p≈ôipojit k datab√°zi"), e)
         return class_._postgresql_Connection(connection, connection_data)
 
     @classmethod
@@ -61,7 +61,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
     
     def _postgresql_query(self, connection, query, restartable, query_args=None):
         if query_args:
-            raise Exception(_("Query arguments unsupported by " +
+            raise Exception(_(u"Query arguments unsupported by " +
                               "the pgsql backend"))
         result = None
         def do_query(connection):
@@ -79,19 +79,19 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                 elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
                     raise DBInsertException()
             if not restartable:
-                raise DBSystemException(_("Database operational error"),
+                raise DBSystemException(_(u"Database operational error"),
                                         e, e.args, query)
             cdata = connection.connection_data()
             connection = self._postgresql_new_connection(cdata)
             try:
                 result = do_query(connection.connection())
             except Exception, e:
-                raise DBSystemException(_("Database operational error"),
+                raise DBSystemException(_(u"Database operational error"),
                                         e, e.args, query)
         except libpq.InternalError, e:
             raise DBException(None, e, query)
         except libpq.IntegrityError, e:
-            raise DBUserException(_("Database integrity violation"),
+            raise DBUserException(_(u"Database integrity violation"),
                                   e, e.args, query)
         return self._postgresql_Result(result), connection
 
@@ -173,7 +173,7 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
             connection = connection_.connection()
             while True:
                 if __debug__:
-                    log(DEBUG, 'HlÌd·m vstup', connection)
+                    log(DEBUG, 'Hl√≠d√°m vstup', connection)
                 try:
                     select.select([connection.socket], [], [], None)
                 except Exception, e:
@@ -181,19 +181,19 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                         log(DEBUG, 'Chyba na socketu', e.args)
                     break
                 if __debug__:
-                    log(DEBUG, 'P¯iπel vstup')
+                    log(DEBUG, 'P≈ôi≈°el vstup')
                 def lfunction():
                     try:
                         connection.consumeInput()
                         notice = connection.notifies()
                     except Exception, e:
                         if __debug__:
-                            log(DEBUG, 'Datab·zov· chyba', e.args)
+                            log(DEBUG, 'Datab√°zov√° chyba', e.args)
                         return None
                     notifications = []
                     if notice:
                         if __debug__:
-                            log(DEBUG, 'Zaregistrov·na zmÏna dat')
+                            log(DEBUG, 'Zaregistrov√°na zmƒõna dat')
                     while notice:
                         n = notice.relname.lower()
                         notifications.append(n)
@@ -205,7 +205,7 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                 if notifications is None:
                     break
                 if __debug__:
-                    log(DEBUG, 'NaËteny notifikace:', notifications)
+                    log(DEBUG, 'Naƒçteny notifikace:', notifications)
                 self._notif_invoke_callbacks(notifications)
 
 
@@ -213,17 +213,17 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
 
 
 class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBDataPyPgSQL):
-    """Datov· t¯Ìda, kterou v†naπich aplikacÌch standardnÏ pouæÌv·me.
+    """Datov√° t≈ô√≠da, kterou v¬†na≈°ich aplikac√≠ch standardnƒõ pou≈æ√≠v√°me.
 
-    Je utvo¯ena pouh˝m sloæenÌm existujÌcÌch t¯Ìd a nezav·dÌ æ·dnou dalπÌ novou
-    funkcionalitu kromÏ konstruktoru.
+    Je utvo≈ôena pouh√Ωm slo≈æen√≠m existuj√≠c√≠ch t≈ô√≠d a nezav√°d√≠ ≈æ√°dnou dal≈°√≠ novou
+    funkcionalitu kromƒõ konstruktoru.
 
     """    
     def __init__(self, bindings, key, connection_data=None, ordering=None,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
                  dbconnection_spec=None, **kwargs):
-        # TODO: Vy¯adit dbconnection_spec ze seznamu argument˘ po konverzi
-        # aplikacÌ.
+        # TODO: Vy≈ôadit dbconnection_spec ze seznamu argument≈Ø po konverzi
+        # aplikac√≠.
         if dbconnection_spec is not None:
             if connection_data is not None:
                 raise Exception("Programming error: " +
@@ -232,24 +232,24 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBDataPyPgSQL):
         super(DBDataDefaultClass, self).__init__(
             bindings=bindings, key=key, connection_data=connection_data,
             ordering=ordering, access_rights=access_rights, **kwargs)
-        # TODO: N·sledujÌcÌ hack je tu proto, æe ve vol·nÌch konstruktor˘ v˝πe
-        # je _pg_add_notifications vol·no p¯edËasnÏ, p¯iËemæ po¯adÌ vol·nÌ
-        # konstruktor˘ nelze zmÏnit.  Pro n·pravu je pot¯eba jeπtÏ p¯edÏlat
-        # t¯Ìdy t˝kajÌcÌ se notifikacÌ.
+        # TODO: N√°sleduj√≠c√≠ hack je tu proto, ≈æe ve vol√°n√≠ch konstruktor≈Ø v√Ω≈°e
+        # je _pg_add_notifications vol√°no p≈ôedƒçasnƒõ, p≈ôiƒçem≈æ po≈ôad√≠ vol√°n√≠
+        # konstruktor≈Ø nelze zmƒõnit.  Pro n√°pravu je pot≈ôeba je≈°tƒõ p≈ôedƒõlat
+        # t≈ô√≠dy t√Ωkaj√≠c√≠ se notifikac√≠.
         self._pg_add_notifications()
 
 
-### ExportovanÈ promÏnnÈ/t¯Ìdy
+### Exportovan√© promƒõnn√©/t≈ô√≠dy
 
 
 DBDataDefault = DBDataDefaultClass
-"""Podt¯Ìda 'DBData', kterou pouæÌv·me pro p¯Ìstup k†datab·zi."""
+"""Podt≈ô√≠da 'DBData', kterou pou≈æ√≠v√°me pro p≈ô√≠stup k¬†datab√°zi."""
 
 DBCounterDefault = DBPyPgCounter
-"""Podt¯Ìda t¯Ìdy 'Counter', kter· je standardnÏ pouæÌv·na."""
+"""Podt≈ô√≠da t≈ô√≠dy 'Counter', kter√° je standardnƒõ pou≈æ√≠v√°na."""
 
 DBFunctionDefault = DBPyPgFunction
-"""Podt¯Ìda t¯Ìdy 'Function', kter· je standardnÏ pouæÌv·na."""
+"""Podt≈ô√≠da t≈ô√≠dy 'Function', kter√° je standardnƒõ pou≈æ√≠v√°na."""
 
 DBTransactionDefault = DBPyPgTransaction
 """Standard transaction class."""
@@ -261,4 +261,4 @@ def _postgresql_access_groups(connection_data):
         pass
     return PgUserGroups(connection_data).access_groups()
 default_access_groups = _postgresql_access_groups
-"""Funkce vracejÌcÌ seznam skupin uæivatele specifikovanÈho spojenÌ."""
+"""Funkce vracej√≠c√≠ seznam skupin u≈æivatele specifikovan√©ho spojen√≠."""

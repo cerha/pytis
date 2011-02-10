@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Rùzné formátovací funkce
+# RÅ¯znÃ© formÃ¡tovacÃ­ funkce
 # 
 # Copyright (C) 2002, 2003, 2005 Brailcom, o.p.s.
 #
@@ -18,9 +18,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Rùzné formátovací funkce.
+"""RÅ¯znÃ© formÃ¡tovacÃ­ funkce.
 
-Pro jména veøejnıch funkcí platí konvence, ¾e zaèínají prefixem 'f_'.
+Pro jmÃ©na veÅ™ejnÃ½ch funkcÃ­ platÃ­ konvence, Å¾e zaÄÃ­najÃ­ prefixem 'f_'.
 
 """
 
@@ -30,26 +30,26 @@ from pytis.output import *
 _FONT_STEP = 1.2
 
 def f_larger(*contents):
-    """Nech» 'contents' je vysázeno fontem vìt¹í velikosti vzhledem k okolí."""
+    """NechÅ¥ 'contents' je vysÃ¡zeno fontem vÄ›tÅ¡Ã­ velikosti vzhledem kÂ okolÃ­."""
     return FontSize(_FONT_STEP, *contents)
 
 def f_smaller(*contents):
-    """Nech» 'contents' je vysázeno fontem men¹í velikosti vzhledem k okolí."""
+    """NechÅ¥ 'contents' je vysÃ¡zeno fontem menÅ¡Ã­ velikosti vzhledem kÂ okolÃ­."""
     return FontSize(1.0/_FONT_STEP, *contents)
 
 
 def f_table(*data, **kwargs):
-    """Jednoduchá tabulka.
+    """JednoduchÃ¡ tabulka.
 
     Argumenty:
 
-      data -- neprázdná sekvence neprázdnıch sekvencí, odpovídá øádkùm (vnìj¹í
-        sekvence) formátovanım do sloupcù (vnitøní sekvence); v¹echny vnitøní
-        sekvence musí mít stejnou délku
-      kwargs -- argumenty pøedané konstruktoru tøídy 'Table'
+      data -- neprÃ¡zdnÃ¡ sekvence neprÃ¡zdnÃ½ch sekvencÃ­, odpovÃ­dÃ¡ Å™Ã¡dkÅ¯m (vnÄ›jÅ¡Ã­
+        sekvence) formÃ¡tovanÃ½m do sloupcÅ¯ (vnitÅ™nÃ­ sekvence); vÅ¡echny vnitÅ™nÃ­
+        sekvence musÃ­ mÃ­t stejnou dÃ©lku
+      kwargs -- argumenty pÅ™edanÃ© konstruktoru tÅ™Ã­dy 'Table'
 
-    Jedná se o zcela jednoduchou tabulku s automaticky zarovnanımi sloupci,
-    nepøesahující velikost stránky.
+    JednÃ¡ se oÂ zcela jednoduchou tabulku sÂ automaticky zarovnanÃ½mi sloupci,
+    nepÅ™esahujÃ­cÃ­ velikost strÃ¡nky.
 
     """
     column_spec = Table.Column(alignment=Table.Column.ALIGN_LEFT)

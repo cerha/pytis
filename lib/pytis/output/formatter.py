@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Formátování vıstupu
+# FormÃ¡tovÃ¡nÃ­ vÃ½stupu
 # 
 # Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
 #
@@ -18,29 +18,29 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Formátování vıstupu.
+"""FormÃ¡tovÃ¡nÃ­ vÃ½stupu.
 
-Modul má na starost formátování textu a dat pro vıstup dle zadanıch ¹ablon.
-Zpracovává specifikace v podobì znaèek definovanıch v modulu 'markup'.  ©ablony
-mají podobu pythonovıch souborù, obsahujících následující funkce vracející
-odpovídající specifikace:
+Modul mÃ¡ na starost formÃ¡tovÃ¡nÃ­ textu a dat pro vÃ½stup dle zadanÃ½ch Å¡ablon.
+ZpracovÃ¡vÃ¡ specifikace vÂ podobÄ› znaÄek definovanÃ½ch vÂ modulu 'markup'.  Å ablony
+majÃ­ podobu pythonovÃ½ch souborÅ¯, obsahujÃ­cÃ­ch nÃ¡sledujÃ­cÃ­ funkce vracejÃ­cÃ­
+odpovÃ­dajÃ­cÃ­ specifikace:
 
-  coding -- vrací kódování dokumentu, jedna z konstant tøídy 'Coding';
-    implicitní je 'Coding.ASCII'
-  doc_header -- hlavièka dokumentu; implicitnì prázdná
-  doc_footer -- zakonèení dokumentu; implicitnì prázdné
-  page_header -- hlavièka stránky; implicitnì prázdná
-  page_footer -- patièka stránky; implicitnì èíslo stránky
-  first_page_header -- hlavièka první stránky; implicitnì shodná
-    s 'page_header'
-  page_layout -- dictionary parametrù urèujících velikosti stránky a jejích
-    okrajù; klíèi jsou 'PAGE_*' konstanty modulu, hodnoty jsou popsány
-    v dokumentaci tìchto konstant
-  background -- pozadí stránky; implicitnì prázdné bílé
-  body -- obsah dokumentu samotného; tato funkce musí bıt povinnì pøítomna
+  coding -- vracÃ­ kÃ³dovÃ¡nÃ­ dokumentu, jedna zÂ konstant tÅ™Ã­dy 'Coding';
+    implicitnÃ­ je 'Coding.ASCII'
+  doc_header -- hlaviÄka dokumentu; implicitnÄ› prÃ¡zdnÃ¡
+  doc_footer -- zakonÄenÃ­ dokumentu; implicitnÄ› prÃ¡zdnÃ©
+  page_header -- hlaviÄka strÃ¡nky; implicitnÄ› prÃ¡zdnÃ¡
+  page_footer -- patiÄka strÃ¡nky; implicitnÄ› ÄÃ­slo strÃ¡nky
+  first_page_header -- hlaviÄka prvnÃ­ strÃ¡nky; implicitnÄ› shodnÃ¡
+    sÂ 'page_header'
+  page_layout -- dictionary parametrÅ¯ urÄujÃ­cÃ­ch velikosti strÃ¡nky a jejÃ­ch
+    okrajÅ¯; klÃ­Äi jsou 'PAGE_*' konstanty modulu, hodnoty jsou popsÃ¡ny
+    vÂ dokumentaci tÄ›chto konstant
+  background -- pozadÃ­ strÃ¡nky; implicitnÄ› prÃ¡zdnÃ© bÃ­lÃ©
+  body -- obsah dokumentu samotnÃ©ho; tato funkce musÃ­ bÃ½t povinnÄ› pÅ™Ã­tomna
 
-Hlavní tøídou modulu je tøída 'Formatter'.  Ta zaji¹»uje naètení a zpracování
-¹ablon a doruèení zformátovanıch dat.
+HlavnÃ­ tÅ™Ã­dou modulu je tÅ™Ã­da 'Formatter'.  Ta zajiÅ¡Å¥uje naÄtenÃ­ a zpracovÃ¡nÃ­
+Å¡ablon a doruÄenÃ­ zformÃ¡tovanÃ½ch dat.
 
 """
 
@@ -60,29 +60,29 @@ import pytis.presentation
 
 
 class Coding:
-    """Vıètová tøída podporovanıch kódování."""
+    """VÃ½ÄtovÃ¡ tÅ™Ã­da podporovanÃ½ch kÃ³dovÃ¡nÃ­."""
     ASCII = 'ASCII'
     LATIN2 = 'LATIN2'
 
 
 PAGE_WIDTH = 'pwidth'
-"""©íøka stránky, instance tøídy 'Unit'."""
+"""Å Ã­Å™ka strÃ¡nky, instance tÅ™Ã­dy 'Unit'."""
 PAGE_HEIGHT = 'pheight'
-"""Vı¹ka stránky, instance tøídy 'Unit'."""
+"""VÃ½Å¡ka strÃ¡nky, instance tÅ™Ã­dy 'Unit'."""
 PAGE_TOP_MARGIN = 'top_margin'
-"""Velikost horního okraje stránky, instance tøídy 'Unit'."""
+"""Velikost hornÃ­ho okraje strÃ¡nky, instance tÅ™Ã­dy 'Unit'."""
 PAGE_BOTTOM_MARGIN = 'bottom_margin'
-"""Velikost dolního okraje stránky, instance tøídy 'Unit'."""
+"""Velikost dolnÃ­ho okraje strÃ¡nky, instance tÅ™Ã­dy 'Unit'."""
 PAGE_LEFT_MARGIN = 'left_margin'
-"""Velikot levého okraje stránky, instance tøídy 'Unit'."""
+"""Velikot levÃ©ho okraje strÃ¡nky, instance tÅ™Ã­dy 'Unit'."""
 PAGE_RIGHT_MARGIN = 'right_margin'
-"""Velikost pravého okraje stránky, instance tøídy 'Unit'."""
+"""Velikost pravÃ©ho okraje strÃ¡nky, instance tÅ™Ã­dy 'Unit'."""
 PAGE_LANDSCAPE_MODE = 'landscape_mode'
-"""Právì kdy¾ je pravdivé, bude zamìnìna vı¹ka a ¹íøka stránky."""
+"""PrÃ¡vÄ› kdyÅ¾ je pravdivÃ©, bude zamÄ›nÄ›na vÃ½Å¡ka a Å¡Ã­Å™ka strÃ¡nky."""
 
 
-# Toto je mimo LoutFormatter jednak pro pøehlednost, a hlavnì pak aby nebyl
-# maten emacsovı mód.
+# Toto je mimo LoutFormatter jednak pro pÅ™ehlednost, aÂ hlavnÄ› pak aby nebyl
+# maten emacsovÃ½ mÃ³d.
 _INTRO = '''
 ### Basic includes to get the most important things defined
 
@@ -93,7 +93,7 @@ _INTRO = '''
 
 ### Our utility definitions
 
-macro " " { ~ }
+macro "Â " { ~ }
 
 def @smallmargin { 0.3f }
 
@@ -386,49 +386,49 @@ def @numberOfPages { { @document&&preceding } @Open { @numOfPages } }
 '''
 
 class LoutFormatter(Tmpdir):
-    """Formátovaè textu pracující s vyu¾itím Lout."""
+    """FormÃ¡tovaÄ textu pracujÃ­cÃ­ sÂ vyuÅ¾itÃ­m Lout."""
 
-    # Pravidla formátování kódu pro Lout:
+    # Pravidla formÃ¡tovÃ¡nÃ­ kÃ³du pro Lout:
     #
-    # - Generovanı text musí bıt pøehlednı, aby se v nìm bylo mo¾no vyznat a
-    #   diagnostikovat pøípadné chyby.
-    # - Odsazovací krok je dvì mezery.
-    # - Uvnitø ka¾dıch slo¾enıch závorek, pokud nejsou jednoøádkové, je zvı¹eno
-    #   odsazení textu.  Závorky samy jsou odsazeny stejnì jako okolní øádky.
-    # - Slo¾ené závorky jsou obvykle obklopeny z ka¾dé strany práve jednou
-    #   mezerou nebo znakem nového øádku.
-    # - Funkce jsou obvykle na samostatném øádku, nikoliv stejném øádku jako
-    #   okolní text.
-    # - Levı argument funkce je obvykle na stejném øádku jako jméno funkce,
-    #   pokud není moc dlouhı.
-    # - Pravı argument funkce je obvykle a¾ na dal¹ích øádcích, pokud není
-    #   evidentnì krátkı.
-    # - Pojmenované argumenty funkce jsou obvykle na stejném øádku jako jméno
-    #   funkce.  Jsou-li pøíli¹ dlouhé, jsou na dal¹ím øádku se zvı¹enım
-    #   odsazením, a to buï v¹echny na jednom øádku, nebo ka¾dı na samostatném.
-    # - Operátory horizontálního spojení jsou, je-li to mo¾né, na stejném øádku
-    #   jako okolní text.
-    # - Operátory vertikálního spojení jsou obvykle na samostatném øádku.
-    #   Jsou-li uvnitø slo¾enıch závorek, mohou mít stejnou úroveò odsazení
-    #   jako ty závorky, tj. doleva oproti okolnímu textu.
+    # - GenerovanÃ½ text musÃ­ bÃ½t pÅ™ehlednÃ½, aby se vÂ nÄ›m bylo moÅ¾no vyznat a
+    #   diagnostikovat pÅ™Ã­padnÃ© chyby.
+    # - OdsazovacÃ­ krok je dvÄ› mezery.
+    # - UvnitÅ™ kaÅ¾dÃ½ch sloÅ¾enÃ½ch zÃ¡vorek, pokud nejsou jednoÅ™Ã¡dkovÃ©, je zvÃ½Å¡eno
+    #   odsazenÃ­ textu.  ZÃ¡vorky samy jsou odsazeny stejnÄ› jako okolnÃ­ Å™Ã¡dky.
+    # - SloÅ¾enÃ© zÃ¡vorky jsou obvykle obklopeny zÂ kaÅ¾dÃ© strany prÃ¡ve jednou
+    #   mezerou nebo znakem novÃ©ho Å™Ã¡dku.
+    # - Funkce jsou obvykle na samostatnÃ©m Å™Ã¡dku, nikoliv stejnÃ©m Å™Ã¡dku jako
+    #   okolnÃ­ text.
+    # - LevÃ½ argument funkce je obvykle na stejnÃ©m Å™Ã¡dku jako jmÃ©no funkce,
+    #   pokud nenÃ­ moc dlouhÃ½.
+    # - PravÃ½ argument funkce je obvykle aÅ¾ na dalÅ¡Ã­ch Å™Ã¡dcÃ­ch, pokud nenÃ­
+    #   evidentnÄ› krÃ¡tkÃ½.
+    # - PojmenovanÃ© argumenty funkce jsou obvykle na stejnÃ©m Å™Ã¡dku jako jmÃ©no
+    #   funkce.  Jsou-li pÅ™Ã­liÅ¡ dlouhÃ©, jsou na dalÅ¡Ã­m Å™Ã¡dku se zvÃ½Å¡enÃ½m
+    #   odsazenÃ­m, aÂ to buÄ vÅ¡echny na jednom Å™Ã¡dku, nebo kaÅ¾dÃ½ na samostatnÃ©m.
+    # - OperÃ¡tory horizontÃ¡lnÃ­ho spojenÃ­ jsou, je-li to moÅ¾nÃ©, na stejnÃ©m Å™Ã¡dku
+    #   jako okolnÃ­ text.
+    # - OperÃ¡tory vertikÃ¡lnÃ­ho spojenÃ­ jsou obvykle na samostatnÃ©m Å™Ã¡dku.
+    #   Jsou-li uvnitÅ™ sloÅ¾enÃ½ch zÃ¡vorek, mohou mÃ­t stejnou ÃºroveÅˆ odsazenÃ­
+    #   jako ty zÃ¡vorky, tj. doleva oproti okolnÃ­mu textu.
     #
-    # Koordinace formátování pøi generování kódu:
+    # Koordinace formÃ¡tovÃ¡nÃ­ pÅ™i generovÃ¡nÃ­ kÃ³du:
     #
-    # - Ka¾dı vygenerovanı kus kódu musí konèit buï mezerou, nebo novım øádkem
-    #   a odpovídajícím odsazením.
-    # - Konèí-li vygenerovanı kus kódu mezerou, znamená to mo¾nost pøipojení
-    #   dal¹ího textu na stejném øádku, typicky takto plynule navá¾e operátor
-    #   horizontálního spojení.
-    # - Konèí-li vygenerovanı kus kódu novım øádkem a odsazením, vyluèuje to
-    #   mo¾nost pøipojení dal¹ího textu na stejném øádku, a to vèetnì
-    #   horizontálních operátorù.  Pokud navazuje volání funkce, lze
-    #   pøedpokládat její umístìní na samostatnı øádek, tj. ve vısledném efektu
-    #   její oddìlení prázdnım øádkem.
-    # - Generuje-li se text na stejném øádku, tak se na zaèátek nevkládá nic a
-    #   na konec se vlo¾í mezery a nové øádky dle pravidel vı¹e.
-    # - Generuje-li se text na samostatném øádku, tak se na zaèátek vlo¾í znak
-    #   nového øádku plus patøièné odsazení a na konec se vlo¾í mezery a nové
-    #   øádky dle pravidel vı¹e.
+    # - KaÅ¾dÃ½ vygenerovanÃ½ kus kÃ³du musÃ­ konÄit buÄ mezerou, nebo novÃ½m Å™Ã¡dkem
+    #   a odpovÃ­dajÃ­cÃ­m odsazenÃ­m.
+    # - KonÄÃ­-li vygenerovanÃ½ kus kÃ³du mezerou, znamenÃ¡ to moÅ¾nost pÅ™ipojenÃ­
+    #   dalÅ¡Ã­ho textu na stejnÃ©m Å™Ã¡dku, typicky takto plynule navÃ¡Å¾e operÃ¡tor
+    #   horizontÃ¡lnÃ­ho spojenÃ­.
+    # - KonÄÃ­-li vygenerovanÃ½ kus kÃ³du novÃ½m Å™Ã¡dkem a odsazenÃ­m, vyluÄuje to
+    #   moÅ¾nost pÅ™ipojenÃ­ dalÅ¡Ã­ho textu na stejnÃ©m Å™Ã¡dku, aÂ to vÄetnÄ›
+    #   horizontÃ¡lnÃ­ch operÃ¡torÅ¯.  Pokud navazuje volÃ¡nÃ­ funkce, lze
+    #   pÅ™edpoklÃ¡dat jejÃ­ umÃ­stÄ›nÃ­ na samostatnÃ½ Å™Ã¡dek, tj. ve vÃ½slednÃ©m efektu
+    #   jejÃ­ oddÄ›lenÃ­ prÃ¡zdnÃ½m Å™Ã¡dkem.
+    # - Generuje-li se text na stejnÃ©m Å™Ã¡dku, tak se na zaÄÃ¡tek nevklÃ¡dÃ¡ nic a
+    #   na konec se vloÅ¾Ã­ mezery a novÃ© Å™Ã¡dky dle pravidel vÃ½Å¡e.
+    # - Generuje-li se text na samostatnÃ©m Å™Ã¡dku, tak se na zaÄÃ¡tek vloÅ¾Ã­ znak
+    #   novÃ©ho Å™Ã¡dku plus patÅ™iÄnÃ© odsazenÃ­ a na konec se vloÅ¾Ã­ mezery a novÃ©
+    #   Å™Ã¡dky dle pravidel vÃ½Å¡e.
 
     INTRO = _INTRO
 
@@ -468,11 +468,11 @@ class LoutFormatter(Tmpdir):
 
         Argumenty:
 
-          resolvers -- resolver jmen ¹ablon a datovıch objektù; smí bıt
-            i neprázdná sekvence resolverù, v kterém¾to pøípadì bude pou¾it
-            první resolver nevyvolávající vıjimku 'ResolverFileError' pøi
-            pøístupu k ¹ablonì
-          template_id -- id ¹ablony vıstupu, string
+          resolvers -- resolver jmen Å¡ablon a datovÃ½ch objektÅ¯; smÃ­ bÃ½t
+            iÂ neprÃ¡zdnÃ¡ sekvence resolverÅ¯, v kterÃ©mÅ¾to pÅ™Ã­padÄ› bude pouÅ¾it
+            prvnÃ­ resolver nevyvolÃ¡vajÃ­cÃ­ vÃ½jimku 'ResolverFileError' pÅ™i
+            pÅ™Ã­stupu kÂ Å¡ablonÄ›
+          template_id -- id Å¡ablony vÃ½stupu, string
             
         """
         super(LoutFormatter, self).__init__(prefix='pytislout')
@@ -525,7 +525,7 @@ class LoutFormatter(Tmpdir):
             break
         else:
             if mandatory:
-                raise TemplateException(_("Chybí pou¾itelnı resolver"))
+                raise TemplateException(_(u"ChybÃ­ pouÅ¾itelnÃ½ resolver"))
             else:
                 resolver = None
         return resolver
@@ -543,7 +543,7 @@ class LoutFormatter(Tmpdir):
             result = default
         return result
 
-    # Pomocné formátovací funkce
+    # PomocnÃ© formÃ¡tovacÃ­ funkce
 
     def _indent(self, indentation):
         return indentation + '  '
@@ -556,7 +556,7 @@ class LoutFormatter(Tmpdir):
         elif family == FontFamily.FIXED_WIDTH:
             font = 'Courier'
         else:
-            raise TemplateException(_("Neznámá specifikace fontu"), family)
+            raise TemplateException(_(u"NeznÃ¡mÃ¡ specifikace fontu"), family)
         if self._coding == Coding.LATIN2:
             font = font + 'CE'
         return font
@@ -576,12 +576,12 @@ class LoutFormatter(Tmpdir):
         try:
             letter = _UNIT_LETTERS[length.__class__]
         except KeyError:
-            raise FormattingException(_("Neznámá jednotka"))
+            raise FormattingException(_(u"NeznÃ¡mÃ¡ jednotka"))
         result = '%f%s' % (size, letter)
         # a hack to avoid locale dependent float formatting
         return result.replace(',','.')
 
-    # Formátovaèe pro jednotlivé znaèky a elementy
+    # FormÃ¡tovaÄe pro jednotlivÃ© znaÄky a elementy
 
     def _format_text(self, template, stream, indent):
         dict = self._SPECIAL_LOUT_CHARS
@@ -684,7 +684,7 @@ class LoutFormatter(Tmpdir):
         try:
             list_name = mark2name[template.arg_mark]
         except KeyError:
-            raise TemplateException(_("Neznámá znaèka uvození seznamu"),
+            raise TemplateException(_(u"NeznÃ¡mÃ¡ znaÄka uvozenÃ­ seznamu"),
                                     template.arg_mark, template)
         stream.write('\n%s%s' % (indent, list_name))
         for e in template.contents():
@@ -739,16 +739,16 @@ class LoutFormatter(Tmpdir):
                (nindent, indent, separator, MARGIN, separator, nindent)
         egend = '/ {}\n%s}\n%s%s%%s\n%s' % \
                 (nindent, indent, separator, nindent)
-        # Rozmìry
+        # RozmÄ›ry
         balance = template.arg_balance
         nelements = len(elements)
         if balance:
             if len(balance) != nelements:
-                raise TemplateException(_("Balance neodpovídá poètu prvkù"),
+                raise TemplateException(_(u"Balance neodpovÃ­dÃ¡ poÄtu prvkÅ¯"),
                                     balance, template)
             sum = functools.reduce(operator.__add__, balance)
             if sum <= 0 or some(lambda x: x < 0, balance):
-                raise TemplateException(_("Chybné èíslo v balanci"),
+                raise TemplateException(_(u"ChybnÃ© ÄÃ­slo vÂ balanci"),
                                     balance, template)
             bk = 1.0 / sum
             balance = map(lambda b, bk=bk: bk*b, balance)
@@ -763,7 +763,7 @@ class LoutFormatter(Tmpdir):
             for b in balance:
                 sum = sum + b
                 gaps.append('%.2fbt' % sum)
-        # Hurá do toho
+        # HurÃ¡ do toho
         stream.write('\n%s%s\n%s{\n%s' % (indent, function, indent, nindent))
         for e, g in zip(elements, gaps):
             egroup = isinstance(e, Group)
@@ -816,7 +816,7 @@ class LoutFormatter(Tmpdir):
             elif alignment == Table.Column.ALIGN_RIGHT:
                 break_ = 'indent { right } '
             else:
-                raise TemplateException(_("Neznámı druh zarovnání sloupce"),
+                raise TemplateException(_(u"NeznÃ¡mÃ½ druh zarovnÃ¡nÃ­ sloupce"),
                                         c.alignment)
             return break_
         for i in range(len(template_columns)):
@@ -862,11 +862,11 @@ class LoutFormatter(Tmpdir):
                     self._format(cell, stream, nindent)
                     stream.write(' } ')
                 stream.write('\n')
-            # TODO: rule pod posledním øádkem
+            # TODO: rule pod poslednÃ­m Å™Ã¡dkem
         stream.write('%s}\n' % (nindent,))
         
     def _format_long_table(self, template, stream, indent):
-        # Formátování
+        # FormÃ¡tovÃ¡nÃ­
         columns = template.columns()
         hcells = []
         cell_templates = []
@@ -885,7 +885,7 @@ class LoutFormatter(Tmpdir):
                 else:
                     raise ProgramError('Unknown alignment', alignment)
                 return cell_fun
-            # Hlavièková buòka
+            # HlaviÄkovÃ¡ buÅˆka
             if c.label is not None:
                 label_stream = cStringIO.StringIO()
                 self._format(c.label, label_stream)
@@ -895,13 +895,13 @@ class LoutFormatter(Tmpdir):
             cell_fun = cell_function(c.label_alignment)
             hcell = '{ %s } %s header { yes } { %s }' % (all_width, cell_fun, label)
             hcells.append(hcell)            
-            # Netabulková buòka
+            # NetabulkovÃ¡ buÅˆka
             cell_fun = cell_function(c.alignment)
             cell_beg = '{ %s } %s { ' % (all_width, cell_fun)
             cell_end = ' }'
             cell_templates.append((cell_beg, cell_end))
         s = stream
-        # Hlavièka
+        # HlaviÄka
         nindent = self._indent(indent)
         if [c for c in columns if c.label is not None]:
             labels = string.join(hcells, ' | ')
@@ -917,7 +917,7 @@ class LoutFormatter(Tmpdir):
             s.write('\n%s@LLP\n%s@BeginHeaderComponent {\n%s%s}\n%s//\n' % \
                         (indent, indent, nindent, header, indent))
             s.write(indent + header + '\n')
-        # Øádky dat
+        # Å˜Ã¡dky dat
         sep_raw = template.line_separator_height()
         sep = self._unit(sep_raw, UPoint)
         margin = self._unit(template.line_separator_margin(), UPoint)
@@ -946,21 +946,21 @@ class LoutFormatter(Tmpdir):
             if sep_raw:
                 s.write('\n%s}' % indent)
             s.write('\n')
-        # Zakonèení
+        # ZakonÄenÃ­
         s.write('%s//1vx\n%s' % (indent, indent))
         s.write('@EndHeaderComponent\n%s' % (indent))
         
     def _format_image(self, template, stream, indent):
         tfile_name = os.path.normpath(template.file_name())
         if tfile_name == '..' or starts_with(tfile_name, '../'):
-            raise TemplateException(_("Nikoliv bezpeèné jméno souboru"),
+            raise TemplateException(_(u"Nikoliv bezpeÄnÃ© jmÃ©no souboru"),
                                     template.file_name())
         import config
         file_name = os.path.join(config.def_dir, tfile_name)
         file_name.replace('"', '\\"')
         stream.write('@IncludeGraphic "%s"\n' % file_name)
 
-    # Obecné formátování
+    # ObecnÃ© formÃ¡tovÃ¡nÃ­
     
     def _format(self, template, stream, indent=''):
         if is_anystring(template):
@@ -971,11 +971,11 @@ class LoutFormatter(Tmpdir):
             try:
                 tclass = template.__class__
             except AttributeError:
-                raise TemplateException(_("Chybnı element"), template)
+                raise TemplateException(_(u"ChybnÃ½ element"), template)
             try:
                 processor = self._mark_processors[tclass]
             except KeyError:
-                raise TemplateException(_("Neznámı element"), template)
+                raise TemplateException(_(u"NeznÃ¡mÃ½ element"), template)
         result = processor(template, stream, indent)
         return result
 
@@ -1039,22 +1039,22 @@ class LoutFormatter(Tmpdir):
                         except:
                             pass
                     in_stream = Pipe(cc=cc)
-                    if __debug__: log(DEBUG, 'Start zpracování specifikace')
+                    if __debug__: log(DEBUG, 'Start zpracovÃ¡nÃ­ specifikace')
                     try:
                         self._process(in_stream)
                         in_stream.close()
                         self._formatted_document = in_stream.read()
-                    except ValueError:  # zápis do uzavøeného streamu
-                        log(EVENT, ('Zpracování specifikace pøeru¹eno '
-                                    'uzavøením streamu'))
+                    except ValueError:  # zÃ¡pis do uzavÅ™enÃ©ho streamu
+                        log(EVENT, ('ZpracovÃ¡nÃ­ specifikace pÅ™eruÅ¡eno '
+                                    'uzavÅ™enÃ­m streamu'))
                         in_stream.close()
-                    if __debug__: log(DEBUG, 'Konec zpracování specifikace')
+                    if __debug__: log(DEBUG, 'Konec zpracovÃ¡nÃ­ specifikace')
                 else:
-                    if __debug__: log(DEBUG, 'Zdroják Lout je nacachován')
+                    if __debug__: log(DEBUG, 'ZdrojÃ¡k Lout je nacachovÃ¡n')
                     import StringIO
-                    # Zde by mìlo bıt pou¾ito cStringIO, ale z nìjakého
-                    # záhadného dùvodu to s ním nefunguje.  Vypadá to na
-                    # nìjakı problém s konverzí koncù øádkù...
+                    # Zde by mÄ›lo bÃ½t pouÅ¾ito cStringIO, ale z nÄ›jakÃ©ho
+                    # zÃ¡hadnÃ©ho dÅ¯vodu to s nÃ­m nefunguje.  VypadÃ¡ to na
+                    # nÄ›jakÃ½ problÃ©m s konverzÃ­ koncÅ¯ Å™Ã¡dkÅ¯...
                     s = StringIO.StringIO(self._formatted_document)
                     copy_stream(s, to_lout, close=True)
             finally:
@@ -1065,35 +1065,35 @@ class LoutFormatter(Tmpdir):
                     pass
         with_lock(self._lout_run_lock, lfunction)
         errors = ''
-        log(EVENT, 'Konec formátování pøes Lout')
+        log(EVENT, 'Konec formÃ¡tovÃ¡nÃ­ pÅ™es Lout')
         return errors
 
     def preview(self, stream):
-        """Vra» zformátovanı dokument jako èistı text.
+        """VraÅ¥ zformÃ¡tovanÃ½ dokument jako ÄistÃ½ text.
         
         Argumenty:
 
-          stream -- stream otevøenı pro zápis, disponující metodou 'write'.
+          stream -- stream otevÅ™enÃ½ pro zÃ¡pis, disponujÃ­cÃ­ metodou 'write'.
 
-        Metoda po skonèení zápisu uzavírá 'stream'.
+        Metoda po skonÄenÃ­ zÃ¡pisu uzavÃ­rÃ¡ 'stream'.
 
         """
         errors = self._lout(('-P',), stream)
 
     def printout(self, stream):
-        """Po¹li dokument jako PostScript na 'stream'.
+        """PoÅ¡li dokument jako PostScript na 'stream'.
 
         Argumenty:
 
-          stream -- stream otevøenı pro zápis, disponující metodou 'write'.
+          stream -- stream otevÅ™enÃ½ pro zÃ¡pis, disponujÃ­cÃ­ metodou 'write'.
 
-        Metoda po skonèení zápisu uzavírá 'stream'.
+        Metoda po skonÄenÃ­ zÃ¡pisu uzavÃ­rÃ¡ 'stream'.
 
         """
         errors = self._lout((), stream)
 
     def printdirect(self):
-        """Po¹li dokument jako PostScript na vstup 'printing_command'."""      
+        """PoÅ¡li dokument jako PostScript na vstup 'printing_command'."""      
         stream = dev_null_stream('w')
         errors = self._lout((), stream)
         process = Popen(config.printing_command,
@@ -1102,15 +1102,15 @@ class LoutFormatter(Tmpdir):
         thread.start_new_thread(self.printout, (stream,))
 
     def close(self):
-        """Explicitnì proveï ukonèovací akce tøídy.
+        """ExplicitnÄ› proveÄ ukonÄovacÃ­ akce tÅ™Ã­dy.
 
-        Tato metoda odpovídá akcím metody '__del__()', av¹ak umo¾òuje své
-        explicitní volání.  V této tøídì toti¾ metoda '__del__()' z neznámıch
-        dùvodù volána není.
+        Tato metoda odpovÃ­dÃ¡ akcÃ­m metody '__del__()', avÅ¡ak umoÅ¾Åˆuje svÃ©
+        explicitnÃ­ volÃ¡nÃ­.  VÂ tÃ©to tÅ™Ã­dÄ› totiÅ¾ metoda '__del__()' zÂ neznÃ¡mÃ½ch
+        dÅ¯vodÅ¯ volÃ¡na nenÃ­.
         
         """
         self._cleanup ()
 
 
 Formatter = LoutFormatter
-"""Implicitní formátovaè."""
+"""ImplicitnÃ­ formÃ¡tovaÄ."""

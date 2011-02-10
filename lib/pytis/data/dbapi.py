@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 if msg.find('password') != -1 or \
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
-            raise DBSystemException(_("Can't connect to database"), e)
+            raise DBSystemException(_(u"Can't connect to database"), e)
         connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
         return class_._postgresql_Connection(connection, connection_data)
 
@@ -122,7 +122,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 # We believe this shouldn't happen as a program error and it
                 # may occur as a result of database engine connection crash.
                 log(OPERATIONAL, "Access to closed database connection")
-                result, connection = retry(_("Database interface error"), e)
+                result, connection = retry(_(u"Database interface error"), e)
             else:
                 raise DBUserException(None, e, e.args, query)
         except dbapi.NotSupportedError, e:
@@ -138,7 +138,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
                     raise DBInsertException()
                 elif e.args[0].find('server closed the connection unexpectedly') != -1:
-                    result, connection = retry(_("Database connection error"), e)
+                    result, connection = retry(_(u"Database connection error"), e)
                 else:
                     raise DBUserException(None, e, e.args, query)
             else:
@@ -148,11 +148,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.OperationalError, e:
             if e.args and e.args[0].find('could not obtain lock') != -1:
                 raise DBLockException()
-            result, connection = retry(_("Database operational error"), e)
+            result, connection = retry(_(u"Database operational error"), e)
         except dbapi.InternalError, e:
             raise DBException(None, e, query)
         except dbapi.IntegrityError, e:
-            raise DBUserException(_("Database integrity violation"),
+            raise DBUserException(_(u"Database integrity violation"),
                                   e, e.args, query)
         if __debug__:
             if query.startswith('fetch') or query.startswith('skip'):
@@ -222,7 +222,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
 
     def _maybe_connection_error(self, e):
         if e.args[0].find('server closed the connection unexpectedly') != -1:
-            raise DBSystemException(_("Database connection error"), e, e.args)
+            raise DBSystemException(_(u"Database connection error"), e, e.args)
 
     
 class DBAPICounter(_DBAPIAccessor, DBPostgreSQLCounter):
@@ -281,7 +281,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection_ = self._pgnotif_connection
                 connection = connection_.connection()
                 if __debug__:
-                    log(DEBUG, 'HlÌd·m vstup', connection)
+                    log(DEBUG, 'Hl√≠d√°m vstup', connection)
                 def lfunction():
                     cursor = connection.cursor()
                     try:
@@ -297,7 +297,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                         log(DEBUG, 'Chyba na socketu', e.args)
                     break
                 if __debug__:
-                    log(DEBUG, 'P¯iπel vstup')
+                    log(DEBUG, 'P≈ôi≈°el vstup')
                 def lfunction():
                     notifications = []
                     try:
@@ -313,7 +313,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                         notifies = connection.notifies
                         if notifies:
                             if __debug__:
-                                log(DEBUG, 'Zaregistrov·na zmÏna dat')
+                                log(DEBUG, 'Zaregistrov√°na zmƒõna dat')
                             notifications = []
                             while notifies:
                                 notifications.append(notifies.pop()[1])
@@ -322,7 +322,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                                             self._pg_query_lock,),
                                            lfunction)
                 if __debug__:
-                    log(DEBUG, 'NaËteny notifikace:', notifications)
+                    log(DEBUG, 'Naƒçteny notifikace:', notifications)
                 self._notif_invoke_callbacks(notifications)
 
 
@@ -330,17 +330,17 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
 
 
 class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
-    """Datov· t¯Ìda, kterou v†naπich aplikacÌch standardnÏ pouæÌv·me.
+    """Datov√° t≈ô√≠da, kterou v¬†na≈°ich aplikac√≠ch standardnƒõ pou≈æ√≠v√°me.
 
-    Je utvo¯ena pouh˝m sloæenÌm existujÌcÌch t¯Ìd a nezav·dÌ æ·dnou dalπÌ novou
-    funkcionalitu kromÏ konstruktoru.
+    Je utvo≈ôena pouh√Ωm slo≈æen√≠m existuj√≠c√≠ch t≈ô√≠d a nezav√°d√≠ ≈æ√°dnou dal≈°√≠ novou
+    funkcionalitu kromƒõ konstruktoru.
 
     """    
     def __init__(self, bindings, key, connection_data=None, ordering=None,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
                  dbconnection_spec=None, sql_logger=None, **kwargs):
-        # TODO: Vy¯adit dbconnection_spec ze seznamu argument˘ po konverzi
-        # aplikacÌ.
+        # TODO: Vy≈ôadit dbconnection_spec ze seznamu argument≈Ø po konverzi
+        # aplikac√≠.
         if dbconnection_spec is not None:
             if connection_data is not None:
                 raise Exception("Programming error: " +
@@ -350,26 +350,26 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
             bindings=bindings, key=key, connection_data=connection_data,
             ordering=ordering, access_rights=access_rights, **kwargs)
         self._sql_logger = sql_logger
-        # TODO: N·sledujÌcÌ hack je tu proto, æe ve vol·nÌch konstruktor˘ v˝πe
-        # je _pg_add_notifications vol·no p¯edËasnÏ, p¯iËemæ po¯adÌ vol·nÌ
-        # konstruktor˘ nelze zmÏnit.  Pro n·pravu je pot¯eba jeπtÏ p¯edÏlat
-        # t¯Ìdy t˝kajÌcÌ se notifikacÌ.
+        # TODO: N√°sleduj√≠c√≠ hack je tu proto, ≈æe ve vol√°n√≠ch konstruktor≈Ø v√Ω≈°e
+        # je _pg_add_notifications vol√°no p≈ôedƒçasnƒõ, p≈ôiƒçem≈æ po≈ôad√≠ vol√°n√≠
+        # konstruktor≈Ø nelze zmƒõnit.  Pro n√°pravu je pot≈ôeba je≈°tƒõ p≈ôedƒõlat
+        # t≈ô√≠dy t√Ωkaj√≠c√≠ se notifikac√≠.
         import config
         if config.dblisten:
             self._pg_add_notifications()
 
 
-### ExportovanÈ promÏnnÈ/t¯Ìdy
+### Exportovan√© promƒõnn√©/t≈ô√≠dy
 
 
 DBDataDefault = DBDataDefaultClass
-"""Podt¯Ìda 'DBData', kterou pouæÌv·me pro p¯Ìstup k†datab·zi."""
+"""Podt≈ô√≠da 'DBData', kterou pou≈æ√≠v√°me pro p≈ô√≠stup k¬†datab√°zi."""
 
 DBCounterDefault = DBAPICounter
-"""Podt¯Ìda t¯Ìdy 'Counter', kter· je standardnÏ pouæÌv·na."""
+"""Podt≈ô√≠da t≈ô√≠dy 'Counter', kter√° je standardnƒõ pou≈æ√≠v√°na."""
 
 DBFunctionDefault = DBAPIFunction
-"""Podt¯Ìda t¯Ìdy 'Function', kter· je standardnÏ pouæÌv·na."""
+"""Podt≈ô√≠da t≈ô√≠dy 'Function', kter√° je standardnƒõ pou≈æ√≠v√°na."""
 
 DBTransactionDefault = DBAPITransaction
 """Standard transaction class."""
@@ -381,4 +381,4 @@ def _postgresql_access_groups(connection_data):
         pass
     return PgUserGroups(connection_data).access_groups()
 default_access_groups = _postgresql_access_groups
-"""Funkce vracejÌcÌ seznam skupin uæivatele specifikovanÈho spojenÌ."""
+"""Funkce vracej√≠c√≠ seznam skupin u≈æivatele specifikovan√©ho spojen√≠."""

@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Funkce a tøídy pro práci s emailem.
+"""Funkce a tÅ™Ã­dy pro prÃ¡ci s emailem.
 
-Do tohoto modulu patøí pomocné funkce a tøídy pro práci s email zprávami.
+Do tohoto modulu patÅ™Ã­ pomocnÃ© funkce a tÅ™Ã­dy pro prÃ¡ci s email zprÃ¡vami.
 """
 
 import sys
@@ -36,14 +36,14 @@ from email.MIMEText import MIMEText
 from email.Header import Header
 
 class SimpleEmail(object):
-    """Tøída pro vytvoøení a odeslaní jednoduchého mailu."""
+    """TÅ™Ã­da pro vytvoÅ™enÃ­ a odeslanÃ­ jednoduchÃ©ho mailu."""
 
-    ERR_CONNECTION = _("Could not connect to SMTP server")
-    ERR_RECIPIENT = _("Recipient refused")
-    ERR_SENDER = _("Sender refused")
-    ERR_DISCONNECTED = _("SMTP server disconnected")
-    ERR_DATA = _("Error by sending data")
-    ERR_HELO = _("Error by sending helo")
+    ERR_CONNECTION = _(u"Could not connect to SMTP server")
+    ERR_RECIPIENT = _(u"Recipient refused")
+    ERR_SENDER = _(u"Sender refused")
+    ERR_DISCONNECTED = _(u"SMTP server disconnected")
+    ERR_DATA = _(u"Error by sending data")
+    ERR_HELO = _(u"Error by sending helo")
     
     def __init__(self, to, from_, subject, content, html=False,
                  bcc=None,  smtp='localhost', charset='iso-8859-2'):
@@ -51,13 +51,13 @@ class SimpleEmail(object):
 
         Argumenty:
 
-          to -- adresa pøíjemce nebo sekvence pøíjemcù
-          from_ -- adresa odesílatele
-          subject -- pøedmìt zprávy (mù¾e obsahovat buï ascii øetìzec
-            nebo unicode øetìzec nebo øetìzec v kódování iso-8859-2)
-          content -- obsah zprávy
-          bcc -- adresa pøíjemce pro bcc nebo sekvence adres
-          smtp -- adresa odesílacího serveru
+          to -- adresa pÅ™Ã­jemce nebo sekvence pÅ™Ã­jemcÅ¯
+          from_ -- adresa odesÃ­latele
+          subject -- pÅ™edmÄ›t zprÃ¡vy (mÅ¯Å¾e obsahovat buÄ ascii Å™etÄ›zec
+            nebo unicode Å™etÄ›zec nebo Å™etÄ›zec v kÃ³dovÃ¡nÃ­ iso-8859-2)
+          content -- obsah zprÃ¡vy
+          bcc -- adresa pÅ™Ã­jemce pro bcc nebo sekvence adres
+          smtp -- adresa odesÃ­lacÃ­ho serveru
         """  
 
         assert isinstance(to, (str, unicode, tuple, list))
@@ -192,25 +192,25 @@ class SimpleEmail(object):
         return success              
 
 class GPGEmail(SimpleEmail):
-    """Tøída pro vytvoøení a odeslaní jednoduchého kryptovaného mailu."""
+    """TÅ™Ã­da pro vytvoÅ™enÃ­ a odeslanÃ­ jednoduchÃ©ho kryptovanÃ©ho mailu."""
 
-    ERR_GPG_MODULE = _("Could not import Python GnuPG module")
-    ERR_GPG_INSTANCE = _("Could not create GPG instance")
-    ERR_GPG_KEYRING = _("Could not create a temporary GPG keyring")
-    ERR_GPG_OUTPUT = _("GPG process did not return string.")
+    ERR_GPG_MODULE = _(u"Could not import Python GnuPG module")
+    ERR_GPG_INSTANCE = _(u"Could not create GPG instance")
+    ERR_GPG_KEYRING = _(u"Could not create a temporary GPG keyring")
+    ERR_GPG_OUTPUT = _(u"GPG process did not return string.")
     
     def __init__(self, to, from_, subject, content, key, html=False, 
                  smtp='localhost', charset='iso-8859-2'):
         """Inicializuj instanci.
         
-          to -- adresa pøíjemce (zatím podporujeme jen jednoho pøíjemce)
-          from_ -- adresa odesílatele
-          subject -- pøedmìt zprávy (mù¾e obsahovat buï øetìzec nebo unicode
-          content -- vlastní obsah zprávy
-          key -- veøejnı klíè, kterım má bıt zpráva zakryptována
-          html -- pøíznak, zda obsah je html
-          smtp -- adresa odesílacího serveru
-          charset -- v pøípadì, ¾e content není v unicode, je zde uveden charset pro content
+          to -- adresa pÅ™Ã­jemce (zatÃ­m podporujeme jen jednoho pÅ™Ã­jemce)
+          from_ -- adresa odesÃ­latele
+          subject -- pÅ™edmÄ›t zprÃ¡vy (mÅ¯Å¾e obsahovat buÄ Å™etÄ›zec nebo unicode
+          content -- vlastnÃ­ obsah zprÃ¡vy
+          key -- veÅ™ejnÃ½ klÃ­Ä, kterÃ½m mÃ¡ bÃ½t zprÃ¡va zakryptovÃ¡na
+          html -- pÅ™Ã­znak, zda obsah je html
+          smtp -- adresa odesÃ­lacÃ­ho serveru
+          charset -- v pÅ™Ã­padÄ›, Å¾e content nenÃ­ v unicode, je zde uveden charset pro content
         """
         super(GPGEmail, self).__init__(to, from_, subject, content, html=html,
                                            smtp=smtp, charset=charset)
@@ -312,12 +312,12 @@ class GPGEmail(SimpleEmail):
         secondSubMsg.add_header("Content-Disposition", "inline",
                                 filename=filename)
         secondSubMsg.set_payload(encrypted)
-        # Pøidání èástí do main
+        # PÅ™idÃ¡nÃ­ ÄÃ¡stÃ­ do main
         self.msg.attach(firstSubMsg)
         self.msg.attach(secondSubMsg)
         
 class ComplexEmail(SimpleEmail):
-    """Tøída pro vytvoøení a odeslaní mailu s pøílohami."""
+    """TÅ™Ã­da pro vytvoÅ™enÃ­ a odeslanÃ­ mailu s pÅ™Ã­lohami."""
 
     def __init__(self, to, from_, subject, content=None, html=False, bcc=None,  smtp='localhost',
                  charset='iso-8859-2'):
@@ -325,13 +325,13 @@ class ComplexEmail(SimpleEmail):
 
         Argumenty:
 
-          to -- adresa pøíjemce nebo sekvence pøíjemcù
-          from_ -- adresa odesílatele
-          subject -- pøedmìt zprávy (mù¾e obsahovat buï øetìzec nebo unicode
-          content -- obsah zprávy
-          html -- indikace, zda je obsah content v html podobì
-          bcc -- adresa pøíjemce pro bcc nebo sekvence adres
-          smtp -- adresa odesílacího serveru
+          to -- adresa pÅ™Ã­jemce nebo sekvence pÅ™Ã­jemcÅ¯
+          from_ -- adresa odesÃ­latele
+          subject -- pÅ™edmÄ›t zprÃ¡vy (mÅ¯Å¾e obsahovat buÄ Å™etÄ›zec nebo unicode
+          content -- obsah zprÃ¡vy
+          html -- indikace, zda je obsah content v html podobÄ›
+          bcc -- adresa pÅ™Ã­jemce pro bcc nebo sekvence adres
+          smtp -- adresa odesÃ­lacÃ­ho serveru
         """  
         super(ComplexEmail, self).__init__(to, from_, subject, content, html=html,
                                            bcc=bcc, smtp=smtp, charset=charset)
@@ -355,7 +355,7 @@ class ComplexEmail(SimpleEmail):
         return MIMEText(data, subtype, _charset=charset)
         
     def get_content_data(self, data, filename, charset=None):
-        "Vrátí data jako instanci tøídy odvozené od MIMEBase."
+        "VrÃ¡tÃ­ data jako instanci tÅ™Ã­dy odvozenÃ© od MIMEBase."
         # Guess the content type based on the file's extension.  Encoding
         # will be ignored, although we should check for simple things like
         # gzip'd or compressed files.
@@ -379,12 +379,12 @@ class ComplexEmail(SimpleEmail):
         return content
 
     def add_content_text(self, data, html=False, charset=None):
-        """Pøidá text nebo html jako MIME èást."""
+        """PÅ™idÃ¡ text nebo html jako MIME ÄÃ¡st."""
         content = self.get_content_text(data, html=html, charset=charset)
         self.parts.append(content)        
     
     def add_content_data(self, data, filename, charset=None):
-        """Pøidá data jako pøílohu emailu."""
+        """PÅ™idÃ¡ data jako pÅ™Ã­lohu emailu."""
         content = self.get_content_data(data, filename, charset=charset)
         # Set the filename parameter
         content.add_header('Content-Disposition', 'attachment',
@@ -392,7 +392,7 @@ class ComplexEmail(SimpleEmail):
         self.parts.append(content)
 
     def add_content_file(self, path, charset=None):
-        """Pøipojí obsah souboru danı cestou path."""
+        """PÅ™ipojÃ­ obsah souboru danÃ½ cestou path."""
         if not os.path.isfile(path):
             return False
         directory, filename = os.path.split(path)

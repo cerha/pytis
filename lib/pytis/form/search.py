@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Prvky uæivatelskÈho rozhranÌ souvisejÌcÌ s†vyhled·v·nÌm
+# Prvky u≈æivatelsk√©ho rozhran√≠ souvisej√≠c√≠ s¬†vyhled√°v√°n√≠m
 # 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -18,12 +18,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Prvky uæivatelskÈho rozhranÌ souvisejÌcÌ s†vyhled·v·nÌm.
+"""Prvky u≈æivatelsk√©ho rozhran√≠ souvisej√≠c√≠ s¬†vyhled√°v√°n√≠m.
 
-Modul obsahuje podporu dialog˘ s†funkcionalitou vÌce Ëi mÈnÏ odpovÌdajÌcÌ
-z·kladnÌmu vyhled·vacÌmu dialogu.  Z·kladem je spoleËn· t¯Ìda 'Dialog', kter·
-je mÌnÏna jako abstraktnÌ.  Z†nÌ jsou pak odvozeny dialogovÈ t¯Ìdy pro
-konkrÈtnÌ pouæitÌ.
+Modul obsahuje podporu dialog≈Ø s¬†funkcionalitou v√≠ce ƒçi m√©nƒõ odpov√≠daj√≠c√≠
+z√°kladn√≠mu vyhled√°vac√≠mu dialogu.  Z√°kladem je spoleƒçn√° t≈ô√≠da 'Dialog', kter√°
+je m√≠nƒõna jako abstraktn√≠.  Z¬†n√≠ jsou pak odvozeny dialogov√© t≈ô√≠dy pro
+konkr√©tn√≠ pou≈æit√≠.
 
 """
 
@@ -42,10 +42,10 @@ class SFSColumn(object):
 
         Arguments:
 
-          id -- datov˝ identifik·tor sloupce jako string
-          type -- datov˝ typ sloupce jako instance t¯Ìdy
+          id -- datov√Ω identifik√°tor sloupce jako string
+          type -- datov√Ω typ sloupce jako instance t≈ô√≠dy
             'pytis.data.types_.Type'
-          label -- jmÈno sloupce pro uæivatele jako string
+          label -- jm√©no sloupce pro u≈æivatele jako string
 
         """
         self._id = id
@@ -53,15 +53,15 @@ class SFSColumn(object):
         self._label = label
 
     def id(self):
-        """Vraª id zadanÈ v†konstruktoru."""
+        """Vra≈• id zadan√© v¬†konstruktoru."""
         return self._id
 
     def type(self):
-        """Vraª type zadan˝ v†konstruktoru."""
+        """Vra≈• type zadan√Ω v¬†konstruktoru."""
         return self._type
 
     def label(self):
-        """Vraª label zadan˝ v†konstruktoru."""
+        """Vra≈• label zadan√Ω v¬†konstruktoru."""
         return self._label
 
     
@@ -70,7 +70,7 @@ class SFSDialog(GenericDialog):
 
     _FIELD_HEIGHT = 27
     _TITLE = None
-    _ESCAPE_BUTTON = _("Zav¯Ìt")
+    _ESCAPE_BUTTON = _(u"Zav≈ô√≠t")
     _BUTTONS = (_ESCAPE_BUTTON,)
     def __init__(self, parent, columns, col=None):
         """Initialize the dialog.
@@ -130,24 +130,24 @@ class SFSDialog(GenericDialog):
     
     
 class SortingDialog(SFSDialog):
-    """Dialog pro volbu parametr˘ ¯azenÌ.
+    """Dialog pro volbu parametr≈Ø ≈ôazen√≠.
 
-    Metoda 'run()' vracÌ specifikaci ¯azenÌ, kterou pouæÌv· formul·¯
-    `pytis.form.LookupForm'.  Je-li dialog opuπtÏn jin˝m zp˘sobem neæ stiskem
-    tlaËÌtka, je vr·ceno 'None'.
+    Metoda 'run()' vrac√≠ specifikaci ≈ôazen√≠, kterou pou≈æ√≠v√° formul√°≈ô
+    `pytis.form.LookupForm'.  Je-li dialog opu≈°tƒõn jin√Ωm zp≈Øsobem ne≈æ stiskem
+    tlaƒç√≠tka, je vr√°ceno 'None'.
 
     """
 
-    _TITLE = _("ÿazenÌ")
-    _SORT_BUTTON = _("Se¯adit")
-    _RESET_BUTTON = _("Obnovit v˝chozÌ ¯azenÌ")
+    _TITLE = _(u"≈òazen√≠")
+    _SORT_BUTTON = _(u"Se≈ôadit")
+    _RESET_BUTTON = _(u"Obnovit v√Ωchoz√≠ ≈ôazen√≠")
     _BUTTONS = (_SORT_BUTTON, _RESET_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _SORT_BUTTON
     
     _DIRECTIONS = (pytis.data.ASCENDENT, pytis.data.DESCENDANT, None)
-    _LABELS = {pytis.data.ASCENDENT: _("VzestupnÏ"),
-               pytis.data.DESCENDANT: _("SestupnÏ"),
-               None: _("Ne¯adit")}
+    _LABELS = {pytis.data.ASCENDENT: _(u"Vzestupnƒõ"),
+               pytis.data.DESCENDANT: _(u"Sestupnƒõ"),
+               None: _(u"Ne≈ôadit")}
     
     _HELP_TOPIC = 'sorting'
     
@@ -174,14 +174,14 @@ class SortingDialog(SFSDialog):
         for cid, dir in self._sorting or ((self._col, self._direction),):
             self._controls.append((
                 choice([(c.label(), c) for c in self._columns], selected=self._find_column(cid),
-                       tooltip=_("Zvolte sloupec, podle nÏjæ chcete ¯adit")),
+                       tooltip=_(u"Zvolte sloupec, podle nƒõj≈æ chcete ≈ôadit")),
                 choice([(self._LABELS[d], d) for d in self._DIRECTIONS], selected=dir,
-                       tooltip=_("Zvolte smÏr ¯azenÌ"))))
+                       tooltip=_(u"Zvolte smƒõr ≈ôazen√≠"))))
 
     def _create_content(self, sizer):
         super(SortingDialog, self)._create_content(sizer)
-        button = self._create_button(_("P¯idat"), self._on_add,
-                                     _("P¯idat sloupec sekund·rnÌho ¯azenÌ"))
+        button = self._create_button(_(u"P≈ôidat"), self._on_add,
+                                     _(u"P≈ôidat sloupec sekund√°rn√≠ho ≈ôazen√≠"))
         sizer.Add(button, 0, wx.ALL|wx.CENTER, 5)
 
     def _customize_result(self, button_wid):
@@ -208,7 +208,7 @@ class SortingDialog(SFSDialog):
 
     
 class SFDialog(SFSDialog):
-    """SpoleËn˝ z·klad vπech vyhled·vacÌch a filtrovacÌch dialog˘."""
+    """Spoleƒçn√Ω z√°klad v≈°ech vyhled√°vac√≠ch a filtrovac√≠ch dialog≈Ø."""
 
     _OPERATORS = (pytis.data.EQ,
                   pytis.data.NE,
@@ -225,8 +225,8 @@ class SFDialog(SFSDialog):
                pytis.data.GE: '>=',
                pytis.data.LT: '<',
                pytis.data.GT: '>',
-               pytis.data.AND: _("AND"),
-               pytis.data.OR:  _("OR")}
+               pytis.data.AND: _(u"AND"),
+               pytis.data.OR:  _(u"OR")}
     # WM and EQ have the same UI ctrl, so we ignore the difference.
     _RELATIONAL_OPERATORS_MAP = {'EQ': pytis.data.EQ,
                                  'NE': pytis.data.NE,
@@ -240,11 +240,11 @@ class SFDialog(SFSDialog):
                               'OR': pytis.data.OR}
     _TEXT_CTRL_SIZE = 18
     _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(),
-                           '* '+_("hodnota")+' *')
+                           '* '+_(u"hodnota")+' *')
     
     class SFConditionError(Exception):
         def __init__(self, i, ctrl, msg):
-            msg = _("Chyba v podmÌnce Ë. %d: %s") % (i+1, msg)
+            msg = _(u"Chyba v podm√≠nce ƒç. %d: %s") % (i+1, msg)
             run_dialog(Error, msg)
             #ctrl.SetFocus()
             #self.focus()
@@ -323,35 +323,35 @@ class SFDialog(SFSDialog):
             return (
                 choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS],
                        selected=operator,
-                       tooltip=_("Zvolte zp˘sob spojenÌ s p¯edchozÌmi podmÌnkami")),
-                label(_("V·ha oper·toru:")),
-                spin(level, length=4, tooltip=_("Zvolte v·hu logickÈho oper·toru.")))
+                       tooltip=_(u"Zvolte zp≈Øsob spojen√≠ s p≈ôedchoz√≠mi podm√≠nkami")),
+                label(_(u"V√°ha oper√°toru:")),
+                spin(level, length=4, tooltip=_(u"Zvolte v√°hu logick√©ho oper√°toru.")))
         def create_relational_operator(i, n, operator, col1, col2, value):
             return (
                 choice([(c.label(), c) for c in self._columns], selected=col1,
                        on_change=lambda e: self._on_selection_change(i),
-                       tooltip=_("Zvolte sloupec tabulky")),
+                       tooltip=_(u"Zvolte sloupec tabulky")),
                 choice([(self._LABELS[op], op) for op in self._OPERATORS], selected=operator,
-                       tooltip=_("Zvolte oper·tor")),
+                       tooltip=_(u"Zvolte oper√°tor")),
                 choice([(c.label(), c) for c in self._col2_columns], selected=col2,
                        on_change=lambda e: self._on_selection_change(i),
-                       tooltip=_("Zvolte s ËÌm m· b˝t hodnota porovn·v·na")),
+                       tooltip=_(u"Zvolte s ƒç√≠m m√° b√Ωt hodnota porovn√°v√°na")),
                 field(value, length=self._TEXT_CTRL_SIZE,
-                      tooltip=_("Zapiπte hodnotu podmÌnkovÈho v˝razu")),
-                button(_("Nas·t"), lambda e: self._on_suck(i),
-                       _("NaËÌst hodnotu aktivnÌ buÚky"),
+                      tooltip=_(u"Zapi≈°te hodnotu podm√≠nkov√©ho v√Ωrazu")),
+                button(_(u"Nas√°t"), lambda e: self._on_suck(i),
+                       _(u"Naƒç√≠st hodnotu aktivn√≠ bu≈àky"),
                        enabled=self._row is not None),
-                button(_("Vymazat"), lambda e: self._on_clear(i),
-                       _("Vymazat obsah podmÌnky")),
-                button(_("Odebrat"), lambda e: self._on_remove(i),
-                       _("Zruπit tuto podmÌnku"), enabled=n > 1))
+                button(_(u"Vymazat"), lambda e: self._on_clear(i),
+                       _(u"Vymazat obsah podm√≠nky")),
+                button(_(u"Odebrat"), lambda e: self._on_remove(i),
+                       _(u"Zru≈°it tuto podm√≠nku"), enabled=n > 1))
         c = self._find_column(self._col) or self._columns[0]
         empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
         #print "===", self._strop(self._condition or empty)
         try:
             operators = self._decompose_condition(self._condition or empty)
         except Exception, e:
-            run_dialog(Warning, _("Nepoda¯ilo se rozloæit podmÌnkov˝ v˝raz:") +" "+ str(e))
+            run_dialog(Warning, _(u"Nepoda≈ôilo se rozlo≈æit podm√≠nkov√Ω v√Ωraz:") +" "+ str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
             if len(items) == 2:
@@ -367,12 +367,12 @@ class SFDialog(SFSDialog):
         super(SFDialog, self)._create_content(sizer)
         choice, button = self._create_choice, self._create_button
         buttons = [
-            button(_("P¯idat AND"), lambda e: self._on_add(),
-                   tooltip=_("P¯idat novou podmÌnku v konjunkci (a z·roveÚ)")),
-            button(_("P¯idat OR"), lambda e: self._on_add(or_=True),
-                   tooltip=_("P¯idat novou podmÌnku v disjunkci (a nebo)")),
-            button(_("Odebrat vπe"), lambda e: self._on_reset(),
-                   tooltip=_("Zruπit vπechny st·vajÌcÌ podmÌnky"))]
+            button(_(u"P≈ôidat AND"), lambda e: self._on_add(),
+                   tooltip=_(u"P≈ôidat novou podm√≠nku v konjunkci (a z√°rove≈à)")),
+            button(_(u"P≈ôidat OR"), lambda e: self._on_add(or_=True),
+                   tooltip=_(u"P≈ôidat novou podm√≠nku v disjunkci (a nebo)")),
+            button(_(u"Odebrat v≈°e"), lambda e: self._on_reset(),
+                   tooltip=_(u"Zru≈°it v≈°echny st√°vaj√≠c√≠ podm√≠nky"))]
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
             bsizer.Add(b, 0, wx.RIGHT, 10)
@@ -395,16 +395,16 @@ class SFDialog(SFSDialog):
                 for basetype in (pytis.data.String, pytis.data.Number, pytis.data.DateTime,
                                  pytis.data.Boolean, pytis.data.Binary):
                     if isinstance(col1.type(), basetype) and not isinstance(col2.type(), basetype):
-                        raise self.SFConditionError(i, wcol2, _("NesluËitelnÈ typy %s a %s") %
+                        raise self.SFConditionError(i, wcol2, _(u"Nesluƒçiteln√© typy %s a %s") %
                                                     (col1.type().__class__.__name__,
                                                      col2.type().__class__.__name__))
             elif isinstance(col1.type(), pytis.data.Binary):
                 if wval.GetValue():
                     raise self.SFConditionError(i, wval,
-                                     _("Bin·rnÌ sloupec lze testovat pouze na pr·zdnou hodnotu"))
+                                     _(u"Bin√°rn√≠ sloupec lze testovat pouze na pr√°zdnou hodnotu"))
                 elif op not in (pytis.data.EQ, pytis.data.NE):
                     raise self.SFConditionError(i, wop,
-                                     _("Bin·rnÌ sloupec lze testovat pouze na rovnost Ëi nerovnost"))
+                                     _(u"Bin√°rn√≠ sloupec lze testovat pouze na rovnost ƒçi nerovnost"))
                 arg2 = pytis.data.Value(col1.type(), None)
             else:
                 val = wval.GetValue()
@@ -529,11 +529,11 @@ class SearchDialog(SFDialog):
     instance.
 
     """
-    _NEXT_BUTTON = _("DalπÌ")
-    _PREVIOUS_BUTTON = _("P¯edchozÌ")
+    _NEXT_BUTTON = _(u"Dal≈°√≠")
+    _PREVIOUS_BUTTON = _(u"P≈ôedchoz√≠")
     _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _NEXT_BUTTON    
-    _TITLE = _("Hled·nÌ")
+    _TITLE = _(u"Hled√°n√≠")
     _HELP_TOPIC = 'searching'
 
     def __init__(self, *args, **kwargs):
@@ -578,8 +578,8 @@ class FilterDialog(SFDialog):
     wishes to unfilter the underlying form.
     
     """
-    _FILTER_BUTTON = _("Filtrovat")
-    _UNFILTER_BUTTON = _("Zruπit filtr")
+    _FILTER_BUTTON = _(u"Filtrovat")
+    _UNFILTER_BUTTON = _(u"Zru≈°it filtr")
     _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _FILTER_BUTTON
     _AGG_OPERATORS = (pytis.data.Data.AGG_COUNT,
@@ -587,12 +587,12 @@ class FilterDialog(SFDialog):
                       pytis.data.Data.AGG_MAX,
                       pytis.data.Data.AGG_SUM,
                       pytis.data.Data.AGG_AVG)
-    _AGG_LABELS = {pytis.data.Data.AGG_COUNT: _("PoËet"),
-                   pytis.data.Data.AGG_MIN:   _("Minimum"),
-                   pytis.data.Data.AGG_MAX:   _("Maximum"),
-                   pytis.data.Data.AGG_SUM:   _("SouËet"), 
-                   pytis.data.Data.AGG_AVG:   _("Pr˘mÏr")}
-    _TITLE = _("Filtrov·nÌ")
+    _AGG_LABELS = {pytis.data.Data.AGG_COUNT: _(u"Poƒçet"),
+                   pytis.data.Data.AGG_MIN:   _(u"Minimum"),
+                   pytis.data.Data.AGG_MAX:   _(u"Maximum"),
+                   pytis.data.Data.AGG_SUM:   _(u"Souƒçet"), 
+                   pytis.data.Data.AGG_AVG:   _(u"Pr≈Ømƒõr")}
+    _TITLE = _(u"Filtrov√°n√≠")
     _HELP_TOPIC = 'filtering'
 
     def __init__(self, parent, columns, row, compute_aggregate, **kwargs):
@@ -619,14 +619,14 @@ class FilterDialog(SFDialog):
         choice, field, button = self._create_choice, self._create_text_ctrl, self._create_button
         self._agg_controls = (
             choice([(c.label(), c) for c in self._columns],
-                   tooltip=_("Zvolte sloupec pro agregaci")),
+                   tooltip=_(u"Zvolte sloupec pro agregaci")),
             choice([(self._AGG_LABELS[op], op) for op in self._AGG_OPERATORS],
-                   tooltip=_("Zvolte agregaËnÌ funkci")),
+                   tooltip=_(u"Zvolte agregaƒçn√≠ funkci")),
             field(None, length=24, readonly=True,
-                  tooltip=_("ZobrazenÌ v˝sledku agregaËnÌ funkce")),
-            button(_("Zjistit"), self._on_compute_aggregate,
-                   tooltip=_("Zobraz v˝sledek zvolenÈ agrekaËnÌ funkce")))
-        box = wx.StaticBox(self._dialog, -1, _("AgregaËnÌ funkce:"))
+                  tooltip=_(u"Zobrazen√≠ v√Ωsledku agregaƒçn√≠ funkce")),
+            button(_(u"Zjistit"), self._on_compute_aggregate,
+                   tooltip=_(u"Zobraz v√Ωsledek zvolen√© agrekaƒçn√≠ funkce")))
+        box = wx.StaticBox(self._dialog, -1, _(u"Agregaƒçn√≠ funkce:"))
         boxsizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
         for ctrl in self._agg_controls:
             boxsizer.Add(ctrl)
@@ -645,7 +645,7 @@ class FilterDialog(SFDialog):
             if op != pytis.data.Data.AGG_COUNT and not isinstance(col.type(), pytis.data.Number):
                 # TODO: We should also support Date and maybe other types, but first it must be
                 # implemented in the data interface.
-                run_dialog(Error, _("Tato operaca nenÌ pro dan˝ typ sloupce podporov·na."))
+                run_dialog(Error, _(u"Tato operaca nen√≠ pro dan√Ω typ sloupce podporov√°na."))
                 v = ''
             else:
                 result = self._compute_aggregate(op, col.id(), condition)

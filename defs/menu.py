@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -31,10 +31,10 @@ from pytis.extensions import Field, nextval
 class ApplicationRolePurposes(pytis.presentation.Specification):
     public = True
     table = 'c_pytis_role_purposes'
-    title = _("⁄Ëely rolÌ")
+    title = _(u"√öƒçely rol√≠")
     fields = (
-        Field('purposeid', _("Identifik·tor")),
-        Field('purpose', _("Popis")),
+        Field('purposeid', _(u"Identifik√°tor")),
+        Field('purpose', _(u"Popis")),
         )
     cb = pytis.presentation.CodebookSpec(display='purpose')
 
@@ -52,74 +52,74 @@ class _ApplicationRolesSpecification(pytis.presentation.Specification):
     
     def on_edit_record(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _("Spr·vcovskÈ role nelze editovat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Spr√°vcovsk√© role nelze editovat"))
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['name'])
 
     def _row_deleteable(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _("Spr·vcovskÈ role nelze mazat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Spr√°vcovsk√© role nelze mazat"))
             return False
         return True
         
     def on_delete_record(self, row):
         if not self._row_deleteable(row):
             return None
-        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete z·znam zcela vymazat?")):
+        if not pytis.form.run_dialog(pytis.form.Question, _(u"Opravdu chcete z√°znam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
     
 class ApplicationRoles(_ApplicationRolesSpecification):
     public = True
     table = 'ev_pytis_roles'
-    title = _("Role")
+    title = _(u"Role")
     fields = (
-        Field('roleid', _("Skupina"),     # to allow binding of ApplicationRolesMembers
+        Field('roleid', _(u"Skupina"),     # to allow binding of ApplicationRolesMembers
               virtual=True, computer=pytis.presentation.computer(lambda row, name: name)),
-        Field('member', _("Obsaæen· role"),     # to allow binding of ApplicationRolesOwners
+        Field('member', _(u"Obsa≈æen√° role"),     # to allow binding of ApplicationRolesOwners
               virtual=True, computer=pytis.presentation.computer(lambda row, name: name)),
-        Field('name', _("N·zev"),
+        Field('name', _(u"N√°zev"),
               fixed=True,
-              descr=_("StruËn˝ n·zev role nebo uæivatelskÈ jmÈno v datab·zi.")),
+              descr=_(u"Struƒçn√Ω n√°zev role nebo u≈æivatelsk√© jm√©no v datab√°zi.")),
         Field('description', "Popis",
-              descr=_("Popis urËenÌ role.")),
-        Field('purposeid', _("⁄Ëel"), codebook='menu.CommonApplicationRolePurposes',
+              descr=_(u"Popis urƒçen√≠ role.")),
+        Field('purposeid', _(u"√öƒçel"), codebook='menu.CommonApplicationRolePurposes',
               fixed=True, selection_type=pytis.presentation.SelectionType.CHOICE,
-              descr=_("⁄Ëel role: norm·lnÌ, uæivatelsk˝ ˙Ëet, spr·vcovsk·.")),
-        Field('purpose', _("⁄Ëel"),
+              descr=_(u"√öƒçel role: norm√°ln√≠, u≈æivatelsk√Ω √∫ƒçet, spr√°vcovsk√°.")),
+        Field('purpose', _(u"√öƒçel"),
               fixed=True,
-              descr=_("V˝znam role: norm·lnÌ, uæivatelsk˝ ˙Ëet, spr·vcovsk·.")),              
-        Field('deleted', _("Datum zruπenÌ"),
+              descr=_(u"V√Ωznam role: norm√°ln√≠, u≈æivatelsk√Ω √∫ƒçet, spr√°vcovsk√°.")),              
+        Field('deleted', _(u"Datum zru≈°en√≠"),
               fixed=True,
-              descr=_("Je-li nastaveno, role je od danÈho data neaktivnÌ.")),
+              descr=_(u"Je-li nastaveno, role je od dan√©ho data neaktivn√≠.")),
         )
     columns = ('name', 'description', 'purpose', 'deleted',)
     layout = ('name', 'description', 'purposeid', 'deleted',)
     sorting = (('name', pytis.data.ASCENDENT,),)
     def actions(self): return (
-        pytis.presentation.Action('copy_roles', _("ZkopÌrovat role od..."), self._copy_roles,
-                                  descr=("NastavenÌ aplikaËnÌch rolÌ dle jinÈho uæivatele.")),
+        pytis.presentation.Action('copy_roles', _(u"Zkop√≠rovat role od..."), self._copy_roles,
+                                  descr=("Nastaven√≠ aplikaƒçn√≠ch rol√≠ dle jin√©ho u≈æivatele.")),
         )
-    bindings = (pytis.presentation.Binding('members', _("Obsahuje role"), 'menu.ApplicationRolesMembers',
+    bindings = (pytis.presentation.Binding('members', _(u"Obsahuje role"), 'menu.ApplicationRolesMembers',
                                            binding_column='roleid'),
-                pytis.presentation.Binding('owners', _("Pat¯Ì do rolÌ"), 'menu.ApplicationRolesOwners',
+                pytis.presentation.Binding('owners', _(u"Pat≈ô√≠ do rol√≠"), 'menu.ApplicationRolesOwners',
                                            binding_column='member'),
-                pytis.presentation.Binding('menu', _("N·hled menu"), 'menu.ApplicationRoleMenu',
+                pytis.presentation.Binding('menu', _(u"N√°hled menu"), 'menu.ApplicationRoleMenu',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), False,)))),
-                pytis.presentation.Binding('previewmenu', _("N·hled chystanÈho menu"), 'menu.ApplicationPreviewRoleMenu',
+                pytis.presentation.Binding('previewmenu', _(u"N√°hled chystan√©ho menu"), 'menu.ApplicationPreviewRoleMenu',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True)))),
-                pytis.presentation.Binding('extmenu', _("RozπÌ¯en˝ n·hled menu"), 'menu.ApplicationRoleMenuExtended',
+                pytis.presentation.Binding('extmenu', _(u"Roz≈°√≠≈ôen√Ω n√°hled menu"), 'menu.ApplicationRoleMenuExtended',
                                            arguments=(lambda row: dict(roleid=row['roleid']))),
-                pytis.presentation.Binding('previewextmenu', _("RozπÌ¯en˝ n·hled chystanÈho menu"), 'menu.ApplicationPreviewRoleMenuExtended',
+                pytis.presentation.Binding('previewextmenu', _(u"Roz≈°√≠≈ôen√Ω n√°hled chystan√©ho menu"), 'menu.ApplicationPreviewRoleMenuExtended',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True)))),
                 )
     
     def on_delete_record(self, row):
         if self._row_deleteable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _("Role nelze mazat, nastavte datum zruπenÌ"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Role nelze mazat, nastavte datum zru≈°en√≠"))
         return None
     
     def _copy_roles(self, row):
@@ -147,23 +147,23 @@ class CommonApplicationRoles(ApplicationRoles):
 class ApplicationRolesMembership(_ApplicationRolesSpecification):
     public = True
     table = 'ev_pytis_valid_role_members'
-    title = "»lenstvÌ v rolÌch"
+    title = "ƒålenstv√≠ v rol√≠ch"
     fields = (
-        Field('id', _("Id"), default=nextval('e_pytis_role_members_id_seq')),
-        Field('roleid', _("Skupina"), fixed=True, codebook='menu.ApplicationApplicationRoles',
-              descr=_("Role, do nÌæ jsou zahrnuty jinÈ role.")),
-        Field('member', _("Obsaæen· role"), fixed=True, codebook='menu.CommonApplicationRoles',
-              descr=_("Role, kter· je Ëlenem skupinovÈ role.")),
-        Field('purposeid', _("Identifik·tor ˙Ëelu role"), codebook='menu.ApplicationRolePurposes'),
-        Field('purpose', _("⁄Ëel role"),
+        Field('id', _(u"Id"), default=nextval('e_pytis_role_members_id_seq')),
+        Field('roleid', _(u"Skupina"), fixed=True, codebook='menu.ApplicationApplicationRoles',
+              descr=_(u"Role, do n√≠≈æ jsou zahrnuty jin√© role.")),
+        Field('member', _(u"Obsa≈æen√° role"), fixed=True, codebook='menu.CommonApplicationRoles',
+              descr=_(u"Role, kter√° je ƒçlenem skupinov√© role.")),
+        Field('purposeid', _(u"Identifik√°tor √∫ƒçelu role"), codebook='menu.ApplicationRolePurposes'),
+        Field('purpose', _(u"√öƒçel role"),
               editable=pytis.presentation.Editable.NEVER, fixed=True),
-        Field('mpurposeid', _("Identifik·tor ˙Ëelu role"), codebook='menu.ApplicationRolePurposes'),
-        Field('mpurpose', _("⁄Ëel role"),
+        Field('mpurposeid', _(u"Identifik√°tor √∫ƒçelu role"), codebook='menu.ApplicationRolePurposes'),
+        Field('mpurpose', _(u"√öƒçel role"),
               editable=pytis.presentation.Editable.NEVER, fixed=True),
-        Field('description', _("Popis"),
-              descr=_("Popis urËenÌ role.")),
-        Field('mdescription', _("Popis"),
-              descr=_("Popis urËenÌ role.")),
+        Field('description', _(u"Popis"),
+              descr=_(u"Popis urƒçen√≠ role.")),
+        Field('mdescription', _(u"Popis"),
+              descr=_(u"Popis urƒçen√≠ role.")),
         )
     columns = ('roleid', 'member',)
     layout = ('roleid', 'member',)
@@ -174,17 +174,17 @@ class ApplicationRolesMembership(_ApplicationRolesSpecification):
         return row['purposeid'].value() != 'admn' and row['mpurposeid'].value() != 'admn'
     
     def on_edit_record(self, row):
-        pytis.form.run_dialog(pytis.form.Warning, _("P¯i¯azenÌ rolÌ nelze editovat, jen p¯id·vat a mazat"))
+        pytis.form.run_dialog(pytis.form.Warning, _(u"P≈ôi≈ôazen√≠ rol√≠ nelze editovat, jen p≈ôid√°vat a mazat"))
         return None
 
 class ApplicationRolesOwners(ApplicationRolesMembership):
     public = True
-    title = _("Za¯azenÌ do skupiny")
+    title = _(u"Za≈ôazen√≠ do skupiny")
     columns = ('roleid', 'purpose', 'description',)
 
 class ApplicationRolesMembers(ApplicationRolesMembership):
     public = True
-    title = _("P¯i¯azenÌ role")
+    title = _(u"P≈ôi≈ôazen√≠ role")
     columns = ('member', 'mpurpose', 'mdescription',)
 
 
@@ -193,11 +193,11 @@ class ApplicationRolesMembers(ApplicationRolesMembership):
 class ApplicationActions(pytis.presentation.Specification):
     public = True
     table = 'c_pytis_menu_actions'
-    title = _("UæivatelskÈ akce")
+    title = _(u"U≈æivatelsk√© akce")
     fields = (
-        Field('fullname', _("NavÏπen· akce"), editable=Editable.NEVER),
-        Field('shortname', _("Akce"), editable=Editable.NEVER),
-        Field('description', _("Popis")),
+        Field('fullname', _(u"Navƒõ≈°en√° akce"), editable=Editable.NEVER),
+        Field('shortname', _(u"Akce"), editable=Editable.NEVER),
+        Field('description', _(u"Popis")),
         )
     columns = ('fullname', 'description',)
     layout = ('fullname', 'description',)
@@ -208,9 +208,9 @@ class ApplicationActions(pytis.presentation.Specification):
 class ApplicationShortActions(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_short_actions'
-    title = _("UæivatelskÈ akce")
+    title = _(u"U≈æivatelsk√© akce")
     fields = (
-        Field('shortname', _("Akce"), editable=Editable.NEVER),
+        Field('shortname', _(u"Akce"), editable=Editable.NEVER),
         )
     sorting = (('shortname', pytis.data.ASCENDENT,),)    
     cb = pytis.presentation.CodebookSpec(display='shortname')
@@ -234,21 +234,21 @@ def _xaction_computer(row, fullname):
 class ApplicationMenu(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_menu'
-    title = _("Menu")
+    title = _(u"Menu")
     fields = (
-        Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq')),
-        Field('name', _("Id obsahujÌcÌ role")),
-        Field('title', _("Titulek poloæky menu"), type=_Title()),
-        Field('xtitle', _("Titulek poloæky menu"), type=_Title()),
-        Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
-        Field('next_position', _("N·sledujÌcÌ pozice v menu"), default='0'),
-        Field('position_nsub', _("PoËet poduzl˘")),
-        Field('fullname', _("NavÏπen· akce"), codebook='menu.ApplicationActions',
-              descr=_("Akce aplikace vyvolan· poloækou menu")),
-        Field('xaction', _("NavÏπen· akce"), virtual=True,
+        Field('menuid', _(u"Id"), default=nextval('e_pytis_menu_menuid_seq')),
+        Field('name', _(u"Id obsahuj√≠c√≠ role")),
+        Field('title', _(u"Titulek polo≈æky menu"), type=_Title()),
+        Field('xtitle', _(u"Titulek polo≈æky menu"), type=_Title()),
+        Field('position', _(u"Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
+        Field('next_position', _(u"N√°sleduj√≠c√≠ pozice v menu"), default='0'),
+        Field('position_nsub', _(u"Poƒçet poduzl≈Ø")),
+        Field('fullname', _(u"Navƒõ≈°en√° akce"), codebook='menu.ApplicationActions',
+              descr=_(u"Akce aplikace vyvolan√° polo≈ækou menu")),
+        Field('xaction', _(u"Navƒõ≈°en√° akce"), virtual=True,
               computer=pytis.presentation.computer(_xaction_computer),
-              descr=_("Akce aplikace vyvolan· poloækou menu")),
-        Field('locked', _("Z·kaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
+              descr=_(u"Akce aplikace vyvolan√° polo≈ækou menu")),
+        Field('locked', _(u"Z√°kaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         )
     columns = ('xtitle', 'xaction', 'locked',)
     layout = ('title', 'position',)
@@ -257,84 +257,84 @@ class ApplicationMenu(pytis.presentation.Specification):
     folding = pytis.form.FoldableForm.Folding(level=2)
     def on_edit_record(self, row):
         if row['locked'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _("Tuto poloæku menu nelze editovat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto polo≈æku menu nelze editovat"))
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['menuid'])    
     def on_delete_record(self, row):
         if row['locked'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _("Tuto poloæku menu nelze smazat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto polo≈æku menu nelze smazat"))
             return None
         if row['name'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _("KoncovÈ poloæky menu nelze mazat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Koncov√© polo≈æky menu nelze mazat"))
             return None
         wm_value = row['position'].value() + '.*'
         if (row.data().select(condition=pytis.data.AND(pytis.data.LTreeMatch('position', wm_value),
                                                        pytis.data.NE('position', row['position'])))
             > 0):
-            pytis.form.run_dialog(pytis.form.Warning, _("Nelze mazat poloæky obsahujÌcÌ jinÈ poloæky"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Nelze mazat polo≈æky obsahuj√≠c√≠ jin√© polo≈æky"))
             return None
-        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete z·znam zcela vymazat?")):
+        if not pytis.form.run_dialog(pytis.form.Question, _(u"Opravdu chcete z√°znam zcela vymazat?")):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
     
 class ApplicationMenuM(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_menu_structure'
-    title = _("Menu")
+    title = _(u"Menu")
     fields = (
-        Field('fullname', _("NavÏπen· akce"), codebook='menu.ApplicationActions',
+        Field('fullname', _(u"Navƒõ≈°en√° akce"), codebook='menu.ApplicationActions',
               editable=pytis.presentation.Editable.NEVER,
-              descr=_("Akce aplikace vyvolan· poloækou menu")),
-        Field('shortname', _("Akce"), codebook='menu.ApplicationShortActions',
+              descr=_(u"Akce aplikace vyvolan√° polo≈ækou menu")),
+        Field('shortname', _(u"Akce"), codebook='menu.ApplicationShortActions',
               editable=pytis.presentation.Editable.NEVER),
-        Field('actiontype', _("Typ poloæky"), fixed=True,
+        Field('actiontype', _(u"Typ polo≈æky"), fixed=True,
               editable=pytis.presentation.Editable.NEVER),
-        Field('menuid', _("Id"), default=nextval('e_pytis_menu_menuid_seq'),
+        Field('menuid', _(u"Id"), default=nextval('e_pytis_menu_menuid_seq'),
               editable=pytis.presentation.Editable.NEVER),
-        Field('title', _("Titulek poloæky menu"), type=_Title(),
+        Field('title', _(u"Titulek polo≈æky menu"), type=_Title(),
               editable=pytis.presentation.Editable.NEVER),
-        Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions',
+        Field('position', _(u"Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions',
               editable=pytis.presentation.Editable.NEVER),
-        Field('position_nsub', _("PoËet poduzl˘"),
+        Field('position_nsub', _(u"Poƒçet poduzl≈Ø"),
               editable=pytis.presentation.Editable.NEVER),
-        Field('xaction', _("NavÏπen· akce"), virtual=True,
+        Field('xaction', _(u"Navƒõ≈°en√° akce"), virtual=True,
               computer=pytis.presentation.computer(_xaction_computer),
               editable=pytis.presentation.Editable.NEVER,
-              descr=_("Akce aplikace vyvolan· poloækou menu")),
-        Field('locked', _("Z·kaz editace"), fixed=True,
+              descr=_(u"Akce aplikace vyvolan√° polo≈ækou menu")),
+        Field('locked', _(u"Z√°kaz editace"), fixed=True,
               editable=pytis.presentation.Editable.NEVER),
-        Field('description', _("Pozn·mka")),
+        Field('description', _(u"Pozn√°mka")),
         )
     columns = ('title', 'actiontype', 'fullname', 'description',)
     layout = ('title', 'position', 'actiontype', 'fullname', 'description',)
-    bindings = (pytis.presentation.Binding('role_rights', _("Rozpis pr·v podle rolÌ"), 'menu.ApplicationMenuRightsFoldable',
+    bindings = (pytis.presentation.Binding('role_rights', _(u"Rozpis pr√°v podle rol√≠"), 'menu.ApplicationMenuRightsFoldable',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        column=pytis.data.Value(pytis.data.String(), 'roleid',)))),
-                pytis.presentation.Binding('column_rights', _("Rozpis pr·v podle sloupc˘"), 'menu.ApplicationMenuRightsFoldableColumn',
+                pytis.presentation.Binding('column_rights', _(u"Rozpis pr√°v podle sloupc≈Ø"), 'menu.ApplicationMenuRightsFoldableColumn',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        column=pytis.data.Value(pytis.data.String(), 'colname',)))),
-                pytis.presentation.Binding('summary_rights', _("Pr·va poloæky menu"), 'menu.ApplicationSummaryRights',
+                pytis.presentation.Binding('summary_rights', _(u"Pr√°va polo≈æky menu"), 'menu.ApplicationSummaryRights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), False,),
                                                                        multirights=ApplicationMenuM._multiform_row(row),
                                                                        ))),
-                pytis.presentation.Binding('preview_rights', _("Chystan· pr·va poloæky"), 'menu.ApplicationPreviewRights',
+                pytis.presentation.Binding('preview_rights', _(u"Chystan√° pr√°va polo≈æky"), 'menu.ApplicationPreviewRights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True,),
                                                                        multirights=ApplicationMenuM._multiform_row(row),
                                                                        ))),
-                pytis.presentation.Binding('changes', _("ChystanÈ zmÏny"), 'menu.ApplicationChangedRights',
+                pytis.presentation.Binding('changes', _(u"Chystan√© zmƒõny"), 'menu.ApplicationChangedRights',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        multirights=ApplicationMenuM._multiform_row(row),
                                                                        ))),
-                pytis.presentation.Binding('users', _("UæivatelÈ"), 'statistics.FormUserStatisticsNoinfo',
+                pytis.presentation.Binding('users', _(u"U≈æivatel√©"), 'statistics.FormUserStatisticsNoinfo',
                                            condition=(lambda row: pytis.data.EQ('shortname', row['shortname']))),
                 )
     def actions(self): return (
-        pytis.presentation.Action('copy_rights', _("ZkopÌrovat pr·va z..."), self._copy_rights,
-                                  descr=("ZkopÌrov·nÌ pr·v z jinÈ poloæky.")),
-        pytis.presentation.Action('a_odstranit_nadbytecna_prava', _("Odstranit nadbyteËn· pr·va"), self._remove_redundant,
-                                  descr=("OdstranÏnÌ poloæek pr·v, kterÈ nemajÌ vliv na v˝sledn· pr·va.")),
+        pytis.presentation.Action('copy_rights', _(u"Zkop√≠rovat pr√°va z..."), self._copy_rights,
+                                  descr=("Zkop√≠rov√°n√≠ pr√°v z jin√© polo≈æky.")),
+        pytis.presentation.Action('a_odstranit_nadbytecna_prava', _(u"Odstranit nadbyteƒçn√° pr√°va"), self._remove_redundant,
+                                  descr=("Odstranƒõn√≠ polo≈æek pr√°v, kter√© nemaj√≠ vliv na v√Ωsledn√° pr√°va.")),
         )
     access_rights = pytis.data.AccessRights((None, (['admin_menu'],
                                                     pytis.data.Permission.VIEW,
@@ -362,7 +362,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
 
     def _remove_redundant(self, row):
         if not pytis.form.run_dialog(pytis.form.Question,
-                                     (_("Opravdu chcete odstranit nadbyteËn· pr·va poloæky \"%s\"?") %
+                                     (_(u"Opravdu chcete odstranit nadbyteƒçn√° pr√°va polo≈æky \"%s\"?") %
                                       (row['title'].value() or '',))):
             return
         result = pytis.extensions.dbfunction('pytis_remove_redundant', ('shortname', row['shortname'],),)
@@ -370,22 +370,22 @@ class ApplicationMenuM(pytis.presentation.Specification):
 class ApplicationMenuCodebook(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_menu_structure'
-    title = _("Menu")
+    title = _(u"Menu")
     fields = (
-        Field('position', _("Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions',
+        Field('position', _(u"Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions',
               editable=pytis.presentation.Editable.NEVER),
-        Field('position_nsub', _("PoËet poduzl˘"),
+        Field('position_nsub', _(u"Poƒçet poduzl≈Ø"),
               editable=pytis.presentation.Editable.NEVER),
-        Field('fullname', _("NavÏπen· akce"), codebook='menu.ApplicationActions',
+        Field('fullname', _(u"Navƒõ≈°en√° akce"), codebook='menu.ApplicationActions',
               editable=pytis.presentation.Editable.NEVER,
-              descr=_("Akce aplikace vyvolan· poloækou menu")),
-        Field('shortname', _("Akce"), codebook='menu.ApplicationShortActions',
+              descr=_(u"Akce aplikace vyvolan√° polo≈ækou menu")),
+        Field('shortname', _(u"Akce"), codebook='menu.ApplicationShortActions',
               editable=pytis.presentation.Editable.NEVER),
-        Field('actiontype', _("Typ poloæky"), fixed=True,
+        Field('actiontype', _(u"Typ polo≈æky"), fixed=True,
               editable=pytis.presentation.Editable.NEVER),
-        Field('title', _("Titulek poloæky menu"), type=_Title(),
+        Field('title', _(u"Titulek polo≈æky menu"), type=_Title(),
               editable=pytis.presentation.Editable.NEVER),
-        Field('description', _("Pozn·mka")),
+        Field('description', _(u"Pozn√°mka")),
         )
     columns = ('title', 'actiontype', 'description',)
     sorting=(('position', pytis.data.ASCENDENT,),)
@@ -399,11 +399,11 @@ class ApplicationMenuCodebook(pytis.presentation.Specification):
 class ApplicationMenuPositions(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_menu_positions'
-    title = _("Menu")
+    title = _(u"Menu")
     fields = (
-        Field('position', _("Pozice v menu"), fixed=True),
-        Field('title', _("Titulek poloæky menu"), type=_Title()),
-        Field('xtitle', _("Titulek poloæky menu"), type=_Title()),
+        Field('position', _(u"Pozice v menu"), fixed=True),
+        Field('title', _(u"Titulek polo≈æky menu"), type=_Title()),
+        Field('xtitle', _(u"Titulek polo≈æky menu"), type=_Title()),
         )
     columns = ('xtitle',)
     layout = ('title', 'position',)
@@ -415,9 +415,9 @@ class ApplicationMenuPositions(pytis.presentation.Specification):
 class ApplicationRights(pytis.presentation.Specification):
     public = True
     table = 'c_pytis_access_rights'
-    title = "Seznam pr·v"
+    title = "Seznam pr√°v"
     fields = (
-        Field('rightid', "Pr·vo", fixed=True),
+        Field('rightid', "Pr√°vo", fixed=True),
         Field('description', "Popis"),
         )
     columns = ('rightid', 'description',)
@@ -429,7 +429,7 @@ def _colname_description(row, shortname, colname):
     if components[0] != 'form':
         return None
     if not colname:
-        return _("Cel˝ formul·¯")
+        return _(u"Cel√Ω formul√°≈ô")
     spec_name = components[1]
     resolver = pytis.util.resolver()
     try:
@@ -446,9 +446,9 @@ class ApplicationColumns(pytis.presentation.Specification):
     table = 'ev_pytis_colnames'
     title = "Sloupce"
     fields = (
-        Field('colname', _("Identifik·tor"), fixed=True),
-        Field('shortname', _("Akce")),
-        Field('description', _("Popis"), type=pytis.data.String(),
+        Field('colname', _(u"Identifik√°tor"), fixed=True),
+        Field('shortname', _(u"Akce")),
+        Field('description', _(u"Popis"), type=pytis.data.String(),
               virtual=True, computer=pytis.presentation.computer(_colname_description)),
         )
     columns = ('colname', 'description',)
@@ -468,10 +468,10 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
                                 condition=pytis.data.EQ('shortname', shortname))
         if len(items) > 1:
             current_menuid = main_form.current_row()['menuid'].value()
-            message = _("Pozor, tato poloæka se vyskytuje i na jin˝ch mÌstech menu:")
+            message = _(u"Pozor, tato polo≈æka se vyskytuje i na jin√Ωch m√≠stech menu:")
             for menuid, title in items:
                 if menuid != current_menuid:
-                    message = message + '\n  ' + (title or _("[bez titulku]"))
+                    message = message + '\n  ' + (title or _(u"[bez titulku]"))
             pytis.form.run_dialog(pytis.form.Warning, message)
     def _codebook_rights_check(self):
         main_form = pytis.form.current_form().main_form()
@@ -485,7 +485,7 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
                   menu_checker.check_reverse_codebook_rights(spec_name, new=True))
         if errors:
             message = ('\n'.join(errors)) + '\n\n\n'
-            pytis.form.run_dialog(pytis.form.Warning, "Rozporupln· p¯Ìstupov· pr·va k ËÌselnÌku",
+            pytis.form.run_dialog(pytis.form.Warning, "Rozporupln√° p≈ô√≠stupov√° pr√°va k ƒç√≠seln√≠ku",
                                   report=message)
     def _before_edit_checks(self):
         self._multiaction_check()
@@ -495,31 +495,31 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
 class ApplicationMenuRights(_ApplicationMenuRightsBase):
     public = True
     table = 'ev_pytis_action_rights'
-    title = _("Pr·va")
+    title = _(u"Pr√°va")
     fields = (
-        Field('id', _("Id"), default=nextval('e_pytis_action_rights_id_seq')),
-        Field('roleid', _("Role"), codebook='menu.ApplicationRoles',
+        Field('id', _(u"Id"), default=nextval('e_pytis_action_rights_id_seq')),
+        Field('roleid', _(u"Role"), codebook='menu.ApplicationRoles',
               fixed=True),
-        Field('purpose', _("⁄Ëel role"),
+        Field('purpose', _(u"√öƒçel role"),
               editable=pytis.presentation.Editable.NEVER, fixed=True),
-        Field('shortname', _("Akce"), editable=pytis.presentation.Editable.NEVER,
+        Field('shortname', _(u"Akce"), editable=pytis.presentation.Editable.NEVER,
               codebook='menu.ApplicationShortActions',
-              descr=_("Identifik·tor akce souvisejÌcÌ s danou poloækou menu")),
-        Field('colname', _("Sloupec"),
+              descr=_(u"Identifik√°tor akce souvisej√≠c√≠ s danou polo≈ækou menu")),
+        Field('colname', _(u"Sloupec"),
               fixed=True,
               codebook='menu.ApplicationColumns', not_null=False,
               runtime_filter=pytis.presentation.Computer(lambda row: pytis.data.EQ('shortname', row['shortname']), depends=('shortname',)),
-              descr=_("Sloupec, na kter˝ se pr·vo vztahuje")),
-        Field('rightid', _("Pr·vo"), codebook='menu.ApplicationRights',
+              descr=_(u"Sloupec, na kter√Ω se pr√°vo vztahuje")),
+        Field('rightid', _(u"Pr√°vo"), codebook='menu.ApplicationRights',
               fixed=True,
-              descr=_("P¯idÏlenÈ nebo odebranÈ pr·vo")),
-        Field('system', _("SystÈmovÈ"), fixed=True,
-              descr=_("Jde o nemÏnnÈ pr·vo definov·no tv˘rcem aplikace?")),
-        Field('granted', _("Ano/Ne"), fixed=True, default=True,
-              descr=_("Je pr·vo povoleno (ano) nebo zak·z·no (ne)?")),
-        Field('redundant', _("NadbyteËnÈ"), fixed=True,
+              descr=_(u"P≈ôidƒõlen√© nebo odebran√© pr√°vo")),
+        Field('system', _(u"Syst√©mov√©"), fixed=True,
+              descr=_(u"Jde o nemƒõnn√© pr√°vo definov√°no tv≈Ørcem aplikace?")),
+        Field('granted', _(u"Ano/Ne"), fixed=True, default=True,
+              descr=_(u"Je pr√°vo povoleno (ano) nebo zak√°z√°no (ne)?")),
+        Field('redundant', _(u"Nadbyteƒçn√©"), fixed=True,
               editable=pytis.presentation.Editable.NEVER,
-              descr=_("Je toto pr·vo nadbyteËnÈ, bez vlivu na v˝sledn· pr·va?")),
+              descr=_(u"Je toto pr√°vo nadbyteƒçn√©, bez vlivu na v√Ωsledn√° pr√°va?")),
         )
     columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
     layout = ('shortname', 'roleid', 'rightid', 'granted', 'colname',)
@@ -537,7 +537,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
         return result
     def on_edit_record(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _("SystÈmov· pr·va nelze editovat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Syst√©mov√° pr√°va nelze editovat"))
             return None
         self._before_edit_checks()
         result = pytis.form.run_form(pytis.form.PopupEditForm, 'menu.'+self.__class__.__name__, select_row=row['id'])
@@ -546,27 +546,27 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
         return result
     def _row_deleteable(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _("SystÈmov· pr·va nelze mazat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Syst√©mov√° pr√°va nelze mazat"))
             return False
         return True
     def on_delete_record(self, row):
         if not self._row_deleteable(row):
             return None
         self._before_edit_checks()
-        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete z·znam zcela vymazat?")):
+        if not pytis.form.run_dialog(pytis.form.Question, _(u"Opravdu chcete z√°znam zcela vymazat?")):
             return None
         result = row.data().delete((row['id'],))
         if result:
             self._after_edit_checks()
         else:
-            result = "ÿ·dek se nepoda¯ilo vymazat"
+            result = "≈ò√°dek se nepoda≈ôilo vymazat"
         return result
     def proc_spec(self):
         def commit_changes():
             if pytis.extensions.dbfunction("pytis_update_summary_rights"):
-                message = _("ZmÏny aplikov·ny")
+                message = _(u"Zmƒõny aplikov√°ny")
             else:
-                message = _("Prov·dÏnÌ zmÏn uzamËeno, zmÏny nebyly aplikov·ny")
+                message = _(u"Prov√°dƒõn√≠ zmƒõn uzamƒçeno, zmƒõny nebyly aplikov√°ny")
             pytis.form.run_dialog(pytis.form.Message, message)
         return {'commit_changes': commit_changes}
     
@@ -582,32 +582,32 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
     arguments = (Field('shortname', "", type=pytis.data.String()),
                  Field('column', "", type=pytis.data.String()),
                  )
-    title = _("Pr·va")
+    title = _(u"Pr√°va")
     fields = (
-        Field('id', _("Id"), type=pytis.data.Integer()),
-        Field('tree', _("Stromov˝ identifik·tor"), type=pytis.data.LTree()),
-        Field('subcount', _("PoËet poduzl˘"), type=pytis.data.Integer()),
-        Field('roleid', _("Role"), type=_RightsTree(),
+        Field('id', _(u"Id"), type=pytis.data.Integer()),
+        Field('tree', _(u"Stromov√Ω identifik√°tor"), type=pytis.data.LTree()),
+        Field('subcount', _(u"Poƒçet poduzl≈Ø"), type=pytis.data.Integer()),
+        Field('roleid', _(u"Role"), type=_RightsTree(),
               fixed=True),
-        Field('purpose', _("⁄Ëel role"), type=pytis.data.String(),
+        Field('purpose', _(u"√öƒçel role"), type=pytis.data.String(),
               fixed=True),
-        Field('shortname', _("Akce"), type=pytis.data.String(),
-              descr=_("Identifik·tor akce souvisejÌcÌ s danou poloækou menu")),
-        Field('colname', _("Sloupec"), type=pytis.data.String(),
+        Field('shortname', _(u"Akce"), type=pytis.data.String(),
+              descr=_(u"Identifik√°tor akce souvisej√≠c√≠ s danou polo≈ækou menu")),
+        Field('colname', _(u"Sloupec"), type=pytis.data.String(),
               fixed=True,
-              descr=_("Sloupec, na kter˝ se pr·vo vztahuje")),
-        Field('rightid', _("Pr·vo"), type=pytis.data.String(),
+              descr=_(u"Sloupec, na kter√Ω se pr√°vo vztahuje")),
+        Field('rightid', _(u"Pr√°vo"), type=pytis.data.String(),
               fixed=True,
-              descr=_("P¯idÏlenÈ nebo odebranÈ pr·vo")),
-        Field('system', _("SystÈmovÈ"), type=pytis.data.Boolean(),
+              descr=_(u"P≈ôidƒõlen√© nebo odebran√© pr√°vo")),
+        Field('system', _(u"Syst√©mov√©"), type=pytis.data.Boolean(),
               fixed=True,
-              descr=_("Jde o nemÏnnÈ pr·vo definov·no tv˘rcem aplikace?")),
-        Field('granted', _("Ano/Ne"), type=pytis.data.Boolean(),
+              descr=_(u"Jde o nemƒõnn√© pr√°vo definov√°no tv≈Ørcem aplikace?")),
+        Field('granted', _(u"Ano/Ne"), type=pytis.data.Boolean(),
               fixed=True, default=True,
-              descr=_("Je pr·vo povoleno (ano) nebo zak·z·no (ne)?")),
-        Field('redundant', _("NadbyteËnÈ"), type=pytis.data.Boolean(),
+              descr=_(u"Je pr√°vo povoleno (ano) nebo zak√°z√°no (ne)?")),
+        Field('redundant', _(u"Nadbyteƒçn√©"), type=pytis.data.Boolean(),
               fixed=True,
-              descr=_("Je toto pr·vo nadbyteËnÈ, bez vlivu na v˝sledn· pr·va?")),
+              descr=_(u"Je toto pr√°vo nadbyteƒçn√©, bez vlivu na v√Ωsledn√° pr√°va?")),
         )
     columns = ('roleid', 'purpose', 'colname', 'rightid', 'system', 'granted', 'redundant',)
     layout = ('shortname', 'roleid', 'purpose', 'rightid', 'granted',)
@@ -631,7 +631,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
         return not row['system'].value() and row['id'].value() >= 0
     def on_edit_record(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _("SystÈmov· pr·va nelze editovat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Syst√©mov√° pr√°va nelze editovat"))
             return None
         self._before_edit_checks()
         result = pytis.form.run_form(pytis.form.PopupEditForm, 'menu.ApplicationMenuRights', select_row=row['id'])
@@ -640,7 +640,7 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
         return result
     def _row_deleteable(self, row):
         if not self._row_editable(row):
-            pytis.form.run_dialog(pytis.form.Warning, _("SystÈmov· pr·va nelze mazat"))
+            pytis.form.run_dialog(pytis.form.Warning, _(u"Syst√©mov√° pr√°va nelze mazat"))
             return False
         return True
     def on_delete_record(self, row):
@@ -648,44 +648,44 @@ class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
         if not self._row_deleteable(row):
             return None
         self._before_edit_checks()
-        if not pytis.form.run_dialog(pytis.form.Question, _("Opravdu chcete z·znam zcela vymazat?")):
+        if not pytis.form.run_dialog(pytis.form.Question, _(u"Opravdu chcete z√°znam zcela vymazat?")):
             return None
         data = pytis.extensions.data_object('menu.ApplicationMenuRights')
         result = data.delete((row['id'],))
         if result:
             self._after_edit_checks()
         else:
-            result = "ÿ·dek se nepoda¯ilo vymazat"
+            result = "≈ò√°dek se nepoda≈ôilo vymazat"
         return 1
 
 class ApplicationMenuRightsFoldableColumn(ApplicationMenuRightsFoldable):
     public = True
     table = 'pytis_action_rights_foldable'
     fields = (
-        Field('id', _("Id"), type=pytis.data.Integer()),
-        Field('tree', _("Stromov˝ identifik·tor"), type=pytis.data.LTree()),
-        Field('subcount', _("PoËet poduzl˘"), type=pytis.data.Integer()),
-        Field('roleid', _("Role"), type=pytis.data.String(),
+        Field('id', _(u"Id"), type=pytis.data.Integer()),
+        Field('tree', _(u"Stromov√Ω identifik√°tor"), type=pytis.data.LTree()),
+        Field('subcount', _(u"Poƒçet poduzl≈Ø"), type=pytis.data.Integer()),
+        Field('roleid', _(u"Role"), type=pytis.data.String(),
               fixed=True),
-        Field('purpose', _("⁄Ëel role"), type=pytis.data.String(),
+        Field('purpose', _(u"√öƒçel role"), type=pytis.data.String(),
               fixed=True),
-        Field('shortname', _("Akce"), type=pytis.data.String(),
-              descr=_("Identifik·tor akce souvisejÌcÌ s danou poloækou menu")),
-        Field('colname', _("Sloupec"), type=_RightsTree(),
+        Field('shortname', _(u"Akce"), type=pytis.data.String(),
+              descr=_(u"Identifik√°tor akce souvisej√≠c√≠ s danou polo≈ækou menu")),
+        Field('colname', _(u"Sloupec"), type=_RightsTree(),
               fixed=True,
-              descr=_("Sloupec, na kter˝ se pr·vo vztahuje")),
-        Field('rightid', _("Pr·vo"), type=pytis.data.String(),
+              descr=_(u"Sloupec, na kter√Ω se pr√°vo vztahuje")),
+        Field('rightid', _(u"Pr√°vo"), type=pytis.data.String(),
               fixed=True,
-              descr=_("P¯idÏlenÈ nebo odebranÈ pr·vo")),
-        Field('system', _("SystÈmovÈ"), type=pytis.data.Boolean(),
+              descr=_(u"P≈ôidƒõlen√© nebo odebran√© pr√°vo")),
+        Field('system', _(u"Syst√©mov√©"), type=pytis.data.Boolean(),
               fixed=True,
-              descr=_("Jde o nemÏnnÈ pr·vo definov·no tv˘rcem aplikace?")),
-        Field('granted', _("Ano/Ne"), type=pytis.data.Boolean(),
+              descr=_(u"Jde o nemƒõnn√© pr√°vo definov√°no tv≈Ørcem aplikace?")),
+        Field('granted', _(u"Ano/Ne"), type=pytis.data.Boolean(),
               fixed=True, default=True,
-              descr=_("Je pr·vo povoleno (ano) nebo zak·z·no (ne)?")),
-        Field('redundant', _("NadbyteËnÈ"), type=pytis.data.Boolean(),
+              descr=_(u"Je pr√°vo povoleno (ano) nebo zak√°z√°no (ne)?")),
+        Field('redundant', _(u"Nadbyteƒçn√©"), type=pytis.data.Boolean(),
               fixed=True,
-              descr=_("Je toto pr·vo nadbyteËnÈ, bez vlivu na v˝sledn· pr·va?")),
+              descr=_(u"Je toto pr√°vo nadbyteƒçn√©, bez vlivu na v√Ωsledn√° pr√°va?")),
         )
     columns = ('colname', 'roleid', 'purpose', 'rightid', 'system', 'granted', 'redundant',)
 
@@ -696,37 +696,37 @@ class _MenuidPreviewType(pytis.data.Integer):
 class ApplicationSummaryRights(pytis.presentation.Specification):
     public = True
     table = 'pytis_view_summary_rights'
-    title = _("Souhrnn· pr·va")
+    title = _(u"Souhrnn√° pr√°va")
     arguments = (Field('shortname', "", type=pytis.data.String()),
                  Field('roleid', "", type=pytis.data.String()),
                  Field('new', "", type=pytis.data.Boolean()),
                  Field('multirights', "", type=pytis.data.Boolean()),
                  )
     fields = (
-        Field('roleid', _("Role"), type=pytis.data.String(not_null=True),
+        Field('roleid', _(u"Role"), type=pytis.data.String(not_null=True),
               fixed=True),
-        Field('purpose', _("⁄Ëel role"), type=pytis.data.String(),
+        Field('purpose', _(u"√öƒçel role"), type=pytis.data.String(),
               editable=pytis.presentation.Editable.NEVER, fixed=True),
-        Field('columns', _("Sloupce"), type=pytis.data.String(),
+        Field('columns', _(u"Sloupce"), type=pytis.data.String(),
               editable=pytis.presentation.Editable.NEVER,
-              descr=_("Sloupce, na kterÈ je pr·vo aplikov·no; nenÌ-li uvedeno, tak vπechny.")),
-        Field('rights', _("Pr·va"), type=pytis.data.String(), fixed=True),
-        Field('rights_show', _("Menu"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("ZobrazenÌ v menu")),
-        Field('rights_view', _("N·hled"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("ZobrazenÌ formul·¯e")),
-        Field('rights_insert', _("VloæenÌ"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("VloæenÌ novÈho z·znamu")),
-        Field('rights_update', _("Editace"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("ZmÏna hodnot existujÌcÌho z·znamu")),
-        Field('rights_delete', _("Smaz·nÌ"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("Smaz·nÌ existujÌcÌho z·znamu")),
-        Field('rights_print', _("Tisk"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("Tisk formul·¯e")),
-        Field('rights_export', _("Export"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("Export formul·¯e do souboru")),
-        Field('rights_call', _("SpuπtÏnÌ"), type=pytis.data.Boolean(), fixed=True,
-              descr=_("SpuπtÏnÌ funkce (net˝k· se formul·¯˘)")),
+              descr=_(u"Sloupce, na kter√© je pr√°vo aplikov√°no; nen√≠-li uvedeno, tak v≈°echny.")),
+        Field('rights', _(u"Pr√°va"), type=pytis.data.String(), fixed=True),
+        Field('rights_show', _(u"Menu"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Zobrazen√≠ v menu")),
+        Field('rights_view', _(u"N√°hled"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Zobrazen√≠ formul√°≈ôe")),
+        Field('rights_insert', _(u"Vlo≈æen√≠"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Vlo≈æen√≠ nov√©ho z√°znamu")),
+        Field('rights_update', _(u"Editace"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Zmƒõna hodnot existuj√≠c√≠ho z√°znamu")),
+        Field('rights_delete', _(u"Smaz√°n√≠"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Smaz√°n√≠ existuj√≠c√≠ho z√°znamu")),
+        Field('rights_print', _(u"Tisk"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Tisk formul√°≈ôe")),
+        Field('rights_export', _(u"Export"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Export formul√°≈ôe do souboru")),
+        Field('rights_call', _(u"Spu≈°tƒõn√≠"), type=pytis.data.Boolean(), fixed=True,
+              descr=_(u"Spu≈°tƒõn√≠ funkce (net√Ωk√° se formul√°≈ô≈Ø)")),
         )
     columns = ('roleid', 'purpose', 'columns', 'rights_show', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
@@ -744,18 +744,18 @@ class ApplicationSummaryRights(pytis.presentation.Specification):
 class ApplicationPreviewRights(ApplicationSummaryRights):
     public = True
     table = 'pytis_view_summary_rights'
-    title = _("Chystan· pr·va")
+    title = _(u"Chystan√° pr√°va")
 
 class ApplicationChangedRights(ApplicationSummaryRights):
     public = True
     table = 'pytis_changed_rights'
-    title = _("ChystanÈ zmÏny pr·v")
+    title = _(u"Chystan√© zmƒõny pr√°v")
     arguments = (Field('shortname', "", type=pytis.data.String()),
                  Field('roleid', "", type=pytis.data.String()),
                  Field('multirights', "", type=pytis.data.Boolean()),
                  )
     fields = (ApplicationSummaryRights.fields +
-              (Field('change', _("NovÈ"), type=pytis.data.Boolean(),
+              (Field('change', _(u"Nov√©"), type=pytis.data.Boolean(),
                      editable=pytis.presentation.Editable.NEVER, fixed=True),))
     _STYLE_OLD = pytis.presentation.Style(background=pytis.presentation.Color.GRAY10)
     def row_style(self, row):
@@ -765,34 +765,34 @@ class ApplicationChangedRights(ApplicationSummaryRights):
 class ApplicationRoleMenu(pytis.presentation.Specification):
     public = True
     table = 'pytis_view_role_menu'
-    title = _("Menu uæivatele")
+    title = _(u"Menu u≈æivatele")
     arguments = (Field('roleid', "", type=pytis.data.String()),
                  Field('new', "", type=pytis.data.Boolean()),
                  )
     fields = (
-        Field('menuid', _("Identifik·tor poloæky menu"), type=pytis.data.Integer()),
-        Field('roleid', _("Role"), type=pytis.data.String(),
+        Field('menuid', _(u"Identifik√°tor polo≈æky menu"), type=pytis.data.Integer()),
+        Field('roleid', _(u"Role"), type=pytis.data.String(),
               fixed=True),
-        Field('title', _("Titulek poloæky menu"), type=_Title(), fixed=True),
-        Field('position', _("Pozice v menu"), type=pytis.data.String()),
-        Field('position_nsub', _("PoËet poduzl˘"), type=pytis.data.Integer()),
-        Field('rights', _("Pr·va"), type=pytis.data.String()),
-        Field('rights_show', _("Menu"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("ZobrazenÌ v menu")),
-        Field('rights_view', _("N·hled"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("ZobrazenÌ formul·¯e")),
-        Field('rights_insert', _("VloæenÌ"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("VloæenÌ novÈho z·znamu")),
-        Field('rights_update', _("Editace"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("ZmÏna hodnot existujÌcÌho z·znamu")),
-        Field('rights_delete', _("Smaz·nÌ"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("Smaz·nÌ existujÌcÌho z·znamu")),
-        Field('rights_print', _("Tisk"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("Tisk formul·¯e")),
-        Field('rights_export', _("Export"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("Export formul·¯e do souboru")),
-        Field('rights_call', _("SpuπtÏnÌ"), fixed=True, type=pytis.data.Boolean(),
-              descr=_("SpuπtÏnÌ funkce (net˝k· se formul·¯˘)")),
+        Field('title', _(u"Titulek polo≈æky menu"), type=_Title(), fixed=True),
+        Field('position', _(u"Pozice v menu"), type=pytis.data.String()),
+        Field('position_nsub', _(u"Poƒçet poduzl≈Ø"), type=pytis.data.Integer()),
+        Field('rights', _(u"Pr√°va"), type=pytis.data.String()),
+        Field('rights_show', _(u"Menu"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Zobrazen√≠ v menu")),
+        Field('rights_view', _(u"N√°hled"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Zobrazen√≠ formul√°≈ôe")),
+        Field('rights_insert', _(u"Vlo≈æen√≠"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Vlo≈æen√≠ nov√©ho z√°znamu")),
+        Field('rights_update', _(u"Editace"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Zmƒõna hodnot existuj√≠c√≠ho z√°znamu")),
+        Field('rights_delete', _(u"Smaz√°n√≠"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Smaz√°n√≠ existuj√≠c√≠ho z√°znamu")),
+        Field('rights_print', _(u"Tisk"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Tisk formul√°≈ôe")),
+        Field('rights_export', _(u"Export"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Export formul√°≈ôe do souboru")),
+        Field('rights_call', _(u"Spu≈°tƒõn√≠"), fixed=True, type=pytis.data.Boolean(),
+              descr=_(u"Spu≈°tƒõn√≠ funkce (net√Ωk√° se formul√°≈ô≈Ø)")),
         )
     columns = ('title', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
@@ -810,17 +810,17 @@ class ApplicationRoleMenu(pytis.presentation.Specification):
 class ApplicationPreviewRoleMenu(ApplicationRoleMenu):
     public = True
     table = 'pytis_view_role_menu'
-    title = _("ChystanÈ menu uæivatele")
+    title = _(u"Chystan√© menu u≈æivatele")
     
 class ApplicationRoleMenuExtended(ApplicationRoleMenu):
     public = True
     table = 'pytis_view_extended_role_menu'
-    title = _("RozπÌ¯enÈ menu uæivatele")
+    title = _(u"Roz≈°√≠≈ôen√© menu u≈æivatele")
     arguments = (Field('roleid', "", type=pytis.data.String()),
                  Field('new', "", type=pytis.data.Boolean()),
                  )
     fields = (ApplicationRoleMenu.fields +
-              (Field('actiontype', _("Typ poloæky"), fixed=True, editable=pytis.presentation.Editable.NEVER,
+              (Field('actiontype', _(u"Typ polo≈æky"), fixed=True, editable=pytis.presentation.Editable.NEVER,
                type=pytis.data.String()),))
     columns = ('title', 'actiontype', 'roleid', 'rights_view', 'rights_insert', 'rights_update',
                'rights_delete', 'rights_print', 'rights_export', 'rights_call',)
@@ -830,4 +830,4 @@ class ApplicationRoleMenuExtended(ApplicationRoleMenu):
 class ApplicationPreviewRoleMenuExtended(ApplicationRoleMenuExtended):
     public = True
     table = 'pytis_view_extended_role_menu'
-    title = _("ChystanÈ rozπÌ¯enÈ menu uæivatele")
+    title = _(u"Chystan√© roz≈°√≠≈ôen√© menu u≈æivatele")

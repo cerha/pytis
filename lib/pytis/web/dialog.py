@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2007, 2008, 2011 Brailcom, o.p.s.
 #
@@ -48,7 +48,7 @@ class Dialog(lcg.Content):
             hidden += [('action', self._action)]
         # Translators: Default edit form submit button label.
         content += tuple([g.hidden(k, v) for k, v in hidden]) + \
-                   (g.submit(_("Submit")),)
+                   (g.submit(_(u"Submit")),)
         return g.form(content, action=self._handler, cls="dialog", method="POST") + "\n"
 
 

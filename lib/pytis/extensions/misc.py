@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2002, 2003, 2005, 2006 Brailcom, o.p.s.
 #
@@ -16,10 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Drobné doplòkové funkce.
+"""DrobnÃ© doplÅˆkovÃ© funkce.
 
-Do tohoto modulu patøí funkce, které nemají s Pytisem jako takovım nic
-spoleèného.  Nepracují pøímo s jeho API, jen se zkrátka v defsech mohou nìjak
+Do tohoto modulu patÅ™Ã­ funkce, kterÃ© nemajÃ­ s Pytisem jako takovÃ½m nic
+spoleÄnÃ©ho.  NepracujÃ­ pÅ™Ã­mo s jeho API, jen se zkrÃ¡tka v defsech mohou nÄ›jak
 hodit.
 
 """
@@ -36,7 +36,7 @@ def smssend(tel, message, server='192.168.1.55'):
     UID='sms'
     PWD='sms'
     DB='SMS'
-    MAX_LENGTH=480 # 3 SMS po 160 znacích
+    MAX_LENGTH=480 # 3 SMS po 160 znacÃ­ch
     SQSH='/usr/bin/sqsh'
     TEMPLATE="""
     insert into sms_request
@@ -46,13 +46,13 @@ def smssend(tel, message, server='192.168.1.55'):
     """
 
     if not os.path.exists(SQSH):
-        return "Není nainstalován balík 'sqsh'. SMS nebude odeslána."
+        return "NenÃ­ nainstalovÃ¡n balÃ­k 'sqsh'. SMS nebude odeslÃ¡na."
     if len(message) > MAX_LENGTH:
-        return "Zpráva je del¹í ne¾ %s. SMS nebude odeslána." % (MAX_LENGTH)
+        return "ZprÃ¡va je delÅ¡Ã­ neÅ¾ %s. SMS nebude odeslÃ¡na." % (MAX_LENGTH)
     if len(tel) not in (14,9):
-	return ("©patnı formát telefoního èísla %s.\n\n"
-	        "Èíslo musí mít tvar:\nPPPPPxxxxxxxxx - (pìt znakù pøedvolba "
-                "- devìt znakù èíslo)\nxxxxxxxxx - (devìt znakù èíslo)") % (tel)
+	return ("Å patnÃ½ formÃ¡t telefonÃ­ho ÄÃ­sla %s.\n\n"
+	        "ÄŒÃ­slo musÃ­ mÃ­t tvar:\nPPPPPxxxxxxxxx - (pÄ›t znakÅ¯ pÅ™edvolba "
+                "- devÄ›t znakÅ¯ ÄÃ­slo)\nxxxxxxxxx - (devÄ›t znakÅ¯ ÄÃ­slo)") % (tel)
     message.replace('"','')
     message.replace("'","")	
     sms_insert = TEMPLATE % (tel, message)
@@ -60,7 +60,7 @@ def smssend(tel, message, server='192.168.1.55'):
 	  (SQSH, UID, DB, SERVER, PWD, sms_insert)
     test, msg = commands.getstatusoutput(cmd)
     if test:
-	msg = "SMS se nepodaøilo odeslat!\n\n" + msg
+	msg = "SMS se nepodaÅ™ilo odeslat!\n\n" + msg
 	return msg
     return None
 
@@ -68,7 +68,7 @@ def smssend(tel, message, server='192.168.1.55'):
 # TODO: this procedure is obsolete and superceeded with send_mail and should be removed
 #       after checking its use in applications
 def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
-    """Ode¹le email"""
+    """OdeÅ¡le email"""
 
     import os
     try:
@@ -84,7 +84,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
         s.close()
         return 0
     except:
-        print 'ERROR: e-mail se nepodaøilo odeslat'
+        print 'ERROR: e-mail se nepodaÅ™ilo odeslat'
         return 1
 
 # TODO: argument sendmail_command should be removed when all applications reflect this change    
@@ -102,7 +102,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
             except:
                 raise ProgramError("Cannot convert argument to unicode for charset %s" % (charset))
         return arg.encode('UTF-8')
-    # Pøevedení na UTF-8
+    # PÅ™evedenÃ­ na UTF-8
     to = get_utf8_argument(to)
     address = get_utf8_argument(address)
     subject = get_utf8_argument(subject)
@@ -127,24 +127,24 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
 # Additional constraints
             
 def constraints_email(email):
-    """Ovìø platnost zápisu e-mailové adresy.
+    """OvÄ›Å™ platnost zÃ¡pisu e-mailovÃ© adresy.
     
-    Pokud má adresa platnı tvar, nebo je None vrací None.  Jinak vrací øetìzec
-    s chybovou hlá¹kou
+    Pokud mÃ¡ adresa platnÃ½ tvar, nebo je None vracÃ­ None.  Jinak vracÃ­ Å™etÄ›zec
+    s chybovou hlÃ¡Å¡kou
 
     """
     if email is None:
         return None
     mask=re.compile(r"^[A-Za-z0-9\d]([\w\d\.\-]?[A-Za-z0-9\_\&\.\-\d])*\@[A-Za-z0-9\d]([\w\d\.\-]?[A-Za-z0-9\_\&\d])*$")
     if mask.match(email.strip()) is None:
-        return "©patnı tvar emailu " + email.strip()  + " !"
+        return "Å patnÃ½ tvar emailu " + email.strip()  + " !"
     return None
 
 def constraints_email_many(emails):
-    """Ovìø platnost zápisu seznamu e=mailovıch adres oddìlenıch èárkami.
+    """OvÄ›Å™ platnost zÃ¡pisu seznamu e=mailovÃ½ch adres oddÄ›lenÃ½ch ÄÃ¡rkami.
 
-    Pokud má seznam i ka¾dá adresa platnı tvar, nebo je None funkce vrací None.
-    Jinak vrací øetìzec s chybovou hlá¹kou.
+    Pokud mÃ¡ seznam i kaÅ¾dÃ¡ adresa platnÃ½ tvar, nebo je None funkce vracÃ­ None.
+    Jinak vracÃ­ Å™etÄ›zec s chybovou hlÃ¡Å¡kou.
 
     """
     if emails is None:
@@ -158,29 +158,29 @@ def constraints_email_many(emails):
         return None
     return '\n'.join(not_match)
 
-# Nìkteré èasto pou¾ívané konfiguraèní parametry.
+# NÄ›kterÃ© Äasto pouÅ¾Ã­vanÃ© konfiguraÄnÃ­ parametry.
 
 def session_date(transaction=None):
-    """Vra» vnitøní hodnotu nastaveného pracovního datumu."""
+    """VraÅ¥ vnitÅ™nÃ­ hodnotu nastavenÃ©ho pracovnÃ­ho datumu."""
     return session_date_value().value()
 
 def session_date_value(transaction=None):
-    """Vra» nastavené pracovní datum pøihlá¹eného u¾ivatele."""
+    """VraÅ¥ nastavenÃ© pracovnÃ­ datum pÅ™ihlÃ¡Å¡enÃ©ho uÅ¾ivatele."""
     return cfg_param('datum', 'Nastaveni.BvUsersCfg')
 
 def start_date(transaction=None):
-    """Vra» vnitøní hodnotu nastaveného 'datumu od'."""
+    """VraÅ¥ vnitÅ™nÃ­ hodnotu nastavenÃ©ho 'datumu od'."""
     return start_date_value().value()
 
 def start_date_value(transaction=None):
-    """Vra» nastavené 'datum od' pøihlá¹eného u¾ivatele."""
+    """VraÅ¥ nastavenÃ© 'datum od' pÅ™ihlÃ¡Å¡enÃ©ho uÅ¾ivatele."""
     return cfg_param('datum_od', 'Nastaveni.BvUsersCfg')
 
 def end_date(transaction=None):
-    """Vra» vnitøní hodnotu nastaveného 'datumu do'."""
+    """VraÅ¥ vnitÅ™nÃ­ hodnotu nastavenÃ©ho 'datumu do'."""
     return end_date_value().value()
 
 def end_date_value(transaction=None):
-    """Vra» nastavené 'datum do' pøihlá¹eného u¾ivatele."""
+    """VraÅ¥ nastavenÃ© 'datum do' pÅ™ihlÃ¡Å¡enÃ©ho uÅ¾ivatele."""
     return cfg_param('datum_do', 'Nastaveni.BvUsersCfg')
 

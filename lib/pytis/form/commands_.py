@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Definice u¾ivatelskıch pøíkazù
+# Definice uÅ¾ivatelskÃ½ch pÅ™Ã­kazÅ¯
 # 
 # Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -31,40 +31,40 @@ defined commands.  For example the definition:
 will automatically create a constant 'Application.COMMAND_EXIT' and this constant may be further
 used to invoke the command, etc.
 
-Pøiøazení kláves pøíkazùm:
+PÅ™iÅ™azenÃ­ klÃ¡ves pÅ™Ã­kazÅ¯m:
 
-V aplikaci nikde nepou¾íváme pøímı zápis kláves, nıbr¾ pouze jim odpovídající
-pøíkazy.  To nám umo¾òuje nestarat se v aplikaèním kódu o pøiøazení kláves.  To
-definujeme na jediném místì v tomto modulu.
+VÂ aplikaci nikde nepouÅ¾Ã­vÃ¡me pÅ™Ã­mÃ½ zÃ¡pis klÃ¡ves, nÃ½brÅ¾ pouze jim odpovÃ­dajÃ­cÃ­
+pÅ™Ã­kazy.  To nÃ¡m umoÅ¾Åˆuje nestarat se vÂ aplikaÄnÃ­m kÃ³du oÂ pÅ™iÅ™azenÃ­ klÃ¡ves.  To
+definujeme na jedinÃ©m mÃ­stÄ› vÂ tomto modulu.
 
 """
 
 from pytis.form import *
     
 Command(Application, 'EXIT',
-        "Ukonèení aplikace")
+        "UkonÄenÃ­ aplikace")
 Command(Application, 'HELP',
-        "Vyvolání nápovìdy")
+        "VyvolÃ¡nÃ­ nÃ¡povÄ›dy")
 Command(Application, 'BREAK',
-        "Pøeru¹ení aktuálnì provádìné operace")
+        "PÅ™eruÅ¡enÃ­ aktuÃ¡lnÄ› provÃ¡dÄ›nÃ© operace")
 Command(Application, 'REFRESH',
-        "Vy¾ádání obnovení obsahu aktivního formuláøe")
+        "VyÅ¾Ã¡dÃ¡nÃ­ obnovenÃ­ obsahu aktivnÃ­ho formulÃ¡Å™e")
 Command(Application, 'NEW_RECORD',
-        "Vlo¾ení nového záznamu")
+        "VloÅ¾enÃ­ novÃ©ho zÃ¡znamu")
 Command(Application, 'RUN_FORM',
-        "Spu¹tìní formuláøe")
+        "SpuÅ¡tÄ›nÃ­ formulÃ¡Å™e")
 Command(Application, 'RUN_PROCEDURE',
-        "Spu¹tìní procedury")
+        "SpuÅ¡tÄ›nÃ­ procedury")
 Command(Application, 'RAISE_FORM',
-        "Vyzvednutí okna formuláøe v oknì aplikace")
+        "VyzvednutÃ­ okna formulÃ¡Å™e v oknÄ› aplikace")
 Command(Application, 'RAISE_PREV_FORM',
-        "Vyzvednutí okna pøedchozího formuláøe")
+        "VyzvednutÃ­ okna pÅ™edchozÃ­ho formulÃ¡Å™e")
 Command(Application, 'RAISE_NEXT_FORM',
-        "Vyzvednutí okna následujícího formuláøe")
+        "VyzvednutÃ­ okna nÃ¡sledujÃ­cÃ­ho formulÃ¡Å™e")
 Command(Application, 'RAISE_RECENT_FORM',
-        "Vyzvednutí okna poslednì aktivního formuláøe")
+        "VyzvednutÃ­ okna poslednÄ› aktivnÃ­ho formulÃ¡Å™e")
 Command(Application, 'CLEAR_RECENT_FORMS',
-        "Vyèisti menu poslednì otevøenıch formuláøù")
+        "VyÄisti menu poslednÄ› otevÅ™enÃ½ch formulÃ¡Å™Å¯")
 Command(Application, 'HANDLED_ACTION',
         "Perform application defined action (arg. 'handler', 'enabled')")
 Command(Application, 'RELOAD_RIGHTS',
@@ -86,9 +86,9 @@ Command(InnerForm, 'AGGREGATION_MENU',
 Command(InnerForm, 'PRINT_MENU',
         "Show print menu for the current form")
 Command(LookupForm, 'FILTER',
-        "Filtrování záznamù")
+        "FiltrovÃ¡nÃ­ zÃ¡znamÅ¯")
 Command(LookupForm, 'UNFILTER',
-        "Zru¹ení filtrování záznamù")
+        "ZruÅ¡enÃ­ filtrovÃ¡nÃ­ zÃ¡znamÅ¯")
 Command(LookupForm, 'PROFILE_MENU',
         "Show profile menu for the current form")
 Command(LookupForm, 'APPLY_PROFILE',
@@ -106,153 +106,153 @@ Command(LookupForm, 'RELOAD_PROFILE',
 Command(LookupForm, 'RESET_PROFILE',
         "Discard all saved profile changes and load the original settings (only for predefined profiles)")
 Command(LookupForm, 'FILTER_BY_VALUE',
-        "Vyfiltrování formuláøe podle dané hodnoty (arg. 'column_id', 'value')")
+        "VyfiltrovÃ¡nÃ­ formulÃ¡Å™e podle danÃ© hodnoty (arg. 'column_id', 'value')")
 Command(LookupForm, 'JUMP',
-        "Skok na záznam")
+        "Skok na zÃ¡znam")
 Command(LookupForm, 'SEARCH',
-        "Hledání záznamu")
+        "HledÃ¡nÃ­ zÃ¡znamu")
 Command(LookupForm, 'SORT',
-        "Setøídìní podle sloupce")
+        "SetÅ™Ã­dÄ›nÃ­ podle sloupce")
 Command(LookupForm, 'FIRST_RECORD',
-        "Skok na první záznam")
+        "Skok na prvnÃ­ zÃ¡znam")
 Command(LookupForm, 'LAST_RECORD',
-        "Skok na poslední záznam")
+        "Skok na poslednÃ­ zÃ¡znam")
 
 Command(RecordForm, 'NEW_RECORD',
-        "Vlo¾ení nového záznamu pomocí editaèního formuláøe")
+        "VloÅ¾enÃ­ novÃ©ho zÃ¡znamu pomocÃ­ editaÄnÃ­ho formulÃ¡Å™e")
 Command(RecordForm, 'IMPORT_INTERACTIVE',
-        "Interaktivní import dat z CSV souboru")
+        "InteraktivnÃ­ import dat z CSV souboru")
 Command(RecordForm, 'EDIT_RECORD',
-        "Editace aktuálního záznamu v editaèním formuláøi")
+        "Editace aktuÃ¡lnÃ­ho zÃ¡znamu v editaÄnÃ­m formulÃ¡Å™i")
 Command(RecordForm, 'DELETE_RECORD',
-        "Vymazání editovaného záznamu z databáze")
+        "VymazÃ¡nÃ­ editovanÃ©ho zÃ¡znamu zÂ databÃ¡ze")
 Command(RecordForm, 'CONTEXT_ACTION',
-        "Vyvolání akce nad aktuálním øádkem formuláøe (mandatory arg. 'action')")
+        "VyvolÃ¡nÃ­ akce nad aktuÃ¡lnÃ­m Å™Ã¡dkem formulÃ¡Å™e (mandatory arg. 'action')")
 Command(ListForm, 'ACTIVATE',
-        "Aktivaèní funkce pro aktuální øádek formuláøe (arg. 'alternate')")
+        "AktivaÄnÃ­ funkce pro aktuÃ¡lnÃ­ Å™Ã¡dek formulÃ¡Å™e (arg. 'alternate')")
 Command(ListForm, 'FIRST_COLUMN',
-        "Pøechod na první sloupec tabulky")
+        "PÅ™echod na prvnÃ­ sloupec tabulky")
 Command(ListForm, 'LAST_COLUMN',
-        "Pøechod na poslední sloupec tabulky")
+        "PÅ™echod na poslednÃ­ sloupec tabulky")
 Command(ListForm, 'INCREMENTAL_SEARCH',
-        "Prefixové inkrementální hledání záznamu (arg. 'full')")
+        "PrefixovÃ© inkrementÃ¡lnÃ­ hledÃ¡nÃ­ zÃ¡znamu (arg. 'full')")
 Command(ListForm, 'EDIT',
-        "Vyvolání inline editace aktuální buòky")
+        "VyvolÃ¡nÃ­ inline editace aktuÃ¡lnÃ­ buÅˆky")
 Command(ListForm, 'COPY_CELL',
-        "Zkopírování obsahu aktuální buòky do clipboardu")
+        "ZkopÃ­rovÃ¡nÃ­ obsahu aktuÃ¡lnÃ­ buÅˆky do clipboardu")
 Command(ListForm, 'FILTER_BY_CELL',
-        "Vyfiltrování formuláøe podle hodnoty aktuální buòky")
+        "VyfiltrovÃ¡nÃ­ formulÃ¡Å™e podle hodnoty aktuÃ¡lnÃ­ buÅˆky")
 Command(ListForm, 'AUTOFILTER',
-        "Zobrazení menu autofilteru (arg. 'col' a 'position')")
+        "ZobrazenÃ­ menu autofilteru (arg. 'col' a 'position')")
 Command(ListForm, 'TOGGLE_AGGREGATION',
-        "Pøidání/odebrání agregaèní funkce (arg. 'operation')")
+        "PÅ™idÃ¡nÃ­/odebrÃ¡nÃ­ agregaÄnÃ­ funkce (arg. 'operation')")
 Command(ListForm, 'AGGREGATE',
-        "Pøidání agregaèní funkce (arg. 'operation')")
+        "PÅ™idÃ¡nÃ­ agregaÄnÃ­ funkce (arg. 'operation')")
 Command(ListForm, 'UNAGGREGATE',
-        "Odebrání agregaèní funkce (arg. 'operation')")
+        "OdebrÃ¡nÃ­ agregaÄnÃ­ funkce (arg. 'operation')")
 Command(ListForm, 'AGGREGATED_VIEW',
-        "Zobrazení agregovaného náhledu pro danı formuláø.")
+        "ZobrazenÃ­ agregovanÃ©ho nÃ¡hledu pro danÃ½ formulÃ¡Å™.")
 Command(ListForm, 'COPY_AGGREGATION_RESULT',
-        "Zkopírování vısledku agreganí funkce do schránky (arg. 'operation', 'cid')")
+        "ZkopÃ­rovÃ¡nÃ­ vÃ½sledku agreganÃ­ funkce do schrÃ¡nky (arg. 'operation', 'cid')")
 Command(ListForm, 'EXPORT_CSV',
-        "Export øádkového formuláøe do csv souboru")
+        "Export Å™Ã¡dkovÃ©ho formulÃ¡Å™e do csv souboru")
 Command(ListForm, 'EXPORT_FILE',
-        "Export øádkového formuláøe do souboru")
+        "Export Å™Ã¡dkovÃ©ho formulÃ¡Å™e do souboru")
 Command(ListForm, 'LINE_COMMIT',
-        "Dokonèení editace záznamu (ulo¾ení)")
+        "DokonÄenÃ­ editace zÃ¡znamu (uloÅ¾enÃ­)")
 Command(ListForm, 'LINE_ROLLBACK',
-        "Zru¹ení zmìn v editovaném záznamu (arg. 'soft')")
+        "ZruÅ¡enÃ­ zmÄ›n v editovanÃ©m zÃ¡znamu (arg. 'soft')")
 Command(ListForm, 'FINISH_EDITING',
-        "Opu¹tìní editace øádku")
+        "OpuÅ¡tÄ›nÃ­ editace Å™Ã¡dku")
 Command(ListForm, 'CELL_COMMIT',
-        "Ukonèení editace políèka s novou hodnotou")
+        "UkonÄenÃ­ editace polÃ­Äka sÂ novou hodnotou")
 Command(ListForm, 'CELL_ROLLBACK',
-        "Ukonèení editace políèka s vrácením pùvodní hodnoty")
+        "UkonÄenÃ­ editace polÃ­Äka sÂ vrÃ¡cenÃ­m pÅ¯vodnÃ­ hodnoty")
 Command(ListForm, 'INSERT_LINE',
-        "In-line vlo¾ení nového záznamu (arg. 'before' and 'copy')")
+        "In-line vloÅ¾enÃ­ novÃ©ho zÃ¡znamu (arg. 'before' and 'copy')")
 Command(ListForm, 'SET_GROUPING_COLUMN',
-        "Zmìna sloupce vizuáního seskupování")
+        "ZmÄ›na sloupce vizuÃ¡nÃ­ho seskupovÃ¡nÃ­")
 Command(ListForm, 'RESIZE_COLUMN',
-        "Roz¹íøení/zù¾ení sloupce (arg. 'diff' +/- pixels)") 
+        "RozÅ¡Ã­Å™enÃ­/zÅ¯Å¾enÃ­ sloupce (arg. 'diff' +/- pixels)") 
 Command(ListForm, 'MOVE_COLUMN',
-        "Pøesunutí sloupce doprava/doleva (arg. 'diff' +/- number of columns)")
+        "PÅ™esunutÃ­ sloupce doprava/doleva (arg. 'diff' +/- number of columns)")
 Command(ListForm, 'TOGGLE_COLUMN',
-        "Skrytí/zobrazení sloupce")
+        "SkrytÃ­/zobrazenÃ­ sloupce")
 Command(ListForm, 'TOGGLE_ROW_LABELS',
-        "Skrytí/zobrazení sloupce záhlaví øádkù")
+        "SkrytÃ­/zobrazenÃ­ sloupce zÃ¡hlavÃ­ Å™Ã¡dkÅ¯")
 Command(ListForm, 'CONTEXT_MENU',
-        "Zobrazení kontextového menu aktivní buòky")
+        "ZobrazenÃ­ kontextovÃ©ho menu aktivnÃ­ buÅˆky")
 Command(FoldableForm, 'EXPAND_OR_COLLAPSE',
-        "Sbalování a rozbalování øádkù")
+        "SbalovÃ¡nÃ­ a rozbalovÃ¡nÃ­ Å™Ã¡dkÅ¯")
 Command(FoldableForm, 'EXPAND_OR_COLLAPSE_SUBTREE',
-        "Sbalování a rozbalování podstromù")
+        "SbalovÃ¡nÃ­ a rozbalovÃ¡nÃ­ podstromÅ¯")
 Command(FoldableForm, 'EXPAND_ALL',
-        "Kompletní rozbalení celého formuláøe")
+        "KompletnÃ­ rozbalenÃ­ celÃ©ho formulÃ¡Å™e")
 Command(FoldableForm, 'COLLAPSE_ALL',
-        "Sbalení v¹ech hlavních uzlù formuláøe")
+        "SbalenÃ­ vÅ¡ech hlavnÃ­ch uzlÅ¯ formulÃ¡Å™e")
 Command(FoldableForm, 'FOLDING_LEVEL',
-        "Rozbalení uzlù formuláøe na zadanou úroveò")
+        "RozbalenÃ­ uzlÅ¯ formulÃ¡Å™e na zadanou ÃºroveÅˆ")
 Command(EditForm, 'COMMIT_RECORD',
-        "Ukonèení editaèního formuláøe s ulo¾ením zmìn (arg. 'close', PopupEditForm also 'next')")
+        "UkonÄenÃ­ editaÄnÃ­ho formulÃ¡Å™e s uloÅ¾enÃ­m zmÄ›n (arg. 'close', PopupEditForm also 'next')")
 Command(EditForm, 'NAVIGATE',
-        "Navigace mezi políèky editaèního formuláøe (arg. 'back')")
+        "Navigace mezi polÃ­Äky editaÄnÃ­ho formulÃ¡Å™e (arg. 'back')")
 Command(BrowsableShowForm, 'NEXT_RECORD',
-        "Pøechod na dal¹í záznam vpøed/vzad (arg. 'back')") 
+        "PÅ™echod na dalÅ¡Ã­ zÃ¡znam vpÅ™ed/vzad (arg. 'back')") 
 Command(DualForm, 'OTHER_FORM',
-        "Pøechod mezi podformuláøi duálního formuláøe")
+        "PÅ™echod mezi podformulÃ¡Å™i duÃ¡lnÃ­ho formulÃ¡Å™e")
 Command(MultiForm, 'NEXT_FORM',
         "Advance to next/previous tab in a multi-form (arg. 'back')")
 Command(PrintFormInternal, 'PRINT',
-        "Po¹li data na tiskárnu")
+        "PoÅ¡li data na tiskÃ¡rnu")
 Command(PrintFormInternal, 'NEXT_PAGE',
-        "Pøechod na dal¹í stránku tiskového náhledu")
+        "PÅ™echod na dalÅ¡Ã­ strÃ¡nku tiskovÃ©ho nÃ¡hledu")
 Command(PrintFormInternal, 'PREVIOUS_PAGE',
-        "Pøechod na pøedchozí stránku tiskového náhledu")
+        "PÅ™echod na pÅ™edchozÃ­ strÃ¡nku tiskovÃ©ho nÃ¡hledu")
 Command(InputField, 'RESET',
-        "Vrácení pùvodní hodnoty vstupního políèka")
+        "VrÃ¡cenÃ­ pÅ¯vodnÃ­ hodnoty vstupnÃ­ho polÃ­Äka")
 Command(InputField, 'CONTEXT_MENU',
-        "Zobrazení kontextového menu vstupního políèka")
+        "ZobrazenÃ­ kontextovÃ©ho menu vstupnÃ­ho polÃ­Äka")
 Command(InputField, 'LEAVE_INLINE_EDIT',
-        "Odchod z editace vstupního políèka")
+        "Odchod z editace vstupnÃ­ho polÃ­Äka")
 Command(TextField, 'CUT',
-        "Vyjmutí oznaèeného textu do schránky.")
+        "VyjmutÃ­ oznaÄenÃ©ho textu do schrÃ¡nky.")
 Command(TextField, 'COPY',
-        "Zkopírování oznaèeného textu do schránky.")
+        "ZkopÃ­rovÃ¡nÃ­ oznaÄenÃ©ho textu do schrÃ¡nky.")
 Command(TextField, 'PASTE',
-        "Vlo¾ení textu ze schránky do políèka.")
+        "VloÅ¾enÃ­ textu ze schrÃ¡nky do polÃ­Äka.")
 Command(TextField, 'SELECT_ALL',
-        "Provedení vıbìru celého textu políèka.")
+        "ProvedenÃ­ vÃ½bÄ›ru celÃ©ho textu polÃ­Äka.")
 Command(Invocable, 'INVOKE_SELECTION',
-        "Vyvolání vıbìru hodnoty vstupního políèka (arg. 'alternate')")
+        "VyvolÃ¡nÃ­ vÃ½bÄ›ru hodnoty vstupnÃ­ho polÃ­Äka (arg. 'alternate')")
 Command(SpinnableField, 'SPIN',
         "Spinning the field value up/down (arg. 'up')")
 Command(GenericCodebookField, 'INVOKE_CODEBOOK_FORM',
-        "Vyvolání alternativního vıbìru hodnoty políèka")
+        "VyvolÃ¡nÃ­ alternativnÃ­ho vÃ½bÄ›ru hodnoty polÃ­Äka")
 Command(ListField, 'SELECT',
-        "Vıbìr aktuálního záznamu")
+        "VÃ½bÄ›r aktuÃ¡lnÃ­ho zÃ¡znamu")
 Command(ListField, 'SHOW_SELECTED',
-        "Vıbìr aktuálního záznamu")
+        "VÃ½bÄ›r aktuÃ¡lnÃ­ho zÃ¡znamu")
 Command(ListField, 'EDIT_SELECTED',
-        "Vyvolání editaèního formuláøe nad aktuálním záznamem.")
+        "VyvolÃ¡nÃ­ editaÄnÃ­ho formulÃ¡Å™e nad aktuÃ¡lnÃ­m zÃ¡znamem.")
 Command(ListField, 'DELETE_SELECTED',
-        "Smazání aktuálního záznamu z èíselníku.")
+        "SmazÃ¡nÃ­ aktuÃ¡lnÃ­ho zÃ¡znamu z ÄÃ­selnÃ­ku.")
 Command(ListField, 'NEW_CODEBOOK_RECORD',
-        "Vyvolání formuláøe pro vlo¾ení nového záznamu do èíselníku.")
+        "VyvolÃ¡nÃ­ formulÃ¡Å™e pro vloÅ¾enÃ­ novÃ©ho zÃ¡znamu do ÄÃ­selnÃ­ku.")
 Command(FileField, 'LOAD',
-        "Nahrání soubodu jako nové hodnoty políèka.")
+        "NahrÃ¡nÃ­ soubodu jako novÃ© hodnoty polÃ­Äka.")
 Command(FileField, 'SAVE',
-        "Ulo¾ení objektu z databáze do soborového systému.")
+        "UloÅ¾enÃ­ objektu z databÃ¡ze do soborovÃ©ho systÃ©mu.")
 Command(FileField, 'CLEAR',
-        "Vynulování nastavené hodnoty políèka.")
+        "VynulovÃ¡nÃ­ nastavenÃ© hodnoty polÃ­Äka.")
 Command(ImageField, 'VIEW',
-        "Otevøení náhledu obrázku v prohlí¾eèi.")
+        "OtevÅ™enÃ­ nÃ¡hledu obrÃ¡zku v prohlÃ­Å¾eÄi.")
 
 Command(Dialog, 'CLOSE_DIALOG',
-        "Opu¹tìní dialogu bez potvrzení")
+        "OpuÅ¡tÄ›nÃ­ dialogu bez potvrzenÃ­")
 Command(Dialog, 'COMMIT_DIALOG',
-        "Potvrzení dialogu (arg. 'force' simulates pressing the default button.)")
+        "PotvrzenÃ­ dialogu (arg. 'force' simulates pressing the default button.)")
 Command(Dialog, 'HELP',
-        "Vyvolání nápovìdy dialogu")
+        "VyvolÃ¡nÃ­ nÃ¡povÄ›dy dialogu")
 
 DEFAULT_KEYMAP = (
     ('F1',               Application.COMMAND_HELP(topic='pytis')),
@@ -353,9 +353,9 @@ DEFAULT_KEYMAP = (
 
 if __debug__:
     Command(Application, 'CUSTOM_DEBUG',
-            "Pomocnı pøíkaz pro vyvolání pomocné ladící funkce")
+            "PomocnÃ½ pÅ™Ã­kaz pro vyvolÃ¡nÃ­ pomocnÃ© ladÃ­cÃ­ funkce")
     Command(Application, 'INSPECT',
-            "Vyvolání vıvojáøského nástroje pro inspekci wx Widgets")
+            "VyvolÃ¡nÃ­ vÃ½vojÃ¡Å™skÃ©ho nÃ¡stroje pro inspekci wx Widgets")
     DEFAULT_KEYMAP += \
         (('Ctrl-d', Application.COMMAND_CUSTOM_DEBUG),
          ('Ctrl-i', Application.COMMAND_INSPECT),)
@@ -426,113 +426,113 @@ COMMAND_ICONS = (
 class UICommands(object):
     PYTIS_HELP = UICommand(
         Application.COMMAND_HELP(topic='pytis'),
-        _("Nápovìda systému Pytis"),
-        _("Zobrazit u¾ivatelskou pøíruèku popisující ovládání aplikace")
+        _(u"NÃ¡povÄ›da systÃ©mu Pytis"),
+        _(u"Zobrazit uÅ¾ivatelskou pÅ™Ã­ruÄku popisujÃ­cÃ­ ovlÃ¡dÃ¡nÃ­ aplikace")
         )
     HELP = UICommand(
         Form.COMMAND_HELP(),
-        _("Nápovìda k aktuálnímu formuláøi"),
-        _("Zobrazit podrobnou nápovìdu k aktuálnímu formuláøi v prohlí¾eèi nápovìdy"))
+        _(u"NÃ¡povÄ›da k aktuÃ¡lnÃ­mu formulÃ¡Å™i"),
+        _(u"Zobrazit podrobnou nÃ¡povÄ›du k aktuÃ¡lnÃ­mu formulÃ¡Å™i v prohlÃ­Å¾eÄi nÃ¡povÄ›dy"))
     DESCRIBE = UICommand(
         InnerForm.COMMAND_DESCRIBE(),
-        _("Popis aktuálního formuláøe"),
-        _("Zobrazit popis aktuálního formuláøe v samostatném oknì"))
+        _(u"Popis aktuÃ¡lnÃ­ho formulÃ¡Å™e"),
+        _(u"Zobrazit popis aktuÃ¡lnÃ­ho formulÃ¡Å™e v samostatnÃ©m oknÄ›"))
     AGGREGATION_MENU = UICommand(
         InnerForm.COMMAND_AGGREGATION_MENU(),
-        _("Zobrazit menu agregaèních funkcí"),
-        _("Zobrazit menu agregaèních funkcí pro aktivní formuláø"))
+        _(u"Zobrazit menu agregaÄnÃ­ch funkcÃ­"),
+        _(u"Zobrazit menu agregaÄnÃ­ch funkcÃ­ pro aktivnÃ­ formulÃ¡Å™"))
     PRINT_MENU = UICommand(
         InnerForm.COMMAND_PRINT_MENU(),
-        _("Zobrazit tiskové menu"),
-        _("Zobrazit menu tiskovıch sestav pro aktivní formuláø"))
+        _(u"Zobrazit tiskovÃ© menu"),
+        _(u"Zobrazit menu tiskovÃ½ch sestav pro aktivnÃ­ formulÃ¡Å™"))
     JUMP = UICommand(
         LookupForm.COMMAND_JUMP(),
-        _("Skok na záznam"),
-        _("Skok na záznam podle èísla øádku."))
+        _(u"Skok na zÃ¡znam"),
+        _(u"Skok na zÃ¡znam podle ÄÃ­sla Å™Ã¡dku."))
     SEARCH = UICommand(
         LookupForm.COMMAND_SEARCH(),
-        _("Hledat"),
-        _("Vyhledávat záznam podle zadanıch podmínek."))
+        _(u"Hledat"),
+        _(u"VyhledÃ¡vat zÃ¡znam podle zadanÃ½ch podmÃ­nek."))
     SEARCH_NEXT = UICommand(
         LookupForm.COMMAND_SEARCH(next=True),
-        _("Hledat dal¹í"),
-        _("Vyhledat dal¹í záznam odpovídající zadanım podmínkám."))
+        _(u"Hledat dalÅ¡Ã­"),
+        _(u"Vyhledat dalÅ¡Ã­ zÃ¡znam odpovÃ­dajÃ­cÃ­ zadanÃ½m podmÃ­nkÃ¡m."))
     SEARCH_PREVIOUS = UICommand(
         LookupForm.COMMAND_SEARCH(next=True, back=True),
-        _("Hledat pøedchozí"),
-        _("Vyhledat pøedchozí záznam odpovídající zadanım podmínkám."))
+        _(u"Hledat pÅ™edchozÃ­"),
+        _(u"Vyhledat pÅ™edchozÃ­ zÃ¡znam odpovÃ­dajÃ­cÃ­ zadanÃ½m podmÃ­nkÃ¡m."))
     INCREMENTAL_SEARCH = UICommand(
         ListForm.COMMAND_INCREMENTAL_SEARCH(),
-        _("Inkrementální hledání"),
-        _("Postupnì vyhledávat záznam podle hodnoty políèka."))
+        _(u"InkrementÃ¡lnÃ­ hledÃ¡nÃ­"),
+        _(u"PostupnÄ› vyhledÃ¡vat zÃ¡znam podle hodnoty polÃ­Äka."))
     SORT = UICommand(
         LookupForm.COMMAND_SORT(),
-        _("Øazení"),
-        _("Urèit podmínky øazení záznamù."))
+        _("Å˜azenÃ­"),
+        _("UrÄit podmÃ­nky Å™azenÃ­ zÃ¡znamÅ¯."))
     PROFILE_MENU = UICommand(
         LookupForm.COMMAND_PROFILE_MENU(),
-        _("Vıbìr aktivního profilu"),
-        _("Zobrazuje aktivní profil a umo¾òuje vıbìr z ostatních pøeddefinovanıch profilù."))
+        _("VÃ½bÄ›r aktivnÃ­ho profilu"),
+        _("Zobrazuje aktivnÃ­ profil a umoÅ¾Åˆuje vÃ½bÄ›r z ostatnÃ­ch pÅ™eddefinovanÃ½ch profilÅ¯."))
     FILTER = UICommand(
         LookupForm.COMMAND_FILTER(),
-        _("Filtrování"),
-        _("Filtrovat záznamy podle zadanıch podmínek."))
+        _(u"FiltrovÃ¡nÃ­"),
+        _(u"Filtrovat zÃ¡znamy podle zadanÃ½ch podmÃ­nek."))
     UNFILTER = UICommand(
         LookupForm.COMMAND_UNFILTER(),
-        _("Zru¹ filtr"),
-        _("Zru¹it filtrování záznamù."))
+        _(u"ZruÅ¡ filtr"),
+        _(u"ZruÅ¡it filtrovÃ¡nÃ­ zÃ¡znamÅ¯."))
     EDIT_RECORD = UICommand(
         RecordForm.COMMAND_EDIT_RECORD(),
-        _("Upravit záznam"),
-        _("Upravit hodnoty záznamu v samostatném formuláøi."))
+        _(u"Upravit zÃ¡znam"),
+        _(u"Upravit hodnoty zÃ¡znamu v samostatnÃ©m formulÃ¡Å™i."))
     NEW_RECORD = UICommand(
         RecordForm.COMMAND_NEW_RECORD(),
-        _("Novı záznam"),
-        _("Vlo¾it novı záznam v samostatném formuláøi."))
+        _(u"NovÃ½ zÃ¡znam"),
+        _(u"VloÅ¾it novÃ½ zÃ¡znam v samostatnÃ©m formulÃ¡Å™i."))
     NEW_RECORD_COPY = UICommand(
         RecordForm.COMMAND_NEW_RECORD(copy=True),
-        _("Novı záznam - kopie"),
-        _("Vlo¾it novı záznam zkopírováním hodnot aktuálního záznamu."))
+        _(u"NovÃ½ zÃ¡znam - kopie"),
+        _(u"VloÅ¾it novÃ½ zÃ¡znam zkopÃ­rovÃ¡nÃ­m hodnot aktuÃ¡lnÃ­ho zÃ¡znamu."))
     DELETE_RECORD = UICommand(
         RecordForm.COMMAND_DELETE_RECORD(),
-        _("Smazat záznam"),
-        _("Smazat aktuální záznam."))
+        _(u"Smazat zÃ¡znam"),
+        _(u"Smazat aktuÃ¡lnÃ­ zÃ¡znam."))
     INSERT_LINE = UICommand(
         ListForm.COMMAND_INSERT_LINE(),
-        _("Vlo¾it øádek pod"),
-        _("Vlo¾it novı záznam v re¾imu inline editace."))
+        _(u"VloÅ¾it Å™Ã¡dek pod"),
+        _(u"VloÅ¾it novÃ½ zÃ¡znam v reÅ¾imu inline editace."))
     INSERT_LINE_BEFORE = UICommand(
         ListForm.COMMAND_INSERT_LINE(before=True),
-        _("Vlo¾it øádek nad"),
-        _("Vlo¾it novı záznam v re¾imu inline editace."))
+        _(u"VloÅ¾it Å™Ã¡dek nad"),
+        _(u"VloÅ¾it novÃ½ zÃ¡znam v reÅ¾imu inline editace."))
     INSERT_LINE_COPY = UICommand(
         ListForm.COMMAND_INSERT_LINE(copy=True),
-        _("Kopírovat øádek pod"),
-        _("Vlo¾it novı záznam v re¾imu inline editace jako kopii souèasného."))
+        _(u"KopÃ­rovat Å™Ã¡dek pod"),
+        _(u"VloÅ¾it novÃ½ zÃ¡znam v reÅ¾imu inline editace jako kopii souÄasnÃ©ho."))
     INSERT_LINE_COPY_BEFORE = UICommand(
         ListForm.COMMAND_INSERT_LINE(copy=True, before=True),
-        _("Kopírovat øádek nad"),
-        _("Vlo¾it novı záznam v re¾imu inline editace jako kopii souèasného."))
+        _(u"KopÃ­rovat Å™Ã¡dek nad"),
+        _(u"VloÅ¾it novÃ½ zÃ¡znam v reÅ¾imu inline editace jako kopii souÄasnÃ©ho."))
     EXPORT_FILE = UICommand(
         ListForm.COMMAND_EXPORT_FILE(),
-        _("Export do souboru"),
-        _("Exportovat data do souboru."))
+        _(u"Export do souboru"),
+        _(u"Exportovat data do souboru."))
     IMPORT_INTERACTIVE = UICommand(
         RecordForm.COMMAND_IMPORT_INTERACTIVE(),
-        _("Import z textového souboru"),
-        _("Importovat data z textového souboru ve formátu CSV."))
+        _(u"Import z textovÃ©ho souboru"),
+        _(u"Importovat data z textovÃ©ho souboru ve formÃ¡tu CSV."))
     AGGREGATED_VIEW = UICommand(
         ListForm.COMMAND_AGGREGATED_VIEW(),
-        _("Zobrazit agregovanı náhled"),
-        _("Zobrazit duální formuláø se zvolenımi agregaèními funkcemi."))
+        _(u"Zobrazit agregovanÃ½ nÃ¡hled"),
+        _(u"Zobrazit duÃ¡lnÃ­ formulÃ¡Å™ se zvolenÃ½mi agregaÄnÃ­mi funkcemi."))
     OTHER_FORM = UICommand(
         DualForm.COMMAND_OTHER_FORM(),
-        _("Pøepnout aktivní formuláø duálního formuláøe"),
-        _("Pøechod mezi horním a dolním formuláøem duálního formuláøe"))
+        _(u"PÅ™epnout aktivnÃ­ formulÃ¡Å™ duÃ¡lnÃ­ho formulÃ¡Å™e"),
+        _(u"PÅ™echod mezi hornÃ­m a dolnÃ­m formulÃ¡Å™em duÃ¡lnÃ­ho formulÃ¡Å™e"))
     LEAVE_FORM = UICommand(
         Form.COMMAND_LEAVE_FORM(),
-        _("Uzavøít formuláø"),
-        _("Uzavøít aktuální formuláø"))
+        _(u"UzavÅ™Ã­t formulÃ¡Å™"),
+        _(u"UzavÅ™Ã­t aktuÃ¡lnÃ­ formulÃ¡Å™"))
 
 
 TOOLBAR_COMMANDS = ((

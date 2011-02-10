@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2002-2011 Brailcom, o.p.s.
 #
@@ -238,17 +238,17 @@ class PresentedRow(object):
         return all
         
     def _init_dependencies(self):
-        # Pro ka¾dé políèko si zapamatuji seznam poèítanıch políèek, která na
-        # nìm závisí (obrácené mapování ne¾ ve specifikacích).
+        # Pro kaÅ¾dÃ© polÃ­Äko si zapamatuji seznam poÄÃ­tanÃ½ch polÃ­Äek, kterÃ¡ na
+        # nÄ›m zÃ¡visÃ­ (obrÃ¡cenÃ© mapovÃ¡nÃ­ neÅ¾ ve specifikacÃ­ch).
         self._dependent = {}
         self._editability_dependent = {}
         self._runtime_filter_dependent = {}
         self._runtime_arguments_dependent = {}
-        # Pro v¹echna poèítaná políèka si pamatuji, zda potøebují pøepoèítat,
-        # èi nikoliv (po pøepoèítání je políèko èisté, po zmìnì políèka na
-        # kterém závisí jiná políèka nastavím závislım políèkùm pøíznak
-        # dirty).  Pøepoèítávání potom mohu provádìt a¾ pøi skuteèném po¾adavku
-        # na získání hodnoty políèka.
+        # Pro vÅ¡echna poÄÃ­tanÃ¡ polÃ­Äka si pamatuji, zda potÅ™ebujÃ­ pÅ™epoÄÃ­tat,
+        # Äi nikoliv (po pÅ™epoÄÃ­tÃ¡nÃ­ je polÃ­Äko ÄistÃ©, po zmÄ›nÄ› polÃ­Äka na
+        # kterÃ©m zÃ¡visÃ­ jinÃ¡ polÃ­Äka nastavÃ­m zÃ¡vislÃ½m polÃ­ÄkÅ¯m pÅ™Ã­znak
+        # dirty).  PÅ™epoÄÃ­tÃ¡vÃ¡nÃ­ potom mohu provÃ¡dÄ›t aÅ¾ pÅ™i skuteÄnÃ©m poÅ¾adavku
+        # na zÃ­skÃ¡nÃ­ hodnoty polÃ­Äka.
         self._dirty = {}
         self._editability_dirty = {}
         self._editable = {}
@@ -289,10 +289,10 @@ class PresentedRow(object):
                 add_secret(column)
 
     def __getitem__(self, key, lazy=False):
-        """Vra» hodnotu políèka 'key' jako instanci tøídy 'pytis.data.Value'.
+        """VraÅ¥ hodnotu polÃ­Äka 'key' jako instanci tÅ™Ã­dy 'pytis.data.Value'.
         
-        'key' je id políèka (øetìzec) identifikující existující políèko, jinak
-        je chování metody nedefinováno.
+        'key' je id polÃ­Äka (Å™etÄ›zec) identifikujÃ­cÃ­ existujÃ­cÃ­ polÃ­Äko, jinak
+        je chovÃ¡nÃ­ metody nedefinovÃ¡no.
         
         """
         if key in self._row:
@@ -389,7 +389,7 @@ class PresentedRow(object):
                 self._editability_dirty[k] = True
 
     def _compute_editability(self, key):
-        # Vypoèti editovatelnost políèka a vra» vısledek (jako boolean).
+        # VypoÄti editovatelnost polÃ­Äka a vraÅ¥ vÃ½sledek (jako boolean).
         func = self._coldict[key].editable.function()
         self._editable[key] = result = func(self)
         self._editability_dirty[key] = False
@@ -500,8 +500,8 @@ class PresentedRow(object):
         try:
             value = self[key]
         except KeyError:
-            # Mù¾e nastat napøíklad v pøípadì, kdy k danému sloupci nejsou
-            # pøístupová práva.
+            # MÅ¯Å¾e nastat napÅ™Ã­klad vÂ pÅ™Ã­padÄ›, kdy kÂ danÃ©mu sloupci nejsou
+            # pÅ™Ã­stupovÃ¡ prÃ¡va.
             return ''
         if secure is False or self.permitted(key, permission=pytis.data.Permission.VIEW):
             value_type = value.type()
@@ -612,9 +612,9 @@ class PresentedRow(object):
                key in self._invalid
 
     def editable(self, key):
-        """Vra» pravdu, právì kdy¾ je políèko dané 'key' editovatelné.
+        """VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ je polÃ­Äko danÃ© 'key' editovatelnÃ©.
 
-        Vıznam argumentu 'key' je stejnı jako v metodì '__getitem__'.
+        VÃ½znam argumentu 'key' je stejnÃ½ jako vÂ metodÄ› '__getitem__'.
 
         """
         if not self.permitted(key, permission=True):
@@ -672,7 +672,7 @@ class PresentedRow(object):
                                       transaction=self._transaction, **select_kwargs)
             self._data.close()
             if count != 0:
-                error = pytis.data.ValidationError(_("Taková hodnota ji¾ existuje."))
+                error = pytis.data.ValidationError(_(u"TakovÃ¡ hodnota jiÅ¾ existuje."))
         result = error
         if error:
             value, error = column.type.validate(string, transaction=self._transaction,

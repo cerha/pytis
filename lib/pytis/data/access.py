@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Access rights
 # 
@@ -255,11 +255,11 @@ class RestrictedData(Data):
                 raise DataAccessException(permission, table=table, column=c)
         
     def _check_access_condition_columns(self, condition):
-        # Toto pùvodnì byla lokální funkce v `_check_access_condition'.
-        # Jenom¾e je rekurzivní, co¾ vede k tomu, ¾e nemù¾e bıt uvolnìna (sice
-        # nechápu, proè ji neuvolní garbage collector, kdy¾ hlásí, ¾e nejsou
-        # ¾ádné neuvolnitelné objekty, ale prostì je to tak) a dochází
-        # k jejímu hromadìní bez uvolnìní pro ka¾dou novou instanci datového
+        # Toto pÅ¯vodnÄ› byla lokÃ¡lnÃ­ funkce vÂ `_check_access_condition'.
+        # JenomÅ¾e je rekurzivnÃ­, coÅ¾ vede kÂ tomu, Å¾e nemÅ¯Å¾e bÃ½t uvolnÄ›na (sice
+        # nechÃ¡pu, proÄ ji neuvolnÃ­ garbage collector, kdyÅ¾ hlÃ¡sÃ­, Å¾e nejsou
+        # Å¾Ã¡dnÃ© neuvolnitelnÃ© objekty, ale prostÄ› je to tak) a dochÃ¡zÃ­
+        # kÂ jejÃ­mu hromadÄ›nÃ­ bez uvolnÄ›nÃ­ pro kaÅ¾dou novou instanci datovÃ©ho
         # objektu.
         if condition is None:
             return []
@@ -270,7 +270,7 @@ class RestrictedData(Data):
             return result
         elif condition.name == 'IN':
             column, data, table_column, table_condition = condition.args()
-            # Toto nefunguje pro vzdálenı pøístup, ale nelze svítit...
+            # Toto nefunguje pro vzdÃ¡lenÃ½ pÅ™Ã­stup, ale nelze svÃ­tit...
             data._check_access_columns(table_column)
             data._check_access_condition(table_condition)
             return [column]
@@ -314,9 +314,9 @@ class RestrictedData(Data):
         return self._access_rights.permitted(permission, self.access_groups(),
                                              column=column_id)
     
-    # Pøedefinované metody.
-    # Je nutno dbát opatrnosti u conditions a dal¹ích argumentù, proto¾e ty
-    # umo¾òují získávat informace o datech nepøímo.
+    # PÅ™edefinovanÃ© metody.
+    # Je nutno dbÃ¡t opatrnosti uÂ conditions a dalÅ¡Ã­ch argumentÅ¯, protoÅ¾e ty
+    # umoÅ¾ÅˆujÃ­ zÃ­skÃ¡vat informace oÂ datech nepÅ™Ã­mo.
 
     def row(self, key, **kwargs):
         self._check_access_key()
@@ -396,7 +396,7 @@ class DataAccessException(Exception):
         import config
         log(EVENT, 'Access violation attempt',
             (config.dbconnection.user(), permission, table, column))
-        Exception.__init__(self, _("Access denied"), permission, table, column)
+        Exception.__init__(self, _(u"Access denied"), permission, table, column)
 
 
 def is_in_groups(access_groups):

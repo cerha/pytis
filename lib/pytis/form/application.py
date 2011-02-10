@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
@@ -16,11 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Hlavní aplikaèní okno.
+"""HlavnÃ­ aplikaÄnÃ­ okno.
 
-Tento modul definuje tøídu 'Application', která pøedstavuje hlavní okno
-aplikace a zaji¹»uje základní slu¾by s ním související.  Modul se tıká pouze
-u¾ivatelského rozhraní, neøe¹í obecnì start a zastavení aplikace.
+Tento modul definuje tÅ™Ã­du 'Application', kterÃ¡ pÅ™edstavuje hlavnÃ­ okno
+aplikace a zajiÅ¡Å¥uje zÃ¡kladnÃ­ sluÅ¾by sÂ nÃ­m souvisejÃ­cÃ­.  Modul se tÃ½kÃ¡ pouze
+uÅ¾ivatelskÃ©ho rozhranÃ­, neÅ™eÅ¡Ã­ obecnÄ› start a zastavenÃ­ aplikace.
 
 """
 
@@ -43,42 +43,42 @@ import wx.html
 _application = None
 
 class Application(wx.App, KeyHandler, CommandHandler):
-    """Aplikace systému Pytis.
+    """Aplikace systÃ©mu Pytis.
 
-    Pro ka¾dou aplikaci systému Pytis existuje po celou dobu jejího bìhu jedno
-    hlavní aplikaèní okno.  To se sestává jednak ze statickıch prvkù a jednak z
-    vymìnitelného vnitøku okna (vlastních formuláøù).  Statickımi prvky jsou
-    pull-down menu a stavovı øádek.
+    Pro kaÅ¾dou aplikaci systÃ©mu Pytis existuje po celou dobu jejÃ­ho bÄ›hu jedno
+    hlavnÃ­ aplikaÄnÃ­ okno.  To se sestÃ¡vÃ¡ jednak ze statickÃ½ch prvkÅ¯ a jednak z
+    vymÄ›nitelnÃ©ho vnitÅ™ku okna (vlastnÃ­ch formulÃ¡Å™Å¯).  StatickÃ½mi prvky jsou
+    pull-down menu a stavovÃ½ Å™Ã¡dek.
 
-    Start aplikace a vytvoøení statickıch prvkù je mo¾né parametrizovat
-    specifikaèním souborem aplikace.  Tím je soubor 'application.py' v adresáøi
-    resolveru (urèeném konfiguraèní volbou 'def_dir').  Pou¾itelné specifikaèní
+    Start aplikace a vytvoÅ™enÃ­ statickÃ½ch prvkÅ¯ je moÅ¾nÃ© parametrizovat
+    specifikaÄnÃ­m souborem aplikace.  TÃ­m je soubor 'application.py' v adresÃ¡Å™i
+    resolveru (urÄenÃ©m konfiguraÄnÃ­ volbou 'def_dir').  PouÅ¾itelnÃ© specifikaÄnÃ­
     funkce jsou:
 
-      menu -- specifikace hlavního menu aplikace ve formátu specifikaèního
-        argumentu konstruktoru tøídy 'pytis.form.screen.MenuBar'.
+      menu -- specifikace hlavnÃ­ho menu aplikace ve formÃ¡tu specifikaÄnÃ­ho
+        argumentu konstruktoru tÅ™Ã­dy 'pytis.form.screen.MenuBar'.
         
-      status_fields -- specifikace polí stavové øádky aplikace ve formátu
-        specifikaèního argumentu konstruktoru tøídy
+      status_fields -- specifikace polÃ­ stavovÃ© Å™Ã¡dky aplikace ve formÃ¡tu
+        specifikaÄnÃ­ho argumentu konstruktoru tÅ™Ã­dy
         'pytis.form.screen.StatusBar'.
         
-      keymap -- specifikace pøiøazení kláves pøíkazùm jako sekvence trojic
-        (KEY, COMMAND, ARGS), kde KEY je definice klávesové zkratky, COMMAND je
-        instance tøídy 'Command' a ARGS je slovník argumentù, které mají bıt
-        pøíkazu pøedány.
+      keymap -- specifikace pÅ™iÅ™azenÃ­ klÃ¡ves pÅ™Ã­kazÅ¯m jako sekvence trojic
+        (KEY, COMMAND, ARGS), kde KEY je definice klÃ¡vesovÃ© zkratky, COMMAND je
+        instance tÅ™Ã­dy 'Command' a ARGS je slovnÃ­k argumentÅ¯, kterÃ© majÃ­ bÃ½t
+        pÅ™Ã­kazu pÅ™edÃ¡ny.
 
-      init -- Tato funkce mù¾e provádìt libovolné, blí¾e neurèené,
-        inicializaèní akce aplikace.  Je spu¹tìna a¾ po sestavení hlavního
-        aplikaèního okna a naètení konfigurace, tak¾e zde mù¾eme pracovat i s
-        u¾ivatelskım rozhraním.
+      init -- Tato funkce mÅ¯Å¾e provÃ¡dÄ›t libovolnÃ©, blÃ­Å¾e neurÄenÃ©,
+        inicializaÄnÃ­ akce aplikace.  Je spuÅ¡tÄ›na aÅ¾ po sestavenÃ­ hlavnÃ­ho
+        aplikaÄnÃ­ho okna a naÄtenÃ­ konfigurace, takÅ¾e zde mÅ¯Å¾eme pracovat i s
+        uÅ¾ivatelskÃ½m rozhranÃ­m.
 
-    Start u¾ivatelského rozhraní spoèívá ve vytvoøení instance této tøídy a
-    volání její metody 'run()'.
+    Start uÅ¾ivatelskÃ©ho rozhranÃ­ spoÄÃ­vÃ¡ ve vytvoÅ™enÃ­ instance tÃ©to tÅ™Ã­dy a
+    volÃ¡nÃ­ jejÃ­ metody 'run()'.
     
     """
     _menubar_forms = {}
 
-    _WINDOW_MENU_TITLE = _("Okn&a")
+    _WINDOW_MENU_TITLE = _(u"Okn&a")
 
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'saved_startup_forms'
@@ -217,7 +217,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         if not issubclass(cls, Form):
                             raise AttributeError
                     except AttributeError:
-                        self.run_dialog(Error, _("Neplatná formuláøová tøída v 'startup_forms':") +
+                        self.run_dialog(Error, _(u"NeplatnÃ¡ formulÃ¡Å™ovÃ¡ tÅ™Ã­da v 'startup_forms':") +
                                         ' '+ cls_name)
                         continue
                 else:
@@ -235,7 +235,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(OPERATIONAL, "Ignoring saved startup form:", pair)
         def run_startup_forms(update, startup_forms):
             i, total = 0, len(startup_forms)
-            msg = _("Otevírám formuláø: %s (%d/%d)")
+            msg = _(u"OtevÃ­rÃ¡m formulÃ¡Å™: %s (%d/%d)")
             for cls, name in startup_forms:
                 update(int(float(i)/total*100), newmsg=msg % (name, i+1, total))
                 try:
@@ -252,8 +252,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 i += 1
         if len(startup_forms) > 1:
             run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
-                       title=_("Automatické otevøení ulo¾enıch formuláøù"),
-                       message=_("Otevírám formuláø")+' '*40) #, can_abort=True)
+                       title=_(u"AutomatickÃ© otevÅ™enÃ­ uloÅ¾enÃ½ch formulÃ¡Å™Å¯"),
+                       message=_(u"OtevÃ­rÃ¡m formulÃ¡Å™")+' '*40) #, can_abort=True)
             # In wx2.8, keyboard navigation doesn't work now.  The following
             # lines raise the previous form and then back the top form, which
             # fixes the problem.  Running a Message dialog instead also helps,
@@ -265,9 +265,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         conn = config.dbconnection
         if conn:
-            # Pozor, pokud bìhem inicializace aplikace nedojde k pøipojení k
-            # databázi (není vyvolána ¾ádná databázová operace), nemusí bıt
-            # hodnoty správnì.
+            # Pozor, pokud bÄ›hem inicializace aplikace nedojde k pÅ™ipojenÃ­ k
+            # databÃ¡zi (nenÃ­ vyvolÃ¡na Å¾Ã¡dnÃ¡ databÃ¡zovÃ¡ operace), nemusÃ­ bÃ½t
+            # hodnoty sprÃ¡vnÄ›.
             title = frame.GetTitle()
             title += " %s@%s" % (conn.user(), conn.database())
             if conn.host():
@@ -308,7 +308,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _find_help_files(self):
         if not os.path.exists(config.help_dir):
-            log(OPERATIONAL, "Neexistující adresáø nápovìdy:", config.help_dir)
+            log(OPERATIONAL, "NeexistujÃ­cÃ­ adresÃ¡Å™ nÃ¡povÄ›dy:", config.help_dir)
             return []
         result = []
         import zipfile
@@ -332,7 +332,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                             result.append((filename, index, title))
 
         if len(result) == 0:
-            log(OPERATIONAL, "®ádné soubory nápovìdy nebyly nalezeny:",
+            log(OPERATIONAL, "Å½Ã¡dnÃ© soubory nÃ¡povÄ›dy nebyly nalezeny:",
                 config.help_dir)
         return result
 
@@ -343,11 +343,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 items.append(MSeparator())
             for uicmd in group:
                 items.append(mitem(uicmd))
-        menus.append(Menu(_("Pøíkazy"), items))
+        menus.append(Menu(_(u"PÅ™Ã­kazy"), items))
 
     def _create_help_menu(self, menus):
-        if [m for m in menus if m.title() == _("Nápovìda")]:
-            log(OPERATIONAL, "Menu nápovìdy nalezeno - nevytváøím vlastní.")
+        if [m for m in menus if m.title() == _(u"NÃ¡povÄ›da")]:
+            log(OPERATIONAL, "Menu nÃ¡povÄ›dy nalezeno - nevytvÃ¡Å™Ã­m vlastnÃ­.")
             return
         items = [mitem(UICommands.PYTIS_HELP)]
         items.extend([MItem(title, command=Application.COMMAND_HELP(topic=index))
@@ -355,7 +355,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         items.extend((MSeparator(),
                       mitem(UICommands.HELP),
                       mitem(UICommands.DESCRIBE)))
-        menus.append(Menu(_("Nápovìda"), items))
+        menus.append(Menu(_(u"NÃ¡povÄ›da"), items))
 
     def _dynamic_menu(self, connection_data):
         # Check for menu presence, if not available, return None
@@ -448,14 +448,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menus_prototype = self._spec('menu', ())
         menus = self._build_menu(menus_prototype, config.dbconnection)
         menus.append(Menu(self._WINDOW_MENU_TITLE, (
-                    MItem(_("Pøedchozí okno"), command=Application.COMMAND_RAISE_PREV_FORM,
-                          help=_("Pøepnout na pøedchozí okno v poøadí seznamu oken.")),
-                    MItem(_("Následující okno"), command=Application.COMMAND_RAISE_NEXT_FORM,
-                          help=_("Pøepnout na následující okno v poøadí seznamu oken.")),
-                    MItem(_("Poslednì aktivní okno"), command=Application.COMMAND_RAISE_RECENT_FORM,
-                          help=_("Umo¾òuje cyklicky pøepínat mezi dvìma poslednì aktivními okny.")),
-                    MItem(_("Uzavøít aktuální okno"), command=Form.COMMAND_LEAVE_FORM,
-                          help=_("Uzavøít okno aktuálního formuláøe.")),
+                    MItem(_(u"PÅ™edchozÃ­ okno"), command=Application.COMMAND_RAISE_PREV_FORM,
+                          help=_(u"PÅ™epnout na pÅ™edchozÃ­ okno v poÅ™adÃ­ seznamu oken.")),
+                    MItem(_(u"NÃ¡sledujÃ­cÃ­ okno"), command=Application.COMMAND_RAISE_NEXT_FORM,
+                          help=_(u"PÅ™epnout na nÃ¡sledujÃ­cÃ­ okno v poÅ™adÃ­ seznamu oken.")),
+                    MItem(_(u"PoslednÄ› aktivnÃ­ okno"), command=Application.COMMAND_RAISE_RECENT_FORM,
+                          help=_(u"UmoÅ¾Åˆuje cyklicky pÅ™epÃ­nat mezi dvÄ›ma poslednÄ› aktivnÃ­mi okny.")),
+                    MItem(_(u"UzavÅ™Ã­t aktuÃ¡lnÃ­ okno"), command=Form.COMMAND_LEAVE_FORM,
+                          help=_(u"UzavÅ™Ã­t okno aktuÃ¡lnÃ­ho formulÃ¡Å™e.")),
                     MSeparator(),
                     ), allow_autoindex=False))
         self._create_command_menu(menus)
@@ -469,7 +469,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         assert self._window_menu is not None
         return mb
 
-# Ostatní metody
+# OstatnÃ­ metody
 
     def _form_menu_item_title(self, form):
         title = form.title()
@@ -480,7 +480,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _update_window_menu(self):
         def wmitem(i, form):
             return CheckItem(acceskey_prefix(i) + self._form_menu_item_title(form),
-                             help=_('Vyzvednout okno formuláøe "%s" (%s/%s)') %\
+                             help=_('Vyzvednout okno formulÃ¡Å™e "%s" (%s/%s)') %\
                              (form.title(),form.__class__.__name__,form.name()),
                              command=Application.COMMAND_RAISE_FORM,
                              state=lambda : top_window() is form,
@@ -519,20 +519,20 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 
     def _recent_forms_menu_items(self):
         items = [MItem(acceskey_prefix(i) + title,
-                       help=_('Otevøít formuláø "%s" (%s/%s)') %
+                       help=_('OtevÅ™Ã­t formulÃ¡Å™ "%s" (%s/%s)') %
                             (title, args['form_class'].__name__, args['name']),
                        command=Application.COMMAND_RUN_FORM, args=args)
                  for i, (title, args) in enumerate(self._recent_forms)]
         items.append(MSeparator())
-        items.append(MItem(_("Vyèistit"),
-                           help=_("Vymazat menu poslednì otevøenıch formuláøù"),
+        items.append(MItem(_(u"VyÄistit"),
+                           help=_(u"Vymazat menu poslednÄ› otevÅ™enÃ½ch formulÃ¡Å™Å¯"),
                            command=Application.COMMAND_CLEAR_RECENT_FORMS))
         return items
         
     def _raise_form(self, form):
         if form is not None:
             if form not in self._frame.GetChildren():
-                log(EVENT, "Reparent -- mo¾ná je to tu opravdu potøeba...")
+                log(EVENT, "Reparent -- moÅ¾nÃ¡ je to tu opravdu potÅ™eba...")
                 form.Reparent(self._frame)
             old = self._windows.active()
             if form is not old:
@@ -578,17 +578,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
             del self._saved_state[name]
             
     def _cleanup(self):
-        # Zde ignorujeme v¹emo¾né vıjimky, aby i pøi pomìrnì znaènì havarijní
-        # situaci bylo mo¾no aplikaci ukonèit.
+        # Zde ignorujeme vÅ¡emoÅ¾nÃ© vÃ½jimky, aby iÂ pÅ™i pomÄ›rnÄ› znaÄnÄ› havarijnÃ­
+        # situaci bylo moÅ¾no aplikaci ukonÄit.
         def safelog(msg, *args):
             try:
                 log(ACTION, msg, *args)
             except:
                 print msg, args
-        safelog('Voláno ukonèení aplikace')
+        safelog('VolÃ¡no ukonÄenÃ­ aplikace')
         try:
             if not self._modals.empty():
-                log(EVENT, "Není mo¾no zavøít aplikaci s modálním oknem:",
+                log(EVENT, "NenÃ­ moÅ¾no zavÅ™Ã­t aplikaci s modÃ¡lnÃ­m oknem:",
                     self._modals.top())
                 return False
             forms = [(f.__class__, f.name(), f.title(), True) for f in self._windows.items()
@@ -599,7 +599,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if forms:
                 items = [(checked, title, cls.descr()) for cls, name, title, checked in forms]
                 save_state = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
-                exit, result = self.run_dialog(ExitDialog, save_columns=(_("Název"), _("Typ")),
+                exit, result = self.run_dialog(ExitDialog, save_columns=(_(u"NÃ¡zev"), _(u"Typ")),
                                                save_items=items, save_state=save_state)
                 if not exit:
                     return False
@@ -628,7 +628,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if current_value != initial_value:
                     options.append((option, current_value))
             self._configuration_stroage.write(options)
-            log(OPERATIONAL, "Konfigurace ulo¾ena: %d polo¾ek" % len(options))
+            log(OPERATIONAL, "Konfigurace uloÅ¾ena: %d poloÅ¾ek" % len(options))
         except Exception, e:
             safelog("Saving changed configuration failed:", str(e))
         try:
@@ -666,21 +666,21 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _on_form_close(self, event):
         form = event.GetEventObject()
         assert form is self._windows.active()
-        log(EVENT, "Okno nemodálního formuláøe uzavøeno:", form)
+        log(EVENT, "Okno nemodÃ¡lnÃ­ho formulÃ¡Å™e uzavÅ™eno:", form)
         self._windows.remove(form)
         self._update_window_menu()
         self.restore()
 
     def on_key_down(self, event, dont_skip=False):
-        # Toto je záchrannı odchytávaè.  Vìøte tomu nebo ne, ale pokud tady ta
-        # metoda není, wxWindows se pøi více pøíle¾itostech po stisku klávesy
-        # zhroutí.
+        # Toto je zÃ¡chrannÃ½ odchytÃ¡vaÄ.  VÄ›Å™te tomu nebo ne, ale pokud tady ta
+        # metoda nenÃ­, wxWindows se pÅ™i vÃ­ce pÅ™Ã­leÅ¾itostech po stisku klÃ¡vesy
+        # zhroutÃ­.
         return KeyHandler.on_key_down(self, event)
 
-    # Zpracování pøíkazù
+    # ZpracovÃ¡nÃ­ pÅ™Ã­kazÅ¯
 
     def _cmd_break(self):
-        message(_("Stop"), beep_=True)
+        message(_(u"Stop"), beep_=True)
         
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)
@@ -754,8 +754,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 name = name()
                 if name is None:
                     return None
-            log(ACTION, 'Vytváøím novı formuláø:', (form_class, name, kwargs))
-            message(_("Spou¹tím formuláø..."), root=True)
+            log(ACTION, 'VytvÃ¡Å™Ã­m novÃ½ formulÃ¡Å™:', (form_class, name, kwargs))
+            message(_(u"SpouÅ¡tÃ­m formulÃ¡Å™..."), root=True)
             assert issubclass(form_class, Form)
             assert is_anystring(name)
             # We indicate busy state here so that the action is not delayed by
@@ -769,7 +769,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if form is not None:
                 busy_cursor(False)
                 self._raise_form(form)
-                message(_('Formuláø "%s" nalezen na zásobníku oken.') % form.title())
+                message(_('FormulÃ¡Å™ "%s" nalezen na zÃ¡sobnÃ­ku oken.') % form.title())
                 if 'select_row' in kwargs:
                     form.select_row(kwargs['select_row'])
                 if 'filter' in kwargs:
@@ -791,10 +791,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 form = None
             if form is None:
                 busy_cursor(False)
-                self.run_dialog(Error, _("Formuláø se nepodaøilo vytvoøit: %s") % name)
+                self.run_dialog(Error, _(u"FormulÃ¡Å™ se nepodaÅ™ilo vytvoÅ™it: %s") % name)
             else:
                 if isinstance(form, PopupForm):
-                    log(EVENT, "Zobrazuji modální formuláø:", form)
+                    log(EVENT, "Zobrazuji modÃ¡lnÃ­ formulÃ¡Å™:", form)
                     self._modals.push(form)
                     message('', root=True)
                     form.show()
@@ -802,8 +802,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     try:
                         form_str = str(form) # Dead form doesn't speak...
                         result = form.run()
-                        log(EVENT, "Modální formuláø byl uzavøen:", form_str)
-                        log(EVENT, "Návratová hodnota:", result)
+                        log(EVENT, "ModÃ¡lnÃ­ formulÃ¡Å™ byl uzavÅ™en:", form_str)
+                        log(EVENT, "NÃ¡vratovÃ¡ hodnota:", result)
                     finally:
                         self._modals.pop()
                         busy_cursor(False)
@@ -815,7 +815,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     else:
                         self._panel.SetFocus()
                 else:
-                    log(EVENT, "Zobrazuji nemodální formuláø:", form)
+                    log(EVENT, "Zobrazuji nemodÃ¡lnÃ­ formulÃ¡Å™:", form)
                     old = self._windows.active()
                     if old is not None:
                         old.hide()
@@ -872,24 +872,24 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Dokumentace viz funkce run_procedure().
         result = None
         try:
-            message(_("Spou¹tím proceduru..."), root=True, timeout=2)
-            log(ACTION, 'Spou¹tím proceduru:',
+            message(_(u"SpouÅ¡tÃ­m proceduru..."), root=True, timeout=2)
+            log(ACTION, 'SpouÅ¡tÃ­m proceduru:',
                 (spec_name, proc_name, args, kwargs))
-            # Kvùli wx.SafeYield() se ztrácí focus, tak¾e
-            # si ho ulo¾íme a pak zase obnovíme.
+            # KvÅ¯li wx.SafeYield() se ztrÃ¡cÃ­ focus, takÅ¾e
+            # si ho uloÅ¾Ã­me a pak zase obnovÃ­me.
             focused = wx_focused_window()
             wx_yield_()
             spec = resolver().get(spec_name, 'proc_spec')
             assert is_dictionary(spec), \
-                   _("Specifikace procedur 'proc_spec' musí vracet slovník!")
+                   _(u"Specifikace procedur 'proc_spec' musÃ­ vracet slovnÃ­k!")
             assert proc_name in spec, \
-                  _("Specifikace procedur neobsahuje definici '%s'") % proc_name
+                  _(u"Specifikace procedur neobsahuje definici '%s'") % proc_name
             proc = spec[proc_name]
             if block_refresh_:
                 result = block_refresh(proc, *args, **kwargs)
             else:
                 result = proc(*args, **kwargs)
-            log(ACTION, "Návratová hodnota procedury:", result)
+            log(ACTION, "NÃ¡vratovÃ¡ hodnota procedury:", result)
             if focused:
                 focused.SetFocus()
         except UserBreakException:
@@ -899,17 +899,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def _cmd_help(self, topic=None):
-        """Zobraz dané téma v prohlí¾eèi nápovìdy."""
+        """Zobraz danÃ© tÃ©ma v prohlÃ­Å¾eÄi nÃ¡povÄ›dy."""
         if not self._help_files:
-            msg = _("®ádnı soubor s nápovìdou nebyl nalezen.\n"
-                    "Konfiguraèní volba 'help_dir' nyní ukazuje na:\n%s\n"
-                    "Zkontrolujte zda je cesta správná\n"
-                    "a zda adresáø obsahuje soubory nápovìdy.")
+            msg = _(u"Å½Ã¡dnÃ½ soubor s nÃ¡povÄ›dou nebyl nalezen.\n"
+                    "KonfiguraÄnÃ­ volba 'help_dir' nynÃ­ ukazuje na:\n%s\n"
+                    "Zkontrolujte zda je cesta sprÃ¡vnÃ¡\n"
+                    "a zda adresÃ¡Å™ obsahuje soubory nÃ¡povÄ›dy.")
             self.run_dialog(Warning, msg % config.help_dir)
             return
         if self._help_controller is None:
             self._help_controller = controller = wx.html.HtmlHelpController()
-            controller.SetTitleFormat(_("Nápovìda")+": %s")
+            controller.SetTitleFormat(_(u"NÃ¡povÄ›da")+": %s")
             wx.FileSystem_AddHandler(wx.ZipFSHandler())
             for filename, index, title in self._help_files:
                 controller.AddBook(filename)
@@ -944,25 +944,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_nothing(self, enabled=True):
         pass
         
-    # Veøejné metody
+    # VeÅ™ejnÃ© metody
 
     def run_dialog(self, dialog_or_class_, *args, **kwargs):
-        """Zobraz dialog urèené tøídy s hlavním oknem aplikace jako rodièem.
+        """Zobraz dialog urÄenÃ© tÅ™Ã­dy s hlavnÃ­m oknem aplikace jako rodiÄem.
 
         Argumenty:
-          dialog_or_class_ -- tøída dialogu (odvozená od tøídy 'Dialog'), nebo
-            pøímo instance.  Pokud jde o tøídu, bude vytvoøena nová instance a
-            ta bude následnì spu¹tìna.
+          dialog_or_class_ -- tÅ™Ã­da dialogu (odvozenÃ¡ od tÅ™Ã­dy 'Dialog'), nebo
+            pÅ™Ã­mo instance.  Pokud jde o tÅ™Ã­du, bude vytvoÅ™ena novÃ¡ instance a
+            ta bude nÃ¡slednÄ› spuÅ¡tÄ›na.
           
-        Jako první argument konstruktoru dialogové tøídy ('parent') bude
-        doplnìno aktuální (vrchní) okno aplikace.  Ostatní argumenty jsou
-        pøedány tak, jak jsou.  Více o dialogovıch tøídách a jejich argumentech
+        Jako prvnÃ­ argument konstruktoru dialogovÃ© tÅ™Ã­dy ('parent') bude
+        doplnÄ›no aktuÃ¡lnÃ­ (vrchnÃ­) okno aplikace.  OstatnÃ­ argumenty jsou
+        pÅ™edÃ¡ny tak, jak jsou.  VÃ­ce o dialogovÃ½ch tÅ™Ã­dÃ¡ch a jejich argumentech
         konstruktoru v modulu 'pytis.form.dialog'.
 
-        Pokud je argumentem instance, jsou argumenty pøedány metodì 'run()'.
+        Pokud je argumentem instance, jsou argumenty pÅ™edÃ¡ny metodÄ› 'run()'.
 
-        Dialog je spu¹tìn (metodou 'run()') a jeho návratová hodnota je také
-        návratovou hodnotou této metody.
+        Dialog je spuÅ¡tÄ›n (metodou 'run()') a jeho nÃ¡vratovÃ¡ hodnota je takÃ©
+        nÃ¡vratovou hodnotou tÃ©to metody.
         
         """
         if not isinstance(dialog_or_class_, Dialog):
@@ -983,7 +983,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         finally:
             self._modals.pop()
             busy_cursor(False)
-        # Tento yield zaruèí správné pøedání focusu oken.
+        # Tento yield zaruÄÃ­ sprÃ¡vnÃ© pÅ™edÃ¡nÃ­ focusu oken.
         wx_yield_() 
         top = self.top_window()
         if top is not None:
@@ -994,10 +994,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
     
     def run(self):
-        """Spus» bìh u¾ivatelského rozhraní.
+        """SpusÅ¥ bÄ›h uÅ¾ivatelskÃ©ho rozhranÃ­.
 
-        Nevracej se døíve, ne¾ je bìh u¾ivatelského rozhraní definitivnì
-        ukonèen.
+        Nevracej se dÅ™Ã­ve, neÅ¾ je bÄ›h uÅ¾ivatelskÃ©ho rozhranÃ­ definitivnÄ›
+        ukonÄen.
 
         """
         COMPLETELY_BROKEN = False
@@ -1020,7 +1020,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self.MainLoop()
 
     def top_window(self):
-        """Vra» momentálnì aktivní okno aplikace.
+        """VraÅ¥ momentÃ¡lnÄ› aktivnÃ­ okno aplikace.
         
         """
         if not self._modals.empty():
@@ -1029,11 +1029,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return self._windows.active()
 
     def current_form(self, inner=True):
-        """Vra» právì aktivní formuláø aplikace, pokud existuje.
+        """VraÅ¥ prÃ¡vÄ› aktivnÃ­ formulÃ¡Å™ aplikace, pokud existuje.
         
-        Pokud není otevøen ¾ádnı formuláø, nebo aktivním oknem není formuláø,
-        vrací None.  Pokud je aktivním formuláøem duální formuláø, bude vrácen
-        jeho aktivní podformuláø, právì pokud je argument 'inner' pravdivı.
+        Pokud nenÃ­ otevÅ™en Å¾Ã¡dnÃ½ formulÃ¡Å™, nebo aktivnÃ­m oknem nenÃ­ formulÃ¡Å™,
+        vracÃ­ None.  Pokud je aktivnÃ­m formulÃ¡Å™em duÃ¡lnÃ­ formulÃ¡Å™, bude vrÃ¡cen
+        jeho aktivnÃ­ podformulÃ¡Å™, prÃ¡vÄ› pokud je argument 'inner' pravdivÃ½.
         
         """
         form = self.top_window()
@@ -1045,31 +1045,31 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return form
         
     def set_status(self, id, message, timeout=None, root=False, log_=True):
-        """Nastav v poli stavové øádky daného 'id' zprávu 'message'.
+        """Nastav v poli stavovÃ© Å™Ã¡dky danÃ©ho 'id' zprÃ¡vu 'message'.
         
         Argumenty:
         
-          id -- identifikátor pole stavové øádky.
+          id -- identifikÃ¡tor pole stavovÃ© Å™Ã¡dky.
           
-          message -- string, kterı má bıt zobrazen, nebo 'None'; je-li 'None',
-            bude pøedchozí hlá¹ení smazáno.
+          message -- string, kterÃ½ mÃ¡ bÃ½t zobrazen, nebo 'None'; je-li 'None',
+            bude pÅ™edchozÃ­ hlÃ¡Å¡enÃ­ smazÃ¡no.
             
-          timeout -- není-li 'None', zpráva zmizí po zadaném poètu sekund.
+          timeout -- nenÃ­-li 'None', zprÃ¡va zmizÃ­ po zadanÃ©m poÄtu sekund.
           
-          root -- je-li pravdivé, bude zpráva zobrazena v¾dy v hlavním oknì
-            aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního
-            okna aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno,
-            nebo se zobrazení zprávy v modálním oknì nepodaøilo.
+          root -- je-li pravdivÃ©, bude zprÃ¡va zobrazena vÅ¾dy v hlavnÃ­m oknÄ›
+            aplikace.  Pokud ne, je zprÃ¡va zobrazena ve stavovÃ© Å™Ã¡dce hlavnÃ­ho
+            okna aplikace aÅ¾ v pÅ™Ã­padÄ›, Å¾e nenÃ­ otevÅ™eno Å¾Ã¡dnÃ© modÃ¡lnÃ­ okno,
+            nebo se zobrazenÃ­ zprÃ¡vy v modÃ¡lnÃ­m oknÄ› nepodaÅ™ilo.
             
-          log_ -- pokud je pravda, bude událost zalogována.
+          log_ -- pokud je pravda, bude udÃ¡lost zalogovÃ¡na.
 
-        Zobrazení není garantováno, nemusí se zobrazit napøíklad v pøípadì, kdy
-        stavovı øádek neobsahuje odpovídající pole.
+        ZobrazenÃ­ nenÃ­ garantovÃ¡no, nemusÃ­ se zobrazit napÅ™Ã­klad vÂ pÅ™Ã­padÄ›, kdy
+        stavovÃ½ Å™Ã¡dek neobsahuje odpovÃ­dajÃ­cÃ­ pole.
 
         """
         if __debug__:
             if log_:
-                log(DEBUG, "Nastavení pole stavové øádky:", data=(id, message))
+                log(DEBUG, "NastavenÃ­ pole stavovÃ© Å™Ã¡dky:", data=(id, message))
 
         modal = self._modals.top()
         if root or not isinstance(modal, Form) \
@@ -1077,15 +1077,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return self._statusbar.message(id, message, timeout=timeout)
             
     def get_status(self, id):
-        """Vra» text pole 'id' stavového øádku hlavního okna aplikace.
+        """VraÅ¥ text pole 'id' stavovÃ©ho Å™Ã¡dku hlavnÃ­ho okna aplikace.
 
-        Pokud stavovı øádek dané pole neobsahuje, vra» None.
+        Pokud stavovÃ½ Å™Ã¡dek danÃ© pole neobsahuje, vraÅ¥ None.
         
         """
         return self._statusbar.get_message(id)
 
     def save(self):
-        """Ulo¾ stav aplikace."""
+        """UloÅ¾ stav aplikace."""
         form = self._windows.active()
         if form:
             form.save()
@@ -1104,14 +1104,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._panel.SetFocus()
 
     def recent_forms_menu(self):
-        """Vra» menu poslednì otevøenıch formuláøù jako instanci 'Menu'."""
-        menu = Menu(_("Poslednì otevøené formuláøe"),
+        """VraÅ¥ menu poslednÄ› otevÅ™enÃ½ch formulÃ¡Å™Å¯ jako instanci 'Menu'."""
+        menu = Menu(_(u"PoslednÄ› otevÅ™enÃ© formulÃ¡Å™e"),
                     self._recent_forms_menu_items(), allow_autoindex=False)
         self._recent_forms_menu = menu
         return menu
 
     def wx_frame(self):
-        """Vra» instancí 'wx.Frame' hlavního okna aplikace."""
+        """VraÅ¥ instancÃ­ 'wx.Frame' hlavnÃ­ho okna aplikace."""
         return self._frame
 
     def login_hook(self, success):
@@ -1482,55 +1482,54 @@ class DBFormProfileManager(FormProfileManager):
         return [v.value() for v in values]
 
 
-
-# Funkce odpovídající pøíkazùm aplikace.
+# Funkce odpovÃ­dajÃ­cÃ­ pÅ™Ã­kazÅ¯m aplikace.
 
 def run_form(form_class, name, **kwargs):
-    """Vytvoø formuláø a spus» jej v aplikaci.
+    """VytvoÅ™ formulÃ¡Å™ a spusÅ¥ jej v aplikaci.
     
     Argumenty:
     
-      form_class -- tøída vytváøeného formuláøe (odvozená od tøídy 'Form').
+      form_class -- tÅ™Ã­da vytvÃ¡Å™enÃ©ho formulÃ¡Å™e (odvozenÃ¡ od tÅ™Ã­dy 'Form').
         
-      name -- název specifikace pro resolverù øetìzec.
+      name -- nÃ¡zev specifikace pro resolverÅ¯ Å™etÄ›zec.
 
-      kwargs -- klíèové arguementy, které mají bıt pøedány konstruktoru
-        formuláøe.  Argumenty 'parent' a 'resolver' budou doplnìny automaticky.
+      kwargs -- klÃ­ÄovÃ© arguementy, kterÃ© majÃ­ bÃ½t pÅ™edÃ¡ny konstruktoru
+        formulÃ¡Å™e.  Argumenty 'parent' a 'resolver' budou doplnÄ›ny automaticky.
         
-    Vytvoøenı formuláø bude zobrazen v oknì aplikace, nebo v novém modálním
-    oknì (pokud jde o modální formuláø odvozenı od tøídy 'PopupForm').  Okno
-    nemodálního formuláøe zùstává po návratu této funkce v aplikaci otevøeno
-    (lze jej odstranit pøíkazem 'Form.COMMAND_LEAVE_FORM').  V pøípadì
-    modálního formuláøe se funkce vrací a¾ po jeho uzavøení.
+    VytvoÅ™enÃ½ formulÃ¡Å™ bude zobrazen v oknÄ› aplikace, nebo v novÃ©m modÃ¡lnÃ­m
+    oknÄ› (pokud jde o modÃ¡lnÃ­ formulÃ¡Å™ odvozenÃ½ od tÅ™Ã­dy 'PopupForm').  Okno
+    nemodÃ¡lnÃ­ho formulÃ¡Å™e zÅ¯stÃ¡vÃ¡ po nÃ¡vratu tÃ©to funkce v aplikaci otevÅ™eno
+    (lze jej odstranit pÅ™Ã­kazem 'Form.COMMAND_LEAVE_FORM').  V pÅ™Ã­padÄ›
+    modÃ¡lnÃ­ho formulÃ¡Å™e se funkce vracÃ­ aÅ¾ po jeho uzavÅ™enÃ­.
 
-    Vrací: Návratovou hodnotu metody 'run()' v pøípadì modálního formuláøe,
-    nebo None v pøípadì nemodálního formuláøe.  Pokud formuláø nelze spustit
-    (napø. nedostateèná pøístupová práva) , vrací False.
+    VracÃ­: NÃ¡vratovou hodnotu metody 'run()' v pÅ™Ã­padÄ› modÃ¡lnÃ­ho formulÃ¡Å™e,
+    nebo None v pÅ™Ã­padÄ› nemodÃ¡lnÃ­ho formulÃ¡Å™e.  Pokud formulÃ¡Å™ nelze spustit
+    (napÅ™. nedostateÄnÃ¡ pÅ™Ã­stupovÃ¡ prÃ¡va) , vracÃ­ False.
 
     """
     cmd = Application.COMMAND_RUN_FORM
     kwargs = dict(form_class=form_class, name=name, **kwargs)
     if not cmd.enabled(**kwargs):
-        message(_("Spu¹tìní formuláøe zamítnuto."), beep_=True)
+        message(_(u"SpuÅ¡tÄ›nÃ­ formulÃ¡Å™e zamÃ­tnuto."), beep_=True)
         return False
     return cmd.invoke(**kwargs)
 
 def run_procedure(spec_name, proc_name, *args, **kwargs):
-    """Spus» proceduru.
+    """SpusÅ¥ proceduru.
     
     Argumenty:
     
-      spec_name -- jméno specifikace pro resolver.
+      spec_name -- jmÃ©no specifikace pro resolver.
     
-      proc_name -- jméno procedury, která má bıt spu¹tìna.  Jde o klíè do
-        slovníku, kterı je vracen specifikaèní funkcí 'proc_spec'.
+      proc_name -- jmÃ©no procedury, kterÃ¡ mÃ¡ bÃ½t spuÅ¡tÄ›na.  Jde o klÃ­Ä do
+        slovnÃ­ku, kterÃ½ je vracen specifikaÄnÃ­ funkcÃ­ 'proc_spec'.
 
-    V¹echny dal¹í argumenty (vèetnì klíèovıch) budou pøedány spou¹tìné
-    proceduøe.  Vıjimkou je klíèovı argument 'block_refresh_', kterı pøedán
-    není, ale pokud je pravdivı, tak bude volání procedury obaleno voláním
+    VÅ¡echny dalÅ¡Ã­ argumenty (vÄetnÄ› klÃ­ÄovÃ½ch) budou pÅ™edÃ¡ny spouÅ¡tÄ›nÃ©
+    proceduÅ™e.  VÃ½jimkou je klÃ­ÄovÃ½ argument 'block_refresh_', kterÃ½ pÅ™edÃ¡n
+    nenÃ­, ale pokud je pravdivÃ½, tak bude volÃ¡nÃ­ procedury obaleno volÃ¡nÃ­m
     'block_refresh()'.
 
-    Návratová hodnota procedury je návratovou hodnotou volání této metody.
+    NÃ¡vratovÃ¡ hodnota procedury je nÃ¡vratovou hodnotou volÃ¡nÃ­ tÃ©to metody.
 
     """
     assert 'args' not in kwargs, "The keyword argument 'args' is reserved for internal use!"
@@ -1569,12 +1568,12 @@ def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
     return Application.COMMAND_NEW_RECORD.invoke(**locals())
 
 def delete_record(view, data, transaction, record,
-                  question=_("Opravdu chcete záznam zcela vymazat?")):
+                  question=_(u"Opravdu chcete zÃ¡znam zcela vymazat?")):
     # This is here only to prevent duplication of code in form.py and inputfield.py.
     # It Shound not be used as a public API method.
     ask = True
     key = record.row().columns([c.id() for c in data.key()])
-    # O¹etøení u¾ivatelské funkce pro mazání
+    # OÅ¡etÅ™enÃ­ uÅ¾ivatelskÃ© funkce pro mazÃ¡nÃ­
     on_delete_record = view.on_delete_record()
     if on_delete_record is not None:
         result = on_delete_record(record)
@@ -1605,15 +1604,15 @@ def delete_record(view, data, transaction, record,
         return False
 
 def refresh():
-    """Aktualizuj zobrazení viditelnıch oken aplikace, pokud je to tøeba."""
+    """Aktualizuj zobrazenÃ­ viditelnÃ½ch oken aplikace, pokud je to tÅ™eba."""
     Application.COMMAND_REFRESH.invoke()
 
 def help(topic=None):
-    """Zobraz dané téma v proholí¾eèi nápovìdy."""
+    """Zobraz danÃ© tÃ©ma v proholÃ­Å¾eÄi nÃ¡povÄ›dy."""
     return Application.COMMAND_HELP.invoke(topic=topic)
 
 def exit():
-    """Ukonèi u¾ivatelské rozhraní aplikace."""
+    """UkonÄi uÅ¾ivatelskÃ© rozhranÃ­ aplikace."""
     return Application.COMMAND_EXIT.invoke()
 
 def db_operation(operation, *args, **kwargs):
@@ -1655,13 +1654,13 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 _application.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException, e:
-            run_dialog(Error, _("Pøístup odmítnut"))
+            run_dialog(Error, _(u"PÅ™Ã­stup odmÃ­tnut"))
             return FAILURE
         except pytis.data.DBLoginException, e:
             import config
             if config.dbconnection.password() is not None and _application:
                 _application.login_hook(success=False)
-            login_and_password = run_dialog(Login, _("Zadejte heslo pro pøístup do databáze"),
+            login_and_password = run_dialog(Login, _(u"Zadejte heslo pro pÅ™Ã­stup do databÃ¡ze"),
                                             login=config.dbuser)
 	    if not login_and_password:
                 return FAILURE
@@ -1677,66 +1676,66 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if quiet:
                 return FAILURE
             if in_transaction:
-                run_dialog(Message, message, title=_("Databázová chyba"),
+                run_dialog(Message, message, title=_(u"DatabÃ¡zovÃ¡ chyba"),
                            icon=Message.ICON_ERROR)
                 return FAILURE
             else:
-                message += '\n' + _("Zkusit znovu?")
-                if not run_dialog(Question, message, title=_("Databázová chyba"),
+                message += '\n' + _(u"Zkusit znovu?")
+                if not run_dialog(Question, message, title=_(u"DatabÃ¡zovÃ¡ chyba"),
                                   icon=Question.ICON_ERROR):
                     return FAILURE
 
 def delete_record_question(msg=None):
-    """Zeptej se u¾ivatele, zda má bıt opravdu smazán záznam.
+    """Zeptej se uÅ¾ivatele, zda mÃ¡ bÃ½t opravdu smazÃ¡n zÃ¡znam.
 
-    Vra» pravdu, právì kdy¾ u¾ivatel odpoví kladnì.
+    VraÅ¥ pravdu, prÃ¡vÄ› kdyÅ¾ uÅ¾ivatel odpovÃ­ kladnÄ›.
     
     """
-    log(EVENT, 'Dialog mazání øádku')
+    log(EVENT, 'Dialog mazÃ¡nÃ­ Å™Ã¡dku')
     if msg == None:
-        msg = _("Opravdu chcete záznam zcela vymazat?")        
+        msg = _(u"Opravdu chcete zÃ¡znam zcela vymazat?")        
     if not run_dialog(Question, msg):
-        log(EVENT, 'Mazání øádku u¾ivatelem zamítnuto')
+        log(EVENT, 'MazÃ¡nÃ­ Å™Ã¡dku uÅ¾ivatelem zamÃ­tnuto')
         return False
-    log(EVENT, 'Mazání øádku u¾ivatelem potvrzeno')
+    log(EVENT, 'MazÃ¡nÃ­ Å™Ã¡dku uÅ¾ivatelem potvrzeno')
     return True
 
-# Funkce, které jsou obrazem veøejnıch metod aktuální aplikace.
+# Funkce, kterÃ© jsou obrazem veÅ™ejnÃ½ch metod aktuÃ¡lnÃ­ aplikace.
 
 def run_dialog(*args, **kwargs):
-    """Zobraz dialog v oknì aplikace (viz 'Application.run_dialog()')."""
+    """Zobraz dialog v oknÄ› aplikace (viz 'Application.run_dialog()')."""
     if _application is not None:
         return _application.run_dialog(*args, **kwargs)
     else:
         log(OPERATIONAL, "Attempt to run a dialog:", (args, kwargs))
 
 def current_form(inner=True):
-    """Vra» právì aktivní formuláø (viz 'Application.currnt_form()')."""
+    """VraÅ¥ prÃ¡vÄ› aktivnÃ­ formulÃ¡Å™ (viz 'Application.currnt_form()')."""
     if _application is not None:
         return _application.current_form(inner=inner)
 
 def top_window():
-    """Vra» aktivní okno aplikace (formuláø, nebo dialog)."""
+    """VraÅ¥ aktivnÃ­ okno aplikace (formulÃ¡Å™, nebo dialog)."""
     if _application is not None:
         return _application.top_window()
 
 def set_status(id, message, log_=True):
-    """Nastav pole 'id' stavové øádky (viz 'Application.set_status()')."""
+    """Nastav pole 'id' stavovÃ© Å™Ã¡dky (viz 'Application.set_status()')."""
     if _application is not None:
         return _application.set_status(id, message, log_=log_)
     else:
         log(OPERATIONAL, "Attempt to set status-line:", (id, message))
 
 def get_status(id):
-    """Vra» text pole 'id' stavové øádky. (viz 'Application.get_status()')"""
+    """VraÅ¥ text pole 'id' stavovÃ© Å™Ã¡dky. (viz 'Application.get_status()')"""
     return _application.get_status(id)
 
 def recent_forms_menu():
-    """Vra» menu poslednì otevøenıch formuláøù jako instanci 'pytis.form.Menu'.
+    """VraÅ¥ menu poslednÄ› otevÅ™enÃ½ch formulÃ¡Å™Å¯ jako instanci 'pytis.form.Menu'.
 
-    Tato funkce je urèena pro vyu¾ití pøi definici menu aplikace.  Pokud menu poslednì otevøenıch
-    formuláøù tímto zpùsobem do hlavního menu aplikace pøidáme, bude jej aplikace dále
-    obhospodaøovat.  Toto menu lze do hlavního menu umístit pouze jednou.
+    Tato funkce je urÄena pro vyuÅ¾itÃ­ pÅ™i definici menu aplikace.  Pokud menu poslednÄ› otevÅ™enÃ½ch
+    formulÃ¡Å™Å¯ tÃ­mto zpÅ¯sobem do hlavnÃ­ho menu aplikace pÅ™idÃ¡me, bude jej aplikace dÃ¡le
+    obhospodaÅ™ovat.  Toto menu lze do hlavnÃ­ho menu umÃ­stit pouze jednou.
         
     """
     if _application:
@@ -1746,34 +1745,34 @@ def recent_forms_menu():
         return ()
 
 def wx_frame():
-    """Vra» instanci 'wx.Frame' hlavního okna aplikace."""
+    """VraÅ¥ instanci 'wx.Frame' hlavnÃ­ho okna aplikace."""
     return _application.wx_frame()
 
 def profile_manager():
     """Return 'Application.profile_manager()' of the current application instance."""
     return _application.profile_manager()
 
-# Ostatní funkce.
+# OstatnÃ­ funkce.
 
 def message(message, kind=EVENT, data=None, beep_=False, timeout=None,
             root=False, log_=True):
-    """Zaloguj a zobraz neinteraktivní 'message' v oknì aplikace.
+    """Zaloguj a zobraz neinteraktivnÃ­ 'message' vÂ oknÄ› aplikace.
 
     Argumenty:
 
-      message -- øetìzec, kterı má bıt zobrazen; obsahuje-li jako poslední znak
-        dvojteèku, není tato v oknì aplikace zobrazena
-      kind -- druh zprávy, jedna z konstant modulu 'log'
-      data -- doplòující data pro logování, stejné jako v 'log.log'
-      beep_ -- právì kdy¾ je pravdivé, bude hlá¹ení doprovázeno pípnutím
-      timeout -- pokud je zadáno, zpráva zmizí po zadaném poètu sekund
-      root -- je-li pravdivé, bude zpráva zobrazena v¾dy v hlavním oknì
-        aplikace.  Pokud ne, je zpráva zobrazena ve stavové øádce hlavního okna
-        aplikace a¾ v pøípadì, ¾e není otevøeno ¾ádné modální okno, nebo se
-        zobrazení zprávy v modálním oknì nepodaøilo.
-      log_ -- pokud je pravda, bude zpráva také zalogována.
+      message -- Å™etÄ›zec, kterÃ½ mÃ¡ bÃ½t zobrazen; obsahuje-li jako poslednÃ­ znak
+        dvojteÄku, nenÃ­ tato vÂ oknÄ› aplikace zobrazena
+      kind -- druh zprÃ¡vy, jedna zÂ konstant modulu 'log'
+      data -- doplÅˆujÃ­cÃ­ data pro logovÃ¡nÃ­, stejnÃ© jako vÂ 'log.log'
+      beep_ -- prÃ¡vÄ› kdyÅ¾ je pravdivÃ©, bude hlÃ¡Å¡enÃ­ doprovÃ¡zeno pÃ­pnutÃ­m
+      timeout -- pokud je zadÃ¡no, zprÃ¡va zmizÃ­ po zadanÃ©m poÄtu sekund
+      root -- je-li pravdivÃ©, bude zprÃ¡va zobrazena vÅ¾dy v hlavnÃ­m oknÄ›
+        aplikace.  Pokud ne, je zprÃ¡va zobrazena ve stavovÃ© Å™Ã¡dce hlavnÃ­ho okna
+        aplikace aÅ¾ v pÅ™Ã­padÄ›, Å¾e nenÃ­ otevÅ™eno Å¾Ã¡dnÃ© modÃ¡lnÃ­ okno, nebo se
+        zobrazenÃ­ zprÃ¡vy v modÃ¡lnÃ­m oknÄ› nepodaÅ™ilo.
+      log_ -- pokud je pravda, bude zprÃ¡va takÃ© zalogovÃ¡na.
         
-    Pro zobrazení zprávy ve stavové øádce platí stejná pravidla, jako v pøípadì
+    Pro zobrazenÃ­ zprÃ¡vy ve stavovÃ© Å™Ã¡dce platÃ­ stejnÃ¡ pravidla, jako v pÅ™Ã­padÄ›
     metody 'Application.set_status()'.
 
     """
@@ -1815,16 +1814,16 @@ def create_data_object(name, spec_kwargs={}, kwargs={}):
     return data_object
         
 def global_keymap():
-    """Vra» klávesovou mapu aplikace jako instanci tøídy 'Keymap'."""
+    """VraÅ¥ klÃ¡vesovou mapu aplikace jako instanci tÅ™Ã­dy 'Keymap'."""
     try:
         return _application.keymap
     except AttributeError:
         return Keymap()
 
 def block_refresh(function, *args, **kwargs):
-    """Zablokuj ve¹kerı refresh po dobu provádìní funkce 'function'.
+    """Zablokuj veÅ¡kerÃ½ refresh po dobu provÃ¡dÄ›nÃ­ funkce 'function'.
     
-    Vrací: vısledek vrácenı volanou funkcí.
+    VracÃ­: vÃ½sledek vrÃ¡cenÃ½ volanou funkcÃ­.
     
     """
     return Refreshable.block_refresh(function, *args, **kwargs)
@@ -1946,11 +1945,11 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=True):
 
 _yield_lock = None
 def wx_yield_(full=False):
-    """Zpracuj wx messages ve frontì.
+    """Zpracuj wx messages ve frontÄ›.
 
     Argumenty:
 
-      full -- právì kdy¾ je pravdivé, zpracuj i u¾ivatelské události
+      full -- prÃ¡vÄ› kdyÅ¾ je pravdivÃ©, zpracuj iÂ uÅ¾ivatelskÃ© udÃ¡losti
 
     """
     if _yield_blocked:

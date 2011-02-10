@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2001-2009, 2011 Brailcom, o.p.s.
 #
@@ -16,12 +16,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Práce s u¾ivatelskım rozhraním.
+"""PrÃ¡ce sÂ uÅ¾ivatelskÃ½m rozhranÃ­m.
 
-Modul obsahuje v¹e co souvisí s u¾ivatelskım rozhraním a v¹e co má nìco
-spoleèného s wxWindows.  V¹echny obslu¾né zále¾itosti u¾ivatelského rozhraní
-jsou implementovány v tomto modulu, mimo tento modul se definují pouze
-specifikace jednotlivıch prvkù rozhraní.
+Modul obsahuje vÅ¡e co souvisÃ­ sÂ uÅ¾ivatelskÃ½m rozhranÃ­m a vÅ¡e co mÃ¡ nÄ›co
+spoleÄnÃ©ho sÂ wxWindows.  VÅ¡echny obsluÅ¾nÃ© zÃ¡leÅ¾itosti uÅ¾ivatelskÃ©ho rozhranÃ­
+jsou implementovÃ¡ny vÂ tomto modulu, mimo tento modul se definujÃ­ pouze
+specifikace jednotlivÃ½ch prvkÅ¯ rozhranÃ­.
 
 """
 
@@ -69,7 +69,7 @@ import _grid
 list_ = list
 list = _list
 
-# Øe¹ení cyklickıch závislostí souborù
+# Å˜eÅ¡enÃ­ cyklickÃ½ch zÃ¡vislostÃ­ souborÅ¯
 for file in (event, application, command, dialog, form, dualform,
              inputfield, list_, output, screen, search, _grid):
     file.__dict__.update(globals())

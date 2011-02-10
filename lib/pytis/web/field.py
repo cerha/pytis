@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright (C) 2006-2011 Brailcom, o.p.s.
 #
@@ -455,7 +455,7 @@ class DateFieldExporter(DateTimeFieldExporter):
             js_values = dict(
                 id = kwargs['id'],
                 format = locale_data.date_format,
-                today = context.translate(_("today")),
+                today = context.translate(_(u"today")),
                 day_names = g.js_value([context.translate(lcg.week_day_name(i, abbrev=True))
                                         for i in (6,0,1,2,3,4,5)]),
                 month_names = g.js_value([context.translate(lcg.month_name(i))
@@ -487,7 +487,7 @@ class BooleanFieldExporter(FieldExporter):
     def _format(self, context):
         # Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
         fid = self._field.id
-        return self._row.display(fid) or self._row[fid].value() and _("Yes") or _("No")
+        return self._row.display(fid) or self._row[fid].value() and _(u"Yes") or _(u"No")
 
     def _editor(self, context, **kwargs):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
@@ -500,7 +500,7 @@ class BinaryFieldExporter(FieldExporter):
         if buf:
             # Translators: The label "image"/"file" is used in textual representation of binary
             # data values, usually as a link to download the actual binary file.
-            return buf.filename() or isinstance(type, pd.Image) and _("image") or _("file")
+            return buf.filename() or isinstance(type, pd.Image) and _(u"image") or _(u"file")
         else:
             return ""
 
