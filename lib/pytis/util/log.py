@@ -176,11 +176,11 @@ class Logger(object):
     def _formatted_data(self, prefix, fmessage, data):
         if data is not None:
             if type(data) == type(()):
-                repr = `tuple(map(str, data))`
+                repr_ = repr(tuple(map(str, data)))
             elif type(data) == type(''):
-                repr = data
+                repr_ = data
             else:
-                repr = `data`
+                repr_ = repr(data)
             datalines = map(lambda l, prefix=prefix: '%s%s' % (prefix, l),
                             string.split(repr, '\n'))
             n = len(datalines)
