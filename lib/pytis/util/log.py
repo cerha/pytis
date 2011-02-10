@@ -182,14 +182,14 @@ class Logger(object):
             else:
                 repr_ = repr(data)
             datalines = map(lambda l, prefix=prefix: '%s%s' % (prefix, l),
-                            string.split(repr, '\n'))
+                            string.split(repr_, '\n'))
             n = len(datalines)
             if n <= 1:
                 if fmessage and fmessage[-1] == ':':
                     import config
                     if config.log_one_line_preferred:
-                        return '*%s%s %s' % (prefix, fmessage, repr)
-                data_string = '=%s%s' % (prefix, repr)
+                        return '*%s%s %s' % (prefix, fmessage, repr_)
+                data_string = '=%s%s' % (prefix, repr_)
             else:
                 datalines[0] = '<%s' % datalines[0]
                 datalines[n-1] = '>%s' % datalines[n-1]
