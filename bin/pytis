@@ -67,7 +67,7 @@ def _install_gettext():
     import config
     try:
         gettext.install('ebas')
-    except IOError, e:
+    except IOError as e:
         util.log(util.OPERATIONAL, 'Nelze otevřít jazykový soubor', e.args)
         import __builtin__
         __builtin__.__dict__['_'] = util.identity    
@@ -77,7 +77,7 @@ def go():
     import config
     try:
         config.add_command_line_options(sys.argv)
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         _usage(e)
     if not util.in_x():
         sys.stderr.write(_("Nedostupné prostředí X Window\n"))
@@ -113,7 +113,7 @@ def go():
         try:
             import cgitb
             sys.stderr.write(cgitb.text(einfo))
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write("Unable to generate detailed traceback: "+ str(e) +"\n")
             import traceback
             traceback.print_exception(*einfo)

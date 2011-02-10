@@ -38,9 +38,9 @@ def run():
     try:
         config.add_command_line_options(sys.argv)
         old, new = sys.argv[1:]
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e.msg)
-    except ValueError, e:
+    except ValueError as e:
         usage()
     # Avoid pytis logging during the update.
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]

@@ -1848,7 +1848,7 @@ class RecordForm(LookupForm):
                 return False
             try:
                 fh = open(filename)
-            except IOError, e:
+            except IOError as e:
                 msg = _(u"Nepodařilo se otevřít soubor '%s': %s")
                 run_dialog(Error, msg % (filename, str(e)))
                 continue

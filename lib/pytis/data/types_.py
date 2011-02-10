@@ -293,7 +293,7 @@ class Type(object):
         key = (object, strict, transaction, condition, arguments, tuple(kwargs.items()))
         try:
             result = self._validation_cache[key], None
-        except ValidationError, e:
+        except ValidationError as e:
             result = None, e
         return result
 
@@ -1084,7 +1084,7 @@ class DateTime(Type):
                 result = None, self._validation_error(self.VM_DT_AGE)
             else:    
                 result = Value(self, dt), None
-        except Exception, e:
+        except Exception as e:
             result = None, self._validation_error(self.VM_DT_FORMAT)
         # TODO: zjistit, proč zde bylo uděláno toto omezení
         # Pro správnou funkčnost třídy Time je ale třeba ho zrušit
@@ -1732,7 +1732,7 @@ class Array(Limited):
             try:
                 self._check_constraints(values, transaction=transaction,
                                         condition=condition, arguments=arguments)
-            except ValidationError, e:
+            except ValidationError as e:
                 return None, e
         return Value(self, values), None
 

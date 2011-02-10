@@ -243,7 +243,7 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
             log(OPERATIONAL, "Soubor nenalezen:", p)
     try:
         f = open(path, 'r')
-    except IOError, e:
+    except IOError as e:
         pytis.form.run_dialog(pytis.form.Error,
                               _(u"Nemohu otevřít soubor nápovědy: %s") % e)
     else:

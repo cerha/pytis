@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006, 2007, 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ def get_form_defs(resolver, messages=None):
                 except pytis.util.ResolverFileError:
                     add_message(messages, DMPMessage.WARNING_MESSAGE, "Module not loaded", (module_name,))
                     continue
-                except Exception, e:
+                except Exception as e:
                     add_message(messages, DMPMessage.ERROR_MESSAGE, "Error when loading module", (module, e,))
                 module_identifier = module_name.replace('/', '.')
                 for spec_attr in [o for o in dir(module)]:
@@ -235,7 +235,7 @@ class MenuChecker(object):
             class_name = spec_name[pos+1:]
             try:
                 spec = self._resolver.get_object(module_name, class_name)
-            except ResolverError, e:
+            except ResolverError as e:
                 return errors + [str(e)]
             if not spec.public:
                 errors.append("Neveřejná specifikace v menu.")
@@ -245,7 +245,7 @@ class MenuChecker(object):
         errors = []
         try:
             bindings = self._resolver.get(main, 'binding_spec')
-        except ResolverError, e:
+        except ResolverError as e:
             return errors + [str(e)]
         try:
             bspec = bindings[side]
@@ -285,7 +285,7 @@ class MenuChecker(object):
                                                "Týká se to těchto rolí: %(roles)s.") %
                                               dict(codebook=codebook, view=spec_name, field=f.id(), roles=users))
                                 break
-        except Exception, e:
+        except Exception as e:
             errors.append(str(e))
         return errors
 
@@ -316,7 +316,7 @@ class MenuChecker(object):
         resolver = self._resolver
         try:
             data_spec = resolver.get(spec_name, 'data_spec')
-        except ResolverError, e:
+        except ResolverError as e:
             return errors + [str(e)]
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
@@ -328,7 +328,7 @@ class MenuChecker(object):
             row = data.fetchone()
             if row:
                 PresentedRow(fields, data, row)
-        except Exception, e:
+        except Exception as e:
             errors.append(str(e))
         return errors
     
@@ -382,7 +382,7 @@ class MenuChecker(object):
             reporter.info("Specifikace: " + s)
             try:
                 errors = self._check_spec(s)
-            except Exception, e:
+            except Exception as e:
                 errors = [str(e)]
             for e in errors:
                 reporter.error(e)

@@ -46,7 +46,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
             log(DEBUG, 'Připojovací řetězec:', connection_string)
         try:
             connection = libpq.PQconnectdb(connection_string)
-        except libpq.DatabaseError, e:
+        except libpq.DatabaseError as e:
             if e.args:
                 msg = e.args[0].lower()
                 if msg.find('password') != -1 or \
@@ -68,11 +68,11 @@ class _PgsqlAccessor(PostgreSQLAccessor):
             return connection.query(query)
         try:
             result = do_query(connection.connection())
-        except libpq.InterfaceError, e:
+        except libpq.InterfaceError as e:
             raise DBUserException(None, e, query)
-        except libpq.ProgrammingError, e:
+        except libpq.ProgrammingError as e:
             raise DBUserException(None, e, query)
-        except libpq.OperationalError, e:
+        except libpq.OperationalError as e:
             if e.args:
                 if e.args[0].find('could not obtain lock') != -1:
                     raise DBLockException()
@@ -85,12 +85,12 @@ class _PgsqlAccessor(PostgreSQLAccessor):
             connection = self._postgresql_new_connection(cdata)
             try:
                 result = do_query(connection.connection())
-            except Exception, e:
+            except Exception as e:
                 raise DBSystemException(_(u"Database operational error"),
                                         e, e.args, query)
-        except libpq.InternalError, e:
+        except libpq.InternalError as e:
             raise DBException(None, e, query)
-        except libpq.IntegrityError, e:
+        except libpq.IntegrityError as e:
             raise DBUserException(_(u"Database integrity violation"),
                                   e, e.args, query)
         return self._postgresql_Result(result), connection
@@ -111,7 +111,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                 for col in range(result.nfields):
                     try:
                         value = result.getvalue(row, col)                    
-                    except libpq.InterfaceError, e:
+                    except libpq.InterfaceError as e:
                         raise DBUserException(None, e)
                     if value is libpq.PG_True:
                         value = 'T'
@@ -176,7 +176,7 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                     log(DEBUG, 'Hlídám vstup', connection)
                 try:
                     select.select([connection.socket], [], [], None)
-                except Exception, e:
+                except Exception as e:
                     if __debug__:
                         log(DEBUG, 'Chyba na socketu', e.args)
                     break
@@ -186,7 +186,7 @@ class DBDataPyPgSQL(_PgsqlAccessor, DBDataPostgreSQL):
                     try:
                         connection.consumeInput()
                         notice = connection.notifies()
-                    except Exception, e:
+                    except Exception as e:
                         if __debug__:
                             log(DEBUG, 'Databázová chyba', e.args)
                         return None

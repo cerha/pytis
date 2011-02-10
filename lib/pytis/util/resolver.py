@@ -282,7 +282,7 @@ class FileResolver(Resolver):
                 try:
                     file, pathname, descr = imp.find_module(name, self._path)
                     module = imp.load_module(name, file, pathname, descr)
-                except ImportError, e:
+                except ImportError as e:
                     raise ResolverFileError(name, self._path, e)
             finally:
                 if file is not None:

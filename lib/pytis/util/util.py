@@ -1309,7 +1309,7 @@ def catch(tag, function, *args, **kwargs):
     """
     try:
         result = function(*args, **kwargs)
-    except _Throw, e:
+    except _Throw as e:
         if e.tag() == tag:
             result = e.value()
         else:

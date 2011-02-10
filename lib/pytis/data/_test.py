@@ -747,7 +747,7 @@ class _DBBaseTest(unittest.TestCase):
         cursor = self._connector.cursor()
         try:
             cursor.execute(command)
-        except Exception, e:
+        except Exception as e:
             try:
                 self._connector.rollback()
                 cursor.close()

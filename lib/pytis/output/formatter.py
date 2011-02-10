@@ -538,7 +538,7 @@ class LoutFormatter(Tmpdir):
     def _resolve(self, resolver, template_id, element, default=''):
         try:
             result = resolver.get(template_id, element)
-        except ResolverSpecError, e:
+        except ResolverSpecError as e:
             if __debug__: log(DEBUG, 'Specifikace nenalezena:', e.args)
             result = default
         return result

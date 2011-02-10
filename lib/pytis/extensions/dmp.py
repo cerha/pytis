@@ -315,7 +315,7 @@ class DMPObject(object):
         try:
             spec = resolver.get_object(module_name, class_name)
             spec_instance = spec(resolver)
-        except Exception, e:
+        except Exception as e:
             add_message(messages, DMPMessage.ERROR_MESSAGE,
                         "Couldn't load specification", (name, e,))
             return None
@@ -1250,7 +1250,7 @@ class DMPActions(DMPObject):
             else:
                 try:
                     title = spec.view_spec().title()
-                except Exception, e:
+                except Exception as e:
                     title = ''
                     add_message(messages, DMPMessage.ERROR_MESSAGE,
                                 "Can't create specification instance to get binding title",

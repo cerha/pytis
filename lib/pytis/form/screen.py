@@ -592,7 +592,7 @@ class KeyHandler:
             key_guardian = self.guardian()
             while not isinstance(key_guardian, KeyHandler):
                 key_guardian = key_guardian.guardian()
-        except Exception, e:
+        except Exception as e:
             key_guardian = None
         self._key_guardian = key_guardian
 

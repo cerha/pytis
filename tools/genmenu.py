@@ -140,7 +140,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
         else:
             try:
                 spec_instance = spec(resolver)
-            except Exception, e:
+            except Exception as e:
                 spec_instance = None
                 print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
         if spec_instance is not None:
@@ -163,7 +163,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
             else:
                 try:
                     title = spec(resolver).view_spec().title()
-                except Exception, e:
+                except Exception as e:
                     title = ''
                     print "Error: Can't create specification instance to get title of %s: %s" % (spec.__name__, e,)
             return pytis.presentation.Binding(id=name, title=title, name=name,
@@ -175,7 +175,7 @@ def process_menu(resolver, menu, parent, menu_items, actions, rights, position, 
                     spec = resolver.get_object(form_module, base_form_name)
                     bindings = spec(resolver).view_spec().bindings()
                     bindings = (binding(form_name),) + tuple(bindings)
-                except Exception, e:
+                except Exception as e:
                     bindings = None
                     print "Warning: Can't import bindings of %s: %s" % (form_name, e,)
             else:
@@ -338,7 +338,7 @@ def process_rights(resolver, actions, rights, def_dir, spec_fullname):
             form_spec = resolver.get_object(module_name, class_name)
             form_spec_instance = form_spec(resolver)
             access_rights = form_spec_instance.data_spec().access_rights()
-        except Exception, e:
+        except Exception as e:
             print "Error: Couldn't get access rights for form %s: %s" % (form_name, e,)
             return
         if access_rights is None:

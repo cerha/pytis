@@ -59,7 +59,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # Open the connection
         try:
             connection = dbapi.connect(**kwargs)
-        except dbapi.DatabaseError, e:
+        except dbapi.DatabaseError as e:
             # Does this error detection work for dbapi as well?
             if e.args:
                 msg = e.args[0].lower()
@@ -110,14 +110,14 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 new_connection = self._postgresql_new_connection(cdata)
                 try:
                     result = do_query(new_connection.connection())
-                except Exception, e:
+                except Exception as e:
                     raise DBSystemException(message, e, e.args, query)
             else:
                 raise DBSystemException(message, exception, exception.args, query)
             return result, new_connection
         try:
             result = do_query(connection.connection())
-        except dbapi.InterfaceError, e:
+        except dbapi.InterfaceError as e:
             if e.args and e.args[0].find('connection already closed') != -1:
                 # We believe this shouldn't happen as a program error and it
                 # may occur as a result of database engine connection crash.
@@ -125,13 +125,13 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 result, connection = retry(_(u"Database interface error"), e)
             else:
                 raise DBUserException(None, e, e.args, query)
-        except dbapi.NotSupportedError, e:
+        except dbapi.NotSupportedError as e:
             if e.args and e.args[0].find('cannot perform INSERT RETURNING') != -1:
                 # This is handled once again below since older dbapi versions report it as
                 # ProgrammingError and newer versions as NotSupportedError.
                 raise DBInsertException()
             raise DBUserException(None, e, e.args, query)
-        except dbapi.ProgrammingError, e:
+        except dbapi.ProgrammingError as e:
             if e.args:
                 if e.args[0].find('could not obtain lock') != -1:
                     raise DBLockException()
@@ -143,15 +143,15 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBUserException(None, e, e.args, query)
             else:
                 raise DBUserException(None, e, e.args, query)
-        except dbapi.DataError, e:
+        except dbapi.DataError as e:
             raise DBUserException(None, e, e.args, query)
-        except dbapi.OperationalError, e:
+        except dbapi.OperationalError as e:
             if e.args and e.args[0].find('could not obtain lock') != -1:
                 raise DBLockException()
             result, connection = retry(_(u"Database operational error"), e)
-        except dbapi.InternalError, e:
+        except dbapi.InternalError as e:
             raise DBException(None, e, query)
-        except dbapi.IntegrityError, e:
+        except dbapi.IntegrityError as e:
             raise DBUserException(_(u"Database integrity violation"),
                                   e, e.args, query)
         if __debug__:
@@ -196,28 +196,28 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # beginning of transaction.
         try:
             self._postgresql_commit_transaction()
-        except dbapi.OperationalError, e:
+        except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
     
     def _postgresql_commit_transaction(self):
         connection = self._pg_get_connection().connection()
         try:
             connection.commit()
-        except dbapi.OperationalError, e:
+        except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         
     def _postgresql_rollback_transaction(self):
         connection = self._pg_get_connection().connection()
         try:
             connection.rollback()
-        except dbapi.OperationalError, e:
+        except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         # For unknown reasons, connection client encoding gets reset after
         # rollback
         cursor = connection.cursor()
         try:
             cursor.execute('set client_encoding to "utf-8"')
-        except dbapi.OperationalError, e:
+        except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
 
     def _maybe_connection_error(self, e):
@@ -276,7 +276,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                         self._notif_init_connection()
                         for notification in self._registered_notifications:
                             self._notif_do_registration(notification)
-                    except Exception, e:
+                    except Exception as e:
                         self._pgnotif_connection = None
                 connection_ = self._pgnotif_connection
                 connection = connection_.connection()
@@ -292,7 +292,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 cursor, fileno = with_lock(self._pg_query_lock, lfunction)
                 try:
                     select.select([fileno], [], [], None)
-                except Exception, e:
+                except Exception as e:
                     if __debug__:
                         log(DEBUG, 'Chyba na socketu', e.args)
                     break

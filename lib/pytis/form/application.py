@@ -240,7 +240,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 update(int(float(i)/total*100), newmsg=msg % (name, i+1, total))
                 try:
                     run_form(cls, name)
-                except Exception, e:
+                except Exception as e:
                     log(OPERATIONAL, "Unable to init startup form:", (cls, name, e))
                 else:
                     # Assign titles to saved startup forms (we need a form instance for this).
@@ -280,7 +280,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _spec(self, name, default=None, **kwargs):
         try:
             result = resolver().get('application', name, **kwargs)
-        except ResolverError, e:
+        except ResolverError as e:
             log(OPERATIONAL, str(e))
             result = default
         return result
@@ -301,7 +301,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             module, spec_name = name[:pos], name[pos+1:]
             try:
                 spec_class = resolver().get_object(module, spec_name)
-            except Exception, e:
+            except Exception as e:
                 pass
         return (spec_class is None or
                 (issubclass(spec_class, Specification) and spec_class.public))
@@ -609,7 +609,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
                 else:
                     self._unset_state_param(self._STATE_STARTUP_FORMS)
-        except Exception, e:
+        except Exception as e:
             safelog(str(e))
         try:
             for form in self._windows.items():
@@ -617,9 +617,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._raise_form(form)
                     if not form.close():
                         return False
-                except Exception, e:
+                except Exception as e:
                     safelog(str(e))
-        except Exception, e:
+        except Exception as e:
             safelog(str(e))
         try:
             options = list(self._saved_state.items())
@@ -629,12 +629,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     options.append((option, current_value))
             self._configuration_stroage.write(options)
             log(OPERATIONAL, "Konfigurace uložena: %d položek" % len(options))
-        except Exception, e:
+        except Exception as e:
             safelog("Saving changed configuration failed:", str(e))
         try:
             if self._help_controller is not None:
                 self._help_controller.GetFrame().Close()
-        except Exception, e:
+        except Exception as e:
             safelog(str(e))
         return True
 
@@ -1653,10 +1653,10 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if _application:
                 _application.login_hook(success=True)
             return True, result
-        except pytis.data.DataAccessException, e:
+        except pytis.data.DataAccessException as e:
             run_dialog(Error, _(u"Přístup odmítnut"))
             return FAILURE
-        except pytis.data.DBLoginException, e:
+        except pytis.data.DBLoginException as e:
             import config
             if config.dbconnection.password() is not None and _application:
                 _application.login_hook(success=False)
@@ -1668,7 +1668,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if password is None:
                 return FAILURE
             config.dbconnection.update_login_data(user=login, password=password)
-        except pytis.data.DBException, e:
+        except pytis.data.DBException as e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
             if e.exception():

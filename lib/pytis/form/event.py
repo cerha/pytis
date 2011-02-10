@@ -137,7 +137,7 @@ def top_level_exception():
                             server.quit()
                         except:
                             pass
-                except Exception, e:
+                except Exception as e:
                     run_dialog(Error, _(u"Oznámení se nezdařilo odeslat:\n") + unicode(e))
                 else:
                     run_dialog(Message, _(u"Oznámení o chybě odesláno"))

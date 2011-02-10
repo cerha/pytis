@@ -2495,7 +2495,7 @@ class _GsqlDefs(UserDict.UserDict):
                                         (connection_string, option, value)
             try:
                 connection = libpq.PQconnectdb(connection_string)
-            except libpq.DatabaseError, e:
+            except libpq.DatabaseError as e:
                 if string.find(e.args[0], 'password') >= 0:
                     import getpass
                     stdout = sys.stdout
@@ -2793,7 +2793,7 @@ def _go(argv=None):
     try:
         opts, args = getopt.getopt(argv, '',
                                    map(extract_option, _GSQL_OPTIONS))
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         _usage(e)
     for o, v in opts:
         if o == '--help':

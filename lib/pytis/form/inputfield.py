@@ -1712,9 +1712,9 @@ class FileField(Invocable, InputField):
                     self._buffer.load(path, filename=filename)
                 else:
                     self._buffer = self._type.Buffer(path, filename=filename)
-            except pytis.data.ValidationError, e:
+            except pytis.data.ValidationError as e:
                 message(e.message(), beep_=True)
-            except IOError, e:
+            except IOError as e:
                 message(_(u"Chyba při čtení souboru:")+' '+str(e), beep_=True)
             else:
                 self._on_set_value()
@@ -1734,7 +1734,7 @@ class FileField(Invocable, InputField):
             FileField._last_save_dir = os.path.dirname(path)
             try:
                 self._buffer.save(path)
-            except IOError, e:
+            except IOError as e:
                 message(_(u"Chyba při zápisu souboru:")+' '+str(e), beep_=True)
             else:
                 message(_(u"Soubor uložen."))

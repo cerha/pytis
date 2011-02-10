@@ -747,7 +747,7 @@ class PresentedRow(object):
             if codebook:
                 try:
                     cb_spec = self._resolver.get(codebook, 'cb_spec')
-                except ResolverError, e:
+                except ResolverError as e:
                     cb_spec = CodebookSpec()
             else:
                 cb_spec = CodebookSpec()

@@ -350,7 +350,7 @@ class SFDialog(SFSDialog):
         #print "===", self._strop(self._condition or empty)
         try:
             operators = self._decompose_condition(self._condition or empty)
-        except Exception, e:
+        except Exception as e:
             run_dialog(Warning, _(u"Nepodařilo se rozložit podmínkový výraz:") +" "+ str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):

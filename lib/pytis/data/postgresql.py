@@ -621,7 +621,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                     # navěsit, co je nám libo.
                     for n in remove_duplicates(notiflist):
                         self._notif_register(n)
-                except pytis.data.DBException, e:
+                except pytis.data.DBException as e:
                     time.sleep(error_pause)
                     error_pause = error_pause * 2
                     continue
@@ -3343,7 +3343,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         result = self._pg_query(self._query, transaction=transaction)
         try:
             number = int(result[0][0])
-        except Exception, e:
+        except Exception as e:
             raise pytis.data.DBException(_(u"Chybná hodnota čítače z databáze"), e)
         return number
 
