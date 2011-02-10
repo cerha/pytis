@@ -1394,7 +1394,7 @@ def mktempdir(prefix='pytis'):
     Adresář pro dočasné soubory je dán konfigurací.  Jméno podadresáře se
     skládá ze zadaného 'prefix', kterým musí být string, a generované přípony.
 
-    Podadresář je vytvořen s přístupovými právy 0700.  Není-li možné adresář
+    Podadresář je vytvořen s přístupovými právy 0o700.  Není-li možné adresář
     z nějakého důvodu vytvořit, je vyvolána výjimka 'FileError'.
     
     Vrací: Jméno vytvořeného adresáře včetně kompletní cesty.  Žádná dvě volání
@@ -1408,13 +1408,13 @@ def mktempdir(prefix='pytis'):
         _mktempdir_counter = Counter()
     pattern = os.path.join(config.tmp_dir,
                            '%s%d.%%d' % (prefix, os.getpid()))
-    oldumask = os.umask(0077)
+    oldumask = os.umask(0o077)
     try:
         for i in range(1000):
             n = _mktempdir_counter.next()
             try:
                 the_dir = pattern % n
-                os.mkdir(the_dir, 0700)
+                os.mkdir(the_dir, 0o700)
                 break
             except OSError:
                 pass

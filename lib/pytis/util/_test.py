@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2008 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2004, 2008, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -387,7 +387,7 @@ class Mktempdir(unittest.TestCase):
             dir3 = util.mktempdir('foo')
             assert dir1 != dir3, dir1
             for d in dir1, dir2, dir3:
-                assert (os.stat(d)[0] & 07777) == 0700, (d, os.stat(d)[0])
+                assert (os.stat(d)[0] & 0o7777) == 0700, (d, os.stat(d)[0])
         finally:
             for d in dir1, dir2, dir3:
                 if d:
