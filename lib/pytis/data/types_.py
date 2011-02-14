@@ -43,8 +43,7 @@ import re
 import string
 from cStringIO import StringIO
 import thread
-
-from mx import DateTime as DT
+import time
 
 from pytis.data import *
 
@@ -963,16 +962,62 @@ class FullTextIndex(String):
     def columns(self):
         """Return sequence of column ids given in constructor."""
         return self._columns
+
     
+class _LocalTimezone(datetime.tzinfo):
+
+    def __init__(self):
+        self._offset = datetime.timedelta(seconds=-time.timezone)
+        if time.daylight:
+            self._dst_offset = datetime.timedelta(seconds=-time.altzone)
+        else:
+            self._dst_offset = self._offset
+        self._offset_diff = self._dst_offset - self._offset
+        self._zero_diff = datetime.timedelta(0)
+
+    def utcoffset(self, dt):
+        if self._dst(dt):
+            return self._dst_offset
+        else:
+            return self._offset
+
+    def dst(self, dt):
+        if self._dst(dt):
+            return self._offset_diff
+        else:
+            return self._zero_diff
+
+    def tzname(self, dt):
+        return time.tzname[self._dst(dt)]
+
+    def _dst(self, dt):
+        stamp = time.mktime((dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.weekday(), 0, 0))
+        localtime = time.localtime(stamp)
+        return localtime.tm_isdst > 0
+
+class _UTCTimezone(datetime.tzinfo):
+
+    def __init__(self):
+        self._zero_diff = datetime.timedelta(0)
+
+    def utcoffset(self, dt):
+        return self._zero_diff
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return self._zero_diff
 
 class DateTime(Type):
-    """Časový okamžik reprezentovaný instancí třídy 'DateTime.DateTime'.
+    """Time stamp represented by a 'datetime.datetime' instance.
 
-    Třída je schopna pracovat pouze s absolutním časovým okamžikem.  Čas je uvažován v UTC nebo v
-    lokálním čase podle parametru v konstruktoru, časové zóny nejsou podporovány.  
+    The class can work only with absolute times.  The time can be local or UTC,
+    depending on the constructor parameter; each time value must contain time
+    zone.
 
-    Formát data a času je shodný pro import a export a je dán parametrem
-    'format' metody '__init__()'.
+    The date and time format is the same for both import and export and is
+    determined by the '__init__()' method parameter.
     
     """
     VM_DT_FORMAT = 'VM_DT_FORMAT'
@@ -991,8 +1036,8 @@ class DateTime(Type):
     CZECH_FORMAT = '%d.%m.%Y %H:%M:%S'
     """Český \"účetnický\" formát data a času."""
 
-    if __debug__:
-        _dt_type = type(DT.DateTimeFrom('2001-01-01'))
+    UTC_TZINFO = _UTCTimezone()
+    LOCAL_TZINFO = _LocalTimezone()
 
     def __init__(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
         """Inicializuj instanci.
@@ -1020,12 +1065,12 @@ class DateTime(Type):
         self._check_matcher = {}
         if mindate:
             try:
-                self._mindate = DT.strptime(mindate, self.SQL_FORMAT)
+                self._mindate = datetime.datetime.strptime(mindate, self.SQL_FORMAT)
             except:
                 raise ProgramError('Bad value for mindate', mindate, self.SQL_FORMAT)
         if maxdate:
             try:
-                self._maxdate = DT.strptime(maxdate, self.SQL_FORMAT)
+                self._maxdate = datetime.datetime.strptime(maxdate, self.SQL_FORMAT)
             except:
                 raise ProgramError('Bad value for maxdate', maxdate)                
         super(DateTime, self).__init__(**kwargs)
@@ -1063,19 +1108,19 @@ class DateTime(Type):
         # Využití `strptime' je nejjednodušší řešení.  GNU `strptime' je
         # dostatečně tolerantní vůči nadbytečným mezerám atd., takže by jeho
         # použitím neměl vzniknout problém, pokud nehodláme software provozovat
-        # na ne-GNU systémech, které `strptime' řádně nepodporují.  Musíme
-        # ovšem ořezat mezery zprava, protože v mx.DateTime vadí, je tam nějaká
-        # chyba, standardní `time.strptime' funguje.
+        # na ne-GNU systémech, které `strptime' řádně nepodporují.
         string = string.strip()
         dt = None
         try:
             if not self._check_format(format, string):
                 raise ValidationError(self.VM_DT_FORMAT)
-            dt = DT.strptime(string, format)
-            if local and self._utc:                
-                dt = dt.gmtime()
-            elif not local and not self._utc:
-                dt = dt.localtime()
+            dt = datetime.datetime.strptime(string, format)
+            if local:
+                dt = dt.replace(tzinfo=self.LOCAL_TZINFO)
+            elif dt.tzinfo is None:
+                dt = dt.replace(tzinfo=self.UTC_TZINFO)
+            if self._utc:
+                dt = dt.astimezone(self.UTC_TZINFO)
             if (self._mindate and dt < self._mindate) or \
                    (self._maxdate and dt > self._maxdate):
                 result = None, self._validation_error(self.VM_DT_AGE)
@@ -1092,17 +1137,17 @@ class DateTime(Type):
     def _export(self, value, local=True, format=None):
         """Stejné jako v předkovi až na klíčované argumenty.
 
-        Argumenty:
+        Arguments:
 
-          local -- pravdivé právě když zadaná hodnota je v lokálním čase;
-            v opačném případě je v UTC
+          local -- if true then the value is exported in local time, otherwise
+            it is exported in UTC
           
         """
-        assert type(value) == self._dt_type, 'Value is not DateTime'
-        if local and self._utc:
-            value = value.localtime()
-        elif not local and not self._utc:
-            value = value.gmtime()
+        assert isinstance(value, datetime.datetime), ('Value is not DateTime', value,)
+        if local:
+            value = value.astimezone(self.LOCAL_TZINFO)
+        else:
+            value = value.astimezone(self.UTC_TZINFO)
         if format is None:
             format = self._format
         return value.strftime(format)
@@ -1123,13 +1168,26 @@ class DateTime(Type):
           
         """
         type = class_(**kwargs)
-        return Value(type, DT.now())
+        return Value(type, datetime.datetime.now(class_.LOCAL_TZINFO))
 
-    @staticmethod
-    def current_gmtime():
+    @classmethod
+    def current_gmtime(class_):
         """Return current GM time suitable for use as this class value.
         """
-        return DT.now().gmtime()
+        return datetime.datetime.now(class_.UTC_TZINFO)
+
+    @staticmethod
+    def diff_seconds(dt1, dt2):
+        """Return difference between d1 and d2 in seconds.
+
+        Arguments:
+
+          dt1 -- start datetime; 'Value' instance of 'DateTime' type
+          dt2 -- end datetime; 'Value' instance of 'DateTime' type
+          
+        """
+        diff = dt2.value() - dt1.value()
+        return diff.days * 86400 + diff.seconds
 
     def primitive_value(self, value):
         """Return given value represented by a basic python type.

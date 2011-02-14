@@ -375,7 +375,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                                         ('t_start', start_time,),
                                         ('t_show', show_time,),)
         wx_callback(wx.EVT_IDLE, self, self._on_idle)        
-        log(EVENT, 'Form created in %.3fs:' % (show_time.value() - start_time.value(),), self)
+        log(EVENT, 'Form created in %.3fs:' % (pytis.data.DateTime.diff_seconds(start_time, show_time),), self)
 
     def _init_attributes(self):
         """Process constructor keyword arguments and initialize the attributes.

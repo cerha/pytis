@@ -31,7 +31,7 @@ import pytis.data
 from pytis.form import *
 import wx.lib.colourselect
 from cStringIO import StringIO
-import mx.DateTime
+import datetime
 #from wxPython.pytis.maskededit import wxMaskedTextCtrl
 
 
@@ -1199,7 +1199,7 @@ class DateField(Invocable, TextField, SpinnableField):
     _DEFAULT_WIDTH = 10
     _INVOKE_TITLE = _(u"Vybrat z kalendáře")
     _INVOKE_HELP = _(u"Zobrazit kalendář pro výběr datumu.")
-    _SPIN_STEP = mx.DateTime.oneDay
+    _SPIN_STEP = datetime.timedelta(days=1)
     
     def _on_invoke_selection(self, alternate=False):
         if self._valid:
@@ -1217,7 +1217,7 @@ class TimeField(TextField, SpinnableField):
     The field also supports spinning (see 'SpinnableField') by one hour per one step.
 
     """
-    _SPIN_STEP = mx.DateTime.oneHour
+    _SPIN_STEP = datetime.timedelta(hours=1)
     
 
 class ColorSelectionField(Invocable, TextField):

@@ -35,7 +35,7 @@ application.  Full API defined and documented by `wiking.Application' may be use
 
 """
 
-import os, re, mx.DateTime, lcg, wiking
+import os, re, lcg, wiking
 import hashlib, binascii
 import pytis.util, pytis.presentation as pp, pytis.data as pd, pytis.web as pw
 import cms
@@ -342,8 +342,8 @@ class Session(wiking.PytisModule, wiking.Session):
     def init(self, req, user, session_key):
         data = self._data
         # Delete all expired records first...
-        now = mx.DateTime.now().gmtime()
-        expiration = mx.DateTime.TimeDelta(hours=wiking.cfg.session_expiration)
+        now = pd.DateTime.current_gmtime()
+        expiration = datetime.timedelta(hours=wiking.cfg.session_expiration)
         data.delete_many(pd.LE('last_access', pd.Value(pd.DateTime(), now - expiration)))
         # Create new data row for this session.
         row, success = data.insert(data.make_row(uid=user.uid(),
@@ -354,14 +354,14 @@ class Session(wiking.PytisModule, wiking.Session):
                                        user.uid(), user.login())
         
     def failure(self, req, user, login):
-        self._module('SessionLog').log(req, mx.DateTime.now().gmtime(), None,
+        self._module('SessionLog').log(req, pd.DateTime.current_gmtime(), None,
                                        user and user.uid(), login)
         
     def check(self, req, user, session_key):
         row = self._data.get_row(uid=user.uid(), session_key=session_key)
         if row:
-            now = mx.DateTime.now().gmtime()
-            expiration = mx.DateTime.TimeDelta(hours=wiking.cfg.session_expiration)
+            now = pd.DateTime.current_gmtime()
+            expiration = datetime.timedelta(hours=wiking.cfg.session_expiration)
             if row['last_access'].value() > now - expiration:
                 self._data.update((row['session_id'],), self._data.make_row(last_access=now))
                 return True
@@ -398,7 +398,7 @@ class AccessLog(wiking.PytisModule):
                    'ip_address', 'user_agent', 'referer')]
 
     def log(self, req, modname, action):
-        row = self._data.make_row(timestamp=mx.DateTime.now().gmtime(),
+        row = self._data.make_row(timestamp=pd.DateTime.current_gmtime(),
                                   uri=req.uri(),
                                   uid=req.user() and req.user().uid(),
                                   modname=modname,

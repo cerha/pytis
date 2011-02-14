@@ -27,6 +27,7 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 
 import collections
 import copy
+import datetime
 import operator
 import re
 import string
@@ -34,8 +35,6 @@ import thread
 import threading
 import time
 import weakref
-
-import mx.DateTime
 
 from dbdata import *
 from evaction import *
@@ -2700,7 +2699,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 return False
         return self.row(key, transaction=transaction)
     
-    _pg_dt = type(mx.DateTime.DateTimeFrom('2001-01-01'))
     def _pg_value(self, value):
         v = value.value()
         if v == None:
@@ -2709,7 +2707,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             result = "'%s'" % value.type().export(v)
         elif is_anystring(v):
             result = "'%s'" % pg_escape(v)
-        elif type(v) == self._pg_dt:
+        elif isinstance(v, datetime.datetime):
             if isinstance(value.type(), Date):
                 result = "'%s'" % v.strftime('%Y-%m-%d')
             elif isinstance(value.type(), Time):

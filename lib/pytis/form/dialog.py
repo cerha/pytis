@@ -995,7 +995,7 @@ class Calendar(GenericDialog):
     """Dialog zobrazující kalendář, umožňující výběr dne.
 
     Datum na kalendáři může být přednastaven parametrem konstruktoru. Metoda
-    'run()' vrací vybraný datum jako instanci 'mx.mxDateTime', nebo None, pokud
+    'run()' vrací vybraný datum jako instanci 'datetime.datetime', nebo None, pokud
     byl dialog opuštěn.
     
     """
@@ -1008,7 +1008,7 @@ class Calendar(GenericDialog):
         Argumenty:
 
           parent -- wx rodič; instance 'wx.Frame' nebo 'wx.Dialog'
-          date -- přednastavený datum jako instance 'mxDateTime'.
+          date -- přednastavený datum jako instance 'datetime.datetime'.
           title -- titulek dialogového okna jako string
           enable_year -- když je pravda, zobrazí výběr roku; boolean
           enable_month -- když je pravda, zobrazí výběr měsíce; boolean
@@ -1031,11 +1031,10 @@ class Calendar(GenericDialog):
         if monday_first:     style = style | calendar.CAL_MONDAY_FIRST
         else:                style = style | calendar.CAL_SUNDAY_FIRST
         self._style = style
-        from mx import DateTime as DT
         if date is None:
-            self._date = DT.now()
+            self._date = pytis.data.DateTime.now().value()
         else:
-            assert type(date) == type(DT.DateTimeFrom('2001-01-01'))
+            assert isinstance(date, datetime.datetime), date
             self._date = date
         
     def _create_content(self, sizer):
@@ -1059,8 +1058,8 @@ class Calendar(GenericDialog):
     def _customize_result(self, result):
         if result == self._cal.GetId() \
                or self._button_label(result) == Message.BUTTON_OK:
-            from mx import DateTime as DT
-            return DT.DateTimeFrom(str(self._cal.GetDate().FormatISODate()))
+            date_string = str(self._cal.GetDate().FormatISODate())
+            return pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT).validate(date_string)[0].value()
         return None
 
     def _on_calendar(self, event):
