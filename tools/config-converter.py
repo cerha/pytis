@@ -108,7 +108,7 @@ def run():
                 resolver = pytis.util.resolver()
                 try:
                     spec = resolver.get(specname, 'view_spec')
-                except Exception, e:
+                except pytis.util.ResolverError, e:
                     # Ignore configurations for specifications that no longer exist
                     continue
                 kwargs = dict([(param, state[param])
