@@ -138,9 +138,10 @@ def run():
                     
             for option, value in options.pop('application_state', {}).items():
                 options[option.replace('startup_forms', 'saved_startup_forms')] = value
-            options.pop('dbconnection', None) # Some old saved configs may include it due to an old bug.
+            # Some old saved configs may include 'dbconnection' it due to an old bug.
+            options.pop('dbconnection', None)
             cfg.write(options.items())
-            print count, len(options)
+            print "%d profiles created, %d configuration options converted." % (count, len(options))
         data.close()
     except:
         transaction.rollback()
