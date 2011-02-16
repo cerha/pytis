@@ -72,7 +72,7 @@ def run():
              'TabbedBrowseForm': pytis.form.MultiSideForm.TabbedBrowseForm,
              '_SideForm': pytis.form.AggregationDualForm._SideForm,
              'SubForm': None}
-
+    ignored_specifications = []
     if len(sys.argv) > 1:
         condition = pytis.data.OR(
             *[pytis.data.EQ('uzivatel', pytis.data.Value(pytis.data.String(), username))
@@ -110,6 +110,8 @@ def run():
                     spec = resolver.get(specname, 'view_spec')
                 except pytis.util.ResolverError, e:
                     # Ignore configurations for specifications that no longer exist
+                    if specname not in ignored_specifications:
+                        ignored_specifications.append(specname)
                     continue
                 kwargs = dict([(param, state[param])
                                for param in ('sorting', 'grouping', 'columns', 'folding')
@@ -146,6 +148,11 @@ def run():
         raise
     else:
         transaction.commit()
+    if ignored_specifications:
+        print "The following specifications were ignored (not found in %s):" % config.def_dir
+        for specname in sorted(ignored_specifications):
+            print "  -", specname
+            
 
 if __name__ == '__main__':
     run()
