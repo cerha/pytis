@@ -111,7 +111,7 @@ def run():
                 except pytis.util.ResolverError, e:
                     # Ignore configurations for specifications that no longer exist
                     if specname not in ignored_specifications:
-                        ignored_specifications.append(specname)
+                        ignored_specifications.append((specname, e))
                     continue
                 kwargs = dict([(param, state[param])
                                for param in ('sorting', 'grouping', 'columns', 'folding')
@@ -150,9 +150,9 @@ def run():
     else:
         transaction.commit()
     if ignored_specifications:
-        print "The following specifications were ignored (not found in %s):" % config.def_dir
-        for specname in sorted(ignored_specifications):
-            print "  -", specname
+        print "The following specifications were ignored due to resolver errors:"
+        for specname, error in sorted(ignored_specifications):
+            print "  - %s: %s" % (specname, error)
             
 
 if __name__ == '__main__':
