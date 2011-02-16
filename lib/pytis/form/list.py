@@ -181,7 +181,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     grouping=self._grouping,
                     aggregations=tuple(self._aggregations),
                     group_by_columns=self._group_by_columns,
-                    aggregation_columns=self._aggregation_columns)
+                    aggregation_columns=self._aggregation_columns,
+                    column_widths=dict(self._column_widths))
         
     def _select_columns(self):
         return [c.id() for c in self._data.columns() 
