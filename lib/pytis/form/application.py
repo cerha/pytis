@@ -1207,7 +1207,7 @@ class DBConfigurationStorage(ConfigurationStorage):
     """Database configuration storage backend.
 
     The options are saved in a simple database table as a single string value
-    per user containtint the pickled sequence of options and values.
+    per user containing the pickled sequence of options and values.
 
     """
     _TABLE = 'e_pytis_config'
@@ -1236,13 +1236,13 @@ class DBConfigurationStorage(ConfigurationStorage):
     def read(self, transaction=None):
         row = self._row(transaction=transaction)
         if row:
-            return pickle.loads(str(row['config'].value().encode('utf-8')))
+            return pickle.loads(base64.b64decode(row['config'].value()))
         else:
             return ()
            
     def write(self, config, transaction=None):
         row = self._row(transaction=transaction)
-        value = pytis.data.Value(pytis.data.String(), pickle.dumps(config))
+        value = pytis.data.Value(pytis.data.String(), base64.b64encode(pickle.dumps(config)))
         if row:
             row['config'] = value
             self._data.update(row['username'], row, transaction=transaction)
