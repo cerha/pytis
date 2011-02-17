@@ -1544,7 +1544,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
             else:
                 color = wx.Color(0, 0, 0)
             ctrl.SetForegroundColour(color)
-        elif top_window() is None and popup.GetItemCount() != 0:
+        elif top_window() is None and ctrl.GetValue() != '':
             ctrl.SetValue('')
 
     def _on_context_menu(self, event):
