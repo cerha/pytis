@@ -111,25 +111,30 @@ class FormProfile(pytis.presentation.Profile):
         OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
         def unpack(packed):
             name, packed_args, kwargs = packed
-            assert name in OPERATORS, name
-            assert len(packed_args) == 2, len(packed_args)
+            if name not in OPERATORS:
+                raise Exception("Invalid operator '%s'" % name)
+            if len(packed_args) != 2:
+                raise Exception("Invalid number of operator arguments: %s" % packed_args)
             op = getattr(pytis.data, name)
             if name in ('AND', 'OR'):
                 args = [unpack(arg) for arg in packed_args]
             elif isinstance(packed_args[1], list):
                 col, val = packed_args[0], packed_args[1][0]
-                type = data.find_column(col).type()
+                column = data.find_column(col)
+                if column is None:
+                    raise Exception("Unknown column '%s'" % col)
                 if name in ('WM', 'NW'):
-                    value, err = type.wm_validate(val)
+                    value, err = column.type().wm_validate(val)
                 else:
-                    value, err = type.validate(val, strict=False)
+                    value, err = column.type().validate(val, strict=False)
                 if err is not None:
-                    raise ProgramError("Invalid operand value:", err)
+                    raise Exception("Invalid operand value for '%s': %s" % (col, err))
                 args = col, value
             else:
                 args = packed_args
                 for col in args:
-                    assert isinstance(col, str) and data.find_column(col) is not None
+                    if data.find_column(col) is None:
+                        raise Exception("Unknown column '%s'" % col)
             return op(*args, **kwargs)
         if self._packed_filter:
             try:
