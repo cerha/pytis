@@ -158,7 +158,7 @@ def rp_handler(spec_name, proc_name, *args, **kwargs):
     """
     if __debug__:
         for arg in (spec_name, proc_name) + args:
-            assert isinstance(arg, types.StringType)
+            assert isinstance(arg, basestring)
     return lambda row: pytis.form.run_procedure(spec_name, proc_name,
                                                 *[row[key] for key in args],
                                                 **kwargs)

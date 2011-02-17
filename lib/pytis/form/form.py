@@ -1089,7 +1089,7 @@ class LookupForm(InnerForm):
             for a in operator.args():
                 if isinstance(a, pytis.data.Operator):
                     analyze(a)
-                elif isinstance(a, str) and a not in columns:
+                elif isinstance(a, basestring) and a not in columns:
                     columns.append(a)
         if self._lf_filter is not None:
             analyze(self._lf_filter)
@@ -1767,7 +1767,7 @@ class RecordForm(LookupForm):
             if redirect is not None:
                 redirected_name = redirect(row)
                 if redirected_name is not None:
-                    assert isinstance(redirected_name, str)
+                    assert isinstance(redirected_name, basestring)
                     name = redirected_name
             kwargs = self._new_form_kwargs()
             key = self._current_key()
@@ -2150,7 +2150,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         border = dlg2px(parent, group.border())
         border_style = border_style2wx(group.border_style())
         for i, item in enumerate(group.items()):
-            if is_string(item):
+            if is_anystring(item):
                 if self._view.field(item).width() == 0:
                     continue
                 item = self._field(item)
@@ -2161,7 +2161,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                         or isinstance(item, GroupSpec) \
                         and item.label() is None \
                         and item.orientation() == Orientation.HORIZONTAL \
-                        and is_string(item.items()[0]) \
+                        and is_anystring(item.items()[0]) \
                         and not self._field(item.items()[0]).spec().compact() \
                         and not isinstance(self._field(item.items()[0]).type(), pytis.data.Boolean):
                     # This item will become a part of the current aligned pack.
@@ -2345,7 +2345,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             else:
                 msg = _(u"Transakce přerušena, nelze pokračovat")
             if type(result) == type(()) and \
-               isinstance(result[0], (str, unicode)):
+               isinstance(result[0], basestring):
                 msg = "%s\n\n%s" % (result[0], msg)
             run_dialog(Error, msg)
             return False

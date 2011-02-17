@@ -207,9 +207,8 @@ class Command(object):
         """
         assert issubclass(handler, CommandHandler), \
                "Not a CommandHandler subclass: %s" % handler
-        assert isinstance(name, types.StringType) and name == name.upper(), \
-               (name, type(name))
-        assert doc is None or isinstance(doc, types.StringTypes)
+        assert isinstance(name, basestring) and name == name.upper(), (name, type(name))
+        assert doc is None or isinstance(doc, basestring)
         self._handler = handler
         self._name = name
         self._doc = doc
@@ -315,10 +314,10 @@ class UICommand(object):
         command, args = cmd
         assert isinstance(command, Command), command
         assert isinstance(args, dict), args
-        assert isinstance(title, (str, unicode)), title
-        assert isinstance(descr, (str, unicode)), descr
-        assert icon is None or isinstance(icon, (int, str)), icon
-        assert hotkey is None or isinstance(hotkey, str), hotkey
+        assert isinstance(title, basestring), title
+        assert isinstance(descr, basestring), descr
+        assert icon is None or isinstance(icon, (int, basestring)), icon
+        assert hotkey is None or isinstance(hotkey, basestring), hotkey
         self._command = command
         self._args = args
         self._title = title

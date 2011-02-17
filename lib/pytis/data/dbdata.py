@@ -450,7 +450,7 @@ class DBBinding:
           id -- identifikátor napojení, libovolný string
           
         """
-        assert isinstance(id, str)
+        assert isinstance(id, basestring)
         self._id = id
 
     def id(self):
@@ -497,8 +497,8 @@ class DBColumnBinding(DBBinding):
 
         """
         DBBinding.__init__(self, id)
-        assert isinstance(table, str), table
-        assert isinstance(column, str), column
+        assert isinstance(table, basestring), table
+        assert isinstance(column, basestring), column
         assert isinstance(type_, Type) or type(type_) == type(Type) or type_ is None, type_
         if __debug__:
             if isinstance(type_, Type):

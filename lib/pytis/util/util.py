@@ -1162,15 +1162,15 @@ def is_dictionary(x):
 
 def is_string(x):
     """Vrať pravdu, právě když 'x' je běžný řetězec."""
-    return isinstance(x, pytypes.StringType)
+    return isinstance(x, str)
 
 def is_unicode(x):
     """Vrať pravdu, právě když 'x' je unicode řetězec."""
-    return isinstance(x, pytypes.UnicodeType)
+    return isinstance(x, unicode)
 
 def is_anystring(x):
     """Vrať pravdu, právě když 'x' je unicode řetězec nebo běžný řetězec."""
-    return isinstance(x, pytypes.StringTypes)
+    return isinstance(x, basestring)
 
 def ecase(value, *settings):
     """Vrať hodnotu ze 'settings' odpovídající 'value'.

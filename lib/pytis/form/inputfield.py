@@ -224,7 +224,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         """
         #assert isinstance(parent, wx.Window)
         assert isinstance(row, PresentedRow)
-        assert isinstance(id, str)
+        assert isinstance(id, basestring)
         assert isinstance(inline, bool)
         spec = find(id, row.fields(), key=lambda f: f.id())
         type = row.type(id)
@@ -328,7 +328,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
         """
         assert isinstance(row, PresentedRow)
-        assert isinstance(id, str)
+        assert isinstance(id, basestring)
         assert isinstance(guardian, KeyHandler)
         assert isinstance(inline, bool)
         CallbackHandler.__init__(self)
@@ -847,7 +847,7 @@ class TextField(InputField):
         return self._ctrl.GetValue()
 
     def _set_value(self, value):
-        assert isinstance(value, (str, unicode)), value
+        assert isinstance(value, basestring), value
         self._ctrl.SetValue(value)
         self._on_change() # call manually, since SetValue() doesn't emit an event.
 
@@ -1051,7 +1051,7 @@ class EnumerationField(InputField):
         return self._type.export(value)
 
     def _set_value(self, value):
-        assert isinstance(value, (str, unicode)), value
+        assert isinstance(value, basestring), value
         values = [self._type.export(v) for v, l in self._enumeration()]
         try:
             selection = values.index(value)

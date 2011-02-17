@@ -100,7 +100,7 @@ class DMPMessage(Structure):
     NOTE_MESSAGE = 'Note'
     SQL_MESSAGE = 'SQL'
     
-    _attributes = (Attribute('kind', str),
+    _attributes = (Attribute('kind', basestring),
                    Attribute('message', basestring),
                    Attribute('arguments', tuple, default=()),
                    )
@@ -508,14 +508,14 @@ class DMPMenu(DMPObject):
         MENU_ITEM = 'MENU_ITEM'
         SEPARATOR_ITEM = 'SEPARATOR_ITEM'
         _attributes = (Attribute('id', int),
-                       Attribute('name', str),
-                       Attribute('kind', str),
+                       Attribute('name', basestring),
+                       Attribute('kind', basestring),
                        Attribute('title', unicode),
                        Attribute('parent'),
                        Attribute('children', list, mutable=True),
-                       Attribute('action', str),
-                       Attribute('position', str, mutable=True),
-                       Attribute('hotkey', str),
+                       Attribute('action', basestring),
+                       Attribute('position', basestring, mutable=True),
+                       Attribute('hotkey', basestring),
                        Attribute('help', unicode),
                        Attribute('locked', bool, mutable=True),
                        )
@@ -742,10 +742,10 @@ class DMPRights(DMPObject):
     """Representation of DMP access rights."""
 
     class Right(DMPItem):
-        _attributes = (Attribute('shortname', str),
-                       Attribute('roleid', str),
-                       Attribute('rightid', str),
-                       Attribute('colname', str),
+        _attributes = (Attribute('shortname', basestring),
+                       Attribute('roleid', basestring),
+                       Attribute('rightid', basestring),
+                       Attribute('colname', basestring),
                        Attribute('system', bool),
                        Attribute('granted', bool),
                        )
@@ -902,9 +902,9 @@ class DMPRoles(DMPObject):
     """Representation of DMP roles and their memberships."""
     
     class Role(DMPItem):
-        _attributes = (Attribute('name', str),
+        _attributes = (Attribute('name', basestring),
                        Attribute('description', basestring),
-                       Attribute('purposeid', str, mutable=True),
+                       Attribute('purposeid', basestring, mutable=True),
                        Attribute('members', list, mutable=True),
                        )
         def signature(self):
@@ -1070,7 +1070,7 @@ class DMPActions(DMPObject):
         derived from the fullname.
 
         """
-        _attributes = (Attribute('fullname', str),
+        _attributes = (Attribute('fullname', basestring),
                        Attribute('title', basestring, mutable=True),
                        Attribute('description', basestring),
                        )

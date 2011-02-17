@@ -115,7 +115,7 @@ def get_menu_defs():
         except:
             pass
         else:
-            variants += ['%s:%s' % (m, v) for v in vlist if isinstance(v, str)]
+            variants += ['%s:%s' % (m, v) for v in vlist if isinstance(v, basestring)]
     return specs + remove_duplicates(variants)
 
 

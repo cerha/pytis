@@ -59,11 +59,10 @@ class SimpleEmail(object):
           bcc -- adresa příjemce pro bcc nebo sekvence adres
           smtp -- adresa odesílacího serveru
         """  
-
-        assert isinstance(to, (str, unicode, tuple, list))
-        assert bcc is None or isinstance(bcc, (str, unicode, tuple, list))
-        assert isinstance(from_, (str, unicode))
-        assert isinstance(subject, (str, unicode))
+        assert isinstance(to, (basestring, tuple, list))
+        assert bcc is None or isinstance(bcc, (basestring, tuple, list))
+        assert isinstance(from_, basestring)
+        assert isinstance(subject, basestring)
         self.to = to
         self.from_ = from_
         self.bcc = bcc
@@ -84,7 +83,7 @@ class SimpleEmail(object):
         self.msg = self.get_content_text(self.content, self.html, self.charset)
 
     def _flatten_for_header(self, header):
-        if not isinstance(header, (str, unicode)):
+        if not isinstance(header, basestring):
             return ', '.join(header)
         else:
             return header
@@ -101,15 +100,15 @@ class SimpleEmail(object):
         else:
             to = self.to
             bcc = self.bcc
-            if isinstance(to, (str, unicode)):
+            if isinstance(to, basestring):
                 to = [to]
-            if isinstance(bcc, (str, unicode)):
+            if isinstance(bcc, basestring):
                 bcc = [bcc]                
             return to + bcc
         
     def create_headers(self):
         def get_header(header):
-            if isinstance(header, types.StringType):
+            if isinstance(header, basestring):
                 # Not unicode
                 try:
                     test = unicode(header, 'us-ascii')
@@ -255,9 +254,9 @@ class GPGEmail(SimpleEmail):
         gpg = self._setup_gpg()
         if not gpg:
             raise ProgramError(self._error_msg)
-        if isinstance(self.to, types.StringType):
+        if isinstance(self.to, basestring):
             to = (self.to,)
-        elif isinstance(self.to, types.UnicodeType):
+        elif isinstance(self.to, unicode):
             # Unicode arguments are problem for GPG process, so we will convert them to UTF-8
             to = []
             for t in self.to:
@@ -274,7 +273,7 @@ class GPGEmail(SimpleEmail):
         proc.handles['stdout'].close()        
         proc.wait()
         success = True
-        if not isinstance(output, types.StringType):
+        if not isinstance(output, basestring):
             success = False
         try:
             os.remove(keyring)

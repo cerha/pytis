@@ -419,7 +419,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                 query.encode(self._pg_encoding)
             except UnicodeEncodeError:
                 raise DBUserException(_(u"Data obsahují znaky, které nelze reprezentovat v kódování databáze"))
-        if type(query) is pytypes.UnicodeType:
+        if isinstance(query, unicode):
             query = query.encode('utf-8')
         assert transaction is None or not outside_transaction, \
             'Connection given to a query to be performed outside transaction'
@@ -1556,7 +1556,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         def colarg(colid):
             if isinstance(colid, Operator) and colid.name() == 'Function':
                 return function_call(colid.args()), None
-            assert isinstance(colid, str), ('Invalid column specification', colid)
+            assert isinstance(colid, basestring), ('Invalid column specification', colid)
             col = self._db_column_binding(colid)
             assert col, ('Invalid column name', colid)
             a = self._pdbb_btabcol(col)
@@ -1566,7 +1566,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert len(args) == 2, ('Invalid number or arguments', args)
             arg1, arg2 = args
             a1, t1 = colarg(arg1)
-            if isinstance(arg2, str):
+            if isinstance(arg2, basestring):
                 a2, t2 = colarg(arg2)
                 a2null = False
             else:
@@ -3297,7 +3297,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         """
         if is_sequence(key):
             key = key[0]
-        log(EVENT, 'Locking row:', str (key))
+        log(EVENT, 'Locking row:', str(key))
         self._pg_query('savepoint _lock', transaction=transaction)
         try:
             command = self._pdbb_command_lock.format({'key': self._pg_value(key)})
@@ -3332,7 +3332,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
           kwargs -- passed to 'PostgreSQLConnector' constructor.
 
         """
-        assert is_string(name)
+        assert is_anystring(name)
         PostgreSQLConnector.__init__(self, connection_data, **kwargs)
         self._name = name
         self._query = "select nextval('%s')" % name
@@ -3364,7 +3364,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
           kwargs -- forwarded to successors
 
         """
-        assert is_string(name)
+        assert is_anystring(name)
         self._name = name
         bindings = ()
         self._pdbb_result_columns = result_columns

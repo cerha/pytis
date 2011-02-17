@@ -30,8 +30,8 @@ class Dialog(lcg.Content):
 
     def __init__(self, hidden=(), handler='#', action=None):
         assert isinstance(hidden, (tuple, list))
-        assert isinstance(handler, (str, unicode))
-        assert isinstance(action, (str, unicode)) or action is None
+        assert isinstance(handler, basestring)
+        assert isinstance(action, basestring) or action is None
         super(Dialog, self).__init__()
         self._hidden = list(hidden)
         self._handler = handler
@@ -56,8 +56,8 @@ class SelectionDialog(Dialog):
     
     def __init__(self, id, label, values, selected=None, **kwargs):
         super(SelectionDialog, self).__init__(**kwargs)
-        assert isinstance(id, str)
-        assert isinstance(label, (str, unicode))
+        assert isinstance(id, basestring)
+        assert isinstance(label, basestring)
         assert isinstance(values, (tuple, list))
         assert selected is None or selected in [v for v, uv in values]
         self._id = id

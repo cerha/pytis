@@ -183,7 +183,7 @@ class Text(object):
 
     """
     def __init__(self, text):
-        assert isinstance(text, (str, unicode)), text
+        assert isinstance(text, basestring), text
         self._text = text
         
     def text(self):
@@ -236,16 +236,16 @@ class Button(object):
             
         """
         if action is None:
-            assert isinstance(label, (str, unicode)), label
+            assert isinstance(label, basestring), label
             assert isinstance(handler, collections.Callable), handler
             assert enabled is None or isinstance(enabled, collections.Callable), enabled
         else:
-            assert isinstance(action, str), action
-            assert label is None or isinstance(label, (str, unicode)), label
+            assert isinstance(action, basestring), action
+            assert label is None or isinstance(label, basestring), label
             assert handler is None, handler
             assert enabled is None, enabled
         assert width is None or isinstance(width, int)
-        assert tooltip is None or isinstance(tooltip, (str, unicode)), tooltip
+        assert tooltip is None or isinstance(tooltip, basestring), tooltip
         assert isinstance(active_in_popup_form, bool), active_in_popup_form
         assert isinstance(active_in_readonly_form, bool), active_in_readonly_form
         self._label = label
@@ -318,7 +318,7 @@ class ActionContext(object):
 class _ActionItem(object):
     
     def __init__(self, title):
-        assert isinstance(title, (str, unicode))
+        assert isinstance(title, basestring)
         self._title = title
 
     def title(self, raw=False):
@@ -403,15 +403,15 @@ class Action(_ActionItem):
           hotkey -- keyboard shortcut (implemented only in wx forms).
         
         """
-        assert descr is None or isinstance(descr, (str, unicode)), descr
+        assert descr is None or isinstance(descr, basestring), descr
         assert handler is None or isinstance(handler, collections.Callable), handler
         assert context in public_attributes(ActionContext), context
         assert secondary_context is None or secondary_context in public_attributes(ActionContext), \
             secondary_context
         assert isinstance(enabled, collections.Callable) or isinstance(enabled, bool), enabled
         assert isinstance(visible, collections.Callable) or isinstance(visible, bool), visible
-        assert access_groups is None or isinstance(access_groups, (str, tuple, list))
-        assert hotkey is None or isinstance(hotkey, (str, tuple)), hotkey
+        assert access_groups is None or isinstance(access_groups, (basestring, tuple, list))
+        assert hotkey is None or isinstance(hotkey, (basestring, tuple)), hotkey
         assert kwargs is None or isinstance(kwargs, dict) and not kwargs_, kwargs_
         self._handler = handler
         self._context = context
@@ -679,7 +679,7 @@ class FilterSet(list):
           default -- identifier of the filter (from 'filters') to be selected by default
         
         """
-        assert isinstance(id, str), id
+        assert isinstance(id, basestring), id
         assert self._ID_MATCHER.match(id), id
         assert isinstance(title, basestring)
         assert isinstance(filters, (tuple, list)), filters
@@ -759,14 +759,14 @@ class GroupSpec(object):
 
         """
         assert is_sequence(items), items
-        assert label is None or isinstance(label, (str, unicode))
+        assert label is None or isinstance(label, basestring)
         assert type(gap) == type(0)
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
         self._allowed_item_types = (Button, Text, str, unicode)
         if __debug__:
-            allowed_item_types = (GroupSpec, Button, Text, str, unicode)
+            allowed_item_types = (GroupSpec, Button, Text, basestring)
             try:
                 # Avoid the dependency on LCG, but allow LCG content if LCG is available.
                 import lcg
@@ -800,7 +800,7 @@ class GroupSpec(object):
         for item in self._items:
             if isinstance(item, GroupSpec):
                 fields.extend(item.order())
-            elif isinstance(item, (str, unicode)):
+            elif isinstance(item, basestring):
                 fields.append(item)
         return fields
 
@@ -942,7 +942,7 @@ class LayoutSpec(object):
         podléhá jazykové konverzi.
 
         """
-        assert caption is None or isinstance(caption, (str, unicode))
+        assert caption is None or isinstance(caption, basestring)
         assert isinstance(group, GroupSpec)
         assert order is None or is_sequence(order)
         self._caption = caption
@@ -952,7 +952,7 @@ class LayoutSpec(object):
         elif __debug__:
             found = find_fields(group)
             for id in order:
-                assert is_string(id)
+                assert is_anystring(id)
                 assert id in found, \
                        (_(u"Invalid field id in 'order' specification:"), id)
             for id in found:
@@ -1189,14 +1189,14 @@ class ViewSpec(object):
               profiles=(), filters=(), conditions=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), bindings=(),
               initial_folding=None, folding=None, spec_name='', arguments=None, public=None):
-        assert isinstance(title, (str, unicode))
+        assert isinstance(title, basestring)
         if singular is None:
             if isinstance(layout, LayoutSpec):
                 singular = layout.caption()
             else:
                 singular = title
         else:
-            assert isinstance(singular, (str, unicode))
+            assert isinstance(singular, basestring)
         assert is_sequence(fields)
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
@@ -1261,7 +1261,7 @@ class ViewSpec(object):
             if __debug__:
                 assert is_sequence(columns)
                 for c in columns:
-                    assert isinstance(c, str) and c in self._field_dict,\
+                    assert isinstance(c, basestring) and c in self._field_dict,\
                            (_(u"Unknown column id in 'columns' specification of %s: %r") %
                             (spec_name, c,))
                     f = self._field_dict[c]
@@ -1280,7 +1280,7 @@ class ViewSpec(object):
             assert group_heading is None
         else:
             grouping = xtuple(grouping)
-            assert group_heading is None or isinstance(group_heading, (unicode, str)), group_heading
+            assert group_heading is None or isinstance(group_heading, basestring), group_heading
             if __debug__:
                 for id in grouping:
                     assert self.field(id) is not None, id
@@ -1339,11 +1339,11 @@ class ViewSpec(object):
         assert on_delete_record is None or isinstance(on_delete_record, collections.Callable)
         assert redirect is None or isinstance(redirect, collections.Callable)
         assert focus_field is None or isinstance(focus_field, collections.Callable) or \
-               isinstance(focus_field, (str, unicode))
+               isinstance(focus_field, basestring)
         assert row_style is None or isinstance(row_style, Style) or \
                isinstance(row_style, collections.Callable)
-        assert description is None or isinstance(description, (str, unicode))
-        assert help is None or isinstance(help, (str, unicode))
+        assert description is None or isinstance(description, basestring)
+        assert help is None or isinstance(help, basestring)
         self._title = title
         self._singular = singular
         self._columns = columns
@@ -1578,9 +1578,9 @@ class BindingSpec(object):
             vertical it is on the left side.
 
         """
-        assert title is None or isinstance(title, (str, unicode)), title
-        assert binding_column is None or isinstance(binding_column, (str, unicode)), binding_column
-        assert side_binding_column is None or isinstance(side_binding_column, (str, unicode))
+        assert title is None or isinstance(title, basestring), title
+        assert binding_column is None or isinstance(binding_column, basestring), binding_column
+        assert side_binding_column is None or isinstance(side_binding_column, basestring)
         assert isinstance(hide_binding_column, bool), hide_binding_column
         if append_condition is not None:
             # Backwards compatibility
@@ -1589,8 +1589,8 @@ class BindingSpec(object):
         assert condition is None or isinstance(condition, collections.Callable), condition
         assert condition is not None or binding_column is not None, \
                "You must specify at least one of 'condition', 'binding_column'."
-        assert description is None or isinstance(description, (str, unicode)), description
-        assert help is None or isinstance(help, (str, unicode)), help
+        assert description is None or isinstance(description, basestring), description
+        assert help is None or isinstance(help, basestring), help
         assert orientation in public_attributes(Orientation), orientation
         assert isinstance(sash_ratio, float) and 0 < sash_ratio < 1, sash_ratio
         self._title = title
@@ -1685,7 +1685,7 @@ class Binding(object):
         """
         assert isinstance(name, basestring), name
         assert isinstance(title, basestring), title
-        assert binding_column is None or isinstance(binding_column, (str, unicode)), binding_column
+        assert binding_column is None or isinstance(binding_column, basestring), binding_column
         assert condition is None or isinstance(condition, collections.Callable), condition
         assert condition is not None or binding_column is not None or arguments is not None, \
                "At least one of 'binding_column', 'condition', `arguments' must be used."
@@ -1904,8 +1904,8 @@ class CbComputer(Computer):
           
         
         """
-        assert isinstance(field, str)
-        assert column is None or isinstance(column, str)
+        assert isinstance(field, basestring)
+        assert column is None or isinstance(column, basestring)
         self._field = field
         self._column = column
         self._default = default
@@ -1983,11 +1983,11 @@ class CodebookSpec(object):
         assert columns is None or is_sequence(columns)
         assert sorting is None or is_sequence(sorting)
         assert (display is None or
-                isinstance(display, str) or
+                isinstance(display, basestring) or
                 (isinstance(display, collections.Callable) and len(argument_names(display)) == 1))
         assert isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
-        assert begin_search is None or isinstance(begin_search, str)
+        assert begin_search is None or isinstance(begin_search, basestring)
         assert isinstance(enable_autocompletion, bool)
         self._columns = columns
         self._sorting = sorting
@@ -2085,11 +2085,11 @@ class Link(object):
             staticky.
             
         """
-        assert isinstance(name, str)
-        assert isinstance(column, str)
-        assert binding is None or isinstance(binding, str)
+        assert isinstance(name, basestring)
+        assert isinstance(column, basestring)
+        assert binding is None or isinstance(binding, basestring)
         assert type in public_attributes(FormType)
-        assert label is None or isinstance(label, (str, unicode))
+        assert label is None or isinstance(label, basestring)
         assert isinstance(enabled, collections.Callable) or isinstance(enabled, bool)
         self._name = name
         self._column = column
@@ -2476,13 +2476,13 @@ class Field(object):
         def log_(msg, *args):
             """Return assertion error message."""
             log(OPERATIONAL, "Field '%s':" % id, msg % args)
-        assert isinstance(id, str)
-        assert dbcolumn is None or isinstance(dbcolumn, str)
+        assert isinstance(id, basestring)
+        assert dbcolumn is None or isinstance(dbcolumn, basestring)
         if type_ is not None:
             assert type is None
             type = type_
-        assert label is None or isinstance(label, (str, unicode))
-        assert descr is None or isinstance(descr, (str, unicode))
+        assert label is None or isinstance(label, basestring)
+        assert descr is None or isinstance(descr, basestring)
         assert type is None or isinstance(type, pytis.data.Type) \
             or issubclass(type, pytis.data.Type)
         assert isinstance(virtual, bool)
@@ -2493,16 +2493,16 @@ class Field(object):
 
         assert computer is None or isinstance(computer, Computer), computer
         
-        assert codebook is None or isinstance(codebook, str)
-        assert display is None or isinstance(display, (str, collections.Callable))
-        assert completer is None or isinstance(completer, (str,list,tuple,pytis.data.Enumerator))
+        assert codebook is None or isinstance(codebook, basestring)
+        assert display is None or isinstance(display, (basestring, collections.Callable))
+        assert completer is None or isinstance(completer, (basestring, tuple, pytis.data.Enumerator))
         assert prefer_display is None or isinstance(prefer_display, bool)
         assert display_size is None or isinstance(display_size, int)
         assert null_display is None or isinstance(null_display, basestring)
         # TODO: Enable this after merging data-type-cleanup! (belongs to the line above)
         # and not not_null and (codebook or enumerator)
         assert isinstance(allow_codebook_insert, bool)
-        assert codebook_insert_spec is None or isinstance(codebook_insert_spec, str)
+        assert codebook_insert_spec is None or isinstance(codebook_insert_spec, basestring)
         assert width is None or isinstance(width, int)
         if codebook_runtime_filter is not None:
             assert runtime_filter is None
@@ -2518,12 +2518,12 @@ class Field(object):
         assert filter not in ('INCLUDE_LIST', 'EXCLUDE_LIST') or is_sequence(filter_list)
         assert style is None or isinstance(style, (Style, collections.Callable)), \
             err("Invalid 'style' specification: %s", style)
-        assert filename is None or isinstance(filename, str)
+        assert filename is None or isinstance(filename, basestring)
         assert isinstance(printable, bool)
         if enumerator is None:
             enumerator = codebook
         else:
-            assert isinstance(enumerator, (str, pytis.data.DataFactory, pytis.data.Enumerator))
+            assert isinstance(enumerator, (basestring, pytis.data.DataFactory, pytis.data.Enumerator))
         enumerator_kwargs = dict([(k, v) for k, v
                                   in dict(value_column=value_column,
                                           validity_column=validity_column,
@@ -2771,7 +2771,7 @@ class Field(object):
     def completer(self, resolver):
         """Return field completer as a 'pytis.data.Enumerator' instance."""
         completer = self._completer
-        if isinstance(completer, str):
+        if isinstance(completer, basestring):
             # Completer was defined as a specification name.
             data_spec = resolver.get(completer, 'data_spec')
             completer = pytis.data.DataEnumerator(data_spec, **self._enumerator_kwargs)
@@ -2787,7 +2787,7 @@ class Field(object):
         enumerator = self._enumerator
         if enumerator is None:
             enumerator = self._codebook
-        if isinstance(enumerator, str):
+        if isinstance(enumerator, basestring):
             enumerator = resolver.get(enumerator, 'data_spec')
         if isinstance(enumerator, pytis.data.DataFactory):
             enumerator = pytis.data.DataEnumerator(enumerator, **self._enumerator_kwargs)

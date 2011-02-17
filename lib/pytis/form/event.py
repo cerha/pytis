@@ -114,7 +114,7 @@ def top_level_exception():
             if address:
                 import email.Header, email.Message, email.Utils, smtplib
                 def header(value):
-                    if isinstance(value, (str, unicode)):
+                    if isinstance(value, basestring):
                         try:
                             unicode(value, 'us-ascii')
                         except:

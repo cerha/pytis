@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,12 +91,12 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
 def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859-2',
               sendmail_command=None):
     """Send an email with the possibility to encrypt it with a GPG/PGP key."""
-    assert isinstance(to, types.StringTypes)
-    assert isinstance(address, types.StringTypes)
-    assert isinstance(subject, types.StringTypes)
-    assert isinstance(msg, types.StringTypes)
+    assert isinstance(to, basestring)
+    assert isinstance(address, basestring)
+    assert isinstance(subject, basestring)
+    assert isinstance(msg, basestring)
     def get_utf8_argument(arg):
-        if isinstance(arg, types.StringType):
+        if isinstance(arg, basestring):
             try:
                 arg = unicode(arg, charset)
             except:

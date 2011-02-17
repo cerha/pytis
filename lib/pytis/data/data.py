@@ -973,11 +973,11 @@ class MemData(Data):
         if op_name in relational_operators.keys():
             def relop(row, op, args, kwargs):
                 def arg(a, ignore_case=False):
-                    if isinstance(a, str):
+                    if isinstance(a, basestring):
                         v = row[a].value()
                     else:
                         v = a.value()
-                    if ignore_case and isinstance(v, (str, unicode)):
+                    if ignore_case and isinstance(v, basestring):
                         v = v.lower()
                     return v
                 return op(*[arg(a, **kwargs) for a in args])
@@ -1487,12 +1487,12 @@ class Row:
                 assert is_sequence(item) and len(item) == 2, \
                        ('Column definition must be (ID, VALUE) pair', item)
                 k, v = item
-                assert is_string(k), ('Invalid column id', k)
+                assert is_anystring(k), ('Invalid column id', k)
                 assert isinstance(v, Value), ('Invalid column value', v)
         self._data = list(data)
 
     def _index(self, key):
-        if is_string(key):
+        if is_anystring(key):
             data = self._data
             for i in range(len(data)):
                 if data[i][0] == key:
@@ -1518,7 +1518,7 @@ class Row:
         if type(state) != types.ListType:
             raise InvalidAccessError('Invalid row data', state)
         for k, v in state:
-            if type(k) != types.StringType:
+            if not isinstance(k, basestring):
                 raise InvalidAccessError('Invalid row key', k)
             if not isinstance(v, Value):
                 raise InvalidAccessError('Invalid row value', v)
@@ -1663,7 +1663,7 @@ class Row:
           value -- hodnota sloupce jako instance třídy 'types_.Value'
 
         """
-        assert is_string(key)
+        assert is_anystring(key)
         assert isinstance(value, Value)
         assert not some(lambda x, k=key: x[0] == k, self._data)
         self._data.append((key, value))

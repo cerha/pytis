@@ -92,7 +92,7 @@ class Form(lcg.Content):
         super(Form, self).__init__(**kwargs)
         assert isinstance(view, ViewSpec), view
         assert isinstance(row, pytis.presentation.PresentedRow), row
-        assert isinstance(handler, (str, unicode)), handler
+        assert isinstance(handler, basestring), handler
         assert isinstance(hidden, (tuple, list)), hidden
         self._view = view
         self._row = row
@@ -259,7 +259,7 @@ class LayoutForm(FieldForm):
         for i, item in enumerate(group.items()):
             if isinstance(item, collections.Callable):
                 item = item(self._row)
-            if isinstance(item, (str, unicode)):
+            if isinstance(item, basestring):
                 field = self._fields[item]
                 if omit_first_field_label and i == 0:
                     label = None
@@ -285,7 +285,7 @@ class LayoutForm(FieldForm):
                 label = None
                 if group.orientation() == Orientation.VERTICAL \
                         and item.orientation() == Orientation.HORIZONTAL \
-                        and isinstance(item.items()[0], str):
+                        and isinstance(item.items()[0], basestring):
                     field = self._fields[item.items()[0]]
                     # Nested horizontal group which starts with a labeled field will be aligned
                     # within the current vertical group if possible.
@@ -928,7 +928,7 @@ class BrowseForm(LayoutForm):
         limit_ = param('limit', int)
         if limit_ is None:
             cookie = req.cookie('pytis-form-limit')
-            if cookie and isinstance(cookie, (str, unicode)) and cookie.isdigit():
+            if cookie and isinstance(cookie, basestring) and cookie.isdigit():
                 limit_ = int(cookie)
         else:
             req.set_cookie('pytis-form-limit', limit_)

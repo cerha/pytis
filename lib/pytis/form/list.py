@@ -2578,7 +2578,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             begin_search = self._begin_search
             self._begin_search = None
             prefill = None
-            if isinstance(begin_search, str):
+            if isinstance(begin_search, basestring):
                 col_id = begin_search
             elif isinstance(begin_search, tuple):
                 col_id, prefill = begin_search

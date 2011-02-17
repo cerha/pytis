@@ -107,10 +107,10 @@ class GenericDialog(Dialog):
             (for plain text) or use a default value.
             
         """
-        assert isinstance(title, types.StringTypes), title
+        assert isinstance(title, basestring), title
         assert isinstance(buttons, (list, tuple)), buttons
         assert default is None or default in buttons, default
-        assert report is None or isinstance(report, types.StringTypes), report
+        assert report is None or isinstance(report, basestring), report
         assert report_format in public_attributes(TextFormat), report_format
         assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super_(GenericDialog).__init__(self, parent)
@@ -531,8 +531,8 @@ class InputDialog(Message):
                                      buttons=(Message.BUTTON_OK,
                                               Message.BUTTON_CANCEL),
                                      default=None, **kwargs)
-        assert value is None or isinstance(value, types.StringTypes)
-        assert prompt is None or isinstance(prompt, types.StringTypes)
+        assert value is None or isinstance(value, basestring)
+        assert prompt is None or isinstance(prompt, basestring)
         assert isinstance(allow_empty, types.BooleanType)
         self._value = value and unicode(value)
         self._prompt = unicode(prompt)
@@ -1086,7 +1086,7 @@ class ColorSelector(GenericDialog):
 
         """
         super_(ColorSelector).__init__(self, parent, title=title, buttons=())
-        assert isinstance(color, types.StringTypes) or color is None
+        assert isinstance(color, basestring) or color is None
         self._color = color
         
     def _create_dialog(self):
@@ -1586,8 +1586,8 @@ class FileDialog(Dialog):
         if title is None:
             title = {FileDialog.OPEN: _(u"Otevřít soubor"),
                      FileDialog.SAVE: _(u"Uložit soubor")}[mode]
-        assert dir is None or isinstance(dir, types.StringTypes)
-        assert file is None or isinstance(file, types.StringTypes)
+        assert dir is None or isinstance(dir, basestring)
+        assert file is None or isinstance(file, basestring)
         self._title = unicode(title)
         self._dir = dir
         self._file = file

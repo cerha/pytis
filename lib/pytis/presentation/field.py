@@ -775,7 +775,7 @@ class PresentedRow(object):
         else:
             display = column.display or self._cb_spec(column).display()
             if display:
-                if isinstance(display, str):
+                if isinstance(display, basestring):
                     display_column = display
                     row_function = lambda row: row[display_column].export()
                 elif argument_names(display) == ('row',):
@@ -811,7 +811,7 @@ class PresentedRow(object):
             if display is None:
                 value_column = column.type.enumerator().value_column()
                 display = lambda row: row[value_column].export()
-            elif isinstance(display, str):
+            elif isinstance(display, basestring):
                 display_column = display
                 display = lambda row: row[display_column].export()
             elif argument_names(display) != ('row',):

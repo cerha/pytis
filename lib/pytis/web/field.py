@@ -291,7 +291,7 @@ class FieldExporter(object):
             if link:
                 if callable(link):
                     pass # Ignore array item links here
-                elif type(link) in (str, unicode):
+                elif isinstance(link, basestring):
                     value = g.link(value, link)
                 else:
                     value = g.link(value, link.uri(), title=link.title(), target=link.target())

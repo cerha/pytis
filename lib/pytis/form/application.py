@@ -1583,7 +1583,7 @@ def delete_record(view, data, transaction, record,
             return False
         elif result == 1:
             return True
-        elif isinstance(result, (str, unicode)):
+        elif isinstance(result, basestring):
             run_dialog(Error, result)
             return False
         elif isinstance(result, pytis.data.Operator):

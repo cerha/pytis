@@ -97,7 +97,7 @@ def modal(window):
 
 def copy_to_clipboard(text):
     """Copy the text into system clipboard."""
-    assert isinstance(text, (str, unicode))
+    assert isinstance(text, basestring)
     clipboard = wx.TheClipboard
     if clipboard.Open():
         if config.clipboard_primary_selection:
@@ -821,7 +821,7 @@ class _TitledMenuObject(_MenuObject):
         podléhá jazykové konverzi.
           
         """
-        assert isinstance(title, types.StringTypes)
+        assert isinstance(title, basestring)
         self._title = title
         
     def title(self, raw=False):
@@ -1022,11 +1022,11 @@ class MItem(_TitledMenuObject):
             command, args = command
         assert isinstance(command, Command), (command, command_spec,)
         assert args is None or isinstance(args, types.DictType)
-        assert help is None or isinstance(help, types.StringTypes)
-        assert hotkey is None or isinstance(hotkey, (types.StringTypes,
+        assert help is None or isinstance(help, basestring)
+        assert hotkey is None or isinstance(hotkey, (basestring,
                                                      types.TupleType,
                                                      types.ListType))
-        assert icon is None or isinstance(icon, str)
+        assert icon is None or isinstance(icon, basestring)
         self._command = command
         self._args = args or {}
         self._help = help
@@ -1433,8 +1433,8 @@ class InfoWindow(object):
             těla automaticky vytvořeného dokumentu.
 
         """
-        assert isinstance(title, types.StringTypes)
-        assert isinstance(text, types.StringTypes)
+        assert isinstance(title, basestring)
+        assert isinstance(text, basestring)
         assert format in public_attributes(TextFormat)
         frame = wx.Frame(wx_frame(), title=title, name=_name)
         view = wx_text_view(frame, text, format)
@@ -1765,14 +1765,14 @@ def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
     """
     
     bitmap = None
-    if isinstance(icon_id, str):
+    if isinstance(icon_id, basestring):
         imgfile = os.path.join(config.icon_dir, icon_id + '.png')
         if os.path.exists(imgfile):
             img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
             bitmap = wx.BitmapFromImage(img)
         else:
             log(OPERATIONAL, "Could not find icon file:", imgfile)
-    elif icon_id is not None:
+    if bitmap is None and icon_id is not None:
         bitmap = wx.ArtProvider_GetBitmap(icon_id, type, size)
     if bitmap and bitmap.Ok():
         return bitmap
@@ -1837,7 +1837,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     Returns a 'wx.Button' or 'wx.BitmapButton' instance.
       
     """
-    assert not isinstance(icon, str) or label is not None, \
+    assert not isinstance(icon, basestring) or label is not None, \
            "Button with non-system icon must have a fallback label."
     if not bitmap and icon:
         bitmap = get_icon(icon, type=wx.ART_TOOLBAR)

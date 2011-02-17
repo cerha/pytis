@@ -300,7 +300,7 @@ class SFDialog(SFSDialog):
             col1 = self._find_column(arg1)
             if col1 is None:
                 raise Exception("Invalid column: "+ arg1)
-            if isinstance(arg2, str):
+            if isinstance(arg2, basestring):
                 col2 = self._find_column(arg2)
                 if col2 is None:
                     raise Exception("Invalid column: "+ arg2)

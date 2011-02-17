@@ -29,7 +29,7 @@ def data_object(spec):
     'pytis.data.DataFactory'
     
     """
-    if isinstance(spec, types.StringTypes):
+    if isinstance(spec, basestring):
         spec = pytis.util.resolver().get(spec, 'data_spec')
     def conn_spec():
         return config.dbconnection
@@ -90,7 +90,7 @@ def dbinsert(spec, row, transaction=None):
                 errmsg = 'Column definition must be (ID, VALUE) pair.'
                 raise ProgramError(errmsg)
             k, v = item
-            if not is_string(k):
+            if not is_anystring(k):
                 errmsg =  'Invalid column id %s' % k
                 raise ProgramError(errmsg)
             if not isinstance(v, pytis.data.Value):

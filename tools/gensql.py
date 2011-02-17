@@ -463,7 +463,7 @@ class SelectRelation(object):
         """
         assert jointype != JoinType.CROSS or \
                condition is None
-        assert isinstance(relation, types.StringTypes) or \
+        assert isinstance(relation, basestring) or \
                isinstance(relation, Select)
         assert schema is None or isinstance(schema, basestring), schema
         self.relation = relation
@@ -724,7 +724,7 @@ class _GsqlTable(_GsqlSpec):
         self._upd_log_trigger = upd_log_trigger
         if not init_columns:
             init_columns = columns
-        self._init_columns = [isinstance(c, str) and c
+        self._init_columns = [isinstance(c, basestring) and c
                               or self._column_column(c)
                               for c in init_columns]
         self._indexes = indexes
@@ -885,7 +885,7 @@ class _GsqlTable(_GsqlSpec):
         for c in self._columns:
             ct = c.type
             cn = self._column_column(c)
-            if isinstance(ct, str) and ct.lower() == 'serial' \
+            if isinstance(ct, basestring) and ct.lower() == 'serial' \
                or ct.__class__ == pytis.data.Serial:
                 seqname = "%s_%s_seq" % (self._name, cn)
                 for g in self._grant:                    
@@ -1016,7 +1016,7 @@ class _GsqlTable(_GsqlSpec):
             default = column.default
             constraints = map(normalize, column.constraints)
             ct = column.type
-            if isinstance(ct, str):
+            if isinstance(ct, basestring):
                 TYPE_ALIASES = {'int2': 'smallint'}
                 if ct != dbcolumn['typename'] and ct != TYPE_ALIASES.get(dbcolumn['typename']):
                     sys.stdout.write(
@@ -1223,7 +1223,7 @@ class Select(_GsqlSpec):
         return _gsql_column_table_column(column.name)[1]
 
     def _format_column(self, column):
-        if isinstance(column, str):
+        if isinstance(column, basestring):
             cname = alias = column
         else:
             if column.sql:
@@ -1235,7 +1235,7 @@ class Select(_GsqlSpec):
             cname = 'NULL'
         elif isinstance(type, pytis.data.Type):
             cname = 'NULL::%s' % _gsql_format_type(type)
-        elif isinstance(type, str):
+        elif isinstance(type, basestring):
             cname = 'NULL::%s' % type
         return '%s AS %s' % (cname, alias)
 
@@ -1796,7 +1796,7 @@ class _GsqlView(_GsqlSpec):
 
                
     def _format_column(self, column, i=None, type=UNDEFINED):
-        if isinstance(column, str):
+        if isinstance(column, basestring):
             cname = alias = column
         else:
             if i is None:
@@ -1814,7 +1814,7 @@ class _GsqlView(_GsqlSpec):
             cname = 'NULL'
         elif isinstance(type, pytis.data.Type):
             cname = 'NULL::%s' % _gsql_format_type(type)
-        elif isinstance(type, str):
+        elif isinstance(type, basestring):
             cname = 'NULL::%s' % type
         return '%s AS %s' % (cname, alias)
 
@@ -1963,7 +1963,7 @@ class _GsqlView(_GsqlSpec):
                 if spec is None:
                     return ''
                 where = ' WHERE '
-                if isinstance(spec, str):
+                if isinstance(spec, basestring):
                     join = spec
                 else:
                     rels = ['%s = %s' % r for r in spec]
@@ -2039,7 +2039,7 @@ class _GsqlFunction(_GsqlSpec):
           kwargs -- argumenty předané konstruktoru předka
 
         """
-        if isinstance(name, str):
+        if isinstance(name, basestring):
             the_name = name
         else:
             the_name = name.__name__
@@ -2052,7 +2052,7 @@ class _GsqlFunction(_GsqlSpec):
         self._body = body
         self._security_definer = security_definer
         self._set_schemas(schemas)
-        if self._doc is None and not isinstance(body, str):
+        if self._doc is None and not isinstance(body, basestring):
             self._doc = body.__doc__
 
     def _split_arguments(self, arguments):
@@ -2069,7 +2069,7 @@ class _GsqlFunction(_GsqlSpec):
         return ins, outs        
 
     def _format_body(self, body):
-        if isinstance(body, str):
+        if isinstance(body, basestring):
             if self._use_functions:
                 raise GensqlError(
                     "Non-empty use-function list for a non-Python function",

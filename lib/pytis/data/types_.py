@@ -550,7 +550,7 @@ class Integer(Number):
         tedy i long integers ve tvaru '1L'.
         
         """
-        assert isinstance(string, types.StringTypes), ('Not a string', string)
+        assert isinstance(string, basestring), ('Not a string', string)
         error = None
         try:
             value = int(string)
@@ -640,7 +640,7 @@ class Float(Number):
             dolů (pozor na záporná čísla, platí to pro ně také přesně takto!)
         
         """
-        assert isinstance(string, types.StringTypes), ('Not a string', string)
+        assert isinstance(string, basestring), ('Not a string', string)
         assert precision is None or \
                type(precision) == type(0) and precision >=0, \
                ('Invalid precision', precision)
@@ -706,14 +706,13 @@ class String(Limited):
         správný právě tehdy, není-li delší než tato délka.
         
         """
-        assert isinstance(string, types.StringTypes), ('Not a string', string)
+        assert isinstance(string, basestring), ('Not a string', string)
         return Value(self, unicode(string)), None
 
     def _export(self, value):
         # Pozor, na triviální funkci této metody se spoléhá Value.__init__ --
         # při změně zde je nutná změna i tam.
-        assert isinstance(value, types.StringTypes), \
-               ('Value not a string', value)
+        assert isinstance(value, basestring), ('Value not a string', value)
         return isinstance(value, unicode) and value or unicode(value)
 
     def wm_validate(self, object):
@@ -1053,8 +1052,8 @@ class DateTime(Type):
           utc -- specifies, if timestamp in database is in UTC
 
         """
-        assert mindate is None or isinstance(mindate, types.StringTypes)
-        assert maxdate is None or isinstance(maxdate, types.StringTypes)
+        assert mindate is None or isinstance(mindate, basestring)
+        assert maxdate is None or isinstance(maxdate, basestring)
         if format is None:
             import config
             format = config.date_time_format
@@ -1102,7 +1101,7 @@ class DateTime(Type):
             v opačném případě je v UTC
           
         """
-        assert isinstance(string, types.StringTypes)
+        assert isinstance(string, basestring)
         if format is None:
             format = self._format
         # Využití `strptime' je nejjednodušší řešení.  GNU `strptime' je
@@ -1176,6 +1175,18 @@ class DateTime(Type):
         """
         return datetime.datetime.now(class_.UTC_TZINFO)
 
+    @classmethod
+    def current_time(class_, local=False):
+        """Return current GM time suitable for use as this class value.
+        """
+        return datetime.datetime.now(class_.UTC_TZINFO)
+
+    @classmethod
+    def current_date(class_, local=False):
+        """Return todays time 00:00 suitable for use as this class value.
+        """
+        return class_.current_gmtime().replace(hour=0, minute=0, second=0, microsecond=0)
+
     @staticmethod
     def diff_seconds(dt1, dt2):
         """Return difference between d1 and d2 in seconds.
@@ -1230,7 +1241,10 @@ class Date(DateTime):
 
     def _validate(self, *args, **kwargs):
         kwargs['local'] = False
-        return super(Date, self)._validate(*args, **kwargs)
+        value, error = super(Date, self)._validate(*args, **kwargs)
+        if value:
+            value = Value(value.type(), value.value().timetz())
+        return value, error
         
     def _export(self, *args, **kwargs):
         kwargs['local'] = False
@@ -1247,6 +1261,11 @@ class Date(DateTime):
         """
         return self.export(value, format='%Y-%m-%d', local=False)
 
+    @classmethod
+    def current_date(class_, local=False):
+        """Return todays date suitable for use as this class value.
+        """
+        return class_.current_time(local=local).date()
 
 class Time(DateTime):
     """Time of day without the date part."""
@@ -1277,7 +1296,10 @@ class Time(DateTime):
 
     def _validate(self, *args, **kwargs):
         kwargs['local'] = False
-        return super(Time, self)._validate(*args, **kwargs)
+        value, error = super(Time, self)._validate(*args, **kwargs)
+        if value:
+            value = Value(value.type(), value.value().timetz())
+        return value, error
         
     def _export(self, *args, **kwargs):
         kwargs['local'] = False
@@ -1297,10 +1319,6 @@ class Time(DateTime):
 
 class TimeInterval(Time):
     """Amount of time between two moments."""
-    # TODO: This class is just a quick hack to make some things work right now.
-    # Neither its implementation nor its support in the database interface is complete.
-    # It should be fixed once applications are converted from incorrect use of
-    # `Time' class for time intervals (if it ever happens).
 
     VM_TI_FORMAT =  'VM_TI_INVALID_FORMAT'
     _VM_TI_FORMAT_MSG = _(u"Chybný formát")
@@ -1445,14 +1463,14 @@ class Binary(Limited):
             if isinstance(data, buffer):
                 self._validate(data)
                 self._buffer = data
-            elif isinstance(data, (str, unicode)):
+            elif isinstance(data, basestring):
                 self.load(data)
             elif isinstance(data, (file, StringIO)):
                 self._load(data)
             else:
-                raise ProgramError("Invalid Buffer data:", data)
-            assert filename is None or isinstance(filename, (str, unicode))
-            assert type is None or isinstance(type, str)
+                ProgramError("Invalid Buffer data:", data)
+            assert filename is None or isinstance(filename, basestring)
+            assert type is None or isinstance(type, basestring)
             self._filename = filename
             self._type = type
 
@@ -1533,7 +1551,7 @@ class Binary(Limited):
             finally:
                 f.close()
             if filename is not None:
-                assert isinstance(filename, (str, unicode))
+                assert isinstance(filename, basestring)
                 self._filename = filename
             
                 
@@ -1628,7 +1646,7 @@ class Image(Binary, Big):
             if formats is not None:
                 assert isinstance(formats, (tuple, list)), formats
                 for f in formats:
-                    assert isinstance(f, str)
+                    assert isinstance(f, basestring)
                     if f not in ('PNG', 'JPEG', 'TIFF', 'GIF', 'BMP',
                                  'PCX', 'PPM', 'XBM', 'IM'):
                         log(OPERATIONAL, "Suspicious image format:", f)
@@ -1909,9 +1927,9 @@ class DataEnumerator(Enumerator):
         super(DataEnumerator, self).__init__()
         assert isinstance(data_factory, DataFactory), data_factory
         assert value_column is None or \
-               isinstance(value_column, types.StringType)
+               isinstance(value_column, basestring)
         assert validity_column is None or \
-               isinstance(validity_column, types.StringType) 
+               isinstance(validity_column, basestring)
         assert validity_condition is None or \
                isinstance(validity_condition, pytis.data.Operator) \
                and validity_column is None

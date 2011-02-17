@@ -253,7 +253,7 @@ def PopupCB(spec, name, column, returned_column,
     options = [(r[column].value(), r[returned_column].value())
                for r in dbrows]
     if selected:
-        if isinstance(selected, types.StringTypes):
+        if isinstance(selected, basestring):
             selected = xtuple(selected)
         if len(selected) > 1:
             attrs['multiple'] = 1
