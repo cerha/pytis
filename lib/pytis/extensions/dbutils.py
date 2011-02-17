@@ -212,13 +212,12 @@ def enum(name, **kwargs):
 
 # Pozor, stejná metoda metoda je definována i v pytis.data.access
 def is_in_groups(groups):
-    if isinstance(groups, types.StringType):
+    if isinstance(groups, basestring):
         groups = xtuple(groups)
-    from sets import Set
     def conn_spec():
         return config.dbconnection
     dbgroups = pytis.data.default_access_groups(conn_spec)
-    if Set(groups) & Set(dbgroups) == Set([]):
+    if set(groups) & set(dbgroups) == set([]):
         return False
     else:
         return True

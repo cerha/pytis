@@ -575,11 +575,10 @@ def drop_temptables(tables):
     """Slouží k zrušení dočasných temporery tabulek. Funkce otestuje, zda tabulky uvedené
     v seznamu existují a případně je dropne."""
 
-    from sets import Set
     str_tables = args[0]
     if str_tables is None:
         return 0
-    tables = Set([x.strip() for x in str_tables.split(",")])
+    tables = set([x.strip() for x in str_tables.split(",")])
     q = """select c.relname as name
            from pg_catalog.pg_class c
            left join pg_catalog.pg_user u ON u.usesysid = c.relowner
@@ -590,7 +589,7 @@ def drop_temptables(tables):
     q = plpy.execute(q)
     if len(q) == 0:
         return 0
-    tables.intersection_update(Set([r["name"] for r in q]))
+    tables.intersection_update(set([r["name"] for r in q]))
     pocet = len(tables)
     if pocet != 0:
         plpy.execute("drop table %s" % ",".join(tables))

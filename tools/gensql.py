@@ -1333,9 +1333,8 @@ class Select(_GsqlSpec):
 
     def sort_columns(self, aliases):
         # Check length and column aliases
-        from sets import Set
         colaliases = [c.alias for c in self._columns]
-        missed = Set(aliases) ^ Set(colaliases)
+        missed = set(aliases) ^ set(colaliases)
         if len(missed) != 0:
             names = ' | '.join(missed)
             raise ProgramError('Different columns in SelectSet', names)            
