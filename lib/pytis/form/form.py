@@ -46,15 +46,17 @@ class FormProfile(pytis.presentation.Profile):
     originally defined in specifications.
 
     Important note: Pickling and unpickling is unfortunately not a symmetrical
-    operation.  After unpickling an instance, the method 'finish()' must be
-    called to unpack stored pytis conditions (the 'filter' attribute of the
-    profile).  This is because 'pytis.data.Operator()' instances refer to
-    values with data type instances, which are often bound to data objects.  To
-    prevent pickling of whole such structures of living objects, the filtering
-    condition is stored in a packed form which doesn't refer to data types and
-    objects.  A form's data object is needed to unpack the profile after
-    unpickling.  This is why 'finish()' must be called passing it the data
-    object of the form.
+    operation.  After unpickling an instance, the method 'validate()' must be
+    called to check whether all profile parameters match with the current
+    specification and also the stored pytis conditions (the 'filter' attribute
+    of the profile) must be unpacked from the internal representation into
+    'pytis.data.Operator()' instances.  This is because 'pytis.data.Operator()'
+    instances refer to values with data type instances, which are often bound
+    to data objects.  To prevent pickling whole structures of living objects,
+    the filtering condition is stored in a packed form which doesn't refer to
+    data types and objects.  A form's data object is needed to unpack them.
+    This is why 'validate()' must be called passing it the data object of the
+    form.
 
     """
     def __init__(self, id, name, column_widths=None,
@@ -73,11 +75,11 @@ class FormProfile(pytis.presentation.Profile):
         All other arguments the sam as for the parent class.
 
         """
-        self._packed_filter = None
+        super(FormProfile, self).__init__(id, name, **kwargs)
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
         self._column_widths = column_widths or {}
-        super(FormProfile, self).__init__(id, name, **kwargs)
+        self._state = None
         
     def __getstate__(self):
         # We prefer saving the condition in our custom format, since its safer
@@ -94,19 +96,26 @@ class FormProfile(pytis.presentation.Profile):
             elif isinstance(something, str):
                 return something
             else:
-                raise ProgramError("Invalid object to pack:", something)
-        state = dict(self.__dict__)
-        if self._filter:
-            state['_filter'] = None
-            state['_packed_filter'] = pack(self._filter)
-        return state
+                raise ProgramError("Unknown object in filter operator:", something)
+        return dict(self.__dict__, _filter=self._filter and pack(self._filter))
 
+    def __setstate__(self, state):
+        # Don't restore the state here, to avoid accessing any attributes
+        # before validation (see also __getattr__).
+        self._state = state
+
+    def __getattr__(self, name):
+        if self._state is not None:
+            raise ProgramError("Attempted to access unpacked profile: Call 'validate()' first!")
+        else:
+            raise AttributeError("%r object has no attribute %r" % (type(self).__name__, name))
+        
     def rename(self, name):
         """Change the name of the profile to given 'name' (string)."""
         self._name = name
 
-    def finish(self, data):
-        """Finish the instance after unpickling (see the class docstring for more information)."""
+    def validate(self, view, data):
+        """Validate the instance after loading (see the class docstring for more information)."""
         # NOT is not allowed!
         OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
         def unpack(packed):
@@ -136,20 +145,36 @@ class FormProfile(pytis.presentation.Profile):
                     if data.find_column(col) is None:
                         raise Exception("Unknown column '%s'" % col)
             return op(*args, **kwargs)
-        if self._packed_filter:
+        state = self._state
+        self._state = None
+        if state is None:
+            raise ProgramError("Called 'validate()' on a profile which is not "
+                               "loaded from a pickled state!")
+        self.__dict__.update(state)
+        if self._filter:
             try:
-                self._filter = unpack(self._packed_filter)
+                self._filter = unpack(self._filter)
             except Exception, e:
-                log(OPERATIONAL, "Unable to restore saved fitler for profile '':" % self._name,
-                    (self._packed_filter, str(e)))
-            else:
-                self._packed_filter = None
+                log(OPERATIONAL, "Unable to restore fitler for profile '%s':" % self._name,
+                    (self._filter, str(e)))
+                return False
+        # Check the column identifiers in all profile attributes (except for
+        # filters, which are checked above)
+        for attr, getcol in (('_columns', lambda x: x),
+                             ('_sorting', lambda x: x[0]),
+                             ('_grouping', lambda x: x),
+                             ('_group_by_columns', lambda x: x),
+                             ('_aggregation_columns', lambda x: x[0])):
+            sequence = getattr(self, attr)
+            if sequence is not None:
+                for x in sequence:
+                    col = getcol(x)
+                    if view.field(col) is None:
+                        log(OPERATIONAL, "Unknown column '%s' in %s of profile '%s':" % \
+                                (col, attr[1:], self._name))
+                        return False
+        return True
 
-    def filter(self):
-        if self._packed_filter is not None:
-            raise ProgramError("Attempted to access unpacked profile - call 'finish()' first!")
-        return self._filter
-    
     def group_by_columns(self):
         return self._group_by_columns
     
@@ -791,7 +816,7 @@ class LookupForm(InnerForm):
         default_profile = Profile('__default_profile__', _("Výchozí profil"),
                                   filter=filter, sorting=sorting, columns=columns,
                                   grouping=grouping)
-        self._profiles = self._load_profiles(default_profile)
+        self._profiles, self._invalid_profiles = self._load_profiles(default_profile)
         initial_profile_id = self._view.profiles().default()
         if initial_profile_id:
             current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
@@ -868,6 +893,15 @@ class LookupForm(InnerForm):
     def _current_arguments(self):
         return {}
 
+    def _on_idle(self, event):
+        if super(LookupForm, self)._on_idle(event):
+            return True
+        if self._invalid_profiles:
+            profiles = self._invalid_profiles
+            self._invalid_profiles = []
+            self._delete_invalid_profiles(profiles)
+        return False
+        
     def _init_data_select(self, data, async_count=False):
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
@@ -1000,19 +1034,24 @@ class LookupForm(InnerForm):
         manager = profile_manager()
         fullname = self._fullname()
         profiles = []
+        invalid_profiles = []
         for profile in (default_profile,) + tuple(self._view.profiles()):
             custom = manager.load_profile(fullname, profile.id())
             if custom:
-                custom.finish(self._data)
-                profile = custom
+                if custom.validate(self._view, self._data):
+                    profile = custom
+                else:
+                    invalid_profiles.append(custom)
             profiles.append(profile)
         for profile_id in manager.list_profile_ids(fullname):
             if profile_id.startswith(self._USER_PROFILE_PREFIX):
                 profile = manager.load_profile(fullname, profile_id)
                 if profile:
-                    profile.finish(self._data)
-                    profiles.append(profile)
-        return profiles
+                    if profile.validate(self._view, self._data):
+                        profiles.append(profile)
+                    else:
+                        invalid_profiles.append(profile)
+        return profiles, invalid_profiles
 
     def _apply_profile_parameters(self, profile):
         """Set the form state attributes according to given 'Profile' instance.
@@ -1077,25 +1116,21 @@ class LookupForm(InnerForm):
             if current_value != original_value:
                 return True
         return False
+
+    def _delete_invalid_profiles(self, profiles):
+        # If the profile is not deleted, it is not used in the current form
+        # anyway.  But the form will attempt to load it again next time.
+        for profile in profiles:
+            if run_dialog(Question, icon=Question.ICON_ERROR,
+                          title=_("Neplatný profil"),
+                          message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
+                                    "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
+                                    "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
+                                    "Pøejete si profil smazat?") % profile.name()):
+                profile_manager().drop_profile(self._fullname(), profile.id())
     
     def _cmd_apply_profile(self, index):
-        try:
-            profile = self._profiles[index]
-            self._apply_profile(profile)
-        except Exception, e:
-            log(OPERATIONAL, "Unable to apply profile:", e)
-            # TODO: Handle also invalid customizations of predefined profiles.
-            if self._current_profile.id().startswith(self._USER_PROFILE_PREFIX):
-                delete = run_dialog(Question, icon=Question.ICON_ERROR,
-                                    title=_("Neplatný profil"),
-                                    message=_("U¾ivatelský profil \"%s\" je neplatný.\n"
-                                              "Pravdìpodobnì do¹lo ke zmìnì definice náhledu\n"
-                                              "a ulo¾ený profil ji¾ nelze pou¾ít.\n\n"
-                                              "Pøejete si profil smazat?") % profile.name())
-                if delete:
-                    self._profiles.remove(profile)
-                    profile_manager().drop_profile(self._fullname(), profile.id())
-                    # TODO: Remove also related profile menu items?
+        self._apply_profile(self._profiles[index])
         self.focus()
 
     def _cmd_save_new_profile(self, name):
