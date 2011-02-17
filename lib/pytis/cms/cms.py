@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
 #
@@ -14,6 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import unicode_literals
 
 """Pytis CMS specifications.
 
@@ -63,14 +65,14 @@ class Specification(pp.Specification):
 
 
 class Languages(Specification):
-    title = _(u"Jazyky")
-    help = _(u"Správa jazykù dostupnıch v CMS.")
+    title = _("Jazyky")
+    help = _("SprÃ¡va jazykÅ¯ dostupnÃ½ch v CMS.")
     table = 'cms_languages'
     def fields(self): return (
         Field('lang_id', default=nextval('cms_languages_lang_id_seq')),
-        Field('lang', _(u"Kód"), width=2, column_width=6, fixed=True,
+        Field('lang', _("KÃ³d"), width=2, column_width=6, fixed=True,
               filter=pp.TextFilter.ALPHANUMERIC, post_process=pp.PostProcess.LOWER),
-        Field('name', _(u"Název"), virtual=True,
+        Field('name', _("NÃ¡zev"), virtual=True,
               computer=computer(lambda record, lang: self._language_name(lang))),
         )
     def _language_name(self, lang):
@@ -87,15 +89,15 @@ class Languages(Specification):
 
 
 class Modules(Specification):
-    title = _(u"Moduly")
-    help = _(u"Správa roz¹iøujících modulù pou¾itelnıch ve stránkách.")
+    title = _("Moduly")
+    help = _("SprÃ¡va rozÅ¡iÅ™ujÃ­cÃ­ch modulÅ¯ pouÅ¾itelnÃ½ch ve strÃ¡nkÃ¡ch.")
     table = 'cms_modules'
     access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
                                     (None, ('cms_user', pd.Permission.VIEW)))
     def fields(self): return (
         Field('mod_id', default=nextval('cms_modules_mod_id_seq')),
-        Field('modname', _(u"Název"), width=32),
-        Field('descr', _(u"Popis"), width=64, virtual=True, computer=computer(self._descr)),
+        Field('modname', _("NÃ¡zev"), width=32),
+        Field('descr', _("Popis"), width=64, virtual=True, computer=computer(self._descr)),
         )
     def _module(self, modname):
         if modname:
@@ -118,18 +120,18 @@ class Modules(Specification):
     layout = ('modname', 'descr')
     columns = ('modname', 'descr')
     def bindings(self):
-        return (Binding('actions', _(u"Dostupné akce tohoto modulu"), self._spec_name('Actions'),
+        return (Binding('actions', _("DostupnÃ© akce tohoto modul"), self._spec_name('Actions'),
                         'mod_id'),)
     def actions(self):
-        return (Action('reload', _(u"Pøenaèíst dostupné akce"), self._reload_actions),)
+        return (Action('reload', _("PÅ™enaÄÃ­st dostupnÃ© akce"), self._reload_actions),)
     def on_delete_record(self, record):
         import pytis.form
         data = pytis.form.create_data_object(self._spec_name('Menu'))
         count = data.select(condition=pd.EQ('mod_id', record['mod_id']))
         data.close()
         if count:
-            return _(u"Modul je pou¾íván v existujících stránkách.\n"
-                     "Pokud jej chcete vymazat, zru¹te nejprve v¹echny navázané stránky.")
+            return _("Modul je pouÅ¾Ã­vÃ¡n v existujÃ­cÃ­ch strÃ¡nkÃ¡ch.\n"
+                     "Pokud jej chcete vymazat, zruÅ¡te nejprve vÅ¡echny navÃ¡zanÃ© strÃ¡nky.")
         else:
             return True
     #def on_new_record(self, prefill, transaction=None):
@@ -151,7 +153,7 @@ class Modules(Specification):
             except KeyError:
                 method = getattr(module, 'action_'+action)
                 docstring = method.__doc__
-                return docstring and docstring.splitlines()[0] or _(u"Neuvedeno")
+                return docstring and docstring.splitlines()[0] or _("Neuvedeno")
         module = self._module(record['modname'].value())
         if module:
             from pytis.form import run_dialog, CheckListDialog, create_data_object
@@ -172,12 +174,12 @@ class Modules(Specification):
             order = lambda a: a in default_actions and (default_actions.index(a)+1) or a
             actions.sort(lambda a, b: cmp(order(a), order(b)))
             descriptions = [action_descr(module, action) for action in actions] 
-            result = run_dialog(CheckListDialog, title=_(u"Nalezené akce"),
-                                message=_(u"Za¹krtnìte akce, které chcete zpøístupnit webovım "
-                                          "u¾ivatelùm:"),
+            result = run_dialog(CheckListDialog, title=_("NalezenÃ© akce"),
+                                message=_("ZaÅ¡krtnÄ›te akce, kterÃ© chcete zpÅ™Ã­stupnit webovÃ½m "
+                                          "uÅ¾ivatelÅ¯m:"),
                                 items=zip([a in existing_actions for a in actions],
                                           actions, descriptions),
-                                columns=(_(u"Akce"), _(u"Popis")))
+                                columns=(_("Akce"), _("Popis")))
             if result is not None:
                 # TODO: Use a transaction.  Respect existing actions.
                 for i, action in enumerate(actions):
@@ -194,14 +196,14 @@ class Modules(Specification):
                             data.update((key,), pd.Row((('description', description_value),)))
                         
     _DEFAULT_ACTIONS = (
-        ('view',    _(u"Zobrazení záznamu")),
-        ('list',    _(u"Vıpis v¹ech záznamù")),
-        ('export',  _(u"Export tabulky do CSV formátu")),
-        ('rss',     _(u"Zobrazení RSS kanálù")),
-        ('insert',  _(u"Vlo¾ení nového záznamu")),
-        ('update',  _(u"Editace stávajícího záznamu")),
-        ('delete',  _(u"Smazání záznamu")),
-        ('print_field', _(u"Export tisknutelnıch políèek do PDF")),
+        ('view',    _("ZobrazenÃ­ zÃ¡znam")),
+        ('list',    _("VÃ½pis vÅ¡ech zÃ¡znamÅ¯")),
+        ('export',  _("Export tabulky do CSV formÃ¡t")),
+        ('rss',     _("ZobrazenÃ­ RSS kanÃ¡lÅ¯")),
+        ('insert',  _("VloÅ¾enÃ­ novÃ©ho zÃ¡znam")),
+        ('update',  _("Editace stÃ¡vajÃ­cÃ­ho zÃ¡znam")),
+        ('delete',  _("SmazÃ¡nÃ­ zÃ¡znam")),
+        ('print_field', _("Export tisknutelnÃ½ch polÃ­Äek do PDF")),
         )
     _SEARCH_MODULES = ()
     """Defines list of names python modules which should be searched for available Wiking modules.
@@ -213,17 +215,17 @@ class Modules(Specification):
 
 class MenuParents(Specification):
     # Codebook of parent items for Menu (to prevent recursion).
-    title = _(u"Menu")
+    title = _("Men")
     table = 'cms_menu'
     def fields(self): return (
         Field('menu_id'),
         Field('menu_item_id'),
         Field('tree_order'),
         Field('lang'),
-        Field('title_or_identifier', _(u"Název"), width=32, type=_TreeOrder),
-        Field('identifier', _(u"Identifikátor"), width=20),
-        Field('modname', _(u"Modul")),
-        #Field('description', _(u"Popis"), width=64),
+        Field('title_or_identifier', _("NÃ¡zev"), width=32, type=_TreeOrder),
+        Field('identifier', _("IdentifikÃ¡tor"), width=20),
+        Field('modname', _("Modul")),
+        #Field('description', _("Popis"), width=64),
         )
     sorting = ('tree_order', ASC),
     columns = ('title_or_identifier', 'identifier', 'modname')
@@ -231,8 +233,8 @@ class MenuParents(Specification):
 
 
 class Menu(Specification):
-    title = _(u"Menu")
-    help = _(u"Správa polo¾ek hlavního menu, jejich hierarchie a obsahu.")
+    title = _("Men")
+    help = _("SprÃ¡va poloÅ¾ek hlavnÃ­ho menu, jejich hierarchie a obsahu.")
     table = 'cms_menu'
     def _parent_filter(self, record, lang):
         return pd.EQ('lang', pd.Value(pd.String(), lang))
@@ -241,41 +243,41 @@ class Menu(Specification):
         Field('menu_item_id'),
         Field('tree_order'),
         Field('tree_order_nsub'),
-        Field('identifier', _(u"Identifikátor"), width=20, fixed=True, editable=ONCE,
+        Field('identifier', _("IdentifikÃ¡tor"), width=20, fixed=True, editable=ONCE,
               type=pd.RegexString(maxlen=32, not_null=True, regex='^[a-zA-Z][0-9a-zA-Z_-]*$'),
-              descr=_(u"Identifikátor bude vystupovat jako vnìj¹í adresa stránky.  Mù¾e bıt pou¾it "
-                      "v odkazech na tuto stránku v rámci textu jinıch stránek. Platnı "
-                      "identifikátor mù¾e obsahovat pouze písmena bez diakritiky, èíslice, "
-                      "pomlèky a podtr¾ítka a musí zaèínat písmenem.")),
-        Field('lang', _(u"Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
+              descr=_("IdentifikÃ¡tor bude vystupovat jako vnÄ›jÅ¡Ã­ adresa strÃ¡nky.  MÅ¯Å¾e bÃ½t pouÅ¾it "
+                      "v odkazech na tuto strÃ¡nku v rÃ¡mci textu jinÃ½ch strÃ¡nek. PlatnÃ½ "
+                      "identifikÃ¡tor mÅ¯Å¾e obsahovat pouze pÃ­smena bez diakritiky, ÄÃ­slice, "
+                      "pomlÄky a podtrÅ¾Ã­tka a musÃ­ zaÄÃ­nat pÃ­smenem.")),
+        Field('lang', _("Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
               value_column='lang', selection_type=pp.SelectionType.CHOICE),
-        Field('title_or_identifier', _(u"Název"), width=30, type=_TreeOrder),
-        Field('title', _(u"Název"), width=20, not_null=True, maxlen=32,
-              descr=_(u"Název polo¾ky menu - krátkı a vısti¾nı.")),
-        Field('heading', _(u"Nadpis"), width=32, maxlen=40,
-              descr=_(u"Hlavní nadpis pøi zobrazení stránky.  Pokud ponecháte nevyplnìné, "
-                      "pou¾ije se název polo¾ky.  Ten je ale nìkdy kvùli pou¾ití v menu pøíli¹ "
-                      "krátkı, tak¾e zde je mo¾né urèit jeho del¹í variantu.")),
-        Field('description', _(u"Popis"), width=72,
-              descr=_(u"Struènı popis stránky (zobrazen v menu jako tooltip).")),
-        Field('content', _(u"Obsah"), type=pd.StructuredText(), compact=True, height=20, width=80,
-              descr=_(u"Text stránky formátovanı jako LCG strukturovanı text (wiki)")),
-        Field('mod_id', _(u"Modul"), not_null=False,
+        Field('title_or_identifier', _("NÃ¡zev"), width=30, type=_TreeOrder),
+        Field('title', _("NÃ¡zev"), width=20, not_null=True, maxlen=32,
+              descr=_("NÃ¡zev poloÅ¾ky menu - krÃ¡tkÃ½ a vÃ½stiÅ¾nÃ½.")),
+        Field('heading', _("Nadpis"), width=32, maxlen=40,
+              descr=_("HlavnÃ­ nadpis pÅ™i zobrazenÃ­ strÃ¡nky.  Pokud ponechÃ¡te nevyplnÄ›nÃ©, "
+                      "pouÅ¾ije se nÃ¡zev poloÅ¾ky.  Ten je ale nÄ›kdy kvÅ¯li pouÅ¾itÃ­ v menu pÅ™Ã­liÅ¡ "
+                      "krÃ¡tkÃ½, takÅ¾e zde je moÅ¾nÃ© urÄit jeho delÅ¡Ã­ variantu.")),
+        Field('description', _("Popis"), width=72,
+              descr=_("StruÄnÃ½ popis strÃ¡nky (zobrazen v menu jako tooltip).")),
+        Field('content', _("Obsah"), type=pd.StructuredText(), compact=True, height=20, width=80,
+              descr=_("Text strÃ¡nky formÃ¡tovanÃ½ jako LCG strukturovanÃ½ text (wiki)")),
+        Field('mod_id', _("Modul"), not_null=False,
               codebook=self._spec_name('Modules', False), allow_codebook_insert=True,
-              descr=_(u"Vyberte roz¹iøující modul zobrazenı uvnitø stránky.  Ponechte prázdné pro "
-                      "prostou textovou stránku.")),
-        Field('modname', _(u"Modul")),
-        Field('parent', _(u"Nadøízená polo¾ka"), not_null=False,
+              descr=_("Vyberte rozÅ¡iÅ™ujÃ­cÃ­ modul zobrazenÃ½ uvnitÅ™ strÃ¡nky.  Ponechte prÃ¡zdnÃ© pro "
+                      "prostou textovou strÃ¡nku.")),
+        Field('modname', _("Modul")),
+        Field('parent', _("NadÅ™Ã­zenÃ¡ poloÅ¾ka"), not_null=False,
               codebook=self._spec_name('MenuParents', False), value_column='menu_item_id',
               runtime_filter=computer(self._parent_filter),
-              descr=_(u"Vyberte bezprostøednì nadøízenou polo¾ku v hierarchii menu.  Ponechte "
-                      "prázdné pro stránky na nejvy¹¹í úrovni menu.")),
-        Field('published', _(u"Zveøejnìno"), width=6, default=True, fixed=True, 
-              descr=_(u"Umo¾òuje øídit dostupnost dané polo¾ky nezávisle pro ka¾ou jazykovou "
+              descr=_("Vyberte bezprostÅ™ednÄ› nadÅ™Ã­zenou poloÅ¾ku v hierarchii menu.  Ponechte "
+                      "prÃ¡zdnÃ© pro strÃ¡nky na nejvyÅ¡Å¡Ã­ Ãºrovni menu.")),
+        Field('published', _("ZveÅ™ejnÄ›no"), width=6, default=True, fixed=True, 
+              descr=_("UmoÅ¾Åˆuje Å™Ã­dit dostupnost danÃ© poloÅ¾ky nezÃ¡visle pro kaÅ¾ou jazykovou "
                       "verzi.")),
-        Field('ord', _(u"Poøadí"), width=8, editable=ALWAYS, fixed=True, 
-              descr=_(u"Zadejte èíslo urèující poøadí polo¾ky v menu (mezi stránkami na stejné "
-                      "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zaøazena "
+        Field('ord', _("PoÅ™adÃ­"), width=8, editable=ALWAYS, fixed=True, 
+              descr=_("Zadejte ÄÃ­slo urÄujÃ­cÃ­ poÅ™adÃ­ poloÅ¾ky v menu (mezi strÃ¡nkami na stejnÃ© "
+                      "Ãºrovni hierarchie.  Pokud nevyplnÃ­te, strÃ¡nka bude automaticky zaÅ™azena "
                       "na konec.")),
         )
     def _check_menu_order_condition(self, record):
@@ -289,7 +291,7 @@ class Menu(Specification):
         data = record.data()
         if record['parent'].value() is not None:
             if record['parent'].value() == record['menu_item_id'].value():
-                return ('parent', _(u"Polo¾ka nemù¾e bıt nadøízená sama sobì."))
+                return ('parent', _("PoloÅ¾ka nemÅ¯Å¾e bÃ½t nadÅ™Ã­zenÃ¡ sama sobÄ›."))
             if not record.new():
                 # A new record can't be a parent of existing records.
                 condition = pd.AND(pd.EQ('menu_item_id', record['parent']),
@@ -297,12 +299,12 @@ class Menu(Specification):
                 count = data.select(condition=condition)
                 data.close()
                 if count:
-                    return ('parent', _(u"Nelze pøiøadit podøízenou polo¾ku jako nadøízenou "
+                    return ('parent', _("Nelze pÅ™iÅ™adit podÅ™Ã­zenou poloÅ¾ku jako nadÅ™Ã­zenou "
                                         "(cyklus v hierarchii)."))
         count = data.select(condition=pd.AND(*self._check_menu_order_condition(record)))
         data.close()
         if count:
-            return ('ord', _(u"Stejné poøadové èíslo u¾ má jiná polo¾ka na této úrovni menu."))
+            return ('ord', _("StejnÃ© poÅ™adovÃ© ÄÃ­slo uÅ¾ mÃ¡ jinÃ¡ poloÅ¾ka na tÃ©to Ãºrovni menu."))
 
         
     def on_delete_record(self, record):
@@ -310,8 +312,8 @@ class Menu(Specification):
         count = data.select(condition=pd.EQ('parent', record['menu_item_id']))
         data.close()
         if count:
-            return _(u"Polo¾ka má podøízené polo¾ky.\n"
-                     "Pokud ji chcete vymazat, vyma¾te nejprve v¹echny podpolo¾ky.")
+            return _("PoloÅ¾ka mÃ¡ podÅ™Ã­zenÃ© poloÅ¾ky.\n"
+                     "Pokud ji chcete vymazat, vymaÅ¾te nejprve vÅ¡echny podpoloÅ¾ky.")
         else:
             return True
     def row_style(self, record):
@@ -321,13 +323,13 @@ class Menu(Specification):
             return None
     sorting = ('tree_order', ASC),
     layout = (VGroup('identifier', 'parent', 'mod_id', 'ord',
-                     label=_(u"Globální vlastnosti (spoleèné pro v¹echny jazyky)")),
+                     label=_("GlobÃ¡lnÃ­ vlastnosti (spoleÄnÃ© pro vÅ¡echny jazyky)")),
               VGroup('lang', 'title', 'heading', 'description', 'content', 'published',
-                     label=_(u"Text stránky (pro aktuální jazykovou verzi)")))
+                     label=_("Text strÃ¡nky (pro aktuÃ¡lnÃ­ jazykovou verzi)")))
     columns = ('title_or_identifier', 'identifier', 'modname', 'ord', 'published')
     def bindings(self):
         return (
-            Binding('rights', _(u"Pøístupová práva"), self._spec_name('Rights'),
+            Binding('rights', _("PÅ™Ã­stupovÃ¡ prÃ¡va"), self._spec_name('Rights'),
                     condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id']),
                     prefill=lambda r: {'menu_item_id': r['menu_item_id'].value(),
                                        'mod_id': r['mod_id'].value()}),
@@ -335,14 +337,14 @@ class Menu(Specification):
 
 
 class Users(Specification):
-    title = _(u"U¾ivatelé")
-    help = _(u"Správa u¾ivatelskıch úètù, které je poté mo¾no zaøazovat do rolí.")
+    title = _("UÅ¾ivatelÃ©")
+    help = _("SprÃ¡va uÅ¾ivatelskÃ½ch ÃºÄtÅ¯, kterÃ© je potÃ© moÅ¾no zaÅ™azovat do rolÃ­.")
     table = 'cms_users'
     def fields(self): return (
-        Field('uid', _(u"UID"), width=5, default=nextval('cms_users_uid_seq')),
-        Field('login', _(u"Pøihla¹ovací jméno"), width=16),
-        Field('fullname', _(u"Celé jméno"), width=40),
-        Field('passwd', _(u"Heslo"),
+        Field('uid', _("UID"), width=5, default=nextval('cms_users_uid_seq')),
+        Field('login', _("PÅ™ihlaÅ¡ovacÃ­ jmÃ©no"), width=16),
+        Field('fullname', _("CelÃ© jmÃ©no"), width=40),
+        Field('passwd', _("Heslo"),
               type=pd.Password(not_null=True, minlen=4, md5=True)),
         )
     layout = ('login', 'fullname', 'passwd')
@@ -350,34 +352,34 @@ class Users(Specification):
     cb = CodebookSpec(display='fullname')
     sorting = (('login', ASC),)
     def bindings(self):
-        return (Binding('roles', _(u"U¾ivatelské role"), self._spec_name('UserRoles'), 'uid'),
-                Binding('sessions', _(u"Historie pøihlá¹ení"), self._spec_name('UserSessionLog'),
+        return (Binding('roles', _("UÅ¾ivatelskÃ© role"), self._spec_name('UserRoles'), 'uid'),
+                Binding('sessions', _("Historie pÅ™ihlÃ¡Å¡enÃ­"), self._spec_name('UserSessionLog'),
                         'uid'),
                 )
 
 
 class Roles(Specification):
-    title = _(u"U¾ivatelské role")
-    help = _(u"Správa dostupnıch u¾ivatelskıch rolí, které je mo¾né pøiøazovat u¾ivatelùm.")
+    title = _("UÅ¾ivatelskÃ© role")
+    help = _("SprÃ¡va dostupnÃ½ch uÅ¾ivatelskÃ½ch rolÃ­, kterÃ© je moÅ¾nÃ© pÅ™iÅ™azovat uÅ¾ivatelÅ¯m.")
     table = 'cms_roles'
     def fields(self): return (
         Field('role_id', default=nextval('cms_roles_role_id_seq')),
-        Field('name', _(u"Název"), width=16),
-        Field('system_role', _(u"Systémová role"), width=16, not_null=True),
-        Field('description', _(u"Popis"), width=64),
+        Field('name', _("NÃ¡zev"), width=16),
+        Field('system_role', _("SystÃ©movÃ¡ role"), width=16, not_null=True),
+        Field('description', _("Popis"), width=64),
         )
     layout = ('name', 'description')
     columns = ('name', 'description')
     condition = pd.EQ('system_role', pd.Value(pd.String(), None))
     def bindings(self): return (
-        Binding('users', _(u"U¾ivatelé zaøazení do této role"), self._spec_name('RoleUsers'),
+        Binding('users', _("UÅ¾ivatelÃ© zaÅ™azenÃ­ do tÃ©to role"), self._spec_name('RoleUsers'),
                 'role_id'),
         )
     cb = CodebookSpec(display='name')
 
 class SystemRoles(Roles):
-    title = _(u"Systémové role")
-    help = _(u"Systémové role jsou u¾ivatelùm pøiøazeny automaticky.")
+    title = _("SystÃ©movÃ© role")
+    help = _("SystÃ©movÃ© role jsou uÅ¾ivatelÅ¯m pÅ™iÅ™azeny automaticky.")
     layout = columns = ('name', 'system_role', 'description')
     condition = pd.NE('system_role', pd.Value(pd.String(), None))
     bindings = ()
@@ -386,45 +388,45 @@ class SystemRoles(Roles):
 
 
 class AllRoles(Roles):
-    title = _(u"Role")
-    help = _(u"Role dostupné pro pøiøazování práv akcím (obsahuje systémové i u¾ivatelsky definované role).")
+    title = _("Role")
+    help = _("Role dostupnÃ© pro pÅ™iÅ™azovÃ¡nÃ­ prÃ¡v akcÃ­m (obsahuje systÃ©movÃ© i uÅ¾ivatelsky definovanÃ© role).")
     condition = None
 
     
 class UserRoles(Specification):
-    title = _(u"Pøiøazení u¾ivatelskıch rolí")
-    help = _(u"Správa pøiøazení u¾ivatelskıch rolí jednotlivım u¾ivatelùm.")
+    title = _("PÅ™iÅ™azenÃ­ uÅ¾ivatelskÃ½ch rolÃ­")
+    help = _("SprÃ¡va pÅ™iÅ™azenÃ­ uÅ¾ivatelskÃ½ch rolÃ­ jednotlivÃ½m uÅ¾ivatelÅ¯m.")
     table = 'cms_user_roles'
     def fields(self): return (
         Field('user_role_id', default=nextval('cms_user_role_assignment_user_role_id_seq')),
-        Field('role_id', _(u"Role"), codebook=self._spec_name('Roles', False)),
+        Field('role_id', _("Role"), codebook=self._spec_name('Roles', False)),
         Field('system_role'),
         Field('uid', _('UID'), codebook=self._spec_name('Users', False), width=5),
-        Field('login', _(u"Pøihla¹ovací jméno"), width=16),
-        Field('fullname', _(u"Celé jméno"), width=50),
-        Field('name', _(u"Název role"), width=16),
-        Field('description', _(u"Popis"), width=50))
+        Field('login', _("PÅ™ihlaÅ¡ovacÃ­ jmÃ©no"), width=16),
+        Field('fullname', _("CelÃ© jmÃ©no"), width=50),
+        Field('name', _("NÃ¡zev role"), width=16),
+        Field('description', _("Popis"), width=50))
     layout = ('role_id',)
     columns = ('name', 'description')
 
 
 class RoleUsers(UserRoles):
-    help = _(u"Správa pøiøazení u¾ivatelù jednotlivım u¾ivatelskım rolím.")
+    help = _("SprÃ¡va pÅ™iÅ™azenÃ­ uÅ¾ivatelÅ¯ jednotlivÃ½m uÅ¾ivatelskÃ½m rolÃ­m.")
     layout = ('uid',)
     columns = ('uid', 'login', 'fullname')
 
 
 class Actions(Specification):
-    title = _(u"Dostupné akce")
-    help = _(u"Vıèet podporovanıch akcí pro jednotlivé moduly.")
+    title = _("DostupnÃ© akce")
+    help = _("VÃ½Äet podporovanÃ½ch akcÃ­ pro jednotlivÃ© moduly.")
     table = 'cms_actions'
     access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
                                     (None, ('cms_user', pd.Permission.VIEW)))
     def fields(self): return (
         Field('action_id', default=nextval('cms_actions_action_id_seq')),
-        Field('mod_id', _(u"Modul"), codebook=self._spec_name('Modules', False)),
-        Field('name', _(u"Název"), width=16),
-        Field('description', _(u"Popis"), width=64))
+        Field('mod_id', _("Modul"), codebook=self._spec_name('Modules', False)),
+        Field('name', _("NÃ¡zev"), width=16),
+        Field('description', _("Popis"), width=64))
     sorting = (('action_id', ASC),)
     layout = ('name', 'description')
     columns = ('name', 'description')
@@ -432,29 +434,29 @@ class Actions(Specification):
 
     
 class GenericActions(Actions):
-    title = _(u"Akce spoleèné pro v¹echny polo¾ky menu")
-    help = _(u"Vıèet podporovanıch akcí spoleènıch pro v¹echny polo¾ky menu.")
+    title = _("Akce spoleÄnÃ© pro vÅ¡echny poloÅ¾ky men")
+    help = _("VÃ½Äet podporovanÃ½ch akcÃ­ spoleÄnÃ½ch pro vÅ¡echny poloÅ¾ky menu.")
     condition = pd.EQ('mod_id', pd.Value(pd.Integer(), None))
     access_rights = pd.AccessRights((None, ('cms_admin', pd.Permission.ALL)),
                                     (None, ('cms_user', pd.Permission.VIEW)))
 
     
 class Rights(Specification):
-    title = _(u"Pøístupová práva")
-    help = _(u"Pøiøazení práv k akcím modulù pro jednotlivé u¾ivatelské role.")
+    title = _("PÅ™Ã­stupovÃ¡ prÃ¡va")
+    help = _("PÅ™iÅ™azenÃ­ prÃ¡v k akcÃ­m modulÅ¯ pro jednotlivÃ© uÅ¾ivatelskÃ© role.")
     table = 'cms_rights'
     def fields(self): return (
         Field('rights_assignment_id',
               default=nextval('cms_rights_assignment_rights_assignment_id_seq')),
         Field('menu_item_id'),
-        Field('role_id', _(u"Role"), codebook=self._spec_name('AllRoles', False)),
-        Field('role_name', _(u"Role")),
+        Field('role_id', _("Role"), codebook=self._spec_name('AllRoles', False)),
+        Field('role_name', _("Role")),
         Field('system_role'),
         Field('mod_id'),
-        Field('action_id', _(u"Akce"), codebook=self._spec_name('Actions', False),
+        Field('action_id', _("Akce"), codebook=self._spec_name('Actions', False),
               runtime_filter=computer(self._action_filter)),
-        Field('action_name', _(u"Akce")),
-        Field('action_description', _(u"Popis"), width=30, editable=NEVER),
+        Field('action_name', _("Akce")),
+        Field('action_description', _("Popis"), width=30, editable=NEVER),
         )
     grouping = 'role_id'
     sorting = (('role_name', ASC), ('mod_id', DESC), ('action_id', ASC))
@@ -473,33 +475,33 @@ class Rights(Specification):
 class _Log(Specification):
     public = False
     def fields(self): return (
-        Field('ip_address', _(u"IP adresa"), width=12, editable=NEVER),
-        Field('hostname', _(u"Hostname"), virtual=True, computer=computer(self._hostname),
+        Field('ip_address', _("IP adresa"), width=12, editable=NEVER),
+        Field('hostname', _("Hostname"), virtual=True, computer=computer(self._hostname),
               column_width=15, width=40),
-        Field('user_agent', _(u"User agent"), column_width=25, width=80),
-        Field('referer', _(u"Referer"), column_width=25, width=80))
+        Field('user_agent', _("User agent"), column_width=25, width=80),
+        Field('referer', _("Referer"), column_width=25, width=80))
     def _hostname(self, row, ip_address):
         try:
             hostname = socket.gethostbyaddr(ip_address)[0]
         except:
-            hostname = _(u"Neznámı")
+            hostname = _("NeznÃ¡mÃ½")
         return hostname
         
 class SessionLog(_Log):
-    title = _(u"Log pøihlá¹ení")
-    help = _(u"Záznam informací o pøihlá¹ení u¾ivatelù k webu.")
+    title = _("Log pÅ™ihlÃ¡Å¡enÃ­")
+    help = _("ZÃ¡znam informacÃ­ o pÅ™ihlÃ¡Å¡enÃ­ uÅ¾ivatelÅ¯ k webu.")
     table = 'cms_session_log'
     public = True
     def fields(self): return (
         Field('log_id'),
         Field('session_id'),
         Field('uid', codebook=self._spec_name('Users')),
-        Field('login', _(u"Login"), width=8),
-        Field('fullname', _(u"Jméno"), width=15),
-        Field('success', _(u"Úspìch"), width=3),
-        Field('start_time', _(u"Zaèátek"), width=17),
-        Field('duration', _(u"Trvání"), width=17),
-        Field('active', _(u"Aktivní")),
+        Field('login', _("Login"), width=8),
+        Field('fullname', _("JmÃ©no"), width=15),
+        Field('success', _("ÃšspÄ›ch"), width=3),
+        Field('start_time', _("ZaÄÃ¡tek"), width=17),
+        Field('duration', _("TrvÃ¡nÃ­"), width=17),
+        Field('active', _("AktivnÃ­")),
         ) + super(SessionLog, self).fields()
     def row_style(self, row):
         if row['success'].value():
@@ -522,17 +524,17 @@ class UserSessionLog(SessionLog):
 
 
 class AccessLog(_Log):
-    title = _(u"Log pøístupù")
-    help = _(u"Záznam informací o pøístupu u¾ivatelù k jednotlivım stránkám/modulùm webu.")
+    title = _("Log pÅ™Ã­stupÅ¯")
+    help = _("ZÃ¡znam informacÃ­ o pÅ™Ã­stupu uÅ¾ivatelÅ¯ k jednotlivÃ½m strÃ¡nkÃ¡m/modulÅ¯m webu.")
     table = 'cms_access_log_data'
     public = True
     def fields(self): return (
         Field('log_id'),
-        Field('timestamp', _(u"Datum a èas"), width=17),
-        Field('uri', _(u"Cesta"), width=17),
-        Field('uid', _(u"U¾ivatel"), codebook=self._spec_name('Users')),
-        Field('modname', _(u"Modul"), width=17),
-        Field('action', _(u"Akce"), width=17),
+        Field('timestamp', _("Datum a Äas"), width=17),
+        Field('uri', _("Cesta"), width=17),
+        Field('uid', _("UÅ¾ivatel"), codebook=self._spec_name('Users')),
+        Field('modname', _("Modul"), width=17),
+        Field('action', _("Akce"), width=17),
         ) + super(AccessLog, self).fields()
     layout = ('timestamp', 'uri', 'uid', 'modname', 'action',
               'ip_address', 'hostname', 'user_agent', 'referer')
@@ -546,99 +548,99 @@ class Themes(Specification):
         def __init__(self, id, label, descr=None):
             Field.__init__(self, id, label, descr=descr, type=pd.Color(),
                            dbcolumn=id.replace('-','_'))
-    title = _(u"Barevné Motivy")
-    help = _(u"Správa barevnıch motivù.")
+    title = _("BarevnÃ© Motivy")
+    help = _("SprÃ¡va barevnÃ½ch motivÅ¯.")
     table = 'cms_themes'
     fields = (
         Field('theme_id'),
-        Field('name', _(u"Název"), nocopy=True),
-        _Field('foreground', _(u"Text"),
-               descr=("Barva popøedí hlavních obsahovıch ploch.")),
-        _Field('background', _(u"Pozadí"),
-               descr=("Barva pozadí hlavních obsahovıch ploch (vlastní text stránky, panely).")),
-        _Field('highlight-bg', _(u"Zvıraznìné pozadí"),
-               descr=_(u"Zvıraznìní pomocí barvy pozadí mù¾e bıt pou¾ito na rùznıch místech, "
-                       "napø. pro odli¹ení aktuální polo¾ky menu, aktuálního jazyka, nalezeného "
-                       "záznamu ve formuláøi apod.")),
-        _Field('link', _(u"Odkaz"),
-               descr=_(u"Barva textu nenav¹tíveného odkazu.")),
-        _Field('link-visited', _(u"Nav¹tívenı odkaz"),
-               descr=_(u"Barva textu nav¹tíveného odkazu.  Pokud ponecháte prázdné, bude "
-                       "pou¾ita stejná barva jako u nenav¹tíveného odkazu.")),
-        _Field('link-hover', _(u"Aktivní odkaz"),
-               descr=_(u"Obarvení odkazu pøi pøi pohybu my¹í nad ním.  Pokud ponecháte "
-                       "prázdné, nebude odkaz na pohyb my¹i reagovat.")),
-        _Field('border', _(u"Orámování")),
-        _Field('heading-fg', _(u"Text"),
-               descr=_(u"Barvy nadpisù jsou pou¾ívány pro zvırazenìní názvù kapitol, panelù a "
-                       "jinıch elementù majících povahu nadpisu èi záhlaví.  V závislosti na "
-                       "pou¾itıch stylech mohou nìkteré typy nadpisù pou¾ívat odli¹nou barvu "
-                       "pozadí, jiné mohou bıt pouze podtr¾eny (viz dále).  Barva textu je "
-                       "v¹ak spoleèná pro oba typy nadpisù.")),
-        _Field('heading-bg', _(u"Pozadí"),
-               descr=_(u"Barva pozadí pro nadpisy, které pou¾ívají zvıraznìní barvou pozadí."
-                       "Typicky jsou to záhlaví èástí stránky (menu, panely apod.) a nadpisy "
-                       "vy¹¹ích úrovní.")),
-        _Field('heading-line', _(u"Podtr¾ení"),
-               descr=_(u"Barva podtr¾ení pro nadpisy, které pou¾ívají zvıraznìní podtr¾ením."
-                       "Typicky jsou to nadpisy ni¾¹ích úrovní.")),
-        _Field('frame-fg', _(u"Text"),
-               descr=_(u"Rámy jsou obecnì vyu¾ívány pro odli¹ení samostatnıch prvkù stránky, "
-                       "jako jsou napøíklad formuláøe, nástrojové li¹ty, rejstøíky apod. "
-                       "Rámy v tomto smyslu nemají nic spleèného s HTML rámy (frame).  Pokud "
-                       "barvu textu nevyplníte, bude pou¾ita standardní barva textu (èasto u "
-                       "rámù budete chtít nastavit pouze barvu pozadí a orámování).")),
-        _Field('frame-bg', _(u"Pozadí"),
-               descr=_(u"Barva pozadí rámù pro jejich vizuální odli¹ení od ostatního obsahu "
-                       "stránky.")),
-        _Field('frame-border', _(u"Orámování"),
-               descr=_(u"Barva orámování okrajù plochy rámu na pøechodu mezi barvou pozadí rámu "
+        Field('name', _("NÃ¡zev"), nocopy=True),
+        _Field('foreground', _("Text"),
+               descr=("Barva popÅ™edÃ­ hlavnÃ­ch obsahovÃ½ch ploch.")),
+        _Field('background', _("PozadÃ­"),
+               descr=("Barva pozadÃ­ hlavnÃ­ch obsahovÃ½ch ploch (vlastnÃ­ text strÃ¡nky, panely).")),
+        _Field('highlight-bg', _("ZvÃ½raznÄ›nÃ© pozadÃ­"),
+               descr=_("ZvÃ½raznÄ›nÃ­ pomocÃ­ barvy pozadÃ­ mÅ¯Å¾e bÃ½t pouÅ¾ito na rÅ¯znÃ½ch mÃ­stech, "
+                       "napÅ™. pro odliÅ¡enÃ­ aktuÃ¡lnÃ­ poloÅ¾ky menu, aktuÃ¡lnÃ­ho jazyka, nalezenÃ©ho "
+                       "zÃ¡znamu ve formulÃ¡Å™i apod.")),
+        _Field('link', _("Odkaz"),
+               descr=_("Barva textu nenavÅ¡tÃ­venÃ©ho odkazu.")),
+        _Field('link-visited', _("NavÅ¡tÃ­venÃ½ odkaz"),
+               descr=_("Barva textu navÅ¡tÃ­venÃ©ho odkazu.  Pokud ponechÃ¡te prÃ¡zdnÃ©, bude "
+                       "pouÅ¾ita stejnÃ¡ barva jako u nenavÅ¡tÃ­venÃ©ho odkazu.")),
+        _Field('link-hover', _("AktivnÃ­ odkaz"),
+               descr=_("ObarvenÃ­ odkazu pÅ™i pÅ™i pohybu myÅ¡Ã­ nad nÃ­m.  Pokud ponechÃ¡te "
+                       "prÃ¡zdnÃ©, nebude odkaz na pohyb myÅ¡i reagovat.")),
+        _Field('border', _("OrÃ¡movÃ¡nÃ­")),
+        _Field('heading-fg', _("Text"),
+               descr=_("Barvy nadpisÅ¯ jsou pouÅ¾Ã­vÃ¡ny pro zvÃ½razenÄ›nÃ­ nÃ¡zvÅ¯ kapitol, panelÅ¯ a "
+                       "jinÃ½ch elementÅ¯ majÃ­cÃ­ch povahu nadpisu Äi zÃ¡hlavÃ­.  V zÃ¡vislosti na "
+                       "pouÅ¾itÃ½ch stylech mohou nÄ›kterÃ© typy nadpisÅ¯ pouÅ¾Ã­vat odliÅ¡nou barvu "
+                       "pozadÃ­, jinÃ© mohou bÃ½t pouze podtrÅ¾eny (viz dÃ¡le).  Barva textu je "
+                       "vÅ¡ak spoleÄnÃ¡ pro oba typy nadpisÅ¯.")),
+        _Field('heading-bg', _("PozadÃ­"),
+               descr=_("Barva pozadÃ­ pro nadpisy, kterÃ© pouÅ¾Ã­vajÃ­ zvÃ½raznÄ›nÃ­ barvou pozadÃ­."
+                       "Typicky jsou to zÃ¡hlavÃ­ ÄÃ¡stÃ­ strÃ¡nky (menu, panely apod.) a nadpisy "
+                       "vyÅ¡Å¡Ã­ch ÃºrovnÃ­.")),
+        _Field('heading-line', _("PodtrÅ¾enÃ­"),
+               descr=_("Barva podtrÅ¾enÃ­ pro nadpisy, kterÃ© pouÅ¾Ã­vajÃ­ zvÃ½raznÄ›nÃ­ podtrÅ¾enÃ­m."
+                       "Typicky jsou to nadpisy niÅ¾Å¡Ã­ch ÃºrovnÃ­.")),
+        _Field('frame-fg', _("Text"),
+               descr=_("RÃ¡my jsou obecnÄ› vyuÅ¾Ã­vÃ¡ny pro odliÅ¡enÃ­ samostatnÃ½ch prvkÅ¯ strÃ¡nky, "
+                       "jako jsou napÅ™Ã­klad formulÃ¡Å™e, nÃ¡strojovÃ© liÅ¡ty, rejstÅ™Ã­ky apod. "
+                       "RÃ¡my v tomto smyslu nemajÃ­ nic spleÄnÃ©ho s HTML rÃ¡my (frame).  Pokud "
+                       "barvu textu nevyplnÃ­te, bude pouÅ¾ita standardnÃ­ barva textu (Äasto u "
+                       "rÃ¡mÅ¯ budete chtÃ­t nastavit pouze barvu pozadÃ­ a orÃ¡movÃ¡nÃ­).")),
+        _Field('frame-bg', _("PozadÃ­"),
+               descr=_("Barva pozadÃ­ rÃ¡mÅ¯ pro jejich vizuÃ¡lnÃ­ odliÅ¡enÃ­ od ostatnÃ­ho obsahu "
+                       "strÃ¡nky.")),
+        _Field('frame-border', _("OrÃ¡movÃ¡nÃ­"),
+               descr=_("Barva orÃ¡movÃ¡nÃ­ okrajÅ¯ plochy rÃ¡mu na pÅ™echodu mezi barvou pozadÃ­ rÃ¡mu "
                        "a jeho podkladem.")),
-        _Field('top-fg', _(u"Text"),
-               descr=_(u"Na podkladovıch plochách se vìt¹inou text pøímo nevyskytuje, ale "
-                       "nìkteré styly to mohou pøedepisovat.")),
-        _Field('top-bg', _(u"Pozadí"),
-               descr=_(u"Podkladové plochy tvoøí okolí hlavního obsahu stránky a panelù.")),
-        _Field('top-border', _(u"Orámování"),
-               descr=_(u"Urèuje barvu rámeèku na pøechodu mezi podkladovou plochou a obsahovımi "
-                       "èástmi stránky")),
-        _Field('error-fg', _(u"Text")),
-        _Field('error-bg', _(u"Pozadí")),
-        _Field('error-border', _(u"Orámování")),
-        _Field('message-fg', _(u"Text")),
-        _Field('message-bg', _(u"Pozadí")),
-        _Field('message-border', _(u"Orámování")),
-        _Field('meta-fg', _(u"Text")),
-        _Field('meta-bg', _(u"Pozadí"),
-               descr=_(u"Odli¹ení informaèního øádku v detailních vıpisech, jako napø. "
-                       "informace o datu a autorovi v seznamu èlánkù")),
-        _Field('table-cell', _(u"Standardní pozadí buòky")),
-        _Field('table-cell2', _(u"Stínované pozadí buòky")),
-        _Field('help', _(u"Nápovìda formuláøe")),
-        _Field('inactive-folder', _(u"Neaktivní zálo¾ka")),
+        _Field('top-fg', _("Text"),
+               descr=_("Na podkladovÃ½ch plochÃ¡ch se vÄ›tÅ¡inou text pÅ™Ã­mo nevyskytuje, ale "
+                       "nÄ›kterÃ© styly to mohou pÅ™edepisovat.")),
+        _Field('top-bg', _("PozadÃ­"),
+               descr=_("PodkladovÃ© plochy tvoÅ™Ã­ okolÃ­ hlavnÃ­ho obsahu strÃ¡nky a panelÅ¯.")),
+        _Field('top-border', _("OrÃ¡movÃ¡nÃ­"),
+               descr=_("UrÄuje barvu rÃ¡meÄku na pÅ™echodu mezi podkladovou plochou a obsahovÃ½mi "
+                       "ÄÃ¡stmi strÃ¡nky")),
+        _Field('error-fg', _("Text")),
+        _Field('error-bg', _("PozadÃ­")),
+        _Field('error-border', _("OrÃ¡movÃ¡nÃ­")),
+        _Field('message-fg', _("Text")),
+        _Field('message-bg', _("PozadÃ­")),
+        _Field('message-border', _("OrÃ¡movÃ¡nÃ­")),
+        _Field('meta-fg', _("Text")),
+        _Field('meta-bg', _("PozadÃ­"),
+               descr=_("OdliÅ¡enÃ­ informaÄnÃ­ho Å™Ã¡dku v detailnÃ­ch vÃ½pisech, jako napÅ™. "
+                       "informace o datu a autorovi v seznamu ÄlÃ¡nkÅ¯")),
+        _Field('table-cell', _("StandardnÃ­ pozadÃ­ buÅˆky")),
+        _Field('table-cell2', _("StÃ­novanÃ© pozadÃ­ buÅˆky")),
+        _Field('help', _("NÃ¡povÄ›da formulÃ¡Å™e")),
+        _Field('inactive-folder', _("NeaktivnÃ­ zÃ¡loÅ¾ka")),
         )
     layout = pp.HGroup(pp.VGroup(
         'name',
-        pp.LVGroup(_(u"Standardní barvy stránky"),
+        pp.LVGroup(_("StandardnÃ­ barvy strÃ¡nky"),
                    ('foreground', 'background', 'highlight-bg', 'link', 'link-visited',
                     'link-hover', 'border')),
-        pp.LVGroup(_(u"Tabulky"),
+        pp.LVGroup(_("Tabulky"),
                    ('table-cell', 'table-cell2')),
-        pp.LVGroup(_(u"Rùzné"),
+        pp.LVGroup(_("RÅ¯znÃ©"),
                    ('help', 'inactive-folder')),
         ), pp.VGroup(
-        pp.LVGroup(_(u"Barvy nadpisù"),
+        pp.LVGroup(_("Barvy nadpisÅ¯"),
                    ('heading-fg', 'heading-bg', 'heading-line')),
-        pp.LVGroup(_(u"Rámy"),
+        pp.LVGroup(_("RÃ¡my"),
                    ('frame-fg', 'frame-bg', 'frame-border')),
-        pp.LVGroup(_(u"Meta data záznamu"),
+        pp.LVGroup(_("Meta data zÃ¡znam"),
                    ('meta-fg', 'meta-bg')),
-        pp.LVGroup(_(u"Barvy podkladovıch ploch"),
+        pp.LVGroup(_("Barvy podkladovÃ½ch ploch"),
                    ('top-bg', 'top-border')),
         ), pp.VGroup(
-        pp.LVGroup(_(u"Chybové zprávy"),
+        pp.LVGroup(_("ChybovÃ© zprÃ¡vy"),
                    ('error-fg', 'error-bg', 'error-border')),
-        pp.LVGroup(_(u"Informaèní zprávy"),
+        pp.LVGroup(_("InformaÄnÃ­ zprÃ¡vy"),
                    ('message-fg', 'message-bg', 'message-border')),
         ))
     columns = ('name',)
