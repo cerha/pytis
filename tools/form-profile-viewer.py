@@ -65,12 +65,11 @@ def run():
         print '\n' + fullname
         for profile_id in manager.list_profile_ids(fullname):
             profile = manager.load_profile(fullname, profile_id)
-            print '  * %s (%s):' % (profile.id(), profile.name()) #.encode('utf-8'))
-            for key in ('sorting', 'columns', 'grouping', 'filter'):
-                if key == 'filter':
-                    value = profile._packed_filter
-                else:
-                    value = getattr(profile, key)()
+            state = profile._state
+            print '  * %s (%s):' % (state['_id'], state['_name']) #.encode('utf-8'))
+            for key in ('filter', 'sorting', 'columns', 'grouping', 'folding', 'aggregations',
+                        'column_widths', 'group_by_columns', 'aggregation_columns'):
+                value = profile._state['_'+key]
                 indent = '\n        ' + ' ' * len(key)
                 formatted = indent.join(pp.pformat(value).splitlines())
                 print '    - %s: %s' % (key, formatted)
