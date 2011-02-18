@@ -589,7 +589,7 @@ class Table(_Mark):
                     alignment = lcg.HorizontalAlignment.RIGHT
                 else:
                     raise Exception('Unknown label alignment', column.label_alignment)
-                cells.append(lcg.TableHeading(label, halign=alignment))
+                cells.append(lcg.TableHeading(label, align=alignment))
             table_rows.append(lcg.TableRow(cells))
         alignments = []
         for column in self._columns:
