@@ -1489,6 +1489,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     def SetStringValue(self, value):
         # Called just prior to displaying the popup, but after GetAdjustedSize.
+        # As it is more practical to select the current item there, we don't
+        # need to do anything here.
         pass
 
     def GetStringValue(self):
