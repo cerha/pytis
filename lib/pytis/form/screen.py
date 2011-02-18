@@ -1551,7 +1551,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
         menu = (
             MItem(_("Ulo¾it"),
                   LookupForm.COMMAND_UPDATE_PROFILE(),
-                  help=_("Aktualizovat ulo¾ený profil podle souèasného nastavením formuláøe")),
+                  help=_("Aktualizovat ulo¾ený profil podle souèasného nastavení formuláøe")),
             MItem(_("Ulo¾it jako nový"),
                   Application.COMMAND_HANDLED_ACTION(
                     # Name must be edited first and 'cmd' will be invoked after confirmation.
