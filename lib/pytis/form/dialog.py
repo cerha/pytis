@@ -1032,9 +1032,9 @@ class Calendar(GenericDialog):
         else:                style = style | calendar.CAL_SUNDAY_FIRST
         self._style = style
         if date is None:
-            self._date = pytis.data.DateTime.now().value()
+            self._date = pytis.data.Date.datetime()
         else:
-            assert isinstance(date, datetime.datetime), date
+            assert isinstance(date, datetime.date), date
             self._date = date
         
     def _create_content(self, sizer):
