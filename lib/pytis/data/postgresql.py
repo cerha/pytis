@@ -2704,16 +2704,17 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if v == None:
             result = 'NULL'
         elif isinstance(value.type(), Boolean):
-            result = "'%s'" % value.type().export(v)
+            result = "'%s'" % (value.type().export(v),)
         elif is_anystring(v):
-            result = "'%s'" % pg_escape(v)
+            result = "'%s'" % (pg_escape(v),)
         elif isinstance(v, datetime.datetime):
-            if isinstance(value.type(), Date):
-                result = "'%s'" % v.strftime('%Y-%m-%d')
-            elif isinstance(value.type(), Time):
-                result = "'%s'" % v.strftime('%H:%M:%S')
-            else:                       # DateTime
-                result = "'%s'" % v.strftime('%Y-%m-%d %H:%M:%S')
+            result = "'%s'" % (v.strftime('%Y-%m-%d %H:%M:%S'),)
+        elif isinstance(v, datetime.date):
+            result = "'%s'" % (v.strftime('%Y-%m-%d'),)
+        elif isinstance(v, datetime.time):
+            result = "'%s'" % (v.strftime('%H:%M:%S'),)
+        elif isinstance(v, datetime.timedelta):
+            result = "'%s days %s seconds'" % (v.days, v.seconds,)
         elif isinstance(value.type(), Float):
             result = value.type().export(v, locale_format=False)
         else:

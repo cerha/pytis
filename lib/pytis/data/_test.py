@@ -296,15 +296,13 @@ class DateTime(_TypeCheck):
         assert v.primitive_value() == '2100-02-05 01:02:03', v.primitive_value()
 tests.add(DateTime)
 
-
 class Date(_TypeCheck):
     _test_instance = pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)
     def test_validation(self):
-        tzinfo = pytis.data.DateTime.UTC_TZINFO
-        self._test_validity(None, '2001-02-28', datetime.datetime(2001,2,28,tzinfo=tzinfo))
-        self._test_validity(None, '2999-12-31', datetime.datetime(2999,12,31,tzinfo=tzinfo))
-        self._test_validity(None, '  1999-01-01    ', datetime.datetime(1999,1,1,tzinfo=tzinfo))
-        self._test_validity(None, '1999-01-01', datetime.datetime(1999,1,1,tzinfo=tzinfo))
+        self._test_validity(None, '2001-02-28', datetime.date(2001,2,28))
+        self._test_validity(None, '2999-12-31', datetime.date(2999,12,31))
+        self._test_validity(None, '  1999-01-01    ', datetime.date(1999,1,1))
+        self._test_validity(None, '1999-01-01', datetime.date(1999,1,1))
         self._test_validity(None, '1999-01-01 23:59', None)
         self._test_validity(None, '1999-01-01 23:59:00', None)
         self._test_validity(None, '01-02-29', None)
@@ -312,6 +310,38 @@ class Date(_TypeCheck):
         self._test_validity(None, '2001-02-29', None)
 tests.add(Date)
 
+class Time(_TypeCheck):
+    _test_instance = pytis.data.Time(format='%H:%M:%S')
+    def test_validation(self):
+        tzinfo = pytis.data.DateTime.UTC_TZINFO
+        vkwargs = {'local': False}
+        self._test_validity(None, '12:14:59',
+                            datetime.time(12,14,59,tzinfo=tzinfo),
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '0:0:0',
+                            datetime.time(0,0,0,tzinfo=tzinfo),
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '    23:59:59    ',
+                            datetime.time(23,59,59,tzinfo=tzinfo),
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '23:59', None,
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '23:59:00 +0200', None,
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '24:00:00', None,
+                            kwargs=vkwargs, ekwargs=vkwargs)
+    def test_export(self):
+        tzinfo = pytis.data.DateTime.UTC_TZINFO
+        vkwargs = {'local': False}
+        v, e = self._test_validity(None, '01:02:03',
+                                   datetime.time(1,2,3,tzinfo=tzinfo),
+                                   kwargs=vkwargs, ekwargs=vkwargs,
+                                   check_export=False)
+        exp = v.type().export
+        val = v.value()
+        result = exp(val, **vkwargs)
+        assert result == '01:02:03', ('Invalid time export', result)
+tests.add(Time)
 
 class TimeInterval(_TypeCheck):
     _test_instance = pytis.data.TimeInterval()
@@ -861,8 +891,8 @@ class PostgreSQLStandardBindingHandler(_DBTest):
     pass
 
 class DBDataDefault(_DBTest):
-    ROW1 = (2, datetime.datetime(2001, 1, 2, tzinfo=pytis.data.DateTime.UTC_TZINFO), 1000.0, 'U.S.A.', 'specialni')
-    ROW2 = (3, datetime.datetime(2001, 1 ,2, tzinfo=pytis.data.DateTime.UTC_TZINFO), 2000.0, 'Czech Republic',
+    ROW1 = (2, datetime.date(2001, 1, 2), 1000.0, 'U.S.A.', 'specialni')
+    ROW2 = (3, datetime.date(2001, 1, 2), 2000.0, 'Czech Republic',
             'zvlastni')
     ROW3 = ('5', '2001-07-06', '9.9', 'U.S.A.', 'nove')
     NEWROW = ('5', '2001-07-06', '9.90', 'U.S.A.', 'specialni')

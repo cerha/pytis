@@ -1008,17 +1008,14 @@ class _UTCTimezone(datetime.tzinfo):
     def dst(self, dt):
         return self._zero_diff
 
-class DateTime(Type):
-    """Time stamp represented by a 'datetime.datetime' instance.
+class _CommonDateTime(Type):
+    """Common base class of all date and time types.
 
-    The class can work only with absolute times.  The time can be local or UTC,
-    depending on the constructor parameter; each time value must contain time
-    zone.
+    All the derived classes use classes from Python 'datetime' module to
+    represent the date and/or time values.
 
-    The date and time format is the same for both import and export and is
-    determined by the '__init__()' method parameter.
-    
     """
+    
     VM_DT_FORMAT = 'VM_DT_FORMAT'
     VM_DT_VALUE = 'VM_DT_VALUE'
     VM_DT_AGE = 'VM_DT_AGE'
@@ -1028,51 +1025,25 @@ class DateTime(Type):
     
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S'
-    """Implicitní formát data a času."""
-    SQL_FORMAT = DEFAULT_FORMAT
-    """Formát data a času používaný standardně SQL stroji."""
-    CZECH_FORMAT = '%d.%m.%Y %H:%M:%S'
-    """Český \"účetnický\" formát data a času."""
-
     UTC_TZINFO = _UTCTimezone()
-    LOCAL_TZINFO = _LocalTimezone()
-
-    def __init__(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
-        """Inicializuj instanci.
-
+    LOCAL_TZINFO = _LocalTimezone()    
+    
+    def __init__(self, format, utc=True, **kwargs):
+        """
         Argumenty:
 
           format -- specifikace vstupního i výstupního formátu data a/nebo
-            času, v podobě akceptované funkcí 'time.strftime()'; může být též
-            'None', v kterémžto případě se použije konfigurační volba
-            'config.date_time_format'.  Třída obsahuje předdefinované konstanty
-            '*_FORMAT', které lze využít jako hodnotu tohoto parametru.
-          mindate. maxdate -- omezení validity času
+            času, v podobě akceptované funkcí 'time.strftime()'
+          mindate, maxdate -- omezení validity času
           utc -- specifies, if timestamp in database is in UTC
 
         """
-        assert mindate is None or isinstance(mindate, basestring)
-        assert maxdate is None or isinstance(maxdate, basestring)
-        if format is None:
-            import config
-            format = config.date_time_format
+        assert isinstance(format, basestring), format
+        assert isinstance(utc, bool), utc
         self._format = format
-        self._mindate = mindate
-        self._maxdate = maxdate
         self._utc = utc
         self._check_matcher = {}
-        if mindate:
-            try:
-                self._mindate = datetime.datetime.strptime(mindate, self.SQL_FORMAT)
-            except:
-                raise ProgramError('Bad value for mindate', mindate, self.SQL_FORMAT)
-        if maxdate:
-            try:
-                self._maxdate = datetime.datetime.strptime(maxdate, self.SQL_FORMAT)
-            except:
-                raise ProgramError('Bad value for maxdate', maxdate)                
-        super(DateTime, self).__init__(**kwargs)
+        super(_CommonDateTime, self).__init__(**kwargs)
         
     def _check_format(self, format, string):
         try:
@@ -1088,6 +1059,18 @@ class DateTime(Type):
             regexp = re.sub('(\%[a-zA-Z]|.|\s+)', subst, format)
             self._check_matcher[format] = matcher = re.compile(regexp)
         return matcher.match(string)
+
+    def format(self):
+        """Return format given in the constructor, basestring."""
+        return self._format
+
+    def utc(self):
+        """Return 'utc' flag value given in the constructor, boolean."""
+        return self._utc
+        
+    def is_utc(self):
+        """Deprecated.  Use 'utc' instead."""
+        return self.utc()
         
     def _validate(self, string, format=None, local=True):
         """Stejné jako v předkovi až na klíčované argumenty.
@@ -1120,17 +1103,9 @@ class DateTime(Type):
                 dt = dt.replace(tzinfo=self.UTC_TZINFO)
             if self._utc:
                 dt = dt.astimezone(self.UTC_TZINFO)
-            if (self._mindate and dt < self._mindate) or \
-                   (self._maxdate and dt > self._maxdate):
-                result = None, self._validation_error(self.VM_DT_AGE)
-            else:    
-                result = Value(self, dt), None
+            result = Value(self, dt), None
         except Exception as e:
             result = None, self._validation_error(self.VM_DT_FORMAT)
-        # TODO: zjistit, proč zde bylo uděláno toto omezení
-        # Pro správnou funkčnost třídy Time je ale třeba ho zrušit
-        #if dt is not None and dt.year < 1000:
-        #    result = None, self._validation_error(self.VM_DT_AGE)
         return result
     
     def _export(self, value, local=True, format=None):
@@ -1138,8 +1113,7 @@ class DateTime(Type):
 
         Arguments:
 
-          local -- if true then the value is exported in local time, otherwise
-            it is exported in UTC
+          kwargs -- arguments passed to the class constructor
           
         """
         assert isinstance(value, datetime.datetime), ('Value is not DateTime', value,)
@@ -1156,36 +1130,117 @@ class DateTime(Type):
     
     def is_utc(self):
         return self._utc
-
+    
     @classmethod
     def now(class_, **kwargs):
-        """Vrať instanci 'Value' tohoto typu odpovídající aktuálnímu okamžiku.
+        """Return 'Value' instance of this type of the current moment."""
+        type_ = class_(**kwargs)
+        tz = class_._timezone
+        return Value(type, class_.datetime(tz=tz))
+
+    @classmethod
+    def datetime(class_, tz=None):
+        """Return value corresponding to the current moment.
+
+        The returned value is instance of a 'datetime' module class which is
+        used to represent interal values of the given pytis type.
+
+        Arguments:
+
+          tz -- determines time zone of the value; if 'None', UTC is used, if
+            'True', local time zone is used; otherwise it must be a
+            'datetime.tzinfo' instance to use
+        
+        """
+        if tz is None:
+            tz = class_.UTC_TZINFO
+        elif tz is True:
+            tz = class_.LOCAL_TZINFO
+        return class_._datetime(tz=tz)
+
+    @classmethod
+    def _datetime(class_, tz):
+        raise Exception("Not implemented")
+
+class DateTime(_CommonDateTime):
+    """Time stamp represented by a 'datetime.datetime' instance.
+
+    The class can work only with absolute times.  The time can be local or UTC,
+    depending on the constructor parameter; each time value must contain time
+    zone.
+
+    The date and time format is the same for both import and export and is
+    determined by the '__init__()' method parameter.
+    
+    """
+    DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S'
+    """Implicitní formát data a času."""
+    SQL_FORMAT = DEFAULT_FORMAT
+    """Formát data a času používaný standardně SQL stroji."""
+    CZECH_FORMAT = '%d.%m.%Y %H:%M:%S'
+    """Český \"účetnický\" formát data a času."""
+
+    def __init__(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
+        """Inicializuj instanci.
 
         Argumenty:
 
-          kwargs -- argumenty předané konstruktoru třídy typu
+          format -- specifikace vstupního i výstupního formátu data a/nebo
+            času, v podobě akceptované funkcí 'time.strftime()'; může být též
+            'None', v kterémžto případě se použije konfigurační volba
+            'config.date_time_format'.  Třída obsahuje předdefinované konstanty
+            '*_FORMAT', které lze využít jako hodnotu tohoto parametru.
+          mindate. maxdate -- omezení validity času
+          utc -- specifies, if timestamp in database is in UTC
+
+        """
+        assert mindate is None or isinstance(mindate, basestring)
+        assert maxdate is None or isinstance(maxdate, basestring)
+        if format is None:
+            import config
+            format = config.date_time_format
+        super(DateTime, self).__init__(format=format, utc=utc, **kwargs)
+        self._mindate = mindate
+        self._maxdate = maxdate
+        if mindate:
+            try:
+                self._mindate = datetime.datetime.strptime(mindate, self.SQL_FORMAT)
+            except:
+                raise ProgramError('Bad value for mindate', mindate, self.SQL_FORMAT)
+        if maxdate:
+            try:
+                self._maxdate = datetime.datetime.strptime(maxdate, self.SQL_FORMAT)
+            except:
+                raise ProgramError('Bad value for maxdate', maxdate)                
+
+    def _validate(self, *args, **kwargs):
+        value, error = super(DateTime, self)._validate(*args, **kwargs)
+        if value is not None:
+            dt = value.value()
+            if ((self._mindate and dt < self._mindate) or
+                (self._maxdate and dt > self._maxdate)):
+                value, error = None, self._validation_error(self.VM_DT_AGE)
+        return value, error
+
+    def _export(self, value, local=True):
+        """Stejné jako v předkovi až na klíčované argumenty.
+
+        Arguments:
+
+          local -- if true then the value is exported in local time, otherwise
+            it is exported in UTC
           
         """
-        type = class_(**kwargs)
-        return Value(type, datetime.datetime.now(class_.LOCAL_TZINFO))
+        assert isinstance(value, datetime.datetime), value
+        if local:
+            value = value.astimezone(self.LOCAL_TZINFO)
+        else:
+            value = value.astimezone(self.UTC_TZINFO)
+        return super(DateTime, self)._export(value)
 
     @classmethod
-    def current_gmtime(class_):
-        """Return current GM time suitable for use as this class value.
-        """
-        return datetime.datetime.now(class_.UTC_TZINFO)
-
-    @classmethod
-    def current_time(class_, local=False):
-        """Return current GM time suitable for use as this class value.
-        """
-        return datetime.datetime.now(class_.UTC_TZINFO)
-
-    @classmethod
-    def current_date(class_, local=False):
-        """Return todays time 00:00 suitable for use as this class value.
-        """
-        return class_.current_gmtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    def _datetime(class_, tz):
+        return datetime.datetime.now(tz)
 
     @staticmethod
     def diff_seconds(dt1, dt2):
@@ -1211,6 +1266,11 @@ class DateTime(Type):
         """
         return self.export(value, format='%Y-%m-%d %H:%M:%S', local=False)
 
+    @classmethod
+    def current_gmtime(class_):
+        """Deprecated.  Use 'datetime' method instead.
+        """
+        return class_.datetime()
 
 class Date(DateTime):
     """Datum bez časového údaje."""
@@ -1237,18 +1297,17 @@ class Date(DateTime):
         if format is None:
             import config
             format = config.date_format
-        super(Date, self).__init__(format=format, **kwargs)
+        super(Date, self).__init__(format=format, utc=False, **kwargs)
 
     def _validate(self, *args, **kwargs):
-        kwargs['local'] = False
         value, error = super(Date, self)._validate(*args, **kwargs)
-        if value:
-            value = Value(value.type(), value.value().timetz())
+        if value is not None:
+            value = Value(value.type(), value.value().date())
         return value, error
-        
-    def _export(self, *args, **kwargs):
-        kwargs['local'] = False
-        return super(Date, self)._export(*args, **kwargs)
+
+    def _export(self, value, local=True):
+        assert isinstance(value, datetime.date), value
+        return _CommonDateTime._export(self, value)
 
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
@@ -1262,13 +1321,19 @@ class Date(DateTime):
         return self.export(value, format='%Y-%m-%d', local=False)
 
     @classmethod
-    def current_date(class_, local=False):
-        """Return todays date suitable for use as this class value.
-        """
-        return class_.current_time(local=local).date()
+    def _datetime(class_, tz):
+        dt = super(Date, class_)._datetime(tz)
+        return dt.date()
 
-class Time(DateTime):
-    """Time of day without the date part."""
+class Time(_CommonDateTime):
+    """Time of day without the date part.
+
+    It is strongly recommended to always use UTC as the only Time timezone to
+    prevent problems with daylight saving time conversions.  If you need to use
+    time with local timezones, either use 'DateTime' or don't mix timezones in
+    constructor, validation and exports.
+    
+    """
 
     DEFAULT_FORMAT = '%H:%M:%S'
     """Implicitní formát času."""
@@ -1295,15 +1360,10 @@ class Time(DateTime):
         super(Time, self).__init__(format=format, **kwargs)
 
     def _validate(self, *args, **kwargs):
-        kwargs['local'] = False
         value, error = super(Time, self)._validate(*args, **kwargs)
         if value:
             value = Value(value.type(), value.value().timetz())
         return value, error
-        
-    def _export(self, *args, **kwargs):
-        kwargs['local'] = False
-        return super(Time, self)._export(*args, **kwargs)
 
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
@@ -1316,15 +1376,25 @@ class Time(DateTime):
         """
         return self.export(value, format='%H:%M:%S')
 
+    def _export(self, value, local=False):
+        assert isinstance(value, datetime.time), value
+        if local and self._utc or not local and not self._utc:
+            raise Exception("Can't mix UTC and local time zones in Time type")
+        return super(Time, self)._export(value)
 
-class TimeInterval(Time):
+    @classmethod
+    def _datetime(class_, tz):
+        dt = super(Time, self)._datetime(tz)
+        return dt.time()
+
+class TimeInterval(Type):
     """Amount of time between two moments."""
 
     VM_TI_FORMAT =  'VM_TI_INVALID_FORMAT'
     _VM_TI_FORMAT_MSG = _(u"Chybný formát")
 
     _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
-
+        
     def _validate(self, string_, **kwargs):
         assert isinstance(string_, basestring)
         # Only day-time intervals supported
