@@ -1043,7 +1043,7 @@ class Calendar(GenericDialog):
             size = cal.GetSize()
             cal.SetMinSize((size.GetWidth()+150, size.GetHeight()))
         wx_date = wx.DateTime()
-        if wx_date.ParseDate(str(self._date.date)) is None:
+        if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
         wx_callback(calendar.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
         self._handle_keys(cal)

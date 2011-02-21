@@ -1042,6 +1042,10 @@ class _CommonDateTime(Type):
         assert isinstance(utc, bool), utc
         self._format = format
         self._utc = utc
+        if utc:
+            self._timezone = self.UTC_TZINFO
+        else:
+            self._timezone = self.LOCAL_TZINFO
         self._check_matcher = {}
         super(_CommonDateTime, self).__init__(**kwargs)
         
@@ -1135,7 +1139,7 @@ class _CommonDateTime(Type):
     def now(class_, **kwargs):
         """Return 'Value' instance of this type of the current moment."""
         type_ = class_(**kwargs)
-        tz = class_._timezone
+        tz = type_._timezone
         return Value(type, class_.datetime(tz=tz))
 
     @classmethod
