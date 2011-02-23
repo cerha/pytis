@@ -122,28 +122,29 @@ class FormProfile(pytis.presentation.Profile):
             name, packed_args, kwargs = packed
             if name not in OPERATORS:
                 raise Exception("Invalid operator '%s'" % name)
-            if len(packed_args) != 2:
-                raise Exception("Invalid number of operator arguments: %s" % packed_args)
             op = getattr(pytis.data, name)
             if name in ('AND', 'OR'):
                 args = [unpack(arg) for arg in packed_args]
-            elif isinstance(packed_args[1], list):
-                col, val = packed_args[0], packed_args[1][0]
-                column = data.find_column(col)
-                if column is None:
-                    raise Exception("Unknown column '%s'" % col)
-                if name in ('WM', 'NW'):
-                    value, err = column.type().wm_validate(val)
-                else:
-                    value, err = column.type().validate(val, strict=False)
-                if err is not None:
-                    raise Exception("Invalid operand value for '%s': %s" % (col, err))
-                args = col, value
             else:
-                args = packed_args
-                for col in args:
-                    if data.find_column(col) is None:
+                if len(packed_args) != 2:
+                    raise Exception("Invalid number of operator arguments: %s" % repr(packed_args))
+                if isinstance(packed_args[1], list):
+                    col, val = packed_args[0], packed_args[1][0]
+                    column = data.find_column(col)
+                    if column is None:
                         raise Exception("Unknown column '%s'" % col)
+                    if name in ('WM', 'NW'):
+                        value, err = column.type().wm_validate(val)
+                    else:
+                        value, err = column.type().validate(val, strict=False)
+                    if err is not None:
+                        raise Exception("Invalid operand value for '%s': %s" % (col, err))
+                    args = col, value
+                else:
+                    args = packed_args
+                    for col in args:
+                        if data.find_column(col) is None:
+                            raise Exception("Unknown column '%s'" % col)
             return op(*args, **kwargs)
         state = self._state
         self._state = None
