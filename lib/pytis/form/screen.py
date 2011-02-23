@@ -1462,7 +1462,9 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     def Create(self, parent):
         # Create the popup child control. Return True for success.
-        wx.ListCtrl.Create(self, parent, style=wx.LC_LIST|wx.LC_SINGLE_SEL|wx.SIMPLE_BORDER)
+        wx.ListCtrl.Create(self, parent,
+                           style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.SIMPLE_BORDER|wx.LC_NO_HEADER)
+        self.InsertColumn(0, 'profile')
         self.Bind(wx.EVT_LEFT_DOWN, self._on_left_down)
         self.Bind(wx.EVT_MOTION, self._on_motion)
         return True
@@ -1477,15 +1479,15 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         # avoid having to update the menu during form profile list update.
         form = current_form()
         profiles = form.profiles()
-        width, height = (0, 0)
+        current = form.current_profile()
         for i, profile in enumerate(profiles):
             self.InsertStringItem(i, profile.name())
-            w, h = self.GetItemRect(i)[2:]
-            height += h
-            width = max(width, w)
-        self.Select(profiles.index(form.current_profile()))
-        # Leave 6 px vertically and 30 px horizontally for padding.
-        return wx.Size(max(width+30, minWidth), min(height+6, maxHeight))
+            if profile is current:
+                self.Select(i)
+        self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.SetSize((1,1)) # Needed for GetViewRect to work consistently. 
+        width, height = self.GetViewRect()[2:] # Returned sizes are 16 px greater than the reality.
+        return wx.Size(max(width-16, minWidth), min(height-16, maxHeight))
 
     def SetStringValue(self, value):
         # Called just prior to displaying the popup, but after GetAdjustedSize.
