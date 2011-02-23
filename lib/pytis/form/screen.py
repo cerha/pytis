@@ -1445,18 +1445,20 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
     def __init__(self):
         self.PostCreate(wx.PreListCtrl())
         wx.combo.ComboPopup.__init__(self)
-        self._current_item = -1
+        self._selected_profile_index = None
 
     def _on_motion(self, event):
         item, flags = self.HitTest(event.GetPosition())
         if item >= 0:
-            self.Select(item)
-            self._current_item = item
+            profile_index = self.GetItemData(item)
+            if profile_index != -1:
+                self.Select(item)
+                self._selected_profile_index = profile_index
 
     def _on_left_down(self, event):
         self.Dismiss()
-        if self._current_item >= 0:
-            LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._current_item)
+        if self._selected_profile_index is not None:
+            LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index)
 
     # The following methods implement the ComboPopup API.
 
@@ -1480,10 +1482,20 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         form = current_form()
         profiles = form.profiles()
         current = form.current_profile()
+        first_user_profile = None
         for i, profile in enumerate(profiles):
+            if profile.id().startswith('_user_profile_') and first_user_profile is None:
+                first_user_profile = i
             self.InsertStringItem(i, profile.name())
+            self.SetItemData(i, i)
             if profile is current:
                 self.Select(i)
+        if first_user_profile:
+            for i, label in ((0, _("Systémové profily")),
+                             (first_user_profile + 1, _("U¾ivatelské profily"))):
+                self.InsertStringItem(i, '- ' + label + ' -')
+                self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
+                self.SetItemData(i, -1)
         self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         self.SetSize((1,1)) # Needed for GetViewRect to work consistently. 
         width, height = self.GetViewRect()[2:] # Returned sizes are 16 px greater than the reality.
