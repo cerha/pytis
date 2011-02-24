@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -785,7 +785,8 @@ class RunFormDialog(InputDialog):
     
     """
     _BROWSE_FORM = "BrowseForm"
-    _EDIT_FORM = "EditForm"
+    _EDIT_FORM = "PopupEditForm"
+    _INSERT_FORM = "PopupInsertForm"
     _BROWSE_DUAL_FORM = "BrowseDualForm"
     _MULTI_BROWSE_DUAL_FORM = "MultiBrowseDualForm"
     _CODEBOOK_FORM = "CodebookForm"
@@ -807,6 +808,7 @@ class RunFormDialog(InputDialog):
             self._MULTI_BROWSE_DUAL_FORM: pytis.form.MultiBrowseDualForm,
             self._BROWSE_FORM: BrowseForm,
             self._EDIT_FORM: PopupEditForm,
+            self._INSERT_FORM: PopupInsertForm,
             self._CODEBOOK_FORM: CodebookForm,
         }
 
@@ -814,8 +816,8 @@ class RunFormDialog(InputDialog):
     def _create_content(self, sizer):
         super(RunFormDialog, self)._create_content(sizer)
         label = wx.StaticText(self._dialog, -1, _("Třída formuláře:"))
-        choices = [self._BROWSE_FORM, self._EDIT_FORM, self._BROWSE_DUAL_FORM,
-                   self._MULTI_BROWSE_DUAL_FORM, self._CODEBOOK_FORM]
+        choices = [self._BROWSE_FORM, self._EDIT_FORM, self._INSERT_FORM,
+                   self._BROWSE_DUAL_FORM, self._MULTI_BROWSE_DUAL_FORM, self._CODEBOOK_FORM]
         control = wx.Choice(self._dialog, -1, (-1,-1), (-1,-1), choices=choices)
         control.SetSelection(0)
         self._handle_keys(control)
