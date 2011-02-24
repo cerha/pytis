@@ -1122,6 +1122,8 @@ class ViewSpec(object):
                                 (spec_name, item.action(),))
                     elif isinstance(item, Text):
                         pass
+                    elif callable(item):
+                        pass
                     else:
                         assert self._field_dict.has_key(item), \
                                ("Unknown field in layout of %s: %r" % (spec_name, item,))
