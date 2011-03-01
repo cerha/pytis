@@ -114,6 +114,10 @@ class FormProfile(pytis.presentation.Profile):
         """Change the name of the profile to given 'name' (string)."""
         self._name = name
 
+    def set_filter(self, filter):
+        """Change the filter of the profile to given value (pytis.data.Operator instance)."""
+        self._filter = filter
+
     def validate(self, view, data):
         """Validate the instance after loading (see the class docstring for more information)."""
         # NOT is not allowed!
@@ -1040,6 +1044,13 @@ class LookupForm(InnerForm):
             custom = manager.load_profile(fullname, profile.id())
             if custom:
                 if custom.validate(self._view, self._data):
+                    # Force the filter of system profiles to the filter from
+                    # specification because it often contains dynamic
+                    # conditions, such as EQ('date', now()) which are destroyed
+                    # when saved (the saved condition would be EQ('date',
+                    # '2011-03-01') for example).  That's also why filters of
+                    # system profiles are not editable.
+                    custom.set_filter(profile.filter())
                     profile = custom
                 else:
                     invalid_profiles.append(custom)
