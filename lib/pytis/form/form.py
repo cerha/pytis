@@ -839,7 +839,6 @@ class LookupForm(InnerForm):
         self._default_profile_parameters = self._profile_parameters_to_save()
         self._apply_profile_parameters(current_profile)
         self._lf_initial_sorting = self._lf_sorting
-        self._lf_last_filter = self._lf_filter
         # _lf_condition represents a static condition given by the constructor
         # argument, whereas _lf_filter represents the filtering condition,
         # which is part of the current user profile.  There is also a third
@@ -1208,13 +1207,8 @@ class LookupForm(InnerForm):
         self._profiles[index] = profile
         self._apply_profile(profile)
         
-    def _can_filter(self, condition=None, last=False):
-        return not last or self._lf_last_filter is not None
-        
-    def _cmd_filter(self, condition=None, last=False):
+    def _cmd_filter(self, condition=None):
         # Returns True if applied successfully, False on invalid condition, None when not applied.
-        if last:
-            condition = self._lf_last_filter
         if condition:
             perform = True
         else:
@@ -1346,10 +1340,8 @@ class LookupForm(InnerForm):
             InnerForm.add_toolbar_ctrl(toolbar, uicmd)
     
     def filter(self, condition):
-        """Apply given filtering condition.  Return true if successfull."""
+        """Apply given filtering condition."""
         self._apply_filter(condition)
-        if condition is not None:
-            self._lf_last_filter = condition
             
     def data(self):
         """Return a new instance of the data object used by the form.
