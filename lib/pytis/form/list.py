@@ -2418,7 +2418,7 @@ class FoldableForm(ListForm):
                                                  report_failure=report_failure)
     
     def _apply_filter(self, condition):
-        if condition is not None:
+        if condition is not None and not FormProfile.same_filters(condition, self._lf_filter):
             self._folding = self.Folding(level=None)
         return super(FoldableForm, self)._apply_filter(condition)
 
