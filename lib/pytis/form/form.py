@@ -1359,6 +1359,15 @@ class LookupForm(InnerForm):
     def filter(self, condition):
         """Apply given filtering condition."""
         self._apply_filter(condition)
+        profile = self._current_profile
+        if not profile.id().startswith(self._USER_PROFILE_PREFIX) \
+                and not FormProfile.same_filters(condition, profile.filter()):
+            name = _("Nepojmenovaný profil")
+            i = 1
+            while name in [profile.name() for profile in self._profiles]:
+                i += 1
+                name = _("Nepojmenovaný profil") + " <%d>" % i
+            self.COMMAND_SAVE_NEW_PROFILE.invoke(name=name)
             
     def data(self):
         """Return a new instance of the data object used by the form.
