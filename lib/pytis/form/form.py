@@ -85,21 +85,6 @@ class FormProfile(pytis.presentation.Profile):
         # We prefer saving the condition in our custom format, since its safer
         # to pickle Python builtin types than instances of application defined
         # classes.
-        return dict(self.__dict__, _filter=self._pack_filter(self._filter))
-
-    def __setstate__(self, state):
-        # Don't restore the state here, to avoid accessing any attributes
-        # before validation (see also __getattr__).
-        self._state = state
-
-    def __getattr__(self, name):
-        if self._state is not None:
-            raise ProgramError("Attempted to access unpacked profile: Call 'validate()' first!")
-        else:
-            raise AttributeError("%r object has no attribute %r" % (type(self).__name__, name))
-
-    @classmethod
-    def _pack_filter(cls, filter):
         def pack(something):
             if isinstance(something, pytis.data.Operator):
                 args = tuple([pack(arg) for arg in something.args()])
@@ -112,15 +97,23 @@ class FormProfile(pytis.presentation.Profile):
                 return something
             else:
                 raise ProgramError("Unknown object in filter operator:", something)
-        if filter is None:
-            return None
+        if self._filter is None:
+            filter = None
         else:
-            return pack(filter)
-        
-    @classmethod
-    def same_filters(cls, f1, f2):
-        return cls._pack_filter(f1) == cls._pack_filter(f2)
-    
+            filter = pack(self._filter)
+        return dict(self.__dict__, _filter=filter)
+
+    def __setstate__(self, state):
+        # Don't restore the state here, to avoid accessing any attributes
+        # before validation (see also __getattr__).
+        self._state = state
+
+    def __getattr__(self, name):
+        if self._state is not None:
+            raise ProgramError("Attempted to access unpacked profile: Call 'validate()' first!")
+        else:
+            raise AttributeError("%r object has no attribute %r" % (type(self).__name__, name))
+
     def rename(self, name):
         """Change the name of the profile to given 'name' (string)."""
         self._name = name
@@ -1135,14 +1128,7 @@ class LookupForm(InnerForm):
                 original_value = None
             if original_value is None:
                 original_value = self._default_profile_parameters[param]
-            if param == 'filter':
-                # Temporary hack: Filters can not be compared normally, because
-                # we don't want the comparison to fail when the only difference
-                # is in data type arguemnts of the included Value instances.
-                changed = not FormProfile.same_filters(current_value, original_value)
-            else:
-                changed = current_value != original_value
-            if changed:
+            if current_value != original_value:
                 return True
         return False
 
@@ -1359,9 +1345,8 @@ class LookupForm(InnerForm):
     def filter(self, condition):
         """Apply given filtering condition."""
         self._apply_filter(condition)
-        profile = self._current_profile
-        if not profile.id().startswith(self._USER_PROFILE_PREFIX) \
-                and not FormProfile.same_filters(condition, profile.filter()):
+        if not self._current_profile.id().startswith(self._USER_PROFILE_PREFIX) \
+                and condition != self._current_profile.filter():
             name = _("Nepojmenovaný profil")
             i = 1
             while name in [profile.name() for profile in self._profiles]:
