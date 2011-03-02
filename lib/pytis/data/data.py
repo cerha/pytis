@@ -136,20 +136,21 @@ class Operator:
         """
         return self._name in ('AND', 'OR', 'NOT')
     
-    def _untyped_args(self):
-        """Return self._args, with Value instances converted to their internal values.
+    def _relaxed_args(self):
+        """Return self._args, with Value instances transformed to ignore their type attributes.
 
-        So the data types don't figure in the result.  This is necessary to
-        avoid the influence of the data types on the results of __cmp__ and
+        So the attributes of data type instances don't figure in the result.
+        Only their class is taken into account.  This is necessary to avoid the
+        influence of data types attributes on the results of __cmp__ and
         __hash__.
 
         """
-        def untype(arg):
+        def relax(arg):
             if isinstance(arg, (Value, WMValue)):
-                return arg.value()
+                return (arg.type().__class__, arg.value())
             else:
                 return arg
-        return [untype(arg) for arg in self._args]
+        return [relax(arg) for arg in self._args]
 
     def __str__(self):
         args = string.join(map(str, self.args()), ', ')
@@ -158,14 +159,14 @@ class Operator:
     def __cmp__(self, other):
         if sameclass(self, other):
             return cmp(self._name, other._name) or \
-                   cmp(self._untyped_args(), other._untyped_args()) or \
+                   cmp(self._relaxed_args(), other._relaxed_args()) or \
                    cmp(self._kwargs, other._kwargs)
         else:
             return compare_objects(self, other)
 
     def __hash__(self):
         return (hash(self._name) ^
-                hash(tuple(self._untyped_args())) ^
+                hash(tuple(self._relaxed_args())) ^
                 hash(tuple(self._kwargs.items())))
 
 
