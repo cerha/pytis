@@ -986,7 +986,7 @@ class LookupForm(InnerForm):
     def _user_filter_index(self, condition):
         # Return the index of given filter condition in self._user_filters or None.
         for i, f in enumerate(self._user_filters):
-            if f.condition().is_same(condition):
+            if f.condition() == condition:
                 return i
         return None
 
@@ -1069,7 +1069,7 @@ class LookupForm(InnerForm):
                 if f.name() == name:
                     message(_("Pojmenovaný filtr '%s' ji¾ existuje.") % name, beep_=True)
                     return
-                elif f.condition().is_same(self._lf_filter):
+                elif f.condition() == self._lf_filter:
                     message(_("Shodný filtr ji¾ existuje pod názvem '%s'.") % f.name(), beep_=True)
                     return
             filter_id = '_filter_%d' % (len(self._user_filters),)
@@ -1261,7 +1261,7 @@ class LookupForm(InnerForm):
             editable = False
             for f in self._view.filters() + self._user_filters:
                 ctrl.Append(f.name(), f.condition())
-                if selected is None and f.condition().is_same(self._lf_filter):
+                if selected is None and f.condition() == self._lf_filter:
                     selected = ctrl.GetCount() - 1
             if selected is None:
                 ctrl.Append(self._UNNAMED_FILTER_LABEL, self._lf_filter)
@@ -1276,7 +1276,7 @@ class LookupForm(InnerForm):
                 ctrl.SetSelection(0)
             else:
                 for i, f in enumerate(self._view.filters() + self._user_filters):
-                    if f.condition().is_same(self._lf_filter):
+                    if f.condition() == self._lf_filter:
                         ctrl.SetSelection(i+1)
                         break
                 else:

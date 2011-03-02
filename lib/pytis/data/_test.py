@@ -2475,6 +2475,15 @@ class ThreadTest(_DBBaseTest):
             time.sleep(1)
 #tests.add(ThreadTest)
 
+class OperatorTest(unittest.TestCase):
+    def test_it(self):
+        a = pytis.data.EQ('a', pytis.data.Value(pytis.data.String(), 'a'))
+        b = pytis.data.EQ('b', pytis.data.Value(pytis.data.String(), 'a'))
+        c = pytis.data.EQ('a', pytis.data.Value(pytis.data.String(maxlen=5), 'a'))
+        assert a != b
+        assert a == c
+        assert b != c
+tests.add(OperatorTest)
 
 ################
 

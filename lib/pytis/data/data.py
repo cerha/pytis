@@ -75,11 +75,23 @@ DESCENDANT = 'DESCENDANT'
 
 
 class Operator:
-    """Podmínka pro metodu 'select()'.
+    """Conditional operator for the 'select()' method.
 
-    Tøída má pouze specifikaèní charakter, její instance slou¾í pro zápis
-    podmínek metody.  Ka¾dý operátor je celkovì dán svým jménem, argumenty
-    a pojmenovanými argumenty.
+    The instances of this class define a data filtering condition.  An operator
+    is given by its name, operands (constructor arguments) and parameters
+    (keyword arguments).  See the functions 'AND', 'OR', 'NOT', 'EQ', 'NE',
+    'LE', 'GT', 'WM' and others for convenient constructors of some well known
+    operators.
+
+    The instances of this class are immutable and hashable.
+    
+    When the operators are compared or hashed, the data type of all operands
+    (arguments passed to the constructor) which are 'Value' instances are
+    ignored.  Thus two operators are considered equal if just the inner python
+    values of their operands match.  This is because they represent the same
+    condition even if the data types of the operands differ in their parameters
+    (for example one is String(not_null=True) and the other is
+    String(not_null=False)).
 
     """
     def __init__(self, name, *args, **kwargs):
@@ -123,34 +135,21 @@ class Operator:
         
         """
         return self._name in ('AND', 'OR', 'NOT')
+    
+    def _untyped_args(self):
+        """Return self._args, with Value instances converted to their internal values.
 
-    def is_same(self, other):
-        """Return true if the operators 'self' and 'other' represent the same condition.
-        
-        This method is ignores types of all 'Value' instances in oprator's arguments.  Operators
-        are considered same if just the values match.
-
-        Note: This method was added to allow correct comparison of saved (pickled/unpickled)
-        conditions, conditions defined in specifications and conditions defined through the
-        filter/search dialog.  It might be better to rething and maybe fix the __cmp__ method to
-        correctly recognize equalty of operator instances and remove this method in future...
+        So the data types don't figure in the result.  This is necessary to
+        avoid the influence of the data types on the results of __cmp__ and
+        __hash__.
 
         """
-        if not isinstance(other, Operator):
-            return False
-        if self._name != other._name or self._kwargs != other._kwargs \
-               or len(self._args) != len(other._args):
-            return False
-        for a1, a2 in zip(self._args, other._args):
-            if isinstance(a1, (Value, WMValue)) and isinstance(a2, (Value, WMValue)):
-                if a1.value() != a2.value():
-                    return False
-            elif isinstance(a1, Operator) and isinstance(a2, Operator):
-                if not a1.is_same(a2):
-                    return False
-            elif a1 != a2:
-                return False
-        return True
+        def untype(arg):
+            if isinstance(arg, (Value, WMValue)):
+                return arg.value()
+            else:
+                return arg
+        return [untype(arg) for arg in self._args]
 
     def __str__(self):
         args = string.join(map(str, self.args()), ', ')
@@ -159,14 +158,14 @@ class Operator:
     def __cmp__(self, other):
         if sameclass(self, other):
             return cmp(self._name, other._name) or \
-                   cmp(self._args, other._args) or \
+                   cmp(self._untyped_args(), other._untyped_args()) or \
                    cmp(self._kwargs, other._kwargs)
         else:
             return compare_objects(self, other)
 
     def __hash__(self):
         return (hash(self._name) ^
-                hash(self._args) ^
+                hash(self._untyped_args()) ^
                 hash(tuple(self._kwargs.items())))
 
 
