@@ -165,7 +165,7 @@ class Operator:
 
     def __hash__(self):
         return (hash(self._name) ^
-                hash(self._untyped_args()) ^
+                hash(tuple(self._untyped_args())) ^
                 hash(tuple(self._kwargs.items())))
 
 
