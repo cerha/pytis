@@ -769,13 +769,15 @@ class BrowseForm(LayoutForm):
             the profile selector.  If None, the default filter sets from the
             specification are used.  If not None, the filter sets defined by
             the specification are ignored.
-          profiles -- specification of form profiles as a 'Profiles' instance.
-            These profiles will be available in the user interface for user's
-            selection.  If None, the default set of profiles defined by
-            specification is used.  If not None, the profiles from
-            specification are ignored.  This argument is mostly useful to
-            construct the list of profiles dynamically (specification profiles
-            are static).  
+
+          profiles -- specification of form profiles as a 'Profiles' instance
+            or a sequence of 'Profile' instances.  These profiles will be
+            available in the user interface for user's selection.  If None, the
+            default set of profiles defined by specification is used.  If not
+            None, the profiles from specification are ignored.  This argument
+            is mostly useful to construct the list of profiles dynamically
+            (specification profiles are static).
+            
           filter_fields -- specification of editable filter fields as a
             sequence of tuples of three items (field_specification, operator,
             field_id), where 'field_specification' is a
@@ -842,6 +844,8 @@ class BrowseForm(LayoutForm):
         filter_sets = list(filter_sets)
         if profiles is None:
             profiles = self._view.profiles()
+        elif not isinstance(profiles, Profiles):
+            profiles = Profiles(profiles)
         if profiles:
             assert 'profile' not in [fs.id() for fs in filter_sets]
             # Add profile selection as another filter set, since the user interface is the same.
