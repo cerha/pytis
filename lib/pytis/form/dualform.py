@@ -114,14 +114,14 @@ class DualForm(Form, Refreshable):
         else:
             Form.add_toolbar_ctrl(toolbar, uicmd)
     
-    def __init__(self, *args, **kwargs):
+    def _full_init(self, *args, **kwargs):
         """Inicializuj duální formuláø.
 
         Argumenty jsou stejné jako v pøedkovi, specifikují v¹ak hlavní formuláø
         duálního formuláøe.
         
         """
-        super(DualForm, self).__init__(*args, **kwargs)
+        super(DualForm, self)._full_init(*args, **kwargs)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
 
@@ -326,9 +326,9 @@ class DualForm(Form, Refreshable):
 class ImmediateSelectionDualForm(DualForm):
     """Duální formuláø s okam¾itou obnovou vedlej¹ího formuláøe."""
     
-    def __init__(self, *args, **kwargs):
+    def _full_init(self, *args, **kwargs):
         self._selection_data = None
-        super(ImmediateSelectionDualForm, self).__init__(*args, **kwargs)
+        super(ImmediateSelectionDualForm, self)._full_init(*args, **kwargs)
 
     def _on_main_selection(self, row):
         r = row.row()
@@ -346,8 +346,8 @@ class PostponedSelectionDualForm(ImmediateSelectionDualForm):
     
     _SELECTION_TICK = 2
 
-    def __init__(self, *args, **kwargs):
-        super(PostponedSelectionDualForm, self).__init__(*args, **kwargs)
+    def _full_init(self, *args, **kwargs):
+        super(PostponedSelectionDualForm, self)._full_init(*args, **kwargs)
         self._selection_candidate = None
 
     def _on_idle(self, event):
@@ -512,8 +512,8 @@ class ShowDualForm(SideBrowseDualForm):
     """Duální formuláø s hlavním formuláøem 'BrowsableShowForm'.
 
     """
-    def __init__(self, *args, **kwargs):
-        super(ShowDualForm, self).__init__(*args, **kwargs)
+    def _full_init(self, *args, **kwargs):
+        super(ShowDualForm, self)._full_init(*args, **kwargs)
         self._initialization_done = False
 
     def _on_idle(self, event):
@@ -621,6 +621,10 @@ class MultiForm(Form, Refreshable):
         if isinstance(form, DualForm):
             form = form.active_form()
         return form
+    
+    def _full_init(self, *args, **kwargs):
+        self._form_callbacks_args = []
+        super(MultiForm, self)._full_init(*args, **kwargs)
 
     def _create_view_spec(self):
         return None
@@ -657,7 +661,16 @@ class MultiForm(Form, Refreshable):
     def _on_mouse(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
         event.Skip()
-    
+        
+    def _init_subform(self, form):
+        if form.initialized():
+            return
+        form.full_init()
+        form._release_data()
+        for kind, function in self._form_callbacks_args:
+            if hasattr(form, kind):
+                form.set_callback(kind, function)
+
     def _on_page_change(self, event=None):
         if self._leave_form_requested:
             # Prevent (possibly expensive) database queries on NotebookEvent
@@ -672,6 +685,7 @@ class MultiForm(Form, Refreshable):
         if selection != -1:
             form = self._forms[selection]
             if form:
+                self._init_subform(form)
                 row = self._last_selection
                 if row is not None:
                     form.on_selection(row)
@@ -679,7 +693,7 @@ class MultiForm(Form, Refreshable):
                 old_selection = event.GetOldSelection()
                 if old_selection != -1:
                     old_form = self._forms[old_selection]
-                    if old_form and old_form is not form:
+                    if old_form and old_form is not form and old_form.initialized():
                         old_form._release_data()
             elif event:
                 message(_("Formuláø není dostupnı"), beep_=True)
@@ -688,12 +702,13 @@ class MultiForm(Form, Refreshable):
                 if old_selection != -1:
                     form = self._forms[old_selection]
                     if form:
+                        form._init_subform(form)
                         form.focus()
                         form.SetFocus()
 
     def _exit_check(self):
         for form in self._forms:
-            if form and not form._exit_check():
+            if form and form.initialized() and not form._exit_check():
                 return False
         return True
             
@@ -704,7 +719,7 @@ class MultiForm(Form, Refreshable):
         except:
             pass
         for form in self._forms:
-            if form:
+            if form and form.initialized():
                 form.Reparent(self)
                 try:
                     nb.RemovePage(0)
@@ -734,6 +749,7 @@ class MultiForm(Form, Refreshable):
         while i >= 0 and i < len(self._forms):
             form = self._forms[i]
             if form:
+                self._init_subform(form)
                 self._notebook.SetSelection(i)
                 self._on_page_change()
                 return
@@ -744,7 +760,7 @@ class MultiForm(Form, Refreshable):
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
         for form in self._forms:
-            if form:
+            if form and form.initialized():
                 form.show()
                 form._release_data()
         self._notebook.Enable(True)
@@ -752,7 +768,7 @@ class MultiForm(Form, Refreshable):
 
     def hide(self):
         for form in self._forms:
-            if form:
+            if form and form.initialized():
                 form.hide()
                 form._release_data()
         self._notebook.Show(False)
@@ -761,8 +777,9 @@ class MultiForm(Form, Refreshable):
     def set_callback(self, kind, function):
         if kind != ListForm.CALL_MODIFICATION:
             super(MultiForm, self).set_callback(kind, function)
+        self._form_callbacks_args.append((kind, function,))
         for form in self._forms:
-            if form and hasattr(form, kind):
+            if form and hasattr(form, kind) and form.initialized():
                 form.set_callback(kind, function)
         
     def active_form(self):
@@ -770,6 +787,7 @@ class MultiForm(Form, Refreshable):
         selection = self._notebook.GetSelection()
         if selection != -1:
             form = self._forms[selection]
+            self._init_subform(form)
         else:
             form = None
         return form
@@ -788,6 +806,7 @@ class MultiForm(Form, Refreshable):
     def restore(self):        
         active = self._saved_active_form
         if active:
+            self._init_subform(active)
             self._notebook.SetSelection(self._forms.index(active))
             active.restore()
 
@@ -849,8 +868,7 @@ class MultiSideForm(MultiForm):
             form = self.TabbedShowForm
         else:
             form = self.TabbedBrowseForm
-        form_instance = form(parent, self._resolver, binding.name(), **kwargs)
-        form_instance._release_data()
+        form_instance = form(parent, self._resolver, binding.name(), full_init=False, **kwargs)
         return form_instance
 
     def _create_forms(self, parent):
@@ -874,6 +892,7 @@ class MultiSideForm(MultiForm):
         assert id in [b.id() for b in self._main_form.bindings()]
         for i, form in enumerate(self._forms):
             if form and form.binding().id() == id:
+                self._init_subform(form)
                 self._notebook.SetSelection(i)
                 return True
         message(_("Po¾adovanı vedlej¹í formuláø není dostupnı"), beep_=True)

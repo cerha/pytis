@@ -26,7 +26,9 @@ jednotlivých tøíd.
 
 """
 
+import copy
 import time
+
 import pytis.data
 import pytis.output
 from pytis.presentation import PresentedRow
@@ -259,9 +261,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         else:
             return cls.__class__.__name__
     descr = classmethod(descr)
-        
-    def __init__(self, parent, resolver, name, guardian=None, transaction=None,
-                 spec_kwargs={}, data_kwargs={}, **kwargs):
+
+    def __init__(self, parent, resolver, name, full_init=True, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -279,6 +280,17 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             specification constructor.
           data_kwargs -- dictionary of additional keyword arguments passed to
             the data object constructor.
+          full_init -- iff false, don't perform full form initialization.  This
+            means performing just necessary wx initialization to make the form
+            available without creating its content and data structures.  This
+            is useful when you need to define a form and to register it
+            somewhere (e.g. as a side form in a wx notebook) without actually
+            showing it and without delaying other actions (e.g. because of
+            unnecessary expensive querying database views in the hidden form).
+            If this option is used, you are fully responsible to call full from
+            initialization before the form is actually used for the first
+            time.  You must do it using 'full_init()' method and you may call
+            the method only once for the given form instance.
           kwargs -- viz ní¾e.
 
         Resolver je pou¾it k získání datové a prezentaèní specifikace a
@@ -312,18 +324,30 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         být dodr¾ováno i v odvozených tøídách.
         
         """
+        self._name = name
+        Window.__init__(self, parent)
+        if full_init:
+            self._full_init_called = True
+            self._full_init(parent, resolver, name, **kwargs)
+        else:
+            self._full_init_called = False
+            self._full_init_kwargs = copy.copy(kwargs)
+            self._full_init_kwargs['parent'] = parent
+            self._full_init_kwargs['resolver'] = resolver
+            self._full_init_kwargs['name'] = name
+        
+    def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
+                   spec_kwargs={}, data_kwargs={}, **kwargs):
         import pytis.extensions
         start_time = pytis.data.DateTime.now()
         self._parent = parent
         self._resolver = resolver
-        self._name = name
         self._guardian = guardian or parent
         self._governing_transaction = transaction
         self._transaction = transaction or self._default_transaction()
         self._spec_kwargs = copy.copy(spec_kwargs)
         self._data_kwargs = copy.copy(data_kwargs)
         self._leave_form_requested = False
-        Window.__init__(self, parent)
         KeyHandler.__init__(self)
         CallbackHandler.__init__(self)
         try:
@@ -512,6 +536,28 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def data(self):
         """Return a new instance of the data object used by the form."""
         return self._create_data_object()
+
+    def full_init(self):
+        """Finish initialization of a mostly unitialized form.
+
+        This must be called before the first use of the form when
+        'soft_init=True' was used in the constructor.  It may not be called
+        otherwise nor may be called more than once.
+
+        """
+        assert not self._full_init_called, "Form initialization called more than once"
+        self._full_init_called = True
+        self._full_init(**self._full_init_kwargs)
+        self._full_init_kwargs = None
+
+    def initialized(self):
+        """Return true iff full form initialization was attempted.
+
+        If it wasn't, it is necessary to call 'full_init()' for this form to
+        use the form.
+        
+        """
+        return self._full_init_called
         
     def size(self):
         """Return the prefered form size in pixels as a tuple of two integers (width, height).
@@ -1925,8 +1971,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     MODE_VIEW = 'MODE_VIEW'
     """Mód formuláøe pro zobrazení záznamù bez mo¾nosti editace."""
     
-    def __init__(self, *args, **kwargs):
-        super(EditForm, self).__init__(*args, **kwargs)
+    def _full_init(self, *args, **kwargs):
+        super(EditForm, self)._full_init(*args, **kwargs)
         # Calculate the ideal total form size.  We first count the size of the sizer without the
         # form panel (that's why its hidden and shown below) and then add the manually computed
         # size of the panel to the result.  The size of the forma panel computed by wx Windows is
@@ -2356,9 +2402,12 @@ class PopupEditForm(PopupForm, EditForm):
     """Stejné jako 'EditForm', av¹ak v popup podobì."""
 
     DESCR = _("editaèní formuláø")
-    
+
     def __init__(self, parent, *args, **kwargs):
-        EditForm.__init__(self, self._popup_frame(parent), *args, **kwargs)
+        parent = self._popup_frame(parent)
+        super(PopupEditForm, self).__init__(parent, *args, **kwargs)
+    def _full_init(self, *args, **kwargs):
+        EditForm._full_init(self, *args, **kwargs)
         if self._inserted_data is not None:
             self._load_next_row()
         # Set the popup window size according to the ideal form size limited to

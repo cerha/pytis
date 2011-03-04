@@ -83,9 +83,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     DESCR = _("øádkový formuláø")
 
-    def __init__(self, *args, **kwargs):
+    def _full_init(self, *args, **kwargs):
         self._grid = None
-        super(ListForm, self).__init__(*args, **kwargs)
+        super(ListForm, self)._full_init(*args, **kwargs)
         # Nastav klávesové zkratky z kontextových menu.
         for action in self._view.actions(linear=True):
             if action.hotkey():
@@ -2311,9 +2311,9 @@ class FoldableForm(ListForm):
                 return FoldableForm._FoldingState(level=level, subnodes=dict(subnodes))
             self._folding = transform(state)
             
-    def __init__(self, *args, **kwargs):
+    def _full_init(self, *args, **kwargs):
         self._folding_column_id = None
-        super(FoldableForm, self).__init__(*args, **kwargs)
+        super(FoldableForm, self)._full_init(*args, **kwargs)
         self._folding_column_id = self._find_folding_column()
         # Any better way to display the form with initial folding than to
         # refresh it?
@@ -2523,9 +2523,9 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
 
     _DEFAULT_WINDOW_HEIGHT = 500
 
-    def __init__(self, parent, *args, **kwargs):
+    def _full_init(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
-        super(CodebookForm, self).__init__(parent, *args, **kwargs)
+        super(CodebookForm, self)._full_init(parent, *args, **kwargs)
         if self._folding_enabled():
             height = self._DEFAULT_WINDOW_HEIGHT
         else:
@@ -2946,7 +2946,7 @@ class SideBrowseForm(BrowseForm):
 
 class AggregationForm(BrowseForm):
 
-    def __init__(self, *args, **kwargs):
+    def _full_init(self, *args, **kwargs):
         # We can't process these arguments in _init_attributes() since they are
         # needed in _create_view_spec() and _create_data_object() which are
         # called before _init_attributes().
@@ -2954,7 +2954,7 @@ class AggregationForm(BrowseForm):
         self._af_aggregation_columns = kwargs.pop('aggregation_columns')
         self._af_aggregation_condition = kwargs.pop('aggregation_condition', None)
         self._af_grouping_functions = tuple(kwargs.pop('grouping_functions'))
-        super(AggregationForm, self).__init__(*args, **kwargs)
+        super(AggregationForm, self)._full_init__(*args, **kwargs)
     
     def _create_view_spec(self):
         view = super(AggregationForm, self)._create_view_spec()
