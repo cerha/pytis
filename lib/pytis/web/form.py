@@ -647,18 +647,47 @@ class BrowseForm(LayoutForm):
                            pytis.data.DESCENDANT: 'desc'}
     _NULL_FILTER_ID = '-'
 
-    def __init__(self, view, row, columns=None, condition=None, sorting=None,
-                 limits=(25, 50, 100, 200, 500), limit=50, offset=0, search=None, query=None,
-                 allow_query_search=None, filter=None, filters=None, message=None, req=None,
-                 arguments=None, immediate_filters=True, filter_fields=None, **kwargs):
+    def __init__(self, view, row, req=None, uri_provider=None, condition=None, arguments=None,
+                 columns=None, sorting=None, grouping=None,
+                 limits=(25, 50, 100, 200, 500), limit=50, offset=0,
+                 search=None, query=None, allow_query_search=None, filter=None, message=None, 
+                 filter_sets=None, profiles=None, filter_fields=None, immediate_filters=True,
+                 **kwargs):
         """Arguments:
 
-          columns -- sequence of column identifiers to be displayed or None for
-            the default columns defined by specification.
+          req -- instance of a class implementing the 'Request' API.  The form
+            state (sorting, paging etc) will be set up according to the reqest
+            parameters, if the request includes them (form controls were used
+            to submit the form).  The constructor argument 'name' (defined in
+            parent class) may be used to distinguish between multiple forms on
+            one page.  If this parameter was passed, it is sent as the request
+            argument 'form_name'.  Thus if this argument doesn't match the form
+            name, the request arguments are ignored.
+          uri_provider -- as in the parent class.
           condition -- current condition for filtering the records as
             'pytis.data.Operator' instance or None.
+          arguments -- dictionary of table function call arguments, with
+            function argument identifiers as keys and 'pytis.data.Value'
+            instances as values.  Useful only when the table is actually a row
+            returning function, otherwise ignored.
+          columns -- sequence of column identifiers to be displayed.  If not
+            None, this value overrides the default columns defined by the
+            specification, but may be further overriden by the columns defined
+            by the currently selected form profile (see 'profiles').
           sorting -- form sorting specification in the format recognized by the
-            'sort' argument of 'pytis.data.Data.select()'.
+            'sort' argument of 'pytis.data.Data.select()'.  If not None, this
+            value overrides the default sorting defined by the specification,
+            but may be further overriden by the sorting defined by the
+            currently selected form profile (see 'profiles').
+          grouping -- visual grouping of table rows.  The value is a column
+            identifier or a sequence of column identifiers.  Grouping allows
+            you to visually distinguish table rows, which have the same
+            value(s) in grouping columns(s).  This usually only makes sense
+            when the table is sorted by these columns so grouping is ignored
+            when the user changes sorting.  If not None, this value overrides
+            the default grouping defined by the specification, but may be
+            further overriden by the grouping defined by the currently selected
+            form profile (see 'profiles').
           limit -- maximal number of rows per page.  If the current condition
             produces more rows, the listing will be split into pages and the
             form will include controls for navigation between these pages.
@@ -725,17 +754,6 @@ class BrowseForm(LayoutForm):
             condition will be appended to 'condition', but the difference is
             that 'condition' is invisible to the user, but 'filter' may be
             indicated in the user interface.
-          filters -- sequence of user visible named filters as
-            'pytis.presentation.Filter' or 'pytis.presentation.FilterSet'
-            instances (sequence of 'pytis.presentation.Filter' instances is
-            automatically converted to one filter set containing given
-            filters).  These filters will be available in the user interface
-            for user's selection.  If None, the default set of filters defined
-            by specification is used.  If not None, the filters from
-            specification are ignored, so they need to be included in this
-            argument explicitly if they should be displayed.  This argument is
-            mostly useful to construct the list of filters dynamically
-            (specification filters are static).
           message -- function returning a custom search result message.  If
             none, a default message will be used according to current query,
             such as 'Found 5 records matching the search expression.'.  A
@@ -743,23 +761,21 @@ class BrowseForm(LayoutForm):
             in the form) may be used to return a custom message as a string
             (possibly LCG Translatable object).  An example of a custom message
             might be 'Found 15 articles in category Python'.
-          req -- instance of a class implementing the 'Request' API.  The form
-            state (sorting, paging etc) will be set up according to the reqest
-            parameters, if the request includes them (form controls were used
-            to submit the form).  The constructor argument 'name' (defined in
-            parent class) may be used to distinguish between multiple forms on
-            one page.  If this parameter was passed, it is sent as the request
-            argument 'form_name'.  Thus if this argument doesn't match the form
-            name, the request arguments are ignored.
-          arguments -- dictionary of table function call arguments, with
-            function argument identifiers as keys and 'pytis.data.Value'
-            instances as values.  Useful only when the table is actually a row
-            returning function, otherwise ignored.
-          immediate_filters -- when True, filters apply immediately after their
-            selection in the corresponding combobox; when False, there is a
-            separate button for filter application.  When there is more than
-            one filter in a form, the separate filter application button is
-            always present.
+          filter_sets -- a sequence of filter sets as
+            'pytis.presentation.FilterSet' instances.  Filter sets are used to
+            present multiple filter selectors which can be combined into one
+            final filtering condition.  Filter sets can be also combined with
+            profiles.  In this case filter set selectors will appear prior to
+            the profile selector.  If None, the default filter sets from the
+            specification are used.  If not None, the filter sets defined by
+            the specification are ignored.
+          profiles -- specification of form profiles as a 'Profiles' instance.
+            These profiles will be available in the user interface for user's
+            selection.  If None, the default set of profiles defined by
+            specification is used.  If not None, the profiles from
+            specification are ignored.  This argument is mostly useful to
+            construct the list of profiles dynamically (specification profiles
+            are static).  
           filter_fields -- specification of editable filter fields as a
             sequence of tuples of three items (field_specification, operator,
             field_id), where 'field_specification' is a
@@ -786,13 +802,15 @@ class BrowseForm(LayoutForm):
             object's 'select()' call.  Such arguments are combined with the
             'arguments' passed to the form constructor (the values from filter
             fields override the values in 'arguments').
+          immediate_filters -- when True, filters and profiles apply
+            immediately after their selection in the corresponding selector;
+            when False, there is a separate button for filter application.
+            When 'filter_fields' are present, filters must always be applied
+            using a button, so this argument is ignored in this case.
 
         See the parent classes for definition of the remaining arguments.
 
         """
-        self._columns = columns or view.columns()
-        self._immediate_filters = immediate_filters
-        uri_provider = kwargs.pop('uri_provider')
         if uri_provider:
             def browse_form_uri_provider(row, cid=None, type=UriType.LINK):
                 if cid == self._columns[0] and type==UriType.LINK:
@@ -800,113 +818,40 @@ class BrowseForm(LayoutForm):
                     if uri is not None:
                         return uri
                 return uri_provider(row, cid, type=type)
-            kwargs['uri_provider'] = browse_form_uri_provider
-        super(BrowseForm, self).__init__(view, row, **kwargs)
-        self._condition = condition
-        if filters is None:
-            filters = self._view.filter_sets()
-            profiles = self._view.profiles()
-            if profiles:
-                filters += (FilterSet('profile', _("Filter"),
-                                      [Filter(p.id(), p.name(), p.filter()) for p in filters],
-                                      default=profiles.default()),)
-        elif filters:
-            if isinstance(filters, Profiles):
-                filters = (FilterSet('__single', _("Filter"),
-                                     [Filter(p.id(), p.name(), p.filter()) for p in filters],
-                                     default=filters.default()),)
-            elif isinstance(filters[0], Filter):
-                filters = (FilterSet('__single', _("Filter"), filters),)
-        params = {}
-        if req is not None and req.param('form_name') == self._name:
-            # Process request params if they belong to the current form.
-            for param, func in ((('sort', str), ('dir', str),
-                                 ('limit', int), ('offset', int),
-                                 ('next', bool), ('prev', bool),
-                                 ('search', str), ('index_search', None),
-                                 ('query', unicode), ('show_query_field', bool)) +
-                                tuple([('filter_%s' % (fs.id(),), str,) for fs in filters])):
-                if req.has_param(param):
-                    value = req.param(param)
-                    if func:
-                        try:
-                            value = func(value)
-                        except:
-                            continue
-                    params[param] = value
-        self._arguments = arguments
-        # Determine the current sorting.
-        if params.has_key('sort') and params.has_key('dir'):
-            cid = params['sort']
-            dir = dict([(b, a) for a, b in self._SORTING_DIRECTIONS.items()]).get(params['dir'])
-            if self._row.data().find_column(cid) and dir:
-                sorting = ((cid, dir),)
-        if sorting is None:
-            sorting = self._view.sorting()
-        if sorting is None:
-            sorting = ((self._key, pytis.data.ASCENDENT),)
-        self._sorting = sorting
-        # Determine the limit of records per page.
-        self._limits = limits
-        if req is not None:
-            limit_ = params.get('limit')
-            if limit_ is None:
-                cookie = req.cookie('pytis-form-limit')
-                if cookie and isinstance(cookie, (str, unicode)) and cookie.isdigit():
-                    limit_ = int(cookie)
+        else:
+            browse_form_uri_provider = None
+        super(BrowseForm, self).__init__(view, row, uri_provider=browse_form_uri_provider, **kwargs)
+        def param(name, func=None, default=None):
+            # Consider request params only if they belong to the current form.
+            if req.param('form_name') == self._name and req.has_param(name):
+                value = req.param(name)
+                if func:
+                    try:
+                        return func(value)
+                    except:
+                        return default
+                else:
+                    return value
             else:
-                req.set_cookie('pytis-form-limit', limit_)
-            if limit_ in limits:
-                limit = limit_
-        self._limit = limit
-        # Determine the current offset.
-        if limit is None:
-            offset = 0
-        elif req is not None:
-            if params.has_key('offset'):
-                offset = params['offset']
-            if params.has_key('next'):
-                offset += limit
-            if params.has_key('prev') and offset >= limit:
-                offset -= limit
-        self._offset = offset
-        # Determine the current key or index search condition.
-        index_search_string = ''
-        if req is not None and search is None:
-            if params.has_key('search'):
-                type = self._row.data().find_column(self._key).type()
-                value, error = type.validate(params['search'])
-                if not error:
-                    search = pytis.data.EQ(self._key, value)
-            elif params.has_key('index_search'):
-                if isinstance(self._row.type(sorting[0][0]), pd.String):
-                    index_search_string = params['index_search']
-                    search = self._index_search_condition(index_search_string)
-        self._index_search_string = index_search_string
-        self._search = search
-        # Determine the current query search condition.
-        if allow_query_search is False or query is not None:
-            show_query_field = False
-            allow_query_field = False
-        else:
-            query = params.get('query')
-            show_query_field = bool(query or params.get('show_query_field') or allow_query_search)
-            allow_query_field = True
-        if query:
-            query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
-                                               for f in self._fields.values()
-                                               if isinstance(f.type, pd.String) and not f.virtual])
-                                       for word in query.split()])
-        else:
-            query_condition = None
-        self._query = query
-        self._query_condition = query_condition
-        self._show_query_field = show_query_field
-        self._allow_query_field = allow_query_field
-        # Process filters.
-        self._filters = []
+                return default
+        self._condition = condition
+        self._arguments = arguments
+        # Process filter sets and profiles first.
+        if filter_sets is None:
+            filter_sets = self._view.filter_sets()
+        filter_sets = list(filter_sets)
+        if profiles is None:
+            profiles = self._view.profiles()
+        if profiles:
+            assert 'profile' not in [fs.id() for fs in filter_sets]
+            # Add profile selection as another filter set, since the user interface is the same.
+            filter_sets.append(FilterSet('profile', _("Filter"),
+                                         [Filter(p.id(), p.name(), p.filter()) for p in profiles],
+                                         default=profiles.default()))
+        self._profiles = profiles
         self._filter_ids = {}
-        for filter_set in filters:
+        self._filter_sets = filter_sets
+        for i, filter_set in enumerate(filter_sets):
             filter_set_id = filter_set.id()
             # Determine the current set of user selectable filters.
             null_filter = find(None, filter_set, key=lambda f: f.condition())
@@ -916,10 +861,9 @@ class BrowseForm(LayoutForm):
                 # records to be displayed.
                 null_filter = Filter(self._NULL_FILTER_ID, _("All items"), None)
                 filter_set_filters = [null_filter] + [f for f in filter_set]
-                filter_set = FilterSet(filter_set_id, filter_set.title(), filter_set_filters)
-            self._filters.append(filter_set)
+                filter_sets[i] = FilterSet(filter_set_id, filter_set.title(), filter_set_filters)
             # Determine the currently selected filter.
-            filter_id = params.get('filter_%s' % (filter_set_id,))
+            filter_id = param('filter_%s' % (filter_set_id,), str)
             if filter_id is not None:
                 req.set_cookie('pytis-form-last-filter-%s' % (filter_set_id,),
                                self._name +':'+ filter_id)
@@ -944,24 +888,114 @@ class BrowseForm(LayoutForm):
                 else:
                     filter_id = None
             self._filter_ids[filter_set_id] = filter_id
+        if profiles:
+            profile_id = self._filter_ids['profile']
+            profile = find(profile_id, profiles, key=lambda p: p.id())
+            if profile.columns() is not None:
+                columns = profile.columns()
+            if profile.sorting() is not None:
+                sorting = profile.sorting()
+            if profile.grouping() is not None:
+                grouping = profile.grouping()
         self._filter = filter
-        self._filters = tuple(self._filters)
+        # Determine the current sorting.
+        self._user_sorting = None
+        sorting_column, direction = param('sort', str), param('dir', str)
+        if sorting_column and direction and self._row.data().find_column(sorting_column):
+            direction = dict([(b, a) for a, b in self._SORTING_DIRECTIONS.items()]).get(direction)
+            if direction:
+                self._user_sorting = (sorting_column, direction)
+                sorting = ((sorting_column, direction),)
+        if sorting is None:
+            sorting = self._view.sorting()
+        if sorting is None:
+            sorting = ((self._key, pytis.data.ASCENDENT),)
+        self._sorting = sorting
+
+        # Determine the current grouping.
+        if grouping is None:
+            grouping = self._view.grouping()
+        if self._user_sorting:
+            grouping = None
+        self._grouping = grouping
+        # Determine the limit of records per page.
+        self._limits = limits
+        limit_ = param('limit', int)
+        if limit_ is None:
+            cookie = req.cookie('pytis-form-limit')
+            if cookie and isinstance(cookie, (str, unicode)) and cookie.isdigit():
+                limit_ = int(cookie)
+        else:
+            req.set_cookie('pytis-form-limit', limit_)
+        if limit_ in limits:
+            limit = limit_
+        self._limit = limit
+        # Determine the current offset.
+        if limit is None:
+            offset = 0
+        else:
+            offset_param = param('offset', int)
+            if offset_param is not None:
+                offset = offset_param
+            if param('next', bool):
+                offset += limit
+            if param('prev', bool) and offset >= limit:
+                offset -= limit
+        self._offset = offset
+        # Determine the current key or index search condition.
+        index_search_string = ''
+        if search is None:
+            search_string = param('search', str)
+            if search_string:
+                type = self._row.data().find_column(self._key).type()
+                value, error = type.validate(search_string)
+                if not error:
+                    search = pytis.data.EQ(self._key, value)
+            else:
+                index_search_string = param('index_search', default='')
+                if index_search_string and isinstance(self._row.type(sorting[0][0]), pd.String):
+                    search = self._index_search_condition(index_search_string)
+        self._index_search_string = index_search_string
+        self._search = search
+        # Determine the current query search condition.
+        if allow_query_search is False or query is not None:
+            show_query_field = False
+            allow_query_field = False
+        else:
+            query = param('query', unicode)
+            show_query_field = bool(query or param('show_query_field', bool) or allow_query_search)
+            allow_query_field = True
+        if query:
+            query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
+                                               for f in self._fields.values()
+                                               if isinstance(f.type, pd.String) and not f.virtual])
+                                       for word in query.split()])
+        else:
+            query_condition = None
+        self._query = query
+        self._query_condition = query_condition
+        self._show_query_field = show_query_field
+        self._allow_query_field = allow_query_field
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row.type(sorting[0][0]),
                                   (pytis.data.LTree, pytis.data.TreeOrder)):
             self._tree_order_column = sorting[0][0]
         else:
             self._tree_order_column = None
+        self._columns = columns or view.columns()
         self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
         self._align = dict([(f.id, 'right') for f in cfields
                             if not f.type.enumerator() and isinstance(f.type, pd.Number)])
         self._custom_message = message
-        # Hack allowing locale dependent index search controls.
+        # Hack allowing locale dependent index search controls.  The method
+        # 'prefered_language()' is Wiking specific so it is not correct to rely
+        # on it here.
         try:
             self._lang = str(req.prefered_language())
         except:
             self._lang = None
         self._init_filter_fields(req, filter_fields or ())
+        self._immediate_filters = immediate_filters
 
     def _init_filter_fields(self, req, filter_fields_spec):
         columns = []
@@ -1220,9 +1254,6 @@ class BrowseForm(LayoutForm):
             pages, modulo = divmod(count, min(limit, count))
             pages += modulo and 1 or 0
         self._pages = pages
-        grouping = self._view.grouping()
-        if self._sorting != self._view.sorting():
-            grouping = None
         self._group = True
         self._last_group = None
         group_values = last_group_values = None
@@ -1233,8 +1264,8 @@ class BrowseForm(LayoutForm):
             if r is None:
                 break
             row.set_row(r)
-            if grouping:
-                group_values = [row[cid].value() for cid in grouping]
+            if self._grouping:
+                group_values = [row[cid].value() for cid in self._grouping]
                 if group_values != last_group_values:
                     self._group = not self._group
                     last_group_values = group_values
@@ -1275,9 +1306,9 @@ class BrowseForm(LayoutForm):
             return self._wrap_exported_rows(context, exported_rows, summary)
 
     def _link_ctrl_uri(self, generator, **kwargs):
-        if not kwargs.get('sort'):
-            sort, dir = self._sorting[0]
-            kwargs = dict(kwargs, sort=sort, dir=self._SORTING_DIRECTIONS[dir])
+        if not kwargs.get('sort') and self._user_sorting:
+            sorting_column, direction = self._user_sorting
+            kwargs = dict(kwargs, sort=sorting_column, dir=self._SORTING_DIRECTIONS[direction])
         # TODO: Excluding the 'submit' argument is actually a hack, since it is
         # defined in Wiking and should be transparent for the form.
         args = [('form_name', self._name)]
@@ -1361,8 +1392,9 @@ class BrowseForm(LayoutForm):
         id = (bottom and '0' or '1') + self._id
         content = []
         # Construct a list of filters for export.
-        show_filters = (self._filters and (count or
-                                           [v for v in self._filter_ids.values() if v is not None])
+        show_filters = (self._filter_sets and (count or
+                                               [v for v in self._filter_ids.values()
+                                                if v is not None])
                         or self._filter_fields)
         show_query_field = self._show_query_field
         if not bottom:
@@ -1381,7 +1413,7 @@ class BrowseForm(LayoutForm):
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
             submit_button = g.button(g.span(_("Change filters")), cls='apply-filters')
-            if self._immediate_filters and len(self._filters) <= 1 and not self._filter_fields:
+            if self._immediate_filters and not self._filter_fields:
                 onchange = 'this.form.submit(); return true'
                 # Leave the submit button in place for non-Javascript browsers.
                 submit_button = g.noscript(submit_button)
@@ -1392,7 +1424,7 @@ class BrowseForm(LayoutForm):
                 filter_content.extend((
                         g.label(field.label+':', field.unique_id),
                         self._export_field(context, field, editable=True)))
-            for filter_set in self._filters:
+            for filter_set in self._filter_sets:
                 filter_set_id = filter_set.id()
                 filter_name = 'filter_%s' % (filter_set_id,)
                 filter_id = filter_name + '-' + id
@@ -1466,10 +1498,10 @@ class BrowseForm(LayoutForm):
         if content:
             if self._name is not None:
                 content.append(g.hidden('form_name', self._name))
-            if len(self._sorting) == 1:
-                cid, dir = self._sorting[0]
-                content.extend((g.hidden('sort', cid),
-                                g.hidden('dir', self._SORTING_DIRECTIONS[dir])))
+            if self._user_sorting:
+                sorting_column, direction = self._user_sorting
+                content.extend((g.hidden('sort', sorting_column),
+                                g.hidden('dir', self._SORTING_DIRECTIONS[direction])))
             return g.form(content, action=g.uri(self._handler), method='GET',
                           cls='list-form-controls')
         else:
@@ -1486,7 +1518,7 @@ class BrowseForm(LayoutForm):
         active_filters = [(k, v) for k, v in self._filter_ids.items() if v is not None]
         filter_labels = []
         for filter_id, filter_value in active_filters:
-            for filter_set in self._filters:
+            for filter_set in self._filter_sets:
                 if filter_set.id() == filter_id:
                     break
             else:
