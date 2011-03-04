@@ -235,10 +235,15 @@ class DualForm(Form, Refreshable):
         self._main_form.show()
 
     def hide(self):
-        self._side_form.hide()
-        self._main_form.hide()
-        self._splitter.Show(False)
-        self._splitter.Enable(False)
+        orig_hide_form_requested = self._hide_form_requested
+        self._hide_form_requested = True
+        try:
+            self._side_form.hide()
+            self._main_form.hide()
+            self._splitter.Show(False)
+            self._splitter.Enable(False)
+        finally:
+            self._hide_form_requested = orig_hide_form_requested
 
     def save(self):
         self._main_form.save()
@@ -679,7 +684,7 @@ class MultiForm(Form, Refreshable):
                 busy_cursor(False)
 
     def _on_page_change(self, event=None):
-        if self._leave_form_requested:
+        if self._leave_form_requested or self._hide_form_requested or not self.IsShown():
             # Prevent (possibly expensive) database queries on NotebookEvent
             # called when the form is being closed asynchronously from _on_idle
             # method.
@@ -774,12 +779,17 @@ class MultiForm(Form, Refreshable):
         self._notebook.Show(True)
 
     def hide(self):
-        for form in self._forms:
-            if form and form.initialized():
-                form.hide()
-                form._release_data()
-        self._notebook.Show(False)
-        self._notebook.Enable(False)
+        orig_hide_form_requested = self._hide_form_requested
+        self._hide_form_requested = True
+        try:
+            for form in self._forms:
+                if form and form.initialized():
+                    form.hide()
+                    form._release_data()
+            self._notebook.Show(False)
+            self._notebook.Enable(False)
+        finally:
+            self._hide_form_requested = orig_hide_form_requested
 
     def set_callback(self, kind, function):
         if kind != ListForm.CALL_MODIFICATION:

@@ -168,6 +168,7 @@ class Window(wx.Panel, Restorable):
         assert isinstance(parent, wx.Window), parent
         wx.Panel.__init__(self, parent, wx.NewId())
         self._parent = parent
+        self._hide_form_requested = False
         
     def _exit_check(self):
         "Proveï kontrolu pøed uzavøením a vra» pravdu, je-li mo¾no pokraèovat."
@@ -216,10 +217,15 @@ class Window(wx.Panel, Restorable):
 
     def hide(self):
         """Uèiò toto okno neaktivním a skryj jej."""
-        self.defocus()
-        self.Enable(False)
-        self.Show(False) # nutné i pøed uzavøením
-
+        orig_hide_form_requested = self._hide_form_requested
+        self._hide_form_requested = True
+        try:
+            self.defocus()
+            self.Enable(False)
+            self.Show(False) # nutné i pøed uzavøením
+        finally:
+            self._hide_form_requested = orig_hide_form_requested
+            
     def focus(self):
         """Nastav focus tomuto oknu."""
         if Window._focused_window:
@@ -231,7 +237,6 @@ class Window(wx.Panel, Restorable):
         """Zru¹ focus tomuto oknu."""
         if Window._focused_window is self:
             Window._focused_window = None
-    
 
             
 def focused_window():
