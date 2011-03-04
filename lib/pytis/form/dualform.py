@@ -665,11 +665,18 @@ class MultiForm(Form, Refreshable):
     def _init_subform(self, form):
         if form.initialized():
             return
-        form.full_init()
-        form._release_data()
-        for kind, function in self._form_callbacks_args:
-            if hasattr(form, kind):
-                form.set_callback(kind, function)
+        busy = is_busy_cursor()
+        if not busy:
+            busy_cursor(True)
+        try:
+            form.full_init()
+            form._release_data()
+            for kind, function in self._form_callbacks_args:
+                if hasattr(form, kind):
+                    form.set_callback(kind, function)
+        finally:
+            if not busy:
+                busy_cursor(False)
 
     def _on_page_change(self, event=None):
         if self._leave_form_requested:
