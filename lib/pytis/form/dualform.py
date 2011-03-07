@@ -321,10 +321,9 @@ class DualForm(Form, Refreshable):
             self._side_form.refresh()
 
     def close(self, force=False):
-        if self._side_form is not None:
-            # Prevent certain actions to happen in the side form when the form is
-            # being closed.
-            self._side_form._leave_form_requested = True
+        # Prevent certain actions to happen in the side form when the form is
+        # being closed.
+        self._side_form._leave_form_requested = True
         return super(DualForm, self).close(force=force)
 
         
@@ -674,6 +673,13 @@ class MultiForm(Form, Refreshable):
         if not busy:
             busy_cursor(True)
         try:
+            if form.initialized():
+                # This check is not redundant!  Even when the form is reported
+                # as unitialized in the first call, it may be already
+                # initialized here.  Don't ask me why, I suspect busy_cursor
+                # may invoke some event that causes form initialization, but
+                # who knows...
+                return
             form.full_init()
             form._release_data()
             for kind, function in self._form_callbacks_args:
