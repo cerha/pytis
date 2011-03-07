@@ -417,7 +417,11 @@ class SimpleFormattedTextFieldExporter(MultilineFieldExporter):
                     i += 1
             return line
         lines = [convert_line(l) for l in text.splitlines()]
-        converted_text = string.join(lines, '<br>\n')
+        # Join lines and substitute links for HTML links
+        converted_text = re.sub(
+            r'http(s?)://(.+?)([\),.:;?!\]]?(\s|&nbsp;|&lt;|&gt;|<br/?>|$))',
+            r'<a href="http\1://\2">http\1://\2</a>\3',
+            string.join(lines, '<br>\n'))
         return context.generator().div(converted_text)
 
 class DateTimeFieldExporter(TextFieldExporter):
