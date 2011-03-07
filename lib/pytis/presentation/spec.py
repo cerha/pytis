@@ -643,7 +643,6 @@ class Filter(Profile):
     
     """
     def __init__(self, id, name, condition=None):
-        assert condition is not None
         super(Filter, self).__init__(id, name, filter=condition)
         
     def condition(self):
