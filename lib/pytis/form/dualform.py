@@ -265,7 +265,6 @@ class DualForm(Form, Refreshable):
             self._side_form.close(force=True)
         except:
             pass
-        self._side_form = None
         self._main_form = None
         self._side_form = None
         self._active_form = None
@@ -322,9 +321,10 @@ class DualForm(Form, Refreshable):
             self._side_form.refresh()
 
     def close(self, force=False):
-        # Prevent certain actions to happen in the side form when the form is
-        # being closed.
-        self._side_form._leave_form_requested = True
+        if self._side_form is not None:
+            # Prevent certain actions to happen in the side form when the form is
+            # being closed.
+            self._side_form._leave_form_requested = True
         return super(DualForm, self).close(force=force)
 
         
