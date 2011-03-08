@@ -80,7 +80,6 @@ def data_table(resolver, name, condition=None, sorting=None,
     import config
     data = data_spec.create(dbconnection_spec=config.dbconnection)
     presented_row = pytis.presentation.PresentedRow(view.fields(), data, None, singleline=True)
-    import pytis.form
     columns = []
     for cid in view.columns():
         f = view.field(cid)
