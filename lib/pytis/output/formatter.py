@@ -18,6 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import unicode_literals
+
 """Formátování výstupu.
 
 Modul má na starost formátování textu a dat pro výstup dle zadaných šablon.
@@ -44,9 +46,10 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 
 """
 
-import functools
-import config
 import cStringIO
+import codecs
+import config
+import functools
 import operator
 import os
 import re
@@ -1038,7 +1041,7 @@ class LoutFormatter(Tmpdir):
                             cc.append(f)
                         except:
                             pass
-                    in_stream = Pipe(cc=cc)
+                    in_stream = Pipe(cc=cc, encoder=codecs.getencoder('iso-8859-2'))
                     if __debug__: log(DEBUG, 'Start zpracování specifikace')
                     try:
                         self._process(in_stream)

@@ -172,7 +172,7 @@ class Pipe:
     #   okamžik
     # - zámek _read_lock smí uvolnit pouze držitel zámku _read_lock_lock
     
-    def __init__(self, cc=()):
+    def __init__(self, cc=(), encoder=None, decoder=None):
         """Inicializuj rouru.
 
         Argumenty:
@@ -180,6 +180,8 @@ class Pipe:
           cc -- stream nebo sekvence streamů, do kterých budou kopírována
             všechna do roury zapisovaná data; bude-li volána metoda 'close()',
             budou uzavřeny i tyto streamy
+          encoder -- if not None, it is an encoder function for output
+          decoder -- if not None, it is a decoder function for input
 
         """
         self._cc = xtuple(cc)
@@ -190,6 +192,8 @@ class Pipe:
         self._empty_lock = thread.allocate_lock()
         self._empty_lock.acquire()
         self._empty_lock_lock = thread.allocate_lock()
+        self._encoder = encoder
+        self._decoder = decoder
 
     def _free_empty_lock(self):
         self._empty_lock_lock.acquire()
@@ -209,6 +213,8 @@ class Pipe:
         """
         if self._closed:
             raise ValueError, "I/O operation on closed file"
+        if self._encoder is not None:
+            string_ = self._encoder(string_)[0]
         def lfunction():
             buffer = self._buffer
             if not buffer or len(buffer[-1]) > 4096:
@@ -253,7 +259,10 @@ class Pipe:
                 return None
             else:
                 return result
-        return with_lock(self._read_lock, lfunction)
+        result = with_lock(self._read_lock, lfunction)
+        if self._decoder is not None:
+            result = self._decoder(result)[0]
+        return result
 
     def close(self):
         """Stejné jako v případě třídy 'file'.
