@@ -1227,42 +1227,44 @@ def GE(x, y, ignore_case=False):
     return Operator('GE', x, y, ignore_case=ignore_case, translation=t)
 
 def NOT(x):
-    """Podmínkový operátor 'NOT' negace.
+    """Logical operator 'NOT' for logical negation.
 
-    Argumenty:
+    Arguments:
 
-      x -- operátor
+      x -- operand as 'Operator' instance
 
-    Tento operátor je primitivní.
-
+    This operator is primitive.
+      
     """
     return Operator('NOT', x)
 
 def AND(*args):
-    """Podmínkový operátor 'AND' konjunkce.
+    """Logical operator 'AND' for logical conjunction.
 
-    Argumenty:
+    Arguments:
 
-      args -- sekvence operátorù (mù¾e být i prázdná)
+      args -- sequence of operands as 'Operator' instances (may be also empty).
+        The operands may also be None in which case they are ignored.
 
-    Operátor je komutativní, na poøadí argumentù tedy nezále¾í.
+    The operator is commutative so the order of operands doesn't matter.
 
-    Tento operátor je primitivní.
+    This operator is primitive.
       
     """
-    return Operator('AND', *args)
+    return Operator('AND', *[arg for arg in args if arg is not None])
 
 def OR(*args):
-    """Podmínkový operátor disjunkce.
+    """Logical operator 'OR' for logical disjunction.
 
-    Argumenty:
+    Arguments:
 
-      args -- sekvence operátorù (mù¾e být i prázdná)
+      args -- sequence of operands as 'Operator' instances (may be also empty).
 
-    Operátor je komutativní, na poøadí argumentù tedy nezále¾í.
+    The operator is commutative so the order of operands doesn't matter.
 
-    Tento operátor je vyjádøený pomocí jiných operátorù.
-
+    This operator is not primitive - it may be expressed by a combination of
+    other operators.
+      
     """
     t = NOT(apply(AND, map(NOT, args)))
     return Operator('OR', *args, **{'translation': t})
