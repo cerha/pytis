@@ -100,7 +100,7 @@ pytis.FormHandler = Class.create({
 			var original_value = field.value();
 			for (var key in cdata) {
 			    var value = cdata[key];
-			    if (key == 'enumeration')   field.set_enumeration(value);
+			    if (key == 'enumeration')   field.set_enumeration(value, cdata['links']);
 			    else if (key == 'value')    field.set_value(value);
 		            else if (key == 'editable') field.set_editability(value);
 			    else if (key == 'filter')   this._filters[id] = value;
@@ -166,7 +166,7 @@ pytis.Field = Class.create({
 	this._ctrl.value = value;
     },
     
-    set_enumeration: function(value) {
+    set_enumeration: function(value, links) {
 	// Update enumeration controls (only for enumeration fields).
     }
 
@@ -203,7 +203,7 @@ pytis.RadioField = Class.create(pytis.Field, {
 pytis.ChoiceField = Class.create(pytis.Field, {
     // Specific handler for codebook field represented by HTML select control.
 
-    set_enumeration: function(value) {
+    set_enumeration: function(value, links) {
 	var options = this._ctrl.options;
 	var selected = $F(this._ctrl);
 	for (var i=options.length-1; i>=0; --i) {
@@ -254,7 +254,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 	});
     },
 
-    set_enumeration: function(value) {
+    set_enumeration: function(value, links) {
 	var elem = this._element;
 	var descendants = elem.immediateDescendants();
 	for (var i=0; i<(descendants.length); i++) {
@@ -272,6 +272,12 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 					     'name': this._id,
 					     'id': id}));
 	    div.insert(new Element('label', {'for': id}).update(text));
+	    var link = (links ? links[item[0]] : null);
+	    if (link) {
+		div.insert('&nbsp;[');
+		div.insert(new Element('a', link).update(item[0]));
+		div.insert(']');
+	    }
 	    elem.insert(div);
 	}
     }

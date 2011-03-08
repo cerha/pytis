@@ -542,7 +542,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return result
 
     @classmethod
-    def ajax_response(cls, req, row, layout, errors, translator):
+    def ajax_response(cls, req, row, layout, errors, translator, uri_provider=None):
         """Return the AJAX request response as a JSON encoded data structure.
 
         Arguments:
@@ -554,6 +554,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             (field_id, error_message).
           translator -- 'lcg.Translator' instance used for localization of
             computed field values (such as dates, numbers, etc).
+          uri_provider -- URI provider function same as in the Form constructor
+            argument of the same name.
 
         This method acts as the server side counter-part of the client side
         code defined in the pytis form JavaScript code in 'pytis.js'.  The
@@ -590,9 +592,23 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     old_filter = filters[fid]
                     new_filter = cls._op2str(row.runtime_filter(fid))
                     if new_filter != old_filter:
+                        enumeration = [(value, translator.translate(label))
+                                       for value, label in row.enumerate(fid)]
                         fdata['filter'] = new_filter
-                        fdata['enumeration'] = [(value, translator.translate(label))
-                                                for value, label in row.enumerate(fid)]
+                        fdata['enumeration'] = enumeration
+                        if uri_provider and isinstance(row.type(fid), pd.Array):
+                            func = uri_provider(row, fid, type=UriType.LINK)
+                            def link(value):
+                                lnk = func(value)
+                                if isinstance(lnk, Link):
+                                    return dict(href=lnk.uri(),
+                                                title=translator.translate(lnk.title()),
+                                                target=lnk.target())
+                                else:
+                                    return dict(href=lnk)
+                            if func:
+                                fdata['links'] = dict([(value, link(value))
+                                                       for (value, display) in enumeration])
         for fid, error in errors:
             if fields.has_key(fid):
                 fields[fid]['error'] = error

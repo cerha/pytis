@@ -592,6 +592,9 @@ class ChecklistFieldExporter(CodebookFieldExporter):
         else:
             uri_provider = None
         def checkbox(i, value, strval, display):
+            # Beware!  Any changes in checkbox rendering made here should be
+            # also reflected in the javascript code rendering the items
+            # dynamically on form changes.
             checkbox_id = id+'-'+str(i)
             checked = value in values
             if readonly:
