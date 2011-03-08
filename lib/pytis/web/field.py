@@ -586,6 +586,11 @@ class ChecklistFieldExporter(CodebookFieldExporter):
     def _editor(self, context, id=None, name=None, disabled=None, readonly=False, cls=None):
         g = context.generator()
         values = [v.value() for v in self._value().value() or ()]
+        # URI provider must return a function of the array value for array fields.
+        if self._uri_provider:
+            uri_provider = self._uri_provider(self._row, self._field.id, type=UriType.LINK)
+        else:
+            uri_provider = None
         def checkbox(i, value, strval, display):
             checkbox_id = id+'-'+str(i)
             checked = value in values
@@ -593,9 +598,18 @@ class ChecklistFieldExporter(CodebookFieldExporter):
                 onchange = "this.checked=" + (checked and 'true' or 'false')
             else:
                 onchange = None
-            return (g.checkbox(id=checkbox_id, name=name, value=strval, checked=checked,
-                               disabled=disabled, onchange=onchange) +'&nbsp;'+
-                    g.label(display, checkbox_id))
+            result = (g.checkbox(id=checkbox_id, name=name, value=strval, checked=checked,
+                                 disabled=disabled, onchange=onchange) +'&nbsp;'+
+                      g.label(display, checkbox_id))
+            if uri_provider:
+                uri = uri_provider(value)
+                if uri:
+                    if type(uri) in (str, unicode):
+                        link = g.link(strval, uri)
+                    else:
+                        link = g.link(strval, uri.uri(), title=uri.title(), target=uri.target())
+                    result += '&nbsp;['+ link +']'
+            return result
         checkboxes = [g.div(checkbox(i, val, strval, display) )
                       for i, (val, strval, display) in enumerate(self._enumeration(context))]
         return g.div(checkboxes, id=id, cls='checkbox-group')
