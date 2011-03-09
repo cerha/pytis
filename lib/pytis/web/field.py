@@ -289,7 +289,9 @@ class FieldExporter(object):
                 value = g.img(src, alt=value) #, cls=cls)
             link = self._uri_provider(self._row, fid, type=UriType.LINK)
             if link:
-                if type(link) in (str, unicode):
+                if callable(link):
+                    pass # Ignore array item links here
+                elif type(link) in (str, unicode):
                     value = g.link(value, link)
                 else:
                     value = g.link(value, link.uri(), title=link.title(), target=link.target())
@@ -617,7 +619,10 @@ class ChecklistFieldExporter(CodebookFieldExporter):
                       for i, (val, strval, display) in enumerate(self._enumeration(context))]
         return g.div(checkboxes, id=id, cls='checkbox-group')
     
-        
+    def _display(self, context):
+        return None
+
+
 class FileFieldExporter(TextFieldExporter):
     # Don't confuse with BinaryFieldExporter! Maybe deprecate?
     
