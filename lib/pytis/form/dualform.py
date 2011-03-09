@@ -628,6 +628,8 @@ class MultiForm(Form, Refreshable):
     
     def _full_init(self, *args, **kwargs):
         self._form_callbacks_args = []
+        self._current_notebook_selection = -1
+        self._old_notebook_selection = -1
         super(MultiForm, self)._full_init(*args, **kwargs)
 
     def _create_view_spec(self):
@@ -650,11 +652,11 @@ class MultiForm(Form, Refreshable):
                 form = wx.Panel(nb)
             nb.AddPage(form, title)
         # Select the first available form.
+        self._last_selection = None
         for i, form in enumerate(forms):
             if form:
-                self._notebook.SetSelection(i)
+                self._set_notebook_selection(i)
                 break
-        self._last_selection = None
         wx_callback(wx.EVT_NOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
         wx_callback(wx.EVT_LEFT_DOWN, nb, self._on_mouse)
         wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_mouse)
@@ -689,6 +691,15 @@ class MultiForm(Form, Refreshable):
             if not busy:
                 busy_cursor(False)
 
+    def _set_notebook_selection(self, i):
+        # Don't use wx.Notebook.GetSelection to query current selection, it may
+        # return wrong values, causing undesired database queries.
+        self._old_notebook_selection = self._current_notebook_selection
+        self._current_notebook_selection = i
+        self._notebook.ChangeSelection(i)
+        if self._old_notebook_selection != self._current_notebook_selection:
+            self._on_page_change()
+        
     def _on_page_change(self, event=None):
         if self._leave_form_requested or self._hide_form_requested or not self.IsShown():
             # Prevent (possibly expensive) database queries on NotebookEvent
@@ -697,9 +708,11 @@ class MultiForm(Form, Refreshable):
             return
         if event:
             #event.Skip()
-            selection = event.GetSelection()
+            selection = self._current_notebook_selection = event.GetSelection()
+            old_selection = event.GetOldSelection()
         else:
-            selection = self._notebook.GetSelection()
+            selection = self._current_notebook_selection
+            old_selection = self._old_notebook_selection
         if selection != -1:
             form = self._forms[selection]
             if form:
@@ -708,7 +721,6 @@ class MultiForm(Form, Refreshable):
                 if row is not None:
                     form.on_selection(row)
                 form.focus()
-                old_selection = event.GetOldSelection()
                 if old_selection != -1:
                     old_form = self._forms[old_selection]
                     if old_form and old_form is not form and old_form.initialized():
@@ -763,13 +775,12 @@ class MultiForm(Form, Refreshable):
 
     def _cmd_next_form(self, back=False):
         d = back and -1 or 1
-        i = self._notebook.GetSelection() + d
+        i = self._current_notebook_selection + d
         while i >= 0 and i < len(self._forms):
             form = self._forms[i]
             if form:
                 self._init_subform(form)
-                self._notebook.SetSelection(i)
-                self._on_page_change()
+                self._set_notebook_selection(i)
                 return
             i += d
         msg = back and _("®ádnı pøedchozí aktivní formuláø") or _("®ádnı dal¹í aktivní formuláø")
@@ -807,7 +818,7 @@ class MultiForm(Form, Refreshable):
         
     def active_form(self):
         """Return the currently active form of this form group."""
-        selection = self._notebook.GetSelection()
+        selection = self._current_notebook_selection
         if selection != -1:
             form = self._forms[selection]
             self._init_subform(form)
@@ -830,7 +841,7 @@ class MultiForm(Form, Refreshable):
         active = self._saved_active_form
         if active:
             self._init_subform(active)
-            self._notebook.SetSelection(self._forms.index(active))
+            self._set_notebook_selection(self._forms.index(active))
             active.restore()
 
     def focus(self):
@@ -916,7 +927,7 @@ class MultiSideForm(MultiForm):
         for i, form in enumerate(self._forms):
             if form and form.binding().id() == id:
                 self._init_subform(form)
-                self._notebook.SetSelection(i)
+                self._set_notebook_selection(i)
                 return True
         message(_("Po¾adovanı vedlej¹í formuláø není dostupnı"), beep_=True)
         return False
