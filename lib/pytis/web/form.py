@@ -71,7 +71,16 @@ class Form(lcg.Content):
             the URI is requested.  It may be None when requesting URI for the
             whole record.  The later argument 'type' will always be one of
             'UriType' constants.  It is used for distinction of the purpose,
-            for which the uri us used (eg. for a link or an image src).
+            for which the uri us used (eg. for a link or an image src).  The
+            return value may be None for fields which don't link anywhere,
+            string URI if the field links to that URI or a 'pytis.web.Link'
+            instance if it is necessary to specify also some extended link
+            attributes, such as title (tooltip text) or target (such as
+            _blank).  For array fields (when 'cid' belongs to a field of type
+            'pytis.data.Array'), the return value must be a function of one
+            argument -- the internal python value of the field's inner type.
+            The function will return an URI or Link instance as above for given
+            array value.
           hidden -- hardcoded hidden form fields as a sequence of pairs (name,
             value).
           name -- form name as a string or None.  This name will be sent as a
