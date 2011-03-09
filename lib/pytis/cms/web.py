@@ -668,6 +668,11 @@ class DataSubstitutionProvider(wiking.PytisModule, SubstitutionProvider):
                 else:
                     self._row = pd.Row(())
             return self._row[key].export()
+        def get(self, key, default=None):
+            try:
+                return self[key]
+            except KeyError:
+                return default
 
 
 class Themes(wiking.PytisModule):
