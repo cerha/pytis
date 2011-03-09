@@ -1695,29 +1695,28 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 column_type = self._row.type(self._columns[row].id())
                 return self._aggregation_valid(available_aggregations[col-1][0], column_type)
-        saved_selection = self._get_state_param('aggregation-selection', cls=tuple, item_cls=tuple)
-        # Check saved selection item length to ignore the old format of saved selection.
-        if saved_selection and len(saved_selection[0]) == 2:
-            saved_selection_dict = dict(saved_selection)
-        else:
-            saved_selection_dict = {}
+        group_by_columns = self._get_state_param('group-by-columns', (), cls=tuple)
+        aggregation_columns = self._get_state_param('aggregation-columns', (), cls=tuple, item_cls=tuple)
         selection = run_dialog(CheckMatrixDialog, title=_("Zvolte sloupce..."),
                                message=_("Zvolte sloupce agregaèního náhledu"),
                                columns=[_("Seskupování")]+[x[1] for x in available_aggregations],
                                rows=[column.label() for column in self._columns],
-                               values=[saved_selection_dict.get(column.id(), [False for x in [0]+available_aggregations])
+                               values=[[column.id() in group_by_columns] + 
+                                       [(column.id(), agg) in aggregation_columns
+                                        for agg, label in available_aggregations]
                                        for column in self._columns],
                                enabled=enabled)
         if selection is not None:
-            selection_to_save = tuple([(column.id(), tuple(x))
-                                       for column, x in zip(self._columns, selection)])
-            self._set_state_param('aggregation-selection', selection_to_save)
-            group_by_columns = [col.id() for col, row in zip(self._columns, selection) if row[0]]
+            group_by_columns = []
             aggregation_columns = []
             for col, row in zip(self._columns, selection):
+                if row[0]:
+                    group_by_columns.append(col.id())
                 for (op, label), checked in zip(available_aggregations, row[1:]):
                     if checked:
                         aggregation_columns.append((col.id(), op))
+            self._set_state_param('group-by-columns', tuple(group_by_columns))
+            self._set_state_param('aggregation-columns', tuple(aggregation_columns))
             # Compose the aggregated data object inner condition from the
             # current user filter and the hardcoded condition from
             # specification.
