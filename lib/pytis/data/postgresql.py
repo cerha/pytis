@@ -787,7 +787,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             the column binding corresponding to the column to be aggregated and
             NAME is the result column name (string) that can be used to refer to
             the aggregate column
-          column_groups -- sequence of column ids to be groupped
+          column_groups -- sequence of columns for the GROUP BY clause.  Each
+            item is either a string identifier of an existing column or a tuple
+            (NAME, TYPE, FUNCTION_NAME, *FUNCTION_ARGS), where NAME is the
+            string identifier of the column, TYPE is a 'pytis.data.Type'
+            instance of the resulting column type, FUNCTION_NAME is a string
+            containing the name of the database function returning the value
+            used for grouping, and FUNCTION_ARGS are arguments of the function.
+            Each of FUNCTION_ARGS can be either a string denoting another table
+            column name or a 'Value' instance denoting particular value of the
+            argument.
 
         If 'column_groups' is not 'None' it defines the set of grouped columns
         as in the GROUP BY part of an SQL select statement.  If 'operations' is
@@ -805,13 +814,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         base non-aggregated columns of the table thus allowing you to filter
         the underlying data rows before aggregations get applied.
 
-        """
+        """        
         self._pdbb_table_schemas = {}
         self._pdbb_function_schemas = {}
         super(PostgreSQLStandardBindingHandler, self).__init__(
             bindings=bindings, ordering=ordering, **kwargs)
         self._pdbb_operations = operations
-        self._pdbb_column_groups = column_groups
+        self._pdbb_column_groups = []
+        if column_groups is None:
+            self._pdbb_column_groups = None
+        else:
+            for c in column_groups:
+                if isinstance(c, basestring):
+                    c = (c, None, None)
+                self._pdbb_column_groups.append(c)
         self._pdbb_create_sql_commands()
         
     def _pdbb_tabcol(self, table_name, column_name, column_id):
@@ -1082,13 +1098,23 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Hotovo
         return columns, tuple(key)
 
-    def _pdbb_sql_column_list_from_names(self, column_names, full_text_handler=None, operations=None):
+    def _pdbb_sql_column_list_from_names(self, column_names, full_text_handler=None, operations=None,
+                                         column_groups=None):
         bindings = [self._db_column_binding(name) for name in column_names]
-        return self._pdbb_sql_column_list(bindings, full_text_handler, operations=operations)
+        if column_groups:
+            column_groups = [g for g in column_groups if g[0] in column_names]
+        return self._pdbb_sql_column_list(bindings, full_text_handler, operations=operations,
+                                          column_groups=column_groups)
         
-    def _pdbb_sql_column_list(self, bindings, full_text_handler=None, operations=None):
+    def _pdbb_sql_column_list(self, bindings, full_text_handler=None, operations=None, column_groups=None):
         column_names = [self._pdbb_btabcol(b, full_text_handler=full_text_handler, operations=operations)
                         for b in bindings if b.id()]
+        if column_groups:
+            for g in column_groups:
+                function_name = g[2]
+                if g[2] is not None:
+                    call = self._pdbb_column_group_call(g)
+                    column_names.append('%s as %s' % (call, g[0],))
         return string.join(column_names, ', ')
     
     def _pdbb_full_text_handler(self, binding):
@@ -1104,6 +1130,17 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             result = "''"
         return result
+    
+    def _pdbb_column_group_call(self, group):
+        args = []
+        for a in group[3:]:
+            if isinstance(a, basestring):
+                args.append(a)
+            elif isinstance(a, Value):
+                args.append(self._pg_value(a))
+            else:
+                raise ProgramError("Invalid group function argument", group, a)
+        return '%s(%s)' % (group[2], string.join(args, ', '),)
         
     def _pdbb_create_sql_commands(self):
         """Vytvoø ¹ablony SQL pøíkazù pou¾ívané ve veøejných metodách."""
@@ -1114,10 +1151,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Pøiprav parametry
         operations = (self._pdbb_operations or [])
         aggregate_columns = [o[2] for o in operations]
+        group_columns = [c[0] for c in (self._pdbb_column_groups or []) if c[2] is None]
         if self._pdbb_column_groups is None and self._pdbb_operations is None:
             filtered_bindings = bindings
         else:
-            group_columns = [c for c in (self._pdbb_column_groups or [])]
             filtered_bindings = []
             for b in bindings:
                 if b.id() in group_columns:
@@ -1142,12 +1179,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_filtered_bindings = filtered_bindings
         column_list = self._pdbb_sql_column_list(filtered_bindings,
                                                  full_text_handler=self._pdbb_full_text_handler,
-                                                 operations=self._pdbb_operations)
+                                                 operations=self._pdbb_operations,
+                                                 column_groups=self._pdbb_column_groups)
         if self._pdbb_column_groups:
             groupby_columns = list(self._distinct_on or [])
             for b in bindings:
-                if b.id() in self._pdbb_column_groups:
+                if b.id() in group_columns:
                     groupby_columns.append(self._pdbb_btabcol(b))
+            for g in self._pdbb_column_groups:
+                if g[2] is not None:
+                    c = g[0]
+                    assert c not in groupby_columns, ("group column duplicate", g,)
+                    groupby_columns.append(self._pdbb_column_group_call(g))
             groupby = 'group by %s' % (string.join(groupby_columns, ','))
         else:
             groupby = ''
@@ -1647,7 +1690,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         """Retrieve and return raw data corresponding to 'key_value'."""
         args = {'key': key_value, 'supplement': supplement}
         if columns:
-            args['columns'] = self._pdbb_sql_column_list_from_names(columns, operations=self._pdbb_operations)
+            args['columns'] = self._pdbb_sql_column_list_from_names(columns, operations=self._pdbb_operations,
+                                                                    column_groups=self._pdbb_column_groups)
         self._pg_make_arguments(args, arguments)
         query = self._pdbb_command_row.format(args)
         return self._pg_query(query, transaction=transaction)
@@ -1904,7 +1948,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             args['columns'] = self._pdbb_select_column_list = \
                 self._pdbb_sql_column_list_from_names(columns,
                                                       full_text_handler=self._pdbb_full_text_handler,
-                                                      operations=self._pdbb_operations)
+                                                      operations=self._pdbb_operations,
+                                                      column_groups=self._pdbb_column_groups)
         else:
             self._pdbb_select_column_list = None
         args['selection'] = self._pdbb_selection_number = \
@@ -2508,7 +2553,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             filtered_columns = [c for c in self._columns if c.id() in binding_ids]
         else:
             filtered_columns = self._columns
-        self._pg_make_row_template = self._pg_create_make_row_template(filtered_columns)
+        self._pg_make_row_template = \
+          self._pg_create_make_row_template(filtered_columns,
+                                            column_groups=getattr(self, '_pdbb_column_groups'))
         self._pg_make_row_template_limited = None
         # NASTAVENÍ CACHE
         # Proto¾e pro rùzné parametry (rychlost linky mezi serverem a klientem,
@@ -2556,8 +2603,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     # Pomocné metody
 
-    def _pg_create_make_row_template(self, columns):
+    def _pg_create_make_row_template(self, columns, column_groups=None):
         template = []
+        if column_groups:
+            columns = columns + [ColumnSpec(g[0], g[1]) for g in column_groups if g[2] is not None]
         for c in columns:
             id_ = c.id()
             type = c.type()

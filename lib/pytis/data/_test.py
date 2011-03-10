@@ -1947,7 +1947,9 @@ class DBDataAggregated(DBDataDefault):
                       B('madati', 'denik', 'madati'),
                       )
         operations = ((D.AGG_SUM, 'madati', 'madatisum',), (D.AGG_COUNT, 'cislo', 'count',),)
-        column_groups = ('datum', 'castka',)
+        column_groups = ('datum',
+                         'castka',
+                         ('mesic', pytis.data.Float(), 'date_part', sval('month'), 'datum',))
         data = D(denik_spec,
                  denik_spec[0],
                  self._dconnection,
