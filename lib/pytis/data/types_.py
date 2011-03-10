@@ -2146,3 +2146,84 @@ class Value(_Value):
 
 class WMValue(_Value):
     """Reprezentace specifikace pro wildcard match daného typu."""
+
+
+
+# Shorthand functions for values
+
+def sval(value):
+    """Return 'Value' instance of type 'String' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'Value' instance, basestring
+
+    """
+    assert value is None or isinstance(value, basestring)
+    return Value(String(), value)
+
+def ival(value):
+    """Return 'Value' instance of type 'Integer' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'Value' instance, integer
+
+    """
+    assert value is None or isinstance(value, int)
+    return Value(Integer(), value)
+
+def fval(value):
+    """Return 'Value' instance of type 'Float' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'Float' instance, float
+
+    """
+    assert value is None or isinstance(value, float)
+    return Value(Float(), value)
+
+def bval(value):
+    """Return 'Value' instance of type 'Boolean' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'Value' instance, basestring
+
+    """
+    assert value is None or isinstance(value, bool)
+    return Value(Boolean(), value)
+
+def dval(value):
+    """Return 'Value' instance of type 'Date' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'Date' instance, datetime.date
+
+    """
+    assert value is None or isinstance(value, datetime.date)
+    return Value(Date(), value)
+
+def dtval(value):
+    """Return 'Value' instance of type 'DateTime' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'DateTime' instance, datetime.datetime
+
+    """
+    assert value is None or isinstance(value, datetime.datetime)
+    return Value(DateTime(), value)
+
+def tval(value):
+    """Return 'Value' instance of type 'Time' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'Value' instance, datetime.time
+
+    """
+    assert value is None or isinstance(value, datetime.time)
+    return Value(Time(), value)

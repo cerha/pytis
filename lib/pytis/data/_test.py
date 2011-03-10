@@ -27,6 +27,7 @@ import unittest
 
 from pytis.util import *
 import pytis.data
+from pytis.data import bval, fval, ival, sval
 import dbdata
 
 _connection_data = {'database': 'test'}
@@ -370,7 +371,7 @@ class DataEnumerator(unittest.TestCase):
         S = pytis.data.String()
         B = pytis.data.Boolean()
         V = pytis.data.Value
-        data = [pytis.data.Row((('x', V(S, x)), ('y', V(S, y)), ('z', V(B, z))))
+        data = [pytis.data.Row((('x', sval(x)), ('y', sval(y)), ('z', bval(z))))
                 for x,y,z in (('1','a',True), ('2','b',True), ('3','c',False))]
         d = pytis.data.DataFactory(pytis.data.MemData,
                                    (C('x', S), C('y', S), C('z', B)),
@@ -467,9 +468,9 @@ class Row(unittest.TestCase):
         r = pytis.data.Row()
         assert len(r) == 0, 'invalid length'
     def test_nonempty(self):
-        v1 = pytis.data.Value(pytis.data.Integer(), 1)
-        v2 = pytis.data.Value(pytis.data.String(), 'prvni prvek')
-        v3 = pytis.data.Value(pytis.data.Integer(), 2)
+        v1 = ival(1)
+        v2 = sval('prvni prvek')
+        v3 = ival(2)
         r = pytis.data.Row((('poradi', v1), ('popis', v2)))
         assert len(r) == 2, 'invalid length'
         assert r[0] == v1 and r[1] == v2, 'numeric indexing failed'
@@ -490,25 +491,23 @@ class Row(unittest.TestCase):
         assert x1 == v2 and x2 == v1, 'get slice not working'
         assert r[0:1][0] == v2 and r[1:2][0] == v1, 'get slice not working'
     def test_columns(self):
-        v1 = pytis.data.Value(pytis.data.Integer(), 1)
-        v2 = pytis.data.Value(pytis.data.String(), 'prvni prvek')
-        v3 = pytis.data.Value(pytis.data.Integer(), 2)
+        v1 = ival(1)
+        v2 = sval('prvni prvek')
+        v3 = ival(2)
         r = pytis.data.Row((('poradi', v1), ('popis', v2), ('cislo', v3)))
         assert r.columns(()) == ()
         assert r.columns(('poradi', 'cislo')) == (v1, v3)
     def test_update(self):
-        v1 = pytis.data.Value(pytis.data.Integer(), 1)
-        v2 = pytis.data.Value(pytis.data.String(), 'prvni prvek')
+        v1 = ival(1)
+        v2 = sval('prvni prvek')
         r = pytis.data.Row((('poradi', v1), ('popis', v2)))
-        u1 = pytis.data.Value(pytis.data.Integer(), 8)
+        u1 = ival(8)
         r2 = pytis.data.Row((('poradi', u1),))
         r.update(r2)
         assert r[0] == u1 and r[1] == v2, 'row update failed'
     def test_append(self):
-        V = pytis.data.Value
-        I = pytis.data.Integer()
-        r = pytis.data.Row((('x', V(I, 1)), ('y', V(I,2))))
-        r.append('z', V(I, 3))
+        r = pytis.data.Row((('x', ival(1)), ('y', ival(2))))
+        r.append('z', ival(3))
         assert r['x'].value() == 1
         assert r['y'].value() == 2
         assert r['z'].value() == 3
@@ -540,8 +539,8 @@ class Data(unittest.TestCase):
         assert d.update(v, r) == (None, False), 'update not working'
         assert d.delete(v) == 0, 'delete not working'
     def test_row_key(self):
-        v1 = pytis.data.Value(pytis.data.Integer(), 1)
-        v2 = pytis.data.Value(pytis.data.String(), 'xxx')
+        v1 = ival(1)
+        v2 = sval('xxx')
         row = pytis.data.Row((('foo', v1), ('bar', v2)))
         assert self._data.row_key(row) == (v1,)
 tests.add(Data)
@@ -568,16 +567,14 @@ class MemData(unittest.TestCase):
         c = self._data.select(condition=cond)
         assert c == count, "Expected %d, got %d" % (count, c)
     def test_conditions(self):
-        i = lambda v: pytis.data.Value(pytis.data.Integer(), v)
-        s = lambda v: pytis.data.Value(pytis.data.String(), v)
-        self._check_condition(pytis.data.EQ('a', s('AA')), 0)
-        self._check_condition(pytis.data.EQ('a', s('AA'), ignore_case=True), 1)
-        self._check_condition(pytis.data.NE('x', i(5)), 4)
-        self._check_condition(pytis.data.GT('x', i(3)), 4)
-        self._check_condition(pytis.data.LE('x', i(3)), 3)
+        self._check_condition(pytis.data.EQ('a', sval('AA')), 0)
+        self._check_condition(pytis.data.EQ('a', sval('AA'), ignore_case=True), 1)
+        self._check_condition(pytis.data.NE('x', ival(5)), 4)
+        self._check_condition(pytis.data.GT('x', ival(3)), 4)
+        self._check_condition(pytis.data.LE('x', ival(3)), 3)
         self._check_condition(pytis.data.GE('x', 'y'), 2)
     def test_fetch(self):
-        v = pytis.data.Value(pytis.data.Integer(), 3)
+        v = ival(3)
         c = self._data.select(pytis.data.EQ('x', v))
         assert c == 2, c
         rows = []
@@ -933,8 +930,8 @@ class DBDataDefault(_DBTest):
              B('popis', 'xcosi', 'popis')),
             key, conn,
             condition=pytis.data.AND(
-                pytis.data.GE('id', pytis.data.Value(pytis.data.Integer(), 3)),
-                pytis.data.LT('id', pytis.data.Value(pytis.data.Integer(), 6))))
+                pytis.data.GE('id', ival(3)),
+                pytis.data.LT('id', ival(6))))
         # dist
         key = B('x', 'dist', 'x')
         dist = pytis.data.DBDataDefault(
@@ -1066,8 +1063,7 @@ class DBDataDefault(_DBTest):
         self.data.close()
         # Search in limited select OK?
         self.dosnova.select(columns=('id', 'synt', 'anal', 'danit',))
-        result = self.dosnova.search(pytis.data.EQ(
-                'popis', pytis.data.Value(pytis.data.String(), 'efgh')))
+        result = self.dosnova.search(pytis.data.EQ('popis', sval('efgh')))
         assert result == 3, ('Invalid search result', result)
         self.dosnova.close()
         # .row in limited search still working?
@@ -1105,7 +1101,7 @@ class DBDataDefault(_DBTest):
             n = n + 1
         self.data.close()
     def test_select_condition(self):
-        v = pytis.data.Value(pytis.data.Integer(), 2)
+        v = ival(2)
         condition = pytis.data.AND(pytis.data.EQ('cislo', v))
         self.data.select(condition)
         for r in (self.ROW1,):
@@ -1127,8 +1123,7 @@ class DBDataDefault(_DBTest):
         self.data.close()
         assert len(rows) == 2, len(rows)
         # NULL test
-        condition = pytis.data.EQ('popis',
-                                pytis.data.Value(pytis.data.String(), None))
+        condition = pytis.data.EQ('popis', sval(None))
         self.dcosi.select(condition)
         n = 0
         while self.dcosi.fetchone():
@@ -1190,7 +1185,7 @@ class DBDataDefault(_DBTest):
             finally:
                 d.close()
         check(self.dist, None, ((1, 1,), (3, 2,), (5, 3,),))
-        check(self.dist, pytis.data.GT('x', pytis.data.Value(pytis.data.Integer(), 3)), ((4, 2,), (5, 3,),))
+        check(self.dist, pytis.data.GT('x', ival(3)), ((4, 2,), (5, 3,),))
         check(self.dist1, None, ((1, 1,), (2, 1,), (3, 2,), (4, 2,), (5, 3,),))
         self.dist.select(sort=('x',))
         self.dist.close()
@@ -1198,7 +1193,7 @@ class DBDataDefault(_DBTest):
         self.dist.close()
         self.dist.select(sort=(('x', pytis.data.ASCENDENT,),))
         try:
-            result = self.dist.search(pytis.data.GT('x', pytis.data.Value(pytis.data.Integer(), 3)))
+            result = self.dist.search(pytis.data.GT('x', ival(3)))
         finally:
             self.dist.close()
         assert result == 2, ('distinct on search failed', result,)
@@ -1208,8 +1203,7 @@ class DBDataDefault(_DBTest):
         assert result == 1000, result
         result = d.select_aggregate((d.AGG_MAX, 'castka')).value()
         assert result == 2000, result
-        condition = pytis.data.GT('castka',
-                                  pytis.data.Value(pytis.data.Float(), 1500))
+        condition = pytis.data.GT('castka', fval(1500.0))
         result = d.select_aggregate((d.AGG_AVG, 'castka'),
                                     condition=condition).value()
         assert result == 2000, result
@@ -1225,7 +1219,7 @@ class DBDataDefault(_DBTest):
         assert aggregate_result[1].value() == None, aggregate_result[1].value()
         assert aggregate_result[2].value() == 3000, aggregate_result[2].value()
         assert aggregate_result[3].value() == None, aggregate_result[3].value()
-        value = pytis.data.Value(pytis.data.Float(), 2000)
+        value = fval(2000.0)
         select_result, aggregate_result = \
             d.select_and_aggregate(d.AGG_MAX, columns=('castka',),
                                    condition=pytis.data.GE('castka', value))
@@ -1236,10 +1230,8 @@ class DBDataDefault(_DBTest):
         assert aggregate_result[0].value() == 2, aggregate_result[0].value()
     def test_constructor_condition(self):
         d = self._dcosi_condition
-        def I(i):
-            return pytis.data.Value(pytis.data.Integer(), i)
-        assert d.row(I(2)) is None, 'Excluded row found in limited data object'
-        assert d.row(I(3)) is not None, 'Row not found in limited data object'
+        assert d.row(ival(2)) is None, 'Excluded row found in limited data object'
+        assert d.row(ival(3)) is not None, 'Row not found in limited data object'
         def test_select(condition, n):
             d.select(condition=condition)
             try:
@@ -1251,8 +1243,8 @@ class DBDataDefault(_DBTest):
             finally:
                 d.close()
         test_select(None, 2)
-        test_select(pytis.data.LT('id', I(5)), 1)
-        test_select(pytis.data.GT('id', I(6)), 0)
+        test_select(pytis.data.LT('id', ival(5)), 1)
+        test_select(pytis.data.GT('id', ival(6)), 0)
     def test_async_select(self):
         self.data.select(async_count=True)
         for r in (self.ROW1, self.ROW2):
@@ -1279,8 +1271,7 @@ class DBDataDefault(_DBTest):
                 type(result2[0]) == type(u'')),\
                'invalid failed insertion result'
     def test_insert_view(self):
-        I = pytis.data.Integer()
-        row = pytis.data.Row((('x', pytis.data.Value(I, '5'),),))
+        row = pytis.data.Row((('x', ival(5),),))
         result, success = self.view3.insert(row)
         assert success
         assert result['x'].value() == 5, \
@@ -1289,7 +1280,7 @@ class DBDataDefault(_DBTest):
         assert success
         assert result['x'].value() == 5, \
             ('unexpected insert result', result['x'].value(),)
-        row = pytis.data.Row((('y', pytis.data.Value(I, '5'),),))
+        row = pytis.data.Row((('y', ival(5),),))
         result, success = self.view7.insert(row)
         assert success
         assert result is None, ('unexpected insert result', result,)
@@ -1392,8 +1383,7 @@ class DBDataDefault(_DBTest):
                'row not deleted'
         lines((3,))
     def test_table_function(self):
-        I = pytis.data.Integer()
-        id_value = pytis.data.Value(I, 3)
+        id_value = ival(3)
         assert self.data.select(arguments=dict(id=id_value)) == 2
         assert self.data.fetchone() is not None
         assert self.data.fetchone() is not None
@@ -1667,7 +1657,7 @@ class DBMultiData(DBDataDefault):
         d.close()
     def test_select_condition(self):
         d = self.mdata
-        v = pytis.data.Value(pytis.data.Integer(), 2)
+        v = ival(2)
         condition = pytis.data.AND(pytis.data.EQ('cislo', v))
         d.select(condition)
         for r in (self.ROW1,):
@@ -1699,43 +1689,39 @@ class DBMultiData(DBDataDefault):
         dat.close()
     def test_search(self):
         E = pytis.data.EQ
-        V = pytis.data.Value
-        S = pytis.data.String()
         d = self.dosnova
         d.select()
-        res = d.search(E('popis', V(S, 'efgh')))
+        res = d.search(E('popis', sval('efgh')))
         assert res == 3, ('Invalid search result', res)
-        res = d.search(E('popis', V(S, 'abcd')), direction=pytis.data.FORWARD)
+        res = d.search(E('popis', sval('abcd')), direction=pytis.data.FORWARD)
         assert res == 1, ('Invalid search result', res)
-        res = d.search(E('popis', V(S, 'foo')))
+        res = d.search(E('popis', sval('foo')))
         assert res == 0, ('Invalid search result', res)
         d.fetchone()
-        res = d.search(E('popis', V(S, 'efgh')))
+        res = d.search(E('popis', sval('efgh')))
         assert res == 2, ('Invalid search result', res)
-        res = d.search(E('popis', V(S, 'abcd')))
+        res = d.search(E('popis', sval('abcd')))
         assert res == 0, ('Invalid search result', res)
-        res = d.search(E('popis', V(S, 'foo')))
+        res = d.search(E('popis', sval('foo')))
         assert res == 0, ('Invalid search result', res)
         d.fetchone()
-        res = d.search(E('popis', V(S, 'abcd')), direction=pytis.data.FORWARD)
+        res = d.search(E('popis', sval('abcd')), direction=pytis.data.FORWARD)
         assert res == 0, ('Invalid search result', res)
-        res = d.search(E('popis', V(S, 'abcd')),
+        res = d.search(E('popis', sval('abcd')),
                        direction=pytis.data.BACKWARD)
         assert res == 1, ('Invalid search result', res)
         while d.fetchone() is not None:
             pass
-        res = d.search(E('popis', V(S, 'abcd')), direction=pytis.data.FORWARD)
+        res = d.search(E('popis', sval('abcd')), direction=pytis.data.FORWARD)
         assert res == 0, ('Invalid search result', res)
-        res = d.search(E('popis', V(S, 'abcd')),
+        res = d.search(E('popis', sval('abcd')),
                        direction=pytis.data.BACKWARD)
         assert res == 3, ('Invalid search result', res)        
         d.close()
     def test_search_key(self):
-        V = pytis.data.Value
-        S = pytis.data.String()
         d = self.dosnova
         d.select()
-        res = d.search_key((V(S, '100'), V(S, '008')))
+        res = d.search_key((sval('100'), sval('008')))
         assert res == 2, ('Invalid search result', res)
         d.close()
     def test_insert(self):
@@ -1918,10 +1904,9 @@ class DBDataOrdering(_DBTest):
             pass
         super_(DBDataOrdering).tearDown(self)
     def test_insert(self):
-        row = pytis.data.Row((('popis',
-                         pytis.data.Value(pytis.data.String(), 'bla bla')),))
+        row = pytis.data.Row((('popis', sval('bla bla')),))
         d = self.data
-        key = (pytis.data.Value(pytis.data.Integer(), 3),)
+        key = (ival(3),)
         assert d.insert(row, after=key)[1], 'Insert failed'
         d.select()
         d.fetchone()
@@ -1976,7 +1961,7 @@ class DBDataAggregated(DBDataDefault):
             assert isinstance(column.type(), pytis.data.Integer), column.type()
         try:
             if key is not None:
-                row = data.row(key=pytis.data.Value(pytis.data.Integer(), key), columns=columns)
+                row = data.row(key=ival(key), columns=columns)
                 for k, v in test_result:
                     assert row.has_key(k), ('Missing column', k,)
                     assert row[k].value() == v, ('Invalid value', v,)
@@ -2023,7 +2008,7 @@ class DBDataAggregated(DBDataDefault):
         test_result = ((('castka', 2000.0), ('madatisum', 2), ('count', 1),),
                        (('castka', 3000.0), ('madatisum', 3), ('count', 1),),
                        )
-        condition = pytis.data.EQ('count', pytis.data.Value(pytis.data.Integer(), 1))
+        condition = pytis.data.EQ('count', ival(1))
         self._aggtest(test_result, condition=condition)
     def test_double_aggregated(self):
         D = pytis.data.DBDataDefault
@@ -2035,10 +2020,10 @@ class DBDataAggregated(DBDataDefault):
         self._aggtest((('castka', 2000.0), ('madatisum', 2), ('count', 1),), key=3)
     def test_aggregated_filter(self):
         D = pytis.data.DBDataDefault
-        condition = pytis.data.EQ('cislo', pytis.data.Value(pytis.data.Integer(), 2))
+        condition = pytis.data.EQ('cislo', ival(2))
         self._aggtest(((('castka', 1000.0), ('madatisum', 1), ('count', 1),),),
                       filter_condition=condition)
-        condition = pytis.data.EQ('cislo', pytis.data.Value(pytis.data.Integer(), 3))
+        condition = pytis.data.EQ('cislo', ival(3))
         self._aggtest(1, operation=(D.AGG_COUNT, 'madatisum',), filter_condition=condition)
     def test_distinct(self):
         D = pytis.data.DBDataDefault
@@ -2477,8 +2462,8 @@ class ThreadTest(_DBBaseTest):
 
 class OperatorTest(unittest.TestCase):
     def test_it(self):
-        a = pytis.data.EQ('a', pytis.data.Value(pytis.data.String(), 'a'))
-        b = pytis.data.EQ('b', pytis.data.Value(pytis.data.String(), 'a'))
+        a = pytis.data.EQ('a', sval('a'))
+        b = pytis.data.EQ('b', sval('a'))
         c = pytis.data.EQ('a', pytis.data.Value(pytis.data.String(maxlen=5), 'a'))
         assert a != b
         assert a == c
