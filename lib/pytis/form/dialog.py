@@ -1348,6 +1348,126 @@ class CheckMatrixDialog(Message):
         else:
             return None
 
+
+class AggregationSetupDialog(Message):
+    """A dialog for setting up an aggregated form.
+
+    The result returned by the `run()' is a tuple of two tuples
+    (group_by_columns, aggregation_columns).
+
+    group_by_columns -- selected group by columns as a sequence of pairs
+      (column_id, function), where function is the name of the grouping
+      function from 'grouping_functions' constructor argument or None if the
+      column is used directly with no function applied.
+               
+    aggregation_columns -- preselected aggregation columns as a sequence of
+      pairs (column_id, operation), where operation is the name of the
+      aggregation function from 'aggregation_functions' constructor argument.
+    
+    """
+    _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
+    
+    def __init__(self, parent, aggregation_functions, grouping_functions, columns,
+                 group_by_columns, aggregation_columns, aggregation_valid,
+                 title=_("Zvolte sloupce..."), message=_("Zvolte sloupce agregaèního náhledu")):
+        """Arguments:
+             aggregation_functions -- specification of available aggregation
+               functions as a sequence of pairs (operation, label), where
+               operation is one of `pytis.data.AGG_*' constants and label is
+               the string title of given function.
+             grouping_functions -- specification of available functions
+               aplicable to group by columns in the same format as the
+               'ViewSpec' argument 'grouping_functions'.
+             columns -- sequence of available columns as tuples (column_id,
+               column_label, column_type).
+             aggregation_valid -- function of two arguments (operation,
+               column_type) returning true if given aggregation operation is
+               valid for given column type and false otherwise.
+             group_by_columns -- preselected group by columns in the same
+               format as in the result of run() as described in the class
+               docstring.
+             aggregation_columns -- preselected aggregation columns in the same
+               format as in the result of run() as described in the class
+               docstring.
+        """
+        super(AggregationSetupDialog, self).__init__(parent, title=title, message=message,
+                                                     buttons=(Message.BUTTON_OK,
+                                                              Message.BUTTON_CANCEL))
+        self._aggregation_functions = aggregation_functions
+        self._grouping_functions = grouping_functions
+        self._columns = columns
+        self._aggregation_valid = aggregation_valid
+        self._group_by_columns = group_by_columns
+        self._aggregation_columns = aggregation_columns
+        
+    def _create_content(self, sizer):
+        super(AggregationSetupDialog, self)._create_content(sizer)
+        panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
+        panel.SetScrollRate(20, 20)
+        self._grid = grid = wx.FlexGridSizer(len(self._columns)+1,
+                                             len(self._aggregation_functions)+2, 2, 6)
+        self._grouping_controls = []
+        self._aggregation_controls = []
+        for label in ['', _("Seskupování")] + [x[1] for x in self._aggregation_functions]:
+            grid.Add(wx.StaticText(panel, -1, label))
+        for (column_id, column_label, column_type) in self._columns:
+            grid.Add(wx.StaticText(panel, -1, column_label))
+            checkbox = wx.CheckBox(panel, -1)
+            checkbox.SetValue(column_id in self._group_by_columns)
+            self._grouping_controls.append(((column_id, None), checkbox))
+            functions = [x for x in self._grouping_functions if isinstance(column_type, x[2])]
+            if functions:
+                fsizer = wx.BoxSizer(wx.VERTICAL)
+                fsizer.Add(checkbox)
+                cp = wx.CollapsiblePane(panel, label="Funkce", style=wx.CP_DEFAULT_STYLE)
+                panel.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapsiblepane_changed, cp)
+                pane = cp.GetPane()
+                cpsizer = wx.BoxSizer(wx.VERTICAL)
+                for function, label, input_type, return_type in functions:
+                    checkbox = wx.CheckBox(pane, -1, label=label)
+                    checkbox.SetValue(((column_id, function) in self._group_by_columns))
+                    self._grouping_controls.append(((column_id, function), checkbox))
+                    cpsizer.Add(checkbox)
+                pane.SetSizer(cpsizer)
+                fsizer.Add(cp)
+                grid.Add(fsizer)
+            else:
+                grid.Add(checkbox)
+            for operation, title in self._aggregation_functions:
+                checkbox = wx.CheckBox(panel, -1)
+                checkbox.SetValue((column_id, operation) in self._aggregation_columns)
+                checkbox.Enable(self._aggregation_valid(operation, column_type))
+                grid.Add(checkbox)
+                self._aggregation_controls.append(((column_id, operation), checkbox))
+        panel.SetSizer(grid)
+        sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
+
+    def _on_collapsiblepane_changed(self, event):
+        self._grid.Layout()
+        self._resize()
+
+    def _resize(self):
+        sizer_size = self._dialog.GetSizer().CalcMin()
+        grid_size = self._grid.CalcMin()
+        size = wx.Size(max(sizer_size.width, grid_size.width + 20),
+                       sizer_size.height + grid_size.height)
+        size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
+        self._dialog.SetClientSize(size)
+        
+    def _run_dialog(self):
+        self._resize()
+        return super(AggregationSetupDialog, self)._run_dialog()
+
+    def _customize_result(self, result):
+        if self._button_label(result) == self.BUTTON_OK:
+            group_by_columns = [spec for spec, checkbox in self._grouping_controls
+                                if checkbox.IsChecked()]
+            aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
+                                   if checkbox.IsChecked()]
+            return tuple(group_by_columns), tuple(aggregation_columns)
+        else:
+            return None
+        
         
 class ExitDialog(Question):
     """Application exit question with a choice of items to save for next startup.
