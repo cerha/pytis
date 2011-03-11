@@ -2012,6 +2012,12 @@ class DBDataAggregated(DBDataDefault):
         self._aggtest(test_result, **kwargs)
     def test_columns(self):
         self.test_basic(columns=('castka', 'madatisum', 'count'))
+    def test_columns_groupby_function(self):
+        test_result = ((('castka', 1000.0), ('madatisum', 2), ('count', 2), ('mesic', 1.0),),
+                       (('castka', 2000.0), ('madatisum', 2), ('count', 1), ('mesic', 1.0),),
+                       (('castka', 3000.0), ('madatisum', 3), ('count', 1), ('mesic', 1.0),),
+                       )
+        self._aggtest(test_result)
     def test_condition(self):
         test_result = ((('castka', 2000.0), ('madatisum', 2), ('count', 1),),
                        (('castka', 3000.0), ('madatisum', 3), ('count', 1),),

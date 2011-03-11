@@ -1108,7 +1108,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         
     def _pdbb_sql_column_list(self, bindings, full_text_handler=None, operations=None, column_groups=None):
         column_names = [self._pdbb_btabcol(b, full_text_handler=full_text_handler, operations=operations)
-                        for b in bindings if b.id()]
+                        for b in bindings if b is not None and b.id()]
         if column_groups:
             for g in column_groups:
                 function_name = g[2]
