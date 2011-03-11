@@ -2033,7 +2033,6 @@ class DBDataAggregated(DBDataDefault):
     def test_row(self):
         self._aggtest((('castka', 2000.0), ('madatisum', 2), ('count', 1),), key=3)
     def test_group_only_row(self):
-        condition = pytis.data.EQ('castka', fval(2000.0))
         self._aggtest(((('mesic', 1.0),),), group_only=True)
     def test_aggregated_filter(self):
         D = pytis.data.DBDataDefault
