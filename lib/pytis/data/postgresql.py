@@ -1181,6 +1181,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         self._bindings = bindings = bindings + (b,)
                         filtered_bindings.append(b)
                         self._columns = self._columns + (ColumnSpec(name, type_),)
+            for g in function_column_groups:
+                name, type_ = g[0], g[1]
+                self._columns = self._columns + (ColumnSpec(name, type_),)
         self._pdbb_filtered_bindings = filtered_bindings
         column_list = self._pdbb_sql_column_list(filtered_bindings,
                                                  full_text_handler=self._pdbb_full_text_handler,
