@@ -863,6 +863,9 @@ class MultiForm(Form, Refreshable):
 class MultiSideForm(MultiForm):
         
     class TabbedForm(object):
+        def __init__(self, *args, **kwargs):
+            self._binding = kwargs['binding']
+            super(MultiSideForm.TabbedForm, self).__init__(*args, **kwargs)
         def _init_attributes(self, binding, **kwargs):
             self._binding = binding
             super(MultiSideForm.TabbedForm, self)._init_attributes(**kwargs)
