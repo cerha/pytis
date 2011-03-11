@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1423,10 +1423,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     self._lf_sorting = v
                 else:
                     raise ProgramError('Invalid refresh parameter', k)
-        key = self._current_key()
         row = max(0, self._current_cell()[0])
         self._last_reshuffle_request = self._reshuffle_request = time.time()
         self._update_grid(data_init=True)
+        key = self._current_key() # after _update_grid to prevent redundant queries!
         if key is not None and key_update:
             if self._current_key() != key:
                 self.select_row(key, quiet=True)
