@@ -1937,7 +1937,7 @@ tests.add(DBDataOrdering)
 
 class DBDataAggregated(DBDataDefault):
     def _aggtest(self, test_result, columns=None, condition=None, operation=None, key=None,
-                 filter_condition=None, distinct_on=None, group_only=False):
+                 filter_condition=None, distinct_on=None, group_only=False, sort=()):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
         denik_spec = (B('cislo', 'denik', 'id'),
@@ -1974,7 +1974,7 @@ class DBDataAggregated(DBDataDefault):
                     assert row.has_key(k), ('Missing column', k,)
                     assert row[k].value() == v, ('Invalid value', v,)
             elif operation is None:
-                count = data.select(columns=columns, condition=condition)
+                count = data.select(columns=columns, condition=condition, sort=sort)
                 assert count == len(test_result), ('Unexpected number of aggregate rows', count)
                 for expected_result in test_result:
                     items = data.fetchone().items()
@@ -2034,6 +2034,7 @@ class DBDataAggregated(DBDataDefault):
         self._aggtest((('castka', 2000.0), ('madatisum', 2), ('count', 1),), key=3)
     def test_group_only_row(self):
         self._aggtest(((('mesic', 1.0),),), group_only=True)
+        self._aggtest(((('mesic', 1.0),),), group_only=True, sort=(('mesic', pytis.data.ASCENDENT,),))
     def test_aggregated_filter(self):
         D = pytis.data.DBDataDefault
         condition = pytis.data.EQ('cislo', ival(2))

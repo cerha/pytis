@@ -1646,6 +1646,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return '(%s)' % expression
 
     def _pdbb_sort2sql(self, sort):
+        function_column_dict = {}
+        for g in (self._pdbb_column_groups or []):
+            if g[2] is not None:
+                function_column_dict[g[0]] = g
         def full_text_handler(binding):
             column_name = self._pdbb_btabcol(binding)
             query = self._pdbb_fulltext_query_name(binding.column())
@@ -1657,10 +1661,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 dir = {ASCENDENT: 'ASC', DESCENDANT: 'DESC'}[dirspec]
             else:
                 id, dir = item, 'ASC'
-            b = self._db_column_binding(id)
-            return '%s %s' % (self._pdbb_btabcol(b, full_text_handler=full_text_handler,
-                                                 convert_ltree=True),
-                              dir)
+            g = function_column_dict.get(id)
+            if g:
+                colstring = self._pdbb_column_group_call(g)
+            else:
+                b = self._db_column_binding(id)
+                colstring = self._pdbb_btabcol(b, full_text_handler=full_text_handler,
+                                               convert_ltree=True)
+            return '%s %s' % (colstring, dir,)
         sort_string = ','.join([item2sql(item) for item in sort])
         if sort_string:
             sort_string += ','
