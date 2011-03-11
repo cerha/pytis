@@ -838,7 +838,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             result = column_id
         return result
 
-    def _pdbb_btabcol(self, binding, full_text_handler=None, convert_ltree=False, operations=None):
+    def _pdbb_btabcol(self, binding, full_text_handler=None, convert_ltree=False, operations=None,
+                      column_groups=None):
         """Vra» sloupec z 'binding' zformátovaný pro SQL."""
         def column_type():
             return self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
@@ -848,6 +849,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for aggregate, id_, name in operations:
                 if name == binding.id():
                     result = '%s(%s) as %s' % (self._pg_aggregate_name(aggregate), binding.column(), name,)
+                    break
+        if column_groups is not None:
+            for g in column_groups:
+                name = g[0]
+                if name == binding.id():                
+                    function_name = g[2]
+                    if function_name is not None:
+                        call = self._pdbb_column_group_call(g)
+                        result = '%s as %s' % (call, name,)
                     break
         if result is None:
             column_name = binding.column()
@@ -1107,14 +1117,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                           column_groups=column_groups)
         
     def _pdbb_sql_column_list(self, bindings, full_text_handler=None, operations=None, column_groups=None):
-        column_names = [self._pdbb_btabcol(b, full_text_handler=full_text_handler, operations=operations)
+        column_names = [self._pdbb_btabcol(b, full_text_handler=full_text_handler, operations=operations,
+                                           column_groups=column_groups)
                         for b in bindings if b is not None and b.id()]
-        if column_groups:
-            for g in column_groups:
-                function_name = g[2]
-                if g[2] is not None:
-                    call = self._pdbb_column_group_call(g)
-                    column_names.append('%s as %s' % (call, g[0],))
         return string.join(column_names, ', ')
     
     def _pdbb_full_text_handler(self, binding):
@@ -1184,6 +1189,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for g in function_column_groups:
                 name, type_ = g[0], g[1]
                 self._columns = self._columns + (ColumnSpec(name, type_),)
+                b = DBColumnBinding(name, '', name, type_=type_)
+                self._bindings = bindings = bindings + (b,)
+                filtered_bindings.append(b)
         self._pdbb_filtered_bindings = filtered_bindings
         column_list = self._pdbb_sql_column_list(filtered_bindings,
                                                  full_text_handler=self._pdbb_full_text_handler,
@@ -1236,6 +1244,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             distinct_on = ''
             distinct_on_ordering = ''
+        sort_exclude = aggregate_columns + [g[0] for g in function_column_groups]
         def sortspec(dir):
             items = []
             bindings = [b for b in self._key_binding
@@ -1243,7 +1252,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if not bindings:
                 bindings = filtered_bindings
             for b in bindings:
-                if b.id() not in aggregate_columns:
+                if b.id() not in sort_exclude:
                     items.append('%s %s' % (self._pdbb_btabcol(b, convert_ltree=True), dir,))
             for g in function_column_groups:
                 items.append('%s %s' % (self._pdbb_column_group_call(g), dir,))
@@ -2624,8 +2633,6 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def _pg_create_make_row_template(self, columns, column_groups=None):
         template = []
-        if column_groups:
-            columns = columns + [ColumnSpec(g[0], g[1]) for g in column_groups if g[2] is not None]
         for c in columns:
             id_ = c.id()
             type = c.type()
@@ -2845,7 +2852,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
                              columns=None, transaction=None):
         if columns is None:
-            columns = [c.id() for c in self.columns()]
+            function_columns = [g[0] for g in (self._pdbb_column_groups or ()) if g[2] is not None]
+            columns = [c.id() for c in self.columns()
+                       if c.id() not in function_columns]
             if self._pdbb_operations:
                 allowed_column_ids = [b.id() for b in self._pdbb_filtered_bindings]
                 columns = [c for c in columns if c in allowed_column_ids]
