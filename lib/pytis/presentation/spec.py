@@ -1048,10 +1048,20 @@ class ViewSpec(object):
             select default values of more than one of the filters.  If there is
             no default filter, use 'None' as default_filter value.
             
-          aggregations -- a sequence aggregation functions which should be turned on automatically
-            for this view (in forms which support that).  The items are 'AGG_*' constants of
-            'pytis.data.Data'.
+          aggregations -- a sequence aggregation functions which should be
+            turned on automatically for this view (in forms which support
+            that).  The items are 'AGG_*' constants of 'pytis.data.Data'.
 
+          grouping_functions -- specification of available functions aplicable
+            to group by columns in an aggregated view as a sequence of
+            (function, label, input_type, return_type), where function is
+            identifier of an SQL function, label is the string title of given
+            function, input_type is pytis data type class of function argument
+            (the function must have just one argument) and return_type is the
+            pytis data type instance of the function result.  When a user
+            attempts to open an aggregated view of the form, she can select the
+            columns used in the group by caluse.
+            
           bindings -- a sequence of binding specifications as 'Binding' instances.
 
           initial_folding -- 'FoldableForm.Folding' instance defining initial
@@ -1077,8 +1087,9 @@ class ViewSpec(object):
               actions=(), sorting=None, grouping=None, group_heading=None, check=(),
               cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
-              filters=(), conditions=(), default_filter=None, aggregations=(), bindings=(),
-              initial_folding=None, spec_name='', arguments=None, public=None):
+              filters=(), conditions=(), default_filter=None, aggregations=(),
+              grouping_functions=(), bindings=(), initial_folding=None, spec_name='',
+              arguments=None, public=None):
         assert isinstance(title, (str, unicode))
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1210,6 +1221,7 @@ class ViewSpec(object):
                 assert agg in [getattr(pytis.data.Data, attr)
                                for attr in public_attributes(pytis.data.Data)
                                if attr.startswith('AGG_')]
+        assert isinstance(grouping_functions, (tuple, list))
         assert isinstance(bindings, (tuple, list))
         if __debug__:
             binding_identifiers = []
@@ -1251,6 +1263,7 @@ class ViewSpec(object):
         self._filters = tuple(filters)
         self._default_filter = default_filter
         self._aggregations = tuple(aggregations)
+        self._grouping_functions = tuple(grouping_functions)
         self._bindings = tuple(bindings)
         self._initial_folding = initial_folding
         self._arguments = arguments
@@ -1390,6 +1403,10 @@ class ViewSpec(object):
     def aggregations(self):
         """Return default aggregation functions as a tuple."""
         return self._aggregations
+
+    def grouping_functions(self):
+        """Return specification of available grouping functions as a tuple."""
+        return self._grouping_functions
 
     def bindings(self):
         """Return bindings as a tuple."""
