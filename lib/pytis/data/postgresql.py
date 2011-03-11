@@ -1151,7 +1151,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Pøiprav parametry
         operations = (self._pdbb_operations or [])
         aggregate_columns = [o[2] for o in operations]
-        group_columns = [c[0] for c in (self._pdbb_column_groups or []) if c[2] is None]
+        group_columns = []
+        function_column_groups = []
+        for g in (self._pdbb_column_groups or []):
+            if g[2] is None:
+                group_columns.append(g[0])
+            else:
+                function_column_groups.append(g)
         if self._pdbb_column_groups is None and self._pdbb_operations is None:
             filtered_bindings = bindings
         else:
@@ -1175,12 +1181,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         self._bindings = bindings = bindings + (b,)
                         filtered_bindings.append(b)
                         self._columns = self._columns + (ColumnSpec(name, type_),)
-        assert filtered_bindings, 'No columns present'
         self._pdbb_filtered_bindings = filtered_bindings
         column_list = self._pdbb_sql_column_list(filtered_bindings,
                                                  full_text_handler=self._pdbb_full_text_handler,
                                                  operations=self._pdbb_operations,
                                                  column_groups=self._pdbb_column_groups)
+        assert column_list, ('No columns present', [b.id() for b in bindings], group_columns,)
         if self._pdbb_column_groups:
             groupby_columns = list(self._distinct_on or [])
             for b in bindings:
@@ -1236,6 +1242,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for b in bindings:
                 if b.id() not in aggregate_columns:
                     items.append('%s %s' % (self._pdbb_btabcol(b, convert_ltree=True), dir,))
+            for g in function_column_groups:
+                items.append('%s %s' % (self._pdbb_column_group_call(g), dir,))
             # TODO: items may still be empty (if only aggregates are present in the result columns)
             return string.join(items, ',')
         ordering = sortspec('ASC')

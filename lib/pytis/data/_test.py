@@ -1937,7 +1937,7 @@ tests.add(DBDataOrdering)
 
 class DBDataAggregated(DBDataDefault):
     def _aggtest(self, test_result, columns=None, condition=None, operation=None, key=None,
-                 filter_condition=None, distinct_on=None):
+                 filter_condition=None, distinct_on=None, group_only=False):
         D = pytis.data.DBDataDefault
         B = pytis.data.DBColumnBinding
         denik_spec = (B('cislo', 'denik', 'id'),
@@ -1946,10 +1946,15 @@ class DBDataAggregated(DBDataDefault):
                       B('castka', 'denik', 'castka'),
                       B('madati', 'denik', 'madati'),
                       )
-        operations = ((D.AGG_SUM, 'madati', 'madatisum',), (D.AGG_COUNT, 'cislo', 'count',),)
-        column_groups = ('datum',
-                         'castka',
-                         ('mesic', pytis.data.Float(), 'date_part', sval('month'), 'datum',))
+        if group_only:
+            operations = ()
+        else:
+            operations = ((D.AGG_SUM, 'madati', 'madatisum',), (D.AGG_COUNT, 'cislo', 'count',),)
+        if group_only:
+            column_groups = ()
+        else:
+            column_groups = ('datum', 'castka',)
+        column_groups = column_groups + (('mesic', pytis.data.Float(), 'date_part', sval('month'), 'datum',),)
         data = D(denik_spec,
                  denik_spec[0],
                  self._dconnection,
@@ -1957,10 +1962,11 @@ class DBDataAggregated(DBDataDefault):
                  column_groups=column_groups,
                  condition=filter_condition,
                  distinct_on=distinct_on)
-        for column_id in ('madatisum', 'count'):
-            column = data.find_column(column_id)
-            assert column is not None, ('Aggregation column not found', column_id,)
-            assert isinstance(column.type(), pytis.data.Integer), column.type()
+        if not group_only:
+            for column_id in ('madatisum', 'count'):
+                column = data.find_column(column_id)
+                assert column is not None, ('Aggregation column not found', column_id,)
+                assert isinstance(column.type(), pytis.data.Integer), column.type()
         try:
             if key is not None:
                 row = data.row(key=ival(key), columns=columns)
@@ -2020,6 +2026,9 @@ class DBDataAggregated(DBDataDefault):
         self._aggtest((3, 6000, 7, 4,), operation=D.AGG_SUM)
     def test_row(self):
         self._aggtest((('castka', 2000.0), ('madatisum', 2), ('count', 1),), key=3)
+    def test_group_only_row(self):
+        condition = pytis.data.EQ('castka', fval(2000.0))
+        self._aggtest(((('mesic', 1.0),),), group_only=True)
     def test_aggregated_filter(self):
         D = pytis.data.DBDataDefault
         condition = pytis.data.EQ('cislo', ival(2))
