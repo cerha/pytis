@@ -3040,7 +3040,7 @@ class AggregationForm(BrowseForm):
         if function is None:
             return column_id
         else:
-            return '_'+ column_id +'_'+ function
+            return str('_'+ column_id +'_'+ function)
 
     def _group_by_column_ids(self):
         return [self._group_by_column_id(column_id, function)
