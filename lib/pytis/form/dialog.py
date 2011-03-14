@@ -1423,12 +1423,17 @@ class AggregationSetupDialog(Message):
                 panel.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapsiblepane_changed, cp)
                 pane = cp.GetPane()
                 cpsizer = wx.BoxSizer(wx.VERTICAL)
+                collapse = True
                 for function, label, input_type, return_type in functions:
                     checkbox = wx.CheckBox(pane, -1, label=label)
-                    checkbox.SetValue(((column_id, function) in self._group_by_columns))
+                    checked = (column_id, function) in self._group_by_columns
+                    checkbox.SetValue(checked)
+                    if checked:
+                        collapse = False
                     self._grouping_controls.append(((column_id, function), checkbox))
                     cpsizer.Add(checkbox)
                 pane.SetSizer(cpsizer)
+                cp.Collapse(collapse)
                 fsizer.Add(cp)
                 grid.Add(fsizer)
             else:
