@@ -45,7 +45,7 @@ class CheckReporterExt(pytis.extensions.CheckReporter):
         sys.stdout.flush()
 
     def error(self, message):
-        print "Error:", message
+        print message,
 
 
 def usage(optexception=None):
