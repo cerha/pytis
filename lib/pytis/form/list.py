@@ -1686,37 +1686,26 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 [(pytis.data.Data.AGG_COUNT, _("Poèet"))])
         
     def _cmd_aggregated_view(self):
-        available_aggregations = self._available_aggregations()
-        def enabled(row, col):
-            # Return False for invalid aggregate operations to make the
-            # corresponding checbox in the matrix inactive.
-            if col == 0:
-                return True
-            else:
-                column_type = self._row.type(self._columns[row].id())
-                return self._aggregation_valid(available_aggregations[col-1][0], column_type)
-        group_by_columns = self._get_state_param('group-by-columns', (), cls=tuple)
-        aggregation_columns = self._get_state_param('aggregation-columns', (), cls=tuple, item_cls=tuple)
-        selection = run_dialog(CheckMatrixDialog, title=_("Zvolte sloupce..."),
-                               message=_("Zvolte sloupce agregaèního náhledu"),
-                               columns=[_("Seskupování")]+[x[1] for x in available_aggregations],
-                               rows=[column.label() for column in self._columns],
-                               values=[[column.id() in group_by_columns] + 
-                                       [(column.id(), agg) in aggregation_columns
-                                        for agg, label in available_aggregations]
-                                       for column in self._columns],
-                               enabled=enabled)
-        if selection is not None:
-            group_by_columns = []
-            aggregation_columns = []
-            for col, row in zip(self._columns, selection):
-                if row[0]:
-                    group_by_columns.append(col.id())
-                for (op, label), checked in zip(available_aggregations, row[1:]):
-                    if checked:
-                        aggregation_columns.append((col.id(), op))
-            self._set_state_param('group-by-columns', tuple(group_by_columns))
-            self._set_state_param('aggregation-columns', tuple(aggregation_columns))
+        grouping_functions = (
+            ('f_date_year', _("Rok"), pytis.data.DateTime, pytis.data.Integer()),
+            ('f_date_month', _("Mìsíc"), pytis.data.DateTime, pytis.data.Integer()),
+            )
+        group_by_columns = self._get_state_param('group-by-columns', (),
+                                                 cls=tuple, item_cls=tuple)
+        aggregation_columns = self._get_state_param('aggregation-columns', (),
+                                                    cls=tuple, item_cls=tuple)
+        result = run_dialog(AggregationSetupDialog,
+                            aggregation_functions=self._available_aggregations(),
+                            grouping_functions=grouping_functions,
+                            columns=[(c.id(), c.label(), self._row.type(c.id()))
+                                     for c in self._columns],
+                            aggregation_valid=self._aggregation_valid,
+                            group_by_columns=group_by_columns,
+                            aggregation_columns=aggregation_columns)
+        if result is not None:
+            group_by_columns, aggregation_columns = result
+            self._set_state_param('group-by-columns', group_by_columns)
+            self._set_state_param('aggregation-columns', aggregation_columns)
             # Compose the aggregated data object inner condition from the
             # current user filter and the hardcoded condition from
             # specification.
@@ -1729,6 +1718,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     condition = spec_condition
             run_form(AggregationDualForm, self._name,
                      group_by_columns=group_by_columns,
+                     grouping_functions=grouping_functions,
                      aggregation_columns=aggregation_columns,
                      aggregation_condition=condition)
         
@@ -3009,6 +2999,7 @@ class AggregationForm(BrowseForm):
         # called before _init_attributes().
         self._aggregation_columns = kwargs.pop('aggregation_columns')
         self._group_by_columns = tuple(kwargs.pop('group_by_columns'))
+        self._grouping_functions = tuple(kwargs.pop('grouping_functions'))
         self._aggregation_condition = kwargs.pop('aggregation_condition', None)
         super(AggregationForm, self).__init__(*args, **kwargs)
     
@@ -3017,6 +3008,17 @@ class AggregationForm(BrowseForm):
         fields = list(view.fields())
         labels = dict([(f.id(), f.label()) for f in fields])
         agg_labels = dict(self._available_aggregations())
+        column_groups = []
+        for column_id, function in self._group_by_columns:
+            if function is None:
+                column_groups.append(column_id)
+            else:
+                spec = find(function, self._grouping_functions, key=lambda x: x[0])
+                label, input_type, return_type = spec[1:]
+                func_column_id = self._group_by_column_id(column_id, function)
+                label = labels[column_id] +' :: '+ label
+                column_groups.append((func_column_id, return_type, function, column_id))
+                fields.append(Field(func_column_id, label, type=return_type))
         operations = []
         for column_id, op in self._aggregation_columns:
             agg_column_id = self._aggregation_column_id(column_id, op)
@@ -3024,15 +3026,25 @@ class AggregationForm(BrowseForm):
             operations.append((op, column_id, agg_column_id))
             fields.append(Field(agg_column_id, label))
         self._data_kwargs['operations'] = tuple(operations)
-        self._data_kwargs['column_groups'] = self._group_by_columns
+        self._data_kwargs['column_groups'] = tuple(column_groups)
         self._data_kwargs['condition'] = self._aggregation_condition
         return ViewSpec(view.title(), fields)
 
     def _can_aggregated_view(self):
         return False
-        
+
     def _aggregation_column_id(self, column_id, op):
         return '_'+ column_id +'_'+ str(op)
+    
+    def _group_by_column_id(self, column_id, function):
+        if function is None:
+            return column_id
+        else:
+            return '_'+ column_id +'_'+ function
+
+    def _group_by_column_ids(self):
+        return [self._group_by_column_id(column_id, function)
+                for column_id, function in self._group_by_columns]
     
     def _init_columns(self, columns=None):
         if columns is None:
@@ -3040,12 +3052,13 @@ class AggregationForm(BrowseForm):
         return super(AggregationForm, self)._init_columns(columns=columns)
     
     def _default_sorting(self):
-        return tuple([(column_id, pytis.data.ASCENDENT) for column_id in self._group_by_columns])
+        return tuple([(column_id, pytis.data.ASCENDENT)
+                      for column_id in self._group_by_column_ids()])
         
     def _select_columns(self):
         aggregation_columns = [self._aggregation_column_id(column_id, op)
                                for column_id, op in self._aggregation_columns]
-        return tuple(list(self._group_by_columns) + aggregation_columns)
+        return tuple(self._group_by_column_ids() + aggregation_columns)
 
     def _lf_sfs_columns(self):
         return [c for c in super(AggregationForm, self)._lf_sfs_columns()
@@ -3057,11 +3070,11 @@ class AggregationForm(BrowseForm):
         return default
         
     def title(self):
-        labels = [self._view.field(fid).label() for fid in self._group_by_columns]
+        labels = [self._view.field(fid).label() for fid in self._group_by_column_ids()]
         return super(AggregationForm, self).title() + _(" - agregováno pøes ") + ', '.join(labels)
 
     def group_by_columns(self):
-        return self._group_by_columns
+        return self._group_by_column_ids()
 
     def aggregation_condition(self):
         return self._aggregation_condition
