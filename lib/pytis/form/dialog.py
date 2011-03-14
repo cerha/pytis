@@ -1463,13 +1463,20 @@ class AggregationSetupDialog(Message):
         self._resize()
         return super(AggregationSetupDialog, self)._run_dialog()
 
+    def _on_button(self, event):
+        if self._button_label(event.GetId()) == self.BUTTON_OK:
+            self._group_by_columns = [spec for spec, checkbox in self._grouping_controls
+                                      if checkbox.IsChecked()]
+            self._aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
+                                         if checkbox.IsChecked()]
+            if not self._group_by_columns:
+                run_dialog(Warning, _("Musíte zvolit alespoò jeden sloupec pro seskupování"))
+                return
+        return super(AggregationSetupDialog, self)._on_button(event)
+
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
-            group_by_columns = [spec for spec, checkbox in self._grouping_controls
-                                if checkbox.IsChecked()]
-            aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
-                                   if checkbox.IsChecked()]
-            return tuple(group_by_columns), tuple(aggregation_columns)
+            return tuple(self._group_by_columns), tuple(self._aggregation_columns)
         else:
             return None
         
