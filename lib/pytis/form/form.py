@@ -1202,7 +1202,8 @@ class LookupForm(InnerForm):
         self._apply_profile(self._current_profile)
         
     def _can_reset_profile(self):
-        return not isinstance(self._current_profile, FormProfile)
+        return (isinstance(self._current_profile, FormProfile)
+                and not self._current_profile.id().startswith(self._USER_PROFILE_PREFIX))
         
     def _cmd_reset_profile(self):
         index = self._profiles.index(self._current_profile)
