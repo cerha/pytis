@@ -822,10 +822,10 @@ class LookupForm(InnerForm):
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
-        default_profile = Profile('__default_profile__', _("Výchozí profil"),
-                                  filter=filter, sorting=sorting, columns=columns,
-                                  grouping=grouping)
-        self._profiles, self._invalid_profiles = self._load_profiles(default_profile)
+        self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
+                                        filter=filter, sorting=sorting, columns=columns,
+                                        grouping=grouping)
+        self._profiles, self._invalid_profiles = self._load_profiles()
         initial_profile_id = self._view.profiles().default()
         if initial_profile_id:
             current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
@@ -839,7 +839,7 @@ class LookupForm(InnerForm):
         # corresponding default values and we don't want to repeat this logic
         # anywhere else.  Thus we first apply the default profile, store the
         # resulting profile parameters and only then apply the current profile.
-        self._apply_profile_parameters(default_profile)
+        self._apply_profile_parameters(self._default_profile)
         self._default_profile_parameters = self._profile_parameters_to_save()
         self._apply_profile_parameters(current_profile)
         self._lf_initial_sorting = self._lf_sorting
@@ -1038,12 +1038,12 @@ class LookupForm(InnerForm):
     def _save_profile(self, profile):
         profile_manager().save_profile(self._fullname(), profile)
     
-    def _load_profiles(self, default_profile):
+    def _load_profiles(self):
         manager = profile_manager()
         fullname = self._fullname()
         profiles = []
         invalid_profiles = []
-        for profile in (default_profile,) + tuple(self._view.profiles()):
+        for profile in (self._default_profile,) + tuple(self._view.profiles()):
             custom = manager.load_profile(fullname, profile.id())
             if custom:
                 if custom.validate(self._view, self._data):
@@ -1206,8 +1206,12 @@ class LookupForm(InnerForm):
         
     def _cmd_reset_profile(self):
         index = self._profiles.index(self._current_profile)
-        profile = find(self._current_profile.id(), self._view.profiles(), key=lambda p: p.id())
-        profile_manager().drop_profile(self._fullname(), self._current_profile.id())
+        profile_id = self._current_profile.id()
+        if profile_id == self._default_profile.id():
+            profile = self._default_profile
+        else:
+            profile = find(profile_id, self._view.profiles(), key=lambda p: p.id())
+        profile_manager().drop_profile(self._fullname(), profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
         
