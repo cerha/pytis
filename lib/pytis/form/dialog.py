@@ -1413,7 +1413,7 @@ class AggregationSetupDialog(Message):
         for (column_id, column_label, column_type) in self._columns:
             grid.Add(wx.StaticText(panel, -1, column_label))
             checkbox = wx.CheckBox(panel, -1)
-            checkbox.SetValue(column_id in self._group_by_columns)
+            checkbox.SetValue((column_id, None) in self._group_by_columns)
             self._grouping_controls.append(((column_id, None), checkbox))
             functions = [x for x in self._grouping_functions if isinstance(column_type, x[2])]
             if functions:
