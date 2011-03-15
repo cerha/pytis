@@ -1423,7 +1423,7 @@ class LookupForm(InnerForm):
                 name = _("Nepojmenovaný profil") + " <%d>" % i
             self.COMMAND_SAVE_NEW_PROFILE.invoke(name=name)
             
-    def data(self):
+    def data(self, init_select=True):
         """Return a new instance of the data object used by the form.
 
         The instance will have the data select initialized with the current
@@ -1431,9 +1431,18 @@ class LookupForm(InnerForm):
         practical within application defined procedures, which retrieve this
         data object through the 'RecordForm.Record.data()' method.
 
+        Arguments:
+
+          init_select -- iff True the instance will have the data select
+            initialized with the current filter condition and all its
+            attributes, such as sorting etc.  This is often practical within
+            application defined procedures, which retrieve this data object
+            through the 'RecordForm.Record.data()' method.
+
         """
         data = super(LookupForm, self).data()
-        self._init_data_select(data)
+        if init_select:
+            self._init_data_select(data)
         return data
             
     def condition(self):

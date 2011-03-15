@@ -887,7 +887,7 @@ class MultiSideForm(MultiForm):
     class TabbedShowForm(TabbedForm, ShowForm):
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
-            self._sbcol = main_form.data().find_column(bcol).type().enumerator().value_column()
+            self._sbcol = main_form.data(init_select=False).find_column(bcol).type().enumerator().value_column()
             super(MultiSideForm.TabbedShowForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):
             self.select_row({self._sbcol: row[self._bcol]})

@@ -463,7 +463,7 @@ class _ApplicationMenuRightsBase(pytis.presentation.Specification):
         shortname = main_form.current_row()['shortname']
         if not shortname.value():
             return
-        data = main_form.data()
+        data = main_form.data(init_select=False)
         items = data.select_map(lambda row: (row['menuid'].value(), row['title'].value()),
                                 condition=pytis.data.EQ('shortname', shortname))
         if len(items) > 1:
