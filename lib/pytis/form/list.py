@@ -2451,6 +2451,8 @@ class FoldableForm(ListForm):
             self._refresh_folding()
 
     def _refresh_folding(self):
+        if self._folding_column_id is None:
+            return
         self.refresh()
         
     def _can_expand_or_collapse_subtree(self, level=None):
