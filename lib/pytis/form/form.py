@@ -154,12 +154,10 @@ class FormProfile(pytis.presentation.Profile):
                         if data.find_column(col) is None:
                             raise Exception("Unknown column '%s'" % col)
             return op(*args, **kwargs)
-        state = self._state
-        self._state = None
-        if state is None:
-            raise ProgramError("Called 'validate()' on a profile which is not "
-                               "loaded from a pickled state!")
-        self.__dict__.update(state)
+        if self._state is not None:
+            state = self._state
+            self._state = None
+            self.__dict__.update(state)
         if self._filter:
             try:
                 self._filter = unpack(self._filter)
