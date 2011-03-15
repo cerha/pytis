@@ -615,12 +615,12 @@ class Profiles(tuple):
           default -- identifier of the profile (from 'profiles') to be selected by default
         
         """
+        default = kwargs.pop('default', None)
         if __debug__:
             profile_ids = []
             for p in profiles:
                 assert p.id() not in profile_ids, "Duplicate profile id '%s'" % p.id()
                 profile_ids.append(p.id())
-            default = kwargs.pop('default', None)
             assert not kwargs
             assert default is None or default in profile_ids, default
         super(Profiles, self).__init__(*profiles)
