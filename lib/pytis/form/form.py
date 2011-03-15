@@ -1514,12 +1514,16 @@ class RecordForm(LookupForm):
     def _find_row_by_number(self, row_number):
         # row_number starts with 0
         data = self._data
+        current_row_number = data.last_row_number()
         def dbop():
             data.rewind()
             data.skip(row_number)
             return data.fetchone()
         success, row = db_operation(dbop)
-        self._init_select(async_count=True)
+        def dbop():
+            data.rewind()
+            data.skip(current_row_number + 1)
+        db_operation(dbop)
         if not success or not row:
             return None
         else:
