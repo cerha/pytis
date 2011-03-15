@@ -1545,7 +1545,6 @@ class RecordForm(LookupForm):
         condition = pytis.data.AND(cond, self._current_condition())
         data = self._data
         def dbop(condition):            
-            data.rewind()
             n = data.select(condition, columns=self._select_columns(),
                             transaction=self._transaction)
             return data.fetchone()
