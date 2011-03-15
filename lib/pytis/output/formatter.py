@@ -1025,6 +1025,7 @@ class LoutFormatter(Tmpdir):
 
     def _lout(self, lout_args, stream):
         command = '%s %s -' % (config.lout_command, string.join(lout_args, ' '),)
+        command = str(command)
         def lfunction():
             log(EVENT, 'Start Lout')
             process = Popen(command, from_child=stream,

@@ -214,7 +214,7 @@ class Pipe:
         if self._closed:
             raise ValueError, "I/O operation on closed file"
         if self._encoder is not None:
-            string_ = self._encoder(string_)[0]
+            string_ = self._encoder(string_, 'replace')[0]
         def lfunction():
             buffer = self._buffer
             if not buffer or len(buffer[-1]) > 4096:
