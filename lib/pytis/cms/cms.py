@@ -27,12 +27,22 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 import socket
 import lcg
-import pytis.data as pd, pytis.extensions as pe, pytis.presentation as pp
+import pytis.data as pd, pytis.presentation as pp
 from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
-from pytis.extensions import nextval, ONCE, NEVER, ALWAYS
+
 ASC = pd.ASCENDENT
 DESC = pd.DESCENDANT
+ALWAYS = pp.Editable.ALWAYS
+ONCE = pp.Editable.ONCE
+NEVER = pp.Editable.NEVER
+
+def nextval(seq):
+    def conn_spec():
+        return config.dbconnection
+    counter = pd.DBCounterDefault(seq, conn_spec)
+    return lambda transaction=None: counter.next(transaction=transaction)
+
 
 class _TreeOrder(pp.PrettyFoldable, pd.String):
     def __init__(self, **kwargs):
@@ -632,5 +642,3 @@ class Themes(Specification):
     columns = ('name',)
     cb = CodebookSpec(display='name', prefer_display=True)
 
-
-        
