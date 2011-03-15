@@ -1554,9 +1554,12 @@ class RecordForm(LookupForm):
         cols = xtuple(cols)
         values = xtuple(values)
         assert len(cols) == len(values)
+        data = self._data
+        if cols == tuple([c.id() for c in data.key()]):
+            # This saves the final _init_select call
+            return self._find_row_by_key(values)
         cond = pytis.data.AND(*[pytis.data.EQ(c,v) for c,v in zip(cols, values)])
         condition = pytis.data.AND(cond, self._current_condition())
-        data = self._data
         def dbop(condition):            
             n = data.select(condition, columns=self._select_columns(),
                             transaction=self._transaction)
