@@ -30,6 +30,8 @@ i třídy, které tyto specifikace následně zpracovávají.
 import collections
 import copy
 import string
+import gtk, gtk.gdk
+import webkit
 
 from pytis.form import *
 import wx, wx.combo
@@ -1629,13 +1631,67 @@ class ProfileSelector(wx.combo.ComboCtrl):
             func()
         else:
             event.Skip()
-        
+
     def _on_key_down(self, event):
         event.Skip()
         code = event.GetKeyCode()
         if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             current_form().focus()
             
+
+class BrowserPanel(wx.Panel):
+    """Web Browser widget.
+
+    The widget can be embedded into other wx widgets as an ordinary wx.Panel.
+    The public methods may be used then to manipulate the browser content.
+
+    Implemented using Webkit GTK (http://webkitgtk.org/reference/webkitgtk-webkitwebview.html).
+    
+    """
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        # Show must be called first in order to be able to obtain the GtkPizza
+        # widget below.  GtkPizza is a custom GTK widget implemented by
+        # wxWidgets.
+        parent.Show()
+        window = gtk.gdk.window_lookup(self.GetHandle())
+        # Reference to the GtkPizza widget must be kept to prevent a segfault.
+        self._pizza = pizza = window.get_user_data()
+        # GtkPizza's parant is a gtk.ScrolledWindow.
+        scrolled_window = pizza.parent
+        # Replace the GTK ScrolledWindow content by the webkit widget.
+        scrolled_window.remove(pizza)
+        self._webview = webview = webkit.WebView()
+        scrolled_window.add(webview)
+        scrolled_window.show_all()
+
+    def load_uri(self, uri):
+        return self._webview.load_uri(uri)
+
+    def load_html(self, html, base_uri=''):
+        return self._webview.load_html_string(html, base_uri)
+
+
+class Browser(wx.Frame):
+    """Simple browser in a standalone frame."""
+ 
+    def __init__(self):
+        wx.Frame.__init__(self, None)
+        self._ctrl = ctrl = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        self._browser_panel = panel = BrowserPanel(self)
+        ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_url_enter)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(ctrl, proportion=0, flag=wx.EXPAND)
+        sizer.Add(panel, proportion=1, flag=wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetSize((800,600))
+        self.SendSizeEvent()
+ 
+    def _on_url_enter(self, event):
+        uri = self._ctrl.GetValue()
+        self._browser_panel.load_uri(uri)
+        self.SetTitle(uri)
+
 
 # Převodní funkce
         
@@ -1978,24 +2034,28 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         if height is None:
             height = min(len(lines), 20)
         style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
-        w = wx.TextCtrl(parent, style=style)
-        w.SetValue(content)
+        ctrl = wx.TextCtrl(parent, style=style)
+        ctrl.SetValue(content)
+        ctrl.SetBestFittingSize(char2px(ctrl, width, height))
+        return ctrl
     else:
         if width is None:
             width = 80
         if height is None:
             height = 20
-        import wx.html
-        w = wx.html.HtmlWindow(parent)
+        # The parent widget must be shown first and then we may create the BrowserPanel.
+        browser = BrowserPanel(parent)
         if format == TextFormat.WIKI:
             import lcg
             n = lcg.ContentNode('', content=lcg.Container(lcg.Parser().parse(content)))
             html = n.content().export(lcg.HtmlExporter().context(n, None))
         else:
             html = content
-        if (wx.MAJOR_VERSION, wx.MINOR_VERSION) == (2, 6):
-            html = '<font size="-2">' + html + '</font>'
-        w.SetPage('<html><head></head><body>'+ html +'</body></html>')
-    w.SetBestFittingSize(char2px(w, width, height))
-    return w
+        if isinstance(html, unicode):
+            html = html.encode('utf-8')
+        head = '<meta content="text/html; charset=UTF-8" http-equiv="content-type">'
+        browser.load_html('<html><head>'+ head +'</head><body>'+ html +'</body></html>')
+        parent.SetSize(char2px(parent, width, height))
+        return browser
+
 

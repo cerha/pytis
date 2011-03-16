@@ -23,6 +23,7 @@ import gettext
 import imp
 import os
 import sys
+import gobject
 
 # Ošklivý hack kvůli ošetření výchozího kódování protože site.py metodu `setdefaultencoding()' z
 # modulu `sys' vymaže.
@@ -130,6 +131,8 @@ def gg():
 
 
 def run_application():
+    # Init gobject threads as we use gtk widgets at some places (such as a webkit browser widget).
+    gobject.threads_init()
     gc.enable() # pro jistotu
     import locale
     import pytis.form # musí být až za zpracováním voleb
