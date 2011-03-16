@@ -54,7 +54,7 @@ class NullLogger(pytis.util.Logger):
         pass
 
 def usage(optexception=None):
-    sys.stderr.write("""usage: %s OPTIONS
+    sys.stderr.write("""usage: %s OPTIONS [ SPEC-NAME-PREFIX ]
   --config=CONFIG_FILE   ... use given configuration file
   --devel                ... development checking mode
   --verbose              ... print logging messages
@@ -84,10 +84,16 @@ def run():
         config.add_command_line_options(argv)
     except getopt.GetoptError as e:
         usage(e)
+    spec_name_prefix = None
+    args = sys.argv[1:]
+    if args:
+        if len(args) > 1:
+            usage()
+        spec_name_prefix = args[0]
     if not verbose:
         config.log_logger = (NullLogger, (), {})
     reporter = CheckReporterExt()
-    checker_class().batch_check(reporter)
+    checker_class(spec_name_prefix=spec_name_prefix).batch_check(reporter)
 
 if __name__ == '__main__':
     run()

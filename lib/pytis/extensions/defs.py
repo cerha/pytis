@@ -210,7 +210,14 @@ class MenuChecker(object):
     _specnames = None
     _codebook_form_users_ = None
     
-    def __init__(self):
+    def __init__(self, spec_name_prefix=None):
+        """
+        Arguments:
+
+          spec_name_prefix -- if not None then only specification with given
+            prefix (basestring) are tested
+
+        """
         self._resolver = pytis.util.resolver()
         self._dbconn = config.dbconnection
         connection_data = config.dbconnection
@@ -218,11 +225,18 @@ class MenuChecker(object):
         condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'user'))
         self._application_roles = [row[0].value()
                                    for row in data.select_map(identity, condition=condition)]
+        self._spec_name_prefix = spec_name_prefix
 
     def _specification_names(self, errors=None):
         if self.__class__._specnames is None:
             self.__class__._specnames = self._find_specification_names(errors)
-        return self.__class__._specnames
+        if self._spec_name_prefix is None:
+            names = self.__class__._specnames
+        else:
+            prefix = self._spec_name_prefix
+            l = len(prefix)
+            names = [n for n in self.__class__._specnames if n[:l] == prefix]
+        return names
 
     def _find_specification_names(self, errors):
         return get_menu_defs()        
