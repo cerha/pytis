@@ -2525,6 +2525,10 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
 
     _DEFAULT_WINDOW_HEIGHT = 500
 
+    def __init__(self, parent, *args, **kwargs):
+        parent = self._popup_frame(parent)
+        super(CodebookForm, self).__init__(parent, *args, **kwargs)
+        
     def _full_init(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         super(CodebookForm, self)._full_init(parent, *args, **kwargs)

@@ -2420,7 +2420,8 @@ class PopupEditForm(PopupForm, EditForm):
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
-        super(PopupEditForm, self).__init__(parent, *args, **kwargs)
+        EditForm.__init__(self, parent, *args, **kwargs)
+    
     def _full_init(self, *args, **kwargs):
         EditForm._full_init(self, *args, **kwargs)
         if self._inserted_data is not None:
