@@ -379,7 +379,7 @@ class MenuChecker(object):
             reporter.error(e)
         reporter.start(len(specnames))
         for s in specnames:
-            reporter.info("Specifikace: " + s)
+            reporter.info("Specification: " + s)
             try:
                 errors = self._check_spec(s)
             except Exception as e:
@@ -394,7 +394,26 @@ class AppChecker(MenuChecker):
         menu_specs = get_menu_defs()
         form_specs = get_form_defs(self._resolver, errors)
         return remove_duplicates(menu_specs + form_specs)
-            
+
+class DevelChecker(MenuChecker):
+    """This checker serves for application testing after global changes.
+
+    Its purpose is to check that every function available to the user is
+    working.  On the other hand, its purpose is not to check correctness or
+    sanity of DMP data, etc.
+
+    Of course this checker can't check corectness completely.  It performs only
+    limited set of fully automated global tests.  It tries to detect mainly
+    crashes.  If you want to test application logic or reactions to user
+    actions, there is no other way than to implement special purpose tests.
+
+    """
+    def check_codebook_rights(self, *args, **kwargs):
+        return []
+
+    def check_reverse_codebook_rights(self, *args, **kwargs):
+        return []
+    
 def check_menus_defs():
     """Zkontroluje všechny specifikace uvedené v menu aplikace."""
     MenuChecker().interactive_check()

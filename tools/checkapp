@@ -17,11 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import getopt
 import sys
 import datetime
 
 import pytis.extensions
+import pytis.util
 
 class CheckReporterExt(pytis.extensions.CheckReporter):
 
@@ -45,25 +47,47 @@ class CheckReporterExt(pytis.extensions.CheckReporter):
         sys.stdout.flush()
 
     def error(self, message):
-        print message,
+        print 'Error:', message
 
+class NullLogger(pytis.util.Logger):
+    def log(self, *args, **kwargs):
+        pass
 
 def usage(optexception=None):
-    sys.stderr.write("usage: %s [ --config=CONFIG_FILE ]\n")
+    sys.stderr.write("""usage: %s OPTIONS
+  --config=CONFIG_FILE   ... use given configuration file
+  --devel                ... development checking mode
+  --verbose              ... print logging messages
+""")
     if optexception:
         sys.stderr.write(optexception.msg)
         sys.stderr.write('\n')
     sys.exit(1)
 
+def checkopt(argv, option):
+    try:
+        i = argv.index(option)
+        del argv[i]
+    except:
+        return False
+    return True
+
 def run():
+    argv = copy.copy(sys.argv)
+    if checkopt(argv, '--devel'):
+        checker_class = pytis.extensions.DevelChecker
+    else:
+        checker_class = pytis.extensions.AppChecker
+    verbose = checkopt(argv, '--verbose')
     import config
     try:
-        config.add_command_line_options(sys.argv)
+        config.add_command_line_options(argv)
     except getopt.GetoptError as e:
         usage(e)
-    # reporter = pytis.extensions.CheckReporter()
+    if not verbose:
+        config.log_logger = (NullLogger, (), {})
     reporter = CheckReporterExt()
-    pytis.extensions.AppChecker().batch_check(reporter)
+    checker_class().batch_check(reporter)
 
 if __name__ == '__main__':
     run()
