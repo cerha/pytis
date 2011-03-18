@@ -65,6 +65,8 @@ def unpack(packed, data):
                         validation_kwargs['format'] = '%d.%m.%Y'
                     elif '-' in val:
                         validation_kwargs['format'] = '%Y-%m-%d'
+                if isinstance(column.type(), pytis.data.Float) and ',' in val:
+                    val = val.replace(',', '.')
                 value, err = column.type().validate(val, strict=False, **validation_kwargs)
             if err is not None:
                 raise Exception("Invalid operand value '%s' for '%s': %s" % (val, col, err))
