@@ -257,6 +257,9 @@ class MenuChecker(object):
             if not spec.public:
                 errors.append("Neveřejná specifikace v menu.")
             for p in (print_spec or ()):
+                if p in self._output_specs:
+                    continue
+                self._output_specs[p] = True
                 try:
                     self._output_resolver.get_module(p[1])
                 except ResolverError as e:
@@ -365,6 +368,7 @@ class MenuChecker(object):
     def interactive_check(self):
         errors = []
         specnames = self._specification_names(errors)
+        self._output_specs = {}
         width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
         def check_specs(update, specnames):
             check_spec = self._check_spec
@@ -397,6 +401,7 @@ class MenuChecker(object):
     def batch_check(self, reporter):
         errors = []
         specnames = self._specification_names(errors)
+        self._output_specs = {}
         for e in errors:
             reporter.error(e)
         reporter.start(len(specnames))
