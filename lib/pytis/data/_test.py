@@ -1130,6 +1130,14 @@ class DBDataDefault(_DBTest):
             n = n + 1
         self.dcosi.close()
         assert n == 1
+        # Function test
+        condition = pytis.data.GT(pytis.data.OpFunction('pow', 'id', ival(2)), ival(10))
+        self.dcosi.select(condition)
+        n = 0
+        while self.dcosi.fetchone():
+            n = n + 1
+        self.dcosi.close()
+        assert n == 2        
     def test_select_sorting(self):
         A = pytis.data.ASCENDENT
         D = pytis.data.DESCENDANT

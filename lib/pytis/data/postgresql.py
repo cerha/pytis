@@ -1543,8 +1543,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             return 'true'
         op_name, op_args, op_kwargs = \
                  condition.name(), condition.args(), condition.kwargs()
+        def function_call(op_args):
+            assert len(op_args) >= 1, ('Invalid number of arguments', op_args)
+            function, args = op_args[0], op_args[1:]
+            string_args = []
+            for a in args:
+                if isinstance(a, str):
+                    string_args.append(colarg(a)[0])
+                elif isinstance(a, Value):
+                    string_args.append(self._pg_value(a))
+                else:
+                    raise ProgramError("Invalid function condition argument", a)
+            return '%s(%s)' % (function, string.join(string_args, ', '),)
         def colarg(colid):
-            assert isinstance(colid, str), ('Invalid column name type', colid)
+            if isinstance(colid, Operator) and colid.name() == 'Function':
+                return function_call(colid.args()), None
+            assert isinstance(colid, str), ('Invalid column specification', colid)
             col = self._db_column_binding(colid)
             assert col, ('Invalid column name', colid)
             a = self._pdbb_btabcol(col)
@@ -1636,17 +1650,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             col, query = op_args
             expression = "%s ~ '%s'" % (col, query,)
         elif op_name == 'Function':
-            assert len(op_args) >= 1, ('Invalid number of arguments', op_args)
-            function, args = op_args[0], op_args[1:]
-            string_args = []
-            for a in args:
-                if isinstance(a, str):
-                    string_args.append(colarg(a)[0])
-                elif isinstance(a, Value):
-                    string_args.append(self._pg_value(a))
-                else:
-                    raise ProgramError("Invalid function condition argument", a)
-            expression = '%s(%s)' % (function, string.join(string_args, ', '),)
+            expression = function_call(op_args)
         elif op_name == 'Raw':          # TODO: Remove.
             assert len(op_args) == 1, ('Invalid number of arguments', op_args)
             expression = op_args[0]

@@ -1099,7 +1099,7 @@ def EQ(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- identifikátor sloupce, string
+      x -- column identifier, string, or an 'OpFunction' value
       y -- hodnota sloupce, instance tøídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1114,7 +1114,7 @@ def NE(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- identifikátor sloupce, string
+      x -- column identifier, string, or an 'OpFunction' value
       y -- hodnota sloupce, instance tøídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1130,7 +1130,7 @@ def WM(x, y, ignore_case=True):
 
     Argumenty:
 
-      x -- identifikátor sloupce
+      x -- column identifier, string, or an 'OpFunction' value
       y -- instance 'WMValue' definující vzor; její hodnota mù¾e jako wildcars
         obsahovat znaky '*' (lze substituovat èímkoliv) a '?' (lze substituovat
         libovolným znakem)
@@ -1147,7 +1147,7 @@ def NW(x, y, ignore_case=True):
 
     Argumenty:
 
-      x -- identifikátor sloupce typu 'String', string
+      x -- column identifier, string, or an 'OpFunction' value
       y -- string definující vzor; jako wildcars mù¾e obsahovat znaky '*' (lze
         substituovat èímkoliv) a '?' (lze substituovat libovolným znakem)
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
@@ -1164,7 +1164,7 @@ def LT(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- identifikátor sloupce, string
+      x -- column identifier, string, or an 'OpFunction' value
       y -- hodnota sloupce, instance tøídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1179,7 +1179,7 @@ def LE(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- identifikátor sloupce, string
+      x -- column identifier, string, or an 'OpFunction' value
       y -- hodnota sloupce, instance tøídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1197,7 +1197,7 @@ def GT(x, y, ignore_case=False):
 
     Argumenty:
 
-      x -- identifikátor sloupce, string
+      x -- column identifier, string, or an 'OpFunction' value
       y -- hodnota sloupce, instance tøídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1214,7 +1214,7 @@ def GE(x, y, ignore_case=False):
 
     Argumenty:
     
-    x -- identifikátor sloupce, string
+      x -- column identifier, string, or an 'OpFunction' value
       y -- hodnota sloupce, instance tøídy 'types._Value'
       ignore_case -- zda má být ignorována velikost písmen (má-li to pro daný
         typ smysl)
@@ -1344,6 +1344,18 @@ def LTreeDescendant(x, y):
 
 def FunctionCondition(function, *args):
     """Function call.
+
+    Arguments:
+
+      function -- function name as a string
+      args -- function arguments; each of the arguments is either a column
+        identifier as a string or a 'types_.Value' instance.
+
+    """
+    return Operator('Function', function, *args)
+
+def OpFunction(function, *args):
+    """Function call to be used in relation operators.
 
     Arguments:
 
