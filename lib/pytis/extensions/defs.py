@@ -145,10 +145,7 @@ def _get_default_select(spec):
     data = data_object(spec)
     select_count = init_select(view, data)
     if select_count:
-        print "Default select pro specifikaci %s vrací %s řádků" % (spec,
-                                                                    select_count)
-        import time
-        start_time = time.time()
+        print "Default select pro specifikaci %s vrací %s řádků" % (spec, select_count,)
         data.fetchone()
 
         
@@ -277,7 +274,7 @@ class MenuChecker(object):
         except ResolverError as e:
             return errors + [str(e)]
         try:
-            bspec = bindings[side]
+            bindings[side]
         except KeyError:
             errors.append("Binding item for %s not found." % (side,))
         return errors
