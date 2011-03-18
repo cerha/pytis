@@ -257,11 +257,15 @@ class MenuChecker(object):
             if not spec.public:
                 errors.append("Neveřejná specifikace v menu.")
             for p in (print_spec or ()):
-                if p in self._output_specs:
+                module = p[1]
+                pos = module.find(':')
+                if pos >= 0:
+                    module = module[:pos]
+                if module in self._output_specs:
                     continue
-                self._output_specs[p] = True
+                self._output_specs[module] = True
                 try:
-                    self._output_resolver.get_module(p[1])
+                    self._output_resolver.get_module(module)
                 except ResolverError as e:
                     errors.append("Failed to load print specification: " + str(e))
         return errors
