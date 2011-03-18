@@ -383,7 +383,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         pass
         
     def __str__(self):
-        return "<%s id='%s'>" % (self.__class__.__name__, self.id())
+        try:
+            return "<%s id='%s'>" % (self.__class__.__name__, self.id())
+        except AttributeError:
+            return "<%s (uninitialized)>" % self.__class__.__name__
         
     def _skip_navigation_callback(self, widget):
         def cb(e):
