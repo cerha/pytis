@@ -114,15 +114,31 @@ def run():
                     if specname not in ignored_specifications:
                         ignored_specifications.append((specname, e))
                     continue
-                kwargs = dict([(param, state[param])
-                               for param in ('sorting', 'grouping', 'columns', 'folding')
-                               if state.get(param) is not None])
                 try:
                     data_object = data_spec.create(dbconnection_spec=config.dbconnection)
                 except Exception, e:
                     if specname not in ignored_specifications:
                         ignored_specifications.append((specname, e))
                     continue
+                kwargs = {}
+                for param, getcol in (('columns',  lambda x: x),
+                                      ('sorting',  lambda x: x[0]),
+                                      ('grouping', lambda x: x),
+                                      ('folding',  None)):
+                    value = state.get(param)
+                    if value is not None:
+                        if getcol is not None:
+                            ok = True
+                            for x in value:
+                                column_id = getcol(x)
+                                if view_spec.field(column_id) is None:
+                                    print "    - Unknown column %s in %s of %s" % \
+                                        (column_id, param, specname)
+                                    ok = False
+                                    break
+                            if not ok:
+                                continue
+                        kwargs[param] = value
                 if state.has_key('column_width'):
                     kwargs['column_widths'] = dict(state['column_width'])
                 if kwargs.has_key('sorting'):
