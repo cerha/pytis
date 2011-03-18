@@ -585,7 +585,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._row.field_changed(self.id())
 
     def _px_size(self, width, height):
-        return dlg2px(self._parent, 4*(width+1)+2, 8*height+4.5)
+        size = dlg2px(self._parent, 4*(width+1)+2, 8*height+4.5)
+        return (size.width, size.height)
     
     def _set_focus(self):
         parent = self._ctrl.GetParent()
