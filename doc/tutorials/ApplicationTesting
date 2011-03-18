@@ -1,0 +1,22 @@
+Stručný návod k testování aplikací po hromadných změnách:
+
+- Přepnout se do adresáře aplikace, obsahujícího patřičné config.py.
+
+- Spustit testy specifikací:
+
+    PYTHONPATH=$PYTHONPATH:. checkapp --devel
+
+- Spustit testy jen na některé specifikace, začínající prefixem `Foo':
+
+    PYTHONPATH=$PYTHONPATH:. checkapp --devel Foo
+
+- Spustit testy se zapnutým pytisovým logováním:
+
+    PYTHONPATH=$PYTHONPATH:. checkapp --devel --verbose Foo
+
+Specifikace lze dále testovat testovacími nástroji Pythonu jako jsou pychecker,
+pylint nebo pyflakes.  Užitečnost těchto nástrojů je sporná, hlásí spoustu
+nepodstatných nebo neexistujících chyb a nemusí odhalit chyby skutečné, některé
+z nástrojů jsou navíc hodně pomalé.  Z praktického hlediska je pro hromadné
+kontroly asi nejpoužitelnější pyflakes, které je rychlé, díky tomu že provádí
+pouze statické kontroly.  Je tak vhodným doplňkem checkapp.
