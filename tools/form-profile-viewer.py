@@ -27,7 +27,9 @@ def usage(msg=None):
                      "Usage: config-update [options] username [pattern]\n"
                      "  options: Pytis command line options (defined by pytis configuration)\n"
                      "  username: Name of the database user owning the profiles\n"
-                     "  pattern: wildcard pattern to mach form specification names\n")
+                     "  pattern: wildcard pattern to mach form specification names\n"
+                     "  and/or profile names (specification name pattern may be\n"
+                     "  followed by a colon and profiloe name pattern)\n")
     if msg:
         sys.stderr.write(msg)
         sys.stderr.write('\n')
@@ -45,6 +47,12 @@ def run():
     except getopt.GetoptError, e:
         usage(e.msg)
     # Disable pytis logging.
+    if pattern and ':' in pattern:
+        import re
+        pattern, name_pattern = pattern.split(':', 1)
+        name_matcher = re.compile(name_pattern.replace('*', '.*'))
+    else:
+        name_matcher = None
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
@@ -62,17 +70,21 @@ def run():
             break
     pp = pprint.PrettyPrinter()
     for fullname in manager.list_fullnames(pattern=pattern):
-        print '\n' + fullname
+        fullname_printed = False
         for profile_id in manager.list_profile_ids(fullname):
             profile = manager.load_profile(fullname, profile_id)
             state = profile._state
-            print '  * %s (%s):' % (state['_id'], state['_name']) #.encode('utf-8'))
-            for key in ('filter', 'sorting', 'columns', 'grouping', 'folding', 'aggregations',
-                        'column_widths', 'group_by_columns', 'aggregation_columns'):
-                value = profile._state['_'+key]
-                indent = '\n        ' + ' ' * len(key)
-                formatted = indent.join(pp.pformat(value).splitlines())
-                print '    - %s: %s' % (key, formatted)
-                
+            if name_matcher is None or name_matcher.match(state['_name']):
+                if not fullname_printed:
+                    print '\n' + fullname
+                    fullname_printed = True
+                print '  * %s (%s):' % (state['_id'], state['_name']) #.encode('utf-8'))
+                for key in ('filter', 'sorting', 'columns', 'grouping', 'folding', 'aggregations',
+                            'column_widths', 'group_by_columns', 'aggregation_columns'):
+                    value = profile._state['_'+key]
+                    indent = '\n        ' + ' ' * len(key)
+                    formatted = indent.join(pp.pformat(value).splitlines())
+                    print '    - %s: %s' % (key, formatted)
+
 if __name__ == '__main__':
     run()
