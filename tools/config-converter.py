@@ -89,7 +89,7 @@ def run():
             saved_config = row['config'].value()
             if not saved_config:
                 continue
-            print "  -", row['uzivatel'].value(), '...',
+            print "  *", row['uzivatel'].value(), '...'
             count = 0
             options = dict(pickle.loads(zlib.decompress(binascii.a2b_base64(saved_config))))
             cfg = DBConfigurationStorage(config.dbconnection, username=row['uzivatel'].value())
@@ -107,7 +107,8 @@ def run():
                 fullname = 'form/%s.%s/%s//' % (form.__module__, form.__name__, specname)
                 resolver = pytis.util.resolver()
                 try:
-                    spec = resolver.get(specname, 'view_spec')
+                    view_spec = resolver.get(specname, 'view_spec')
+                    data_spec = resolver.get(specname, 'data_spec')
                 except pytis.util.ResolverError, e:
                     # Ignore configurations for specifications that no longer exist
                     if specname not in ignored_specifications:
@@ -116,6 +117,12 @@ def run():
                 kwargs = dict([(param, state[param])
                                for param in ('sorting', 'grouping', 'columns', 'folding')
                                if state.get(param) is not None])
+                try:
+                    data_object = data_spec.create(dbconnection_spec=config.dbconnection)
+                except Exception, e:
+                    if specname not in ignored_specifications:
+                        ignored_specifications.append((specname, e))
+                    continue
                 if state.has_key('column_width'):
                     kwargs['column_widths'] = dict(state['column_width'])
                 if kwargs.has_key('sorting'):
@@ -126,22 +133,24 @@ def run():
                     profile = FormProfile('__default_profile__', _("Výchozí profil"), **kwargs)
                     manager.save_profile(fullname, profile, transaction=transaction)
                     count += 1
-                    for p in spec.profiles():
+                    for p in view_spec.profiles():
                         profile = FormProfile(p.id(), p.name(), filter=p.filter(), **kwargs)
                         manager.save_profile(fullname, profile, transaction=transaction)
                         count += 1
                 for i, (name, cond) in enumerate(state.pop('conditions', ())):
-                    profile = FormProfile('_user_profile_%d' % (i+1), name.strip(), **kwargs)
-                    profile._packed_filter = cond
-                    manager.save_profile(fullname, profile, transaction=transaction)
-                    count += 1
-                    
+                    profile = FormProfile('_user_profile_%d' % (i+1), name.strip())
+                    profile._state = dict([('_'+k, v) for k,v in kwargs.items()], _filter=cond)
+                    if profile.validate(view_spec, data_object):
+                        manager.save_profile(fullname, profile, transaction=transaction)
+                        count += 1
+                    else:
+                        print "    - Ignoring invalid saved condition '%s': %s" % (name, cond)
             for option, value in options.pop('application_state', {}).items():
                 options[option.replace('startup_forms', 'saved_startup_forms')] = value
             # Some old saved configs may include 'dbconnection' it due to an old bug.
             options.pop('dbconnection', None)
             cfg.write(options.items())
-            print "%d profiles created, %d configuration options converted." % (count, len(options))
+            print "    ... %d profiles created, %d configuration options converted." % (count, len(options))
         data.close()
     except:
         transaction.rollback()
