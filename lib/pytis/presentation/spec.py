@@ -1232,7 +1232,7 @@ class ViewSpec(object):
                                 (spec_name, item.action(),))
                     elif isinstance(item, Text):
                         pass
-                    elif callable(item):
+                    elif isinstance(item, collections.Callable):
                         pass
                     else:
                         assert item in self._field_dict, \

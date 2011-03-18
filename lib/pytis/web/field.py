@@ -16,6 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import collections
 import re
 import string
 
@@ -289,7 +290,7 @@ class FieldExporter(object):
                 value = g.img(src, alt=value) #, cls=cls)
             link = self._uri_provider(self._row, fid, type=UriType.LINK)
             if link:
-                if callable(link):
+                if isinstance(link, collections.Callable):
                     pass # Ignore array item links here
                 elif isinstance(link, basestring):
                     value = g.link(value, link)
