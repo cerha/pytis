@@ -19,6 +19,7 @@
 """Funkce pro načítání, caching, kontrolu a reporty z defsů.""" 
 
 import pytis.data
+import pytis.output
 import pytis.util
 from pytis.extensions import *
 
@@ -219,6 +220,7 @@ class MenuChecker(object):
 
         """
         self._resolver = pytis.util.resolver()
+        self._output_resolver = pytis.output.OutputResolver(self._resolver)
         self._dbconn = config.dbconnection
         connection_data = config.dbconnection
         data = pytis.data.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
@@ -249,10 +251,16 @@ class MenuChecker(object):
             class_name = spec_name[pos+1:]
             try:
                 spec = self._resolver.get_object(module_name, class_name)
+                print_spec = self._resolver.get(spec_name, 'print_spec')
             except ResolverError as e:
                 return errors + [str(e)]
             if not spec.public:
                 errors.append("Neveřejná specifikace v menu.")
+            for p in (print_spec or ()):
+                try:
+                    self._output_resolver.get_module(p[1])
+                except ResolverError as e:
+                    errors.append("Failed to load print specification: " + str(e))
         return errors
     
     def check_bindings(self, main, side):
