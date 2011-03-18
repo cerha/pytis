@@ -37,7 +37,7 @@ class CheckReporterExt(pytis.extensions.CheckReporter):
         end_time = datetime.datetime.now()
         diff = end_time - self._start_time
         print "="*80
-        print "Checked %s specification in %s seconds" % (self._number_of_items, diff.seconds) 
+        print "Checked %s specifications in %s seconds" % (self._number_of_items, diff.seconds) 
 
     def info(self, message):
         self._current += 1
