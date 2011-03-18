@@ -38,6 +38,45 @@ def usage(msg=None):
         sys.stderr.write('\n')
     sys.exit(1)
 
+OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
+def unpack(packed, data):
+    name, packed_args, kwargs = packed
+    if name not in OPERATORS:
+        raise Exception("Invalid operator '%s'" % name)
+    op = getattr(pytis.data, name)
+    if name in ('AND', 'OR'):
+        args = [unpack(arg, data) for arg in packed_args]
+    else:
+        if len(packed_args) != 2:
+            raise Exception("Invalid number of operator arguments: %s" % repr(packed_args))
+        if isinstance(packed_args[1], list):
+            col, val = packed_args[0], packed_args[1][0]
+            column = data.find_column(col)
+            if column is None:
+                raise Exception("Unknown column '%s'" % col)
+            if name in ('WM', 'NW'):
+                value, err = column.type().wm_validate(val)
+            else:
+                validation_kwargs = {}
+                if isinstance(column.type(), pytis.data.Date):
+                    if '/' in val:
+                        validation_kwargs['format'] = '%d/%m/%Y'
+                    elif '.' in val:
+                        validation_kwargs['format'] = '%d.%m.%Y'
+                    elif '-' in val:
+                        validation_kwargs['format'] = '%Y-%m-%d'
+                value, err = column.type().validate(val, strict=False, **validation_kwargs)
+            if err is not None:
+                raise Exception("Invalid operand value '%s' for '%s': %s" % (val, col, err))
+            args = col, value
+        else:
+            args = packed_args
+            for col in args:
+                if data.find_column(col) is None:
+                    raise Exception("Unknown column '%s'" % col)
+    return op(*args, **kwargs)
+
+    
 def run():
     # Process command line options and init configuration.
     try:
@@ -154,13 +193,15 @@ def run():
                         manager.save_profile(fullname, profile, transaction=transaction)
                         count += 1
                 for i, (name, cond) in enumerate(state.pop('conditions', ())):
-                    profile = FormProfile('_user_profile_%d' % (i+1), name.strip())
-                    profile._state = dict([('_'+k, v) for k,v in kwargs.items()], _filter=cond)
-                    if profile.validate(view_spec, data_object):
+                    try:
+                        filter = unpack(cond, data_object)
+                    except Exception, e:
+                        print "    - Ignoring saved condition '%s': %s" % (name, e)
+                    else:
+                        profile = FormProfile('_user_profile_%d' % (i+1), name.strip(),
+                                              filter=filter, **kwargs)
                         manager.save_profile(fullname, profile, transaction=transaction)
                         count += 1
-                    else:
-                        print "    - Ignoring invalid saved condition '%s': %s" % (name, cond)
             for option, value in options.pop('application_state', {}).items():
                 options[option.replace('startup_forms', 'saved_startup_forms')] = value
             # Some old saved configs may include 'dbconnection' it due to an old bug.
