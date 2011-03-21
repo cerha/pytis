@@ -459,7 +459,8 @@ class AggregationDualForm(PostponedSelectionDualForm):
 
     def _create_side_form(self, parent):
         return self._SideForm(parent, self._resolver, self._name, guardian=self,
-                              main_form=self._main_form, condition=self._side_form_condition)
+                              main_form=self._main_form,
+                              condition=self._main_form.side_form_condition)
     
     def _set_main_form_callbacks(self):
         f = self._main_form
@@ -471,13 +472,6 @@ class AggregationDualForm(PostponedSelectionDualForm):
         f.set_callback(f.CALL_MODIFICATION, self._main_form.refresh)
         f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
 
-    def _side_form_condition(self, row):
-        eqs = [pytis.data.EQ(cid, row[cid]) for cid in self._main_form.group_by_columns()]
-        aggregation_condition = self._main_form.aggregation_condition()
-        if aggregation_condition:
-            eqs.append(aggregation_condition)
-        return pytis.data.AND(*eqs)
-        
     def _do_selection(self, row):
         form = self._side_form
         focused = wx_focused_window()

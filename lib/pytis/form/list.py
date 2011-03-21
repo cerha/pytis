@@ -3076,5 +3076,15 @@ class AggregationForm(BrowseForm):
     def group_by_columns(self):
         return self._group_by_column_ids()
 
-    def aggregation_condition(self):
-        return self._aggregation_condition
+    def side_form_condition(self, row):
+        """Return the side form filtering condition for given main form row."""
+        conditions = [self._aggregation_condition]
+        for column_id, function in self._group_by_columns:
+            if function is None:
+                condition = pytis.data.EQ(column_id, row[column_id])
+            else:
+                value = row[self._group_by_column_id(column_id, function)]
+                op_function = pytis.data.OpFunction(function, column_id)
+                condition = pytis.data.EQ(op_function, value)
+            conditions.append(condition)
+        return pytis.data.AND(*conditions)
