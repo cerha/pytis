@@ -300,6 +300,7 @@ class DateTime(_TypeCheck):
         val = v.value()
         result = exp(val, **vkwargs)
         assert result == '2100-02-05 01:02:03', ('Invalid date export', result)
+        assert v.primitive_value() == '2100-02-05 01:02:03', v.primitive_value()
 tests.add(DateTime)
 
 
@@ -329,6 +330,7 @@ class TimeInterval(_TypeCheck):
         value = pytis.data.Value(self._test_instance, datetime.timedelta(1, 3600))
         exported = value.export()
         assert exported == '25:00:00', (value, exported,)
+        assert value.primitive_value() == exported, (value.primitive_value(), exported,)
 tests.add(TimeInterval)
 
 
@@ -354,6 +356,7 @@ class Array(_TypeCheck):
         value, _ = self._test_validity(None, ('1', '2', '3'), None, check_value=False)
         assert [v.value() for v in value.value()] == [1, 2, 3]
         assert value.export() == ('1', '2', '3'), value.export()
+        assert value.primitive_value() == [1, 2, 3], value.primitive_value()
     def test_cmp(self):
         cls = self._test_instance.__class__
         inner_type = self._test_instance.inner_type()
