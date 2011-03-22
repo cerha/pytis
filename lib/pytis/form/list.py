@@ -165,8 +165,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._aggregation_columns = profile.aggregation_columns()
             self._column_widths = dict(profile.column_widths())
         else:
-            self._group_by_columns = None
-            self._aggregation_columns = None
+            self._group_by_columns = ()
+            self._aggregation_columns = ()
             self._column_widths = {}
         
     def _apply_profile(self, profile, refresh=True):

@@ -60,7 +60,7 @@ class FormProfile(pytis.presentation.Profile):
 
     """
     def __init__(self, id, name, column_widths=None,
-                 group_by_columns=None, aggregation_columns=None, **kwargs):
+                 group_by_columns=(), aggregation_columns=(), **kwargs):
         """Specific keyword arguments:
 
           group_by_columns -- tuple of group by columns (their string
