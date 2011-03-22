@@ -1686,10 +1686,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 [(pytis.data.Data.AGG_COUNT, _("Poèet"))])
         
     def _cmd_aggregated_view(self):
-        grouping_functions = (
-            ('f_date_year', _("Rok"), pytis.data.DateTime, pytis.data.Integer()),
-            ('f_date_month', _("Mìsíc"), pytis.data.DateTime, pytis.data.Integer()),
-            )
+        grouping_functions = self._view.grouping_functions()
         group_by_columns = self._get_state_param('group-by-columns', (),
                                                  cls=tuple, item_cls=tuple)
         aggregation_columns = self._get_state_param('aggregation-columns', (),
