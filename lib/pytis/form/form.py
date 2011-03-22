@@ -90,7 +90,17 @@ class FormProfile(pytis.presentation.Profile):
                 args = tuple([pack(arg) for arg in something.args()])
                 return (something.name(), args, something.kwargs())
             elif isinstance(something, pytis.data.Value):
-                return [something.export()]
+                t = something.type()
+                export_kwargs = {}
+                if isinstance(t, pytis.data.Date):
+                    export_kwargs['format'] = '%Y-%m-%d'
+                elif isinstance(t, pytis.data.Time):
+                    export_kwargs['format'] = '%H:%M:%S'
+                elif isinstance(t, pytis.data.DateTime):
+                    export_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
+                elif isinstance(t, pytis.data.Float):
+                    export_kwargs['locale_format'] = False
+                return [something.export(**export_kwargs)]
             elif isinstance(something, pytis.data.WMValue):
                 return [something.value()]
             elif isinstance(something, str):
@@ -141,10 +151,20 @@ class FormProfile(pytis.presentation.Profile):
                     column = data.find_column(col)
                     if column is None:
                         raise Exception("Unknown column '%s'" % col)
+                    t = column.type()
                     if name in ('WM', 'NW'):
-                        value, err = column.type().wm_validate(val)
+                        value, err = t.wm_validate(val)
                     else:
-                        value, err = column.type().validate(val, strict=False)
+                        validation_kwargs = {}
+                        if isinstance(t, pytis.data.Date):
+                            validation_kwargs['format'] = '%Y-%m-%d'
+                        elif isinstance(t, pytis.data.Time):
+                            validation_kwargs['format'] = '%H:%M:%S'
+                        elif isinstance(t, pytis.data.DateTime):
+                            validation_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
+                        elif isinstance(t, pytis.data.Float):
+                            validation_kwargs['locale_format'] = False
+                        value, err = t.validate(val, strict=False, **validation_kwargs)
                     if err is not None:
                         raise Exception("Invalid operand value for '%s': %s" % (col, err))
                     args = col, value

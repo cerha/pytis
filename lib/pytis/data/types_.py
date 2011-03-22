@@ -621,7 +621,7 @@ class Float(Number):
         """Vra» pøesnost èísla zadanou v konstruktoru jako integer."""
         return self._precision
     
-    def _validate(self, string, precision=None, rounding=None):
+    def _validate(self, string, precision=None, rounding=None, locale_format=True):
         """Pokus se pøevést 'string' na float.
 
         Pokud je 'string' mo¾no pøevést na float, je správný a vrácená instance
@@ -647,11 +647,14 @@ class Float(Number):
                ('Invalid precision', precision)
         error = None
         try:
-            import locale
-            if isinstance(string, unicode):
-                encoding = locale.getpreferredencoding()
-                string = string.encode(encoding)
-            value = locale.atof(string)
+            if locale_format:
+                import locale
+                if isinstance(string, unicode):
+                    encoding = locale.getpreferredencoding()
+                    string = string.encode(encoding)
+                value = locale.atof(string)
+            else:
+                value = string.atof(string)
         except:
             # Dokumentace Pythonu 1.5.2 neøíká, ¾e by `float' mohlo metat metat
             # nìjakou výjimkou, ale evidentnì by mìlo, pokud `string' nelze
