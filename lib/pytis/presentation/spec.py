@@ -1648,33 +1648,38 @@ class Binding(object):
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
           title -- title used for the list of related records
-          name -- name of the related specification
-          binding_column -- the string identifier of the binding column.  The meaning depends on
-            the type of the binding.  The binding can be 1:1 or 1:N and is determined by the
-            'single' argument (below).  Binding column can be combined with a 'condition' to
-            further restrict the relation or can be completely omitted and only a generic condition
-            may be used to define the relation.  In this case, however, the application has no
-            information about the type of the binding and may not be able to offer some features
-            which require this knowledge.  This argument may be used as positional.
-          condition -- a function of one argument (the 'PresentedRow' instance) returning the
-            current binding condition (a 'pytis.data.Operator' instance) to filter the data of the
-            dependent form for given main form row.  If used together with the binding column, the
-            condition will be used in conjunction with the binding column condition.  If
+          name -- name of the related specification.
+          binding_column -- the string identifier of the binding column.  The
+            meaning depends on the type of the binding.  The binding can be 1:1
+            or 1:N and is determined by the 'single' argument (below).  Binding
+            column can be combined with a 'condition' to further restrict the
+            relation or can be completely omitted and only a generic condition
+            may be used to define the relation.  In this case, however, the
+            application has no information about the type of the binding and
+            may not be able to offer some features which require this
+            knowledge.  This argument may be used as positional.
+          condition -- a function of one argument (the 'PresentedRow' instance)
+            returning the current binding condition (a 'pytis.data.Operator'
+            instance) to filter the data of the dependent form for given main
+            form row.  If used together with the binding column, the condition
+            will be used in conjunction with the binding column condition.  If
             'binding_column' is None, this condition will be used solely.
           arguments -- function of a single argument (the 'PresentedRow'
             instance) returning a dictionary of table arguments.  This function
             may be provided only when the side form table is actually a row
             returning function.  Otherwise 'arguments' must be 'None'.
           descr -- binding description text (to be used in on-line help etc).
-          single -- boolean flag indicating whether this binding corresponds to a 1:1 relation
-            (True value) or 1:N relation (False value).  The value of this flag determines the
-            meaning of the 'binding_column' argument.  For the 1:1 relation, there is exactly one
-            record in the related view corresponding to one record of the main form.  The
-            'binding_column' in this case is the identifier of a column in main form specification
-            which must have a codebook specification pointing to the related view.  For the 1:N
-            relation the binding column must exist in the related view and must have a codebook
-            (foreign key) specification pointing to the main form (the view for which the binding
-            is used).
+          single -- boolean flag indicating whether this binding corresponds to
+            a 1:1 relation (True value) or 1:N relation (False value).  The
+            value of this flag determines the meaning of the 'binding_column'
+            argument.  For the 1:1 relation, there is exactly one record in the
+            related view corresponding to one record of the main form.  The
+            'binding_column' in this case is the identifier of a column in main
+            form specification which must have a codebook specification
+            pointing to the related view.  For the 1:N relation the binding
+            column must exist in the related view and must have a codebook
+            (foreign key) specification pointing to the main form (the view for
+            which the binding is used).
           prefill -- function of one argument (the main form record) returning
             a dictionary of values to prefill in the side form's new record.
             The dictionary keys are field identifiers and values are internal
