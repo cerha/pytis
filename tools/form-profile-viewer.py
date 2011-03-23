@@ -78,7 +78,15 @@ def run():
                 if not fullname_printed:
                     print '\n' + fullname
                     fullname_printed = True
-                print '  * %s (%s):' % (state['_id'], state['_name']) #.encode('utf-8'))
+                if isinstance(state['_name'], types.UnicodeType):
+                    name = state['_name'].encode('utf-8')
+                else:
+                    name = state['_name']
+                if isinstance(state['_id'], types.UnicodeType):
+                    state_id = state['_id'].encode('utf-8')
+                else:
+                    state_id = state['_id']
+                print '  * %s (%s):' % (state_id, name)
                 for key in ('filter', 'sorting', 'columns', 'grouping', 'folding', 'aggregations',
                             'column_widths', 'group_by_columns', 'aggregation_columns'):
                     value = profile._state['_'+key]
