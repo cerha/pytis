@@ -1642,8 +1642,8 @@ class Binding(object):
     Experimental alternative to BindingSpec to be used with MultiBrowseDualForm.
 
     """
-    def __init__(self, id, title, name, binding_column=None, condition=None, descr=None,
-                 single=False, arguments=None, prefill=None):
+    def __init__(self, id, title, name=None, binding_column=None, condition=None, descr=None,
+                 single=False, arguments=None, prefill=None, uri=None):
         """Arguments:
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
@@ -1686,27 +1686,39 @@ class Binding(object):
             (python) values.  If 'prefill' is None and 'binding_column' is
             specified, the default prefill is automatically generated using the
             binding column value.
+          uri -- identifier of a column providing side form URI or a function
+            of one argument (PresentedRow instance) returning this URI.  If not
+            None, the binding referes to a "web form" -- an embedded browser
+            window showing the given URI.  In this case tha arguments 'name',
+            'binding_column', 'condition', 'arguments' and 'prefill'
+            make no sense and must be None.
           
         """
-        assert isinstance(name, basestring), name
-        assert isinstance(title, basestring), title
-        assert binding_column is None or isinstance(binding_column, basestring), binding_column
-        assert condition is None or isinstance(condition, collections.Callable), condition
-        assert condition is not None or binding_column is not None or arguments is not None, \
-               "At least one of 'binding_column', 'condition', `arguments' must be used."
-        assert isinstance(single, bool), single
         assert isinstance(id, basestring), id
-        assert arguments is None or isinstance(arguments, collections.Callable), arguments
-        assert prefill is None or isinstance(prefill, collections.Callable), prefill
-        self._name = name
+        assert isinstance(title, basestring), title
+        if name is not None:
+            assert isinstance(name, basestring), name
+            assert binding_column is None or isinstance(binding_column, basestring), binding_column
+            assert condition is None or isinstance(condition, collections.Callable), condition
+            assert arguments is None or isinstance(arguments, collections.Callable), arguments
+            assert condition is not None or binding_column is not None or arguments is not None, \
+                "At least one of 'binding_column', 'condition', `arguments' must be used."
+            assert isinstance(single, bool), single
+            assert prefill is None or isinstance(prefill, collections.Callable), prefill
+            assert uri is None
+        else:
+            assert callable(uri), uri
+            assert name is binding_column is condition is arguments is prefill is None
+        self._id = id
         self._title = title
+        self._name = name
         self._binding_column = binding_column
         self._condition = condition
-        self._id = id
         self._descr = descr
         self._single = single
         self._arguments = arguments
         self._prefill = prefill
+        self._uri = uri
         
     def id(self):
         return self._id
@@ -1734,6 +1746,9 @@ class Binding(object):
 
     def prefill(self):
         return self._prefill
+
+    def uri(self):
+        return self._uri
 
 
 class Editable(object):
