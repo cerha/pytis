@@ -892,16 +892,26 @@ class MultiSideForm(MultiForm):
         def on_selection(self, row):
             self.select_row({self._sbcol: row[self._bcol]})
             
+    class TabbedWebForm(TabbedForm, WebForm):
+        def _init_attributes(self, binding, main_form, **kwargs):
+            self._uri = binding.uri()
+            super(MultiSideForm.TabbedWebForm, self)._init_attributes(binding=binding, **kwargs)
+        def on_selection(self, row):
+            uri = self._uri(row)
+            self.load_uri(uri)
+
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form
         self._main_form = main_form
         super(MultiSideForm, self)._init_attributes(**kwargs)
 
     def _create_subform(self, parent, binding):
-        if not has_access(binding.name()):
+        if binding.name() and not has_access(binding.name()):
             return None
         kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
-        if binding.single():
+        if binding.uri():
+            form = self.TabbedWebForm
+        elif binding.single():
             form = self.TabbedShowForm
         else:
             form = self.TabbedBrowseForm
@@ -914,7 +924,8 @@ class MultiSideForm(MultiForm):
                 # TODO: Remove this condition to include inactive tabs in multi form.
                 # The wx.Notebook doesn't support inactive tabs and the workaround doesn't
                 # work correctly, so we rather exclude disabled tabs here for now.
-                if has_access(binding.name())]
+                # binding.name() is None for web forms.
+                if binding.name() is None or has_access(binding.name())]
     
     def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.

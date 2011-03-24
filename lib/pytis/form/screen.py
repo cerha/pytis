@@ -1654,7 +1654,11 @@ class Browser(wx.Panel):
         # widget below.  GtkPizza is a custom GTK widget implemented by
         # wxWidgets.
         parent.Show()
-        window = gtk.gdk.window_lookup(self.GetHandle())
+        handle = self.GetHandle()
+        if handle == 0:
+            # This hack is needed for the WebForm, where self.GetHandle() returns 0 for some reason.
+            handle = parent.GetHandle()
+        window = gtk.gdk.window_lookup(handle)
         # Reference to the GtkPizza widget must be kept to prevent a segfault.
         self._pizza = pizza = window.get_user_data()
         # GtkPizza's parant is a gtk.ScrolledWindow.

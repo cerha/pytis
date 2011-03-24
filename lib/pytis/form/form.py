@@ -2674,3 +2674,25 @@ class BrowsableShowForm(ShowForm):
         return result
                      
 
+class WebForm(Form):
+    """Web browser embedded in a Pytis form.
+
+    The form shows a browser window as its main content.
+
+    """
+    def _create_view_spec(self):
+        # This is quite a hack.  The base Form class should be independent of
+        # pytis specifications and data objects as it shows, that we want also
+        # forms which don't deal with the database at all.
+        return None
+
+    def _create_data_object(self):
+        return None
+
+    def _create_form_parts(self, sizer):
+        self._browser = browser = Browser(self)
+        sizer.Add(browser, 1, wx.EXPAND)
+
+    def load_uri(self, uri):
+        self._browser.load_uri(uri)
+        
