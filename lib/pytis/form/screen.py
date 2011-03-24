@@ -1639,7 +1639,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
             current_form().focus()
             
 
-class BrowserPanel(wx.Panel):
+class Browser(wx.Panel):
     """Web Browser widget.
 
     The widget can be embedded into other wx widgets as an ordinary wx.Panel.
@@ -1672,24 +1672,24 @@ class BrowserPanel(wx.Panel):
         return self._webview.load_html_string(html, base_uri)
 
 
-class Browser(wx.Frame):
-    """Simple browser in a standalone frame."""
+class BrowserWindow(wx.Frame):
+    """Simple web browser in a standalone frame."""
  
     def __init__(self):
         wx.Frame.__init__(self, None)
         self._ctrl = ctrl = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
-        self._browser_panel = panel = BrowserPanel(self)
+        self._browser = browser = Browser(self)
         ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_url_enter)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(ctrl, proportion=0, flag=wx.EXPAND)
-        sizer.Add(panel, proportion=1, flag=wx.EXPAND)
+        sizer.Add(browser, proportion=1, flag=wx.EXPAND)
         self.SetSizer(sizer)
         self.SetSize((800,600))
         self.SendSizeEvent()
  
     def _on_url_enter(self, event):
         uri = self._ctrl.GetValue()
-        self._browser_panel.load_uri(uri)
+        self._browser.load_uri(uri)
         self.SetTitle(uri)
 
 
@@ -2043,8 +2043,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
             width = 80
         if height is None:
             height = 20
-        # The parent widget must be shown first and then we may create the BrowserPanel.
-        browser = BrowserPanel(parent)
+        browser = Browser(parent)
         if format == TextFormat.WIKI:
             import lcg
             n = lcg.ContentNode('', content=lcg.Container(lcg.Parser().parse(content)))
