@@ -774,7 +774,13 @@ class BrowseForm(LayoutForm):
             of all filter fields are applied in conjunction and also in
             conjunction with any other form filters/conditions.  The field
             values are automatically stored in browser cookies, so the filters
-            should be persistent.
+            should be persistent.  The specification can also refer to a table
+            function call argument instead of a conditional operator -- If a
+            string value is used in place of 'operator' in 'filter_fields'
+            specification, the field value will be added to 'arguments' passed
+            to the pytis data object's 'select()' call instead of 'condition'.
+            Such arguments are combined with the 'arguments' passed to the
+            constructor.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -956,6 +962,7 @@ class BrowseForm(LayoutForm):
         columns = []
         fields = []
         conditions = []
+        arguments = []
         values = []
         errors = []
         for filter_id, label, operator, field_id, default in filter_fields_spec:
@@ -997,7 +1004,10 @@ class BrowseForm(LayoutForm):
             columns.append(pytis.data.ColumnSpec(filter_id, ftype))
             fields.append(self._view.field(field_id).clone(fspec))
             values.append((filter_id, value))
-            conditions.append(operator(field_id, value))
+            if isinstance(operator, basestring):
+                arguments.append((field_id, value))
+            else:
+                conditions.append(operator(field_id, value))
         if fields:
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
             row = PresentedRow(fields, data, pytis.data.Row(values), resolver=self._row.resolver())
@@ -1014,6 +1024,7 @@ class BrowseForm(LayoutForm):
         self._errors = errors
         self._filter_fields = filter_fields
         self._filter_fields_condition = condition
+        self._filter_fields_arguments = arguments
         self._filter_fields_row = row
 
     def _export_cell(self, context, field):
@@ -1167,8 +1178,13 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
+        if self._arguments or self._filter_fields_arguments:
+            arguments = self._arguments or {}
+            arguments.update(dict(self._filter_fields_arguments))
+        else:
+            arguments = None
         self._count = count = data.select(condition=self._conditions(), sort=self._sorting,
-                                          arguments=self._arguments)
+                                          arguments=arguments)
         found = False
         offset = self._offset
         if self._search:
