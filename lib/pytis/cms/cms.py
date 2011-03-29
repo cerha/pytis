@@ -27,6 +27,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 import socket
 import lcg
+import config
 import pytis.data as pd, pytis.presentation as pp
 from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
