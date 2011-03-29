@@ -760,27 +760,31 @@ class BrowseForm(LayoutForm):
             one filter in a form, the separate filter application button is
             always present.
           filter_fields -- specification of editable filter fields as a
-            sequence of tuples (filter_id, label, operator, field_id, default),
-            where 'filter_id' is a unique identifier of the filter field,
-            'label' is the field label, 'operator' is a conditional operator
-            function (a function of two arguments - field id and
-            'pytis.data.Value' instance returning a 'pytis.data.Operator'
-            instance), 'field_id' id the identifier of the field passed to the
-            'operator' and 'default' is the dafault value as and internal
-            Python value compatible with the 'field_id' field data type.  An
-            input field will be created for each of the named filter fields and
-            the form filter will automatically include also the conditions
-            given by the operators using the current field values.  Operators
-            of all filter fields are applied in conjunction and also in
-            conjunction with any other form filters/conditions.  The field
-            values are automatically stored in browser cookies, so the filters
-            should be persistent.  The specification can also refer to a table
-            function call argument instead of a conditional operator -- If a
-            string value is used in place of 'operator' in 'filter_fields'
-            specification, the field value will be added to 'arguments' passed
-            to the pytis data object's 'select()' call instead of 'condition'.
-            Such arguments are combined with the 'arguments' passed to the
-            constructor.
+            sequence of tuples of three items (field_specification, operator,
+            field_id), where 'field_specification' is a
+            'pytis.Presentation.Field' instance defining a unique filter field
+            id, label, default value and other possible presentational
+            properties.  'operator' is a conditional operator function (a
+            function of two arguments - field id and 'pytis.data.Value'
+            instance returning a 'pytis.data.Operator' instance).  'field_id'
+            will be used as the first argument to the 'operator'.  It must also
+            refer to one of existing form fields.  The filter field will
+            inherit all attributes of the form field given by 'field_id', but
+            attributes defined by 'field_specification' override the form
+            field's attributes.  An input field will be created for each of the
+            named filter fields and the form filter will automatically include
+            also the conditions given by the operators using the current field
+            values.  Operators of all filter fields are applied in conjunction
+            and also in conjunction with any other form filters/conditions.
+            The field values are automatically stored in browser cookies, so
+            the filters should be persistent.  If 'operator' is None, the field
+            will be used as a table function argument instead of a condition.
+            In this case 'field_id' must be present on data object's
+            'arguments' (defined by 'Specification' attribute 'arguments').
+            The field value will be added to 'arguments' passed to the data
+            object's 'select()' call.  Such arguments are combined with the
+            'arguments' passed to the form constructor (the values from filter
+            fields override the values in 'arguments').
 
         See the parent classes for definition of the remaining arguments.
 
@@ -965,9 +969,14 @@ class BrowseForm(LayoutForm):
         arguments = []
         values = []
         errors = []
-        for filter_id, label, operator, field_id, default in filter_fields_spec:
-            fspec = pytis.presentation.Field(filter_id, label)
-            ftype = self._row.type(field_id)
+        for fspec, operator, field_id in filter_fields_spec:
+            if operator is None:
+                binding = find(field_id, self._row.data().arguments(), key=lambda b: b.id())
+                ftype = binding.type()
+            else:
+                fspec = self._view.field(field_id).clone(fspec)
+                ftype = self._row.type(field_id)
+            filter_id = fspec.id()    
             cookie = 'pytis-filter-%s-%s' % (self._name, filter_id)
             if req.has_param(filter_id):
                 # TODO: This validation will only work for simple fields.  It
@@ -1000,14 +1009,17 @@ class BrowseForm(LayoutForm):
                 else:
                     value = None
                 if value is None:
+                    default = fspec.default()
+                    if callable(default):
+                        default = default()
                     value = pytis.data.Value(ftype, default)
             columns.append(pytis.data.ColumnSpec(filter_id, ftype))
-            fields.append(self._view.field(field_id).clone(fspec))
             values.append((filter_id, value))
-            if isinstance(operator, basestring):
+            if operator is None:
                 arguments.append((field_id, value))
             else:
                 conditions.append(operator(field_id, value))
+            fields.append(fspec)
         if fields:
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
             row = PresentedRow(fields, data, pytis.data.Row(values), resolver=self._row.resolver())

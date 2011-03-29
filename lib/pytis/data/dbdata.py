@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -198,6 +198,10 @@ class DBData(Data):
         if __debug__: log(DEBUG, 'Uspání')
         self.close()
 
+    def arguments(self):
+        """Return the value of argument 'arguments' passed to the constructor."""
+        return self._arguments
+        
 
 class DBConnectionPool:
 
