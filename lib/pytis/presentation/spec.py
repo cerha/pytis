@@ -1089,7 +1089,7 @@ class ViewSpec(object):
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               filters=(), conditions=(), default_filter=None, aggregations=(),
               grouping_functions=(), bindings=(), initial_folding=None, spec_name='',
-              arguments=None, public=None):
+              public=None):
         assert isinstance(title, (str, unicode))
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1266,7 +1266,6 @@ class ViewSpec(object):
         self._grouping_functions = tuple(grouping_functions)
         self._bindings = tuple(bindings)
         self._initial_folding = initial_folding
-        self._arguments = arguments
         
     def _linearize_actions(self, spec):
         actions = []
@@ -2954,7 +2953,7 @@ class Specification(object):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
                    attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                                 'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
-                                'data_access_rights',
+                                'data_access_rights', 'arguments',
                                 'oid', # for backward compatibility 
                                 ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
