@@ -2446,8 +2446,8 @@ class Field(object):
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
             for k in kwargs.keys():
                 assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
-                             'precision', 'format', 'mindate', 'maxdate', 'validation_messages',
-                             'inner_type'), \
+                             'precision', 'format', 'mindate', 'maxdate', 'utc',
+                             'validation_messages', 'inner_type'), \
                              err("Invalid argument: %r", k)
             if isinstance(type, pytis.data.Type):
                 for arg, value in (('codebook', codebook),
