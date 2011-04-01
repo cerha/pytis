@@ -393,8 +393,8 @@ class Type(object):
         exported = self._export(value, *args, **kwargs)
         return exported
 
-    def _export(self, value):
-        return `value`
+    def _export(self, value, **kwargs):
+        return repr(value)
 
     def default_value(self):
         """Return the default value as a 'Value' instance.
@@ -1113,31 +1113,17 @@ class _CommonDateTime(Type):
         return result
     
     def _export(self, value, local=True, format=None):
-        """Stejné jako v předkovi až na klíčované argumenty.
+        return value.strftime(self._format)
+
+    @classmethod
+    def now(class_, **kwargs):
+        """Return 'Value' instance of this type of the current moment.
 
         Arguments:
 
           kwargs -- arguments passed to the class constructor
           
         """
-        assert isinstance(value, datetime.datetime), ('Value is not DateTime', value,)
-        if local:
-            value = value.astimezone(self.LOCAL_TZINFO)
-        else:
-            value = value.astimezone(self.UTC_TZINFO)
-        if format is None:
-            format = self._format
-        return value.strftime(format)
-
-    def format(self):
-        return self._format
-    
-    def is_utc(self):
-        return self._utc
-    
-    @classmethod
-    def now(class_, **kwargs):
-        """Return 'Value' instance of this type of the current moment."""
         type_ = class_(**kwargs)
         tz = type_._timezone
         return Value(type, class_.datetime(tz=tz))
