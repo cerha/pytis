@@ -1643,7 +1643,7 @@ class Binding(object):
 
     """
     def __init__(self, id, title, name=None, binding_column=None, condition=None, descr=None,
-                 single=False, arguments=None, prefill=None, uri=None):
+                 single=False, arguments=None, prefill=None, uri=None, content=None):
         """Arguments:
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
@@ -1686,12 +1686,17 @@ class Binding(object):
             (python) values.  If 'prefill' is None and 'binding_column' is
             specified, the default prefill is automatically generated using the
             binding column value.
-          uri -- identifier of a column providing side form URI or a function
-            of one argument (PresentedRow instance) returning this URI.  If not
-            None, the binding referes to a "web form" -- an embedded browser
-            window showing the given URI.  In this case tha arguments 'name',
-            'binding_column', 'condition', 'arguments' and 'prefill'
-            make no sense and must be None.
+          uri -- a function of one argument (PresentedRow instance) returning
+            side form URI as a string.  If not None, the binding referes to a
+            "web form" -- an embedded browser window showing given URI.  In
+            this case the arguments 'name', 'binding_column', 'condition',
+            'arguments' and 'prefill' make no sense and must be None.
+          content -- function of one argument (PresentedRow instance) returning
+            an HTML string to be displayed as side form content.  If not None,
+            the binding referes to a "web form" -- an embedded browser window
+            showing given content.  In this case the arguments 'name',
+            'binding_column', 'condition', 'arguments' and 'prefill' make no
+            sense and must be None.
           
         """
         assert isinstance(id, basestring), id
@@ -1707,7 +1712,12 @@ class Binding(object):
             assert prefill is None or isinstance(prefill, collections.Callable), prefill
             assert uri is None
         else:
-            assert isinstance(uri, collections.Callable), uri
+            if uri is not None:
+                assert isinstance(uri, collections.Callable), uri
+                assert content is None, content
+            else:
+                assert isinstance(content, collections.Callable), content
+                assert uri is None, uri
             assert name is binding_column is condition is arguments is prefill is None
         self._id = id
         self._title = title
@@ -1719,6 +1729,7 @@ class Binding(object):
         self._arguments = arguments
         self._prefill = prefill
         self._uri = uri
+        self._content = content
         
     def id(self):
         return self._id
@@ -1749,6 +1760,9 @@ class Binding(object):
 
     def uri(self):
         return self._uri
+
+    def content(self):
+        return self._content
 
 
 class Editable(object):
