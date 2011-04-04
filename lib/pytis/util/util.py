@@ -1530,29 +1530,27 @@ def ipython():
 
 
 def deepstr(obj):
-    """Vrať stringovou podobu 'obj'.
+    """Return unicode form of 'obj'.
 
-    Je-li 'obj' sekvence, aplikuj se rekurzivně na její prvky.
+    If 'obj' is a sequence, apply the function on it recursively.
 
     """
     if is_sequence(obj):
-        result = map(deepstr, obj)
+        transformed = map(deepstr, obj)
         if isinstance(obj, tuple):
-            result = tuple(result)
-        result = unicode(result)
-    elif type(obj) is type(object) or type(obj) is pytypes.ClassType:
-        try:
-            result = unicode(obj)
-        except:
-            # If the class defines __unicode__ method, the call above throws an
-            # exception
-            result = '%s.%s' % (obj.__module__, obj.__name__,)
+            transformed = tuple(transformed)
     else:
-        result = unicode(obj)
-    try:
-        return str(result)
+        transformed = obj
+    try:            
+        result = unicode(transformed)
     except UnicodeEncodeError:
-        return result.encode('unicode_escape')
+        result = transformed.encode('unicode_escape')
+    except:
+        try:
+            result = unicode(repr(transformed))
+        except:
+            result = '<<unicode conversion error>>'
+    return result
 
 
 def format_traceback():

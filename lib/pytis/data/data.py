@@ -1773,7 +1773,7 @@ class DataFactory(object):
     
     def __str__(self):
         return '<DataFactory: class=%s, args=%s, kwargs=%s>' % \
-               (self._class_, deepstr(self._args), self._kwargs)
+               (self._class_, deepstr(self._args).encode('unicode_escape'), self._kwargs)
 
     def _get_data_object(key):
         class_, args, kwargs = key

@@ -176,7 +176,7 @@ class Logger(object):
     def _formatted_data(self, prefix, fmessage, data):
         if data is not None:
             if type(data) == type(()):
-                repr_ = repr(tuple(map(unicode, data)))
+                repr_ = repr(tuple(map(deepstr, data)))
             elif type(data) == type(''):
                 repr_ = data
             else:
