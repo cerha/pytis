@@ -2961,7 +2961,7 @@ class AggregationForm(BrowseForm):
         self._af_aggregation_columns = kwargs.pop('aggregation_columns')
         self._af_aggregation_condition = kwargs.pop('aggregation_condition', None)
         self._af_grouping_functions = tuple(kwargs.pop('grouping_functions'))
-        super(AggregationForm, self)._full_init__(*args, **kwargs)
+        super(AggregationForm, self)._full_init(*args, **kwargs)
     
     def _create_view_spec(self):
         view = super(AggregationForm, self)._create_view_spec()
