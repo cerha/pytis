@@ -290,9 +290,9 @@ class DualForm(Form, Refreshable):
         if profile and profile.sash_position():
             return min(profile.sash_position(), dimension(total_size))
         elif isinstance(self._main_form, EditForm):
-            return min(dimension(self._main_form.size()), dimension(total_size) - 200)
+            return min(dimension(wx.Size(*self._main_form.size())), dimension(total_size) - 200)
         elif isinstance(self._side_form, EditForm):
-            return max(dimension(total_size) - dimension(self._side_form.size()), 200)
+            return max(dimension(total_size) - dimension(wx.Size(*self._side_form.size())), 200)
         else:
             r = self._view.sash_ratio()
             return dimension(wx.Size(total_size.width * r, total_size.height * r))
