@@ -1677,3 +1677,17 @@ def positive_id(obj):
             assert result >= 0 # else addresses are fatter than 64 bits
     return result
 
+def lcg_to_html(text):
+    """Return given LCG structured text converted into HTML.
+
+    The source text is parsed as LCG structured text, exported into HTML and
+    returned as utf-8 encoded string.
+    
+    """
+    import lcg
+    content = lcg.Container(lcg.Parser().parse(text))
+    node = lcg.ContentNode('', content=content)
+    exporter = lcg.HtmlExporter()
+    context = exporter.context(node, None)
+    html = exporter.export(context)
+    return html.encode('utf-8')

@@ -2042,23 +2042,24 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         ctrl.SetValue(content)
         ctrl.SetBestFittingSize(char2px(ctrl, width, height))
         return ctrl
+    elif format == TextFormat.WIKI:
+        html = lcg_to_html(content)
+    elif format == TextFormat.WIKI:
+        if isinstance(content, unicode):
+            content = content.encode('utf-8')
+        html = ('<html>'
+                '<head><meta content="text/html; charset=UTF-8" http-equiv="content-type"></head>'
+                '<body>' + content + '</body>'
+                '</html>')
     else:
-        if width is None:
-            width = 80
-        if height is None:
-            height = 20
-        browser = Browser(parent)
-        if format == TextFormat.WIKI:
-            import lcg
-            n = lcg.ContentNode('', content=lcg.Container(lcg.Parser().parse(content)))
-            html = n.content().export(lcg.HtmlExporter().context(n, None))
-        else:
-            html = content
-        if isinstance(html, unicode):
-            html = html.encode('utf-8')
-        head = '<meta content="text/html; charset=UTF-8" http-equiv="content-type">'
-        browser.load_html('<html><head>'+ head +'</head><body>'+ html +'</body></html>')
-        parent.SetSize(char2px(parent, width, height))
-        return browser
+        raise ProgramError("Unknown text format: %s" % format)
+    if width is None:
+        width = 80
+    if height is None:
+        height = 20
+    browser = Browser(parent)
+    browser.load_html(html)
+    parent.SetSize(char2px(parent, width, height))
+    return browser
 
 
