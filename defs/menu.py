@@ -23,6 +23,7 @@ import pytis.data
 import pytis.extensions
 import pytis.form
 import pytis.presentation
+import pytis.util
 from pytis.presentation import Editable
 from pytis.extensions import Field, nextval
 
@@ -434,7 +435,7 @@ def _colname_description(row, shortname, colname):
     resolver = pytis.util.resolver()
     try:
         view_spec = resolver.get(spec_name, 'view_spec')
-    except ResolverError:
+    except pytis.util.ResolverError:
         return None
     field = view_spec.field(colname)
     if field is None:
