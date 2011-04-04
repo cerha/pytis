@@ -1369,7 +1369,8 @@ class AggregationSetupDialog(Message):
     
     def __init__(self, parent, aggregation_functions, grouping_functions, columns,
                  group_by_columns, aggregation_columns, aggregation_valid,
-                 title=_("Zvolte sloupce..."), message=_("Zvolte sloupce agregaËnÌho n·hledu")):
+                 title=_(u"Zvolte sloupce..."),
+                 message=_(u"Zvolte sloupce agregaƒçn√≠ho n√°hledu")):
         """Arguments:
              aggregation_functions -- specification of available aggregation
                functions as a sequence of pairs (operation, label), where
@@ -1408,7 +1409,7 @@ class AggregationSetupDialog(Message):
                                              len(self._aggregation_functions)+2, 2, 6)
         self._grouping_controls = []
         self._aggregation_controls = []
-        for label in ['', _("Seskupov·nÌ")] + [x[1] for x in self._aggregation_functions]:
+        for label in ['', _(u"Seskupov√°n√≠")] + [x[1] for x in self._aggregation_functions]:
             grid.Add(wx.StaticText(panel, -1, label))
         for (column_id, column_label, column_type) in self._columns:
             grid.Add(wx.StaticText(panel, -1, column_label))
@@ -1470,7 +1471,7 @@ class AggregationSetupDialog(Message):
             self._aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
                                          if checkbox.IsChecked()]
             if not self._group_by_columns:
-                run_dialog(Warning, _("MusÌte zvolit alespoÚ jeden sloupec pro seskupov·nÌ"))
+                run_dialog(Warning, _(u"Mus√≠te zvolit alespo≈à jeden sloupec pro seskupov√°n√≠"))
                 return
         return super(AggregationSetupDialog, self)._on_button(event)
 
