@@ -467,12 +467,12 @@ class UICommands(object):
         _(u"Postupně vyhledávat záznam podle hodnoty políčka."))
     SORT = UICommand(
         LookupForm.COMMAND_SORT(),
-        _("Řazení"),
-        _("Určit podmínky řazení záznamů."))
+        _(u"Řazení"),
+        _(u"Určit podmínky řazení záznamů."))
     PROFILE_MENU = UICommand(
         LookupForm.COMMAND_PROFILE_MENU(),
-        _("Výběr aktivního profilu"),
-        _("Zobrazuje aktivní profil a umožňuje výběr z ostatních předdefinovaných profilů."))
+        _(u"Výběr aktivního profilu"),
+        _(u"Zobrazuje aktivní profil a umožňuje výběr z ostatních předdefinovaných profilů."))
     FILTER = UICommand(
         LookupForm.COMMAND_FILTER(),
         _(u"Filtrování"),
