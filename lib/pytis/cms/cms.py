@@ -30,8 +30,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 import collections
 import socket
 import lcg
-import config
-import pytis.data as pd, pytis.presentation as pp
+import pytis.data as pd, pytis.util as pu, pytis.presentation as pp
 from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
 import config
@@ -80,7 +79,7 @@ class Languages(Specification):
         import os
         lcg_dir = os.environ.get('LCGDIR', '/usr/local/share/lcg')
         translation_dir = os.path.join(lcg_dir, 'translations')
-        t = lcg.GettextTranslator('cs', path=(translation_dir,), fallback=True)
+        t = lcg.GettextTranslator(str('cs'), path=(translation_dir,), fallback=True)
         return t.translate(lcg.language_name(lang))
     def cb(self):
         return CodebookSpec(display=lambda lang: self._language_name(lang), prefer_display=True)
@@ -334,6 +333,8 @@ class Menu(Specification):
                     condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id']),
                     prefill=lambda r: {'menu_item_id': r['menu_item_id'].value(),
                                        'mod_id': r['mod_id'].value()}),
+            Binding('content', _("Obsah"),
+                    content=lambda r: pu.lcg_to_html(r['content'].value() or ''),),
             )
 
 
