@@ -138,6 +138,12 @@ class _ConfigData(pytis.data.RestrictedData):
                     for o in [c.id() for c in self.columns()]]
         return pytis.data.Row(row_data)
 
+    def last_row_number(self):
+        if self._giveone:
+            return -1
+        else:
+            return 0
+
     def update(self, key, row, transaction=None):
         for option in row.keys():
             setattr(config, option, row[option].value())
