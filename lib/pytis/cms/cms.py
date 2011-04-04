@@ -234,7 +234,7 @@ class MenuParents(Specification):
 
 
 class Menu(Specification):
-    title = _("Men")
+    title = _("Menu")
     help = _("Správa položek hlavního menu, jejich hierarchie a obsahu.")
     table = 'cms_menu'
     def _parent_filter(self, record, lang):
