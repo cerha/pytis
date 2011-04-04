@@ -2695,4 +2695,7 @@ class WebForm(Form):
 
     def load_uri(self, uri):
         self._browser.load_uri(uri)
+
+    def load_html(self, uri):
+        self._browser.load_html(uri)
         

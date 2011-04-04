@@ -894,12 +894,16 @@ class MultiSideForm(MultiForm):
             
     class TabbedWebForm(TabbedForm, WebForm):
         def _init_attributes(self, binding, main_form, **kwargs):
-            self._uri = binding.uri()
+            if binding.uri():
+                self._function = binding.uri()
+                self._load = self.load_uri
+            else:
+                self._function = binding.content()
+                self._load = self.load_html
             super(MultiSideForm.TabbedWebForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):
-            uri = self._uri(row)
-            self.load_uri(uri)
-
+            self._load(self._function(row))
+            
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form
         self._main_form = main_form
@@ -909,7 +913,7 @@ class MultiSideForm(MultiForm):
         if binding.name() and not has_access(binding.name()):
             return None
         kwargs = dict(guardian=self, binding=binding, main_form=self._main_form)
-        if binding.uri():
+        if binding.name() is None:
             form = self.TabbedWebForm
         elif binding.single():
             form = self.TabbedShowForm
