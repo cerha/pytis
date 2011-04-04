@@ -34,6 +34,7 @@ import config
 import pytis.data as pd, pytis.presentation as pp
 from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
+import config
 
 ASC = pd.ASCENDENT
 DESC = pd.DESCENDANT

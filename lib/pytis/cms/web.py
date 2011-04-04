@@ -35,6 +35,7 @@ application.  Full API defined and documented by `wiking.Application' may be use
 
 """
 
+import datetime
 import os, re, lcg, wiking
 import hashlib, binascii
 import pytis.util, pytis.presentation as pp, pytis.data as pd, pytis.web as pw
