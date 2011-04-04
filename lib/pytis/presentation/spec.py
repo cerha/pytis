@@ -1707,7 +1707,7 @@ class Binding(object):
             assert prefill is None or isinstance(prefill, collections.Callable), prefill
             assert uri is None
         else:
-            assert callable(uri), uri
+            assert isinstance(uri, collections.Callable), uri
             assert name is binding_column is condition is arguments is prefill is None
         self._id = id
         self._title = title
