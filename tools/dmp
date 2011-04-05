@@ -152,51 +152,6 @@ def cmd_add(connection, dry_run, args):
         queries.append("insert into e_pytis_menu (name, title, position, fullname) values (%s, '%s', '%s', '%s')"
                        % (name, pg_escape(title), position, fullname,))
     run_queries(queries, cursor, connection, dry_run)
-
-def cmd_del(connection, dry_run, args):
-    cursor = connection.cursor()
-    if not args:
-        print "Error: missing action identifier"
-        return
-    action = args.pop(0)
-    if args:
-        print "Error: extra arguments:", args
-        return
-    if not action:
-        print "Error: empty action"
-    queries = []
-    if action[0] in ('-' + string.digits):
-        action_type = 'menuid'
-        try:
-            action_number = int(action)
-        except:
-            print "Error: invalid menuid:", action
-            return
-        cursor.execute("select menuid from e_pytis_menu where menuid=%s" % (action,))
-        if not cursor.rowcount:
-            print "Error: invalid menuid:", action
-            return
-    elif len(action.split('/')) > 2:
-        action_type = 'fullname'
-    else:
-        action_type = 'shortname'
-    if action_type == 'menuid':
-        queries.append("delete from e_pytis_menu where %s=%s" % (action_type, action,))
-    else:
-        action_string = "'%s'" % (action,)
-        cursor.execute("select shortname from c_pytis_menu_actions where %s=%s" % (action_type, action_string,))
-        if not cursor.rowcount:
-            print "Error: no such action:", action
-            return
-        shortname = cursor.fetchone()[0]
-        if action_type == 'fullname':
-            queries.append("delete from e_pytis_menu where fullname=%s" % (action_string,))
-        else:
-            queries.append(("delete from e_pytis_menu where fullname in "
-                            "(select fullname from c_pytis_menu_actions where shortname=%s)") % (action_string,))
-        queries.append("delete from e_pytis_action_rights where shortname='%s'" % (shortname,))
-        queries.append("delete from c_pytis_menu_actions where %s=%s" % (action_type, action_string,))
-    run_queries(queries, cursor, connection, dry_run)
     
 def cmd_sys(connection, dry_run, args, system=True):
     cursor = connection.cursor()
@@ -323,6 +278,24 @@ def command_update_form(parameters, dry_run, args):
     specification = args[0]
     return pytis.extensions.dmp_update_form(parameters, dry_run, specification)
 
+def command_delete(parameters, dry_run, args):
+    if not args:
+        print "Error: missing action identifier"
+        return
+    action = args.pop(0)
+    if args:
+        print "Error: extra arguments:", args
+        return
+    if not action:
+        print "Error: empty action"
+    if action[0] in string.digits:
+        result = pytis.extensions.dmp_delete_menu(parameters, dry_run, action)
+    elif len(action.split('/')) > 2:
+        result = pytis.extensions.dmp_delete_fullname(parameters, dry_run, action)
+    else:
+        result = pytis.extensions.dmp_delete_shortname(parameters, dry_run, action)
+    return result
+
 def command_commit(parameters, dry_run, args):
     if args:
         print "Error: commit takes no arguments"
@@ -344,13 +317,13 @@ USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
 Commands:
   ls [ menu | roles | rights [ SHORTNAME ] ]
   add { FULLNAME | SHORTNAME } [ TITLE { POSITION | PARENT-TITLE } ]
-  del { SHORTNAME | FULLNAME | MENU-ID }
   sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   rig SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   import
   add-member MEMBER ROLE
   add-form FULLNAME MENU-POSITION
   update-form SPECIFICATION-NAME
+  delete { SHORTNAME | FULLNAME | MENU-POSITION }
   reset-rights SPECIFICATION-NAME
   commit"""
 

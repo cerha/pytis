@@ -422,8 +422,13 @@ class DMPObject(object):
         return condition
 
     def _specifications_condition(self, transaction, specifications):
-        return pytis.data.OR(*[pytis.data.WM('shortname', self._s_('*/%s' % (s,)), ignore_case=False)
-                               for s in specifications])
+        def spec2cond(s):
+            if len(s.split('/')) > 1:
+                condition = pytis.data.EQ('shortname', self._s_(s))
+            else:
+                condition = pytis.data.WM('shortname', self._s_('*/%s' % (s,)), ignore_case=False)
+            return condition
+        return pytis.data.OR(*[spec2cond(s) for s in specifications])
     
     def dump_specifications(self, stream):
         """Dump DMP data in the form of Python source code."""
@@ -523,7 +528,8 @@ class DMPMenu(DMPObject):
             return equal
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
-                      [('e_pytis_menu', ('menuid', 'name', 'title', 'position', 'next_position', 'fullname', 'help', 'hotkey', 'locked'),)])
+                      [('e_pytis_menu', ('menuid', 'name', 'title', 'position', 'next_position', 'fullname', 'help', 'hotkey', 'locked'),),
+                       ('ev_pytis_menu', ('menuid', 'name', 'title', 'position', 'next_position', 'help', 'hotkey', 'locked', 'fullname', 'shortname',),)])
 
     def __init__(self, *args, **kwargs):
         super(DMPMenu, self).__init__(*args, **kwargs)
@@ -706,8 +712,30 @@ class DMPMenu(DMPObject):
         return True
     
     def _delete_data(self, transaction, condition):
-        data = self._data('e_pytis_menu')
+        data = self._data('ev_pytis_menu')
         data.delete_many(condition, transaction=transaction)
+
+    def delete_menu(self, fake, condition, transaction=None):
+        messages = []
+        data = self._data('e_pytis_menu')
+        present = (data.select(condition=condition) > 0)
+        data.close()
+        if present:
+            if transaction is None:
+                transaction_ = self._transaction()
+            else:
+                transaction_ = transaction
+            self._logger.clear()
+            self._delete_data(transaction_, condition)
+            if transaction is None:
+                if fake:
+                    messages += self._logger.messages()
+                    transaction_.rollback()
+                else:
+                    transaction_.commit()            
+        else:
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such position", (position,))
+        return messages
 
 
 class DMPRights(DMPObject):
@@ -1348,6 +1376,32 @@ class DMPActions(DMPObject):
                 transaction_.commit()
         return messages
 
+    def dmp_delete_name(self, fake, name, action_type):
+        messages = []
+        data = self._data('c_pytis_menu_actions')
+        condition = pytis.data.EQ(action_type, pytis.data.sval(name))
+        data.select(condition=condition)
+        row = data.fetchone()
+        data.close()
+        if row is None:
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such "+action_type, (name,))
+        else:
+            shortname = row['shortname'].value()
+            menu = DMPMenu(self._configuration)
+            rights = DMPRights(self._configuration)
+            transaction = self._transaction()
+            self._logger.clear()            
+            menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
+            rights.delete_data(fake, transaction=transaction, specifications=(shortname,))
+            self._delete_data(transaction, condition)
+            if fake:
+                messages += self._logger.messages()
+            if fake:
+                transaction.rollback()
+            else:
+                transaction.commit()
+        return messages
+
 
 class DMPImport(DMPObject):
     """Initial import functionality."""
@@ -1495,7 +1549,20 @@ def dmp_reset_rights(parameters, fake, specification):
     configuration = DMPConfiguration(**parameters)
     return DMPRights(configuration).restore(fake, [specification])
 
-def dmp_commit(connection_parameters, fake):
+def dmp_commit(parameters, fake):
     """Make access rights prepared in the database actually effective."""
-    configuration = DMPConfiguration(**connection_parameters)
+    configuration = DMPConfiguration(**parameters)
     return DMPRights(configuration).commit(fake=fake)
+
+def dmp_delete_menu(parameters, fake, position):
+    configuration = DMPConfiguration(**parameters)
+    condition = pytis.data.EQ('position', pytis.data.sval(position))
+    return DMPMenu(configuration).delete_menu(fake, condition)
+
+def dmp_delete_fullname(parameters, fake, fullname):
+    configuration = DMPConfiguration(**parameters)
+    return DMPActions(configuration).dmp_delete_name(fake, fullname, 'fullname')
+
+def dmp_delete_shortname(parameters, fake, shortname):
+    configuration = DMPConfiguration(**parameters)
+    return DMPActions(configuration).dmp_delete_name(fake, shortname, 'shortname')
