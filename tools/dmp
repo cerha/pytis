@@ -30,7 +30,7 @@ def run_queries(queries, cursor, connection, dry_run, quiet=False):
     if not quiet:
         print "Changes applied, don't forget to update summary rights to get them fully applied."
 
-def command_ls(connection, dry_run, args):
+def cmd_ls(connection, dry_run, args):
     cursor = connection.cursor()
     def ls_menu():
         cursor.execute("select menuid, position, xtitle, shortname, fullname from ev_pytis_menu order by position")
@@ -77,7 +77,7 @@ def command_ls(connection, dry_run, args):
         return
     handler()
 
-def command_add(connection, dry_run, args):
+def cmd_add(connection, dry_run, args):
     cursor = connection.cursor()
     if not args:
         print "Error: missing action"
@@ -153,7 +153,7 @@ def command_add(connection, dry_run, args):
                        % (name, pg_escape(title), position, fullname,))
     run_queries(queries, cursor, connection, dry_run)
 
-def command_del(connection, dry_run, args):
+def cmd_del(connection, dry_run, args):
     cursor = connection.cursor()
     if not args:
         print "Error: missing action identifier"
@@ -198,7 +198,7 @@ def command_del(connection, dry_run, args):
         queries.append("delete from c_pytis_menu_actions where %s=%s" % (action_type, action_string,))
     run_queries(queries, cursor, connection, dry_run)
     
-def command_sys(connection, dry_run, args, system=True):
+def cmd_sys(connection, dry_run, args, system=True):
     cursor = connection.cursor()
     if not args:
         print "Error: missing shortname"
@@ -274,7 +274,7 @@ def command_sys(connection, dry_run, args, system=True):
             queries.append(query)
     run_queries(queries, cursor, connection, dry_run)
 
-def command_rig(connection, dry_run, args):
+def cmd_rig(connection, dry_run, args):
     command_sys(connection, dry_run, args, system=False)
 
 def command_import(parameters, dry_run, args):
@@ -312,25 +312,22 @@ def command_update_form(parameters, dry_run, args):
         return
     specification = args[0]
     return pytis.extensions.dmp_update_form(parameters, dry_run, specification)
-    
+
 def command_commit(parameters, dry_run, args):
     if args:
         print "Error: commit takes no arguments"
         return
     return pytis.extensions.dmp_commit(parameters, dry_run)
 
-COMMANDS = {'import': command_import,
-            'add-form': command_add_form,
-            'update-form': command_update_form,
-            'reset-rights': command_reset_rights,
-            'commit': command_commit,
-            }
-OLD_COMMANDS = {'ls': command_ls,
-                'add': command_add,
-                'del': command_del,
-                'sys': command_sys,
-                'rig': command_rig,
-                }
+def find_command(command_string):
+    command = command_string.replace('-', '_')
+    command_function = globals().get('command_' + command)
+    if command_function is None:
+        command_function = globals().get('cmd_' + command)
+        new = False
+    else:
+        new = True
+    return command_function, new
 
 USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
 
@@ -361,7 +358,7 @@ def parse_options():
             break
         command_index += 1
     args = sys.argv[command_index:]
-    if not args or args[0] not in COMMANDS.keys() + OLD_COMMANDS.keys():
+    if not args or not find_command(args[0])[0]:
         parser.print_help()
         sys.exit(1)
     options, _args = parser.parse_args(args=sys.argv[1:command_index])
@@ -378,15 +375,14 @@ def run():
     for k, v in Configuration.dbparameters.items():
         if v is not None:
             parameters[k] = v    
-    command = args[0]
+    command = args[0].replace('-', '_')
     command_args = args[1:]
-    command_function = COMMANDS.get(command)
-    if command_function is None:
-        command_function = OLD_COMMANDS[command]
-        connection = dbapi.connect(**parameters)
-    else:
+    command_function, new = find_command(args[0])
+    if new:
         parameters['configuration_file'] = options.config
         connection = parameters
+    else:
+        connection = dbapi.connect(**parameters)
     messages = command_function(connection, options.dry_run, command_args)
     if messages:
         for m in messages:
