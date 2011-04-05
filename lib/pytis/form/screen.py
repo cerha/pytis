@@ -1669,6 +1669,8 @@ class Browser(wx.Panel):
         scrolled_window.add(webview)
         scrolled_window.show_all()
         webview.connect('notify::load-status', self._on_load_status_changed)
+        webview.connect('navigation-policy-decision-requested', self._on_navigation)
+        self._uri_to_load = None
 
     def _on_load_status_changed(self, webview, signal):
         status = webview.get_property('load-status')
@@ -1684,7 +1686,17 @@ class Browser(wx.Panel):
         busy_cursor(busy)
         message(msg)
 
+    def _on_navigation(self, webview, fram, req, action, decision):
+        uri = req.get_uri()
+        if uri != self._uri_to_load:
+            decision.ignore()
+            log(OPERATIONAL, "Web browser navigation blocked:", uri)
+            return True
+        else:
+            return False
+        
     def load_uri(self, uri):
+        self._uri_to_load = uri
         return self._webview.load_uri(uri)
 
     def load_html(self, html, base_uri=''):
