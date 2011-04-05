@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -990,6 +990,42 @@ class DMPRoles(DMPObject):
                 role.set_members(role_members + [member])
         data.select_map(process)
 
+    def dmp_add_member(self, fake, member, role):
+        """Add new member to role.
+
+        Arguments:
+
+          fake -- iff True, don't actually change the data but return sequence
+            of SQL commands (basestrings) that would do so
+          member -- name of the member to be added, string
+          role -- name of the target role, string
+          
+        """
+        messages = []
+        member_value = pytis.data.sval(member)
+        role_value = pytis.data.sval(role)
+        condition = pytis.data.AND(pytis.data.EQ('member', member_value),
+                                   pytis.data.EQ('roleid', role_value))
+        data = self._data('e_pytis_role_members')
+        already_present = (data.select(condition=condition) > 0)
+        data.close()
+        if already_present:
+            add_message(messages, DMPMessage.ERROR_MESSAGE,
+                        "Member already present in the role", (member, role,))
+        else:
+            row = pytis.data.Row((('member', member_value,),
+                                  ('roleid', role_value,),
+                                  ))
+            transaction = self._transaction()
+            self._logger.clear()
+            data.insert(row, transaction=transaction)
+            if fake:
+                messages += self._logger.messages()
+                transaction.rollback()
+            else:
+                transaction.commit()
+        return messages
+
 
 class DMPActions(DMPObject):
     """Representation of DMP actions.
@@ -1431,6 +1467,11 @@ def dmp_import(parameters, fake):
     """Import DMP data from application specifications to a database."""
     configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_import(fake)
+
+def dmp_add_member(parameters, fake, member, role):
+    """Add member to role."""
+    configuration = DMPConfiguration(**parameters)
+    return DMPRoles(configuration).dmp_add_member(fake, member, role)
 
 def dmp_add_form(parameters, fake, fullname, position):
     """Add new form from specifications to database menu."""

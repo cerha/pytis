@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 #
-# Copyright (C) 2005-2010 Brailcom, o.p.s.
+# Copyright (C) 2005-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ from deftypes import *
 from deftypes import _TreeOrder
 from spec import *
 from defs import *
-from dmp import dmp_add_form, dmp_commit, dmp_import, dmp_reset_rights, dmp_update_form
+from dmp import dmp_add_member, dmp_add_form, dmp_commit, dmp_import, dmp_reset_rights, dmp_update_form
 
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
