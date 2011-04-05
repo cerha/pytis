@@ -1668,6 +1668,21 @@ class Browser(wx.Panel):
         self._webview = webview = webkit.WebView()
         scrolled_window.add(webview)
         scrolled_window.show_all()
+        webview.connect('notify::load-status', self._on_load_status_changed)
+
+    def _on_load_status_changed(self, webview, signal):
+        status = webview.get_property('load-status')
+        if status == webkit.LOAD_FINISHED:
+            msg = _(u"Dokument byl načten.")
+            busy = False
+        elif status == webkit.LOAD_FAILED:
+            msg = _(u"Načtení dokumentu se nezdařilo.")
+            busy = False
+        else:
+            msg = _(u"Načítám dokument.")
+            busy = True
+        busy_cursor(busy)
+        message(msg)
 
     def load_uri(self, uri):
         return self._webview.load_uri(uri)
