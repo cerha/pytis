@@ -64,6 +64,9 @@ import types
 from pytis.util import *
 import pytis.data
 
+imp.reload(sys)
+sys.setdefaultencoding('utf-8')
+
 
 exit_code = 0
 _EXIT_USAGE = 1
