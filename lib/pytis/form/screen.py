@@ -1500,8 +1500,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
             if profile is current:
                 self.Select(i)
         if first_user_profile:
-            for i, label in ((0, _("Systémové profily")),
-                             (first_user_profile + 1, _("Uživatelské profily"))):
+            for i, label in ((0, _(u"Systémové profily")),
+                             (first_user_profile + 1, _(u"Uživatelské profily"))):
                 self.InsertStringItem(i, '- ' + label + ' -')
                 self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
                 self.SetItemData(i, -1)
@@ -1574,35 +1574,35 @@ class ProfileSelector(wx.combo.ComboCtrl):
 
     def _on_context_menu(self, event):
         menu = (
-            MItem(_("Uložit"),
+            MItem(_(u"Uložit"),
                   LookupForm.COMMAND_UPDATE_PROFILE(),
-                  help=_("Aktualizovat uložený profil podle současného nastavení formuláře")),
-            MItem(_("Uložit jako nový"),
+                  help=_(u"Aktualizovat uložený profil podle současného nastavení formuláře")),
+            MItem(_(u"Uložit jako nový"),
                   Application.COMMAND_HANDLED_ACTION(
                     # Name must be edited first and 'cmd' will be invoked after confirmation.
                     handler=self._edit_profile_name,
                     enabled=self._edit_profile_name_enabled,
                     cmd=LookupForm.COMMAND_SAVE_NEW_PROFILE,
                     clear=True),
-                  help=_("Vytvořit nový profil podle současného nastavení formuláře")),
-            MItem(_("Přejmenovat"),
+                  help=_(u"Vytvořit nový profil podle současného nastavení formuláře")),
+            MItem(_(u"Přejmenovat"),
                   Application.COMMAND_HANDLED_ACTION(
                     # Name must be edited first and 'cmd' will be invoked after confirmation.
                     handler=self._edit_profile_name,
                     enabled=self._edit_profile_name_enabled,
                     cmd=LookupForm.COMMAND_RENAME_PROFILE),
-                  help=_("Upravit a uložit název aktuálního profilu")),
-            MItem(_("Smazat"), 
+                  help=_(u"Upravit a uložit název aktuálního profilu")),
+            MItem(_(u"Smazat"), 
                   LookupForm.COMMAND_DELETE_PROFILE(),
-                  help=_("Smazat zvolený uložený profil")),
+                  help=_(u"Smazat zvolený uložený profil")),
             MSeparator(),
-            MItem(_("Vrátit poslední uložené nastavení"),
+            MItem(_(u"Vrátit poslední uložené nastavení"),
                   LookupForm.COMMAND_RELOAD_PROFILE,
-                  help=_("Zahodit změny nastavení formuláře provedené "
+                  help=_(u"Zahodit změny nastavení formuláře provedené "
                          "od posledního uložení profilu.")),
-            MItem(_("Vrátit výchozí nastavení aplikace"),
+            MItem(_(u"Vrátit výchozí nastavení aplikace"),
                   command=LookupForm.COMMAND_RESET_PROFILE,
-                  help=_("Zahodit všechny uložené uživatelské změny nastavení formuláře.")),
+                  help=_(u"Zahodit všechny uložené uživatelské změny nastavení formuláře.")),
             )
         popup_menu(self, menu)
 
@@ -1618,7 +1618,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
         else:
             ctrl.SelectAll()
         ctrl.SetFocus()
-        message(_("Zadejte název profilu a potvrďte stiskem ENTER."))
+        message(_(u"Zadejte název profilu a potvrďte stiskem ENTER."))
         self._on_enter_perform = perform
 
     def _edit_profile_name_enabled(self, cmd, clear=False):

@@ -3026,7 +3026,7 @@ class AggregationForm(BrowseForm):
 
     def title(self):
         labels = [self._view.field(fid).label() for fid in self._group_by_column_ids()]
-        return super(AggregationForm, self).title() + _(" - agregováno přes ") + ', '.join(labels)
+        return super(AggregationForm, self).title() + _(u" - agregováno přes ") + ', '.join(labels)
 
     def group_by_columns(self):
         return self._group_by_column_ids()

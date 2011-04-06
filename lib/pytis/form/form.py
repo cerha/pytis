@@ -887,7 +887,7 @@ class LookupForm(InnerForm):
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
-        self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
+        self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"),
                                         filter=filter, sorting=sorting, columns=columns,
                                         grouping=grouping)
         self._profiles, self._invalid_profiles = self._load_profiles()
@@ -1202,11 +1202,11 @@ class LookupForm(InnerForm):
         # anyway.  But the form will attempt to load it again next time.
         for profile in profiles:
             if run_dialog(Question, icon=Question.ICON_ERROR,
-                          title=_("Neplatný profil"),
-                          message=_("Uživatelský profil \"%s\" je neplatný.\n"
-                                    "Pravděpodobně došlo ke změně definice náhledu\n"
-                                    "a uložený profil již nelze použít.\n\n"
-                                    "Přejete si profil smazat?") % profile.name()):
+                          title=_(u"Neplatný profil"),
+                          message=_(u"Uživatelský profil \"%s\" je neplatný.\n"
+                                    u"Pravděpodobně došlo ke změně definice náhledu\n"
+                                    u"a uložený profil již nelze použít.\n\n"
+                                    u"Přejete si profil smazat?") % profile.name()):
                 profile_manager().drop_profile(self._fullname(), profile.id())
     
     def _cmd_apply_profile(self, index):
@@ -1215,7 +1215,7 @@ class LookupForm(InnerForm):
 
     def _cmd_save_new_profile(self, name):
         if name in [profile.name() for profile in self._profiles]:
-            message(_("Takto pojmenovaný profil již existuje."), beep_=True)
+            message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
         user_profile_numbers = [int(profile.id()[len(self._USER_PROFILE_PREFIX):])
                                 for profile in self._profiles
@@ -1226,7 +1226,7 @@ class LookupForm(InnerForm):
         self._profiles.append(profile)
         self._save_profile(profile)
         self._current_profile = profile
-        message(_("Profil uložen pod názvem '%s'.") % name)
+        message(_(u"Profil uložen pod názvem '%s'.") % name)
         self.focus()
 
     def _can_rename_profile(self, name):
@@ -1234,11 +1234,11 @@ class LookupForm(InnerForm):
 
     def _cmd_rename_profile(self, name):
         if name in [p.name() for p in self._profiles if p is not self._current_profile]:
-            message(_("Takto pojmenovaný profil již existuje."), beep_=True)
+            message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
         self._current_profile.rename(name)
         self._save_profile(self._current_profile)
-        message(_("Profil uložen pod názvem '%s'.") % name)
+        message(_(u"Profil uložen pod názvem '%s'.") % name)
         self.focus()
 
     def _can_update_profile(self):
