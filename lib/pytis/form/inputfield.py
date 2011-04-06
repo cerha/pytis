@@ -1915,6 +1915,13 @@ class StructuredTextField(TextField):
                            _(u"Vložit"),
                            _(u"Vložit text ze schránky na aktuální pozici kurzoru.")),
                  ),
+                #(UICommand(self.COMMAND_SEARCH(),
+                #           _(u"Hledat"),
+                #           _(u"Vyhledat řetězec v textu políčka.")),
+                # UICommand(self.COMMAND_SEARCH_AND_REPLACE(),
+                #           _(u"Hledat a nahradit"),
+                #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
+                # ),
                 )
 
     def _create_ctrl(self):
@@ -1958,6 +1965,12 @@ class StructuredTextField(TextField):
         sizer.Add(widget, 1, wx.EXPAND)
         return sizer
 
+    def _cmd_search(self):
+        pass
+    
+    def _cmd_search_and_replace(self):
+        pass
+    
     def _can_undo(self):
         return self._ctrl.CanUndo()
     

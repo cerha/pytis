@@ -248,6 +248,10 @@ Command(FileField, 'CLEAR',
         "Vynulování nastavené hodnoty políčka.")
 Command(ImageField, 'VIEW',
         "Otevření náhledu obrázku v prohlížeči.")
+Command(StructuredTextField, 'SEARCH',
+        "Search for a string within the text field content.")
+Command(StructuredTextField, 'SEARCH_AND_REPLACE',
+        "Search and replace text within the text field content.")
 Command(StructuredTextField, 'UNDO',
         "Undo last text edit operation.")
 Command(StructuredTextField, 'REDO',
@@ -404,6 +408,8 @@ COMMAND_ICONS = (
     (FileField.COMMAND_LOAD,                               wx.ART_FILE_OPEN),
     (FileField.COMMAND_SAVE,                               wx.ART_FILE_SAVE),
     (FileField.COMMAND_CLEAR,                              wx.ART_DELETE),
+    (StructuredTextField.COMMAND_SEARCH,                   wx.ART_FIND),
+    (StructuredTextField.COMMAND_SEARCH_AND_REPLACE,       wx.ART_FIND_AND_REPLACE),
     (StructuredTextField.COMMAND_UNDO,                     wx.ART_UNDO),
     (StructuredTextField.COMMAND_REDO,                     wx.ART_REDO),
     (ListForm.COMMAND_COPY_CELL,                           wx.ART_COPY),
