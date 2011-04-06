@@ -75,7 +75,7 @@ DESCENDANT = 'DESCENDANT'
 ### Datové třídy
 
 
-class Operator:
+class Operator(object):
     """Conditional operator for the 'select()' method.
 
     The instances of this class define a data filtering condition.  An operator
