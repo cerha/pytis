@@ -1425,7 +1425,7 @@ class StatusBar(wx.StatusBar):
             return self.GetStatusText(self._field_number(id))
         except KeyError:
             return None
-      
+
 
 class InfoWindow(object):
     """Nemodální okno pro zobrazení textových informací."""

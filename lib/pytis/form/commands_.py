@@ -248,6 +248,10 @@ Command(FileField, 'CLEAR',
         "Vynulování nastavené hodnoty políčka.")
 Command(ImageField, 'VIEW',
         "Otevření náhledu obrázku v prohlížeči.")
+Command(StructuredTextField, 'UNDO',
+        "Undo last text edit operation.")
+Command(StructuredTextField, 'REDO',
+        "Redo last text edit operation.")
 
 Command(Dialog, 'CLOSE_DIALOG',
         "Opuštění dialogu bez potvrzení")
@@ -400,6 +404,8 @@ COMMAND_ICONS = (
     (FileField.COMMAND_LOAD,                               wx.ART_FILE_OPEN),
     (FileField.COMMAND_SAVE,                               wx.ART_FILE_SAVE),
     (FileField.COMMAND_CLEAR,                              wx.ART_DELETE),
+    (StructuredTextField.COMMAND_UNDO,                     wx.ART_UNDO),
+    (StructuredTextField.COMMAND_REDO,                     wx.ART_REDO),
     (ListForm.COMMAND_COPY_CELL,                           wx.ART_COPY),
     (ListForm.COMMAND_EDIT,                                'edit-cell'),
     (ListForm.COMMAND_FILTER_BY_CELL,                      'filter-by-cell'),
@@ -420,6 +426,7 @@ COMMAND_ICONS = (
     (RecordForm.COMMAND_NEW_RECORD(copy=True),             'new-record-copy'),
     (RecordForm.COMMAND_NEW_RECORD,                        'new-record'),
     (RecordForm.COMMAND_DELETE_RECORD,                     'delete-record'),
+    (EditForm.COMMAND_COMMIT_RECORD,                       wx.ART_FILE_SAVE),
     (LookupForm.COMMAND_SORT(direction=_ASC),              'sort-asc'),
     (LookupForm.COMMAND_SORT(direction=_DESC),             'sort-desc'),
     (LookupForm.COMMAND_SORT(direction=_NONE),             'unsort'),

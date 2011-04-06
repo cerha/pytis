@@ -1890,3 +1890,82 @@ class ImageField(FileField):
             os.system(command)
         finally:
             os.remove(path)
+
+class StructuredTextField(TextField):
+
+    def _commands(self):
+        return ((UICommand(EditForm.COMMAND_COMMIT_RECORD(close=False),
+                           _(u"Uložit"),
+                           _(u"Uložit záznam bez uzavření formuláře.")),
+                 ),
+                (UICommand(self.COMMAND_UNDO(),
+                           _(u"Zpět"),
+                           _(u"Vrátit zpět poslední akci.")),
+                 UICommand(self.COMMAND_REDO(),
+                           _(u"Znovu"),
+                           _(u"Provést znovu poslední akci vzatou zpět.")),
+                 ),
+                (UICommand(self.COMMAND_CUT(),
+                           _(u"Vyjmout"),
+                           _(u"Vyjmout označený text.")),
+                 UICommand(self.COMMAND_COPY(),
+                           _(u"Kopírovat"),
+                           _(u"Zkopírovat označený text do schránky.")),
+                 UICommand(self.COMMAND_PASTE(),
+                           _(u"Vložit"),
+                           _(u"Vložit text ze schránky na aktuální pozici kurzoru.")),
+                 ),
+                )
+
+    def _create_ctrl(self):
+        import wx.stc
+        class TextCtrl(wx.stc.StyledTextCtrl):
+            """StyledTextCtrl implementing the TextCtrl API used by parent classes.
+
+            This allows us to use StyledTextCtrl (which is normally not API
+            compatible with TextCtrl) as a drop-in replacement for the TextCtrl
+            widget and keep the parent classes happy.
+
+            """
+            def SetValue(self, text):
+                self.ClearAll()
+                self.AppendText(text)
+                self.EmptyUndoBuffer()
+            def GetValue(self):
+                return self.GetText()
+            def CanCut(self):
+                start, end = self.GetSelection()
+                return start != end
+            def CanCopy(self):
+                return self.CanCut()
+        ctrl = TextCtrl(self._parent, -1, style=self._ctrl_style())
+        wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
+        self._completer = None
+        self._update_completions = None
+        return ctrl
+        
+    def _create_widget(self):
+        widget = super(StructuredTextField, self)._create_widget()
+        toolbar = wx.ToolBar(self._parent)
+        commands = self._commands()
+        for group in commands:
+            if group != commands[0]:
+                toolbar.AddSeparator()
+            for uicmd in group:
+                uicmd.create_toolbar_ctrl(toolbar)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(toolbar, 0, wx.EXPAND)
+        sizer.Add(widget, 1, wx.EXPAND)
+        return sizer
+
+    def _can_undo(self):
+        return self._ctrl.CanUndo()
+    
+    def _cmd_undo(self):
+        self._ctrl.Undo()
+    
+    def _can_redo(self):
+        return self._ctrl.CanRedo()
+    
+    def _cmd_redo(self):
+        self._ctrl.Redo()

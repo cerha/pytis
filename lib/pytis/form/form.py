@@ -891,10 +891,10 @@ class PopupForm:
             self._popup_frame_ = frame
             wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         return frame
-
+    
     def _popup_frame_style(self):
         return wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE
-
+    
     def _on_frame_close(self, event):
         if self:
             if self._exit_check():
@@ -2130,7 +2130,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         panel.Show(False)
         size = self.GetSizer().CalcMin()
         panel.Show(True)
-        if isinstance(panel, wx.ScrolledWindow):
+        if isinstance(panel, (wx.ScrolledWindow, wx.Panel)):
             # The size of a scrollable window is simly its virtual size.
             panel_size = panel.GetVirtualSize()
             width = panel_size.width
@@ -2813,6 +2813,36 @@ class InputForm(PopupEditForm):
         return []
         
     
+class StructuredTextEditor(PopupEditForm):
+
+    def _init_attributes(self, field_id, **kwargs):
+        """Process constructor keyword arguments and initialize the attributes.
+
+        Arguments:
+
+          field_id -- string identifier of the edited field.
+
+        """
+        super(StructuredTextEditor, self)._init_attributes(**kwargs)
+        self._editor_field_id = field_id
+    
+    def _popup_frame_style(self):
+        return super(StructuredTextEditor, self)._popup_frame_style() | wx.RESIZE_BORDER
+    
+    def _create_form_parts(self, sizer):
+        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
+        sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
+        
+    def _create_form_controls(self):
+        panel = wx.Panel(self)
+        field = StructuredTextField(panel, self._row, self._editor_field_id, guardian=self,
+                                    readonly=self.readonly())
+        self._fields.append(field)
+        self._form_controls_window = panel
+        panel.SetSizer(field.widget())
+        return panel
+
+
 class PopupInsertForm(PopupEditForm):
     
     DESCR = _(u"vkládací formulář")
