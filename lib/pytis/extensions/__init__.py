@@ -28,9 +28,3 @@ from dmp import dmp_add_member, dmp_add_form, dmp_commit, dmp_import, dmp_reset_
 
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
-
-# Většina defsů počítají s tím, že importem pytis.extensions jsou importovány i
-# všechny identifikátory z pytis.form.  Časem by bylo dobré se toho zbavit a
-# používat celé názvy `pytis.forms.*'.  Zde je import každopádně až na konci,
-# abychom "nezasvinili" jmenný prostor modulů.
-from pytis.form import *
