@@ -1418,10 +1418,10 @@ class LookupForm(InnerForm):
         if not self._current_profile.id().startswith(self._USER_PROFILE_PREFIX) \
                 and condition != self._current_profile.filter():
             name = _(u"Nepojmenovaný profil")
-            i = 1
-            while name in [profile.name() for profile in self._profiles]:
-                i += 1
-                name = _(u"Nepojmenovaný profil") + " <%d>" % i
+            profile = find(name, self._profiles, key=lambda p: p.name())
+            if profile:
+                profile_manager().drop_profile(self._fullname(), profile.id())
+                self._profiles.remove(profile)
             self.COMMAND_SAVE_NEW_PROFILE.invoke(name=name)
             
     def data(self, init_select=True):
