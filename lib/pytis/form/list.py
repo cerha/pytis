@@ -260,11 +260,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _update_grid(self, data_init=False, inserted_row_number=None, inserted_row_prefill=None,
                      delete_column=None, insert_column=None, inserted_column_index=None,
-                     init_columns=False):
+                     init_columns=False, retain_row=False):
         g = self._grid
         t = self._table
         notify = self._notify_grid
-        current_row = self._table.current_row()
+        current_row_number = self._table.current_row()
+        if not retain_row or current_row_number is None:
+            original_key = None
+        else:
+            original_key = self._current_key()
         # Uprav velikost gridu
         g.BeginBatch()
         try:
@@ -292,11 +296,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                      grouping=self._grouping, inserted_row_number=inserted_row_number,
                      inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
             old_row_count = g.GetNumberRows()
-            self._update_grid_length(g, row_count, current_row)
+            self._update_grid_length(g, row_count, current_row_number)
             if insert_column is not None or delete_column is not None or init_columns:
                 self._init_col_attr()
         finally:
             g.EndBatch()
+        # Skip to the former line
+        if retain_row and original_key is not None:
+            if self._current_key() != original_key:
+                self.select_row(original_key, quiet=True)
+            # Pokud se nepodařilo nastavit pozici na předchozí klíč,
+            # pokusíme se nastavit pozici na předchozí číslo řádku v gridu.
+            if self._current_key() != original_key:
+                if row < self._table.number_of_rows(min_value=row+1) and row >= 0:
+                    self._select_cell(row=row)
+                else:
+                    self._select_cell(row=0)
+        else:
+            self._select_cell(row=current_row_number)
         # Závěrečné úpravy
         self._update_colors()
         self._resize_columns()
@@ -305,7 +322,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Force scrollbar update by generating a size event.
             #g.SetSize(g.GetSize())
             g.FitInside()
-
+            
     def _update_grid_length(self, g, row_count, current_row):
         notify = self._notify_grid
         self._last_updated_row_count = row_count
@@ -1384,20 +1401,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     raise ProgramError('Invalid refresh parameter', k)
         row = max(0, self._current_cell()[0])
         self._last_reshuffle_request = self._reshuffle_request = time.time()
-        self._update_grid(data_init=True)
-        key = self._current_key() # after _update_grid to prevent redundant queries!
-        if key is not None and key_update:
-            if self._current_key() != key:
-                self.select_row(key, quiet=True)
-            # Pokud se nepodařilo nastavit pozici na předchozí klíč,
-            # pokusíme se nastavit pozici na předchozí číslo řádku v gridu.
-            if self._current_key() != key:
-                if row < self._table.number_of_rows(min_value=row+1) and row >= 0:
-                    self._select_cell(row=row)
-                else:
-                    self._select_cell(row=0)
-        else:
-            self._select_cell(row=row)
+        self._update_grid(data_init=True, retain_row=True)
         self._show_data_status()
         return True
 
