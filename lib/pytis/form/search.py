@@ -89,19 +89,24 @@ class SFSDialog(GenericDialog):
 
     def _find_column(self, cid):
         return find(cid, self._columns, key=lambda c: c.id())
+
+    def _create_ctrl(self, constructor, *args, **kwargs):
+        ctrl = constructor(self._dialog, *args, **kwargs)
+        self._handle_keys(ctrl)
+        return ctrl
     
     def _create_button(self, label, callback, tooltip=None, **kwargs):
-        return wx_button(self._dialog, label=label, callback=callback,
-                         tooltip=tooltip, height=self._FIELD_HEIGHT, **kwargs)
+        return self._create_ctrl(wx_button, label=label, callback=callback,
+                                 tooltip=tooltip, height=self._FIELD_HEIGHT, **kwargs)
         
     def _create_choice(self, choices, tooltip=None, **kwargs):
-        return wx_choice(self._dialog, choices, height=self._FIELD_HEIGHT, **kwargs)
+        return self._create_ctrl(wx_choice, choices, height=self._FIELD_HEIGHT, **kwargs)
 
     def _create_text_ctrl(self, value, **kwargs):
-        return wx_text_ctrl(self._dialog, value, height=self._FIELD_HEIGHT, **kwargs)
+        return self._create_ctrl(wx_text_ctrl, value, height=self._FIELD_HEIGHT, **kwargs)
 
     def _create_spin_ctrl(self, value, **kwargs):
-        return wx_spin_ctrl(self._dialog, value, height=self._FIELD_HEIGHT, **kwargs)
+        return self._create_ctrl(wx_spin_ctrl, value, height=self._FIELD_HEIGHT, **kwargs)
         
     def _create_label(self, label, **kwargs):
         panel = wx.Panel(self._dialog, -1)
