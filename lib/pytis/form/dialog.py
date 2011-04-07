@@ -342,18 +342,18 @@ class Message(GenericDialog):
     ICON_QUIT = wx.ART_QUIT
     "Ikona opuštění aplikace."
 
-    BUTTON_OK = _('Ok')
+    BUTTON_OK = _(u"Ok")
     "Nápis pro potvrzovací tlačítko." 
-    BUTTON_CANCEL = _('Zrušit')
+    BUTTON_CANCEL = _(u"Zrušit")
     "Nápis pro opouštěcí tlačítko." 
-    BUTTON_YES = _('Ano')
+    BUTTON_YES = _(u"Ano")
     "Nápis pro tlačítko souhlasu." 
-    BUTTON_NO = _('Ne')
+    BUTTON_NO = _(u"Ne")
     "Nápis pro tlačítko nesouhlasu." 
     
     _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
     
-    def __init__(self, parent, message, icon=ICON_INFO, title=_('Zpráva'),
+    def __init__(self, parent, message, icon=ICON_INFO, title=_(u"Zpráva"),
                  buttons=(BUTTON_OK,), default=_(BUTTON_OK), **kwargs):
         """Inicializuj dialog.
 
@@ -389,7 +389,7 @@ class Message(GenericDialog):
 class Warning(Message):
     """Dialog pro zobrazení varovné zprávy."""
 
-    def __init__(self, parent, message, title=_('Varování'), **kwargs):
+    def __init__(self, parent, message, title=_(u"Varování"), **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
@@ -413,7 +413,7 @@ class Warning(Message):
 class Error(Message):
     """Dialog pro zobrazení chybové zprávy."""
 
-    def __init__(self, parent, message, title=_('Chyba'), **kwargs):
+    def __init__(self, parent, message, title=_(u"Chyba"), **kwargs):
         """Inicializuj dialog.
         
         Argumenty:
@@ -589,7 +589,7 @@ class Password(InputDialog):
     
     """
     def __init__(self, parent, message=None, title=_(u"Zadejte heslo"),
-                 prompt=_('Heslo:'), icon=None):
+                 prompt=_(u"Heslo:"), icon=None):
         """Inicializuj dialog.
 
         Argumenty:
@@ -674,7 +674,7 @@ class InputDate(InputDialog):
                 return pytis.data.Value(pytis.data.Date(), None)
             value, error  = pytis.data.Date().validate(self._control.GetValue())
             if error:
-                raise ProgramError("Chyba validace vstupu!")                
+                raise ProgramError("Input validation error!")                
             return value
         else:
             return pytis.data.Value(pytis.data.Date(), None)
@@ -1420,7 +1420,7 @@ class AggregationSetupDialog(Message):
             if functions:
                 fsizer = wx.BoxSizer(wx.VERTICAL)
                 fsizer.Add(checkbox)
-                cp = wx.CollapsiblePane(panel, label="Funkce", style=wx.CP_DEFAULT_STYLE)
+                cp = wx.CollapsiblePane(panel, label=_(u"Funkce"), style=wx.CP_DEFAULT_STYLE)
                 panel.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapsiblepane_changed, cp)
                 pane = cp.GetPane()
                 cpsizer = wx.BoxSizer(wx.VERTICAL)
