@@ -623,6 +623,7 @@ class FilterDialog(SFDialog):
     def _create_content(self, sizer):
         super(FilterDialog, self)._create_content(sizer)
         cp = wx.CollapsiblePane(self._dialog, label=_("Agregační funkce"))
+        self._handle_keys(cp)
         pane = cp.GetPane()
         choice, field, button = self._create_choice, self._create_text_ctrl, self._create_button
         self._agg_controls = (
