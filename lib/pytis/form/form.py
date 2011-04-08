@@ -2841,6 +2841,12 @@ class StructuredTextEditor(PopupEditForm):
         self._form_controls_window = panel
         panel.SetSizer(field.widget())
         return panel
+        
+    # TODO: Run outside transaction.  
+    #def __default_transaction(self):
+    #    # Run editor outside transaction to prevent long transactions (the
+    #    # editation usually takes quite some time).
+    #    return None
 
 
 class PopupInsertForm(PopupEditForm):
