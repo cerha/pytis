@@ -2848,7 +2848,10 @@ class StructuredTextEditor(PopupEditForm):
     #    # editation usually takes quite some time).
     #    return None
 
+    def size(self):
+        return (700, 500)
 
+        
 class PopupInsertForm(PopupEditForm):
     
     DESCR = _(u"vkládací formulář")
