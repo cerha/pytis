@@ -1670,7 +1670,7 @@ class Browser(wx.Panel):
         scrolled_window.show_all()
         webview.connect('notify::load-status', self._on_load_status_changed)
         webview.connect('navigation-policy-decision-requested', self._on_navigation)
-        self._uri_to_load = None
+        self._restricted_navigation_uri = None
 
     def _on_load_status_changed(self, webview, signal):
         status = webview.get_property('load-status')
@@ -1688,15 +1688,31 @@ class Browser(wx.Panel):
 
     def _on_navigation(self, webview, fram, req, action, decision):
         uri = req.get_uri()
-        if uri != self._uri_to_load:
+        restricted_navigation_uri = self._restricted_navigation_uri
+        if restricted_navigation_uri is not None and not uri.startswith(restricted_navigation_uri):
             decision.ignore()
-            log(OPERATIONAL, "Web browser navigation blocked:", uri)
+            message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
         else:
             return False
         
+    def restrict_navigation(self, uri, restrict_to_domain=False):
+        """Restrict user's navigation to particular URI prefix.
+
+        Arguments:
+          uri -- the URI prefix to restrict all navigation to.  Only URIs
+            starting with given prefix will be allowed.
+          restrict_to_domain -- only use the domain name of 'uri' and ignore
+            the rest (restrict the navigation to all addresses within the same
+            server).
+
+
+        """
+        if uri is not None and restrict_to_domain:
+            uri = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*', lambda m: m.group(1), uri)
+        self._restricted_navigation_uri = uri
+        
     def load_uri(self, uri):
-        self._uri_to_load = uri
         return self._webview.load_uri(uri)
 
     def load_html(self, html, base_uri=''):

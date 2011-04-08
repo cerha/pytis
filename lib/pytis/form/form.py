@@ -2694,8 +2694,10 @@ class WebForm(Form):
         sizer.Add(browser, 1, wx.EXPAND)
 
     def load_uri(self, uri):
+        self._browser.restrict_navigation(uri, restrict_to_domain=True)
         self._browser.load_uri(uri)
 
     def load_html(self, uri):
+        self._browser.restrict_navigation('-')
         self._browser.load_html(uri)
         
