@@ -308,6 +308,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Pokud se nepodařilo nastavit pozici na předchozí klíč,
             # pokusíme se nastavit pozici na předchozí číslo řádku v gridu.
             if self._current_key() != original_key:
+                row = current_row_number
                 if row < self._table.number_of_rows(min_value=row+1) and row >= 0:
                     self._select_cell(row=row)
                 else:
