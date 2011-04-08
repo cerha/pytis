@@ -2578,7 +2578,8 @@ class Field(object):
             for k in kwargs.keys():
                 assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
                              'precision', 'format', 'mindate', 'maxdate', 'utc',
-                             'validation_messages', 'inner_type'), \
+                             'validation_messages', 'inner_type',
+                             'minsize', 'maxsize', 'formats', 'strength', 'md5',), \
                              err("Invalid argument: %r", k)
             if isinstance(type, pytis.data.Type):
                 for arg, value in (('codebook', codebook),
