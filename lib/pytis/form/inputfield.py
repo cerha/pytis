@@ -1898,13 +1898,13 @@ class StructuredTextField(TextField):
                            _(u"Uložit"),
                            _(u"Uložit záznam bez uzavření formuláře.")),
                  ),
-                (UICommand(self.COMMAND_UNDO(),
-                           _(u"Zpět"),
-                           _(u"Vrátit zpět poslední akci.")),
-                 UICommand(self.COMMAND_REDO(),
-                           _(u"Znovu"),
-                           _(u"Provést znovu poslední akci vzatou zpět.")),
-                 ),
+                #(UICommand(self.COMMAND_UNDO(),
+                #           _(u"Zpět"),
+                #           _(u"Vrátit zpět poslední akci.")),
+                # UICommand(self.COMMAND_REDO(),
+                #           _(u"Znovu"),
+                #           _(u"Provést znovu poslední akci vzatou zpět.")),
+                # ),
                 (UICommand(self.COMMAND_CUT(),
                            _(u"Vyjmout"),
                            _(u"Vyjmout označený text.")),
@@ -1945,8 +1945,14 @@ class StructuredTextField(TextField):
                 return start != end
             def CanCopy(self):
                 return self.CanCut()
-        ctrl = TextCtrl(self._parent, -1, style=self._ctrl_style())
-        wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
+        # TODO: We currently use a standard wx.TextCtrl instead of
+        # wx.stc.StyledTextCtrl as it has some strange bugs in caret
+        # positioning etc.  Once this is resolved, we can re-enable usiong the
+        # derived TextCtrl class defined above.
+        #ctrl = TextCtrl(self._parent, -1, style=self._ctrl_style())
+        #wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
+        ctrl = wx.TextCtrl(self._parent, -1, style=self._ctrl_style())
+        wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
         self._completer = None
         self._update_completions = None
         return ctrl
