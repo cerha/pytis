@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2011 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+import os
+import rpyc
+import rpyc.utils.authenticators
+import ssl
+import sys
+
+host = '0.0.0.0'
+port = 17984
+key_file = 'windows.key'
+certificate_file = 'windows.crt'
+ca_certificate_file = 'ca.crt'
+
+class Authenticator(object):
+    
+    def __call__(self, sock):
+        try:
+            ssl_sock = ssl.wrap_socket(sock, server_side=True,
+                                       keyfile=key_file, certfile=certificate_file,
+                                       ca_certs=ca_certificate_file,
+                                       cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1)
+        except Exception:
+            e = sys.exc_info()[1]
+            raise rpyc.utils.authenticators.AuthenticationError(str(e))
+        if ssl_sock.getpeercert() is None:
+            raise rpyc.utils.authenticators.AuthenticationError("Invalid client certificate")
+        return ssl_sock, None
+
+class PytisService(rpyc.Service):
+
+    def exposed_get_clipboard_text(self):
+        """Return current clipboard text, as unicode.
+
+        If the text can't be retrieved, return 'None'.
+        
+        """
+        import win32clipboard
+        win32clipboard.OpenClipboard()
+        try:
+            data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
+        except:                   # may happen when there is no clipboard data
+            data = None
+        win32clipboard.CloseClipboard()
+        return data
+        
+    def exposed_set_clipboard_text(self, text):
+        """Set clipboard content to text.
+
+        Arguments:
+
+          text -- text to store into the clipboard; unicode
+          
+        """
+        assert isinstance(text, unicode), text
+        import win32clipboard
+        win32clipboard.OpenClipboard()
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardData(win32clipboard.CF_UNICODETEXT, text)
+        win32clipboard.CloseClipboard()
+
+    def exposed_launch_file(self, path):
+        """Start associated application on path.
+
+        Arguments:
+
+          path -- path to the file to be started with its associated
+            application; basestring.  Note that path must be given in the
+            Windows form, i.e. use backslashes to separate path elements.
+
+        """
+        assert isinstance(path, basestring), path
+        os.startfile(path)
+    
+if __name__ == '__main__':
+    from rpyc.utils.server import ThreadedServer
+    t = ThreadedServer(PytisService, hostname=host, port=port, authenticator=Authenticator())
+    t.start()

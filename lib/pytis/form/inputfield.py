@@ -29,6 +29,7 @@ The actual class representing each field is determined by its specification and 
 import collections
 import pytis.data
 from pytis.form import *
+import pytis.windows
 import wx.lib.colourselect
 from cStringIO import StringIO
 import datetime
@@ -756,6 +757,61 @@ class TextField(InputField):
         self._update_completions = None
         return control
 
+    def _create_widget(self):
+        widget = super(TextField, self)._create_widget()
+        sizer = wx.BoxSizer()
+        sizer.Add(widget, 0, wx.FIXED_MINSIZE)
+        button = self._create_button('GET')
+        button.SetToolTipString(_(u"Get windows clipboard"))
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._insert_clipboard())
+        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
+        sizer.Add(button, 0, wx.FIXED_MINSIZE)
+        self._get_clipboard_button = button
+        button = self._create_button('SET')
+        button.SetToolTipString(_(u"Set windows clipboard"))
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._set_clipboard())
+        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
+        sizer.Add(button, 0, wx.FIXED_MINSIZE)
+        self._set_clipboard_button = button
+        button = self._create_button('LAUNCH')
+        button.SetToolTipString(_(u"Launch"))
+        wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._test_launch())
+        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
+        sizer.Add(button, 0, wx.FIXED_MINSIZE)
+        self._test_button = button
+        return sizer
+
+    def _create_button(self, label, icon=None):
+        return wx_button(self._parent, label=label, icon=icon, size=self._button_size())
+
+    def _button_size(self):
+        x = self._px_size(1, 1)[1]
+        return (x, x)
+
+    def _disable(self):
+        self._set_clipboard_button.Enable(False)
+        self._get_clipboard_button.Enable(False)
+        self._test_button.Enable(False)
+        super(TextField, self)._disable()        
+    
+    def _enable(self):
+        self._set_clipboard_button.Enable(True)
+        self._get_clipboard_button.Enable(True)
+        self._test_button.Enable(True)
+        super(TextField, self)._enable()
+
+    def _insert_clipboard(self):
+        text = pytis.windows.get_clipboard_text()
+        if text is not None:
+            self._set_value(text)
+
+    def _set_clipboard(self):
+        text = self._get_value()
+        pytis.windows.set_clipboard_text(text)
+
+    def _test_launch(self):
+        pytis.windows.launch_file('/Python26/README.txt')
+        
     def on_key_down(self, event):
         if self._completer and self._completer.on_key_down(event):
             return
