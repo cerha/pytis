@@ -56,7 +56,7 @@ def run():
     if command == 'set' and value is None:
         usage("Value must be specified for command '%s'" % command)
     if command != 'set' and value is not None:
-        usage("Value mmakes no sense for command '%s'" % command)
+        usage("Value makes no sense for command '%s'" % command)
     storage = DBConfigurationStorage(config.dbconnection, username=username)
     cfg = dict(storage.read())
     if command == 'get':
