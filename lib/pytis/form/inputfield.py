@@ -757,60 +757,12 @@ class TextField(InputField):
         self._update_completions = None
         return control
 
-    def _create_widget(self):
-        widget = super(TextField, self)._create_widget()
-        sizer = wx.BoxSizer()
-        sizer.Add(widget, 0, wx.FIXED_MINSIZE)
-        button = self._create_button('GET')
-        button.SetToolTipString(_(u"Get windows clipboard"))
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._insert_clipboard())
-        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
-        sizer.Add(button, 0, wx.FIXED_MINSIZE)
-        self._get_clipboard_button = button
-        button = self._create_button('SET')
-        button.SetToolTipString(_(u"Set windows clipboard"))
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._set_clipboard())
-        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
-        sizer.Add(button, 0, wx.FIXED_MINSIZE)
-        self._set_clipboard_button = button
-        button = self._create_button('LAUNCH')
-        button.SetToolTipString(_(u"Launch"))
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._test_launch())
-        wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
-        sizer.Add(button, 0, wx.FIXED_MINSIZE)
-        self._test_button = button
-        return sizer
-
     def _create_button(self, label, icon=None):
         return wx_button(self._parent, label=label, icon=icon, size=self._button_size())
 
     def _button_size(self):
         x = self._px_size(1, 1)[1]
         return (x, x)
-
-    def _disable(self):
-        self._set_clipboard_button.Enable(False)
-        self._get_clipboard_button.Enable(False)
-        self._test_button.Enable(False)
-        super(TextField, self)._disable()        
-    
-    def _enable(self):
-        self._set_clipboard_button.Enable(True)
-        self._get_clipboard_button.Enable(True)
-        self._test_button.Enable(True)
-        super(TextField, self)._enable()
-
-    def _insert_clipboard(self):
-        text = pytis.windows.get_clipboard_text()
-        if text is not None:
-            self._set_value(text)
-
-    def _set_clipboard(self):
-        text = self._get_value()
-        pytis.windows.set_clipboard_text(text)
-
-    def _test_launch(self):
-        pytis.windows.launch_file('/Python26/README.txt')
         
     def on_key_down(self, event):
         if self._completer and self._completer.on_key_down(event):
@@ -941,19 +893,53 @@ class TextField(InputField):
         return self._ctrl.CanCut()
         
     def _cmd_cut(self):
-        self._ctrl.Cut()
+        if pytis.windows.nx_ip():
+            self._cmd_copy()
+            ctrl = self._ctrl
+            from_, to_ = ctrl.GetSelection()
+            if from_ != to_:
+                text = ctrl.GetValue()
+                ctrl.ChangeValue(text[:from_]+text[to_:])
+                ctrl.SetInsertionPoint(from_)
+        else:
+            self._ctrl.Cut()
         
     def _can_copy(self):
         return self._ctrl.CanCopy()
 
     def _cmd_copy(self):
-        self._ctrl.Copy()
+        if pytis.windows.nx_ip():
+            text = self._ctrl.GetStringSelection()
+            if text:
+                pytis.windows.set_clipboard_text(text)
+        else:
+            self._ctrl.Copy()
         
     def _can_paste(self):
         return self._ctrl.CanPaste()
         
     def _cmd_paste(self):
-        self._ctrl.Paste()
+        if pytis.windows.nx_ip():
+            text = pytis.windows.get_clipboard_text()
+            if text:
+                text_length = len(text)
+                ctrl = self._ctrl
+                orig_text = ctrl.GetValue()
+                if orig_text:
+                    from_, to_ = ctrl.GetSelection()
+                    if from_ != to_:
+                        text = orig_text[:from_] + text + orig_text[to_:]
+                        point = from_ + text_length
+                    else:
+                        point = ctrl.GetInsertionPoint()
+                        text = orig_text[:point] + text + orig_text[point:]
+                        point = point + text_length
+                else:
+                    point = text_length
+                ctrl.ChangeValue(text)
+                ctrl.SetInsertionPoint(point)
+        else:
+            self._ctrl.Paste()
         
     def _can_select_all(self):
         return bool(self._ctrl.GetValue())
