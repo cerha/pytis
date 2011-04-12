@@ -19,16 +19,17 @@
 
 import rpyc
 
-local_port = remote_port = 17984
+import config
 
 class ProxyService(rpyc.Service):
 
     def exposed_request(self, target_ip, request, *args, **kwargs):
-        connection = rpyc.ssl_connect(target_ip, remote_port,
-                                      keyfile='linux.key', certfile='linux.crt')
+        connection = rpyc.ssl_connect(target_ip, config.rpc_remote_port,
+                                      keyfile=config.rpc_key_file,
+                                      certfile=config.rpc_certificate_file)
         return getattr(connection.root, request)(*args, **kwargs)
 
 def run_proxy():
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(ProxyService, hostname='localhost', port=local_port)
+    t = ThreadedServer(ProxyService, hostname='localhost', port=config.rpc_local_port)
     t.start()

@@ -21,8 +21,7 @@ import os
 import rpyc
 import subprocess
 
-host = 'localhost'
-port = 17984
+import config
 
 def _nx_ip():
     nxsessionid = os.getenv('NXSESSIONID')
@@ -39,7 +38,7 @@ def _nx_ip():
     
 def _request(request, *args, **kwargs):
     target_ip = _nx_ip()
-    connection = rpyc.connect(host, port)
+    connection = rpyc.connect('localhost', config.rpc_local_port)
     return connection.root.request(target_ip, request, *args, **kwargs)
     
 def get_clipboard_text():
