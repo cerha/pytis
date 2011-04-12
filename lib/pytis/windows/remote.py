@@ -53,13 +53,23 @@ def _request(request, *args, **kwargs):
     return connection.root.request(target_ip, request, *args, **kwargs)
     
 def get_clipboard_text():
-    return _request('get_clipboard_text')
+    try:
+        return _request('get_clipboard_text')
+    except:
+        return None
 
 def set_clipboard_text(text):
     assert isinstance(text, unicode), text
-    return _request('set_clipboard_text', text)
+    try:
+        _request('set_clipboard_text', text)
+    except:
+        pass
 
 def launch_file(path):
     assert isinstance(path, basestring), path
     wpath = path.replace('/', '\\')
-    return _request('launch_file', wpath)
+    try:
+        return _request('launch_file', wpath)
+    except:
+        import pytis.form
+        pytis.form.run_dialog(pytis.form.Error, _("Soubor %s se nepodařilo otevřít") % (wpath,))
