@@ -18,4 +18,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from proxy import run_proxy
-from remote import nx_ip, get_clipboard_text, set_clipboard_text, launch_file
+from remote import nx_ip, get_clipboard_text, set_clipboard_text, launch_file, launch_url

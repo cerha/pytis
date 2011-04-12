@@ -73,3 +73,11 @@ def launch_file(path):
     except:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Soubor %s se nepodařilo otevřít") % (wpath,))
+
+def launch_url(url):
+    assert isinstance(url, basestring), url
+    try:
+        return _request('launch_file', url)
+    except:
+        import pytis.form
+        pytis.form.run_dialog(pytis.form.Error, _("URL %s se nepodařilo otevřít") % (url,))
