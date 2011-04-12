@@ -1599,7 +1599,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
             MItem(_(u"Vrátit poslední uložené nastavení"),
                   LookupForm.COMMAND_RELOAD_PROFILE,
                   help=_(u"Zahodit změny nastavení formuláře provedené "
-                         "od posledního uložení profilu.")),
+                         u"od posledního uložení profilu.")),
             MItem(_(u"Vrátit výchozí nastavení aplikace"),
                   command=LookupForm.COMMAND_RESET_PROFILE,
                   help=_(u"Zahodit všechny uložené uživatelské změny nastavení formuláře.")),
