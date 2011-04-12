@@ -21,23 +21,34 @@ import os
 import rpyc
 import subprocess
 
+from pytis.util import *
 import config
 
-def _nx_ip():
+_nx_ip = UNDEFINED
+def nx_ip():
+    """Return IP address of the nx client, as a string.
+
+    If pytis is not run from an nx client, return 'None'.
+    
+    """
+    global _nx_ip
+    if _nx_ip is not UNDEFINED:
+        return _nx_ip
+    _nx_ip = None
     nxsessionid = os.getenv('NXSESSIONID')
-    if nxsessionid is None:
-        return None
-    session_id = ':' + nxsessionid.split('-')[1]
-    p = subprocess.Popen('who', stdout=subprocess.PIPE, shell=True)
-    output, __ = p.communicate()
-    for line in output.splitlines():
-        items = line.split()
-        if items[1] == session_id:
-            return items[4][1:-1]
-    return None
+    if nxsessionid is not None:
+        session_id = ':' + nxsessionid.split('-')[1]
+        p = subprocess.Popen('who', stdout=subprocess.PIPE, shell=True)
+        output, __ = p.communicate()
+        for line in output.splitlines():
+            items = line.split()
+            if items[1] == session_id:
+                _nx_ip = items[4][1:-1]
+                break
+    return _nx_ip
     
 def _request(request, *args, **kwargs):
-    target_ip = _nx_ip()
+    target_ip = nx_ip()
     connection = rpyc.connect('localhost', config.rpc_local_port)
     return connection.root.request(target_ip, request, *args, **kwargs)
     
