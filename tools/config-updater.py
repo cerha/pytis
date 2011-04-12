@@ -57,8 +57,6 @@ def run():
         usage("Value must be specified for command '%s'" % command)
     if command != 'set' and value is not None:
         usage("Value mmakes no sense for command '%s'" % command)
-    # Avoid pytis logging during the update.
-    #config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
     storage = DBConfigurationStorage(config.dbconnection, username=username)
     cfg = dict(storage.read())
     if command == 'get':
@@ -80,6 +78,9 @@ def run():
                 del cfg[option]
         else: # command == 'set'
             cfg[option] = value
+        # Avoid pytis logging during the update.
+        config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
+        # Update the saved configuration.
         storage.write(cfg.items())
 
 
