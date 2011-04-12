@@ -81,9 +81,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _WINDOW_MENU_TITLE = _(u"Okn&a")
 
     _STATE_RECENT_FORMS = 'recent_forms'
-    _STATE_STARTUP_FORMS = 'saved_startup_forms'
-    _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit' # Avoid colision with config.startup_forms!
-    _STATE_FORM_CONFIG = 'saved_form_config'
+    _STATE_STARTUP_FORMS = 'saved_startup_forms' # Avoid name conflict with config.startup_forms!
+    _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
+    _STATE_FORM_CONFIG = 'saved_form_config' # Used only when e_pytis_form_profiles does not exist.
 
     def _get_command_handler_instance(cls):
         global _application
