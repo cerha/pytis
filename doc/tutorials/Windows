@@ -1,0 +1,199 @@
+= Komunikace pytisové aplikace s windowsovou stanicí =
+
+Tento dokument popisuje, jak zprovovoznit komunikaci pytisové aplikace spuštěné
+přes nx s windowsovou stanicí, ze které byla spuštěna.
+
+== Nástin komunikace ==
+
+Na windowsových stanicích běží serverové procesy přijímající a vyřizující
+požadavky přicházející z klienta na linuxovém serveru.  Linuxový klient
+vystupuje zároveň jako server vůči pytisovým aplikacím běžícím na tomto
+serveru.  Pytisové aplikace nekomunikují s windowsovými stanicemi přímo kvůli
+tomu, aby uživatelské účty nemusely mít přístup k autentizačním informacím.
+
+== Vytvoření certifikátů ==
+
+Pro autentizaci je potřeba vytvořit sadu TLS certifikátů a klíčů obsahující:
+
+- Certifikát certifikační autority, kterým se ověřují klientské certifikáty.
+  Podepisují se jím klientské certifikáty.  Veřejný certifikát certifikační
+  autority musí být instalován na windowsových stanicích.
+
+- Certifikát serveru používaný víceméně jenom proto, že serverový certifikát je
+  při TLS komunikaci vyžadován.  Instaluje se na windowsových stanicích.
+  Obvykle se jím autentizují servery, ale my tuto funkci pro daný účel
+  nepotřebujeme, lze tedy použít tentýž certifikát na všech windowsových
+  stanicích.
+
+- Klientský certifikát instalovaný na linuxovém serveru.  Linuxový server se
+  jím autentizuje vůči windowsovým stanicím.
+
+Následuje návod k vytvoření všech těchto certifikátů a jejich klíčů s pomocí
+nástroje =certtool= z balíku =gnutls-bin=.  Soubory =*.crt= jsou veřejné,
+soubory =*.key= jsou privátní.  Na pojmenování souborů nezáleží, uvedené názvy
+odpovídají implicitním hodnotám v konfiguraci pytisu.  Hodnoty zadávané při
+vytváření certifikátů jsou ukázkové, lze přiměřeně použít jiné.
+
+Vytvoření certifikátu certifikační autority:
+
+  % certtool --generate-privkey --outfile ca.key
+  Generating a 2048 bit RSA private key...
+
+  % certtool --generate-self-signed --load-privkey ca.key --outfile ca.crt
+  Generating a self signed certificate...
+  Please enter the details of the certificate's distinguished name. Just press enter to ignore a field.
+  Country name (2 chars): cz
+  Organization name: WPB
+  Organizational unit name: 
+  Locality name: 
+  State or province name: 
+  Common name: Pytis CA
+  UID: 
+  This field should not be used in new certificates.
+  E-mail: 
+  Enter the certificate's serial number in decimal (default: 1302543288): 
+
+  Activation/Expiration time.
+  The certificate will expire in (days): 10000
+
+  Extensions.
+  Does the certificate belong to an authority? (y/N): y
+  Path length constraint (decimal, -1 for no constraint): -1
+  Is this a TLS web client certificate? (y/N): 
+  Is this also a TLS web server certificate? (y/N): 
+  Enter the e-mail of the subject of the certificate: 
+  Will the certificate be used to sign other certificates? (y/N): y
+  Will the certificate be used to sign CRLs? (y/N): 
+  Will the certificate be used to sign code? (y/N): 
+  Will the certificate be used to sign OCSP requests? (y/N): 
+  Will the certificate be used for time stamping? (y/N): 
+  Enter the URI of the CRL distribution point:
+  ...
+  Is the above information ok? (Y/N): y
+
+  Signing certificate...
+
+Soubor =ca.crt= se nainstaluje na windowsové stanice.  Soubory =ca.crt= a
+=ca.key= zůstanou uchovány na linuxovém serveru pro případné další použití.
+
+Vytvoření certifikátu windowsové stanice:
+
+  % certtool --generate-privkey --outfile windows.key
+  Generating a 2048 bit RSA private key...
+
+  % certtool --generate-self-signed --load-privkey windows.key --outfile windows.crt
+  Generating a self signed certificate...
+  Please enter the details of the certificate's distinguished name. Just press enter to ignore a field.
+  Country name (2 chars): cz
+  Organization name: WPB
+  Organizational unit name: 
+  Locality name: 
+  State or province name: 
+  Common name: Pytis Windows Server
+  UID: 
+  This field should not be used in new certificates.
+  E-mail: 
+  Enter the certificate's serial number in decimal (default: 1302543619): 
+
+  Activation/Expiration time.
+  The certificate will expire in (days): 10000
+
+  Extensions.
+  Does the certificate belong to an authority? (y/N): 
+  Is this a TLS web client certificate? (y/N): 
+  Is this also a TLS web server certificate? (y/N): y
+  Enter a dnsName of the subject of the certificate: *.habrovka.xx
+  Enter a dnsName of the subject of the certificate: *.wpb.cz
+  Enter a dnsName of the subject of the certificate: 
+  Enter the IP address of the subject of the certificate: 
+  Will the certificate be used for signing (DHE and RSA-EXPORT ciphersuites)? (y/N): 
+  Will the certificate be used for encryption (RSA ciphersuites)? (y/N): 
+  Enter the URI of the CRL distribution point:
+  ...
+  Is the above information ok? (Y/N): y
+
+  Signing certificate...
+
+Oba soubory =windows.crt= a =windows.key= se nainstalují na windowsové stanice.
+
+Vytvoření certifikátu klienta na linuxovém serveru:
+
+  % certtool --generate-privkey --outfile linux.key
+  Generating a 2048 bit RSA private key...
+
+  % certtool --generate-request --load-privkey linux.key --outfile linux.req
+  Generating a PKCS #10 certificate request...
+  Country name (2 chars): cz
+  Organization name: WPB
+  Organizational unit name: 
+  Locality name: 
+  State or province name: 
+  Common name: Pytis Linux
+  UID: 
+  Enter a dnsName of the subject of the certificate: 
+  Enter the IP address of the subject of the certificate: 
+  Enter the e-mail of the subject of the certificate: 
+  Enter a challenge password: 
+  Does the certificate belong to an authority? (y/N): 
+  Will the certificate be used for signing (DHE and RSA-EXPORT ciphersuites)? (y/N): 
+  Will the certificate be used for encryption (RSA ciphersuites)? (y/N): 
+  Is this a TLS web client certificate? (y/N): y
+  Is this also a TLS web server certificate? (y/N): 
+
+  % certtool --generate-certificate --load-ca-privkey ca.key --load-ca-certificate ca.crt --load-request linux.req --outfile linux.crt
+  Generating a signed certificate...
+  Enter the certificate's serial number in decimal (default: 1302544279): 
+
+  Activation/Expiration time.
+  The certificate will expire in (days): 10000
+
+  Extensions.
+  Do you want to honour the extensions from the request? (y/N): y
+  Does the certificate belong to an authority? (y/N): 
+  Is this a TLS web client certificate? (y/N): y
+  Is this also a TLS web server certificate? (y/N): 
+  Enter the e-mail of the subject of the certificate: 
+  Will the certificate be used for signing (required for TLS)? (y/N): y
+  Will the certificate be used for encryption (not required for TLS)? (y/N):
+  ...
+  Is the above information ok? (Y/N): y
+
+  Signing certificate...
+
+Soubory =linux.crt= a =linux.key= se nainstalují na linuxový server.  Soubor
+=linux.req= je možno smazat.
+
+== Instalace na Windows ==
+
+Postup instalace RPyC serveru na windowsové stanici:
+
+- Nainstalovat RPyC, viz http://rpyc.wikidot.com/download.  Stačí nainstalovat
+  samotné RPyC, nic víc k němu (kromě Pythonu >= 2.6) potřeba není.
+
+- Zkopírovat někam soubory =windows.crt=, =windows.key= a =ca.crt= vytvořené
+  dle tohoto návodu.
+
+- Zkopírovat někam soubor =pytis/bin/windows-server=.
+
+- Na začátku souboru =windows-server= zeditovat konfigurační parametry, je-li
+  třeba, zejména umístění či název souborů s certifikáty a klíčem.
+
+- Zajistit nastartování souboru =windows-server= při spuštění Windows.
+
+== Instalace na Linuxu ==
+
+Postup instalace RPyC klienta-serveru na linuxovém serveru:
+
+- Nainstalovat RPyC, viz http://rpyc.wikidot.com/download.  Stačí nainstalovat
+  samotné RPyC, nic víc k němu (kromě Pythonu >= 2.6) potřeba není.
+
+- Umístit někam někam soubory =linux.crt= a =linux.key= vytvořené dle tohoto
+  návodu.
+
+- Je-li třeba, upravit konfigurační volby =rpc_*= v pytisovém =config.py=
+  (ostatní volby nemají pro běh serveru význam), zejména umístění či název
+  souborů s certifikáty a klíčem.
+
+- Zajistit nastartování a běh souboru =pytis/bin/linux-server=:
+
+    linux-server --config=.../config.py
