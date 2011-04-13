@@ -21,6 +21,7 @@ import rpyc
 import rpyc.utils.authenticators
 import ssl
 import sys
+import tempfile
 
 host = '0.0.0.0'
 port = 17984
@@ -87,6 +88,30 @@ class PytisService(rpyc.Service):
         """
         assert isinstance(path, basestring), path
         os.startfile(path)
+
+    def exposed_make_temporary_file(self, suffix=''):
+        """Create a temporary file and return its instance.
+
+        The return value is a 'tempfile.NamedTemporaryFile' instance.
+
+        Arguments:
+
+          suffix -- suffix to use in the temporary file name; if a dot should
+            be part of the suffix then it must be explicitly included in it
+        
+        """
+        class Wrapper(object):
+            def __init__(self, handle, filename):
+                self._f = os.fdopen(handle, 'w')
+                self._filename = filename
+            def exposed_write(self, data):
+                self._f.write(data)
+            def exposed_close(self):
+                self._f.close()
+            def exposed_name(self):
+                return self._filename
+        handle, filename = tempfile.mkstemp(prefix='pytis', suffix=suffix)
+        return Wrapper(handle, filename)
     
 if __name__ == '__main__':
     from rpyc.utils.server import ThreadedServer

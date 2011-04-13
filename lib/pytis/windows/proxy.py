@@ -21,13 +21,21 @@ import rpyc
 
 import config
 
+
 class ProxyService(rpyc.Service):
 
+    def __init__(self, *args, **kwargs):
+        rpyc.Service.__init__(self, *args, **kwargs)
+        self._connection = None
+
     def exposed_request(self, target_ip, request, *args, **kwargs):
-        connection = rpyc.ssl_connect(target_ip, config.rpc_remote_port,
-                                      keyfile=config.rpc_key_file,
-                                      certfile=config.rpc_certificate_file)
-        return getattr(connection.root, request)(*args, **kwargs)
+        try:
+            self._connection.root
+        except:
+            self._connection = rpyc.ssl_connect(target_ip, config.rpc_remote_port,
+                                                keyfile=config.rpc_key_file,
+                                                certfile=config.rpc_certificate_file)
+        return getattr(self._connection.root, request)(*args, **kwargs)
 
 def run_proxy():
     from rpyc.utils.server import ThreadedServer

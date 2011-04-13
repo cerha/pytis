@@ -43,6 +43,7 @@ import pytis.data
 import pytis.output
 import pytis.presentation
 from pytis.presentation import PresentedRow
+import pytis.windows
 
 import _grid
 
@@ -1829,6 +1830,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             msg = _(u"Tabulka neobsahuje žádné řádky! Export nebude proveden.")
             run_dialog(Warning, msg)
             return False
+        if number_rows > 100000:
+            msg = _("Formulář má příliš mnoho řádků, je třeba ho vyfiltrovat. Export nebude proveden.")
+            run_dialog(Warning, msg)
+            return False
         # Seznam sloupců
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         allowed = True
@@ -1872,27 +1877,35 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 default_filename = 'export_%s.xls' % username
         else:
             fileformat = 'CSV'
-        export_dir = config.export_directory
-        filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
-                                         dir=export_dir, file=default_filename, mode='SAVE',
-                                         wildcards=tuple(wildcards))
-        if not filename:
-            return
-        try:       
-            export_file = open(filename,'w')
-            export_file.write('')
-        except:
-            msg = _(u"Nepodařilo se otevřít soubor " + filename + \
-                    " pro zápis!\n")
-            run_dialog(Error, msg)
-            return
-        export_file.close()
+        filename = None
+        if pytis.windows.nx_ip():
+            try:
+                filename = pytis.windows.make_temporary_file(suffix='.'+fileformat.lower())
+            except:
+                pass
+        if filename is None:
+            export_dir = config.export_directory
+            filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
+                                             dir=export_dir, file=default_filename, mode='SAVE',
+                                             wildcards=tuple(wildcards))
+            if not filename:
+                return
+            try:       
+                export_file = open(filename,'w')
+                export_file.write('')
+            except:
+                msg = _(u"Nepodařilo se otevřít soubor " + filename + \
+                        " pro zápis!\n")
+                run_dialog(Error, msg)
+                return
+            export_file.close()
         if fileformat == 'XLS':
-            self._cmd_export_xls(filename)
+            export_function = self._cmd_export_xls
         else:
-            self._cmd_export_csv(filename)
-        return
-    
+            export_function = self._cmd_export_csv
+        if export_function(filename) and not isinstance(filename, basestring):
+            pytis.windows.launch_file(filename.name())
+
     def _cmd_export_csv(self, filename):
         log(EVENT, 'Vyvolání CSV exportu')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
@@ -1905,13 +1918,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             msg = msg + _(u"Export se provede bez překódování.")
             export_encoding = None
             run_dialog(Error, msg)
-        try:       
-            export_file = open(filename,'w')
-        except:
-            msg = _(u"Nepodařilo se otevřít soubor " + filename + \
-                    " pro zápis!\n")
-            run_dialog(Error, msg)
-            return
+        if isinstance(filename, basestring):
+            try:
+                export_file = open(filename,'w')
+            except:
+                msg = _(u"Nepodařilo se otevřít soubor " + filename + \
+                        " pro zápis!\n")
+                run_dialog(Error, msg)
+                return False
+        else:
+            export_file = filename
         number_rows = self._table.number_of_rows()
         def _process_table(update):
             # Export labelů
@@ -1937,7 +1953,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     export_file.write(';'.join(s.split('\n'))+'\t')
                 export_file.write('\n')
             export_file.close()
-        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
+        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
+        return True
         
     def _cmd_export_xls(self, filename):
         log(EVENT, 'Called XLS export')
@@ -1948,7 +1965,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         except:
             msg = _(u"Modul pro práci s XLS soubory není nainstalován. Končím.")
             run_dialog(Error, msg)
-            return            
+            return False
         number_rows = self._table.number_of_rows()
         def _process_table(update):
             w = pyxls.Workbook()
@@ -2004,7 +2021,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     if s is not None:
                         ws.write(r+1, j, s, column_styles[cid])
             w.save(filename)
-        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)       
+        pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
+        return True
         
     def _cmd_insert_line(self, before=False, copy=False):
         row = self._current_cell()[0]

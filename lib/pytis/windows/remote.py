@@ -46,11 +46,16 @@ def nx_ip():
                 _nx_ip = items[4][1:-1]
                 break
     return _nx_ip
-    
+
+_connection = None
 def _request(request, *args, **kwargs):
+    global _connection
     target_ip = nx_ip()
-    connection = rpyc.connect('localhost', config.rpc_local_port)
-    return connection.root.request(target_ip, request, *args, **kwargs)
+    try:
+        _connection.root
+    except:
+        _connection = rpyc.connect('localhost', config.rpc_local_port)
+    return _connection.root.request(target_ip, request, *args, **kwargs)
     
 def get_clipboard_text():
     try:
@@ -70,9 +75,9 @@ def launch_file(path):
     wpath = path.replace('/', '\\')
     try:
         return _request('launch_file', wpath)
-    except:
+    except Exception, e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Soubor %s se nepodařilo otevřít") % (wpath,))
+        pytis.form.run_dialog(pytis.form.Error, _("Soubor %s se nepodařilo otevřít: %s") % (wpath, e,))
 
 def launch_url(url):
     assert isinstance(url, basestring), url
@@ -81,3 +86,10 @@ def launch_url(url):
     except:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("URL %s se nepodařilo otevřít") % (url,))
+
+def make_temporary_file(suffix=''):
+    assert isinstance(suffix, basestring), suffix
+    try:
+        return _request('make_temporary_file', suffix=suffix)
+    except:
+        return None
