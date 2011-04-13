@@ -143,25 +143,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
             keymap.define_key(key, cmd, args)
         global _application
         _application = self
-        self._initial_config = [(o, copy.copy(getattr(config, o))) for o in configurable_options()]
-        self._saved_state = {}
-        # Read the stored configuration.
-        try:
-            cfg = DBConfigurationStorage(config.dbconnection, config.dbuser)
-        except pytis.data.DBException:
-            cfg = FileConfigurationStorage(self._config_filename())
-        for option, value in cfg.read():
-            if hasattr(config, option):
-                setattr(config, option, value)
-            else:
-                self._saved_state[option] = value
-        self._configuration_stroage = cfg
         # Initialize login and password.
         def test():
             bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id) for id in ('tablename',)]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             dummy_data = factory.create(connection_data=config.dbconnection)
         db_operation(test)
+        self._initial_config = [(o, copy.copy(getattr(config, o))) for o in configurable_options()]
+        self._saved_state = {}
+        # Read the stored configuration.
+        try:
+            user_configuration_storage = DBConfigurationStorage(config.dbconnection, config.dbuser)
+        except pytis.data.DBException:
+            user_configuration_storage = FileConfigurationStorage(self._config_filename())
+        for option, value in user_configuration_storage.read():
+            if hasattr(config, option):
+                setattr(config, option, value)
+            else:
+                self._saved_state[option] = value
+        self._user_configuration_storage = user_configuration_storage
         # Initialize the storage of form profile configurations.  If the
         # database storage fails (the needed table doesn't exist in the
         # database), form configurations will be stored as part of application
@@ -627,7 +627,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 current_value = getattr(config, option)
                 if current_value != initial_value:
                     options.append((option, current_value))
-            self._configuration_stroage.write(options)
+            self._user_configuration_storage.write(options)
             log(OPERATIONAL, "Konfigurace uložena: %d položek" % len(options))
         except Exception as e:
             safelog("Saving changed configuration failed:", str(e))
