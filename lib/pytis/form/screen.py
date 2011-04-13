@@ -37,6 +37,19 @@ from pytis.form import *
 import wx, wx.combo
 import pytis.presentation
 
+import config
+if config.http_proxy is not None:
+    # Nasty way to set the proxy used by the webkit browser.  This should be
+    # much more elegant with newer pywebkitgtk versions as they will have a new
+    # method set_proxy(), but this version was not released yet..
+    import ctypes
+    libgobject = ctypes.CDLL('/usr/lib/libgobject-2.0.so.0')
+    libsoup = ctypes.CDLL('/usr/lib/libsoup-2.4.so.1')
+    libwebkit = ctypes.CDLL('/usr/lib/libwebkit-1.0.so.2')
+    proxy_uri = libsoup.soup_uri_new(config.http_proxy)
+    session = libwebkit.webkit_get_default_session()
+    libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
+
 _WX_COLORS = {}
 _WX_COLOR_DB = {}
 

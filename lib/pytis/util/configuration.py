@@ -737,6 +737,11 @@ class Configuration(object):
         _DESCR = _(u"Flag určující, zda mají být do databáze ukládány statistické informace " +
                    u"o otevíraných formulářích.")
         _DEFAULT = False
+
+    class _Option_http_proxy(StringOption):
+        _DESCR = _(u"HTTP proxy URI used for integrated web browser and other http services.  "
+                   u"Example: 'http://127.0.0.1:3129'")
+        _DEFAULT = None
         
     # Volby přizpůsobení uživatelského rozhraní
         
