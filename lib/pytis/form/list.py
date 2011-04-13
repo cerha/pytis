@@ -2653,7 +2653,7 @@ class BrowseForm(FoldableForm):
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
         class _Spec:
-            # This class has to emulete a specification module as well as a
+            # This class has to emulate a specification module as well as a
             # (new style) specification class.
             def __init__(self, resolver):
                 self._resolver = resolver

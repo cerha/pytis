@@ -520,6 +520,9 @@ class LoutFormatter(Tmpdir):
         self._body = body
     
     def _ok_resolver(self, template_id, element, mandatory=False):
+        pos = template_id.find(':')
+        if pos >= 0:
+            template_id = template_id[:pos]
         for resolver in xtuple(self._resolvers):
             try:
                 resolver.get_object(template_id, element)
