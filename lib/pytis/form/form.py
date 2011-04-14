@@ -747,11 +747,13 @@ class PopupForm:
         try:
             frame = self._popup_frame_
         except AttributeError:
-            style = wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE #|wx.RESIZE_BORDER
-            frame = wx.Dialog(parent, style=style)
+            frame = wx.Dialog(parent, style=self._popup_frame_style())
             self._popup_frame_ = frame
             wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
-        return frame    
+        return frame
+
+    def _popup_frame_style(self):
+        return wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE
 
     def _on_frame_close(self, event):
         if self:

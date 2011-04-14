@@ -75,6 +75,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
     _ROW_LABEL_WIDTH = 85
     _ALLOW_TITLE_BAR = True
+    _ALLOW_TOOL_BAR = False
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
 
@@ -211,8 +212,22 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         else:
             self._title_bar = None
+        if self._ALLOW_TOOL_BAR:
+            sizer.Add(self._create_tool_bar(), 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(self._create_grid(), 1, wx.EXPAND|wx.FIXED_MINSIZE)
-
+        
+    def _create_tool_bar(self):
+        toolbar = wx.ToolBar(self)
+        for group in TOOLBAR_COMMANDS:
+            if group != TOOLBAR_COMMANDS[0]:
+                toolbar.AddSeparator()
+            for uicmd in group:
+                handler = uicmd.command().handler()
+                if isinstance(self, handler):
+                    handler.add_toolbar_ctrl(toolbar, uicmd)
+        toolbar.Realize()
+        return toolbar
+        
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
         self._grid = g = wx.grid.Grid(self)
@@ -2531,6 +2546,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     DESCR = _(u"číselník")
 
     _DEFAULT_WINDOW_HEIGHT = 500
+    _ALLOW_TOOL_BAR = True
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
@@ -2567,6 +2583,13 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         self._begin_search = begin_search
         super(CodebookForm, self)._init_attributes(**kwargs)
         
+    def _popup_frame_style(self):
+        return super(CodebookForm, self)._popup_frame_style() | wx.RESIZE_BORDER
+
+    def _total_width(self):
+        # 630 seems to be the minimal width to make the profile selector in the toolbar visible.
+        return max(super(CodebookForm, self)._total_width(), 630)
+    
     def _current_arguments(self):
         return self._arguments
         
