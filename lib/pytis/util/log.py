@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2007, 2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -301,6 +301,8 @@ class SyslogLogger(Logger):
             raise ProgramError('Unknown message kind', kind)
         if self._facility is not None:
             priority = priority | self._facility
+        if isinstance(formatted, unicode):
+            formatted = formatted.encode('utf-8')
         while formatted:
             syslog.syslog(priority, formatted[:self._MAX_MESSAGE_LENGTH])
             formatted = formatted[self._MAX_MESSAGE_LENGTH:]
