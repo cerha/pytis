@@ -2945,11 +2945,12 @@ class SideBrowseForm(BrowseForm):
 
     def _update_selection_colors(self):
         g = self._grid
-        if focused_window() is not self:
-            g.ClearSelection()
-        else:
-            g.SelectRow(g.GetGridCursorRow())
-            super(SideBrowseForm, self)._update_selection_colors()
+        if g is not None:               # may be called within `close'
+            if focused_window() is not self:
+                g.ClearSelection()
+            else:
+                g.SelectRow(g.GetGridCursorRow())
+                super(SideBrowseForm, self)._update_selection_colors()
 
     def main_form(self):
         """Return main form instance corresponding to this side form."""
