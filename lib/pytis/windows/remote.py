@@ -52,7 +52,7 @@ def _request(request, *args, **kwargs):
     global _connection
     target_ip = nx_ip()
     try:
-        _connection.root
+        _connection.root.request
     except:
         _connection = rpyc.connect('localhost', config.rpc_local_port)
     return _connection.root.request(target_ip, request, *args, **kwargs)

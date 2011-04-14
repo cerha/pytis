@@ -30,7 +30,7 @@ class ProxyService(rpyc.Service):
 
     def exposed_request(self, target_ip, request, *args, **kwargs):
         try:
-            self._connection.root
+            getattr(self._connection.root, request)
         except:
             self._connection = rpyc.ssl_connect(target_ip, config.rpc_remote_port,
                                                 keyfile=config.rpc_key_file,
