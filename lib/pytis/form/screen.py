@@ -1671,16 +1671,16 @@ class Browser(wx.Panel):
         if handle == 0:
             # This hack is needed for the WebForm, where self.GetHandle() returns 0 for some reason.
             handle = parent.GetHandle()
-        window = gtk.gdk.window_lookup(handle)
+        gtk_window = gtk.gdk.window_lookup(handle)
         # Reference to the GtkPizza widget must be kept to prevent a segfault.
-        self._pizza = pizza = window.get_user_data()
+        self._gtk_pizza = gtk_pizza = gtk_window.get_user_data()
         # GtkPizza's parant is a gtk.ScrolledWindow.
-        scrolled_window = pizza.parent
+        gtk_scrolled_window = gtk_pizza.parent
         # Replace the GTK ScrolledWindow content by the webkit widget.
-        scrolled_window.remove(pizza)
+        gtk_scrolled_window.remove(gtk_pizza)
         self._webview = webview = webkit.WebView()
-        scrolled_window.add(webview)
-        scrolled_window.show_all()
+        gtk_scrolled_window.add(webview)
+        gtk_scrolled_window.show_all()
         webview.connect('notify::load-status', self._on_load_status_changed)
         webview.connect('navigation-policy-decision-requested', self._on_navigation)
         self._restricted_navigation_uri = None
