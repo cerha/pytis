@@ -1702,7 +1702,8 @@ class Browser(wx.Panel):
     def _on_navigation(self, webview, fram, req, action, decision):
         uri = req.get_uri()
         restricted_navigation_uri = self._restricted_navigation_uri
-        if restricted_navigation_uri is not None and not uri.startswith(restricted_navigation_uri):
+        if restricted_navigation_uri is not None and uri != 'about:blank' and \
+                not uri.startswith(restricted_navigation_uri):
             decision.ignore()
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
