@@ -1668,9 +1668,6 @@ class Browser(wx.Panel):
         # wxWidgets.
         parent.Show()
         handle = self.GetHandle()
-        if handle == 0:
-            # This hack is needed for the WebForm, where self.GetHandle() returns 0 for some reason.
-            handle = parent.GetHandle()
         gtk_window = gtk.gdk.window_lookup(handle)
         # Reference to the GtkPizza widget must be kept to prevent a segfault.
         self._gtk_pizza = gtk_pizza = gtk_window.get_user_data()

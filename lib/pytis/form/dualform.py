@@ -716,6 +716,12 @@ class MultiForm(Form, Refreshable):
         if selection != -1:
             form = self._forms[selection]
             if form:
+                # The ChangeSelection call below is necessary here to make
+                # WebForm work in sideforms, as they need the panel to be shown
+                # before the webkit widget can be embedded into it.  And the
+                # embedding is done within _init_subform(), so we must ensure
+                # the page is changed before.
+                self._notebook.ChangeSelection(selection)
                 self._init_subform(form)
                 row = self._last_selection
                 if row is not None:
