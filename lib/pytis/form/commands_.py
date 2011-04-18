@@ -379,7 +379,7 @@ COMMAND_ICONS = (
     (InnerForm.COMMAND_AGGREGATION_MENU,                   'aggregate'),
     (InnerForm.COMMAND_PRINT_MENU,                         wx.ART_PRINT),
     (BrowseForm.COMMAND_PRINT,                             wx.ART_PRINT),
-    (PrintFormInternal.COMMAND_PRINT,                     wx.ART_PRINT),
+    (PrintFormInternal.COMMAND_PRINT,                      wx.ART_PRINT),
     (InputField.COMMAND_RESET,                             wx.ART_UNDO),
     (TextField.COMMAND_CUT,                                wx.ART_CUT),
     (TextField.COMMAND_COPY,                               wx.ART_COPY),
@@ -407,9 +407,9 @@ COMMAND_ICONS = (
     (RecordForm.COMMAND_NEW_RECORD(copy=True),             'new-record-copy'),
     (RecordForm.COMMAND_NEW_RECORD,                        'new-record'),
     (RecordForm.COMMAND_DELETE_RECORD,                     'delete-record'),
-    (LookupForm.COMMAND_SORT(direction=_ASC),               'sort-asc'),
-    (LookupForm.COMMAND_SORT(direction=_DESC),              'sort-desc'),
-    (LookupForm.COMMAND_SORT(direction=_NONE),              'unsort'),
+    (LookupForm.COMMAND_SORT(direction=_ASC),              'sort-asc'),
+    (LookupForm.COMMAND_SORT(direction=_DESC),             'sort-desc'),
+    (LookupForm.COMMAND_SORT(direction=_NONE),             'unsort'),
     (LookupForm.COMMAND_SORT,                              'sort'),
     (LookupForm.COMMAND_FILTER_BY_VALUE,                   'filter-by-cell'),
     (LookupForm.COMMAND_FILTER,                            'filter-form'),
@@ -418,8 +418,8 @@ COMMAND_ICONS = (
     (LookupForm.COMMAND_SEARCH(next=True),                 'search-forward'),
     (LookupForm.COMMAND_SEARCH,                            'search'),
     (LookupForm.COMMAND_JUMP,                              'jump'),
-    (LookupForm.COMMAND_RESET_PROFILE,                      'reset-profile'),
-    (LookupForm.COMMAND_RELOAD_PROFILE,                     'reload-profile'),
+    (LookupForm.COMMAND_RESET_PROFILE,                     'reset-profile'),
+    (LookupForm.COMMAND_RELOAD_PROFILE,                    'reload-profile'),
     )
 
 
