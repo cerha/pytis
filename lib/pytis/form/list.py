@@ -75,7 +75,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     _SELECTION_CALLBACK_DELAY = 3 # desítky milisekund
     _ROW_LABEL_WIDTH = 85
     _ALLOW_TITLE_BAR = True
-    _ALLOW_TOOL_BAR = False
+    _ALLOW_TOOLBAR = False
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
 
@@ -212,22 +212,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             sizer.Add(self._title_bar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         else:
             self._title_bar = None
-        if self._ALLOW_TOOL_BAR:
-            sizer.Add(self._create_tool_bar(), 0, wx.EXPAND|wx.FIXED_MINSIZE)
+        if self._ALLOW_TOOLBAR:
+            sizer.Add(self._create_toolbar(), 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(self._create_grid(), 1, wx.EXPAND|wx.FIXED_MINSIZE)
-        
-    def _create_tool_bar(self):
-        toolbar = wx.ToolBar(self)
-        for group in TOOLBAR_COMMANDS:
-            if group != TOOLBAR_COMMANDS[0]:
-                toolbar.AddSeparator()
-            for uicmd in group:
-                handler = uicmd.command().handler()
-                if isinstance(self, handler):
-                    handler.add_toolbar_ctrl(toolbar, uicmd)
-        toolbar.Realize()
-        return toolbar
-        
+
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
         self._grid = g = wx.grid.Grid(self)
@@ -2546,7 +2534,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     DESCR = _(u"číselník")
 
     _DEFAULT_WINDOW_HEIGHT = 500
-    _ALLOW_TOOL_BAR = True
+    _ALLOW_TOOLBAR = True
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)

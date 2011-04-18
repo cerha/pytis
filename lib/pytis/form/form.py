@@ -415,6 +415,36 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     def _create_form_parts(self, sizer):
         pass
 
+    def _toolbar_commands(self):
+        """Return toolbar commands for this form's toolbar as a sequence of command groups.
+
+        The returned sequence of sequences represents command groups which
+        should be added to the toolbar with visual separators between
+        individual groups.  Items of the inner sequences must be 'UICommand'
+        instances.
+        
+        """
+        # In this class returns those commands from global TOOLBAR_COMMANDS
+        # which belong to this form class.
+        groups = []
+        for group in TOOLBAR_COMMANDS:
+            group = [uicmd for uicmd in group
+                     if isinstance(self, uicmd.command().handler())]
+            if group:
+                groups.append(group)
+        return groups
+
+    def _create_toolbar(self):
+        toolbar = wx.ToolBar(self)
+        for i, group in enumerate(self._toolbar_commands()):
+            if i != 0:
+                toolbar.AddSeparator()
+            for uicmd in group:
+                handler = uicmd.command().handler()
+                handler.add_toolbar_ctrl(toolbar, uicmd)
+        toolbar.Realize()
+        return toolbar
+    
     def __str__(self):
         return '<%s for "%s">' % (self.__class__.__name__, self._name)
 
