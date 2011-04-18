@@ -254,6 +254,11 @@ Command(Dialog, 'COMMIT_DIALOG',
 Command(Dialog, 'HELP',
         "Vyvolání nápovědy dialogu")
 
+Command(Browser, 'GO_FORWARD',
+        "Go to the next page in browser history")
+Command(Browser, 'GO_BACK',
+        "Go to the previous page in browser history")
+
 DEFAULT_KEYMAP = (
     ('F1',               Application.COMMAND_HELP(topic='pytis')),
     ('Ctrl-g',           Application.COMMAND_BREAK),
@@ -420,6 +425,8 @@ COMMAND_ICONS = (
     (LookupForm.COMMAND_JUMP,                              'jump'),
     (LookupForm.COMMAND_RESET_PROFILE,                     'reset-profile'),
     (LookupForm.COMMAND_RELOAD_PROFILE,                    'reload-profile'),
+    (Browser.COMMAND_GO_BACK,                              wx.ART_GO_BACK),
+    (Browser.COMMAND_GO_FORWARD,                           wx.ART_GO_FORWARD),
     )
 
 

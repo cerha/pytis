@@ -1652,7 +1652,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
             current_form().focus()
             
 
-class Browser(wx.Panel):
+class Browser(wx.Panel, CommandHandler):
     """Web Browser widget.
 
     The widget can be embedded into other wx widgets as an ordinary wx.Panel.
@@ -1706,6 +1706,18 @@ class Browser(wx.Panel):
             return True
         else:
             return False
+
+    def _can_go_forward(self):
+        return self._webview.can_go_forward()
+        
+    def _cmd_go_forward(self):
+        self._webview.go_forward()
+        
+    def _can_go_back(self):
+        return self._webview.can_go_back()
+        
+    def _cmd_go_back(self):
+        self._webview.go_back()
         
     def restrict_navigation(self, uri, restrict_to_domain=False):
         """Restrict user's navigation to particular URI prefix.
