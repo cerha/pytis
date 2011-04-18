@@ -102,18 +102,29 @@ class CommandHandler:
 
         """
         cmd, kwargs = uicmd.command(), uicmd.args()
-        id = wx.NewId()
-        assigned_icon = command_icon(cmd, kwargs)
-        if assigned_icon is None:
-            raise Exception("No icon assigned for command %s %s." % (cmd, kwargs))
-        icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
-        tool = toolbar.AddTool(id, icon,
-                               shortHelpString=uicmd.title(),
-                               longHelpString=uicmd.descr())
-        frame = toolbar.GetParent()
-        wx_callback(wx.EVT_TOOL, frame, id, lambda e: cmd.invoke(**kwargs))
-        wx_callback(wx.EVT_UPDATE_UI, frame, id, lambda e: e.Enable(cmd.enabled(**kwargs)))
-    
+        ctrl_cls = uicmd.ctrl()
+        if ctrl_cls:
+            if isinstance(ctrl_cls, tuple):
+                ctrl_cls, ctrl_kwargs = ctrl_cls
+            else:
+                ctrl_kwargs = {}
+            ctrl = ctrl_cls(toolbar, uicmd, **ctrl_kwargs)
+            ctrl.SetToolTipString(uicmd.title())
+            tool = toolbar.AddControl(ctrl)
+            toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr()) # Doesn't work...
+        else:
+            assigned_icon = command_icon(cmd, kwargs)
+            if assigned_icon is None:
+                raise Exception("No icon assigned for command %s %s." % (cmd, kwargs))
+            icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
+            tool = toolbar.AddTool(-1, icon,
+                                   shortHelpString=uicmd.title(),
+                                   longHelpString=uicmd.descr())
+            parent = toolbar.GetParent()
+            wx_callback(wx.EVT_TOOL, parent, tool.GetId(), lambda e: cmd.invoke(**kwargs))
+            wx_callback(wx.EVT_UPDATE_UI, parent, tool.GetId(), lambda e: e.Enable(cmd.enabled(**kwargs)))
+
+        
     def on_command(self, command, **kwargs):
         """Zpracuj příkaz 'command' s parametry 'kwargs'.
 
@@ -303,15 +314,22 @@ class UICommand(object):
     be displayed in the user interface (as a button tooltip, menu item title, etc).
 
     """
-    def __init__(self, cmd, title, descr, icon=None, hotkey=None):
+    def __init__(self, cmd, title, descr, icon=None, hotkey=None, ctrl=None):
         """Arguments:
 
           cmd -- The (command, args) pair as produced by calling a command instance.
           title -- user interface title shown as menu item title, toolbar button tooltip, etc.
           descr -- brief description (longer than title) used in status-bar help or so.
-          
           icon, hotkey -- currently unused, but planned to replace the 'DEFAULT_KEYMAP' and
             'COMMAND_ICONS' specifications.
+          ctrl -- class of a wx widget representing the command control in the
+            user interface (toolbar).  May also be a tuple (ctrl, kwargs),
+            where kwargs are passed to ctrl constructor on its creation.  If
+            None, the command is represented by a simple button which invokes
+            the command when pressed.  If not None, the class must accept two
+            positional constructor arguments (parent, uicmd), where parent is
+            the parent wx widget (toolbar) and uicmd is this UICommand instance
+            (plus any keyword arguments if defined as described above).
 
         """
         command, args = cmd
@@ -327,6 +345,7 @@ class UICommand(object):
         self._descr = descr
         self._icon = icon
         self._hotkey = hotkey
+        self._ctrl = ctrl
 
     def command(self):
         return self._command
@@ -346,11 +365,13 @@ class UICommand(object):
     def hotkey(self):
         return self._hotkey
 
+    def ctrl(self):
+        return self._ctrl
+
     def clone(self, **kwargs):
         """Return the same 'UICommand' instance with command arguments overriden by 'kwargs'."""
         return UICommand((self._command, dict(self._args, **kwargs)), self._title, self._descr,
                          icon=self._icon, hotkey=self._hotkey)
-
 
 _command_icons = None
 def command_icon(command, args):

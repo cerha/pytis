@@ -485,7 +485,8 @@ class UICommands(object):
     PROFILE_MENU = UICommand(
         LookupForm.COMMAND_PROFILE_MENU(),
         _(u"Výběr aktivního profilu"),
-        _(u"Zobrazuje aktivní profil a umožňuje výběr z ostatních předdefinovaných profilů."))
+        _(u"Zobrazuje aktivní profil a umožňuje výběr z ostatních předdefinovaných profilů."),
+        ctrl=(ProfileSelector, dict(size=(270, 25))))
     FILTER = UICommand(
         LookupForm.COMMAND_FILTER(),
         _(u"Filtrování"),
@@ -541,7 +542,8 @@ class UICommands(object):
     OTHER_FORM = UICommand(
         DualForm.COMMAND_OTHER_FORM(),
         _(u"Přepnout aktivní formulář duálního formuláře"),
-        _(u"Přechod mezi horním a dolním formulářem duálního formuláře"))
+        _(u"Přechod mezi horním a dolním formulářem duálního formuláře"),
+        ctrl=DualFormSwitcher)
     LEAVE_FORM = UICommand(
         Form.COMMAND_LEAVE_FORM(),
         _(u"Uzavřít formulář"),

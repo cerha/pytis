@@ -1428,22 +1428,6 @@ class LookupForm(InnerForm):
         
     # Veřejné metody
     
-    @classmethod
-    def add_toolbar_ctrl(cls, toolbar, uicmd):
-        cmd, kwargs = uicmd.command(), uicmd.args()
-        if cmd == LookupForm.COMMAND_PROFILE_MENU:
-            # Create the profile selection combo box.  The current 'Command'
-            # implementation doesn't support command control updates other than
-            # enabling/disabling.  This example, together with the hack for
-            # DualForm.COMMAND_OTHER_FORM might serve as reference for futre
-            # generalization of command control updates.
-            ctrl = ProfileSelector(toolbar, size=(270, 25))
-            ctrl.SetToolTipString(uicmd.title())
-            tool = toolbar.AddControl(ctrl)
-            toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr()) # Doesn't work...
-        else:
-            InnerForm.add_toolbar_ctrl(toolbar, uicmd)
-    
     def filter(self, condition):
         """Apply given filtering condition."""
         self._apply_filter(condition)

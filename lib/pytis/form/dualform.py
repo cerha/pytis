@@ -84,36 +84,6 @@ class DualForm(Form, Refreshable):
     """
     DESCR = _(u"duální formulář")
 
-    @classmethod
-    def add_toolbar_ctrl(cls, toolbar, uicmd):
-        cmd = uicmd.command()
-        if cmd == DualForm.COMMAND_OTHER_FORM:
-            args = uicmd.args()
-            # This is a total hack to allow bitmap swithing on the COMMAND_OTHER_FORM toolbar
-            # button.  SetBitmap1 doesn't seem to work on tools created using AddTool...
-            cls._form_switcher_bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR),
-                                           get_icon('dual-form-active-down', type=wx.ART_TOOLBAR))
-            button = wx_button(toolbar, 'x', icon='dual-form-active-up', size=(30, 30),
-                               tooltip=uicmd.title(), noborder=True,
-                               callback=lambda e: cmd.invoke(**args))
-            cls._last_form_switch_icon = 0
-            def update(event):
-                enabled = cmd.enabled(**args)
-                event.Enable(enabled)
-                if enabled:
-                    form = cls._get_command_handler_instance()
-                    i = form._active_form != form._main_form and 1 or 0
-                    if i != cls._last_form_switch_icon:
-                        cls._last_form_switch_icon = i
-                        button.SetBitmapLabel(cls._form_switcher_bitmaps[i])
-                        toolbar.Realize()
-            frame = toolbar.GetParent()
-            wx_callback(wx.EVT_UPDATE_UI, frame, button.GetId(), update)
-            tool = toolbar.AddControl(button)
-            toolbar.SetToolLongHelp(tool.GetId(), uicmd.descr()) # Doesn't work...
-        else:
-            Form.add_toolbar_ctrl(toolbar, uicmd)
-    
     def _full_init(self, *args, **kwargs):
         """Inicializuj duální formulář.
 
@@ -221,6 +191,10 @@ class DualForm(Form, Refreshable):
     def active_form(self):
         """Vrať aktivní formulář tohoto duálního formuláře."""
         return self._active_form
+    
+    def main_form(self):
+        """Return the instance of the upper (main) form."""
+        return self._main_form
 
     def inactive_form(self):
         """Vrať neaktivní formulář tohoto duálního formuláře."""

@@ -1551,7 +1551,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
 class ProfileSelector(wx.combo.ComboCtrl):
     """Toolbar control for form profile selection and management."""
     
-    def __init__(self, parent, size):
+    def __init__(self, parent, uicmd, size):
         wx.combo.ComboCtrl.__init__(self, parent, style=wx.TE_PROCESS_ENTER, size=size)
         self._popup = ProfileSelectorPopup()
         self.SetPopupControl(self._popup)
@@ -1650,6 +1650,47 @@ class ProfileSelector(wx.combo.ComboCtrl):
         code = event.GetKeyCode()
         if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             current_form().focus()
+            
+
+class DualFormSwitcher(wx.BitmapButton):
+    """Special toolbar control for DualForm.COMMAND_OTHER_FORM.
+
+    The only reason for implementing a custom toolbar control is the ability to
+    switch the bitmap displayed on the button according to the current form to
+    indicate whether the upper or the lower form in the dual form is active..
+
+    """
+    
+    def __init__(self, parent, uicmd):
+        self._toolbar = parent
+        self._uicmd = uicmd
+        self._bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR),
+                         get_icon('dual-form-active-down', type=wx.ART_TOOLBAR))
+        self._current_bitmap = self._bitmaps[0]
+        wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
+                                 style=wx.BU_EXACTFIT|wx.NO_BORDER)
+        wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
+        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+
+    def _on_click(self, event):
+        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd.invoke(**kwargs)
+        
+    def _on_update_ui(self, event):
+        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        enabled = cmd.enabled(**kwargs)
+        event.Enable(enabled)
+        if enabled:
+            dualform = current_form(inner=False)
+            if dualform.active_form() == dualform.main_form():
+                i = 0
+            else:
+                i = 1
+            new_bitmap = self._bitmaps[i]
+            if self._current_bitmap != new_bitmap:
+                self._current_bitmap = new_bitmap
+                self.SetBitmapLabel(new_bitmap)
+                self._toolbar.Realize()
             
 
 class Browser(wx.Panel, CommandHandler):
