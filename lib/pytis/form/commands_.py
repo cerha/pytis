@@ -379,7 +379,7 @@ COMMAND_ICONS = (
     #(Application.COMMAND_NEW_RECORD,                      'new-record'),
     #(Application.COMMAND_RUN_FORM,                        'run-form'),
     (Form.COMMAND_HELP,                                    'help-book'),
-    (Form.COMMAND_LEAVE_FORM,                              wx.ART_CROSS_MARK), #'close'),
+    (Form.COMMAND_LEAVE_FORM,                              'close'),
     (InnerForm.COMMAND_DESCRIBE,                           'describe'),
     (InnerForm.COMMAND_AGGREGATION_MENU,                   'aggregate'),
     (InnerForm.COMMAND_PRINT_MENU,                         wx.ART_PRINT),

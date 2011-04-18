@@ -442,8 +442,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         tooltip=_(u"Zaškrtněnte, pokud chcete aby vyhledávání respektovalo malá a " +
                                   u"velká písmena."),
                         checked=False),
-            wx_button(panel, tooltip=_(u"Skrýt vyhledávací panel"), icon=wx.ART_CROSS_MARK,
-                      callback=lambda e: self._exit_incremental_search(), noborder=True),
+            wx_button(panel, label=_(u"Skrýt"), tooltip=_(u"Skrýt vyhledávací panel"),
+                      icon='close', noborder=True,                      
+                      callback=lambda e: self._exit_incremental_search()),
             )
         sizer = wx.BoxSizer()
         for i, ctrl in enumerate(controls[:-1]):
