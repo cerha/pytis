@@ -258,6 +258,8 @@ Command(Browser, 'GO_FORWARD',
         "Go to the next page in browser history")
 Command(Browser, 'GO_BACK',
         "Go to the previous page in browser history")
+Command(Browser, 'STOP_LOADING',
+        "Stop loading")
 
 DEFAULT_KEYMAP = (
     ('F1',               Application.COMMAND_HELP(topic='pytis')),
@@ -427,6 +429,7 @@ COMMAND_ICONS = (
     (LookupForm.COMMAND_RELOAD_PROFILE,                    'reload-profile'),
     (Browser.COMMAND_GO_BACK,                              wx.ART_GO_BACK),
     (Browser.COMMAND_GO_FORWARD,                           wx.ART_GO_FORWARD),
+    (Browser.COMMAND_STOP_LOADING,                         wx.ART_CROSS_MARK),
     )
 
 

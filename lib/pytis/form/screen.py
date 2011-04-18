@@ -1719,6 +1719,13 @@ class Browser(wx.Panel, CommandHandler):
     def _cmd_go_back(self):
         self._webview.go_back()
         
+    def _can_stop_loading(self):
+        status = self._webview.get_property('load-status')
+        return status not in (webkit.LOAD_FINISHED, webkit.LOAD_FAILED)
+        
+    def _cmd_stop_loading(self):
+        self._webview.stop_loading()
+        
     def restrict_navigation(self, uri, restrict_to_domain=False):
         """Restrict user's navigation to particular URI prefix.
 
