@@ -103,7 +103,10 @@ class CommandHandler:
         """
         cmd, kwargs = uicmd.command(), uicmd.args()
         id = wx.NewId()
-        icon = get_icon(command_icon(cmd, kwargs), type=wx.ART_TOOLBAR)
+        assigned_icon = command_icon(cmd, kwargs)
+        if assigned_icon is None:
+            raise Exception("No icon assigned for command %s %s." % (cmd, kwargs))
+        icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
         tool = toolbar.AddTool(id, icon,
                                shortHelpString=uicmd.title(),
                                longHelpString=uicmd.descr())
