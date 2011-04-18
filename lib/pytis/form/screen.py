@@ -1873,33 +1873,33 @@ def popup_menu(parent, items, keymap=None, position=None):
 
 
 def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
-    """Najdi vrať požadovanou ikonu jako instanci 'wx.Bitmap'.
+    """Get icon by id and return the corresponding 'wx.Bitmap' instance.
 
-    Argumenty:
+    Arguments:
 
-      icon_id -- může to být buďto jedna z konstant 'wx.ART_*' nebo řetězec.
-        Pokud jde o wx konstantu, je vrácena příslušná systémová ikona
-        odpovídající aktuálně zvolenému tématu.  Pokud jde o řetězec, je
-        vyhledávána ikona stejného jména (k němuž je automaticky připojena
-        přípona '.png') v adresáři určeném konfigurační volbou
-        'config.icon_dir'.
-
+      icon_id -- string icon identifier.  It may be either one of 'wx.ART_*'
+        constants or a filename.  The icons returned for wx constants should
+        honour the pre-defined symbol in the current user interface theme.
+        Identifiers not corresponding to wx constants are used as icon file
+        names within the 'config.icon_dir'.  The '.png' suffix is added
+        automatically, so the identifier consists just of a base name.
       type, size -- only relevant when icon_id as a 'wx.ART_*' constant.
 
-    If the icon is not found, returns None.
+    If an icon for given identifier is not found, returns None.
 
     """
-    
-    bitmap = None
-    if isinstance(icon_id, basestring):
+    if icon_id is None:
+        bitmap = None
+    elif icon_id.startswith('wx'):
+        bitmap = wx.ArtProvider_GetBitmap(icon_id, type, size)
+    else:
         imgfile = os.path.join(config.icon_dir, icon_id + '.png')
         if os.path.exists(imgfile):
             img = wx.Image(imgfile, type=wx.BITMAP_TYPE_PNG)
             bitmap = wx.BitmapFromImage(img)
         else:
             log(OPERATIONAL, "Could not find icon file:", imgfile)
-    if bitmap is None and icon_id is not None:
-        bitmap = wx.ArtProvider_GetBitmap(icon_id, type, size)
+            bitmap = None
     if bitmap and bitmap.Ok():
         return bitmap
     else:
@@ -1963,8 +1963,6 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
     Returns a 'wx.Button' or 'wx.BitmapButton' instance.
       
     """
-    assert not isinstance(icon, basestring) or label is not None, \
-           "Button with non-system icon must have a fallback label."
     if not bitmap and icon:
         bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
     style = 0
