@@ -1726,6 +1726,9 @@ class Browser(wx.Panel, CommandHandler):
     def _cmd_stop_loading(self):
         self._webview.stop_loading()
         
+    def _cmd_reload(self):
+        self._webview.reload()
+        
     def restrict_navigation(self, uri, restrict_to_domain=False):
         """Restrict user's navigation to particular URI prefix.
 
