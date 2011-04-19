@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2011 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+import sys
+import rpyc
+import pytis.windows
+import config
+
+def say(target_ip, request, *arguments):
+    arguments = [a.decode('utf-8') for a in arguments]
+    connection = rpyc.connect('localhost', config.rpc_local_port)
+    result = connection.root.request(target_ip, request, *arguments)
+    if result is not None:
+        sys.stderr.write(result.encode('utf-8'))
+        sys.stderr.write('\n')
+
+def run(args):
+    if len(args) < 2 or args[1] == '--help':
+        sys.stdout.write('usage: %s IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (args[0],))
+        sys.exit()
+    say(*args[1:])
+
+if __name__ == '__main__':
+    run(sys.argv)
