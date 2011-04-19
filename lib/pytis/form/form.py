@@ -440,8 +440,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             if i != 0:
                 toolbar.AddSeparator()
             for uicmd in group:
-                handler = uicmd.command().handler()
-                handler.add_toolbar_ctrl(toolbar, uicmd)
+                uicmd.create_toolbar_ctrl(toolbar)
         toolbar.Realize()
         return toolbar
     

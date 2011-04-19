@@ -199,8 +199,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if group != TOOLBAR_COMMANDS[0]:
                 toolbar.AddSeparator()
             for uicmd in group:
-                handler = uicmd.command().handler()
-                handler.add_toolbar_ctrl(self._toolbar, uicmd)
+                uicmd.create_toolbar_ctrl(self._toolbar)
         toolbar.Realize()
         # Run application specific initialization.
         self._spec('init')
