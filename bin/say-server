@@ -22,18 +22,26 @@ import pytis.windows
 import config
 
 def say(target_ip, request, *arguments):
-    arguments = [a.decode('utf-8') for a in arguments]
+    if request == 'upgrade':
+        if len(arguments) != 1:
+            usage(1)
+        arguments = [open(arguments[0], 'rb').read()]
+    else:
+        arguments = [a.decode('utf-8') for a in arguments]
     connection = rpyc.connect('localhost', config.rpc_local_port)
     result = connection.root.request(target_ip, request, *arguments)
     if result is not None:
         sys.stderr.write(result.encode('utf-8'))
         sys.stderr.write('\n')
 
+def usage(exit_code=0):
+    sys.stdout.write('usage: %s IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
+    sys.exit(exit_code)
+
 def run(args):
-    if len(args) < 2 or args[1] == '--help':
-        sys.stdout.write('usage: %s IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (args[0],))
-        sys.exit()
-    say(*args[1:])
+    if not args or args[0] == '--help':
+        usage()
+    say(*args)
 
 if __name__ == '__main__':
-    run(sys.argv)
+    run(sys.argv[1:])
