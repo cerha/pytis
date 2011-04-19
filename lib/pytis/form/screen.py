@@ -1693,9 +1693,41 @@ class DualFormSwitcher(wx.BitmapButton):
                 self._toolbar.Realize()
             
 
+class LocationBar(wx.TextCtrl):
+    """Toolbar control for browser location display and entry."""
+    
+    def __init__(self, parent, uicmd, editable=True, size=None):
+        self._toolbar = parent
+        self._uicmd = uicmd
+        wx.TextCtrl.__init__(self, parent, -1, size=size, style=wx.TE_PROCESS_ENTER)
+        self.SetEditable(editable)
+        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+        if editable:
+            wx_callback(wx.EVT_TEXT_ENTER, parent, self.GetId(), self._on_enter)
+        else:
+            self.SetOwnBackgroundColour(config.field_disabled_color)
+            self.Refresh()
+
+
+    def _on_update_ui(self, event):
+        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        enabled = cmd.enabled(**kwargs)
+        event.Enable(enabled)
+        if enabled:
+            form = current_form(inner=True)
+            if isinstance(form, WebForm):
+                browser = form._browser
+                browser.connect_location_bar(self)
+                
+    def _on_enter(self, event):
+        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        uri = self.GetValue()
+        cmd.invoke(uri=uri, **kwargs)
+
+    
 class Browser(wx.Panel, CommandHandler):
     """Web Browser widget.
-
+    
     The widget can be embedded into other wx widgets as an ordinary wx.Panel.
     The public methods may be used then to manipulate the browser content.
 
@@ -1722,6 +1754,7 @@ class Browser(wx.Panel, CommandHandler):
         webview.connect('notify::load-status', self._on_load_status_changed)
         webview.connect('navigation-policy-decision-requested', self._on_navigation)
         self._restricted_navigation_uri = None
+        self._location_bar = None
 
     def _on_load_status_changed(self, webview, signal):
         status = webview.get_property('load-status')
@@ -1737,15 +1770,24 @@ class Browser(wx.Panel, CommandHandler):
         busy_cursor(busy)
         message(msg)
 
-    def _on_navigation(self, webview, fram, req, action, decision):
+    def _on_navigation(self, webview, frame, req, action, decision):
         uri = req.get_uri()
+        if uri == 'about:blank':
+            # This URI gets loaded several times while other document is
+            # loaded.  It is unknown what originates such request and how to
+            # distinguish it form a real request to 'about:blank'.  But it
+            # confuses the location bar and may also generate invalid
+            # restriction messages so we beter ignore it now.
+            return False
         restricted_navigation_uri = self._restricted_navigation_uri
-        if restricted_navigation_uri is not None and uri != 'about:blank' and \
+        if restricted_navigation_uri is not None and \
                 not uri.startswith(restricted_navigation_uri):
             decision.ignore()
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
         else:
+            if self._location_bar:
+                self._location_bar.SetValue(uri)
             return False
 
     def _can_go_forward(self):
@@ -1769,6 +1811,9 @@ class Browser(wx.Panel, CommandHandler):
         
     def _cmd_reload(self):
         self._webview.reload()
+
+    def _cmd_load_uri(self, uri):
+        self._webview.load_uri(uri)
         
     def restrict_navigation(self, uri, restrict_to_domain=False):
         """Restrict user's navigation to particular URI prefix.
@@ -1785,7 +1830,10 @@ class Browser(wx.Panel, CommandHandler):
         if uri is not None and restrict_to_domain:
             uri = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*', lambda m: m.group(1), uri)
         self._restricted_navigation_uri = uri
-        
+
+    def connect_location_bar(self, ctrl):
+        self._location_bar = ctrl
+
     def load_uri(self, uri):
         return self._webview.load_uri(uri)
 

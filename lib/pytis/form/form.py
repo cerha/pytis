@@ -2719,6 +2719,10 @@ class WebForm(Form):
                  UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=handler),
                            _(u"Zastavit"),
                            _(u"Zastavit načítání dokumentu")),
+                 UICommand(Browser.COMMAND_LOAD_URI(_command_handler=handler),
+                           _(u"Adresa"),
+                           _(u"Aktuální adresa prohlížeče"),
+                           ctrl=(LocationBar, dict(size=(600, 25), editable=False))),
                  ),
                 )
 

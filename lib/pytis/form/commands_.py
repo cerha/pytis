@@ -262,6 +262,8 @@ Command(Browser, 'STOP_LOADING',
         "Stop loading")
 Command(Browser, 'RELOAD',
         "Reload the current document")
+Command(Browser, 'LOAD_URI',
+        "Load the URI given by the 'uri' argument of the command.")
 
 DEFAULT_KEYMAP = (
     ('F1',               Application.COMMAND_HELP(topic='pytis')),
