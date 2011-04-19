@@ -2704,6 +2704,10 @@ class WebForm(Form):
     def _create_data_object(self):
         return None
     
+    def _init_attributes(self, **kwargs):
+        super_(WebForm)._init_attributes(self, **kwargs)
+        self._async_browser_interaction = None
+        
     def _toolbar_commands(self):
         handler = self._browser
         return ((UICommand(Browser.COMMAND_GO_BACK(_command_handler=handler),
@@ -2731,11 +2735,26 @@ class WebForm(Form):
         sizer.Add(toolbar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(browser, 1, wx.EXPAND)
 
+    def _on_idle(self, event):
+        if super(WebForm, self)._on_idle(event):
+            return True
+        function = self._async_browser_interaction
+        if function:
+            # Perform browser interaction asyncronously to avoid blocking the
+            # main application.
+            self._async_browser_interaction = None
+            function()
+        return False
+
     def load_uri(self, uri):
-        self._browser.restrict_navigation(uri, restrict_to_domain=True)
-        self._browser.load_uri(uri)
+        def load_uri():
+            self._browser.restrict_navigation(uri, restrict_to_domain=True)
+            self._browser.load_uri(uri)
+        self._async_browser_interaction = load_uri
 
     def load_html(self, uri):
-        self._browser.restrict_navigation('-')
-        self._browser.load_html(uri)
+        def load_html():
+            self._browser.restrict_navigation('-')
+            self._browser.load_html(uri)
+        self._async_browser_interaction = load_html
         
