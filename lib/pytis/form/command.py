@@ -76,12 +76,15 @@ class CommandHandler:
 
     @classmethod
     def command_enabled(cls, command, **kwargs):
-        """Vrať pravdu, pokud je daný příkaz aktivní (smí být vyvolán).
+        """Return true if given command is active (can be invoked).
         
-        Příkazy, které nejsou kompatibilní s aktivním prvkem aplikace (instancí
-        'CommandHandler') jsou automaticky neaktivní.  Pokud je kompatibilní
-        instance 'CommandHandler' nalezena, je dostupnost příkazu dále
-        vyhodnocena voláním metody 'can_command' této instance.
+        The commands which are not compatible with the active object in the
+        application ('CommandHandler' instance) are automatically inactive.  If
+        there is an active handler compatible with the command (the command is
+        defined by its 'CommandHandler' class), the command availability is
+        determined by calling the method 'can_command()' of the instance (which
+        normally futher calls a method '_can_<command-name>()' matching the
+        command name).
 
         """
         handler, kwargs = cls._command_handler(command, **kwargs)
@@ -95,9 +98,15 @@ class CommandHandler:
 
     @classmethod
     def invoke_command(cls, command, **kwargs):
-        """Vyhledej instanci handleru příkazu a příkaz proveď.
+        """Invoke given comand in the currently active command handler instance.
 
-        Vrací: Návratovou hodnotu obslužné rutiny daného příkazu.
+        If there is an active handler compatible with the command (the command
+        is defined by its 'CommandHandler' class), the command is invoked by
+        calling the method 'on_command()' of the instance (which normally
+        futher calls a method '_cmd_<command-name>()' matching the command
+        name).
+        
+        Returns: The return value of the command handler method.
 
         """
         handler, kwargs = cls._command_handler(command, **kwargs)
