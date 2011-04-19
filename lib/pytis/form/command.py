@@ -29,19 +29,39 @@ modulu 'commands_'.
 from pytis.form import *
 
 class CommandHandler:
-    """Mix-in třída, kterou musí dědit třídy definující vlastní příkazy.
+    """Mix-in class for objects capable of handling user commands.
 
-    Tato třída přidává schopnost zpracovat příkazy (instance 'Command') a
-    zjistit, zda je konkrétní příkaz v danou chvíli dostupný.
+    This class adds the ability to define user commands and process them.
 
-    TODO: Doplnit přehled účelu jednotlivých metod a způsobu vyhledání instance
-    handleru.
+    Classes derived from this class are capable of handling user commands
+    defined using the 'Command' class.  New commands are defined by command
+    handler classes (classes derived from 'CommandHandler') and handled by
+    their instances.  To locate the handler instance, the derived classes must
+    implement the method '_get_command_handler_instance()'.  The handler
+    instance is then queried for availability of the particular command using
+    the 'can_command()' instance method and if the command is available, it may
+    be invoked on the instance using the 'on_command()' instance method.
+
+    The methods 'command_enabled()' and 'invoke_command()' are counterparts of
+    the methods 'can_command()' and 'on_command(), but they are class methods
+    and are capable to locate the active instance and call the instance method
+    on it.
 
     """
     
     @classmethod
     def _get_command_handler_instance(cls):
-        """Najdi v aplikaci aktivní prvek, který je schopen zpracovat příkaz."""
+        """Find an active CommandHandler instance capable to handle commands.
+
+        Commands are bound to command handler classes, but are invoked on their
+        instances.  This method is used to find an active instance of given
+        command handler class.
+
+        Each class derived from CommandHandler must define this method and
+        return an instance of itself which is currently active to process its
+        commands or None if no such instance is active in the application.
+        
+        """
         raise ProgramError("This method must be overriden in a derived class.")
 
     @classmethod
@@ -53,7 +73,7 @@ class CommandHandler:
         if not isinstance(handler, cls):
             handler = None
         return handler, kwargs
-    
+
     @classmethod
     def command_enabled(cls, command, **kwargs):
         """Vrať pravdu, pokud je daný příkaz aktivní (smí být vyvolán).
@@ -96,9 +116,10 @@ class CommandHandler:
     def add_toolbar_ctrl(cls, toolbar, uicmd):
         """Add a toolbar control for given 'uicmd' into 'toolbar'.
 
-        This method adds a default command control into the toolbar.  The default control is a
-        simple button which invokes the command on click.  Derived classes may override this method
-        to create some more sophisticated controls for their specific commands.
+        This method adds command control into the toolbar.  The default control
+        is a simple button which invokes the command on click.  More
+        sophisticated controls may be specified using the 'ctrl' constructor
+        argument.
 
         """
         cmd, kwargs = uicmd.command(), uicmd.args()
@@ -124,7 +145,6 @@ class CommandHandler:
             wx_callback(wx.EVT_TOOL, parent, tool.GetId(), lambda e: cmd.invoke(**kwargs))
             wx_callback(wx.EVT_UPDATE_UI, parent, tool.GetId(), lambda e: e.Enable(cmd.enabled(**kwargs)))
 
-        
     def on_command(self, command, **kwargs):
         """Zpracuj příkaz 'command' s parametry 'kwargs'.
 
