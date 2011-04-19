@@ -1878,11 +1878,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             fileformat = 'CSV'
         filename = None
+        remote = False
         if pytis.windows.nx_ip():
             try:
                 filename = pytis.windows.make_temporary_file(suffix='.'+fileformat.lower())
             except:
                 pass
+            export_file = filename
+            remote = True
         if filename is None:
             export_dir = config.export_directory
             filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
@@ -1890,20 +1893,21 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                              wildcards=tuple(wildcards))
             if not filename:
                 return
+            mode = 'w'
+            if fileformat == 'XLS':
+                mode += 'b'
             try:       
-                export_file = open(filename,'w')
+                export_file = open(filename, mode)
                 export_file.write('')
             except:
-                msg = _(u"Nepodařilo se otevřít soubor " + filename + \
-                        " pro zápis!\n")
+                msg = _(u"Nepodařilo se otevřít soubor " + filename + " pro zápis!\n")
                 run_dialog(Error, msg)
                 return
-            export_file.close()
         if fileformat == 'XLS':
             export_function = self._cmd_export_xls
         else:
             export_function = self._cmd_export_csv
-        if export_function(filename) and not isinstance(filename, basestring):
+        if export_function(export_file) and remote:
             pytis.windows.launch_file(filename.name())
 
     def _cmd_export_csv(self, filename):
@@ -1920,10 +1924,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             run_dialog(Error, msg)
         if isinstance(filename, basestring):
             try:
-                export_file = open(filename,'w')
+                export_file = open(filename, 'w')
             except:
-                msg = _(u"Nepodařilo se otevřít soubor " + filename + \
-                        " pro zápis!\n")
+                msg = _(u"Nepodařilo se otevřít soubor " + filename + " pro zápis!\n")
                 run_dialog(Error, msg)
                 return False
         else:
@@ -2021,6 +2024,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     if s is not None:
                         ws.write(r+1, j, s, column_styles[cid])
             w.save(filename)
+            if not isinstance(filename, basestring):
+                # This is necessary to prevent truncation of the file in some
+                # cases as pyxls doesn't close the file.
+                filename.close()
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
         return True
         
