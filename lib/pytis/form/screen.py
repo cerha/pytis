@@ -1835,10 +1835,10 @@ class Browser(wx.Panel, CommandHandler):
         self._location_bar = ctrl
 
     def load_uri(self, uri):
-        return self._webview.load_uri(uri)
+        self._webview.load_uri(uri)
 
     def load_html(self, html, base_uri=''):
-        return self._webview.load_html_string(html, base_uri)
+        self._webview.load_html_string(html, base_uri)
 
 
 class BrowserWindow(wx.Frame):
