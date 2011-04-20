@@ -2039,18 +2039,25 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         else:
             self._set_focus_field()
 
-    def _init_attributes(self, mode=MODE_EDIT, focus_field=None, **kwargs):
+    def _init_attributes(self, mode=MODE_EDIT, focus_field=None, set_values=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
 
-          mode -- one of the 'MODE_*' constants.  Determines whether the form is primarily for
-            viewing, editation or creation of records.
-          focus_field -- identifier of the field which should be activated for user input on form
-            startup.  If None, the first field is the default.  It is also possible to pass a
-            function of one argument -- the PresentedRow instance representing the current record.
-            This function must return a field identifier or None.
+          mode -- one of the 'MODE_*' constants.  Determines whether the form
+            is primarily for viewing, editation or creation of records.
+          focus_field -- identifier of the field which should be activated for
+            user input on form startup.  If None, the first field is the
+            default.  It is also possible to pass a function of one argument --
+            the PresentedRow instance representing the current record.  This
+            function must return a field identifier or None.
           kwargs -- arguments passed to the parent class
+          set_values -- dictionary of row values to set in the newly openened
+            form.  If not None, the dictionary keys are field identifiers and
+            values are the corresponding internal python values valid for the
+            fields's data type.  These values will not affect the initial row
+            state (unlike the 'prefill' argument of the parent class) and thus
+            will appear as changed to the user.
          
         """
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
@@ -2060,6 +2067,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self._focus_field = focus_field or self._view.focus_field()
         # Other attributes
         self._fields = []
+        if set_values:
+            for key, value in set_values.items():
+                self._row[key] = pytis.data.Value(self._row.type(key), value)
 
     def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políček."""
@@ -2757,4 +2767,5 @@ class WebForm(Form):
             self._browser.restrict_navigation('-')
             self._browser.load_html(uri)
         self._async_browser_interaction = load_html
-        
+
+
