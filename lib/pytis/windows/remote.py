@@ -18,12 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import rpyc
 import subprocess
 
 from pytis.util import *
 import config
 
+_ip_matcher = re.compile(r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
 _nx_ip = UNDEFINED
 def nx_ip():
     """Return IP address of the nx client, as a string.
@@ -43,8 +45,10 @@ def nx_ip():
         for line in output.splitlines():
             items = line.split()
             if items[1] == session_id:
-                _nx_ip = items[4][1:-1]
-                break
+                maybe_ip = items[4][1:-1]
+                if _ip_matcher.match(maybe_ip):
+                    _nx_ip = maybe_ip
+                    break
     return _nx_ip
 
 _connection = None
