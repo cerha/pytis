@@ -2054,10 +2054,11 @@ class EditForm(RecordForm, TitledForm, Refreshable):
           kwargs -- arguments passed to the parent class
           set_values -- dictionary of row values to set in the newly openened
             form.  If not None, the dictionary keys are field identifiers and
-            values are the corresponding internal python values valid for the
-            fields's data type.  These values will not affect the initial row
-            state (unlike the 'prefill' argument of the parent class) and thus
-            will appear as changed to the user.
+            values are either the corresponding internal python values valid
+            for the fields's data type or pytis.data.Value() instances
+            directly.  These values will not affect the initial row state
+            (unlike the 'prefill' argument of the parent class) and thus will
+            appear as changed to the user.
          
         """
         assert mode in (self.MODE_EDIT, self.MODE_INSERT, self.MODE_VIEW)
@@ -2069,7 +2070,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         self._fields = []
         if set_values:
             for key, value in set_values.items():
-                self._row[key] = pytis.data.Value(self._row.type(key), value)
+                type = self._row.type(key)
+                if isinstance(value, pytis.data.Value):
+                    value = value.retype(type)
+                else:
+                    value = pytis.data.Value(type, value)
+                self._row[key] = value
 
     def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políček."""
