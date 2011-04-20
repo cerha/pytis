@@ -16,6 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import logging
 import os
 import rpyc
 import rpyc.utils.authenticators
@@ -31,6 +32,7 @@ port = 17984
 key_file = 'windows.key'
 certificate_file = 'windows.crt'
 ca_certificate_file = 'ca.crt'
+logging_level = logging.INFO
 
 _restart = False
 
@@ -135,6 +137,13 @@ class PytisThreadedServer(rpyc.utils.server.ThreadedServer):
     def __init__(self, *args, **kwargs):
         self._pytis_start_restart_thread()
         super(PytisThreadedServer, self).__init__(*args, **kwargs)
+        
+    def _get_logger(self):
+        logger = super(PytisThreadedServer, self)._get_logger()
+        logger.setLevel(logging_level)
+        handler = logging.StreamHandler()
+        logger.addHandler(handler)
+        return logger
 
     def _pytis_start_restart_thread(self):
         t = threading.Thread(target=self._pytis_check_restart)
@@ -145,6 +154,7 @@ class PytisThreadedServer(rpyc.utils.server.ThreadedServer):
         global _restart
         while True:
             if _restart:
+                self.logger.info('restart requested')
                 time.sleep(1) # provide some time to finnish the connection
                 self.close()
                 return

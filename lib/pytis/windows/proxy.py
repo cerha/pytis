@@ -17,10 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import rpyc
+import rpyc.utils.server
 
 import config
 
+logging_level = logging.INFO
 
 class ProxyService(rpyc.Service):
 
@@ -37,7 +40,15 @@ class ProxyService(rpyc.Service):
                                                 certfile=config.rpc_certificate_file)
         return getattr(self._connection.root, request)(*args, **kwargs)
 
+class ProxyThreadedServer(rpyc.utils.server.ThreadedServer):
+
+    def _get_logger(self):
+        logger = super(ProxyThreadedServer, self)._get_logger()
+        logger.setLevel(logging_level)
+        handler = logging.StreamHandler()
+        logger.addHandler(handler)
+        return logger
+
 def run_proxy():
-    from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(ProxyService, hostname='localhost', port=config.rpc_local_port)
+    t = ProxyThreadedServer(ProxyService, hostname='localhost', port=config.rpc_local_port)
     t.start()
