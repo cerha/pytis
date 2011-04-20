@@ -180,6 +180,8 @@ Postup instalace RPyC serveru na windowsové stanici:
 
 - Zajistit nastartování souboru =windows-server= při spuštění Windows.
 
+Poznámka: Server vypisuje chybové hlášky o registry, to je normální.
+
 == Instalace na Linuxu ==
 
 Postup instalace RPyC klienta-serveru na linuxovém serveru:
@@ -197,3 +199,15 @@ Postup instalace RPyC klienta-serveru na linuxovém serveru:
 - Zajistit nastartování a běh souboru =pytis/bin/linux-server=:
 
     linux-server --config=.../config.py
+
+Poznámka: Server vypisuje chybové hlášky o registry, to je normální.
+
+== Řádkový klient ==
+
+Pro potřeby administrace jd k dispozici řádkové rozhraní pro volání
+windowsového serveru =pytis/bin/say-server=.  Jeho nejtypičtější použití je pro
+upgrade windowsového serveru, např.
+
+  ./say-server IP-ADRESA upgrade ./windows-server
+
+Ostatní dostupné funkce lze vypsat pomocí =say-server --help=.
