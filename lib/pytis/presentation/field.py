@@ -219,12 +219,12 @@ class PresentedRow(object):
         self._virtual = dict(virtual)
         self._invalid = {}
         if reset:
-            self._original_row_empty = row is None
-            if not hasattr(self, '_original_row'):
+            self._original_row = copy.copy(row)
+            if not hasattr(self, '_initialized_original_row'):
                 # Calling row() may invoke dirty column computations.  The computers may use the
                 # original row as well, so we must create one before.
-                self._original_row = copy.copy(self._row)
-            self._original_row = self.row()
+                self._initialized_original_row = copy.copy(self._row)
+            self._initialized_original_row = self.row()
         self._resolve_dependencies()
         self._run_callback(self.CALL_CHANGE, None)
 
@@ -559,18 +559,27 @@ class PresentedRow(object):
         """Return true if the row represents a new (inserted) record."""
         return self._new
     
-    def original_row(self, empty_as_none=False):
-        """Return a *data* row containing the values before any changes.
+    def original_row(self, initialized=True):
+        """Return a *data* row containing the values before changes.
 
-        The returned row is a 'pytis.data.Row' instance, not necasarilly identical with the row
-        passed to the constructor.
-
-        The original values are values after row initialization or after the last call to
-        'set_row()' with 'reset' se to true.
+        Arguemnts:
         
+          initialized -- if True (default), return the row with initialized
+            values according to prefill, default and computer initializations.
+            If False, return the 'row' prior to all internal initializations.
+            A higher level explanation of the same is that with
+            initialized=False you get the original data row, while with
+            initialized=True you get the row values before any user changes.
+            
+        In both cases (initialized=True/False) the returned row corresponds to
+        the 'row' passed to the constructor or the last call to 'set_row()'
+        with 'reset' set to true.  If 'initialized' is False, the returned
+        value may be None if the 'row' argument was None.  Otherwise it is
+        a 'pytis.data.Row' instance.
+
         """
-        if empty_as_none and self._original_row_empty:
-            return None
+        if initialized:
+            return self._initialized_original_row
         else:
             return self._original_row
 
@@ -608,7 +617,7 @@ class PresentedRow(object):
 
         """
         return key not in self._row or \
-               self._row[key].value() != self._original_row[key].value() or \
+               self._row[key].value() != self._initialized_original_row[key].value() or \
                key in self._invalid
 
     def editable(self, key):
@@ -663,7 +672,7 @@ class PresentedRow(object):
             kwargs = dict(kwargs, arguments=self.runtime_arguments(key))
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
         if not error and column.type.unique() and not column.virtual and \
-               (self._new or value != self._original_row[key]) and value.value() is not None:
+               (self._new or value != self._initialized_original_row[key]) and value.value() is not None:
             if isinstance(self._data, pytis.data.RestrictedData):
                 select_kwargs = dict(check_condition=False)
             else:

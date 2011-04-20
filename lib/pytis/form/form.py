@@ -1635,7 +1635,7 @@ class RecordForm(LookupForm):
     def _current_key(self):        
         the_row = self.current_row()
         if the_row is not None:
-            data_row = the_row.original_row(empty_as_none=True)
+            data_row = the_row.original_row(initialized=False)
             if data_row is None:
                 data_row = the_row.row()
             return data_row.columns([c.id() for c in self._data.key()])
@@ -1682,7 +1682,9 @@ class RecordForm(LookupForm):
                  if self._data.find_column(f.id()) is not None and
                  (permission is None or self._data.permitted(f.id(), permission))]
         if updated:
-            rdata = [id_value for id_value in rdata if row.field_changed(id_value[0])]
+            original_row = row.original_row(initialized=False)
+            rdata = [(key, value) for (key, value) in rdata
+                     if original_row[key].value() != value.value()]
         return pytis.data.Row(rdata)
     
     def _row_copy_prefill(self, the_row):
