@@ -25,7 +25,9 @@ import subprocess
 from pytis.util import *
 import config
 
-_ip_matcher = re.compile(r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+_ipv4_regexp = r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
+_ipv6_regexp = r'.*:.*:.*'
+_ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
 _nx_ip = UNDEFINED
 def nx_ip():
     """Return IP address of the nx client, as a string.
