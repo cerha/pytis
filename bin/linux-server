@@ -16,7 +16,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+import getopt
+import sys
+
 import pytis.windows
+import config
+
+def _usage(optexception=None):
+    if optexception:
+        sys.stderr.write(optexception.msg)
+        sys.stderr.write('\n')
+    sys.stderr.write('usage: %s [ --config=CONFIG-FILE ]\n' % (sys.argv[0],))
+    sys.exit(1)
+
+def run():
+    try:
+        config.add_command_line_options(sys.argv)
+    except getopt.GetoptError, e:
+        _usage(e)
+    pytis.windows.run_proxy()
 
 if __name__ == '__main__':
-    pytis.windows.run_proxy()
+    run()
