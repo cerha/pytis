@@ -2299,117 +2299,145 @@ class Field(object):
             The name is the same as the field identifier by default.  It is not
             recommended to use different column name than the field identifier
             unless there is a serious reason for it.
-          type -- explicit data type as a 'pytis.data.Type' class or instance.  None value means to
-            use the default type determined from the underlying data object (or the default type
-            'pyttis.data.String' for virtual fields not present in the data object).  If a class is
-            passed, the instance of this class will be created automatically and the system will
-            pass it all arguments which it is able to determine.  If an instance is passed it is
-            used as is even if the system would create it with other arguments.  So by passing a
-            class you leave the system to do its best, while by passing an instance, you can force
-            whatever you want.  In any case, the specified type must be compatible with the type
-            determined by the underlying data object.  If None or if a class is specified,
-            individual type constructor arguments may be passed separately as additional 'Field'
-            keyword arguments and they take precedence over the arguments determined by system.
-            Thus this is a more gentle way to force specific properties of the field data type
-            individually.  The arguments 'codebook' and 'enumerator' determine the constructed
+          type -- explicit data type as a 'pytis.data.Type' class or instance.
+            None value means to use the default type determined from the
+            underlying data object (or the default type 'pyttis.data.String'
+            for virtual fields not present in the data object).  If a class is
+            passed, the instance of this class will be created automatically
+            and the system will pass it all arguments which it is able to
+            determine.  If an instance is passed it is used as is even if the
+            system would create it with other arguments.  So by passing a class
+            you leave the system to do its best, while by passing an instance,
+            you can force whatever you want.  In any case, the specified type
+            must be compatible with the type determined by the underlying data
+            object.  If None or if a class is specified, individual type
+            constructor arguments may be passed separately as additional
+            'Field' keyword arguments and they take precedence over the
+            arguments determined by system.  Thus this is a more gentle way to
+            force specific properties of the field data type individually.  The
+            arguments 'codebook' and 'enumerator' determine the constructed
             type's enumerator.
-          width -- field width in characters (integer).  Default width is determined automatically
-            if not specified here.  Certain types of input fields may interpret the value
-            differently (e.g. as a number of columns) when number of characters doesn't make sense.
-          height -- field height in characters (integer).  Certain types of input fields may
-            interpret the value differently (e.g. as a number of rows) when number of characters
-            doesn't make sense.
-          column_width -- table column width in characters (integer).  If not defined, defaults to
-            'width'.
-          disable_column -- If true, it is not possible to display the field as a table
-            column.  The field does not appear in the selection of columns to display and presence
-            of such field in default columns ('ViewSpec' argument 'columns') is announced as
-            an error.
-          fixed -- passing True value will disable automatic scaling of column width when the table
-            size is changed.  The default behavaior is to accommodate column widths to new form
-            size, so that the available space is used evenly between all columns.  Fixed columns,
-            however will be left out during these recomputations and will keep their prevoius
-            widths.
-          editable -- one of 'Editable' constants or a 'Computer' instance.  The constants
-            determine field editability statically, the computer may be used to compute editability
-            dynamically based on the values of other fields of a record and return true iff the
-            field is editable (see also notes about computer specifications below).
-            The default value is 'Editable.ALWAYS', but certain combinations of other specification
-            parameters may lead to another default value (for example if a'computer' is defined, the
-            default value is 'Editable.NEVER'). 
-          compact -- true value results in the field label being displayed above the field, not on
-            the left which is the default.  This way the field will span to the full width of the
-            field group.
-          nocopy -- iff true, the field's value will be omitted during record copying (user command
-            for creation of a new record as a copy af an existing record).  Key columns and
-            computed fields depending on key columns are omitted automatically.
-          default -- default value or a function for computing the default value.  The default
-            value is used when a new record is initialized.  Please note, that if computer is
-            defined, it has higher precedence than the default value.  You may pass a value
-            directly or a callable object.  The callable object will be called with no arguments
-            when the default value is needed and its returned value will be used.  In any case, the
-            default value must be compatible with the internal Python representation for the data
-            type of the field.  If not defined, the default value is determined by the data type
-            (usually 'None').
-          computer -- a 'Computer' instance for computing the field value based on the values of
-            other fields of the same record.  See below for more details about computed fields.
-          null_display -- display value (string) to use for the unselected state of an enumeration
-            field (null field value).  Null value is not part of the enumeration, but if the field
-            is not 'not_null', it is a valid field value, but as it is not within the enumeration,
+          width -- field width in characters (integer).  Default width is
+            determined automatically if not specified here.  Certain types of
+            input fields may interpret the value differently (e.g. as a number
+            of columns) when number of characters doesn't make sense.
+          height -- field height in characters (integer).  Certain types of
+            input fields may interpret the value differently (e.g. as a number
+            of rows) when number of characters doesn't make sense.
+          column_width -- table column width in characters (integer).  If not
+            defined, defaults to 'width'.
+          disable_column -- If true, it is not possible to display the field as
+            a table column.  The field does not appear in the selection of
+            columns to display and presence of such field in default columns
+            ('ViewSpec' argument 'columns') is announced as an error.
+          fixed -- passing True value will disable automatic scaling of column
+            width when the table size is changed.  The default behavaior is to
+            accommodate column widths to new form size, so that the available
+            space is used evenly between all columns.  Fixed columns, however
+            will be left out during these recomputations and will keep their
+            prevoius widths.
+          editable -- one of 'Editable' constants or a 'Computer' instance.
+            The constants determine field editability statically, the computer
+            may be used to compute editability dynamically based on the values
+            of other fields of a record and return true iff the field is
+            editable (see also notes about computer specifications below).  The
+            default value is 'Editable.ALWAYS', but certain combinations of
+            other specification parameters may lead to another default value
+            (for example if a'computer' is defined, the default value is
+            'Editable.NEVER').
+          compact -- true value results in the field label being displayed
+            above the field, not on the left which is the default.  This way
+            the field will span to the full width of the field group.
+          nocopy -- iff true, the field's value will be omitted during record
+            copying (user command for creation of a new record as a copy af an
+            existing record).  Key columns and computed fields depending on key
+            columns are omitted automatically.
+          default -- default value or a function for computing the default
+            value.  The default value is used when a new record is initialized.
+            Please note, that if computer is defined, it has higher precedence
+            than the default value.  You may pass a value directly or a
+            callable object.  The callable object will be called with no
+            arguments when the default value is needed and its returned value
+            will be used.  In any case, the default value must be compatible
+            with the internal Python representation for the data type of the
+            field.  If not defined, the default value is determined by the data
+            type (usually 'None').
+          computer -- a 'Computer' instance for computing the field value based
+            on the values of other fields of the same record.  See below for
+            more details about computed fields.
+          null_display -- display value (string) to use for the unselected
+            state of an enumeration field (null field value).  Null value is
+            not part of the enumeration, but if the field is not 'not_null', it
+            is a valid field value, but as it is not within the enumeration,
             'display' may not be used.
-          line_separator -- line separator in single line field value presentation.
-          codebook -- name (string) of the specification which acts as a codebook for this field.
-            This argument has two effects.  It is used as the default value of 'enumerator' (if
-            'enumerator is not set explicitly) and it determines the name of the specification used
-            for codebook form invocation for 'SelectionType.CODEBOOK'.  Specifying 'codebook'
-            causes 'selection_type' to default to 'SelectionType.CODEBOOK'.  From the other
-            perspective 'SelectionType.CODEBOOK' requires 'codebook' to be defined.
-          enumerator -- field data type enumerator as a string (name of a specification for
-            'pytis.data.DataEnumerator' construction), 'pytis.data.DataFactory' instance (for
-            'pytis.data.DataEnumerator' construction) or a 'pytis.data.Enumerator' instance
-            directly.  Unlike 'codebook', 'enumerator' is only used for field's data type
-            construction and has no effect on 'selection_type'.  If None, enumerator will default
-            to the value of 'codebook'.
-          display -- overrides the same 'CodebookSpec' option for this particular field.  If not
-            defined, the value defaults to the value defined by the related codebook.
-          prefer_display -- overrides the same 'CodebookSpec' option for this particular field.  If
-            not defined, the value defaults to the value defined by the related codebook.
-          display_size -- overrides the same 'CodebookSpec' option for this particular field.  If
-            not defined, the value defaults to the value defined by the related codebook.
-          allow_codebook_insert -- true value enables a button for codebook new record insertion.
-            This button is displayed next to the codebook field.
-          codebook_insert_spec -- name of the specification to use for codebook insertion when
-            'allow_codebook_insert' is true.  If none, the value defined by 'codebook' is used.
-          runtime_filter -- provider of enumeration runtime filter as a 'Computer' instance.  The
-            computer function computes the filter condition based on the current row data and
-            returns it as a 'pytis.data.Operator' instance.  This condition is used to filter out
-            enumerator data for codebook fields as well as available completions when
-            autocompletion is enabled.  This is mostly useful for modification of available
-            codebook values based on the current values of other fields within the form.
+          line_separator -- line separator in single line field value
+            presentation.
+          codebook -- name (string) of the specification which acts as a
+            codebook for this field.  This argument has two effects.  It is
+            used as the default value of 'enumerator' (if 'enumerator is not
+            set explicitly) and it determines the name of the specification
+            used for codebook form invocation for 'SelectionType.CODEBOOK'.
+            Specifying 'codebook' causes 'selection_type' to default to
+            'SelectionType.CODEBOOK'.  From the other perspective
+            'SelectionType.CODEBOOK' requires 'codebook' to be defined.
+          enumerator -- field data type enumerator as a string (name of a
+            specification for 'pytis.data.DataEnumerator' construction),
+            'pytis.data.DataFactory' instance (for 'pytis.data.DataEnumerator'
+            construction) or a 'pytis.data.Enumerator' instance directly.
+            Unlike 'codebook', 'enumerator' is only used for field's data type
+            construction and has no effect on 'selection_type'.  If None,
+            enumerator will default to the value of 'codebook'.
+          display -- overrides the same 'CodebookSpec' option for this
+            particular field.  If not defined, the value defaults to the value
+            defined by the related codebook.
+          prefer_display -- overrides the same 'CodebookSpec' option for this
+            particular field.  If not defined, the value defaults to the value
+            defined by the related codebook.
+          display_size -- overrides the same 'CodebookSpec' option for this
+            particular field.  If not defined, the value defaults to the value
+            defined by the related codebook.
+          allow_codebook_insert -- true value enables a button for codebook new
+            record insertion.  This button is displayed next to the codebook
+            field.
+          codebook_insert_spec -- name of the specification to use for codebook
+            insertion when 'allow_codebook_insert' is true.  If none, the value
+            defined by 'codebook' is used.
+          runtime_filter -- provider of enumeration runtime filter as a
+            'Computer' instance.  The computer function computes the filter
+            condition based on the current row data and returns it as a
+            'pytis.data.Operator' instance.  This condition is used to filter
+            out enumerator data for codebook fields as well as available
+            completions when autocompletion is enabled.  This is mostly useful
+            for modification of available codebook values based on the current
+            values of other fields within the form.
           runtime_arguments -- provider of codebook table function arguments as a
             'Computer' instance.  This is similar to 'runtime_filter' argument,
             except that the computer function returns dictionary of table
             function arguments.  'runtime_arguments' may be provided only when the
             field is a codebook field and the codebook is actually a row
             returning function.  Otherwise 'runtime_arguments' must be 'None'.
-          completer -- enumerator used for automatic completion.  The available completions are
-            taken from an enumerator object.  If the field has an enumerator (defined by
-            'enumerator' or 'codebook'), it will be used for completions automatically (unless
-            autocompletion is disabled by the relevant 'CodebookSpec').  This argument, however,
-            makes it possible to specify a completer even for fields, which don't have an
-            enumerator (the validation constraints imposed by enumerator are not desirable).  The
-            value of this argument may be an enumerator instance directly
-            (e.g. 'pytis.data.FixedEnumerator') or a name of the specification used to create a
-            'pytis.data.DataEnumerator'.  Also a sequens (list or tuple) is accepted and converted
-            to a 'FixedEnumerator' instance.
-          selection_type -- one of 'SelectionType' constants defining the type of user interface
-            element used to present the related enumeration.  Only relevant for fields with an
-            enumerator (specified either by 'codebook' or 'enumerator').  If 'codebook' is not
-            None, selection_type defaults to 'SelectionType.CODEBOOK'.  Also if selection_type is
-            set to 'SelectionType.CODEBOOK', 'codebook' must be defined.
-          orientation -- field orientation as one of 'Orientation' class constants; relevant only
-            for certain field types, such as radio buttons, which may be arranged vertically or
-            horizontally..
+          completer -- enumerator used for automatic completion.  The available
+            completions are taken from an enumerator object.  If the field has
+            an enumerator (defined by 'enumerator' or 'codebook'), it will be
+            used for completions automatically (unless autocompletion is
+            disabled by the relevant 'CodebookSpec').  This argument, however,
+            makes it possible to specify a completer even for fields, which
+            don't have an enumerator (the validation constraints imposed by
+            enumerator are not desirable).  The value of this argument may be
+            an enumerator instance directly (e.g. 'pytis.data.FixedEnumerator')
+            or a name of the specification used to create a
+            'pytis.data.DataEnumerator'.  Also a sequens (list or tuple) is
+            accepted and converted to a 'FixedEnumerator' instance.
+          selection_type -- one of 'SelectionType' constants defining the type
+            of user interface element used to present the related enumeration.
+            Only relevant for fields with an enumerator (specified either by
+            'codebook' or 'enumerator').  If 'codebook' is not None,
+            selection_type defaults to 'SelectionType.CODEBOOK'.  Also if
+            selection_type is set to 'SelectionType.CODEBOOK', 'codebook' must
+            be defined.
+          orientation -- field orientation as one of 'Orientation' class
+            constants; relevant only for certain field types, such as radio
+            buttons, which may be arranged vertically or horizontally.
           post_process -- funkce upravující vkládaný text během psaní.  Jedná
             se o funkci jednoho argumentu, kterým je řetězcová hodnota políčka.
             Vrácená hodnota je potom nastavena jako nová hodnota políčka.  Tato
@@ -2419,32 +2447,33 @@ class Field(object):
             Hodnotou tohoto argumentu může být také některá z konstant třídy
             'PostProcess', čímž je ušetřeno psaní některých často používaných
             funkcí.
-          filter -- specifikace jednoho z přednastavených filtrů znaků
-            propouštěných do textového políčka z uživatelského vstupu.  Jedna
-            z konstant třídy 'TextFilter'.
-          filter_list -- sekvence povolených, nebo zakázaných znaků.
-            Relevantní jen pro 'filter' typu 'INCLUDE_LIST' nebo
-            'EXCLUDE_LIST'.
-          style -- instance třídy 'Style' určující vizuální styl políčka
-            nebo funkce dvou argumentů vracející instanci třídy 'Style'.
-            Jedná-li se o funkci, jsou jejími argumenty id sloupce jako string
-            a aktuální datový řádek jako instance 'PresentedRow'.  Pokud je
-            'None', bude použit výchozí styl řádku (viz. argument 'row_style'
-            konstruktoru 'ViewSpec').
-          link -- specification of a link, or a series of links to other forms related to the
-            current field value.  The value is a 'Link' instance or their sequence.  The links will
-            be presented as separate menu items in the context menu of a record in the GUI.  The
-            web forms currently only support one link per field and present it as a hypertext link
-            on field's value.  The links will open the related form and locate the record
-            corresponding to the value of the refering field.
-          filename -- identifier of the field, which provides the filename for downloading/saving
-            the value of this field into a file.  If not None, the user interface should offer
-            downloading/saving the content of the field into a file.  This may be relevant for
-            binary fields, as well as for ordinary string data.
+          filter -- one of 'TextFilter' class constants for filtering the user
+            input.
+          filter_list -- sequence of included/excluded characters for 'filter'
+            using 'TextFilter.INCLUDE_LIST' or 'TextFilter.EXCLUDE_LIST'.
+          style -- visual field appearance as a 'Style' instance or a function
+            of one argument ('PresentedRow' instance) returning the 'Style'
+            instance dynamically.  If not None, it overrides the row level
+            style defined by 'row_style' argument of 'ViewSpec'.  Useful for
+            highlighting cells in a table view depending on their values (such
+            as negative numbers in red).
+          link -- specification of a link, or a series of links to other forms
+            related to the current field value.  The value is a 'Link' instance
+            or their sequence.  The links will be presented as separate menu
+            items in the context menu of a record in the GUI.  The web forms
+            currently only support one link per field and present it as a
+            hypertext link on field's value.  The links will open the related
+            form and locate the record corresponding to the value of the
+            refering field.
+          filename -- identifier of the field, which provides the filename for
+            downloading/saving the value of this field into a file.  If not
+            None, the user interface should offer downloading/saving the
+            content of the field into a file.  This may be relevant for binary
+            fields, as well as for ordinary string data.          
           printable -- iff True, the user interface should allow the value of
-            this field to be printed as a separate document.  This is most often
-            useful with fields containing structured text content, which may be
-            directly exported into PDF.
+            this field to be printed as a separate document.  This is most
+            often useful with fields containing structured text content, which
+            may be directly exported into PDF.
           **kwargs -- all the remaining keyword arguments are passed to the
             constructor of field's data type instance.  These arguments
             override the values of arguments, that the system would normally
