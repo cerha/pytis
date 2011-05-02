@@ -2729,6 +2729,14 @@ class PopupEditForm(PopupForm, EditForm):
             self._load_next_row()
         return result
         
+    def _cmd_safe_leave_form(self):
+        # Leaving form in idle thread causes recursion in popup forms, when a
+        # dialog asking for confirmation of leaving unsaved form appears.  So
+        # we just leave the form immediately here.  Hopefuly, the problems
+        # which lead to moving _leave_form to the idle thread don't apply to
+        # popup forms.
+        self._cmd_leave_form()
+        
     def can_command(self, command, **kwargs):
         if command.handler() in (LookupForm, RecordForm) \
                and command != RecordForm.COMMAND_CONTEXT_ACTION:
