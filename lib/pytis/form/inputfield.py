@@ -267,7 +267,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
-            field = NumericField
+            if spec.slider() and not inline:
+                field = SliderField
+            else:
+                field = NumericField
         else:
             field = TextField
         return field(parent, row, id, inline=inline, **kwargs)
@@ -1007,7 +1010,30 @@ class NumericField(TextField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
+class SliderField(InputField):
 
+    def _create_ctrl(self):
+        if self.height() == 1:
+            style = wx.SL_HORIZONTAL
+        else:
+            style = wx.SL_VERTICAL
+        style |= wx.SL_LABELS
+        ctrl = wx.Slider(self._parent, -1, style=style,
+                         minValue=self._type.minimum() or 0,
+                         maxValue=self._type.maximum() is None and 100 or self._type.maximum(),
+                         # Use min height 1.6 to fit the labels when height = 1.
+                         size=self._px_size(self.width(), max(self.height(), 1.6)))
+        wx_callback(wx.EVT_SCROLL, ctrl, self._on_change)
+        return ctrl
+    
+    def _get_value(self):
+        return str(self._ctrl.GetValue())
+
+    def _set_value(self, value):
+        self._ctrl.SetValue(int(value))
+        self._on_change()
+
+    
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
