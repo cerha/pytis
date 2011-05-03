@@ -2474,13 +2474,11 @@ class Field(object):
             this field to be printed as a separate document.  This is most
             often useful with fields containing structured text content, which
             may be directly exported into PDF.
-          slider -- set to True to turn a numeric field into a slider control.
+          slider -- set to True to add a slider control to a numeric field.
             The slider can be dragged by mouse (or keyboard) to set the value
-            instead of typing it.  Use 'height' other than 1 to get a vertical
-            slider (default is horizontal).  Use 'minimum' and 'maximum' type
-            constructor arguments (see 'pytis.data.Number') to set the slider
-            range.  The default range when 'minimum' and 'maximum' are unset is
-            0..100.
+            instead of typing it.  Use 'minimum' and 'maximum' type constructor
+            arguments (see 'pytis.data.Number') to set the slider range.  The
+            default range when 'minimum' and 'maximum' are unset is 0..100.
           **kwargs -- all the remaining keyword arguments are passed to the
             constructor of field's data type instance.  These arguments
             override the values of arguments, that the system would normally
