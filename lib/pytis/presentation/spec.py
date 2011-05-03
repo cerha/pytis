@@ -2605,7 +2605,7 @@ class Field(object):
             for lnk in links:
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
             for k in kwargs.keys():
-                assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
+                assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen', 'minimum', 'maximum',
                              'precision', 'format', 'mindate', 'maxdate', 'utc',
                              'validation_messages', 'inner_type',
                              'minsize', 'maxsize', 'formats', 'strength', 'md5',), \

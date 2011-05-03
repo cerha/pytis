@@ -443,7 +443,61 @@ class Number(Type):
 
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+    
+    VM_MINIMUM = 'VM_MINIMUM'
+    _VM_MINIMUM_MSG = _(u"Minimální hodnota je %(minimum)s")
+    VM_MAXIMUM = 'VM_MAXIMUM'
+    _VM_MAXIMUM_MSG = _(u"Maximální hodnota je %(maximum)s")
 
+    def __init__(self, minimum=None, maximum=None, **kwargs):
+        """Initialize the instance.
+        
+        Arguments:
+        
+          minimum -- minimal value; 'None' denotes no limit.
+          maximum -- maximal value; 'None' denotes no limit.
+             
+        Other arguments are passed to the parent constructor.
+
+        """
+        self._minimum = minimum
+        self._maximum = maximum
+        super(Number, self).__init__(**kwargs)
+
+    def __cmp__(self, other):
+        """Return 0 if 'self' and 'other' are of the same class and constraints."""
+        result = super(Number, self).__cmp__(other)
+        if not result:
+            result = cmp(self.maximum(), other.maximum())
+        if not result:
+            result = cmp(self.minimum(), other.minimum())
+        return result
+
+    def minimum(self):
+        """Return the minimal value.
+
+        'None' denotes no limit.
+        
+        """
+        return self._minimum
+
+    def maximum(self):
+        """Return the maximal value.
+
+        'None' denotes no limit.
+        
+        """
+        return self._maximum
+
+    def _check_constraints(self, value, **kwargs):
+        super(Number, self)._check_constraints(value, **kwargs)
+        if value is not None:
+            if self._minimum is not None and value < self._minimum:
+                raise self._validation_error(self.VM_MINIMUM, minimum=self._minimum)
+            if self._maximum is not None and value > self._maximum:
+                raise self._validation_error(self.VM_MAXIMUM, maximum=self._maximum)
+
+    
 
 class Big(Type):
     """Mixin class denoting types with big values.

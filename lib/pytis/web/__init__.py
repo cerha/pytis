@@ -39,6 +39,8 @@ pd = pytis.data
 # Translators: All the messages below are validation errors.
 pd.Type._VM_NULL_VALUE_MSG = _(u"Empty value")
 pd.Type._VM_INVALID_VALUE_MSG = _(u"Invalid value")
+pd.Number._VM_MINIMUM_MSG = _(u"Minimal value is %(minimum)s")
+pd.Number._VM_MAXIMUM_MSG = _(u"Maximal value is %(maximum)s")
 pd.Limited._VM_MINLEN_MSG = _(u"Minimal length %(minlen)s characters not satisfied")
 pd.Limited._VM_MAXLEN_MSG = _(u"Maximal length %(maxlen)s characters exceeded")
 pd.Integer._VM_NONINTEGER_MSG = _(u"Not an integer")

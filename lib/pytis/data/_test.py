@@ -130,6 +130,10 @@ class Integer(_TypeCheck):
         self._test_validity(None, '+0L', 0L)
         self._test_validity(None, '1.1', None)
         self._test_validity(None, 'foo', None)
+        limited = pytis.data.Integer(minimum=5, maximum=8)
+        self._test_validity(limited, '3', None)
+        self._test_validity(limited, '5', 5)
+        self._test_validity(limited, '10', None)
 tests.add(Integer)
 
 
