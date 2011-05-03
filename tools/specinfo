@@ -1,0 +1,127 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2011 Brailcom, o.p.s.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+import collections
+import getopt
+import sys
+
+import pytis.util
+import config
+
+def find_specification(spec_name):
+    resolver = pytis.util.resolver()
+    pos = spec_name.rfind('.')
+    module_name = spec_name[:pos].replace('.', '/')
+    class_name = spec_name[pos+1:]
+    try:
+        spec = resolver.get_object(module_name, class_name)
+    except pytis.util.ResolverError:
+        sys.stderr.write("Specification not found: %s\n" % (spec_name,))
+        sys.exit(1)
+    return spec(resolver)
+
+def specification_info(spec):
+    info = {}
+    info['fields'] = spec.view_spec().fields()
+    info['actions'] = spec.view_spec().actions()
+    return info
+
+def print_info(info):
+    field_names = [f.id() for f in info['fields']]
+    field_names.sort()
+    for name in field_names:
+        sys.stdout.write('Field: %s\n' % (name,))
+    def enabled_action(action):
+        if isinstance(action, pytis.presentation.Action):
+            enabled = action.enabled()
+            if isinstance(enabled, collections.Callable):
+                try:
+                    enabled = enabled(None)
+                except Exception:
+                    enabled = True
+        elif isinstance(action, pytis.presentation.ActionGroup):
+            enabled = pytis.util.some(enabled_action, action.actions())
+        elif isinstance(action, (list, tuple,)):
+            enabled = pytis.util.some(enabled_action, action)
+        else:
+            enabled = True
+        return enabled
+    def print_action(action, indent=0):
+        indentation_string = ' '*indent
+        if isinstance(action, pytis.presentation.Action):
+            if enabled_action(action):
+                sys.stdout.write('%sAction: %s\n' % (indentation_string, action.id(),))
+        elif isinstance(action, pytis.presentation.ActionGroup):
+            if enabled_action(action):
+                sys.stdout.write('%sAction Group\n' % (indentation_string,))
+                for a in action.actions():
+                    print_action(a, indent=indent+1)
+        elif isinstance(action, (list, tuple,)):
+            if enabled_action(action):
+                sys.stdout.write('%sAction Sequence\n' % (indentation_string,))
+                for a in action:
+                    print_action(a, indent=indent+1)
+        else:
+            sys.stdout.write('%sUnknown action object: %s\n' % (indentation_string, action,))
+    for a in info['actions']:
+        print_action(a)
+
+def info(spec_name):
+    pos = spec_name.rfind('.')
+    sys.stdout.write('*** %s\n' % (spec_name[pos+1:],))
+    spec = find_specification(spec_name)
+    info = specification_info(spec)
+    print_info(info)
+
+def module_info(module_name):
+    resolver = pytis.util.resolver()
+    try:
+        module = resolver.get_module(module_name)
+    except pytis.util.ResolverFileError:
+        sys.stderr.write("Module not found: %s\n" % (module_name,))
+        sys.exit(1)
+    module_identifier = module_name.replace('/', '.')
+    names = []
+    for spec_attr in [o for o in dir(module)]:
+        spec = getattr(module, spec_attr)
+        if isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec.public:
+            spec_name = module_identifier + '.' + spec.__name__
+            names.append(spec_name)
+    names.sort()
+    for spec_name in names:
+        info(spec_name)
+
+def usage(optexception=None):
+    if optexception:
+        sys.stderr.write(optexception.msg)
+        sys.stderr.write('\n')
+    sys.stderr.write('usage: %s [ --config=CONFIG-FILE ] MODULE-NAME\n' % (sys.argv[0],))
+    sys.exit(1)
+
+def run():
+    try:
+        config.add_command_line_options(sys.argv)
+    except getopt.GetoptError as e:
+        usage(e)
+    if len(sys.argv) != 2:
+        usage()
+    module_info(sys.argv[1])
+
+if __name__ == '__main__':
+    run()
