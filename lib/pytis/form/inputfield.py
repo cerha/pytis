@@ -1012,9 +1012,9 @@ class NumericField(TextField, SpinnableField):
         if self._spec.slider() and not self._inline:
             box = wx.BoxSizer()
             slider = wx.Slider(self._parent, -1, style=wx.SL_HORIZONTAL,
-                                     minValue=self._type.minimum() or 0,
-                                     maxValue=self._type.maximum() is None and 100 or self._type.maximum(),
-                                     size=(200, 25))
+                               minValue=self._type.minimum() or 0,
+                               maxValue=self._type.maximum() is None and 100 or self._type.maximum(),
+                               size=(200, 25))
             wx_callback(wx.EVT_SCROLL, slider, self._on_slider)
             box.Add(result)
             box.Add(slider)
@@ -1027,14 +1027,14 @@ class NumericField(TextField, SpinnableField):
     def _on_slider(self, event):
         self._set_value(str(self._slider.GetValue()))
         
-    def _on_change(self, event=None):
-        super(NumericField, self)._on_change(event=event)
-        value = self._get_value()
+    def _on_idle(self, event):
+        super(NumericField, self)._on_idle(event)
         if self._slider:
-            try:
-                position = int(value)
-            except ValueError:
+            value = self._row[self._id].value()
+            if value is None or self._row.invalid_string(self._id):
                 position = self._slider.GetMin()
+            else:
+                position = int(value)
             self._slider.SetValue(position)
 
    
