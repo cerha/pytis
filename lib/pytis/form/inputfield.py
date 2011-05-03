@@ -1008,7 +1008,7 @@ class NumericField(TextField, SpinnableField):
     _SPIN_STEP = 1
 
     def _create_widget(self):
-        result = super(TextField, self)._create_widget()
+        result = super(NumericField, self)._create_widget()
         if self._spec.slider() and not self._inline:
             box = wx.BoxSizer()
             slider = wx.Slider(self._parent, -1, style=wx.SL_HORIZONTAL,
@@ -1028,7 +1028,7 @@ class NumericField(TextField, SpinnableField):
         self._set_value(str(self._slider.GetValue()))
         
     def _on_change(self, event=None):
-        super(TextField, self)._on_change(event=event)
+        super(NumericField, self)._on_change(event=event)
         value = self._get_value()
         if self._slider:
             try:
