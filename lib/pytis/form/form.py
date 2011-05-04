@@ -213,7 +213,36 @@ class FormProfile(pytis.presentation.Profile):
 
     def column_widths(self):
         return self._column_widths
+
+
+class FormSettings(object):
+    """Special profile class for storing profile independent form settings.
+
+    Profile independent settings are settings which don't change when the
+    current user profile is switched.  Thus these settings don't belong to any
+    particular profile, but are unique for each form.  This class has the same
+    basic interface as 'FormProfile' and thus can be saved/restored using the
+    'FormProfileManager'.  Otherwise it has nothing to do with form profiles.
+
+    """
+    PROFILE_ID = '__form_settings__'
     
+    def __init__(self, settings):
+        assert isinstance(settings, dict)
+        self._settings = settings
+        
+    def id(self):
+        return self.PROFILE_ID
+    
+    def name(self):
+        return 'Form Settings'
+    
+    def get(self, name, default=None):
+        return self._settings.get(name, default)
+
+    def clone(self, **kwargs):
+        return FormSettings(dict(self._settings, **kwargs))
+
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
@@ -387,6 +416,23 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
         """
         pass
+
+    def _update_saved_settings(self, **kwargs):
+        """Update saved form parameters independent on current profile."""
+        settings = profile_manager().load_profile(self._fullname(), FormSettings.PROFILE_ID)
+        if settings:
+            settings = settings.clone(**kwargs)
+        else:
+            settings = FormSettings(kwargs)
+        profile_manager().save_profile(self._fullname(), settings)
+    
+    def _saved_setting(self, param, default=None):
+        """Save form parameter independent on current profile."""
+        settings = profile_manager().load_profile(self._fullname(), FormSettings.PROFILE_ID)
+        if settings:
+            return settings.get(param, default)
+        else:
+            return default
         
     def _create_view_spec(self):
         t = time.time()

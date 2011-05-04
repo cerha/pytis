@@ -72,27 +72,33 @@ def run():
     for fullname in manager.list_fullnames(pattern=pattern):
         fullname_printed = False
         for profile_id in manager.list_profile_ids(fullname):
+            if profile_id == '__dualform__':
+                continue
             profile = manager.load_profile(fullname, profile_id)
-            state = profile._state
-            if name_matcher is None or name_matcher.match(state['_name']):
+            if isinstance(profile, pytis.form.FormProfile):
+                name, state_id = profile._state['_name'], profile._state['_id']
+            else:
+                name, state_id = profile.name(), profile.id()
+            if name_matcher is None or name_matcher.match(name):
                 if not fullname_printed:
                     print '\n' + fullname
                     fullname_printed = True
-                if isinstance(state['_name'], types.UnicodeType):
-                    name = state['_name'].encode('utf-8')
-                else:
-                    name = state['_name']
-                if isinstance(state['_id'], types.UnicodeType):
-                    state_id = state['_id'].encode('utf-8')
-                else:
-                    state_id = state['_id']
+                if isinstance(name, types.UnicodeType):
+                    name = name.encode('utf-8')
+                if isinstance(state_id, types.UnicodeType):
+                    state_id = state_id.encode('utf-8')
                 print '  * %s (%s):' % (state_id, name)
-                for key in ('filter', 'sorting', 'columns', 'grouping', 'folding', 'aggregations',
-                            'column_widths', 'group_by_columns', 'aggregation_columns'):
-                    value = profile._state['_'+key]
-                    indent = '\n        ' + ' ' * len(key)
-                    formatted = indent.join(pp.pformat(value).splitlines())
-                    print '    - %s: %s' % (key, formatted)
+                if isinstance(profile, pytis.form.FormProfile):
+                    state = profile._state
+                    for key in ('filter', 'sorting', 'columns', 'grouping', 'folding', 'aggregations',
+                                'column_widths', 'group_by_columns', 'aggregation_columns'):
+                        value = profile._state['_'+key]
+                        indent = '\n        ' + ' ' * len(key)
+                        formatted = indent.join(pp.pformat(value).splitlines())
+                        print '    - %s: %s' % (key, formatted)
+                else:
+                    for key, value in profile._settings.items():
+                        print '    - %s: %s' % (key, value)
 
 if __name__ == '__main__':
     run()
