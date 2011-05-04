@@ -831,7 +831,8 @@ class MultiForm(Form, Refreshable):
             
 
 class MultiSideForm(MultiForm):
-        
+    CALL_BINDING_SELECTED = 'CALL_BINDING_SELECTED'
+    
     class TabbedForm(object):
         def __init__(self, *args, **kwargs):
             self._binding = kwargs['binding']
@@ -901,6 +902,11 @@ class MultiSideForm(MultiForm):
                 # binding.name() is None for web forms.
                 if binding.name() is None or has_access(binding.name())]
     
+    def _on_page_change(self, event=None):
+        super(MultiSideForm, self)._on_page_change(event=event)
+        binding = self._forms[self._current_notebook_selection].binding()
+        self._run_callback(self.CALL_BINDING_SELECTED, binding)
+        
     def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.
 
@@ -954,9 +960,16 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _create_side_form(self, parent):
         form = MultiSideForm(parent, self._resolver, self._name, guardian=self,
                              main_form=self._main_form)
-        if self._selected_binding:
-            form.select_binding(self._selected_binding)
+        form.set_callback(MultiSideForm.CALL_BINDING_SELECTED, self._on_binding_selection)
+        selected_binding = self._selected_binding
+        if selected_binding is None:
+            selected_binding = self._saved_setting('binding')
+        if selected_binding:
+            form.select_binding(selected_binding)
         return form
+        
+    def _on_binding_selection(self, binding):
+        self._update_saved_settings(binding=binding.id())
         
     def _on_main_activation(self, alternate=False):
         if alternate:
