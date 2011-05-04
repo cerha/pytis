@@ -29,23 +29,6 @@ import pytis.output
 from pytis.form import *
 import wx
 
-class DualFormProfile(FormProfile):
-    """Special profile for storing dual form specific parameters.
-    
-    Dual forms actually don't have any user visible profiles, that the user
-    could switch etc.  They just store the internal state automatically
-    using profile manager.
-    
-    """
-    def __init__(self, id, sash_position):
-        assert isinstance(sash_position, int)
-        super(DualFormProfile, self).__init__(id, id)
-        self._sash_position = sash_position
-
-    def sash_position(self):
-        return self._sash_position
-
-
 class DualForm(Form, Refreshable):
     """Formulář složený ze dvou spolupracujících formulářů.
 
@@ -255,25 +238,32 @@ class DualForm(Form, Refreshable):
             active.focus()
 
     def _initial_sash_position(self, total_size):
+        saved_position = self._saved_setting('sash_position')
+        if saved_position:
+            if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
+                maximum = total_size.height
+            else:
+                maximum = total_size.width
+            return min(saved_position, maximum)
+        else:
+            return self._default_sash_position(total_size)
+
+    def _default_sash_position(self, total_size):
         def dimension(size):
             if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
                 return size.height
             else:
                 return size.width
-        profile = profile_manager().load_profile(self._fullname(), '__dualform__')
-        if profile and profile.sash_position():
-            return min(profile.sash_position(), dimension(total_size))
-        elif isinstance(self._main_form, EditForm):
+        if isinstance(self._main_form, EditForm):
             return min(dimension(wx.Size(*self._main_form.size())), dimension(total_size) - 200)
         elif isinstance(self._side_form, EditForm):
             return max(dimension(total_size) - dimension(wx.Size(*self._side_form.size())), 200)
         else:
-            r = self._view.sash_ratio()
+            r = self._default_sash_ratio()
             return dimension(wx.Size(total_size.width * r, total_size.height * r))
             
     def _on_sash_changed(self, event):
-        profile = DualFormProfile('__dualform__', sash_position=event.GetSashPosition())
-        profile_manager().save_profile(self._fullname(), profile)
+        self._update_saved_settings(sash_position=event.GetSashPosition())
         # Sometimes the form is not redrawn correctly...
         self._main_form.Refresh()
         self._active_form.focus()
@@ -954,9 +944,9 @@ class MultiBrowseDualForm(BrowseDualForm):
     def _initial_orientation(self):
         return Orientation.HORIZONTAL
         
-    def _initial_sash_position(self, size):
-        return size.height / 2 
-
+    def _default_sash_position(self, total_size):
+        return total_size.height / 2
+        
     def _create_main_form(self, parent, binding=None, **kwargs):
         self._selected_binding = binding
         return self.MainForm(parent, self._resolver, self._name, guardian=self, **kwargs)
