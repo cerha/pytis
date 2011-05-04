@@ -94,7 +94,11 @@ def print_info(info):
                     print_action(a, indent=indent+1)
         else:
             sys.stdout.write('%sUnknown action object: %s\n' % (indentation_string, action,))
-    for a in info['actions']:
+    actions = info['actions']
+    if False:
+        actions = list(actions)
+        actions.sort(key=lambda a: a.id())
+    for a in actions:
         print_action(a)
 
 def info(spec_name):
