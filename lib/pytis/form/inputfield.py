@@ -1037,6 +1037,15 @@ class NumericField(TextField, SpinnableField):
                 position = int(value)
             self._slider.SetValue(position)
 
+    def _enable(self):
+        super(NumericField, self)._enable()
+        if self._slider:
+            self._slider.Enable(True)
+        
+    def _disable(self):
+        super(NumericField, self)._disable()
+        if self._slider:
+            self._slider.Enable(False)
    
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
