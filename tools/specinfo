@@ -40,6 +40,7 @@ def specification_info(spec):
     info = {}
     info['fields'] = spec.view_spec().fields()
     info['actions'] = spec.view_spec().actions()
+    info['layout'] = spec.view_spec().layout()
     return info
 
 def print_info(info):
@@ -47,6 +48,20 @@ def print_info(info):
     field_names.sort()
     for name in field_names:
         sys.stdout.write('Field: %s\n' % (name,))
+    def print_layout(layout, indent=0):
+        indentation_string = ' '*indent
+        if isinstance(layout, pytis.presentation.GroupSpec):
+            sys.stdout.write('%s%s\n' % (indentation_string, layout.__class__.__name__,))
+            for item in layout.items():
+                print_layout(item, indent=indent+1)
+        elif isinstance(layout, basestring):
+            sys.stdout.write('%sLayout: %s\n' % (indentation_string, layout,))
+        else:
+            sys.stdout.write('%sUnknown layout object: %s\n' % (indentation_string, layout,))
+    layout = info['layout']
+    if isinstance(layout, pytis.presentation.LayoutSpec):
+        layout = layout.group()
+    print_layout(layout)
     def enabled_action(action):
         if isinstance(action, pytis.presentation.Action):
             enabled = action.enabled()
