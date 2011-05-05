@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2011 Brailcom, o.p.s.
+#
+# COPYRIGHT NOTICE
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import getopt
+import sys
+
+import psycopg2 as dbapi
+
+import pytis.data
+import config
+
+
+def db_connection():
+    connection_data = config.dbconnection
+    kwargs = {}
+    for option, accessor in (('user', pytis.data.DBConnection.user),
+                             ('password', pytis.data.DBConnection.password),
+                             ('database', pytis.data.DBConnection.database),
+                             ('host', pytis.data.DBConnection.host),
+                             ('port', pytis.data.DBConnection.port),
+                             ('sslmode', pytis.data.DBConnection.sslmode),
+                             ):
+        value = accessor(connection_data)
+        if value is not None:
+            kwargs[option] = value
+    connection = dbapi.connect(**kwargs)
+    return connection
+
+def view_names(cursor):
+    sys.stdout.write('View names...\n')
+    cursor.execute("select relname, relfilenode from pg_class c left join pg_namespace n on n.oid = c.relnamespace where relkind = 'v' and n.nspname <> 'pg_catalog' and n.nspname <> 'information_schema' and n.nspname !~ '^pg_toast' and pg_catalog.pg_table_is_visible(c.oid)")
+    return cursor.fetchall()
+
+def view_info(cursor, names):
+    sys.stdout.write('View info...\n')
+    info = []
+    for name, oid in names:
+        query = "select attname from pg_attribute where attrelid = '%s' and attnum > 0 and not attisdropped order by attname"
+        cursor.execute(query, (oid,))
+        columns = [row[0] for row in cursor.fetchall()]
+        query = "select ev_type, rulename, trim(trailing ';' from pg_get_ruledef(oid, true)) from pg_rewrite where ev_class = '%s' and rulename != '_RETURN' order by rulename"
+        cursor.execute(query, (oid,))
+        rules = cursor.fetchall()
+        query = "select pg_get_viewdef(%s, true)"
+        cursor.execute(query, (oid,))
+        source = cursor.fetchone()[0]
+        info.append((name, columns, rules, source,))
+    return info
+
+def view_groups(cursor, info):
+    sys.stdout.write('View grouping...\n')
+    groups = {}
+    for item in info:
+        name, columns, rules, source = item
+        key = (tuple(columns), tuple([r[0] for r in rules]),)
+        groups[key] = groups.get(key, []) + [item]
+    return groups.values()
+
+def output_groups(cursor, groups):
+    sys.stdout.write('Output...\n')
+    i = 0
+    for g in groups:
+        if len(g) > 1:
+            i += 1
+            for name, columns, rules, source in g:
+                f = open('VIEW_%03d_%s' % (i, name,), 'w')
+                for c in columns:
+                    f.write('%s\n' % (c,))
+                f.write('SOURCE:\n%s\n' % (source,))
+                for r in rules:
+                    f.write('%s: %s\n' % r[1:])
+                f.close()
+
+def usage(optexception=None):
+    if optexception:
+        sys.stderr.write(optexception.msg)
+        sys.stderr.write('\n')
+    sys.stderr.write('usage: %s [ --config=CONFIG-FILE ]\n' % (sys.argv[0],))
+    sys.exit(1)
+
+def run():
+    cursor = db_connection().cursor()
+    names = view_names(cursor)
+    info = view_info(cursor, names)
+    groups = view_groups(cursor, info)
+    output_groups(cursor, groups)
+
+if __name__ == '__main__':
+    try:
+        config.add_command_line_options(sys.argv)
+    except getopt.GetoptError as e:
+        usage(e)
+    run()
