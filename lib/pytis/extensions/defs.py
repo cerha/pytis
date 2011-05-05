@@ -353,7 +353,17 @@ class MenuChecker(object):
             if not success:
                 return errors + ["Nepodařilo se vytvořit datový objekt."]
             data.select()
-            row = data.fetchone()
+            try:
+                row = data.fetchone()
+            except AssertionError as e:
+                # Hack to avoid printing errors on non-existent image files
+                # referred from the database.
+                if (len(e.args) == 3 and
+                    isinstance(e.args[2], pytis.data.ValidationError) and
+                    e.args[2][0] == u'Neplatný grafický formát'):
+                    row = None
+                else:
+                    raise
             if row:
                 PresentedRow(fields, data, row)
         except Exception as e:
