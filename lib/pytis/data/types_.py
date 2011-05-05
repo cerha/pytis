@@ -605,7 +605,6 @@ class Integer(Number):
         
         """
         assert isinstance(string, basestring), ('Not a string', string)
-        error = None
         try:
             value = int(string)
         except:
@@ -698,7 +697,6 @@ class Float(Number):
         assert precision is None or \
                type(precision) == type(0) and precision >=0, \
                ('Invalid precision', precision)
-        error = None
         try:
             if locale_format:
                 import locale
@@ -1162,7 +1160,7 @@ class _CommonDateTime(Type):
             if self._utc:
                 dt = dt.astimezone(self.UTC_TZINFO)
             result = Value(self, dt), None
-        except Exception as e:
+        except Exception:
             result = None, self._validation_error(self.VM_DT_FORMAT)
         return result
     
