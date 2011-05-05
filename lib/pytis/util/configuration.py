@@ -32,7 +32,6 @@ import stat
 import string
 import sys
 import time
-import copy
 
 from pytis.util import *
 import pytis.data
@@ -1013,8 +1012,6 @@ class Configuration(object):
         """
         #stream.write('# -*- coding: utf-8 -*-\n\n')
         from textwrap import wrap
-        import pprint
-        pp = pprint.PrettyPrinter()
         for option in self.options(sort=True):
             if option.visible():
                 stream.write('# %s\n' % option.description())
