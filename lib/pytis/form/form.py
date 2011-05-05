@@ -968,7 +968,7 @@ class LookupForm(InnerForm):
                                         filter=filter, sorting=sorting, columns=columns,
                                         grouping=grouping)
         self._profiles, self._invalid_profiles = self._load_profiles()
-        initial_profile_id = self._view.profiles().default()
+        initial_profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
         if initial_profile_id:
             current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
         else:
@@ -1357,7 +1357,14 @@ class LookupForm(InnerForm):
         profile_manager().drop_profile(self._fullname(), profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
+
+    def _can_set_initial_profile(self):
+        return self._current_profile.id() != self._saved_setting('initial_profile')
         
+    def _cmd_set_initial_profile(self):
+        profile_id = self._current_profile.id()
+        self._update_saved_settings(initial_profile=profile_id)
+
     def _cmd_filter(self, condition=None):
         if condition:
             perform = True

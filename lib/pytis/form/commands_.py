@@ -105,6 +105,8 @@ Command(LookupForm, 'RELOAD_PROFILE',
         "Reinitialize the form to the last saved state of the current profile.")
 Command(LookupForm, 'RESET_PROFILE',
         "Discard all saved profile changes and load the original settings (only for predefined profiles)")
+Command(LookupForm, 'SET_INITIAL_PROFILE',
+        "Use the current profile as the initial profile on next form startup")
 Command(LookupForm, 'FILTER_BY_VALUE',
         "Vyfiltrování formuláře podle dané hodnoty (arg. 'column_id', 'value')")
 Command(LookupForm, 'JUMP',
