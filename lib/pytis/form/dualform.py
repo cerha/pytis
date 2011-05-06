@@ -213,16 +213,16 @@ class DualForm(Form, Refreshable):
             
     def _cleanup(self):
         try:
-            self._main_form.close(force=True)
-        except:
-            pass
-        try:
             self._side_form.close(force=True)
         except:
             pass
-        self._main_form = None
         self._side_form = None
         self._active_form = None
+        try:
+            self._main_form.close(force=True)
+        except:
+            pass
+        self._main_form = None
         try:
             self._splitter.Show(False)
             self._splitter.Close()
