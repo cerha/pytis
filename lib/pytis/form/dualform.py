@@ -24,8 +24,6 @@ způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 
 """
 
-import pytis.data
-import pytis.output
 from pytis.form import *
 import wx
 
