@@ -711,6 +711,8 @@ class MultiForm(Form, Refreshable):
         return True
             
     def _cleanup(self):
+        self._leave_form_requested = True
+        self._side_form._leave_form_requested = True
         try:
             nb = self._notebook
             nb.Show(False)
