@@ -106,7 +106,7 @@ class FormProfile(pytis.presentation.Profile):
                 return [something.export(**export_kwargs)]
             elif isinstance(something, pytis.data.WMValue):
                 return [something.value()]
-            elif isinstance(something, str):
+            elif isinstance(something, basestring):
                 return something
             else:
                 raise ProgramError("Unknown object in filter operator:", something)
