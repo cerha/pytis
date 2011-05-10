@@ -75,7 +75,7 @@ class FormProfile(pytis.presentation.Profile):
           column_widths -- dictionary of pixel widths of form columns keyed by
             column identifiers
 
-        All other arguments the sam as for the parent class.
+        All other arguments the same as for the parent class.
 
         """
         super(FormProfile, self).__init__(id, name, **kwargs)
@@ -128,8 +128,8 @@ class FormProfile(pytis.presentation.Profile):
             raise AttributeError("%r object has no attribute %r" % (type(self).__name__, name))
 
     def rename(self, name):
-        """Change the name of the profile to given 'name' (string)."""
-        self._name = name
+        """Change the name of the profile to given 'name' (unicode)."""
+        self._name = unicode(name)
 
     def set_filter(self, filter):
         """Change the filter of the profile to given value (pytis.data.Operator instance)."""
@@ -191,7 +191,7 @@ class FormProfile(pytis.presentation.Profile):
             try:
                 self._filter = unpack(self._filter)
             except Exception, e:
-                log(OPERATIONAL, "Unable to restore fitler for profile '%s':" % self._name,
+                log(OPERATIONAL, "Unable to restore filter for profile '%s':" % (self._name,),
                     (self._filter, str(e)))
                 return False
         # Check the column identifiers in all profile attributes (except for
