@@ -1087,7 +1087,7 @@ class _CommonDateTime(Type):
           format -- specifikace vstupního i výstupního formátu data a/nebo
             času, v podobě akceptované funkcí 'time.strftime()'
           mindate, maxdate -- omezení validity času
-          utc -- specifies, if timestamp in database is in UTC
+          utc -- specifies whether timestamp in the database is in UTC
 
         """
         assert isinstance(format, basestring), format
@@ -1185,7 +1185,7 @@ class _CommonDateTime(Type):
         """Return value corresponding to the current moment.
 
         The returned value is instance of a 'datetime' module class which is
-        used to represent interal values of the given pytis type.
+        used to represent internal values of the given pytis type.
 
         Arguments:
 
@@ -1406,6 +1406,10 @@ class Time(_CommonDateTime):
         if value:
             value = Value(value.type(), value.value().timetz())
         return value, error
+    
+    def timezone(self):
+        """Return 'datetime.tzinfo' object corresponding to the time zone."""
+        return self._timezone
 
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
@@ -1455,7 +1459,7 @@ class TimeInterval(Type):
         assert isinstance(value, datetime.timedelta), value
         seconds = value.days * 86400 + value.seconds
         return '%d:%02d:%02d' % (seconds/3600, (seconds%3600)/60, seconds%60,)
-
+    
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
 
@@ -1466,6 +1470,25 @@ class TimeInterval(Type):
         
         """
         return self.export(value)
+
+def date_and_time(date, time):
+    """Combine given 'date' and 'time' 'Value's into a 'datetime.datetime' return value.
+
+    Arguments:
+
+      date -- 'Value' instance of type 'Date' containing the date value
+      time -- 'Value' instance of type 'Time' containing the time value to
+        add to the date value
+
+    """
+    assert isinstance(date, Value) and isinstance(date.type(), Date), date
+    assert isinstance(time, Value) and isinstance(time.type(), Time), time
+    date_value = date.value()
+    time_value = time.value()
+    if time_value.tzinfo is None:
+        time_value = time_value.replace(tzinfo=time.type().timezone())
+    value = datetime.datetime.combine(date_value, time_value)
+    return value
 
 
 class Boolean(Type):

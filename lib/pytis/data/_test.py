@@ -312,6 +312,14 @@ class Date(_TypeCheck):
         self._test_validity(None, '01-02-29', None)
         self._test_validity(None, '2000-13-01', None)
         self._test_validity(None, '2001-02-29', None)
+    def test_date_and_time(self):
+        date_value = pytis.data.Value(self._test_instance, datetime.date(2001, 2, 3))
+        time_value = pytis.data.Value(pytis.data.Time(utc=True), datetime.time(12, 34, 56))
+        value = pytis.data.date_and_time(date_value, time_value)
+        assert value == datetime.datetime(2001, 2, 3, 12, 34, 56, tzinfo=pytis.data.DateTime.UTC_TZINFO)
+        time_value = pytis.data.Value(pytis.data.Time(utc=False), datetime.time(2, 4, 6))
+        value = pytis.data.date_and_time(date_value, time_value)
+        assert value == datetime.datetime(2001, 2, 3, 2, 4, 6, tzinfo=pytis.data.DateTime.LOCAL_TZINFO)
 tests.add(Date)
 
 class Time(_TypeCheck):
