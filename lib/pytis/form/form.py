@@ -181,6 +181,12 @@ class FormProfile(pytis.presentation.Profile):
             state = self._state
             self._state = None
             self.__dict__.update(state)
+            # Hack to translate old stored Latin 2 string names to unicodes
+            if isinstance(self._name, str):
+                try:
+                    self._name = str(self._name).decode('utf-8')
+                except UnicodeDecodeError:
+                    self._name = str(self._name).decode('iso-8859-2')
         if self._filter:
             try:
                 self._filter = unpack(self._filter)
