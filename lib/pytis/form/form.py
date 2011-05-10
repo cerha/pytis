@@ -151,6 +151,11 @@ class FormProfile(pytis.presentation.Profile):
                     raise Exception("Invalid number of operator arguments: %s" % repr(packed_args))
                 if isinstance(packed_args[1], list):
                     col, val = packed_args[0], packed_args[1][0]
+                    if isinstance(val, str):
+                        try:
+                            val = val.decode('utf-8')
+                        except UnicodeDecodeError:
+                            val = val.decode('iso-8859-2')
                     column = data.find_column(col)
                     if column is None:
                         raise Exception("Unknown column '%s'" % col)
@@ -184,9 +189,9 @@ class FormProfile(pytis.presentation.Profile):
             # Hack to translate old stored Latin 2 string names to unicodes
             if isinstance(self._name, str):
                 try:
-                    self._name = str(self._name).decode('utf-8')
+                    self._name = self._name.decode('utf-8')
                 except UnicodeDecodeError:
-                    self._name = str(self._name).decode('iso-8859-2')
+                    self._name = self._name.decode('iso-8859-2')
         if self._filter:
             try:
                 self._filter = unpack(self._filter)
