@@ -246,6 +246,9 @@ class DualForm(Form, Refreshable):
         else:
             return self._default_sash_position(total_size)
 
+    def _default_sash_ratio(self):
+        return 0.5
+
     def _default_sash_position(self, total_size):
         def dimension(size):
             if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
