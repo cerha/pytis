@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2001, 2002, 2003, 2005, 2009 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2005, 2009, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ from pytis.extensions import *
 
        
 class Price(pytis.data.Float):
-    def __init__(self, not_null=True):
-        super(Price, self).__init__(precision=2, not_null=not_null)
+    def __init__(self, not_null=True, precision=2, **kwargs):
+        super(Price, self).__init__(precision=precision, not_null=not_null, **kwargs)
     def default_value(self):
         value, error = self.validate('0')
         if error is not None:
