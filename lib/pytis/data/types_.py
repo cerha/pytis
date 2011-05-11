@@ -1042,7 +1042,13 @@ class _LocalTimezone(datetime.tzinfo):
         return time.tzname[self._dst(dt)]
 
     def _dst(self, dt):
-        stamp = time.mktime((dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.weekday(), 0, 0))
+        try:
+            # mktime is not guaranteed to work for all dates and overflows were
+            # observed for reasonable dates on an 32-bit system
+            stamp = time.mktime((dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
+                                 dt.weekday(), 0, 0))
+        except:
+            return False
         localtime = time.localtime(stamp)
         return localtime.tm_isdst > 0
 
