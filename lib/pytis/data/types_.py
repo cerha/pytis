@@ -1353,9 +1353,9 @@ class Date(DateTime):
             value = Value(value.type(), value.value().date())
         return value, error
 
-    def _export(self, value, local=True):
+    def _export(self, value, local=True, **kwargs):
         assert isinstance(value, datetime.date), value
-        return _CommonDateTime._export(self, value)
+        return _CommonDateTime._export(self, value, **kwargs)
 
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
@@ -1428,11 +1428,11 @@ class Time(_CommonDateTime):
         """
         return self.export(value, format='%H:%M:%S')
 
-    def _export(self, value, local=False):
+    def _export(self, value, local=False, **kwargs):
         assert isinstance(value, datetime.time), value
         if local and self._utc or not local and not self._utc:
             raise Exception("Can't mix UTC and local time zones in Time type")
-        return super(Time, self)._export(value)
+        return super(Time, self)._export(value, **kwargs)
 
     @classmethod
     def _datetime(class_, tz):
