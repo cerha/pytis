@@ -248,7 +248,7 @@
 (defun pytis-class-types ()
   (interactive)
   (goto-char (point-min))
-  (while (re-search-forward "type=pd.[A-Za-z]+(" nil t)
+  (while (re-search-forward "type=\\(p[de]\\|wiking\\)\\.[A-Za-z]+(" nil t)
     (backward-char)
     (let ((beg (point)))
       (forward-sexp)
