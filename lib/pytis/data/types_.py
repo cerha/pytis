@@ -1171,7 +1171,7 @@ class _CommonDateTime(Type):
         return result
     
     def _export(self, value, local=True, format=None):
-        return value.strftime(self._format)
+        return value.strftime(format or self._format)
 
     @classmethod
     def now(class_, **kwargs):
@@ -1270,7 +1270,7 @@ class DateTime(_CommonDateTime):
                 value, error = None, self._validation_error(self.VM_DT_AGE)
         return value, error
 
-    def _export(self, value, local=True):
+    def _export(self, value, local=True, format=None):
         """Stejné jako v předkovi až na klíčované argumenty.
 
         Arguments:
@@ -1284,7 +1284,7 @@ class DateTime(_CommonDateTime):
             value = value.astimezone(self.LOCAL_TZINFO)
         else:
             value = value.astimezone(self.UTC_TZINFO)
-        return super(DateTime, self)._export(value)
+        return super(DateTime, self)._export(value, format=format)
 
     @classmethod
     def _datetime(class_, tz):
