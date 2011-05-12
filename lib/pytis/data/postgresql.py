@@ -1062,9 +1062,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             elif type_class_ == Float and 'precision' not in type_kwargs:
                 spec = int(size_string)
                 precision = (spec & 0xFFFF) - 4
-                if precision < 0 or precision > 100:
-                    precision = None
-                type_kwargs['precision'] = precision
+                if precision >= 0 and precision <= 100:
+                    type_kwargs['precision'] = precision
             elif type_class_ == Integer and serial:
                 type_class_ = Serial
             if ctype:

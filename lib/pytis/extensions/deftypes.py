@@ -22,10 +22,6 @@ from pytis.extensions import *
        
 class Price(pytis.data.Float):
     def __init__(self, not_null=True, precision=2, **kwargs):
-        if precision is None:
-            # Otherwise Price types specified in Fields as classes, not
-            # instances, are displayed with precision=6 for unknown reasons.
-            precision = 2
         super(Price, self).__init__(precision=precision, not_null=not_null, **kwargs)
     def default_value(self):
         value, error = self.validate('0')
