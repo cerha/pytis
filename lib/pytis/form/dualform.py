@@ -906,6 +906,8 @@ class MultiSideForm(MultiForm):
                 if binding.name() is None or has_access(binding.name())]
     
     def _on_page_change(self, event=None):
+        if self._leave_form_requested:
+            return
         super(MultiSideForm, self)._on_page_change(event=event)
         binding = self._forms[self._current_notebook_selection].binding()
         self._run_callback(self.CALL_BINDING_SELECTED, binding)
