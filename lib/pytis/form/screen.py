@@ -2210,7 +2210,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         return ctrl
     elif format == TextFormat.WIKI:
         html = lcg_to_html(content)
-    elif format == TextFormat.WIKI:
+    elif format == TextFormat.HTML:
         if isinstance(content, unicode):
             content = content.encode('utf-8')
         html = ('<html>'
