@@ -1188,7 +1188,7 @@ class BugReport(GenericDialog):
         label = self._button_label(result)
         if label == self._EXIT_LABEL:
             result = None
-        elif label == self._IGNORE_LABEL:
+        elif label == self._IGNORE_LABEL or label is None:
             result = ''
         elif label == self._REPORT_LABEL:
             if isinstance(self._traceback, wx.TextCtrl):
