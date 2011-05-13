@@ -160,7 +160,7 @@
     ("Text" "pytis.presentation")
     ("has_access" "pytis.form")
     ("new_record" "pytis.form")
-    ("run_cb" "pytis.form")
+    ("run_cb" "pytis.extensions")
     ("run_dialog" "pytis.form")
     ("run_procedure" "pytis.form")
     ("delete_record_question" "pytis.form")
