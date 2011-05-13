@@ -1108,6 +1108,45 @@ def compare_objects(o1, o2):
             return cmp(o1, o2)
 
 
+def less(o1, o2):
+    """Similar to '<' operator but handles 'None' values.
+
+    Arguments:
+
+      o1, o2 -- objects to compare
+
+    If 'o2' is 'None', return False.
+    Else if 'o1' is 'None', return True.
+    Else return the result of 'o1 < o2'.
+    
+    """
+    if o2 is None:
+        return False
+    if o1 is None:
+        return True
+    return o1 < o2
+
+def less_equal(o1, o2):
+    """Similar to '<=' operator but handles 'None' values.
+
+    Arguments:
+
+      o1, o2 -- objects to compare
+
+    If 'o1' is None and 'o2' is 'None', return True.
+    Else if 'o2' is 'None', return False.
+    Else if 'o1' is 'None', return True.
+    Else return the result of 'o1 <= o2'.
+    
+    """
+    if o2 is None:
+        return o1 is None
+    if o1 is None:
+        return True
+    return o1 <= o2
+
+
+
 def compare_attr(self, other, attributes):
     """Vrať celkový výsledek porovnání atributů objektů 'self' a 'other'.
 
