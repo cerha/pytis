@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pwd
 import re
 import rpyc
 import subprocess
@@ -57,11 +58,12 @@ _connection = None
 def _request(request, *args, **kwargs):
     global _connection
     target_ip = nx_ip()
+    user_name = pwd.getpwuid(os.getuid())[0]
     try:
         _connection.root.request
     except:
         _connection = rpyc.connect('localhost', config.rpc_local_port)
-    return _connection.root.request(target_ip, request, *args, **kwargs)
+    return _connection.root.request(target_ip, user_name, request, *args, **kwargs)
     
 def get_clipboard_text():
     try:

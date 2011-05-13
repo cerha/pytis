@@ -29,10 +29,10 @@ def say(target_ip, request, *arguments):
     else:
         arguments = [a.decode('utf-8') for a in arguments]
     connection = rpyc.connect('localhost', config.rpc_local_port)
-    result = connection.root.request(target_ip, request, *arguments)
+    result = connection.root.request(target_ip, None, request, *arguments)
     if result is not None:
-        sys.stderr.write(result.encode('utf-8'))
-        sys.stderr.write('\n')
+        sys.stdout.write(unicode(result).encode('utf-8'))
+        sys.stdout.write('\n')
 
 def usage(exit_code=0):
     sys.stdout.write('usage: %s IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
@@ -41,6 +41,8 @@ def usage(exit_code=0):
     launch_file { FILE-NAME | URL }
     get_clipboard_text
     set_clipboard_text TEXT
+    echo TEXT
+    user_port USERNAME
 """)
     sys.exit(exit_code)
 

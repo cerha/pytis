@@ -25,19 +25,28 @@ import config
 
 logging_level = logging.INFO
 
+class ProxyException(Exception):
+    pass
+
 class ProxyService(rpyc.Service):
 
     def __init__(self, *args, **kwargs):
         rpyc.Service.__init__(self, *args, **kwargs)
         self._connection = None
 
-    def exposed_request(self, target_ip, request, *args, **kwargs):
+    def exposed_request(self, target_ip, user_name, request, *args, **kwargs):
         try:
-            getattr(self._connection.root, request)
+            getattr(self._connection.root, 'echo')
         except:
             self._connection = rpyc.ssl_connect(target_ip, config.rpc_remote_port,
                                                 keyfile=config.rpc_key_file,
                                                 certfile=config.rpc_certificate_file)
+        if user_name is None:
+            port = config.rpc_remote_port
+        else:
+            port = getattr(self._connection.root, 'user_port')(user_name)
+            if port is None:
+                raise ProxyException("User server unavailable", user_name)
         return getattr(self._connection.root, request)(*args, **kwargs)
 
 class ProxyThreadedServer(rpyc.utils.server.ThreadedServer):
