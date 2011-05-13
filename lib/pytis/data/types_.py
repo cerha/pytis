@@ -1187,7 +1187,7 @@ class _CommonDateTime(Type):
         """
         type_ = class_(**kwargs)
         tz = type_._timezone
-        return Value(type, class_.datetime(tz=tz))
+        return Value(type_, class_.datetime(tz=tz))
 
     @classmethod
     def datetime(class_, tz=None):
