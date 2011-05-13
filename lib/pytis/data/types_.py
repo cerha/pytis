@@ -1134,7 +1134,7 @@ class _CommonDateTime(Type):
         """Deprecated.  Use 'utc' instead."""
         return self.utc()
         
-    def _validate(self, string, format=None, local=True):
+    def _validate(self, string, format=None, local=None):
         """Stejné jako v předkovi až na klíčované argumenty.
 
         Argumenty:
@@ -1142,13 +1142,16 @@ class _CommonDateTime(Type):
           string -- stejné jako v předkovi
           format -- požadovaný formát hodnoty 'string', ve tvaru požadovaném
             metodou '__init__()'
-          local -- pravdivé právě když zadaná hodnota je v lokálním čase;
-            v opačném případě je v UTC
+          local -- if true, handle the given value as a local time value; if
+            false, handle it as a UTC value; if 'None' handle it according to
+            utc flag of the type
           
         """
         assert isinstance(string, basestring)
         if format is None:
             format = self._format
+        if local is None:
+            local = (not self._utc)
         # Využití `strptime' je nejjednodušší řešení.  GNU `strptime' je
         # dostatečně tolerantní vůči nadbytečným mezerám atd., takže by jeho
         # použitím neměl vzniknout problém, pokud nehodláme software provozovat
