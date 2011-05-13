@@ -96,7 +96,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
     assert isinstance(subject, basestring)
     assert isinstance(msg, basestring)
     def get_utf8_argument(arg):
-        if isinstance(arg, basestring):
+        if isinstance(arg, str):
             try:
                 arg = unicode(arg, charset)
             except:
