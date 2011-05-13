@@ -707,8 +707,8 @@ class InputNumeric(InputDialog):
         self._integer_width = integer_width
         # Zjištění desetinného oddělovače a oddělovače tísíců
         import locale
-        self._decimal_point = locale.localeconv()['decimal_point']
-        self._thousands_sep = locale.localeconv()['thousands_sep']
+        self._decimal_point = locale.localeconv()['decimal_point'].decode('utf-8')
+        self._thousands_sep = locale.localeconv()['thousands_sep'].decode('utf-8')
         self._limited = not (self._min_value is None and self._max_value is None)
 
     def _create_content(self, sizer):
