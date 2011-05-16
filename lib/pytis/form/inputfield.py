@@ -1512,6 +1512,10 @@ class ListField(GenericCodebookField):
         self._last_set_invalid_value = None
         return list
 
+    def _change_callback(self):
+        self._reload_enumeration()
+        super(ListField, self)._change_callback()
+        
     def _on_select(self, event):
         self._list.SetItemState(event.GetIndex(), 0, wx.LIST_STATE_SELECTED)
 
