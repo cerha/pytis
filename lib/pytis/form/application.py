@@ -731,7 +731,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     spec = resolver().get(name, 'view_spec')
                     if binding is None:
                         for b in spec.bindings():
-                            if has_access(b.name()):
+                            binding_name = b.name()
+                            if binding_name is None or has_access(binding_name):
                                 return True
                         return False
                     else:
