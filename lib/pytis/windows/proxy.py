@@ -32,22 +32,34 @@ class ProxyService(rpyc.Service):
 
     def __init__(self, *args, **kwargs):
         rpyc.Service.__init__(self, *args, **kwargs)
-        self._connection = None
+        self._connections = {}
+
+    def _new_pytis_connection(self, ip, port):
+        return rpyc.ssl_connect(ip, port, keyfile=config.rpc_key_file,
+                                certfile=config.rpc_certificate_file)
 
     def exposed_request(self, target_ip, user_name, request, *args, **kwargs):
-        try:
-            getattr(self._connection.root, 'echo')
-        except:
-            self._connection = rpyc.ssl_connect(target_ip, config.rpc_remote_port,
-                                                keyfile=config.rpc_key_file,
-                                                certfile=config.rpc_certificate_file)
+        master_port = config.rpc_remote_port
+        master_connection = self._connections.get(target_ip, master_port)
         if user_name is None:
-            port = config.rpc_remote_port
+            connection = master_connection
+            port = master_port
         else:
-            port = getattr(self._connection.root, 'user_port')(user_name)
-            if port is None:
-                raise ProxyException("User server unavailable", user_name)
-        return getattr(self._connection.root, request)(*args, **kwargs)
+            try:
+                port = getattr(master_connection.root, 'user_port')(user_name)
+            except:
+                master_connection = self._connections[master_port] = \
+                  self._new_pytis_connection(target_ip, master_port)
+                port = getattr(master_connection.root, 'user_port')(user_name)
+                if port is None:
+                    raise ProxyException("User server unavailable", user_name)
+            connection = self._connections.get(port)
+        try:
+            remote_method = getattr(connection.root, request)
+        except:
+            connection = self._connections[port] = self._new_pytis_connection(target_ip, port)
+            remote_method = getattr(connection.root, request)
+        return remote_method(*args, **kwargs)
 
 class ProxyThreadedServer(rpyc.utils.server.ThreadedServer):
 
