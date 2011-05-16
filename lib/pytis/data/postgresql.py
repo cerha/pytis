@@ -1545,7 +1545,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             function, args = op_args[0], op_args[1:]
             string_args = []
             for a in args:
-                if isinstance(a, str):
+                if isinstance(a, basestring):
                     string_args.append(colarg(a)[0])
                 elif isinstance(a, Value):
                     string_args.append(self._pg_value(a))
