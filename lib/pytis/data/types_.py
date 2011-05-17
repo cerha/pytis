@@ -2341,8 +2341,16 @@ class _Value(object):
             if res:
                 return res
             else:
-                #return compare_objects(self.value(), other.value())
-                return cmp(self.value(), other.value())
+                # Beware, datetime instances can't be compared with None
+                v1, v2 = self.value(), other.value()
+                if v1 is None and v2 is None:
+                    return 0
+                elif v1 is None:
+                    return -1
+                elif v2 is None:
+                    return 1
+                else:
+                    return cmp(v1, v2)
         else:
             return compare_objects(self, other)
 
