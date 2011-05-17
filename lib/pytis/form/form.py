@@ -1251,6 +1251,8 @@ class LookupForm(InnerForm):
         state.
 
         """
+        # BEWARE!  This method is overriden in ListForm without calling the
+        # super class method.
         self._apply_profile_parameters(profile)
         self._init_select(async_count=False)
         self.select_row(self._current_key())
