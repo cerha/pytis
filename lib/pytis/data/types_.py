@@ -1253,16 +1253,21 @@ class DateTime(_CommonDateTime):
         super(DateTime, self).__init__(format=format, utc=utc, **kwargs)
         self._mindate = mindate
         self._maxdate = maxdate
+        # Python strftime can work only with years >= 1900
+        min_allowed_date = datetime.datetime(1900, 1, 1, tzinfo=self.UTC_TZINFO)
         if mindate:
             try:
                 self._mindate = datetime.datetime.strptime(mindate, self.SQL_FORMAT)
             except:
                 raise ProgramError('Bad value for mindate', mindate, self.SQL_FORMAT)
+            self._mindate = min(self._min_date, min_allowed_date)
+        else:
+            self._mindate = min_allowed_date
         if maxdate:
             try:
                 self._maxdate = datetime.datetime.strptime(maxdate, self.SQL_FORMAT)
             except:
-                raise ProgramError('Bad value for maxdate', maxdate)                
+                raise ProgramError('Bad value for maxdate', maxdate)
 
     def _validate(self, *args, **kwargs):
         value, error = super(DateTime, self)._validate(*args, **kwargs)
