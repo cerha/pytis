@@ -1710,7 +1710,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._arguments is not None:
             for i in range(len(self._arguments)):
                 b = self._arguments[i]
-                arg_value = arguments.get(b.id(), b.type().default_value())
+                type_ = b.type()
+                if not isinstance(type_, Type):
+                    type_ = type_()
+                arg_value = arguments.get(b.id(), type_.default_value())
                 args['__arg_%d' % (i+1,)] = self._pg_value(arg_value)
     
     def _pg_row (self, key_value, columns, transaction=None, supplement='',
