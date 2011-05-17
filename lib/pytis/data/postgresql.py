@@ -2709,10 +2709,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             result = "'%s'" % (value.type().export(v),)
         elif is_anystring(v):
             result = "'%s'" % (pg_escape(v),)
+        # datetime strftime works only for years >= 1900, so we have to use
+        # "manual" export
         elif isinstance(v, datetime.datetime):
-            result = "'%s'" % (v.strftime('%Y-%m-%d %H:%M:%S'),)
+            result = "'%d-%02d-%02d %02d:%02d:%02d'" % (v.year, v.month, v.day, v.hour, v.minute, v.second,)
         elif isinstance(v, datetime.date):
-            result = "'%s'" % (v.strftime('%Y-%m-%d'),)
+            result = "'%d-%02d-%02d'" % (v.year, v.month, v.day,)
         elif isinstance(v, datetime.time):
             result = "'%s'" % (v.strftime('%H:%M:%S'),)
         elif isinstance(v, datetime.timedelta):
