@@ -218,6 +218,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
+        self._editors = []
+        self._table = None
         self._grid = g = wx.grid.Grid(self)
         self._table = table = \
           _grid.ListTable(self, self._data, self._row, self._columns, self._lf_select_count_,
@@ -233,8 +235,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g.SetLabelBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
         g.SetLabelFont(g.GetFont()) # Use standard font instead of bold.
         self._row_height = row_height = dlg2px(g, 0, 10).GetHeight()
-        self._label_height = label_height = dlg2px(g, 0, 12).GetHeight()
-        self._editors = []
+        self._label_height = dlg2px(g, 0, 12).GetHeight()
         self._init_col_attr()
         self._update_colors()
         self._update_label_height()
@@ -1483,7 +1484,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Musíme tabulce zrušit datový objekt, protože jinak do něj bude šahat
             # i po kompletním uzavření starého gridu (!!) a rozhodí nám tak data
             # v novém gridu.
-            self._table.close()
+            if self._table is not None:
+                self._table.close()
 
     def _cleanup_data(self):
         self._data.remove_callback_on_change(self.on_data_change)
