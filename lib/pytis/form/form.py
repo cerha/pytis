@@ -83,6 +83,7 @@ class FormProfile(pytis.presentation.Profile):
         self._aggregation_columns = aggregation_columns
         self._column_widths = column_widths or {}
         self._state = None
+        self._valid = True
         
     def __getstate__(self):
         # We prefer saving the condition in our custom format, since its safer
@@ -120,6 +121,7 @@ class FormProfile(pytis.presentation.Profile):
         # Don't restore the state here, to avoid accessing any attributes
         # before validation (see also __getattr__).
         self._state = state
+        self._valid = False
 
     def __getattr__(self, name):
         if self._state is not None:
@@ -135,6 +137,10 @@ class FormProfile(pytis.presentation.Profile):
         """Change the filter of the profile to given value (pytis.data.Operator instance)."""
         self._filter = filter
 
+    def valid(self):
+        """Return True if the profile is valid or false if invalid."""
+        return self._valid
+        
     def validate(self, view, data):
         """Validate the instance after loading (see the class docstring for more information)."""
         # NOT is not allowed!
@@ -198,7 +204,8 @@ class FormProfile(pytis.presentation.Profile):
             except Exception, e:
                 log(OPERATIONAL, "Unable to restore filter for profile '%s':" % (self._name,),
                     (self._filter, str(e)))
-                return False
+                self._valid = False
+                return
         # Check the column identifiers in all profile attributes (except for
         # filters, which are checked above)
         for attr, getcol in (('_columns', lambda x: x),
@@ -213,8 +220,10 @@ class FormProfile(pytis.presentation.Profile):
                     if view.field(col) is None:
                         log(OPERATIONAL, "Unknown column '%s' in %s of profile '%s':" % \
                                 (col, attr[1:], self._name))
-                        return False
-        return True
+                        self._valid = False
+                        return
+        self._valid = True
+        return
 
     def group_by_columns(self):
         return self._group_by_columns
@@ -978,7 +987,7 @@ class LookupForm(InnerForm):
         self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"),
                                         filter=filter, sorting=sorting, columns=columns,
                                         grouping=grouping)
-        self._profiles, self._invalid_profiles = self._load_profiles()
+        self._profiles = self._load_profiles()
         initial_profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
         if initial_profile_id:
             current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
@@ -1054,15 +1063,6 @@ class LookupForm(InnerForm):
     def _current_arguments(self):
         return {}
 
-    def _on_idle(self, event):
-        if super(LookupForm, self)._on_idle(event):
-            return True
-        if self._invalid_profiles:
-            profiles = self._invalid_profiles
-            self._invalid_profiles = []
-            self._delete_invalid_profiles(profiles)
-        return False
-        
     def _init_data_select(self, data, async_count=False):
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
@@ -1199,27 +1199,22 @@ class LookupForm(InnerForm):
         for profile in (self._default_profile,) + tuple(self._view.profiles()):
             custom = manager.load_profile(fullname, profile.id())
             if custom:
-                if custom.validate(self._view, self._data):
-                    # Force the filter of system profiles to the filter from
-                    # specification because it often contains dynamic
-                    # conditions, such as EQ('date', now()) which are destroyed
-                    # when saved (the saved condition would be EQ('date',
-                    # '2011-03-01') for example).  That's also why filters of
-                    # system profiles are not editable.
-                    custom.set_filter(profile.filter())
-                    profile = custom
-                else:
-                    invalid_profiles.append(custom)
+                custom.validate(self._view, self._data)
+                # Force the filter of system profiles to the filter from
+                # specification because it often contains dynamic
+                # conditions, such as EQ('date', now()) which are destroyed
+                # when saved (the saved condition would be EQ('date',
+                # '2011-03-01') for example).  That's also why filters of
+                # system profiles are not editable.
+                custom.set_filter(profile.filter())
+                profile = custom
             profiles.append(profile)
         for profile_id in manager.list_profile_ids(fullname):
             if profile_id.startswith(self._USER_PROFILE_PREFIX):
                 profile = manager.load_profile(fullname, profile_id)
-                if profile:
-                    if profile.validate(self._view, self._data):
-                        profiles.append(profile)
-                    else:
-                        invalid_profiles.append(profile)
-        return profiles, invalid_profiles
+                profile.validate(self._view, self._data)
+                profiles.append(profile)
+        return profiles
 
     def _apply_profile_parameters(self, profile):
         """Set the form state attributes according to given 'Profile' instance.
@@ -1287,20 +1282,22 @@ class LookupForm(InnerForm):
                 return True
         return False
 
-    def _delete_invalid_profiles(self, profiles):
-        # If the profile is not deleted, it is not used in the current form
-        # anyway.  But the form will attempt to load it again next time.
-        for profile in profiles:
-            if run_dialog(Question, icon=Question.ICON_ERROR,
-                          title=_(u"Neplatný profil"),
-                          message=_(u"Uživatelský profil \"%s\" je neplatný.\n"
-                                    u"Pravděpodobně došlo ke změně definice náhledu\n"
-                                    u"a uložený profil již nelze použít.\n\n"
-                                    u"Přejete si profil smazat?") % profile.name()):
-                profile_manager().drop_profile(self._fullname(), profile.id())
-    
     def _cmd_apply_profile(self, index):
-        self._apply_profile(self._profiles[index])
+        profile = self._profiles[index]
+        if isinstance(profile, FormProfile) and not profile.valid():
+            keep, remove = (_(u"Ponechat"), _(u"Odstranit"))
+            msg = _(u"Uživatelský profil \"%s\" je neplatný.\n"
+                    u"Pravděpodobně došlo ke změně definice náhledu a uložený\n"
+                    u"profil nyní nelze použít. Profil můžete buďto odstranit,\n"
+                    u"nebo ponechat a požádat správce aplikace o jeho obnovení."
+                    ) % profile.name()
+            answer = run_dialog(MultiQuestion, title=_(u"Neplatný profil"), message=msg,
+                                icon=Question.ICON_ERROR, buttons=(keep, remove), default=keep)
+            if answer == remove:
+                self._profiles.remove(profile)
+                profile_manager().drop_profile(self._fullname(), profile.id())
+        else:
+            self._apply_profile(profile)
         self.focus()
 
     def _cmd_save_new_profile(self, name):

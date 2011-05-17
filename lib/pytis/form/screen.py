@@ -1508,7 +1508,10 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         for i, profile in enumerate(profiles):
             if profile.id().startswith('_user_profile_') and first_user_profile is None:
                 first_user_profile = i
-            self.InsertStringItem(i, profile.name())
+            name = profile.name()
+            if isinstance(profile, FormProfile) and not profile.valid():
+                name += ' '+ _(u"(neplatný)")
+            self.InsertStringItem(i, name)
             self.SetItemData(i, i)
             if profile is current:
                 self.Select(i)
