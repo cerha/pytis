@@ -595,7 +595,7 @@ class Profile(object):
         return self._folding
 
 
-class Profiles(tuple):
+class Profiles(list):
     """A sequence of form profiles with an optional specification of the default profile.
 
     Profiles can be passed as an ordinary sequence to 'ViewSpec' constructor's
@@ -607,7 +607,7 @@ class Profiles(tuple):
     _ID_MATCHER = re.compile('[a-z0-9_]+')
     
     def __new__(cls, *args, **kwargs):
-        return tuple.__new__(cls, args)
+        return list.__new__(cls, args)
     
     def __init__(self, *profiles, **kwargs):
         """Arguments:
@@ -624,7 +624,7 @@ class Profiles(tuple):
                 profile_ids.append(p.id())
             assert not kwargs
             assert default is None or default in profile_ids, default
-        super(Profiles, self).__init__(*profiles)
+        super(Profiles, self).__init__(profiles)
         self._default = default
 
     def default(self):
