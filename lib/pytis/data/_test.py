@@ -307,6 +307,7 @@ class Date(_TypeCheck):
         self._test_validity(None, '2999-12-31', datetime.date(2999,12,31))
         self._test_validity(None, '  1999-01-01    ', datetime.date(1999,1,1))
         self._test_validity(None, '1999-01-01', datetime.date(1999,1,1))
+        self._test_validity(None, '1900-01-01', datetime.date(1900,1,1))
         self._test_validity(None, '1999-01-01 23:59', None)
         self._test_validity(None, '1999-01-01 23:59:00', None)
         self._test_validity(None, '01-02-29', None)

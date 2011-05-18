@@ -1254,7 +1254,7 @@ class DateTime(_CommonDateTime):
         self._mindate = mindate
         self._maxdate = maxdate
         # Python strftime can work only with years >= 1900
-        min_allowed_date = datetime.datetime(1900, 1, 1, tzinfo=self.UTC_TZINFO)
+        min_allowed_date = datetime.datetime(1900, 1, 1, tzinfo=self.LOCAL_TZINFO)
         if mindate:
             try:
                 self._mindate = datetime.datetime.strptime(mindate, self.SQL_FORMAT)
