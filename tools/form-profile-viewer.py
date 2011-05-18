@@ -39,7 +39,9 @@ Usage: %s [options] [username [fullname_pattern [profile_name_pattern]]]
 
   Options:
 
-    --validate: If supplied, the profiles will be validated.
+    --validate: If supplied, the profiles will be validated.  You may need to
+      set up the Python path and pytis defs dir in this case so that the
+      specifications may be loaded correctly.
 
     --invalid:  If supplied, only invalid profiles will printed (implies --validate).
 
