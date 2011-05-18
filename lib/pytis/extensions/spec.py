@@ -311,7 +311,47 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     else:
         formatter.printdirect()
 
+def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
+               charset='UTF-8', **kwargs):
+    """Tiskni specifikaci pomocí příkazu config.printing_command nebo ulož do output_file.
 
+    Argumenty:
+
+      spec -- název specifikace pro PrintResolver
+      print_spec -- název tiskové specifikace pro pytis.output.Formatter
+      row -- řádek s daty pro PrintResolver
+      to -- adresát
+      from_ -- adresa odesílatele
+      subject -- subject emailu
+      msg -- tělo emailu
+      filename -- název pro soubor s přílohou; pokud je None, bude vygenerován
+      
+      Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
+    """
+    import tempfile
+    import os
+    handle, fname = tempfile.mkstemp(suffix='.pdf')    
+    printdirect(resolver, spec, print_spec, row, output_file=handle, **kwargs)
+    data_tisk = None
+    with open(fname, 'r') as soubor:
+        data_tisk = soubor.read()
+    if os.path.exists(fname):
+        os.remove(fname)
+    if data_tisk:
+        if not filename:
+            filename = os.path.basename(fname)
+        mail = ComplexEmail(to, from_, subject, msg, charset=charset)
+        mail.add_content_data(data_tisk, filename)
+        result = mail.send()
+        if not result:
+            # Sending email failed -- return an error message
+            return mail.get_error_msg()
+        else:
+            # Success - return no error message
+            return None
+    else:
+        return "No print data available."
+    
 class ReusableSpec:
     def __init__(self, resolver):
         self._resolver = resolver

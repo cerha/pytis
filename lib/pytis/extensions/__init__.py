@@ -17,6 +17,7 @@
 
 import pytis.data, pytis.form
 
+from email_ import *
 from dbconfig import *
 from dbutils import *
 from misc import *
@@ -25,7 +26,6 @@ from deftypes import _TreeOrder
 from spec import *
 from defs import *
 from dmp import dmp_add_member, dmp_add_form, dmp_commit, dmp_import, dmp_reset_rights, dmp_update_form, dmp_delete_menu, dmp_delete_fullname, dmp_delete_shortname
-from email_ import *
 
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
