@@ -17,47 +17,54 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, getopt, pprint, types
+import sys, getopt, types
 import pytis.util, pytis.data, config
 
 from pytis.form import DBFormProfileManager
 
 def usage(msg=None):
-    sys.stderr.write("Display saved form profiles.\n"
-                     "Usage: config-update [options] username [pattern]\n"
-                     "  options: Pytis command line options (defined by pytis configuration)\n"
-                     "  username: Name of the database user owning the profiles\n"
-                     "  pattern: wildcard pattern to mach form specification names\n"
-                     "  and/or profile names (specification name pattern may be\n"
-                     "  followed by a colon and profiloe name pattern)\n")
+    sys.stderr.write("""Display saved form profiles.
+Usage: %s [options] [username [fullname_pattern [profile_name_pattern]]]
+
+  username: Name of the database user owning the profiles.  If omitted, all
+    profiles of all users are processed.  Use '*' if you want all users but
+    need to specify fullname_pattern or profile_name_pattern.
+
+  fullname_pattern: Wildcard pattern to match the form fullname string.  If
+    omitted, printed profiles are not restricted by fullname.  Use '*' if you
+    want all fullnames but need to specify profile_name_pattern.
+
+  profile_name_pattern: Wildcard pattern to match the user visible profile name
+    string.  If omitted, printed profiles are not restricted by name.
+
+  Options:
+
+    --validate: If supplied, the profiles will be validated.
+
+    --invalid:  If supplied, only invalid profiles will printed (implies --validate).
+
+    Other standard Pytis command line options, such as --config or --dbhost and
+    --dbname may be used here as well.
+
+""" % sys.argv[0])
     if msg:
         sys.stderr.write(msg)
         sys.stderr.write('\n')
     sys.exit(1)
 
-def run():
-    try:
-        config.add_command_line_options(sys.argv)
-        if len(sys.argv) == 2:
-            username, pattern = sys.argv[1], None
-        elif len(sys.argv) == 3:
-            username, pattern = sys.argv[1:]
-        else:
-            usage()
-    except getopt.GetoptError, e:
-        usage(e.msg)
-    # Disable pytis logging.
-    if pattern and ':' in pattern:
-        import re
-        pattern, name_pattern = pattern.split(':', 1)
-        name_matcher = re.compile(name_pattern.replace('*', '.*'))
-    else:
-        name_matcher = None
-    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
+# State information for print_info().
+last_fullname = None
+last_username = None
+total_printed = 0
+    
+# Cache of ViewSpec instances and data objects used when validation is on.
+cache = {}
+
+def dbop(op, *args, **kwargs):
     while True:
         try:
-            manager = DBFormProfileManager(config.dbconnection, username=username)
-        except pytis.data.DBLoginException, e:
+            return op(*args, **kwargs)
+        except pytis.data.DBLoginException as e:
             if config.dbconnection.password() is None:
                 import getpass
                 login = config.dbuser
@@ -66,39 +73,96 @@ def run():
             else:
                 sys.stderr.write("Login failed.\n")
                 sys.exit(1)
-        else:
-            break
-    pp = pprint.PrettyPrinter()
-    for fullname in manager.list_fullnames(pattern=pattern):
-        fullname_printed = False
-        for profile_id in manager.list_profile_ids(fullname):
-            if profile_id == '__dualform__':
-                continue
-            profile = manager.load_profile(fullname, profile_id)
-            if isinstance(profile, pytis.form.FormProfile):
-                name, state_id = profile._state['_name'], profile._state['_id']
-            else:
-                name, state_id = profile.name(), profile.id()
-            if name_matcher is None or name_matcher.match(name):
-                if not fullname_printed:
-                    print '\n' + fullname
-                    fullname_printed = True
-                if isinstance(name, types.UnicodeType):
-                    name = name.encode('utf-8')
-                if isinstance(state_id, types.UnicodeType):
-                    state_id = state_id.encode('utf-8')
-                print '  * %s (%s):' % (state_id, name)
-                if isinstance(profile, pytis.form.FormProfile):
-                    state = profile._state
-                    for key in ('filter', 'sorting', 'columns', 'grouping', 'folding', 'aggregations',
-                                'column_widths', 'group_by_columns', 'aggregation_columns'):
-                        value = profile._state['_'+key]
-                        indent = '\n        ' + ' ' * len(key)
-                        formatted = indent.join(pp.pformat(value).splitlines())
-                        print '    - %s: %s' % (key, formatted)
-                else:
-                    for key, value in profile._settings.items():
-                        print '    - %s: %s' % (key, value)
 
+def print_info(username, fullname, info):
+    global last_username
+    global last_fullname
+    global total_printed
+    if username != last_username:
+        last_username = username
+        print "======== %s ========\n" % username
+    if fullname != last_fullname:
+        last_fullname = fullname
+        print fullname + '\n'
+    print info
+    total_printed += 1
+
+def run():
+    if '--help' in sys.argv:
+        usage()
+    if '--validate' in sys.argv:
+        sys.argv.remove('--validate')
+        validate = True
+    else:
+        validate = False
+    if '--invalid' in sys.argv:
+        sys.argv.remove('--invalid')
+        validate = True
+        filter_invalid = True
+    else:
+        filter_invalid = False
+    try:
+        config.add_command_line_options(sys.argv)
+        username = fullname_pattern = profile_name_pattern = None
+        if len(sys.argv) > 1:
+            username = sys.argv[1]
+        if len(sys.argv) > 2:
+            fullname_pattern = sys.argv[2]
+        if len(sys.argv) > 3:
+            profile_name_pattern = sys.argv[3]
+        if len(sys.argv) > 4:
+            usage()
+    except getopt.GetoptError as e:
+        usage(e.msg)
+    if profile_name_pattern:
+        import re
+        profile_name_matcher = re.compile(profile_name_pattern.replace('*', '.*'))
+    else:
+        profile_name_matcher = None
+    # Disable pytis logging and notification thread (may cause troubles when
+    # creating data objects for profile validation).
+    config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
+    config.dblisten = False
+    if username is None or username == '*':
+        data = dbop(pytis.data.dbtable, 'e_pytis_form_profiles', ('id', 'username'),
+                    config.dbconnection)
+        usernames = [v.value() for v in data.distinct('username')]
+    else:
+        usernames = (username,)
+    for username in usernames:
+        manager = dbop(DBFormProfileManager, config.dbconnection, username=username)
+        for fullname in manager.list_fullnames(pattern=fullname_pattern):
+            for profile_id in manager.list_profile_ids(fullname):
+                if profile_id == '__dualform__':
+                    continue
+                profile = manager.load_profile(fullname, profile_id)
+                # The profile may be either FormProfile or FormSettings instance!
+                if validate and isinstance(profile, pytis.form.FormProfile):
+                    specname = fullname.split('/')[2]
+                    try:
+                        view_spec, data_object, error = cache[specname]
+                    except KeyError:
+                        resolver = pytis.util.resolver()
+                        try:
+                            view_spec = resolver.get(specname, 'view_spec')
+                            data_spec = resolver.get(specname, 'data_spec')
+                            data_object = data_spec.create(dbconnection_spec=config.dbconnection)
+                        except Exception as e:
+                            view_spec, data_object,  error = None, None, e
+                        else:
+                            error = None
+                        cache[specname] = view_spec, data_object,  error
+                    if error:
+                        info = "  * %s: Unable to validate profile: %s\n" % (profile_id, error)
+                        print_info(username, fullname, info)
+                        continue
+                    profile.validate(view_spec, data_object)
+                if filter_invalid and (isinstance(profile, pytis.form.FormSettings) or profile.valid()):
+                    # Ignore FormSettings instances and valid profiles if --invalid was requested.
+                    continue
+                if profile_name_matcher is None or profile_name_matcher.match(profile.name()):
+                    print_info(username, fullname, profile.dump())
+    print "Total %d profiles match." % total_printed
+                    
 if __name__ == '__main__':
     run()

@@ -83,45 +83,52 @@ class FormProfile(pytis.presentation.Profile):
         self._aggregation_columns = aggregation_columns
         self._column_widths = column_widths or {}
         self._state = None
-        self._valid = True
         
+    def _pack(self, something):
+        if isinstance(something, pytis.data.Operator):
+            args = tuple([self._pack(arg) for arg in something.args()])
+            return (something.name(), args, something.kwargs())
+        elif isinstance(something, pytis.data.Value):
+            t = something.type()
+            export_kwargs = {}
+            if isinstance(t, pytis.data.Date):
+                export_kwargs['format'] = '%Y-%m-%d'
+            elif isinstance(t, pytis.data.Time):
+                export_kwargs['format'] = '%H:%M:%S'
+            elif isinstance(t, pytis.data.DateTime):
+                export_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
+            elif isinstance(t, pytis.data.Float):
+                export_kwargs['locale_format'] = False
+            return [something.export(**export_kwargs)]
+        elif isinstance(something, pytis.data.WMValue):
+            return [something.value()]
+        elif isinstance(something, basestring):
+            return something
+        else:
+            raise ProgramError("Unknown object in filter operator:", something)
+            
     def __getstate__(self):
         # We prefer saving the condition in our custom format, since its safer
         # to pickle Python builtin types than instances of application defined
         # classes.
-        def pack(something):
-            if isinstance(something, pytis.data.Operator):
-                args = tuple([pack(arg) for arg in something.args()])
-                return (something.name(), args, something.kwargs())
-            elif isinstance(something, pytis.data.Value):
-                t = something.type()
-                export_kwargs = {}
-                if isinstance(t, pytis.data.Date):
-                    export_kwargs['format'] = '%Y-%m-%d'
-                elif isinstance(t, pytis.data.Time):
-                    export_kwargs['format'] = '%H:%M:%S'
-                elif isinstance(t, pytis.data.DateTime):
-                    export_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
-                elif isinstance(t, pytis.data.Float):
-                    export_kwargs['locale_format'] = False
-                return [something.export(**export_kwargs)]
-            elif isinstance(something, pytis.data.WMValue):
-                return [something.value()]
-            elif isinstance(something, basestring):
-                return something
-            else:
-                raise ProgramError("Unknown object in filter operator:", something)
         if self._filter is None:
             filter = None
         else:
-            filter = pack(self._filter)
+            filter = self._pack(self._filter)
         return dict(self.__dict__, _filter=filter)
 
     def __setstate__(self, state):
         # Don't restore the state here, to avoid accessing any attributes
         # before validation (see also __getattr__).
+        name = state['_name']
+        if isinstance(name, str):
+            # Hack to translate old stored Latin 2 string names to unicodes
+            try:
+                name = name.decode('utf-8')
+            except UnicodeDecodeError:
+                name = name.decode('iso-8859-2')
+            state['_name'] = name
         self._state = state
-        self._valid = False
 
     def __getattr__(self, name):
         if self._state is not None:
@@ -192,20 +199,14 @@ class FormProfile(pytis.presentation.Profile):
             state = self._state
             self._state = None
             self.__dict__.update(state)
-            # Hack to translate old stored Latin 2 string names to unicodes
-            if isinstance(self._name, str):
-                try:
-                    self._name = self._name.decode('utf-8')
-                except UnicodeDecodeError:
-                    self._name = self._name.decode('iso-8859-2')
+        self._valid = False
         if self._filter:
             try:
                 self._filter = unpack(self._filter)
             except Exception, e:
                 log(OPERATIONAL, "Unable to restore filter for profile '%s':" % (self._name,),
                     (self._filter, str(e)))
-                self._valid = False
-                return
+                return False
         # Check the column identifiers in all profile attributes (except for
         # filters, which are checked above)
         for attr, getcol in (('_columns', lambda x: x),
@@ -220,19 +221,46 @@ class FormProfile(pytis.presentation.Profile):
                     if view.field(col) is None:
                         log(OPERATIONAL, "Unknown column '%s' in %s of profile '%s':" % \
                                 (col, attr[1:], self._name))
-                        self._valid = False
-                        return
+                        return False
         self._valid = True
-        return
+        return True
 
+    def dump(self):
+        import pprint
+        pp = pprint.PrettyPrinter()
+        def format_item(key, value):
+            indent = '\n        ' + ' ' * len(key)
+            formatted = indent.join(pp.pformat(value).splitlines())
+            return '    - %s: %s\n' % (key, formatted)
+        if self._state is not None:
+            state = self._state
+            validity = ''
+        else:
+            state = self.__dict__
+            if self._valid:
+                validity = ''
+            else:
+                validity = ' (INVALID)'
+        result = u'  * %s: "%s"%s\n' % (state['_id'], state['_name'], validity)
+        f = state['_filter']
+        if isinstance(f, pytis.data.Operator):
+            # The filter may be already unpacked when the profile was not
+            # validated yet or if the filter validation failed.
+            f = self._pack(f)
+        result += format_item('filter', f)
+        for key in ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
+                    'column_widths', 'group_by_columns', 'aggregation_columns'):
+            result += format_item(key, state['_'+key])
+        return result
+    
+    def column_widths(self):
+        return self._column_widths
+    
     def group_by_columns(self):
         return self._group_by_columns
     
     def aggregation_columns(self):
         return self._aggregation_columns
-
-    def column_widths(self):
-        return self._column_widths
 
 
 class FormSettings(object):
@@ -262,6 +290,12 @@ class FormSettings(object):
 
     def clone(self, **kwargs):
         return FormSettings(dict(self._settings, **kwargs))
+
+    def dump(self):
+        result = u'  * %s: "%s"\n' % (self.id(), self.name())
+        for key, value in self._settings.items():
+            result += '    - %s: %s\n' % (key, value)
+        return result
 
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
