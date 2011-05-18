@@ -1297,7 +1297,14 @@ class LookupForm(InnerForm):
             answer = run_dialog(MultiQuestion, title=_(u"Neplatný profil"), message=msg,
                                 icon=Question.ICON_ERROR, buttons=(keep, remove), default=keep)
             if answer == remove:
-                self._profiles.remove(profile)
+                if profile.id().startswith(self._USER_PROFILE_PREFIX):
+                    self._profiles.remove(profile)
+                else:
+                    if profile.id() == self._default_profile.id():
+                        profile = self._default_profile
+                    else:
+                        profile = find(profile.id(), self._view.profiles(), key=lambda p: p.id())
+                    self._profiles[index] = profile
                 profile_manager().drop_profile(self._fullname(), profile.id())
         else:
             self._apply_profile(profile)
