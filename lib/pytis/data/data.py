@@ -107,7 +107,7 @@ class Operator(object):
                 return 1
             
         def __hash__(self):
-            hash(self._value)
+            return hash(self._value)
 
     def __init__(self, name, *args, **kwargs):
         """Vytvoř operátor 'name' s argumenty 'args' a 'kwargs'.
