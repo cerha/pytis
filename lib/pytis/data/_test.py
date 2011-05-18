@@ -2529,9 +2529,13 @@ class OperatorTest(unittest.TestCase):
         a = pytis.data.EQ('a', sval('a'))
         b = pytis.data.EQ('b', sval('a'))
         c = pytis.data.EQ('a', pytis.data.Value(pytis.data.String(maxlen=5), 'a'))
+        d = pytis.data.EQ('d', pytis.data.Value(pytis.data.DateTime(), pytis.data.DateTime.now().value()))
+        e = pytis.data.EQ('d', pytis.data.Value(pytis.data.DateTime(), None))
         assert a != b
         assert a == c
         assert b != c
+        assert a != d
+        assert d != e
 tests.add(OperatorTest)
 
 ################

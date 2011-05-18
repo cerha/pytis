@@ -95,6 +95,20 @@ class Operator(object):
     String(not_null=False)).
 
     """
+    class ComparableDateTime(object):
+        """Wrapper for datetime values to enable their comparison to None."""
+        def __init__(self, value):
+            self._value = value
+            
+        def __cmp__(self, other):
+            if sameclass(self, other):
+                return cmp(self._value, other._value)
+            else:
+                return 1
+            
+        def __hash__(self):
+            hash(self._value)
+
     def __init__(self, name, *args, **kwargs):
         """Vytvoř operátor 'name' s argumenty 'args' a 'kwargs'.
 
@@ -148,7 +162,12 @@ class Operator(object):
         """
         def relax(arg):
             if isinstance(arg, (Value, WMValue)):
-                return (arg.type().__class__, arg.value())
+                cls, value = arg.type().__class__, arg.value()
+                if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+                    # datetime values can not be compared to None, so we use
+                    # this wrapper class for simplicity.
+                    value = self.ComparableDateTime(value)
+                return (cls, value)
             else:
                 return arg
         return [relax(arg) for arg in self._args]
