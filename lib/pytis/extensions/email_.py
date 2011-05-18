@@ -375,6 +375,7 @@ class ComplexEmail(SimpleEmail):
             content = MIMEAudio(data, _subtype=subtype)
         else:
             content = MIMEBase(maintype, subtype)
+            content.set_payload(data)
         return content
 
     def add_content_text(self, data, html=False, charset=None):
