@@ -260,8 +260,8 @@ cmd_run_any_form = \
            pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
-def printdirect(resolver, spec, print_spec, row, **kwargs):
-    """Tiskni specifikaci pomocí příkazu config.printing_command.
+def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
+    """Tiskni specifikaci pomocí příkazu config.printing_command nebo ulož do output_file.
 
     Argumenty:
 
@@ -306,7 +306,10 @@ def printdirect(resolver, spec, print_spec, row, **kwargs):
     print_resolver = P(resolver, parameters=parameters)
     resolvers = (print_resolver,)
     formatter = pytis.output.Formatter(resolvers, spec_path)
-    formatter.printdirect()
+    if output_file:
+        formatter.printout(output_file)
+    else:
+        formatter.printdirect()
 
 
 class ReusableSpec:
