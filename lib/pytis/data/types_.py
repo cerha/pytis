@@ -1174,51 +1174,7 @@ class _CommonDateTime(Type):
         return result
     
     def _export(self, value, local=True, format=None):
-        def findall(text, substr):
-             # Also finds overlaps
-             sites = []
-             i = 0
-             while 1:
-                 j = text.find(substr, i)
-                 if j == -1:
-                     break
-                 sites.append(j)
-                 i=j+1
-             return sites
-        if format is None:
-            format = self._format
-        year = value.year
-        if year > 1900:
-            return value.strftime(format)
-        # Python datetime.strftime() doesn't support dates before 1900-01-01.
-        # The following code works around that.  The original author is Andrew
-        # Dalke who posted this code to
-        # http://code.activestate.com/recipes/306860-proleptic-gregorian-dates-and-strftime-before-1900/
-        #
-        # Every 28 years the calendar repeats, except through century leap
-        # years where it's 6 years.  But only if you're using the Gregorian
-        # calendar.  ;)
-        # For every non-leap year century, advance by
-        # 6 years to get into the 28-year repeat cycle
-        delta = 2000 - year
-        off = 6*(delta // 100 + delta // 400)
-        year = year + off
-        # Move to around the year 2000
-        year = year + ((2000 - year)//28)*28
-        timetuple = value.timetuple()
-        s1 = time.strftime(format, (year,) + timetuple[1:])
-        sites1 = findall(s1, str(year))
-        s2 = time.strftime(format, (year+28,) + timetuple[1:])
-        sites2 = findall(s2, str(year+28))
-        sites = []
-        for site in sites1:
-            if site in sites2:
-                sites.append(site)
-        s = s1
-        syear = "%4d" % (value.year,)
-        for site in sites:
-            s = s[:site] + syear + s[site+4:]
-        return s
+        return value.strftime(format or self._format)
 
     @classmethod
     def now(class_, **kwargs):
@@ -1332,7 +1288,51 @@ class DateTime(_CommonDateTime):
             value = value.astimezone(self.LOCAL_TZINFO)
         else:
             value = value.astimezone(self.UTC_TZINFO)
-        return super(DateTime, self)._export(value, format=format)
+        return self._strftime(value, format or self._format)
+
+    def _strftime(self, value, format):
+        # Python datetime.strftime() doesn't support dates before 1900-01-01.
+        # The following code works around that.  The original author is Andrew
+        # Dalke who posted this code to
+        # http://code.activestate.com/recipes/306860-proleptic-gregorian-dates-and-strftime-before-1900/
+        def findall(text, substr):
+             # Also finds overlaps
+             sites = []
+             i = 0
+             while 1:
+                 j = text.find(substr, i)
+                 if j == -1:
+                     break
+                 sites.append(j)
+                 i=j+1
+             return sites
+        # Every 28 years the calendar repeats, except through century leap
+        # years where it's 6 years.  But only if you're using the Gregorian
+        # calendar.  ;)
+        # For every non-leap year century, advance by
+        # 6 years to get into the 28-year repeat cycle
+        year = value.year
+        if year > 1900:
+            return value.strftime(format)
+        delta = 2000 - year
+        off = 6*(delta // 100 + delta // 400)
+        year = year + off
+        # Move to around the year 2000
+        year = year + ((2000 - year)//28)*28
+        timetuple = value.timetuple()
+        s1 = time.strftime(format, (year,) + timetuple[1:])
+        sites1 = findall(s1, str(year))
+        s2 = time.strftime(format, (year+28,) + timetuple[1:])
+        sites2 = findall(s2, str(year+28))
+        sites = []
+        for site in sites1:
+            if site in sites2:
+                sites.append(site)
+        s = s1
+        syear = "%4d" % (value.year,)
+        for site in sites:
+            s = s[:site] + syear + s[site+4:]
+        return s
 
     @classmethod
     def _datetime(class_, tz):
@@ -1401,9 +1401,9 @@ class Date(DateTime):
             value = Value(value.type(), value.value().date())
         return value, error
 
-    def _export(self, value, local=True, **kwargs):
+    def _export(self, value, local=True, format=None):
         assert isinstance(value, datetime.date), value
-        return _CommonDateTime._export(self, value, **kwargs)
+        return self._strftime(value, format or self._format)
 
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
