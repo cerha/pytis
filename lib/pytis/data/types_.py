@@ -1084,15 +1084,15 @@ class _CommonDateTime(Type):
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
     UTC_TZINFO = _UTCTimezone()
-    LOCAL_TZINFO = _LocalTimezone()    
+    LOCAL_TZINFO = _LocalTimezone()
     
     def __init__(self, format, utc=True, **kwargs):
         """
         Argumenty:
 
-          format -- specifikace vstupního i výstupního formátu data a/nebo
-            času, v podobě akceptované funkcí 'time.strftime()'
-          mindate, maxdate -- omezení validity času
+          format -- specification of both input and output format of date
+            and/or time in the form accepted by `time.strftime()'.
+          mindate, maxdate -- limits of acceptable date/time
           utc -- specifies whether timestamp in the database is in UTC
 
         """
@@ -1174,7 +1174,51 @@ class _CommonDateTime(Type):
         return result
     
     def _export(self, value, local=True, format=None):
-        return value.strftime(format or self._format)
+        def findall(text, substr):
+             # Also finds overlaps
+             sites = []
+             i = 0
+             while 1:
+                 j = text.find(substr, i)
+                 if j == -1:
+                     break
+                 sites.append(j)
+                 i=j+1
+             return sites
+        if format is None:
+            format = self._format
+        year = value.year
+        if year > 1900:
+            return value.strftime(format)
+        # Python datetime.strftime() doesn't support dates before 1900-01-01.
+        # The following code works around that.  The original author is Andrew
+        # Dalke who posted this code to
+        # http://code.activestate.com/recipes/306860-proleptic-gregorian-dates-and-strftime-before-1900/
+        #
+        # Every 28 years the calendar repeats, except through century leap
+        # years where it's 6 years.  But only if you're using the Gregorian
+        # calendar.  ;)
+        # For every non-leap year century, advance by
+        # 6 years to get into the 28-year repeat cycle
+        delta = 2000 - year
+        off = 6*(delta // 100 + delta // 400)
+        year = year + off
+        # Move to around the year 2000
+        year = year + ((2000 - year)//28)*28
+        timetuple = value.timetuple()
+        s1 = time.strftime(format, (year,) + timetuple[1:])
+        sites1 = findall(s1, str(year))
+        s2 = time.strftime(format, (year+28,) + timetuple[1:])
+        sites2 = findall(s2, str(year+28))
+        sites = []
+        for site in sites1:
+            if site in sites2:
+                sites.append(site)
+        s = s1
+        syear = "%4d" % (value.year,)
+        for site in sites:
+            s = s[:site] + syear + s[site+4:]
+        return s
 
     @classmethod
     def now(class_, **kwargs):
@@ -1235,13 +1279,12 @@ class DateTime(_CommonDateTime):
         """Inicializuj instanci.
 
         Argumenty:
-
-          format -- specifikace vstupního i výstupního formátu data a/nebo
-            času, v podobě akceptované funkcí 'time.strftime()'; může být též
-            'None', v kterémžto případě se použije konfigurační volba
-            'config.date_time_format'.  Třída obsahuje předdefinované konstanty
-            '*_FORMAT', které lze využít jako hodnotu tohoto parametru.
-          mindate. maxdate -- omezení validity času
+          format -- specification of both input and output format of date
+            and/or time in the form accepted by `time.strftime()'.
+            May be also None in which case the configuration option
+            'config.date_time_format' is used.  The class defines '*_FORMAT'
+            constants which may be used as a value of this argument.
+          mindate, maxdate -- limits of acceptable date/time
           utc -- specifies, if timestamp in database is in UTC
 
         """
@@ -1251,23 +1294,20 @@ class DateTime(_CommonDateTime):
             import config
             format = config.date_time_format
         super(DateTime, self).__init__(format=format, utc=utc, **kwargs)
-        self._mindate = mindate
-        self._maxdate = maxdate
-        # Python strftime can work only with years >= 1900
-        min_allowed_date = datetime.datetime(1900, 1, 1, tzinfo=self.LOCAL_TZINFO)
         if mindate:
             try:
                 self._mindate = datetime.datetime.strptime(mindate, self.SQL_FORMAT)
             except:
                 raise ProgramError('Bad value for mindate', mindate, self.SQL_FORMAT)
-            self._mindate = min(self._min_date, min_allowed_date)
         else:
-            self._mindate = min_allowed_date
+            self._mindate = None
         if maxdate:
             try:
                 self._maxdate = datetime.datetime.strptime(maxdate, self.SQL_FORMAT)
             except:
                 raise ProgramError('Bad value for maxdate', maxdate)
+        else:
+            self._maxdate = None
 
     def _validate(self, *args, **kwargs):
         value, error = super(DateTime, self)._validate(*args, **kwargs)
@@ -1343,11 +1383,11 @@ class Date(DateTime):
 
         Argumenty:
 
-          format -- specifikace vstupního i výstupního formátu data, v podobě
-            akceptované funkcí 'time.strftime()'; může být též 'None',
-            v kterémžto případě se použije konfigurační volba
-            'config.date_format'.  Třída obsahuje předdefinované konstanty
-            '*_FORMAT', které lze využít jako hodnotu tohoto parametru.
+          format -- specification of both input and output format of date
+            and/or time in the form accepted by `time.strftime()'.
+            May be also None in which case the configuration option
+            'config.date_time_format' is used.  The class defines '*_FORMAT'
+            constants which may be used as a value of this argument.
 
         """
         if format is None:
@@ -1403,11 +1443,11 @@ class Time(_CommonDateTime):
 
         Argumenty:
 
-          format -- specifikace vstupního i výstupního formátu času, v podobě
-            akceptované funkcí 'time.strftime()'; může být též 'None',
-            v kterémžto případě se použije konfigurační volba
-            'config.time_format'.  Třída obsahuje předdefinované konstanty
-            '*_FORMAT', které lze využít jako hodnotu tohoto parametru.
+          format -- specification of both input and output format of date
+            and/or time in the form accepted by `time.strftime()'.
+            May be also None in which case the configuration option
+            'config.date_time_format' is used.  The class defines '*_FORMAT'
+            constants which may be used as a value of this argument.
 
         """
         if format is None:

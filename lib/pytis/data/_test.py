@@ -298,6 +298,9 @@ class DateTime(_TypeCheck):
         result = exp(val, **vkwargs)
         assert result == '2100-02-05 01:02:03', ('Invalid date export', result)
         assert v.primitive_value() == '2100-02-05 01:02:03', v.primitive_value()
+        val2 = datetime.datetime(1841,7,2,1,2,3,tzinfo=tzinfo)
+        result2 = exp(val2, format='%d.%m.%Y')
+        assert result2 == '02.07.1841', result2
 tests.add(DateTime)
 
 class Date(_TypeCheck):
@@ -307,7 +310,7 @@ class Date(_TypeCheck):
         self._test_validity(None, '2999-12-31', datetime.date(2999,12,31))
         self._test_validity(None, '  1999-01-01    ', datetime.date(1999,1,1))
         self._test_validity(None, '1999-01-01', datetime.date(1999,1,1))
-        self._test_validity(None, '1900-01-01', datetime.date(1900,1,1))
+        self._test_validity(None, '1841-07-02', datetime.date(1841,7,2))
         self._test_validity(None, '1999-01-01 23:59', None)
         self._test_validity(None, '1999-01-01 23:59:00', None)
         self._test_validity(None, '01-02-29', None)
