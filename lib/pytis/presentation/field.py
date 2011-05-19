@@ -786,7 +786,13 @@ class PresentedRow(object):
             if display:
                 if isinstance(display, basestring):
                     display_column = display
-                    row_function = lambda row: row[display_column].export()
+                    # Note, we can't use format() to handle multiline values
+                    # (we don't have PresentedRow, just the data Row) so we
+                    # simply join the lines using semicolons.  It would be
+                    # better to respect the line_separator of the display
+                    # field, but we don't have simple access to it from here
+                    # and the semicolons are fine in most cases.
+                    row_function = lambda row: '; '.join(row[display_column].export().splitlines())
                 elif argument_names(display) == ('row',):
                     row_function = display
                 else:
