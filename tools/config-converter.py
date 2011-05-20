@@ -83,7 +83,7 @@ def run():
     # Process command line options and init configuration.
     try:
         config.add_command_line_options(sys.argv)
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e.msg)
     if config.help:
         usage()
@@ -98,7 +98,7 @@ def run():
         dbname = config.dbname or login
         try:
             data = factory.create(dbconnection_spec=config.dbconnection)
-        except pytis.data.DBLoginException, e:
+        except pytis.data.DBLoginException as e:
             if config.dbconnection.password() is None:
                 import getpass
                 password = getpass.getpass("Enter database password for %s@%s: " % (login, dbname))
@@ -150,14 +150,14 @@ def run():
                 try:
                     view_spec = resolver.get(specname, 'view_spec')
                     data_spec = resolver.get(specname, 'data_spec')
-                except pytis.util.ResolverError, e:
+                except Exception as e:
                     # Ignore configurations for specifications that no longer exist
                     if specname not in ignored_specifications:
                         ignored_specifications.append((specname, e))
                     continue
                 try:
                     data_object = data_spec.create(dbconnection_spec=config.dbconnection)
-                except Exception, e:
+                except Exception as e:
                     if specname not in ignored_specifications:
                         ignored_specifications.append((specname, e))
                     continue
@@ -194,15 +194,17 @@ def run():
                         profile = FormProfile(p.id(), p.name(), filter=p.filter(), **kwargs)
                         manager.save_profile(fullname, profile, transaction=transaction)
                         count += 1
-                for i, (name, cond) in enumerate(state.pop('conditions', ())):
+                profiles = []
+                for name, cond in state.pop('conditions', ()):
                     try:
                         filter = unpack(cond, data_object)
-                    except Exception, e:
+                    except Exception as e:
                         print "    - Ignoring saved condition '%s': %s" % (name, e)
                     else:
-                        profile = FormProfile('_user_profile_%d' % (i+1), name.strip(),
-                                              filter=filter, **kwargs)
+                        profile_id = FormProfile.new_user_profile_id(profiles)
+                        profile = FormProfile(profile_id, name.strip(), filter=filter, **kwargs)
                         manager.save_profile(fullname, profile, transaction=transaction)
+                        profiles.append(profile)
                         count += 1
             for option, value in options.pop('application_state', {}).items():
                 options[option.replace('startup_forms', 'saved_startup_forms')] = value
@@ -220,7 +222,7 @@ def run():
     if ignored_specifications:
         print "The following specifications were ignored due to resolver errors:"
         for specname, error in sorted(ignored_specifications):
-            print "  - %s: %s" % (specname, error)
+            print "%s: %s" % (specname, error)
             
 
 if __name__ == '__main__':

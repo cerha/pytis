@@ -62,6 +62,13 @@ class FormProfile(pytis.presentation.Profile):
     form.
 
     """
+    _USER_PROFILE_PREFIX = '_user_profile_'
+    """Profile identifier prefix used for user defined profiles.
+
+    User defined profiles are recognized from system profiles (defined in
+    specifications) by this prefix.
+    
+    """
     def __init__(self, id, name, column_widths=None,
                  group_by_columns=(), aggregation_columns=(), **kwargs):
         """Specific keyword arguments:
@@ -141,6 +148,19 @@ class FormProfile(pytis.presentation.Profile):
         """Change the name of the profile to given 'name' (unicode)."""
         self._name = unicode(name)
 
+    def is_user_defined_profile(self):
+        """Return True if the profile is user defined (not a predefined system profile)."""
+        return self._id.startswith(self._USER_PROFILE_PREFIX)
+
+    @classmethod
+    def new_user_profile_id(cls, profiles):
+        """Generate a new unique user profile id based on given list of existing profiles."""
+        user_profile_numbers = [int(profile.id()[len(cls._USER_PROFILE_PREFIX):])
+                                for profile in profiles
+                                if profile.is_user_defined_profile()
+                                and profile.id()[len(cls._USER_PROFILE_PREFIX):].isdigit()]
+        return cls._USER_PROFILE_PREFIX + str(max(user_profile_numbers+[0])+1)
+    
     def set_filter(self, filter):
         """Change the filter of the profile to given value (pytis.data.Operator instance)."""
         self._filter = filter
@@ -979,8 +999,6 @@ class LookupForm(InnerForm):
     Deprecated: Use 'pytis.data.DESCENDANT' directly.
 
     """
-    _USER_PROFILE_PREFIX = '_user_profile_'
-
     def _init_attributes(self, filter=None, sorting=None, columns=None, grouping=None,
                          condition=None, arguments=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
@@ -1248,9 +1266,9 @@ class LookupForm(InnerForm):
                 profile = custom
             profiles.append(profile)
         for profile_id in manager.list_profile_ids(fullname):
-            if profile_id.startswith(self._USER_PROFILE_PREFIX):
-                profile = manager.load_profile(fullname, profile_id)
-                profile.validate(self._view, self._data)
+            profile = manager.load_profile(fullname, profile_id)
+            profile.validate(self._view, self._data)
+            if self._is_user_defined_profile(profile):
                 profiles.append(profile)
         return profiles
 
@@ -1320,6 +1338,9 @@ class LookupForm(InnerForm):
                 return True
         return False
 
+    def _is_user_defined_profile(self, profile):
+        return isinstance(profile, FormProfile) and profile.is_user_defined_profile()
+
     def _cmd_apply_profile(self, index):
         profile = self._profiles[index]
         if isinstance(profile, FormProfile) and not profile.valid():
@@ -1332,7 +1353,7 @@ class LookupForm(InnerForm):
             answer = run_dialog(MultiQuestion, title=_(u"Neplatný profil"), message=msg,
                                 icon=Question.ICON_ERROR, buttons=(keep, remove), default=keep)
             if answer == remove:
-                if profile.id().startswith(self._USER_PROFILE_PREFIX):
+                if self._is_user_defined_profile(profile):
                     self._profiles.remove(profile)
                 else:
                     if profile.id() == self._default_profile.id():
@@ -1349,11 +1370,7 @@ class LookupForm(InnerForm):
         if name in [profile.name() for profile in self._profiles]:
             message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
-        user_profile_numbers = [int(profile.id()[len(self._USER_PROFILE_PREFIX):])
-                                for profile in self._profiles
-                                if profile.id().startswith(self._USER_PROFILE_PREFIX)
-                                and profile.id()[len(self._USER_PROFILE_PREFIX):].isdigit()]
-        profile_id = self._USER_PROFILE_PREFIX + str(max(user_profile_numbers+[0])+1)
+        profile_id = FormProfile.new_user_profile_id(self._profiles)
         profile = self._create_profile(profile_id, name)
         self._profiles.append(profile)
         self._save_profile(profile)
@@ -1362,7 +1379,7 @@ class LookupForm(InnerForm):
         self.focus()
 
     def _can_rename_profile(self, name):
-        return self._current_profile.id().startswith(self._USER_PROFILE_PREFIX)
+        return self._is_user_defined_profile(self._current_profile)
 
     def _cmd_rename_profile(self, name):
         if name in [p.name() for p in self._profiles if p is not self._current_profile]:
@@ -1385,7 +1402,7 @@ class LookupForm(InnerForm):
         self._current_profile = profile
     
     def _can_delete_profile(self):
-        return self._current_profile.id().startswith(self._USER_PROFILE_PREFIX)
+        return self._is_user_defined_profile(self._current_profile)
 
     def _cmd_delete_profile(self):
         profile_manager().drop_profile(self._fullname(), self._current_profile.id())
@@ -1400,7 +1417,7 @@ class LookupForm(InnerForm):
         
     def _can_reset_profile(self):
         return (isinstance(self._current_profile, FormProfile)
-                and not self._current_profile.id().startswith(self._USER_PROFILE_PREFIX))
+                and not self._is_user_defined_profile(self._current_profile))
         
     def _cmd_reset_profile(self):
         index = self._profiles.index(self._current_profile)
@@ -1538,7 +1555,7 @@ class LookupForm(InnerForm):
     def filter(self, condition):
         """Apply given filtering condition."""
         self._apply_filter(condition)
-        if not self._current_profile.id().startswith(self._USER_PROFILE_PREFIX) \
+        if not self._is_user_defined_profile(self._current_profile) \
                 and condition != self._current_profile.filter():
             name = _(u"Nepojmenovaný profil")
             profile = find(name, self._profiles, key=lambda p: p.name())
