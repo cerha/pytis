@@ -1395,19 +1395,19 @@ class DBFormProfileManager(FormProfileManager):
         
     """
     _TABLE = 'e_pytis_form_profiles'
-    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_name', 'profile_data',)
+    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_name',
+                'pickle', 'dump', 'errors')
 
     def __init__(self, dbconnection, username=None):
         self._username = username or config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
 
     def _key_values(self, fullname, profile_id=None):
-        values = (('username', self._username),
-                  ('fullname', fullname))
+        values = (('username', pytis.data.sval(self._username)),
+                  ('fullname', pytis.data.sval(fullname)))
         if profile_id:
-            values += (('profile_id', profile_id),)
-        return [(key, pytis.data.Value(pytis.data.String(), value))
-                for key, value in values]
+            values += (('profile_id', pytis.data.sval(profile_id)),)
+        return values
 
     def _row_condition(self, fullname, profile_id=None):
         return pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
@@ -1431,25 +1431,28 @@ class DBFormProfileManager(FormProfileManager):
 
     def save_profile(self, fullname, profile, transaction=None):
         row = self._row(fullname, profile.id(), transaction=transaction)
-        pickled = pytis.data.Value(pytis.data.String(), base64.b64encode(pickle.dumps(profile)))
-        name = pytis.data.Value(pytis.data.String(), profile.name())
-        # The column 'profile_name' in the DB table is a redundant information
-        # just for occasional direct SQL manipulations or debugging.  It is
+        # The columns 'profile_name', 'dump', and 'errors' in the DB table are
+        # redundant information for direct SQL access or debugging.  It is
         # ignored when loading back the profile.
+        values = (
+            ('profile_name', pytis.data.sval(profile.name())),
+            ('pickle', pytis.data.sval(base64.b64encode(pickle.dumps(profile)))),
+            ('dump', pytis.data.sval(profile.dump())),
+            ('errors', pytis.data.sval("\n".join(profile.validation_errors()))),
+            )
         if row:
-            row['profile_data'] = pickled
-            row['profile_name'] = name
+            for key, value in values:
+                row[key] = value
             self._data.update(row['id'], row, transaction=transaction)
         else:
-            values = self._key_values(fullname, profile.id())
-            row = pytis.data.Row(values + [('profile_data', pickled),
-                                           ('profile_name', name)])
+            key_values = self._key_values(fullname, profile.id())
+            row = pytis.data.Row(key_values + values)
             self._data.insert(row, transaction=transaction)
 
     def load_profile(self, fullname, profile_id, transaction=None):
         row = self._row(fullname, profile_id, transaction=transaction)
         if row:
-            return pickle.loads(base64.b64decode(row['profile_data'].value()))
+            return pickle.loads(base64.b64decode(row['pickle'].value()))
         else:
             return None
            

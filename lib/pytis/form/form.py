@@ -249,29 +249,16 @@ class FormProfile(pytis.presentation.Profile):
         import pprint
         pp = pprint.PrettyPrinter()
         def format_item(key, value):
-            indent = '\n        ' + ' ' * len(key)
+            indent = '\n  ' + ' ' * len(key)
             formatted = indent.join(pp.pformat(value).splitlines())
-            return '    - %s: %s\n' % (key, formatted)
-        if self._state is not None:
-            state = self._state
-            validity = ''
-        else:
-            state = self.__dict__
-            if self.valid():
-                validity = ''
-            else:
-                validity = ' (INVALID)'
-        result = u'  * %s: "%s"%s\n' % (state['_id'], state['_name'], validity)
-        f = state['_filter']
-        if isinstance(f, pytis.data.Operator):
-            # The filter may be already unpacked when the profile was not
-            # validated yet or if the filter validation failed.
-            f = self._pack(f)
-        result += format_item('filter', f)
-        for key in ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
-                    'column_widths', 'group_by_columns', 'aggregation_columns'):
-            result += format_item(key, state['_'+key])
-        return result
+            return '%s: %s' % (key, formatted)
+        result = []
+        if self.is_user_defined_profile():
+            result = [format_item('filter', self._pack(self._filter))]
+        result.extend([format_item(key, self.__dict__['_'+key])
+                       for key in ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
+                                   'column_widths', 'group_by_columns', 'aggregation_columns')])
+        return '\n'.join(result)
     
     def column_widths(self):
         return self._column_widths
@@ -305,17 +292,19 @@ class FormSettings(object):
     def name(self):
         return 'Form Settings'
     
+    def dump(self):
+        return '\n'.join(['%s: %s' % (key, value) for key, value in self._settings.items()])
+
+    def validation_errors(self):
+        return ()
+    
+    # FormSettings Specific interface:
+
     def get(self, name, default=None):
         return self._settings.get(name, default)
 
     def clone(self, **kwargs):
         return FormSettings(dict(self._settings, **kwargs))
-
-    def dump(self):
-        result = u'  * %s: "%s"\n' % (self.id(), self.name())
-        for key, value in self._settings.items():
-            result += '    - %s: %s\n' % (key, value)
-        return result
 
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
