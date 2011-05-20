@@ -39,14 +39,14 @@ import wx
 class FormProfile(pytis.presentation.Profile):
     """Form profile specification that can be saved and restored.
 
+    Instances of this class are used to save and restore user defined form
+    profiles as well as user customizations of predefined form profiles
+    originally defined in specifications.
+
     Unlike 'pytis.presentation.Profile' (the base class), instances of this
     class can be safely pickled and unpickled (see notes below) and define also
     some additional profile attributes which are not exposed to specifications
     but the user interface needs to save/restore them.
-
-    Thus instances of this class are used to save and restore user defined form
-    profiles as well as user customizations of predefined form profiles
-    originally defined in specifications.
 
     Important note: Pickling and unpickling is unfortunately not a symmetrical
     operation.  After unpickling an instance, the method 'validate()' must be
@@ -90,7 +90,7 @@ class FormProfile(pytis.presentation.Profile):
         self._aggregation_columns = aggregation_columns
         self._column_widths = column_widths or {}
         self._state = None
-        self._valid = True
+        self._validation_errors = []
         
     def _pack(self, something):
         if isinstance(something, pytis.data.Operator):
@@ -165,10 +165,6 @@ class FormProfile(pytis.presentation.Profile):
         """Change the filter of the profile to given value (pytis.data.Operator instance)."""
         self._filter = filter
 
-    def valid(self):
-        """Return True if the profile is valid or false if invalid."""
-        return self._valid
-        
     def validate(self, view, data):
         """Validate the instance after loading (see the class docstring for more information)."""
         # NOT is not allowed!
@@ -176,13 +172,14 @@ class FormProfile(pytis.presentation.Profile):
         def unpack(packed):
             name, packed_args, kwargs = packed
             if name not in OPERATORS:
-                raise Exception("Invalid operator '%s'" % name)
+                raise Exception("Invalid filter operator '%s'." % name)
             op = getattr(pytis.data, name)
             if name in ('AND', 'OR'):
                 args = [unpack(arg) for arg in packed_args]
             else:
                 if len(packed_args) != 2:
-                    raise Exception("Invalid number of operator arguments: %s" % repr(packed_args))
+                    raise Exception("Invalid number of filter operator arguments: %s" %
+                                    repr(packed_args))
                 if isinstance(packed_args[1], list):
                     col, val = packed_args[0], packed_args[1][0]
                     if isinstance(val, str):
@@ -192,7 +189,7 @@ class FormProfile(pytis.presentation.Profile):
                             val = val.decode('iso-8859-2')
                     column = data.find_column(col)
                     if column is None:
-                        raise Exception("Unknown column '%s'" % col)
+                        raise Exception("Unknown column '%s' in filter." % col)
                     t = column.type()
                     if name in ('WM', 'NW'):
                         value, err = t.wm_validate(val)
@@ -208,26 +205,24 @@ class FormProfile(pytis.presentation.Profile):
                             validation_kwargs['locale_format'] = False
                         value, err = t.validate(val, strict=False, **validation_kwargs)
                     if err is not None:
-                        raise Exception("Invalid operand value for '%s': %s" % (col, err))
+                        raise Exception("Invalid filter operand value for '%s': %s" % (col, err))
                     args = col, value
                 else:
                     args = packed_args
                     for col in args:
                         if data.find_column(col) is None:
-                            raise Exception("Unknown column '%s'" % col)
+                            raise Exception("Unknown column '%s' in filter." % col)
             return op(*args, **kwargs)
         if self._state is not None:
             state = self._state
             self._state = None
             self.__dict__.update(state)
-        self._valid = False
+        self._validation_errors = errors = []
         if self._filter:
             try:
                 self._filter = unpack(self._filter)
-            except Exception, e:
-                log(OPERATIONAL, "Unable to restore filter for profile '%s':" % (self._name,),
-                    (self._filter, str(e)))
-                return False
+            except Exception as e:
+                errors.append(str(e))
         # Check the column identifiers in all profile attributes (except for
         # filters, which are checked above)
         for attr, getcol in (('_columns', lambda x: x),
@@ -240,11 +235,15 @@ class FormProfile(pytis.presentation.Profile):
                 for x in sequence:
                     col = getcol(x)
                     if view.field(col) is None:
-                        log(OPERATIONAL, "Unknown column '%s' in %s of profile '%s':" % \
-                                (col, attr[1:], self._name))
-                        return False
-        self._valid = True
-        return True
+                        errors.append("Unknown column '%s' in %s." % (col, attr[1:]))
+        return tuple(errors)
+    
+    def validation_errors(self):
+        return tuple(self._validation_errors)
+        
+    def valid(self):
+        """Return True if the profile is valid or false if invalid."""
+        return len(self._validation_errors) == 0
 
     def dump(self):
         import pprint
@@ -258,7 +257,7 @@ class FormProfile(pytis.presentation.Profile):
             validity = ''
         else:
             state = self.__dict__
-            if self._valid:
+            if self.valid():
                 validity = ''
             else:
                 validity = ' (INVALID)'
