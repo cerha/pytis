@@ -83,6 +83,7 @@ class FormProfile(pytis.presentation.Profile):
         self._aggregation_columns = aggregation_columns
         self._column_widths = column_widths or {}
         self._state = None
+        self._valid = True
         
     def _pack(self, something):
         if isinstance(something, pytis.data.Operator):
