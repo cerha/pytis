@@ -1453,6 +1453,7 @@ class InfoWindow(object):
         assert format in public_attributes(TextFormat)
         frame = wx.Frame(wx_frame(), title=title, name=_name)
         view = wx_text_view(frame, text, format)
+        frame.SetSize(view.GetSize())
         frame.Show(True)
         
 
@@ -2228,7 +2229,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         height = 20
     browser = Browser(parent)
     browser.load_html(html)
-    parent.SetSize(char2px(parent, width, height))
+    browser.SetSize(char2px(parent, width, height))
     return browser
 
 
