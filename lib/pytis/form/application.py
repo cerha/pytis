@@ -1332,7 +1332,7 @@ class FormProfileManager(object):
         """
         pass
 
-    def list_fullnames(self, pattern):
+    def list_fullnames(self, pattern=None):
         """Return a sequence form fullnames for which profiles were saved.
 
         Arguments:
@@ -1468,7 +1468,7 @@ class DBFormProfileManager(FormProfileManager):
             profile_ids.append(row['profile_id'].value())
         return tuple(profile_ids)
 
-    def list_fullnames(self, pattern, transaction=None):
+    def list_fullnames(self, pattern=None, transaction=None):
         condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
         if pattern:
             wm = pytis.data.WM('fullname', pytis.data.WMValue(pytis.data.String(), pattern),
