@@ -2330,10 +2330,19 @@ class FoldableForm(ListForm):
         self._folding_column_id = None
         super(FoldableForm, self)._full_init(*args, **kwargs)
         self._folding_column_id = self._find_folding_column()
+        if self._folding_column_id is not None:
+            # Make the current row visible (unfolded)
+            node = self._row[self._folding_column_id].value()
+            path = (node or '').split('.')
+            if len(path) > 1:
+                parent = '.'.join(path[:-1])
+                level = self._folding.level(parent)
+                if level == 0:
+                    self._folding.expand(parent, level=1)
         # Any better way to display the form with initial folding than to
         # refresh it?
         self._refresh_folding()
-
+            
     def _init_folding(self, folding_state=None):
         self._folding = self._default_folding()
         if folding_state is None:
