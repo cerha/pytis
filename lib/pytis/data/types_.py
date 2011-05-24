@@ -1484,7 +1484,7 @@ class Time(_CommonDateTime):
 
     @classmethod
     def _datetime(class_, tz):
-        dt = super(Time, self)._datetime(tz)
+        dt = super(Time, class_)._datetime(tz)
         return dt.time()
 
 class TimeInterval(Type):
