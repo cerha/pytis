@@ -1037,7 +1037,7 @@ class LookupForm(InnerForm):
             current_profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
         else:
             current_profile = self._profiles[0]
-        if isinstance(current_profile, FormProfile) and not current_profile.valid():
+        if not isinstance(current_profile, FormProfile) or not current_profile.valid():
             # Don't use the initial profile if it is invalid.
             current_profile = self._default_profile
         # The profile instances may contain None values to denote default
