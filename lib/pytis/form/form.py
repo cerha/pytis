@@ -157,7 +157,7 @@ class FormProfile(pytis.presentation.Profile):
         """Generate a new unique user profile id based on given list of existing profiles."""
         user_profile_numbers = [int(profile.id()[len(cls._USER_PROFILE_PREFIX):])
                                 for profile in profiles
-                                if profile.is_user_defined_profile()
+                                if isinstance(profile, pytis.form.FormProfile) and  profile.is_user_defined_profile()
                                 and profile.id()[len(cls._USER_PROFILE_PREFIX):].isdigit()]
         return cls._USER_PROFILE_PREFIX + str(max(user_profile_numbers+[0])+1)
     
