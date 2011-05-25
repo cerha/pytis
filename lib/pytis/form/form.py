@@ -295,6 +295,9 @@ class FormSettings(object):
     def dump(self):
         return '\n'.join(['%s: %s' % (key, value) for key, value in self._settings.items()])
 
+    def validate(self, view, data):
+        return ()
+    
     def validation_errors(self):
         return ()
     
