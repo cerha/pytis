@@ -330,7 +330,6 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                                                        ))),
                 pytis.presentation.Binding('users', _(u"Uživatelé"), 'statistics.FormUserStatisticsNoinfo',
                                            condition=(lambda row: pytis.data.EQ('shortname', row['shortname']))),
-                pytis.presentation.Binding('profiles', _(u"Profily"), 'profiles.FormProfiles', 'fullname'),
                 )
     def actions(self): return (
         pytis.presentation.Action('copy_rights', _(u"Zkopírovat práva z..."), self._copy_rights,
