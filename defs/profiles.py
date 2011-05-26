@@ -45,6 +45,9 @@ class FormProfiles(Specification):
                     ('fullname', 'dump', 'errors'))
     profiles = (Profile('all-profiles', _("Všechny profily"),
                         filter=pd.NE('profile_id', pd.sval('__form_settings__'))),
+                Profile('invalid-profiles', _("Neplatné profily"),
+                        filter=pd.AND(pd.NE('profile_id', pd.sval('__form_settings__')),
+                                      pd.NE('errors', pd.sval(None)))),
                 Profile('user-profiles', _("Uživatelské profily"),
                         filter=pd.WM('profile_id', pd.WMValue(pd.String(), '_user_profile_*'))),
                 Profile('sustem-profiles', _("Systémové profily"),
