@@ -83,6 +83,7 @@ class FormUserList(Specification):
         )
     bindings = (Binding('users', _(u"Formuláře"), 'statistics.FormUserStatistics',
                         condition=(lambda row: pytis.data.EQ('login', row['login']))),
+                Binding('profiles', _(u"Profily"), 'profiles.FormProfiles', 'username'),
                 )
 
 class FormUserStatistics(Specification):
