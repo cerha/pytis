@@ -254,7 +254,7 @@ class FormProfile(pytis.presentation.Profile):
             return '%s: %s' % (key, formatted)
         result = []
         if self.id().startswith(self.USER_PROFILE_PREFIX):
-            result = [format_item('filter', self._pack(self._filter))]
+            result = [format_item('filter', self._filter and self._pack(self._filter))]
         result.extend([format_item(key, self.__dict__['_'+key])
                        for key in ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
                                    'column_widths', 'group_by_columns', 'aggregation_columns')])
