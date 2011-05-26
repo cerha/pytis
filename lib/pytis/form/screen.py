@@ -1507,7 +1507,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         current = form.current_profile()
         first_user_profile = None
         for i, profile in enumerate(profiles):
-            if isinstance(profile, FormProfile) and profile.is_user_defined_profile() and first_user_profile is None:
+            if profile.id().startswith(FormProfile.USER_PROFILE_PREFIX) and first_user_profile is None:
                 first_user_profile = i
             name = profile.name()
             if isinstance(profile, FormProfile) and not profile.valid():

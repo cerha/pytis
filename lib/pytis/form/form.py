@@ -62,7 +62,7 @@ class FormProfile(pytis.presentation.Profile):
     form.
 
     """
-    _USER_PROFILE_PREFIX = '_user_profile_'
+    USER_PROFILE_PREFIX = '_user_profile_'
     """Profile identifier prefix used for user defined profiles.
 
     User defined profiles are recognized from system profiles (defined in
@@ -148,18 +148,14 @@ class FormProfile(pytis.presentation.Profile):
         """Change the name of the profile to given 'name' (unicode)."""
         self._name = unicode(name)
 
-    def is_user_defined_profile(self):
-        """Return True if the profile is user defined (not a predefined system profile)."""
-        return self._id.startswith(self._USER_PROFILE_PREFIX)
-
     @classmethod
     def new_user_profile_id(cls, profiles):
         """Generate a new unique user profile id based on given list of existing profiles."""
-        user_profile_numbers = [int(profile.id()[len(cls._USER_PROFILE_PREFIX):])
-                                for profile in profiles
-                                if isinstance(profile, pytis.form.FormProfile) and  profile.is_user_defined_profile()
-                                and profile.id()[len(cls._USER_PROFILE_PREFIX):].isdigit()]
-        return cls._USER_PROFILE_PREFIX + str(max(user_profile_numbers+[0])+1)
+        prefix = cls.USER_PROFILE_PREFIX
+        user_profile_numbers = [int(profile.id()[len(prefix):]) for profile in profiles
+                                if profile.id().startswith(prefix)
+                                and profile.id()[len(prefix):].isdigit()]
+        return prefix + str(max(user_profile_numbers+[0])+1)
     
     def set_filter(self, filter):
         """Change the filter of the profile to given value (pytis.data.Operator instance)."""
@@ -253,7 +249,7 @@ class FormProfile(pytis.presentation.Profile):
             formatted = indent.join(pp.pformat(value).splitlines())
             return '%s: %s' % (key, formatted)
         result = []
-        if self.is_user_defined_profile():
+        if self.id().startswith(self.USER_PROFILE_PREFIX):
             result = [format_item('filter', self._pack(self._filter))]
         result.extend([format_item(key, self.__dict__['_'+key])
                        for key in ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
@@ -285,6 +281,9 @@ class FormSettings(object):
     def __init__(self, settings):
         assert isinstance(settings, dict)
         self._settings = settings
+
+    # The following methods mimic the interface of `FormProfile' class to allow
+    # storing FormSettings instances through ProfileManager.
         
     def id(self):
         return self.PROFILE_ID
@@ -295,13 +294,10 @@ class FormSettings(object):
     def dump(self):
         return '\n'.join(['%s: %s' % (key, value) for key, value in self._settings.items()])
 
-    def validate(self, view, data):
-        return ()
-    
     def validation_errors(self):
         return ()
     
-    # FormSettings Specific interface:
+    # FormSettings specific interface:
 
     def get(self, name, default=None):
         return self._settings.get(name, default)
@@ -1257,9 +1253,9 @@ class LookupForm(InnerForm):
                 profile = custom
             profiles.append(profile)
         for profile_id in manager.list_profile_ids(fullname):
-            profile = manager.load_profile(fullname, profile_id)
-            profile.validate(self._view, self._data)
-            if self._is_user_defined_profile(profile):
+            if profile_id.startswith(FormProfile.USER_PROFILE_PREFIX):
+                profile = manager.load_profile(fullname, profile_id)
+                profile.validate(self._view, self._data)
                 profiles.append(profile)
         return profiles
 
@@ -1330,7 +1326,7 @@ class LookupForm(InnerForm):
         return False
 
     def _is_user_defined_profile(self, profile):
-        return isinstance(profile, FormProfile) and profile.is_user_defined_profile()
+        return profile.id().startswith(FormProfile.USER_PROFILE_PREFIX)
 
     def _cmd_apply_profile(self, index):
         profile = self._profiles[index]
