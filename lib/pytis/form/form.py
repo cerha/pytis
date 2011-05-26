@@ -116,14 +116,18 @@ class FormProfile(pytis.presentation.Profile):
             raise ProgramError("Unknown object in filter operator:", something)
             
     def __getstate__(self):
-        # We prefer saving the condition in our custom format, since its safer
-        # to pickle Python builtin types than instances of application defined
-        # classes.
-        if self._filter is None:
-            filter = None
+        if self._state is not None:
+            # If the profile was not used yet, it can be pickled again as is.
+            return self._state
         else:
-            filter = self._pack(self._filter)
-        return dict(self.__dict__, _filter=filter)
+            # We prefer saving the condition in our custom format, since its safer
+            # to pickle Python builtin types than instances of application defined
+            # classes.
+            if self._filter is None:
+                filter = None
+            else:
+                filter = self._pack(self._filter)
+            return dict(self.__dict__, _filter=filter)
 
     def __setstate__(self, state):
         # Don't restore the state here, to avoid accessing any attributes
@@ -1238,7 +1242,6 @@ class LookupForm(InnerForm):
         manager = profile_manager()
         fullname = self._fullname()
         profiles = []
-        invalid_profiles = []
         for profile in (self._default_profile,) + tuple(self._view.profiles()):
             custom = manager.load_profile(fullname, profile.id())
             if custom:
