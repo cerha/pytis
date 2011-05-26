@@ -36,11 +36,11 @@ class FormProfiles(Specification):
         Field('pickle', editable=Editable.NEVER),
         Field('dump', _(u"Obsah"), width=80, height=8, editable=Editable.NEVER),
         Field('errors', _(u"Chyby"), width=80, height=8, editable=Editable.NEVER),
-        Field('valid', _(u"Neplatný"), type=pd.Boolean, virtual=True, width=1,
-              computer=computer(lambda r, errors: errors is None), editable=Editable.NEVER),
+        Field('invalid', _(u"Neplatný"), type=pd.Boolean, virtual=True, width=1,
+              computer=computer(lambda r, errors: errors is not None), editable=Editable.NEVER),
         )
     cb = CodebookSpec(display='profile_name')
-    columns = ('profile_name', 'profile_id', 'username', 'fullname', 'valid')
+    columns = ('profile_name', 'profile_id', 'username', 'fullname', 'invalid')
     layout = HGroup(('profile_name', 'profile_id', 'username'),
                     ('fullname', 'dump', 'errors'))
     profiles = (Profile('all-profiles', _("Všechny profily"),
