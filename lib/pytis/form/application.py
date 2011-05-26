@@ -1438,7 +1438,7 @@ class DBFormProfileManager(FormProfileManager):
             ('profile_name', pytis.data.sval(profile.name())),
             ('pickle', pytis.data.sval(base64.b64encode(pickle.dumps(profile)))),
             ('dump', pytis.data.sval(profile.dump())),
-            ('errors', pytis.data.sval("\n".join(profile.validation_errors()))),
+            ('errors', pytis.data.sval("\n".join(profile.validation_errors()) or None)),
             )
         if row:
             for key, value in values:
