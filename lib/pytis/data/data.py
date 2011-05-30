@@ -103,6 +103,8 @@ class Operator(object):
         def __cmp__(self, other):
             if sameclass(self, other):
                 return cmp(self._value, other._value)
+            elif pytis.util.less(self, other):
+                return -1
             else:
                 return 1
             
