@@ -563,8 +563,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         return str(self)
 
     def _fullname(self):
-        cls = self.__class__
-        return 'form/%s.%s/%s//' % (cls.__module__, cls.__name__, self._name)
+        return make_fullname(self.__class__, self._name)
 
     def _release_data(self):
         if self._data is not None:

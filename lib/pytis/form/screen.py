@@ -1956,6 +1956,20 @@ def border_style2wx(style):
 
 # Pomocné funkce
 
+def make_fullname(form_class, spec_name):
+    """Return a fullname string for given form class and specification name.
+
+    Arguments:
+      form_class -- particular form class derived from 'pytis.form.Form'
+      spec_name -- string name of a pytis specification (for resolver)
+    
+    The fullname string is used to refer to a form in DMP and other places
+    where python objects (form instances) can not be refered directly (the
+    reference is stored in the database).
+    
+    """
+    return 'form/%s.%s/%s//' % (form_class.__module__, form_class.__name__, spec_name)
+
 def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
     return MItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())

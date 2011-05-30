@@ -1097,9 +1097,7 @@ class DMPActions(DMPObject):
                                     "Failed to retrieve RUN_FORM command", (form_string,))
                     form_name = None
                 if form_name is not None:
-                    self._alternate_fullname = ('form/%s.%s/%s//' %
-                                                (form_class.__module__, form_class.__name__,
-                                                 form_name,))
+                    self._alternate_fullname = pytis.form.make_fullname(form_class, form_name)
                 else:
                     self._alternate_fullname = fullname
             elif components[0] == 'sub' and components[2] == 'RUN_FORM':
