@@ -1664,7 +1664,7 @@ class Binary(Limited):
             elif isinstance(data, (file, StringIO)):
                 self._load(data)
             else:
-                ProgramError("Invalid Buffer data:", data)
+                raise ProgramError("Invalid Buffer data:", data)
             assert filename is None or isinstance(filename, basestring)
             assert type is None or isinstance(type, basestring)
             self._filename = filename
