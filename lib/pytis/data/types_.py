@@ -1392,7 +1392,7 @@ class Binary(Limited):
             elif isinstance(data, file):
                 self._load(data)
             else:
-                ProgramError("Invalid Buffer data:", data)
+                raise ProgramError("Invalid Buffer data:", data)
             assert filename is None or isinstance(filename, (str, unicode))
             assert type is None or isinstance(type, str)
             self._filename = filename
