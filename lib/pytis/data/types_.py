@@ -1478,10 +1478,11 @@ class Time(_CommonDateTime):
 
     def _export(self, value, **kwargs):
         assert isinstance(value, datetime.time), value
-        # TODO: Need to check how it was meant with self._utc and local keyword
-        #       in Time instances
-        # if local and self._utc or not local and not self._utc:
-        #     raise Exception("Can't mix UTC and local time zones in Time type")        
+        if __debug__:
+            local = kwargs.get('local')
+            if local is not None:
+                if local and self._utc or not local and not self._utc:
+                    raise Exception("Can't mix UTC and local time zones in Time type")        
         if self._utc:
             kwargs['local'] = False
         else:
