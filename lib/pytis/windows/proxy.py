@@ -71,5 +71,6 @@ class ProxyThreadedServer(rpyc.utils.server.ThreadedServer):
         return logger
 
 def run_proxy():
-    t = ProxyThreadedServer(ProxyService, hostname='localhost', port=config.rpc_local_port)
+    t = ProxyThreadedServer(ProxyService, hostname='localhost', port=config.rpc_local_port,
+                            auto_register=False)
     t.start()

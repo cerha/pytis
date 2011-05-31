@@ -251,7 +251,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
     def _run_admin(self):
         servicemanager.LogInfoMsg("Running manager service")
         t = PytisThreadedServer(PytisAdminService, hostname=host, port=port,
-                                authenticator=Authenticator())
+                                authenticator=Authenticator(), auto_register=False)
         thread = threading.Thread(target=t.start)
         thread.start()
         self._stop_check_loop()
@@ -263,7 +263,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
         while _user_port < 65536:
             try:
                 server = PytisThreadedServer(PytisUserService, hostname=host, port=_user_port,
-                                             authenticator=Authenticator())
+                                             authenticator=Authenticator(), auto_register=False)
                 break
             except socket.error:
                 _user_port += 1
