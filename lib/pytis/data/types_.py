@@ -350,11 +350,11 @@ class Type(object):
                 return True
         if self._enumerator is not None:
             if isinstance(self._enumerator, DataEnumerator):
-                if not self._enumerator.check(value, transaction, condition=condition):
-                    raise self._validation_error(self.VM_INVALID_VALUE)
+                check_kwargs = dict(transaction=transaction, condition=condition)
             else:
-                if not self._enumerator.check(value):
-                    raise self._validation_error(self.VM_INVALID_VALUE)                    
+                check_kwargs = {}
+            if not self._enumerator.check(value, **check_kwargs):
+                raise self._validation_error(self.VM_INVALID_VALUE)
         for c in self._constraints:
             cresult = c(value)
             if cresult is not None:
