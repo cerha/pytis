@@ -145,7 +145,7 @@ def run():
                     form = getattr(pytis.form, formname)
                 if form is None:
                     continue # Ignore obsolete forms mapped to None.
-                fullname = 'form/%s.%s/%s//' % (form.__module__, form.__name__, specname)
+                fullname = pytis.form.make_fullname(form, specname)
                 resolver = pytis.util.resolver()
                 try:
                     view_spec = resolver.get(specname, 'view_spec')
