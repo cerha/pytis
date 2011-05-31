@@ -235,8 +235,8 @@ class WindowsService(win32serviceutil.ServiceFramework):
         self.run()
 
     def _is_admin(self):
-        return (os.path.basename(__file__) == 'windows-server' or
-                os.path.basename(__file__) == 'windows-server.py')
+        return os.path.basename(__file__) in('windows-server', 'windows-server.py',
+                                              'windows-server.pyc', 'windows-server.pyo',)
 
     def _stop_check_loop(self):
         servicemanager.LogInfoMsg("stop check loop started")
