@@ -48,6 +48,17 @@ def username():
     import win32api
     return win32api.GetUserName()
 
+class WindowsLoggingHandler(logging.Handler):
+    
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            servicemanager.LogInfoMsg(msg)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+    
 class Authenticator(object):
     
     def __call__(self, sock):
@@ -175,7 +186,7 @@ class PytisThreadedServer(rpyc.utils.server.ThreadedServer):
     def _get_logger(self):
         logger = super(PytisThreadedServer, self)._get_logger()
         logger.setLevel(logging_level)
-        handler = logging.StreamHandler()
+        handler = WindowsLoggingHandler()
         logger.addHandler(handler)
         return logger
 
@@ -238,6 +249,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
                 break
 
     def _run_admin(self):
+        servicemanager.LogInfoMsg("Running manager service")
         t = PytisThreadedServer(PytisAdminService, hostname=host, port=port,
                                 authenticator=Authenticator())
         thread = threading.Thread(target=t.start)
@@ -245,6 +257,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
         self._stop_check_loop()
 
     def _run_user(self):
+        servicemanager.LogInfoMsg("Running user service")
         global _user_port
         server = None
         while _user_port < 65536:
@@ -255,8 +268,9 @@ class WindowsService(win32serviceutil.ServiceFramework):
             except socket.error:
                 _user_port += 1
         if server is None:
-            sys.stderr.write("No free port found, exiting.\n")
+            servicemanager.LogInfoMsg("No free port found, exiting")
             return
+        servicemanager.LogInfoMsg("Running on port %s" % (_user_port,))
         registration = threading.Thread(target=registration_thread)
         registration.daemon = True
         registration.start()
