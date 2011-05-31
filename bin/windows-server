@@ -48,6 +48,10 @@ def username():
     import win32api
     return win32api.GetUserName()
 
+def is_admin():
+    return os.path.basename(__file__) in('windows-server', 'windows-server.py',
+                                         'windows-server.pyc', 'windows-server.pyo',)
+
 class WindowsLoggingHandler(logging.Handler):
     
     def emit(self, record):
@@ -216,8 +220,12 @@ def registration_thread():
             pass
 
 class WindowsService(win32serviceutil.ServiceFramework):
-    _svc_name_ = "PytisService"
-    _svc_display_name_ = "Pytis Service"
+    if is_admin():
+        _svc_name_ = "PytisService"
+        _svc_display_name_ = "Pytis Service"
+    else:
+        _svc_name_ = "PytisUserService"
+        _svc_display_name_ = "Pytis User Service"
 
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
@@ -233,10 +241,6 @@ class WindowsService(win32serviceutil.ServiceFramework):
                               servicemanager.PYS_SERVICE_STARTED,
                               (self._svc_name_, ''))
         self.run()
-
-    def _is_admin(self):
-        return os.path.basename(__file__) in('windows-server', 'windows-server.py',
-                                              'windows-server.pyc', 'windows-server.pyo',)
 
     def _stop_check_loop(self):
         servicemanager.LogInfoMsg("stop check loop started")
@@ -279,7 +283,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
         self._stop_check_loop()
             
     def run(self):
-        if self._is_admin():
+        if is_admin():
             self._run_admin()
         else:
             self._run_user()
