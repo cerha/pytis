@@ -229,7 +229,6 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
-        self._user_port = None
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
 
     def SvcStop(self):
@@ -254,32 +253,12 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     def _run_admin(self):
         servicemanager.LogInfoMsg("Running manager service")
-        t = PytisThreadedServer(PytisAdminService, hostname=host, port=port,
-                                authenticator=Authenticator(), auto_register=False)
-        thread = threading.Thread(target=t.start)
-        thread.start()
+        start_manager(True)
         self._stop_check_loop()
 
     def _run_user(self):
         servicemanager.LogInfoMsg("Running user service")
-        global _user_port
-        server = None
-        while _user_port < 65536:
-            try:
-                server = PytisThreadedServer(PytisUserService, hostname=host, port=_user_port,
-                                             authenticator=Authenticator(), auto_register=False)
-                break
-            except socket.error:
-                _user_port += 1
-        if server is None:
-            servicemanager.LogInfoMsg("No free port found, exiting")
-            return
-        servicemanager.LogInfoMsg("Running on port %s" % (_user_port,))
-        registration = threading.Thread(target=registration_thread)
-        registration.daemon = True
-        registration.start()
-        thread = threading.Thread(target=server.start)
-        thread.start()
+        start_user(True)
         self._stop_check_loop()
             
     def run(self):
@@ -288,5 +267,46 @@ class WindowsService(win32serviceutil.ServiceFramework):
         else:
             self._run_user()
 
+def start_manager(in_background):
+    t = PytisThreadedServer(PytisAdminService, hostname=host, port=port,
+                            authenticator=Authenticator(), auto_register=False)
+    if in_background:
+        thread = threading.Thread(target=t.start)
+        thread.start()
+    else:
+        t.start()
+
+def start_user(in_background):
+    global _user_port
+    server = None
+    while _user_port < 65536:
+        try:
+            server = PytisThreadedServer(PytisUserService, hostname=host, port=_user_port,
+                                         authenticator=Authenticator(), auto_register=False)
+            break
+        except socket.error:
+            _user_port += 1
+    if server is None:
+        servicemanager.LogInfoMsg("No free port found, exiting")
+        return
+    servicemanager.LogInfoMsg("Running on port %s" % (_user_port,))
+    registration = threading.Thread(target=registration_thread)
+    registration.daemon = True
+    registration.start()
+    if in_background:
+        thread = threading.Thread(target=server.start)
+        thread.start()
+    else:
+        server.start()
+
+def run():
+    if is_admin():
+        start_manager(False)
+    else:
+        start_user(False)
+
 if __name__ == '__main__':
-    win32serviceutil.HandleCommandLine(WindowsService)
+    if is_admin():
+        win32serviceutil.HandleCommandLine(WindowsService)
+    else:
+        run()
