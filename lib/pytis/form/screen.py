@@ -1968,7 +1968,13 @@ def make_fullname(form_class, spec_name):
     reference is stored in the database).
     
     """
-    return 'form/%s.%s/%s//' % (form_class.__module__, form_class.__name__, spec_name)
+    module_name = form_class.__module__
+    if module_name.startswith('pytis.form.'):
+        # Make sure the module name is always the same (depending on how
+        # modules were imported, it may be sometimes 'pytis.form' and sometimes
+        # 'pytis.form.list').
+        module_name = 'pytis.form'
+    return 'form/%s.%s/%s//' % (module_name, form_class.__name__, spec_name)
 
 def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
