@@ -40,7 +40,7 @@ certificate_file = '/windows.crt'
 ca_certificate_file = '/ca.crt'
 logging_level = logging.INFO
 
-_restart = False
+_stop = False
 _user_port = port + 1
 _registered_users = {}
 
@@ -152,8 +152,8 @@ class PytisUserService(rpyc.Service):
         f.close()
         os.remove(file_name)
         os.rename(new_file_name, file_name)
-        global _restart
-        _restart = True
+        global _stop
+        _stop = True
 
 class PytisAdminService(PytisUserService):
         
@@ -169,7 +169,7 @@ class PytisAdminService(PytisUserService):
 class PytisThreadedServer(rpyc.utils.server.ThreadedServer):
 
     def __init__(self, *args, **kwargs):
-        self._pytis_start_restart_thread()
+        self._pytis_start_stop_thread()
         super(PytisThreadedServer, self).__init__(*args, **kwargs)
         
     def _get_logger(self):
@@ -179,16 +179,16 @@ class PytisThreadedServer(rpyc.utils.server.ThreadedServer):
         logger.addHandler(handler)
         return logger
 
-    def _pytis_start_restart_thread(self):
-        t = threading.Thread(target=self._pytis_check_restart)
+    def _pytis_start_stop_thread(self):
+        t = threading.Thread(target=self._pytis_check_stop)
         t.daemon = True
         t.start()
         
-    def _pytis_check_restart(self):
-        global _restart
+    def _pytis_check_stop(self):
+        global _stop
         while True:
-            if _restart:
-                self.logger.info('restart requested')
+            if _stop:
+                self.logger.info('stop requested')
                 time.sleep(1) # provide some time to finnish the connection
                 self.close()
                 return
@@ -227,10 +227,22 @@ class WindowsService(win32serviceutil.ServiceFramework):
         return (os.path.basename(__file__) == 'windows-server' or
                 os.path.basename(__file__) == 'windows-server.py')
 
+    def _stop_check_loop(self):
+        servicemanager.LogInfoMsg("stop check loop started")
+        while True:
+            code = win32event.WaitForSingleObject(self.hWaitStop, 1000)
+            if code == win32event.WAIT_OBJECT_0:
+                servicemanager.LogInfoMsg("Stop requested")
+                global _stop
+                _stop = True
+                break
+
     def _run_admin(self):
         t = PytisThreadedServer(PytisAdminService, hostname=host, port=port,
                                 authenticator=Authenticator())
-        t.start()
+        thread = threading.Thread(target=t.start)
+        thread.start()
+        self._stop_check_loop()
 
     def _run_user(self):
         global _user_port
@@ -248,8 +260,10 @@ class WindowsService(win32serviceutil.ServiceFramework):
         registration = threading.Thread(target=registration_thread)
         registration.daemon = True
         registration.start()
-        server.start()
-
+        thread = threading.Thread(target=server.start)
+        thread.start()
+        self._stop_check_loop()
+            
     def run(self):
         if self._is_admin():
             self._run_admin()
