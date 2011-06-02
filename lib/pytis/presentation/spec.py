@@ -1696,7 +1696,9 @@ class Binding(object):
             the binding referes to a "web form" -- an embedded browser window
             showing given content.  In this case the arguments 'name',
             'binding_column', 'condition', 'arguments' and 'prefill' make no
-            sense and must be None.
+            sense and must be None.  The function 'pytis.util.lcg_to_html()'
+            may be useful if you need to display the formatted content of a
+            field containing LCG Structured Text.
           
         """
         assert isinstance(id, basestring), id
