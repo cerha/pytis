@@ -168,7 +168,7 @@ class PytisUserService(PytisService):
 class PytisAdminService(PytisService):
 
     def _true_authentication(self):
-        # Dirty — we access private attribute of self._conn.  But how to access
+        # Dirty: We access private attribute of self._conn.  But how to access
         # credentials otherwise?  And RPyC's SlaveService accesses the
         # attribute too.
         return self._conn._config.get('credentials')
