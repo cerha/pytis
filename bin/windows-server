@@ -77,12 +77,13 @@ class Authenticator(object):
         except Exception:
             e = sys.exc_info()[1]
             raise rpyc.utils.authenticators.AuthenticationError(str(e))
-        if ssl_sock.getpeercert() is None:
+        peer_certificate = ssl_sock.getpeercert()
+        if peer_certificate is None:
             raise rpyc.utils.authenticators.AuthenticationError("Invalid client certificate")
-        return ssl_sock, None
+        return ssl_sock, peer_certificate
 
-class PytisUserService(rpyc.Service):
-
+class PytisService(rpyc.Service):
+    
     def exposed_echo(self, text):
         """Return 'text'.
 
@@ -90,6 +91,8 @@ class PytisUserService(rpyc.Service):
         
         """
         return text
+
+class PytisUserService(PytisService):
         
     def exposed_get_clipboard_text(self):
         """Return current clipboard text, as unicode.
@@ -162,8 +165,27 @@ class PytisUserService(rpyc.Service):
         handle, filename = tempfile.mkstemp(prefix='pytis', suffix=suffix)
         return Wrapper(handle, filename, encoding)
 
+class PytisAdminService(PytisService):
+
+    def _true_authentication(self):
+        # Dirty — we access private attribute of self._conn.  But how to access
+        # credentials otherwise?  And RPyC's SlaveService accesses the
+        # attribute too.
+        return self._conn._config.get('credentials')
+
+    def exposed_register_user(self, user, port):
+        assert isinstance(user, basestring), user
+        assert isinstance(port, int), port
+        _registered_users[user] = port
+
+    def exposed_user_port(self, user):
+        assert isinstance(user, basestring), user
+        return _registered_users.get(user)
+
     def exposed_upgrade(self, source):
         assert source and isinstance(source, basestring), source
+        if not self._true_authentication():
+            raise Exception("Permission denied")
         file_name = __file__
         self._upgrade(file_name, source)
         file_name = os.path.join(os.path.dirname(file_name), 'windows-user-server.py')
@@ -178,17 +200,6 @@ class PytisUserService(rpyc.Service):
         f.close()
         os.remove(file_name)
         os.rename(new_file_name, file_name)
-
-class PytisAdminService(PytisUserService):
-        
-    def exposed_register_user(self, user, port):
-        assert isinstance(user, basestring), user
-        assert isinstance(port, int), port
-        _registered_users[user] = port
-
-    def exposed_user_port(self, user):
-        assert isinstance(user, basestring), user
-        return _registered_users.get(user)
     
 class PytisThreadedServer(rpyc.utils.server.ThreadedServer):
 
