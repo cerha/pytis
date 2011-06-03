@@ -1885,7 +1885,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             except:
                 pass
             export_file = filename
-            remote = True
+            if export_file is not None:
+                remote = True
         if filename is None:
             export_dir = config.export_directory
             filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
