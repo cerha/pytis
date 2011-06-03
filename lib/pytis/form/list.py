@@ -28,9 +28,10 @@ wxWindows.
 # (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
 # obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWindows.
 
-import functools
+import codecs
 import collections
 import copy
+import functools
 import string
 import time
 import types
@@ -1939,6 +1940,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 label = column.column_label()
                 if label is None:
                     label = column.label()
+                if export_encoding and export_encoding != db_encoding:
+                    if not is_unicode(label):
+                        label = unicode(label, db_encoding)
+                    label = label.encode(export_encoding)
                 export_file.write(label + '\t')
             export_file.write('\n')
             for r in range(0,number_rows):
