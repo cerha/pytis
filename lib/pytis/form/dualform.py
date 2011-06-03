@@ -967,7 +967,9 @@ class MultiBrowseDualForm(BrowseDualForm):
         form.set_callback(MultiSideForm.CALL_BINDING_SELECTED, self._on_binding_selection)
         selected_binding = self._selected_binding
         if selected_binding is None:
-            selected_binding = self._saved_setting('binding')
+            saved_binding = self._saved_setting('binding')
+            if saved_binding in [b.id() for b in self._main_form.bindings()]:
+                selected_binding = saved_binding
         if selected_binding:
             form.select_binding(selected_binding)
         return form
