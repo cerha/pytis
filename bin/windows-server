@@ -165,14 +165,19 @@ class PytisUserService(rpyc.Service):
     def exposed_upgrade(self, source):
         assert source and isinstance(source, basestring), source
         file_name = __file__
+        self._upgrade(file_name, source)
+        file_name = os.path.join(os.path.dirname(file_name), 'windows-user-server.py')
+        self._upgrade(file_name, source)
+        global _stop
+        _stop = True
+
+    def _upgrade(self, file_name, source):
         new_file_name = file_name + '.new'
         f = open(new_file_name, 'wb')
         f.write(source)
         f.close()
         os.remove(file_name)
         os.rename(new_file_name, file_name)
-        global _stop
-        _stop = True
 
 class PytisAdminService(PytisUserService):
         
