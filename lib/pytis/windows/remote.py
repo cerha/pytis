@@ -95,9 +95,10 @@ def launch_url(url):
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("URL %s se nepodařilo otevřít") % (url,))
 
-def make_temporary_file(suffix=''):
+def make_temporary_file(suffix='', encoding=None):
     assert isinstance(suffix, basestring), suffix
+    assert encoding is None or isinstance(encoding, basestring), encoding
     try:
-        return _request('make_temporary_file', suffix=suffix)
+        return _request('make_temporary_file', suffix=suffix, encoding=encoding)
     except:
         return None

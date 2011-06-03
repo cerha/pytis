@@ -134,7 +134,7 @@ class PytisUserService(rpyc.Service):
         assert isinstance(path, basestring), path
         os.startfile(path)
 
-    def exposed_make_temporary_file(self, suffix=''):
+    def exposed_make_temporary_file(self, suffix='', encoding=None):
         """Create a temporary file and return its instance.
 
         The return value is a 'tempfile.NamedTemporaryFile' instance.
@@ -143,20 +143,24 @@ class PytisUserService(rpyc.Service):
 
           suffix -- suffix to use in the temporary file name; if a dot should
             be part of the suffix then it must be explicitly included in it
+          encoding -- output encoding, string or None
         
         """
         class Wrapper(object):
-            def __init__(self, handle, filename):
+            def __init__(self, handle, filename, encoding):
                 self._f = os.fdopen(handle, 'w')
                 self._filename = filename
+                self._encoding = encoding
             def exposed_write(self, data):
+                if self._encoding is not None:
+                    data = data.encode(self._encoding)
                 self._f.write(data)
             def exposed_close(self):
                 self._f.close()
             def exposed_name(self):
                 return self._filename
         handle, filename = tempfile.mkstemp(prefix='pytis', suffix=suffix)
-        return Wrapper(handle, filename)
+        return Wrapper(handle, filename, encoding)
 
     def exposed_upgrade(self, source):
         assert source and isinstance(source, basestring), source
