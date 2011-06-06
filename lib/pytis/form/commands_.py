@@ -256,6 +256,8 @@ Command(StructuredTextField, 'UNDO',
         "Undo last text edit operation.")
 Command(StructuredTextField, 'REDO',
         "Redo last text edit operation.")
+Command(StructuredTextField, 'PREVIEW',
+        "Preview the formatted text in a browser.")
 
 Command(Dialog, 'CLOSE_DIALOG',
         "Opuštění dialogu bez potvrzení")
@@ -412,6 +414,7 @@ COMMAND_ICONS = (
     (StructuredTextField.COMMAND_SEARCH_AND_REPLACE,       wx.ART_FIND_AND_REPLACE),
     (StructuredTextField.COMMAND_UNDO,                     wx.ART_UNDO),
     (StructuredTextField.COMMAND_REDO,                     wx.ART_REDO),
+    (StructuredTextField.COMMAND_PREVIEW,                  wx.ART_TICK_MARK),
     (ListForm.COMMAND_COPY_CELL,                           wx.ART_COPY),
     (ListForm.COMMAND_EDIT,                                'edit-cell'),
     (ListForm.COMMAND_FILTER_BY_CELL,                      'filter-by-cell'),

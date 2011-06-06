@@ -1922,6 +1922,10 @@ class StructuredTextField(TextField):
                 #           _(u"Hledat a nahradit"),
                 #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
                 # ),
+                (UICommand(self.COMMAND_PREVIEW(),
+                           _(u"Zobrazit náhled"),
+                           _(u"Zobrazit náhled zformátovaného textu v prohlížeči.")),
+                 ),
                 )
 
     def _create_ctrl(self):
@@ -1988,3 +1992,12 @@ class StructuredTextField(TextField):
     
     def _cmd_redo(self):
         self._ctrl.Redo()
+        
+    def _cmd_preview(self):
+        text = self._get_value()
+        form = current_form()
+        if isinstance(form, PopupForm):
+            parent = form.GetParent()
+        else:
+            parent = None
+        InfoWindow(_(u"Náhled"), text=text, format=TextFormat.WIKI)

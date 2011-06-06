@@ -1430,7 +1430,7 @@ class StatusBar(wx.StatusBar):
 class InfoWindow(object):
     """Nemodální okno pro zobrazení textových informací."""
     
-    def __init__(self, title, text, format=TextFormat.PLAIN, _name='info'):
+    def __init__(self, title, text, format=TextFormat.PLAIN, parent=None, _name='info'):
         """Zobraz nemodální okno nezávislé na hlavním okně aplikace.
         
         Argumenty:
@@ -1446,15 +1446,22 @@ class InfoWindow(object):
             sobě platným HTML dokumentem.  Neobsahuje hlavičku, ani značky
             <html> a <body>.  Jde jen o zformátovaný text, který bude vsazen do
             těla automaticky vytvořeného dokumentu.
+          parent -- parent wx Frame or None to use the main application frame
 
         """
         assert isinstance(title, basestring)
         assert isinstance(text, basestring)
         assert format in public_attributes(TextFormat)
-        frame = wx.Frame(wx_frame(), title=title, name=_name)
+        if parent is None:
+            parent = wx_frame()
+        frame = wx.Dialog(parent, title=title, name=_name)
+        # Temporarily us a modal dialog instead an ordinary frame to work
+        # around the problem of closing a frame whose parent is a modal dialog
+        # in StructuredTextField._cmd_preview().  Once that is sorted out, a
+        # non-modal frame would be better.
         view = wx_text_view(frame, text, format)
         frame.SetSize(view.GetSize())
-        frame.Show(True)
+        frame.ShowModal()
         
 
 class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
