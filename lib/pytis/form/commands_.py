@@ -266,6 +266,8 @@ Command(StructuredTextField, 'UNDERLINED',
         "Insert markup for underlined text.")
 Command(StructuredTextField, 'LINK',
         "Insert markup for a hypertext link.")
+Command(StructuredTextField, 'ITEMIZE',
+        "Insert markup for a bullet/numbered list item (arg. style).")
 Command(StructuredTextField, 'PREVIEW',
         "Preview the formatted text in a browser.")
 
@@ -428,6 +430,8 @@ COMMAND_ICONS = (
     (StructuredTextField.COMMAND_EMPHASIZED,              'text-italic'),
     (StructuredTextField.COMMAND_UNDERLINED,              'text-underlined'),
     (StructuredTextField.COMMAND_LINK,                    'text-link'),
+    (StructuredTextField.COMMAND_ITEMIZE(style='bullet'), 'text-bullet-list'),
+    (StructuredTextField.COMMAND_ITEMIZE(style='numbered'), 'text-numbered-list'),
     (StructuredTextField.COMMAND_PREVIEW,                  wx.ART_TICK_MARK),
     (ListForm.COMMAND_COPY_CELL,                           wx.ART_COPY),
     (ListForm.COMMAND_EDIT,                                'edit-cell'),

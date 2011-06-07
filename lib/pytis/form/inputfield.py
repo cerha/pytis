@@ -1943,6 +1943,12 @@ class StructuredTextField(TextField):
                 (UICommand(self.COMMAND_LINK(),
                            _(u"Vložit hypertextový odkaz"),
                            _(u"Vložit hypertextový odkaz.")),
+                 UICommand(self.COMMAND_ITEMIZE(style='bullet'),
+                           _(u"Vytvořit položku odrážkového seznamu"),
+                           _(u"Vytvořit položku odrážkového seznamu.")),
+                 UICommand(self.COMMAND_ITEMIZE(style='numbered'),
+                           _(u"Vytvořit položku číslovaného seznamu"),
+                           _(u"Vytvořit položku číslovaného seznamu.")),
                  ),
                 (UICommand(self.COMMAND_PREVIEW(),
                            _(u"Zobrazit náhled"),
@@ -2051,6 +2057,28 @@ class StructuredTextField(TextField):
         
     def _cmd_underlined(self):
         self._insert_markup('_')
+
+    def _cmd_itemize(self, style='bullet'):
+        if style == 'bullet':
+            markup = '*'
+        elif style == 'numbered':
+            markup = '#'
+        else:
+            raise ProgramError("Invalid list style: %r" % style)
+        ctrl = self._ctrl
+        selection = ctrl.GetRange(*ctrl.GetSelection())
+        if selection:
+            if '\n' in selection:
+                import textwrap
+                selection = textwrap.fill(selection, 80, subsequent_indent='  ')
+            new_text = markup + ' ' + selection.strip()  + '\n'
+        else:
+            new_text = markup + ' '
+        column_number = ctrl.PositionToXY(ctrl.GetInsertionPoint())[0]
+        if column_number != 0:
+            new_text = '\n' + new_text
+        ctrl.WriteText(new_text)
+        
         
     def _cmd_link(self):
         ctrl = self._ctrl
