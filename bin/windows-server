@@ -35,9 +35,10 @@ import servicemanager
 
 host = '0.0.0.0'
 port = 17984
-key_file = '/windows.key'
-certificate_file = '/windows.crt'
-ca_certificate_file = '/ca.crt'
+certificate_directory = os.path.join(os.environ["WINDIR"], "ssl")
+key_file = os.path.join(certificate_directory, 'windows.key')
+certificate_file = os.path.join(certificate_directory, 'windows.crt')
+ca_certificate_file = os.path.join(certificate_directory, 'ca.crt')
 logging_level = logging.INFO
 
 _stop = False
