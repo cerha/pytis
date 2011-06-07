@@ -1940,6 +1940,10 @@ class StructuredTextField(TextField):
                            _(u"Vložit značku pro podtržený text"),
                            _(u"Vložit značku pro podtržený text.")),
                  ),
+                (UICommand(self.COMMAND_LINK(),
+                           _(u"Vložit hypertextový odkaz"),
+                           _(u"Vložit hypertextový odkaz.")),
+                 ),
                 (UICommand(self.COMMAND_PREVIEW(),
                            _(u"Zobrazit náhled"),
                            _(u"Zobrazit náhled zformátovaného textu v prohlížeči.")),
@@ -2047,6 +2051,27 @@ class StructuredTextField(TextField):
         
     def _cmd_underlined(self):
         self._insert_markup('_')
+        
+    def _cmd_link(self):
+        ctrl = self._ctrl
+        uri = run_dialog(InputDialog, title=_(u"Zadejte cíl odkazu"), 
+                         prompt=_(u"Cíl odkazu:"), input_width=50,
+                         message=_(u"Zadejte absolutní URL ve tvaru např. "
+                                   "http://www.mojefirma.com nebo\n"
+                                   u"lokální adresu jako např. identifikátor jiné stránky v CMS."))
+        if uri:
+            title = run_dialog(InputDialog, title=_(u"Zadejte název odkazu"),
+                               prompt=_(u"Název odkazu:"), input_width=50,
+                               message=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
+                                         u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
+                                         u"předchozím kroku."))
+            if title:
+                result = '[' + uri + ' ' + title +']'
+            elif uri.startswith('http://') or uri.startswith('https://') or uri.startswith('ftp://'):
+                result = uri
+            else:
+                result = '[' + uri +']'
+            ctrl.WriteText(result)
 
     def _cmd_heading(self, level):
         ctrl = self._ctrl
