@@ -1158,7 +1158,7 @@ class _FormDataIterator(_DataIterator):
     def __init__(self, resolver, form, transaction):
         name = form.name()
         condition=form.condition()
-        sorting=form.data_sorting()
+        sorting=form.sorting()
         if condition is None:
             try:
                 condition = resolver.p((name, P_CONDITION))
@@ -1245,7 +1245,7 @@ class LCGFormatter(object):
             if form is None:
                 return lcg.Content()
             table = pytis.output.data_table(self._selected_resolver, form.name(),
-                                            condition=form.condition(), sorting=form.data_sorting(),
+                                            condition=form.condition(), sorting=form.sorting(),
                                             transaction=self._transaction)
             return table.lcg()
         def _make_agg(self, op):
