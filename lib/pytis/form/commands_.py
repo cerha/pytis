@@ -256,6 +256,12 @@ Command(StructuredTextField, 'UNDO',
         "Undo last text edit operation.")
 Command(StructuredTextField, 'REDO',
         "Redo last text edit operation.")
+Command(StructuredTextField, 'STRONG',
+        "Insert markup for strong text.")
+Command(StructuredTextField, 'EMPHASIZED',
+        "Insert markup for emphasized text.")
+Command(StructuredTextField, 'UNDERLINED',
+        "Insert markup for underlined text.")
 Command(StructuredTextField, 'PREVIEW',
         "Preview the formatted text in a browser.")
 
@@ -414,6 +420,9 @@ COMMAND_ICONS = (
     (StructuredTextField.COMMAND_SEARCH_AND_REPLACE,       wx.ART_FIND_AND_REPLACE),
     (StructuredTextField.COMMAND_UNDO,                     wx.ART_UNDO),
     (StructuredTextField.COMMAND_REDO,                     wx.ART_REDO),
+    (StructuredTextField.COMMAND_STRONG,                  'text-bold'),
+    (StructuredTextField.COMMAND_EMPHASIZED,              'text-italic'),
+    (StructuredTextField.COMMAND_UNDERLINED,              'text-underlined'),
     (StructuredTextField.COMMAND_PREVIEW,                  wx.ART_TICK_MARK),
     (ListForm.COMMAND_COPY_CELL,                           wx.ART_COPY),
     (ListForm.COMMAND_EDIT,                                'edit-cell'),

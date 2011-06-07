@@ -1922,6 +1922,16 @@ class StructuredTextField(TextField):
                 #           _(u"Hledat a nahradit"),
                 #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
                 # ),
+                (UICommand(self.COMMAND_STRONG(),
+                           _(u"Vložit značku pro tučný text"),
+                           _(u"Vložit značku pro tučný text.")),
+                 UICommand(self.COMMAND_EMPHASIZED(),
+                           _(u"Vložit značku pro zvýrazeněný text"),
+                           _(u"Vložit značku pro zvýrazeněný text.")),
+                 UICommand(self.COMMAND_UNDERLINED(),
+                           _(u"Vložit značku pro podtržený text"),
+                           _(u"Vložit značku pro podtržený text.")),
+                 ),
                 (UICommand(self.COMMAND_PREVIEW(),
                            _(u"Zobrazit náhled"),
                            _(u"Zobrazit náhled zformátovaného textu v prohlížeči.")),
@@ -1975,6 +1985,25 @@ class StructuredTextField(TextField):
         sizer.Add(widget, 1, wx.EXPAND)
         return sizer
 
+    def _insert_markup(self, markup):
+        ctrl = self._ctrl
+        start, end = ctrl.GetSelection()
+        selection = ctrl.GetRange(start, end)
+        prior = next = None
+        if start > 0:
+            prior = ctrl.GetRange(start-1, start)
+        if end < ctrl.GetLastPosition():
+            next = ctrl.GetRange(end, end+1)
+        if prior not in (None, ' ', '\t', '\n', '\r'):
+            ctrl.WriteText(' ')
+        if start == end:
+            ctrl.WriteText(markup+markup)
+            ctrl.SetInsertionPoint(ctrl.GetInsertionPoint()-1)
+        else:
+            ctrl.WriteText(markup+selection+markup)
+        if next not in (None, ' ', '\t', '\n', '\r'):
+            ctrl.WriteText(' ')
+
     def _cmd_search(self):
         pass
     
@@ -2001,3 +2030,12 @@ class StructuredTextField(TextField):
         else:
             parent = None
         InfoWindow(_(u"Náhled"), text=text, format=TextFormat.WIKI)
+
+    def _cmd_strong(self):
+        self._insert_markup('*')
+        
+    def _cmd_emphasized(self):
+        self._insert_markup('/')
+        
+    def _cmd_underlined(self):
+        self._insert_markup('_')
