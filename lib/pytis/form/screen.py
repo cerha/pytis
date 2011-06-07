@@ -1666,6 +1666,35 @@ class ProfileSelector(wx.combo.ComboCtrl):
             current_form().focus()
             
 
+class TextHeadingSelector(wx.Choice):
+    """Toolbar control for structured text heading level selection."""
+    _CHOICES = ("Normal text",
+                "Heading level 1",
+                "Heading level 2",
+                "Heading level 3",
+                "Heading level 4",
+                "Heading level 5",
+                )
+    
+    def __init__(self, parent, uicmd, size=None):
+        self._uicmd = uicmd
+        wx.Choice.__init__(self, parent, choices=self._CHOICES, size=size)
+        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
+        wx_callback(wx.EVT_CHOICE, self, self.GetId(), self._on_selection)
+            
+    def _on_ui_event(self, event):
+        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        enabled = cmd.enabled(**kwargs)
+        event.Enable(enabled)
+        if enabled:
+            ctrl = kwargs['_command_handler']
+            self.SetSelection(ctrl.current_heading_level())
+
+    def _on_selection(self, event):
+        cmd, kwargs = self._uicmd.command(), self._uicmd.args()
+        cmd.invoke(level=event.GetSelection(), **kwargs)
+
+            
 class DualFormSwitcher(wx.BitmapButton):
     """Special toolbar control for DualForm.COMMAND_OTHER_FORM.
 

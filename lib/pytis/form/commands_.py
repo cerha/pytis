@@ -256,6 +256,8 @@ Command(StructuredTextField, 'UNDO',
         "Undo last text edit operation.")
 Command(StructuredTextField, 'REDO',
         "Redo last text edit operation.")
+Command(StructuredTextField, 'HEADING',
+        "Insert markup for heading.")
 Command(StructuredTextField, 'STRONG',
         "Insert markup for strong text.")
 Command(StructuredTextField, 'EMPHASIZED',

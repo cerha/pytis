@@ -1893,6 +1893,9 @@ class ImageField(FileField):
 
 class StructuredTextField(TextField):
 
+    _HEADING_MATCHER = re.compile(r'^(?P<level>=+) (?P<title>.*) (?P=level)' +
+                                  r'(?:[\t ]+(?:\*|(?P<anchor>[\w\d_-]+)))? *$')
+
     def _commands(self):
         return ((UICommand(EditForm.COMMAND_COMMIT_RECORD(close=False),
                            _(u"Uložit"),
@@ -1922,6 +1925,11 @@ class StructuredTextField(TextField):
                 #           _(u"Hledat a nahradit"),
                 #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
                 # ),
+                (UICommand(self.COMMAND_HEADING(_command_handler=self),
+                           _(u"Vložit značku pro nadpis"),
+                           _(u"Vložit značku pro nadpis."),
+                           ctrl=TextHeadingSelector),
+                 ),
                 (UICommand(self.COMMAND_STRONG(),
                            _(u"Vložit značku pro tučný text"),
                            _(u"Vložit značku pro tučný text.")),
@@ -2039,3 +2047,42 @@ class StructuredTextField(TextField):
         
     def _cmd_underlined(self):
         self._insert_markup('_')
+
+    def _cmd_heading(self, level):
+        ctrl = self._ctrl
+        position = ctrl.GetInsertionPoint()
+        column_number, line_number = ctrl.PositionToXY(position)
+        line_text = ctrl.GetLineText(line_number)
+        match = self._HEADING_MATCHER.match(line_text)
+        line_beginning = position - column_number
+        if match:
+            title = match.group('title')
+            anchor = match.group('anchor')
+            if anchor:
+                anchor = ' ' + anchor
+            else:
+                anchor = ''
+        else:
+            title = line_text.strip()
+            anchor = ''
+        if level > 0:
+            new_text = '='*level + ' ' + title + ' ' + '='*level + anchor
+        else:
+            new_text = title
+        ctrl.SetSelection(line_beginning, line_beginning + len(line_text))
+        ctrl.WriteText(new_text)
+        self.set_focus()
+        
+    def current_heading_level(self):
+        ctrl = self._ctrl
+        position = ctrl.GetInsertionPoint()
+        line_number = ctrl.PositionToXY(position)[1]
+        line_text = ctrl.GetLineText(line_number)
+        match = self._HEADING_MATCHER.match(line_text)
+        if match:
+            return len(match.group('level'))
+        else:
+            return 0
+        
+        
+        
