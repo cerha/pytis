@@ -28,9 +28,9 @@ wxWindows.
 # (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
 # obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWindows.
 
-import codecs
 import collections
 import copy
+import cStringIO
 import functools
 import string
 import time
@@ -43,7 +43,6 @@ from pytis.form import *
 import pytis.data
 import pytis.output
 import pytis.presentation
-from pytis.presentation import PresentedRow
 import pytis.windows
 
 import _grid
@@ -1935,7 +1934,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_file = filename
         number_rows = self._table.number_of_rows()
         def _process_table(update):
-            # Export labelů
+            # We buffer exported data before writing them to the file in order
+            # to prevent numerous rpc calls in case of remote export.
+            csv_buffer = cStringIO.StringIO()
             for column in self._columns:
                 label = column.column_label()
                 if label is None:
@@ -1944,8 +1945,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     if not is_unicode(label):
                         label = unicode(label, db_encoding)
                     label = label.encode(export_encoding)
-                export_file.write(label + '\t')
-            export_file.write('\n')
+                csv_buffer.write(label + '\t')
+            csv_buffer.write('\n')
             for r in range(0,number_rows):
                 if not update(int(float(r)/number_rows*100)):
                     break
@@ -1959,8 +1960,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         if not is_unicode(s):
                             s = unicode(s, db_encoding)
                         s = s.encode(export_encoding)
-                    export_file.write(';'.join(s.split('\n'))+'\t')
-                export_file.write('\n')
+                    csv_buffer.write(';'.join(s.split('\n'))+'\t')
+                csv_buffer.write('\n')
+            export_file.write(csv_buffer.getvalue())
             export_file.close()
         pytis.form.run_dialog(pytis.form.ProgressDialog, _process_table)
         return True
