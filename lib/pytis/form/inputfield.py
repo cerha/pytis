@@ -1949,6 +1949,9 @@ class StructuredTextField(TextField):
                  UICommand(self.COMMAND_ITEMIZE(style='numbered'),
                            _(u"Vytvořit položku číslovaného seznamu"),
                            _(u"Vytvořit položku číslovaného seznamu.")),
+                 UICommand(self.COMMAND_VERBATIM(),
+                           _(u"Předformátovaný text"),
+                           _(u"Vložit předformátovaný text")),
                  ),
                 (UICommand(self.COMMAND_PREVIEW(),
                            _(u"Zobrazit náhled"),
@@ -2071,7 +2074,7 @@ class StructuredTextField(TextField):
             if '\n' in selection:
                 import textwrap
                 selection = textwrap.fill(selection, 80, subsequent_indent='  ')
-            new_text = markup + ' ' + selection.strip()  + '\n'
+            new_text = markup + ' ' + selection.strip() + '\n'
         else:
             new_text = markup + ' '
         column_number = ctrl.PositionToXY(ctrl.GetInsertionPoint())[0]
@@ -2079,6 +2082,25 @@ class StructuredTextField(TextField):
             new_text = '\n' + new_text
         ctrl.WriteText(new_text)
         
+    def _cmd_verbatim(self):
+        ctrl = self._ctrl
+        start, end = ctrl.GetSelection()
+        selection = ctrl.GetRange(start, end)
+        if selection:
+            verbatim_text = selection
+            if not verbatim_text.endswith('\n'):
+                verbatim_text += '\n'
+            position = start
+        else:
+            verbatim_text = '\n'
+            position = ctrl.GetInsertionPoint()
+        new_text = '-----\n' + verbatim_text + '-----\n'
+        column_number = ctrl.PositionToXY(position)[0]
+        if column_number != 0:
+            new_text = '\n' + new_text
+        ctrl.WriteText(new_text)
+        if not selection:
+            ctrl.SetInsertionPoint(position+6)
         
     def _cmd_link(self):
         ctrl = self._ctrl
