@@ -187,6 +187,7 @@ class PytisAdminService(PytisService):
         if not self._true_authentication():
             raise Exception("Permission denied")
         file_name = __file__
+        file_name = os.path.join(os.path.dirname(file_name), 'windows-server.py')
         self._upgrade(file_name, source)
         file_name = os.path.join(os.path.dirname(file_name), 'windows-user-server.py')
         self._upgrade(file_name, source)
