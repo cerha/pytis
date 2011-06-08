@@ -1,6 +1,6 @@
-# -*- coding: iso-8859-2 -*-
+# -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+
 import pytis.data
 import pytis.form
 import pytis.presentation
@@ -27,16 +29,16 @@ from pytis.extensions import Field, nextval
 class GlobalOutputTemplates(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_global_output_templates'
-    title = _("Pøeddefinované tiskové ¹ablony")
+    title = _("PÅ™eddefinovanÃ© tiskovÃ© Å¡ablony")
     fields = (
-        Field('id', _("Identifikátor øádku"), editable=pytis.presentation.Editable.NEVER),
-        Field('module', _("Formuláø"), editable=pytis.presentation.Editable.NEVER),
-        Field('specification', _("Název ¹ablony")),
-        Field('template', _("©ablona"), type=pytis.data.StructuredText(),
+        Field('id', _("IdentifikÃ¡tor Å™Ã¡dku"), editable=pytis.presentation.Editable.NEVER),
+        Field('module', _("FormulÃ¡Å™"), editable=pytis.presentation.Editable.NEVER),
+        Field('specification', _("NÃ¡zev Å¡ablony")),
+        Field('template', _("Å ablona"), type=pytis.data.StructuredText(),
               width=80, height=20, compact=True),
-        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), type=pytis.data.StructuredText(),
+        Field('rowtemplate', _("Å ablona pro jednotlivÃ© Å™Ã¡dky"), type=pytis.data.StructuredText(),
               width=80, height=20, compact=True),
-        Field('help', _("Nápovìda"), virtual=True,
+        Field('help', _("NÃ¡povÄ›da"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=20, compact=True),
         )
@@ -46,18 +48,18 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
 class UserOutputTemplates(pytis.presentation.Specification):
     public = True
     table = 'ev_pytis_user_output_templates'
-    title = _("U¾ivatelské tiskové ¹ablony")
+    title = _("UÅ¾ivatelskÃ© tiskovÃ© Å¡ablony")
     fields = (
-        Field('id', _("Identifikátor øádku"), default=nextval('e_pytis_output_templates_id_seq'),
+        Field('id', _("IdentifikÃ¡tor Å™Ã¡dku"), default=nextval('e_pytis_output_templates_id_seq'),
               editable=pytis.presentation.Editable.NEVER),
-        Field('module', _("Formuláø")),
-        Field('specification', _("Název ¹ablony")),
-        Field('template', _("©ablona"), type=pytis.data.StructuredText(),
+        Field('module', _("FormulÃ¡Å™")),
+        Field('specification', _("NÃ¡zev Å¡ablony")),
+        Field('template', _("Å ablona"), type=pytis.data.StructuredText(),
               width=80, height=20, compact=True),
-        Field('rowtemplate', _("©ablona pro jednotlivé øádky"), type=pytis.data.StructuredText(),
+        Field('rowtemplate', _("Å ablona pro jednotlivÃ© Å™Ã¡dky"), type=pytis.data.StructuredText(),
               width=80, height=20, compact=True),
-        Field('username', _("U¾ivatel")),
-        Field('help', _("Nápovìda"), virtual=True,
+        Field('username', _("UÅ¾ivatel")),
+        Field('help', _("NÃ¡povÄ›da"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=20, compact=True),
         )
@@ -65,7 +67,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
     layout = ('module', 'specification', 'template', 'rowtemplate', 'help',)
     def on_delete_record(self, row):
         if not row['username'].value():
-            pytis.form.run_dialog(pytis.form.Warning, _("Mù¾ete mazat pouze své vlastní záznamy."))
+            pytis.form.run_dialog(pytis.form.Warning, _("MÅ¯Å¾ete mazat pouze svÃ© vlastnÃ­ zÃ¡znamy."))
             return None
         template = row['specification'].value()
         question = _("Opravdu chcete vymazat tiskovou sestavu %s?") % (template,)
@@ -91,12 +93,12 @@ class DirectUserOutputTemplates(UserOutputTemplates):
             condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
                                        pytis.data.EQ('specification', s(specification)))
             if not data.select(condition):
-                message =  _("Tisková sestava neexistuje: ") + specification
+                message =  _("TiskovÃ¡ sestava neexistuje: ") + specification
                 pytis.form.run_dialog(pytis.form.Error, message)
                 return
             row = data.fetchone()
             if data.fetchone() is not None:
-                message =  _("Tisková sestava se vyskytuje ve více exempláøích: ") + specification
+                message =  _("TiskovÃ¡ sestava se vyskytuje ve vÃ­ce exemplÃ¡Å™Ã­ch: ") + specification
                 pytis.form.run_dialog(pytis.form.Error, message)
                 return
             record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
