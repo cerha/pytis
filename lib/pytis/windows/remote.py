@@ -57,7 +57,7 @@ def nx_ip():
 def windows_available():
     """Return true, iff Windows client is available."""
     try:
-        return self._request('echo', 'hello') == 'hello'
+        return _request('echo', 'hello') == 'hello'
     except:
         return False
 
