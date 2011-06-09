@@ -2015,15 +2015,20 @@ class StructuredTextField(TextField):
             prior = ctrl.GetRange(start-1, start)
         if end < ctrl.GetLastPosition():
             next = ctrl.GetRange(end, end+1)
-        if prior not in (None, ' ', '\t', '\n', '\r'):
+        if prior not in (None, ' ', '\t', '\n', '\r', '/', '*', '_'):
             ctrl.WriteText(' ')
         if start == end:
             ctrl.WriteText(markup+markup)
-            ctrl.SetInsertionPoint(ctrl.GetInsertionPoint()-1)
+            step_back = 1
         else:
             ctrl.WriteText(markup+selection+markup)
-        if next not in (None, ' ', '\t', '\n', '\r'):
+            step_back = None
+        if next not in (None, ' ', '\t', '\n', '\r', '/', '*', '_'):
             ctrl.WriteText(' ')
+            if step_back:
+                step_back += 1
+        if step_back:
+            ctrl.SetInsertionPoint(ctrl.GetInsertionPoint()-step_back)
 
     def _cmd_search(self):
         pass
