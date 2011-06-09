@@ -2104,23 +2104,30 @@ class StructuredTextField(TextField):
         
     def _cmd_link(self):
         ctrl = self._ctrl
-        uri = run_dialog(InputDialog, title=_(u"Zadejte cíl odkazu"), 
-                         prompt=_(u"Cíl odkazu:"), input_width=50,
-                         message=_(u"Zadejte absolutní URL ve tvaru např. "
-                                   "http://www.mojefirma.com nebo\n"
-                                   u"lokální adresu jako např. identifikátor jiné stránky v CMS."))
-        if uri:
-            title = run_dialog(InputDialog, title=_(u"Zadejte název odkazu"),
-                               prompt=_(u"Název odkazu:"), input_width=50,
-                               message=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
-                                         u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
-                                         u"předchozím kroku."))
+        from pytis.presentation import Field
+        fields = (
+            Field('target', _(u"Cíl"), width=50, not_null=True,
+                  descr=_(u"Zadejte absolutní URL ve tvaru např. "
+                          u"http://www.mojefirma.com nebo\n"
+                          u"lokální adresu jako např. identifikátor jiné stránky v CMS.")),
+            Field('title', _(u"Název"), width=50,
+                  descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
+                          u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
+                          u"předchozím políčku.")),
+            Field('tooltip', _(u"Tooltip"), width=50,
+                  descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
+            )
+        row = run_form(InputForm, title=_(u"Zadejte parametry odkazu"), fields=fields)
+        if row:
+            target, title, tooltip = [row[k].value() for k in ('target', 'title', 'tooltip')]
+            if tooltip:
+                title = (title or '') + ' | ' + tooltip
             if title:
-                result = '[' + uri + ' ' + title + ']'
-            elif uri.startswith('http://') or uri.startswith('https://') or uri.startswith('ftp://'):
-                result = uri
+                result = '[' + target + ' ' + title + ']'
+            elif True in [target.startswith(proto+'://') for proto in ('http', 'https', 'ftp')]:
+                result = target
             else:
-                result = '[' + uri + ']'
+                result = '[' + target + ']'
             ctrl.WriteText(result)
 
     def _cmd_heading(self, level):
