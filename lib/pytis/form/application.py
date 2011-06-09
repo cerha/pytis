@@ -721,6 +721,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 w.refresh()
 
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
+        if form_class is InputForm and name is None:
+            return True
         if isinstance(self.current_form(), PopupForm) and not issubclass(form_class, PopupForm):
             return False
         if not self._public_spec(name):
@@ -757,7 +759,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(ACTION, 'Vytvářím nový formulář:', (form_class, name, kwargs))
             message(_(u"Spouštím formulář..."), root=True)
             assert issubclass(form_class, Form)
-            assert is_anystring(name)
+            assert name is None or isinstance(name, basestring) # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
             # some time consuming _on_idle methods.
             busy_cursor(True)
@@ -1483,7 +1485,7 @@ class DBFormProfileManager(FormProfileManager):
 
 # Funkce odpovídající příkazům aplikace.
 
-def run_form(form_class, name, **kwargs):
+def run_form(form_class, name=None, **kwargs):
     """Vytvoř formulář a spusť jej v aplikaci.
     
     Argumenty:

@@ -2761,8 +2761,58 @@ class PopupEditForm(PopupForm, EditForm):
         if self._transaction is None:
              self._transaction = pytis.data.DBTransactionDefault(config.dbconnection) 
         super(PopupEditForm, self).set_row(row)
-        
 
+
+class InputForm(PopupEditForm):
+    """Dynamically created virtual form.
+
+    This form is not bound to a specification acquired from the resolver, but
+    the specification is created on the fly based on keyword arguments passed
+    to the form constructor.  All keyword arguments passed to the constructor,
+    except for 'guardian' and 'transaction' (which have the same meaning as in
+    the parent class) are used as attributes of the
+    'pytis.presentation.Specification' class.  The default 'data_cls' of the
+    specification is 'pytis.data.RestrictedMemData' so the form will by default
+    work with a virtual data object which is not bound to any database object.
+    
+    This form is mainly intended to be used as a single purpose input form when
+    it is neccessary to query the user for several values and the fields can be
+    easily described as standard pytis input fields.  All the features
+    supported by pytis input fields are available and can be defined through
+    standard pytis specification options.
+
+    Example usage:
+
+    result = run_form(InputForm, title=_("Enter the values"),
+                      fields=(Field('title', _(u"Title"), not_null=True),
+                              Field('date', _(u"Date"), type=pytis.data.Date)))
+                              
+    The 'result' is None if the form was escaped without confirmation.  If
+    confirmed, the 'result' is a 'pytis.presentation.PresentedRow' instance
+    containing the entered values.  Other specification attributes, such as
+    'layout', 'check', etc. may be used.
+
+    """
+    def _full_init(self, parent, resolver, name, guardian=None, transaction=None, **kwargs):
+        class Spec(Specification):
+            data_cls = pytis.data.RestrictedMemData
+        for key, value in kwargs.items():
+            setattr(Spec, key, value)
+        self._specification = Spec(resolver)
+        super(InputForm, self)._full_init(parent, resolver, name,
+                                          mode=self.MODE_INSERT, multi_insert=False)
+
+    def _create_view_spec(self):
+        return self._specification.view_spec()
+
+    def _create_data_object(self):
+        factory = self._specification.data_spec()
+        return factory.create()
+
+    def _print_menu(self):
+        return []
+        
+    
 class PopupInsertForm(PopupEditForm):
     
     DESCR = _(u"vkládací formulář")
