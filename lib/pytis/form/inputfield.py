@@ -2059,12 +2059,15 @@ class StructuredTextField(TextField):
 
     def _cmd_strong(self):
         self._insert_markup('*')
+        self.set_focus()
         
     def _cmd_emphasized(self):
         self._insert_markup('/')
+        self.set_focus()
         
     def _cmd_underlined(self):
         self._insert_markup('_')
+        self.set_focus()
 
     def _cmd_itemize(self, style='bullet'):
         if style == 'bullet':
@@ -2086,6 +2089,7 @@ class StructuredTextField(TextField):
         if column_number != 0:
             new_text = '\n' + new_text
         ctrl.WriteText(new_text)
+        self.set_focus()
         
     def _cmd_verbatim(self):
         ctrl = self._ctrl
@@ -2106,6 +2110,7 @@ class StructuredTextField(TextField):
         ctrl.WriteText(new_text)
         if not selection:
             ctrl.SetInsertionPoint(position+6)
+        self.set_focus()
         
     def _cmd_link(self):
         ctrl = self._ctrl
@@ -2134,6 +2139,7 @@ class StructuredTextField(TextField):
             else:
                 result = '[' + target + ']'
             ctrl.WriteText(result)
+        self.set_focus()
 
     def _cmd_heading(self, level):
         ctrl = self._ctrl
