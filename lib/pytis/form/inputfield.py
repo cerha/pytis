@@ -2116,11 +2116,11 @@ class StructuredTextField(TextField):
                                          u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
                                          u"předchozím kroku."))
             if title:
-                result = '[' + uri + ' ' + title +']'
+                result = '[' + uri + ' ' + title + ']'
             elif uri.startswith('http://') or uri.startswith('https://') or uri.startswith('ftp://'):
                 result = uri
             else:
-                result = '[' + uri +']'
+                result = '[' + uri + ']'
             ctrl.WriteText(result)
 
     def _cmd_heading(self, level):
