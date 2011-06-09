@@ -1010,8 +1010,14 @@ class DMPRoles(DMPObject):
         # Membership
         data = self._data('pg_auth_members')
         def process(row):
-            roleid = role_oids[row['roleid'].value()]
-            member = role_oids[row['member'].value()]
+            try:
+                roleid = role_oids[row['roleid'].value()]
+                member = role_oids[row['member'].value()]
+            except KeyError:
+                # It may happen that a pg_auth_members item is not present in
+                # pg_roles.  We don't know why but let's not crash in such a
+                # case.
+                return
             role = roles_by_names[roleid]
             role_members = role.members() or []
             if member not in role_members:
