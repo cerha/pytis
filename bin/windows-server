@@ -51,7 +51,9 @@ def username():
 
 def is_admin():
     return os.path.basename(__file__) in('windows-server', 'windows-server.py',
-                                         'windows-server.pyc', 'windows-server.pyo',)
+                                         'windows-server.pyc', 'windows-server.pyo',
+                                         'windows_server', 'windows_server.py',
+                                         'windows_server.pyc', 'windows_server.pyo',)
 
 class WindowsLoggingHandler(logging.Handler):
     
@@ -188,9 +190,9 @@ class PytisAdminService(PytisService):
         if not self._true_authentication():
             raise Exception("Permission denied")
         file_name = __file__
-        file_name = os.path.join(os.path.dirname(file_name), 'windows-server.py')
+        file_name = os.path.join(os.path.dirname(file_name), 'windows_server.py')
         self._upgrade(file_name, source)
-        file_name = os.path.join(os.path.dirname(file_name), 'windows-user-server.py')
+        file_name = os.path.join(os.path.dirname(file_name), 'windows_user_server.py')
         self._upgrade(file_name, source)
         global _stop
         _stop = True
