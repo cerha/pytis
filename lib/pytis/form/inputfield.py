@@ -674,7 +674,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             if interactive:
                 log(EVENT, 'Invalid field:', self.id())
                 run_dialog(Error, title=_(u"Chyba validace"),
-                           message=_('Chyba validace políčka!\n\n%s: %s') % \
+                           message=_(u"Chyba validace políčka!\n\n%s: %s") % \
                            (self.spec().label(), error.message()))
             else:
                 message(error.message(), beep_=True)
