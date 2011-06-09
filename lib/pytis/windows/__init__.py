@@ -17,5 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from proxy import run_proxy
+try:
+    from proxy import run_proxy
+except ImportError as e:
+    def run_proxy(*args, **kwargs):
+        raise e
 from remote import nx_ip, windows_available, get_clipboard_text, set_clipboard_text, launch_file, launch_url, make_temporary_file
