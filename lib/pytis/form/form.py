@@ -420,17 +420,17 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         být dodržováno i v odvozených třídách.
         
         """
-        self._name = name
         Window.__init__(self, parent)
+        self._name = name
         if full_init:
             self._full_init_called = True
             self._full_init(parent, resolver, name, **kwargs)
         else:
             self._full_init_called = False
-            self._full_init_kwargs = copy.copy(kwargs)
-            self._full_init_kwargs['parent'] = parent
-            self._full_init_kwargs['resolver'] = resolver
-            self._full_init_kwargs['name'] = name
+            self._full_init_kwargs = dict(kwargs,
+                                          parent=parent,
+                                          resolver=resolver,
+                                          name=name)
         
     def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
                    spec_kwargs={}, data_kwargs={}, **kwargs):
