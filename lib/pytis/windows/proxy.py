@@ -21,6 +21,7 @@ import logging
 import rpyc
 import rpyc.utils.server
 
+import pytis.util
 import config
 
 logging_level = logging.INFO
@@ -35,8 +36,11 @@ class ProxyService(rpyc.Service):
         self._connections = {}
 
     def _new_pytis_connection(self, ip, port):
-        return rpyc.ssl_connect(ip, port, keyfile=config.rpc_key_file,
-                                certfile=config.rpc_certificate_file)
+        pytis.util.log(pytis.util.EVENT, 'New windows connection requested:', (ip, port,))
+        connection = rpyc.ssl_connect(ip, port, keyfile=config.rpc_key_file,
+                                      certfile=config.rpc_certificate_file)
+        pytis.util.log(pytis.util.EVENT, 'New windows connection created:', (ip, port,))
+        return connection
 
     def exposed_request(self, target_ip, user_name, request, *args, **kwargs):
         master_port = config.rpc_remote_port
