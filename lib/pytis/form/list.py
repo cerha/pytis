@@ -1879,7 +1879,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             fileformat = 'CSV'
         filename = None
         remote = False
-        if pytis.windows.nx_ip():
+        if pytis.windows.windows_available():
             try:
                 filename = pytis.windows.make_temporary_file(suffix='.'+fileformat.lower())
             except:

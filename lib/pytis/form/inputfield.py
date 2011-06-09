@@ -893,7 +893,7 @@ class TextField(InputField):
         return self._ctrl.CanCut()
         
     def _cmd_cut(self):
-        if pytis.windows.nx_ip():
+        if pytis.windows.windows_available():
             self._cmd_copy()
             ctrl = self._ctrl
             from_, to_ = ctrl.GetSelection()
@@ -908,7 +908,7 @@ class TextField(InputField):
         return self._ctrl.CanCopy()
 
     def _cmd_copy(self):
-        if pytis.windows.nx_ip():
+        if pytis.windows.windows_available():
             text = self._ctrl.GetStringSelection()
             if text:
                 pytis.windows.set_clipboard_text(text)
@@ -919,7 +919,7 @@ class TextField(InputField):
         return self._ctrl.CanPaste()
         
     def _cmd_paste(self):
-        if pytis.windows.nx_ip():
+        if pytis.windows.windows_available():
             text = pytis.windows.get_clipboard_text()
             if text:
                 text_length = len(text)

@@ -54,6 +54,13 @@ def nx_ip():
                     break
     return _nx_ip
 
+def windows_available():
+    """Return true, iff Windows client is available."""
+    try:
+        return self._request('echo', 'hello') == 'hello'
+    except:
+        return False
+
 _connection = None
 def _request(request, *args, **kwargs):
     global _connection
