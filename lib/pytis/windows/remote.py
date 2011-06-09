@@ -20,7 +20,6 @@
 import os
 import pwd
 import re
-import rpyc
 import subprocess
 
 from pytis.util import *
@@ -56,6 +55,8 @@ def nx_ip():
 
 def windows_available():
     """Return true, iff Windows client is available."""
+    if nx_ip() is None:
+        return False
     try:
         return _request('echo', 'hello') == 'hello'
     except:
@@ -69,6 +70,7 @@ def _request(request, *args, **kwargs):
     try:
         _connection.root.request
     except:
+        import rpyc
         _connection = rpyc.connect('localhost', config.rpc_local_port)
     return _connection.root.request(target_ip, user_name, request, *args, **kwargs)
     
