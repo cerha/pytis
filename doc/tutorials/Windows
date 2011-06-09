@@ -171,16 +171,18 @@ Postup instalace RPyC serveru na windowsové stanici:
   samotné RPyC, nic víc k němu (kromě Pythonu >= 2.6) potřeba není.
 
 - Zkopírovat někam soubory =windows.crt=, =windows.key= a =ca.crt= vytvořené
-  dle tohoto návodu.
+  dle tohoto návodu.  Implicitní umístění je =$WINDIR/ssl/=.
 
-- Zkopírovat někam soubor =pytis/bin/windows-server=.
+- Zkopírovat soubor =pytis/bin/windows-server= někam do pythonové cesty
+  (např. =\Python26\Lib\site-packages\=) do souborů =windows_server.py= a
+  =windows_user_server.py=.
 
-- Na začátku souboru =windows-server= zeditovat konfigurační parametry, je-li
-  třeba, zejména umístění či název souborů s certifikáty a klíčem.
+- Na začátku souboru =windows_server.py= zeditovat konfigurační parametry,
+  je-li třeba, zejména umístění či název souborů s certifikáty a klíčem.
 
-- Zajistit nastartování souboru =windows-server= při spuštění Windows.
-
-Poznámka: Server vypisuje chybové hlášky o registry, to je normální.
+- Zajistit nastartování souborů =windows_server.py= (registrační server běžící
+  globálně v systému) a =windows_user_server.py= (uživatelský server pro
+  každého uživatele zvlášť) při spuštění Windows.
 
 == Instalace na Linuxu ==
 
