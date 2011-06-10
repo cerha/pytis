@@ -55,7 +55,7 @@ def nx_ip():
 
 def windows_available():
     """Return true, iff Windows client is available."""
-    if nx_ip() is None:
+    if not config.rpc_communication_enabled or nx_ip() is None:
         return False
     try:
         return _request('echo', 'hello') == 'hello'

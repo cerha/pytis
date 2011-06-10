@@ -676,6 +676,10 @@ class Configuration(object):
     class _Option_rpc_certificate_file(FileOption):
         _DESCR = _("Soubor s certifikátem pro komunikaci s klientskými stanicemi.")
         _DEFAULT = 'linux.crt'
+
+    class _Option_rpc_communication_enabled(BooleanOption):
+        _DESCR = _("Zapnutí/vypnutí komunikace s windowsovými klientskými stanicemi.")
+        _DEFAULT = True
         
     # Ostatní konfigurační volby
 

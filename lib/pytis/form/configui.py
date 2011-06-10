@@ -52,7 +52,8 @@ _LAYOUT = (
             'show_tooltips',
             'auto_menu_accel',
             'show_splash',
-            'cache_spec_onstart'),
+            'cache_spec_onstart',
+            'rpc_communication_enabled'),
     LVGroup(_(u"Ostatní"),
             'sender_address'),
     ))),
@@ -81,6 +82,7 @@ _LABELS = {
     'sender_address':        _(u"E-mailová adresa"),
     'export_directory':      _(u"Výchozí adresář"),
     'export_encoding':       _(u"Kódování exportovaných dat"),
+    'rpc_communication_enabled': _(u"Povolení komunikace s windowsovými stanicemi."),
 }
 
 _FIELDSPEC_KWARGS = {
