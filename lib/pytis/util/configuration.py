@@ -659,22 +659,22 @@ class Configuration(object):
                    u"pÅ™Ã­kazu.")
         _DEFAULT = 'run-mailcap'
 
-    # Komunikace s klientskımi stanicemi
+    # Komunikace s klientskÃ½mi stanicemi
     
     class _Option_rpc_local_port(NumericOption):
-        _DESCR = _("Lokální komunikaèní port pro naslouchání pytisovım aplikacím.")
+        _DESCR = _("LokÃ¡lnÃ­ komunikaÄnÃ­ port pro naslouchÃ¡nÃ­ pytisovÃ½m aplikacÃ­m.")
         _DEFAULT = 17984
         
     class _Option_rpc_remote_port(NumericOption):
-        _DESCR = _("Vzdálenı komunikaèní port na klientskıch stanicích.")
+        _DESCR = _("VzdÃ¡lenÃ½ komunikaÄnÃ­ port na klientskÃ½ch stanicÃ­ch.")
         _DEFAULT = 17984
         
     class _Option_rpc_key_file(FileOption):
-        _DESCR = _("Soubor s klíèem certifikátu pro komunikaci s klientskımi stanicemi.")
+        _DESCR = _("Soubor s klÃ­Äem certifikÃ¡tu pro komunikaci s klientskÃ½mi stanicemi.")
         _DEFAULT = 'linux.key'
         
     class _Option_rpc_certificate_file(FileOption):
-        _DESCR = _("Soubor s certifikátem pro komunikaci s klientskımi stanicemi.")
+        _DESCR = _("Soubor s certifikÃ¡tem pro komunikaci s klientskÃ½mi stanicemi.")
         _DEFAULT = 'linux.crt'
         
     # OstatnÃ­ konfiguraÄnÃ­ volby
