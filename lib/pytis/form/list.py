@@ -2778,9 +2778,16 @@ class BrowseForm(FoldableForm):
                   help=_(u"Otevřít formulář s tabulkou nahoře a náhledem v dolní části."),
                   icon='show-record'),
             )
-        actions = self._action_mitems(self._view.actions())
-        if actions:
-            menu += (MSeparator(),) + tuple(actions)
+        editor_items = [MItem(_(u"Textový editor políčka %s") % f.label(),
+                              command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
+                              help=_(u"Otevřít editor strukturovaného textu."))
+                        for f in self._fields
+                        if isinstance(self._row.type(f.id()), pytis.data.StructuredText)]
+        if editor_items:
+            menu += (MSeparator(),) + tuple(editor_items)
+        action_items = self._action_mitems(self._view.actions())
+        if action_items:
+            menu += (MSeparator(),) + tuple(action_items)
         self._context_menu_static_part = menu
         # The dynamic part of the menu is created based on the links.
         def link_title(name, type=FormType.BROWSE, binding=None):

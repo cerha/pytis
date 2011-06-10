@@ -2017,6 +2017,10 @@ class RecordForm(LookupForm):
         finally:
             fh.close()
         new_record(self._name, prefill=self._prefill, inserted_data=data)
+
+    def _cmd_open_editor(self, field_id):
+        run_form(StructuredTextEditor, self.name(),
+                 field_id=field_id, select_row=self.current_key())
             
     # Public methods
 

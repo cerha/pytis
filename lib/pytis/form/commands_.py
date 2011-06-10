@@ -130,6 +130,8 @@ Command(RecordForm, 'DELETE_RECORD',
         "Vymazání editovaného záznamu z databáze")
 Command(RecordForm, 'CONTEXT_ACTION',
         "Vyvolání akce nad aktuálním řádkem formuláře (mandatory arg. 'action')")
+Command(RecordForm, 'OPEN_EDITOR',
+        "Open StructuredTextEditor form for field given by the argument 'field_id'")
 Command(ListForm, 'ACTIVATE',
         "Aktivační funkce pro aktuální řádek formuláře (arg. 'alternate')")
 Command(ListForm, 'FIRST_COLUMN',
