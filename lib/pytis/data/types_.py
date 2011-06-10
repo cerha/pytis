@@ -1134,7 +1134,7 @@ class _CommonDateTime(Type):
         """Deprecated.  Use 'utc' instead."""
         return self.utc()
         
-    def _validate(self, string, format=None, local=None):
+    def _validate(self, string, format=None, local=True):
         """Stejné jako v předkovi až na klíčované argumenty.
 
         Argumenty:
