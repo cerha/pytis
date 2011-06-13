@@ -36,7 +36,9 @@ import thread
 
 from pytis.form import *
 import wx
+import lcg
 import pytis.output
+import pytis.util
 import config
 
 
@@ -304,6 +306,20 @@ def print_form():
 class PrintForm(Form):
     """Common ancestor of both internal and external print previewers."""
 
+    def _run_formatter_process(self, stream, on_background=False):
+        result = None
+        try:
+            if on_background:
+                result = thread.start_new_thread(self._run_formatter, (stream,))
+            else:
+                result = self._run_formatter(stream)
+        except lcg.SubstitutionIterator.NotStartedError:
+            tbstring = pytis.util.format_traceback()
+            log(OPERATIONAL, 'Print exception caught', tbstring)
+            run_dialog(Error, _("Chybné použití identifikátoru `data' v tiskové sestavě.\n"
+                                "Možná jste místo něj chtěli použít `current_row'?"))
+        return result
+
 class PrintFormInternal(PrintForm, InnerForm):
     """Formulář zobrazující preview tisku s možností jeho provedení."""
     DESCR = "tisková sestava"
@@ -353,13 +369,12 @@ class PrintFormInternal(PrintForm, InnerForm):
         if not new:
             preview.restart(None)
         stream = self._current_stream = preview.ps_input_stream()
-        if isinstance(self._formatter, pytis.output.LoutFormatter):
-            thread.start_new_thread(self._run_formatter, (stream,))
-        else:
-            self._run_formatter(stream)
+        on_background = isinstance(self._formatter, pytis.output.LoutFormatter)
+        return self._run_formatter_process(stream, on_background=on_background)
         
     def _create_controls(self):
-        self._start_postscript_viewer(1.0)
+        if not self._start_postscript_viewer(1.0):
+            return
         preview = self._preview
         if __debug__: log(DEBUG, 'Zobrazuji první stránku')
         preview.show_page(1)
@@ -497,7 +512,8 @@ class PrintFormInternal(PrintForm, InnerForm):
             pass
         # Nový náhled
         if __debug__: log(DEBUG, 'Restart náhledu')
-        self._start_postscript_viewer(zoom/100.0)
+        if not self._start_postscript_viewer(zoom/100.0):
+            return
         self._preview.show_page(1)
         sizer.Prepend(self._preview, 1, wx.EXPAND|wx.FIXED_MINSIZE)
         self.SetSize(self.GetSize())
@@ -527,8 +543,8 @@ class PrintFormInternal(PrintForm, InnerForm):
         process = Popen(config.printing_command,
                         from_child=dev_null_stream('w'))
         stream = process.to_child()
-        thread.start_new_thread(self._run_formatter, (stream,))
-        message(_(u"Spuštěn tisk"))
+        if self._run_formatter_process(stream, on_background=True):
+            message(_(u"Spuštěn tisk"))
 
     def _on_size(self, event):
         size = event.GetSize()
@@ -561,7 +577,7 @@ class PrintFormExternal(PrintForm, PopupForm):
         super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
-    def _run_formatter(self):
+    def _run_formatter(self, stream):
         import tempfile
         handle, file_name = tempfile.mkstemp()
         f = os.fdopen(handle, 'w')
@@ -585,8 +601,10 @@ class PrintFormExternal(PrintForm, PopupForm):
         pass
     
     def run(self, *args, **kwargs):
-        file_name = self._run_formatter()
+        file_name = self._run_formatter_process(None)
+        if file_name is None:
+            return
         if isinstance(self._formatter, pytis.output.LoutFormatter):
             # Run it once again to make correct total page count in the document
-            file_name = self._run_formatter()
+            file_name = self._run_formatter_process(None)
         thread.start_new_thread(self._run_viewer, (file_name,))
