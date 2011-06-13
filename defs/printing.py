@@ -20,10 +20,10 @@
 from __future__ import unicode_literals
 
 import pytis.data
+import pytis.extensions
 import pytis.form
 import pytis.presentation
 
-from pytis.presentation import Editable
 from pytis.extensions import Field, nextval
 
 class GlobalOutputTemplates(pytis.presentation.Specification):
@@ -74,6 +74,13 @@ class UserOutputTemplates(pytis.presentation.Specification):
         if not pytis.form.run_dialog(pytis.form.Question, question):
             return None
         return pytis.data.EQ(row.keys()[0], row.key()[0])
+    def check(self, row):
+        condition = pytis.data.AND(pytis.data.EQ('specification', row['specification']),
+                                   pytis.data.EQ('module', row['module']),
+                                   pytis.data.NE('id', row['id']))
+        if pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
+            pytis.form.message(_("Tento název šablony již existuje"))
+            return 'specification'
 
 class DirectUserOutputTemplates(UserOutputTemplates):
     def fields(self):
