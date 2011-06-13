@@ -1134,7 +1134,7 @@ class _CommonDateTime(Type):
         """Deprecated.  Use 'utc' instead."""
         return self.utc()
         
-    def _validate(self, string, format=None, local=True):
+    def _validate(self, string, format=None, local=None):
         """Stejné jako v předkovi až na klíčované argumenty.
 
         Argumenty:
@@ -1173,7 +1173,7 @@ class _CommonDateTime(Type):
             result = None, self._validation_error(self.VM_DT_FORMAT)
         return result
     
-    def _export(self, value, local=True, format=None):
+    def _export(self, value, local=None, format=None):
         return value.strftime(format or self._format)
 
     @classmethod
@@ -1274,20 +1274,24 @@ class DateTime(_CommonDateTime):
                 value, error = None, self._validation_error(self.VM_DT_AGE)
         return value, error
 
-    def _export(self, value, local=True, format=None):
+    def _export(self, value, local=None, format=None):
         """Stejné jako v předkovi až na klíčované argumenty.
 
         Arguments:
 
           local -- if true then the value is exported in local time, otherwise
-            it is exported in UTC
+            it is exported in UTC; if 'None' handle it according to utc flag of
+            the type
           
         """
         assert isinstance(value, datetime.datetime), value
+        if local is None:
+            local = not self._utc
         if local:
-            value = value.astimezone(self.LOCAL_TZINFO)
+            tzinfo = self.LOCAL_TZINFO
         else:
-            value = value.astimezone(self.UTC_TZINFO)
+            tzinfo = self.UTC_TZINFO
+        value = value.astimezone(tzinfo)
         return self._strftime(value, format or self._format)
 
     def _strftime(self, value, format):
@@ -1401,7 +1405,7 @@ class Date(DateTime):
             value = Value(value.type(), value.value().date())
         return value, error
 
-    def _export(self, value, local=True, format=None):
+    def _export(self, value, local=None, format=None):
         assert isinstance(value, datetime.date), value
         return self._strftime(value, format or self._format)
 
