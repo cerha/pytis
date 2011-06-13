@@ -1028,6 +1028,20 @@ def public_attributes(class_):
     _public_attributes[class_] = result
     return result
 
+def public_attr_values(class_):
+    """Return a tuple of values of all public attributes of class 'class_'.
+
+    Just a shorthand to get the values of attributes returned by
+    'public_attributes()'.
+
+    """
+    # Note: This function should actually be used in most assertions for use of
+    # specification class constants.  They mostly use just public_attributes()
+    # as they rely on the typical 1:1 mapping of attribute names and their
+    # values.  But when this is not the case, public_attr_values() must be
+    # used.
+    return tuple(getattr(class_, attr) for attr in public_attributes(class_))
+
 def argument_names(callable):
     """Return names of all function/method arguments as a tuple of strings.
 

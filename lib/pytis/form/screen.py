@@ -2268,7 +2268,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         ctrl.SetValue(content)
         ctrl.SetBestFittingSize(char2px(ctrl, width, height))
         return ctrl
-    elif format == TextFormat.WIKI:
+    elif format == TextFormat.LCG:
         html = lcg_to_html(content)
     elif format == TextFormat.HTML:
         if isinstance(content, unicode):

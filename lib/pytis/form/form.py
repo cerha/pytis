@@ -793,7 +793,7 @@ class InnerForm(Form):
         title = self._view.title()
         description = self._view.help() or self._view.description()
         text = "= "+ title +" =\n\n" + description
-        InfoWindow(_(u"Popis náhledu %s") % title, text=text, format=TextFormat.WIKI)
+        InfoWindow(_(u"Popis náhledu %s") % title, text=text, format=TextFormat.LCG)
         
     def _can_describe(self):
         description = self._view.help() or self._view.description()
@@ -1996,7 +1996,7 @@ class RecordForm(LookupForm):
                             for id in self._view.layout().order()]]))
         separator = run_dialog(InputDialog, 
                                title=_(u"Hromadné vkládání dat"),
-                               report=msg, report_format=TextFormat.WIKI,
+                               report=msg, report_format=TextFormat.LCG,
                                prompt="Oddělovač", value='|')
         if not separator:
             if separator is not None:

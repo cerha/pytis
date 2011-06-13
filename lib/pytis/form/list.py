@@ -2818,8 +2818,7 @@ class BrowseForm(FoldableForm):
         editor_items = [MItem(_(u"Textový editor políčka %s") % f.label(),
                               command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
                               help=_(u"Otevřít editor strukturovaného textu."))
-                        for f in self._fields
-                        if isinstance(self._row.type(f.id()), pytis.data.StructuredText)]
+                        for f in self._fields if f.text_format() == TextFormat.LCG]
         if editor_items:
             menu += (MSeparator(),) + tuple(editor_items)
         action_items = self._action_mitems(self._view.actions())

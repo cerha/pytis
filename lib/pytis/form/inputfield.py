@@ -2066,7 +2066,7 @@ class StructuredTextField(TextField):
             parent = form.GetParent()
         else:
             parent = None
-        InfoWindow(_(u"Náhled"), text=text, format=TextFormat.WIKI)
+        InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG)
 
     def _cmd_strong(self):
         self._insert_markup('*')

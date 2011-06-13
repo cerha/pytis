@@ -38,10 +38,37 @@ from pytis.util import *
 from pytis.presentation import *
 
 class TextFormat(object):
-    """Konstanty pro definici vstupního formátu textu."""
-    PLAIN = 'PLAIN'
-    HTML = 'HTML'
-    WIKI = 'WIKI'
+    """Constants for definition of text format.
+
+    Not all formats defined below must be supported at all places where
+    'TextFormat' is specified.  The documentation of each such place should
+    specify the behavior for each of the supported text formats.
+    
+    """
+    PLAIN = 'plain'
+    """Plain text
+
+    Indicates that no further formatting should be expected within the text and
+    the text can be displayed as is.
+
+    """
+    HTML = 'html'
+    """HTML text
+
+    No particular HTML version is defined at this level.  The expected HTML
+    version and the range of supported elements depends strictly upon the
+    consumer of this text.  This constant only indicates, that the text is in
+    HTML and should be treated as such.
+    
+    """
+    LCG = WIKI = 'lcg'
+    """LCG Structured Text
+
+    Indicates that the text uses the markup described in LCG's Structured Text
+    Formatting manual.  Such text should normally be processed by LCG before
+    displaying.
+
+    """
 
 
 class BorderStyle(object):
@@ -2471,7 +2498,17 @@ class Field(object):
             downloading/saving the value of this field into a file.  If not
             None, the user interface should offer downloading/saving the
             content of the field into a file.  This may be relevant for binary
-            fields, as well as for ordinary string data.          
+            fields, as well as for ordinary string data.
+          text_format -- One of the available 'TextFormat' constants defining
+            the format of the field text.  Only relevant for textual fields (of
+            type 'pytis.data.String').  The default format 'TextFormat.PLAIN'
+            denotes that the field contains just ordinary text.  The format
+            'TextFormat.LCG' may be used to indicate that the field contains a
+            text with special formatting (see 'TextFormat.LCG' documentation
+            for more information about the format) and the user interface
+            should respect this (field editation may offer some extended
+            controls, the field text is processed by LCG before displayed).
+            Other formats are currently unsupported.
           printable -- iff True, the user interface should allow the value of
             this field to be printed as a separate document.  This is most
             often useful with fields containing structured text content, which
@@ -2535,9 +2572,9 @@ class Field(object):
               display_size=None, null_display=None, allow_codebook_insert=False,
               codebook_insert_spec=None, codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
-              orientation=Orientation.VERTICAL, post_process=None, filter=None,
-              filter_list=None, style=None, link=(), filename=None, printable=False, slider=False,
-              enumerator=None, value_column=None, validity_column=None,
+              orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
+              style=None, link=(), filename=None, text_format=TextFormat.PLAIN, printable=False,
+              slider=False, enumerator=None, value_column=None, validity_column=None,
               validity_condition=None,
               **kwargs):
         def err(msg, *args):
@@ -2589,6 +2626,7 @@ class Field(object):
         assert style is None or isinstance(style, (Style, collections.Callable)), \
             err("Invalid 'style' specification: %s", style)
         assert filename is None or isinstance(filename, basestring)
+        assert text_format in public_attr_values(TextFormat), text_format
         assert isinstance(printable, bool)
         if enumerator is None:
             enumerator = codebook
@@ -2694,6 +2732,7 @@ class Field(object):
         self._style = style
         self._links = links
         self._filename = filename
+        self._text_format = text_format
         self._printable = printable
         self._slider = slider
 
@@ -2837,6 +2876,9 @@ class Field(object):
     def filename(self):
         return self._filename
 
+    def text_format(self):
+        return self._text_format
+    
     def printable(self):
         return self._printable
     
