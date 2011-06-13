@@ -56,7 +56,6 @@ import os
 import re
 import string
 import thread
-import UserList
 
 import pytis.data
 from pytis.output import *
@@ -663,10 +662,10 @@ class LoutFormatter(Tmpdir):
     def _format_space(self, template, stream, indent):
         orientation, size = template.orientation(), template.size()
         if orientation == template.VERTICAL:
-            operator = '//'
+            operator_ = '//'
             function = '@vfill'
         elif orientation == template.HORIZONTAL:
-            operator = '||'
+            operator_ = '||'
             function = '@hfill'
         else:
             raise ProgramError('Unknown orientation', orientation, template)
@@ -674,7 +673,7 @@ class LoutFormatter(Tmpdir):
             stream.write(' %s ' % (function,))
         else:
             stream.write(' { {} %s%s {} } ' %
-                         (operator, self._unit(size, UMm)))
+                         (operator_, self._unit(size, UMm)))
 
     def _format_hline(self, template, stream, indent):
         stream.write('%s@FullWidthRule\n' % indent)
@@ -963,7 +962,6 @@ class LoutFormatter(Tmpdir):
         if tfile_name == '..' or starts_with(tfile_name, '../'):
             raise TemplateException(_(u"Nikoliv bezpečné jméno souboru"),
                                     template.file_name())
-        import config
         file_name = os.path.join(config.def_dir, tfile_name)
         file_name.replace('"', '\\"')
         stream.write('@IncludeGraphic "%s"\n' % file_name)
@@ -1087,7 +1085,7 @@ class LoutFormatter(Tmpdir):
         Metoda po skončení zápisu uzavírá 'stream'.
 
         """
-        errors = self._lout(('-P',), stream)
+        self._lout(('-P',), stream)
 
     def printout(self, stream):
         """Pošli dokument jako PostScript na 'stream'.
@@ -1099,12 +1097,12 @@ class LoutFormatter(Tmpdir):
         Metoda po skončení zápisu uzavírá 'stream'.
 
         """
-        errors = self._lout((), stream)
+        self._lout((), stream)
 
     def printdirect(self):
         """Pošli dokument jako PostScript na vstup 'printing_command'."""      
         stream = dev_null_stream('w')
-        errors = self._lout((), stream)
+        self._lout((), stream)
         process = Popen(config.printing_command,
                         from_child=dev_null_stream('w'))
         stream = process.to_child()
@@ -1319,7 +1317,7 @@ class LCGFormatter(object):
                      ('first_page_header', self._first_page_header,),
                      ('page_background', self._page_background,),
                      ):
-            if not parameters.has_key(p):
+            if p not in parameters:
                 if a is None:
                     value = None
                 else:
@@ -1360,9 +1358,9 @@ class LCGFormatter(object):
         for resolver in xtuple(self._resolvers):
             try:
                 result = resolver.get(template_id, element)
-            except ResolverError, e:
+            except ResolverError:
                 continue
-            except ResolverSpecError, e:
+            except ResolverSpecError:
                 continue
             break
         return result
