@@ -1451,7 +1451,7 @@ class InfoWindow(object):
         """
         assert isinstance(title, basestring)
         assert isinstance(text, basestring)
-        assert format in public_attributes(TextFormat)
+        assert format in public_attr_values(TextFormat)
         if parent is None:
             parent = wx_frame()
         frame = wx.Dialog(parent, title=title, name=_name)

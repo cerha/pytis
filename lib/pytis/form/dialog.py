@@ -111,7 +111,7 @@ class GenericDialog(Dialog):
         assert isinstance(buttons, (list, tuple)), buttons
         assert default is None or default in buttons, default
         assert report is None or isinstance(report, basestring), report
-        assert report_format in public_attributes(TextFormat), report_format
+        assert report_format in public_attr_values(TextFormat), report_format
         assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super_(GenericDialog).__init__(self, parent)
         self._title = unicode(title)
