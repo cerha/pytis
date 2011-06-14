@@ -1631,11 +1631,12 @@ class ListView(BrowseForm):
                     continue
                 cls = 'dynamic-content'
             elif self._row[item].value() is not None:
-                if isinstance(self._row.type(item), pd.SimpleFormattedText):
-                    content = lcg.HtmlContent(self._export_field(context, self._fields[item]))
-                else:
+                field = self._fields[item]
+                if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
                     text = self._row[item].export()
                     content = lcg.Container(parser.parse(text))
+                else:
+                    content = lcg.HtmlContent(self._export_field(context, field))
                 cls = 'content id-'+ item
             else:
                 continue

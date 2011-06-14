@@ -957,14 +957,6 @@ class Macaddr(String):
         return Value(self, unicode(value)), None
 
 
-class SimpleFormattedText(String):
-    """Text formatted using a minimalistic simple formatter.
-
-    Fields of this type may be handled specifically in the user interface.
-
-    """
-    pass
-    
 class TreeOrderBase(Type):
     """Literal numeric value denoting the level of the item within the tree structure.
 

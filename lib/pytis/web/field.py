@@ -18,7 +18,6 @@
 
 import collections
 import re
-import string
 
 from pytis.web import *
 
@@ -170,8 +169,6 @@ class Field(object):
             exporter = FileFieldExporter
         elif spec.text_format() == TextFormat.LCG:
             exporter = StructuredTextFieldExporter
-        elif isinstance(type, pytis.data.SimpleFormattedText):
-            exporter = SimpleFormattedTextFieldExporter
         elif spec.height() > 1:
             exporter = MultilineFieldExporter
         elif isinstance(type, pytis.data.String):
@@ -190,6 +187,7 @@ class FieldExporter(object):
     
     """
     _HANDLER = 'pytis.Field'
+    _URL_MATCHER = re.compile(r'(https?://.+?)(?=[\),.:;?!\]]?\.*(\s|&nbsp;|&lt;|&gt;|<br/?>|$))')
     
     def __init__(self, row, field, form, uri_provider):
         self._row = row
@@ -214,17 +212,44 @@ class FieldExporter(object):
         value = self._value().export()
         if value and not isinstance(value, lcg.Localizable):
             g = context.generator()
-            value = g.escape(self._row.format(field.id))
-            lines = value.splitlines()
-            if len(lines) > 1:
-                if self._showform and len(lines) > field.spec.height()+2:
-                    width = field.spec.width()
-                    value = g.textarea(field.id, value=value, readonly=True,
-                                       rows=min(field.spec.height(), 8), cols=width,
-                                       cls=width >= 80 and 'fullsize' or None)
-                else:
-                    # Insert explicit linebreaks for non-css browsers.
-                    value = g.span(g.br().join(lines), cls='multiline')
+            escaped = g.escape(self._row.format(field.id))
+            lines = escaped.splitlines()
+            if self._showform and len(lines) > field.spec.height()+2:
+                width = field.spec.width()
+                value = g.textarea(field.id, value=escaped, readonly=True,
+                                   rows=min(field.spec.height(), 8), cols=width,
+                                   cls=width >= 80 and 'fullsize' or None)
+            else:
+                # Preserve linebreaks and indentation in multiline text.
+                nbsp = '&nbsp;'
+                len_nbsp = len(nbsp)
+                def convert_line(line):
+                    line_length = len(line)
+                    i = 0
+                    while i < line_length and line[i] == ' ':
+                        i += 1
+                    if i > 0:
+                        line = nbsp*i + line[i:]
+                        line_length += (len_nbsp - 1) * i
+                        i = len_nbsp * i
+                    while i < line_length:
+                        if line[i] == ' ':
+                            j = i + 1
+                            while j < line_length and line[j] == ' ':
+                                j += 1
+                            if j > i + 1:
+                                line = line[:i] + nbsp*(j-i) + line[j:]
+                                line_length += (len_nbsp - 1) * (j - i)
+                                i += len_nbsp * (j - i)
+                            else:
+                                i += 1
+                        else:
+                            i += 1
+                    return line
+                # Join lines and substitute links for HTML links
+                converted_text = '<br>\n'.join(convert_line(l) for l in lines)
+                substituted_text = self._URL_MATCHER.sub(r'<a href="\1">\1</a>', converted_text)
+                value = g.div(substituted_text)
         return value
 
     def _display(self, context):
@@ -381,51 +406,6 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
         content.set_parent(context.node())
         return context.generator().div(content.export(context))
 
-class SimpleFormattedTextFieldExporter(MultilineFieldExporter):
-
-    def _format(self, context):
-        text = self._value().export()
-        nbsp = '&nbsp;'; len_nbsp = len(nbsp)
-        lt = '&lt;'; len_lt = len(lt)
-        gt = '&gt;'; len_gt = len(gt)
-        def convert_line(line):
-            line_length = len(line)
-            i = 0
-            while i < line_length and line[i] == ' ':
-                i += 1
-            if i > 0:
-                line = nbsp*i + line[i:]
-                line_length += (len_nbsp - 1) * i
-                i = len_nbsp * i
-            while i < line_length:
-                if line[i] == '<':
-                    line = line[:i] + lt + line[i+1:]
-                    line_length += len_lt - 1
-                    i += len_lt
-                elif line[i] == '>':
-                    line = line[:i] + gt + line[i+1:]
-                    line_length += len_gt - 1
-                    i += len_gt
-                elif line[i] == ' ':
-                    j = i + 1
-                    while j < line_length and line[j] == ' ':
-                        j += 1
-                    if j > i + 1:
-                        line = line[:i] + nbsp*(j-i) + line[j:]
-                        line_length += (len_nbsp - 1) * (j - i)
-                        i += len_nbsp * (j - i)
-                    else:
-                        i += 1
-                else:
-                    i += 1
-            return line
-        lines = [convert_line(l) for l in text.splitlines()]
-        # Join lines and substitute links for HTML links
-        converted_text = re.sub(
-            r'(https?://.+?)(?=[\),.:;?!\]]?(\s|&nbsp;|&lt;|&gt;|<br/?>|$))',
-            r'<a href="\1">\1</a>',
-            string.join(lines, '<br>\n'))
-        return context.generator().div(converted_text)
 
 class DateTimeFieldExporter(TextFieldExporter):
     
