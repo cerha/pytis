@@ -260,7 +260,7 @@ class Menu(Specification):
                       "krátký, takže zde je možné určit jeho delší variantu.")),
         Field('description', _("Popis"), width=72,
               descr=_("Stručný popis stránky (zobrazen v menu jako tooltip).")),
-        Field('content', _("Obsah"), type=pd.StructuredText(), compact=True, height=20, width=80,
+        Field('content', _("Obsah"), text_format=pp.TextFormat.LCG, compact=True, height=20, width=80,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
         Field('mod_id', _("Modul"), not_null=False,
               codebook=self._spec_name('Modules', False), allow_codebook_insert=True,

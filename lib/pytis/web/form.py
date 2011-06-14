@@ -154,7 +154,7 @@ class FieldForm(Form):
                                            error=dict(self._errors).get(field.id))
         else:
             formatted = field.exporter.format(context)
-            if isinstance(field.type, pd.StructuredText):
+            if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
                 if field.spec.printable():
                     uri = self._uri_provider(self._row, field.id, type=UriType.PRINT)
                     if uri:

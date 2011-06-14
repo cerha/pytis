@@ -956,13 +956,6 @@ class Macaddr(String):
                             for x in range(0,len(macaddr),2)] )
         return Value(self, unicode(value)), None
 
-class StructuredText(String):
-    """Text formatted using the LCG structured text markup.
-
-    Fields of this type may be handled specifically in the user interface.
-
-    """
-    pass
 
 class SimpleFormattedText(String):
     """Text formatted using a minimalistic simple formatter.

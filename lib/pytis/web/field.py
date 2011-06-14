@@ -168,7 +168,7 @@ class Field(object):
                 exporter = CodebookFieldExporter
         elif spec.filename():
             exporter = FileFieldExporter
-        elif isinstance(type, pytis.data.StructuredText):
+        elif spec.text_format() == TextFormat.LCG:
             exporter = StructuredTextFieldExporter
         elif isinstance(type, pytis.data.SimpleFormattedText):
             exporter = SimpleFormattedTextFieldExporter
