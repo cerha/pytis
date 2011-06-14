@@ -265,8 +265,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             field = ColorSelectionField
         elif isinstance(type, pytis.data.Password):
             field = PasswordField
-        elif isinstance(type, pytis.data.StructuredText):
-            field = CodeField
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
@@ -955,15 +953,14 @@ class StringField(TextField):
     def _maxlen(self):
         return self._type.maxlen()
 
-class CodeField(TextField):
-    """Text input field with a monospace font."""
-
     def _create_ctrl(self):
         control = TextField._create_ctrl(self)
-        # Set a monospace font
-        font = wx.Font(control.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
-        control.SetFont(font)
+        if self._spec.text_format() == TextFormat.LCG:
+            # Set a monospace font
+            font = wx.Font(control.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
+            control.SetFont(font)
         return control
+
 
 class PasswordField(StringField):
     _ORIGINAL_VALUE = u'\u2024'*8
