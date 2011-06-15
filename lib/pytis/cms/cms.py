@@ -31,7 +31,7 @@ import collections
 import socket
 import lcg
 import pytis.data as pd, pytis.util as pu, pytis.presentation as pp
-from pytis.presentation import Field, Fields, HGroup, VGroup, Binding, Action, CodebookSpec, \
+from pytis.presentation import Field, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
 import config
 
