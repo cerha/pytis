@@ -1442,10 +1442,9 @@ class InfoWindow(object):
             případě prostého textu ('TextFormat.PLAIN') zůstane řádkování i
             veškeré další formátování nedotčeno (je ponecháno na volající
             straně).  V případě formátu 'TextFormat.HTML' je vstupní text
-            považován přímo za text s HTML zančkováním.  Text však není sám o
-            sobě platným HTML dokumentem.  Neobsahuje hlavičku, ani značky
-            <html> a <body>.  Jde jen o zformátovaný text, který bude vsazen do
-            těla automaticky vytvořeného dokumentu.
+            považován přímo za text s HTML zančkováním.  Pokud text není sám o
+            sobě kompletním HTML dokumentem (neobsahuje hlavičku, ani značky
+            <html> a <body>), bude automaticky obalen příslušným HTML kódem.
           parent -- parent wx Frame or None to use the main application frame
 
         """
@@ -2273,10 +2272,13 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
     elif format == TextFormat.HTML:
         if isinstance(content, unicode):
             content = content.encode('utf-8')
-        html = ('<html>'
-                '<head><meta content="text/html; charset=UTF-8" http-equiv="content-type"></head>'
-                '<body>' + content + '</body>'
-                '</html>')
+        if '<html' in content:
+            html = content
+        else:
+            html = ('<html>'
+                    '<head><meta content="text/html; charset=UTF-8" http-equiv="content-type"></head>'
+                    '<body>' + content + '</body>'
+                    '</html>')
     else:
         raise ProgramError("Unknown text format: %s" % format)
     if width is None:
