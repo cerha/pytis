@@ -2897,11 +2897,18 @@ class StructuredTextEditor(PopupEditForm):
         return None
 
     def _lock_record(self, key):
+        # Locking is not possible as we don't use transactions here (see
+        # above).  Instead we rely on the check for conflicting changes before
+        # commit implemented below in _check_record.
         return True
         
     def _check_record(self, row):
         result = super(StructuredTextEditor, self)._check_record(row)
         if result is None:
+            # Check for possible conflicting changes made since the record was
+            # last saved.  If the current value in database doesn't match the
+            # value before editation, someone else probably changed it.  The
+            # resolution is left up to the user.
             data = create_data_object(self._name)
             success, db_row = db_operation(data.row, self._current_key(),
                                            columns=self._select_columns(),
