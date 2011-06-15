@@ -2896,6 +2896,59 @@ class StructuredTextEditor(PopupEditForm):
         # editation usually takes quite some time).
         return None
 
+    def _lock_record(self, key):
+        return True
+        
+    def _check_record(self, row):
+        result = super(StructuredTextEditor, self)._check_record(row)
+        if result is None:
+            data = create_data_object(self._name)
+            success, db_row = db_operation(data.row, self._current_key(),
+                                           columns=self._select_columns(),
+                                           arguments=self._current_arguments())
+            current_db_value = db_row[self._editor_field_id].value()
+            value_before_edits = row.original_row()[self._editor_field_id].value()
+            if current_db_value != value_before_edits:
+                import difflib
+                diff = difflib.HtmlDiff()
+                html_diff = diff.make_file(value_before_edits.splitlines(),
+                                           current_db_value.splitlines(),
+                                           _("Původní text"),
+                                           _("Kolegova nová verze"),
+                                           context=True, numlines=3)
+                for src, dst, context in (
+                    # Localize some strings and hack the style sheet.
+                    ('Colors', _(u"Barvy"), '<th> %s </th>'),
+                    ('Legends', _(u"Legenda"), '> %s </th>'),
+                    ('&nbsp;Added&nbsp;', _(u"Přidáno"), '<td class="diff_add">%s</td>'),
+                    ('Changed', _(u"Změněno"), '<td class="diff_chg">%s</td>'),
+                    ('Deleted', _(u"Smazáno"), '<td class="diff_sub">%s</td>'),
+                    ('font-family:Courier', 'font-size:0.9em;cell-padding:2px', 'table.diff {%s; border:medium;}'),
+                    ('background-color:#c0c0c0', 'display:none', '.diff_next {%s}'),
+                    ):
+                    html_diff = html_diff.replace(context % src, context % dst)
+                html_diff = re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '',
+                                   html_diff)
+                msg = _(u"Někdo jiný změnil stejný text během doby, kdy jste prováděl(a) "
+                        u"tyto úpravy.  Níže vidíte výpis změn, které byly provedeny. "
+                        u"Nejbezpečnější je vaše změny zahodit a začít znovu upravovat\n"
+                        u"novou podobu textu.  Pokud byly vaše úpravy příliš rozsáhlé, "
+                        u"můžete se pokusit obě verze sloučit tím, že do Vašeho současného "
+                        u"textu aplikujete níže uvedené změny.")
+                revert, merge, ignore = (_(u"Zahodit moje změny"), _(u"Sloučit"),
+                                         _(u"Ignorovat kolegovy změny"))
+                answer = run_dialog(MultiQuestion, title=_(u"Konflikt editace"), message=msg,
+                                    report=html_diff, report_format=TextFormat.HTML,
+                                    buttons=(revert, ignore)) # TODO: Add merge button.
+                if answer == merge:
+                    result = self._editor_field_id
+                elif answer == ignore:
+                    pass
+                elif answer == revert:
+                    value = pytis.data.Value(row.type(self._editor_field_id), current_db_value)
+                    row[self._editor_field_id] = value
+        return result
+
     def size(self):
         return (700, 500)
 
