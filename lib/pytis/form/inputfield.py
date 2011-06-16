@@ -1956,10 +1956,13 @@ class StructuredTextField(TextField):
                            _(u"Vytvořit položku odrážkového seznamu.")),
                  UICommand(self.COMMAND_ITEMIZE(style='numbered'),
                            _(u"Číslovaný seznam"),
-                           _(u"Vytvořit položku číslovaného seznamu")),
+                           _(u"Vytvořit položku číslovaného seznamu.")),
                  UICommand(self.COMMAND_VERBATIM(),
                            _(u"Předformátovaný text"),
-                           _(u"Vložit předformátovaný text")),
+                           _(u"Vložit předformátovaný text.")),
+                 UICommand(self.COMMAND_LINEBREAK(),
+                           _(u"Vynucený řádkový zlom"),
+                           _(u"Vložit vynucený řádkový zlom.")),
                  ),
                 (UICommand(self.COMMAND_PREVIEW(),
                            _(u"Zobrazit HTML náhled"),
@@ -2164,6 +2167,10 @@ class StructuredTextField(TextField):
             ctrl.WriteText(result)
         self.set_focus()
 
+    def _cmd_linebreak(self):
+        self._ctrl.WriteText('//\n')
+        self.set_focus()
+        
     def _cmd_heading(self, level):
         ctrl = self._ctrl
         position = ctrl.GetInsertionPoint()
