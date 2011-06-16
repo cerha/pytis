@@ -1043,7 +1043,8 @@ class ViewSpec(object):
             'LayoutSpec' instance is also accepted for backwards compatibility,
             but its usage is deprecated.
 
-          list_layout -- specification of list layout as a 'ListLayout' instance or None.
+          list_layout -- specification of list layout as a 'ListLayout'
+            instance or None.
           
           columns -- specifikace sloupců tabulkového formuláře, sekvence
             indentifikátorů políček z 'fields'.  Pokud není určeno, bude
@@ -1062,26 +1063,32 @@ class ViewSpec(object):
             'ActionGroup'.  Prvky v rámci každé 'ActionGroup' lze dále
             seskupovat stejným způsobem.
                         
-          sorting -- default sorting in the same format as accepted by the 'sort' argument of
-            'pytis.data.Data.select()'.  If None, the records will be sorted by the key column.
+          sorting -- default sorting in the same format as accepted by the
+            'sort' argument of 'pytis.data.Data.select()'.  If None, the
+            records will be sorted by the key column.
             
-          grouping -- default visual grouping of table rows.  The value is a column identifier or a
-            sequence of column identifiers.  Grouping allows you to visually group table rows,
-            which have the same value(s) in grouping columns(s).  This usually only makes sense
-            when the table is sorted by these columns.  Grouping is typically represented by slight
-            changes in the background color.  Rows with the same values in grouping columns always
-            have the same background color.  This color changes whenever one of the values changes.
+          grouping -- default visual grouping of table rows.  The value is a
+            column identifier or a sequence of column identifiers.  Grouping
+            allows you to visually group table rows, which have the same
+            value(s) in grouping columns(s).  This usually only makes sense
+            when the table is sorted by these columns.  Grouping is typically
+            represented by slight changes in the background color.  Rows with
+            the same values in grouping columns always have the same background
+            color.  This color changes whenever one of the values changes.
 
-          group_heading -- group heading allows additional representation of `grouping' (see above)
-            and thus is only relevant when grouping is on.  If a column identifier is specified,
-            the value of this column will apeear as a separate table row whenever a new group
-            starts.  An 'lcg.TranslatableText' instance can also be passed as an interpolation
-            template.  In this case the group heading will be produced by interpolation of the
-            template (with python string formatting syntax such as '%(field_id)s') by formatted
-            field values of the first row of the group.  Most often, you will want to show group
-            headings when the grouping columns are actually not shown in the table.  Group heading
-            is currently only supported by web forms.  In this case the title will be produced by
-            interpolation of formatted row values within given string (with python string
+          group_heading -- group heading allows additional representation of
+            `grouping' (see above) and thus is only relevant when grouping is
+            on.  If a column identifier is specified, the value of this column
+            will apeear as a separate table row whenever a new group starts.
+            An 'lcg.TranslatableText' instance can also be passed as an
+            interpolation template.  In this case the group heading will be
+            produced by interpolation of the template (with python string
+            formatting syntax such as '%(field_id)s') by formatted field values
+            of the first row of the group.  Most often, you will want to show
+            group headings when the grouping columns are actually not shown in
+            the table.  Group heading is currently only supported by web forms.
+            In this case the title will be produced by interpolation of
+            formatted row values within given string (with python string
             formatting syntax).
 
           check -- funkce pro ověření integrity dat celého záznamu.  Jedná se o
@@ -1099,18 +1106,21 @@ class ViewSpec(object):
             Je možné vrátit také dvojici (ID, MESSAGE), kde MESSAGE je chybová
             zpráva, která má být zobrazena uživateli.
             
-          cleanup -- a function for final actions after inserting/updating a record.  The function
-            must accept two arguments -- the first one is the row after performing the database
-            operation (insert/update) and the second is the edited/inserted row before the database
-            operation (row values may be changed by the operation -- default values may be supplied
-            and/or triggers/rules may modify the data).  Both arguments are `PresentedRow'
-            instances.  Note, that you can also access the values before any user changes throught
-            the 'original_row()' method on the second argument.  The cleanup function is run after
-            comitting the edit/insert form (using the ``Ok'' button) or after committing inline
-            editation/insert regardless whether the record has been changed or not.  Note, that
-            unlike 'check', 'cleanup' is called after the database operation, but you can still
-            abort the operation by rollback of the transaction (if the underlying database engine
-            supports it).
+          cleanup -- a function for final actions after inserting/updating a
+            record.  The function must accept two arguments -- the first one is
+            the row after performing the database operation (insert/update) and
+            the second is the edited/inserted row before the database operation
+            (row values may be changed by the operation -- default values may
+            be supplied and/or triggers/rules may modify the data).  Both
+            arguments are `PresentedRow' instances.  Note, that you can also
+            access the values before any user changes throught the
+            'original_row()' method on the second argument.  The cleanup
+            function is run after comitting the edit/insert form (using the
+            ``Ok'' button) or after committing inline editation/insert
+            regardless whether the record has been changed or not.  Note, that
+            unlike 'check', 'cleanup' is called after the database operation,
+            but you can still abort the operation by rollback of the
+            transaction (if the underlying database engine supports it).
             
           on_new_record -- akce vložení nového záznamu.  Pokud je None, bude
             provedena výchozí akce (otevření PopupEditForm nad danou
@@ -1125,42 +1135,51 @@ class ViewSpec(object):
             jímž je instance 'PresentedRow', lze předefinovat editaci záznamu
             libovolnou vlastní funkcionalitou.
             
-          on_delete_record -- user defined record deletion function.  If defined, it must be a
-            function of one argument (the current record as a PresentedRow instance) which will be
-            called on users request to delete a record.  Further processing of the deletion request
-            will depend on the result value of the function as follows: If the function returns
-            True, the deletion will continue by the default action (user is asked for confirmation
-            and record is deleted) as it the function was not defined.  If None or False is
-            returned the deletion is aborted.  If a string or unicode is returned, the message is
-            printed as an error message and the deletion is aborted.  If 1 is returned, the
-            deletion is considered being already successfuly applied so only after-deletion actions
-            (such as refresh) are performed.  Finally, if a 'pytis.data.Operator' instance is
-            returned, all records matching given condition are deleted without further prompting.
+          on_delete_record -- user defined record deletion function.  If
+            defined, it must be a function of one argument (the current record
+            as a PresentedRow instance) which will be called on users request
+            to delete a record.  Further processing of the deletion request
+            will depend on the result value of the function as follows: If the
+            function returns True, the deletion will continue by the default
+            action (user is asked for confirmation and record is deleted) as it
+            the function was not defined.  If None or False is returned the
+            deletion is aborted.  If a string or unicode is returned, the
+            message is printed as an error message and the deletion is aborted.
+            If 1 is returned, the deletion is considered being already
+            successfuly applied so only after-deletion actions (such as
+            refresh) are performed.  Finally, if a 'pytis.data.Operator'
+            instance is returned, all records matching given condition are
+            deleted without further prompting.
             
-          redirect -- redirection for single record view/editation specified as a callable object
-            (function) of one argument - the 'PresentedRow' instance.  The function should return
-            the name of the specification to use for given record.  If the function is not defined
-            or it returns None, no redirection takes place.  Redirection may be useful when a form
-            lists records of different types (displaying only the fields which are common for all
-            the subtypes) and you want to be able to open each particular record in a form which
-            matches its subtype.  Note, that the same effect would be possible by defining the
-            'on_edit_record' function.
+          redirect -- redirection for single record view/editation specified as
+            a callable object (function) of one argument - the 'PresentedRow'
+            instance.  The function should return the name of the specification
+            to use for given record.  If the function is not defined or it
+            returns None, no redirection takes place.  Redirection may be
+            useful when a form lists records of different types (displaying
+            only the fields which are common for all the subtypes) and you want
+            to be able to open each particular record in a form which matches
+            its subtype.  Note, that the same effect would be possible by
+            defining the 'on_edit_record' function.
             
-          focus_field -- identifier of the field, which should automatically gain focus when a form
-            is open.  You may also pass a function of one argument ('PresentedRow' instance), which
-            returns the field identifier.
+          focus_field -- identifier of the field, which should automatically
+            gain focus when a form is open.  You may also pass a function of
+            one argument ('PresentedRow' instance), which returns the field
+            identifier.
             
-          description -- brief description of the view.  A short text (one or two sentences)
-            without formatting.  Use the 'help' argument below to supply a detailed description.
-            But even if 'help' is present, this short description should still be defined.
+          description -- brief description of the view.  A short text (one or
+            two sentences) without formatting.  Use the 'help' argument below
+            to supply a detailed description.  But even if 'help' is present,
+            this short description should still be defined.
           
-          help -- detailed description of the view as a formatted text in the LCG Structured Text
-            format.  This text is used for generating the on-line help and it is also possible to
-            supply it in a separate file.  See the Help tutorial for more information.
+          help -- detailed description of the view as a formatted text in the
+            LCG Structured Text format.  This text is used for generating the
+            on-line help and it is also possible to supply it in a separate
+            file.  See the Help tutorial for more information.
 
-          row_style -- a 'Style' instance determining the base style for all fields or a function
-            of one argument (the 'PresentedRow' instance) returning the 'Style' for one row (based
-            on its values).
+          row_style -- a 'Style' instance determining the base style for all
+            fields or a function of one argument (the 'PresentedRow' instance)
+            returning the 'Style' for one row (based on its values).
 
           profiles -- predefined form profiles as 'Profiles' instance or an
             ordinary sequence of 'Profile' instances.  If used the user
@@ -1174,9 +1193,9 @@ class ViewSpec(object):
             multiple filter selectors which can be combined into one final
             filtering condition.
 
-          aggregations -- a sequence aggregation functions which should be turned on automatically
-            for this view (in forms which support that).  The items are 'AGG_*' constants of
-            'pytis.data.Data'.
+          aggregations -- a sequence aggregation functions which should be
+            turned on automatically for this view (in forms which support
+            that).  The items are 'AGG_*' constants of 'pytis.data.Data'.
 
           grouping_functions -- specification of available functions aplicable
             to group by columns in an aggregated view as a sequence of
