@@ -273,7 +273,9 @@ Command(StructuredTextField, 'ITEMIZE',
 Command(StructuredTextField, 'VERBATIM',
         "Insert markup for verbatim text.")
 Command(StructuredTextField, 'PREVIEW',
-        "Preview the formatted text in a browser.")
+        "Preview the text formatted as HTML in a browser.")
+Command(StructuredTextField, 'EXPORT_PDF',
+        "Preview the text formatted as PDF in a viewer.")
 
 Command(Dialog, 'CLOSE_DIALOG',
         "Opuštění dialogu bez potvrzení")
@@ -430,14 +432,15 @@ COMMAND_ICONS = (
     (StructuredTextField.COMMAND_SEARCH_AND_REPLACE,       wx.ART_FIND_AND_REPLACE),
     (StructuredTextField.COMMAND_UNDO,                     wx.ART_UNDO),
     (StructuredTextField.COMMAND_REDO,                     wx.ART_REDO),
-    (StructuredTextField.COMMAND_STRONG,                  'text-bold'),
-    (StructuredTextField.COMMAND_EMPHASIZED,              'text-italic'),
-    (StructuredTextField.COMMAND_UNDERLINED,              'text-underlined'),
-    (StructuredTextField.COMMAND_LINK,                    'text-link'),
-    (StructuredTextField.COMMAND_ITEMIZE(style='bullet'), 'text-bullet-list'),
-    (StructuredTextField.COMMAND_ITEMIZE(style='numbered'), 'text-numbered-list'),
-    (StructuredTextField.COMMAND_VERBATIM(),              'text-verbatim'),
-    (StructuredTextField.COMMAND_PREVIEW,                  wx.ART_TICK_MARK),
+    (StructuredTextField.COMMAND_STRONG,                   'text-bold'),
+    (StructuredTextField.COMMAND_EMPHASIZED,               'text-italic'),
+    (StructuredTextField.COMMAND_UNDERLINED,               'text-underlined'),
+    (StructuredTextField.COMMAND_LINK,                     'text-link'),
+    (StructuredTextField.COMMAND_ITEMIZE(style='bullet'),  'text-bullet-list'),
+    (StructuredTextField.COMMAND_ITEMIZE(style='numbered'),'text-numbered-list'),
+    (StructuredTextField.COMMAND_VERBATIM(),               'text-verbatim'),
+    (StructuredTextField.COMMAND_PREVIEW,                  'preview'),
+    (StructuredTextField.COMMAND_EXPORT_PDF,               'print-preview'),
     (ListForm.COMMAND_COPY_CELL,                           wx.ART_COPY),
     (ListForm.COMMAND_EDIT,                                'edit-cell'),
     (ListForm.COMMAND_FILTER_BY_CELL,                      'filter-by-cell'),

@@ -1962,8 +1962,11 @@ class StructuredTextField(TextField):
                            _(u"Vložit předformátovaný text")),
                  ),
                 (UICommand(self.COMMAND_PREVIEW(),
-                           _(u"Zobrazit náhled"),
-                           _(u"Zobrazit náhled zformátovaného textu v prohlížeči.")),
+                           _(u"Zobrazit HTML náhled"),
+                           _(u"Zobrazit náhled zformátovaného textu jako HTML.")),
+                 UICommand(self.COMMAND_EXPORT_PDF(),
+                           _(u"Zobrazit PDF náhled"),
+                           _(u"Zobrazit náhled zformátovaného textu jako PDF.")),
                  ),
                 )
 
@@ -2064,6 +2067,18 @@ class StructuredTextField(TextField):
         else:
             parent = None
         InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG)
+
+    def _cmd_export_pdf(self):
+        import tempfile
+        exporter = lcg.pdf.PDFExporter() #translations=cfg.translation_path)
+        content = lcg.Container(lcg.Parser().parse(self._get_value()))
+        node = lcg.ContentNode('export', title=_(u"Náhled"), content=content)
+        context = exporter.context(node, 'cs')
+        pdf = exporter.export(context)
+        process = Popen(config.printing_command, from_child=dev_null_stream('w'))
+        stream = process.to_child()
+        stream.write(pdf)
+        stream.close()
 
     def _cmd_strong(self):
         self._insert_markup('*')
