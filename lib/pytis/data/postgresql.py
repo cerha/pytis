@@ -3466,8 +3466,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         """
         Arguments:
 
-          connection_data -- instance tøídy 'DBConnection' definující
-            parametry pøipojení, nebo funkce bez argumentù vracející takovou
+          connection_data -- instance tÅ™Ã­dy 'DBConnection' definujÃ­cÃ­
+            parametry pÅ™ipojenÃ­, nebo funkce bez argumentÅ¯ vracejÃ­cÃ­ takovou
             instanci 'DBConnection'
           isolation -- transaction isolation level, either 'None' (default
             isolation level, i.e. read commited) or 'SERIALIZABLE' constant of
