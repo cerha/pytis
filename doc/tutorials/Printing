@@ -1,209 +1,209 @@
-#title Tutoriál: Tvorba vıstupních sestav
+#title TutoriÃ¡l: Tvorba vÃ½stupnÃ­ch sestav
 
-* Cíle
+* CÃ­le
 
-Obecnı cíl je jednoduchı: Mít mo¾nost z EBAS tisknout.  Typickımi tisky,
-které by mìlo EBAS zvládnout, jsou:
+ObecnÃ½ cÃ­l je jednoduchÃ½: MÃ­t moÅ¾nost zÂ EBAS tisknout.  TypickÃ½mi tisky,
+kterÃ© by mÄ›lo EBAS zvlÃ¡dnout, jsou:
 
-- Tisk úèetního deníku.
+- Tisk ÃºÄetnÃ­ho denÃ­ku.
 
 - Tisk faktury.
 
-Na tisk nejsou kladeny velké prezentaèní nároky, vısledná podoba v¹ak musí
-bıt rozumnì pou¾itelná (viz faktura).  Ka¾dı tisk musí bıt mo¾no zobrazit
-v náhledu na obrazovce, aby bylo mo¾no zkontrolovat ti¹tìné údaje.  Formát
-vıstupu pro tiskárnu mù¾e bıt jakıkoliv pou¾itelnı, napøíklad èistı text,
+Na tisk nejsou kladeny velkÃ© prezentaÄnÃ­ nÃ¡roky, vÃ½slednÃ¡ podoba vÅ¡ak musÃ­
+bÃ½t rozumnÄ› pouÅ¾itelnÃ¡ (viz faktura).  KaÅ¾dÃ½ tisk musÃ­ bÃ½t moÅ¾no zobrazit
+vÂ nÃ¡hledu na obrazovce, aby bylo moÅ¾no zkontrolovat tiÅ¡tÄ›nÃ© Ãºdaje.  FormÃ¡t
+vÃ½stupu pro tiskÃ¡rnu mÅ¯Å¾e bÃ½t jakÃ½koliv pouÅ¾itelnÃ½, napÅ™Ã­klad ÄistÃ½ text,
 PostScript nebo PDF.
 
-Tisky by mìlo bıt mo¾no definovat podobnım zpùsobem jako napøíklad
-obrazovkové formuláøe.  Definice tiskù by z hlediska potøeby lidské práce
-mìla bıt co nejjednodu¹¹í a nejbì¾nìj¹í typy tiskù by mìly bıt sestavovány
+Tisky by mÄ›lo bÃ½t moÅ¾no definovat podobnÃ½m zpÅ¯sobem jako napÅ™Ã­klad
+obrazovkovÃ© formulÃ¡Å™e.  Definice tiskÅ¯ by zÂ hlediska potÅ™eby lidskÃ© prÃ¡ce
+mÄ›la bÃ½t co nejjednoduÅ¡Å¡Ã­ a nejbÄ›Å¾nÄ›jÅ¡Ã­ typy tiskÅ¯ by mÄ›ly bÃ½t sestavovÃ¡ny
 automaticky.
 
 
 * Popis mechanismu
 
-Tiskovı mechanismus sestává z následujících èástí:
+TiskovÃ½ mechanismus sestÃ¡vÃ¡ zÂ nÃ¡sledujÃ­cÃ­ch ÄÃ¡stÃ­:
 
-- Specifikaèní soubor vıstupní sestavy.
+- SpecifikaÄnÃ­ soubor vÃ½stupnÃ­ sestavy.
 
-- Definice formátovacích znaèek.
+- Definice formÃ¡tovacÃ­ch znaÄek.
 
-- Procesor formátovacích znaèek a dat, formátování pro náhled a tisk.
+- Procesor formÃ¡tovacÃ­ch znaÄek a dat, formÃ¡tovÃ¡nÃ­ pro nÃ¡hled a tisk.
 
-- Vyvolání tiskového formuláøe.
+- VyvolÃ¡nÃ­ tiskovÃ©ho formulÃ¡Å™e.
 
-- Odeslání zformátované sestavy na tiskárnu.
+- OdeslÃ¡nÃ­ zformÃ¡tovanÃ© sestavy na tiskÃ¡rnu.
 
-Nyní si je pøedstavíme malinko podrobnìji, jak z hlediska praktického
-pou¾ití, tak i z hlediska vnitøního fungování celého systému.  Rozdìlíme vı¹e
-uvedené èásti na dvì skupiny: vyvolání tisku a specifikace vıstupní sestavy.
+NynÃ­ si je pÅ™edstavÃ­me malinko podrobnÄ›ji, jak zÂ hlediska praktickÃ©ho
+pouÅ¾itÃ­, tak iÂ zÂ hlediska vnitÅ™nÃ­ho fungovÃ¡nÃ­ celÃ©ho systÃ©mu.  RozdÄ›lÃ­me vÃ½Å¡e
+uvedenÃ© ÄÃ¡sti na dvÄ› skupiny: vyvolÃ¡nÃ­ tisku a specifikace vÃ½stupnÃ­ sestavy.
 
-** Vyvolání tisku
+** VyvolÃ¡nÃ­ tisku
 
-Tisk je koncipován tak, ¾e ka¾dému formuláøi pøíslu¹í nejvı¹e jedna tisková
-sestava.  Základním aplikovanım principem je, ¾e tisknout lze zhruba to, co
-u¾ivatel vidí na obrazovce v aktuálním formuláøi, a» u¾ jednoduchém nebo
-slo¾eném (napøíklad duálním).
+Tisk je koncipovÃ¡n tak, Å¾e kaÅ¾dÃ©mu formulÃ¡Å™i pÅ™Ã­sluÅ¡Ã­ nejvÃ½Å¡e jedna tiskovÃ¡
+sestava.  ZÃ¡kladnÃ­m aplikovanÃ½m principem je, Å¾e tisknout lze zhruba to, co
+uÅ¾ivatel vidÃ­ na obrazovce vÂ aktuÃ¡lnÃ­m formulÃ¡Å™i, aÅ¥ uÅ¾ jednoduchÃ©m nebo
+sloÅ¾enÃ©m (napÅ™Ã­klad duÃ¡lnÃ­m).
 
-Pro u¾ivatele je definován pøíkaz =Form.COMMAND_PRINT=, dostupnı ze v¹ech
-formuláøù.  Ka¾dı formuláø mù¾e a nemusí na tento pøíkaz reagovat.
-Reaguje-li, zobrazí se tiskovı náhled.  Z nìj pak lze stejnım pøíkazem
-spustit tisk na tiskárnu.
+Pro uÅ¾ivatele je definovÃ¡n pÅ™Ã­kaz =Form.COMMAND_PRINT=, dostupnÃ½ ze vÅ¡ech
+formulÃ¡Å™Å¯.  KaÅ¾dÃ½ formulÃ¡Å™ mÅ¯Å¾e a nemusÃ­ na tento pÅ™Ã­kaz reagovat.
+Reaguje-li, zobrazÃ­ se tiskovÃ½ nÃ¡hled.  ZÂ nÄ›j pak lze stejnÃ½m pÅ™Ã­kazem
+spustit tisk na tiskÃ¡rnu.
 
-Pro zobrazení tiskového náhledu slou¾í formuláø =pytis.form.PrintForm=, kterı
-je podobnì jako ostatní formuláøe potomkem =pytis.form.Form= a ukládá se na
-frame stack.  Tento formuláø umí vyvolat formátování vıstupu dle zadané
-specifikace, formátování samotné pak má na starosti modul =pytis.output=,
-konkrétnì tøída =pytis.output.Formatter=.
+Pro zobrazenÃ­ tiskovÃ©ho nÃ¡hledu slouÅ¾Ã­ formulÃ¡Å™ =pytis.form.PrintForm=, kterÃ½
+je podobnÄ› jako ostatnÃ­ formulÃ¡Å™e potomkem =pytis.form.Form= a uklÃ¡dÃ¡ se na
+frame stack.  Tento formulÃ¡Å™ umÃ­ vyvolat formÃ¡tovÃ¡nÃ­ vÃ½stupu dle zadanÃ©
+specifikace, formÃ¡tovÃ¡nÃ­ samotnÃ© pak mÃ¡ na starosti modul =pytis.output=,
+konkrÃ©tnÄ› tÅ™Ã­da =pytis.output.Formatter=.
 
-V souèasné dobì na pøíkaz tisku reagují øádkové formuláøe typu =BrowseForm=.
-Po vyvolání tiskového pøíkazu spustí formátování vıstupu dle specifikace,
-kterou hledají prostøednictvím resolverù v souboru =defs/output/FORMNAME.py=,
-kde =FORMNAME= je jméno onoho øádkového formuláøe.  Pokud tento specifikaèní
-soubor neexistuje, je prostøednictvím druhého resolveru, podstrèeného do
-=PrintForm=, proveden tisk formuláøe jako obyèejné tabulky.
+VÂ souÄasnÃ© dobÄ› na pÅ™Ã­kaz tisku reagujÃ­ Å™Ã¡dkovÃ© formulÃ¡Å™e typu =BrowseForm=.
+Po vyvolÃ¡nÃ­ tiskovÃ©ho pÅ™Ã­kazu spustÃ­ formÃ¡tovÃ¡nÃ­ vÃ½stupu dle specifikace,
+kterou hledajÃ­ prostÅ™ednictvÃ­m resolverÅ¯ vÂ souboru =defs/output/FORMNAME.py=,
+kde =FORMNAME= je jmÃ©no onoho Å™Ã¡dkovÃ©ho formulÃ¡Å™e.  Pokud tento specifikaÄnÃ­
+soubor neexistuje, je prostÅ™ednictvÃ­m druhÃ©ho resolveru, podstrÄenÃ©ho do
+=PrintForm=, proveden tisk formulÃ¡Å™e jako obyÄejnÃ© tabulky.
 
-Tiskovı náhled je generován stejnì jako finální tisk jako PostScript.  Je tedy
-toto¾nı s vıslednım tiskem, a¾ na pøípadné rozdíly zpùsobené pou¾itımi
+TiskovÃ½ nÃ¡hled je generovÃ¡n stejnÄ› jako finÃ¡lnÃ­ tisk jako PostScript.  Je tedy
+totoÅ¾nÃ½ sÂ vÃ½slednÃ½m tiskem, aÅ¾ na pÅ™Ã­padnÃ© rozdÃ­ly zpÅ¯sobenÃ© pouÅ¾itÃ½mi
 interprety PostScriptu.
 
-Vıstupy jsou formátovány s vyu¾itím textového procesoru Lout.  Vıhodou tohoto
-pøístupu je snadnost implementace formátování, nevıhodou jsou naopak, kromì
-samotného faktu nutné dostupnosti dal¹ího nástroje, nìkteré negativní
-vlastnosti Lout, napøíklad znaèná spotøeba pamìti nebo "divoké" chování pøi
-nevhodnıch specifikacích (øádky pøesahující ¹íøku stránky, apod.).
+VÃ½stupy jsou formÃ¡tovÃ¡ny sÂ vyuÅ¾itÃ­m textovÃ©ho procesoru Lout.  VÃ½hodou tohoto
+pÅ™Ã­stupu je snadnost implementace formÃ¡tovÃ¡nÃ­, nevÃ½hodou jsou naopak, kromÄ›
+samotnÃ©ho faktu nutnÃ© dostupnosti dalÅ¡Ã­ho nÃ¡stroje, nÄ›kterÃ© negativnÃ­
+vlastnosti Lout, napÅ™Ã­klad znaÄnÃ¡ spotÅ™eba pamÄ›ti nebo "divokÃ©" chovÃ¡nÃ­ pÅ™i
+nevhodnÃ½ch specifikacÃ­ch (Å™Ã¡dky pÅ™esahujÃ­cÃ­ Å¡Ã­Å™ku strÃ¡nky, apod.).
 
-Odeslání dat na tiskárnu je jednoduché, vyu¾ívá se pøíkazu =lpr=.  Pomocí
-pøenastavení konfiguraèní volby =printing_command= lze tento pøíkaz zmìnit,
-napøíklad na obyèejnı =cat= do souboru pro úèely ladìní.
+OdeslÃ¡nÃ­ dat na tiskÃ¡rnu je jednoduchÃ©, vyuÅ¾Ã­vÃ¡ se pÅ™Ã­kazu =lpr=.  PomocÃ­
+pÅ™enastavenÃ­ konfiguraÄnÃ­ volby =printing_command= lze tento pÅ™Ã­kaz zmÄ›nit,
+napÅ™Ã­klad na obyÄejnÃ½ =cat= do souboru pro ÃºÄely ladÄ›nÃ­.
 
-** Specifikaèní soubory
+** SpecifikaÄnÃ­ soubory
 
-Podobnì jako ostatní prvky v EBAS (napøíklad formuláøe), jsou i vıstupní
-sestavy specifikovány pythonovımi soubory.  Tyto soubory umo¾òují definovat
-základní èásti ti¹tìného dokumentu (hlavièky, patièky, tìlo) prostøednictvím
-specifikaèních funkcí.  Nejdùle¾itìj¹ími z tìchto funkcí jsou =body= (tìlo
-dokumentu), =page_header= a =page_footer= (hlavièka a patièka stránky) a
-=coding= (kódování fontu pou¾itého ve vıstupu).  Není nutné je uvádìt
-v¹echny, jediná povinná z nich je =body=.
+PodobnÄ› jako ostatnÃ­ prvky vÂ EBAS (napÅ™Ã­klad formulÃ¡Å™e), jsou iÂ vÃ½stupnÃ­
+sestavy specifikovÃ¡ny pythonovÃ½mi soubory.  Tyto soubory umoÅ¾ÅˆujÃ­ definovat
+zÃ¡kladnÃ­ ÄÃ¡sti tiÅ¡tÄ›nÃ©ho dokumentu (hlaviÄky, patiÄky, tÄ›lo) prostÅ™ednictvÃ­m
+specifikaÄnÃ­ch funkcÃ­.  NejdÅ¯leÅ¾itÄ›jÅ¡Ã­mi zÂ tÄ›chto funkcÃ­ jsou =body= (tÄ›lo
+dokumentu), =page_header= a =page_footer= (hlaviÄka a patiÄka strÃ¡nky) a
+=coding= (kÃ³dovÃ¡nÃ­ fontu pouÅ¾itÃ©ho ve vÃ½stupu).  NenÃ­ nutnÃ© je uvÃ¡dÄ›t
+vÅ¡echny, jedinÃ¡ povinnÃ¡ zÂ nich je =body=.
 
-V¹echny tyto funkce mají jedinı argument, kterım je resolver.  S pomocí nìj lze
-získávat obecné specifikace (napøíklad datové a prezentaèní specifikace tabulky
-pro urèení jejího formátování) a pøedané parametry (napøíklad pøedanı klíè
-aktuálního øádku od formuláøe).  Resolveru pøedané parametry nejsou
-specifikovány obecnì, jsou závislé na objektu, kterı je pøedává.  Resolver je
-instancí tøídy =pytis.output.OutputResolver= a parametry lze získat jeho metodou
+VÅ¡echny tyto funkce majÃ­ jedinÃ½ argument, kterÃ½m je resolver.  SÂ pomocÃ­ nÄ›j lze
+zÃ­skÃ¡vat obecnÃ© specifikace (napÅ™Ã­klad datovÃ© a prezentaÄnÃ­ specifikace tabulky
+pro urÄenÃ­ jejÃ­ho formÃ¡tovÃ¡nÃ­) a pÅ™edanÃ© parametry (napÅ™Ã­klad pÅ™edanÃ½ klÃ­Ä
+aktuÃ¡lnÃ­ho Å™Ã¡dku od formulÃ¡Å™e).  Resolveru pÅ™edanÃ© parametry nejsou
+specifikovÃ¡ny obecnÄ›, jsou zÃ¡vislÃ© na objektu, kterÃ½ je pÅ™edÃ¡vÃ¡.  Resolver je
+instancÃ­ tÅ™Ã­dy =pytis.output.OutputResolver= a parametry lze zÃ­skat jeho metodou
 =p=.
 
-Ka¾dá z funkcí odpovídajících nìjaké èásti dokumentu vrací specifikaci této
-èásti v podobì znaèek definovanıch v modulu =pytis.output=.  K dispozici jsou
-jednak jednoduché formátovací znaèky (jako =Paragraph= nebo =Bold=) a jednak
-funkce vy¹¹í úrovnì vracející znaèkování pro urèitı prvek (jako napøíklad
-funkce pro zpøístupnìní dat: =data_table= nebo =data_item=).  Formátovací
-znaèky jsou tøídy, jejich¾ dohromady poskládané instance vytváøí pøíslu¹nou
-specifikaci.  Kromì tìchto tøíd existují je¹tì dvì speciální znaèky: obyèejnı
-string (pøedstavuje pøímo danı, ji¾ zformátovanı, text) a sekvence (spojení
-nìkolika znaèek, prvkù této sekvence, dohromady).
+KaÅ¾dÃ¡ zÂ funkcÃ­ odpovÃ­dajÃ­cÃ­ch nÄ›jakÃ© ÄÃ¡sti dokumentu vracÃ­ specifikaci tÃ©to
+ÄÃ¡sti vÂ podobÄ› znaÄek definovanÃ½ch vÂ modulu =pytis.output=.  KÂ dispozici jsou
+jednak jednoduchÃ© formÃ¡tovacÃ­ znaÄky (jako =Paragraph= nebo =Bold=) a jednak
+funkce vyÅ¡Å¡Ã­ ÃºrovnÄ› vracejÃ­cÃ­ znaÄkovÃ¡nÃ­ pro urÄitÃ½ prvek (jako napÅ™Ã­klad
+funkce pro zpÅ™Ã­stupnÄ›nÃ­ dat: =data_table= nebo =data_item=).  FormÃ¡tovacÃ­
+znaÄky jsou tÅ™Ã­dy, jejichÅ¾ dohromady posklÃ¡danÃ© instance vytvÃ¡Å™Ã­ pÅ™Ã­sluÅ¡nou
+specifikaci.  KromÄ› tÄ›chto tÅ™Ã­d existujÃ­ jeÅ¡tÄ› dvÄ› speciÃ¡lnÃ­ znaÄky: obyÄejnÃ½
+string (pÅ™edstavuje pÅ™Ã­mo danÃ½, jiÅ¾ zformÃ¡tovanÃ½, text) a sekvence (spojenÃ­
+nÄ›kolika znaÄek, prvkÅ¯ tÃ©to sekvence, dohromady).
 
-Specifikace vıstupu tedy mù¾e vyu¾ívat tøí vrstev prostøedkù:
+Specifikace vÃ½stupu tedy mÅ¯Å¾e vyuÅ¾Ã­vat tÅ™Ã­ vrstev prostÅ™edkÅ¯:
 
-- Pøímo formátovací znaèky.
+- PÅ™Ã­mo formÃ¡tovacÃ­ znaÄky.
 
-- Knihovní formátovací funkce, umo¾òující jednodu¹e zapsat typické shluky
-  formátovacích znaèek.
+- KnihovnÃ­ formÃ¡tovacÃ­ funkce, umoÅ¾ÅˆujÃ­cÃ­ jednoduÅ¡e zapsat typickÃ© shluky
+  formÃ¡tovacÃ­ch znaÄek.
 
-- Libovolnı vlastní programovı kód generující formátovací znaèky, pøípadnì
-  i s vyu¾itím knihovních formátovacích funkcí, pro komplikovanìj¹í
+- LibovolnÃ½ vlastnÃ­ programovÃ½ kÃ³d generujÃ­cÃ­ formÃ¡tovacÃ­ znaÄky, pÅ™Ã­padnÄ›
+  iÂ sÂ vyuÅ¾itÃ­m knihovnÃ­ch formÃ¡tovacÃ­ch funkcÃ­, pro komplikovanÄ›jÅ¡Ã­
   specifikace.
 
 
-* Pou¾ití
+* PouÅ¾itÃ­
 
-Pøedvedeme si vytvoøení definice vıstupní sestavy pro velmi zjednodu¹enou
+PÅ™edvedeme si vytvoÅ™enÃ­ definice vÃ½stupnÃ­ sestavy pro velmi zjednoduÅ¡enou
 fakturu.
 
-V první øadì je nutné tisk faktury spojit s nìkterım formuláøem.  Vhodnım
-formuláøem je spodní èást duálního formuláøe knihy vydanıch (pøípadnì
-pøijatıch) faktur, zobrazující polo¾ky faktury.  V tomto formuláøi patrnì
-nemá smysl tisknout nìco jiného ne¾ odpovídající fakturu.  V adresáøi
-=defs/output/=, obsahujícím definièní soubory v¹ech tiskovıch sestav, tedy
-vytvoøíme pythonovı soubor s názvem odpovídajícím zvolenému formuláøi
-(napøíklad =VydFakturyPolozky.py=).
+VÂ prvnÃ­ Å™adÄ› je nutnÃ© tisk faktury spojit sÂ nÄ›kterÃ½m formulÃ¡Å™em.  VhodnÃ½m
+formulÃ¡Å™em je spodnÃ­ ÄÃ¡st duÃ¡lnÃ­ho formulÃ¡Å™e knihy vydanÃ½ch (pÅ™Ã­padnÄ›
+pÅ™ijatÃ½ch) faktur, zobrazujÃ­cÃ­ poloÅ¾ky faktury.  VÂ tomto formulÃ¡Å™i patrnÄ›
+nemÃ¡ smysl tisknout nÄ›co jinÃ©ho neÅ¾ odpovÃ­dajÃ­cÃ­ fakturu.  VÂ adresÃ¡Å™i
+=defs/output/=, obsahujÃ­cÃ­m definiÄnÃ­ soubory vÅ¡ech tiskovÃ½ch sestav, tedy
+vytvoÅ™Ã­me pythonovÃ½ soubor sÂ nÃ¡zvem odpovÃ­dajÃ­cÃ­m zvolenÃ©mu formulÃ¡Å™i
+(napÅ™Ã­klad =VydFakturyPolozky.py=).
 
-Prakticky ve v¹ech vıstupních sestavách je vhodné naimportovat modul
-=pytis.output=, definující leccos tıkající se vıstupních sestav, nejlépe
-hvìzdièkovì, obsahující v¹echny formátovací znaèky a obecné formátovací funkce.
-Úvod na¹í specifikace tedy bude vypadat takto:
+Prakticky ve vÅ¡ech vÃ½stupnÃ­ch sestavÃ¡ch je vhodnÃ© naimportovat modul
+=pytis.output=, definujÃ­cÃ­ leccos tÃ½kajÃ­cÃ­ se vÃ½stupnÃ­ch sestav, nejlÃ©pe
+hvÄ›zdiÄkovÄ›, obsahujÃ­cÃ­ vÅ¡echny formÃ¡tovacÃ­ znaÄky a obecnÃ© formÃ¡tovacÃ­ funkce.
+Ãšvod naÅ¡Ã­ specifikace tedy bude vypadat takto:
 
 <example>
 from pytis.output import *
 </example>
 
-Bude-li jazykem faktury èe¹tina, je nutno tiskovému procesoru øíct, ¾e má
-pou¾ívat fonty v kódování Latin 2 (ISO 8859-2).  Toho dosáhneme definicí
-standardní specifikaèní funkce =coding=:
+Bude-li jazykem faktury ÄeÅ¡tina, je nutno tiskovÃ©mu procesoru Å™Ã­ct, Å¾e mÃ¡
+pouÅ¾Ã­vat fonty vÂ kÃ³dovÃ¡nÃ­ LatinÂ 2 (ISOÂ 8859-2).  Toho dosÃ¡hneme definicÃ­
+standardnÃ­ specifikaÄnÃ­ funkce =coding=:
 
 <example>
 def coding(resolver):
     return pytis.output.Coding.LATIN2
 </example>
 
-V¹echny specifikaèní funkce mají jeden argument, kterım je resolver jmennıch
-odkazù.  Ten v tiskovıch sestavách obvykle své vyu¾ití nenalezne, je to ale
-konzistentní s ostatními druhy specifikací, napøíklad formuláøovımi.
+VÅ¡echny specifikaÄnÃ­ funkce majÃ­ jeden argument, kterÃ½m je resolver jmennÃ½ch
+odkazÅ¯.  Ten vÂ tiskovÃ½ch sestavÃ¡ch obvykle svÃ© vyuÅ¾itÃ­ nenalezne, je to ale
+konzistentnÃ­ sÂ ostatnÃ­mi druhy specifikacÃ­, napÅ™Ã­klad formulÃ¡Å™ovÃ½mi.
 
-Specifikace vıstupních sestav obsahuje definice hlavièek a patièek stránek a
-celého dokumentu.  Jim odpovídající funkce nemusíme definovat, pokud nám
-vyhovuje implicitní nastavení, tj. dokument nemá ¾ádné záhlaví ani zvlá¹tní
-ukonèení, stránky nemají ¾ádnou hlavièku a ve svıch patièkách mají èíslo
-stránky.  Ve fakturách se obvykle stránky neèíslují, tak¾e pøedefinujeme
-funkci patièky stránky =page_footer=:
+Specifikace vÃ½stupnÃ­ch sestav obsahuje definice hlaviÄek a patiÄek strÃ¡nek a
+celÃ©ho dokumentu.  Jim odpovÃ­dajÃ­cÃ­ funkce nemusÃ­me definovat, pokud nÃ¡m
+vyhovuje implicitnÃ­ nastavenÃ­, tj. dokument nemÃ¡ Å¾Ã¡dnÃ© zÃ¡hlavÃ­ ani zvlÃ¡Å¡tnÃ­
+ukonÄenÃ­, strÃ¡nky nemajÃ­ Å¾Ã¡dnou hlaviÄku a ve svÃ½ch patiÄkÃ¡ch majÃ­ ÄÃ­slo
+strÃ¡nky.  Ve fakturÃ¡ch se obvykle strÃ¡nky neÄÃ­slujÃ­, takÅ¾e pÅ™edefinujeme
+funkci patiÄky strÃ¡nky =page_footer=:
 
 <example>
 def page_footer(resolver):
     return Null()
 </example>
 
-V¹imnìte si, ¾e se zde pou¾ívá znaèka prázdného obsahu =Null=, nikoliv
-prázdnı øetìzec.  Je tak deklarováno, ¾e pøíslu¹nı objekt je skuteènì
-prázdnı, nikoliv neprázdnı obsahující text nulové délky.  Vìt¹inou na tom
-nezále¾í a =Null= i prázdnı øetìzec mají shodnı efekt, je v¹ak lépe dr¾et se
-logického vıznamu pro pøedcházení pøípadnım budoucím formátovacím problémùm.
+VÅ¡imnÄ›te si, Å¾e se zde pouÅ¾Ã­vÃ¡ znaÄka prÃ¡zdnÃ©ho obsahu =Null=, nikoliv
+prÃ¡zdnÃ½ Å™etÄ›zec.  Je tak deklarovÃ¡no, Å¾e pÅ™Ã­sluÅ¡nÃ½ objekt je skuteÄnÄ›
+prÃ¡zdnÃ½, nikoliv neprÃ¡zdnÃ½ obsahujÃ­cÃ­ text nulovÃ© dÃ©lky.  VÄ›tÅ¡inou na tom
+nezÃ¡leÅ¾Ã­ a =Null= iÂ prÃ¡zdnÃ½ Å™etÄ›zec majÃ­ shodnÃ½ efekt, je vÅ¡ak lÃ©pe drÅ¾et se
+logickÃ©ho vÃ½znamu pro pÅ™edchÃ¡zenÃ­ pÅ™Ã­padnÃ½m budoucÃ­m formÃ¡tovacÃ­m problÃ©mÅ¯m.
 
-Koneènì definujeme to nejdùle¾itìj¹í -- samotnı obsah ti¹tìného dokumentu,
-danı funkcí =body=.  Jde jen o ilustrativní pøíklad, tak¾e dokument bude pro
-jednoduchost obsahovat pouze èíslo faktury (tuènì), adresu dodavatele a
-seznam polo¾ek faktury v podobì jednoduché tabulky:
+KoneÄnÄ› definujeme to nejdÅ¯leÅ¾itÄ›jÅ¡Ã­ -- samotnÃ½ obsah tiÅ¡tÄ›nÃ©ho dokumentu,
+danÃ½ funkcÃ­ =body=.  Jde jen oÂ ilustrativnÃ­ pÅ™Ã­klad, takÅ¾e dokument bude pro
+jednoduchost obsahovat pouze ÄÃ­slo faktury (tuÄnÄ›), adresu dodavatele a
+seznam poloÅ¾ek faktury vÂ podobÄ› jednoduchÃ© tabulky:
 
 <example>
 def body(resolver):
     invoice_number = data_item(resolver, 'VydFaktury', 'number')
     seller = data_item(resolver, 'VydFaktury', 'adresa')
-    return (Paragraph(Bold('Faktura è. ', invoice_number)),
+    return (Paragraph(Bold('Faktura Ä. ', invoice_number)),
             Paragraph('Dodavatel:\n', seller),
             data_table(resolver, 'VydFakturyPolozky'))
 </example>
 
-Zde ji¾ pou¾íváme jednoduché programové konstrukce (pøiøazení do pomocnıch
-promìnnıch).  Jako ve v¹ech specifikacích v EBAS, mù¾eme i zde vyu¾ívat
-kompletních mo¾ností Pythonu, co¾ nám umo¾òuje øadu vìcí zjednodu¹it nebo
-zpøehlednit.  To je pomìrnì velká vymo¾enost oproti pou¾ití nìkterıch jinıch
-nástrojù, jako tøeba XML.
+Zde jiÅ¾ pouÅ¾Ã­vÃ¡me jednoduchÃ© programovÃ© konstrukce (pÅ™iÅ™azenÃ­ do pomocnÃ½ch
+promÄ›nnÃ½ch).  Jako ve vÅ¡ech specifikacÃ­ch vÂ EBAS, mÅ¯Å¾eme iÂ zde vyuÅ¾Ã­vat
+kompletnÃ­ch moÅ¾nostÃ­ Pythonu, coÅ¾ nÃ¡m umoÅ¾Åˆuje Å™adu vÄ›cÃ­ zjednoduÅ¡it nebo
+zpÅ™ehlednit.  To je pomÄ›rnÄ› velkÃ¡ vymoÅ¾enost oproti pouÅ¾itÃ­ nÄ›kterÃ½ch jinÃ½ch
+nÃ¡strojÅ¯, jako tÅ™eba XML.
 
-Ve funkci =body= se odkazujeme na data ze dvou rùznıch tabulek.  V tom nám
-obecnì nic nebrání, nebo» tabulky lze v¾dy nalézt dle jejich zadaného jména.
-Trochu slo¾itìj¹í je to v¹ak s údaji o èísle faktury a dodavateli, kde není
-øeèeno kterı øádek z tabulky =VydFaktury= má bıt pou¾it, nebo» ve specifikaci
-neznáme klíè odpovídajícího øádku.  Správné záznamy dostaneme díky tomu, ¾e
-tisk je vyvoláván z duálního formuláøe, kterı poskytne informace o aktuálním
-øádku hlavního podformuláøe v parametrech resolveru, tak¾e funkce =data_item= a
-=data_table= dostanou prostøednictvím resolveru potøebné podklady.  Proto¾e obì
-tabulky =VydFakturyPolozky= i =VydFaktury= jsou duálnímu formuláøi známy a ten
-tudí¾ mù¾e do tisku pøedat informace o jejich aktuálním zobrazení, bude to
+Ve funkci =body= se odkazujeme na data ze dvou rÅ¯znÃ½ch tabulek.  VÂ tom nÃ¡m
+obecnÄ› nic nebrÃ¡nÃ­, neboÅ¥ tabulky lze vÅ¾dy nalÃ©zt dle jejich zadanÃ©ho jmÃ©na.
+Trochu sloÅ¾itÄ›jÅ¡Ã­ je to vÅ¡ak sÂ Ãºdaji oÂ ÄÃ­sle faktury a dodavateli, kde nenÃ­
+Å™eÄeno kterÃ½ Å™Ã¡dek zÂ tabulky =VydFaktury= mÃ¡ bÃ½t pouÅ¾it, neboÅ¥ ve specifikaci
+neznÃ¡me klÃ­Ä odpovÃ­dajÃ­cÃ­ho Å™Ã¡dku.  SprÃ¡vnÃ© zÃ¡znamy dostaneme dÃ­ky tomu, Å¾e
+tisk je vyvolÃ¡vÃ¡n zÂ duÃ¡lnÃ­ho formulÃ¡Å™e, kterÃ½ poskytne informace oÂ aktuÃ¡lnÃ­m
+Å™Ã¡dku hlavnÃ­ho podformulÃ¡Å™e vÂ parametrech resolveru, takÅ¾e funkce =data_item= a
+=data_table= dostanou prostÅ™ednictvÃ­m resolveru potÅ™ebnÃ© podklady.  ProtoÅ¾e obÄ›
+tabulky =VydFakturyPolozky= iÂ =VydFaktury= jsou duÃ¡lnÃ­mu formulÃ¡Å™i znÃ¡my a ten
+tudÃ­Å¾ mÅ¯Å¾e do tisku pÅ™edat informace oÂ jejich aktuÃ¡lnÃ­m zobrazenÃ­, bude to
 fungovat.
 
-Na závìr si coby shrnutí uvedeme kompletní vytvoøenou specifikaci tisku na¹í
+Na zÃ¡vÄ›r si coby shrnutÃ­ uvedeme kompletnÃ­ vytvoÅ™enou specifikaci tisku naÅ¡Ã­
 prafaktury:
 
 <example>
@@ -218,7 +218,17 @@ def page_footer(resolver):
 def body(resolver):
     invoice_number = data_item(resolver, 'VydFaktury', 'number')
     seller = data_item(resolver, 'VydFaktury', 'adresa')
-    return (Paragraph(Bold('Faktura è. ', invoice_number)),
+    return (Paragraph(Bold('Faktura Ä. ', invoice_number)),
             Paragraph('Dodavatel:\n', seller),
             data_table(resolver, 'VydFakturyPolozky'))
 </example>
+
+
+* Tipy pro prÃ¡ci s tiskovÃ½mi sestavami ReportLabu
+
+** UmÃ­stÄ›nÃ­ dlouhÃ½ch tabulek
+
+NeumisÅ¥ujte dlouhÃ© tabulky (LongTable) do horizontÃ¡lnÃ­ch skupin.  HorizontÃ¡lnÃ­
+skupiny totiÅ¾ nelze zalamovat na hranicÃ­ch strÃ¡nek a pÅ™Ã­tomnost pÅ™Ã­liÅ¡ dlouhÃ©
+tabulky vÂ nich pak vede kÂ chybovÃ½m stavÅ¯m.  PÅ™Ã­padnÃ© nezbytnÃ© horizontÃ¡lnÃ­
+prvky tedy umÃ­stÄ›te pÅ™Ã­mo do tabulky.
