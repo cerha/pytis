@@ -768,7 +768,7 @@ class StructuredText(_Mark):
 
         """
         super(StructuredText, self).__init__()
-        self._text = text
+        self._text = text.replace('${data.', '@iterate ${data.')
         self._parameters = {}
 
     def _lcg(self):
