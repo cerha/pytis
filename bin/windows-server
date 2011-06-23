@@ -39,7 +39,7 @@ certificate_directory = os.path.join(os.environ["WINDIR"], "ssl")
 key_file = os.path.join(certificate_directory, 'windows.key')
 certificate_file = os.path.join(certificate_directory, 'windows.crt')
 ca_certificate_file = os.path.join(certificate_directory, 'ca.crt')
-logging_level = logging.INFO
+logging_level = logging.ERROR
 
 _stop = False
 _user_port = port + 1
