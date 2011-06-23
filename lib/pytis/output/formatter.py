@@ -1367,6 +1367,7 @@ class LCGFormatter(object):
 
     def _template_parameters(self, template):
         if isinstance(template, StructuredText):
+            template.lcg()
             parameters = template.parameters()
         else:
             parameters = {}
