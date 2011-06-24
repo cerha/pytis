@@ -56,17 +56,19 @@ class UserOutputTemplates(pytis.presentation.Specification):
         Field('module', _("Formulář")),
         Field('specification', _("Název šablony")),
         Field('template', _("Šablona"), text_format=pytis.presentation.TextFormat.LCG,
-              width=80, height=20, compact=True),
+              width=80, height=25, compact=True),
         Field('rowtemplate', _("Šablona pro jednotlivé řádky"),
               text_format=pytis.presentation.TextFormat.LCG,
-              width=80, height=20, compact=True),
+              width=80, height=25, compact=True),
         Field('username', _("Uživatel")),
         Field('help', _("Nápověda"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
-              width=80, height=20, compact=True),
+              width=80, height=25, compact=True),
         )
     columns = ('module', 'specification', 'username', 'template',)
-    layout = ('module', 'specification', 'template', 'rowtemplate', 'help',)
+    layout = pytis.presentation.TabGroup((_("Šablona"), ('module', 'specification', 'template',)),
+                                         (_("Řádková šablona"), ('rowtemplate',)),
+                                         (_("Nápověda"), ('help',)))
     def on_delete_record(self, row):
         if not row['username'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Můžete mazat pouze své vlastní záznamy."))
