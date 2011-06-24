@@ -467,13 +467,15 @@ class Document(_Container):
                 value = definition.lcg()
             return {None: value}
         content_id = 'pytismarkup%d' % (self._counter.next(),)
+        if self.arg_presentation is not None and not isinstance(self.arg_presentation, dict):
+            self.arg_presentation = {None: self.arg_presentation}
         return lcg.ContentNode(id=content_id, title=' ', # let's avoid printing the id
                                content=self.lcg(),
                                page_header=arg(self.arg_page_header),
                                page_footer=arg(self.arg_page_footer),
                                first_page_header=arg(self.arg_first_page_header),
                                page_background=arg(self.arg_page_background),
-                               presentation={None: self.arg_presentation},
+                               presentation=self.arg_presentation,
                                **kwargs)
 
 class Table(_Mark):
