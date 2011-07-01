@@ -1572,6 +1572,11 @@ class ListView(BrowseForm):
 
     """
     _CSS_CLS = 'list-view'
+    class _Interpolator(object):
+        def __init__(self, func):
+            self._func = func
+        def __getitem__(self, key):
+            return self._func(key)
 
     def __init__(self, view, row, **kwargs):
         self._list_layout = list_layout = view.list_layout()
@@ -1587,9 +1592,12 @@ class ListView(BrowseForm):
             self._meta = [(self._field(id), id in list_layout.meta_labels())
                           for id in list_layout.meta()]
             self._image = list_layout.image() and self._field(list_layout.image())
-            self._anchor = anchor = list_layout.anchor()
+            anchor = list_layout.anchor()
             if not anchor and list_layout.allow_index():
-                self._anchor = camel_case_to_lower(self._name, '-') + '-%s'
+                anchor = camel_case_to_lower(self._name, '-') + '-%s'
+            if anchor:
+                anchor = anchor.replace('%s', '%%(%s)s' % self._key)
+            self._anchor = anchor
 
     def _export_body(self, context):
         self._exported_row_index = []
@@ -1605,7 +1613,7 @@ class ListView(BrowseForm):
             title = self._row[layout.title()].export()
         anchor = self._anchor
         if anchor:
-            anchor = anchor % row[self._key].export()
+            anchor = anchor % self._Interpolator(lambda key: row[key].export())
             heading = g.link(title, None, name=anchor)
         else:
             heading = title
