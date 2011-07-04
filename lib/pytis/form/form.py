@@ -2888,7 +2888,9 @@ class StructuredTextEditor(PopupEditForm):
                                     readonly=self.readonly())
         self._fields.append(field)
         self._form_controls_window = panel
-        panel.SetSizer(field.widget())
+        sizer = wx.BoxSizer()
+        sizer.Add(field.widget(), 1, wx.EXPAND)
+        panel.SetSizer(sizer)
         return panel
         
     def _default_transaction(self):

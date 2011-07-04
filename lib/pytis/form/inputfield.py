@@ -2009,6 +2009,7 @@ class StructuredTextField(TextField):
     def _create_widget(self):
         widget = super(StructuredTextField, self)._create_widget()
         toolbar = wx.ToolBar(self._parent)
+        editor_panel = wx.Panel(notebook)
         commands = self._commands()
         for group in commands:
             if group != commands[0]:
@@ -2043,6 +2044,8 @@ class StructuredTextField(TextField):
                 step_back += 1
         if step_back:
             ctrl.SetInsertionPoint(ctrl.GetInsertionPoint()-step_back)
+        editor_panel.SetSizer(sizer)
+        return editor_panel
 
     def _cmd_search(self):
         pass
