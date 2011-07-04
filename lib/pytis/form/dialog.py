@@ -1568,7 +1568,7 @@ class FileDialog(Dialog):
             doplněn výchozí titulek v závislosti na argumentu 'mode'.
           dir -- přednastavená cesta; řetězec, nebo None.
           file -- přednastavený název souboru; řetězec, nebo None.
-          mode -- typ dialogu; jedna z konstant 'OPEN' a 'CLOSE' třídy.
+          mode -- typ dialogu; jedna z konstant 'OPEN' a 'SAVE' třídy.
           wildcards -- seznam masek souborů a popisů, podle kterých bude možno
             filtrovat; jedná se o sekvenci, kde každý lichý prvek určuje popis
             a každý sudý prvek je wildcard řetězcem, podle kterého budou
