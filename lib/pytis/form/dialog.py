@@ -1629,4 +1629,50 @@ class FileDialog(Dialog):
             return path
         else:
             return None
+
+        
+class DirDialog(Dialog):
+    """Dialog for directory selection.
+
+    Displays a dialog to browse existing directories and also allows creation
+    of a new directory.
+
+    """
+
+    _last_directory = None
+
+    def __init__(self, parent, title=_("Výběr adresáře"), path=None):
+        """Arguments:
+
+          parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance
+          title -- Title to show in the dialog title bar.
+          path -- initial derectory or None to use the last selected directory.
+
+        """
+        super_(FileDialog).__init__(self, parent)
+        assert isinstance(title, basestring)
+        assert path is None or isinstance(path, basestring)
+        self._title = unicode(title)
+        self._path = path
+
+    def run(self):
+        """Zobraz dialog a vrať cestu k vybranému souboru jeko řetězec.
+
+        Pokud je argument konstruktoru 'multi' pravdivý, bude vrácen tuple
+        řetězců.
+
+        """
+        self._dialog = d = wx.DirDialog(self._parent,
+                                        message=self._title,
+                                        defaultPath=self._path or DirDialog._last_directory or '',
+                                        style=wx.DD_DEFAULT_STYLE)
+        result = d.ShowModal()
+        path = d.GetPath()
+        d.Destroy()
+        FileDialog._last_directory = path
+        if result == wx.ID_OK:
+            return path
+        else:
+            return None
+
 
