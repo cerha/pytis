@@ -248,8 +248,9 @@ class FieldExporter(object):
                     return line
                 # Join lines and substitute links for HTML links
                 converted_text = '<br>\n'.join(convert_line(l) for l in lines)
-                substituted_text = self._URL_MATCHER.sub(r'<a href="\1">\1</a>', converted_text)
-                value = g.div(substituted_text)
+                value = self._URL_MATCHER.sub(r'<a href="\1">\1</a>', converted_text)
+                if len(lines) > 1:
+                    value = g.div(value)
         return value
 
     def _display(self, context):
