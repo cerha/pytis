@@ -1,0 +1,154 @@
+= Integrace webového prohlíče do wx aplikace =
+
+Tento dokument popisuje možnosti využití webového prohlížeče coby součásti wx
+aplikace, tedy formulářů implementovaných modulem `pytis.form'.
+
+== Vestavěný prohlížeč ==
+
+Využíváme prohlížeče založeného na jádru webkit, který je do wx aplikace
+vestavěn pomocí triku s výměnou GTK widgetu wx panelu za widget webkit/GTK
+browseru (viz konstruktor třídy `pytis.form.Browser').  Tento způsob vestavění
+není díky přímé manipulaci s GTK widgety univerzální a je vázaný na wx/GTK.
+
+Je nutné mít nainstalován webkit a jeho pythonové rozhraní, což v Debianu
+zajistí balík python-webkit.  Pythonové rozhraní je zdokumentováno na adrese
+http://webkitgtk.org/reference/webkitgtk-webkitwebview.html.  Veškerá volání
+webkitu by však měla být interní záležitostí třídy `pytis.form.Browser' a
+uvnitř pytisu by tedy mělo být využíváno výhradně rozhraní naší pytisové třídy.
+
+Prohlížeč plně podporuje HTML včetně CSS a JavaScriptu.  Umožňuje také využití
+pluginů (např. Flash), ale to vyžaduje implementaci na straně aplikace a naše
+pytisové použití momentálně žádné pluginy nepodporuje.
+
+V zásadě můžeme prohlížeč využít dvěma způsoby:
+- Zobrazení existující stránky skrze její HTTP(S) adresu
+- Zobrazení HTML kódu vygenerovaného aplikací
+
+=== Známá omezení ===
+
+* Současná implementace bude fungovat výhradně s wx/GTK.
+
+* Zpracování klávesových událostí uvnitř GTK widgetu se nepropaguje do wx,
+  potažmo do pytisového zpracování klávesových událostí a tudíž nelze příkazy
+  prohlížeče standardně navázat na klávesové zkratky.  Vzhledem ke oblíbenosti
+  klikací práce s webem u uživatelů to zatím nebylo pozorováno jako problém,
+  ale je dobré si toto omezení uvědomit při plánování dalších rozšíření využití
+  webového widgetu.
+
+* Porpoda pluginů, jako např. Flash, není momentálně implementována.  Webkit
+  obsahuje podporu, ale implementace je na straně aplikace, tedy v našem
+  případě pytisu.
+
+
+== Možnosti využití ==
+
+=== Samostatný prohlížeč ===
+
+Nejjednodušší využití prohlížeče je pomocí třídy InfoWindow, která při předání
+HTML, nebo LCG strukturovaného textu zobrazí samostatné okno s vestavěným
+prohlížečem zobrazujícím daný obsah.
+
+Třída BrowserWindow zobrazí prohlížeč s textovým polem pro zadání URL a funguje
+tedy jako běžný velmi jednoduchý prohlížeč.
+
+
+=== HTML formuláře ===
+
+HTML formuláře ve wx aplikaci slouží k zobrazení HTML stránky coby běžného
+formuláře aplikace.  Nejčastější využití je ve formě vedlejších formulářů,
+které zobrazují nějaký HTML obsah vztahující se k databázovému záznamu
+zobrazenému v hlavním formuláři duálního formuláře.  Všechny HTML formuláře
+jsou odvozeny od třídy `pytis.form.WebForm'.
+
+==== Zobrazení webové stránky ve vedlejším formuláři ====
+
+Umožňuje zobrazit libovolnou webovou stránku na základě HTTP(S) adresy
+sestavené z dat aktuálního řádku hlavního formuláře.  K tomu slouží argument
+`uri' ve specifikaci `Binding' (viz nápověda konstruktoru třídy Binding).
+
+Příklad:
+-----
+    bindings = (...,
+                Binding('website', _("Náhled webové stránky"), 
+		        uri=lambda row: row['uri'].value())),
+		...)
+-----
+
+Více viz nápověda konstruktoru třídy Binding.  Příklad je možné nalézt také v
+Pytis Demo, kde je v číselníku zemí ke každému státu zobrazována příslušná
+stránka z Wikipedie.
+
+To nabízí široké možnosti uplatnění, jako např. zobrazení grafu vývoje kurzu
+měny ze stránek ČNB, zobrazení doplňkových informací z internetových aplikací
+či provázání s vlastní webovou aplikací či intranetem.
+
+Při použití tohoto typu vedlejšího formuláře je vždy automaticky aktivováno
+omezení uživatelské navigace ve vedlejším formuláři pouze na doménu
+odpovídající doméně adresy vygenerované aplikací.  Takže např. pokud funkce
+předaná jako argument `uri' vrátí hodnotu
+„http://www.cnb.cz/cs/financni_trhy/devizovy_trh/kurzy_devizoveho_trhu/graf.jsp?rok=2011&mena=AUD“,
+bude uživatel moci zobrazit libovolnou další stránku na serveru www.cnb.cz, ale
+např. při pokusu o zobrazení adresy začínající „http://www.facebook.com“
+prohlížeč takovou navigaci zamítne.  Více viz kapitola Omezení přístupu níže.
+
+
+==== Zobrazení vlastního HTML ve vedlejším formuláři ====
+
+Umožňuje zobrazit libovolný HMTL kód vygenerovaný aplikací na základě dat
+aktuálního řádku hlavního formuláře.  K tomu slouží argument `content' ve
+specifikaci `Binding'.
+
+Příklad:
+-----
+    bindings = (...,
+                Binding('content', _("Zformátovaný text"), 
+		        content=lambda row: pytis.util.lcg_to_html(row['content'].value() or '')),
+		...)
+-----
+
+Více viz nápověda konstruktoru třídy Binding.  Podobný příklad je možné nalézt
+v Pytis CMS, kde je v multiformu CMS stránek ve vedlejším formuláři zobrazován
+zformátovaný obsah stránky.
+
+
+
+==== Zobrazení webového formuláře ve vedlejším formuláři ====
+
+Jde o možnost zobrazit webový formulář z modulu `pytis.web' ve wx aplikaci.
+Existuje prototyp, který to dokáže, ale oficiálně tato možnost zatím není k
+dispozici.  V budouvnu by mohla umožnit zobrazovat např. `ListView' s
+`ListLayout' včetně obrázků apod., což jsou prvky, které by jinak byly coby wx
+formuláře těžko realizovatelné (nehledě na duplicitu).  Webové formuláře jsou
+co do možností zobrazení podstatně flexibilnější a jejich provázáním do wx
+aplikace bychom tuto flexibilitu mohli s výhodou využít i zde.
+
+
+== Omezení přístupu ==
+
+Vestavěný prohlížeč v pytisové aplikaci funguje jako běžný browser.  Může tedy
+být záhodno omezit možnosti jeho zneužití uživateli k prohlížení obsahu
+nesouvisejícího s provozem aplikace.
+
+=== Použití HTTP proxy ===
+
+Nastavením proxy serveru je možné sdílet obecná globální filtrovací pravidla
+stejně jako u kteréhokoliv jiného prohlížeče.  Slouží k tomu konfigurační volba
+`http_proxy' v konfiguraci Pytisu.  Toto nastavení respektují všechny instance
+webkitového prohlížeče použité v aplikaci.
+
+=== Explicitní omezení dostupných adres ===
+
+V kódu aplikace lze dále omezit adresy dostupné v konkrétní instanci prohlížeče
+pomocí metody `Browser.restrict_navigation()'.  Omezení spočívá v nastavení
+prefixu URI.  Prohlížeč po tomto nastavení odmítne zobrazit adresu, která
+nezačíná daným prefixem a to ať už je tato adresa vepsána do adresního řádku
+přímo, nebo je cílem odkazu, na který uživatel v prohlížeči klikne, či je
+vyžadována pro získání objektu odkazovaného ve stránce.  Při pokusu o navigaci
+na nepovolenou adresu je uživateli vypsáno oznámení o zamítnutí navigace a
+požadavek je ignorován.  
+
+Toto omezení je automaticky aktivováno ve vedlejším formuláři zobrazujícím
+webovou adresu skrze specifikaci `uri' konstruktoru Binding.  Uživatel je zde
+omezen na prohlížení stránek pouze na stejném serveru, jako byla původní adresa
+vygenerovaná aplikací.  Přechod na jiný server je zamítnut.
+
