@@ -330,18 +330,20 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
     """
     import tempfile
     import os
-    handle, fname = tempfile.mkstemp(suffix='.pdf')    
+    fd, fname = tempfile.mkstemp(suffix='.pdf')
+    handle = os.fdopen(fd, 'wb')
     printdirect(resolver, spec, print_spec, row, output_file=handle, **kwargs)
-    data_tisk = None
-    with open(fname, 'r') as soubor:
-        data_tisk = soubor.read()
+    document = None
+    with open(fname, 'rb') as f:
+        document = f.read()
     if os.path.exists(fname):
         os.remove(fname)
-    if data_tisk:
+    if document:
         if not filename:
             filename = os.path.basename(fname)
+
         mail = ComplexEmail(to, from_, subject, msg, charset=charset)
-        mail.add_content_data(data_tisk, filename)
+        mail.add_content_data(document, filename)
         result = mail.send()
         if not result:
             # Sending email failed -- return an error message
