@@ -376,6 +376,7 @@ class ComplexEmail(SimpleEmail):
         else:
             content = MIMEBase(maintype, subtype)
             content.set_payload(data)
+            email.Encoders.encode_base64(content)
         return content
 
     def add_content_text(self, data, html=False, charset=None):
