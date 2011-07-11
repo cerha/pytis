@@ -154,6 +154,8 @@ def dbupdate_many(spec, condition=None, update_row=None,
 def dbfunction(name, *args, **kwargs):
     """Zavolej databázovou funkci a vrať výsledek jako Pythonovou hodnotu.
 
+    If the database call fails, return None.
+    
     Argumenty:
 
       name -- název funkce.
@@ -166,7 +168,8 @@ def dbfunction(name, *args, **kwargs):
         databázové funkce.  To znamená úsporu pokud je tato funkce použita v
         computeru políčka, které je závislé na jiných políčkách, která ještě
         nejsou vyplněna.
-      transaction -- instance pytis.data.DBTransactionDefault        
+      transaction -- instance pytis.data.DBTransactionDefault
+      
     """
     proceed_with_empty_values = kwargs.get('proceed_with_empty_values', False)
     transaction = kwargs.get('transaction')
@@ -180,6 +183,8 @@ def dbfunction(name, *args, **kwargs):
     success, function = pytis.form.db_operation(pytis.data.DBFunctionDefault, name, conn_spec)
     success, result   = pytis.form.db_operation(function.call, pytis.data.Row(args),
                                                 transaction=transaction)
+    if not success:
+        return None
     if len(result) == 1 and len(result[0]) == 1:
         return result[0][0].value()
     return result
