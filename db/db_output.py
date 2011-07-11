@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -27,6 +27,9 @@ _std_table('e_pytis_output_templates',
             C('specification', TString, constraints=('not null',)), # user template name
             C('template', TString),
             C('rowtemplate', TString),
+            C('header', TString),
+            C('first_page_header', TString),
+            C('footer', TString),
             C('username', TString),
             ),
            """Storage of print output templates handled by a DatabaseResolver.""",
@@ -49,9 +52,9 @@ viewng('ev_pytis_user_output_templates',
        (SelectRelation('e_pytis_output_templates', alias='templates',
                        condition=current_user_condition),
         ),
-       insert="insert into e_pytis_output_templates (module, specification, template, rowtemplate, username) values (new.module, new.specification, new.template, new.rowtemplate, current_user)",
+       insert="insert into e_pytis_output_templates (module, specification, template, rowtemplate, header, first_page_header, footer, username) values (new.module, new.specification, new.template, new.rowtemplate, new.header, new.first_page_header, new.footer, current_user)",
        update="""(
-       insert into e_pytis_output_templates (module, specification, template, rowtemplate, username) values (new.module, new.specification, new.template, new.rowtemplate, current_user);
+       insert into e_pytis_output_templates (module, specification, template, rowtemplate, header, first_page_header, footer, username) values (new.module, new.specification, new.template, new.rowtemplate, new.header, new.first_page_header, new.footer, current_user);
        delete from e_pytis_output_templates where id=old.id and username=current_user;
        )
        """,

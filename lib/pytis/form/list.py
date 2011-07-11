@@ -2760,14 +2760,13 @@ class BrowseForm(FoldableForm):
     class _DBPrintResolver(DatabaseResolver):
         
         def __init__(self, db_table):
-            DatabaseResolver.__init__(self, db_table, ('template', 'rowtemplate',))
+            DatabaseResolver.__init__(self, db_table, ('template', 'rowtemplate', 'header', 'first_page_header', 'footer',))
 
         def get(self, module_name, spec_name, **kwargs):
-            if spec_name == 'body':
-                result_index = 0
-            elif spec_name == 'row':
-                result_index = 1
-            else:
+            specs = ('body', 'row', 'page_header', 'first_page_header', 'page_footer',)
+            try:
+                result_index = specs.index(spec_name)
+            except ValueError:
                 raise ResolverSpecError(module_name, spec_name)
             module_parts = module_name.split('/')
             if module_parts[0] == 'output':

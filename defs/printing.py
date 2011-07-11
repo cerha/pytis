@@ -60,6 +60,15 @@ class UserOutputTemplates(pytis.presentation.Specification):
         Field('rowtemplate', _("Šablona pro jednotlivé řádky"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=25, compact=True),
+        Field('header', _("Hlavička"),
+              text_format=pytis.presentation.TextFormat.LCG,
+              width=80, height=10, compact=True),
+        Field('first_page_header', _("Odlišná hlavička první stránky"),
+              text_format=pytis.presentation.TextFormat.LCG,
+              width=80, height=10, compact=True),
+        Field('footer', _("Patička"),
+              text_format=pytis.presentation.TextFormat.LCG,
+              width=80, height=10, compact=True),
         Field('username', _("Uživatel")),
         Field('help', _("Nápověda"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
@@ -68,6 +77,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
     columns = ('module', 'specification', 'username', 'template',)
     layout = pytis.presentation.TabGroup((_("Šablona"), ('module', 'specification', 'template',)),
                                          (_("Řádková šablona"), ('rowtemplate',)),
+                                         (_("Hlavičky a patičky"), ('header', 'first_page_header', 'footer',)),
                                          (_("Nápověda"), ('help',)))
     def on_delete_record(self, row):
         if not row['username'].value():
