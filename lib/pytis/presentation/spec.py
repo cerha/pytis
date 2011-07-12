@@ -621,6 +621,61 @@ class Profile(object):
     def folding(self):
         return self._folding
 
+    
+class AggregatedView(object):
+    """Predefined aggregated view specification.
+
+    Aggregated view can be displayed for any pytis form.  It displays form data
+    aggregated using given aggregation functions and groupped by given "group
+    by" columns.
+
+    The user interface allows simple invocation of aggregated views defined in
+    specification as well as management of user defined aggregated views.  Thus
+    instances of this class may originate either from specification or from
+    user data.
+
+    """
+    
+    def __init__(self, id, name, group_by_columns, aggregation_columns):
+        """Arguments:
+        
+          id -- aggregation identifier as a string.  It must be unique among all
+            aggregations within a given specification.
+          name -- user visible name as a string.
+          group_by_columns -- columns to be used in the "group by" clause of
+            the aggregated view as a sequence of pairs (column_id, function),
+            where column_id is a string column identifier and function is the
+            name of the grouping function from 'grouping_functions'
+            specification option or None if the column is used directly with no
+            function applied.
+          aggregation_columns -- tuple of aggregation column specifications,
+            where each item is a pair of string column identifier and the
+            aggregation function as one of pytis.data.Data AGG_* constants.
+            May only be used if 'group_by_columns' are also defiend.
+          
+        """
+        assert isinstance(id, basestring), id
+        assert isinstance(name, basestring), name
+        assert isinstance(aggregation_columns, (tuple, list)), aggregation_columns
+        assert isinstance(group_by_columns, (tuple, list)), group_by_columns
+        self._id = id
+        self._name = name
+        self._group_by_columns = group_by_columns
+        self._aggregation_columns = aggregation_columns
+    
+    def id(self):
+        return self._id
+        
+    def name(self):
+        return self._name
+
+    def group_by_columns(self):
+        return self._group_by_columns
+    
+    def aggregation_columns(self):
+        return self._aggregation_columns
+
+    
 
 class Profiles(list):
     """A sequence of form profiles with an optional specification of the default profile.
