@@ -159,6 +159,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._saved_state[option] = value
         # Initialize the storage of form profile configurations.
         self._profile_manager = FormProfileManager(config.dbconnection)
+        # Initialize the storage of user defiend aggregated views.
+        self._aggregated_views_manager = AggregatedViewsManager(config.dbconnection)
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Init the recent forms list.
@@ -1111,6 +1113,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def profile_manager(self):
         return self._profile_manager
 
+    def aggregated_views_manager(self):
+        return self._aggregated_views_manager
+
 
 class UserSetttingsManager(object):
     """Common base class for all user settings managers.
@@ -1303,6 +1308,76 @@ class FormProfileManager(UserSetttingsManager):
             condition = pytis.data.AND(condition, wm)
         values = self._data.distinct('fullname', condition=condition, transaction=transaction)
         return [v.value() for v in values]
+
+    
+class AggregatedViewsManager(UserSetttingsManager):
+    """Accessor of the database storage of saved aggregation form setups.
+
+    Aggregation form setups are the properties defined by the user in the
+    aggregation form setup dialog and represented by a
+    'pytis.presentation.AggregatedView' instance.  Users may create several
+    named setups for each specification and these setups will appear as
+    separate items in the aggregarion menu in a form toolbar.  instance and are
+    related to a specification, so all forms above given specification share
+    the list of available aggregation setups.
+        
+    """
+    _TABLE = 'e_pytis_aggregated_views'
+    _COLUMNS = ('id', 'username', 'spec_name', 'aggregated_view_id', 'title', 'pickle')
+
+    def save(self, spec_name, aggregated_view, transaction=None):
+        """Save aggregation form setup.
+        
+        Arguments:
+
+          spec_name -- specification name as a string.
+          aggregated_view -- 'pytis.presentation.AggregatedView' instance.
+
+        """
+        assert isinstance(aggregated_view, AggregatedView)
+        values = dict(title=aggregated_view.name(),
+                      pickle=self._pickle(aggregated_view))
+        self._save(values, spec_name=spec_name, aggregated_view_id=aggregated_view.id(),
+                   transaction=transaction)
+
+    def load(self, spec_name, aggregated_view_id, transaction=None):
+        """Return previously saved aggregated view setup.
+
+        Arguments:
+          spec_name -- specification name as a string.
+          aggregated_view_id -- string identifier of the aggregated view to load.
+
+        Returns a 'pytis.form.AggregatedView' instance.  If no such aggregated
+        view is found, None is returned.
+
+        """
+        return self._load(spec_name=spec_name, aggregated_view_id=aggregated_view_id,
+                          transaction=transaction)
+
+    def drop(self, spec_name, aggregated_view_id, transaction=None):
+        """Remove the previously saved aggregated view setup.
+
+        Arguments:
+          spec_name -- specification name as a string.
+          profile_id -- string identifier of the profile to drop.
+
+        """
+        row = self._row(spec_name=spec_name, aggregated_view_id=aggregated_view_id)
+        if row:
+            self._data.delete(row['id'], transaction=transaction)
+
+    def list(self, spec_name, transaction=None):
+        """Return a sequence of all previously saved setups for given specification.
+
+        Arguments:
+          spec_name -- specification name as a string.
+
+        Returns a sequence of strings -- all distinct aggregated view
+        identifiers previously saved using 'save()' for given 'spec_name'.
+
+        """
+        return tuple(row['id'].value()
+                     for row in self._rows(spec_name=spec_name, transaction=transaction))
 
 
 # Funkce odpovídající příkazům aplikace.
@@ -1577,6 +1652,10 @@ def wx_frame():
 def profile_manager():
     """Return 'Application.profile_manager()' of the current application instance."""
     return _application.profile_manager()
+
+def aggregated_views_manager():
+    """Return 'Application.aggregated_views_manager()' of the current application instance."""
+    return _application.aggregated_views_manager()
 
 # Ostatní funkce.
 

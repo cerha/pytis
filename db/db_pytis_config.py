@@ -32,9 +32,24 @@ table('e_pytis_form_profiles',
        C('profile_name', TString, constraints=('NOT NULL',)),
        C('pickle', TString, constraints=('NOT NULL',)),
        C('dump', TString),
-       C('errors', TString)),
+       C('errors', TString),
+       ),
       sql='UNIQUE (username, fullname, profile_id)',
       grant=db_rights,
       schemas=db_schemas,
       doc="""Pytis form configuration storage."""
+      )
+
+table('e_pytis_aggregated_views',
+      (P('id', TSerial),
+       C('username', TUser, constraints=('NOT NULL',)),
+       C('spec_name', TString, constraints=('NOT NULL',)),
+       C('aggregated_view_id', TString, constraints=('NOT NULL',)),
+       C('name', TString, constraints=('NOT NULL',)),
+       C('pickle', TString, constraints=('NOT NULL',)),
+       ),
+      sql='UNIQUE (username, spec_name, aggregated_view_id)',
+      grant=db_rights,
+      schemas=db_schemas,
+      doc="""Pytis aggregated views storage."""
       )
