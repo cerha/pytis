@@ -83,7 +83,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'saved_startup_forms' # Avoid name conflict with config.startup_forms!
     _STATE_SAVE_FORMS_ON_EXIT = 'save_forms_on_exit'
-    _STATE_FORM_CONFIG = 'saved_form_config' # Used only when e_pytis_form_profiles does not exist.
 
     def _get_command_handler_instance(cls):
         global _application
@@ -162,17 +161,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             else:
                 self._saved_state[option] = value
         self._user_configuration_storage = user_configuration_storage
-        # Initialize the storage of form profile configurations.  If the
-        # database storage fails (the needed table doesn't exist in the
-        # database), form configurations will be stored as part of application
-        # state (suboptimal for large scale applications).
-        try:
-            manager = DBFormProfileManager(config.dbconnection)
-        except pytis.data.DBException:
-            form_config = self._get_state_param(self._STATE_FORM_CONFIG, {}, dict)
-            self._set_state_param(self._STATE_FORM_CONFIG, form_config)
-            manager = DictionaryFormProfileManager(form_config)
-        self._profile_manager = manager
+        # Initialize the storage of form profile configurations.
+        self._profile_manager = FormProfileManager(config.dbconnection)
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Init the recent forms list.
@@ -1255,169 +1245,32 @@ class DBConfigurationStorage(ConfigurationStorage):
                                   ('config', value)))
             self._data.insert(row, transaction=transaction)
 
-    
 
-class FormProfileManager(object):
-    """Generic accessor of form configuration storage.
+class FormDataManager(object):
+    """Common base class for all form data managers.
 
-    This class just defines the generic interface of all form configuration
-    managers.  Different implementations may store the configurations
-    differently.
-
-    The actual form profile data are python dictionaries of arbitrary form
-    settings at this level.  There are no rules, except that the data structure
-    must be safe to pickle and unpickle (ideally they should consist just of
-    basic python data types).  They are referenced by a string identifier and
-    the upper layer is responsible for converting these structures into
-    'pytis.presentation.Profile' instances.
-
-    Forms are referenced by unique string identifiers (see the 'fullname'
-    arguement of the manager's methods).  This string should follow the same
-    structure as DMP fullnames by convention, but the manager doesn't enforce
-    that in any way.
-    
-    TODO: The conversion to 'pytis.presentation.Profile' instances might be
-    done directly by this class, but the routines must be factored out of Form
-    classes where they are now still used for other purposes.  Forms also use
-    special profiles to store other kinds of settings (see
-    '__global_settings__').
+    Form data managers take care of storing various form related information,
+    such as profiles and other settings in the database.
 
     """
-    def save_profile(self, fullname, profile):
-        """Save user specific configuration of a form.
-        
-        Arguments:
-
-          fullname -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile -- form profile as a 'pytis.form.FormProfile' instance.
-          config -- dictionary of form configuration parameters.
-
-        """
-        pass
-
-    def load_profile(self, fullname, profile_id):
-        """Return previously saved user specific configuration of a form.
-
-        Arguments:
-          fullname -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile_id -- string identifier of the profile to load.
-
-        Returns a 'pytis.form.FormProfile' instance.  If no such profile is
-        found or if a problem occures reading it, None is returned.
-
-        """
-        pass
-
-    def drop_profile(self, fullname, profile_id):
-        """Remove the previously saved form configuration.
-
-        Arguments:
-          fullname -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile_id -- string identifier of the profile to drop.
-
-        """
-        pass
-
-    def list_profile_ids(self, fullname):
-        """Return a sequence of identifiers of all previously saved profiles.
-
-        Arguments:
-          fullname -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-
-        Returns a sequence of strings -- all distinct profile identifiers
-        previously saved using 'save_profile' for given 'fullname'.
-
-        """
-        pass
-
-    def list_fullnames(self, pattern=None):
-        """Return a sequence form fullnames for which profiles were saved.
-
-        Arguments:
-          pattern -- wildcard pattern (using * and ? in their usual meaning)
-            to match the returned fullnames.  If None, all previously saved
-            fullnames for given user are returned.
-
-        """
-        pass
-    
-
-class DictionaryFormProfileManager(FormProfileManager):
-    """Accessor of a simple dictionary storage of form configurations.
-
-    Form configurations are stored in a simple dictionary.  This is not optimal
-    for large scale applications with lots of forms, since the dictionary may
-    grow to huge sizes, so its lookup, storage and retrieval may take
-    unreasonable time.
-
-    The dictionary is passed to the constructor and the calling side is
-    responsible for securing its persistence!
-
-    """
-    def __init__(self, config):
-        assert isinstance(config, dict)
-        self._config = config
-
-    def _key(self, fullname, profile_id):
-        return fullname +':'+ profile_id
-
-    def save_profile(self, fullname, profile):
-        assert profile.id() != '__saved_profiles__'
-        profile_ids = self.list_profile_ids(fullname)
-        if profile.id() not in profile_ids:
-            profile_ids += (profile.id(),)
-            self._config[self._key(fullname, '__saved_profiles__')] = profile_ids
-        self._config[self._key(fullname, profile.id())] = profile
-            
-    def load_profile(self, fullname, profile_id):
-        return self._config.get(self._key(fullname, profile_id))
-
-    def drop_profile(self, fullname, profile_id):
-        try:
-            del self._config[self._key(fullname, profile_id)]
-        except KeyError:
-            pass
-        
-    def list_profile_ids(self, fullname):
-        return self._config.get(self._key(fullname, '__saved_profiles__'), ())
-        
-    
-class DBFormProfileManager(FormProfileManager):
-    """Accessor of the database storage of form configurations.
-
-    This manager will store form configurations in a database table, one row per form profile.
-    This is more optimal for large scale applications
-
-    The constructor will raise 'pytis.data.DBException' if the needed database table is not found.
-    This means that some other manager has to be used.
-        
-    """
-    _TABLE = 'e_pytis_form_profiles'
-    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_name',
-                'pickle', 'dump', 'errors')
+    _TABLE = None
+    _COLUMNS = ()
 
     def __init__(self, dbconnection, username=None):
         self._username = username or config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
 
-    def _key_values(self, fullname, profile_id=None):
-        values = (('username', pytis.data.sval(self._username)),
-                  ('fullname', pytis.data.sval(fullname)))
-        if profile_id:
-            values += (('profile_id', pytis.data.sval(profile_id)),)
-        return values
+    def _values(self, **kwargs):
+        return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
+                for key, value in [('username', self._username)] + kwargs.items()]
 
-    def _row_condition(self, fullname, profile_id=None):
-        return pytis.data.AND(*[pytis.data.EQ(key, value) for key, value in
-                                self._key_values(fullname, profile_id)])
+    def _condition(self, **kwargs):
+        return pytis.data.AND(*[pytis.data.EQ(key, value)
+                                for key, value in self._values(**kwargs)])
 
-    def _row(self, fullname, profile_id, transaction=None):
+    def _row(self, transaction=None, **kwargs):
         try:
-            count = self._data.select(condition=self._row_condition(fullname, profile_id),
+            count = self._data.select(condition=self._condition(**kwargs),
                                       transaction=transaction)
             if count == 0:
                 row = None
@@ -1431,49 +1284,121 @@ class DBFormProfileManager(FormProfileManager):
                 pass
         return row
 
+    def _rows(self, transaction=None, **kwargs):
+        rows = []
+        self._data.select(condition=self._condition(**kwargs), transaction=transaction)
+        while True:
+            row = self._data.fetchone()
+            if row is None:
+                break
+            rows.append(row)
+        return rows
+
+    
+class FormProfileManager(FormDataManager):
+    """Accessor of the database storage of form profiles.
+
+    The actual form profile data are python dictionaries of arbitrary form
+    settings at this level.  There are no rules, except that the data structure
+    must be safe to pickle and unpickle (ideally they should consist just of
+    basic python data types).  They are referenced by a string identifier and
+    the upper layer is responsible for converting these structures into
+    'pytis.presentation.Profile' instances.
+
+    Forms are referenced by unique string identifiers (see the 'fullname'
+    arguement of the manager's methods).  This string should follow the same
+    structure as DMP fullnames by convention, but the manager doesn't enforce
+    that in any way.
+        
+    """
+    _TABLE = 'e_pytis_form_profiles'
+    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_name',
+                'pickle', 'dump', 'errors')
+
     def save_profile(self, fullname, profile, transaction=None):
-        row = self._row(fullname, profile.id(), transaction=transaction)
+        """Save user specific configuration of a form.
+        
+        Arguments:
+
+          fullname -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile -- form profile as a 'pytis.form.FormProfile' instance.
+          config -- dictionary of form configuration parameters.
+
+        """
+        row = self._row(fullname=fullname, profile_id=profile.id(), transaction=transaction)
         # The columns 'profile_name', 'dump', and 'errors' in the DB table are
         # redundant information for direct SQL access or debugging.  It is
         # ignored when loading back the profile.
-        values = (
+        values = [
             ('profile_name', pytis.data.sval(profile.name())),
             ('pickle', pytis.data.sval(base64.b64encode(pickle.dumps(profile)))),
             ('dump', pytis.data.sval(profile.dump())),
             ('errors', pytis.data.sval("\n".join(profile.validation_errors()) or None)),
-            )
+            ]
         if row:
             for key, value in values:
                 row[key] = value
             self._data.update(row['id'], row, transaction=transaction)
         else:
-            key_values = self._key_values(fullname, profile.id())
+            key_values = self._values(fullname=fullname, profile_id=profile.id())
             row = pytis.data.Row(key_values + values)
             self._data.insert(row, transaction=transaction)
 
     def load_profile(self, fullname, profile_id, transaction=None):
-        row = self._row(fullname, profile_id, transaction=transaction)
+        """Return previously saved user specific configuration of a form.
+
+        Arguments:
+          fullname -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile_id -- string identifier of the profile to load.
+
+        Returns a 'pytis.form.FormProfile' instance.  If no such profile is
+        found or if a problem occures reading it, None is returned.
+
+        """
+        row = self._row(fullname=fullname, profile_id=profile_id, transaction=transaction)
         if row:
             return pickle.loads(base64.b64decode(row['pickle'].value()))
         else:
             return None
            
     def drop_profile(self, fullname, profile_id, transaction=None):
-        row = self._row(fullname, profile_id)
+        """Remove the previously saved form configuration.
+
+        Arguments:
+          fullname -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile_id -- string identifier of the profile to drop.
+
+        """
+        row = self._row(fullname=fullname, profile_id=profile_id)
         if row:
             self._data.delete(row['id'], transaction=transaction)
         
     def list_profile_ids(self, fullname, transaction=None):
-        profile_ids = []
-        self._data.select(condition=self._row_condition(fullname), transaction=transaction)
-        while True:
-            row = self._data.fetchone()
-            if row is None:
-                break
-            profile_ids.append(row['profile_id'].value())
-        return tuple(profile_ids)
+        """Return a sequence of identifiers of all previously saved profiles.
+
+        Arguments:
+          fullname -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+
+        Returns a sequence of strings -- all distinct profile identifiers
+        previously saved using 'save_profile' for given 'fullname'.
+
+        """
+        return tuple(row['profile_id'].value()
+                     for row in self._rows(fullname=fullname, transaction=transaction))
 
     def list_fullnames(self, pattern=None, transaction=None):
+        """Return a sequence form fullnames for which profiles were saved.
+
+        Arguments:
+          pattern -- wildcard pattern (using * and ? in their usual meaning)
+            to match the returned fullnames.  If None, all previously saved
+            fullnames for given user are returned.
+
+        """
         condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
         if pattern:
             wm = pytis.data.WM('fullname', pytis.data.WMValue(pytis.data.String(), pattern),
