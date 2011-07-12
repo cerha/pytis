@@ -1294,6 +1294,29 @@ class FormDataManager(object):
             rows.append(row)
         return rows
 
+    def _load(self, transaction=None, **key):
+        row = self._row(key, transaction=transaction)
+        if row:
+            return pickle.loads(base64.b64decode(row['pickle'].value()))
+        else:
+            return None
+    
+    def _save(self, values, transaction=None, **key):
+        row = self._row(transaction=transaction, **key)
+        if row:
+            for k, v in self._values(**values):
+                row[k] = v
+            self._data.update(row['id'], row, transaction=transaction)
+        else:
+            row = pytis.data.Row(self._values(**key) + self._values(**values))
+            self._data.insert(row, transaction=transaction)
+
+
+    def _drop(self, transaction=None, **key):
+        row = self._row(transaction=transaction, **key)
+        if row:
+            self._data.delete(row['id'], transaction=transaction)
+            
     
 class FormProfileManager(FormDataManager):
     """Accessor of the database storage of form profiles.
@@ -1326,24 +1349,12 @@ class FormProfileManager(FormDataManager):
           config -- dictionary of form configuration parameters.
 
         """
-        row = self._row(fullname=fullname, profile_id=profile.id(), transaction=transaction)
-        # The columns 'profile_name', 'dump', and 'errors' in the DB table are
-        # redundant information for direct SQL access or debugging.  It is
-        # ignored when loading back the profile.
-        values = [
-            ('profile_name', pytis.data.sval(profile.name())),
-            ('pickle', pytis.data.sval(base64.b64encode(pickle.dumps(profile)))),
-            ('dump', pytis.data.sval(profile.dump())),
-            ('errors', pytis.data.sval("\n".join(profile.validation_errors()) or None)),
-            ]
-        if row:
-            for key, value in values:
-                row[key] = value
-            self._data.update(row['id'], row, transaction=transaction)
-        else:
-            key_values = self._values(fullname=fullname, profile_id=profile.id())
-            row = pytis.data.Row(key_values + values)
-            self._data.insert(row, transaction=transaction)
+        key = dict()
+        values = dict(profile_name=profile.name(),
+                      pickle=base64.b64encode(pickle.dumps(profile)),
+                      dump=profile.dump(),
+                      errors="\n".join(profile.validation_errors()) or None)
+        self._save(values, fullname=fullname, profile_id=profile.id(), transaction=transaction)
 
     def load_profile(self, fullname, profile_id, transaction=None):
         """Return previously saved user specific configuration of a form.
@@ -1357,11 +1368,7 @@ class FormProfileManager(FormDataManager):
         found or if a problem occures reading it, None is returned.
 
         """
-        row = self._row(fullname=fullname, profile_id=profile_id, transaction=transaction)
-        if row:
-            return pickle.loads(base64.b64decode(row['pickle'].value()))
-        else:
-            return None
+        return self._load(fullname=fullname, profile_id=profile_id, transaction=transaction)
            
     def drop_profile(self, fullname, profile_id, transaction=None):
         """Remove the previously saved form configuration.
@@ -1372,9 +1379,7 @@ class FormProfileManager(FormDataManager):
           profile_id -- string identifier of the profile to drop.
 
         """
-        row = self._row(fullname=fullname, profile_id=profile_id)
-        if row:
-            self._data.delete(row['id'], transaction=transaction)
+        self._drop(fullname=fullname, profile_id=profile_id)
         
     def list_profile_ids(self, fullname, transaction=None):
         """Return a sequence of identifiers of all previously saved profiles.
