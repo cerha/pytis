@@ -151,16 +151,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._initial_config = [(o, copy.copy(getattr(config, o))) for o in configurable_options()]
         self._saved_state = {}
         # Read the stored configuration.
-        try:
-            user_configuration_storage = DBConfigurationStorage(config.dbconnection, config.dbuser)
-        except pytis.data.DBException:
-            user_configuration_storage = FileConfigurationStorage(self._config_filename())
-        for option, value in user_configuration_storage.read():
+        self._application_config_manager = ApplicationConfigManager(config.dbconnection)
+        for option, value in self._application_config_manager.load():
             if hasattr(config, option):
                 setattr(config, option, value)
             else:
                 self._saved_state[option] = value
-        self._user_configuration_storage = user_configuration_storage
         # Initialize the storage of form profile configurations.
         self._profile_manager = FormProfileManager(config.dbconnection)
         # Read in access rights.
@@ -616,7 +612,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 current_value = getattr(config, option)
                 if current_value != initial_value:
                     options.append((option, current_value))
-            self._user_configuration_storage.write(options)
+            self._application_config_manager.save(options)
             log(OPERATIONAL, "Konfigurace uložena: %d položek" % len(options))
         except Exception as e:
             safelog("Saving changed configuration failed:", str(e))
@@ -1116,141 +1112,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return self._profile_manager
 
 
-class ConfigurationStorage(object):
-    """Abstract specification of configuration storage interface.
+class UserSetttingsManager(object):
+    """Common base class for all user settings managers.
 
-    Different storage backends can be created implementing the interface
-    defined by the methods 'read()' and 'write()' below.  Each backend can have
-    its specific constructor arguments.
-    
-    """
-    def read(self):
-        """Return previously stored configuration options as a tuple of (name, value) pairs."""
-
-    def write(self, options):
-        """Save the options passed as a tuple of (name, value) pairs."""
-
-
-class FileConfigurationStorage(ConfigurationStorage):
-    """File configuration storage based on 'wx.Config'."""
-    _PYTIS_TYPE_MAPPING = (
-        (pytis.data.String,  str),
-        (pytis.data.Integer, int),
-        (pytis.data.Boolean, bool),
-        )
-    def __init__(self, filename):
-        self._filename = filename
-        
-    def _stored_options(self, wxconfig):
-        options = []
-        cont, key, index = wxconfig.GetFirstEntry()
-        while cont:
-            options.append(key)
-            cont, key, index = wxconfig.GetNextEntry(index)
-        return options
-
-    def _option_type(self, option):
-        if option == 'save_forms_on_exit':
-            return bool
-        elif hasattr(config, option):
-            t = config.option(option).type()
-            for pytis_type, python_type in self._PYTIS_TYPE_MAPPING:
-                if isinstance(t, pytis_type):
-                    return python_type
-        # The value will be pickled
-        return None
-
-    def read(self):
-        def read_pickled(option):
-            return pickle.loads(str(wxconfig.Read(option)))
-        log(OPERATIONAL, "Loading saved configuration:", self._filename)
-        wxconfig = wx.Config(self._filename)
-        mapping = {str: wxconfig.Read,
-                   int: wxconfig.ReadInt,
-                   bool: wxconfig.ReadBool}
-        options = []
-        for option in self._stored_options(wxconfig):
-            t = self._option_type(option)
-            method = mapping.get(t, read_pickled)
-            value = method(option)
-            options.append((option, value))
-        return tuple(options)
-            
-    def write(self, options):
-        def write_pickled(option, value):
-            wxconfig.Write(option, pickle.dumps(value))
-        log(OPERATIONAL, "Saving configuration:", self._filename)
-        wxconfig = wx.Config(self._filename)
-        mapping = {str: wxconfig.Write,
-                   int: wxconfig.WriteInt,
-                   bool: wxconfig.WriteBool}
-        to_delete = self._stored_options(wxconfig)
-        for option, value in options:
-            if option in to_delete:
-                to_delete.remove(option)
-            t = self._option_type(option)
-            method = mapping.get(t, write_pickled)
-            method(option, value)
-        for option in to_delete:
-            wxconfig.DeleteEntry(option)
-        wxconfig.Flush()
-
-
-class DBConfigurationStorage(ConfigurationStorage):
-    """Database configuration storage backend.
-
-    The options are saved in a simple database table as a single string value
-    per user containing the pickled sequence of options and values.
-
-    """
-    _TABLE = 'e_pytis_config'
-    _COLUMNS = ('username', 'config')
-
-    def __init__(self, dbconnection, username=None):
-        self._username = username
-        self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
-    
-    def _row(self, transaction=None):
-        condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
-        try:
-            count = self._data.select(condition=condition, transaction=transaction)
-            if count == 0:
-                row = None
-            else:
-                assert count == 1
-                row = self._data.fetchone(transaction=transaction)
-        finally:
-            try:
-                self._data.close()
-            except:
-                pass
-        return row
-
-    def read(self, transaction=None):
-        row = self._row(transaction=transaction)
-        if row:
-            return pickle.loads(base64.b64decode(row['config'].value()))
-        else:
-            return ()
-           
-    def write(self, config, transaction=None):
-        row = self._row(transaction=transaction)
-        value = pytis.data.Value(pytis.data.String(), base64.b64encode(pickle.dumps(config)))
-        if row:
-            row['config'] = value
-            self._data.update(row['username'], row, transaction=transaction)
-        else:
-            username = pytis.data.Value(pytis.data.String(), self._username)
-            row = pytis.data.Row((('username', username),
-                                  ('config', value)))
-            self._data.insert(row, transaction=transaction)
-
-
-class FormDataManager(object):
-    """Common base class for all form data managers.
-
-    Form data managers take care of storing various form related information,
-    such as profiles and other settings in the database.
+    User settings managers take care of storing various user specific data,
+    such as application configuration, form profiles and other settings in the
+    database.
 
     """
     _TABLE = None
@@ -1294,10 +1161,13 @@ class FormDataManager(object):
             rows.append(row)
         return rows
 
-    def _load(self, transaction=None, **key):
-        row = self._row(key, transaction=transaction)
+    def _pickle(self, value):
+        return base64.b64encode(pickle.dumps(value))
+
+    def _load(self, transaction=None, pickled_column='pickle', **key):
+        row = self._row(transaction=transaction, **key)
         if row:
-            return pickle.loads(base64.b64decode(row['pickle'].value()))
+            return pickle.loads(base64.b64decode(row[pickled_column].value()))
         else:
             return None
     
@@ -1316,9 +1186,31 @@ class FormDataManager(object):
         row = self._row(transaction=transaction, **key)
         if row:
             self._data.delete(row['id'], transaction=transaction)
+
+
+class ApplicationConfigManager(UserSetttingsManager):
+    """Application configuration storage manager.
+
+    The options are saved in a simple database table as a single string value
+    per user containing the pickled sequence of options and values.  The
+    methods 'load()' and 'save()' can be used to retrieve and store such
+    sequences.
+
+    """
+    _TABLE = 'e_pytis_config'
+    _COLUMNS = ('id', 'username', 'pickle')
+
+    def load(self, transaction=None):
+        """Return previously stored configuration options as a tuple of (name, value) pairs."""
+        return self._load(transaction=transaction) or ()
+           
+    def save(self, config, transaction=None):
+        """Return previously stored configuration options as a tuple of (name, value) pairs."""
+        assert isinstance(config, (tuple, list))
+        self._save(dict(pickle=self._pickle(tuple(config))), transaction=transaction)
+
             
-    
-class FormProfileManager(FormDataManager):
+class FormProfileManager(UserSetttingsManager):
     """Accessor of the database storage of form profiles.
 
     The actual form profile data are python dictionaries of arbitrary form
@@ -1351,7 +1243,7 @@ class FormProfileManager(FormDataManager):
         """
         key = dict()
         values = dict(profile_name=profile.name(),
-                      pickle=base64.b64encode(pickle.dumps(profile)),
+                      pickle=self._pickle(profile),
                       dump=profile.dump(),
                       errors="\n".join(profile.validation_errors()) or None)
         self._save(values, fullname=fullname, profile_id=profile.id(), transaction=transaction)

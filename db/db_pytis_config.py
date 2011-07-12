@@ -15,8 +15,10 @@ if not db_rights:
     raise ProgramError('No rights specified! Please define Gpytis_config')
 
 table('e_pytis_config',
-      (P('username', TUser, constraints=('NOT NULL',)),
-       C('config', TString, constraints=('NOT NULL',))),
+      (P('id', TSerial),
+       C('username', TUser, constraints=('UNIQUE NOT NULL',)),
+       C('pickle', TString, constraints=('NOT NULL',)),
+       ),
       grant=db_rights,
       schemas=db_schemas,
       doc="""Pytis application configuration storage."""
