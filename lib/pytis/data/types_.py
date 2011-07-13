@@ -1491,7 +1491,11 @@ class TimeInterval(Type):
     _VM_TI_FORMAT_MSG = _(u"Chybný formát")
 
     _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
-        
+
+    DEFAULT_FORMAT = '%H:%M:%S'
+    SQL_FORMAT = DEFAULT_FORMAT
+    SHORT_FORMAT = '%H:%M'
+    
     def _validate(self, string_, **kwargs):
         assert isinstance(string_, basestring)
         # Only day-time intervals supported
@@ -1506,10 +1510,14 @@ class TimeInterval(Type):
         interval = datetime.timedelta(days, seconds)
         return Value(self, interval), None
     
-    def _export(self, value, **kwargs):
+    def _export(self, value, format=None, **kwargs):
         assert isinstance(value, datetime.timedelta), value
         seconds = value.days * 86400 + value.seconds
-        return '%d:%02d:%02d' % (seconds/3600, (seconds%3600)/60, seconds%60,)
+        if format is None:
+            format = self.DEFAULT_FORMAT
+        format_string = format.replace('%H', '%(hours)d').replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d')
+        return format_string % dict(hours=seconds/3600, minutes=(seconds%3600)/60,
+                                    seconds=seconds%60)
     
     def primitive_value(self, value):
         """Return given value represented by a basic python type.

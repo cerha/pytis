@@ -371,6 +371,10 @@ class TimeInterval(_TypeCheck):
         exported = value.export()
         assert exported == '25:00:00', (value, exported,)
         assert value.primitive_value() == exported, (value.primitive_value(), exported,)
+        exported = value.export(format='%M:%S')
+        assert exported == '00:00', (value, exported,)
+        exported = value.export(format='%H')
+        assert exported == '25', (value, exported,)
 tests.add(TimeInterval)
 
 
