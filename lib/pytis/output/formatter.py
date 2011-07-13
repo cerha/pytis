@@ -1498,11 +1498,11 @@ class LCGFormatter(object):
                     text += _("    %s ... %s\n") % (field.id(), field.label(),)
                 text += "\n"
         text += _("""Agregační proměnné:
-  ${agg.min} ... minimum
-  ${agg.max} ... maximum
-  ${agg.count} ... počet
-  ${agg.sum} ... součet
-  ${agg.avg} ... průměr
+  ${agg.min.IDENTIFIKÁTOR_SLOUPCE} ..... minimum
+  ${agg.max.IDENTIFIKÁTOR_SLOUPCE} ..... maximum
+  ${agg.count.IDENTIFIKÁTOR_SLOUPCE} ... počet
+  ${agg.sum.IDENTIFIKÁTOR_SLOUPCE} ..... součet
+  ${agg.avg.IDENTIFIKÁTOR_SLOUPCE} ..... průměr
   
 """)
         return text
