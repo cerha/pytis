@@ -1376,7 +1376,7 @@ class AggregatedViewsManager(UserSetttingsManager):
         identifiers previously saved using 'save()' for given 'spec_name'.
 
         """
-        return tuple(row['id'].value()
+        return tuple(row['aggregated_view_id'].value()
                      for row in self._rows(spec_name=spec_name, transaction=transaction))
 
 
