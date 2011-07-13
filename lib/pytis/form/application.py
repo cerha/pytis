@@ -1232,7 +1232,7 @@ class FormProfileManager(UserSetttingsManager):
         
     """
     _TABLE = 'e_pytis_form_profiles'
-    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'profile_name',
+    _COLUMNS = ('id', 'username', 'fullname', 'profile_id', 'title',
                 'pickle', 'dump', 'errors')
 
     def save_profile(self, fullname, profile, transaction=None):
@@ -1247,7 +1247,7 @@ class FormProfileManager(UserSetttingsManager):
 
         """
         key = dict()
-        values = dict(profile_name=profile.name(),
+        values = dict(title=profile.name(),
                       pickle=self._pickle(profile),
                       dump=profile.dump(),
                       errors="\n".join(profile.validation_errors()) or None)
