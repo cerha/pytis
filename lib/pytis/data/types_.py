@@ -1493,18 +1493,46 @@ class TimeInterval(Type):
     _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
 
     DEFAULT_FORMAT = '%H:%M:%S'
-    SQL_FORMAT = DEFAULT_FORMAT
     SHORT_FORMAT = '%H:%M'
+    SQL_FORMAT = True
+
+    def __init__(self, format=None, **kwargs):
+        """
+        Argumenty:
+
+          format -- specification of both input and output format of the time
+            interval; only a limited set of specification constructs is
+            supported
+            
+        """
+        super(TimeInterval, self).__init__(**kwargs)
+        self._format = format
+        if format is None:
+            self._matcher = self._MATCHER
+        else:
+            self._matcher = self._make_matcher(format)
+
+    def _make_matcher(self, format):
+        re_hours = '(?P<hours>[0-9]+)'
+        re_minutes = '(?P<minutes>[0-9]+)'
+        re_seconds = '(?P<seconds>[0-9]+)'
+        matcher_string = format.replace('%H', re_hours).replace('%M', re_minutes).replace('%S', re_seconds)
+        return re.compile(matcher_string)        
     
-    def _validate(self, string_, **kwargs):
+    def _validate(self, string_, format=None, **kwargs):
         assert isinstance(string_, basestring)
-        # Only day-time intervals supported
-        match = self._MATCHER.match(string_)
+        if format is None:
+            matcher = self._matcher
+        elif format is True:
+            matcher = self._MATCHER
+        else:
+            matcher = self._make_matcher(format)
+        match = matcher.match(string_)
         if not match:
             return None, self._validation_error(self.VM_TI_FORMAT)
         groups = match.groupdict()
-        days = int(groups['days'] or '0')
-        seconds = int(groups['hours']) * 3600 + int(groups['minutes']) * 60 + int(groups['seconds'])
+        days = int(groups.get('days') or '0')
+        seconds = int(groups.get('hours') or '0') * 3600 + int(groups.get('minutes') or '0') * 60 + int(groups.get('seconds') or '0')
         days += seconds / 86400
         seconds = seconds % 86400
         interval = datetime.timedelta(days, seconds)
@@ -1514,7 +1542,9 @@ class TimeInterval(Type):
         assert isinstance(value, datetime.timedelta), value
         seconds = value.days * 86400 + value.seconds
         if format is None:
-            format = self.DEFAULT_FORMAT
+            format = self._format
+            if format is None:
+                format = self.DEFAULT_FORMAT
         format_string = format.replace('%H', '%(hours)d').replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d')
         return format_string % dict(hours=seconds/3600, minutes=(seconds%3600)/60,
                                     seconds=seconds%60)

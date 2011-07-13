@@ -2641,7 +2641,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             type = c.type()
             if isinstance(type, (String, LTree)):
                 typid = 0
-            elif isinstance(type, (Time, DateTime)):
+            elif isinstance(type, (Time, DateTime, TimeInterval)):
                 typid = 2
             else:
                 typid = 99

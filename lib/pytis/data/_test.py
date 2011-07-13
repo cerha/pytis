@@ -377,6 +377,21 @@ class TimeInterval(_TypeCheck):
         assert exported == '25', (value, exported,)
 tests.add(TimeInterval)
 
+class TimeInterval2(_TypeCheck):
+    _test_instance = pytis.data.TimeInterval(format='%H:%M')
+    def test_validation(self):
+        self._test_validity(None, '01:02', datetime.timedelta(0, 3720))
+    def test_export(self):
+        value = pytis.data.Value(self._test_instance, datetime.timedelta(1, 3600))
+        exported = value.export()
+        assert exported == '25:00', (value, exported,)
+        assert value.primitive_value() == exported, (value.primitive_value(), exported,)
+        exported = value.export(format='%M:%S')
+        assert exported == '00:00', (value, exported,)
+        exported = value.export(format='%H')
+        assert exported == '25', (value, exported,)
+tests.add(TimeInterval)
+
 
 class Boolean(_TypeCheck):
     _test_instance = pytis.data.Boolean()
