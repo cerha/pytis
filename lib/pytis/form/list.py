@@ -116,6 +116,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._search_panel = None
         self._last_updated_row_count = 0
         self._grid = None
+        self._group_by_columns = ()
+        self._aggregation_columns = ()
 
     def _default_columns(self):
         """Return the default form columns as a sequence of field identifiers (strings)."""
@@ -165,12 +167,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._init_grouping(profile.grouping())
         self._init_aggregations(profile.aggregations())
         if isinstance(profile, FormProfile):
-            self._group_by_columns = profile.group_by_columns()
-            self._aggregation_columns = profile.aggregation_columns()
             self._column_widths = dict(profile.column_widths())
         else:
-            self._group_by_columns = ()
-            self._aggregation_columns = ()
             self._column_widths = {}
         
     def _apply_profile(self, profile, refresh=True):
@@ -184,8 +182,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     columns=tuple([c.id() for c in self._columns]),
                     grouping=self._grouping,
                     aggregations=tuple(self._aggregations),
-                    group_by_columns=self._group_by_columns,
-                    aggregation_columns=self._aggregation_columns,
                     column_widths=dict(self._column_widths))
         
     def _select_columns(self):

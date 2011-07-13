@@ -69,16 +69,9 @@ class FormProfile(pytis.presentation.Profile):
     specifications) by this prefix.
     
     """
-    def __init__(self, id, name, column_widths=None,
-                 group_by_columns=(), aggregation_columns=(), **kwargs):
+    def __init__(self, id, name, column_widths=None, **kwargs):
         """Specific keyword arguments:
 
-          group_by_columns -- tuple of group by columns (their string
-            identifiers) for an aggregated view of given form
-          aggregation_columns -- tuple of aggregation column specifications,
-            where each item is a pair of string column identifier and the
-            aggregation function as one of pytis.data.Data AGG_* constants.
-            May only be used if 'group_by_columns' are also defiend.
           column_widths -- dictionary of pixel widths of form columns keyed by
             column identifiers
 
@@ -86,8 +79,6 @@ class FormProfile(pytis.presentation.Profile):
 
         """
         super(FormProfile, self).__init__(id, name, **kwargs)
-        self._group_by_columns = group_by_columns
-        self._aggregation_columns = aggregation_columns
         self._column_widths = column_widths or {}
         self._state = None
         self._validation_errors = []
@@ -227,9 +218,8 @@ class FormProfile(pytis.presentation.Profile):
         # filters, which are checked above)
         for attr, getcol in (('_columns', lambda x: x),
                              ('_sorting', lambda x: x[0]),
-                             ('_grouping', lambda x: x),
-                             ('_group_by_columns', lambda x: x),
-                             ('_aggregation_columns', lambda x: x[0])):
+                             ('_grouping', lambda x: x)
+                             ):
             sequence = getattr(self, attr)
             if sequence is not None:
                 for x in sequence:
@@ -257,18 +247,12 @@ class FormProfile(pytis.presentation.Profile):
             result = [format_item('filter', self._filter and self._pack(self._filter))]
         result.extend([format_item(key, self.__dict__['_'+key])
                        for key in ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
-                                   'column_widths', 'group_by_columns', 'aggregation_columns')])
+                                   'column_widths')])
         return '\n'.join(result)
     
     def column_widths(self):
         return self._column_widths
     
-    def group_by_columns(self):
-        return self._group_by_columns
-    
-    def aggregation_columns(self):
-        return self._aggregation_columns
-
 
 class FormSettings(object):
     """Special profile class for storing profile independent form settings.
