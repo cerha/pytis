@@ -1541,6 +1541,31 @@ def date_and_time(date, time):
     value = datetime.datetime.combine(date_value, time_value)
     return value
 
+def add_timedelta(value, timedelta):
+    """Return information about 'DateTime' 'value' with 'timedelta' added.
+
+    Arguments:
+
+      value -- 'Value' instance of type 'DateTime'
+      timedelta -- 'datetime.timedelta' instance
+
+    This utility function takes the 'value', adds 'timedelta' to its Python
+    value and returns the sequence (VALUE, DATETIME, DIFF_DATES) where:
+    - VALUE is a new 'Value' instance created from the resulting datetime
+    - DATETIME is the corresponding Python value
+    - DIFF_DATES is the difference in days between the original and new
+      dates (without considering times); it is positive iff the new date is
+      higher than the old date
+
+    """
+    assert isinstance(value, Value) and isinstance(value.type(), DateTime), value
+    assert isinstance(timedelta, datetime.timedelta), timedelta
+    orig_value = value.value()
+    dt = orig_value + timedelta
+    value = Value(value.type(), dt)
+    diff_dates = (dt.date() - orig_value.date()).days
+    return value, dt, diff_dates
+
 
 class Boolean(Type):
     """Jednoduchý výčtový typ implementující hodnoty \"pravda\" a \"nepravda\".
