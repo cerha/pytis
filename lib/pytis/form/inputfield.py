@@ -2009,7 +2009,6 @@ class StructuredTextField(TextField):
     def _create_widget(self):
         widget = super(StructuredTextField, self)._create_widget()
         toolbar = wx.ToolBar(self._parent)
-        editor_panel = wx.Panel(notebook)
         commands = self._commands()
         for group in commands:
             if group != commands[0]:
