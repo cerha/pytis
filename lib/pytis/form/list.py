@@ -948,14 +948,31 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for c in columns if c and not c.disable_column()]
 
     def _aggregation_menu(self):
-        return [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
+        menu = [CheckItem(title, command=ListForm.COMMAND_TOGGLE_AGGREGATION(operation=op),
                           state=lambda op=op: op in self._aggregations)
-                for op, title, icon, label in self._AGGREGATIONS] + \
-               [MSeparator(),
-                MItem(_(u"Zobrazit vše"), command=ListForm.COMMAND_AGGREGATE),
-                MItem(_(u"Skrýt vše"),    command=ListForm.COMMAND_UNAGGREGATE),
-                MSeparator(),
-                MItem(_(u"Zobrazit agregovaný náhled"), command=ListForm.COMMAND_AGGREGATED_VIEW)]
+                for op, title, icon, label in self._AGGREGATIONS]
+        menu.extend((MSeparator(),
+                     MItem(_(u"Zobrazit vše"), command=ListForm.COMMAND_AGGREGATE),
+                     MItem(_(u"Skrýt vše"),    command=ListForm.COMMAND_UNAGGREGATE),
+                     ))
+        manager = aggregated_views_manager()
+        aggregated_views = [manager.load(self._name, aggregated_view_id)
+                            for aggregated_view_id in manager.list(self._name)]
+        if aggregated_views:
+            menu.append(MSeparator())
+            menu.extend([MItem(v.name(),
+                               command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+                               help=_("Zobrazit uživatelský agregovaný náhled"))
+                         for v in aggregated_views])
+        menu.extend((MSeparator(),
+                     MItem(_(u"Nový agregovaný náhled"),
+                           command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=None))))
+        if aggregated_views:
+            command = ListForm.COMMAND_DELETE_AGGREGATED_VIEW
+            menu.append(Menu(_("Smazat agregovaný náhled"),
+                             [MItem(v.name(), command=command(aggregated_view_id=v.id()))
+                              for v in aggregated_views]))
+        return menu
                 
     def _column_context_menu(self, col):
         M = Menu
@@ -1651,18 +1668,37 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return ([(op, title) for op, title, icon, label in self._AGGREGATIONS] +
                 [(pytis.data.Data.AGG_COUNT, _(u"Počet"))])
         
-    def _cmd_aggregated_view(self):
+    def _cmd_aggregated_view(self, aggregated_view_id):
         grouping_functions = self._view.grouping_functions()
+        manager = aggregated_views_manager()
+        if aggregated_view_id:
+            view = manager.load(self._name, aggregated_view_id)
+            name = view.name()
+            group_by_columns = view.group_by_columns()
+            aggregation_columns = view.aggregation_columns()
+        else:
+            name = ''
+            group_by_columns = ()
+            aggregation_columns = ()
         result = run_dialog(AggregationSetupDialog,
                             aggregation_functions=self._available_aggregations(),
                             grouping_functions=grouping_functions,
                             columns=[(c.id(), c.label(), self._row.type(c.id()))
                                      for c in self._columns],
                             aggregation_valid=self._aggregation_valid,
-                            group_by_columns=self._group_by_columns,
-                            aggregation_columns=self._aggregation_columns)
+                            name=name, group_by_columns=group_by_columns,
+                            aggregation_columns=aggregation_columns)
         if result is not None:
-            self._group_by_columns, self._aggregation_columns = result
+            name, group_by_columns, aggregation_columns = result
+            if name:
+                if aggregated_view_id is None:
+                    prefix = 'user-'
+                    numbers = [int(aid[len(prefix):]) for aid in manager.list(self._name)
+                               if aid.startswith(prefix) and aid[len(prefix):].isdigit()]
+                    aggregated_view_id = prefix + str(max(numbers+[0])+1)
+                aggregated_view = AggregatedView(aggregated_view_id,
+                                                 name, group_by_columns, aggregation_columns)
+                manager.save(self._name, aggregated_view)
             # Compose the aggregated data object inner condition from the
             # current user filter and the hardcoded condition from
             # specification.
@@ -1674,11 +1710,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 else:
                     condition = spec_condition
             run_form(AggregationDualForm, self._name,
-                     group_by_columns=self._group_by_columns,
+                     aggregated_view_name=name,
+                     group_by_columns=group_by_columns,
                      grouping_functions=grouping_functions,
-                     aggregation_columns=self._aggregation_columns,
+                     aggregation_columns=aggregation_columns,
                      aggregation_condition=condition)
         
+    def _cmd_delete_aggregated_view(self, aggregated_view_id):
+        manager = aggregated_views_manager()
+        manager.drop(self._name, aggregated_view_id)
+                            
     def _cmd_filter_by_cell(self):
         row, col = self._current_cell()
         id = self._columns[col].id()
@@ -3065,6 +3106,7 @@ class AggregationForm(BrowseForm):
         # We can't process these arguments in _init_attributes() since they are
         # needed in _create_view_spec() and _create_data_object() which are
         # called before _init_attributes().
+        self._af_name = kwargs.pop('aggregated_view_name')
         self._af_group_by_columns = tuple(kwargs.pop('group_by_columns'))
         self._af_aggregation_columns = kwargs.pop('aggregation_columns')
         self._af_aggregation_condition = kwargs.pop('aggregation_condition', None)
@@ -3098,7 +3140,7 @@ class AggregationForm(BrowseForm):
         self._data_kwargs['condition'] = self._af_aggregation_condition
         return ViewSpec(view.title(), fields)
 
-    def _can_aggregated_view(self):
+    def _can_aggregated_view(self, aggregated_view_id):
         return False
 
     def _aggregation_column_id(self, column_id, op):
@@ -3133,8 +3175,7 @@ class AggregationForm(BrowseForm):
                 if c.id() in self._select_columns()]
 
     def title(self):
-        labels = [self._view.field(fid).label() for fid in self._group_by_column_ids()]
-        return super(AggregationForm, self).title() + _(u" - agregováno přes ") + ', '.join(labels)
+        return _("Agregovaný náhled") +' :: '+ super(AggregationForm, self).title() + ' :: ' + self._af_name
 
     def group_by_columns(self):
         return self._group_by_column_ids()

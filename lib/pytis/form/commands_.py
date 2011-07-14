@@ -155,7 +155,9 @@ Command(ListForm, 'AGGREGATE',
 Command(ListForm, 'UNAGGREGATE',
         "Odebrání agregační funkce (arg. 'operation')")
 Command(ListForm, 'AGGREGATED_VIEW',
-        "Zobrazení agregovaného náhledu pro daný formulář.")
+        "Display an aggregated view (arg. 'aggregated_view_id').")
+Command(ListForm, 'DELETE_AGGREGATED_VIEW',
+        "Delete an aggregated view (arg. 'aggregated_view_id').")
 Command(ListForm, 'COPY_AGGREGATION_RESULT',
         "Zkopírování výsledku agreganí funkce do schránky (arg. 'operation', 'cid')")
 Command(ListForm, 'EXPORT_CSV',

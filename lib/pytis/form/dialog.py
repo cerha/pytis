@@ -80,6 +80,15 @@ class GenericDialog(Dialog):
     _COMMIT_BUTTON = None
     _HELP_TOPIC = 'dialog'
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
+
+    BUTTON_OK = _(u"Ok")
+    "Nápis pro potvrzovací tlačítko."
+    BUTTON_CANCEL = _(u"Zrušit")
+    "Nápis pro opouštěcí tlačítko."
+    BUTTON_YES = _(u"Ano")
+    "Nápis pro tlačítko souhlasu."
+    BUTTON_NO = _(u"Ne")
+    "Nápis pro tlačítko nesouhlasu."
     
     def __init__(self, parent, title, buttons, default=None, report=None,
                  report_format=TextFormat.PLAIN, report_size=(None, None)):
@@ -342,19 +351,10 @@ class Message(GenericDialog):
     ICON_QUIT = wx.ART_QUIT
     "Ikona opuštění aplikace."
 
-    BUTTON_OK = _(u"Ok")
-    "Nápis pro potvrzovací tlačítko." 
-    BUTTON_CANCEL = _(u"Zrušit")
-    "Nápis pro opouštěcí tlačítko." 
-    BUTTON_YES = _(u"Ano")
-    "Nápis pro tlačítko souhlasu." 
-    BUTTON_NO = _(u"Ne")
-    "Nápis pro tlačítko nesouhlasu." 
-    
     _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
     
     def __init__(self, parent, message, icon=ICON_INFO, title=_(u"Zpráva"),
-                 buttons=(BUTTON_OK,), default=_(BUTTON_OK), **kwargs):
+                 buttons=(GenericDialog.BUTTON_OK,), default=GenericDialog.BUTTON_OK, **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
@@ -399,14 +399,14 @@ class Warning(Message):
           argumenty tato třída definuje vždy napevno:
 
             icon = 'Message.ICON_WARNING'
-            buttons = ('Message.BUTTON_OK',)
-            default = 'Message.BUTTON_OK'
+            buttons = ('GenericDialog.BUTTON_OK',)
+            default = 'GenericDialog.BUTTON_OK'
 
         """
         super_(Warning).__init__(self, parent, message, title=title,
                                  icon=Message.ICON_WARNING,
-                                 buttons=(Message.BUTTON_OK,),
-                                 default=Message.BUTTON_OK,
+                                 buttons=(GenericDialog.BUTTON_OK,),
+                                 default=GenericDialog.BUTTON_OK,
                                  **kwargs)
 
 
@@ -423,14 +423,14 @@ class Error(Message):
           argumenty tato třída definuje vždy napevno:
 
             icon = 'Message.ICON_ERROR'
-            buttons = ('Message.BUTTON_OK',)
-            default = 'Message.BUTTON_OK'
+            buttons = ('GenericDialog.BUTTON_OK',)
+            default = 'GenericDialog.BUTTON_OK'
 
         """
         super_(Error).__init__(self, parent, message, title=title,
                                icon=Message.ICON_ERROR,
-                               buttons=(Message.BUTTON_OK,),
-                               default=Message.BUTTON_OK,
+                               buttons=(GenericDialog.BUTTON_OK,),
+                               default=GenericDialog.BUTTON_OK,
                                **kwargs)
 
 
@@ -446,7 +446,7 @@ class Question(MultiQuestion):
     """Dialog vyžadující odpověď ano/ne na zobrazenou zprávu (otázku).
 
     Metoda 'run()' vrací: Pravdu, právě když uživatel odpoví na danou
-    otázku kladně - stiskne tlačítko s nápisem 'Message.BUTTON_YES'.
+    otázku kladně - stiskne tlačítko s nápisem 'GenericDialog.BUTTON_YES'.
 
     """
     def __init__(self, parent, message, default=True,
@@ -457,13 +457,13 @@ class Question(MultiQuestion):
         Argumenty:
 
           default -- pokud je pravda, bude předvoleným tlačítkem tlačítko
-            'Message.BUTTON_YES'. Jinak je předvolená odpověď
-            'Message.BUTTON_NO' (implicitně).
+            'GenericDialog.BUTTON_YES'. Jinak je předvolená odpověď
+            'GenericDialog.BUTTON_NO' (implicitně).
         
           Ostatní argumenty odpovídají stejným argumentům rodičovské třídy s
           tím, že následující argumenty tato třída definuje vždy napevno:
 
-            buttons = ('Message.BUTTON_YES', 'Message.BUTTON_NO')
+            buttons = ('GenericDialog.BUTTON_YES', 'GenericDialog.BUTTON_NO')
 
         Klíčový argument 'default' může být uváděn i bez explicitního
         pojmenování, takže musí být do budoucna zaručeno jeho zachování včetně
@@ -495,7 +495,7 @@ class InputDialog(Message):
     jinak (tlačítko 'Zrušit', klávesa Escape apod.).
 
     """
-    _COMMIT_BUTTON = Message.BUTTON_OK
+    _COMMIT_BUTTON = GenericDialog.BUTTON_OK
 
     
     def __init__(self, parent, message=None, value=None, prompt=None,
@@ -521,15 +521,15 @@ class InputDialog(Message):
           Zbývající argumenty odpovídají stejným argumentům rodičovské třídy
           s tím, že následující argumenty tato třída definuje vždy napevno:
 
-            buttons = ('Message.BUTTON_OK', 'Message.BUTTON_CANCEL')
+            buttons = ('GenericDialog.BUTTON_OK', 'GenericDialog.BUTTON_CANCEL')
             default = None
 
         """
         self._input_height = input_height
         self._input_width = input_width
         super_(InputDialog).__init__(self, parent, message, title=title,
-                                     buttons=(Message.BUTTON_OK,
-                                              Message.BUTTON_CANCEL),
+                                     buttons=(GenericDialog.BUTTON_OK,
+                                              GenericDialog.BUTTON_CANCEL),
                                      default=None, **kwargs)
         assert value is None or isinstance(value, basestring)
         assert prompt is None or isinstance(prompt, basestring)
@@ -576,7 +576,7 @@ class InputDialog(Message):
         e.Skip()
 
     def _customize_result(self, result):
-        if self._button_label(result) == Message.BUTTON_OK:
+        if self._button_label(result) == GenericDialog.BUTTON_OK:
             return self._control.GetValue()
         else:
             return None
@@ -643,7 +643,7 @@ class Login(InputDialog):
         sizer.Add(grid, 0, wx.ALL|wx.CENTER, 5)
 
     def _customize_result(self, result):
-        if self._button_label(result) == Message.BUTTON_OK:
+        if self._button_label(result) == GenericDialog.BUTTON_OK:
             return (self._login.GetValue(), self._passwd.GetValue())
         else:
             return None
@@ -669,7 +669,7 @@ class InputDate(InputDialog):
             self._autoformat = 'EUDATEDDMMYYYY/'
 
     def _customize_result(self, result):
-        if self._button_label(result) == Message.BUTTON_OK:
+        if self._button_label(result) == GenericDialog.BUTTON_OK:
             if not self._control.IsValid(self._control.GetValue()):
                 return pytis.data.Value(pytis.data.Date(), None)
             value, error  = pytis.data.Date().validate(self._control.GetValue())
@@ -757,7 +757,7 @@ class InputNumeric(InputDialog):
         e.Skip()
         
     def _customize_result(self, result):
-        if self._button_label(result) == Message.BUTTON_OK:
+        if self._button_label(result) == GenericDialog.BUTTON_OK:
             if not self._control.IsInBounds(self._control.GetValue()):
                 if self._decimal_width == 0:
                     return pytis.data.Value(pytis.data.Integer(), None)
@@ -830,7 +830,7 @@ class RunFormDialog(InputDialog):
         sizer.Add(vsizer, 0, wx.ALL|wx.CENTER, 5)
 
     def _customize_result(self, result):
-        if self._button_label(result) == Message.BUTTON_OK:
+        if self._button_label(result) == GenericDialog.BUTTON_OK:
             selection = self._form_class_choice.GetStringSelection()
             selection = self._form_class_choice.GetStringSelection()
             return (self._FORM_CLASS_MAPPING[selection],
@@ -1000,7 +1000,7 @@ class Calendar(GenericDialog):
     byl dialog opuštěn.
     
     """
-    _COMMIT_BUTTON = Message.BUTTON_OK
+    _COMMIT_BUTTON = GenericDialog.BUTTON_OK
 
     def __init__(self, parent, date, title=_(u"Kalendář"),
                  enable_year=True, enable_month=True, monday_first=True):
@@ -1021,8 +1021,8 @@ class Calendar(GenericDialog):
 
         """
         super_(Calendar).__init__(self, parent, title=title,
-                                  buttons=(Message.BUTTON_OK,
-                                           Message.BUTTON_CANCEL))
+                                  buttons=(GenericDialog.BUTTON_OK,
+                                           GenericDialog.BUTTON_CANCEL))
         # vytvoř kalendář
         style = wx.DIALOG_MODAL| \
                 calendar.CAL_SHOW_HOLIDAYS| \
@@ -1058,13 +1058,13 @@ class Calendar(GenericDialog):
     
     def _customize_result(self, result):
         if result == self._cal.GetId() \
-               or self._button_label(result) == Message.BUTTON_OK:
+               or self._button_label(result) == GenericDialog.BUTTON_OK:
             date_string = str(self._cal.GetDate().FormatISODate())
             return pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT).validate(date_string)[0].value()
         return None
 
     def _on_calendar(self, event):
-        return self._end_modal(self._button_id(Message.BUTTON_OK))
+        return self._end_modal(self._button_id(GenericDialog.BUTTON_OK))
 
     
 class ColorSelector(GenericDialog):
@@ -1244,8 +1244,9 @@ class CheckListDialog(Message):
                textual fields must be the same as the numer of column labels passed in
                'columns'.  These fields are presented in a table-like list.
         """
-        super(CheckListDialog, self).__init__(parent, buttons=(Message.BUTTON_OK,
-                                                               Message.BUTTON_CANCEL), **kwargs)
+        super(CheckListDialog, self).__init__(parent, buttons=(GenericDialog.BUTTON_OK,
+                                                               GenericDialog.BUTTON_CANCEL),
+                                              **kwargs)
         assert isinstance(columns, (list, tuple))
         assert isinstance(items, (list, tuple))
         self._columns = columns
@@ -1295,8 +1296,9 @@ class CheckMatrixDialog(Message):
                column will be inactive (the user will not be able to change its
                state from its initial state given by values).
         """
-        super(CheckMatrixDialog, self).__init__(parent, buttons=(Message.BUTTON_OK,
-                                                                 Message.BUTTON_CANCEL), **kwargs)
+        super(CheckMatrixDialog, self).__init__(parent, buttons=(GenericDialog.BUTTON_OK,
+                                                                 GenericDialog.BUTTON_CANCEL),
+                                                **kwargs)
         assert isinstance(columns, (list, tuple)), columns
         assert isinstance(rows, (list, tuple)), rows
         assert values is None or isinstance(values, (list, tuple)), values
@@ -1350,11 +1352,15 @@ class CheckMatrixDialog(Message):
             return None
 
 
-class AggregationSetupDialog(Message):
+class AggregationSetupDialog(GenericDialog):
     """A dialog for setting up an aggregated form.
 
     The result returned by the `run()' is a tuple of two tuples
-    (group_by_columns, aggregation_columns).
+    (name, group_by_columns, aggregation_columns).
+
+    name -- user supplied human readable title of the aggregated view for
+      further reference (the values of group_by_columns and aggregation_columns
+      may be stored and further used under this title).
 
     group_by_columns -- selected group by columns as a sequence of pairs
       (column_id, function), where function is the name of the grouping
@@ -1369,9 +1375,8 @@ class AggregationSetupDialog(Message):
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
     def __init__(self, parent, aggregation_functions, grouping_functions, columns,
-                 group_by_columns, aggregation_columns, aggregation_valid,
-                 title=_(u"Zvolte sloupce..."),
-                 message=_(u"Zvolte sloupce agregačního náhledu")):
+                 name, group_by_columns, aggregation_columns, aggregation_valid,
+                 title=_(u"Parametry agregačního náhledu")):
         """Arguments:
              aggregation_functions -- specification of available aggregation
                functions as a sequence of pairs (operation, label), where
@@ -1385,6 +1390,8 @@ class AggregationSetupDialog(Message):
              aggregation_valid -- function of two arguments (operation,
                column_type) returning true if given aggregation operation is
                valid for given column type and false otherwise.
+             name -- user supplied human readable name as in the result of
+               run() described in the class docstring.
              group_by_columns -- preselected group by columns in the same
                format as in the result of run() as described in the class
                docstring.
@@ -1392,18 +1399,27 @@ class AggregationSetupDialog(Message):
                format as in the result of run() as described in the class
                docstring.
         """
-        super(AggregationSetupDialog, self).__init__(parent, title=title, message=message,
-                                                     buttons=(Message.BUTTON_OK,
-                                                              Message.BUTTON_CANCEL))
+        super(AggregationSetupDialog, self).__init__(parent, title=title,
+                                                     buttons=(GenericDialog.BUTTON_OK,
+                                                              GenericDialog.BUTTON_CANCEL))
         self._aggregation_functions = aggregation_functions
         self._grouping_functions = grouping_functions
         self._columns = columns
         self._aggregation_valid = aggregation_valid
+        self._name = name
         self._group_by_columns = group_by_columns
         self._aggregation_columns = aggregation_columns
         
     def _create_content(self, sizer):
         super(AggregationSetupDialog, self)._create_content(sizer)
+        self._name_control = wx_text_ctrl(self._dialog, value=self._name, length=50,
+                                          tooltip=_("Zadejte název pod kterým se má náhled uložit, "
+                                                    "nebo ponechte prázdné, pokud náhled nechcete "
+                                                    "ukládat."))
+        box = wx.BoxSizer(wx.HORIZONTAL)
+        box.Add(wx.StaticText(self._dialog, -1, _("Název:")), wx.ALL, 3)
+        box.Add(self._name_control)
+        sizer.Add(box, 0, wx.EXPAND|wx.ALL, 5)
         panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
         panel.SetScrollRate(20, 20)
         self._grid = grid = wx.FlexGridSizer(len(self._columns)+1,
@@ -1467,6 +1483,7 @@ class AggregationSetupDialog(Message):
 
     def _on_button(self, event):
         if self._button_label(event.GetId()) == self.BUTTON_OK:
+            self._name = self._name_control.GetValue()
             self._group_by_columns = [spec for spec, checkbox in self._grouping_controls
                                       if checkbox.IsChecked()]
             self._aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
@@ -1478,7 +1495,7 @@ class AggregationSetupDialog(Message):
 
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
-            return tuple(self._group_by_columns), tuple(self._aggregation_columns)
+            return self._name, tuple(self._group_by_columns), tuple(self._aggregation_columns)
         else:
             return None
         
