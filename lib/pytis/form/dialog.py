@@ -195,11 +195,8 @@ class GenericDialog(Dialog):
     def _create_buttons(self):
         """Create dialog buttons and return them as a sequence of wx widgets."""
         self._buttons = []
-        self._button_label_dict = {}
         for label in self._button_labels:
-            id = wx.NewId()
-            self._button_label_dict[id] = label
-            button = wx.Button(self._dialog, id, unicode(label))
+            button = wx.Button(self._dialog, -1, label)
             self._buttons.append(button)
             if self._default == label:
                 button.SetDefault()
@@ -246,17 +243,13 @@ class GenericDialog(Dialog):
     
     def _button_label(self, id):
         # Vrať nápis tlačítka s daným id.
-        try:
-            return self._button_label_dict[id]
-        except KeyError:
-            return None
+        button = find(id, self._buttons, key=lambda b: b.GetId())
+        return button and button.GetLabel()
 
     def _button_id(self, label):
         # Vrať id tlačítka s daným nápisem.
-        for id, l in self._button_label_dict.items():
-            if l == label:
-                return id
-        return None
+        button = find(label, self._buttons, key=lambda b: b.GetLabel())
+        return button and button.GetId()
 
     def _customize_result(self, result):
         """Vrať návratovou hodnotu podle výsledku ukončeného dialogu.
