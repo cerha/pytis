@@ -1050,7 +1050,8 @@ class LookupForm(InnerForm):
         initial_profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
         if initial_profile_id:
             profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
-            if profile is not None and profile.valid():
+            if profile is not None \
+                    and (not isinstance(profile, FormProfile) or profile.valid()):
                 current_profile = profile
         if isinstance(current_profile, FormProfile) and not current_profile.valid():
             # Don't use the customized default profile as initial profile if it is invalid.
