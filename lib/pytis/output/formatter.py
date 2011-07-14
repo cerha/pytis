@@ -496,7 +496,6 @@ class LoutFormatter(Tmpdir):
           self._ok_resolver(template_id, 'body', mandatory=True)
         self._generic_resolver = None
         # Specifikace
-        self._coding = self._resolve(resolver, template_id, 'coding')
         self._doc_header = \
           self._resolve(resolver, template_id, 'doc_header')
         self._doc_footer = \
