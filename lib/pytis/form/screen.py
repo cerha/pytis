@@ -1453,7 +1453,8 @@ class InfoWindow(object):
         assert format in public_attr_values(TextFormat)
         if parent is None:
             parent = wx_frame()
-        frame = wx.Dialog(parent, title=title, name=_name)
+        frame = wx.Dialog(parent, title=title, name=_name,
+                          style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         # Temporarily us a modal dialog instead an ordinary frame to work
         # around the problem of closing a frame whose parent is a modal dialog
         # in StructuredTextField._cmd_preview().  Once that is sorted out, a
