@@ -1667,12 +1667,13 @@ class ProfileSelector(wx.combo.ComboCtrl):
 
 class TextHeadingSelector(wx.Choice):
     """Toolbar control for structured text heading level selection."""
-    _CHOICES = ("Normal text",
-                "Heading level 1",
-                "Heading level 2",
-                "Heading level 3",
-                "Heading level 4",
-                "Heading level 5",
+    _CHOICES = ("Běžný text",
+                "Nadpis úrovně 1",
+                "Nadpis úrovně 2",
+                "Nadpis úrovně 3",
+                "Nadpis úrovně 4",
+                "Nadpis úrovně 5",
+                "Nadpis úrovně 6",
                 )
     
     def __init__(self, parent, uicmd, size=None):
