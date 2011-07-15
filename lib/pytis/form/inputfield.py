@@ -2047,8 +2047,6 @@ class StructuredTextField(TextField):
                 step_back += 1
         if step_back:
             ctrl.SetInsertionPoint(ctrl.GetInsertionPoint()-step_back)
-        editor_panel.SetSizer(sizer)
-        return editor_panel
 
     def _cmd_search(self):
         pass
