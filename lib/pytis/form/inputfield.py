@@ -266,7 +266,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         elif isinstance(type, pytis.data.Password):
             field = PasswordField
         elif isinstance(type, pytis.data.String):
-            field = StringField
+            if spec.text_format() == TextFormat.LCG:
+                field = StructuredTextField
+            else:
+                field = StringField
         elif isinstance(type, pytis.data.Number):
             field = NumericField
         else:
@@ -952,14 +955,6 @@ class StringField(TextField):
 
     def _maxlen(self):
         return self._type.maxlen()
-
-    def _create_ctrl(self):
-        control = TextField._create_ctrl(self)
-        if self._spec.text_format() == TextFormat.LCG:
-            # Set a monospace font
-            font = wx.Font(control.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
-            control.SetFont(font)
-        return control
 
 
 class PasswordField(StringField):
@@ -1905,73 +1900,80 @@ class StructuredTextField(TextField):
                                   r'(?:[\t ]+(?:\*|(?P<anchor>[\w\d_-]+)))? *$')
 
     def _commands(self):
-        return ((UICommand(EditForm.COMMAND_COMMIT_RECORD(close=False),
+        commands = ()
+        if isinstance(self._guardian, StructuredTextEditor):
+            # Add form commands only in a standalone editor, not in ordinary forms.
+            commands += (
+                (UICommand(EditForm.COMMAND_COMMIT_RECORD(close=False),
                            _(u"Uložit"),
                            _(u"Uložit záznam bez uzavření formuláře.")),
                  ),
-                #(UICommand(self.COMMAND_UNDO(),
-                #           _(u"Zpět"),
-                #           _(u"Vrátit zpět poslední akci.")),
-                # UICommand(self.COMMAND_REDO(),
-                #           _(u"Znovu"),
-                #           _(u"Provést znovu poslední akci vzatou zpět.")),
-                # ),
-                (UICommand(self.COMMAND_CUT(),
-                           _(u"Vyjmout"),
-                           _(u"Vyjmout označený text.")),
-                 UICommand(self.COMMAND_COPY(),
-                           _(u"Kopírovat"),
-                           _(u"Zkopírovat označený text do schránky.")),
-                 UICommand(self.COMMAND_PASTE(),
-                           _(u"Vložit"),
-                           _(u"Vložit text ze schránky na aktuální pozici kurzoru.")),
-                 ),
-                #(UICommand(self.COMMAND_SEARCH(),
-                #           _(u"Hledat"),
-                #           _(u"Vyhledat řetězec v textu políčka.")),
-                # UICommand(self.COMMAND_SEARCH_AND_REPLACE(),
-                #           _(u"Hledat a nahradit"),
-                #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
-                # ),
-                (UICommand(self.COMMAND_HEADING(_command_handler=self),
-                           _(u"Úroveň nadpisu"),
-                           _(u"Vložit značky pro nadpis dané úrovně."),
-                           ctrl=TextHeadingSelector),
-                 ),
-                (UICommand(self.COMMAND_STRONG(),
-                           _(u"Tučný text"),
-                           _(u"Vložit značku pro tučný text.")),
-                 UICommand(self.COMMAND_EMPHASIZED(),
-                           _(u"Skloněné písmo"),
-                           _(u"Vložit značku pro text zvýrazeněný skloněným písmem.")),
-                 UICommand(self.COMMAND_UNDERLINED(),
-                           _(u"Podtržený text"),
-                           _(u"Vložit značku pro podtržený text.")),
-                 ),
-                (UICommand(self.COMMAND_LINK(),
-                           _(u"Hypertextový odkaz"),
-                           _(u"Vložit hypertextový odkaz.")),
-                 UICommand(self.COMMAND_ITEMIZE(style='bullet'),
-                           _(u"Odrážkový seznam"),
-                           _(u"Vytvořit položku odrážkového seznamu.")),
-                 UICommand(self.COMMAND_ITEMIZE(style='numbered'),
-                           _(u"Číslovaný seznam"),
-                           _(u"Vytvořit položku číslovaného seznamu.")),
-                 UICommand(self.COMMAND_VERBATIM(),
-                           _(u"Předformátovaný text"),
-                           _(u"Vložit předformátovaný text.")),
-                 UICommand(self.COMMAND_LINEBREAK(),
-                           _(u"Vynucený řádkový zlom"),
-                           _(u"Vložit vynucený řádkový zlom.")),
-                 ),
-                (UICommand(self.COMMAND_PREVIEW(),
-                           _(u"Zobrazit HTML náhled"),
-                           _(u"Zobrazit náhled zformátovaného textu jako HTML.")),
-                 UICommand(self.COMMAND_EXPORT_PDF(),
-                           _(u"Zobrazit PDF náhled"),
-                           _(u"Zobrazit náhled zformátovaného textu jako PDF.")),
-                 ),
                 )
+        commands += (
+            #(UICommand(self.COMMAND_UNDO(),
+            #           _(u"Zpět"),
+            #           _(u"Vrátit zpět poslední akci.")),
+            # UICommand(self.COMMAND_REDO(),
+            #           _(u"Znovu"),
+            #           _(u"Provést znovu poslední akci vzatou zpět.")),
+            # ),
+            (UICommand(self.COMMAND_CUT(),
+                       _(u"Vyjmout"),
+                       _(u"Vyjmout označený text.")),
+             UICommand(self.COMMAND_COPY(),
+                       _(u"Kopírovat"),
+                       _(u"Zkopírovat označený text do schránky.")),
+             UICommand(self.COMMAND_PASTE(),
+                       _(u"Vložit"),
+                       _(u"Vložit text ze schránky na aktuální pozici kurzoru.")),
+             ),
+            #(UICommand(self.COMMAND_SEARCH(),
+            #           _(u"Hledat"),
+            #           _(u"Vyhledat řetězec v textu políčka.")),
+            # UICommand(self.COMMAND_SEARCH_AND_REPLACE(),
+            #           _(u"Hledat a nahradit"),
+            #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
+            # ),
+            (UICommand(self.COMMAND_HEADING(_command_handler=self),
+                       _(u"Úroveň nadpisu"),
+                       _(u"Vložit značky pro nadpis dané úrovně."),
+                       ctrl=TextHeadingSelector),
+             ),
+            (UICommand(self.COMMAND_STRONG(),
+                       _(u"Tučný text"),
+                       _(u"Vložit značku pro tučný text.")),
+             UICommand(self.COMMAND_EMPHASIZED(),
+                       _(u"Skloněné písmo"),
+                       _(u"Vložit značku pro text zvýrazeněný skloněným písmem.")),
+             UICommand(self.COMMAND_UNDERLINED(),
+                       _(u"Podtržený text"),
+                       _(u"Vložit značku pro podtržený text.")),
+             ),
+            (UICommand(self.COMMAND_LINK(),
+                       _(u"Hypertextový odkaz"),
+                       _(u"Vložit hypertextový odkaz.")),
+             UICommand(self.COMMAND_ITEMIZE(style='bullet'),
+                       _(u"Odrážkový seznam"),
+                       _(u"Vytvořit položku odrážkového seznamu.")),
+             UICommand(self.COMMAND_ITEMIZE(style='numbered'),
+                       _(u"Číslovaný seznam"),
+                       _(u"Vytvořit položku číslovaného seznamu.")),
+             UICommand(self.COMMAND_VERBATIM(),
+                       _(u"Předformátovaný text"),
+                       _(u"Vložit předformátovaný text.")),
+             UICommand(self.COMMAND_LINEBREAK(),
+                       _(u"Vynucený řádkový zlom"),
+                       _(u"Vložit vynucený řádkový zlom.")),
+             ),
+            (UICommand(self.COMMAND_PREVIEW(),
+                       _(u"Zobrazit HTML náhled"),
+                       _(u"Zobrazit náhled zformátovaného textu jako HTML.")),
+             UICommand(self.COMMAND_EXPORT_PDF(),
+                       _(u"Zobrazit PDF náhled"),
+                       _(u"Zobrazit náhled zformátovaného textu jako PDF.")),
+             ),
+            )
+        return commands
 
     def _create_ctrl(self):
         import wx.stc
@@ -2001,6 +2003,8 @@ class StructuredTextField(TextField):
         #ctrl = TextCtrl(self._parent, -1, style=self._ctrl_style())
         #wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
         ctrl = wx.TextCtrl(self._parent, -1, style=self._ctrl_style())
+        # Set a monospace font
+        ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL))
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
         self._completer = None
         self._update_completions = None
