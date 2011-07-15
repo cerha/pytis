@@ -2282,10 +2282,13 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
                     '</html>')
     else:
         raise ProgramError("Unknown text format: %s" % format)
+    # We can' adjust the default size according to the content size, but since
+    # webkit 1.3.8, there should be a new method webview.get_viewport_attributes(),
+    # which will allow it.
     if width is None:
-        width = 80
+        width = 90
     if height is None:
-        height = 20
+        height = 30
     browser = Browser(parent)
     browser.load_html(html)
     browser.SetSize(char2px(parent, width, height))
