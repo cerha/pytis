@@ -2002,7 +2002,11 @@ class StructuredTextField(TextField):
         # derived TextCtrl class defined above.
         #ctrl = TextCtrl(self._parent, -1, style=self._ctrl_style())
         #wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
-        ctrl = wx.TextCtrl(self._parent, -1, style=self._ctrl_style())
+        if not self._inline:
+            size = self._px_size(self.width(), self.height())
+        else:
+            size = None
+        ctrl = wx.TextCtrl(self._parent, -1, style=self._ctrl_style(), size=size)
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL))
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
