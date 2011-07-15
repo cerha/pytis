@@ -489,7 +489,40 @@ class Action(_ActionItem):
     
     def kwargs(self):
         return self._kwargs
-    
+
+
+class PrintAction(object):
+    """Output (print) action specification.
+    """
+    def __init__(self, id, title, name):
+        """
+        Arguments:
+        
+          id -- action identifier as a string.  It must be unique among all
+            objects identifiers within a given form.
+          title -- action title displayed in the user interface
+          name -- name of the print specification, string
+
+        """
+        assert isinstance(id, basestring), id
+        assert isinstance(title, basestring), title
+        assert isinstance(name, basestring), name
+        self._id = id
+        self._title = title
+        self._name = name
+
+    def id(self):
+        """Return action id given in the constructor."""
+        return self._id
+
+    def title(self):
+        """Return action title given in the constructor."""
+        return self._title
+
+    def name(self):
+        """Return print action name given in the constructor."""
+        return self._name
+
 
 class ActionGroup(_ActionItem):
     """Definice pojmenované logické skupiny akcí.
@@ -3395,7 +3428,14 @@ class Specification(object):
 
     def print_spec(self):
         """Vrať sekvenci specifikací tiskových náhledů."""
-        return self.prints
+        print_spec = []
+        i = 1
+        for p in (self.prints or []):
+            if not isinstance(p, PrintAction):
+                p = PrintAction('__print_action_%d' % (i,), p[0], p[1])
+                i += 1
+            print_spec.append(p)
+        return print_spec
 
     def access_spec(self):
         """Return the 'access_rights' attribute value.

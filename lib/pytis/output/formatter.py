@@ -1509,3 +1509,83 @@ class LCGFormatter(object):
 
 Formatter = LCGFormatter
 """Implicitní formátovač."""
+
+
+class PrintSpecification(object):
+    """Specification of printed output.
+
+    Every method provides specification of the corresponding printed output
+    element.  Every printed specification should define 'body' content, the
+    other specifications are optional.
+    
+    """
+    def __init__(self, resolver):
+        self._resolver = resolver
+        
+    def body(self):
+        """Return body of the document.
+
+        Returns pytis 'Document' instance or a sequence of 'Document' instances
+        or any pytis markup content acceptable by 'Document' constructor.
+          
+        """
+        return None
+    
+    def page_header(self):
+        """Return header of a page.
+
+        Returns '_Mark' instance.
+          
+        """
+        return None
+    
+    def first_page_header(self):
+        """Return header of the first page.
+
+        It is necessary to define this only when the first page header should
+        be different from the header returned from 'page_header'.
+            
+        Returns '_Mark' instance.
+          
+        """
+        return self.page_header()
+    
+    def page_footer(self):
+        """Return footer of a page.
+            
+        Returns '_Mark' instance.
+          
+        """
+        return Center('Strana ', PageNumber())
+    
+    def doc_header(self):
+        """Return initial part of the whole document.
+          
+        Returns '_Mark' instance.
+        
+        """
+        return None
+    
+    def doc_footer(self):
+        """Return closing part of the document.
+          
+        Returns '_Mark' instance.
+        
+        """
+        return None
+    
+    def page_layout(self):
+        """Return dictionary of page parameters.
+
+        Returns dictionary of supported page parameters.
+        
+        """
+        return {}
+    
+    def background(self):
+        """Return background image to be put on each page.
+        
+        Returns '_Mark' instance.
+          
+        """
+        return None

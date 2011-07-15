@@ -256,7 +256,7 @@ class MenuChecker(object):
             if not spec.public:
                 errors.append("Neveřejná specifikace v menu.")
             for p in (print_spec or ()):
-                module = p[1]
+                module = p.name()
                 pos = module.find(':')
                 if pos >= 0:
                     module = module[:pos]

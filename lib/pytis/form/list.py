@@ -2987,7 +2987,7 @@ class BrowseForm(FoldableForm):
             except ResolverError:
                 spec = None
             if spec:
-                print_spec_path = spec[0][1]
+                print_spec_path = spec[0].name()
             else:
                 print_spec_path = os.path.join('output', name)
         P = self._PrintResolver
@@ -2996,7 +2996,8 @@ class BrowseForm(FoldableForm):
         print_resolver = P(self._resolver, parameters=parameters)
         wiki_template_resolver = self._PlainPrintResolver(config.def_dir, extension='text')
         db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
-        resolvers = (db_template_resolver, wiki_template_resolver, print_resolver,)
+        print_spec_resolver = pytis.output.OutputResolver(self._resolver, parameters=parameters)
+        resolvers = (db_template_resolver, wiki_template_resolver, print_resolver, print_spec_resolver,)
         formatter = pytis.output.Formatter(resolvers, print_spec_path, form=self,
                                            **self._print_form_kwargs())
         run_form(print_form(), name, formatter=formatter)

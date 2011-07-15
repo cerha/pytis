@@ -313,10 +313,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     Používané specifikační funkce:
 
-      print_spec -- sekvence dvojic (POPIS, SOUBOR), kde POPIS je string se
-        stručným slovním popisem specifikace (využívaným například jako titulek
-        položky menu) a SOUBOR je string udávající jméno souboru se
-        specifikací, relativní k adresáři s definičními soubory, bez přípony
+      print_spec -- sequence of 'ActionPrint' instances
 
     """
 
@@ -739,14 +736,16 @@ class InnerForm(Form):
         #    print_spec = ((_("Výchozí"), os.path.join('output', name)),)
         db_print_spec = []
         condition = pytis.data.EQ('module', pytis.data.Value(pytis.data.String(), name))
+        i = 1
         for row in pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
             template_name = row['specification'].value()
-            print_item = (template_name, name+'/'+template_name,)
+            print_item = PrintAction('__db_%d' % (i,), template_name, name+'/'+template_name,)
             print_spec.append(print_item)
             db_print_spec.append((name, template_name,))
+            i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
-        menu = [MItem(title, command=BrowseForm.COMMAND_PRINT(print_spec_path=path))
-                for title, path in print_spec]
+        menu = [MItem(p.title(), command=BrowseForm.COMMAND_PRINT(print_spec_path=p.name()))
+                for p in print_spec]
         def s(value):
             return pytis.data.Value(pytis.data.String(), value)
         menu.append(MSeparator())
