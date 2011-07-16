@@ -270,8 +270,8 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
       row -- řádek s daty pro PrintResolver
 
       Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
-    """
         
+    """
     import pytis.output
     class _PrintResolver (pytis.output.OutputResolver):
         P_NAME = 'P_NAME'
@@ -282,31 +282,28 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
                 return None
             def doc_footer(self, resolver):
                 return None
-            def coding(self, resolver):
-                if wx.Font_GetDefaultEncoding() == \
-                   wx.FONTENCODING_ISO8859_2:
-                    result = pytis.output.Coding.LATIN2
-                else:
-                    result = pytis.output.Coding.ASCII
-                return result
+        def __init__(self, resolver, old=False, **kwargs):
+            pytis.output.OutputResolver.__init__(self, resolver, **kwargs)
+            self._old = old
         def _get_module(self, module_name):
+            if self._old:
+                module_name = os.path.join('output', module_name)
             try:
-                result = pytis.output.OutputResolver._get_module(self,
-                                                               module_name)
+                result = pytis.output.OutputResolver._get_module(self, module_name)
             except ResolverModuleError:
                 result = self._Spec()
             return result
         
     log(EVENT, 'Vyvolání tiskového formuláře')
-    spec_path = os.path.join('output', print_spec)
     P = _PrintResolver    
     parameters = {(spec+'/'+pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
     parameters.update(kwargs)
     print_resolver = P(resolver, parameters=parameters)
-    resolvers = (print_resolver,)
+    old_print_resolver = P(resolver, parameters=parameters, old=True)
+    resolvers = (print_resolver, old_print_resolver,)
     try:
-        formatter = pytis.output.Formatter(resolvers, spec_path)
+        formatter = pytis.output.Formatter(resolvers, print_spec)
     except pytis.output.AbortOutput:
         return
     if output_file:
