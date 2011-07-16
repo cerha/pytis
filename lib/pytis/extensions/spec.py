@@ -305,7 +305,10 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     parameters.update(kwargs)
     print_resolver = P(resolver, parameters=parameters)
     resolvers = (print_resolver,)
-    formatter = pytis.output.Formatter(resolvers, spec_path)
+    try:
+        formatter = pytis.output.Formatter(resolvers, spec_path)
+    except pytis.output.AbortOutput:
+        return
     if output_file:
         formatter.printout(output_file)
     else:

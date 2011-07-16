@@ -76,6 +76,10 @@ PAGE_LANDSCAPE_MODE = 'landscape_mode'
 """Právě když je pravdivé, bude zaměněna výška a šířka stránky."""
 
 
+class AbortOutput(Exception):
+    """Exception raised when printing should be aborted."""
+
+    
 class _ProxyDict(dict):
     def __getitem__(self, key):
         result = dict.__getitem__(self, key)
@@ -83,6 +87,11 @@ class _ProxyDict(dict):
             callable(result)):
             result = self[key] = result()
         return result
+class HashableDict(dict):
+    def __hash__(self):
+        return 0
+    def __setitem__(self, key, value):
+        raise Exception('immutable object')
 class _DataIterator(lcg.SubstitutionIterator):
     def __init__(self, resolver, form_name, condition, sorting, transaction):
         self._transaction = transaction
@@ -253,17 +262,21 @@ class LCGFormatter(object):
             
         """
         self._resolvers = xtuple(resolvers)
-        self._coding = self._resolve(template_id, 'coding')
-        self._doc_header = self._resolve(template_id, 'doc_header')
-        self._doc_footer = self._resolve(template_id, 'doc_footer')
-        self._page_header = self._resolve(template_id, 'page_header', default=None)
-        self._first_page_header = self._resolve(template_id, 'first_page_header',
-                                                default=self._page_header)
-        self._page_footer = self._resolve(template_id, 'page_footer',
-                                          default=Center('Strana ', PageNumber()))
-        self._page_background = self._resolve(template_id, 'background', default=None)
-        self._page_layout = self._resolve(template_id, 'page_layout', default={})
-        body = self._resolve(template_id, 'body')
+        output_parameters, r = self._resolve(template_id, 'init')
+        if r is not None:
+            if output_parameters is None:
+                raise AbortOutput()
+            r.add_output_parameters(output_parameters)
+        self._doc_header, __ = self._resolve(template_id, 'doc_header')
+        self._doc_footer, __ = self._resolve(template_id, 'doc_footer')
+        self._page_header, __ = self._resolve(template_id, 'page_header', default=None)
+        self._first_page_header, __ = self._resolve(template_id, 'first_page_header',
+                                                    default=self._page_header)
+        self._page_footer, __ = self._resolve(template_id, 'page_footer',
+                                              default=Center('Strana ', PageNumber()))
+        self._page_background, __ = self._resolve(template_id, 'background', default=None)
+        self._page_layout, __ = self._resolve(template_id, 'page_layout', default={})
+        body, __ = self._resolve(template_id, 'body')
         parameters = copy.copy(self._template_parameters(body))
         for p, a in (('page_header', self._page_header,),
                      ('page_footer', self._page_footer,),
@@ -303,8 +316,8 @@ class LCGFormatter(object):
         self._body = body
         self._form = form
         self._form_bindings = form_bindings
-        self._row_template = self._resolve(template_id, 'row', default=None)
-        self._application_variables = self._resolve(template_id, 'variables', default={})
+        self._row_template, __ = self._resolve(template_id, 'row', default=None)
+        self._application_variables, __ = self._resolve(template_id, 'variables', default={})
 
     def _resolve(self, template_id, element, default=''):
         result = default
@@ -316,7 +329,9 @@ class LCGFormatter(object):
             except ResolverSpecError:
                 continue
             break
-        return result
+        else:
+            resolver = None
+        return result, resolver
 
     def _template_parameters(self, template):
         if isinstance(template, StructuredText):
@@ -471,10 +486,31 @@ class PrintSpecification(object):
     Every method provides specification of the corresponding printed output
     element.  Every printed specification should define 'body' content, the
     other specifications are optional.
+
+    Additionally, it's possible to define initial actions to be performed
+    before printing, typically asking user for dynamic parameters of the
+    output.  You can use 'init()' method for that purpose.
     
     """
     def __init__(self, resolver):
+        """
+        Arguments:
+
+          resolver -- 'Resolver' instance available to instance methods
+        
+        """
         self._resolver = resolver
+
+    def init(self):
+        """Run actions to be performed before the printing starts.
+
+        Return dictionary of arbitrary keys and values.  The dictionary is
+        later given as an argument to the content generating methods.  If the
+        user interaction indicates that printing should be aborted, return
+        'None'.
+        
+        """
+        return HashableDict()
         
     def body(self):
         """Return body of the document.

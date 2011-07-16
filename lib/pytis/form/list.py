@@ -2989,10 +2989,13 @@ class BrowseForm(FoldableForm):
         print_resolver = P(self._resolver, parameters=parameters)
         wiki_template_resolver = self._PlainPrintResolver(config.def_dir, extension='text')
         db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
-        print_spec_resolver = pytis.output.OutputResolver(self._resolver, parameters=parameters)
+        print_spec_resolver = P(self._resolver, parameters=parameters)
         resolvers = (db_template_resolver, wiki_template_resolver, print_resolver, print_spec_resolver,)
-        formatter = pytis.output.Formatter(resolvers, print_spec_path, form=self,
-                                           **self._print_form_kwargs())
+        try:
+            formatter = pytis.output.Formatter(resolvers, print_spec_path, form=self,
+                                               **self._print_form_kwargs())
+        except pytis.output.AbortOutput:
+            return
         run_form(print_form(), name, formatter=formatter)
 
     def _print_form_kwargs(self):

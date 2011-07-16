@@ -2,7 +2,7 @@
 
 # Resolver pro specifikace výstupu
 # 
-# Copyright (C) 2002, 2005 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,23 +37,20 @@ class OutputResolver(ProxyResolver):
     """Jméno modulu parametrů výstupu."""
 
     def __init__(self, resolver, parameters={}):
-        """Inicializuj instanci.
+        """
+        Arguments:
 
-        Argumenty:
-
-          resolver -- standardní resolver specifikací, předaný konstruktoru
-            předka
-          parameters -- dictionary parametrů výstupu, klíče musí být neprázdné
-            strings, hodnoty mohou být libovolné objekty
+          resolver -- common specification resolver, to be passed to the
+            superclass constructor
+          parameters -- dictionary of output parameters, keys must be non-empty
+            strings, values may be arbitrary objects
 
         """
         super(OutputResolver, self).__init__(resolver)
-        class P:
-            def __init__(self, parameters):
-                self.__parameters = parameters
+        class P(dict):
             def __getattr__(self, name):
                 try:
-                    p = self.__parameters[name]
+                    p = self[name]
                 except KeyError:
                     raise AttributeError(name)
                 return lambda resolver: p
@@ -87,3 +84,18 @@ class OutputResolver(ProxyResolver):
         return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
 
     p = output_parameter
+
+    def add_output_parameters(self, parameters):
+        """Add parameters to the output parameters of the resolver.
+
+        Arguments:
+
+          parameters -- dictionary of output parameters to be added, keys must
+            be non-empty strings, values may be arbitrary objects
+            
+        """
+        p = self._parameters
+        for k, v in parameters.items():
+            if p.has_key(k):
+                raise Exception("Key already present in output parameters", k)
+            p[k] = v
