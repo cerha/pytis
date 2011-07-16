@@ -369,8 +369,7 @@ class PrintFormInternal(PrintForm, InnerForm):
         if not new:
             preview.restart(None)
         stream = self._current_stream = preview.ps_input_stream()
-        on_background = isinstance(self._formatter, pytis.output.LoutFormatter)
-        return self._run_formatter_process(stream, on_background=on_background)
+        return self._run_formatter_process(stream, on_background=False)
         
     def _create_controls(self):
         if not self._start_postscript_viewer(1.0):
@@ -440,9 +439,6 @@ class PrintFormInternal(PrintForm, InnerForm):
         if self._total_pages is None:
             self._show_page(self._preview.current_page())
             microsleep()
-        if isinstance(self._formatter, pytis.output.LoutFormatter):
-            if not self._formatter_running and self._number_of_runs < 2:
-                self._start_postscript_viewer(self._zoom, new=False)
 
     def _on_widget_key(self, event, widget):
         if WxKey().is_event_of_key(event, 'Enter'):
@@ -604,7 +600,4 @@ class PrintFormExternal(PrintForm, PopupForm):
         file_name = self._run_formatter_process(None)
         if file_name is None:
             return
-        if isinstance(self._formatter, pytis.output.LoutFormatter):
-            # Run it once again to make correct total page count in the document
-            file_name = self._run_formatter_process(None)
         thread.start_new_thread(self._run_viewer, (file_name,))

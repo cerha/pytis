@@ -2755,13 +2755,6 @@ class BrowseForm(FoldableForm):
                 return None
             def doc_footer(self, resolver=None, variant=None):
                 return None
-            def coding(self, resolver=None, variant=None):
-                if wx.Font_GetDefaultEncoding() == \
-                   wx.FONTENCODING_ISO8859_2:
-                    result = pytis.output.Coding.LATIN2
-                else:
-                    result = pytis.output.Coding.ASCII
-                return result
             
         def _get_module(self, name):
             # Supply a default specification module (old style spec).

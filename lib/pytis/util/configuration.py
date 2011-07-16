@@ -629,13 +629,6 @@ class Configuration(object):
         _DOC = _(u"Příkaz musí být schopen převzít tisková data ze standardního vstupu.")
         _DEFAULT = 'lpr'
 
-    class _Option_lout_command(StringOption):
-        _DESCR = _(u"Jméno programu Lout, s cestou nebo bez ní.")
-        _DOC = _(u"Bude použito při konstrukci příkazové řádky Lout. " +
-                 u"Nejedná-li se o originální Lout, musí být argumenty " +
-                 u"programu s Loutem kompatibilní.")
-        _DEFAULT = 'lout'
-
     class _Option_postscript_viewer(StringOption):
         _DESCR = _(u"Shell command to be used for displaying print preview PostScript files. " +
                    u"It must take the name of the file to be displayed as its first argument. " +

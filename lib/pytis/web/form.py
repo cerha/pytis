@@ -1345,7 +1345,7 @@ class BrowseForm(LayoutForm):
                       if v.value() is not None]
             if self._lang == 'cs':
                 # Total hack allowing correct usage of Czech character 'ch' in index search.
-                # A more appropriate sloution would be to handle that on the database level.
+                # A more appropriate solution would be to handle that on the database level.
                 values = [v for v in values if not v.lower().endswith('ch')]
                 if search_string and search_string[-1] == search_string[-1].lower():
                     ch = 'ch'

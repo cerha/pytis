@@ -68,12 +68,6 @@ Tiskový náhled je generován stejně jako finální tisk jako PostScript.  Je 
 totožný s výsledným tiskem, až na případné rozdíly způsobené použitými
 interprety PostScriptu.
 
-Výstupy jsou formátovány s využitím textového procesoru Lout.  Výhodou tohoto
-přístupu je snadnost implementace formátování, nevýhodou jsou naopak, kromě
-samotného faktu nutné dostupnosti dalšího nástroje, některé negativní
-vlastnosti Lout, například značná spotřeba paměti nebo "divoké" chování při
-nevhodných specifikacích (řádky přesahující šířku stránky, apod.).
-
 Odeslání dat na tiskárnu je jednoduché, využívá se příkazu =lpr=.  Pomocí
 přenastavení konfigurační volby =printing_command= lze tento příkaz změnit,
 například na obyčejný =cat= do souboru pro účely ladění.
