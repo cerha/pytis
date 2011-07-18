@@ -160,7 +160,6 @@ class FormProfileManager(UserSetttingsManager):
           config -- dictionary of form configuration parameters.
 
         """
-        key = dict()
         values = dict(title=profile.name(),
                       pickle=self._pickle(profile),
                       dump=profile.dump(),
