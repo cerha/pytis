@@ -28,6 +28,19 @@ needed by a typical pytis application at startup and these managers are then
 accessible from within pytis through functions defined in application.py, such
 as 'profile_manager()', etc.
 
+Most of the settings are stored as pickled python objects.  Pickling and
+unpickling is done internally by the manager, so the API works transparently
+with python objects.  These objects just must be safe to pickle and unpickle
+(ideally they should consist just of basic python data types or they must
+implement additional support for pickling).
+
+Settings are always identified by the current user (the 'username' argument of
+the manager's constructor) and additionally by other selectors such as
+specification name ('spec_name') and/or form name ('form_name').  Where
+'spec_name' and 'form_name' is used, it should follow the conventions for the
+relevant parts of DMP fullnames, but the manager doesn't enforce that in any
+way.
+
 """
 
 import base64
@@ -130,7 +143,7 @@ class ApplicationConfigManager(UserSetttingsManager):
 
             
 class FormProfileManager(UserSetttingsManager):
-    """Accessor of the database storage of form profiles.
+    """Accessor of database storage of form profiles.
 
     The actual form profile data are python dictionaries of arbitrary form
     settings at this level.  There are no rules, except that the data structure
@@ -224,7 +237,7 @@ class FormProfileManager(UserSetttingsManager):
 
     
 class AggregatedViewsManager(UserSetttingsManager):
-    """Accessor of the database storage of saved aggregation form setups.
+    """Accessor of database storage of saved aggregation form setups.
 
     Aggregation form setups are the properties defined by the user in the
     aggregation form setup dialog and represented by a
