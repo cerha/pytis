@@ -1510,7 +1510,7 @@ def init_access_rights(connection_data):
     Specification._init_access_rights(connection_data)
     
 def has_access(name, perm=pytis.data.Permission.VIEW, column=True):
-    """Return true if the current user has given permission for given spec.
+    """Return true if the current user has given permission for given form specification.
 
     Arguments:
     

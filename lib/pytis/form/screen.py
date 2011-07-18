@@ -1104,7 +1104,7 @@ class MItem(_TitledMenuObject):
 
     @classmethod
     def parse_action(class_, action):
-        """Parse action id back to command and its argumets.
+        """Parse action id back to command and its arguments.
 
         Arguments:
 

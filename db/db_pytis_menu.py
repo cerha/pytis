@@ -1119,13 +1119,13 @@ def pytis_update_actions_structure():
                 parent_subactions = subactions[parent] = []
             parent_subactions.append((fullname, shortname,))
         formactions = {}
-        for row in plpy.execute("select shortname from c_pytis_menu_actions where shortname like 'action/%' order by shortname"):
-            shortname = row['shortname']
-            form_name = shortname[shortname.find('/', 7)+1:]
+        for row in plpy.execute("select shortname, fullname from c_pytis_menu_actions where shortname like 'action/%' or shortname like 'print/%' order by shortname"):
+            fullname = row['fullname']
+            form_name = fullname[fullname.find('/', 7)+1:]
             form_name_formactions = formactions.get(form_name)
             if form_name_formactions is None:
                 form_name_formactions = formactions[form_name] = []
-            form_name_formactions.append(shortname)
+            form_name_formactions.append(row['shortname'])
         actions = {}
         def add_row(fullname, shortname, menuid, position):
             if fullname[:4] == 'sub/':

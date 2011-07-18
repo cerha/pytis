@@ -69,6 +69,13 @@ akcí a jejich identifikátorů:
 
   ACTION_NAME .. identifikátor akce (uvedený v pythonové specifikaci)
   FORM_NAME ... specifikace formuláře kvalifikovaná vůči adresáři `defs', např. `misc.Products'
+
+  Specifikace tiskových akcí formulářů se ukládají ve tvaru
+
+    print/PRINT_ACTION_NAME/FORM_NAME
+
+  PRINT_ACTION_NAME .. identifikátor tiskové specifikace
+  FORM_NAME ... specifikace formuláře kvalifikovaná vůči adresáři `defs', např. `misc.Products'  
   
 - Příkaz NEW_RECORD:
 
@@ -113,7 +120,8 @@ insert into c_pytis_menu_actions (fullname, shortname, action_title, description
 <example>
 
   FULLNAME ... identifikátor akce vytvořený dle pravidel výše
-  SHORTNAME ... pro akce s prefixem `form/' a `sub/' má podobu `form/FORM_NAME'
+  SHORTNAME ... pro akce s prefixem `form/' a `sub/' má podobu `form/FORM_NAME',
+    pro akce s prefixem `print/' má podobu `print/PRINT_ACTION_NAME',
     pro ostatní akce je shodné s FULLNAME
   TITLE ... libovolný stručný titulek akce, odpovídá atributu `title' ve specifikaci
   DESCRIPTION ... nepovinná poznámka vztahující se k akci, správce DMP ji může

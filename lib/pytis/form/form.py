@@ -745,7 +745,8 @@ class InnerForm(Form):
             i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
         menu = [MItem(p.title(), command=BrowseForm.COMMAND_PRINT(print_spec_path=p.name()))
-                for p in print_spec]
+                for p in print_spec
+                if action_has_access('action/%s' % (p.name(),), perm=pytis.data.Permission.PRINT)]
         def s(value):
             return pytis.data.Value(pytis.data.String(), value)
         menu.append(MSeparator())

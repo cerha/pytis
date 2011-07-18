@@ -80,7 +80,6 @@ script.
 
 import copy
 import string
-import sys
 
 import pytis.data
 import pytis.extensions
@@ -804,6 +803,16 @@ class DMPRights(DMPObject):
                     form_action_name = 'action/%s/%s' % (a.id(), spec_name,)
                     form_action_rights = ((None, (a.access_groups(), pytis.data.Permission.CALL)),)
                     add_rights(form_action_name, form_action_rights)
+            # Print actions access rights
+            for p in spec.print_spec():
+                form_action_name = 'print/%s/%s' % (p.name(), spec_name,)
+                if access_rights is None:
+                    print_access_groups = None
+                else:
+                    print_access_groups = \
+                      access_rights.permitted_groups(pytis.data.Permission.PRINT, None)
+                print_action_rights = ((None, (print_access_groups, pytis.data.Permission.PRINT)),)
+                add_rights(form_action_name, print_action_rights)
         return messages
 
     def _retrieve_data(self):
@@ -1136,6 +1145,8 @@ class DMPActions(DMPObject):
                     shortname = 'form/INVALID'
                 else:
                     shortname = 'form/%s' % (components[4],)
+            elif components[0] == 'print':
+                shortname = 'print/%s' % (components[1],)
             else:
                 shortname = self.fullname()
             return shortname
@@ -1281,6 +1292,12 @@ class DMPActions(DMPObject):
             fullname = 'action/%s/%s' % (a.id(), form_name,)
             action = self.Action(self._resolver(), messages,
                                  fullname=fullname, title=a.title(raw=True))
+            self._add_action(action)
+        # Print actions
+        for p in spec.print_spec():
+            fullname = 'print/%s/%s' % (p.name(), form_name,)
+            action = self.Action(self._resolver(), messages,
+                                 fullname=fullname, title=p.title())
             self._add_action(action)
         
     def _load_from_rights(self, items, messages):
