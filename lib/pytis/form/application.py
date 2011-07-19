@@ -238,8 +238,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # fixes the problem.  Running a Message dialog instead also helps,
             # but it's probably more obtrusive to the users.  Maybe you can
             # find a better solution!
-            self._raise_form(self._windows.mru()[1])
-            self._raise_form(self._windows.mru()[1])
+            mru_windows = self._windows.mru()
+            if len(mru_windows) > 1:
+                self._raise_form(mru_windows[1])
+                self._raise_form(mru_windows[1])
         else:
             run_startup_forms(lambda *args, **kwargs: True, startup_forms)
         conn = config.dbconnection
