@@ -142,6 +142,59 @@ class ApplicationConfigManager(UserSetttingsManager):
         self._save(dict(pickle=self._pickle(tuple(config))), transaction=transaction)
 
             
+class FormSettingsManager(UserSetttingsManager):
+    """Accessor of database storage of form settings other than profiles.
+
+    Form settings are those form properties, which don't depend on the current
+    profile.  They don't change when a profile is changed (for example dualform
+    sash position doesn't depend on the current profile).
+
+    Form settings are simple pairs of string 'option' and a value of some
+    primitive python data type, such as 'int', 'str' or 'bool'.  Different form
+    types may store different settings (with different names).  The maneger
+    internally keeps a dictionary of settings for each form and the methods
+    'get()' and 'set()' may be used to retrieve/write individual options.
+
+    """
+    _TABLE = 'e_pytis_form_settings'
+    _COLUMNS = ('id', 'username', 'spec_name', 'form_name', 'pickle', 'dump')
+
+    def _settings(self, spec_name, form_name, transaction=None):
+        settings = self._load(spec_name=spec_name, form_name=form_name, transaction=transaction)
+        if settings is None:
+            settings = {}
+        return settings
+
+    def set(self, spec_name, form_name, option, value, transaction=None):
+        """Save value of user specific form configuration option.
+
+        Arguments:
+          spec_name -- specification name as a string.
+          form_name -- string uniquely identifying the form type.
+          option -- string option name.
+          value -- option value as an instance of any python primitive data type.
+
+        """
+        settings = self._settings(spec_name, form_name, transaction=transaction)
+        settings[option] = value
+        values = dict(pickle=self._pickle(settings),
+                      dump='\n'.join(['%s: %s' % item for item in settings.items()]))
+        self._save(values, spec_name=spec_name, form_name=form_name, transaction=transaction)
+
+    def get(self, spec_name, form_name, option, default=None, transaction=None):
+        """Return previously saved user specific form configuration option.
+
+        Arguments:
+          spec_name -- specification name as a string.
+          form_name -- string uniquely identifying the form type.
+          option -- string option name.
+          default -- default valuee to be used if the option was not previously set for given form.
+
+        """
+        settings = self._settings(spec_name, form_name, transaction=transaction)
+        return settings.get(option, default)
+
+
 class FormProfileManager(UserSetttingsManager):
     """Accessor of database storage of form profiles.
 

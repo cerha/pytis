@@ -24,6 +24,20 @@ _std_table_nolog('e_pytis_config',
       doc="""Pytis application configuration storage."""
       )
 
+_std_table_nolog('e_pytis_form_settings',
+      (P('id', TSerial),
+       C('username', TUser, constraints=('NOT NULL',)),
+       C('spec_name', TString, constraints=('NOT NULL',)),
+       C('form_name', TString, constraints=('NOT NULL',)),
+       C('pickle', TString, constraints=('NOT NULL',)),
+       C('dump', TString),
+       ),
+      sql='UNIQUE (username, spec_name, form_name)',
+      grant=db_rights,
+      schemas=db_schemas,
+      doc="""Storage of pytis profile independent form settings."""
+      )
+
 _std_table_nolog('e_pytis_form_profiles',
       (P('id', TSerial),
        C('username', TUser, constraints=('NOT NULL',)),

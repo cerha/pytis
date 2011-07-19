@@ -245,7 +245,7 @@ class DualForm(Form, Refreshable):
             active.focus()
 
     def _initial_sash_position(self, total_size):
-        saved_position = self._saved_setting('sash_position')
+        saved_position = self._get_saved_setting('sash_position')
         if saved_position:
             if self._splitter.GetSplitMode() == wx.SPLIT_HORIZONTAL:
                 maximum = total_size.height
@@ -273,7 +273,7 @@ class DualForm(Form, Refreshable):
             return dimension(wx.Size(total_size.width * r, total_size.height * r))
             
     def _on_sash_changed(self, event):
-        self._update_saved_settings(sash_position=event.GetSashPosition())
+        self._set_saved_setting('sash_position', event.GetSashPosition())
         # Sometimes the form is not redrawn correctly...
         self._main_form.Refresh()
         self._active_form.focus()
@@ -984,7 +984,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         form.set_callback(MultiSideForm.CALL_BINDING_SELECTED, self._on_binding_selection)
         selected_binding = self._selected_binding
         if selected_binding is None:
-            saved_binding = self._saved_setting('binding')
+            saved_binding = self._get_saved_setting('binding')
             if saved_binding in [b.id() for b in self._main_form.bindings()]:
                 selected_binding = saved_binding
         if selected_binding:
@@ -992,7 +992,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         return form
         
     def _on_binding_selection(self, binding):
-        self._update_saved_settings(binding=binding.id())
+        self._set_saved_setting('binding', binding.id())
         
     def _on_main_activation(self, alternate=False):
         if alternate:

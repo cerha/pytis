@@ -252,46 +252,6 @@ class FormProfile(pytis.presentation.Profile):
     
     def column_widths(self):
         return self._column_widths
-    
-
-class FormSettings(object):
-    """Special profile class for storing profile independent form settings.
-
-    Profile independent settings are settings which don't change when the
-    current user profile is switched.  Thus these settings don't belong to any
-    particular profile, but are unique for each form.  This class has the same
-    basic interface as 'FormProfile' and thus can be saved/restored using the
-    'FormProfileManager'.  Otherwise it has nothing to do with form profiles.
-
-    """
-    PROFILE_ID = '__form_settings__'
-    
-    def __init__(self, settings):
-        assert isinstance(settings, dict)
-        self._settings = settings
-
-    # The following methods mimic the interface of `FormProfile' class to allow
-    # storing FormSettings instances through ProfileManager.
-        
-    def id(self):
-        return self.PROFILE_ID
-    
-    def name(self):
-        return 'Form Settings'
-    
-    def dump(self):
-        return '\n'.join(['%s: %s' % (key, value) for key, value in self._settings.items()])
-
-    def validation_errors(self):
-        return ()
-    
-    # FormSettings specific interface:
-
-    def get(self, name, default=None):
-        return self._settings.get(name, default)
-
-    def clone(self, **kwargs):
-        return FormSettings(dict(self._settings, **kwargs))
 
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
@@ -464,23 +424,14 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """
         pass
 
-    def _update_saved_settings(self, **kwargs):
-        """Update saved form parameters independent on current profile."""
-        settings = profile_manager().load_profile(self._fullname(), FormSettings.PROFILE_ID)
-        if settings:
-            settings = settings.clone(**kwargs)
-        else:
-            settings = FormSettings(kwargs)
-        profile_manager().save_profile(self._fullname(), settings)
-    
-    def _saved_setting(self, param, default=None):
-        """Save form parameter independent on current profile."""
-        settings = profile_manager().load_profile(self._fullname(), FormSettings.PROFILE_ID)
-        if settings:
-            return settings.get(param, default)
-        else:
-            return default
+    def _get_saved_setting(self, option, default=None):
+        """Retrieve form parameter independent on current profile."""
+        return form_settings_manager().get(self._name, self._form_name(), option, default=default)
         
+    def _set_saved_setting(self, option, value):
+        """Update saved form parameter independent on current profile."""
+        form_settings_manager().set(self._name, self._form_name(), option, value)
+    
     def _create_view_spec(self):
         t = time.time()
         spec = self._resolver.get(self._name, 'view_spec', **self._spec_kwargs)
@@ -545,6 +496,16 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _fullname(self):
         return make_fullname(self.__class__, self._name)
+
+    def _form_name(self):
+        cls = self.__class__
+        module_name = cls.__module__
+        if module_name.startswith('pytis.form.'):
+            # Make sure the module name is always the same (depending on how
+            # modules were imported, it may be sometimes 'pytis.form' and sometimes
+            # 'pytis.form.list').
+            module_name = 'pytis.form'
+        return '%s.%s' % (module_name, cls.__name__)
 
     def _release_data(self):
         if self._data is not None:
@@ -1127,7 +1088,7 @@ class LookupForm(InnerForm):
         # Note, that the profile 0 may not be self._default_profile, but
         # its customization.
         default_profile = self._profiles[0]
-        profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
+        profile_id = self._get_saved_setting('initial_profile') or self._view.profiles().default()
         if profile_id:
             profile = find(profile_id, self._profiles, key=lambda p: p.id()) or default_profile
         else:
@@ -1140,7 +1101,7 @@ class LookupForm(InnerForm):
                 # unknown reason) sometimes steals the focus when applied in a
                 # sideform.
                 dual.main_form().focus()
-    
+                
     def _on_idle(self, event):
         if super(LookupForm, self)._on_idle(event):
             return True
@@ -1466,11 +1427,11 @@ class LookupForm(InnerForm):
         self._apply_profile(profile)
 
     def _can_set_initial_profile(self):
-        return self._current_profile.id() != self._saved_setting('initial_profile')
+        return self._current_profile.id() != self._get_saved_setting('initial_profile')
         
     def _cmd_set_initial_profile(self):
         profile_id = self._current_profile.id()
-        self._update_saved_settings(initial_profile=profile_id)
+        self._set_saved_setting('initial_profile', profile_id)
 
     def _cmd_filter(self, condition=None):
         if condition:

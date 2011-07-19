@@ -29,7 +29,8 @@ import collections, os.path, string, sys, thread, time, wx, wx.html
 import config
 import pytis.data, pytis.form
 
-from managers import ApplicationConfigManager, FormProfileManager, AggregatedViewsManager
+from managers import ApplicationConfigManager, FormSettingsManager, \
+    FormProfileManager, AggregatedViewsManager
 from pytis.form import *
 
 _application = None
@@ -141,17 +142,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
         db_operation(test)
         self._initial_config = [(o, copy.copy(getattr(config, o))) for o in configurable_options()]
         self._saved_state = {}
-        # Read the stored configuration.
+        # Initialize all needed user settings managers.
         self._application_config_manager = ApplicationConfigManager(config.dbconnection)
+        self._form_settings_manager = FormSettingsManager(config.dbconnection)
+        self._profile_manager = FormProfileManager(config.dbconnection)
+        self._aggregated_views_manager = AggregatedViewsManager(config.dbconnection)
+        # Read the stored configuration.
         for option, value in self._application_config_manager.load():
             if hasattr(config, option):
                 setattr(config, option, value)
             else:
                 self._saved_state[option] = value
-        # Initialize the storage of form profile configurations.
-        self._profile_manager = FormProfileManager(config.dbconnection)
-        # Initialize the storage of user defiend aggregated views.
-        self._aggregated_views_manager = AggregatedViewsManager(config.dbconnection)
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Init the recent forms list.
@@ -1106,6 +1107,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def profile_manager(self):
         return self._profile_manager
 
+    def form_settings_manager(self):
+        return self._form_settings_manager
+
     def aggregated_views_manager(self):
         return self._aggregated_views_manager
 
@@ -1383,6 +1387,10 @@ def wx_frame():
 def profile_manager():
     """Return 'Application.profile_manager()' of the current application instance."""
     return _application.profile_manager()
+
+def form_settings_manager():
+    """Return 'Application.form_settings_manager()' of the current application instance."""
+    return _application.form_settings_manager()
 
 def aggregated_views_manager():
     """Return 'Application.aggregated_views_manager()' of the current application instance."""
