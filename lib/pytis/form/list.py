@@ -2760,7 +2760,7 @@ class BrowseForm(FoldableForm):
             # Supply a default specification module (old style spec).
             try:
                 x = super(BrowseForm._PrintResolver, self)._get_module(name)
-            except ResolverModuleError:
+            except (ResolverModuleError, ResolverFileError,):
                 x = self._Spec(self)
             return x
 
