@@ -350,7 +350,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # (Re)inicializuj atributy sloupců gridu.
         def registration(editor):
             self._current_editor = editor
-        self.editable = False
         if self._editors:
             self._close_editors()
         for i, c in enumerate(self._columns):
@@ -364,7 +363,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # editor
             if c.editable() in (Editable.ALWAYS, Editable.ONCE) \
                    or isinstance(c.editable(), Computer):
-                self.editable = True
                 editing = self._table.editing()
                 if editing:
                     e = _grid.InputFieldCellEditor(self._parent, editing.the_row, c.id(),
@@ -1534,9 +1532,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return super(ListForm, self).can_command(command, **kwargs)
     
     def _cmd_delete_record(self):
-        if not self.editable:
-            message('Needitovatelná tabulka!', beep_=True)
-            return
         def blocked_code():
             deleted = super(ListForm, self)._cmd_delete_record()
             self._table.edit_row(None)
@@ -1843,9 +1838,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return self._current_key() is not None
         
     def _cmd_edit(self):
-        if not self.editable:
-            log(EVENT, 'Pokus o editaci needitovatelné tabulky')
-            return False
         table = self._table
         if self._transaction is None:
             self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
@@ -2082,9 +2074,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(EVENT, u'Vložení nového řádku:', (row, before, copy))
         if not self._data.permitted(True, pytis.data.Permission.INSERT):
             message(_(u"Nemáte přístupová práva pro vkládání záznamů do této tabulky!"), beep_=True)
-            return False
-        if not self.editable:
-            message(_(u"Needitovatelná tabulka!"), beep_=True)
             return False
         if self._view.on_new_record() is not None:
             message(_(u"In-line vkládání zakázáno.  Použijte formulář (F6)."), beep_=True)
