@@ -240,6 +240,7 @@ _std_table_nolog('c_pytis_action_types',
                               ("'subf'", _(u"'Podformulář'"),),
                               ("'proc'", _(u"'Procedura'"),),
                               ("'actf'", _(u"'Akce formuláře'"),),
+                              ("'prnt'", _(u"'Tisk'"),),
                               ),
                  grant=db_rights
                  )
@@ -1125,13 +1126,15 @@ def pytis_update_actions_structure():
             form_name_formactions = formactions.get(form_name)
             if form_name_formactions is None:
                 form_name_formactions = formactions[form_name] = []
-            form_name_formactions.append(row['shortname'])
+            form_name_formactions.append((row['fullname'], row['shortname'],))
         actions = {}
         def add_row(fullname, shortname, menuid, position):
             if fullname[:4] == 'sub/':
                 item_type = 'subf'
             elif fullname[:7] == 'action/':
                 item_type = 'actf'
+            elif fullname[:6] == 'print/':
+                item_type = 'prnt'
             elif position.find('.') == -1:
                 item_type = '----'
             elif menuid is None:
@@ -1151,9 +1154,9 @@ def pytis_update_actions_structure():
         def add_formactions(shortname, position):
             formaction_list = formactions.get(shortname[5:], ())
             for i in range(len(formaction_list)):
-                faction_shortname = formaction_list[i]
+                faction_fullname, faction_shortname = formaction_list[i]
                 subposition = '%s.%02d' % (position, (i + 50),)
-                add_row(faction_shortname, faction_shortname, None, subposition)
+                add_row(faction_fullname, faction_shortname, None, subposition)
         for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname "
                                 "from e_pytis_menu, c_pytis_menu_actions "
                                 "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "

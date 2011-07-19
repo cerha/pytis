@@ -739,14 +739,15 @@ class InnerForm(Form):
         i = 1
         for row in pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
             template_name = row['specification'].value()
-            print_item = PrintAction('__db_%d' % (i,), template_name, name+'/'+template_name,)
+            template_specification = row['module'].value()+'/'+template_name
+            print_item = PrintAction('__db_%d' % (i,), template_name, template_specification,)
             print_spec.append(print_item)
             db_print_spec.append((name, template_name,))
             i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
         menu = [MItem(p.title(), command=BrowseForm.COMMAND_PRINT(print_spec_path=p.name()))
                 for p in print_spec
-                if action_has_access('action/%s' % (p.name(),), perm=pytis.data.Permission.PRINT)]
+                if action_has_access('print/%s' % (p.dmp_name(),), perm=pytis.data.Permission.PRINT)]
         def s(value):
             return pytis.data.Value(pytis.data.String(), value)
         menu.append(MSeparator())

@@ -523,6 +523,10 @@ class PrintAction(object):
         """Return print action name given in the constructor."""
         return self._name
 
+    def dmp_name(self):
+        """Return print action name in the form useable for DMP."""
+        return self._name.replace('/', '#')
+
 
 class ActionGroup(_ActionItem):
     """Definice pojmenované logické skupiny akcí.

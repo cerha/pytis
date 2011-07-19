@@ -1295,7 +1295,7 @@ class DMPActions(DMPObject):
             self._add_action(action)
         # Print actions
         for p in spec.print_spec():
-            fullname = 'print/%s/%s' % (p.name(), form_name,)
+            fullname = 'print/%s/%s' % (p.dmp_name(), form_name,)
             action = self.Action(self._resolver(), messages,
                                  fullname=fullname, title=p.title())
             self._add_action(action)
