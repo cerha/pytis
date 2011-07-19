@@ -41,7 +41,7 @@ _std_table_nolog('e_pytis_form_settings',
 _std_table_nolog('e_pytis_form_profiles',
       (P('id', TSerial),
        C('username', TUser, constraints=('NOT NULL',)),
-       C('fullname', TString, constraints=('NOT NULL',)),
+       C('spec_name', TString, constraints=('NOT NULL',)),
        C('profile_id', TString, constraints=('NOT NULL',)),
        C('title', TString, constraints=('NOT NULL',)),
        C('pickle', TString, constraints=('NOT NULL',)),
@@ -52,6 +52,20 @@ _std_table_nolog('e_pytis_form_profiles',
       grant=db_rights,
       schemas=db_schemas,
       doc="""Pytis form configuration storage."""
+      )
+
+_std_table_nolog('e_pytis_form_profile_params',
+      (C('id', TInt, constraints=('not null',),
+         references='e_pytis_form_profiles on delete cascade on update cascade'),
+       C('form_name', TString, constraints=('NOT NULL',)),
+       C('pickle', TString, constraints=('NOT NULL',)),
+       C('dump', TString),
+       C('errors', TString),
+       ),
+      sql='UNIQUE (id, form_name)',
+      grant=db_rights,
+      schemas=db_schemas,
+      doc="""Pytis form profile form type specific parameters."""
       )
 
 _std_table_nolog('e_pytis_aggregated_views',
