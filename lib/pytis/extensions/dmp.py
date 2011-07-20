@@ -805,7 +805,7 @@ class DMPRights(DMPObject):
                     add_rights(form_action_name, form_action_rights)
             # Print actions access rights
             for p in spec.print_spec():
-                form_action_name = 'print/%s/%s' % (p.name(), spec_name,)
+                form_action_name = 'print/%s/%s' % (p.dmp_name(), spec_name,)
                 if access_rights is None:
                     print_access_groups = None
                 else:
@@ -1185,7 +1185,11 @@ class DMPActions(DMPObject):
             if specifications is None:
                 return True
             fullname = self.fullname()
-            spec_name = self.shortname().split('/')[-1]
+            short_components = self.shortname().split('/')
+            if short_components[0] == 'print':
+                spec_name = fullname.split('/')[-1]
+            else:
+                spec_name = short_components[-1]
             for s in specifications:
                 if spec_name == s or fullname == s:
                     return True
@@ -1384,7 +1388,7 @@ class DMPActions(DMPObject):
         self._logger.clear()
         for action in original_actions.items():
             if (action.specifications_match(specifications) and
-                action.kind() == 'action' and
+                action.kind() in ('action', 'print',) and
                 action.fullname() not in self._fullnames):
                 condition = pytis.data.EQ('fullname', self._s_(action.fullname()))
                 self._delete_data(transaction_, condition)
