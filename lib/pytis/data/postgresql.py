@@ -2641,8 +2641,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             type = c.type()
             if isinstance(type, (String, LTree)):
                 typid = 0
-            elif isinstance(type, (Time, DateTime, TimeInterval)):
+            elif isinstance(type, (Time, DateTime,)):
                 typid = 2
+            elif isisntance(type, TimeInterval):
+                typid = 3
             else:
                 typid = 99
             template.append((id_, typid, type))
@@ -2678,9 +2680,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     v = unicode(dbvalue, 'utf-8')
                 value = Value(type_, v)
             elif typid == 2:            # time
-                local = not type_.is_utc()
+                local = not type_.utc()
                 value, err = type_.validate(dbvalue, strict=False,
                                             format=type_.SQL_FORMAT, local=local)
+                assert err is None, (dbvalue, type_, err)
+            elif typid == 3:            # time interval
+                value, err = type_.validate(dbvalue, strict=False, format=type_.SQL_FORMAT)
                 assert err is None, (dbvalue, type_, err)
             else:
                 value, err = type_.validate(dbvalue, strict=False)
