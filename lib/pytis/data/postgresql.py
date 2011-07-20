@@ -2643,7 +2643,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 typid = 0
             elif isinstance(type, (Time, DateTime,)):
                 typid = 2
-            elif isisntance(type, TimeInterval):
+            elif isinstance(type, TimeInterval):
                 typid = 3
             else:
                 typid = 99
