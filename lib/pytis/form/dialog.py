@@ -940,7 +940,7 @@ class ProgressDialog(OperationDialog):
         current_size = self._dialog.GetSize()
         if new_width > current_size.width:
             self._dialog.SetSize((new_width, current_size.height))
-        self._dialog.Update(progress, newmsg=newmsg)
+        return self._dialog.Update(progress, newmsg=newmsg)
 
     def _run_dialog(self):
         return self._function(self._update, *self._args, **self._kwargs)
