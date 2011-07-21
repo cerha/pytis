@@ -932,10 +932,18 @@ class ProgressDialog(OperationDialog):
                                          maximum=100, parent=self._parent,
                                          style=self._style)
 
+    def _update(self, progress, newmsg=''):
+        # progress is a number in range 1..100.
+        font = self._dialog.GetFont()
+        new_width = min(self._dialog.GetFullTextExtent(newmsg, font)[0] + 30,
+                        wx.DisplaySize()[0] - 50)
+        current_size = self._dialog.GetSize()
+        if new_width > current_size.width:
+            self._dialog.SetSize((new_width, current_size.height))
+        self._dialog.Update(progress, newmsg=newmsg)
+
     def _run_dialog(self):
-        return self._function(lambda n, newmsg='':
-                              self._dialog.Update(n, newmsg=newmsg),
-                              *self._args, **self._kwargs)
+        return self._function(self._update, *self._args, **self._kwargs)
 
     def _customize_result(self, result):
         return result
