@@ -2,11 +2,10 @@ Pytis Installation Instructions
 
 Requirements:
 
-  * Python 2.3 or later
+  * Python 2.6 or later
   * PostgreSQL 8.4 or later
   * python-psycopg2 library (for older versions - PyPgSQL Python library)
-  * egenix-mx-datetime Python library
-  * python-wxgtk2.6 or later (only for GUI apps)
+  * python-wxgtk2.8 or later (only for GUI apps)
   * python-imaging (only when using Image data types)  
 
 On Debian-based system, you can install the requirements with this command
