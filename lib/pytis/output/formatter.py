@@ -262,6 +262,7 @@ class LCGFormatter(object):
             
         """
         self._resolvers = xtuple(resolvers)
+        self._template_id = template_id
         output_parameters, r = self._resolve(template_id, 'init')
         if r is not None:
             if output_parameters is None:
@@ -417,6 +418,7 @@ class LCGFormatter(object):
         """
         stream.write(self._pdf())
         stream.close()
+        self._resolve(self._template_id, 'cleanup')
     
     def printdirect(self):
         """Send the document as PDF to the standard input of 'printing_command'."""
@@ -511,6 +513,10 @@ class PrintSpecification(object):
         
         """
         return HashableDict()
+        
+    def cleanup(self):
+        """Run actions to be performed after output formatting."""
+        pass
         
     def body(self):
         """Return body of the document.
