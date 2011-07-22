@@ -1419,11 +1419,11 @@ class LCGFormatter(object):
         start_time_export = pytis.data.DateTime.now()
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None, presentation=presentation)
+        pdf = exporter.export(context)
         show_time = pytis.data.DateTime.now()
         log(EVENT, ('Output formatting took %.3fs (PDF export %.3fs)' %
                     (pytis.data.DateTime.diff_seconds(start_time, show_time),
                      pytis.data.DateTime.diff_seconds(start_time_export, show_time),)))
-        pdf = exporter.export(context)
         return pdf
         
     def preview(self, stream):
