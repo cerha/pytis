@@ -283,9 +283,9 @@ class FileResolver(Resolver):
             try:
                 try:
                     file, pathname, descr = imp.find_module(name, self._path)
-                    module = imp.load_module(name, file, pathname, descr)
                 except ImportError as e:
                     raise ResolverFileError(name, self._path, e)
+                module = imp.load_module(name, file, pathname, descr)
             finally:
                 if file is not None:
                     file.close()
