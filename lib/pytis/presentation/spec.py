@@ -863,7 +863,7 @@ class GroupSpec(object):
         """Arguments:
 
           items -- contents of the group as a sequence of layout items (see
-            'GroupSpec' for details about possible types if items.
+            'GroupSpec' for details about possible types of items).
             
           orientation -- defines how the fields are composed together as one of
             'Orientation' class constants.  Vertical group has items above each
