@@ -2748,9 +2748,13 @@ class BrowseForm(FoldableForm):
             def __init__(self, resolver):
                 self._resolver = resolver
             def body(self, resolver=None, variant=None):
-                table_id = self._resolver.p(BrowseForm._PrintResolver.P_NAME)
-                result = pytis.output.data_table(self._resolver, table_id)
-                return result
+                # Just for testing purposes for now:
+                if True:
+                    run_dialog(Error, _("Tisková sestava nenalezena!"))
+                else:
+                    table_id = self._resolver.p(BrowseForm._PrintResolver.P_NAME)
+                    result = pytis.output.data_table(self._resolver, table_id)
+                    return result
             def doc_header(self, resolver=None, variant=None):
                 return None
             def doc_footer(self, resolver=None, variant=None):
