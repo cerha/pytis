@@ -508,7 +508,7 @@ class DBColumnBinding(DBBinding):
                         del kwargs_copy['not_null']
                     except KeyError:
                         pass                        
-                assert kwargs == {}, (type_, kwargs)
+                assert kwargs_copy == {}, (type_, kwargs)
         self._table = table
         self._column = column
         self._related_to = related_to
