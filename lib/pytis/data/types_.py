@@ -1495,6 +1495,8 @@ class TimeInterval(Type):
     DEFAULT_FORMAT = '%H:%M:%S'
     SHORT_FORMAT = '%H:%M'
     SQL_FORMAT = True
+    
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
     def __init__(self, format=None, **kwargs):
         """
