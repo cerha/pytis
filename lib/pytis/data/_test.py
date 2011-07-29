@@ -27,13 +27,10 @@ import unittest
 from pytis.util import *
 import pytis.data
 from pytis.data import bval, fval, ival, sval
-import dbdata
 
 _connection_data = {'database': 'test'}
 
 tests = TestSuite()
-
-import sys
 
 
 #############
@@ -432,7 +429,6 @@ class DataEnumerator(unittest.TestCase):
         C = pytis.data.ColumnSpec
         S = pytis.data.String()
         B = pytis.data.Boolean()
-        V = pytis.data.Value
         data = [pytis.data.Row((('x', sval(x)), ('y', sval(y)), ('z', bval(z))))
                 for x,y,z in (('1','a',True), ('2','b',True), ('3','c',False))]
         d = pytis.data.DataFactory(pytis.data.MemData,
@@ -833,7 +829,6 @@ class _DBBaseTest(unittest.TestCase):
 class _DBTest(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connector
         for q in ("create table cstat (stat char(2) PRIMARY KEY, nazev varchar(40) UNIQUE NOT NULL)",
                   "create table cosnova (id serial PRIMARY KEY, synte char(3), anal char(3), popis varchar(40), druh char(1) NOT NULL CHECK (druh IN ('X','Y')), stat char(2) REFERENCES cstat, danit boolean NOT NULL DEFAULT 'TRUE')",
                   "create table denik (id int PRIMARY KEY, datum date NOT NULL DEFAULT now(), castka decimal(15,2) NOT NULL, madati int NOT NULL DEFAULT 1 REFERENCES cosnova)",
@@ -888,7 +883,6 @@ class _DBTest(_DBBaseTest):
                 self.tearDown()
                 raise 
     def tearDown(self):
-        c = self._connector
         for t in ('tablefunc(int)',):
             try:
                 self._sql_command('drop function %s' % (t,))
@@ -947,7 +941,7 @@ class DBDataDefault(_DBTest):
             pytis.data.DBDataDefault,
             (key, (B('nazev', 'cstat', 'nazev'))),
             key)
-        dstat1 = dstat_spec.create(connection_data=conn)
+        dstat1 = dstat1_spec.create(connection_data=conn)
         # osnova
         key = B('id', 'cosnova', 'id')
         dosnova_spec = pytis.data.DataFactory(
@@ -1856,7 +1850,6 @@ class DBMultiData(DBDataDefault):
 class DBDataFetchBuffer(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connector
         import config
         try:
             self._sql_command("create table big (x int)")
@@ -1916,7 +1909,6 @@ class DBDataFetchBuffer(_DBBaseTest):
         fsize2 = fsize + config.fetch_size
         tsize = self._table_size
         d1 = self.data
-        d2 = self.data2
         self._check_skip_fetch(d1, (('s', tsize-1), ('f', 1), ('s', -2),
                                     ('f',-1)))
         self._check_skip_fetch(d1, (('f',12), ('s',42)))
@@ -2181,7 +2173,6 @@ class DBDataNotification(DBDataDefault):
 class DBCounter(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connector
         for q in ("create sequence fooseq",):
             try:
                 self._sql_command(q)
@@ -2190,7 +2181,6 @@ class DBCounter(_DBBaseTest):
                 raise
         self._counter = pytis.data.DBCounterDefault('fooseq', self._dconnection)
     def tearDown(self):
-        c = self._connector
         for q in ("drop sequence fooseq",):
             try:
                 self._sql_command(q)
@@ -2206,7 +2196,6 @@ tests.add(DBCounter)
 class DBFunction(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connector
         try:
             self._sql_command("create table tab (x int)")
             self._sql_command("create table tab1 (x int)")
@@ -2227,7 +2216,6 @@ class DBFunction(_DBBaseTest):
             self.tearDown()
             raise
     def tearDown(self):
-        c = self._connector
         for q in ("foo1(int)",
                   "foo2(text,text)",
                   "foo3()",
@@ -2371,7 +2359,6 @@ class TutorialTest(_DBBaseTest):
                 self.tearDown()
                 raise
     def tearDown(self):
-        c = self._connector
         for t in ('tab', 'cis'):
             try:
                 self._sql_command("DROP TABLE %s" % (t,))
@@ -2415,8 +2402,8 @@ class TutorialTest(_DBBaseTest):
             for c, v in zip(tab_data.columns(),
                             ('9', u'pěkný řádek', 'devet')):
                 new_row_data.append ((c.id(), c.type().validate(v)[0]))
-            new_row = pytis.data.Row(new_row_data)
             # TODO: Momenálně nechodí.  Opravit.
+            #new_row = pytis.data.Row(new_row_data)
             #assert tab_data.insert(new_row)[1], 'line not inserted'
             #assert tab_data.delete(new_key), 'line not deleted'
             #result, success = tab_data.update(old_key, new_row)
@@ -2489,14 +2476,12 @@ class ThreadTest(_DBBaseTest):
     # insufficient thread safety
     def setUp(self):
         _DBBaseTest.setUp(self)
-        c = self._connector
         try:
             self._sql_command("create table tab (x int, y int)")
         except:
             self.tearDown()
             raise
     def tearDown(self):
-        c = self._connector
         try:
             self._sql_command("drop table tab")
         except:
