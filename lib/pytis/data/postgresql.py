@@ -870,6 +870,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 result = self._pdbb_tabcol(binding.table(), column_name, column_id) + '::text'
             else:
                 result = self._pdbb_tabcol(binding.table(), column_name, column_id)
+                btype = binding.type()
+                if btype is not None and btype.encrypted():
+                    result = "%s(%s, '%s')" % (btype.DECRYPTION_FUNCTION, result, btype.encrypted(),)
         return result
         
     def _pdbb_coalesce(self, ctype, value):
@@ -1073,7 +1076,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             result = type_class_(**type_kwargs)
         else:
             if __debug__:
-                if isinstance(ctype, TimeInterval) and type_class_ == Time: # temporary hack
+                if ctype.encrypted():
+                    assert type_class_ == Binary, type_class_
+                elif isinstance(ctype, TimeInterval) and type_class_ == Time: # temporary hack
                     pass
                 else:
                     assert isinstance(ctype, type_class_), \
@@ -1702,6 +1707,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             colid = b.id()
             colspec = self.find_column(colid)
             assert colspec, ('Column not found', colid)
+            ctype = colspec.type()
+            if ctype is not None and ctype.encrypted():
+                value = "%s(%s, '%s')" % (ctype.ENCRYPTION_FUNCTION, value, ctype.encrypted(),)
             columns.append(b.column())
             values.append(value)
         return columns, values
@@ -2179,7 +2187,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     # always substitute in `_DBAPIAccessor._postgresql_query.do_query()'?
                     v = v.replace('%', '%%')
                 vals.append(v)
-                
         self._pg_query("savepoint _insert", transaction=transaction)
         try:
             key_data = self._pg_query(

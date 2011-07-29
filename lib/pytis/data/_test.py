@@ -2335,6 +2335,81 @@ class DBSearchPath(_DBTest):
         test(['special', 'public'])
 tests.add(DBSearchPath)
 
+class DBCrypto(_DBBaseTest):
+    def setUp(self):
+        _DBBaseTest.setUp(self)
+        for q in ("create table t_pytis_passwords (name text, password text)",
+                  "insert into t_pytis_passwords values ('test', 'somepassword')",
+                  "create table foo (id serial, x bytea, y bytea, z bytea)",):
+            try:
+                self._sql_command(q)
+            except:
+                self.tearDown()
+                raise
+        B = pytis.data.DBColumnBinding
+        key = B('id', 'foo', 'id')
+        spec = pytis.data.DataFactory(
+            pytis.data.DBDataDefault,
+            (key,
+             B('x', 'foo', 'x', type_=pytis.data.Integer(encrypted='test')),
+             B('y', 'foo', 'y', type_=pytis.data.Float(encrypted='test')),
+             B('z', 'foo', 'z', type_=pytis.data.String(encrypted='test')),
+             ),
+            key)
+        self._data = spec.create(connection_data=self._dconnection)
+    def tearDown(self):
+        for q in ("drop table t_pytis_passwords",
+                  "drop table foo",):
+            try:
+                self._sql_command(q)
+            except:
+                pass
+        _DBBaseTest.tearDown(self)
+    def test_basic(self):
+        data = self._data
+        def check(expected, **kwargs):
+            n = data.select(**kwargs)
+            try:
+                assert n == len(expected), ('Invalid row count', n,)
+                for e in expected:
+                    row = data.fetchone()
+                    if row is None:
+                        raise Exception('Missing row')
+                    if e is None:
+                        continue
+                    x, y, z = e
+                    assert row['x'].value() == x, x
+                    assert row['y'].value() == y, y
+                    assert row['z'].value() == z, z
+            finally:
+                try:
+                    data.close()
+                except:
+                    pass
+        data.insert(pytis.data.Row((('x', ival(1),), ('y', fval(-1.10),), ('z', sval('abc'),),)))
+        data.insert(pytis.data.Row((('x', ival(2),), ('y', fval(2.22),), ('z', sval('def'),),)))
+        data.insert(pytis.data.Row((('x', ival(3),), ('y', fval(-3.33),), ('z', sval('gh'),),)))
+        data.insert(pytis.data.Row((('x', ival(4),), ('y', fval(4.44),), ('z', sval('ijkl'),),)))
+        data.insert(pytis.data.Row((('x', ival(-5),), ('y', fval(5.50),), ('z', sval('m'),),)))
+        data.insert(pytis.data.Row((('x', ival(0),), ('y', fval(0.00),), ('z', sval(''),),)))
+        data.update(ival(1), pytis.data.Row((('z', sval('xabc'),),)))
+        data.delete(ival(2))
+        check(((-5, 5.5, 'm',),
+               (0, 0.0, '',),
+               (1, -1.1, 'xabc',),
+               (3, -3.33, 'gh',),
+               (4, 4.44, 'ijkl',),
+               ),
+              sort=('x',))
+        data.delete_many(pytis.data.LE('x', ival(1)))
+        check(((3, -3.33, 'gh',),
+               (4, 4.44, 'ijkl',),
+               ),
+              sort=('y',))
+        data.delete_many(pytis.data.GT('y', fval(-10.0)))
+        check(())
+tests.add(DBCrypto)
+
 
 ###################
 # Complex DB test #

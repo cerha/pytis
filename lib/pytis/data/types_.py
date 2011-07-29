@@ -123,6 +123,9 @@ class Type(object):
     
     _VALIDATION_CACHE_LIMIT = 1000
 
+    DECRYPTION_FUNCTION = None
+    ENCRYPTION_FUNCTION = None
+
     def _make(class_, *args, **kwargs):
         result = Type._type_table.get_instance(class_, *args, **kwargs)
         assert result is not None
@@ -139,7 +142,7 @@ class Type(object):
     make = classmethod(make)
 
     def __init__(self, not_null=False, enumerator=None, constraints=(),
-                 validation_messages=None, unique=False):
+                 validation_messages=None, unique=False, encrypted=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -149,26 +152,28 @@ class Type(object):
             libovolná jiná hodnota na None mapovaná (viz. konstanta
             _SPECIAL_VALUES).  Pokud tento argument pravdivý, neprojde prázdná
             hodnota validací.
-            
           enumerator -- specifikace enumerátoru, jako instance `Enumerator',
             nebo None.  Slouží k realizaci integritních omezení výčtového
             typu.  Více viz dokumentace třídy `Enumerator'.
-            
           constraints -- sekvence validačních funkcí sloužících k realizaci
             libovolných integritních omezení.  Každá z těchto funkcí je funkcí
             jednoho argumentu, kterým je vnitřní hodnota typu.  Funkce pro tuto
             hodnotu musí vrátit buď 'None', je-li hodnota správná, nebo
             chybovou hlášku jako string v opačném případě.
-            
           validation_messages -- dictionary identifikátorů a validačních
             hlášek.  Klíče jsou identifikátory validačních hlášek definované
             konstantami třídy s názvy začínajícími prefixem 'VM_' a hodnoty
             jsou hlášky coby řetězce.  Hlášky z tohoto argumentu, jsou-li pro
             daný identifikátor definovány, mají přednost před implicitními
             hláškami definovanými typem.
-
           unique -- flag saying the value must be unique within its column in a
             table
+          encrypted -- if not None, type values are encrypted, i.e. protected
+            by a password, in the database.  The argument value is an
+            identifier of the protection, there can be several different
+            protections in the application, protected by different passwords.
+            Not all types support encryption, it is an error to set encryption
+            for types which don't support it.
 
         """
         super(Type, self).__init__()
@@ -177,11 +182,15 @@ class Type(object):
         assert enumerator is None or isinstance(enumerator, Enumerator)
         assert isinstance(constraints, (types.ListType, types.TupleType))
         assert validation_messages is None or \
-               isinstance(validation_messages, types.DictType) 
+               isinstance(validation_messages, types.DictType)
+        assert (encrypted is None or
+                (self.DECRYPTION_FUNCTION and isinstance(encrypted, basestring))), \
+               encrypted
         self._not_null = not_null
         self._unique = unique
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
+        self._encrypted = encrypted
         vm = [(getattr(self, attr), getattr(self, '_'+attr+'_MSG'))
               for attr in dir(self) if attr.startswith('VM_')]
         self._validation_messages = dict(vm)
@@ -433,6 +442,10 @@ class Type(object):
         
         """
         return value
+
+    def encrypted(self):
+        """Return 'encrypted' value given in the constructor."""
+        return self._encrypted
        
 
 class Number(Type):
@@ -591,6 +604,9 @@ class Integer(Number):
     VM_NONINTEGER = 'VM_NONINTEGER'
     _VM_NONINTEGER_MSG = _(u"Není to celé číslo")
     
+    ENCRYPTION_FUNCTION = 'pytis_encrypt_int'
+    DECRYPTION_FUNCTION = 'pytis_decrypt_int'
+    
     def _validate(self, string):
         """Pokus se převést 'string' na plain nebo long integer.
         
@@ -646,6 +662,9 @@ class Float(Number):
 
     VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
     _VM_INVALID_NUMBER_MSG = _(u"Není to povolené číslo")
+    
+    ENCRYPTION_FUNCTION = 'pytis_encrypt_float'
+    DECRYPTION_FUNCTION = 'pytis_decrypt_float'
     
     def __init__(self, precision=None, **kwargs):
         """Definuj typ reálného čísla.
@@ -750,6 +769,9 @@ class String(Limited):
 
     _VM_MAXLEN_MSG = _(u"Řetězec přesahuje maximální délku %(maxlen)s")
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
+
+    ENCRYPTION_FUNCTION = 'pytis_encrypt_text'
+    DECRYPTION_FUNCTION = 'pytis_decrypt_text'    
     
     def _validate(self, string):
         """Vrať instanci třídy 'Value' s hodnotou 'string'.
