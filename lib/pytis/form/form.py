@@ -3061,27 +3061,12 @@ class WebForm(Form):
         sizer.Add(toolbar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(browser, 1, wx.EXPAND)
 
-    def _on_idle(self, event):
-        if super(WebForm, self)._on_idle(event):
-            return True
-        function = self._async_browser_interaction
-        if function:
-            # Perform browser interaction asyncronously to avoid blocking the
-            # main application.
-            self._async_browser_interaction = None
-            function()
-        return False
-
     def load_uri(self, uri):
-        def load_uri():
-            self._browser.restrict_navigation(uri, restrict_to_domain=True)
-            self._browser.load_uri(uri)
-        self._async_browser_interaction = load_uri
+        restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*', lambda m: m.group(1),
+                                     uri)
+        self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
 
-    def load_html(self, uri):
-        def load_html():
-            self._browser.restrict_navigation('-')
-            self._browser.load_html(uri)
-        self._async_browser_interaction = load_html
+    def load_html(self, html):
+        self._browser.load_html(html, restrict_navigation='-')
 
 

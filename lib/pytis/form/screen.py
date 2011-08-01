@@ -1780,25 +1780,44 @@ class Browser(wx.Panel, CommandHandler):
     """
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        # Show must be called first in order to be able to obtain the GtkPizza
-        # widget below.  GtkPizza is a custom GTK widget implemented by
-        # wxWidgets.
-        parent.Show()
-        handle = self.GetHandle()
-        gtk_window = gtk.gdk.window_lookup(handle)
-        # Reference to the GtkPizza widget must be kept to prevent a segfault.
-        self._gtk_pizza = gtk_pizza = gtk_window.get_user_data()
-        # GtkPizza's parant is a gtk.ScrolledWindow.
-        gtk_scrolled_window = gtk_pizza.parent
-        # Replace the GTK ScrolledWindow content by the webkit widget.
-        gtk_scrolled_window.remove(gtk_pizza)
-        self._webview = webview = webkit.WebView()
-        gtk_scrolled_window.add(webview)
-        gtk_scrolled_window.show_all()
-        webview.connect('notify::load-status', self._on_load_status_changed)
-        webview.connect('navigation-policy-decision-requested', self._on_navigation)
+        self._webview = None
+        self._async_queue = []
         self._restricted_navigation_uri = None
-        self._location_bar = None
+        wx_callback(wx.EVT_IDLE, self, self._on_idle)
+
+    def _on_idle(self, event):
+        if self._webview is None:
+            # Show must be called first in order to be able to obtain the GtkPizza
+            # widget below.  GtkPizza is a custom GTK widget implemented by
+            # wxWidgets.
+            self.GetParent().Show()
+            handle = self.GetHandle()
+            gtk_window = gtk.gdk.window_lookup(handle)
+            # The GTK window lookup will return None when called *before* the
+            # window is actually shown on the screen (because of some wx/GTK
+            # magic).  In this case we must wait and try again in next idle
+            # call.
+            if gtk_window:
+                # Reference to the GtkPizza widget must be kept to prevent a segfault.
+                self._gtk_pizza = gtk_pizza = gtk_window.get_user_data()
+                # GtkPizza's parant is a gtk.ScrolledWindow.
+                gtk_scrolled_window = gtk_pizza.parent
+                # Replace the GTK ScrolledWindow content by the webkit widget.
+                gtk_scrolled_window.remove(gtk_pizza)
+                self._webview = webview = webkit.WebView()
+                gtk_scrolled_window.add(webview)
+                gtk_scrolled_window.show_all()
+                webview.connect('notify::load-status', self._on_load_status_changed)
+                webview.connect('navigation-policy-decision-requested', self._on_navigation)
+            self._location_bar = None
+        if self._webview is not None:
+            # Perform webview interaction asyncronously to avoid blocking the
+            # main application.  This also allows the public methods load_uri
+            # and load_html() to be called before the vebview is actually
+            # created above.
+            while self._async_queue:
+                function = self._async_queue.pop(0)
+                function()
 
     def _on_load_status_changed(self, webview, signal):
         status = webview.get_property('load-status')
@@ -1858,31 +1877,27 @@ class Browser(wx.Panel, CommandHandler):
 
     def _cmd_load_uri(self, uri):
         self._webview.load_uri(uri)
+
+    def can_command(self, command, **kwargs):
+        if self._webview is not None:
+            return super(Browser, self).can_command(command, **kwargs)
+        else:
+            return False
         
-    def restrict_navigation(self, uri, restrict_to_domain=False):
-        """Restrict user's navigation to particular URI prefix.
-
-        Arguments:
-          uri -- the URI prefix to restrict all navigation to.  Only URIs
-            starting with given prefix will be allowed.
-          restrict_to_domain -- only use the domain name of 'uri' and ignore
-            the rest (restrict the navigation to all addresses within the same
-            server).
-
-
-        """
-        if uri is not None and restrict_to_domain:
-            uri = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*', lambda m: m.group(1), uri)
-        self._restricted_navigation_uri = uri
-
     def connect_location_bar(self, ctrl):
         self._location_bar = ctrl
 
-    def load_uri(self, uri):
-        self._webview.load_uri(uri)
+    def load_uri(self, uri, restrict_navigation=None):
+        def f():
+            self._restricted_navigation_uri = restrict_navigation
+            self._webview.load_uri(uri)
+        self._async_queue.append(f)
 
-    def load_html(self, html, base_uri=''):
-        self._webview.load_html_string(html, base_uri)
+    def load_html(self, html, base_uri='', restrict_navigation=None):
+        def f():
+            self._restricted_navigation_uri = restrict_navigation
+            self._webview.load_html_string(html, base_uri)
+        self._async_queue.append(f)
 
 
 class BrowserWindow(wx.Frame):
