@@ -2827,15 +2827,17 @@ class InputForm(PopupEditForm):
     'layout', 'check', etc. may be used.
 
     """
-    def _full_init(self, parent, resolver, name, guardian=None, transaction=None, **kwargs):
+    def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
+                   prefill=None, **kwargs):
         class Spec(Specification):
             data_cls = pytis.data.RestrictedMemData
         for key, value in kwargs.items():
             setattr(Spec, key, value)
         self._specification = Spec(resolver)
-        super(InputForm, self)._full_init(parent, resolver, name,
-                                          mode=self.MODE_INSERT, multi_insert=False)
-
+        super(InputForm, self)._full_init(parent, resolver, name, guardian=guardian,
+                                          mode=self.MODE_INSERT, multi_insert=False,
+                                          prefill=prefill)
+        
     def _create_view_spec(self):
         return self._specification.view_spec()
 
