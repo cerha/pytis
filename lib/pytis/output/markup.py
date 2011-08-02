@@ -31,6 +31,8 @@ elementy ke spojení dohromady.
 
 """
 
+import re
+
 import lcg
 from lcg import Unit, UMm, UPoint, UFont, USpace
 from pytis.output import *
@@ -762,6 +764,8 @@ class Image(_Mark):
 class StructuredText(_Mark):
     """LCG structured text."""
 
+    _SIDE_DATA_MATCHER = re.compile(r'(\${[^}]+\.data\.)')
+    
     def __init__(self, text):
         """
         Arguments:
@@ -770,7 +774,9 @@ class StructuredText(_Mark):
 
         """
         super(StructuredText, self).__init__()
-        self._text = text.replace('${data.', '@iterate ${data.')
+        text = text.replace('${data.', '@iterate ${data.')
+        text = self._SIDE_DATA_MATCHER.sub(r'@iterate \1', text)
+        self._text = text
         self._parameters = {}
 
     def _lcg(self):
