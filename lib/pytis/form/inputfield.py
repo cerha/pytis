@@ -358,12 +358,13 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._needs_validation = False
         self._valid = False
         self._init_attributes()
-        self._ctrl = ctrl = self._create_ctrl()
         if inline:
-            self._widget = ctrl
+            self._label = None
+            self._widget = self._create_ctrl(parent)
         else:
-            self._label = self._create_label()
-            self._widget = self._create_widget()
+            self._label = self._create_label(parent)
+            self._widget = self._create_widget(parent)
+        ctrl = self._ctrl
         KeyHandler.__init__(self, ctrl)
         wx_callback(wx.EVT_IDLE,       ctrl, self._on_idle)
         wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_kill_focus)
@@ -402,22 +403,25 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                 e.Skip()
         return cb
             
-    def _create_label(self):
+    def _create_label(self, parent):
         # Return field label as 'wx.StaticText' instance.
         label = self.spec().label()
         if label:
             label = label + ':'            
-        return wx.StaticText(self._parent, -1, label, style=wx.ALIGN_RIGHT)
+        return wx.StaticText(parent, -1, label, style=wx.ALIGN_RIGHT)
 
-    def _create_ctrl(self):
+    def _create_ctrl(self, parent):
         # Return the actual control element for this field.
         raise ProgramError("This method must be overriden!")
 
-    def _create_widget(self):
-        # Return the complete widget containing all control elements.
+    def _create_widget(self, parent):
+        # Create the main control and optionally create additional UI elements.
+        # Return a wx widget containing all UI elements for given field.
         # For simple fields that's the actual control, but some more
-        # sophisticated classes may add additional buttons etc.
-        return self._ctrl
+        # sophisticated fields may have additional buttons etc.
+        # The main control must be assinged to `self._ctrl'.
+        self._ctrl = ctrl = self._create_ctrl(parent)
+        return ctrl
 
     def _get_value(self):
         # Return the external (string) representation of the current field value from the field UI
@@ -722,9 +726,9 @@ class Unlabeled:
     v gridu musí být prázdný.
 
     """
-    def _create_label(self):
+    def _create_label(self, parent):
         # Return an empty label as 'wx.StaticText' instance.
-        return wx.StaticText(self._parent, -1, '')
+        return wx.StaticText(parent, -1, '')
 
 
 class TextField(InputField):
@@ -737,12 +741,12 @@ class TextField(InputField):
     ASCII   = map(chr, range(127))
     LETTERS = map(chr, range(ord('a'),ord('z')+1) + range(ord('A'),ord('Z')+1))
 
-    def _create_ctrl(self):
+    def _create_ctrl(self, parent):
         if not self._inline:
             size = self._px_size(self.width(), self.height())
         else:
             size = None
-        control = wx.TextCtrl(self._parent, -1, '', style=self._ctrl_style(), size=size)
+        control = wx.TextCtrl(parent, -1, '', style=self._ctrl_style(), size=size)
         wxid = control.GetId()
         maxlen = self._maxlen()
         if maxlen is not None:
@@ -760,8 +764,8 @@ class TextField(InputField):
         self._update_completions = None
         return control
 
-    def _create_button(self, label, icon=None):
-        return wx_button(self._parent, label=label, icon=icon, size=self._button_size())
+    def _create_button(self, parent, label, icon=None):
+        return wx_button(parent, label=label, icon=icon, size=self._button_size())
 
     def _button_size(self):
         x = self._px_size(1, 1)[1]
@@ -950,6 +954,7 @@ class TextField(InputField):
     def _cmd_select_all(self):
         self._ctrl.SetSelection(-1, -1)
         
+
 class StringField(TextField):
     """Textové vstupní políčko pro data typu 'pytis.data.String'."""
 
@@ -963,10 +968,10 @@ class PasswordField(StringField):
     def _ctrl_style(self):
         return super(PasswordField, self)._ctrl_style() | wx.TE_PASSWORD
 
-    def _create_widget(self):
-        result = super(PasswordField, self)._create_widget()
+    def _create_widget(self, parent):
+        result = super(PasswordField, self)._create_widget(parent)
         if self._type.verify():
-            self._ctrl2 = self._create_ctrl()
+            self._ctrl2 = self._create_ctrl(parent)
             sizer = wx.BoxSizer()
             sizer.Add(result,  0, wx.FIXED_MINSIZE)
             sizer.Add(self._ctrl2, 0, wx.FIXED_MINSIZE)
@@ -1052,11 +1057,11 @@ class NumericField(TextField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
-    def _create_widget(self):
-        result = super(NumericField, self)._create_widget()
+    def _create_widget(self, parent):
+        result = super(NumericField, self)._create_widget(parent)
         if self._spec.slider() and not self._inline:
             box = wx.BoxSizer()
-            slider = wx.Slider(self._parent, -1, style=wx.SL_HORIZONTAL,
+            slider = wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
                                minValue=self._type.minimum() or 0,
                                maxValue=self._type.maximum() is None and 100 or self._type.maximum(),
                                size=(200, 25))
@@ -1095,13 +1100,13 @@ class NumericField(TextField, SpinnableField):
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
-    def _create_ctrl(self):
+    def _create_ctrl(self, parent):
         """Vrať instanci 'wx.CheckBox'."""
         if self._inline:
             label = ''
         else:
             label = self.spec().label()
-        control = wx.CheckBox(self._parent, -1, label)
+        control = wx.CheckBox(parent, -1, label)
         wx_callback(wx.EVT_CHECKBOX, control, control.GetId(), self._on_change)
         return control
                     
@@ -1156,8 +1161,8 @@ class ChoiceField(EnumerationField):
     def _enumeration(self):
         return [(None, self._spec.null_display() or '')] + super(ChoiceField, self)._enumeration()
     
-    def _create_ctrl(self):
-        control = wx.Choice(self._parent, choices=self._choices())
+    def _create_ctrl(self, parent):
+        control = wx.Choice(parent, choices=self._choices())
         wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
         return control
     
@@ -1174,7 +1179,7 @@ class RadioBoxField(Unlabeled, EnumerationField):
     """
     _DEFAULT_WIDTH = 1
 
-    def _create_ctrl(self):
+    def _create_ctrl(self, parent):
         if self._spec.orientation() == Orientation.VERTICAL:
             style = wx.RA_SPECIFY_COLS
             dimension = self.width()
@@ -1184,8 +1189,7 @@ class RadioBoxField(Unlabeled, EnumerationField):
         label = self.spec().label()
         if label:
             label = label + ':'
-        control = wx.RadioBox(self._parent, -1, label,
-                              choices=self._choices(), style=style,
+        control = wx.RadioBox(parent, -1, label, choices=self._choices(), style=style,
                               majorDimension=dimension)
         wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
         return control
@@ -1196,8 +1200,8 @@ class ListBoxField(EnumerationField):
     _DEFAULT_HEIGHT = None
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     
-    def _create_ctrl(self):
-        control = wx.ListBox(self._parent, choices=self._choices(),
+    def _create_ctrl(self, parent):
+        control = wx.ListBox(parent, choices=self._choices(),
                              style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
         if self.height() is not None:
             height = char2px(control, 1, float(10)/7).height * self.height()
@@ -1229,9 +1233,9 @@ class Invocable(object, CommandHandler):
         return InputField._get_command_handler_instance()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
-    def _create_widget(self):
-        widget = super(Invocable, self)._create_widget()
-        button = self._create_button('...', icon=self._INVOKE_ICON)
+    def _create_widget(self, parent):
+        widget = super(Invocable, self)._create_widget(parent)
+        button = self._create_button(parent, '...', icon=self._INVOKE_ICON)
         button.SetToolTipString(self._INVOKE_TITLE)
         self._invocation_button = button
         sizer = wx.BoxSizer()
@@ -1247,8 +1251,8 @@ class Invocable(object, CommandHandler):
         x = self._px_size(1, 1)[1]
         return (x, x)
 
-    def _create_button(self, label, icon=None):
-        return wx_button(self._parent, label=label, icon=icon, size=self._button_size())
+    def _create_button(self, parent, label, icon=None):
+        return wx_button(parent, label=label, icon=icon, size=self._button_size())
 
     def _disable(self):
         if not self._inline:
@@ -1320,9 +1324,9 @@ class ColorSelectionField(Invocable, TextField):
         if color != None:
             self._set_value(color)
 
-    def _create_button(self, label, **kwargs):
+    def _create_button(self, parent, label, **kwargs):
         size = self._button_size()
-        return wx.lib.colourselect.ColourSelect(self._parent, -1, size=size)
+        return wx.lib.colourselect.ColourSelect(parent, -1, size=size)
     
     def _set_value(self, value):
         if not self._inline:
@@ -1433,9 +1437,9 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
         self._display = None
         super(CodebookField, self)._init_attributes()
         
-    def _create_widget(self):
+    def _create_widget(self, parent):
         """Zavolej '_create_widget()' třídy Invocable a přidej displej."""
-        widget = super(CodebookField, self)._create_widget()
+        widget = super(CodebookField, self)._create_widget(parent)
         spec = self.spec()
         cb_spec = self._cb_spec
         if cb_spec.display() is None and not spec.allow_codebook_insert():
@@ -1448,15 +1452,14 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 display_size = cb_spec.display_size()
             if display_size:
                 size = self._px_size(display_size, 1)
-                display = wx.TextCtrl(self._parent, style=wx.TE_READONLY,
-                                      size=size)
+                display = wx.TextCtrl(parent, style=wx.TE_READONLY, size=size)
                 display.SetOwnBackgroundColour(config.field_disabled_color)
                 self._display = display
                 wx_callback(wx.EVT_NAVIGATION_KEY, display,
                             self._skip_navigation_callback(display))
                 sizer.Add(display, 0, wx.FIXED_MINSIZE)
         if spec.allow_codebook_insert():
-            button = self._create_button('+', icon='new-record')
+            button = self._create_button(parent, '+', icon='new-record')
             button.SetToolTipString(_(u"Vložit nový záznam do číselníku"))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
@@ -1526,13 +1529,13 @@ class ListField(GenericCodebookField):
     _DEFAULT_HEIGHT = 6
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
 
-    def _create_ctrl(self):
+    def _create_ctrl(self, parent):
         # Načtu specifikace.
         view_spec = resolver().get(self._cb_name, 'view_spec')
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
         # Vytvořím vlastní seznamový widget.
         style=wx.LC_REPORT|wx.SIMPLE_BORDER|wx.LC_SINGLE_SEL
-        list = wx.ListCtrl(self._parent, -1, style=style)
+        list = wx.ListCtrl(parent, -1, style=style)
         # Nastavím záhlaví sloupců.
         total_width = 0
         for i, id in enumerate(columns):
@@ -1741,8 +1744,8 @@ class FileField(Invocable, InputField):
         self._buffer = None
         super(FileField, self)._init_attributes()
         
-    def _create_ctrl(self):
-        ctrl = wx.TextCtrl(self._parent, -1, '', size=self._px_size(8, 1))
+    def _create_ctrl(self, parent):
+        ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(8, 1))
         ctrl.SetEditable(False)
         ctrl.SetOwnBackgroundColour(config.field_disabled_color)
         return ctrl
@@ -1844,8 +1847,8 @@ class ImageField(FileField):
     _DEFAULT_WIDTH = _DEFAULT_HEIGHT = 80
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     
-    def _create_ctrl(self):
-        return wx_button(self._parent, bitmap=self._bitmap(),
+    def _create_ctrl(self, parent):
+        return wx_button(parent, bitmap=self._bitmap(),
                          size=(self.width()+10, self.height()+10),
                          callback=lambda e: self._on_button())
 
@@ -1995,7 +1998,7 @@ class StructuredTextField(TextField):
                     )
         return menu
     
-    def _create_ctrl(self):
+    def _create_ctrl(self, parent):
         import wx.stc
         class TextCtrl(wx.stc.StyledTextCtrl):
             """StyledTextCtrl implementing the TextCtrl API used by parent classes.
@@ -2020,13 +2023,13 @@ class StructuredTextField(TextField):
         # wx.stc.StyledTextCtrl as it has some strange bugs in caret
         # positioning etc.  Once this is resolved, we can re-enable usiong the
         # derived TextCtrl class defined above.
-        #ctrl = TextCtrl(self._parent, -1, style=self._ctrl_style())
+        #ctrl = TextCtrl(parent, -1, style=self._ctrl_style())
         #wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
         if not self._inline:
             size = self._px_size(self.width(), self.height())
         else:
             size = None
-        ctrl = wx.TextCtrl(self._parent, -1, style=self._ctrl_style(), size=size)
+        ctrl = wx.TextCtrl(parent, -1, style=self._ctrl_style(), size=size)
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL))
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
@@ -2034,9 +2037,9 @@ class StructuredTextField(TextField):
         self._update_completions = None
         return ctrl
         
-    def _create_widget(self):
-        widget = super(StructuredTextField, self)._create_widget()
-        toolbar = wx.ToolBar(self._parent)
+    def _create_widget(self, parent):
+        widget = super(StructuredTextField, self)._create_widget(parent)
+        toolbar = wx.ToolBar(parent)
         commands = self._commands()
         for group in commands:
             if group != commands[0]:
