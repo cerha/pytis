@@ -461,7 +461,8 @@ class LCGFormatter(object):
             text += _("Vedlejší formuláře:\n")
             for b in bindings:
                 binding_id = re.sub('[^A-Za-z0-9_]', '_', b.id())
-                text += "  ${Binding.%s.PROMĚNNÁ} ... %s\n" % (binding_id, b.title(),)
+                text += "  ${Binding.%s.table} ... %s\n" % (binding_id, b.title(),)
+                text += "  ${Binding.%s.data.IDENTIFIKÁTOR_SLOUPCE} ... %s\n" % (binding_id, b.title(),)
                 text += _("  Identifikátory sloupců:\n")
                 sub_view_spec = resolver.get(b.name(), 'view_spec')
                 for field in sub_view_spec.fields():
