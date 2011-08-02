@@ -337,7 +337,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         assert isinstance(inline, bool)
         CallbackHandler.__init__(self)
         spec = find(id, row.fields(), key=lambda f: f.id())
-        self._parent = parent
         self._row = row
         self._type = row.type(id)
         self._spec = spec
@@ -592,8 +591,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         # Returns always false for virtual fields
         return self._row.field_changed(self.id())
 
-    def _px_size(self, width, height):
-        size = dlg2px(self._parent, 4*(width+1)+2, 8*height+4.5)
+    def _px_size(self, parent, width, height):
+        size = dlg2px(parent, 4*(width+1)+2, 8*height+4.5)
         return (size.width, size.height)
     
     def _set_focus(self):
@@ -743,7 +742,7 @@ class TextField(InputField):
 
     def _create_ctrl(self, parent):
         if not self._inline:
-            size = self._px_size(self.width(), self.height())
+            size = self._px_size(parent, self.width(), self.height())
         else:
             size = None
         control = wx.TextCtrl(parent, -1, '', style=self._ctrl_style(), size=size)
@@ -765,10 +764,10 @@ class TextField(InputField):
         return control
 
     def _create_button(self, parent, label, icon=None):
-        return wx_button(parent, label=label, icon=icon, size=self._button_size())
+        return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
 
-    def _button_size(self):
-        x = self._px_size(1, 1)[1]
+    def _button_size(self, parent):
+        x = self._px_size(parent, 1, 1)[1]
         return (x, x)
         
     def on_key_down(self, event):
@@ -1247,12 +1246,12 @@ class Invocable(object, CommandHandler):
                     self._skip_navigation_callback(button))
         return sizer
 
-    def _button_size(self):
-        x = self._px_size(1, 1)[1]
+    def _button_size(self, parent):
+        x = self._px_size(parent, 1, 1)[1]
         return (x, x)
 
     def _create_button(self, parent, label, icon=None):
-        return wx_button(parent, label=label, icon=icon, size=self._button_size())
+        return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
 
     def _disable(self):
         if not self._inline:
@@ -1325,7 +1324,7 @@ class ColorSelectionField(Invocable, TextField):
             self._set_value(color)
 
     def _create_button(self, parent, label, **kwargs):
-        size = self._button_size()
+        size = self._button_size(parent)
         return wx.lib.colourselect.ColourSelect(parent, -1, size=size)
     
     def _set_value(self, value):
@@ -1451,7 +1450,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
             if display_size is None:
                 display_size = cb_spec.display_size()
             if display_size:
-                size = self._px_size(display_size, 1)
+                size = self._px_size(parent, display_size, 1)
                 display = wx.TextCtrl(parent, style=wx.TE_READONLY, size=size)
                 display.SetOwnBackgroundColour(config.field_disabled_color)
                 self._display = display
@@ -1745,13 +1744,13 @@ class FileField(Invocable, InputField):
         super(FileField, self)._init_attributes()
         
     def _create_ctrl(self, parent):
-        ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(8, 1))
+        ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(parent, 8, 1))
         ctrl.SetEditable(False)
         ctrl.SetOwnBackgroundColour(config.field_disabled_color)
         return ctrl
 
-    def _button_size(self):
-        x = self._px_size(1, 1)[1]
+    def _button_size(self, parent):
+        x = self._px_size(parent, 1, 1)[1]
         return (x+5, x+2)
     
     def _validate(self):
@@ -1796,7 +1795,7 @@ class FileField(Invocable, InputField):
     def _cmd_load(self):
         msg = _(u"Vyberte soubor pro políčko '%s'") % self.spec().label()
         dir = FileField._last_load_dir or FileField._last_save_dir or ''
-        dlg = wx.FileDialog(self._parent, message=msg, style=wx.OPEN,
+        dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN,
                             defaultDir=dir)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -1822,7 +1821,7 @@ class FileField(Invocable, InputField):
     def _cmd_save(self):
         msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
         dir = FileField._last_save_dir or FileField._last_load_dir or ''
-        dlg = wx.FileDialog(self._parent, style=wx.SAVE, message=msg,
+        dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg,
                             defaultDir=dir)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -1856,8 +1855,8 @@ class ImageField(FileField):
         super(ImageField, self)._disable()
         self._ctrl.Enable(True)
         
-    def _button_size(self):
-        x = self._px_size(1, 1)[1]
+    def _button_size(self, parent):
+        x = self._px_size(parent, 1, 1)[1]
         return (x+4, x+2)
     
     def _bitmap(self):
@@ -2026,7 +2025,7 @@ class StructuredTextField(TextField):
         #ctrl = TextCtrl(parent, -1, style=self._ctrl_style())
         #wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
         if not self._inline:
-            size = self._px_size(self.width(), self.height())
+            size = self._px_size(parent, self.width(), self.height())
         else:
             size = None
         ctrl = wx.TextCtrl(parent, -1, style=self._ctrl_style(), size=size)
