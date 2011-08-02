@@ -124,7 +124,12 @@ class DualForm(Form, Refreshable):
         else:
             gravity = 0
         splitter.SetSashGravity(gravity)
-        splitter.SetMinimumPaneSize(50)
+        splitter.SetMinimumPaneSize(80)
+        # Setting a minimal size here is a hack to avoid wx/gtk hanging when
+        # the splitter size becomes too small.  It is unknown what actually
+        # causes the hang, but 180x180 seems to be the lowest minimal size
+        # which avoids it.
+        splitter.SetMinSize((180, 180))
         self._select_form(self._main_form)
         self._set_main_form_callbacks()
         self._set_side_form_callbacks()

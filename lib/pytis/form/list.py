@@ -99,6 +99,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         wx_callback(wx.EVT_SIZE, self, self._on_size)
         self._select_cell(row=self._get_row_number(self._row.row()))
         self.set_callback(ListForm.CALL_ACTIVATION, self._on_activation)
+        # Setting a minimal size here is a hack to avoid wx/gtk hanging when
+        # the form size becomes too small.  The trigger of the hang seems to be
+        # the moment, when there doesn't remain any space for scrollbar "body"
+        # (the arrow buttons touch each other...).
+        self.SetMinSize((80, 80))
 
     def _init_attributes(self, select_row=0, **kwargs):
         self._aggregation_results = SimpleCache(self._get_aggregation_result)
