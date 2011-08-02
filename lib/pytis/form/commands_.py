@@ -280,6 +280,8 @@ Command(StructuredTextField, 'PREVIEW',
         "Preview the text formatted as HTML in a browser.")
 Command(StructuredTextField, 'EXPORT_PDF',
         "Preview the text formatted as PDF in a viewer.")
+Command(StructuredTextField, 'OPEN_IN_EDITOR',
+        "Edit the field text in a standalone editor.")
 
 Command(Dialog, 'CLOSE_DIALOG',
         "Opuštění dialogu bez potvrzení")

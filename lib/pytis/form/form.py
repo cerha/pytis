@@ -2848,9 +2848,54 @@ class InputForm(PopupEditForm):
     def _print_menu(self):
         return []
         
-    
-class StructuredTextEditor(PopupEditForm):
 
+class ResizableEditForm(object):
+    """Mixin for resizable edit forms with fields expanded to the whole window.
+
+    The fields returned by _resizable_fields() will take the whole space of the
+    form and will expand with the form when its window is resized.  It is
+    mostly useful for forms which should look like a text editor.
+    
+    """
+    
+    def _popup_frame_style(self):
+        return super(ResizableEditForm, self)._popup_frame_style() | wx.RESIZE_BORDER
+
+    def _resizable_fields(self):
+        return self._view.layout().group().order()
+    
+    def _create_form_parts(self, sizer):
+        panel = wx.Panel(self)
+        field_sizer = wx.BoxSizer()
+        panel.SetSizer(field_sizer)
+        for field_id in self._resizable_fields():
+            if self._view.field(field_id).width() != 0:
+                field = InputField.create(panel, self._row, field_id, guardian=self,
+                                          readonly=self.readonly())
+                self._fields.append(field)
+                field_sizer.Add(field.widget(), 1, wx.EXPAND)
+        self._form_controls_window = panel
+        sizer.Add(panel, 1, wx.EXPAND)
+        sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
+
+
+class ResizableInputForm(ResizableEditForm, InputForm):
+    """Resizable InputForm with fields expanded to the whole window."""
+    # Used within StructuredTextField._cmd_open_in_editor().
+    pass
+
+        
+class StructuredTextEditor(ResizableEditForm, PopupEditForm):
+    """Text Editor of a single structured text field running outside transaction.
+
+    It is assumed that structured text editation may take a "long time" and it
+    is not desired to block the database by a long running transaction.  Thus
+    this form will run outside transaction and will perform a check for
+    conflicting changes in the text before saving the new value into the
+    database.
+
+    """
+    
     def _init_attributes(self, field_id, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
@@ -2862,24 +2907,9 @@ class StructuredTextEditor(PopupEditForm):
         super(StructuredTextEditor, self)._init_attributes(**kwargs)
         self._editor_field_id = field_id
     
-    def _popup_frame_style(self):
-        return super(StructuredTextEditor, self)._popup_frame_style() | wx.RESIZE_BORDER
+    def _resizable_fields(self):
+        return (self._editor_field_id,)
     
-    def _create_form_parts(self, sizer):
-        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
-        sizer.Add(self._create_status_bar(), 0, wx.EXPAND)
-        
-    def _create_form_controls(self):
-        panel = wx.Panel(self)
-        field = StructuredTextField(panel, self._row, self._editor_field_id, guardian=self,
-                                    readonly=self.readonly())
-        self._fields.append(field)
-        self._form_controls_window = panel
-        sizer = wx.BoxSizer()
-        sizer.Add(field.widget(), 1, wx.EXPAND)
-        panel.SetSizer(sizer)
-        return panel
-        
     def _default_transaction(self):
         # Run editor outside transaction to prevent long transactions (the
         # editation usually takes quite some time).

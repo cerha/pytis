@@ -1909,6 +1909,16 @@ class StructuredTextField(TextField):
                            _(u"Uložit záznam bez uzavření formuláře.")),
                  ),
                 )
+        if isinstance(self._guardian, ResizableInputForm):
+            # ResizableInputForm is used within _cmd_open_in_editor().  Commit
+            # will only return the current value (it is a virtual form), not
+            # save anything to the database.
+            commands += (
+                (UICommand(EditForm.COMMAND_COMMIT_RECORD(),
+                           _(u"Potvrdit změny a opustit editaci"),
+                           _(u"Potvrdit změny a opustit editaci.")),
+                 ),
+                )
         commands += (
             #(UICommand(self.COMMAND_UNDO(),
             #           _(u"Zpět"),
@@ -1975,6 +1985,16 @@ class StructuredTextField(TextField):
             )
         return commands
 
+    def _menu(self):
+        menu = super(StructuredTextField, self)._menu()
+        if not isinstance(self._guardian, (StructuredTextEditor, ResizableInputForm)):
+            menu +=(None,
+                    UICommand(self.COMMAND_OPEN_IN_EDITOR(),
+                              _("Editovat v samostatném okně"),
+                              _("")),
+                    )
+        return menu
+    
     def _create_ctrl(self):
         import wx.stc
         class TextCtrl(wx.stc.StyledTextCtrl):
@@ -2204,6 +2224,14 @@ class StructuredTextField(TextField):
         ctrl.WriteText(new_text)
         self.set_focus()
         
+    def _cmd_open_in_editor(self):
+        form = self._guardian
+        result = run_form(ResizableInputForm, name='x', title=self._spec.label(),
+                          fields=(self._spec,),
+                          prefill={self._id: self._ctrl.GetValue()})
+        if result is not None:
+            self._ctrl.SetValue(result[self._id].value())
+            
     def current_heading_level(self):
         ctrl = self._ctrl
         position = ctrl.GetInsertionPoint()
