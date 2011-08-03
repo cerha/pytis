@@ -1730,17 +1730,34 @@ def positive_id(obj):
             assert result >= 0 # else addresses are fatter than 64 bits
     return result
 
-def lcg_to_html(text):
+def lcg_to_html(text, styles=('default.css',), resource_path=()):
     """Return given LCG structured text converted into HTML.
 
-    The source text is parsed as LCG structured text, exported into HTML and
-    returned as utf-8 encoded string.
+    Arguments:
+    
+      text -- The source text in LCG structured text format.
+      styles -- sequence of style sheet file names to be embedded as inline
+        styles in the final document.  These files must be located in resource
+        directories specified by 'resource_path'.  The arrangement of files in
+        resource directories must follow the standard expected by
+        'lcg.ResourceProvider'.
+      resource_path -- sequence of filesystem directory names where resource
+        files (style sheets) are searched.  If empty, the LCG's source
+        directory is searched by default.
+
+    The exported HTML is returned as UTF-8 encoded string.
     
     """
     import lcg
+    class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
+        pass
+    if not resource_path:
+        lcg_dir = os.path.dirname(os.path.dirname(os.path.dirname(lcg.__file__)))
+        resource_path=(os.path.join(lcg_dir, 'resources'),)
     content = lcg.Container(lcg.Parser().parse(text))
-    node = lcg.ContentNode('', content=content)
-    exporter = lcg.HtmlExporter()
+    provider = lcg.ResourceProvider(dirs=resource_path)
+    node = lcg.ContentNode('', content=content, resource_provider=provider)
+    exporter = Exporter(styles=styles, inlinestyles=True)
     context = exporter.context(node, None)
     html = exporter.export(context)
     return html.encode('utf-8')
