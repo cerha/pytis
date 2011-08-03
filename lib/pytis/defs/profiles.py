@@ -43,16 +43,26 @@ class FormProfiles(Specification):
     columns = ('title', 'profile_id', 'username', 'fullname', 'invalid')
     layout = HGroup(('title', 'profile_id', 'username'),
                     ('fullname', 'dump', 'errors'))
-    profiles = (Profile('all-profiles', _("Všechny profily"),
-                        filter=pd.NE('profile_id', pd.sval('__form_settings__'))),
-                Profile('invalid-profiles', _("Neplatné profily"),
-                        filter=pd.AND(pd.NE('profile_id', pd.sval('__form_settings__')),
-                                      pd.NE('errors', pd.sval(None)))),
+    profiles = (Profile('invalid-profiles', _("Neplatné profily"),
+                        filter=pd.NE('errors', pd.sval(None))),
                 Profile('user-profiles', _("Uživatelské profily"),
                         filter=pd.WM('profile_id', pd.WMValue(pd.String(), '_user_profile_*'))),
-                Profile('sustem-profiles', _("Systémové profily"),
-                        filter=pd.AND(pd.NE('profile_id', pd.sval('__form_settings__')),
-                                      pd.NW('profile_id', pd.WMValue(pd.String(), '_user_profile_*')))),
-                Profile('form-settings', _("Nastavení formulářů"),
-                        filter=pd.EQ('profile_id', pd.sval('__form_settings__'))),
+                Profile('system-profiles', _("Systémové profily"),
+                        filter=pd.NW('profile_id', pd.WMValue(pd.String(), '_user_profile_*'))),
                 )
+
+class FormSettings(Specification):
+    public = True
+    table = 'e_pytis_form_settings'
+    title = _(u"Nastavení formulářů")
+    fields = (
+        Field('id', _(u"Identifikátor"), width=20, editable=Editable.NEVER),
+        Field('username', _(u"Uživatel"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
+        Field('spec_name', _(u"Název specifikace"), width=50, editable=Editable.NEVER),
+        Field('form_name', _(u"Typ formuláře"), width=50, editable=Editable.NEVER),
+        Field('pickle', editable=Editable.NEVER),
+        Field('dump', _(u"Obsah"), width=40, height=5, editable=Editable.NEVER),
+        )
+    columns = ('username', 'spec_name', 'form_name')
+    layout = HGroup(('username', 'spec_name', 'form_name'),
+                    ('dump'))

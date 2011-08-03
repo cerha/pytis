@@ -310,7 +310,8 @@ class ApplicationMenuM(pytis.presentation.Specification):
         )
     columns = ('title', 'actiontype', 'fullname', 'description',)
     layout = ('title', 'position', 'actiontype', 'fullname', 'description',)
-    bindings = (pytis.presentation.Binding('role_rights', _(u"Rozpis práv podle rolí"), 'menu.ApplicationMenuRightsFoldable',
+    def bindings(self):
+        return (pytis.presentation.Binding('role_rights', _(u"Rozpis práv podle rolí"), 'menu.ApplicationMenuRightsFoldable',
                                            arguments=(lambda row: dict(shortname=row['shortname'],
                                                                        column=pytis.data.Value(pytis.data.String(), 'roleid',)))),
                 pytis.presentation.Binding('column_rights', _(u"Rozpis práv podle sloupců"), 'menu.ApplicationMenuRightsFoldableColumn',
@@ -333,6 +334,8 @@ class ApplicationMenuM(pytis.presentation.Specification):
                 pytis.presentation.Binding('users', _(u"Uživatelé"), 'statistics.FormUserStatisticsNoinfo',
                                            condition=(lambda row: pytis.data.EQ('shortname', row['shortname']))),
                 pytis.presentation.Binding('profiles', _(u"Profily"), 'profiles.FormProfiles', 'fullname'),
+                pytis.presentation.Binding('settings', _(u"Nastavení"), 'profiles.FormSettings',
+                                           condition=self._form_settings_binding_condition),
                 )
     def actions(self): return (
         pytis.presentation.Action('copy_rights', _(u"Zkopírovat práva z..."), self._copy_rights,
@@ -355,7 +358,15 @@ class ApplicationMenuM(pytis.presentation.Specification):
         fullname = row['fullname'].value() or ''
         result = fullname[:4] != 'sub/' and (fullname.find('::') >= 0 or fullname.find('.Multi') >= 0)
         return pytis.data.Value(pytis.data.Boolean(), result)
-    
+
+    def _form_settings_binding_condition(self, row):
+        split_fullname = row['fullname'].value().split('/')
+        if len(split_fullname) == 5 and split_fullname[0] == 'form':
+            return pytis.data.AND(pytis.data.EQ('spec_name', pytis.data.sval(split_fullname[2])),
+                                  pytis.data.EQ('form_name', pytis.data.sval(split_fullname[1])))
+        else:
+            return pytis.data.OR()
+        
     ## Form actions
 
     def _copy_rights(self, row):
