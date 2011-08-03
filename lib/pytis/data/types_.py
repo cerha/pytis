@@ -1989,6 +1989,23 @@ class LTree(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
+    def __init__(self, text=True, **kwargs):
+        """
+        Arguments:
+
+          text -- if true, handle the type values as text values, otherwise
+            handle them as true ltree values.  This makes difference in
+            sorting -- when true, sort textually, when false, sort
+            lexicographically.
+          
+        """
+        super(LTree, self).__init__(**kwargs)
+        self._text = text
+
+    def text(self):
+        """Return value of 'text' constructor argument."""
+        return self._text
+        
     def _validate(self, string):
         assert isinstance(string, basestring), ('Not a string', string)
         items = string.split('.')

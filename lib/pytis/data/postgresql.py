@@ -862,7 +862,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             column_id = binding.id()
             if full_text_handler is not None and isinstance(binding.type(), FullTextIndex):
                 result = full_text_handler(binding)
-            elif convert_ltree and isinstance(column_type(), LTree):
+            elif convert_ltree and isinstance(column_type(), LTree) and column_type().text():
                 # In order to make Czech sorting working on ltrees, we must do some
                 # ugly things...
                 result = ("replace(%s::text, '.', chr(160))" %
