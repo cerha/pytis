@@ -3010,7 +3010,7 @@ class SideBrowseForm(BrowseForm):
 
     def _init_attributes(self, main_form, binding_column=None, side_binding_column=None,
                          hide_binding_column=True, condition=None, arguments=None,
-                         prefill=None, **kwargs):
+                         prefill=None, search=None, **kwargs):
         """Process constructor arguments and initialize attributes.
         
         Arguments:
@@ -3025,6 +3025,7 @@ class SideBrowseForm(BrowseForm):
         self._xarguments = arguments
         self._selection_arguments = {}
         self._side_prefill = prefill
+        self._side_search = search
         if binding_column:
             column_condition = lambda row: pytis.data.EQ(side_binding_column, row[binding_column])
             if condition is not None:
@@ -3066,6 +3067,16 @@ class SideBrowseForm(BrowseForm):
         elif self._xarguments is not None:
             self._lf_condition = None
         self._refresh(key_update=False)
+        if self._side_search:
+            search = self._side_search(row)
+            if search is not None:
+                if isinstance(search, pytis.data.Value):
+                    search = pytis.data.EQ(self._data.key()[0].id(), search)
+                elif isinstance(search, dict):
+                    search = pytis.data.AND(*[pytis.data.EQ(k, v) for k, v in search.items()])
+                else:
+                    assert isinstance(search, pytis.data.Operator)
+                self._search(search, pytis.data.FORWARD, report_failure=False)
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()

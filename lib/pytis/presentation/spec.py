@@ -1744,7 +1744,7 @@ class Binding(object):
 
     """
     def __init__(self, id, title, name=None, binding_column=None, condition=None, descr=None,
-                 single=False, arguments=None, prefill=None, uri=None, content=None):
+                 single=False, arguments=None, prefill=None, search=None, uri=None, content=None):
         """Arguments:
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
@@ -1765,7 +1765,7 @@ class Binding(object):
             form row.  If used together with the binding column, the condition
             will be used in conjunction with the binding column condition.  If
             'binding_column' is None, this condition will be used solely.
-          arguments -- function of a single argument (the 'PresentedRow'
+          arguments -- function of a single argument ('PresentedRow'
             instance) returning a dictionary of table arguments.  This function
             may be provided only when the side form table is actually a row
             returning function.  Otherwise 'arguments' must be 'None'.
@@ -1787,6 +1787,17 @@ class Binding(object):
             (python) values.  If 'prefill' is None and 'binding_column' is
             specified, the default prefill is automatically generated using the
             binding column value.
+          search -- function of one argument ('PresentedRow' instance)
+            returning search parameters to perform side form search on main
+            form navigation.  The function will receive the current main form
+            record and should return a side form search condition.  The first
+            matching side form row will be automatically selected on each main
+            form record change (after side form filtering by
+            binding_column/condition).  The returned condition may be a
+            'pytis.data.Operator' instance, 'pytis.data.Value' instance
+            representing the side form key column value or a dictionary of
+            column values (keys are column identifiers and values are
+            pytis.data.Value instances).
           uri -- a function of one argument (PresentedRow instance) returning
             side form URI as a string.  If not None, the binding referes to a
             "web form" -- an embedded browser window showing given URI.  In
@@ -1831,6 +1842,7 @@ class Binding(object):
         self._single = single
         self._arguments = arguments
         self._prefill = prefill
+        self._search = search
         self._uri = uri
         self._content = content
         
@@ -1860,6 +1872,9 @@ class Binding(object):
 
     def prefill(self):
         return self._prefill
+
+    def search(self):
+        return self._search
 
     def uri(self):
         return self._uri
