@@ -504,10 +504,11 @@ class DBColumnBinding(DBBinding):
             if isinstance(type_, Type):
                 kwargs_copy = copy.copy(kwargs)
                 if type_.not_null() == kwargs_copy.get('not_null', type_.not_null()):
-                    try:
-                        del kwargs_copy['not_null']
-                    except KeyError:
-                        pass                        
+                    for a in ('not_null', 'enumerator',):
+                        try:
+                            del kwargs_copy[a]
+                        except KeyError:
+                            pass                        
                 assert kwargs_copy == {}, (type_, kwargs)
         self._table = table
         self._column = column
