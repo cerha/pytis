@@ -313,7 +313,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     Používané specifikační funkce:
 
-      print_spec -- sequence of 'ActionPrint' instances
+      print_spec -- sequence of 'PrintAction' instances
 
     """
 
