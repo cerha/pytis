@@ -750,20 +750,21 @@ class InnerForm(Form):
                 if action_has_access('print/%s' % (p.dmp_name(),), perm=pytis.data.Permission.PRINT)]
         def s(value):
             return pytis.data.Value(pytis.data.String(), value)
-        menu.append(MSeparator())
-        menu.append(pytis.extensions.new_record_mitem(_("Nová sestava"), printing_form,
-                                                      prefill=dict(module=s(name))))
-        if db_print_spec:
-            mitem = pytis.extensions.run_form_mitem
-            edit_submenu = [mitem(label, printing_form, PopupEditForm,
-                                  select_row=dict(module=s(module), specification=s(label)))
-                            for module, label in db_print_spec]
-            mitem = pytis.extensions.run_procedure_mitem
-            delete_submenu = [mitem(label, printing_form, 'delete_template',
-                                    module=module, specification=label)
-                              for module, label in db_print_spec]
-            menu += [Menu(_("Editace sestav"), edit_submenu),
-                     Menu(_("Mazání sestav"), delete_submenu)]
+        if has_access(self.name(), perm=pytis.data.Permission.PRINT):
+            menu.append(MSeparator())
+            menu.append(pytis.extensions.new_record_mitem(_("Nová sestava"), printing_form,
+                                                          prefill=dict(module=s(name))))
+            if db_print_spec:
+                mitem = pytis.extensions.run_form_mitem
+                edit_submenu = [mitem(label, printing_form, PopupEditForm,
+                                      select_row=dict(module=s(module), specification=s(label)))
+                                for module, label in db_print_spec]
+                mitem = pytis.extensions.run_procedure_mitem
+                delete_submenu = [mitem(label, printing_form, 'delete_template',
+                                        module=module, specification=label)
+                                  for module, label in db_print_spec]
+                menu += [Menu(_("Editace sestav"), edit_submenu),
+                         Menu(_("Mazání sestav"), delete_submenu)]
         return menu
 
     def _get_print_menu(self):
