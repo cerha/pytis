@@ -57,7 +57,20 @@ class Permission:
     EXPORT = 'EXPORT'
     """Right to make CSV export."""
     PRINT = 'PRINT'
-    """Right to print the form."""
+    """Right to print the form.
+
+    The following rules apply when using DMP:
+
+    - Print actions are always permitted or forbidden based on their own PRINT
+      permissions, regardless of the related form PRINT permissions.
+
+    - If a form doesn't have PRINT permission, the user can't create and edit
+      user output templates.
+
+    - If a side form doesn't have PRINT permission, it is not available in user
+      output templates in Binding substitutions.
+
+    """
     ALL = 'ALL'
     """All rights to the given object."""
 
