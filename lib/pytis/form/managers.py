@@ -271,20 +271,9 @@ class FormProfileManager(UserSetttingsManager):
         return tuple(row['profile_id'].value()
                      for row in self._rows(fullname=fullname, transaction=transaction))
 
-    def list_fullnames(self, pattern=None, transaction=None):
-        """Return a sequence form fullnames for which profiles were saved.
-
-        Arguments:
-          pattern -- wildcard pattern (using * and ? in their usual meaning)
-            to match the returned fullnames.  If None, all previously saved
-            fullnames for given user are returned.
-
-        """
+    def list_fullnames(self, transaction=None):
+        """Return a sequence form fullnames for which profiles were saved."""
         condition = pytis.data.EQ('username', pytis.data.Value(pytis.data.String(), self._username))
-        if pattern:
-            wm = pytis.data.WM('fullname', pytis.data.WMValue(pytis.data.String(), pattern),
-                               ignore_case=False)
-            condition = pytis.data.AND(condition, wm)
         values = self._data.distinct('fullname', condition=condition, transaction=transaction)
         return [v.value() for v in values]
 
