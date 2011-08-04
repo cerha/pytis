@@ -756,6 +756,12 @@ class Configuration(object):
         _DESCR = _(u"HTTP proxy URI used for integrated web browser and other http services.  "
                    u"Example: 'http://127.0.0.1:3129'")
         _DEFAULT = None
+
+    class _Option_fallback_table_print(BooleanOption):
+        _DESCR = _(u"Flag určující, zda se má při tisku vytisknout prostá tabulka formuláře, "
+                   u"pokud není aplikovatelný žádný specifičtější tisk. "
+                   u"Není-li nastaveno, nevytiskne se v takovém případě nic.")
+        _DEFAULT = False
         
     # Volby přizpůsobení uživatelského rozhraní
         
