@@ -48,14 +48,14 @@ _std_table_nolog('e_pytis_form_profiles',
        C('dump', TString),
        C('errors', TString),
        ),
-      sql='UNIQUE (username, fullname, profile_id)',
+      sql='UNIQUE (username, spec_name, profile_id)',
       grant=db_rights,
       schemas=db_schemas,
       doc="""Pytis form configuration storage."""
       )
 
 _std_table_nolog('e_pytis_form_profile_params',
-      (C('id', TInt, constraints=('not null',),
+      (C('id', TInteger, constraints=('not null',),
          references='e_pytis_form_profiles on delete cascade on update cascade'),
        C('form_name', TString, constraints=('NOT NULL',)),
        C('pickle', TString, constraints=('NOT NULL',)),
