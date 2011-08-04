@@ -186,7 +186,8 @@ class LCGFormatter(object):
                     dictionary['Binding'] = binding_dictionary = _ProxyDict()
                     for binding in form_bindings:
                         form_name = binding.name()
-                        if pytis.form.has_access(form_name):
+                        if (pytis.form.has_access(form_name) and
+                            pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT)):
                             # I tried to use closure here, but it produced unexpected results
                             class MakeBinding(object):
                                 def __init__(self, binding, processor, current_row):
@@ -461,13 +462,16 @@ class LCGFormatter(object):
             text += _("Vedlejší formuláře:\n")
             for b in bindings:
                 binding_id = re.sub('[^A-Za-z0-9_]', '_', b.id())
-                text += "  ${Binding.%s.table} ... %s\n" % (binding_id, b.title(),)
-                text += "  ${Binding.%s.data.IDENTIFIKÁTOR_SLOUPCE} ... %s\n" % (binding_id, b.title(),)
-                text += _("  Identifikátory sloupců:\n")
-                sub_view_spec = resolver.get(b.name(), 'view_spec')
-                for field in sub_view_spec.fields():
-                    text += _("    %s ... %s\n") % (field.id(), field.label(),)
-                text += "\n"
+                form_name = b.name()
+                if (pytis.form.has_access(form_name) and
+                    pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT)):
+                    text += "  ${Binding.%s.table} ... %s\n" % (binding_id, b.title(),)
+                    text += "  ${Binding.%s.data.IDENTIFIKÁTOR_SLOUPCE} ... %s\n" % (binding_id, b.title(),)
+                    text += _("  Identifikátory sloupců:\n")
+                    sub_view_spec = resolver.get(b.name(), 'view_spec')
+                    for field in sub_view_spec.fields():
+                        text += _("    %s ... %s\n") % (field.id(), field.label(),)
+                    text += "\n"
         text += _("""Agregační proměnné:
   ${agg.min.IDENTIFIKÁTOR_SLOUPCE} ..... minimum
   ${agg.max.IDENTIFIKÁTOR_SLOUPCE} ..... maximum
