@@ -56,6 +56,7 @@ import string
 import thread
 
 import pytis.data
+import pytis.form
 from pytis.output import *
 import pytis.presentation
 import lcg
@@ -389,7 +390,14 @@ class LCGFormatter(object):
         start_time_export = pytis.data.DateTime.now()
         exporter = lcg.pdf.PDFExporter()
         context = exporter.context(lcg_content, None, presentation=presentation)
-        pdf = exporter.export(context)
+        try:
+            pdf = exporter.export(context)
+        except lcg.SubstitutionIterator.IteratorError, e:
+            message = _("Chybné použití iterátoru.\n"
+                        "Možná se v tabulce odkazujete na neexistující nebo nepřístupný objekt?\n")
+            message += unicode(e)
+            pytis.form.run_dialog(pytis.form.Error, message)
+            return ''
         show_time = pytis.data.DateTime.now()
         log(EVENT, ('Output formatting took %.3fs (PDF export %.3fs)' %
                     (pytis.data.DateTime.diff_seconds(start_time, show_time),
