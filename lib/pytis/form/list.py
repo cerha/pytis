@@ -3076,7 +3076,8 @@ class SideBrowseForm(BrowseForm):
                     search = pytis.data.AND(*[pytis.data.EQ(k, v) for k, v in search.items()])
                 else:
                     assert isinstance(search, pytis.data.Operator)
-                self._search(search, pytis.data.FORWARD, report_failure=False)
+                self._select_cell(0)
+                self._search(search, pytis.data.FORWARD, row_number=0, report_failure=False)
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
