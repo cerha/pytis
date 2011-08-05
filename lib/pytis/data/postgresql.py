@@ -871,7 +871,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 result = self._pdbb_tabcol(binding.table(), column_name, column_id)
                 btype = binding.type()
-                if btype is not None and btype.encrypted():
+                # At least when called from Wiking, btype may be a type class
+                # (and not a Type instance).  Hmm.
+                if btype is not None and isinstance(btype, Type) and btype.encrypted():
                     result = "%s(%s, '%s')" % (btype.DECRYPTION_FUNCTION, result, btype.encrypted(),)
         return result
         

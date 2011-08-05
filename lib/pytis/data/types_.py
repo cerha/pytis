@@ -169,7 +169,7 @@ class Type(object):
           unique -- flag saying the value must be unique within its column in a
             table
           encrypted -- if not None, type values are encrypted, i.e. protected
-            by a password, in the database.  The argument value is an
+            by a password, in the database.  The argument value is a string
             identifier of the protection, there can be several different
             protections in the application, protected by different passwords.
             Not all types support encryption, it is an error to set encryption
@@ -444,7 +444,7 @@ class Type(object):
         return value
 
     def encrypted(self):
-        """Return 'encrypted' value given in the constructor."""
+        """Return 'encrypted' value given in the constructor, 'None' or string."""
         return self._encrypted
        
 
