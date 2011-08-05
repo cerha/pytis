@@ -820,6 +820,14 @@ class Configuration(object):
         _DESCR = _(u"Barva zvýraznění aktivní buňky tabulkového formuláře.")
         _DEFAULT = '#ffa000'
 
+    class _Option_row_highlight_color(ColorOption):
+        _DESCR = _(u"Barva zvýraznění aktivního řádku tabulkového formuláře.")
+        _DEFAULT = '#00a0ff'
+
+    class _Option_row_highlight_color_inactive(ColorOption):
+        _DESCR = _(u"Barva zvýraznění aktivního řádku neaktivního tabulkového formuláře.")
+        _DEFAULT = '#808080'
+
     class _Option_grid_line_color(ColorOption):
         _DESCR = _(u"Barva mřížky tabulkového formuláře.")
         _DEFAULT = '#6482be'

@@ -607,8 +607,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                         if row < row_count:
                             self._update_grid_length(g, row_count, current_row)
                     if row < 0 or row >= g.GetNumberRows():
-                        if g.IsSelection():
-                            g.ClearSelection()
                         row = 0
                     else:
                         if col is None:
@@ -785,9 +783,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             self._table.edit_row(None)
             self._update_selection_colors()
-            # Tento SelectRow je zde nutný pro vynucení překreslení řádku se
-            # staronovými hodnotami.
-            self._grid.SelectRow(row)
+            self._grid.Refresh()
         self._select_cell(row=row, invoke_callback=False)
         self.refresh()
         return True
@@ -812,10 +808,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             g.SetSelectionForeground(foreground)
         if background is not None and background != g.GetSelectionBackground():
             g.SetSelectionBackground(background)
-        # Musíme vynutit překreslení celé selection
-        if g.IsSelection():
-            g.ClearSelection()
-            g.SelectRow(g.GetGridCursorRow())
+        # Force selection refresh.
+        self._grid.Refresh()
         
     def _is_editable_cell(self, row, col):
         # Vrať pravdu, pokud je buňka daného řádku a sloupca editovatelná.
@@ -885,9 +879,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if self._selection_candidate is not None:
             row, col = self._selection_candidate
             self._selection_candidate = None
-            self._grid.SelectRow(row)
-            self._update_selection_colors()
             self._grid.MakeCellVisible(row, col)
+            self._update_selection_colors()
         if self._selection_callback_candidate is not None:
             if self._selection_callback_tick > 0:
                 self._selection_callback_tick -= 1
@@ -936,7 +929,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             event.Skip()
         else:
             event.Veto()
-            self._grid.SelectRow(self._grid.GetGridCursorRow())
 
     def _on_activation(self, alternate=False):
         if alternate:
@@ -1301,16 +1293,21 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _on_right_click(self, event):
         self._run_callback(self.CALL_USER_INTERACTION)
-        selected = len(self._selected_rows())
-        if selected == 1 and self._grid.IsInSelection(*self._current_cell()) \
-               or selected == 0:
-            row, col = event.GetRow(), event.GetCol()
-            self._select_cell(row, col)
-            self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
-        event.Skip()
+        row, col = event.GetRow(), event.GetCol()
+        self._select_cell(row, col)
+        self._grid.Refresh()
+        self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
         
     def _on_left_click(self, event):
-        event.Skip()
+        if self._grid.IsSelection() or event.ShiftDown() or event.ControlDown():
+            # Allow default behavior (clicked row selection) only when there
+            # was a previous selection or if the user wants to make one.
+            event.Skip()
+        else:
+            # Otherwise only move the cursor to the clicked cell.
+            row, col = event.GetRow(), event.GetCol()
+            self._select_cell(row, col)
+            self._grid.Refresh()
             
     def _on_wheel(self, event):
         g = self._grid
@@ -2557,7 +2554,7 @@ class FoldableForm(ListForm):
                             level = 1
                         self._expand_or_collapse(row, level=level)
                         return
-        event.Skip()
+        super(FoldableForm, self)._on_left_click(event)
         
     def _expand_or_collapse(self, row, level=None):
         node = self._table.row(row)[self._folding_column_id].value()
@@ -3115,15 +3112,6 @@ class SideBrowseForm(BrowseForm):
         parameters.update({self._main_form.name()+'/'+pytis.output.P_ROW:
                            copy.copy(self._main_form.current_row().row())})
         return parameters
-
-    def _update_selection_colors(self):
-        g = self._grid
-        if g is not None:               # may be called within `close'
-            if focused_window() is not self:
-                g.ClearSelection()
-            else:
-                g.SelectRow(g.GetGridCursorRow())
-                super(SideBrowseForm, self)._update_selection_colors()
 
     def main_form(self):
         """Return main form instance corresponding to this side form."""

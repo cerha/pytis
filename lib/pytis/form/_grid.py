@@ -478,22 +478,6 @@ class DataTable(object):
 
 class ListTable(wx.grid.PyGridTableBase, DataTable):    
             
-    class _Column(DataTable._Column):
-        
-        _TYPE_MAPPING = None
-        
-        def __init__(self, id_, type_, label, style):
-            DataTable._Column.__init__(self, id_, type_, label, style)
-            self.wxtype = self._wx_type(type_)
-            
-        def _wx_type(self, t):
-            if self._TYPE_MAPPING is None:
-                # Musíme inicializovat až zde kvůli neXovému serveru.
-                # Nepoužíváme mapování pro Float, protože to by nám zrušilo
-                # naše formátování čísel.
-                self.__class__._TYPE_MAPPING = {pytis.data.Boolean: wx.grid.GRID_VALUE_BOOL}
-            return self._TYPE_MAPPING.get(t.__class__, wx.grid.GRID_VALUE_STRING)
-                            
     def __init__(self, form, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
         assert isinstance(form, Form)
@@ -556,7 +540,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
     def IsEmptyCell(self, row, col):
         return False
     
-    def GetValue(self, row, col, inputfield=False):
+    def GetValue(self, row, col):
         # `row' a `col' jsou číslovány od 0.
         # Je tabulka již uzavřena?
         if not self._data or col >= self.GetNumberCols():
@@ -569,12 +553,6 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
             value = the_row.format(column.id, secure=True)
         else:
             value = self._cached_value(row, column.id)
-        if not inputfield and column.wxtype == wx.grid.GRID_VALUE_BOOL:
-            # wx pro boolean sloupce rozeznává pouze následující *stringové* hodnoty:
-            if value == 'T':
-                value = '1'
-            else:
-                value = ''
         return value
 
     def SetValue(self, row, col, value):
@@ -601,11 +579,10 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
     # Nyní implementováno pomocí `ListForm._on_column_header_paint()'.
 
     def GetTypeName(self, row, col):
-        # wx.grid.GRID_VALUE_BOOL causes segfault on doubleclicking a column, so we rather blaim 
-        # the grid that everyting is a string and use a custom renderer for boolean columns...
-        #if col < self.GetNumberCols():
-        #    return self._columns[col].wxtype
-        #else:
+        # wx.grid.GRID_VALUE_BOOL causes segfault on doubleclicking a column
+        # and float is avoided in favor of our own numeric value formatting, so
+        # we rather blaim the grid that everyting is a string.  Bool values are
+        # rendered using a custom renderer...
         return wx.grid.GRID_VALUE_STRING
     
     def GetAttr(self, row, col, kind):
@@ -637,8 +614,10 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
                 attr.SetTextColour(fg)
                 attr.SetBackgroundColour(bg)
                 attr.SetFont(font)
-                if column.wxtype == wx.grid.GRID_VALUE_BOOL:
-                    attr.SetRenderer(wx.grid.GridCellBoolRenderer())
+                if column.type.__class__ == pytis.data.Boolean:
+                    attr.SetRenderer(CustomBooleanCellRenderer())
+                else:
+                    attr.SetRenderer(CustomCellRenderer())
                 return attr
         return None
 
@@ -732,4 +711,64 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         """
         self.SetControl(None)
 
-    
+
+class CustomCellRenderer(wx.grid.PyGridCellRenderer):
+    """Custom renderer which highlights the current row using a rectangle.
+
+    The base class doesn't allow using the default behavior and only add the
+    rectangle, so we must drow everything ourselves as the default renderer
+    would draw it.  Than we additionally drow the rectangle around the current
+    row (where the grid cursor is located).
+
+    """
+
+    def _draw_value(self, value, dc, rect, align):
+        label_rect = wx.Rect(rect.x+1, rect.y, rect.width-2, rect.height)
+        dc.DrawLabel(value, label_rect, wx.ALIGN_CENTER_VERTICAL|align)
+        
+    def Draw(self, grid, attr, dc, rect, row, col, isSelected):
+        """Customisation Point: Draw the data from grid in the rectangle with attributes using the dc"""
+        dc.SetClippingRegion(rect.x, rect.y, rect.width, rect.height)
+        try:
+            if isSelected:
+                fg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+                bg = wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+            else:
+                fg = attr.GetTextColour()
+                bg = attr.GetBackgroundColour()
+            dc.SetBrush(wx.Brush(bg, wx.SOLID))
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height)
+            dc.SetBackgroundMode(wx.TRANSPARENT)
+            dc.SetTextForeground(fg)
+            dc.SetFont(attr.GetFont())
+            self._draw_value(grid.GetCellValue(row, col), dc, rect, attr.GetAlignment()[0])
+            if grid.GetGridCursorRow() == row:
+                original_pen = dc.GetPen()
+                try:
+                    if grid.GetParent() is focused_window():
+                        color = config.row_highlight_color
+                    else:
+                        color = config.row_highlight_color_inactive
+                    dc.SetPen(wx.Pen(color, 3, wx.SOLID))
+                    dc.DrawLine(rect.x+1, rect.y, rect.x+rect.width+1, rect.y)
+                    dc.DrawLine(rect.x, rect.y+rect.height-1, rect.x+rect.width, rect.y+rect.height-1)
+                    if col == 0:
+                        dc.DrawLine(rect.x, rect.y, rect.x, rect.y+rect.height)
+                    if col+1 == grid.GetNumberCols():
+                        dc.DrawLine(rect.x+rect.width, rect.y, rect.x+rect.width, rect.y+rect.height)
+                        
+                finally:
+                    dc.SetPen(original_pen)
+                    
+        finally:
+            dc.DestroyClippingRegion()
+
+class CustomBooleanCellRenderer(CustomCellRenderer):
+
+    def _draw_value(self, value, dc, rect, align):
+        icon = get_icon(value == 'T' and 'checkbox-checked' or 'checkbox-unchecked')
+        if icon:
+            dc.DrawImageLabel('', icon, rect, wx.ALIGN_CENTER_VERTICAL|align)
+        elif value == 'T':
+            dc.DrawLabel(value, rect, wx.ALIGN_CENTER_VERTICAL|align)
