@@ -413,18 +413,20 @@ class DateTimeFieldExporter(TextFieldExporter):
     def _format(self, context):
         return localizable_datetime(self._value())
     
+    def _editor_date_format(self, locale_data):
+        return locale_data.date_format + ' ' + locale_data.time_format
+    
     def _editor_kwargs(self, context, prefill, error):
         kwargs = super(DateTimeFieldExporter, self)._editor_kwargs(context, prefill, error)
         # Use localizable values also inside editor fields (exported value is used by default).
         return dict(kwargs, value=self._format(context))
-    
-class DateFieldExporter(DateTimeFieldExporter):
-    
+
     def _maxlen(self):
-        return 10
+        # TODO: Respect date format!
+        return 16
     
     def _editor(self, context, **kwargs):
-        result = super(DateFieldExporter, self)._editor(context, **kwargs)
+        result = super(DateTimeFieldExporter, self)._editor(context, **kwargs)
         g = context.generator()
         result += g.script_write(g.button('...', id='%s-button' % kwargs['id'], type='button',
                                           cls='selection-invocation calendar-invocation',
@@ -436,7 +438,7 @@ class DateFieldExporter(DateTimeFieldExporter):
             locale_data = context.locale_data()
             js_values = dict(
                 id = kwargs['id'],
-                format = locale_data.date_format,
+                format = self._editor_date_format(locale_data),
                 today = context.translate(_(u"today")),
                 day_names = g.js_value([context.translate(lcg.week_day_name(i, abbrev=True))
                                         for i in (6,0,1,2,3,4,5)]),
@@ -454,6 +456,18 @@ class DateFieldExporter(DateTimeFieldExporter):
                Calendar.FIRST_WEEK_DAY = %(first_week_day)d;
                """ % js_values)
         return result
+
+    
+class DateFieldExporter(DateTimeFieldExporter):
+    
+    def _editor_date_format(self, locale_data):
+        return locale_data.date_format
+
+    def _maxlen(self):
+        # TODO: Respect date format!
+        return 10
+
+
 class ColorFieldExporter(StringFieldExporter):
 
     def _format(self, context):
