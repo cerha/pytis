@@ -834,9 +834,8 @@ class DMPRights(DMPObject):
         I = self._i_
         S = self._s_
         for right in self.items():
-            right_spec = right.shortname().split('/')[-1]
-            if (specifications is not None and
-                not some(lambda s: s==right_spec, specifications)):
+            shortname = right.shortname()
+            if (specifications is not None and shortname not in specifications):
                 continue
             row = pytis.data.Row((('shortname', S(right.shortname()),),
                                   ('roleid', S(right.roleid()),),
