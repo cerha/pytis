@@ -625,17 +625,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if self._current_editor is None:
             self._init_col_attr()
         row, col = self._current_cell()
-        table = self._table
-        cid = self._columns[col].id()
-        the_row = table.editing().the_row
         if self._view.on_edit_record() is not None:
             message(_(u"In-line editace zakázána.  Použijte formulář (F5)."), beep_=True)
             return False
-        if not the_row.editable(cid):
+        if not self._is_editable_cell(row, col):
             message(_(u"Políčko je needitovatelné"), kind=ACTION, beep_=True)
             return False
         self._grid.EnableCellEditControl()
-        log(EVENT, 'Spuštěn editor políčka:', (row, cid))
+        log(EVENT, 'Grid field editor started:', (row, col))
         return True
 
     def _on_editor_shown(self, event):
@@ -806,12 +803,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _is_editable_cell(self, row, col):
         # Vrať pravdu, pokud je buňka daného řádku a sloupca editovatelná.
         editing = self._table.editing()
-        if row == editing.row:
+        if editing and row == editing.row:
             the_row = editing.the_row
         else:
             the_row = self._table.row(row)
-        id = self._columns[col].id()
-        return the_row.editable(id)
+        cid = self._columns[col].id()
+        return the_row.editable(cid)
     
     def _find_next_editable_cell(self):
         # Vrať pravdu, pokud bylo pohybem vpravo nalezeno editovatelné políčko.
