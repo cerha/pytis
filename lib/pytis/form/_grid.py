@@ -615,9 +615,9 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
                 attr.SetBackgroundColour(bg)
                 attr.SetFont(font)
                 if column.type.__class__ == pytis.data.Boolean:
-                    attr.SetRenderer(CustomBooleanCellRenderer())
+                    attr.SetRenderer(CustomBooleanCellRenderer(self))
                 else:
-                    attr.SetRenderer(CustomCellRenderer())
+                    attr.SetRenderer(CustomCellRenderer(self))
                 return attr
         return None
 
@@ -721,6 +721,10 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
     row (where the grid cursor is located).
 
     """
+    
+    def __init__(self, table):
+        self._table = table
+        super(CustomCellRenderer, self).__init__()
 
     def _draw_value(self, value, dc, rect, align):
         label_rect = wx.Rect(rect.x+1, rect.y, rect.width-2, rect.height)
@@ -746,10 +750,12 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
             if grid.GetGridCursorRow() == row:
                 original_pen = dc.GetPen()
                 try:
-                    if grid.GetParent() is focused_window():
-                        color = config.row_highlight_color
+                    if grid.GetParent() is not focused_window():
+                        color = config.row_highlight_unfocused_color
+                    elif self._table.editing():
+                        color = config.row_highlight_edited_color
                     else:
-                        color = config.row_highlight_color_inactive
+                        color = config.row_highlight_color
                     dc.SetPen(wx.Pen(color, 3, wx.SOLID))
                     dc.DrawLine(rect.x+1, rect.y, rect.x+rect.width+1, rect.y)
                     dc.DrawLine(rect.x, rect.y+rect.height-1, rect.x+rect.width, rect.y+rect.height-1)

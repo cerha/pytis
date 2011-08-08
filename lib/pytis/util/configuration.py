@@ -790,24 +790,6 @@ class Configuration(object):
         _DESCR = _(u"Seznam formulářů, které mají být otevřeny po spuštění aplikace.")
         _DEFAULT = None
 
-    class _Option_row_focus_fg_color(ColorOption):
-        _DESCR = _(u"Barva textu aktivního řádku tabulkového formuláře.")
-        _DEFAULT = '#ffffff'
-        
-    class _Option_row_focus_bg_color(ColorOption):
-        _DESCR = _(u"Barva pozadí aktivního řádku tabulkového formuláře.")
-        _DOC   = _(u"Pokud barva není nastavena, bude použita systémová barva " +
-                   u"zvýraznění.  Barva je reprezentována řetězcem '#RRGGBB'.")
-        _DEFAULT = None
-        
-    class _Option_row_nofocus_fg_color(ColorOption):
-        _DESCR = _(u"Barva textu neaktivního řádku tabulkového formuláře.")
-        _DEFAULT = '#000000'
-        
-    class _Option_row_nofocus_bg_color(ColorOption):
-        _DESCR = _(u"Barva pozadí neaktivního řádku tabulkového formuláře.")
-        _DEFAULT = '#b6b6b6'
-        
     class _Option_row_edit_fg_color(ColorOption):
         _DESCR = _(u"Barva textu editovaného řádku tabulkového formuláře.")
         _DEFAULT = '#ffffff'
@@ -824,7 +806,11 @@ class Configuration(object):
         _DESCR = _(u"Barva zvýraznění aktivního řádku tabulkového formuláře.")
         _DEFAULT = '#00a0ff'
 
-    class _Option_row_highlight_color_inactive(ColorOption):
+    class _Option_row_highlight_edited_color(ColorOption):
+        _DESCR = _(u"Barva zvýraznění aktivního řádku tabulkového formuláře během inline editace.")
+        _DEFAULT = '#ff0000'
+
+    class _Option_row_highlight_unfocused_color(ColorOption):
         _DESCR = _(u"Barva zvýraznění aktivního řádku neaktivního tabulkového formuláře.")
         _DEFAULT = '#808080'
 

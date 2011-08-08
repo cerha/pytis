@@ -782,35 +782,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._update_grid()
         else:
             self._table.edit_row(None)
-            self._update_selection_colors()
             self._grid.Refresh()
         self._select_cell(row=row, invoke_callback=False)
         self.refresh()
         return True
     
-    def _update_selection_colors(self):
-        if focused_window() is self:
-            if self._table.editing():
-                foreground = config.row_edit_fg_color
-                background = config.row_edit_bg_color
-            else:
-                foreground = config.row_focus_fg_color
-                background = config.row_focus_bg_color
-                if background is None:
-                    c = wx.SYS_COLOUR_HIGHLIGHT
-                    background = wx.SystemSettings.GetColour(c)
-
-        else:
-            foreground = config.row_nofocus_fg_color
-            background = config.row_nofocus_bg_color
-        g = self._grid
-        if foreground is not None and foreground != g.GetSelectionForeground():
-            g.SetSelectionForeground(foreground)
-        if background is not None and background != g.GetSelectionBackground():
-            g.SetSelectionBackground(background)
-        # Force selection refresh.
-        self._grid.Refresh()
-        
     def _is_editable_cell(self, row, col):
         # Vrať pravdu, pokud je buňka daného řádku a sloupca editovatelná.
         editing = self._table.editing()
@@ -880,7 +856,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             row, col = self._selection_candidate
             self._selection_candidate = None
             self._grid.MakeCellVisible(row, col)
-            self._update_selection_colors()
+            self._grid.Refresh()
         if self._selection_callback_candidate is not None:
             if self._selection_callback_tick > 0:
                 self._selection_callback_tick -= 1
@@ -1307,7 +1283,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Otherwise only move the cursor to the clicked cell.
             row, col = event.GetRow(), event.GetCol()
             self._select_cell(row, col)
-            self._grid.Refresh()
+            self.focus()
             
     def _on_wheel(self, event):
         g = self._grid
@@ -1441,7 +1417,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return True
 
     def _update_colors(self):
-        self._update_selection_colors()
+        # Wx only supports highlighting of the current cell, not the current
+        # row.  Thus we highlight the current row ourselves in
+        # CustomCellRenderer (defined in _grid.py).
         if config.cell_highlight_color is not None:
             self._grid.SetCellHighlightColour(config.cell_highlight_color)
         if config.grid_line_color is not None:
@@ -1871,7 +1849,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._transaction = self._governing_transaction
                 return False
             table.edit_row(self._current_cell()[0])
-            self._update_selection_colors()
+            self._grid.Refresh()
         if not self._edit_cell():
             self._on_line_rollback()
         return True
@@ -2142,7 +2120,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             log(EVENT, u'Žádný sloupec není editovatelný')
             return False
         self._edit_cell()
-        self._update_selection_colors()
         log(EVENT, u'Řádek vložen')
         return True
 
@@ -2240,12 +2217,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         super(ListForm, self).focus()
         self._show_position()
         self._show_data_status()
-        self._update_selection_colors()
         self._grid.SetFocus()
+        self._grid.Refresh()
         
     def defocus(self):
         super(ListForm, self).defocus()
-        self._update_selection_colors()
+        self._grid.Refresh()
 
 
 class FoldableForm(ListForm):
