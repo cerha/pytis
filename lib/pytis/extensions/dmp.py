@@ -1432,6 +1432,10 @@ class DMPActions(DMPObject):
                 transaction.commit()
         return messages
 
+    def convert_system_rights(self, fake, shortname):
+        row = pytis.data.Row((('shortname', pytis.data.sval(shortname),),))
+        self._dbfunction('pytis_convert_system_rights').call(row)
+
 
 class DMPImport(DMPObject):
     """Initial import functionality."""
@@ -1610,3 +1614,7 @@ def dmp_delete_fullname(parameters, fake, fullname):
 def dmp_delete_shortname(parameters, fake, shortname):
     configuration = DMPConfiguration(**parameters)
     return DMPActions(configuration).dmp_delete_name(fake, shortname, 'shortname')
+
+def dmp_convert_system_rights(parameters, fake, shortname):
+    configuration = DMPConfiguration(**parameters)
+    return DMPActions(configuration).convert_system_rights(fake, shortname)

@@ -285,6 +285,19 @@ as select distinct shortname from c_pytis_menu_actions;
         name='ev_pytis_short_actions',
         depends=('c_pytis_menu_actions',))
 
+sql_raw("""
+create or replace function pytis_convert_system_rights (shortname_ text) returns void as $$
+begin
+  if (select count(*) from e_pytis_action_rights where shortname=shortname_ and system=True) = 0 then
+    raise exception 'No system rights found for %', shortname_;
+  end if;
+  insert into e_pytis_action_rights (shortname, roleid, rightid, granted) values (shortname_, '*', '*', False);
+  update e_pytis_action_rights set system=False where shortname=shortname_ and system=True;
+end;
+$$ language plpgsql;
+""",
+        name='pytis_convert_system_rights',
+        depends=('e_pytis_action_rights',))
 
 ### Menus
 

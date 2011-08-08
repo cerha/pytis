@@ -296,6 +296,16 @@ def command_delete(parameters, dry_run, args):
         result = pytis.extensions.dmp_delete_shortname(parameters, dry_run, action)
     return result
 
+def command_convert_system_rights(parameters, dry_run, args):
+    if not args:
+        print "Error: missing shortname"
+        return
+    shortname = args.pop(0)
+    if args:
+        print "Error: extra arguments:", args
+        return
+    return pytis.extensions.dmp_convert_system_rights(parameters, dry_run, shortname)
+    
 def command_commit(parameters, dry_run, args):
     if args:
         print "Error: commit takes no arguments"
@@ -324,6 +334,7 @@ Commands:
   add-form FULLNAME MENU-POSITION
   update-form SPECIFICATION-NAME
   delete { SHORTNAME | FULLNAME | MENU-POSITION }
+  convert-system-rights SHORTNAME
   reset-rights SPECIFICATION-NAME
   commit"""
 
