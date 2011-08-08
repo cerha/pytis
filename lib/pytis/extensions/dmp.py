@@ -510,7 +510,7 @@ class DMPMenu(DMPObject):
                        Attribute('name', basestring),
                        Attribute('kind', basestring),
                        Attribute('title', unicode),
-                       Attribute('parent'),
+                       Attribute('parent', mutable=True),
                        Attribute('children', list, mutable=True),
                        Attribute('action', basestring),
                        Attribute('position', basestring, mutable=True),
@@ -672,7 +672,7 @@ class DMPMenu(DMPObject):
             pos = position.rfind('.')
             if pos >= 0:
                 parent_position = position[:pos]
-                item.parent = items_by_position[parent_position]
+                item.set_parent(items_by_position[parent_position])
             else:
                 if self._top_item is None or item.position() < self._top_item.position():
                     self._top_item = item
