@@ -915,11 +915,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
         condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
     rights_query = ("select rightid, granted, roleid, shortname, colname, system "
                     "from e_pytis_action_rights "
-                    "where %s and rightid!='*' "
-                    "union "
-                    "select c.rightid, granted, roleid, shortname, colname, system "
-                    "from e_pytis_action_rights e, c_pytis_access_rights c "
-                    "where %s and e.rightid='*' and c.rightid!='*'") % (condition, condition,)
+                    "where %s") % (condition,)
     for row in plpy.execute(rights_query):
         rightid, granted, roleid, shortname, column, system = row['rightid'], row['granted'], row['roleid'], row['shortname'], row['colname'], row['system']
         key = shortname
@@ -1016,10 +1012,10 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             def store_rights(shortname, max_rights, allowed_rights, forbidden_rights):
                 if max_rights is None:
                     max_rights = allowed_rights
-                rights = [right for right in max_rights if right not in forbidden_rights]
+                rights = [right for right in max_rights if right not in forbidden_rights and ('*', None) not in forbidden_rights]
                 rights += [right for right in allowed_rights
                            if right not in forbidden_rights and (right in max_rights or (right[0], None,) in max_rights)]
-                if ('show', None,) not in forbidden_rights:
+                if ('show', None,) not in forbidden_rights and ('*', None) not in forbidden_rights:
                     rights.append(('show', None,))
                 rights.sort()
                 computed_rights[(shortname, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights,
