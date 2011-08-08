@@ -1514,7 +1514,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                               ListForm.COMMAND_RESIZE_COLUMN,
                               ListForm.COMMAND_EDIT,
                               ListForm.COMMAND_FIRST_COLUMN,
-                              ListForm.COMMAND_LAST_COLUMN)
+                              ListForm.COMMAND_LAST_COLUMN,
+                              ListForm.COMMAND_CONTEXT_MENU)
         # Příkazy platné pouze během editace řádku.
         EDIT_COMMANDS = (ListForm.COMMAND_LINE_COMMIT,
                          ListForm.COMMAND_LINE_ROLLBACK,
