@@ -758,6 +758,12 @@ class DMPRights(DMPObject):
     def items(self):
         return self._rights
 
+    def add_item(self, shortname, roleid='*', rightid='*', colname=None, system=False, granted=True):
+        item = self.Right(shortname=shortname, roleid=roleid, rightid=rightid, colname=colname,
+                          system=system, granted=granted)
+        self._rights.append(item)
+        return item
+
     def _load_specifications(self):
         messages = []
         def add_rights(shortname, access_specification):
@@ -1524,16 +1530,30 @@ class DMPImport(DMPObject):
 
         """
         transaction = self._transaction()
+        resolver = self._resolver()
         messages = []
-        action = DMPActions.Action(self._resolver(), messages, fullname=fullname)
+        action = DMPActions.Action(resolver, messages, fullname=fullname)
         messages += self._dmp_actions.load_specifications(actions=[action])
         messages += self._dmp_actions.store_data(fake, transaction)
         specification = action.form_name()
         messages += self._dmp_actions.update_forms(fake, [specification], transaction=transaction)
         self._dmp_menu.retrieve_data()
-        self._dmp_menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
-                                title=action.title(), action=fullname, position=position)
+        menu_item = self._dmp_menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
+                                            title=action.title(), action=fullname, position=position)
         messages += self._dmp_menu.store_data(fake, transaction=transaction, specifications=[fullname])
+        self._dmp_rights.retrieve_data()
+        shortname = action.shortname()
+        for a in self._dmp_rights.items():
+            if a.shortname() == shortname:
+                break
+        else:
+            for m in self._dmp_menu.items():
+                if (m is not menu_item and
+                    DMPActions.Action(resolver, [], fullname=m.action()).shortname() == shortname):
+                    break
+            else:
+                self._dmp_rights.add_item(shortname, granted=False)
+        messages += self._dmp_rights.store_data(fake, transaction=transaction, specifications=[shortname])
         if fake:
             transaction.rollback()
         else:
