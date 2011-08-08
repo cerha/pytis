@@ -1273,9 +1273,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
         
     def _on_left_click(self, event):
-        if self._grid.IsSelection() or event.ShiftDown() or event.ControlDown():
-            # Allow default behavior (clicked row selection) only when there
-            # was a previous selection or if the user wants to make one.
+        if event.ShiftDown() or event.ControlDown():
+            # Allow default behavior (clicked row selection) only when the user
+            # wants to make a selection.
             event.Skip()
         else:
             # Otherwise only move the cursor to the clicked cell.
