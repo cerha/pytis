@@ -567,7 +567,8 @@ _std_table_nolog('c_pytis_access_rights',
                   C('description', pytis.data.String(maxlen=32), constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
-                 init_values=(("'show'", _(u"'Viditelnost položek menu'"),),
+                 init_values=(("'*'", _(u"Všechna práva"),),
+                              ("'show'", _(u"'Viditelnost položek menu'"),),
                               ("'view'", _(u"'Prohlížení existujících záznamů'"),),
                               ("'insert'", _(u"'Vkládání nových záznamů'"),),
                               ("'update'", _(u"'Editace existujících záznamů'"),),
@@ -912,7 +913,14 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             return []
         related_shortnames = string.join(related_shortnames_list, ', ')
         condition = "%s and shortname in (%s)" % (condition, related_shortnames,)
-    for row in plpy.execute("select rightid, granted, roleid, shortname, colname, system from e_pytis_action_rights where %s" % (condition,)):
+    rights_query = ("select rightid, granted, roleid, shortname, colname, system "
+                    "from e_pytis_action_rights "
+                    "where %s and rightid!='*' "
+                    "union "
+                    "select c.rightid, granted, roleid, shortname, colname, system "
+                    "from e_pytis_action_rights e, c_pytis_access_rights c "
+                    "where %s and e.rightid='*' and c.rightid!='*'") % (condition, condition,)
+    for row in plpy.execute(rights_query):
         rightid, granted, roleid, shortname, column, system = row['rightid'], row['granted'], row['roleid'], row['shortname'], row['colname'], row['system']
         key = shortname
         item_rights = raw_rights.get(key)
