@@ -357,13 +357,13 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         self._needs_validation = False
         self._valid = False
         self._init_attributes()
+        self._ctrl = ctrl = self._create_ctrl(parent)
         if inline:
             self._label = None
-            self._widget = self._create_ctrl(parent)
+            self._widget = ctrl
         else:
             self._label = self._create_label(parent)
             self._widget = self._create_widget(parent)
-        ctrl = self._ctrl
         KeyHandler.__init__(self, ctrl)
         wx_callback(wx.EVT_IDLE,       ctrl, self._on_idle)
         wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_kill_focus)
@@ -414,13 +414,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         raise ProgramError("This method must be overriden!")
 
     def _create_widget(self, parent):
-        # Create the main control and optionally create additional UI elements.
-        # Return a wx widget containing all UI elements for given field.
-        # For simple fields that's the actual control, but some more
-        # sophisticated fields may have additional buttons etc.
-        # The main control must be assinged to `self._ctrl'.
-        self._ctrl = ctrl = self._create_ctrl(parent)
-        return ctrl
+        # Create additional UI elements for the field control.  Return a wx
+        # widget containing all UI elements for given field.  This class simply
+        # returns the actual control, but derived classes may add extra buttons
+        # etc. to create more sophisticated user interface.  This class is not
+        # called in "inline" mode where additional controls are not allowed.
+        return self._ctrl
 
     def _get_value(self):
         # Return the external (string) representation of the current field value from the field UI
@@ -1056,21 +1055,23 @@ class NumericField(TextField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
+    def _create_ctrl(self, parent):
+        self._slider = None
+        return super(NumericField, self)._create_ctrl(parent)
+        
     def _create_widget(self, parent):
         result = super(NumericField, self)._create_widget(parent)
-        if self._spec.slider() and not self._inline:
+        if self._spec.slider():
             box = wx.BoxSizer()
-            slider = wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
-                               minValue=self._type.minimum() or 0,
-                               maxValue=self._type.maximum() is None and 100 or self._type.maximum(),
-                               size=(200, 25))
+            self._slider = slider =wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
+                                             minValue=self._type.minimum() or 0,
+                                             maxValue=(self._type.maximum() is None
+                                                       and 100 or self._type.maximum()),
+                                             size=(200, 25))
             wx_callback(wx.EVT_SCROLL, slider, self._on_slider)
             box.Add(result)
             box.Add(slider)
             result = box
-        else:
-            slider = None
-        self._slider = slider
         return result
     
     def _on_slider(self, event):
