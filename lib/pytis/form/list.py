@@ -573,8 +573,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # returns an empty list, so we must construct the list ourselves using
         # g.GetSelectionBlockTopLeft() and g.GetSelectionBlockBottomRight().
         rows = []
-        if g.IsInSelection(*self._current_cell()):
-            rows.append(g.GetGridCursorRow())
         for start, end in zip([r for r, c in g.GetSelectionBlockTopLeft()],
                               [r for r, c in g.GetSelectionBlockBottomRight()]):
             rows.extend([r for r in range(start, end+1) if r not in rows])
@@ -2732,7 +2730,10 @@ class SelectRowsForm(CodebookForm):
     """Řádkový pop-up formulář vracející tuple všech vybraných řádků."""
 
     def _on_activation(self, alternate=False):
-        self._result = tuple(self.selected_rows())
+        selected_rows = tuple(self.selected_rows()) 
+        if len(selected_rows) == 0:
+            selected_rows = (self.current_row(),)
+        self._result = selected_rows
         self._parent.EndModal(1)
         return True
 
