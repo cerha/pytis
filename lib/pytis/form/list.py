@@ -1823,13 +1823,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
         # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
         #                     so we must continue tu use this horrible hack
-        if config.use_wx_clipboard:
-            copy_to_clipboard(text)
+        if pytis.windows.windows_available():
+            nx_ip  = pytis.windows.nx_ip()
+            log(EVENT, 'Copy the cell to windows clipboard on %s' % nx_ip)
+            pytis.windows.set_clipboard_text(text)
         else:
-            ctrl = wx.TextCtrl(self, -1, text)
-            ctrl.SetSelection(0, len(text))
-            ctrl.Copy()
-            ctrl.Destroy()
+            if config.use_wx_clipboard:
+                copy_to_clipboard(text)
+            else:
+                ctrl = wx.TextCtrl(self, -1, text)
+                ctrl.SetSelection(0, len(text))
+                ctrl.Copy()
+                ctrl.Destroy()
         
     def _cmd_copy_aggregation_result(self, operation, cid):
         self._copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
@@ -1913,6 +1918,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         filename = None
         remote = False
         if pytis.windows.windows_available():
+            nx_ip  = pytis.windows.nx_ip()
+            log(EVENT, 'Windows service on %s available' % nx_ip)
             try:
                 filename = pytis.windows.make_temporary_file(suffix='.'+fileformat.lower())
             except:
@@ -1920,6 +1927,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_file = filename
             if export_file is not None:
                 remote = True
+        else:
+            log(EVENT, 'Windows service not available')
         if filename is None:
             export_dir = config.export_directory
             filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
