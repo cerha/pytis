@@ -6,9 +6,14 @@ db_rights = globals().get('Gall_pytis', None)
 if not db_rights:
     raise ProgramError('No rights specified! Please define Gpytis_menu')
 
-_std_table_nolog('e_pytis_disabled_dmp_triggers',
-                 (P('id', TUser),),
-                 """This table allows disabling some trigger calls.
+pytis_inherits = globals().get('pytis_inherits', None)
+pytis_log_update = globals().get('pytis_log_update', None)
+
+
+table('e_pytis_disabled_dmp_triggers',
+      (P('id', TUser),),
+      grant=db_rights,
+      doc="""This table allows disabling some trigger calls.
 Supported values (flags) are:
 genmenu -- initial insertion and deletion on certain tables
 positions -- set during trigger update of menu positions to prevent recursive trigger calls;
@@ -34,19 +39,20 @@ _std_table_nolog('c_pytis_role_purposes',
                  grant=db_rights
                  )
 
-_std_table('e_pytis_roles',
+table('e_pytis_roles',
            (P('name', TUser),
             C('description', pytis.data.String(maxlen=64)),
             C('purposeid', pytis.data.String(minlen=4, maxlen=4), constraints=('not null',), default="'appl'",
               references='c_pytis_role_purposes on update cascade'),
             C('deleted', TDate),),
-            """Application user roles.""",
            init_values=(("'*'", "'Zástupná role pro všechny role'", "'admn'", 'NULL',),
                         ("'admin_roles'", "'Administrátor rolí'", "'admn'", 'NULL',),
                         ("'admin_menu'", "'Administrátor menu'", "'admn'", 'NULL',),
                         ("'admin'", "'Administrátor rolí a menu'", "'admn'", 'NULL',),
                         ),
            grant=db_rights,
+           inherits=pytis_inherits,
+           doc="Application user roles.",
            depends=('c_pytis_role_purposes',))
 def e_pytis_roles_trigger():
     class Roles(BaseTriggerObject):
