@@ -2073,7 +2073,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 presented_row = self._table.row(r)
                 for j, (cid, ctype) in enumerate(column_list):
                     if isinstance(ctype, pytis.data.Float):
-                        s = presented_row.format(cid, secure=True, locale_format=True)
+                        s = presented_row[cid].value()
                     else:
                         value = presented_row.get(cid, secure=True)
                         if value and value.value() is not None:
