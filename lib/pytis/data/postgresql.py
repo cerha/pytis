@@ -28,7 +28,6 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 import collections
 import copy
 import datetime
-import operator
 import re
 import string
 import thread
@@ -620,7 +619,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                     # navěsit, co je nám libo.
                     for n in remove_duplicates(notiflist):
                         self._notif_register(n)
-                except pytis.data.DBException as e:
+                except pytis.data.DBException:
                     time.sleep(error_pause)
                     error_pause = error_pause * 2
                     continue
@@ -692,7 +691,6 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         if not notifications:
             return
         spec = self._pg_connection_data()
-        key = self._pg_notifier_key(spec)
         try:
             notifier = PostgreSQLNotifier.NOTIFIERS[spec]
         except KeyError:
@@ -891,30 +889,21 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _pdbb_coalesce(self, ctype, value):
         """Vrať string 'value' zabezpečený pro typ sloupce 'ctype' v SQL."""
         if ctype is None or isinstance(ctype, String) or value == 'NULL':
-            default = "''"
             cast = ''
         elif isinstance(ctype, Float):
-            default = '0'
             cast = '::numeric'                
         elif isinstance(ctype, Number):
-            default = '0'
             cast = ''
         elif isinstance(ctype, Time):
-            default = "'00:00:01'"
             cast = '::time'
         elif isinstance(ctype, Date):
-            default = "'0000-01-01'"
             cast = '::date'
         elif isinstance(ctype, DateTime):
-            default = "'0000-01-01'"
             cast = '::timestamp'
         elif isinstance(ctype, Boolean):
-            default = "'F'"
             cast = '::bool'
         else:
-            default = "''"
             cast = ''
-        #return 'coalesce(%s%s, %s%s)' % (value, cast, default, cast)
         return '%s%s' % (value, cast)
 
     def _pdbb_split_object_name(self, obj, schema_dict, object_table, object_label):
@@ -2977,9 +2966,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     skip_direction = FORWARD
                 if xcount > 0:
                     try:
-                        result = self._pg_skip(xcount, skip_direction,
-                                               exact_count=True,
-                                               transaction=transaction_)
+                        self._pg_skip(xcount, skip_direction, exact_count=True,
+                                      transaction=transaction_)
                     except:
                         cls, e, tb = sys.exc_info()
                         try:
