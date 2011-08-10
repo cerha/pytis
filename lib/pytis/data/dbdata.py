@@ -468,7 +468,7 @@ class DBColumnBinding(DBBinding):
     sdílena.
     
     """
-    def __init__(self, id, table, column, related_to=None, type_=None, **kwargs):
+    def __init__(self, id, table, column, related_to=None, type_=None, crypto_name=None, **kwargs):
         """Define a column binding.
 
         Argumenty:
@@ -483,6 +483,13 @@ class DBColumnBinding(DBBinding):
             Je-li 'None', bude typ sloupce určen automaticky dle informací získaných přímo
             z databáze.  V opačném případě bude typem hodnota tohoto argumentu, která musí
             odpovídat typu sloupce v databázi (být jeho specializací).
+          crypto_name -- if not 'None' then the column is stored encrypted in
+            the database and the argument value is a string identifier of the
+            protection area.  There can be defined several different protection
+            areas identified by corresponding crypto names in the application,
+            protected by different passwords.  Not all types support
+            encryption, it is an error to set encryption here for column types
+            which don't support it.
           **kwargs -- explicitně definované klíčové argumenty typu.  Pokud jsou definovány
             libovolné klíčové argumenty, budou tyto předány konstruktoru implicitního datového
             typu.  Typ v takovém případě nesmí být explicitně určen argumentem 'type_'.
@@ -500,6 +507,7 @@ class DBColumnBinding(DBBinding):
         assert isinstance(table, basestring), table
         assert isinstance(column, basestring), column
         assert isinstance(type_, Type) or type(type_) == type(Type) or type_ is None, type_
+        assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         if __debug__:
             if isinstance(type_, Type):
                 kwargs_copy = copy.copy(kwargs)
@@ -514,6 +522,7 @@ class DBColumnBinding(DBBinding):
         self._column = column
         self._related_to = related_to
         self._type = type_
+        self._crypto_name = crypto_name
         self._kwargs = kwargs
         self._is_hidden = not id
 
@@ -532,6 +541,10 @@ class DBColumnBinding(DBBinding):
     def type(self):
         """Vrať instanci typu sloupce z konstruktoru nebo 'None'."""
         return self._type
+
+    def crypto_name(self):
+        """Return 'crypto_name' value given in the constructor, 'None' or string."""
+        return self._crypto_name
     
     def kwargs(self):
         """Vrať slovník klíčových argumentů konstruktoru dat. typu sloupce."""

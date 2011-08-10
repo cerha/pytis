@@ -2351,9 +2351,9 @@ class DBCrypto(_DBBaseTest):
         spec = pytis.data.DataFactory(
             pytis.data.DBDataDefault,
             (key,
-             B('x', 'foo', 'x', type_=pytis.data.Integer(encrypted='test')),
-             B('y', 'foo', 'y', type_=pytis.data.Float(encrypted='test')),
-             B('z', 'foo', 'z', type_=pytis.data.String(encrypted='test')),
+             B('x', 'foo', 'x', type_=pytis.data.Integer(), crypto_name='test'),
+             B('y', 'foo', 'y', type_=pytis.data.Float(), crypto_name='test'),
+             B('z', 'foo', 'z', type_=pytis.data.String(), crypto_name='test'),
              ),
             key)
         self._data = spec.create(connection_data=self._dconnection)

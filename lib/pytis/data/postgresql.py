@@ -870,11 +870,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 result = self._pdbb_tabcol(binding.table(), column_name, column_id) + '::text'
             else:
                 result = self._pdbb_tabcol(binding.table(), column_name, column_id)
-                btype = binding.type()
-                # At least when called from Wiking, btype may be a type class
-                # (and not a Type instance).  Hmm.
-                if btype is not None and isinstance(btype, Type) and btype.encrypted():
-                    result = "%s(%s, '%s')" % (btype.DECRYPTION_FUNCTION, result, btype.encrypted(),)
+                crypto_name = binding.crypto_name()
+                if crypto_name is not None:
+                    btype = binding.type()
+                    if btype is None:
+                        raise Exception("Unknown type in crypto column binding", binding)
+                    # At least when called from Wiking, btype may be a type class
+                    # (and not a Type instance).  Hmm.
+                    if isinstance(btype, String) or isinstance(btype, type) and issubclass(btype, String):
+                        decryption_function = 'pytis_decrypt_text'
+                    elif isinstance(btype, Float) or isinstance(btype, type) and issubclass(btype, Float):
+                        decryption_function = 'pytis_decrypt_float'
+                    elif isinstance(btype, Integer) or isinstance(btype, type) and issubclass(btype, Integer):
+                        decryption_function = 'pytis_decrypt_int'
+                    else:
+                        raise Exception("Encryption support not available for the type", btype)
+                    result = "%s(%s, '%s')" % (decryption_function, result, crypto_name,)
         return result
         
     def _pdbb_coalesce(self, ctype, value):
@@ -1078,8 +1089,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             result = type_class_(**type_kwargs)
         else:
             if __debug__:
-                if ctype.encrypted():
-                    assert type_class_ == Binary, type_class_
+                if type_class_ == Binary: # maybe a crypto column
+                    pass
                 elif isinstance(ctype, TimeInterval) and type_class_ == Time: # temporary hack
                     pass
                 else:
@@ -1709,9 +1720,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             colid = b.id()
             colspec = self.find_column(colid)
             assert colspec, ('Column not found', colid)
-            ctype = colspec.type()
-            if ctype is not None and ctype.encrypted():
-                value = "%s(%s, '%s')" % (ctype.ENCRYPTION_FUNCTION, value, ctype.encrypted(),)
+            crypto_name = b.crypto_name()
+            if crypto_name is not None:
+                ctype = colspec.type()
+                if isinstance(ctype, String):
+                    encryption_function = 'pytis_encrypt_text'
+                elif isinstance(ctype, Float):
+                    encryption_function = 'pytis_encrypt_float'
+                elif isinstance(ctype, Integer):
+                    encryption_function = 'pytis_encrypt_int'
+                else:
+                    raise Exception("Encryption supported not available for the type", ctype)
+                value = "%s(%s, '%s')" % (encryption_function, value, crypto_name,)
             columns.append(b.column())
             values.append(value)
         return columns, values

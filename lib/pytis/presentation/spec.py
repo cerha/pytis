@@ -2644,6 +2644,13 @@ class Field(object):
             instead of typing it.  Use 'minimum' and 'maximum' type constructor
             arguments (see 'pytis.data.Number') to set the slider range.  The
             default range when 'minimum' and 'maximum' are unset is 0..100.
+          crypto_name -- if not 'None' then the field column values are stored
+            encrypted in the database and the argument value is a string
+            identifier of the protection area.  There can be defined several
+            different protection areas identified by corresponding crypto names
+            in the application, protected by different passwords.  Not all data
+            types support encryption, it is an error to set encryption here for
+            field types which don't support it.
           **kwargs -- all the remaining keyword arguments are passed to the
             constructor of field's data type instance.  These arguments
             override the values of arguments, that the system would normally
@@ -2701,7 +2708,7 @@ class Field(object):
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
               style=None, link=(), filename=None, text_format=TextFormat.PLAIN, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
-              validity_condition=None,
+              validity_condition=None, crypto_name=None,
               **kwargs):
         def err(msg, *args):
             """Return assertion error message."""
@@ -2754,6 +2761,7 @@ class Field(object):
         assert filename is None or isinstance(filename, basestring)
         assert text_format in public_attr_values(TextFormat), text_format
         assert isinstance(printable, bool)
+        assert crypto_name is None or isinstance(crypto_name, basestring)
         if enumerator is None:
             enumerator = codebook
         else:
@@ -2862,6 +2870,7 @@ class Field(object):
         self._text_format = text_format
         self._printable = printable
         self._slider = slider
+        self._crypto_name = crypto_name
 
     def __str__(self):
         return "<Field for '%s'>" % self.id()
@@ -3011,6 +3020,9 @@ class Field(object):
     
     def slider(self):
         return self._slider
+
+    def crypto_name(self):
+        return self._crypto_name
 
     def completer(self, resolver):
         """Return field completer as a 'pytis.data.Enumerator' instance."""
@@ -3330,7 +3342,8 @@ class Specification(object):
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
-            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **f.type_kwargs(resolver))
+            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), crypto_name=f.crypto_name(),
+                          **f.type_kwargs(resolver))
                         for f in self.fields if not f.virtual()]
             if self.key:
                 keyid = self.key
