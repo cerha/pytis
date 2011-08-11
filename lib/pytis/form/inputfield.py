@@ -943,6 +943,7 @@ class TextField(InputField):
                     point = text_length
                 ctrl.ChangeValue(text)
                 ctrl.SetInsertionPoint(point)
+                self._on_change()
         else:
             self._ctrl.Paste()
         
