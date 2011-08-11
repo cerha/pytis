@@ -1770,7 +1770,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             col = self._current_cell()[1]
         return self._data.find_column(self._columns[col].id()) is not None
         
-            
     def _cmd_context_menu(self, position=None):
         if self._table.editing():
             menu = self._edit_menu()
@@ -1835,16 +1834,18 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._copy_to_clipboard(self._table.row(row).format(cid, secure=True))
 
     def _copy_to_clipboard(self, text):
-        # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
-        # Thus the terrible hack below...
-        # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
-        # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
-        #                     so we must continue tu use this horrible hack
         if pytis.windows.windows_available():
             nx_ip  = pytis.windows.nx_ip()
-            log(EVENT, 'Copy the cell to windows clipboard on %s' % nx_ip)
+            log(EVENT, 'Copy the cell to windows clipboard on %s' % (nx_ip,))
+            if isinstance(text, str):
+                text = unicode(text)
             pytis.windows.set_clipboard_text(text)
         else:
+            # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
+            # Thus the terrible hack below...
+            # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
+            # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
+            #                     so we must continue tu use this horrible hack
             if config.use_wx_clipboard:
                 copy_to_clipboard(text)
             else:
