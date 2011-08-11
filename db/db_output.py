@@ -20,13 +20,11 @@
 """Gensql definitions for print output formatting."""
 
 db_rights = globals().get('Gall_pytis', None)
-pytis_inherits = globals().get('pytis_inherits', None)
-pytis_log_update = globals().get('pytis_log_update', None)
 
 if not db_rights:
     raise ProgramError('No rights specified! Please define Gall_pytis')
 
-table('e_pytis_output_templates',
+_std_table('e_pytis_output_templates',
       (P('id', TSerial),
        C('module', TString, constraints=('not null',)), # form
        C('specification', TString, constraints=('not null',)), # user template name
@@ -38,8 +36,6 @@ table('e_pytis_output_templates',
        C('username', TString),
        ),
       grant=db_rights,
-      inherits=pytis_inherits,
-      upd_log_trigger=pytis_log_update,
       doc="""Storage of print output templates handled by a DatabaseResolver.""",
       depends=())
 

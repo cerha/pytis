@@ -4,13 +4,10 @@
 
 db_rights = globals().get('Gall_pytis', None)
 if not db_rights:
-    raise ProgramError('No rights specified! Please define Gpytis_menu')
-
-pytis_inherits = globals().get('pytis_inherits', None)
-pytis_log_update = globals().get('pytis_log_update', None)
+    raise ProgramError('No rights specified! Please define Gall_pytis')
 
 
-table('e_pytis_disabled_dmp_triggers',
+_std_table_nolog('e_pytis_disabled_dmp_triggers',
       (P('id', TUser),),
       grant=db_rights,
       doc="""This table allows disabling some trigger calls.
@@ -39,7 +36,7 @@ _std_table_nolog('c_pytis_role_purposes',
                  grant=db_rights
                  )
 
-table('e_pytis_roles',
+_std_table('e_pytis_roles',
            (P('name', TUser),
             C('description', pytis.data.String(maxlen=64)),
             C('purposeid', pytis.data.String(minlen=4, maxlen=4), constraints=('not null',), default="'appl'",
@@ -51,9 +48,9 @@ table('e_pytis_roles',
                         ("'admin'", "'Administrátor rolí a menu'", "'admn'", 'NULL',),
                         ),
            grant=db_rights,
-           inherits=pytis_inherits,
            doc="Application user roles.",
            depends=('c_pytis_role_purposes',))
+
 def e_pytis_roles_trigger():
     class Roles(BaseTriggerObject):
         def _pg_escape(self, val):
@@ -77,9 +74,11 @@ def e_pytis_roles_trigger():
             self._update_roles()
     roles = Roles(TD)
     return roles.do_trigger()
+
 _trigger_function('e_pytis_roles_trigger', body=e_pytis_roles_trigger,
                   depends=('e_pytis_roles', 'e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members',
                            'pytis_update_transitive_roles',))
+
 sql_raw("""
 create trigger e_pytis_roles_update_after after insert or update or delete on e_pytis_roles
 for each row execute procedure e_pytis_roles_trigger();
@@ -144,9 +143,11 @@ def e_pytis_role_members_trigger():
             self._update_all()
     roles = Roles(TD)
     return roles.do_trigger()
+
 _trigger_function('e_pytis_role_members_trigger', body=e_pytis_role_members_trigger,
                   depends=('e_pytis_role_members', 'e_pytis_disabled_dmp_triggers', 'a_pytis_valid_role_members',
                            'pytis_update_transitive_roles', 'pytis_update_rights_redundancy',))
+
 sql_raw("""
 create trigger e_pytis_role_members_all_after after insert or update or delete on e_pytis_role_members
 for each row execute procedure e_pytis_role_members_trigger();
@@ -208,6 +209,7 @@ def pytis_update_transitive_roles():
             plpy.execute("insert into a_pytis_valid_role_members (roleid, member) values ('%s', '%s')" %
                          (_pg_escape(total), _pg_escape(role)))
     return True
+
 _plpy_function('pytis_update_transitive_roles', (), TBoolean,
                body=pytis_update_transitive_roles)
 
@@ -275,8 +277,10 @@ def c_pytis_menu_actions_trigger():
             self._update_all()
     menu = Menu(TD)
     return menu.do_trigger()
+
 _trigger_function('c_pytis_menu_actions_trigger', body=c_pytis_menu_actions_trigger,
                   depends=('c_pytis_menu_actions', 'pytis_update_actions_structure', 'e_pytis_disabled_dmp_triggers',))
+
 sql_raw("""
 create trigger c_pytis_menu_actions_all_after_rights after insert or update or delete on c_pytis_menu_actions
 for each statement execute procedure c_pytis_menu_actions_trigger();
@@ -460,8 +464,10 @@ def e_pytis_menu_trigger():
             plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
     menu = Menu(TD)
     return menu.do_trigger()
+
 _trigger_function('e_pytis_menu_trigger', body=e_pytis_menu_trigger,
                   depends=('e_pytis_menu', 'c_pytis_menu_actions', 'e_pytis_disabled_dmp_triggers',))
+
 sql_raw("""
 create trigger e_pytis_menu_all_before before insert or update or delete on e_pytis_menu
 for each row execute procedure e_pytis_menu_trigger();
@@ -470,6 +476,7 @@ for each row execute procedure e_pytis_menu_trigger();
 """,
         name='e_pytis_menu_triggers',
         depends=('e_pytis_menu_trigger',))
+
 def e_pytis_menu_trigger_rights():
     class Menu(BaseTriggerObject):
         def _pg_escape(self, val):
@@ -486,8 +493,10 @@ def e_pytis_menu_trigger_rights():
             self._update_all()
     menu = Menu(TD)
     return menu.do_trigger()
+
 _trigger_function('e_pytis_menu_trigger_rights', body=e_pytis_menu_trigger_rights,
                   depends=('e_pytis_menu', 'pytis_update_actions_structure', 'e_pytis_disabled_dmp_triggers',))
+
 sql_raw("""
 create trigger e_pytis_menu_all_after_rights after insert or update or delete on e_pytis_menu
 for each statement execute procedure e_pytis_menu_trigger_rights();
@@ -540,6 +549,7 @@ def pytis_first_position(position):
     if first == start:
         first += '8'
     return first
+
 _plpy_function('pytis_first_position', (TString,), TString,
                body=pytis_first_position,
                depends=())

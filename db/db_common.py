@@ -2,6 +2,7 @@
 
 import pytis.data
 
+# Konstanty pro datové typy
 TBoolean  = pytis.data.Boolean()
 TDate     = pytis.data.Date()
 TTime     = pytis.data.Time()
@@ -16,6 +17,7 @@ TString   = pytis.data.String()
 TUser     = 'name'
 TImage    = pytis.data.Image()
 
+# Aliasy
 C = Column
 P = PrimaryColumn
 V = ViewColumn
@@ -26,9 +28,11 @@ RT = ReturnType
 SS = SelectSet
 INNER = JoinType.INNER
 LOUTER = JoinType.LEFT_OUTER
+ROUTER = JoinType.RIGHT_OUTER
 CROSS = JoinType.CROSS
 UNION = SelectSetType.UNION
 UNION_ALL = SelectSetType.UNION_ALL
+EXCEPT = SelectSetType.EXCEPT
 EXCEPT_ALL = SelectSetType.EXCEPT_ALL
 INTERSECT = SelectSetType.INTERSECT
 
@@ -38,7 +42,8 @@ def Ctimestamp(name, doc=None):
 def Cuser(name, doc=None):
     return C(name, TUser, constraints=('NOT NULL',), default='user', doc=doc)
 
-Gall_pytis = (('all', 'pytis'),)
+Gall_pytis = globals().get('Gall_pytis', ('all', 'pytis'))
+Grights_log_update = globals().get('Grights_log_update', ('all', 'pytis'))
 
 def _std_table(name, columns, doc, grant=Gall_pytis, **kwargs):
     return table(name, columns, inherits=('_changes',), grant=grant,
@@ -48,6 +53,15 @@ def _std_table(name, columns, doc, grant=Gall_pytis, **kwargs):
 def _std_table_nolog(name, columns, doc, grant=Gall_pytis, **kwargs):
     return table(name, columns, inherits=('_changes',), grant=grant,
                  doc=doc, **kwargs)
+
+def _std_view_raw(name, columns, fromitems, where=None, 
+                 groupby=None, having=None, 
+                 insert=None, update=None, delete=None, grant=Gall_pytis,
+                  **kwargs):
+    return view_sql_raw(name, columns, fromitems, where=where,
+                        groupby=groupby, having=having,
+                        insert=insert, update=update, delete=delete,
+                        grant=grant, **kwargs)
 
 # Pomocná funkce, jejíž obsah se připojí k funkcím, definovaným jako _std_function
 def _plpy_include():
@@ -156,21 +170,8 @@ def _trigger_function(name, body=None, use_functions=(), **kwargs):
 
 
 def _plpy_control_include():
-    """Funkce pro formátování pythonovský proměných různých typů, pro použití v SQL příkazech
-    plpythonu (například plpy.execute). Přidává možnost html výstupu."""
+    """Definice html tabulky z databázových dat."""
     
-    TMoney    = 'numeric(15,2)'
-    TKurz     = 'numeric(12,6)'
-    def pg_escape(val):
-        return str(val).replace("'", "''")
-    def boolean(val):
-        if val is None:
-            return "NULL"
-        return val and "TRUE" or "FALSE"
-    def string(val):
-        return val is not None and "'%s'" % (pg_escape(val)) or "NULL"
-    def num(val):
-        return val is not None and "%s" % (val) or "NULL"
     def _html_table(columns_labels,rows):
         def st(val):
             if val is None or str(val).strip() == '':
@@ -195,7 +196,7 @@ def _control_function(name, input_types, output_type, body=None,
                       use_functions=(), **kwargs):
     """Pro definici plpython kontrolních funkcí. Přidává na výstup html formátování"""
     return function(name, input_types, output_type, body=body,
-                    use_functions=(_plpy_control_include,) + use_functions, **kwargs)
+                    use_functions=(_plpy_control_include, _plpy_include) + use_functions, **kwargs)
 
 def partitioning_trigger():
     """Updatuje datum a místo odeslání"""
@@ -355,6 +356,43 @@ stype=text, initcond='' );""",
         name="space_concat",
         depends=('space_aggregate',))
 
+def gen_mirror_spec(tables):
+    """Vygeneruje základní specifikace pro seznam tabulek"""
+    tables = [t.strip() for t in args[0].split(',')]
+    specs = []
+    for table in tables:
+        class_name = "%s%s" % (table[0:1].upper(), table[1:])
+        q = """select '    fields = (' as fields
+               union all
+               (SELECT '        Field(''' || a.attname || ''', _("' || a.attname || '"), ),'
+               FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c
+               WHERE pg_catalog.pg_table_is_visible(c.oid)
+               AND c.relname = '%s'
+               AND c.oid = a.attrelid
+               AND a.attnum > 0
+               AND NOT a.attisdropped
+               AND a.attname not in ('vytvoril','vytvoreno','zmenil','zmeneno'))
+               union all
+               (select '       )')
+               union all
+               (SELECT '    columns = (' || array_to_string(array_agg('''' || a.attname || ''''), ', ') || ')'
+               FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c
+               WHERE pg_catalog.pg_table_is_visible(c.oid)
+               AND c.relname = '%s'
+               AND c.oid = a.attrelid
+               AND a.attnum > 0
+               AND NOT a.attisdropped
+               AND a.attname not in ('vytvoril','vytvoreno','zmenil','zmeneno'))
+           """ % (table, table)
+        q = plpy.execute(q)
+        fields = "\\n".join([r["fields"] for r in q])
+        spec = ('class %s(Specification):\\n    public = True\\n\\n    table = %s%s%s\\n    title = _("%s")\\n\\n'
+                ) % (class_name, "'", table, "'", class_name)
+        specs.append(spec + fields)
+    return "\\n\\n\\n".join(specs)
+
+function('gen_mirror_spec', (TString,), TString, body=gen_mirror_spec,
+         doc=("Vygeneruje základní specifikace pro seznam tabulek"))
 
 
 ##################################
@@ -372,6 +410,20 @@ table('log',
 function('only_digits', (TString,), TBoolean,
          "SELECT ($1 ~ ''^[0-9]+$'')",
          doc="Pomocná funkce pro CHECK constraint.")
+
+function('f_date_year', (TDate,), TInteger, "select date_part(''year'', $1)::int",
+         schemas=SCHEMAS_COMMON,
+         doc="Pomocná funkce pro agregační matici pytisu.")
+function('f_date_halfyear', (TDate,), TInteger,
+         "select case when date_part(''month'', $1) < 7 then 1 else 2 end::int",
+         schemas=SCHEMAS_COMMON,
+         doc="Pomocná funkce pro agregační matici pytisu.")
+function('f_date_quarter', (TDate,), TInteger, "select date_part(''quarter'', $1)::int",
+         schemas=SCHEMAS_COMMON,
+         doc="Pomocná funkce pro agregační matici pytisu.")
+function('f_date_month', (TDate,), TInteger, "select date_part(''month'', $1)::int",
+         schemas=SCHEMAS_COMMON,
+         doc="Pomocná funkce pro agregační matici pytisu.")
 
 table('_changes',
       (Cuser('vytvoril'),
@@ -416,7 +468,7 @@ table('_inserts',
                       update=None,
                       insert=None,
                       delete=None)),
-      grant=Gall_pytis,
+      grant=Grights_log_update,
       doc="""Tabulka zaznamenávající přidávání záznamů standardních
       tabulek."""
       )
@@ -450,7 +502,7 @@ table('_updates',
                       update=None,
                       insert=None,
                       delete=None)),
-      grant=Gall_pytis,
+      grant=Grights_log_update,
       doc="""Tabulka zaznamenávající změny v záznamech standardních
       tabulek."""
       )
@@ -481,10 +533,130 @@ table('_deletes',
                       update=None,
                       insert=None,
                       delete=None)),            
-      grant=Gall_pytis,
+      grant=Grights_log_update,
       doc="""Tabulka zaznamenávající vymazávání záznamů ve standardních
       tabulkách."""
       )
+
+table('_changes_statistic',
+      (P('id', TSerial,
+         doc="identifikace řádku"),
+       Cuser('uzivatel'),
+       C('datum', TDate),
+       C('inserts', TInteger),
+       C('updates', TInteger),
+       C('deletes', TInteger)),
+      grant=Gall_pytis,
+      doc="""Tabulka pro statistiky změn v tabulkách."""
+      )
+
+sql_raw("""
+create or replace view _changes_statistic_total as
+select uzivatel,
+       sum(inserts) as inserts,
+       sum(updates) as updates,
+       sum(deletes) as deletes
+from _changes_statistic
+group by uzivatel;
+
+CREATE OR REPLACE RULE _changes_statistic_total_ins AS
+ ON INSERT TO _changes_statistic_total DO INSTEAD
+ NOTHING;
+
+CREATE OR REPLACE RULE _changes_statistic_total_upd AS
+ ON UPDATE TO _changes_statistic_total DO INSTEAD
+ NOTHING;
+
+CREATE OR REPLACE RULE _changes_statistic_total_del AS
+ ON DELETE TO _changes_statistic_total DO INSTEAD
+ NOTHING;
+""",
+        name = '_changes_statistic_total',
+        depends = ('_changes_statistic',)
+    )
+
+def update_statistic():
+    # Minimální a maximální datum
+    q = """select min(datum)::date as minimum
+            from
+              (select min(vytvoreno) as datum
+                 from _inserts
+               UNION
+               select min(zmeneno) as datum
+                 from _updates
+               UNION
+               select min(smazano) as datum
+                 from _deletes
+               ) m
+        """
+    q = plpy.execute(q)
+    minimum = q[0]["minimum"]
+    q = """select max(datum)::date as maximum
+            from
+              (select max(vytvoreno) as datum
+                 from _inserts
+               UNION
+               select max(zmeneno) as datum
+                 from _updates
+               UNION
+               select max(smazano) as datum
+                 from _deletes
+               ) m
+        """
+    q = plpy.execute(q)
+    maximum = q[0]["maximum"]
+    # Vygenerujeme nové řádky do _changes_statistic
+    # Nejrychlejší bude všechno to smazat a nasypat to tam znovu
+    q = plpy.execute("delete from _changes_statistic")
+    q = """insert into _changes_statistic
+           (uzivatel, datum, inserts, updates, deletes)
+           select jmeno,
+                  '%s'::date + c.cislo as datum,
+                  0, 0, 0
+           from generate_series(0, '%s'::date - '%s'::date) c(cislo),
+                (select distinct vytvoril as jmeno from _inserts
+                 union
+                 select distinct zmenil as jmeno from _updates
+                 union
+                 select distinct smazal as jmeno from _deletes
+                ) j
+        """ % (minimum, maximum, minimum)
+    q = plpy.execute(q)
+    q = """select new_tempname() as temp"""          
+    q = plpy.execute(q)
+    temp = q[0]["temp"]
+    # Aktualizujeme inserts, updates a deletes
+    for u, d, t, p in (('vytvoril', 'vytvoreno' ,'_inserts', 'inserts'),
+                       ('zmenil', 'zmeneno' ,'_updates', 'updates'),
+                       ('smazal', 'smazano' ,'_deletes', 'deletes'),
+                       ):
+        q = """create temp table %s as
+               select uzivatel, datum, count(*) as pocet
+                 from
+                   (select %s as uzivatel, %s::date as datum
+                      from %s) c
+               group by uzivatel, datum
+            """ % (temp, u, d, t)
+        q = plpy.execute(q)
+        q = """update _changes_statistic
+                  set %s = pocet
+                 from %s
+                where _changes_statistic.uzivatel = %s.uzivatel
+                  and _changes_statistic.datum = %s.datum
+        """ % (p, temp, temp, temp)      
+        q = plpy.execute(q)
+        plpy.execute("drop table %s" % (temp))
+    # Vrátíme počet řádků tabulky
+    q = """select count(*) as pocet from _changes_statistic as pocet"""
+    q = plpy.execute(q)
+    pocet = q[0]["pocet"]
+    return pocet    
+
+f_update_statistic = function('update_statistic', (), TInteger,
+                              body=update_statistic,
+                              doc="""Aktualizuje tabulku statistiky""",
+                              depends=('_inserts', '_deletes', '_updates',))
+
 
 def _log_update_trigger():
     def pg_escape(val):
@@ -515,10 +687,27 @@ def _log_update_trigger():
         return None
     # Pro UPDATE zaznamenáme kromě jména tabulky a klíče i změny v položkách
     zmeny = []
+    # Zjistime bytea sloupce
+    q = """select a.attname
+             from pg_class r, pg_namespace nsp, pg_attribute a, pg_type t
+            where r.relname = '%s' and r.relnamespace = nsp.oid and nsp.nspname = '%s'
+              and a.attrelid = r.oid
+              and a.atttypid = t.oid
+              and t.typname = 'bytea'
+        """ % (TD["table_name"], TD["table_schema"])
+    rows = plpy.execute(q)
+    if rows and len(rows) > 0:
+        bytea_cols = [r["attname"] for r in rows]
+    else:
+        bytea_cols = []
     for k in TD["new"].keys():
         if TD["new"][k] != TD["old"][k]:
-            zmeny.append("""%s: %s -> %s""" % (k, pg_escape(str(TD["old"][k])),
-                                               pg_escape(str(TD["new"][k]))))
+            if k in bytea_cols:
+                zmena = "%s: MODIFIED" % k
+            else:
+                zmena = """%s: %s -> %s""" % (k, pg_escape(str(TD["old"][k])),
+                                              pg_escape(str(TD["new"][k])))
+            zmeny.append(zmena)
     if zmeny != []:        
         zmenystr = """\n""".join(zmeny)        
         q = """insert into _updates (tabulka, klic, zmeny)
@@ -529,6 +718,7 @@ def _log_update_trigger():
 
 function('_log_update_trigger', (), 'trigger',
          body=_log_update_trigger,
+         #security_definer=True,
          doc="""Slouží k evidenci editací nad záznamy tabulek.""",
          depends=('_inserts', '_deletes', '_updates'))
 
@@ -599,6 +789,7 @@ function('drop_temptables', (TString,), TInteger,  body=drop_temptables,
     doc=("Slouží k zrušení dočasných temporery tabulek. Funkce otestuje, zda tabulky uvedené "
          "v seznamu existují a případně je dropne."))
 
+# Typ formuláře pro ruční spouštění v pytisu
 _std_table('c_typ_formular',
            (P('id', pytis.data.String(minlen=2, maxlen=2)),
             C('popis', TString)),
@@ -606,4 +797,30 @@ _std_table('c_typ_formular',
            init_values=(("'BF'", "'Jednoduchý náhled'"),
                         ("'DF'", "'Duální náhled'"))
            )
+
+
+def easter_date(rok):
+    """Pro udaný rok (parametr) vrátí datum velikonoční neděle."""
+
+    # Podle Oudionova algoritmu
+    rok = args[0]
+    c = int(rok/100)
+    n = rok - 19 * int(rok / 19)
+    k = int((c - 17) / 25)
+    i1 = c - int(c / 4) - int((c - k) / 3) + 19 * n + 15
+    i2 = i1 - 30 * int(i1 / 30)
+    i3 = i2 - int(i2 / 28) * (1 - int(i2 / 28) * int(29 / (i2 + 1)) * \
+                              int((21 - n) / 11))
+    a1 = rok + int(rok / 4) + i3 + 2 - c + int(c/4)
+    a2 = a1 - 7 * int(a1 / 7)
+    l = i3 - a2
+    m = 3 + int((l + 40) / 44)
+    d = l + 28 - 31 * int(m / 4)
+    datum = """%s-%s-%s""" % (rok, m, d)
+    return datum
+    
+f_easter_date = function('easter_date', (TInteger,), TDate,
+                       body=easter_date,
+                       doc="""Pro udaný rok (parametr) vrátí datum velikonoční
+                       neděle.""")
 

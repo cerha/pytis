@@ -8,13 +8,13 @@ Gpytis_config = <práva pro objekty tohoto souboru>
 execfile('db_pytis_config.py', copy.copy(globals()))
 """
 
-db_rights = globals().get('Gpytis_config', None)
-db_schemas = globals().get('Gpytis_config_schemas', None)
+db_rights = globals().get('Gall_pytis', None)
+db_schemas = globals().get('Gpytis_schemas', None)
 
 if not db_rights:
-    raise ProgramError('No rights specified! Please define Gpytis_config')
+    raise ProgramError('No rights specified! Please define Gall_pytis')
 
-table('e_pytis_config',
+_std_table_nolog('e_pytis_config',
       (P('id', TSerial),
        C('username', TUser, constraints=('UNIQUE NOT NULL',)),
        C('pickle', TString, constraints=('NOT NULL',)),
@@ -24,7 +24,7 @@ table('e_pytis_config',
       doc="""Pytis application configuration storage."""
       )
 
-table('e_pytis_form_profiles',
+_std_table_nolog('e_pytis_form_profiles',
       (P('id', TSerial),
        C('username', TUser, constraints=('NOT NULL',)),
        C('fullname', TString, constraints=('NOT NULL',)),
@@ -40,7 +40,7 @@ table('e_pytis_form_profiles',
       doc="""Pytis form configuration storage."""
       )
 
-table('e_pytis_aggregated_views',
+_std_table_nolog('e_pytis_aggregated_views',
       (P('id', TSerial),
        C('username', TUser, constraints=('NOT NULL',)),
        C('spec_name', TString, constraints=('NOT NULL',)),

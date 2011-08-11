@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-db_schemas = globals().get('Gpytis_config_schemas', None)
+db_schemas = globals().get('Gpytis_schemas', None)
+db_rights = globals().get('Gall_pytis', None)
+
+if not db_rights:
+    raise ProgramError('No rights specified! Please define Gall_pytis')
 
 
 sql_raw("""
