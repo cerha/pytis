@@ -113,6 +113,12 @@ class Form(lcg.Content):
     
     def _export_footer(self, context):
         pass
+
+    def _form_cls(self):
+        cls = 'pytis-form ' + self._CSS_CLS
+        if self._name:
+            cls += ' ' + camel_case_to_lower(self._name, '-')
+        return cls
     
     def export(self, context):
         g = context.generator()
@@ -120,11 +126,8 @@ class Form(lcg.Content):
                   [g.div(part, cls=name) for part, name in
                    (self._export_submit(context), 'submit'),
                    (self._export_footer(context), 'footer') if part]
-        cls = 'pytis-form ' + self._CSS_CLS
-        if self._name:
-            cls += ' ' + camel_case_to_lower(self._name, '-')
-        return g.form(content, action=g.uri(self._handler), method=self._HTTP_METHOD, cls=cls,
-                      id=self._id, enctype=self._enctype)
+        return g.form(content, action=g.uri(self._handler), method=self._HTTP_METHOD,
+                      cls=self._form_cls(), id=self._id, enctype=self._enctype)
 
     def heading_info(self):
         """Return basestring to be possibly put into a document heading.
@@ -1094,29 +1097,12 @@ class BrowseForm(LayoutForm):
                     # &#8227 does not work in MSIE
         return value
 
-    def _style(self, style, row, n, field=None):
+    def _style(self, style):
         def color(c):
             if type(c) is tuple:
                 return '#%02x%02x%02x' % c
             else:
                 return c
-        if isinstance(style, collections.Callable):
-            style = style(row)
-        cls = []
-        if field is None: # For row style only
-            cls.append(n % 2 and 'even' or 'odd')
-            if self._group != self._last_group:
-                cls.append('group-start')
-                if n != 0:
-                    cls.append('group-change')
-            cls.append(self._group and 'even-group' or 'odd-group')
-        #else:
-        #    cls.append('id-'+field.id)
-        if style is None:
-            return cls and dict(cls=' '.join(cls)) or {}
-        elif style.name() is not None:
-            cls.append(style.name())
-            return dict(cls=' '.join(cls))
         styles = [name +': '+ f(attr()) for attr, name, f in (
             (style.foreground, 'color',            color),
             (style.background, 'background-color', color),
@@ -1125,14 +1111,51 @@ class BrowseForm(LayoutForm):
             (style.overstrike, 'text-decoration',  lambda x: x and 'line-through' or 'none'),
             (style.underline,  'text-decoration',  lambda x: x and 'underline' or 'none'),
             ) if attr() is not None]
-        return dict(cls=' '.join(cls), style='; '.join(styles))
+        return '; '.join(styles)
     
-    def _export_row(self, context, row, n, id):
+    def _field_style(self, field, row):
+        field_style = field.style
+        if isinstance(field_style, collections.Callable):
+            field_style = field_style(row)
+        kwargs = {}
+        if field_style is not None:
+            name = field_style.name()
+            if name:
+                kwargs['cls'] = name
+            style = self._style(field_style)
+            if style:
+                kwargs['style'] = style
+        return kwargs
+
+    def _row_style(self, row, n, highlight_found_record=False):
+        row_style = self._view.row_style()
+        if isinstance(row_style, collections.Callable):
+            row_style = row_style(row)
+        cls = [n % 2 and 'even' or 'odd', self._group and 'even-group' or 'odd-group']
+        if self._group != self._last_group:
+            cls.append('group-start')
+            if n != 0:
+                cls.append('group-change')
+        if highlight_found_record:
+            cls.append('found-record')
+        if row_style is not None:
+            name = row_style.name()
+            if name:
+                cls.append(name)
+            style = self._style(row_style)
+        else:
+            style = None
+        kwargs = dict(cls=' '.join(cls))
+        if style:
+            kwargs['style'] = style
+        return kwargs
+    
+    def _export_row(self, context, row, n, highlight_found_record):
         g = context.generator()
         cells = [g.td(self._export_cell(context, field), align=self._align.get(field.id),
-                      **self._style(field.style, row, n, field))
+                      **self._field_style(field, row))
                  for field in self._column_fields]
-        return g.tr(cells, id=id, **self._style(self._view.row_style(), row, n))
+        return g.tr(cells, **self._row_style(row, n, highlight_found_record))
 
     def _export_aggregation(self, context, op):
         def export_aggregation_value(data, op, field):
@@ -1280,10 +1303,10 @@ class BrowseForm(LayoutForm):
                         exported_rows.append(group_heading)
             if found and (limit is None and offset == n or \
                           limit is not None and offset == (n + page * limit)):
-                id = 'found-record'
+                highlight_found_record = True
             else:
-                id = None
-            exported_rows.append(self._export_row(context, row, n, id))
+                highlight_found_record = False
+            exported_rows.append(self._export_row(context, row, n, highlight_found_record))
             self._last_group = self._group
             n += 1 
             if limit is not None and n >= limit:
@@ -1558,8 +1581,8 @@ class ListView(BrowseForm):
     This form behaves similarly to a regular 'BrowseForm', but the records are
     not represented as table rows but as individual (sub)sections of a
     document.  Field values can be displayed within each section and their
-    layout can be customized through the 'list_view' argument within
-    specification (see 'ViewSpec').  If 'list_view' is not defined, the form
+    layout can be customized through the 'list_layout' argument within
+    specification (see 'ViewSpec').  If 'list_layout' is not defined, the form
     presentation will degrade to the regular table presentation as in
     'BrowseForm'.
 
@@ -1588,6 +1611,7 @@ class ListView(BrowseForm):
             self._export_row = super_._export_row
             self._wrap_exported_rows = super_._wrap_exported_rows
             self._export_group_heading = super_._export_group_heading
+            self.export = super_.export
         else:
             self._meta = [(self._field(id), id in list_layout.meta_labels())
                           for id in list_layout.meta()]
@@ -1599,11 +1623,15 @@ class ListView(BrowseForm):
                 anchor = anchor.replace('%s', '%%(%s)s' % self._key)
             self._anchor = anchor
 
-    def _export_body(self, context):
+    def export(self, context):
+        # Replace the <form> generated by the parent class method by a simple
+        # div to allow using forms within list items (nested forms are not
+        # allowed in HTML).
+        g = context.generator()
         self._exported_row_index = []
-        return super(ListView, self)._export_body(context)
+        return g.div(self._export_body(context), cls=self._form_cls(), id=self._id)
         
-    def _export_row(self, context, row, n, id):
+    def _export_row(self, context, row, n, highlight_found_record):
         layout = self._list_layout
         g = context.generator()
         parser = lcg.Parser()
@@ -1654,8 +1682,8 @@ class ListView(BrowseForm):
             parts.append(g.div(content.export(context), cls=cls))
         # We use only css class name from row_style, since other attributes are
         # BrowseForm specific.
-        cls = self._style(self._view.row_style(), row, n)['cls']
-        return g.div(parts, id=id, cls='list-item '+cls)
+        cls = self._row_style(row, n, highlight_found_record)['cls']
+        return g.div(parts, cls='list-item '+cls)
 
     def _export_group_heading(self, context):
         #return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
@@ -1716,7 +1744,7 @@ class ItemizedView(BrowseForm):
         self._separator = separator
         self._template = template
         
-    def _export_row(self, context, row, n, id):
+    def _export_row(self, context, row, n, highlight_found_record):
         template = self._template
         if template:
             return self._interpolate(context, template, row)
