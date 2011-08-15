@@ -295,19 +295,46 @@ as select distinct shortname from c_pytis_menu_actions;
         name='ev_pytis_short_actions',
         depends=('c_pytis_menu_actions',))
 
-sql_raw("""
-create or replace function pytis_convert_system_rights (shortname_ text) returns void as $$
-begin
-  if (select count(*) from e_pytis_action_rights where shortname=shortname_ and system=True) = 0 then
-    raise exception 'No system rights found for %', shortname_;
-  end if;
-  insert into e_pytis_action_rights (shortname, roleid, rightid, granted) values (shortname_, '*', '*', False);
-  update e_pytis_action_rights set system=False where shortname=shortname_ and system=True;
-end;
-$$ language plpgsql;
-""",
-        name='pytis_convert_system_rights',
-        depends=('e_pytis_action_rights',))
+def pytis_convert_system_rights(shortname):
+    shortname = args[0]
+    q = """select count(*) as pocet from e_pytis_action_rights
+            where shortname='%s' and system=True
+        """ % shortname
+    result = plpy.execute(q)
+    if result[0]["pocet"] == 0:
+        plpy.error('No system rights found for %' % shortname)
+    result = plpy.execute(q)
+    temp_old = plpy.execute("select new_tempname() as jmeno")[0]["jmeno"]
+    temp_new = plpy.execute("select new_tempname() as jmeno")[0]["jmeno"]
+    q = """create temp table %s as select * from pytis_view_summary_rights('%s', NULL, False, False)
+        """ % (temp_old, shortname)
+    result = plpy.execute(q)
+    q = """insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system)
+           values ('%s', '*', '*', False, False)
+        """ % shortname
+    plpy.execute(q)
+    q = """update e_pytis_action_rights set system=False
+            where shortname='%s' and system=True
+        """ % shortname
+    plpy.execute(q)
+    q = "select pytis_update_summary_rights()"
+    plpy.execute(q)
+    q = """create temp table %s as select * from pytis_view_summary_rights('%s', NULL, False, False)
+        """ % (temp_new, shortname)
+    result = plpy.execute(q)
+    q = """select * from %s except select * from %s
+            union
+           select * from %s except select * from %s
+        """ % (temp_old, temp_new, temp_new, temp_old)
+    result = plpy.execute(q)
+    if len(result) > 0:
+        msg = "Converted rights are not the same as original rights"
+        plpy.error(msg)
+        
+_plpy_function('pytis_convert_system_rights', (TString,), 'void',
+               body=pytis_convert_system_rights,
+               depends=('e_pytis_action_rights',))
+
 
 ### Menus
 
