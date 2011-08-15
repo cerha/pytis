@@ -743,30 +743,34 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
             dc.SetBrush(wx.Brush(bg, wx.SOLID))
             dc.SetPen(wx.TRANSPARENT_PEN)
             dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height)
+            if grid.GetGridCursorRow() == row:
+                original_pen = dc.GetPen()
+                try:
+                    border_width = config.row_highlight_width
+                    if border_width != 0:
+                        if grid.GetParent() is not focused_window():
+                            color = config.row_highlight_unfocused_color
+                        elif self._table.editing():
+                            color = config.row_highlight_edited_color
+                        else:
+                            color = config.row_highlight_color
+                        dc.SetPen(wx.Pen(color, border_width, wx.SOLID))
+                        r, mod = divmod(border_width, 2)
+                        x, y, width, height = rect
+                        left, right, top, bottom = x, x+width, y+r, y+height-r-mod
+                        dc.DrawLine(left, top, right, top)
+                        dc.DrawLine(left, bottom, right, bottom)
+                        if col == 0:
+                            dc.DrawLine(left+r+mod, top, left+r+mod, bottom)
+                        if col+1 == grid.GetNumberCols():
+                            dc.DrawLine(right-r-mod, top, right-r-mod, bottom)
+                        
+                finally:
+                    dc.SetPen(original_pen)
             dc.SetBackgroundMode(wx.TRANSPARENT)
             dc.SetTextForeground(fg)
             dc.SetFont(attr.GetFont())
             self._draw_value(grid.GetCellValue(row, col), dc, rect, attr.GetAlignment()[0])
-            if grid.GetGridCursorRow() == row:
-                original_pen = dc.GetPen()
-                try:
-                    if grid.GetParent() is not focused_window():
-                        color = config.row_highlight_unfocused_color
-                    elif self._table.editing():
-                        color = config.row_highlight_edited_color
-                    else:
-                        color = config.row_highlight_color
-                    dc.SetPen(wx.Pen(color, 3, wx.SOLID))
-                    dc.DrawLine(rect.x+1, rect.y, rect.x+rect.width+1, rect.y)
-                    dc.DrawLine(rect.x, rect.y+rect.height-1, rect.x+rect.width, rect.y+rect.height-1)
-                    if col == 0:
-                        dc.DrawLine(rect.x, rect.y, rect.x, rect.y+rect.height)
-                    if col+1 == grid.GetNumberCols():
-                        dc.DrawLine(rect.x+rect.width, rect.y, rect.x+rect.width, rect.y+rect.height)
-                        
-                finally:
-                    dc.SetPen(original_pen)
-                    
         finally:
             dc.DestroyClippingRegion()
 

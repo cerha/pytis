@@ -37,6 +37,7 @@ _LAYOUT = (
                     'row_highlight_color',
                     'row_highlight_edited_color',
                     'row_highlight_unfocused_color',
+                    'row_highlight_width',
                     ),
             'cell_highlight_color',
             'grid_line_color',
@@ -63,6 +64,7 @@ _LABELS = {
     'row_highlight_color':   _(u"Výchozí"),
     'row_highlight_edited_color': _(u"Během inline editace řádku"),
     'row_highlight_unfocused_color': _(u"V neaktivním formuláři"),
+    'row_highlight_width':   _(u"Šířka orámování"),
     'cell_highlight_color':  _(u"Zvýraznění aktivní buňky"),
     'grid_line_color':       _(u"Mřížka tabulky"),
     'grouping_background_downgrade': _(u"Ztmavení řádků při seskupování"),
@@ -83,6 +85,7 @@ _LABELS = {
 _FIELDSPEC_KWARGS = {
     'export_directory': dict(width=45),
     'sender_address': dict(width=45),
+    'row_highlight_width': dict(width=2, slider=True),
 }
 
 def config_menu_items(hotkeys={}):

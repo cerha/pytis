@@ -814,6 +814,11 @@ class Configuration(object):
         _DESCR = _(u"Barva zvýraznění aktivního řádku neaktivního tabulkového formuláře.")
         _DEFAULT = '#808080'
 
+    class _Option_row_highlight_width(NumericOption):
+        _DESCR = _(u"Šířka rámečku zvýraznění aktivního řádku tabulkového formuláře v px.")
+        _TYPE = pytis.data.Integer(minimum=0, maximum=10)
+        _DEFAULT = 3
+
     class _Option_grid_line_color(ColorOption):
         _DESCR = _(u"Barva mřížky tabulkového formuláře.")
         _DEFAULT = '#6482be'
