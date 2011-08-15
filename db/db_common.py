@@ -38,12 +38,12 @@ INTERSECT = SelectSetType.INTERSECT
 
 
 def Ctimestamp(name, doc=None):
-    return C(name, TDateTime, constraints=('NOT NULL',), default='now()', doc=doc)
+    return C(name, TDateTime, constraints=('NOT NULL',), default='localtimestamp', doc=doc)
 def Cuser(name, doc=None):
     return C(name, TUser, constraints=('NOT NULL',), default='user', doc=doc)
 
-Gall_pytis = globals().get('Gall_pytis', ('all', 'pytis'))
-Grights_log_update = globals().get('Grights_log_update', ('all', 'pytis'))
+Gall_pytis = globals().get('Gall_pytis', (('all', 'pytis'),))
+Grights_log_update = globals().get('Grights_log_update', (('all', 'pytis'),))
 
 def _std_table(name, columns, doc, grant=Gall_pytis, **kwargs):
     return table(name, columns, inherits=('_changes',), grant=grant,
