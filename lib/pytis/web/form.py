@@ -354,13 +354,10 @@ class LayoutForm(FieldForm):
             result = concat(result, separator="\n")
         return result
 
-            
-
-    
-
     def _export_field_label(self, context, field):
         if field.label:
-            return context.generator().label(field.label, None) + ":"
+            g = context.generator()
+            return g.span(g.label(field.label, None)+":", cls='field-label id-'+field.id)
         else:
             return None
     
