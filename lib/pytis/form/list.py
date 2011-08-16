@@ -2829,12 +2829,13 @@ class BrowseForm(FoldableForm):
     class _DBPrintResolver(pytis.output.DatabaseResolver):
         
         def __init__(self, db_table):
-            pytis.output.DatabaseResolver.__init__(self, db_table, ('template', 'rowtemplate', 'header', 'first_page_header', 'footer',))
+            pytis.output.DatabaseResolver.__init__(self, db_table, ('template', 'rowtemplate', 'header', 'first_page_header', 'footer', 'style',))
 
         def get(self, module_name, spec_name, **kwargs):
             specs = ('body', 'row', 'page_header', 'first_page_header', 'page_footer',)
+            plain_specs = ('style',)
             try:
-                result_index = specs.index(spec_name)
+                result_index = (specs + plain_specs).index(spec_name)
             except ValueError:
                 raise ResolverError(module_name, spec_name)
             module_parts = module_name.split('/')
@@ -2842,12 +2843,12 @@ class BrowseForm(FoldableForm):
                 del module_parts[0]
             if len(module_parts) > 1:
                 module_name = string.join(module_parts[:-1], '/')
-                spec_name = module_parts[-1]
+                last_spec_name = module_parts[-1]
             else:
                 module_name = string.join(module_parts, '/')
-                spec_name = ''
-            result = pytis.output.DatabaseResolver.get(self, module_name, spec_name, **kwargs)[result_index]
-            if result and isinstance(result, basestring):
+                last_spec_name = ''
+            result = pytis.output.DatabaseResolver.get(self, module_name, last_spec_name, **kwargs)[result_index]
+            if result and isinstance(result, basestring) and spec_name in specs:
                 import lcg
                 result = pytis.output.StructuredText(result)
             return result

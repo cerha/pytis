@@ -53,6 +53,7 @@ import operator
 import os
 import re
 import string
+import StringIO
 import thread
 
 import pytis.data
@@ -281,16 +282,26 @@ class LCGFormatter(object):
                                               default=Center('Strana ', PageNumber()))
         self._page_background, __ = self._resolve(template_id, 'background', default=None)
         self._page_layout, __ = self._resolve(template_id, 'page_layout', default={})
+        style, __ = self._resolve(template_id, 'style', default=None)
+        if style:
+            style_parser = lcg.StyleFile()
+            style_parser.read(StringIO.StringIO(style)) # doesn't work with cStringIO
+            self._style = style_parser.presentations()
+        else:
+            self._style = None
         body, __ = self._resolve(template_id, 'body')
         parameters = copy.copy(self._template_parameters(body))
         for p, a in (('page_header', self._page_header,),
                      ('page_footer', self._page_footer,),
                      ('first_page_header', self._first_page_header,),
                      ('page_background', self._page_background,),
+                     ('presentation', self._style,),
                      ):
             if p not in parameters:
                 if a is None:
                     value = None
+                elif isinstance(a, list): # presentation style
+                    value = a
                 else:
                     value = a.lcg()
                 parameters[p] = {None: value}
@@ -389,7 +400,9 @@ class LCGFormatter(object):
         presentation.landscape = self._page_layout.get(PAGE_LANDSCAPE_MODE)
         start_time_export = pytis.data.DateTime.now()
         exporter = lcg.pdf.PDFExporter()
-        context = exporter.context(lcg_content, None, presentation=presentation)
+        presentation_args = [(presentation, lcg.ContentMatcher(),)] + (self._style or [])
+        presentation_set = lcg.PresentationSet(())
+        context = exporter.context(lcg_content, None, presentation=presentation_set)
         try:
             pdf = exporter.export(context)
         except lcg.SubstitutionIterator.IteratorError, e:
