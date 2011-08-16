@@ -461,7 +461,7 @@ class LCGFormatter(object):
         except ResolverError:
             return text
         bindings = view_spec.bindings()
-        bindings = [b for b in bindings if pytis.form.has_access(b.name())]
+        bindings = [b for b in bindings if b.name() and pytis.form.has_access(b.name())]
         text += _("Identifikátory sloupců:\n")
         for field in view_spec.fields():
             text += _("  %s ... %s\n") % (field.id(), field.label(),)
