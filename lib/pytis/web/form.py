@@ -1644,9 +1644,9 @@ class ListView(BrowseForm):
             self._exported_row_index.append(g.link(title, '#'+anchor))
         parts = [g.h(heading, level=3)]
         if layout.image():
-            img = self._export_field(context, self._image) #cls='list-layout-image')
+            img = self._export_field(context, self._image) 
             if img:
-                parts.append(img)
+                parts.append(g.span(img, cls='list-layout-image'))
         if self._meta:
             meta = [(labeled and
                      g.span(field.label+":", cls='label id-'+ field.id)+" " or '') + \
