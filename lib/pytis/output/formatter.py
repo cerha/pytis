@@ -187,6 +187,8 @@ class LCGFormatter(object):
                     dictionary['Binding'] = binding_dictionary = _ProxyDict()
                     for binding in form_bindings:
                         form_name = binding.name()
+                        if form_name is None:
+                            continue
                         if (pytis.form.has_access(form_name) and
                             pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT)):
                             # I tried to use closure here, but it produced unexpected results
