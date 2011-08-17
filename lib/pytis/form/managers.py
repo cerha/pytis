@@ -36,6 +36,7 @@ import cPickle as pickle
 import config
 import pytis.data
 import pytis.form
+import pytis.presentation
 
 class UserSetttingsManager(object):
     """Common base class for all user settings managers."""
@@ -247,7 +248,7 @@ class AggregatedViewsManager(UserSetttingsManager):
           aggregated_view -- 'pytis.presentation.AggregatedView' instance.
 
         """
-        assert isinstance(aggregated_view, AggregatedView)
+        assert isinstance(aggregated_view, pytis.presentation.AggregatedView)
         values = dict(title=aggregated_view.name(),
                       pickle=self._pickle(aggregated_view))
         self._save(values, spec_name=spec_name, aggregated_view_id=aggregated_view.id(),
@@ -260,7 +261,7 @@ class AggregatedViewsManager(UserSetttingsManager):
           spec_name -- specification name as a string.
           aggregated_view_id -- string identifier of the aggregated view to load.
 
-        Returns a 'pytis.form.AggregatedView' instance.  If no such aggregated
+        Returns a 'pytis.presentation.AggregatedView' instance.  If no such aggregated
         view is found, None is returned.
 
         """
