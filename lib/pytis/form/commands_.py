@@ -587,10 +587,6 @@ class UICommands(object):
         RecordForm.COMMAND_IMPORT_INTERACTIVE(),
         _(u"Import z textového souboru"),
         _(u"Importovat data z textového souboru ve formátu CSV."))
-    AGGREGATED_VIEW = UICommand(
-        ListForm.COMMAND_AGGREGATED_VIEW(),
-        _(u"Zobrazit agregovaný náhled"),
-        _(u"Zobrazit duální formulář se zvolenými agregačními funkcemi."))
     OTHER_FORM = UICommand(
         DualForm.COMMAND_OTHER_FORM(),
         _(u"Přepnout aktivní formulář duálního formuláře"),
