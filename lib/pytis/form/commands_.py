@@ -635,7 +635,6 @@ FORM_MENU_COMMANDS = ((
         UICommands.SORT,
         UICommands.FILTER,
         UICommands.UNFILTER,
-        UICommands.AGGREGATED_VIEW,
         ),(
         UICommands.EDIT_RECORD,
         UICommands.NEW_RECORD,
