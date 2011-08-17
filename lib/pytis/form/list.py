@@ -1273,6 +1273,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self.COMMAND_CONTEXT_MENU.invoke(position=event.GetPosition())
         
     def _on_left_click(self, event):
+        self._run_callback(self.CALL_USER_INTERACTION)
         if event.ShiftDown() or event.ControlDown():
             # Allow default behavior (clicked row selection) only when the user
             # wants to make a selection.
