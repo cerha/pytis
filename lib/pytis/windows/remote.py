@@ -38,7 +38,9 @@ def nx_ip():
     global _nx_ip
     if _nx_ip is not UNDEFINED:
         return _nx_ip
-    _nx_ip = None
+    _nx_ip = os.getenv['NXUSERIP']
+    if _nx_ip is not None:
+        return _nx_ip
     nxsessionid = os.getenv('NXSESSIONID')
     if nxsessionid is not None:
         session_id = ':' + nxsessionid.split('-')[1]
