@@ -3155,6 +3155,16 @@ class Specification(object):
 
     May be also defined as a method of the same name."""
 
+    crypto_names = ()
+    """Sequence of crypto names (strings) required by the table.
+
+    Field crypto names are added to this sequence automatically.  Explicitly
+    setting other crypto names here is useful when the underlying database
+    table is actually a view or a function performing decryption (and possibly
+    also encryption) transparently, assuming the passwords for given crypto
+    names are already given.
+    """
+
     condition = None
     """A hardcoded condition filtering data of the underlying data object.
 
@@ -3291,9 +3301,9 @@ class Specification(object):
         
     def __init__(self, resolver):
         self._resolver = resolver
-        for attr in ('fields', 'arguments', 'access_rights', 'condition', 'distinct_on',
-                     'bindings', 'cb', 'sorting', 'profiles', 'filters', 'conditions',
-                     'folding', 'initial_folding',):
+        for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
+                     'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
+                     'conditions', 'folding', 'initial_folding',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if isinstance(value, collections.Callable):
@@ -3306,7 +3316,7 @@ class Specification(object):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
                    attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                                 'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
-                                'data_access_rights', 'arguments',
+                                'data_access_rights', 'arguments', 'crypto_names',
                                 'oid', # for backward compatibility 
                                 ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
@@ -3379,7 +3389,7 @@ class Specification(object):
                 access_rights = pytis.data.AccessRights((None, (None, perm)))
         kwargs = dict(access_rights=access_rights, connection_name=self.connection,
                       condition=self.condition, distinct_on=self.distinct_on,
-                      arguments=arguments)
+                      arguments=arguments, crypto_names=self.crypto_names)
         return pytis.data.DataFactory(self.data_cls, *args, **kwargs)
 
     def _create_view_spec(self, title=None, **kwargs):

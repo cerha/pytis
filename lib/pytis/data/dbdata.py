@@ -84,7 +84,7 @@ class DBData(Data):
     
     """
     def __init__(self, bindings, ordering=None, distinct_on=(), arguments=None,
-                 **kwargs):
+                 crypto_names=(), **kwargs):
         """Inicializuj tabulku s napojením do databáze.
 
         Argumenty:
@@ -96,6 +96,8 @@ class DBData(Data):
           arguments -- sequence of 'DBBinding' instances defining table
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
+          crypto_names -- sequence of additional crypto names (strings)
+            required by the object but not defined in bindings
           kwargs -- k předání předkovi
 
         Sloupce datové tabulky se určí automaticky na základě 'bindings'.
@@ -126,6 +128,16 @@ class DBData(Data):
         if __debug__: log(DEBUG, 'Sloupce databázové instance:', columns)
         if __debug__: log(DEBUG, 'Klíč databázové instance:', key)
         self._distinct_on = distinct_on
+        assert is_sequence(crypto_names), crypto_names
+        if __debug__:
+            assert all([isinstance(n, basestring) for n in crypto_names]), crypto_names
+        crypto_names = list(crypto_names)
+        for b in bindings:
+            if isinstance(b, DBColumnBinding):
+                n = b.crypto_name()
+                if n is not None and n not in crypto_names:
+                    crypto_names.append(n)
+        self._crypto_names = crypto_names
         try:
             del kwargs['key']
         except:
@@ -201,6 +213,15 @@ class DBData(Data):
     def arguments(self):
         """Return the value of argument 'arguments' passed to the constructor."""
         return self._arguments
+
+    def crypto_names(self):
+        """Return sequence of all crypto names (strings) required by the data object.
+
+        It includes crypto names given in the constructor and crypto names
+        defined in bindings.
+        
+        """
+        return self._crypto_names
         
 
 class DBConnectionPool:
