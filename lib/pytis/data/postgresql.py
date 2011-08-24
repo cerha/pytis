@@ -1072,7 +1072,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             elif type_class_ == Integer and serial:
                 type_class_ = Serial
             if ctype:
-                assert issubclass(ctype, type_class_), \
+                assert (type_class_ == Binary or # maybe a crypto column
+                        issubclass(ctype, type_class_)), \
                        ("User type doesn't match DB type", ctype, type_class_)
                 type_class_ = ctype
             result = type_class_(**type_kwargs)
