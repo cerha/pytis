@@ -24,12 +24,7 @@ create or replace function pytis_crypt_password(name text) returns text as $$
 declare
   psw text;
 begin
-  begin
-    select password into psw from t_pytis_passwords where name=name;
-  exception
-    when NO_DATA_FOUND then
-      psw := 'dummy';
-  end;
+  select password into strict psw from t_pytis_passwords where name=name;
   return psw;
 end;
 $$ language plpgsql stable;
