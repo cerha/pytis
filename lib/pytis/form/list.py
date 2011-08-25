@@ -1804,32 +1804,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _cmd_copy_cell(self):
         row, col = self._current_cell()
-        cid = self._columns[col].id()
-        self._copy_to_clipboard(self._table.row(row).format(cid, secure=True))
+        cid = self._columns[col].id()        
+        copy_to_clipboard(self._table.row(row).format(cid, secure=True))
 
-    def _copy_to_clipboard(self, text):
-        if pytis.windows.windows_available():
-            nx_ip  = pytis.windows.nx_ip()
-            log(EVENT, 'Copy the cell to windows clipboard on %s' % (nx_ip,))
-            if isinstance(text, str):
-                text = unicode(text)
-            pytis.windows.set_clipboard_text(text)
-        else:
-            # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
-            # Thus the terrible hack below...
-            # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
-            # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
-            #                     so we must continue tu use this horrible hack
-            if config.use_wx_clipboard:
-                copy_to_clipboard(text)
-            else:
-                ctrl = wx.TextCtrl(self, -1, text)
-                ctrl.SetSelection(0, len(text))
-                ctrl.Copy()
-                ctrl.Destroy()
-        
     def _cmd_copy_aggregation_result(self, operation, cid):
-        self._copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
+        copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
         
     def _can_copy_aggregation_result(self, operation, cid):
         return self._aggregation_results[(cid, operation)] is not None

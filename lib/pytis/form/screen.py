@@ -113,14 +113,73 @@ def modal(window):
 def copy_to_clipboard(text):
     """Copy the text into system clipboard."""
     assert isinstance(text, basestring)
-    clipboard = wx.TheClipboard
-    if clipboard.Open():
-        if config.clipboard_primary_selection:
-            clipboard.UsePrimarySelection(True)
-        clipboard.SetData(wx.TextDataObject(text))
-        clipboard.Flush()
-        clipboard.Close()
-        
+    if pytis.windows.windows_available():
+        nx_ip  = pytis.windows.nx_ip()
+        log(EVENT, 'Copy text to windows clipboard on %s' % (nx_ip,))
+        if isinstance(text, str):
+            text = unicode(text)
+        pytis.windows.set_clipboard_text(text)
+    else:
+        # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
+        # Thus the terrible hack below...
+        # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
+        # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
+        #                     so we must continue tu use this horrible hack
+        log(EVENT, 'Copy text to clipboard.')
+        if config.use_wx_clipboard:
+            clipboard = wx.TheClipboard
+            if clipboard.Open():
+                clipboard.SetData(wx.TextDataObject(text))
+                clipboard.Flush()
+                clipboard.Close()
+        else:
+            ctrl = wx.TextCtrl(self, -1, text)
+            ctrl.SetSelection(0, len(text))
+            ctrl.Copy()
+            ctrl.Destroy()
+
+def paste_from_clipboard(ctrl):
+    """Paste from clipboard to TextCtrl widget."""
+    if isinstance(ctrl, wx.TextCtrl):
+        if pytis.windows.windows_available():
+            nx_ip  = pytis.windows.nx_ip()
+            log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
+            text = pytis.windows.get_clipboard_text()
+            if text:
+                success = True
+            else:
+                success = False                
+
+                pytis.windows.set_clipboard_text(text)
+        else:
+            log(EVENT, 'Paste from clipboard')
+            if not wx.TheClipboard.IsOpened():  # may crash, otherwise
+                do = wx.TextDataObject()
+                wx.TheClipboard.Open()
+                success = wx.TheClipboard.GetData(do)
+                wx.TheClipboard.Close()
+                if success:
+                    text = do.GetText()
+                else:
+                    text = None
+        if text:
+            text_length = len(text)
+            orig_text = ctrl.GetValue()
+            if orig_text:
+                from_, to_ = ctrl.GetSelection()
+                if from_ != to_:
+                    text = orig_text[:from_] + text + orig_text[to_:]
+                    point = from_ + text_length
+                else:
+                    point = ctrl.GetInsertionPoint()
+                    text = orig_text[:point] + text + orig_text[point:]
+                    point = point + text_length
+            else:
+                point = text_length
+            ctrl.ChangeValue(text)
+            ctrl.SetInsertionPoint(point)
+            
+            
 def hotkey_string(hotkey):
     """Return the human readable hotkey representation of Keymap.lookup_command() result."""
     return ' '.join([k.replace(' ', _(u"Mezerník")) for k in hotkey])
@@ -2237,7 +2296,7 @@ def wx_combo(parent, choices, **kwargs):
     return wx_choice(parent, choices, _combo=True, **kwargs)
 
 
-def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=None, 
+def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=None,
                  length=None, width=None, height=None, readonly=False, enabled=True, _spin=False):
     if _spin:
         cls = wx.SpinCtrl
@@ -2248,6 +2307,8 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
         wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
     if on_text:
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
+    wx_callback(wx.EVT_TEXT_COPY, ctrl, clipboard_copy_event)
+    wx_callback(wx.EVT_TEXT_PASTE, ctrl, clipboard_paste_event)
     if value is not None:
         ctrl.SetValue(value)
     if length:
@@ -2281,6 +2342,8 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
             height = min(len(lines), 20)
         style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
         ctrl = wx.TextCtrl(parent, style=style)
+        wx_callback(wx.EVT_TEXT_COPY, ctrl, clipboard_copy_event)        
+        wx_callback(wx.EVT_TEXT_PASTE, ctrl, clipboard_paste_event)                
         ctrl.SetValue(content)
         ctrl.SetBestFittingSize(char2px(ctrl, width, height))
         return ctrl
@@ -2310,4 +2373,11 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
     browser.SetSize(char2px(parent, width, height))
     return browser
 
+def clipboard_copy_event(event):
+    ctrl = event.GetEventObject()
+    text = ctrl.GetStringSelection()
+    copy_to_clipboard(text)
 
+def clipboard_paste_event(event):
+    ctrl = event.GetEventObject()
+    paste_from_clipboard(ctrl)

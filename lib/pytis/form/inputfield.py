@@ -898,54 +898,28 @@ class TextField(InputField):
         return self._ctrl.CanCut()
         
     def _cmd_cut(self):
-        if pytis.windows.windows_available():
-            self._cmd_copy()
-            ctrl = self._ctrl
-            from_, to_ = ctrl.GetSelection()
-            if from_ != to_:
-                text = ctrl.GetValue()
-                ctrl.ChangeValue(text[:from_]+text[to_:])
-                ctrl.SetInsertionPoint(from_)
-        else:
-            self._ctrl.Cut()
+        self._cmd_copy()
+        ctrl = self._ctrl
+        from_, to_ = ctrl.GetSelection()
+        if from_ != to_:
+            text = ctrl.GetValue()
+            ctrl.ChangeValue(text[:from_]+text[to_:])
+            ctrl.SetInsertionPoint(from_)
+        self._on_change()
         
     def _can_copy(self):
         return self._ctrl.CanCopy()
 
     def _cmd_copy(self):
-        if pytis.windows.windows_available():
-            text = self._ctrl.GetStringSelection()
-            if text:
-                pytis.windows.set_clipboard_text(text)
-        else:
-            self._ctrl.Copy()
+        text = self._ctrl.GetStringSelection()
+        copy_to_clipboard(text)
         
     def _can_paste(self):
         return self._ctrl.CanPaste()
         
     def _cmd_paste(self):
-        if pytis.windows.windows_available():
-            text = pytis.windows.get_clipboard_text()
-            if text:
-                text_length = len(text)
-                ctrl = self._ctrl
-                orig_text = ctrl.GetValue()
-                if orig_text:
-                    from_, to_ = ctrl.GetSelection()
-                    if from_ != to_:
-                        text = orig_text[:from_] + text + orig_text[to_:]
-                        point = from_ + text_length
-                    else:
-                        point = ctrl.GetInsertionPoint()
-                        text = orig_text[:point] + text + orig_text[point:]
-                        point = point + text_length
-                else:
-                    point = text_length
-                ctrl.ChangeValue(text)
-                ctrl.SetInsertionPoint(point)
-                self._on_change()
-        else:
-            self._ctrl.Paste()
+        paste_from_clipboard(self._ctrl)
+        self._on_change()
         
     def _can_select_all(self):
         return bool(self._ctrl.GetValue())
