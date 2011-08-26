@@ -849,17 +849,17 @@ class BrowseForm(LayoutForm):
             profiles = self._view.profiles()
         elif not isinstance(profiles, Profiles):
             profiles = Profiles(*profiles)
-        if profiles:
-            assert 'profile' not in [fs.id() for fs in filter_sets]
-            # Add profile selection as another filter set, since the user interface is the same.
-            filter_sets.insert(0, FilterSet('profile', _("Profile"),
-                                            [Filter(p.id(), p.name(), p.filter()) for p in profiles],
-                                            default=profiles.default()))
         self._profiles = profiles
         self._filter = filter
         self._filter_ids = {}
         self._filter_sets = []
         if profiles:
+            assert 'profile' not in [fs.id() for fs in filter_sets]
+            # Add profile selection as another filter set, since the user interface is the same.
+            filter_set = FilterSet('profile', _("Profile"),
+                                   [Filter(p.id(), p.name(), p.filter()) for p in profiles],
+                                   default=profiles.default())
+            self._init_filter_sets((filter_set,), req, param)
             profile_id = self._filter_ids['profile']
             if profile_id is not None:
                 profile = find(profile_id, profiles, key=lambda p: p.id())
@@ -1086,7 +1086,6 @@ class BrowseForm(LayoutForm):
                         self._filter = cond
                 else:
                     filter_id = None
-            lcg.log("***", filter_set_id, [f.id() for f in filter_set], filter_id, null_filter.id())
             self._filter_ids[filter_set_id] = filter_id
             self._filter_sets.append(filter_set)
         
