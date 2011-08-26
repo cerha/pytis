@@ -859,7 +859,6 @@ class BrowseForm(LayoutForm):
         self._filter = filter
         self._filter_ids = {}
         self._filter_sets = []
-        self._init_filter_sets(filter_sets, req, param)
         if profiles:
             profile_id = self._filter_ids['profile']
             if profile_id is not None:
@@ -873,6 +872,7 @@ class BrowseForm(LayoutForm):
                 profile_filter_sets = profile.filter_sets()
                 if profile_filter_sets is not None:
                     self._init_filter_sets(profile_filter_sets, req, param)
+        self._init_filter_sets(filter_sets, req, param)
         # Determine the current sorting.
         self._user_sorting = None
         sorting_column, direction = param('sort', str), param('dir', str)
