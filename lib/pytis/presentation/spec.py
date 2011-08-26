@@ -578,7 +578,7 @@ class Profile(object):
     """
     
     def __init__(self, id, name, filter=None, sorting=None, columns=None, grouping=None,
-                 aggregations=None, folding=None):
+                 aggregations=None, folding=None, filter_sets=None):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
@@ -601,6 +601,9 @@ class Profile(object):
             'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
           folding -- folding specification ('FoldableForm.Folding' instance)
             If None, the 'ViewSpec' folding applies.
+          filter_sets -- profile specific filter sets.  Additional to global
+            filter sets defined for 'ViewSpec'.  The same format and
+            limitations as for the same argument of 'ViewSpec'.
           
         """
         assert isinstance(id, basestring)
@@ -610,6 +613,10 @@ class Profile(object):
         assert grouping is None or isinstance(grouping, (basestring, tuple)), grouping
         assert columns is None or isinstance(columns, (tuple, list)), columns
         assert aggregations is None or isinstance(aggregations, (tuple, list)), aggregations
+        assert filter_sets is None or isinstance(filter_sets, (list, tuple)), filter_sets
+        if __debug__:
+            for fs in filter_sets or ():
+                assert isinstance(fs, FilterSet), fs
         self._id = id
         self._name = name
         self._filter = filter
@@ -618,6 +625,7 @@ class Profile(object):
         self._columns = columns and tuple(columns)
         self._aggregations = aggregations and tuple(aggregations)
         self._folding = folding
+        self._filter_sets = filter_sets and tuple(filter_sets)
     
     def __str__(self):
         parameters = ['%s=%s' % (key[1:], value)
@@ -657,6 +665,9 @@ class Profile(object):
 
     def folding(self):
         return self._folding
+
+    def filter_sets(self):
+        return self._filter_sets
 
     
 class AggregatedView(object):
@@ -739,6 +750,7 @@ class Profiles(list):
         if __debug__:
             profile_ids = []
             for p in profiles:
+                assert isinstance(p, Profile)
                 assert p.id() not in profile_ids, "Duplicate profile id '%s'" % p.id()
                 profile_ids.append(p.id())
             assert not kwargs
@@ -1470,7 +1482,7 @@ class ViewSpec(object):
                                for attr in public_attributes(pytis.data.Data)
                                if attr.startswith('AGG_')]
             for fs in filter_sets:
-                assert isinstance(fs, FilterSet)
+                assert isinstance(fs, FilterSet), fs
         assert cleanup is None or isinstance(cleanup, collections.Callable)
         assert on_new_record is None or isinstance(on_new_record, collections.Callable)
         assert on_edit_record is None or isinstance(on_edit_record, collections.Callable)

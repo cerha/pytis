@@ -848,53 +848,18 @@ class BrowseForm(LayoutForm):
         if profiles is None:
             profiles = self._view.profiles()
         elif not isinstance(profiles, Profiles):
-            profiles = Profiles(profiles)
+            profiles = Profiles(*profiles)
         if profiles:
             assert 'profile' not in [fs.id() for fs in filter_sets]
             # Add profile selection as another filter set, since the user interface is the same.
-            filter_sets.append(FilterSet('profile', _("Filter"),
-                                         [Filter(p.id(), p.name(), p.filter()) for p in profiles],
-                                         default=profiles.default()))
+            filter_sets.insert(0, FilterSet('profile', _("Profile"),
+                                            [Filter(p.id(), p.name(), p.filter()) for p in profiles],
+                                            default=profiles.default()))
         self._profiles = profiles
+        self._filter = filter
         self._filter_ids = {}
-        self._filter_sets = filter_sets
-        for i, filter_set in enumerate(filter_sets):
-            filter_set_id = filter_set.id()
-            # Determine the current set of user selectable filters.
-            null_filter = find(None, filter_set, key=lambda f: f.condition())
-            if not null_filter:
-                # Translators: Label used in filter selection box for the
-                # option which disables filtering and thus results in all
-                # records to be displayed.
-                null_filter = Filter(self._NULL_FILTER_ID, _("All items"), None)
-                filter_set_filters = [null_filter] + [f for f in filter_set]
-                filter_sets[i] = FilterSet(filter_set_id, filter_set.title(), filter_set_filters)
-            # Determine the currently selected filter.
-            filter_id = param('filter_%s' % (filter_set_id,), str)
-            if filter_id is not None:
-                req.set_cookie('pytis-form-last-filter-%s' % (filter_set_id,),
-                               self._name +':'+ filter_id)
-            else:
-                cookie = req.cookie('pytis-form-last-filter-%s' % (filter_set_id,))
-                if cookie and cookie.startswith(self._name +':'):
-                    filter_id = cookie[len(self._name)+1:]
-                elif filter_set.default():
-                    filter_id = filter_set.default()
-                else:
-                    filter_id = null_filter.id()
-            if filter_id:
-                matching_filter = find(filter_id, filter_set, key=lambda f: f.id())
-                # Append the current user selected filter to the filter passed
-                # as 'filter' argument.
-                if matching_filter:
-                    cond = matching_filter.condition()
-                    if filter and cond:
-                        filter = pd.AND(filter, cond)
-                    elif cond:
-                        filter = cond
-                else:
-                    filter_id = None
-            self._filter_ids[filter_set_id] = filter_id
+        self._filter_sets = []
+        self._init_filter_sets(filter_sets, req, param)
         if profiles:
             profile_id = self._filter_ids['profile']
             if profile_id is not None:
@@ -905,7 +870,9 @@ class BrowseForm(LayoutForm):
                     sorting = profile.sorting()
                 if profile.grouping() is not None:
                     grouping = profile.grouping()
-        self._filter = filter
+                profile_filter_sets = profile.filter_sets()
+                if profile_filter_sets is not None:
+                    self._init_filter_sets(profile_filter_sets, req, param)
         # Determine the current sorting.
         self._user_sorting = None
         sorting_column, direction = param('sort', str), param('dir', str)
@@ -1082,6 +1049,47 @@ class BrowseForm(LayoutForm):
         self._filter_fields_arguments = arguments
         self._filter_fields_row = row
 
+    def _init_filter_sets(self, filter_sets, req, param):
+        for i, filter_set in enumerate(filter_sets):
+            filter_set_id = filter_set.id()
+            # Determine the current set of user selectable filters.
+            null_filter = find(None, filter_set, key=lambda f: f.condition())
+            if not null_filter:
+                # Translators: Label used in filter selection box for the
+                # option which disables filtering and thus results in all
+                # records to be displayed.
+                null_filter = Filter(self._NULL_FILTER_ID, _("All items"), None)
+                filter_set = FilterSet(filter_set_id, filter_set.title(),
+                                       [null_filter] + [f for f in filter_set])
+            # Determine the currently selected filter.
+            filter_id = param('filter_%s' % (filter_set_id,), str)
+            if filter_id is not None:
+                req.set_cookie('pytis-form-last-filter-%s' % (filter_set_id,),
+                               self._name +':'+ filter_id)
+            else:
+                cookie = req.cookie('pytis-form-last-filter-%s' % (filter_set_id,))
+                if cookie and cookie.startswith(self._name +':'):
+                    filter_id = cookie[len(self._name)+1:]
+                elif filter_set.default():
+                    filter_id = filter_set.default()
+                else:
+                    filter_id = null_filter.id()
+            if filter_id:
+                matching_filter = find(filter_id, filter_set, key=lambda f: f.id())
+                # Append the current user selected filter to the filter passed
+                # as 'filter' argument.
+                if matching_filter:
+                    cond = matching_filter.condition()
+                    if self._filter and cond:
+                        self._filter = pd.AND(self._filter, cond)
+                    elif cond:
+                        self._filter = cond
+                else:
+                    filter_id = None
+            lcg.log("***", filter_set_id, [f.id() for f in filter_set], filter_id, null_filter.id())
+            self._filter_ids[filter_set_id] = filter_id
+            self._filter_sets.append(filter_set)
+        
     def _export_cell(self, context, field):
         value = self._export_field(context, field)
         if field.id == self._column_fields[0].id and self._tree_order_column:
