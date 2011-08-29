@@ -124,7 +124,7 @@ def copy_to_clipboard(text):
         # Thus the terrible hack below...
         # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
         # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
-        #                     so we must continue tu use this horrible hack
+        #                     so we must continue to use this horrible hack
         log(EVENT, 'Copy text to clipboard.')
         if config.use_wx_clipboard:
             clipboard = wx.TheClipboard
@@ -133,7 +133,7 @@ def copy_to_clipboard(text):
                 clipboard.Flush()
                 clipboard.Close()
         else:
-            ctrl = wx.TextCtrl(self, -1, text)
+            ctrl = wx.TextCtrl(wx_frame(), -1, text)
             ctrl.SetSelection(0, len(text))
             ctrl.Copy()
             ctrl.Destroy()
