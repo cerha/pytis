@@ -728,7 +728,7 @@ class InnerForm(Form):
         name = self._name
         try:
             print_spec = list(self._resolver.get(name, 'print_spec') or ())
-        except ResolverSpecError:
+        except ResolverError:
             print_spec = []
         # Default print currently disabled, since on a huge table it may extensively consume
         # resources and no one is using it anyway...

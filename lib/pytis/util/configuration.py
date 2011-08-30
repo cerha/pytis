@@ -445,6 +445,11 @@ class Configuration(object):
         _ENVIRONMENT = ('PYTISHELPDIR',)
         _DEFAULT = './help'
 
+    class _Option_print_spec_dir(FileOption):
+        _DESCR = _(u"Adresář obsahující specifikace tiskových sestav.")
+        _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.")
+        _DEFAULT = './output'
+
     # TODO: Dočasně vráceno, dokud ve všech projektech nepřejdeme na nový
     # systém nápovědy.
     class _Option_doc_dir(FileOption, CommandlineOption):

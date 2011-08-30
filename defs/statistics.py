@@ -118,5 +118,5 @@ class FormUserStatisticsNoinfo(Specification):
         try:
             pytis.form.run_form(pytis.form.PopupEditForm, 'Nastaveni.BvUsersCfg',
                                 select_row=pytis.extensions.cfg_param('id', cfgspec='Nastaveni.BvUsersCfg'))
-        except pytis.util.ResolverFileError:
+        except pytis.util.ResolverError:
             pytis.form.run_dialog(pytis.form.Warning, _(u"Tato databáze neobsahuje uživatelskou konfiguraci"))

@@ -257,7 +257,7 @@ class LCGFormatter(object):
 
           resolvers -- resolver of template names and data objects; may also be
             a non-empty sekvence of resolvers, in such a case the first
-            resolver not throwing 'ResolverFileError' when accessing the
+            resolver not throwing 'ResolverError' when accessing the
             template will be used
           template_id -- id of the output template, string
           form -- current form; 'Form' instance or 'None'
@@ -330,8 +330,6 @@ class LCGFormatter(object):
             try:
                 result = resolver.get(template_id, element)
             except ResolverError:
-                continue
-            except ResolverSpecError:
                 continue
             break
         else:

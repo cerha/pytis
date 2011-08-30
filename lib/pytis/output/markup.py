@@ -746,7 +746,7 @@ class Image(_Mark):
         Argumenty:
 
           file_name -- jméno souboru obrázku, relativní k adresáři definovanému
-            konfigurační volbou 'def_dir'.
+            konfigurační volbou 'print_spec_dir'.
 
         """
         super(Image, self).__init__()
@@ -758,7 +758,7 @@ class Image(_Mark):
 
     def _lcg(self):
         import config
-        image = lcg.Image(os.path.join(config.def_dir, self._file_name))
+        image = lcg.Image(os.path.join(config.print_spec_dir, self._file_name))
         return lcg.InlineImage(image)
 
 class StructuredText(_Mark):

@@ -2784,7 +2784,7 @@ class BrowseForm(FoldableForm):
             # Supply a default specification module (old style spec).
             try:
                 x = super(BrowseForm._PrintResolver, self)._get_module(name)
-            except (ResolverModuleError, ResolverFileError,):
+            except ResolverError, e:
                 x = self._Spec(self)
             return x
 
@@ -2792,30 +2792,30 @@ class BrowseForm(FoldableForm):
             # Supply a default specification class (new style spec).
             try:
                 x = super(BrowseForm._PrintResolver, self)._get_instance(key)
-            except ResolverSpecError:
+            except ResolverError, e:
                 x = self._Spec(self)
             return x
 
-    class _PlainPrintResolver(PlainFileResolver):
+    class _PlainPrintResolver(pytis.output.PlainFileResolver):
         
         def get(self, *args, **kwargs):
-            result = PlainFileResolver.get(self, *args, **kwargs)
+            result = pytis.output.PlainFileResolver.get(self, *args, **kwargs)
             if result and isinstance(result, basestring):
                 import lcg
                 result = pytis.output.StructuredText(result)
             return result
 
-    class _DBPrintResolver(DatabaseResolver):
+    class _DBPrintResolver(pytis.output.DatabaseResolver):
         
         def __init__(self, db_table):
-            DatabaseResolver.__init__(self, db_table, ('template', 'rowtemplate', 'header', 'first_page_header', 'footer',))
+            pytis.output.DatabaseResolver.__init__(self, db_table, ('template', 'rowtemplate', 'header', 'first_page_header', 'footer',))
 
         def get(self, module_name, spec_name, **kwargs):
             specs = ('body', 'row', 'page_header', 'first_page_header', 'page_footer',)
             try:
                 result_index = specs.index(spec_name)
             except ValueError:
-                raise ResolverSpecError(module_name, spec_name)
+                raise ResolverError(module_name, spec_name)
             module_parts = module_name.split('/')
             if module_parts[0] == 'output':
                 del module_parts[0]
@@ -2825,7 +2825,7 @@ class BrowseForm(FoldableForm):
             else:
                 module_name = string.join(module_parts, '/')
                 spec_name = ''
-            result = DatabaseResolver.get(self, module_name, spec_name, **kwargs)[result_index]
+            result = pytis.output.DatabaseResolver.get(self, module_name, spec_name, **kwargs)[result_index]
             if result and isinstance(result, basestring):
                 import lcg
                 result = pytis.output.StructuredText(result)
@@ -3006,12 +3006,13 @@ class BrowseForm(FoldableForm):
             if spec:
                 print_spec_path = spec[0].name()
             else:
-                print_spec_path = os.path.join('output', name)
-        P = self._PrintResolver
+                print_spec_path = name
         parameters = self._formatter_parameters()
-        parameters.update({P.P_NAME: name})
-        print_resolver = P(self._resolver, parameters=parameters)
-        wiki_template_resolver = self._PlainPrintResolver(config.def_dir, extension='text')
+        parameters.update({self._PrintResolver.P_NAME: name})
+        print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
+        print_resolver = self._PrintResolver((print_file_resolver, self._resolver),
+                                             parameters=parameters)
+        wiki_template_resolver = self._PlainPrintResolver(config.print_spec_dir, extension='text')
         db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
         resolvers = (db_template_resolver, wiki_template_resolver, print_resolver,)
         try:
