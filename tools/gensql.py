@@ -662,7 +662,7 @@ class _GsqlTable(_GsqlSpec):
                  on_insert=None, on_update=None, on_delete=None,
                  init_values=(), init_columns=(),
                  tablespace=None, upd_log_trigger=None,
-                 indexes=(), **kwargs):
+                 indexes=(), key_columns=(), **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -701,6 +701,11 @@ class _GsqlTable(_GsqlSpec):
           init_columns -- sekvence jmen sloupců nebo instancí třídy 'Column',
             pro něž jsou definovány 'init_values'; je-li prázdnou sekvencí,
             jsou to všechny sloupce tabulky
+          key_columns -- sequence of column names or instances of 'Column',
+            which builds the primary key for the table; it is expected to define
+            this argument only if there are no instances of PrimaryColumn in the
+            argument columns, which is mostly the case when primary key is defined
+            in inherited tables; 
           tablespace -- název tablespace, ve kterém bude tabulka vytvořena  
           upd_log_trigger -- název trigger funkce, která bude logovat změny v
             záznamech, nebo None, pokud se nemá logovat.
@@ -730,6 +735,7 @@ class _GsqlTable(_GsqlSpec):
         self._init_columns = [isinstance(c, basestring) and c
                               or self._column_column(c)
                               for c in init_columns]
+        self._key_columns = key_columns
         self._indexes = indexes
 
     def _full_column_name(self, column):
@@ -849,9 +855,16 @@ class _GsqlTable(_GsqlSpec):
     def key_columns(self):
         """Vrať seznam názvů klíčových sloupců."""
         kcols = []
-        for c in self._columns:
-            if isinstance(c, PrimaryColumn):
-                kcols.append(self._full_column_name(c).name)
+        if len(self._key_columns) > 0:
+            for c in self._key_columns:
+                if isinstance(c, Column):
+                    kcols.append(self._full_column_name(c).name)
+                elif isinstance(c, basestring):
+                    kcols.append("%s.%s" % (self._name, c))
+        if len(kcols) == 0:
+            for c in self._columns:
+                if isinstance(c, PrimaryColumn):
+                    kcols.append(self._full_column_name(c).name)
         return kcols        
     
     def _output(self, _re=False, _all=False):
