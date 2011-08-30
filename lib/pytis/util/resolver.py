@@ -31,28 +31,10 @@ import sys
 
 from pytis.util import *
 
-global _current_resolver
-_current_resolver = None
-
 def resolver():
-    """Vrať resolver pro získání specifikačních instancí na základě jména."""
-    global _current_resolver
-    if _current_resolver is None:
-        import config
-        _current_resolver = FileResolver(config.def_dir)
-    return _current_resolver
-
-def set_resolver(resolver):
-    """Nastav výchozí resolver vracený funkcí 'resolver()'.
-
-    Výchozí resolver je vytvořen automaticky jako instance 'FileResolver' nad
-    adresářem daným konfigurační volbou 'def_dir'.  Pokud chceme použít jiný
-    resolver, je třeba jej nastavit touto funkcí před inicializací aplikace.
-
-    """
-    assert isinstance(resolver, Resolver)
-    global _current_resolver
-    _current_resolver = resolver
+    """Deprecated: Use config.resolver instead."""
+    import config
+    return config.resolver
 
 
 class ResolverError(Exception):

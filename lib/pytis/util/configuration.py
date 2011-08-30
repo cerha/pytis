@@ -441,6 +441,12 @@ class Configuration(object):
         _DEFAULT = ()
         _DEFAULT_STRING = "()"
 
+    class _Option_resolver(Option):
+        _DESCR = _(u"Specification name resolver.")
+        _DOC = _(u"Instance of 'pytis.util.Resolver' used globally to resolve specification names.")
+        def default(self):
+            return Resolver(search=self._configuration.search_modules)
+
     class _Option_help_dir(FileOption, CommandlineOption):
         _DESCR = _(u"Adresář obsahující soubory s nápovědou.")
         _DOC = _(u"Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři.")

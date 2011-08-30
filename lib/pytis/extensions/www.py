@@ -24,7 +24,6 @@ import HyperText
 from HyperText.HTML import TABLE, TR, TD, TH, Select, Href, URL, nbsp
 from pytis.extensions import dbselect, data_object
 import config
-pytis.util.set_resolver(pytis.util.FileResolver(config.def_dir))
 
 class BaseDBTable(object):
 

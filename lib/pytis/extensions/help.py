@@ -167,7 +167,6 @@ class MenuReader(_MenuReader):
 
     """
     def __init__(self, id, *args, **kwargs):
-        pytis.util.set_resolver(pytis.util.FileResolver('../defs'))
         if '..' not in sys.path:
             sys.path.append('..')
         menu = pytis.util.resolver().get('application', 'menu')
