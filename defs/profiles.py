@@ -28,7 +28,7 @@ class FormProfiles(Specification):
     title = _(u"Profily formulářů")
     fields = (
         Field('id', _(u"Identifikátor"), width=20, editable=Editable.NEVER),
-        Field('profile_name', _(u"Název"), width=20, editable=Editable.NEVER),
+        Field('title', _(u"Název"), width=20, editable=Editable.NEVER),
         Field('username', _(u"Uživatel"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
         Field('fullname', _(u"Fullname"), codebook='menu.ApplicationMenuM',
               width=80, column_width=30, editable=Editable.NEVER),
@@ -39,9 +39,9 @@ class FormProfiles(Specification):
         Field('invalid', _(u"Neplatný"), type=pd.Boolean, virtual=True, width=1,
               computer=computer(lambda r, errors: errors is not None), editable=Editable.NEVER),
         )
-    cb = CodebookSpec(display='profile_name')
-    columns = ('profile_name', 'profile_id', 'username', 'fullname', 'invalid')
-    layout = HGroup(('profile_name', 'profile_id', 'username'),
+    cb = CodebookSpec(display='title')
+    columns = ('title', 'profile_id', 'username', 'fullname', 'invalid')
+    layout = HGroup(('title', 'profile_id', 'username'),
                     ('fullname', 'dump', 'errors'))
     profiles = (Profile('all-profiles', _("Všechny profily"),
                         filter=pd.NE('profile_id', pd.sval('__form_settings__'))),
