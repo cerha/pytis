@@ -1743,7 +1743,7 @@ class Binary(Limited):
             return self._filename
 
         def type(self):
-            """Return the suggested filename as passed to the constructor."""
+            """Return the suggested mime type as passed to the constructor."""
             return self._type
 
         def path(self):
