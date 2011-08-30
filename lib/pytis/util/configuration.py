@@ -432,12 +432,14 @@ class Configuration(object):
 
     # Cesty a adresáře
 
-    class _Option_def_dir(FileOption, CommandlineOption):
-        _DESCR = _(u"Adresář obsahující definiční soubory.")
-        _DOC = _(u"Adresář může být zadán absolutně i relativně vzhledem " +
-                 u"k aktuálnímu adresáři.")
-        _DEFAULT = './defs'
-        _ENVIRONMENT = ('PYTISDEFDIR',)
+    class _Option_search_modules(CommandlineOption):
+        _DESCR = _(u"Names of python modules containing pytis specifications.")
+        _DOC = _(u"Sequence of names of python modules which should be searched for pytis "
+                 "specifications.  If empty, specification names must by fully qualified "
+                 "identifiers of python classes.  If a list is given, the names may be relative "
+                 "to one of the modules named in the list.")
+        _DEFAULT = ()
+        _DEFAULT_STRING = "()"
 
     class _Option_help_dir(FileOption, CommandlineOption):
         _DESCR = _(u"Adresář obsahující soubory s nápovědou.")

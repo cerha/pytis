@@ -43,9 +43,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
     pull-down menu a stavový řádek.
 
     Start aplikace a vytvoření statických prvků je možné parametrizovat
-    specifikačním souborem aplikace.  Tím je soubor 'application.py' v adresáři
-    resolveru (určeném konfigurační volbou 'def_dir').  Použitelné specifikační
-    funkce jsou:
+    specifikačním modulem 'application' umístěným v pythonové cestě.
+    Použitelné specifikační funkce jsou:
 
       menu -- specifikace hlavního menu aplikace ve formátu specifikačního
         argumentu konstruktoru třídy 'pytis.form.screen.MenuBar'.

@@ -444,6 +444,17 @@ class Caching(unittest.TestCase):
 tests.add(Caching)
 
 
+class Resolver(unittest.TestCase):
+    def test_resolver(self):
+        from resolver import Resolver
+        import pytis.presentation
+        r = Resolver(search=('pytis', 'wikings'))
+        x = r.get('cms.Languages')
+        view = x.view_spec()
+        assert isinstance(view, pytis.presentation.ViewSpec)
+tests.add(Resolver)
+    
+
 ################
 
 

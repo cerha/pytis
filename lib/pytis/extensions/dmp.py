@@ -169,7 +169,7 @@ class DMPConfiguration(object):
         if configuration_file is None:
             self._resolver = None
         else:
-            self._resolver = FileResolver(config.def_dir)
+            self._resolver = pytis.util.resolver()
         if schemas:
             schemas_list = [s.strip() for s in schemas_string.split(',')]
         else:

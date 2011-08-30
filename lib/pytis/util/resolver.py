@@ -16,13 +16,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Resolvery jmenných odkazů.
+"""Name resolution services.
 
-Motivací pro zavedení resolveru je možnost vzájemného provázání jednotlivých
-formulářů, specifikací a prvků uživatelského rozhraní (menu, tlačítka apod.) na
-základě jmen bez nutnosti vytvářet instance všech odkazovaných objektů při
-vytváření objektu na ně se odkazujícího. Instance odkazovaných objektů jsou
-vytvořeny až při jejich skutečné potřebě pouze na základě znalosti jména.
+The motivation for using resolvers is the capability of flexible symbolic
+linking between various components of the application (form specifications)
+without the need to access the linked instances directly.  Instances of all
+components are created transparently by the resolver in the moment of their
+actual use.
 
 """
 
@@ -56,237 +56,108 @@ def set_resolver(resolver):
 
 
 class ResolverError(Exception):
-    """Chyba resolvace.
-
-    Tato třída je společným základem všech tříd signalizujících chybu
-    resolvace.
-    
-    """
-
-
-class ResolverModuleError(ResolverError):
-    """Výjimka vyvolávaná při nedostupnosti žádaného specifikačního modulu."""
-
-    def __init__(self, module_name, *args):
-        """Inicializuj výjimku.
-
-        Argumenty:
-
-          module_name -- jméno nenalezeného specifikačního modulu, string
-          args -- další argumenty předané konstruktoru předka
-
-        """
-        msg = 'Specification module not found: %s, %s' % (module_name, args)
-        super_(ResolverModuleError).__init__(self, msg)
-    
-
-class ResolverFileError(ResolverError):
-    """Výjimka vyvolávaná nelze-li načíst žádaný specifikační soubor."""
-    
-    def __init__(self, file_name, path, exception):
-        """Inicializuj výjimku.
-
-        Argumenty:
-
-          file_name -- jméno nenalezeného specifikačního souboru, string
-          path -- cesta ke specifikačním souborům, string
-          exception -- výjimka, která problém signalizovala, instance třídy
-            'Exception' nebo 'None'
-          
-        """
-        msg = 'Error importing specification file %s: %s %s' % (file_name, exception, path)
-        super_(ResolverFileError).__init__(self, msg)
-
-
-class ResolverSpecError(ResolverError):
-    """Výjimka vyvolaná není-li ve specifikačním modulu žádaná funkce."""
-    
-    def __init__(self, module_name, spec_name):
-        """Inicializuj výjimku.
-
-        Argumenty:
-
-          module_name -- jméno specifikačního modulu, string
-          spec_name -- jméno specfikační funkce, string
-          
-        """
-        msg = 'Specification not found: %s, %s' % (module_name, spec_name)
-        super_(ResolverSpecError).__init__(self, msg)
+    """Specification name resolution error."""
 
 
 class Resolver(object):
-    """Resolver umožňuje získat specifikační objekt na základě modulu a jména.
+    """Specification name resolver.
 
-    Modulem se rozumí objekt, může a nemusí jím být pythonový modul,
-    poskytující specifikace prostřednictvím funkcí vracejících instance
-    specifikačních objektů.  Specifikační jména odpovídají jménům callable
-    objektů modulu, resolver je schopen vracet přímo tyto objekty (metoda
-    'get_object()') nebo jimi vytvořené instance (metoda 'get()').
+    The resolver is responsible for resolution of specification names.  It
+    automatically creates specification instances from classes defined by
+    specification modules.  It then calls methods on those instances and
+    returns their results.  The specification instances as well as the results
+    of their method calls are cached transparently.  The only public method is
+    'get()' which returns the result of calling a given method on given
+    specification (both given by name).
 
-    """
-    def __init__(self):
-        """Inicializuj resolver."""
-        self._module_cache = SimpleCache(self._get_module)
-        self._object_cache = SimpleCache(self._get_object)
-        self._spec_cache = SimpleCache(self._get_spec)
-        self._instance_cache = SimpleCache(self._get_instance)
-    
-    def _get_module(self, module_name):
-        raise ResolverModuleError(module_name)
+    The specifications are located by their name in python modules available in
+    the current python path.  The resolver can be configured in two modes using
+    the constructor argument `search'.  The names are either fully qualified
+    names including the top level module name or relative to modules named in
+    the search list (see the constructor documentation for more details).
 
-    def _get_object(self, key):
-        module_name, spec_name = key
-        module = self._module_cache[module_name]
-        try:
-            obj = getattr(module, spec_name)
-        except AttributeError:
-            raise ResolverSpecError(module_name, spec_name)
-        return obj
-
-    def _get_spec(self, key):
-        module_name, spec_name, kwargs_items = key
-        kwargs = dict(kwargs_items)
-        if module_name.find('.') != -1:
-            parts = module_name.split('.')
-            module_name = os.path.join(*parts[:-1])
-            class_name = parts[-1]
-            instance = self.get_instance(module_name, class_name, self, **kwargs)
-            try:
-                method = getattr(instance, spec_name)
-            except AttributeError:
-                raise ResolverSpecError(module_name, spec_name)
-            return method()
-        else:
-            obj = self.get_object(module_name, spec_name)
-            return obj(self, **kwargs)
-
-    def _get_instance(self, key):
-        module_name, spec_name, args, kwargs_items = key
-        class_ = self.get_object(module_name, spec_name)
-        return class_(*args, **dict(kwargs_items))
-        
-    def get_object(self, module_name, spec_name):
-        """Vrať požadovaný objekt z daného specifikačního modulu.
-
-        Argumenty:
-
-          module_name -- jméno specifikačního modulu
-          spec_name -- jméno objektu ze specifikačního modulu, neprázdný
-            string
-        
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
-        nalezena třída daná 'spec_name' nebo pokud 'spec_name' začíná
-        podtržítkem, je vyvolána výjimka 'ResolverSpecError'.
-
-        """
-        if not spec_name or spec_name[0] == '_':
-            raise ResolverSpecError(module_name, spec_name)
-        key = (module_name, spec_name)
-        return self._object_cache[key]
-
-    def get_module(self, module_name):
-        """Vrať požadovaný modul.
-
-        Argumenty:
-
-          module_name -- jméno specifikačního modulu
-        
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.
-
-        """
-        return self._get_module(module_name)
-
-    def get_instance(self, module_name, spec_name, *args, **kwargs):
-        # Nestačí nám pouhé 'get_object', protože třída jako taková obsahuje
-        # svůj modul, což může činit potíže při vzdáleném přístupu přes Pyro.
-        """Vrať instanci požadované třídy z daného specifikačního modulu.
-
-        Argumenty:
-
-          module_name -- jméno specifikačního modulu
-          spec_name -- jméno veřejné třídy ze specifikačního modulu, neprázdný
-            string
-
-        Instance třídy je vytvořena voláním jejího konstruktoru s argumenty
-        'args' a 'kwargs'.
-        
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
-        nalezena třída daná 'spec_name' nebo pokud 'spec_name' začíná
-        podtržítkem, je vyvolána výjimka 'ResolverSpecError'.
-
-        """
-        key = (module_name, spec_name, tuple(args), tuple(kwargs.items()))
-        return self._instance_cache[key]
-
-    def get(self, module_name, spec_name, **kwargs):
-        """Vrať specifikaci 'spec_name' ze specifikačního modulu 'module_name'.
-
-        Argumenty:
-
-          module_name -- jméno specifikačního modulu.          
-          spec_name -- jméno specifikační funkce/metoda.
-          kwargs -- klíčové argumenty specifikační funkce/metody.
-
-        Pokud 'module_name' neobsahuje tečky, jde přímo o jméno modulu.  V
-        tomto modulu je vyhledána funkce 'spec_name', ta je spuštěna s instancí
-        resolveru jako prvním pozičním argumentem a danými klíčovými argumenty
-        a výsledek je vrácen.
-
-        Pokud 'module_name' obsahuje tečky, jde o název modulu a třídy v něm
-        obsažené.  Název modulu může v tomto případě také obsahovat názvy
-        adresářů (oddělené rovněž tečkami).  Například název
-        'ucetnictvi.denik.UcetniDenik' znamená, že v adresáři 'ucetnictvi' bude
-        hledán soubor 'denik.py' a v něm třída 'UcetniDenik'.  Pokud je třída
-        nalezena, je vytvořena její instance (konstruktoru je předána instance
-        resolveru jako první poziční argument) a nad ní zavolána metoda
-        'spec_name', té jsou předány dané klíčové argumenty a výsledek je
-        vrácen.
-          
-        Není-li modul 'module_name' nalezen, je vyvolána výjimka
-        'ResolverModuleError'.  Je-li modul nalezen, avšak není v něm
-        nalezena specifikace 'spec_name', je vyvolána výjimka
-        'ResolverSpecError'.
-        
-        """        
-        key = (module_name, spec_name, tuple(kwargs.items()))
-        return self._spec_cache[key]
-        
-
-class FileResolver(Resolver):
-    """Resolver natahující moduly ze specifikačních souborů.
-
-    Specifikační soubory jsou hledány v adresáři zadaném v konstruktoru
-    resolveru.  Jména specifikačních souborů musí začínat velkým písmenem.
+    The configuration option `search_modules' is normally passed as the
+    `search' constructor argument by pytis to the resolver instances which it
+    creates.
 
     """
-    def __init__(self, path):
-        """Inicializuj resolver.
 
-        Argumenty:
+    def __init__(self, search=()):
+        """Arguments:
 
-          path -- cesta ke specifikačním souborům; string, nebo sekvence
-            stringů
+          search -- if not used, the names are fully qualified names of python
+           classes located in python modules available in the current python
+           path.  Thus a name `myapp.people.Users' will refer to a class
+           `Users' in python module `myapp' and its submodule `people'.  If
+           `search' is used, it must be a sequence of strings.  These strings
+           are used as prefixes to specification names passed to 'get()'.  Thus
+           a name `people.Users' will be searched in pyhon modules `myapp' and
+           `myextensions' when search is set to ('myapp', 'myextensions').
 
         """
-        super(FileResolver, self).__init__()
-        self._path = xlist(path)
-        
+        self._search = search
+        self._specification_cache = SimpleCache(self._get_specification)
+        self._method_result_cache = SimpleCache(self._get_method_result)
+
     def _get_module(self, name):
-        module = sys.modules.get(name)
-        if module is None:
-            file = None
+        for prefix in self._search and [prefix+'.' for prefix in self._search] or ('',):
             try:
-                try:
-                    file, pathname, descr = imp.find_module(name, self._path)
-                except ImportError as e:
-                    raise ResolverFileError(name, self._path, e)
-                module = imp.load_module(name, file, pathname, descr)
-            finally:
-                if file is not None:
-                    file.close()
-        return module
+                module = __import__(prefix+name)
+            except ImportError as e:
+                continue
+            else:
+                components = (prefix+name).split('.')
+                for comp in components[1:]:
+                    module = getattr(module, comp)
+                return module
+        search_info = self._search and (' (searching in %s)' % ', '.join(self._search)) or ''
+        raise ResolverError("Resolver error loading module '%s'%s: %s" % (name, search_info, e))
 
+    def _get_specification(self, key):
+        name, kwargs = key
+        if '.' not in name:
+            # TODO: This is a backwards compatibility hack to make top level
+            # specification files, such as application.py, work.  Application
+            # specification should be turned into a specification class instead
+            # of a module with functions.  It is impossible to include
+            # specifications directly in the top level namespace of the
+            # specification module as long as this hack is active.
+            return self._get_module(name)
+        module_name, spec_name = name.rsplit('.', 1)
+        module = self._get_module(module_name)
+        # Note: module.__name__ may not be the same as module_name when self._search is used!
+        try:
+            specification = getattr(module, spec_name)
+        except AttributeError as e:
+            raise ResolverError("Resolver error loading specification '%s.%s': %s" %
+                                (module.__name__, spec_name, e))
+        import pytis.presentation
+        if type(specification) != type(object) or \
+                not issubclass(specification, pytis.presentation.Specification):
+            raise ResolverError("Resolver error loading specification '%s.%s': Not a "
+                                "pytis.presentation.Specification subclass." %
+                                (module.__name__, spec_name))
+        return specification(self, **dict(kwargs))
+
+    def _get_method_result(self, key):
+        name, kwargs, method_name = key
+        specification = self._specification_cache[(name, kwargs)]
+        try:
+            method = getattr(specification, method_name)
+        except AttributeError, e:
+            raise ResolverError("Resolver error loading specification '%s.%s': %s" %
+                                (name, method_name, e))
+        return method(self)
+
+    def get(self, name, method_name, **kwargs):
+        """Return the result of calling 'method_name' on specification instance 'name'.
+
+        Arguments:
+          name -- string name of the specification
+          method_name -- string name of the method to call
+          kwargs -- optional keyword arguments to be passed to the
+            specification instance constructor
+
+        """
+        return self._method_result_cache[(name, tuple(kwargs.items()), method_name)]
 
