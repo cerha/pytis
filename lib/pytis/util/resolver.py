@@ -26,12 +26,10 @@ vytvořeny až při jejich skutečné potřebě pouze na základě znalosti jmé
 
 """
 
-import codecs
 import imp
 import sys
 
 from pytis.util import *
-import pytis.data
 
 global _current_resolver
 _current_resolver = None
