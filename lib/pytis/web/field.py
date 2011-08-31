@@ -419,7 +419,7 @@ class DateTimeFieldExporter(TextFieldExporter):
     def _editor_kwargs(self, context, prefill, error):
         kwargs = super(DateTimeFieldExporter, self)._editor_kwargs(context, prefill, error)
         # Use localizable values also inside editor fields (exported value is used by default).
-        return dict(kwargs, value=self._format(context))
+        return dict(kwargs, value=prefill or self._format(context))
 
     def _maxlen(self):
         # TODO: Respect date format!
