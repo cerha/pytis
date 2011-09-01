@@ -1804,8 +1804,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _cmd_copy_cell(self):
         row, col = self._current_cell()
-        cid = self._columns[col].id()        
-        copy_to_clipboard(self._table.row(row).format(cid, secure=True))
+        presented_row = self._table.row(row)
+        if presented_row:
+            cid = self._columns[col].id()
+            copy_to_clipboard(presented_row.format(cid, secure=True))
 
     def _cmd_copy_aggregation_result(self, operation, cid):
         copy_to_clipboard(self._aggregation_results[(cid, operation)].export())
