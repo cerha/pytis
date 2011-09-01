@@ -162,7 +162,7 @@ class PresentedRow(object):
                        "Invalid enumerator column '%s' in CbComputer for '%s'." % \
                        (computer.column(), fspec.id())
             else:
-                kwargs = fspec.type_kwargs(self._resolver)
+                kwargs = fspec.type_kwargs()
                 if not type_:
                     # String is the default type of virtual columns.
                     type_ = pytis.data.String(**kwargs)
@@ -767,7 +767,7 @@ class PresentedRow(object):
         try:
             completer = self._completer_cache[column.id]
         except KeyError:
-            completer = column.completer(self._resolver)
+            completer = column.completer()
             if not completer and column.type.enumerator() \
                     and isinstance(column.type, pytis.data.String):
                 cb_spec = self._cb_spec(column)

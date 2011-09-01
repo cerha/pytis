@@ -3050,16 +3050,16 @@ class Field(object):
     def crypto_name(self):
         return self._crypto_name
 
-    def completer(self, resolver):
+    def completer(self):
         """Return field completer as a 'pytis.data.Enumerator' instance."""
         completer = self._completer
         if isinstance(completer, basestring):
             # Completer was defined as a specification name.
-            data_spec = resolver.get(completer, 'data_spec')
+            data_spec = config.resolver.get(completer, 'data_spec')
             completer = pytis.data.DataEnumerator(data_spec, **self._enumerator_kwargs)
         return completer
     
-    def type_kwargs(self, resolver):
+    def type_kwargs(self):
         """Return the keyword arguments for field's data type construction.
         
         This method should never be called from outside of the 'pytis.presentation' module.
@@ -3070,7 +3070,7 @@ class Field(object):
         if enumerator is None:
             enumerator = self._codebook
         if isinstance(enumerator, basestring):
-            enumerator = resolver.get(enumerator, 'data_spec')
+            enumerator = config.resolver.get(enumerator, 'data_spec')
         if isinstance(enumerator, pytis.data.DataFactory):
             enumerator = pytis.data.DataEnumerator(enumerator, **self._enumerator_kwargs)
         if enumerator:
@@ -3325,8 +3325,12 @@ class Specification(object):
         # That's all
         Specification._access_rights = access_rights
         
-    def __init__(self, resolver):
-        self._resolver = resolver
+    def __init__(self, resolver=None):
+        # TODO: the `resolver' argument is not normally passed now.  It is here
+        # just for backwards compatibility for specifications which override
+        # the constructor for some reason (mostly because they define
+        # additional kwargs).  Once the resolver arguemnt is removed from
+        # applications, it should be removed from here too.
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
                      'folding', 'initial_folding',):
@@ -3374,12 +3378,11 @@ class Specification(object):
         return spec_name
 
     def _create_data_spec(self):
-        resolver = self._resolver
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
             bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), crypto_name=f.crypto_name(),
-                          **f.type_kwargs(resolver))
+                          **f.type_kwargs())
                         for f in self.fields if not f.virtual()]
             if self.key:
                 keyid = self.key
@@ -3394,13 +3397,13 @@ class Specification(object):
             if self.arguments is None:
                 arguments = None
             else:
-                arguments = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **f.type_kwargs(resolver))
+                arguments = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **f.type_kwargs())
                              for f in self.arguments]
         else:
             def type_(f):
                 t = f.type() or pytis.data.String
                 if type(t) == type(pytis.data.Type):
-                    kwargs = f.type_kwargs(resolver)
+                    kwargs = f.type_kwargs()
                     t = t(**kwargs)
                 return t
             columns = [pytis.data.ColumnSpec(f.id(), type_(f))

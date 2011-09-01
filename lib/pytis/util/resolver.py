@@ -119,7 +119,14 @@ class Resolver(object):
             raise ResolverError("Resolver error loading specification '%s.%s': Not a "
                                 "pytis.presentation.Specification subclass." %
                                 (module.__name__, spec_name))
-        return specification(self, **dict(kwargs))
+        if argument_names(specification.__init__):
+            # TODO: Remove this temporary hack for backwards compatibility.
+            # Now it is necessary for example because some specifications in
+            # applications may override the constructor and expect the resolver
+            # argument (typically when they define kwargs).
+            return specification(self, **dict(kwargs))
+        else:
+            return specification(**dict(kwargs))
 
     def _get_method_result(self, key):
         name, kwargs, method_name = key
@@ -129,7 +136,16 @@ class Resolver(object):
         except AttributeError, e:
             raise ResolverError("Resolver error loading specification '%s.%s': %s" %
                                 (name, method_name, e))
-        return method(self)
+        if argument_names(method):
+            # TODO: Remove this temporary hack for backwards compatibility.
+            # Now it is necessary for example because some specification
+            # methods are defined by applications (basic method, such as
+            # 'view_spec' or 'data_spec' are defined by the base class
+            # 'pytis.presentation.Specification', but 'proc_spec' is typically
+            # defined by application.
+            return method(self)
+        else:
+            return method()
 
     def get(self, name, method_name, **kwargs):
         """Return the result of calling 'method_name' on specification instance 'name'.
