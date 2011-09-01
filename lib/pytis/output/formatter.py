@@ -45,16 +45,9 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 """
 
 import copy
-import cStringIO
-import codecs
 import config
-import functools
-import operator
-import os
 import re
-import string
 import StringIO
-import thread
 
 import pytis.data
 import pytis.form
