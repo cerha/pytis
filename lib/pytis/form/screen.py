@@ -161,46 +161,51 @@ def on_clipboard_copy(text):
         pytis.windows.set_clipboard_text(text)
 
 def paste_from_clipboard(ctrl):
-    """Paste from clipboard to TextCtrl widget."""
-    if isinstance(ctrl, wx.TextCtrl):
-        if pytis.windows.windows_available():
-            nx_ip  = pytis.windows.nx_ip()
-            log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
-            text = pytis.windows.get_clipboard_text()
-            if text:
-                success = True
-            else:
-                success = False                
+    """Paste text from clipboard to 'wx.TextCtrl' widget.
 
-                pytis.windows.set_clipboard_text(text)
-        else:
-            log(EVENT, 'Paste from clipboard')
-            if not wx.TheClipboard.IsOpened():  # may crash, otherwise
-                do = wx.TextDataObject()
-                wx.TheClipboard.Open()
-                success = wx.TheClipboard.GetData(do)
-                wx.TheClipboard.Close()
-                if success:
-                    text = do.GetText()
-                else:
-                    text = None
+    The text will be pasted from the current preferred clipboard -- the remote
+    windows clipboard if it is available or the local system clipboard
+    otherwise.  Except for the source of the text, it should behave exactly as
+    'wx.TextCtrl.Paste()'.
+    
+    """
+    assert isinstance(ctrl, wx.TextCtrl)
+    if pytis.windows.windows_available():
+        nx_ip  = pytis.windows.nx_ip()
+        log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
+        text = pytis.windows.get_clipboard_text()
         if text:
-            text_length = len(text)
-            orig_text = ctrl.GetValue()
-            if orig_text:
-                from_, to_ = ctrl.GetSelection()
-                if from_ != to_:
-                    text = orig_text[:from_] + text + orig_text[to_:]
-                    point = from_ + text_length
-                else:
-                    point = ctrl.GetInsertionPoint()
-                    text = orig_text[:point] + text + orig_text[point:]
-                    point = point + text_length
+            success = True
+        else:
+            success = False
+            pytis.windows.set_clipboard_text(text)
+    else:
+        log(EVENT, 'Paste from clipboard')
+        if not wx.TheClipboard.IsOpened():  # may crash, otherwise
+            do = wx.TextDataObject()
+            wx.TheClipboard.Open()
+            success = wx.TheClipboard.GetData(do)
+            wx.TheClipboard.Close()
+            if success:
+                text = do.GetText()
             else:
-                point = text_length
-            ctrl.ChangeValue(text)
-            ctrl.SetInsertionPoint(point)
-            
+                text = None
+    if text:
+        text_length = len(text)
+        orig_text = ctrl.GetValue()
+        if orig_text:
+            from_, to_ = ctrl.GetSelection()
+            if from_ != to_:
+                text = orig_text[:from_] + text + orig_text[to_:]
+                point = from_ + text_length
+            else:
+                point = ctrl.GetInsertionPoint()
+                text = orig_text[:point] + text + orig_text[point:]
+                point = point + text_length
+        else:
+            point = text_length
+        ctrl.ChangeValue(text)
+        ctrl.SetInsertionPoint(point)
             
 def hotkey_string(hotkey):
     """Return the human readable hotkey representation of Keymap.lookup_command() result."""
