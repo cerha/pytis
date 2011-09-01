@@ -121,26 +121,22 @@ def copy_to_clipboard(text):
     the 'on_clipboard_copy' callback.
 
     """
+    assert isinstance(text, basestring)
+    log(EVENT, 'Copy text to system clipboard.')
     # Using the wx clipboard doesn't work depending on how the application is
     # run.  It works when run natively on linux and also with newer versions of
     # nx, but it doesn't work when pytis is used on Windows through an X
-    # server or on Cygwin.  Thus it is configurable.
-    if config.use_wx_clipboard:
-        log(EVENT, 'Copy text to wx clipboard.')
-        clipboard = wx.TheClipboard
-        if clipboard.Open():
-            clipboard.SetData(wx.TextDataObject(text))
-            clipboard.Flush()
-            clipboard.Close()
-    else:
-        log(EVENT, 'Copy text to system clipboard.')
-        # This is quite a hack, but it works...  In fact it works in all cases
-        # so maybe it doesnt' make sense to have the configuration variable and
-        # two different approaches?
-        ctrl = wx.TextCtrl(wx_frame(), -1, text)
-        ctrl.SetSelection(0, len(text))
-        ctrl.Copy()
-        ctrl.Destroy()
+    # server or on Cygwin.
+    #clipboard = wx.TheClipboard
+    #if clipboard.Open():
+    #    clipboard.SetData(wx.TextDataObject(text))
+    #    clipboard.Flush()
+    #    clipboard.Close()
+    # The following solution is is quite a hack, but it works consistently...
+    ctrl = wx.TextCtrl(wx_frame(), -1, text)
+    ctrl.SetSelection(0, len(text))
+    ctrl.Copy()
+    ctrl.Destroy()
 
 def on_clipboard_copy(text):
     """Handle event of text copied into system clipboard.
