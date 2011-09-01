@@ -50,6 +50,9 @@ if config.http_proxy is not None:
     session = libwebkit.webkit_get_default_session()
     libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
 
+clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+clipboard.connect("owner-change", lambda clipboard, event: on_clipboard_copy(clipboard.wait_for_text()))
+
 _WX_COLORS = {}
 _WX_COLOR_DB = {}
 
@@ -111,7 +114,44 @@ def modal(window):
            (isinstance(window, Dialog) or isinstance(window, PopupForm))
 
 def copy_to_clipboard(text):
-    """Copy the text into system clipboard."""
+    """Copy given text into system clipboard.
+
+    Even though this function itself doesn't handle windows clipboard, the text
+    will be automatically propagated if pytis.windows is available thanks to
+    the 'on_clipboard_copy' callback.
+
+    """
+    # Using the wx clipboard doesn't work depending on how the application is
+    # run.  It works when run natively on linux and also with newer versions of
+    # nx, but it doesn't work when pytis is used on Windows through an X
+    # server or on Cygwin.  Thus it is configurable.
+    if config.use_wx_clipboard:
+        log(EVENT, 'Copy text to wx clipboard.')
+        clipboard = wx.TheClipboard
+        if clipboard.Open():
+            clipboard.SetData(wx.TextDataObject(text))
+            clipboard.Flush()
+            clipboard.Close()
+    else:
+        log(EVENT, 'Copy text to system clipboard.')
+        # This is quite a hack, but it works...  In fact it works in all cases
+        # so maybe it doesnt' make sense to have the configuration variable and
+        # two different approaches?
+        ctrl = wx.TextCtrl(wx_frame(), -1, text)
+        ctrl.SetSelection(0, len(text))
+        ctrl.Copy()
+        ctrl.Destroy()
+
+def on_clipboard_copy(text):
+    """Handle event of text copied into system clipboard.
+
+    This function propagates all local clipboard changes into the remote
+    windows clipboard when pytis.windows is available.  Don't use it to copy
+    things to the clipboard.  Copy them to the local system clipboard
+    (eg. through standard wx methods of wx controls or using the function
+    copy_to_clipboard() when no aplicable control is available).
+
+    """
     assert isinstance(text, basestring)
     if pytis.windows.windows_available():
         nx_ip  = pytis.windows.nx_ip()
@@ -119,24 +159,6 @@ def copy_to_clipboard(text):
         if isinstance(text, str):
             text = unicode(text)
         pytis.windows.set_clipboard_text(text)
-    else:
-        # copy_to_clipboard doesn't work when pytis is used on Windows through an X server.  
-        # Thus the terrible hack below...
-        # UPDATE 23.1.2009 - it seems that copy_to_clipboard works again under newer versions of nx
-        # UPDATE 05.05.2009 - there is still problem with copy_to_clipboard when using cygwin;
-        #                     so we must continue to use this horrible hack
-        log(EVENT, 'Copy text to clipboard.')
-        if config.use_wx_clipboard:
-            clipboard = wx.TheClipboard
-            if clipboard.Open():
-                clipboard.SetData(wx.TextDataObject(text))
-                clipboard.Flush()
-                clipboard.Close()
-        else:
-            ctrl = wx.TextCtrl(wx_frame(), -1, text)
-            ctrl.SetSelection(0, len(text))
-            ctrl.Copy()
-            ctrl.Destroy()
 
 def paste_from_clipboard(ctrl):
     """Paste from clipboard to TextCtrl widget."""
@@ -2307,8 +2329,7 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
         wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
     if on_text:
         wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
-    wx_callback(wx.EVT_TEXT_COPY, ctrl, clipboard_copy_event)
-    wx_callback(wx.EVT_TEXT_PASTE, ctrl, clipboard_paste_event)
+    wx_callback(wx.EVT_TEXT_PASTE, ctrl, lambda e: paste_from_clipboard(ctrl))
     if value is not None:
         ctrl.SetValue(value)
     if length:
@@ -2342,8 +2363,6 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
             height = min(len(lines), 20)
         style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
         ctrl = wx.TextCtrl(parent, style=style)
-        wx_callback(wx.EVT_TEXT_COPY, ctrl, clipboard_copy_event)        
-        wx_callback(wx.EVT_TEXT_PASTE, ctrl, clipboard_paste_event)                
         ctrl.SetValue(content)
         ctrl.SetBestFittingSize(char2px(ctrl, width, height))
         return ctrl
@@ -2373,11 +2392,3 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
     browser.SetSize(char2px(parent, width, height))
     return browser
 
-def clipboard_copy_event(event):
-    ctrl = event.GetEventObject()
-    text = ctrl.GetStringSelection()
-    copy_to_clipboard(text)
-
-def clipboard_paste_event(event):
-    ctrl = event.GetEventObject()
-    paste_from_clipboard(ctrl)

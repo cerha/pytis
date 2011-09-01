@@ -898,21 +898,14 @@ class TextField(InputField):
         return self._ctrl.CanCut()
         
     def _cmd_cut(self):
-        self._cmd_copy()
-        ctrl = self._ctrl
-        from_, to_ = ctrl.GetSelection()
-        if from_ != to_:
-            text = ctrl.GetValue()
-            ctrl.ChangeValue(text[:from_]+text[to_:])
-            ctrl.SetInsertionPoint(from_)
+        self._ctrl.Cut()
         self._on_change()
         
     def _can_copy(self):
         return self._ctrl.CanCopy()
 
     def _cmd_copy(self):
-        text = self._ctrl.GetStringSelection()
-        copy_to_clipboard(text)
+        self._ctrl.Copy()
         
     def _can_paste(self):
         return self._ctrl.CanPaste()
