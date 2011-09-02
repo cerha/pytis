@@ -210,12 +210,6 @@ Command(MultiForm, 'NEXT_FORM',
         "Advance to next/previous tab in a multi-form (arg. 'back')")
 Command(MultiForm, 'FILTER_BY_SIDEFORM',
         "Filter main form rows having non-zero side form rows. (arg. 'index' (side form index))")
-Command(PrintFormInternal, 'PRINT',
-        "Pošli data na tiskárnu")
-Command(PrintFormInternal, 'NEXT_PAGE',
-        "Přechod na další stránku tiskového náhledu")
-Command(PrintFormInternal, 'PREVIOUS_PAGE',
-        "Přechod na předchozí stránku tiskového náhledu")
 Command(InputField, 'RESET',
         "Vrácení původní hodnoty vstupního políčka")
 Command(InputField, 'CONTEXT_MENU',
@@ -313,7 +307,6 @@ DEFAULT_KEYMAP = (
     ('Ctrl-F1',          Form.COMMAND_HELP),
     ('Escape',           Form.COMMAND_SAFE_LEAVE_FORM),
     ('Ctrl-p',           BrowseForm.COMMAND_PRINT),
-    ('Ctrl-p',           PrintFormInternal.COMMAND_PRINT),
     ('F6',               RecordForm.COMMAND_NEW_RECORD),
     ('Ctrl-F6',          RecordForm.COMMAND_NEW_RECORD(copy=True)),
     ('Alt-F6',           RecordForm.COMMAND_IMPORT_INTERACTIVE),
@@ -373,8 +366,6 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Tab',         DualForm.COMMAND_OTHER_FORM),
     ('Alt-Right',        MultiForm.COMMAND_NEXT_FORM),
     ('Alt-Left',         MultiForm.COMMAND_NEXT_FORM(back=True)),
-    ('Next',             PrintFormInternal.COMMAND_NEXT_PAGE),
-    ('Prior',            PrintFormInternal.COMMAND_PREVIOUS_PAGE),
     ('Ctrl-Backspace',   InputField.COMMAND_RESET),
     ('Alt-Down',         InputField.COMMAND_CONTEXT_MENU),
     ('Alt-Enter',        InputField.COMMAND_CONTEXT_MENU),
@@ -427,7 +418,6 @@ COMMAND_ICONS = (
     (InnerForm.COMMAND_AGGREGATION_MENU,                   'aggregate'),
     (InnerForm.COMMAND_PRINT_MENU,                         wx.ART_PRINT),
     (BrowseForm.COMMAND_PRINT,                             wx.ART_PRINT),
-    (PrintFormInternal.COMMAND_PRINT,                      wx.ART_PRINT),
     (InputField.COMMAND_RESET,                             wx.ART_UNDO),
     (TextField.COMMAND_CUT,                                wx.ART_CUT),
     (TextField.COMMAND_COPY,                               wx.ART_COPY),
