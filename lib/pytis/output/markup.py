@@ -253,12 +253,12 @@ class List(_Container):
 
     def _lcg(self):
         if self.arg_mark == self.BULLET_MARK:
-            type_ = lcg.ItemizedList.TYPE_UNORDERED
+            order = lcg.ItemizedList.UNORDERED
         elif self.arg_mark == self.NUMBER_MARK:
-            type_ = lcg.ItemizedList.TYPE_NUMERIC
+            order = lcg.ItemizedList.NUMERIC
         else:
             raise Exception('Unexpected list type', self.arg_mark)
-        return lcg.ItemizedList(self._lcg_contents(), type=type_)
+        return lcg.ItemizedList(self._lcg_contents(), order=order)
 
 class NewPage(_Mark):
     """Značka nové stránky."""
