@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-01-17 08:57+0100\n"
-"PO-Revision-Date: 2011-01-17 08:59+0100\n"
+"POT-Creation-Date: 2011-09-02 11:26+0200\n"
+"PO-Revision-Date: 2011-09-02 11:28+0200\n"
 "Last-Translator: Tomas Cerha <cerha@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -17,25 +17,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#: ../lib/pytis/web/field.py:452
+#: ../lib/pytis/web/field.py:442
 msgid "today"
 msgstr "dnes"
 
-#: ../lib/pytis/web/field.py:484
+#: ../lib/pytis/web/field.py:486
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/field.py:484
+#: ../lib/pytis/web/field.py:486
 msgid "No"
 msgstr "Ne"
 
 #. Translators: The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:497
+#: ../lib/pytis/web/field.py:499
 msgid "image"
 msgstr "obrázek"
 
-#: ../lib/pytis/web/field.py:497
+#: ../lib/pytis/web/field.py:499
 msgid "file"
 msgstr "soubor"
 
@@ -48,149 +48,162 @@ msgstr "Prázdná hodnota"
 msgid "Invalid value"
 msgstr "Neplatná hodnota"
 
-#: ../lib/pytis/web/__init__.py:42 ../lib/pytis/web/__init__.py:46
+#: ../lib/pytis/web/__init__.py:42
+#, python-format
+msgid "Minimal value is %(minimum)s"
+msgstr "Minimální hodnota je %(minimum)s"
+
+#: ../lib/pytis/web/__init__.py:43
+#, python-format
+msgid "Maximal value is %(maximum)s"
+msgstr "Maximální hodnota je %(maximum)s"
+
+#: ../lib/pytis/web/__init__.py:44 ../lib/pytis/web/__init__.py:48
 #, python-format
 msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr "Nedodržena minimální délka %(minlen)s znaků"
 
-#: ../lib/pytis/web/__init__.py:43
+#: ../lib/pytis/web/__init__.py:45
 #, python-format
 msgid "Maximal length %(maxlen)s characters exceeded"
 msgstr "Řetězec přesahuje maximální délku %(maxlen)s znaků"
 
-#: ../lib/pytis/web/__init__.py:44
+#: ../lib/pytis/web/__init__.py:46
 msgid "Not an integer"
 msgstr "Není to celé číslo"
 
-#: ../lib/pytis/web/__init__.py:45
+#: ../lib/pytis/web/__init__.py:47
 msgid "Invalid number"
 msgstr "Není to povolené číslo"
 
-#: ../lib/pytis/web/__init__.py:47
+#: ../lib/pytis/web/__init__.py:49
 #, python-format
 msgid "String exceeds max length %(maxlen)s characters"
 msgstr "Řetězec přesahuje maximální délku %(maxlen)s znaků"
 
-#: ../lib/pytis/web/__init__.py:48
+#: ../lib/pytis/web/__init__.py:50
 msgid "Enter the password twice to eliminate typos"
 msgstr "Zadejte heslo dvakrát pro eliminování překlepů"
 
-#: ../lib/pytis/web/__init__.py:49
+#: ../lib/pytis/web/__init__.py:51
 msgid "Passwords don't match"
 msgstr "Kontrolní zadání hesla neodpovídá"
 
-#: ../lib/pytis/web/__init__.py:50
+#: ../lib/pytis/web/__init__.py:52
 msgid "Please use mix of letters and non-letters in your password"
 msgstr "Použijte ve svém hesle kombinaci písmenných a nepísmenných znaků"
 
-#: ../lib/pytis/web/__init__.py:51
+#: ../lib/pytis/web/__init__.py:53
 msgid "Invalid format"
 msgstr "Neplatný formát"
 
-#: ../lib/pytis/web/__init__.py:52
+#: ../lib/pytis/web/__init__.py:54
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
 msgstr "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
 
-#: ../lib/pytis/web/__init__.py:53
+#: ../lib/pytis/web/__init__.py:55
 msgid "Invalid date or time format"
 msgstr "Chybný formát data nebo času"
 
-#: ../lib/pytis/web/__init__.py:54
+#: ../lib/pytis/web/__init__.py:56
 msgid "Invalid date or time"
 msgstr "Chybné datum nebo čas"
 
-#: ../lib/pytis/web/__init__.py:55
+#: ../lib/pytis/web/__init__.py:57
 msgid "Date outside the allowed range"
 msgstr "Datum mimo povolený rozsah"
 
-#: ../lib/pytis/web/__init__.py:56
+#: ../lib/pytis/web/__init__.py:58
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Nedodržena minimální velikost %(minlen)s"
 
-#: ../lib/pytis/web/__init__.py:57
+#: ../lib/pytis/web/__init__.py:59
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "Maximální velikost %(maxlen)s překročena"
 
-#: ../lib/pytis/web/__init__.py:58
+#: ../lib/pytis/web/__init__.py:60
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "Maximální rozměr %(maxsize)s pixelů překročen"
 
-#: ../lib/pytis/web/__init__.py:59
+#: ../lib/pytis/web/__init__.py:61
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Minimální rozměr %(minsize)s pixelů nedodržen"
 
 #. Translators: This is the last validation error message.
-#: ../lib/pytis/web/__init__.py:61
+#: ../lib/pytis/web/__init__.py:63
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
 #. Translators: Default edit form submit button label.
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:376
-#: ../lib/pytis/web/form.py:389
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:381
+#: ../lib/pytis/web/form.py:394
 msgid "Submit"
 msgstr "Odeslat"
 
-#: ../lib/pytis/web/form.py:154 ../lib/pytis/web/form.py:156
+#: ../lib/pytis/web/form.py:162 ../lib/pytis/web/form.py:164
 msgid "Print"
 msgstr "Tisknout"
 
-#: ../lib/pytis/web/form.py:158
+#: ../lib/pytis/web/form.py:166
 msgid "Export the contents of this field into PDF"
 msgstr "Exportovat obsah tohoto políčka do PDF"
 
-#: ../lib/pytis/web/form.py:376
+#: ../lib/pytis/web/form.py:381
 msgid "Undo all changes"
 msgstr "Zrušit všechny provedené změny"
 
-#: ../lib/pytis/web/form.py:398
+#: ../lib/pytis/web/form.py:404
 msgid "Submit the form"
 msgstr "Odeslat formulář"
 
-#: ../lib/pytis/web/form.py:401
+#: ../lib/pytis/web/form.py:407
 msgid "Reset"
 msgstr "Vrátit původní hodnoty"
 
-#: ../lib/pytis/web/form.py:499
+#: ../lib/pytis/web/form.py:511
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označená hvězdičkou jsou povinná."
 
 #. Translators: Label of filter selection box.
 #. Filtering limits the displayed form records by
 #. certain criterias.
-#: ../lib/pytis/web/form.py:609 ../lib/pytis/web/form.py:775
-#: ../lib/pytis/web/form.py:1352
+#: ../lib/pytis/web/form.py:637 ../lib/pytis/web/form.py:1473
 msgid "Filter"
 msgstr "Filtr"
 
-#: ../lib/pytis/web/form.py:611
+#: ../lib/pytis/web/form.py:639
 msgid "Apply Filter"
 msgstr "Aplikovat filtr"
+
+#: ../lib/pytis/web/form.py:859
+msgid "Profile"
+msgstr "Profil"
 
 #. Translators: Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:876
+#: ../lib/pytis/web/form.py:1061
 msgid "All items"
 msgstr "Všechny položky"
 
-#: ../lib/pytis/web/form.py:1056
+#: ../lib/pytis/web/form.py:1174
 msgid "Sum"
 msgstr "Součet"
 
-#: ../lib/pytis/web/form.py:1057
+#: ../lib/pytis/web/form.py:1175
 msgid "Average"
 msgstr "Průměr"
 
-#: ../lib/pytis/web/form.py:1058
+#: ../lib/pytis/web/form.py:1176
 msgid "Minimum"
 msgstr "Minimum"
 
-#: ../lib/pytis/web/form.py:1059
+#: ../lib/pytis/web/form.py:1177
 msgid "Maximum"
 msgstr "Maximum"
 
@@ -198,7 +211,7 @@ msgstr "Maximum"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1120
+#: ../lib/pytis/web/form.py:1238
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -208,18 +221,18 @@ msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu."
 
 #. Translators: Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1209
+#: ../lib/pytis/web/form.py:1329
 msgid "No records."
 msgstr "Žádné záznamy."
 
-#: ../lib/pytis/web/form.py:1212
+#: ../lib/pytis/web/form.py:1332
 msgid "Total records:"
 msgstr "Počet záznamů celkem:"
 
 #. Translators: The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1217
+#: ../lib/pytis/web/form.py:1337
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
@@ -239,28 +252,28 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1294
+#: ../lib/pytis/web/form.py:1414
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na „%(prefix)s“:"
 
 #. Translators: Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1299
+#: ../lib/pytis/web/form.py:1419
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Přejít na první záznam začínající na „%s“"
 
-#: ../lib/pytis/web/form.py:1320
+#: ../lib/pytis/web/form.py:1441
 msgid "Search expression"
 msgstr "Hledaný výraz"
 
 #. Translators: Search button label.
-#: ../lib/pytis/web/form.py:1325 ../lib/pytis/web/form.py:1377
+#: ../lib/pytis/web/form.py:1446 ../lib/pytis/web/form.py:1498
 msgid "Search"
 msgstr "Hledat"
 
 #. Translators: Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1329
+#: ../lib/pytis/web/form.py:1450
 msgid "Change filters"
 msgstr "Změnit filtry"
 
@@ -268,42 +281,42 @@ msgstr "Změnit filtry"
 #. keyboard combination to use for selection
 #. without unexpected invocation of the
 #. option.
-#: ../lib/pytis/web/form.py:1357 ../lib/pytis/web/form.py:1386
-#: ../lib/pytis/web/form.py:1404
+#: ../lib/pytis/web/form.py:1478 ../lib/pytis/web/form.py:1507
+#: ../lib/pytis/web/form.py:1525
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použijte ALT+šipka dolů pro výběr)"
 
 #. Translators: Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse forward/backwards.
-#: ../lib/pytis/web/form.py:1383 ../lib/pytis/web/form.py:1385
+#: ../lib/pytis/web/form.py:1504 ../lib/pytis/web/form.py:1506
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:1391
+#: ../lib/pytis/web/form.py:1512
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/web/form.py:1392
+#: ../lib/pytis/web/form.py:1513
 msgid "Go to previous page"
 msgstr "Přejít na předchozí stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1394
+#: ../lib/pytis/web/form.py:1515
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/web/form.py:1395
+#: ../lib/pytis/web/form.py:1516
 msgid "Go to next page"
 msgstr "Přejít na následující stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1401 ../lib/pytis/web/form.py:1403
+#: ../lib/pytis/web/form.py:1522 ../lib/pytis/web/form.py:1524
 msgid "Records per page"
 msgstr "Počet záznamů na stránku"
 
-#: ../lib/pytis/web/form.py:1408
+#: ../lib/pytis/web/form.py:1529
 msgid "Go"
 msgstr "Jdi"
 
-#: ../lib/pytis/web/form.py:1446
+#: ../lib/pytis/web/form.py:1567
 msgid "filtered by: "
 msgstr "s filtry: "
 
