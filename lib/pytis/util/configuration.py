@@ -643,11 +643,9 @@ class Configuration(object):
         _DEFAULT = 'lpr'
 
     class _Option_postscript_viewer(StringOption):
-        _DESCR = _(u"Shell command to be used for displaying print preview PostScript files. " +
-                   u"It must take the name of the file to be displayed as its first argument. " +
-                   u"If this option value is empty, Pytis internal viewer is used.")
+        _DESCR = _(u"Shell command to be used for displaying print preview PDF files. "
+                   u"It must take the name of the file to be displayed as its first argument. ")
         _DEFAULT = ''
-        #_DEFAULT = 'gv'
 
     class _Option_sendmail_command(StringOption):
         # Používáno již jen v pytis-extensions...

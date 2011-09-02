@@ -336,9 +336,18 @@ class PrintFormExternal(PrintForm, PopupForm):
     def _run_viewer(self, file_name):
         import subprocess
         viewer = config.postscript_viewer
-        call_args = viewer.split()
         try:
-            subprocess.call(call_args + [file_name])
+            if viewer:
+                call_args = viewer.split()
+                subprocess.call(call_args + [file_name])
+            else:
+                import mailcap
+                match = mailcap.findmatch(mailcap.getcaps(), 'application/pdf')[1]
+                if match:
+                    command = match['view'] % (file_name,)
+                    os.system(command)
+                else:
+                    run_dialog(Error, _("Nenalezen žádný PDF prohlížeč."))
         finally:
             os.remove(file_name)
         
