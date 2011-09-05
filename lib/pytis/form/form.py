@@ -1119,21 +1119,25 @@ class LookupForm(InnerForm):
         return {}
 
     def _on_idle(self, event):
+        if super(LookupForm, self)._on_idle(event):
+            return True
         if not self._initial_profile_applied:
-            # Note, that the profile 0 may not be self._default_profile, but
-            # its customization.
-            initial_profile_index = 0
-            profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
-            if profile_id:
-                profile = find(profile_id, self._profiles, key=lambda p: p.id())
-                if profile:
-                    initial_profile_index = self._profiles.index(profile)
-            # This must be here (in _on_idle) espacially because the initial
-            # profile may not be valid and we want to make use of the logic in
-            # _cmd_apply_profile().
-            self._cmd_apply_profile(initial_profile_index)
-            self._initial_profile_applied = True
-        return super(LookupForm, self)._on_idle(event)
+            try:
+                profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
+                if profile_id:
+                    profile = find(profile_id, self._profiles, key=lambda p: p.id())
+                else:
+                    # Note, that the profile 0 may not be self._default_profile, but
+                    # its customization.
+                    profile = self._profiles[0]
+                # This must be here (in _on_idle) espacially because the
+                # initial profile may not be valid and we want to make use of
+                # handling invalid profiles in _cmd_apply_profile().
+                if profile and profile is not self._current_profile:
+                    self._cmd_apply_profile(self._profiles.index(profile))
+            finally:
+                self._initial_profile_applied = True
+        return False
 
     def _init_data_select(self, data, async_count=False):
         return data.select(condition=self._current_condition(display=True),
