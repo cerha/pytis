@@ -1362,7 +1362,7 @@ class DMPActions(DMPObject):
 
           fake -- iff True, don't actually change the data but return sequence
             of SQL commands (basestrings) that would do so
-          specifications -- sequence of form specification names, string
+          specifications -- sequence of form specification names, strings
           transaction -- transaction object to use or 'None'; if not 'None' no
             commit nor rollback is performed in this method regardless 'fake'
             argument value
@@ -1372,7 +1372,7 @@ class DMPActions(DMPObject):
         original_actions = DMPActions(self._configuration)
         original_actions.retrieve_data()
         menu = DMPMenu(self._configuration)
-        menu.load_specifications()
+        menu.retrieve_data()
         rights = DMPRights(self._configuration)
         rights.load_specifications()
         self.load_specifications(dmp_menu=menu, dmp_rights=rights)
