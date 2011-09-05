@@ -551,6 +551,20 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._data.sleep()
 
     def _on_idle(self, event):
+        if not self._initial_profile_applied:
+            # Note, that the profile 0 may not be self._default_profile, but
+            # its customization.
+            initial_profile_index = 0
+            profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
+            if profile_id:
+                profile = find(profile_id, self._profiles, key=lambda p: p.id())
+                if profile:
+                    initial_profile_index = self._profiles.index(profile)
+            # This must be here (in _on_idle) espacially because the initial
+            # profile may not be valid and we want to make use of the logic in
+            # _cmd_apply_profile().
+            self._cmd_apply_profile(initial_profile_index)
+            self._initial_profile_applied = True
         if self._leave_form_requested:
             try:
                 self._cmd_leave_form()
@@ -1047,28 +1061,18 @@ class LookupForm(InnerForm):
                                         filter=filter, sorting=sorting, columns=columns,
                                         grouping=grouping)
         self._profiles = self._load_profiles()
-        # Note, self._profiles[0] may not be self._default_profile, but its customization.
-        current_profile = self._profiles[0] 
-        initial_profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
-        if initial_profile_id:
-            profile = find(initial_profile_id, self._profiles, key=lambda p: p.id())
-            if profile is not None \
-                    and (not isinstance(profile, FormProfile) or profile.valid()):
-                current_profile = profile
-        if isinstance(current_profile, FormProfile) and not current_profile.valid():
-            # Don't use the customized default profile as initial profile if it is invalid.
-            current_profile = self._default_profile
+        self._initial_profile_applied = False
         # The profile instances may contain None values to denote default
         # values.  We need to remember the corresponding real values to be able
         # to compare profiles with the current form state in
         # '_current_profile_changed()'.  We rely on the fact that
         # '_apply_profile_parameters()' substitutes None values by their
         # corresponding default values and we don't want to repeat this logic
-        # anywhere else.  Thus we first apply the default profile, store the
-        # resulting profile parameters and only then apply the current profile.
+        # anywhere else.  Thus we here apply the default profile and store the
+        # resulting profile parameters.  The user visible initial profile is
+        # applied later in _on_idle().
         self._apply_profile_parameters(self._default_profile)
         self._default_profile_parameters = self._profile_parameters_to_save()
-        self._apply_profile_parameters(current_profile)
         self._lf_initial_sorting = self._lf_sorting
         # _lf_condition represents a static condition given by the constructor
         # argument, whereas _lf_filter represents the filtering condition,
