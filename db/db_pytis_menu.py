@@ -898,12 +898,20 @@ viewng('ev_pytis_user_system_rights',
 
 function('pytis_copy_rights', (TString, TString), 'void',
          """
-update e_pytis_action_rights set status=-1 where shortname=$2 and colname is null;
+update e_pytis_action_rights set status=-1 where shortname=$2;
 insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, granted)
        select $2 as shortname, roleid, rightid, colname, system, granted from e_pytis_action_rights
-              where shortname=$1 and status>=0 and colname is null;
+              where shortname=$1 and status>=0;
 """,
          doc="Make access rights of a menu item the same as of another menu item.",
+         grant=db_rights,
+         depends=('e_pytis_action_rights',))
+
+function('pytis_columns_in_rights', (TString,), RT('name', setof=True),
+         """
+select distinct colname from e_pytis_action_rights where shortname=$1 and colname is not null;
+""",
+         doc="Return column names appearing in rights assigned to given shortname.",
          grant=db_rights,
          depends=('e_pytis_action_rights',))
 

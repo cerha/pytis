@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import string
 
 import pytis.data
 import pytis.extensions
@@ -361,7 +362,28 @@ class ApplicationMenuM(pytis.presentation.Specification):
         template_row = pytis.extensions.run_cb('menu.ApplicationMenuCodebook')
         if template_row is None:
             return
-        pytis.extensions.dbfunction('pytis_copy_rights', ('copy_from', template_row['shortname'],), ('copy_to', row['shortname'],))
+        from_shortname = template_row['shortname']
+        to_shortname = row['shortname']
+        # Check compatibility of column names (this doesn't do the right thing
+        # if there are columns with the same names but different purposes, but
+        # it is generally responsibility of the DMP admin to copy rights only
+        # between compatible objects).
+        rows = pytis.extensions.dbfunction('pytis_columns_in_rights', ('shortname', from_shortname,))
+        if not isinstance(rows, (list, tuple)):
+            rows = [[rows]]
+        if rows:
+            from_columns = set([r[0] for r in rows])
+            components = to_shortname.value().split('/')
+            spec_name = components[1]
+            view_spec = self._resolver.get(spec_name, 'view_spec')
+            to_columns = set([f.id() for f in view_spec.fields()])
+            missing_columns = from_columns - to_columns
+            if missing_columns:
+                message = (_(u"Ve specifikaci chybí tyto sloupce práv: %s.\nChcete práva přesto zkopírovat?") %
+                           (string.join(list(missing_columns), ', '),))
+                if not pytis.form.run_dialog(pytis.form.Question, message):
+                    return
+        pytis.extensions.dbfunction('pytis_copy_rights', ('copy_from', from_shortname,), ('copy_to', to_shortname,))
 
     def _remove_redundant(self, row):
         if not pytis.form.run_dialog(pytis.form.Question,
