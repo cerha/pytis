@@ -551,20 +551,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             self._data.sleep()
 
     def _on_idle(self, event):
-        if not self._initial_profile_applied:
-            # Note, that the profile 0 may not be self._default_profile, but
-            # its customization.
-            initial_profile_index = 0
-            profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
-            if profile_id:
-                profile = find(profile_id, self._profiles, key=lambda p: p.id())
-                if profile:
-                    initial_profile_index = self._profiles.index(profile)
-            # This must be here (in _on_idle) espacially because the initial
-            # profile may not be valid and we want to make use of the logic in
-            # _cmd_apply_profile().
-            self._cmd_apply_profile(initial_profile_index)
-            self._initial_profile_applied = True
         if self._leave_form_requested:
             try:
                 self._cmd_leave_form()
@@ -1131,6 +1117,23 @@ class LookupForm(InnerForm):
 
     def _current_arguments(self):
         return {}
+
+    def _on_idle(self, event):
+        if not self._initial_profile_applied:
+            # Note, that the profile 0 may not be self._default_profile, but
+            # its customization.
+            initial_profile_index = 0
+            profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
+            if profile_id:
+                profile = find(profile_id, self._profiles, key=lambda p: p.id())
+                if profile:
+                    initial_profile_index = self._profiles.index(profile)
+            # This must be here (in _on_idle) espacially because the initial
+            # profile may not be valid and we want to make use of the logic in
+            # _cmd_apply_profile().
+            self._cmd_apply_profile(initial_profile_index)
+            self._initial_profile_applied = True
+        return super(LookupForm, self)._on_idle(event)
 
     def _init_data_select(self, data, async_count=False):
         return data.select(condition=self._current_condition(display=True),
