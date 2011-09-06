@@ -55,14 +55,15 @@ _std_table_nolog('e_pytis_form_profiles',
       )
 
 _std_table_nolog('e_pytis_form_profile_params',
-      (C('id', TInteger, constraints=('not null',),
+      (P('id', TSerial),
+       C('related_id', TInteger, constraints=('not null',),
          references='e_pytis_form_profiles on delete cascade on update cascade'),
        C('form_name', TString, constraints=('NOT NULL',)),
        C('pickle', TString, constraints=('NOT NULL',)),
        C('dump', TString),
        C('errors', TString),
        ),
-      sql='UNIQUE (id, form_name)',
+      sql='UNIQUE (related_id, form_name)',
       grant=db_rights,
       schemas=db_schemas,
       doc="""Pytis form profile form type specific parameters."""
