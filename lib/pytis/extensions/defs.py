@@ -264,8 +264,13 @@ class MenuChecker(object):
                 if module in self._output_specs:
                     continue
                 self._output_specs[module] = True
+                print_pos = module.rfind('.')
+                if print_pos < 0:
+                    errors.append("Invalid print specification: " + module)
+                print_module_name = module[:print_pos].replace('.', '/')
+                print_class_name = module[print_pos+1:]
                 try:
-                    self._output_resolver.get_module(module)
+                    self._output_resolver.get_object(print_module_name, print_class_name)
                 except ResolverError as e:
                     errors.append("Failed to load print specification: " + str(e))
         return errors
