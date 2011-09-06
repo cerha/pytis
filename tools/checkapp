@@ -58,6 +58,7 @@ def usage(optexception=None):
   --config=CONFIG_FILE   ... use given configuration file
   --devel                ... development checking mode
   --verbose              ... print logging messages
+  --help                 ... show this help
 """)
     if optexception:
         sys.stderr.write(optexception.msg)
@@ -74,6 +75,8 @@ def checkopt(argv, option):
 
 def run():
     argv = copy.copy(sys.argv)
+    if checkopt(argv, '--help'):
+        usage()
     if checkopt(argv, '--devel'):
         checker_class = pytis.extensions.DevelChecker
     else:
