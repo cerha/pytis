@@ -58,7 +58,8 @@ def get_form_defs(resolver, messages=None):
                     add_message(messages, DMPMessage.WARNING_MESSAGE, "Module not loaded", (module_name,))
                     continue
                 except Exception as e:
-                    add_message(messages, DMPMessage.ERROR_MESSAGE, "Error when loading module", (module, e,))
+                    add_message(messages, DMPMessage.ERROR_MESSAGE, "Error when loading module", (module_name, e,))
+                    continue
                 module_identifier = module_name.replace('/', '.')
                 for spec_attr in [o for o in dir(module)]:
                     spec = getattr(module, spec_attr)
