@@ -67,8 +67,13 @@ _watcher_thread_ident = None
 _wx_key = None
 
 
+_in_top_level_exception = False
 def top_level_exception():
     """Zpracuj aktuálně vyvolanou výjimku aplikace."""
+    global _in_top_level_exception
+    if _in_top_level_exception:
+        return
+    _in_top_level_exception = True
     einfo = sys.exc_info()
     if issubclass(einfo[0], SystemExit):
         sys.exit()
@@ -144,7 +149,7 @@ def top_level_exception():
     if config.debug_on_error:
         import pdb
         pdb.post_mortem(sys.exc_info()[2])
-        return
+    _in_top_level_exception = False
 
 
 _last_user_event = None
