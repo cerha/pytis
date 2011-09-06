@@ -295,6 +295,8 @@ def wx_callback(evt_function, *args):
             else:
                 # Standardní "systémová" událost
                 result = system_callback()
+        except SystemExit:
+            raise
         except:
             top_level_exception()
             return

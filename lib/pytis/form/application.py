@@ -815,6 +815,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         self._update_recent_forms(item)
         except UserBreakException:
             pass
+        except SystemExit:
+            raise
         except:
             top_level_exception()
         return result
@@ -878,6 +880,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 focused.SetFocus()
         except UserBreakException:
             pass
+        except SystemExit:
+            raise
         except:
             top_level_exception()
         return result

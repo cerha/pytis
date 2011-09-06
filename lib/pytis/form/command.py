@@ -118,6 +118,8 @@ class CommandHandler:
                 busy_cursor(False)
         except UserBreakException:
             pass
+        except SystemExit:
+            raise
         except:
             top_level_exception()
 
