@@ -431,35 +431,34 @@ class DateTimeFieldExporter(TextFieldExporter):
         result += g.script_write(g.button('...', id='%s-button' % kwargs['id'], type='button',
                                           cls='selection-invocation calendar-invocation',
                                           disabled=kwargs['disabled']))
-        if not kwargs['disabled']:
-            context.resource('prototype.js')
-            context.resource('calendarview.js')
-            context.resource('calendarview.css')
-            locale_data = context.locale_data()
-            js_values = dict(
-                id = kwargs['id'],
-                format = self._editor_date_format(locale_data),
-                today = context.translate(_(u"today")),
-                day_names = g.js_value([context.translate(lcg.week_day_name(i, abbrev=True))
-                                        for i in (6,0,1,2,3,4,5)]),
-                month_names = g.js_value([context.translate(lcg.month_name(i))
-                                          for i in range(12)]),
-                first_week_day = (locale_data.first_week_day + 1) % 7,
-                )
-            result += g.script("""
-               Calendar.setup({dateField: '%(id)s',
-                               triggerElement: '%(id)s-button',
-                               dateFormat: '%(format)s'});
-               Calendar.TODAY = '%(today)s';
-               Calendar.SHORT_DAY_NAMES = %(day_names)s;
-               Calendar.MONTH_NAMES = %(month_names)s;
-               Calendar.FIRST_WEEK_DAY = %(first_week_day)d;
-               """ % js_values)
+        context.resource('prototype.js')
+        context.resource('calendarview.js')
+        context.resource('calendarview.css')
+        locale_data = context.locale_data()
+        js_values = dict(
+            id = kwargs['id'],
+            format = self._editor_date_format(locale_data),
+            today = context.translate(_(u"today")),
+            day_names = g.js_value([context.translate(lcg.week_day_name(i, abbrev=True))
+                                    for i in (6,0,1,2,3,4,5)]),
+            month_names = g.js_value([context.translate(lcg.month_name(i))
+                                      for i in range(12)]),
+            first_week_day = (locale_data.first_week_day + 1) % 7,
+            )
+        result += g.script("""
+           Calendar.setup({dateField: '%(id)s',
+                           triggerElement: '%(id)s-button',
+                           dateFormat: '%(format)s'});
+           Calendar.TODAY = '%(today)s';
+           Calendar.SHORT_DAY_NAMES = %(day_names)s;
+           Calendar.MONTH_NAMES = %(month_names)s;
+           Calendar.FIRST_WEEK_DAY = %(first_week_day)d;
+           """ % js_values)
         return result
 
     
 class DateFieldExporter(DateTimeFieldExporter):
-    
+    _HANDLER = 'pytis.DateField'
     def _editor_date_format(self, locale_data):
         return locale_data.date_format
 
