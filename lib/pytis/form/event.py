@@ -92,7 +92,7 @@ def top_level_exception():
         to = config.bug_report_address
         if not to:
             run_dialog(Message, _(u"Není známa cílová adresa. Je nutno nastavit konfigurační volbu "
-                                  "`bug_report_address'."))
+                                  u"`bug_report_address'."))
         else:
             tb = einfo[2]
             while tb.tb_next is not None:
