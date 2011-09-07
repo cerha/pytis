@@ -225,7 +225,7 @@ class FormProfileManager(UserSetttingsManager):
     _TABLE = 'e_pytis_form_profiles'
     _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title',
                 'pickle', 'dump', 'errors')
-    _OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE') # NOT is not allowed!
+    _OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE', 'IN') # NOT is not allowed!
     _PROFILE_PARAMS = ('sorting', 'columns', 'grouping', 'folding', 'aggregations', 'column_widths')
 
     USER_PROFILE_PREFIX = '_user_profile_'
@@ -241,7 +241,10 @@ class FormProfileManager(UserSetttingsManager):
         self._params_manager = FormProfileParamsManager(dbconnection, username=username)
 
     def _pack_filter(self, something):
-        if isinstance(something, pytis.data.Operator):
+        if isinstance(something, pytis.form.IN):
+            return (something.name(), (something.column_id(), something.spec_name(),
+                                       something.table_column_id(), something.profile_id()), {})
+        elif isinstance(something, pytis.data.Operator):
             args = tuple([self._pack_filter(arg) for arg in something.args()])
             return (something.name(), args, something.kwargs())
         elif isinstance(something, pytis.data.Value):
@@ -270,6 +273,9 @@ class FormProfileManager(UserSetttingsManager):
         op = getattr(pytis.data, name)
         if name in ('AND', 'OR'):
             args = [self._unpack_filter(arg, data_object) for arg in packed_args]
+        elif name == 'IN':
+            op = pytis.form.IN
+            args = packed_args
         else:
             if len(packed_args) != 2:
                 raise Exception("Invalid number of filter operator arguments: %s" %
@@ -419,6 +425,29 @@ class FormProfileManager(UserSetttingsManager):
             errors += self._validate_params(view_spec, params)
             return Profile(profile_id, row['title'].value(), filter=filter, errors=errors, **params)
         return None
+           
+    def load_filter(self, spec_name, data_object, profile_id, transaction=None):
+        """Return previously saved user filter.
+
+        Arguments:
+          spec_name -- string form specification name
+          profile_id -- string identifier of the profile
+
+        Returns a 'pytis.data.Operator' instance or None when given profile
+        exists, but has no filter.
+
+        Raises exception if no such profile is found or is invalid.
+
+        """
+        row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
+        if row:
+            packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
+            filter, errors = self._validate_filter(data_object, packed_filter)
+            if errors:
+                raise Exception("Saved profile %s for %s is invalid!" % (profile_id, spec_name))
+            return filter, row['title'].value()
+        else:
+            raise Exception("Saved profile %s for %s doesn't exist!" % (profile_id, spec_name))
            
     def drop_profile(self, spec_name, form_name, profile_id, transaction=None):
         """Remove the previously saved form configuration.
