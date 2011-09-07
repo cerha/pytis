@@ -20,7 +20,7 @@
 import sys, getopt, types
 import pytis.util, pytis.data, config
 
-from pytis.form import DBFormProfileManager
+from pytis.form import FormProfileManager
 
 def usage(msg=None):
     sys.stderr.write("""Validate saved form profiles.
@@ -68,44 +68,47 @@ def run():
     total_processed = 0
     total_valid = 0
     total_invalid = 0
+    skipped = 0
     usernames = [v.value() for v in data.distinct('username')]
+    resolver = pytis.util.resolver()
     for username in usernames:
-        manager = DBFormProfileManager(config.dbconnection, username=username)
-        for fullname in manager.list_fullnames():
-            specname = fullname.split('/')[2]
-            for profile_id in manager.list_profile_ids(fullname):
-                profile = manager.load_profile(fullname, profile_id)
+        manager = FormProfileManager(config.dbconnection, username=username)
+        for spec_name in manager.list_spec_names():
+            try:
+                view_spec, data_object, error = cache[spec_name]
+            except KeyError:
                 try:
-                    view_spec, data_object, error = cache[specname]
-                except KeyError:
-                    resolver = pytis.util.resolver()
-                    try:
-                        view_spec = resolver.get(specname, 'view_spec')
-                        data_spec = resolver.get(specname, 'data_spec')
-                        data_object = data_spec.create(dbconnection_spec=config.dbconnection)
-                    except Exception as e:
-                        print "%s: %s" % (specname, e)
-                        view_spec, data_object,  error = None, None, e
-                    else:
-                        error = None
-                    cache[specname] = view_spec, data_object,  error
-                if not error:
-                    errors = profile.validate(view_spec, data_object)
-                    # Update the 'errors' column in the database table.
-                    manager.save_profile(fullname, profile)
-                    for error in errors:
-                        print ':'.join((username, fullname, profile_id, ' '+ error))
-                    if errors:
-                        total_invalid += 1
-                    else:
-                        total_valid += 1
-                total_processed += 1
+                    view_spec = resolver.get(spec_name, 'view_spec')
+                    data_spec = resolver.get(spec_name, 'data_spec')
+                    data_object = data_spec.create(dbconnection_spec=config.dbconnection)
+                except Exception as e:
+                    print "%s: %s" % (spec_name, e)
+                    skipped += 1
+                    view_spec, data_object,  error = None, None, e
+                else:
+                    error = None
+                cache[spec_name] = view_spec, data_object,  error
+            if not error:
+                for form_name in manager.list_form_names(spec_name):
+                    for profile_id in manager.list_profile_ids(spec_name):
+                        profile = manager.load_profile(spec_name, form_name,
+                                                       view_spec, data_object, profile_id)
+                        # Update the 'errors' column in the database table.
+                        manager.save_profile(spec_name, form_name, profile)
+                        for param, error in profile.errors():
+                            print ':'.join((username, spec_name, form_name, profile_id, ' %s: %s' % (param, error)))
+                        if profile.errors():
+                            total_invalid += 1
+                        else:
+                            total_valid += 1
+                        total_processed += 1
     print (u"Total %d profiles processed:\n"
            u"  %d valid\n"
            u"  %d invalid") % (total_processed, total_valid, total_invalid)
-    skipped = total_processed - (total_valid + total_invalid)
-    if skipped != 0:
-        print u"  %d skipped due to errors" % skipped
+    if skipped == 1:
+        print u"  1 specification skipped due to errors"
+    elif skipped > 1:
+        print u"  %d specifications skipped due to errors" % skipped
 
 
 if __name__ == '__main__':

@@ -434,6 +434,10 @@ class FormProfileManager(UserSetttingsManager):
         values = self._data.distinct('spec_name', condition=condition, transaction=transaction)
         return [v.value() for v in values]
 
+    def list_form_names(self, spec_name, transaction=None):
+        """Return a sequence of form names for which profiles were saved."""
+        return self._params_manager.list_form_names(spec_name, transaction=transaction)
+
     def new_user_profile_id(self, profiles):
         """Generate a new unique user profile id based on given list of existing profiles."""
         prefix = self.USER_PROFILE_PREFIX
@@ -459,6 +463,12 @@ class FormProfileParamsManager(UserSetttingsManager):
         return self._load(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                           transaction=transaction) or {}
     
+    def list_form_names(self, spec_name, transaction=None):
+        """Return a sequence of form names for which profiles were saved."""
+        condition = self._condition(spec_name=spec_name)
+        values = self._data.distinct('form_name', condition=condition, transaction=transaction)
+        return [v.value() for v in values] 
+
     def save(self, spec_name, form_name, profile_id, params, dump, errors, transaction=None):
         """Save form profile parameters dictionary."""
         assert isinstance(params, dict)
