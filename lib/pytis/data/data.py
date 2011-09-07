@@ -175,7 +175,7 @@ class Operator(object):
         return [relax(arg) for arg in self._args]
 
     def __str__(self):
-        args = string.join(map(str, self.args()), ', ')
+        args = string.join(map(unicode, self.args()), ', ')
         return '%s (%s)' % (self.name(), args)
 
     def __cmp__(self, other):
