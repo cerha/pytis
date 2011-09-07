@@ -201,13 +201,20 @@ class FormSettingsManager(UserSetttingsManager):
 class FormProfileManager(UserSetttingsManager):
     """Accessor of database storage of form profiles.
 
-    The actual form profile data are python dictionaries of arbitrary form
-    settings at this level.  There are no rules, except that the data structure
-    must be safe to pickle and unpickle (ideally they should consist just of
-    basic python data types).  They are referenced by a string identifier and
-    the upper layer is responsible for converting these structures into
-    'pytis.presentation.Profile' instances.
+    This manager is a little more complicated then the others as it must
+    understand the logic of the data it is saving/restoring.  The
+    'load_profile()' method must read profile data from two different sources,
+    validate them against the current specification
+    join them into a resulting 'pytis.presentation.Profile' instance
 
+    Moreover, the filters can not be simply pickled/unpickled as they are.  The
+    'pytis.data.Operator' instances often refer to values with pytis data
+    types, which have enumerators and other references to ``living'' data
+    objects.  Thus we prefer to convert the Operator instances into our own
+    simple structure of basic immutable python objects and restore
+    'pytis.data.Operator' instances back after unpickling (the form's data
+    object is needed to do that).
+    
     Forms are referenced by unique string identifiers (see the 'spec_name' and
     'form_name' arguements of the manager's methods).
         
