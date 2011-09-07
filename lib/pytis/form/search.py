@@ -318,6 +318,8 @@ class SFDialog(SFSDialog):
             else:
                 raise Exception("Invalid operand type: "+ repr(arg))
             return (op, col1, col2, value),
+        elif name == 'IN' and isinstance(operator, pytis.form.IN):
+            return ((operator,),)
         else:
             raise Exception("Unsupported operator: "+ name)
 
@@ -351,6 +353,17 @@ class SFDialog(SFSDialog):
                        _(u"Vymazat obsah podmínky")),
                 button(_(u"Odebrat"), lambda e: self._on_remove(i),
                        _(u"Zrušit tuto podmínku"), enabled=n > 1))
+        def create_in_operator(i, n, operator):
+            col = self._find_column(operator.column_id())
+            spec = operator.spec_title()
+            if operator.profile_name():
+                spec += ' / ' + operator.profile_name()
+            text = "%s IN %s (%s)" % (col.label(), spec, operator.table_column_label())
+            ctrl = label(text)
+            ctrl._pytis_in_operator = operator
+            return (ctrl,
+                    button(_(u"Odebrat"), lambda e: self._on_remove(i),
+                           _(u"Zrušit tuto podmínku"), enabled=n > 1))
         c = self._find_column(self._col) or self._columns[0]
         empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
         #print "===", self._strop(self._condition or empty)
@@ -360,14 +373,18 @@ class SFDialog(SFSDialog):
             run_dialog(Warning, _(u"Nepodařilo se rozložit podmínkový výraz:") +" "+ str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
-            if len(items) == 2:
+            print "--", items
+            if len(items) == 1:
+                self._controls.append(create_in_operator(i, len(operators), *items))
+            elif len(items) == 2:
                 self._controls.append(create_logical_operator(i, len(operators), *items))
             else:
                 self._controls.append(create_relational_operator(i, len(operators), *items))
                 self._on_selection_change(i)
-        wval = self._controls[-1][3]
-        if wval.IsEnabled():
-            self._want_focus = wval
+        if len(self._controls[-1]) > 2:
+            wval = self._controls[-1][3]
+            if wval.IsEnabled():
+                self._want_focus = wval
 
     def _create_content(self, sizer):
         super(SFDialog, self)._create_content(sizer)
@@ -407,10 +424,10 @@ class SFDialog(SFSDialog):
             elif isinstance(col1.type(), pytis.data.Binary):
                 if wval.GetValue():
                     raise self.SFConditionError(i, wval,
-                                     _(u"Binární sloupec lze testovat pouze na prázdnou hodnotu"))
+                                   _(u"Binární sloupec lze testovat pouze na prázdnou hodnotu"))
                 elif op not in (pytis.data.EQ, pytis.data.NE):
                     raise self.SFConditionError(i, wop,
-                                     _(u"Binární sloupec lze testovat pouze na rovnost či nerovnost"))
+                                   _(u"Binární sloupec lze testovat pouze na rovnost či nerovnost"))
                 arg2 = pytis.data.Value(col1.type(), None)
             else:
                 val = wval.GetValue()
@@ -426,6 +443,9 @@ class SFDialog(SFSDialog):
                     raise self.SFConditionError(i, wval, err.message())
                 arg2 = value
             return op(col1.id(), arg2)
+        def in_operator(i):
+            ctrl = self._controls[i][0]
+            return ctrl._pytis_in_operator
         def apply_logical_operator(operator, operators, level):
             # Apply the logical operators at given level to its operands and return the reduced
             # list of top-level operators.
@@ -462,6 +482,8 @@ class SFDialog(SFSDialog):
                     if weight not in weights:
                         weights.append(weight)
                     operators.append((op, weight))
+                elif len(self._controls[i]) == 2:
+                    operators.append(in_operator(i))
                 else:
                     operators.append(relational_operator(i))
         weights.sort()
