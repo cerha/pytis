@@ -1998,6 +1998,92 @@ class BrowserWindow(wx.Frame):
         self.SetTitle(uri)
 
 
+class IN(pytis.data.Operator):
+    """Symbolic specification of pytis.data.IN operator.
+    
+    This class creates a pytis data operator instance based on symbolic
+    arguments and translates these symbolic arguments into real arguments
+    accepted by pytis.data.IN.  This makes it possible to display this operator
+    in the user interface and save it within user profiles, because the data
+    object and filter condition is defined by name rather than directly.
+
+    See constructor arguments for details how they differ from pytis.data.IN
+    arguments.
+
+    """
+
+    def __init__(self, column_id, spec_name, table_column_id, profile_id):
+        """Arguments:
+
+          column_id -- string identifier of the column which should belong to
+            the set; existence of its value is checked in the other table; same
+            as 'column_id' argument of 'pytis.data.IN'.
+            
+          spec_name -- string name of the specification defining the set; data
+            object of this specification will be created and passed to
+            'pytis.data.IN' as 'data'.
+          
+          table_column_id -- string identifier of the column in 'spec_name' used to
+            search for the value of 'column_id'; same as 'table_column_id'
+            argument of 'pytis.data.IN'.
+
+          profile_id -- string identifier of an existing profile within
+            'spec_name'.  It can be either one of profiles defined by the
+            specification or a user defined profile saved through the profile
+            manager by the current user.  The profile's filter determines the
+            'condition' passed to 'pytis.data.IN'.  Can be also None if no
+            condition shall be applied.
+
+        """
+        self._column_id = column_id
+        self._spec_name = spec_name
+        self._table_column_id = table_column_id
+        self._profile_id = profile_id
+        import config
+        resolver = pytis.util.resolver()
+        view_spec = resolver.get(spec_name, 'view_spec')
+        data_factory = resolver.get(spec_name, 'data_spec')
+        data_object = data_factory.create(connection_data=config.dbconnection)
+        if profile_id is not None:
+            if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
+                manager = profile_manager()
+                condition, profile_name = manager.load_filter(spec_name, view_spec, data_object, profile_id)
+            else:
+                profile = find(profile_id, view_spec.profiles(), lambda p: p.id())
+                if not profile:
+                    raise Exception("Profile %s of %s doesn't exist!" % (profile_id, spec_name))
+                condition = profile.filter()
+                profile_name = profile.name()
+        else:
+            profile_name = None
+            condition = None
+        self._profile_name = profile_name
+        self._spec_title = view_spec.title()
+        self._table_column_label = view_spec.field(table_column_id).label()
+        pytis.data.Operator.__init__(self, 'IN', column_id, data_object, table_column_id, condition)
+
+    def column_id(self):
+        return self._column_id
+    
+    def spec_name(self):
+        return self._spec_name
+
+    def spec_title(self):
+        return self._spec_title
+
+    def table_column_id(self):
+        return self._table_column_id
+    
+    def table_column_label(self):
+        return self._table_column_label
+    
+    def profile_id(self):
+        return self._profile_id
+    
+    def profile_name(self):
+        return self._profile_name
+
+
 # Převodní funkce
         
 def char2px(window, x, y):
