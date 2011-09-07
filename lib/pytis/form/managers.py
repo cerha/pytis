@@ -60,6 +60,7 @@ class UserSetttingsManager(object):
     _COLUMNS = ()
 
     def __init__(self, dbconnection, username=None):
+        self._dbconnection = dbconnection
         self._username = username or config.dbuser
         self._data = pytis.data.dbtable(self._TABLE, self._COLUMNS, dbconnection)
 
@@ -115,7 +116,9 @@ class UserSetttingsManager(object):
             self._data.update(row['id'], row, transaction=transaction)
         else:
             row = pytis.data.Row(self._values(**key) + self._values(**values))
-            self._data.insert(row, transaction=transaction)
+            result, success = self._data.insert(row, transaction=transaction)
+            if not success:
+                raise pd.DBException(result)
 
     def _drop(self, transaction=None, **key):
         row = self._row(transaction=transaction, **key)
@@ -364,8 +367,22 @@ class FormProfileManager(UserSetttingsManager):
           config -- dictionary of form configuration parameters.
 
         """
-        # TODO: Force transaction!
-        # if transaction is None: transaction = pd.DBTransactionDefault(self._dbconnection)
+        if transaction is None:
+            transaction = pytis.data.DBTransactionDefault(self._dbconnection)
+            try:
+                self._save_profile(spec_name, form_name, profile, transaction)
+            except:
+                try:
+                    transaction.rollback()
+                except:
+                    pass
+                raise
+            else:
+                transaction.commit()
+        else:
+            self._save_profile(spec_name, form_name, profile, transaction)
+            
+    def _save_profile(self, spec_name, form_name, profile, transaction):
         filter = profile.filter()
         values = dict(title=profile.name(),
                       pickle=self._pickle(filter and self._pack_filter(filter)),
