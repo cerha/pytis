@@ -263,13 +263,13 @@ class FormProfileManager(UserSetttingsManager):
         else:
             raise pytis.util.ProgramError("Unknown object in filter operator:", something)
 
-    def _unpack_filter(self, packed, view, data):
+    def _unpack_filter(self, packed, data_object):
         name, packed_args, kwargs = packed
         if name not in self._OPERATORS:
             raise Exception("Invalid filter operator '%s'." % name)
         op = getattr(pytis.data, name)
         if name in ('AND', 'OR'):
-            args = [self._unpack_filter(arg, view, data) for arg in packed_args]
+            args = [self._unpack_filter(arg, data_object) for arg in packed_args]
         else:
             if len(packed_args) != 2:
                 raise Exception("Invalid number of filter operator arguments: %s" %
@@ -281,7 +281,7 @@ class FormProfileManager(UserSetttingsManager):
                         val = val.decode('utf-8')
                     except UnicodeDecodeError:
                         val = val.decode('iso-8859-2')
-                column = data.find_column(col)
+                column = data_object.find_column(col)
                 if column is None:
                     raise Exception("Unknown column '%s' in filter." % col)
                 t = column.type()
@@ -304,7 +304,7 @@ class FormProfileManager(UserSetttingsManager):
             else:
                 args = packed_args
                 for col in args:
-                    if data.find_column(col) is None:
+                    if data_object.find_column(col) is None:
                         raise Exception("Unknown column '%s' in filter." % col)
         return op(*args, **kwargs)
 
@@ -332,10 +332,10 @@ class FormProfileManager(UserSetttingsManager):
         else:
             return None
 
-    def _validate_filter(self, packed_filter, view, data):
+    def _validate_filter(self, data_object, packed_filter):
         if packed_filter:
             try:
-                filter = self._unpack_filter(packed_filter, view, data)
+                filter = self._unpack_filter(packed_filter, data_object)
             except Exception as e:
                 return None, (('filter', str(e)),)
             else:
@@ -343,7 +343,7 @@ class FormProfileManager(UserSetttingsManager):
         else:
             return None, ()
 
-    def _validate_params(self, params, view):
+    def _validate_params(self, view_spec, params):
         errors = []
         for param, getcol in (('columns', lambda x: x),
                               ('sorting', lambda x: x[0]),
@@ -352,7 +352,7 @@ class FormProfileManager(UserSetttingsManager):
             if sequence is not None:
                 for x in sequence:
                     col = getcol(x)
-                    if view.field(col) is None:
+                    if view_spec.field(col) is None:
                         errors.append((param, "Unknown column '%s'." % col))
         return tuple(errors)
         
@@ -395,28 +395,28 @@ class FormProfileManager(UserSetttingsManager):
                                   errors=self._errors(profile, lambda p: p != 'filter'),
                                   transaction=transaction)
 
-    def load_profile(self, spec_name, form_name, view, data, profile_id, filter=None,
-                     transaction=None):
-        """Return previously saved user specific configuration of a form.
+    def load_profile(self, spec_name, form_name, view_spec, data_object,
+                     profile_id, filter=None, transaction=None):
+        """Return previously saved user specific form configuration.
 
         Arguments:
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile_id -- string identifier of the profile to load.
+          spec_name -- string specification name
+          form_name -- unique string form identification
+          profile_id -- string identifier of the profile to load
 
-        Returns a 'pytis.presentation.Profile' instance.  If no such profile is
-        found or if a problem occures reading it, None is returned.
+        Returns a 'pytis.presentation.Profile' instance or None if no such
+        profile is found.
 
         """
         row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
         if row:
             if filter is None:
                 packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
-                filter, errors = self._validate_filter(packed_filter, view, data)
+                filter, errors = self._validate_filter(data_object, packed_filter)
             else:
                 errors = ()
             params = self._params_manager.load(spec_name, form_name, profile_id)
-            errors += self._validate_params(params, view)
+            errors += self._validate_params(view_spec, params)
             return Profile(profile_id, row['title'].value(), filter=filter, errors=errors, **params)
         return None
            
