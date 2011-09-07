@@ -36,223 +36,6 @@ from pytis.presentation import PresentedRow
 from pytis.form import *
 import wx
 
-class FormProfile(pytis.presentation.Profile):
-    """Form profile specification that can be saved and restored.
-
-    Instances of this class are used to save and restore user defined form
-    profiles as well as user customizations of predefined form profiles
-    originally defined in specifications.
-
-    Unlike 'pytis.presentation.Profile' (the base class), instances of this
-    class can be safely pickled and unpickled (see notes below) and define also
-    some additional profile attributes which are not exposed to specifications
-    but the user interface needs to save/restore them.
-
-    Important note: Pickling and unpickling is unfortunately not a symmetrical
-    operation.  After unpickling an instance, the method 'validate()' must be
-    called to check whether all profile parameters match with the current
-    specification and also the stored pytis conditions (the 'filter' attribute
-    of the profile) must be unpacked from the internal representation into
-    'pytis.data.Operator()' instances.  This is because 'pytis.data.Operator()'
-    instances refer to values with data type instances, which are often bound
-    to data objects.  To prevent pickling whole structures of living objects,
-    the filtering condition is stored in a packed form which doesn't refer to
-    data types and objects.  A form's data object is needed to unpack them.
-    This is why 'validate()' must be called passing it the data object of the
-    form.
-
-    """
-    USER_PROFILE_PREFIX = '_user_profile_'
-    """Profile identifier prefix used for user defined profiles.
-
-    User defined profiles are recognized from system profiles (defined in
-    specifications) by this prefix.
-    
-    """
-    def __init__(self, id, name, column_widths=None, **kwargs):
-        """Specific keyword arguments:
-
-          column_widths -- dictionary of pixel widths of form columns keyed by
-            column identifiers
-
-        All other arguments the same as for the parent class.
-
-        """
-        super(FormProfile, self).__init__(id, name, **kwargs)
-        self._column_widths = column_widths or {}
-        self._state = None
-        self._validation_errors = []
-        
-    def _pack(self, something):
-        if isinstance(something, pytis.data.Operator):
-            args = tuple([self._pack(arg) for arg in something.args()])
-            return (something.name(), args, something.kwargs())
-        elif isinstance(something, pytis.data.Value):
-            t = something.type()
-            export_kwargs = {}
-            if isinstance(t, pytis.data.Date):
-                export_kwargs['format'] = '%Y-%m-%d'
-            elif isinstance(t, pytis.data.Time):
-                export_kwargs['format'] = '%H:%M:%S'
-            elif isinstance(t, pytis.data.DateTime):
-                export_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
-            elif isinstance(t, pytis.data.Float):
-                export_kwargs['locale_format'] = False
-            return [something.export(**export_kwargs)]
-        elif isinstance(something, pytis.data.WMValue):
-            return [something.value()]
-        elif isinstance(something, basestring):
-            return something
-        else:
-            raise ProgramError("Unknown object in filter operator:", something)
-            
-    def __getstate__(self):
-        if self._state is not None:
-            # If the profile was not used yet, it can be pickled again as is.
-            return self._state
-        else:
-            # We prefer saving the condition in our custom format, since its safer
-            # to pickle Python builtin types than instances of application defined
-            # classes.
-            if self._filter is None:
-                filter = None
-            else:
-                filter = self._pack(self._filter)
-            return dict(self.__dict__, _filter=filter)
-
-    def __setstate__(self, state):
-        # Don't restore the state here, to avoid accessing any attributes
-        # before validation (see also __getattr__).
-        name = state['_name']
-        if isinstance(name, str):
-            # Hack to translate old stored Latin 2 string names to unicodes
-            try:
-                name = name.decode('utf-8')
-            except UnicodeDecodeError:
-                name = name.decode('iso-8859-2')
-            state['_name'] = name
-        self._state = state
-
-    def __getattr__(self, name):
-        if self._state is not None:
-            raise ProgramError("Attempted to access unpacked profile: Call 'validate()' first!")
-        else:
-            raise AttributeError("%r object has no attribute %r" % (type(self).__name__, name))
-
-    def rename(self, name):
-        """Change the name of the profile to given 'name' (unicode)."""
-        self._name = unicode(name)
-
-    @classmethod
-    def new_user_profile_id(cls, profiles):
-        """Generate a new unique user profile id based on given list of existing profiles."""
-        prefix = cls.USER_PROFILE_PREFIX
-        user_profile_numbers = [int(profile.id()[len(prefix):]) for profile in profiles
-                                if profile.id().startswith(prefix)
-                                and profile.id()[len(prefix):].isdigit()]
-        return prefix + str(max(user_profile_numbers+[0])+1)
-    
-    def set_filter(self, filter):
-        """Change the filter of the profile to given value (pytis.data.Operator instance)."""
-        self._filter = filter
-
-    def validate(self, view, data):
-        """Validate the instance after loading (see the class docstring for more information)."""
-        # NOT is not allowed!
-        OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE')
-        def unpack(packed):
-            name, packed_args, kwargs = packed
-            if name not in OPERATORS:
-                raise Exception("Invalid filter operator '%s'." % name)
-            op = getattr(pytis.data, name)
-            if name in ('AND', 'OR'):
-                args = [unpack(arg) for arg in packed_args]
-            else:
-                if len(packed_args) != 2:
-                    raise Exception("Invalid number of filter operator arguments: %s" %
-                                    repr(packed_args))
-                if isinstance(packed_args[1], list):
-                    col, val = packed_args[0], packed_args[1][0]
-                    if isinstance(val, str):
-                        try:
-                            val = val.decode('utf-8')
-                        except UnicodeDecodeError:
-                            val = val.decode('iso-8859-2')
-                    column = data.find_column(col)
-                    if column is None:
-                        raise Exception("Unknown column '%s' in filter." % col)
-                    t = column.type()
-                    if name in ('WM', 'NW'):
-                        value, err = t.wm_validate(val)
-                    else:
-                        validation_kwargs = {}
-                        if isinstance(t, pytis.data.Date):
-                            validation_kwargs['format'] = '%Y-%m-%d'
-                        elif isinstance(t, pytis.data.Time):
-                            validation_kwargs['format'] = '%H:%M:%S'
-                        elif isinstance(t, pytis.data.DateTime):
-                            validation_kwargs['format'] = '%Y-%m-%d %H:%M:%S'
-                        elif isinstance(t, pytis.data.Float):
-                            validation_kwargs['locale_format'] = False
-                        value, err = t.validate(val, strict=False, **validation_kwargs)
-                    if err is not None:
-                        raise Exception("Invalid filter operand value for '%s': %s" % (col, err))
-                    args = col, value
-                else:
-                    args = packed_args
-                    for col in args:
-                        if data.find_column(col) is None:
-                            raise Exception("Unknown column '%s' in filter." % col)
-            return op(*args, **kwargs)
-        if self._state is not None:
-            state = self._state
-            self._state = None
-            self.__dict__.update(state)
-        self._validation_errors = errors = []
-        if self._filter:
-            try:
-                self._filter = unpack(self._filter)
-            except Exception as e:
-                errors.append(str(e))
-        # Check the column identifiers in all profile attributes (except for
-        # filters, which are checked above)
-        for attr, getcol in (('_columns', lambda x: x),
-                             ('_sorting', lambda x: x[0]),
-                             ('_grouping', lambda x: x)
-                             ):
-            sequence = getattr(self, attr)
-            if sequence is not None:
-                for x in sequence:
-                    col = getcol(x)
-                    if view.field(col) is None:
-                        errors.append("Unknown column '%s' in %s." % (col, attr[1:]))
-        return tuple(errors)
-    
-    def validation_errors(self):
-        return tuple(self._validation_errors)
-        
-    def valid(self):
-        """Return True if the profile is valid or false if invalid."""
-        return len(self._validation_errors) == 0
-
-    def dump(self):
-        import pprint
-        pp = pprint.PrettyPrinter()
-        def format_item(key, value):
-            indent = '\n  ' + ' ' * len(key)
-            formatted = indent.join(pp.pformat(value).splitlines())
-            return '%s: %s' % (key, formatted)
-        result = []
-        if self.id().startswith(self.USER_PROFILE_PREFIX):
-            result = [format_item('filter', self._filter and self._pack(self._filter))]
-        result.extend([format_item(key, self.__dict__['_'+key])
-                       for key in ('sorting', 'columns', 'grouping', 'folding', 'aggregations',
-                                   'column_widths')])
-        return '\n'.join(result)
-    
-    def column_widths(self):
-        return self._column_widths
-
 
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
@@ -493,9 +276,6 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def __repr__(self):
         return str(self)
-
-    def _fullname(self):
-        return make_fullname(self.__class__, self._name)
 
     def _form_name(self):
         cls = self.__class__
@@ -1238,29 +1018,28 @@ class LookupForm(InnerForm):
         self.select_row(self._current_key())
 
     def _save_profile(self, profile):
-        profile_manager().save_profile(self._fullname(), profile)
+        profile_manager().save_profile(self._name, self._form_name(), profile)
     
     def _load_profiles(self):
         manager = profile_manager()
-        fullname = self._fullname()
+        spec_name, form_name, view, data = self._name, self._form_name(), self._view, self._data
         profiles = []
         for profile in (self._default_profile,) + tuple(self._view.profiles()):
-            custom = manager.load_profile(fullname, profile.id())
-            if custom:
-                custom.validate(self._view, self._data)
-                # Force the filter of system profiles to the filter from
-                # specification because it often contains dynamic
-                # conditions, such as EQ('date', now()) which are destroyed
-                # when saved (the saved condition would be EQ('date',
-                # '2011-03-01') for example).  That's also why filters of
-                # system profiles are not editable.
-                custom.set_filter(profile.filter())
-                profile = custom
-            profiles.append(profile)
-        for profile_id in manager.list_profile_ids(fullname):
-            if profile_id.startswith(FormProfile.USER_PROFILE_PREFIX):
-                profile = manager.load_profile(fullname, profile_id)
-                profile.validate(self._view, self._data)
+            # Pass filter to load_profile to force the filter of system
+            # profiles to the filter from specification because it often
+            # contains dynamic conditions, such as EQ('date', now()) which are
+            # destroyed when saved (the saved condition would be EQ('date',
+            # '2011-03-01') for example).  That's also why filters of system
+            # profiles are not editable.
+            custom = manager.load_profile(spec_name, form_name, view, data,
+                                          profile.id(), filter=profile.filter())
+            if custom and not custom.errors():
+                profiles.append(custom)
+            else:
+                profiles.append(profile)
+        for profile_id in manager.list_profile_ids(spec_name):
+            if profile_id.startswith(manager.USER_PROFILE_PREFIX):
+                profile = manager.load_profile(spec_name, form_name, view, data, profile_id)
                 profiles.append(profile)
         return profiles
 
@@ -1268,7 +1047,6 @@ class LookupForm(InnerForm):
         """Set the form state attributes according to given 'Profile' instance.
 
         This method doesn't actually refresh the form display.  It only sets
-
         the profile related form attributes to match the parameters of given
         profile.  Only the attributes recognized by the class are set in the
         base class.  Derived classes, which also have attributes for other
@@ -1301,15 +1079,15 @@ class LookupForm(InnerForm):
         self.select_row(self._current_key())
 
     def _create_profile(self, id, name):
-        return FormProfile(id, name, **self._profile_parameters_to_save())
+        return Profile(id, name, **self._profile_parameters_to_save())
 
     def _profile_parameters_to_save(self):
         """Return the profile parameters representing the current state of the form.
 
-        The returned dictionary is passed to 'FormProfile' constructor as
-        keyword arguments when saving a profile.  Note, that the profile
-        instance stored in `self._current_profile' may not have the same
-        parameters if the user changed them since he switched to that profile
+        The returned dictionary is passed to 'Profile' constructor as keyword
+        arguments when saving a profile.  Note, that the profile instance
+        stored in `self._current_profile' may not have the same parameters if
+        the user changed them since he switched to that profile
         (`self._current_profile' instance is not updated when the form state
         changes, it representes the previously saved state).
         
@@ -1318,12 +1096,7 @@ class LookupForm(InnerForm):
 
     def _current_profile_changed(self):
         for param, current_value in self._profile_parameters_to_save().items():
-            if hasattr(self._current_profile, param):
-                original_value = getattr(self._current_profile, param)()
-            else:
-                # If the current profile is a 'Profile' instance, it lacks the
-                # 'FormProfile' specific parameters.
-                original_value = None
+            original_value = getattr(self._current_profile, param)()
             if original_value is None:
                 original_value = self._default_profile_parameters[param]
             if self._profile_parameter_changed(param, current_value, original_value):
@@ -1335,19 +1108,21 @@ class LookupForm(InnerForm):
         return current_value != original_value
 
     def _is_user_defined_profile(self, profile):
-        return profile.id().startswith(FormProfile.USER_PROFILE_PREFIX)
+        return profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX)
 
     def _cmd_apply_profile(self, index):
         profile = self._profiles[index]
-        if isinstance(profile, FormProfile) and not profile.valid():
+        if profile.errors():
             keep, remove = (_(u"Ponechat"), _(u"Odstranit"))
             msg = _(u"Uživatelský profil \"%s\" je neplatný.\n"
                     u"Pravděpodobně došlo ke změně definice náhledu a uložený\n"
                     u"profil nyní nelze použít. Profil můžete buďto odstranit,\n"
                     u"nebo ponechat a požádat správce aplikace o jeho obnovení."
                     ) % profile.name()
+            errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
             answer = run_dialog(MultiQuestion, title=_(u"Neplatný profil"), message=msg,
-                                icon=Question.ICON_ERROR, buttons=(keep, remove), default=keep)
+                                icon=Question.ICON_ERROR, buttons=(keep, remove),
+                                report=errors, default=keep)
             if answer == remove:
                 if self._is_user_defined_profile(profile):
                     self._profiles.remove(profile)
@@ -1357,7 +1132,7 @@ class LookupForm(InnerForm):
                     else:
                         profile = find(profile.id(), self._view.profiles(), key=lambda p: p.id())
                     self._profiles[index] = profile
-                profile_manager().drop_profile(self._fullname(), profile.id())
+                profile_manager().drop_profile(self._name, self._form_name(), profile.id())
         else:
             self._apply_profile(profile)
         self.focus()
@@ -1366,7 +1141,7 @@ class LookupForm(InnerForm):
         if name in [profile.name() for profile in self._profiles]:
             message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
-        profile_id = FormProfile.new_user_profile_id(self._profiles)
+        profile_id = profile_manager().new_user_profile_id(self._profiles)
         profile = self._create_profile(profile_id, name)
         self._profiles.append(profile)
         self._save_profile(profile)
@@ -1381,7 +1156,7 @@ class LookupForm(InnerForm):
         if name in [p.name() for p in self._profiles if p is not self._current_profile]:
             message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
-        self._current_profile.rename(name)
+        self._current_profile = self._create_profile(self._current_profile.id(), name)
         self._save_profile(self._current_profile)
         message(_(u"Profil uložen pod názvem '%s'.") % name)
         self.focus()
@@ -1401,7 +1176,7 @@ class LookupForm(InnerForm):
         return self._is_user_defined_profile(self._current_profile)
 
     def _cmd_delete_profile(self):
-        profile_manager().drop_profile(self._fullname(), self._current_profile.id())
+        profile_manager().drop_profile(self._name, self._form_name(), self._current_profile.id())
         self._profiles.remove(self._current_profile)
         self._apply_profile(self._profiles[0])
 
@@ -1412,8 +1187,7 @@ class LookupForm(InnerForm):
         self._apply_profile(self._current_profile)
         
     def _can_reset_profile(self):
-        return (isinstance(self._current_profile, FormProfile)
-                and not self._is_user_defined_profile(self._current_profile))
+        return not self._is_user_defined_profile(self._current_profile)
         
     def _cmd_reset_profile(self):
         index = self._profiles.index(self._current_profile)
@@ -1422,7 +1196,7 @@ class LookupForm(InnerForm):
             profile = self._default_profile
         else:
             profile = find(profile_id, self._view.profiles(), key=lambda p: p.id())
-        profile_manager().drop_profile(self._fullname(), profile_id)
+        profile_manager().drop_profile(self._name, self._form_name(), profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
 
@@ -1556,7 +1330,7 @@ class LookupForm(InnerForm):
             name = _(u"Nepojmenovaný profil")
             profile = find(name, self._profiles, key=lambda p: p.name())
             if profile:
-                profile_manager().drop_profile(self._fullname(), profile.id())
+                profile_manager().drop_profile(self._name, self._form_name(), profile.id())
                 self._profiles.remove(profile)
             self.COMMAND_SAVE_NEW_PROFILE.invoke(name=name)
             

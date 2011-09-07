@@ -171,10 +171,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._init_columns(profile.columns())
         self._init_grouping(profile.grouping())
         self._init_aggregations(profile.aggregations())
-        if isinstance(profile, FormProfile):
-            self._column_widths = dict(profile.column_widths())
-        else:
-            self._column_widths = {}
+        self._column_widths = dict(profile.column_widths() or {})
         
     def _apply_profile(self, profile, refresh=True):
         self._apply_profile_parameters(profile)
@@ -3158,10 +3155,10 @@ class AggregationForm(BrowseForm):
         self._data_kwargs['condition'] = self._af_aggregation_condition
         return ViewSpec(view.title(), fields)
 
-    def _fullname(self):
-        # We need to have unique fullnames for different column configurations
+    def _form_name(self):
+        # We need to have unique names for different column configurations
         # because profiles for one configuration may not be valid in the other.
-        return super(AggregationForm, self)._fullname() + ':'.join(self._select_columns())
+        return super(AggregationForm, self)._form_name() + ':'.join(self._select_columns())
     
     def _can_aggregated_view(self, aggregated_view_id):
         return False

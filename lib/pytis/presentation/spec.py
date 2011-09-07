@@ -569,9 +569,9 @@ class Profile(object):
     user data.
 
     """
-    
     def __init__(self, id, name, filter=None, sorting=None, columns=None, grouping=None,
-                 aggregations=None, folding=None, filter_sets=None):
+                 aggregations=None, folding=None, filter_sets=None,
+                 column_widths=None, errors=()):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
@@ -597,6 +597,16 @@ class Profile(object):
           filter_sets -- profile specific filter sets.  Additional to global
             filter sets defined for 'ViewSpec'.  The same format and
             limitations as for the same argument of 'ViewSpec'.
+          column_widths -- dictionary of table column widths keyed by string
+            column identifiers with integer values representing pixel width.
+            This is not designed to be used in specifications, but rather for
+            saving UI form state, so this is why the widths are in pixels...
+          errors -- profile validation errors as a sequence of tuples (param,
+            error), where 'param' is the string name of a profile parameter
+            (one of the above arguments) and `error' is the related error
+            message.  Not designed to be used in specifications.  This value is
+            set automatically by profile manager when validating saved
+            profiles.
           
         """
         assert isinstance(id, basestring)
@@ -619,6 +629,8 @@ class Profile(object):
         self._aggregations = aggregations and tuple(aggregations)
         self._folding = folding
         self._filter_sets = filter_sets and tuple(filter_sets)
+        self._column_widths = column_widths
+        self._errors = errors
     
     def __str__(self):
         parameters = ['%s=%s' % (key[1:], value)
@@ -661,6 +673,12 @@ class Profile(object):
 
     def filter_sets(self):
         return self._filter_sets
+
+    def column_widths(self):
+        return self._column_widths
+
+    def errors(self):
+        return self._errors
 
     
 class AggregatedView(object):
