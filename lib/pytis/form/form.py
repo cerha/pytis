@@ -1322,8 +1322,15 @@ class LookupForm(InnerForm):
         
     # Veřejné metody
     
-    def filter(self, condition):
-        """Apply given filtering condition."""
+    def filter(self, condition, append=False):
+        """Apply given filtering condition.
+
+        Iff 'append' is True, add the condition to the current filter,
+        otherwise replace the current filter by given condition.
+
+        """
+        if append and self._lf_filter:
+            condition = pytis.data.AND(self._lf_filter, condition)
         self._apply_filter(condition)
         if not self._is_user_defined_profile(self._current_profile) \
                 and condition != self._current_profile.filter():
@@ -1332,7 +1339,7 @@ class LookupForm(InnerForm):
             if profile:
                 profile_manager().drop_profile(self._name, self._form_name(), profile.id())
                 self._profiles.remove(profile)
-            self.COMMAND_SAVE_NEW_PROFILE.invoke(name=name)
+            self._cmd_save_new_profile(name)
             
     def data(self, init_select=True):
         """Return a new instance of the data object used by the form.

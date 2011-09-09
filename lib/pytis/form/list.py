@@ -3097,6 +3097,24 @@ class SideBrowseForm(BrowseForm):
                 self._select_cell(0)
                 self._search(search, pytis.data.FORWARD, row_number=0, report_failure=False)
 
+    def side_form_in_condition(self):
+        """Return pytis.form.IN condition for filtering mainform records by this sideform.
+
+        The main form will be filtered to contain only rows which have non-zero
+        side form rows with the current binding condition for the current side
+        form profile's filter.
+        
+        """
+        bcol, sbcol = self._binding_column, self._side_binding_column
+        if bcol is None:
+            return None
+        else:
+            if self._current_profile.id() == self._default_profile.id():
+                profile_id = None
+            else:
+                profile_id = self._current_profile.id()
+            return pytis.form.IN(bcol, self.name(), sbcol, profile_id)
+
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()
         if self._hide_binding_column:
