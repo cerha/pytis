@@ -1228,10 +1228,7 @@ class LookupForm(InnerForm):
     def _cmd_filter_by_value(self, column_id, value):
         if column_id not in [c.id() for c in self._lf_sfs_columns()]:
             message(_(u"Podle tohoto sloupce nelze filtrovat."), beep_=True)
-        condition = pytis.data.EQ(column_id, value)
-        if self._lf_filter is not None:
-            condition = pytis.data.AND(self._lf_filter, condition)
-        self.COMMAND_FILTER.invoke(condition=condition)
+        self.filter(pytis.data.EQ(column_id, value), append=True)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
         """Změň třídění.
