@@ -1642,6 +1642,18 @@ class Row:
     def has_key(self, key):
         return self.__contains__(key)
 
+    def get(self, key, default=None):
+        """Return `key' column value.
+
+        In case there is no such column, return `default'.
+        
+        """
+        try:
+            result = self[key]
+        except KeyError:
+            result = default
+        return result
+
     def keys(self):
         """Vrať seznam názvů všech sloupců jako strings.
 
