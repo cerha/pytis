@@ -1539,11 +1539,16 @@ class TimeInterval(Type):
     def _export(self, value, format=None, **kwargs):
         assert isinstance(value, datetime.timedelta), value
         seconds = value.days * 86400 + value.seconds
+        if seconds < 0:
+            seconds = -seconds
+            sign = '-'
+        else:
+            sign = ''
         if format is None:
             format = self._format
             if format is None:
                 format = self.DEFAULT_FORMAT
-        format_string = format.replace('%H', '%(hours)d').replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d')
+        format_string = sign + format.replace('%H', '%(hours)d').replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d')
         return format_string % dict(hours=seconds/3600, minutes=(seconds%3600)/60,
                                     seconds=seconds%60)
     
