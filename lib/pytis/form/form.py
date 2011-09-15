@@ -2766,6 +2766,13 @@ class PopupEditForm(PopupForm, EditForm):
             sizer.Add(button, 0, wx.ALL, 20)
         return sizer
 
+    def _apply_profile(self, profile, refresh=True):
+        # Popup forms ignore profiles.  It doesn't make much sense and they
+        # were not designed for something like that.  It would be more lgical
+        # to change the inheritance hierarchy so that single record forms don't
+        # inherit profiles at all but that's a little too complicated for now.
+        pass
+
     def _can_commit_record(self, close=True, next=False):
         if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
             return False
