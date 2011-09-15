@@ -931,7 +931,9 @@ class PopupForm:
           lock_key -- lock the row with the given key
 
         """
-        if lock_key is not None and not isinstance(self._data, pytis.data.DBDataDefault):
+        if (lock_key is not None and
+            (not isinstance(self._data, pytis.data.DBDataDefault) or
+             self._data.arguments() is not None)):
             lock_key = None
         try:
             if lock_key is not None:
