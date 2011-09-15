@@ -2773,6 +2773,12 @@ class PopupEditForm(PopupForm, EditForm):
         # inherit profiles at all but that's a little too complicated for now.
         pass
 
+    def _cmd_apply_profile(self, index):
+        # See the comment for _apply_profile() above.  This one is specifically
+        # here to avoid invalid profile checking after form initialization
+        # where _cmd_apply_profile is called from _on_idle().
+        pass
+    
     def _can_commit_record(self, close=True, next=False):
         if next and (self._mode != self.MODE_INSERT or not self._multi_insert):
             return False
