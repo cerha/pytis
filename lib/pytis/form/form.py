@@ -2487,10 +2487,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             op, args = None, ()
         elif self._mode == self.MODE_INSERT:
             log(ACTION, 'Inserting record...')
-            op, args = self._data.insert, (rdata,)
+            op, args = self._insert_op_args(rdata)
         elif self._mode == self.MODE_EDIT:
             log(ACTION, 'Updating record...')
-            op, args = self._data.update, (self._current_key(), rdata)
+            op, args = self._update_op_args(rdata)
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
@@ -2548,6 +2548,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             run_dialog(Error, msg)
             return False
 
+    def _insert_op_args(self, rdata):
+        return self._data.insert, (rdata,)
+
+    def _update_op_args(self, rdata):
+        return self._data.update, (self._current_key(), rdata)
+        
     def _exit_check(self):
         if self.changed():
             q = _(u"Data byla změněna a nebyla uložena!") + "\n" + \
