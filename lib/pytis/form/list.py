@@ -270,7 +270,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         g = self._grid
         t = self._table
         notify = self._notify_grid
-        current_row_number = self._table.current_row()
+        current_row_number = self._current_cell()[0]
         if not retain_row or current_row_number is None:
             original_key = None
         else:
