@@ -271,10 +271,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         t = self._table
         notify = self._notify_grid
         current_row_number = self._current_cell()[0]
-        if not retain_row or current_row_number is None:
-            original_key = None
+        if current_row_number not in (0, -1):
+            original_row_number = current_row_number
         else:
+            original_row_number = None
+        if retain_row and original_row_number is not None:
             original_key = self._current_key()
+        else:
+            original_key = None
         # Uprav velikost gridu
         g.BeginBatch()
         try:
@@ -302,7 +306,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                      grouping=self._grouping, inserted_row_number=inserted_row_number,
                      inserted_row_prefill=inserted_row_prefill, prefill=self._prefill)
             old_row_count = g.GetNumberRows()
-            self._update_grid_length(g, row_count, current_row_number)
+            self._update_grid_length(g, row_count, original_row_number)
             if insert_column is not None or delete_column is not None or init_columns:
                 self._init_col_attr()
         finally:
@@ -314,13 +318,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # Pokud se nepodařilo nastavit pozici na předchozí klíč,
             # pokusíme se nastavit pozici na předchozí číslo řádku v gridu.
             if self._current_key() != original_key:
-                row = current_row_number
-                if row < self._table.number_of_rows(min_value=row+1) and row >= 0:
+                row = original_row_number
+                if row is not None and row < self._table.number_of_rows(min_value=row+1) and row >= 0:
                     self._select_cell(row=row)
                 else:
                     self._select_cell(row=0)
         else:
-            self._select_cell(row=current_row_number)
+            self._select_cell(row=original_row_number)
         # Závěrečné úpravy
         self._update_colors()
         self._resize_columns()
