@@ -1134,7 +1134,7 @@ class LookupForm(InnerForm):
         if profile and profile is not self._current_profile:
             self._cmd_apply_profile(self._profiles.index(profile))
             dual = self._dualform()
-            if dual and self is not dual.main_form() and dual.main_form() is not dual.active_form():
+            if dual and self is not dual.main_form():
                 # Force focus back to mainform, as _apply_profile() (for
                 # unknown reason) sometimes steals the focus when applied in a
                 # sideform.
