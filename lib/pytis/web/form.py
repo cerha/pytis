@@ -858,7 +858,7 @@ class BrowseForm(LayoutForm):
             assert 'profile' not in [fs.id() for fs in filter_sets]
             # Add profile selection as another filter set, since the user interface is the same.
             filter_set = FilterSet('profile', profiles.label() or _("Profile"),
-                                   [Filter(p.id(), p.name(), p.filter()) for p in profiles],
+                                   [Filter(p.id(), p.title(), p.filter()) for p in profiles],
                                    default=profiles.default())
             self._init_filter_sets((filter_set,), req, param)
             profile_id = self._filter_ids['profile']
@@ -1477,7 +1477,7 @@ class BrowseForm(LayoutForm):
                                     # without unexpected invocation of the
                                     # option.
                                     _(u"(Use ALT+arrow down to select)")),
-                             options=[(f.name(), f.id()) for f in filter_set],
+                             options=[(f.title(), f.id()) for f in filter_set],
                              onchange=onchange),
                     )
                 filter_content.append(g.span(filter_set_content))

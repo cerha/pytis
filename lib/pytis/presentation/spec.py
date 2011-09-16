@@ -569,14 +569,14 @@ class Profile(object):
     user data.
 
     """
-    def __init__(self, id, name, filter=None, sorting=None, columns=None, grouping=None,
+    def __init__(self, id, title, filter=None, sorting=None, columns=None, grouping=None,
                  aggregations=None, folding=None, filter_sets=None,
                  column_widths=None, errors=()):
         """Arguments:
         
           id -- profile identifier as a string.  It must be unique among all
             profile identifiers within a given form.
-          name -- user visible profile name as a string.
+          title -- user visible profile name as a string.
           filter -- filtering condition as a 'pytis.data.Operator' instance.
             This condition is always applied together (in conjunction) with the
             forms default 'condition' given by it's specification (if not None).
@@ -610,7 +610,7 @@ class Profile(object):
           
         """
         assert isinstance(id, basestring)
-        assert isinstance(name, basestring), name
+        assert isinstance(title, basestring), title
         assert filter is None or isinstance(filter, pytis.data.Operator), filter
         assert sorting is None or isinstance(sorting, tuple), sorting
         assert grouping is None or isinstance(grouping, (basestring, tuple)), grouping
@@ -621,7 +621,7 @@ class Profile(object):
             for fs in filter_sets or ():
                 assert isinstance(fs, FilterSet), fs
         self._id = id
-        self._name = name
+        self._title = title
         self._filter = filter
         self._sorting = sorting
         self._grouping = grouping and xtuple(grouping)
@@ -635,7 +635,7 @@ class Profile(object):
     def __str__(self):
         parameters = ['%s=%s' % (key[1:], value)
                       for key, value in self.__dict__.items()
-                      if key not in ('_id', '_name', '_packed_filter')]
+                      if key not in ('_id', '_title')]
         try:
             return "<%s id='%s' %s>" % (self.__class__.__name__, self._id, ', '.join(parameters))
         except AttributeError:
@@ -646,9 +646,12 @@ class Profile(object):
         """Return the unique profile identifier."""
         return self._id
         
-    def name(self):
+    def title(self):
         """Return the name passed to the constructor."""
-        return self._name
+        return self._title
+
+    name = title
+    """Deprecated: Use title instead."""
 
     def filter(self):
         """Return the condition passed to the constructor."""

@@ -1593,7 +1593,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         for i, profile in enumerate(profiles):
             if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX) and first_user_profile is None:
                 first_user_profile = i
-            name = profile.name()
+            name = profile.title()
             if profile.errors():
                 name += ' '+ _(u"(neplatný)")
             self.InsertStringItem(i, name)
@@ -1662,8 +1662,8 @@ class ProfileSelector(wx.combo.ComboCtrl):
             if not ctrl.IsEditable():
                 form = current_form()
                 current_profile = form.current_profile()
-                if current_profile and ctrl.GetValue() != current_profile.name():
-                    ctrl.SetValue(current_profile.name())
+                if current_profile and ctrl.GetValue() != current_profile.title():
+                    ctrl.SetValue(current_profile.title())
             if LookupForm.COMMAND_UPDATE_PROFILE.enabled():
                 # Indicate changed profile by color (update is enabled for changed profiles).
                 color = wx.Color(200, 0, 0)
@@ -1681,16 +1681,16 @@ class ProfileSelector(wx.combo.ComboCtrl):
             MItem(_(u"Uložit jako nový"),
                   Application.COMMAND_HANDLED_ACTION(
                     # Name must be edited first and 'cmd' will be invoked after confirmation.
-                    handler=self._edit_profile_name,
-                    enabled=self._edit_profile_name_enabled,
+                    handler=self._edit_profile_title,
+                    enabled=self._edit_profile_title_enabled,
                     cmd=LookupForm.COMMAND_SAVE_NEW_PROFILE,
                     clear=True),
                   help=_(u"Vytvořit nový profil podle současného nastavení formuláře")),
             MItem(_(u"Přejmenovat"),
                   Application.COMMAND_HANDLED_ACTION(
                     # Name must be edited first and 'cmd' will be invoked after confirmation.
-                    handler=self._edit_profile_name,
-                    enabled=self._edit_profile_name_enabled,
+                    handler=self._edit_profile_title,
+                    enabled=self._edit_profile_title_enabled,
                     cmd=LookupForm.COMMAND_RENAME_PROFILE),
                   help=_(u"Upravit a uložit název aktuálního profilu")),
             MItem(_(u"Smazat"), 
@@ -1710,12 +1710,12 @@ class ProfileSelector(wx.combo.ComboCtrl):
             )
         popup_menu(self, menu)
 
-    def _edit_profile_name(self, cmd, clear=False):
+    def _edit_profile_title(self, cmd, clear=False):
         ctrl = self.GetTextCtrl()
         def perform():
-            name=self.GetValue()
+            title=self.GetValue()
             ctrl.SetEditable(False)
-            cmd.invoke(name=name)
+            cmd.invoke(title=title)
         ctrl.SetEditable(True)
         if clear:
             ctrl.SetValue('')
@@ -1725,8 +1725,8 @@ class ProfileSelector(wx.combo.ComboCtrl):
         message(_(u"Zadejte název profilu a potvrďte stiskem ENTER."))
         self._on_enter_perform = perform
 
-    def _edit_profile_name_enabled(self, cmd, clear=False):
-        return cmd.enabled(name=self.GetValue())
+    def _edit_profile_title_enabled(self, cmd, clear=False):
+        return cmd.enabled(title=self.GetValue())
         
     def _on_enter(self, event):
         func = self._on_enter_perform
@@ -2053,7 +2053,7 @@ class IN(pytis.data.Operator):
                 if not profile:
                     raise Exception("Profile %s of %s doesn't exist!" % (profile_id, spec_name))
                 condition = profile.filter()
-                profile_name = profile.name()
+                profile_name = profile.title()
         else:
             profile_name = None
             condition = None

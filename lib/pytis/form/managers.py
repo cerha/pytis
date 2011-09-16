@@ -403,7 +403,7 @@ class FormProfileManager(UserSetttingsManager):
             # Save filter and form parameters for user defined profiles.
             def save_profile(transaction):
                 filter = profile.filter()
-                values = dict(title=profile.name(),
+                values = dict(title=profile.title(),
                               pickle=self._pickle(filter and self._pack_filter(filter)),
                               dump=self._dump_filter(filter),
                               errors=self._errors(profile, lambda p: p == 'filter'))
@@ -449,7 +449,7 @@ class FormProfileManager(UserSetttingsManager):
             # condition would be EQ('date', '2011-03-01') for example).
             params, errors = load_params(profile.id())
             if not errors:
-                profile = Profile(profile.id(), profile.name(), filter=profile.filter(), **params)
+                profile = Profile(profile.id(), profile.title(), filter=profile.filter(), **params)
             profiles.append(profile)
         # Now load also user defined profiles.
         for row in self._rows(spec_name=spec_name, transaction=transaction):

@@ -1100,7 +1100,7 @@ class LookupForm(InnerForm):
                     u"Pravděpodobně došlo ke změně definice náhledu a uložený\n"
                     u"profil nyní nelze použít. Profil můžete buďto odstranit,\n"
                     u"nebo ponechat a požádat správce aplikace o jeho obnovení."
-                    ) % profile.name()
+                    ) % profile.title()
             errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
             answer = run_dialog(MultiQuestion, title=_(u"Neplatný profil"), message=msg,
                                 icon=Question.ICON_ERROR, buttons=(keep, remove),
@@ -1119,30 +1119,30 @@ class LookupForm(InnerForm):
             self._apply_profile(profile)
         self.focus()
 
-    def _cmd_save_new_profile(self, name):
-        if name in [profile.name() for profile in self._profiles]:
+    def _cmd_save_new_profile(self, title):
+        if title in [profile.title() for profile in self._profiles]:
             message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
         profile_id = profile_manager().new_user_profile_id(self._profiles)
-        profile = self._create_profile(profile_id, name)
+        profile = self._create_profile(profile_id, title)
         self._profiles.append(profile)
         self._save_profile(profile)
         self._current_profile = profile
-        message(_(u"Profil uložen pod názvem '%s'.") % name)
+        message(_(u"Profil uložen pod názvem '%s'.") % title)
         self.focus()
 
-    def _can_rename_profile(self, name):
+    def _can_rename_profile(self, title):
         return self._is_user_defined_profile(self._current_profile)
 
-    def _cmd_rename_profile(self, name):
-        if name in [p.name() for p in self._profiles if p is not self._current_profile]:
+    def _cmd_rename_profile(self, title):
+        if title in [p.title() for p in self._profiles if p is not self._current_profile]:
             message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
         index = self._profiles.index(self._current_profile)
-        profile = self._create_profile(self._current_profile.id(), name)
+        profile = self._create_profile(self._current_profile.id(), title)
         self._current_profile = self._profiles[index] = profile
         self._save_profile(self._current_profile)
-        message(_(u"Profil uložen pod názvem '%s'.") % name)
+        message(_(u"Profil uložen pod názvem '%s'.") % title)
         self.focus()
 
     def _can_update_profile(self):
@@ -1151,7 +1151,7 @@ class LookupForm(InnerForm):
     def _cmd_update_profile(self):
         current = self._current_profile
         index = self._profiles.index(current)
-        profile = self._create_profile(current.id(), current.name())
+        profile = self._create_profile(current.id(), current.title())
         self._profiles[index] = profile
         self._save_profile(profile)
         self._current_profile = profile
@@ -1315,12 +1315,12 @@ class LookupForm(InnerForm):
         self._apply_filter(condition)
         if not self._is_user_defined_profile(self._current_profile) \
                 and condition != self._current_profile.filter():
-            name = _(u"Nepojmenovaný profil")
-            profile = find(name, self._profiles, key=lambda p: p.name())
+            title = _(u"Nepojmenovaný profil")
+            profile = find(title, self._profiles, key=lambda p: p.title())
             if profile:
                 profile_manager().drop_profile(self._name, self._form_name(), profile.id())
                 self._profiles.remove(profile)
-            self._cmd_save_new_profile(name)
+            self._cmd_save_new_profile(title)
             
     def data(self, init_select=True):
         """Return a new instance of the data object used by the form.
