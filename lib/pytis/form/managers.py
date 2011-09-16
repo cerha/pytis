@@ -500,7 +500,7 @@ class FormProfileManager(UserSetttingsManager):
           profile_id -- string identifier of the profile to drop
 
         """
-        if profile.id().startswith(self.USER_PROFILE_PREFIX):
+        if profile_id.startswith(self.USER_PROFILE_PREFIX):
             # Drop filter and form parameters for user defined profiles.
             def drop(spec_name, form_name, profile_id, transaction):
                 self._drop(spec_name=spec_name, profile_id=profile_id, transaction=transaction)
