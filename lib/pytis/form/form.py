@@ -1022,26 +1022,8 @@ class LookupForm(InnerForm):
     
     def _load_profiles(self):
         manager = profile_manager()
-        spec_name, form_name, view, data = self._name, self._form_name(), self._view, self._data
-        profiles = []
-        for profile in (self._default_profile,) + tuple(self._view.profiles()):
-            # Pass filter to load_profile to force the filter of system
-            # profiles to the filter from specification because it often
-            # contains dynamic conditions, such as EQ('date', now()) which are
-            # destroyed when saved (the saved condition would be EQ('date',
-            # '2011-03-01') for example).  That's also why filters of system
-            # profiles are not editable.
-            custom = manager.load_profile(spec_name, form_name, view, data,
-                                          profile.id(), filter=profile.filter())
-            if custom and not custom.errors():
-                profiles.append(custom)
-            else:
-                profiles.append(profile)
-        for profile_id in manager.list_profile_ids(spec_name):
-            if profile_id.startswith(manager.USER_PROFILE_PREFIX):
-                profile = manager.load_profile(spec_name, form_name, view, data, profile_id)
-                profiles.append(profile)
-        return profiles
+        return manager.load_profiles(self._name, self._form_name(), self._view, self._data,
+                                     self._default_profile)
 
     def _apply_profile_parameters(self, profile):
         """Set the form state attributes according to given 'Profile' instance.

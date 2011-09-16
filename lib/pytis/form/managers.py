@@ -361,22 +361,13 @@ class FormProfileManager(UserSetttingsManager):
                     if view_spec.field(col) is None:
                         errors.append((param, "Unknown column '%s'." % col))
         return tuple(errors)
-        
-    def save_profile(self, spec_name, form_name, profile, transaction=None):
-        """Save user specific configuration of a form.
-        
-        Arguments:
 
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile -- form profile as a 'pytis.presentation.Profile' instance.
-          config -- dictionary of form configuration parameters.
-
-        """
+    def _in_transaction(self, transaction, operation, *args, **kwargs):
         if transaction is None:
             transaction = pytis.data.DBTransactionDefault(self._dbconnection)
+            kwargs['transaction'] = transaction
             try:
-                self._save_profile(spec_name, form_name, profile, transaction)
+                operation(*args, **kwargs)
             except:
                 try:
                     transaction.rollback()
@@ -386,55 +377,106 @@ class FormProfileManager(UserSetttingsManager):
             else:
                 transaction.commit()
         else:
-            self._save_profile(spec_name, form_name, profile, transaction)
-            
-    def _save_profile(self, spec_name, form_name, profile, transaction):
-        filter = profile.filter()
-        values = dict(title=profile.name(),
-                      pickle=self._pickle(filter and self._pack_filter(filter)),
-                      dump=self._dump_filter(filter),
-                      errors=self._errors(profile, lambda p: p == 'filter'))
-        self._save(values, spec_name=spec_name, profile_id=profile.id(), transaction=transaction)
-        params = dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
-        self._params_manager.save(spec_name, form_name, profile.id(), params,
-                                  dump=self._dump_params(params),
-                                  errors=self._errors(profile, lambda p: p != 'filter'),
-                                  transaction=transaction)
+            kwargs['transaction'] = transaction
+            operation(*args, **kwargs)
 
-    def load_profile(self, spec_name, form_name, view_spec, data_object,
-                     profile_id, filter=None, transaction=None):
-        """Return previously saved user specific form configuration.
+    def save_profile(self, spec_name, form_name, profile, transaction=None):
+        """Save user specific configuration of a form.
+        
+        Arguments:
+
+          spec_name, form_name -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile -- form profile as a 'pytis.presentation.Profile' instance.
+          transaction -- Existing DB transaction if the operation should be
+            performed as a part of it.  If None, a local transaction will be
+            created if necessary.
+
+        """
+        def save_params(transaction):
+            params = dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
+            self._params_manager.save(spec_name, form_name, profile.id(), params,
+                                      dump=self._dump_params(params),
+                                      errors=self._errors(profile, lambda p: p != 'filter'),
+                                      transaction=transaction)
+        if profile.id().startswith(self.USER_PROFILE_PREFIX):
+            # Save filter and form parameters for user defined profiles.
+            def save_profile(transaction):
+                filter = profile.filter()
+                values = dict(title=profile.name(),
+                              pickle=self._pickle(filter and self._pack_filter(filter)),
+                              dump=self._dump_filter(filter),
+                              errors=self._errors(profile, lambda p: p == 'filter'))
+                self._save(values, spec_name=spec_name, profile_id=profile.id(),
+                           transaction=transaction)
+                save_params(transaction)
+            self._in_transaction(transaction, save_profile)
+        else:
+            # Only save user specific form parameters for system profiles.
+            save_params(transaction)
+
+    def load_profiles(self, spec_name, form_name, view_spec, data_object, default_profile,
+                      transaction=None):
+        """Return list of form profiles including previously saved user customizations.
 
         Arguments:
           spec_name -- string specification name
           form_name -- unique string form identification
-          profile_id -- string identifier of the profile to load
+          view_spec -- ViewSpec instance of given specification to be used for
+            profile validation
+          data_object -- data object of given specification to be used for
+            profile validation
+          default_profile -- 'pytis.presentation.Profile' instance representing
+            form's default profile
 
-        Returns a 'pytis.presentation.Profile' instance or None if no such
-        profile is found.
+        Returns a list of 'pytis.presentation.Profile' instances including
+        predefined system profiles (possibly with their user customizations) as
+        well as user defined profiles.
 
         """
-        row = self._row(transaction=transaction, spec_name=spec_name, profile_id=profile_id)
-        if row:
-            if filter is None:
-                packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
-                filter, errors = self._validate_filter(data_object, packed_filter)
-            else:
-                errors = ()
-            params = self._params_manager.load(spec_name, form_name, profile_id)
-            errors += self._validate_params(view_spec, params)
-            return Profile(profile_id, row['title'].value(), filter=filter, errors=errors, **params)
-        return None
+        def load_params(profile_id):
+            params = self._params_manager.load(spec_name, form_name, profile_id, transaction=transaction)
+            errors = self._validate_params(view_spec, params)
+            return params, errors
+        profiles = []
+        # Load user customizations of system profiles first.
+        for profile in (default_profile,) + tuple(view_spec.profiles()):
+            # System profiles define the title and filter, which can not be
+            # changed, so we only load saved form parameters if they are valid.
+            # One of the reasons why filter of system profiles can not be
+            # changed is that it often contains dynamic conditions, such as
+            # EQ('date', now()) which are destroyed when saved (the saved
+            # condition would be EQ('date', '2011-03-01') for example).
+            params, errors = load_params(profile.id())
+            if not errors:
+                profile = Profile(profile.id(), profile.name(), filter=profile.filter(), **params)
+            profiles.append(profile)
+        # Now load also user defined profiles.
+        for row in self._rows(spec_name=spec_name, transaction=transaction):
+            packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
+            filter, filter_errors = self._validate_filter(data_object, packed_filter)
+            params, param_errors = load_params(profile.id())
+            profiles.append(Profile(row['profile_id'].value(),
+                                    row['title'].value(),
+                                    filter=filter,
+                                    errors=filter_errors + param_errors,
+                                    **params))
+        return profiles
            
     def load_filter(self, spec_name, data_object, profile_id, transaction=None):
-        """Return previously saved user filter.
+        """Return a previously saved user defined filter.
 
         Arguments:
           spec_name -- string form specification name
+          data_object -- data object of given specification to be used for filter validation
           profile_id -- string identifier of the profile
+          transaction -- Existing DB transaction if the operation should be
+            performed as a part of it.  If None, a local transaction will be
+            created if necessary.
 
-        Returns a 'pytis.data.Operator' instance or None when given profile
-        exists, but has no filter.
+        Returns a tuple (filter, title), where filter is a
+        'pytis.data.Operator' instance or None when given profile exists, but
+        has no filter and title is the user defined title of the profile.
 
         Raises exception if no such profile is found or is invalid.
 
@@ -453,33 +495,21 @@ class FormProfileManager(UserSetttingsManager):
         """Remove the previously saved form configuration.
 
         Arguments:
-          spec_name, form_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-          profile_id -- string identifier of the profile to drop.
+          spec_name -- string specification name
+          form_name -- unique string form identification
+          profile_id -- string identifier of the profile to drop
 
         """
-        self._drop(spec_name=spec_name, profile_id=profile_id)
+        if profile.id().startswith(self.USER_PROFILE_PREFIX):
+            # Drop filter and form parameters for user defined profiles.
+            def drop(spec_name, form_name, profile_id, transaction):
+                self._drop(spec_name=spec_name, profile_id=profile_id, transaction=transaction)
+                self._params_manager.drop(spec_name, form_name, profile_id, transaction=transaction)
+            self._in_transaction(transaction, drop, spec_name, form_name, profile_id)
+        else:
+            # Only drop user specific form parameters for system profiles.
+            self._params_manager.drop(spec_name, form_name, profile_id, transaction=transaction)
         
-    def list_profile_ids(self, spec_name, transaction=None):
-        """Return a sequence of identifiers of all previously saved profiles.
-
-        Arguments:
-          spec_name -- unique string identification of a form to which the
-            profile belongs (see 'FormProfileManager' class docuemntation).
-
-        Returns a sequence of strings -- all distinct profile identifiers
-        previously saved using 'save_profile' for given 'spec_name'.
-
-        """
-        return tuple(row['profile_id'].value()
-                     for row in self._rows(spec_name=spec_name, transaction=transaction))
-
-    def list_spec_names(self, transaction=None):
-        """Return a sequence form spec_names for which profiles were saved."""
-        condition = self._condition()
-        values = self._data.distinct('spec_name', condition=condition, transaction=transaction)
-        return [v.value() for v in values]
-
     def list_form_names(self, spec_name, transaction=None):
         """Return a sequence of form names for which profiles were saved."""
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
@@ -524,7 +554,19 @@ class FormProfileParamsManager(UserSetttingsManager):
         self._save(values, spec_name=spec_name, form_name=form_name, profile_id=profile_id,
                    transaction=transaction)
     
-    
+    def drop(self, spec_name, form_name, profile_id, transaction=None):
+        """Remove the previously saved form parameters.
+
+        Arguments:
+          spec_name, form_name -- unique string identification of a form to which the
+            profile belongs (see 'FormProfileManager' class docuemntation).
+          profile_id -- string identifier of the profile to drop.
+
+        """
+        self._drop(spec_name=spec_name, form_name=form_name, profile_id=profile_id,
+                   transaction=transaction)
+
+        
 class AggregatedViewsManager(UserSetttingsManager):
     """Accessor of database storage of saved aggregation form setups.
 
