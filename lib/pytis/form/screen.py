@@ -1593,10 +1593,10 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         for i, profile in enumerate(profiles):
             if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX) and first_user_profile is None:
                 first_user_profile = i
-            name = profile.title()
+            title = profile.title()
             if profile.errors():
-                name += ' '+ _(u"(neplatný)")
-            self.InsertStringItem(i, name)
+                title += ' '+ _(u"(neplatný)")
+            self.InsertStringItem(i, title)
             self.SetItemData(i, i)
             if profile is current:
                 self.Select(i)
@@ -1606,7 +1606,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
                 self.InsertStringItem(i, '- ' + label + ' -')
                 self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
                 self.SetItemData(i, -1)
-        self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.SetColumnWidth(0, minWidth)
         self.SetSize((1,1)) # Needed for GetViewRect to work consistently. 
         width, height = self.GetViewRect()[2:] # Returned sizes are 16 px greater than the reality.
         return wx.Size(max(width-16, minWidth), min(height-16, maxHeight))
