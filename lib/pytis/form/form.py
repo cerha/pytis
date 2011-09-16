@@ -1156,7 +1156,9 @@ class LookupForm(InnerForm):
         if name in [p.name() for p in self._profiles if p is not self._current_profile]:
             message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
             return
-        self._current_profile = self._create_profile(self._current_profile.id(), name)
+        index = self._profiles.index(self._current_profile)
+        profile = self._create_profile(self._current_profile.id(), name)
+        self._current_profile = self._profiles[index] = profile
         self._save_profile(self._current_profile)
         message(_(u"Profil uložen pod názvem '%s'.") % name)
         self.focus()
