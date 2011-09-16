@@ -174,14 +174,18 @@ class DualForm(Form, Refreshable):
     def _cmd_other_form(self):
         self._select_form(self._other_form(self._active_form))
 
+    def main_form(self):
+        """Return the instance of the upper (main) form."""
+        return self._main_form
+    
+    def side_form(self):
+        """Return the instance of the lower (side) form."""
+        return self._side_form
+
     def active_form(self):
         """Vrať aktivní formulář tohoto duálního formuláře."""
         return self._active_form
     
-    def main_form(self):
-        """Return the instance of the upper (main) form."""
-        return self._main_form
-
     def inactive_form(self):
         """Vrať neaktivní formulář tohoto duálního formuláře."""
         return self._other_form(self._active_form)
@@ -765,6 +769,9 @@ class MultiForm(Form, Refreshable):
             i += d
         msg = back and _(u"Žádný předchozí aktivní formulář") or _(u"Žádný další aktivní formulář")
         message(msg, beep_=True)
+
+    def forms(self):
+        return self._forms
         
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.

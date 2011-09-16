@@ -1120,23 +1120,32 @@ class LookupForm(InnerForm):
     def _current_arguments(self):
         return {}
 
+    def _apply_initial_profile(self):
+        profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
+        if profile_id:
+            profile = find(profile_id, self._profiles, key=lambda p: p.id())
+        else:
+            # Note, that the profile 0 may not be self._default_profile, but
+            # its customization.
+            profile = self._profiles[0]
+        # This must be here (in _on_idle) espacially because the
+        # initial profile may not be valid and we want to make use of
+        # handling invalid profiles in _cmd_apply_profile().
+        if profile and profile is not self._current_profile:
+            self._cmd_apply_profile(self._profiles.index(profile))
+            dual = self._dualform()
+            if dual and self is not dual.main_form() and dual.main_form() is not dual.active_form():
+                # Force focus back to mainform, as _apply_profile() (for
+                # unknown reason) sometimes steals the focus when applied in a
+                # sideform.
+                dual.main_form().focus()
+    
     def _on_idle(self, event):
         if super(LookupForm, self)._on_idle(event):
             return True
         if not self._initial_profile_applied:
             try:
-                profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
-                if profile_id:
-                    profile = find(profile_id, self._profiles, key=lambda p: p.id())
-                else:
-                    # Note, that the profile 0 may not be self._default_profile, but
-                    # its customization.
-                    profile = self._profiles[0]
-                # This must be here (in _on_idle) espacially because the
-                # initial profile may not be valid and we want to make use of
-                # handling invalid profiles in _cmd_apply_profile().
-                if profile and profile is not self._current_profile:
-                    self._cmd_apply_profile(self._profiles.index(profile))
+                self._apply_initial_profile()
             finally:
                 self._initial_profile_applied = True
         return False
@@ -1858,11 +1867,14 @@ class RecordForm(LookupForm):
     def _dualform(self):
         # Pokud je formulář součástí duálního formuláře, vrať jej, jinak None.
         top = top_window()
-        if isinstance(top, DualForm) and self in (top.active_form(), top.inactive_form()):
-            return top
-        else:
-            return None
-    
+        if isinstance(top, DualForm):
+            main, side = top.main_form(), top.side_form()
+            if self in (main, side):
+                return top
+            if isinstance(side, MultiForm) and self in side.forms():
+                return top
+        return None
+
     def _context_action_args(self, action):
         context = action.context()
         if context == ActionContext.RECORD:
@@ -1874,10 +1886,12 @@ class RecordForm(LookupForm):
         scontext = action.secondary_context()
         if scontext is not None:
             dual = self._dualform()
-            if dual.active_form() is self:
-                form = dual.inactive_form()
+            if dual.main_form() is self:
+                form = dual.side_form()
+                if isinstance(form, MultiForm):
+                    form = form.active_form()
             else:
-                form = dual.active_form()
+                form = dual.main_form()
             if scontext == ActionContext.RECORD:
                 args += (form.current_row(),)
             elif scontext == ActionContext.SELECTION:
@@ -2779,10 +2793,8 @@ class PopupEditForm(PopupForm, EditForm):
         # inherit profiles at all but that's a little too complicated for now.
         pass
 
-    def _cmd_apply_profile(self, index):
-        # See the comment for _apply_profile() above.  This one is specifically
-        # here to avoid invalid profile checking after form initialization
-        # where _cmd_apply_profile is called from _on_idle().
+    def _apply_initial_profile(self):
+        # See the comment for _apply_profile() above.
         pass
     
     def _can_commit_record(self, close=True, next=False):
