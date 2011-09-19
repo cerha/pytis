@@ -409,6 +409,7 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
 
 
 class DateTimeFieldExporter(TextFieldExporter):
+    _HANDLER = 'pytis.DateTimeField'
     
     def _format(self, context):
         return localizable_datetime(self._value())
@@ -458,7 +459,6 @@ class DateTimeFieldExporter(TextFieldExporter):
 
     
 class DateFieldExporter(DateTimeFieldExporter):
-    _HANDLER = 'pytis.DateField'
     def _editor_date_format(self, locale_data):
         return locale_data.date_format
 

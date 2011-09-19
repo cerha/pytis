@@ -284,9 +284,10 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 
 });
 
-pytis.DateField = Class.create(pytis.Field, {
+pytis.DateTimeField = Class.create(pytis.Field, {
     set_editability: function(value) {
-	    this._ctrl.disabled = !value;
-	    $$('#'+this._ctrl.id+'-button')[0].disabled = !value;
-	}
+	this._ctrl.disabled = !value;
+	var button = $(this._ctrl.id+'-button')
+	button.disabled = !value;
+    }
 });
