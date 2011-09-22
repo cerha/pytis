@@ -293,6 +293,7 @@ class LayoutForm(FieldForm):
                                                   omit_first_field_label=label is not None),
                                label=label, fullsize=label is None)
             elif isinstance(item, lcg.Content):
+                item.set_parent(self.parent())
                 content.append(item.export(context))
             elif isinstance(item, Text):
                 text = g.div(g.escape(item.text()).replace("\n", g.br()))
