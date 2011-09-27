@@ -744,9 +744,12 @@ class Profiles(list):
         
           profiles -- sequence of 'Profile' instances
           default -- identifier of the profile (from 'profiles') to be selected by default
+          label -- optional label of the profile selector in the user interface (currently
+            only used in web forms).  A default label will be used when None.
         
         """
         default = kwargs.pop('default', None)
+        label = kwargs.pop('label', None)
         if __debug__:
             profile_ids = []
             for p in profiles:
@@ -757,10 +760,15 @@ class Profiles(list):
             assert default is None or default in profile_ids, default
         super(Profiles, self).__init__(profiles)
         self._default = default
+        self._label = label
 
     def default(self):
-        """Return identifier of the filter to be selected by default."""
+        """Return identifier of the profile to be selected by default."""
         return self._default
+
+    def label(self):
+        """Return the user interface label of profile selector or None."""
+        return self._label
 
     
 class Filter(Profile):

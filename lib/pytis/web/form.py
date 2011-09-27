@@ -857,7 +857,7 @@ class BrowseForm(LayoutForm):
         if profiles:
             assert 'profile' not in [fs.id() for fs in filter_sets]
             # Add profile selection as another filter set, since the user interface is the same.
-            filter_set = FilterSet('profile', _("Profile"),
+            filter_set = FilterSet('profile', profiles.label() or _("Profile"),
                                    [Filter(p.id(), p.name(), p.filter()) for p in profiles],
                                    default=profiles.default())
             self._init_filter_sets((filter_set,), req, param)
