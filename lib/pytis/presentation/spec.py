@@ -1319,6 +1319,9 @@ class ViewSpec(object):
             attempts to open an aggregated view of the form, she can select the
             columns used in the group by caluse.
             
+          aggregated_views -- specification of predefined agregated views as a
+            sequence of 'AggregatedView' instances.
+
           bindings -- a sequence of binding specifications as 'Binding' instances.
 
           folding -- 'FoldableForm.Folding' instance defining initial
@@ -1345,7 +1348,7 @@ class ViewSpec(object):
               cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), conditions=(), default_filter=None, filter_sets=(),
-              aggregations=(), grouping_functions=(), bindings=(),
+              aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
               initial_folding=None, folding=None, spec_name='', arguments=None, public=None):
         assert isinstance(title, basestring)
         if singular is None:
@@ -1476,6 +1479,10 @@ class ViewSpec(object):
                                for attr in public_attributes(pytis.data.Data)
                                if attr.startswith('AGG_')]
         assert isinstance(grouping_functions, (tuple, list))
+        assert isinstance(aggregated_views, (tuple, list))
+        if __debug__:
+            for av in aggregated_views:
+                assert isinstance(av, AggregatedView), av
         assert isinstance(bindings, (tuple, list))
         if __debug__:
             binding_identifiers = []
@@ -1525,6 +1532,7 @@ class ViewSpec(object):
         self._filter_sets = tuple(filter_sets)
         self._aggregations = tuple(aggregations)
         self._grouping_functions = tuple(grouping_functions)
+        self._aggregated_views = tuple(aggregated_views)
         self._bindings = tuple(bindings)
         self._folding = folding or initial_folding
         self._arguments = arguments
@@ -1659,6 +1667,10 @@ class ViewSpec(object):
     def grouping_functions(self):
         """Return specification of available grouping functions as a tuple."""
         return self._grouping_functions
+
+    def aggregated_views(self):
+        """Return default aggregation functions as a tuple."""
+        return self._aggregated_views
 
     def bindings(self):
         """Return bindings as a tuple."""

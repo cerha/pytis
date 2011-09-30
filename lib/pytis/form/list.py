@@ -942,6 +942,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                      MItem(_(u"Zobrazit vše"), command=ListForm.COMMAND_AGGREGATE),
                      MItem(_(u"Skrýt vše"),    command=ListForm.COMMAND_UNAGGREGATE),
                      ))
+        predefined_aggregated_views = self._view.aggregated_views()
+        if predefined_aggregated_views:
+            menu.append(MSeparator())
+            menu.extend([MItem(v.name(),
+                               command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
+                               help=_("Zobrazit předdefinovaný agregovaný náhled"))
+                         for v in predefined_aggregated_views])
         manager = aggregated_views_manager()
         aggregated_views = [manager.load(self._name, aggregated_view_id)
                             for aggregated_view_id in manager.list(self._name)]
@@ -1663,25 +1670,33 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cmd_aggregated_view(self, aggregated_view_id):
         grouping_functions = self._view.grouping_functions()
-        manager = aggregated_views_manager()
-        if aggregated_view_id:
-            view = manager.load(self._name, aggregated_view_id)
-            name = view.name()
-            group_by_columns = view.group_by_columns()
-            aggregation_columns = view.aggregation_columns()
+        for v in self._view.aggregated_views():
+            if v.id() == aggregated_view_id:
+                name = v.name()
+                group_by_columns = v.group_by_columns()
+                aggregation_columns = v.aggregation_columns()
+                break
         else:
-            name = ''
-            group_by_columns = ()
-            aggregation_columns = ()
-        result = run_dialog(AggregationSetupDialog,
-                            aggregation_functions=self._available_aggregations(),
-                            grouping_functions=grouping_functions,
-                            columns=[(f.id(), f.label(), self._row.type(f.id()))
-                                     for f in self._fields if not f.virtual()],
-                            aggregation_valid=self._aggregation_valid,
-                            name=name, group_by_columns=group_by_columns,
-                            aggregation_columns=aggregation_columns)
-        if result is not None:
+            manager = aggregated_views_manager()
+            if aggregated_view_id:
+                view = manager.load(self._name, aggregated_view_id)
+                name = view.name()
+                group_by_columns = view.group_by_columns()
+                aggregation_columns = view.aggregation_columns()
+            else:
+                name = ''
+                group_by_columns = ()
+                aggregation_columns = ()
+            result = run_dialog(AggregationSetupDialog,
+                                aggregation_functions=self._available_aggregations(),
+                                grouping_functions=grouping_functions,
+                                columns=[(f.id(), f.label(), self._row.type(f.id()))
+                                         for f in self._fields if not f.virtual()],
+                                aggregation_valid=self._aggregation_valid,
+                                name=name, group_by_columns=group_by_columns,
+                                aggregation_columns=aggregation_columns)
+            if result is None:
+                return
             name, group_by_columns, aggregation_columns = result
             if name:
                 if aggregated_view_id is None:
@@ -1692,22 +1707,22 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 aggregated_view = AggregatedView(aggregated_view_id,
                                                  name, group_by_columns, aggregation_columns)
                 manager.save(self._name, aggregated_view)
-            # Compose the aggregated data object inner condition from the
-            # current user filter and the hardcoded condition from
-            # specification.
-            condition = self._current_condition()
-            spec_condition = self._data.condition()
-            if spec_condition:
-                if condition:
-                    condition = pytis.data.AND(condition, spec_condition)
-                else:
-                    condition = spec_condition
-            run_form(AggregationDualForm, self._name,
-                     aggregated_view_name=name,
-                     group_by_columns=group_by_columns,
-                     grouping_functions=grouping_functions,
-                     aggregation_columns=aggregation_columns,
-                     aggregation_condition=condition)
+        # Compose the aggregated data object inner condition from the
+        # current user filter and the hardcoded condition from
+        # specification.
+        condition = self._current_condition()
+        spec_condition = self._data.condition()
+        if spec_condition:
+            if condition:
+                condition = pytis.data.AND(condition, spec_condition)
+            else:
+                condition = spec_condition
+        run_form(AggregationDualForm, self._name,
+                 aggregated_view_name=name,
+                 group_by_columns=group_by_columns,
+                 grouping_functions=grouping_functions,
+                 aggregation_columns=aggregation_columns,
+                 aggregation_condition=condition)
         
     def _cmd_delete_aggregated_view(self, aggregated_view_id):
         manager = aggregated_views_manager()
