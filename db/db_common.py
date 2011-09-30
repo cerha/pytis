@@ -36,6 +36,8 @@ EXCEPT = SelectSetType.EXCEPT
 EXCEPT_ALL = SelectSetType.EXCEPT_ALL
 INTERSECT = SelectSetType.INTERSECT
 
+db_schemas = globals().get('Gpytis_schemas', None)
+
 
 def Ctimestamp(name, doc=None):
     return C(name, TDateTime, constraints=('NOT NULL',), default='localtimestamp', doc=doc)
@@ -412,17 +414,17 @@ function('only_digits', (TString,), TBoolean,
          doc="Pomocná funkce pro CHECK constraint.")
 
 function('f_date_year', (TDate,), TInteger, "select date_part(''year'', $1)::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=db_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 function('f_date_halfyear', (TDate,), TInteger,
          "select case when date_part(''month'', $1) < 7 then 1 else 2 end::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=db_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 function('f_date_quarter', (TDate,), TInteger, "select date_part(''quarter'', $1)::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=db_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 function('f_date_month', (TDate,), TInteger, "select date_part(''month'', $1)::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=db_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 
 table('_changes',
