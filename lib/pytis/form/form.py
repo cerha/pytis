@@ -1364,9 +1364,13 @@ class LookupForm(InnerForm):
                 original_value = None
             if original_value is None:
                 original_value = self._default_profile_parameters[param]
-            if current_value != original_value:
+            if self._profile_parameter_changed(param, current_value, original_value):
                 return True
         return False
+
+    def _profile_parameter_changed(self, param, current_value, original_value):
+        # Allow overriding the comparison in derived classes.
+        return current_value != original_value
 
     def _is_user_defined_profile(self, profile):
         return profile.id().startswith(FormProfile.USER_PROFILE_PREFIX)

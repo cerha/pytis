@@ -2416,10 +2416,18 @@ class FoldableForm(ListForm):
     def _apply_profile_parameters(self, profile):
         super(FoldableForm, self)._apply_profile_parameters(profile)
         folding_state = profile.folding()
-        if isinstance(folding_state, self.Folding):
-            # HACK: Profiles from specification contain a 'Folding' instance,
-            # while saved profiles contain a 'Folding._FoldingState' instance.
-            # A single specification should be used in both cases.
+        if folding_state is None and profile.filter():
+            # Don't interpret None as the default folding, but as unfolded,
+            # because the default (initial) folding would conflict with
+            # filters.
+            folding_state = self.Folding(level=None).folding_state()
+        elif isinstance(folding_state, self.Folding):
+            # HACK: Profiles from specification contain a 'Folding'
+            # instance, while saved profiles contain a
+            # 'Folding._FoldingState' instance.  A single folding
+            # specification should be used in both cases and it should be
+            # defined as a public specification class in pytis.presentation
+            # (spec.py).
             folding_state = folding_state.folding_state()
         self._init_folding(folding_state)
 
@@ -2427,6 +2435,21 @@ class FoldableForm(ListForm):
         return dict(super(FoldableForm, self)._profile_parameters_to_save(),
                     folding=self._folding.folding_state())
     
+    def _profile_parameter_changed(self, param, current_value, original_value):
+        if param == 'folding' and self._current_profile.filter():
+            # Avoid indication of changed profile in case od system profiles
+            # with filter and no folding in specifications with
+            # initial_folding.  The default folding is actually different
+            # depending on the profile's filter as implemented in
+            # _apply_profile_parameters().
+            original_value = self.Folding(level=None).folding_state()
+        return super(FoldableForm, self)._profile_parameter_changed(param, current_value, original_value)
+    
+    def _apply_filter(self, condition):
+        if condition is not None and condition != self._lf_filter:
+            self._folding = self.Folding(level=None)
+        return super(FoldableForm, self)._apply_filter(condition)
+
     def _default_sorting(self):
         sorting = self._view.sorting()
         if sorting is None:
@@ -2489,11 +2512,6 @@ class FoldableForm(ListForm):
         return super(FoldableForm, self)._search(condition, direction, row_number=row_number,
                                                  report_failure=report_failure)
     
-    def _apply_filter(self, condition):
-        if condition is not None and condition != self._lf_filter:
-            self._folding = self.Folding(level=None)
-        return super(FoldableForm, self)._apply_filter(condition)
-
     def _on_left_click(self, event):
         if self._folding_enabled():
             col = event.GetCol()
