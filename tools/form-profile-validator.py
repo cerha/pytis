@@ -21,6 +21,7 @@ import sys, getopt, types
 import pytis.util, pytis.data, config
 
 from pytis.form import FormProfileManager
+from pytis.presentation import Profile
 
 def usage(msg=None):
     sys.stderr.write("""Validate saved form profiles.
@@ -90,13 +91,13 @@ def run():
                 cache[spec_name] = view_spec, data_object,  error
             if not error:
                 for form_name in manager.list_form_names(spec_name):
-                    for profile_id in manager.list_profile_ids(spec_name):
-                        profile = manager.load_profile(spec_name, form_name,
-                                                       view_spec, data_object, profile_id)
+                    for profile in manager.load_profiles(spec_name, form_name,
+                                                         view_spec, data_object,
+                                                         Profile('__default_profile__', '-')):
                         # Update the 'errors' column in the database table.
                         manager.save_profile(spec_name, form_name, profile)
                         for param, error in profile.errors():
-                            print ':'.join((username, spec_name, form_name, profile_id, ' %s: %s' % (param, error)))
+                            print ':'.join((username, spec_name, form_name, profile.id(), ' %s: %s' % (param, error)))
                         if profile.errors():
                             total_invalid += 1
                         else:

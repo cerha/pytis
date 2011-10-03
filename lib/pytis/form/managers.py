@@ -289,7 +289,7 @@ class FormProfileManager(UserSetttingsManager):
                         val = val.decode('iso-8859-2')
                 column = data_object.find_column(col)
                 if column is None:
-                    raise Exception("Unknown column '%s' in filter." % col)
+                    raise Exception("Unknown column '%s'" % col)
                 t = column.type()
                 if name in ('WM', 'NW'):
                     value, err = t.wm_validate(val)
@@ -311,7 +311,7 @@ class FormProfileManager(UserSetttingsManager):
                 args = packed_args
                 for col in args:
                     if data_object.find_column(col) is None:
-                        raise Exception("Unknown column '%s' in filter." % col)
+                        raise Exception("Unknown column '%s'" % col)
         return op(*args, **kwargs)
 
     def _format_item(self, key, value):
@@ -359,7 +359,7 @@ class FormProfileManager(UserSetttingsManager):
                 for x in sequence:
                     col = getcol(x)
                     if view_spec.field(col) is None:
-                        errors.append((param, "Unknown column '%s'." % col))
+                        errors.append((param, "Unknown column '%s'" % col))
         return tuple(errors)
 
     def _in_transaction(self, transaction, operation, *args, **kwargs):
@@ -510,8 +510,14 @@ class FormProfileManager(UserSetttingsManager):
             # Only drop user specific form parameters for system profiles.
             self._params_manager.drop(spec_name, form_name, profile_id, transaction=transaction)
         
+    def list_spec_names(self, transaction=None):
+        """Return a sequence of distinct specification names for which profiles were saved."""
+        values = self._data.distinct('spec_name', condition=self._condition(),
+                                     transaction=transaction)
+        return [v.value() for v in values]
+    
     def list_form_names(self, spec_name, transaction=None):
-        """Return a sequence of form names for which profiles were saved."""
+        """Return a sequence of distinct form names for which profiles were saved."""
         return self._params_manager.list_form_names(spec_name, transaction=transaction)
 
     def new_user_profile_id(self, profiles):
