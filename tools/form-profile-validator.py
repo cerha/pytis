@@ -61,7 +61,7 @@ def run():
                 password = getpass.getpass("Enter database password for %s: " % login)
                 config.dbconnection.update_login_data(user=login, password=password)
             else:
-                sys.stderr.write("Login failed.\n")
+                sys.stderr.write(e.message())
                 sys.exit(1)
         else:
             break
