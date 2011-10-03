@@ -1074,6 +1074,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             parent_subactions = subactions[parent] = []
         parent_subactions.append(shortname)
     # Compute rights
+    standard_rights = ['view', 'insert', 'update', 'delete', 'print', 'export', 'call']
     class Rights(object):
         def __init__(self, total, allowed, forbidden, subforms, columns):
             self.total = total
@@ -1098,6 +1099,12 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             default_forbidden = []
         for roleid, role_roles in roles.items():
             columns = {}
+            def add_column_right(r):
+                right, column = r
+                if column is not None:
+                    if not column in columns:
+                        columns[column] = []
+                    columns[column].append(right)
             max_ = []
             allowed = []
             forbidden = copy.copy(default_forbidden)
@@ -1110,37 +1117,37 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             for r in max_:
                 if r not in max_rights:
                     max_rights.append(r)
-                    columns[r[1]] = []
+                    add_column_right(r)
             forbidden_rights = []
             for r in forbidden:
                 if r not in forbidden_rights:
                     forbidden_rights.append(r)
-                    columns[r[1]] = []
             allowed_rights = []
             for r in allowed:
                 if r not in forbidden_rights and r not in allowed_rights:
                     allowed_rights.append(r)
-                    columns[r[1]] = []
+                    add_column_right(r)
             raw_default = item_rights.get('*') or RawRights()
             for r in raw_default.system:
                 if r not in max_rights:
                     max_rights.append(r)
-                    columns[r[1]] = []
+                    add_column_right(r)
             for r in raw_default.forbidden:
                 if r not in forbidden_rights and r not in allowed_rights:
                     forbidden_rights.append(r)
-                    columns[r[1]] = []
             for r in raw_default.allowed:
                 if r not in forbidden_rights and r not in allowed_rights:
                     allowed_rights.append(r)
-                    columns[r[1]] = []
+                    add_column_right(r)
             if not max_rights:
                 for r in item_rights.values():
                     if r.system:
                         break
                 else:
-                    max_rights = [('view', None,), ('insert', None,), ('update', None,), ('delete', None,),
-                                  ('print', None,), ('export', None,), ('call', None,)]
+                    if allowed_rights:
+                        max_rights = allowed_rights
+                    else:
+                        max_rights = [(r, None,) for r in standard_rights]
             def store_rights(shortname, max_rights, allowed_rights, forbidden_rights):
                 if max_rights is None:
                     max_rights = allowed_rights
@@ -1171,8 +1178,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             for sub in subforms[1:]:
                 r = computed_rights.get((sub, roleid,))
                 if r is None:
-                    subforms_total = [('show', None,), ('view', None,), ('insert', None,), ('update', None,),
-                                      ('delete', None,), ('print', None,), ('export', None,), ('call', None,)]
+                    subforms_total = [(r, None,) for r in standard_rights + ['show']]
                     break
                 else:
                     subforms_total += r.total
@@ -1199,6 +1205,10 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             for column, rights in column_rights.items():
                 if column is None:
                     continue
+                if '*' in rights:
+                    rights = [r for r in standard_rights
+                              if (r, None,) not in all_rights.forbidden and
+                                 (r, column,) not in all_rights.forbidden]
                 rights = rights + general_rights
                 rights = list(set(rights)) # remove duplicates
                 rights.sort()
