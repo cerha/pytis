@@ -209,11 +209,11 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _get_saved_setting(self, option, default=None):
         """Retrieve form parameter independent on current profile."""
-        return form_settings_manager().get(self._name, self._form_name(), option, default=default)
+        return form_settings_manager().get(self._profile_spec_name(), self._form_name(), option, default=default)
         
     def _set_saved_setting(self, option, value):
         """Update saved form parameter independent on current profile."""
-        form_settings_manager().set(self._name, self._form_name(), option, value)
+        form_settings_manager().set(self._profile_spec_name(), self._form_name(), option, value)
     
     def _create_view_spec(self):
         t = time.time()
@@ -286,6 +286,14 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
             # 'pytis.form.list').
             module_name = 'pytis.form'
         return '%s.%s' % (module_name, cls.__name__)
+    
+    def _profile_spec_name(self):
+        # Return form name for profile manager.  There is a separate method for
+        # this as we need to construct a special name for aggregated forms.  So
+        # this method normally returns simply self._name, but in special cases
+        # it may be overriden to return something else as the name for profile
+        # manager.
+        self._name
 
     def _release_data(self):
         if self._data is not None:
@@ -1018,11 +1026,11 @@ class LookupForm(InnerForm):
         self.select_row(self._current_key())
 
     def _save_profile(self, profile):
-        profile_manager().save_profile(self._name, self._form_name(), profile)
+        profile_manager().save_profile(self._profile_spec_name(), self._form_name(), profile)
     
     def _load_profiles(self):
         manager = profile_manager()
-        return manager.load_profiles(self._name, self._form_name(), self._view, self._data,
+        return manager.load_profiles(self._profile_spec_name(), self._form_name(), self._view, self._data,
                                      self._default_profile)
 
     def _apply_profile_parameters(self, profile):
@@ -1114,7 +1122,7 @@ class LookupForm(InnerForm):
                     else:
                         profile = find(profile.id(), self._view.profiles(), key=lambda p: p.id())
                     self._profiles[index] = profile
-                profile_manager().drop_profile(self._name, self._form_name(), profile.id())
+                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile.id())
         else:
             self._apply_profile(profile)
         self.focus()
@@ -1160,7 +1168,7 @@ class LookupForm(InnerForm):
         return self._is_user_defined_profile(self._current_profile)
 
     def _cmd_delete_profile(self):
-        profile_manager().drop_profile(self._name, self._form_name(), self._current_profile.id())
+        profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), self._current_profile.id())
         self._profiles.remove(self._current_profile)
         self._apply_profile(self._profiles[0])
 
@@ -1180,7 +1188,7 @@ class LookupForm(InnerForm):
             profile = self._default_profile
         else:
             profile = find(profile_id, self._view.profiles(), key=lambda p: p.id())
-        profile_manager().drop_profile(self._name, self._form_name(), profile_id)
+        profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
 
@@ -1318,7 +1326,7 @@ class LookupForm(InnerForm):
             title = _(u"Nepojmenovaný profil")
             profile = find(title, self._profiles, key=lambda p: p.title())
             if profile:
-                profile_manager().drop_profile(self._name, self._form_name(), profile.id())
+                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile.id())
                 self._profiles.remove(profile)
             self._cmd_save_new_profile(title)
             

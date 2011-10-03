@@ -3173,10 +3173,10 @@ class AggregationForm(BrowseForm):
         self._data_kwargs['condition'] = self._af_aggregation_condition
         return ViewSpec(view.title(), fields)
 
-    def _form_name(self):
+    def _profile_spec_name(self):
         # We need to have unique names for different column configurations
         # because profiles for one configuration may not be valid in the other.
-        return super(AggregationForm, self)._form_name() + ':'.join(self._select_columns())
+        return super(AggregationForm, self)._profile_spec_name() + '/' + ':'.join(self._select_columns())
     
     def _can_aggregated_view(self, aggregated_view_id):
         return False
