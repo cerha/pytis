@@ -1178,22 +1178,20 @@ class DBDataDefault(_DBTest):
             rows.append(row)
         self.data.close()
         assert len(rows) == 2, len(rows)
+        def nrows_test(condition, nrows):
+            self.dcosi.select(condition)
+            n = 0
+            while self.dcosi.fetchone():
+                n = n + 1
+            self.dcosi.close()
+            assert n == nrows
         # NULL test
-        condition = pytis.data.EQ('popis', sval(None))
-        self.dcosi.select(condition)
-        n = 0
-        while self.dcosi.fetchone():
-            n = n + 1
-        self.dcosi.close()
-        assert n == 1
+        nrows_test(pytis.data.EQ('popis', sval(None)), 1)
         # Function test
-        condition = pytis.data.GT(pytis.data.OpFunction('pow', 'id', ival(2)), ival(10))
-        self.dcosi.select(condition)
-        n = 0
-        while self.dcosi.fetchone():
-            n = n + 1
-        self.dcosi.close()
-        assert n == 2        
+        nrows_test(pytis.data.GT(pytis.data.OpFunction('pow', 'id', ival(2)), ival(10)), 2)
+        # ANY_OF
+        nrows_test(pytis.data.ANY_OF('popis', sval('specialni'), sval('zvlastni'),
+                                     sval('podivny'), sval(None)), 3)
     def test_select_sorting(self):
         A = pytis.data.ASCENDENT
         D = pytis.data.DESCENDANT

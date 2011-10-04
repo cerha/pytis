@@ -1291,6 +1291,24 @@ def OR(*args):
     t = NOT(AND(*map(NOT, args)))
     return Operator('OR', *args, **{'translation': t})
 
+def ANY_OF(column, *args):
+    """Matching one of the given values.
+
+    'column' value is equal to any of the 'args' values.
+
+    Arguments:
+
+      column -- name of the table column; string
+      args -- 'Value' instances to check for
+      
+    This operator is not primitive - it may be expressed by a combination of
+    other operators.
+    
+    """
+    assert isinstance(column, basestring), column
+    assert all([isinstance(a, Value) for a in args]), args
+    return OR(*[EQ(column, value) for value in args])
+
 def IN(column_id, data, table_column_id, table_condition):
     """Podmínkový operátor příslušnosti.
 
