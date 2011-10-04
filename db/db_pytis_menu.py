@@ -1121,10 +1121,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                     if r.system:
                         break
                 else:
-                    if allowed_rights:
-                        max_rights = allowed_rights
-                    else:
-                        max_rights = set([(r, None,) for r in standard_rights])
+                    max_rights = set([(r, None,) for r in standard_rights])
             def store_rights(shortname, max_rights, allowed_rights, forbidden_rights):
                 if max_rights is None:
                     max_rights = allowed_rights
