@@ -1126,6 +1126,9 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                 if max_rights is None:
                     max_rights = allowed_rights
                 rights = set([right for right in max_rights if right not in forbidden_rights and ('*', right[1],) not in forbidden_rights])
+                for r in allowed_rights.difference(forbidden_rights):
+                    if r in max_rights or (r[0], None,) in max_rights:
+                        rights.add(r)
                 if ('show', None,) not in forbidden_rights:
                     rights.add(('show', None,))
                 computed_rights[(shortname, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights,
