@@ -1170,6 +1170,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             result.append((shortname, roleid, rights_string, ''))
         else:
             rights = all_rights.total
+            general_rights = set([r for r, column in rights if column is None])
             column_rights = all_rights.columns
             general_rights = [r for r, column in rights if column is None]
             general_rights = list(set(general_rights)) # remove duplicates
@@ -1185,11 +1186,15 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                     crights = [r for r in standard_rights
                                if (r, None,) not in all_rights.forbidden and
                                   (r, column,) not in all_rights.forbidden]
+                else:
+                    crights = list(crights.union(general_rights))
                 crights = crights + general_rights
                 crights = list(set(crights)) # remove duplicates
                 crights.sort()
                 rights_string = string.join(crights, ' ')
                 summarized_rights[rights_string] = summarized_rights.get(rights_string, []) + [column]
+            general_rights = list(general_rights)
+            general_rights.sort()
             summarized_rights[string.join(general_rights, ' ')] = None
             for rights_string, columns in summarized_rights.items():
                 if columns is None:
