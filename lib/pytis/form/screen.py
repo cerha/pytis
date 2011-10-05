@@ -170,11 +170,6 @@ def paste_from_clipboard(ctrl):
         nx_ip  = pytis.windows.nx_ip()
         log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
         text = pytis.windows.get_clipboard_text()
-        if text:
-            success = True
-        else:
-            success = False
-            pytis.windows.set_clipboard_text(text)
     else:
         log(EVENT, 'Paste from clipboard')
         if not wx.TheClipboard.IsOpened():  # may crash, otherwise
