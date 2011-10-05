@@ -2047,7 +2047,7 @@ class IN(pytis.data.Operator):
         if profile_id is not None:
             if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 manager = profile_manager()
-                condition, profile_name = manager.load_filter(spec_name, view_spec, data_object, profile_id)
+                condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
             else:
                 profile = find(profile_id, view_spec.profiles(), lambda p: p.id())
                 if not profile:
