@@ -496,7 +496,7 @@ class Configuration(object):
 
     class _Option_dbhost(StringOption, CommandlineOption):
         _DESCR = _(u"Database host name.")
-        _DEFAULT = 'localhost'
+        _DEFAULT = None
     
     class _Option_dbport(NumericOption, CommandlineOption):
         _DESCR = _(u"Database port number.")
