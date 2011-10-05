@@ -39,7 +39,7 @@ _std_table_nolog('e_pytis_form_settings',
       doc="""Storage of pytis profile independent form settings."""
       )
 
-_std_table_nolog('e_pytis_form_profiles',
+_std_table_nolog('e_pytis_form_profile_base',
       (P('id', TSerial),
        C('username', TUser, constraints=('NOT NULL',)),
        C('spec_name', TString, constraints=('NOT NULL',)),
@@ -72,7 +72,7 @@ _std_table_nolog('e_pytis_form_profile_params',
       )
 
 viewng('ev_pytis_form_profiles',
-       relations=(Relation('e_pytis_form_profiles', alias='profile', key_column='id',
+       relations=(Relation('e_pytis_form_profile_base', alias='profile', key_column='id',
                            exclude_columns=('id', 'username', 'spec_name', 'profile_id', 'pickle', 'dump', 'errors')),
                   Relation('e_pytis_form_profile_params', alias='params', key_column='lang',
                            jointype=JoinType.RIGHT_OUTER,
@@ -91,9 +91,9 @@ viewng('ev_pytis_form_profiles',
                         ),
        insert=None,
        update=None,
-       delete=('delete from e_pytis_form_profiles where username = old.username and '
+       delete=('delete from e_pytis_form_profile_base where username = old.username and '
                'spec_name = old.spec_name and profile_id = old.profile_id'),
-       depends=('e_pytis_form_profiles', 'e_pytis_form_profile_params'),
+       depends=('e_pytis_form_profile_base', 'e_pytis_form_profile_params'),
        grant=db_rights,
        schemas=db_schemas,
        doc="Pytis profiles.",

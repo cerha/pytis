@@ -222,7 +222,7 @@ class FormProfileManager(UserSetttingsManager):
     'form_name' arguements of the manager's methods).
         
     """
-    _TABLE = 'e_pytis_form_profiles'
+    _TABLE = 'e_pytis_form_profile_base'
     _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title',
                 'pickle', 'dump', 'errors')
     _OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE', 'IN') # NOT is not allowed!

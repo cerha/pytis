@@ -53,7 +53,7 @@ def run():
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
-            data = pytis.data.dbtable('e_pytis_form_profiles', ('id', 'username'),
+            data = pytis.data.dbtable('e_pytis_form_profile_base', ('id', 'username'),
                                       config.dbconnection)
         except pytis.data.DBLoginException as e:
             if config.dbconnection.password() is None:
