@@ -1534,7 +1534,7 @@ class ViewSpec(object):
         self._grouping_functions = tuple(grouping_functions)
         self._aggregated_views = tuple(aggregated_views)
         self._bindings = tuple(bindings)
-        self._folding = folding or initial_folding
+        self._folding = folding or initial_folding # initial_folding is deprecated!
         self._arguments = arguments
         
     def _linearize_actions(self, spec):
