@@ -293,7 +293,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         # this method normally returns simply self._name, but in special cases
         # it may be overriden to return something else as the name for profile
         # manager.
-        self._name
+        return self._name
 
     def _release_data(self):
         if self._data is not None:
