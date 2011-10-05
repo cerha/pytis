@@ -373,7 +373,6 @@ class SFDialog(SFSDialog):
             run_dialog(Warning, _(u"Nepodařilo se rozložit podmínkový výraz:") +" "+ str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
-            print "--", items
             if len(items) == 1:
                 self._controls.append(create_in_operator(i, len(operators), *items))
             elif len(items) == 2:
