@@ -1424,12 +1424,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
                 (("declare %s scroll cursor for select %%(columns)s, "
-                  "row_number() over (order by %s%%(ordering)s %s) as _number "
+                  "row_number() over (order by %%(ordering)s %s) as _number "
                   "from (select%s * from %s%%(fulltext_queries)s "
                   "where %%(condition)s and (%s)%s) "
-                  "as %s %s order by %s%%(ordering)s %s") %
-                 (cursor_name, distinct_on_ordering, ordering, distinct_on, table_list, relation, filter_condition,
-                  table_names[0], groupby, distinct_on_ordering, ordering,)),
+                  "as %s %s order by %%(ordering)s %s") %
+                 (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
+                  table_names[0], groupby, ordering,)),
                 {'columns': column_list})
         else:
             self._pdbb_command_select = \
