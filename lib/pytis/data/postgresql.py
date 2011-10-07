@@ -1840,6 +1840,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             _PG_INITIAL_STEP = 1000
             _PG_MAX_STEP = 100000
             _PG_DEFAULT_TIMEOUT = 0.1
+            _PG_STOP_CHECK_TIMEOUT = 0.1
             def __init__(self, data, initial_count, transaction, selection, position):
                 threading.Thread.__init__(self)
                 self._pg_data = data
@@ -1898,10 +1899,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             def _pg_dead(self):
                 return (self._pg_terminate or
                         (self._pg_transaction and not self._pg_transaction.open()))
-            def pg_count(self, min_value=None, timeout=None, corrected=False):
+            def pg_count(self, min_value=None, timeout=None, corrected=False, stop_check=None):
                 self._pg_urgent = True
                 if self._pg_dead():
                     pass
+                elif stop_check is not None:
+                    if timeout is not None:
+                        stop_time = time.time() + timeout
+                    while (not self._pg_finished and
+                           (timeout is None or time.time() <= stop_time) and
+                           (min_value is None or self._pg_current_count < min_value)):
+                        if stop_check():
+                            break
+                        t = self._PG_STOP_CHECK_TIMEOUT
+                        if timeout is not None:
+                            t = min(t, max(stop_time - time.time(), 0))
+                        self._pg_terminate_event.wait(t)
                 elif min_value is not None:
                     while self._pg_current_count < min_value and not self._pg_finished:
                         self._pg_terminate_event.wait(timeout or self._PG_DEFAULT_TIMEOUT)
@@ -1933,8 +1946,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._thread = self._Thread(data, 0, transaction, selection, position)
         def start(self):
             self._thread.start()
-        def count(self, min_value=None, timeout=None, corrected=False):
-            result = self._thread.pg_count(min_value, timeout, corrected)
+        def count(self, min_value=None, timeout=None, corrected=False, stop_check=None):
+            assert stop_check is None or isinstance(stop_check, collections.Callable), stop_check
+            result = self._thread.pg_count(min_value, timeout, corrected, stop_check)
             return result
         def stop(self):
             self._thread.pg_stop()
