@@ -1899,18 +1899,19 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             def _pg_dead(self):
                 return (self._pg_terminate or
                         (self._pg_transaction and not self._pg_transaction.open()))
-            def pg_count(self, min_value=None, timeout=None, corrected=False, stop_check=None):
+            def pg_count(self, min_value=None, timeout=None, corrected=False):
                 self._pg_urgent = True
+                stop_check = self._pg_data._pg_stop_check
                 if self._pg_dead():
                     pass
                 elif stop_check is not None:
+                    start_time = time.time()
                     if timeout is not None:
                         stop_time = time.time() + timeout
                     while (not self._pg_finished and
                            (timeout is None or time.time() <= stop_time) and
                            (min_value is None or self._pg_current_count < min_value)):
-                        if stop_check():
-                            break
+                        stop_check(start_time)
                         t = self._PG_STOP_CHECK_TIMEOUT
                         if timeout is not None:
                             t = min(t, max(stop_time - time.time(), 0))
@@ -1946,9 +1947,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._thread = self._Thread(data, 0, transaction, selection, position)
         def start(self):
             self._thread.start()
-        def count(self, min_value=None, timeout=None, corrected=False, stop_check=None):
-            assert stop_check is None or isinstance(stop_check, collections.Callable), stop_check
-            result = self._thread.pg_count(min_value, timeout, corrected, stop_check)
+        def count(self, min_value=None, timeout=None, corrected=False):
+            result = self._thread.pg_count(min_value, timeout, corrected)
             return result
         def stop(self):
             self._thread.pg_stop()
@@ -1963,7 +1963,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         t.start()
         return t
         
-    def _pg_select (self, condition, sort, columns, arguments={}, transaction=None, async_count=False):
+    def _pg_select (self, condition, sort, columns, arguments={}, transaction=None, async_count=False,
+                    stop_check=None):
         """Initiate select and return the number of its lines or 'None'.
 
         Arguments:
@@ -1978,6 +1979,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             a '_PgRowCounting' instance instead of the number of lines;
             this is useful on large tables where row counting may take
             significant amount of time
+          stop_check -- if not 'None' then it is a function to be called
+            periodically, during some long taking operations, with the single
+            argument passing start time of the long operation as returned by
+            'time.time()'.  It is not guaranteed that this function gets
+            actually called during any long taking operation.  If it gets, it's
+            up to the function what to do, it can e.g. raise some exception to
+            stop the operation.
           
         """
         cond_string = self._pdbb_condition2sql(condition)
@@ -2828,7 +2836,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
         
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
-               arguments={}, async_count=False):
+               arguments={}, async_count=False, stop_check=None):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
         if (reuse and not self._pg_changed and self._pg_number_of_rows and
@@ -2849,6 +2857,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_select_transaction = transaction
         self._pg_last_fetch_row = None
         self._pg_last_select_row_number = None
+        self._pg_stop_check = stop_check
         self._pg_changed = False
         if columns:
             self._pg_make_row_template_limited = \
@@ -2857,7 +2866,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_make_row_template_limited = None        
         try:
             row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
-                                             arguments=arguments, async_count=async_count)
+                                             arguments=arguments, async_count=async_count,
+                                             stop_check=stop_check)
         except:
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 try:
