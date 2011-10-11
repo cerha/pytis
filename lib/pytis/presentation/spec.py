@@ -741,15 +741,21 @@ class Profiles(list):
     
     def __init__(self, *profiles, **kwargs):
         """Arguments:
-        
-          profiles -- sequence of 'Profile' instances
-          default -- identifier of the profile (from 'profiles') to be selected by default
-          label -- optional label of the profile selector in the user interface (currently
-            only used in web forms).  A default label will be used when None.
+
+          profiles -- Profiles can be passed as a single argument (tuple or
+            list of 'Profile' instances) or as separate arguments (one
+            'Profile' instance per one positional argument).
+          default -- identifier of the profile (from 'profiles') to be selected
+            by default
+          label -- optional label of the profile selector in the user interface
+            (currently only used in web forms).  A default label will be used
+            when None.
         
         """
         default = kwargs.pop('default', None)
         label = kwargs.pop('label', None)
+        if len(profiles) == 1 and isinstance(profiles[0], (tuple, list)):
+            profiles = profiles[0]
         if __debug__:
             profile_ids = []
             for p in profiles:
