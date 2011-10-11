@@ -1353,7 +1353,7 @@ class ViewSpec(object):
               actions=(), sorting=None, grouping=None, group_heading=None, check=(),
               cleanup=None, on_new_record=None, on_edit_record=None, on_delete_record=None,
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
-              profiles=(), filters=(), conditions=(), default_filter=None, filter_sets=(),
+              profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
               initial_folding=None, folding=None, spec_name='', arguments=None, public=None):
         assert isinstance(title, basestring)
@@ -1456,11 +1456,6 @@ class ViewSpec(object):
         if __debug__:
             for f in check:
                 assert isinstance(f, collections.Callable)
-        if conditions:
-            # `conditions' are for backwards compatibility.
-            assert not filters, "When using 'filters', 'conditions' can not be used."
-            assert not profiles, "When using 'profiles', 'conditions' can not be used."
-            filters = conditions
         if filters:
             # `filters' are for backwards compatibility.
             if isinstance(filters[0], FilterSet):
@@ -3341,7 +3336,7 @@ class Specification(object):
         self._resolver = resolver
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
-                     'conditions', 'folding', 'initial_folding',):
+                     'folding', 'initial_folding',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if isinstance(value, collections.Callable):
