@@ -775,6 +775,11 @@ class Configuration(object):
                    u"pokud není aplikovatelný žádný specifičtější tisk. "
                    u"Není-li nastaveno, nevytiskne se v takovém případě nic.")
         _DEFAULT = False
+
+    class _Option_run_form_timeout(NumericOption):
+        _DESCR = _(u"Počet sekund, po kterých se uživateli nabídne přerušení zdlouhavého "
+                   u"otevírání formuláře.")
+        _DEFAULT = 40
         
     # Volby přizpůsobení uživatelského rozhraní
         

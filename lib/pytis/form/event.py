@@ -311,15 +311,43 @@ def unlock_callbacks():
 
 
 def yield_():
-    """Zkontroluj, zda uživatel nežádá přerušení zpracování události.
+    """Check for user break of the event.
 
-    Žádá-li, vyvolej 'UserBreakException'.
+    If the user requests a break, raise 'UserBreakException'.
 
     """
     global _interrupted
     if _interrupted and _main_thread_ident == thread.get_ident():
         _interrupted = False
         raise UserBreakException()
+
+
+def _stop_check(start_time, confirmed=False):
+    import config
+    if not confirmed and time.time() > start_time + config.run_form_timeout:
+        if run_dialog(Question, u"Otevírání formuláře už trvá dlouho, má se přerušit?"):
+            raise UserBreakException()
+        else:
+            confirmed = True
+    else:
+        # Allow user break by Ctrl-g.  This has actually no real effect, mainly
+        # because wxWindows apparently doesn't pass key events until the run
+        # form event finishes.  But maybe we find a workaround sometimes...
+        yield_()
+    return confirmed
+
+def standard_stop_check_function():
+    """Return standard stop check function.
+
+    The returned function is suitable as 'stop_check' argument value in
+    database 'select' operations.  It raises 'UserBreakException' when
+    'run_form_timeout' given in configuration gets exceeded.
+
+    """
+    confirmed = [False]
+    def maybe_stop_check(start_time):
+        confirmed[0] = _stop_check(start_time, confirmed[0])
+    return maybe_stop_check
 
 
 def interrupt_watcher():

@@ -932,7 +932,7 @@ class LookupForm(InnerForm):
                            sort=self._lf_sorting,
                            arguments=self._current_arguments(),
                            transaction=self._transaction, reuse=False,
-                           async_count=async_count)
+                           async_count=async_count, stop_check=standard_stop_check_function())
 
     def _init_select(self, async_count=False):
         success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
