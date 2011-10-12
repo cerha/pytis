@@ -1735,8 +1735,8 @@ class RecordForm(LookupForm):
         cond = pytis.data.AND(*[pytis.data.EQ(c,v) for c,v in zip(cols, values)])
         condition = pytis.data.AND(cond, self._current_condition())
         def dbop(condition):            
-            n = data.select(condition, columns=self._select_columns(),
-                            transaction=self._transaction)
+            data.select(condition, columns=self._select_columns(),
+                        transaction=self._transaction)
             return data.fetchone()
         success, row = db_operation(dbop, condition)
         self._init_select(async_count=True)
@@ -2466,6 +2466,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _refresh(self, when=None):
         self.Refresh()
 
+    def _commit_data(self, op, args):
+        if op is not None:
+            success, result = db_op(op, args, dict(transaction=self._transaction),
+                                    in_transaction=(self._transaction is not None))
+        else:
+            success, result = True, (None, True)
+        return success, result
+
     def _commit_form(self, close=True):
         if self._mode == self.MODE_INSERT:
             permission = pytis.data.Permission.INSERT
@@ -2493,7 +2501,6 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             else:
                 log(OPERATIONAL, "Unknown field returned by check():", failed_id)
             return False
-        transaction = self._transaction
         # Vytvoření datového řádku.
         rdata = self._record_data(self._row, permission=permission,
                                   updated=(self._mode == self.MODE_EDIT))
@@ -2513,17 +2520,16 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         else:
             raise ProgramError("Can't commit in this mode:", self._mode)
         # Provedení operace
+        transaction = self._transaction
         if transaction is not None:
             success, result = db_op(transaction.set_point, ('commitform',),
                                     in_transaction=True, quiet=True)
         else:
             success = True
         if success:
-            if op is not None:
-                success, result = db_op(op, args, dict(transaction=transaction),
-                                        in_transaction=(transaction is not None))
-            else:
-                success, result = True, (None, True)
+            success, result = self._commit_data(op, args)
+        else:
+            result = (None, False)
         if success and result[1]:
             new_row = result[0]
             original_row = copy.copy(self._row)
@@ -2552,8 +2558,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 log(ACTION, 'Transaction committed')
             return True
         else:
-            if transaction is not None:
-                success, __ = db_op(transaction.cut, ('commitform',), in_transaction=True,
+            if self._transaction is not None:
+                success, __ = db_op(self._transaction.cut, ('commitform',), in_transaction=True,
                                     quiet=True)
             else:
                 success = True
