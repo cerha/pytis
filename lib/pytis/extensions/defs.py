@@ -39,43 +39,16 @@ def get_form_defs(resolver, messages=None):
     assert isinstance(resolver, pytis.util.Resolver), resolver
     assert messages is None or isinstance(messages, list), messages
     from dmp import DMPMessage, add_message
-    import config
-    def_dir = config.def_dir
-    def_dir_len = len(def_dir.split('/'))
     specification_names = []
-    for root, dirs, files in os.walk(def_dir):
-        relative_root_path = root.split('/')[def_dir_len:]
-        if relative_root_path:
-            relative_root = os.path.join(*relative_root_path) + '/'
+    for name, spec in resolver.walk():
+        if spec.public:
+            if spec.__name__.startswith('_'):
+                add_message(messages, DMPMessage.WARNING_MESSAGE,
+                            "Public specification starting with underscore", (name,))
+            specification_names.append(name)
         else:
-            relative_root = ''
-        for f in files:
-            if f.endswith('.py'):
-                module_name = relative_root + f[:-3]
-                try:
-                    module = resolver.get_module(module_name)
-                except pytis.util.ResolverError:
-                    add_message(messages, DMPMessage.WARNING_MESSAGE, "Module not loaded", (module_name,))
-                    continue
-                except Exception as e:
-                    add_message(messages, DMPMessage.ERROR_MESSAGE, "Error when loading module", (module_name, e,))
-                    continue
-                module_identifier = module_name.replace('/', '.')
-                for spec_attr in [o for o in dir(module)]:
-                    spec = getattr(module, spec_attr)
-                    if isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec.public:
-                        if spec_attr[0] == '_':
-                            add_message(messages, DMPMessage.WARNING_MESSAGE,
-                                        "Public specification starting with underscore",
-                                        ('%s.%s' % (module_identifier, spec_attr,),))
-                        spec_name = module_identifier + '.' + spec.__name__
-                        specification_names.append(spec_name)
-                    elif (isinstance(spec, type) and
-                          issubclass(spec, pytis.form.Specification) and
-                          spec_attr != 'Specification'):
-                        add_message(messages, DMPMessage.NOTE_MESSAGE,
-                                    "Private specification, ignored",
-                                    ('%s.%s' % (module_identifier, spec_attr,),))
+            add_message(messages, DMPMessage.NOTE_MESSAGE,
+                        "Private specification, ignored", (name,))
     return specification_names
     
 def get_menu_defs():
@@ -110,17 +83,7 @@ def get_menu_defs():
             if (shortname and shortname[:5] == 'form/' and
                 fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm'):
                 specs.append(shortname[5:])
-    specs = remove_duplicates(specs)
-    # Zjistíme i varianty podle konstanty VARIANTS
-    variants = []
-    for m in specs:
-        try:
-            vlist = resolver.get_object(m, 'VARIANTS')
-        except:
-            pass
-        else:
-            variants += ['%s:%s' % (m, v) for v in vlist if isinstance(v, basestring)]
-    return specs + remove_duplicates(variants)
+    return remove_duplicates(specs)
 
 
 def _get_default_select(spec):
@@ -163,7 +126,7 @@ def check_form():
         try:
             data_spec = resolver.get(spec, 'data_spec')
             view_spec = resolver.get(spec, 'view_spec')                
-        except ResolverError:
+        except pytis.util.ResolverError:
             msg = 'Specifikace nenalezena.'
             pytis.form.run_dialog(pytis.form.Warning, msg)
             return
@@ -220,7 +183,8 @@ class MenuChecker(object):
 
         """
         self._resolver = pytis.util.resolver()
-        self._output_resolver = pytis.output.OutputResolver(self._resolver)
+        print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
+        self._output_resolver = pytis.output.OutputResolver((print_file_resolver, self._resolver))
         self._dbconn = config.dbconnection
         connection_data = config.dbconnection
         data = pytis.data.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
@@ -250,17 +214,14 @@ class MenuChecker(object):
             module_name = spec_name[:pos].replace('.', '/')
             class_name = spec_name[pos+1:]
             try:
-                spec = self._resolver.get_object(module_name, class_name)
+                spec = self._resolver.specification(spec_name)
                 print_spec = self._resolver.get(spec_name, 'print_spec')
-            except ResolverError as e:
+            except pytis.util.ResolverError as e:
                 return errors + [str(e)]
             if not spec.public:
                 errors.append("Neveřejná specifikace v menu.")
             for p in (print_spec or ()):
                 module = p.name()
-                pos = module.find(':')
-                if pos >= 0:
-                    module = module[:pos]
                 if module in self._output_specs:
                     continue
                 self._output_specs[module] = True
@@ -271,7 +232,7 @@ class MenuChecker(object):
                 print_class_name = module[print_pos+1:]
                 try:
                     self._output_resolver.get_object(print_module_name, print_class_name)
-                except ResolverError as e:
+                except pytis.util.ResolverError as e:
                     errors.append("Failed to load print specification: " + str(e))
         return errors
     
@@ -279,7 +240,7 @@ class MenuChecker(object):
         errors = []
         try:
             bindings = self._resolver.get(main, 'binding_spec')
-        except ResolverError as e:
+        except pytis.util.ResolverError as e:
             return errors + [str(e)]
         try:
             bindings[side]
@@ -350,7 +311,7 @@ class MenuChecker(object):
         resolver = self._resolver
         try:
             data_spec = resolver.get(spec_name, 'data_spec')
-        except ResolverError as e:
+        except pytis.util.ResolverError as e:
             return errors + [str(e)]
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
@@ -475,7 +436,7 @@ def cache_spec(*args, **kwargs):
                          'cb_spec', 'proc_spec', 'binding_spec'):
                 try:
                     resolver.get(name, spec)
-                except ResolverError:
+                except pytis.util.ResolverError:
                     pass
             
         total = len(specs)        

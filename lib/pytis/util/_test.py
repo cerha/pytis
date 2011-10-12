@@ -448,10 +448,14 @@ class Resolver(unittest.TestCase):
     def test_resolver(self):
         from resolver import Resolver
         import pytis.presentation
-        r = Resolver(search=('pytis', 'wikings'))
-        x = r.get('cms.Languages')
-        view = x.view_spec()
+        r = Resolver(search=('pytis', 'wiking.cms'))
+        view = r.get('cms.Languages', 'view_spec')
         assert isinstance(view, pytis.presentation.ViewSpec)
+        spec = r.specification('cms.Languages')
+        assert isinstance(spec, pytis.presentation.Specification)
+        specifications = [spec for name, spec in r.walk()]
+        from pytis.cms import Languages
+        assert Languages in specifications, specifications
 tests.add(Resolver)
     
 

@@ -276,15 +276,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _public_spec(self, name):
         spec_class = None
-        pos = name.rfind('.')
-        if pos >= 0:
-            module, spec_name = name[:pos], name[pos+1:]
-            try:
-                spec_class = resolver().get_object(module, spec_name)
-            except Exception as e:
-                pass
-        return (spec_class is None or
-                (issubclass(spec_class, Specification) and spec_class.public))
+        try:
+            spec_class = resolver().specification(name)
+        except Exception as e:
+            return True
+        else:
+            return spec_class.public
 
     def _find_help_files(self):
         if not os.path.exists(config.help_dir):

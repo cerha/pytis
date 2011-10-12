@@ -312,13 +312,11 @@ class DMPObject(object):
         module_name = name[:pos].replace('.', '/')
         class_name = name[pos+1:]
         try:
-            spec = resolver.get_object(module_name, class_name)
-            spec_instance = spec(resolver)
+            return resolver.specification(module_name, class_name)
         except Exception as e:
             add_message(messages, DMPMessage.ERROR_MESSAGE,
                         "Couldn't load specification", (name, e,))
             return None
-        return spec_instance
 
     def _disable_triggers(self, transaction=None):
         data = self._data('e_pytis_disabled_dmp_triggers')

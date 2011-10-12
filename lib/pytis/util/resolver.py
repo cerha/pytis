@@ -30,6 +30,7 @@ import imp
 import sys
 
 from pytis.util import *
+import pytis.presentation
 
 def resolver():
     """Deprecated: Use config.resolver instead."""
@@ -81,17 +82,18 @@ class Resolver(object):
         self._specification_cache = SimpleCache(self._get_specification)
         self._method_result_cache = SimpleCache(self._get_method_result)
 
+    def _import_module(self, name):
+        module = __import__(name)
+        for component in name.split('.')[1:]:
+            module = getattr(module, component)
+        return module
+        
     def _get_module(self, name):
         for prefix in self._search and [prefix+'.' for prefix in self._search] or ('',):
             try:
-                module = __import__(prefix+name)
+                return self._import_module(prefix+name)
             except ImportError as e:
                 continue
-            else:
-                components = (prefix+name).split('.')
-                for comp in components[1:]:
-                    module = getattr(module, comp)
-                return module
         search_info = self._search and (' (searching in %s)' % ', '.join(self._search)) or ''
         raise ResolverError("Resolver error loading module '%s'%s: %s" % (name, search_info, e))
 
@@ -139,13 +141,24 @@ class Resolver(object):
         if argument_names(method):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specification
-            # methods are defined by applications (basic method, such as
+            # methods are defined by applications (basic methods, such as
             # 'view_spec' or 'data_spec' are defined by the base class
             # 'pytis.presentation.Specification', but 'proc_spec' is typically
             # defined by application.
             return method(self)
         else:
             return method()
+
+    def specification(self, name, **kwargs):
+        """Return the specification instance of given 'name'.
+
+        Arguments:
+          name -- string name of the specification
+          kwargs -- optional keyword arguments to be passed to the
+            specification instance constructor
+
+        """
+        return self._specification_cache[(name, tuple(kwargs.items()))]
 
     def get(self, name, method_name, **kwargs):
         """Return the result of calling 'method_name' on specification instance 'name'.
@@ -158,4 +171,43 @@ class Resolver(object):
 
         """
         return self._method_result_cache[(name, tuple(kwargs.items()), method_name)]
+
+    def walk(self, cls=pytis.presentation.Specification):
+        """Return all 'cls' subclasses defined in current search path.
+
+        Returns a list of pairs (name, class), where name is the string name of
+        the class and class is a subclass of 'cls'.  Each class is returned
+        only once and the name is always the shortest name of given class when
+        it is first found within the search path (the same class may be
+        imported into several modules, so it may be available under several
+        different names).
+
+        This method only works when the search path is non-empty.
+
+        """
+        searched_modules = []
+        classes = []
+        names = {}
+        def search(module):
+            # Search cls subclasses in given module recursively.
+            submodules = []
+            for name, value in module.__dict__.items():
+                if type(value) == type(object) and value != cls and issubclass(value, cls) \
+                        and value not in classes and name not in names:
+                    classes.append(value)
+                    names[module.__name__+'.'+name] = value
+                elif type(value) == type(module) and value != module \
+                        and value.__name__.startswith(module.__name__):
+                    submodules.append(value)
+            for submodule in submodules:
+                # Search submodules at the end (after all classes) to find
+                # classes in the top-most module (shortest name).
+                if submodule not in searched_modules:
+                    searched_modules.append(submodule)
+                    search(submodule)
+        for module_name in self._search:
+            module = self._import_module(module_name)
+            search(module)
+        name = dict([(cls, name) for name, cls in names.items()]) # Map classes to their names.
+        return [(name[cls], cls) for cls in classes]
 
