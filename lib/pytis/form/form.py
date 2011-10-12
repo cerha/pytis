@@ -1121,17 +1121,18 @@ class LookupForm(InnerForm):
         return {}
 
     def _apply_initial_profile(self):
+        # This must be called in _on_idle espacially because the initial
+        # profile may not be valid and we want to make use of handling invalid
+        # profiles in _cmd_apply_profile().
+        # Note, that the profile 0 may not be self._default_profile, but
+        # its customization.
+        default_profile = self._profiles[0]
         profile_id = self._saved_setting('initial_profile') or self._view.profiles().default()
         if profile_id:
-            profile = find(profile_id, self._profiles, key=lambda p: p.id())
+            profile = find(profile_id, self._profiles, key=lambda p: p.id()) or default_profile
         else:
-            # Note, that the profile 0 may not be self._default_profile, but
-            # its customization.
-            profile = self._profiles[0]
-        # This must be here (in _on_idle) espacially because the
-        # initial profile may not be valid and we want to make use of
-        # handling invalid profiles in _cmd_apply_profile().
-        if profile and profile is not self._current_profile:
+            profile = default_profile
+        if profile is not self._current_profile:
             self._cmd_apply_profile(self._profiles.index(profile))
             dual = self._dualform()
             if dual and self is not dual.main_form():
