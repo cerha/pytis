@@ -232,34 +232,27 @@ class Button(object):
 
           label -- button label as a string.  Can be None when 'action' is specified -- in this
             case the action title is used.
-          
           handler -- function of one argument -- the 'PresentedRow' instance representing the
-            current state of the form.  If None, 'action' must be sepecified.
-
+            current state of the form.  If None, 'action' must be specified.
           enabled -- function of one argument -- the 'PresentedRow' instance representing the
             current state of the form -- which returns True if the button is enabled or False
             otherwise.  This function will be called periodically on each user interface update, so
-            the result may change during form editation.  Only relevant if 'handler' is used.  For
-            'action' the button state depends on the refered action and its 'enabled' parameter.
-
+            the result may change during form editing.  Only relevant if 'handler' is used.  For
+            'action' the button state depends on the referred action and its 'enabled' parameter.
           action -- name of an 'Action' specification as a string.  This allows to handle the
             button press by invoking one of 'actions' defined in the same 'ViewSpec' instead of
             passing the 'handler' function directly.  If used, 'handler' must be None, if None,
             'handler' must be specified.
-            
           width -- button with (number of characters).  The default width is set automatically to
             fit the label, but this argument may override this default.
-            
           tooltip -- button's tooltip text as a string.
-            
           active_in_popup_form -- False value deactivate the button in popup (modal) forms.  This
-            may be particularly usefull when the button opens a new form, which is impossible in
+            may be particularly useful when the button opens a new form, which is impossible in
             modal forms.
-            
           active_in_readonly_form -- buttons are inactive in read-only forms by default, since they
             often modify form data.  True value will activate the button in even for readonly
-            forms.  This may be particularly usefull when the button performs some action, which
-            doesnt't modify the data.
+            forms.  This may be particularly useful when the button performs some action, which
+            doesn't modify the data.
             
         """
         if action is None:

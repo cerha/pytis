@@ -587,7 +587,7 @@ class PresentedRow(object):
         """Return 'PresentedRow' instance containing the original row values.
 
         The original values are values set in row initialization or after the
-        last call to 'set_row()' with 'reset' se to true.
+        last call to 'set_row()' with 'reset' set to true.
         
         """
         original_row = self.original_row()
