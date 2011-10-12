@@ -299,8 +299,9 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     parameters = {(spec+'/'+pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
     parameters.update(kwargs)
-    print_resolver = P(resolver, parameters=parameters)
-    old_print_resolver = P(resolver, parameters=parameters, old=True)
+    print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
+    print_resolver = P(print_file_resolver, resolver, parameters=parameters)
+    old_print_resolver = P(print_file_resolver, resolver, parameters=parameters, old=True)
     resolvers = (print_resolver, old_print_resolver,)
     try:
         formatter = pytis.output.Formatter(resolvers, print_spec)

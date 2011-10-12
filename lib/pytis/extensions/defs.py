@@ -184,7 +184,7 @@ class MenuChecker(object):
         """
         self._resolver = pytis.util.resolver()
         print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
-        self._output_resolver = pytis.output.OutputResolver((print_file_resolver, self._resolver))
+        self._output_resolver = pytis.output.OutputResolver(print_file_resolver, self._resolver)
         self._dbconn = config.dbconnection
         connection_data = config.dbconnection
         data = pytis.data.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)

@@ -3010,7 +3010,7 @@ class BrowseForm(FoldableForm):
         parameters = self._formatter_parameters()
         parameters.update({self._PrintResolver.P_NAME: name})
         print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
-        print_resolver = self._PrintResolver((print_file_resolver, self._resolver),
+        print_resolver = self._PrintResolver(print_file_resolver, self._resolver,
                                              parameters=parameters)
         wiki_template_resolver = self._PlainPrintResolver(config.print_spec_dir, extension='text')
         db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')

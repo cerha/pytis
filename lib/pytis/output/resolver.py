@@ -369,44 +369,10 @@ class DatabaseResolver(Resolver):
         return self._get_object(key[:2])    
 
 
-class ProxyResolver(Resolver):
-    """Resolver využívající pro získávání dat jiný resolver.
-
-    Tento resolver umožňuje \"řetězit\" instance resolverů.  V konstruktoru je
-    zadána instance jiného resolveru a proxy resolver z ní vytahuje všechny
-    specifikace.
-
-    Hlavní smysl této třídy je umožnit dynamicky rozšířit existující instanci
-    resolveru a další specifikace.
-
-    """
-    def __init__(self, resolvers, **kwargs):
-        """Inicializuj instanci.
-
-        Argumenty:
-
-          resolver -- resolver, ze kterého jsou specifikace získávány, instance
-            třídy 'Resolver'
-          kwargs -- předává se konstruktoru předka
-
-        """
-        super(ProxyResolver, self).__init__(**kwargs)
-        self._resolvers = resolvers
-
-    def _get_module(self, module_name):
-        errors = []
-        for resolver in self._resolvers:
-            try:
-                return resolver._get_module(module_name)
-            except ResolverError, e:
-                errors.append(e)
-        raise ResolverError("Proxy resolver failed: %s" % errors)
-    
-
-class OutputResolver(ProxyResolver):
+class OutputResolver(Resolver):
     """Resolver předávaný specifikacím výstupu.
 
-    Tento resolver jednak poskytuje standardní specifikace a jednak
+    Tento resolver jednak poskytuje standardní specifikace, jednak tiskové specifikace a jednak
     zpřístupňuje šablonám parametry, prostřednictvím metody
     'output_parameter()' nebo jejího aliasu 'p()'.
     
@@ -414,17 +380,17 @@ class OutputResolver(ProxyResolver):
     OUTPUT_PARAMETERS = 'output-parameters'
     """Jméno modulu parametrů výstupu."""
 
-    def __init__(self, resolver, parameters={}):
+    def __init__(self, print_resolver, specification_resolver, parameters={}):
         """
         Arguments:
 
-          resolver -- common specification resolver, to be passed to the
-            superclass constructor
+          print_resolver -- instance 'pytis.output.FileResolver'
+          specification_resolver -- instance 'pytis.util.Resolver'
           parameters -- dictionary of output parameters, keys must be non-empty
             strings, values may be arbitrary objects
 
         """
-        super(OutputResolver, self).__init__(resolver)
+        super(OutputResolver, self).__init__()
         class P(dict):
             def __getattr__(self, name):
                 try:
@@ -432,21 +398,21 @@ class OutputResolver(ProxyResolver):
                 except KeyError:
                     raise AttributeError(name)
                 return lambda resolver: p
+        self._print_resolver = print_resolver
+        self._specification_resolver = specification_resolver
         self._parameters = P(parameters)
 
     def _get_module(self, module_name):
         if module_name == self.OUTPUT_PARAMETERS:
-            result = self._parameters
+            return self._parameters
         else:
-            result = super(OutputResolver, self)._get_module(module_name)
-        return result
+            return self._print_resolver._get_module(module_name)
 
     def get(self, module_name, spec_name, **kwargs):
-        colon = module_name.find(':')
-        if colon != -1:
-            kwargs['variant'] = module_name[colon+1:]
-            module_name = module_name[:colon]
-        return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
+        try:
+            return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
+        except ResolverError, e:
+            return self._specification_resolver.get(module_name, spec_name, **kwargs)
     
     def output_parameter(self, name, **kwargs):
         """Vrať hodnotu parametru výstupu 'name'.
