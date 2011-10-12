@@ -275,7 +275,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             return True
 
     def _public_spec(self, name):
-        spec_class = None
         try:
             spec_class = resolver().specification(name)
         except Exception as e:
