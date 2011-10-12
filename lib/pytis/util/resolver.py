@@ -158,6 +158,10 @@ class Resolver(object):
             specification instance constructor
 
         """
+        if '.' not in name:
+            # TODO: May be removed when the dot hack is removed from _get_specification().
+            raise ResolverError("Resolver error loading specification '%s': "
+                                "Name doesn't have a dot (temporarily disabled)." % name)
         return self._specification_cache[(name, tuple(kwargs.items()))]
 
     def get(self, name, method_name, **kwargs):
