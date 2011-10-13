@@ -30,6 +30,7 @@ from pytis.presentation import *
 
 import collections
 import config
+import pytis.util
 
 # Zkratky na často používané identifikátory.
     
@@ -291,7 +292,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
                 module_name = os.path.join('output', module_name)
             try:
                 result = pytis.output.OutputResolver._get_module(self, module_name)
-            except ResolverError:
+            except pytis.util.ResolverError:
                 result = self._Spec()
             return result
         
