@@ -1018,11 +1018,11 @@ class MemData(Data):
                 raise ProgramError("Operator not supported:", op_name)
 
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
-               arguments={}, async_count=False):
+               arguments={}, async_count=False, stop_check=None):
         """Inicializace vytahování záznamů.
 
         Bližší popis viz nadtřída.  Argumenty 'condition', 'sort',
-        'transaction' a 'arguments' jsou ignorovány.
+        'transaction', 'arguments', 'async_count' a 'stop_check' jsou ignorovány.
         
         """
         if self._condition is not None:
