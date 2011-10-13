@@ -262,6 +262,8 @@ def wx_callback(evt_function, *args):
                 finally:
                     _system_callback_access_lock.release()
             return result
+        if isinstance(event, wx.IdleEvent) and idle_blocked():
+            return
         global _current_event, _interrupted, _last_user_event
         is_user = _is_user_event(event)
         if is_user:
@@ -322,13 +324,48 @@ def yield_():
         raise UserBreakException()
 
 
+_idle_blocked = False
+
+def idle_blocked():
+    """Return whether idle events are blocked."""
+    return is_busy_cursor() or _idle_blocked
+
+def block_idle(block):
+    """Block or unblock idle events.
+
+    Normally, idle event handlers should implement their own reasonable checks
+    whether to run idle actions or not, e.g. by checking for busy cursor.  But
+    in some rare cases it is necessary to block idle events completely.  In
+    such a case you can use this method; but don't forget to unblock events in
+    finally part!
+
+    Arguments:
+
+      block -- flag indicating whether to block (true) or unblock (false) idle
+        events
+
+    """
+    global _idle_blocked
+    _idle_blocked = block
+
+
 def _stop_check(start_time, confirmed, command_number):
     running, number = CommandHandler.command_running()
     if not running or number != command_number:
         return False
     import config
     if not confirmed and time.time() > start_time + config.run_form_timeout:
-        if run_dialog(Question, u"Zobrazení formuláře už trvá dlouho, má se přerušit?"):
+        # We must block idle events before running the question dialog.  This
+        # prevents recursive stop check dialog invocation from an idle method,
+        # followed by a traceback.  Additionally stop check is typically
+        # invoked during command processing when idle events shouldn't be run
+        # yet.
+        block_idle(True)
+        try:
+            answer = run_dialog(Question, u"Zobrazení formuláře už trvá dlouho, má se přerušit?")
+        finally:
+            block_idle(False)
+        if answer:
             raise UserBreakException()
         else:
             confirmed = True
