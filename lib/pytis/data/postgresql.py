@@ -2030,6 +2030,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pg_query(self._pdbb_command_select.format(args), transaction=transaction)
         if async_count:
             result = self._pg_start_row_counting_thread(transaction, args['selection'])
+        elif stop_check is not None:
+            # Allow stop_check even when sync count is requested.
+            counting_thread = self._pg_start_row_counting_thread(transaction, args['selection'])
+            result, finished = counting_thread.count()
+            assert finished
         else:
             data = self._pg_query(self._pdbb_command_fetch_last.format(args), transaction=transaction)
             self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction)
