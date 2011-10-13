@@ -820,6 +820,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _apply_filter(self, condition):
         self._refresh(when=self.DOIT_IMMEDIATELY, reset={'filter': condition})
+        # Force to count at least one line.  This is to allow user
+        # break in case the first cursor operation is very slow.  We
+        # must do it here, otherwise the delay happens later in
+        # _on_idle where we can't handle it.
+        self._table.number_of_rows(min_value=1)
 
     def _current_column_id(self):
         col = self._current_cell()[1]

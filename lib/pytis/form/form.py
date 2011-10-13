@@ -1345,7 +1345,12 @@ class LookupForm(InnerForm):
         """
         if append and self._lf_filter:
             condition = pytis.data.AND(self._lf_filter, condition)
-        self._apply_filter(condition)
+        old_filter = self._lf_filter
+        try:
+            self._apply_filter(condition)
+        except UserBreakException:
+            self._lf_filter = old_filter
+            self._apply_filter(self._lf_filter)
         if not self._is_user_defined_profile(self._current_profile) \
                 and condition != self._current_profile.filter():
             title = _(u"Nepojmenovaný profil")
