@@ -48,7 +48,10 @@ class CommandHandler:
     on it.
 
     """
-    
+
+    _command_running = False
+    _command_counter = Counter()
+
     @classmethod
     def _get_command_handler_instance(cls):
         """Find an active CommandHandler instance capable to handle commands.
@@ -110,11 +113,14 @@ class CommandHandler:
 
         """
         handler, kwargs = cls._command_handler(command, **kwargs)
+        CommandHandler._command_counter.next()
         try:
             try:
+                CommandHandler._command_running = True
                 busy_cursor(True)
                 return handler.on_command(command, **kwargs)
             finally:
+                CommandHandler._command_running = False
                 busy_cursor(False)
         except UserBreakException:
             pass
@@ -164,10 +170,18 @@ class CommandHandler:
                 return False
         return True
 
+    @classmethod
+    def command_running(cls):
+        """Return whether there is a running command.
+
+        Return pair (RUNNING, NUMBER) where RUNNING is a boolean flag
+        indicating whether some command is being handled and NUMBER is a
+        sequential number of the last handled command.
+
+        """
+        return CommandHandler._command_running, CommandHandler._command_counter.current()
 
 
-
-    
 class Command(object):
     """Reprezentace obecného příkazu uživatelského rozhraní.
 

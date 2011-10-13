@@ -322,10 +322,13 @@ def yield_():
         raise UserBreakException()
 
 
-def _stop_check(start_time, confirmed=False):
+def _stop_check(start_time, confirmed, command_number):
+    running, number = CommandHandler.command_running()
+    if not running or number != command_number:
+        return False
     import config
     if not confirmed and time.time() > start_time + config.run_form_timeout:
-        if run_dialog(Question, u"Otevírání formuláře už trvá dlouho, má se přerušit?"):
+        if run_dialog(Question, u"Zobrazení formuláře už trvá dlouho, má se přerušit?"):
             raise UserBreakException()
         else:
             confirmed = True
@@ -345,8 +348,9 @@ def standard_stop_check_function():
 
     """
     confirmed = [False]
+    __, command_number = CommandHandler.command_running()
     def maybe_stop_check(start_time):
-        confirmed[0] = _stop_check(start_time, confirmed[0])
+        confirmed[0] = _stop_check(start_time, confirmed[0], command_number)
     return maybe_stop_check
 
 
