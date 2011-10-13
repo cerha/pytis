@@ -228,12 +228,13 @@ class MenuChecker(object):
                 print_pos = module.rfind('.')
                 if print_pos < 0:
                     errors.append("Invalid print specification: " + module)
-                print_module_name = module[:print_pos].replace('.', '/')
-                print_class_name = module[print_pos+1:]
-                try:
-                    self._output_resolver.get_object(print_module_name, print_class_name)
-                except pytis.util.ResolverError as e:
-                    errors.append("Failed to load print specification: " + str(e))
+                else:
+                    print_module_name = module[:print_pos].replace('.', '/')
+                    print_class_name = module[print_pos+1:]
+                    try:
+                        self._output_resolver.get_object(print_module_name, print_class_name)
+                    except pytis.util.ResolverError as e:
+                        errors.append("Failed to load print specification: " + str(e))
         return errors
     
     def check_bindings(self, main, side):
