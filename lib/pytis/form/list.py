@@ -1618,12 +1618,25 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         old_sorting = self._lf_sorting
         sorting = super(ListForm, self)._cmd_sort(col=col, direction=direction, primary=primary)
         if sorting is not None and sorting != old_sorting:
-            # Update grouping first.
-            cols = self._sorting_columns()
-            l = min(len(cols), len(self._grouping))
-            self._grouping = tuple(cols[:l])
-            # Make the changes visible.
-            self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': sorting})
+            try:
+                # Update grouping first.
+                cols = self._sorting_columns()
+                l = min(len(cols), len(self._grouping))
+                self._grouping = tuple(cols[:l])
+                # Make the changes visible.
+                self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': sorting})
+                # Force to count at least one line.  This is to allow user
+                # break in case the first cursor operation is very slow.  We
+                # must do it here, otherwise the delay happens later in
+                # _on_idle where we can't handle it.
+                self._table.number_of_rows(min_value=1)
+            except UserBreakException:
+                self._lf_sorting = old_sorting
+                cols = self._sorting_columns()
+                l = min(len(cols), len(self._grouping))
+                self._grouping = tuple(cols[:l])
+                # Make the changes visible.
+                self._refresh(when=self.DOIT_IMMEDIATELY, reset={'sorting': self._lf_sorting})
         return sorting
 
     def _cmd_toggle_aggregation(self, operation):
