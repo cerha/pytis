@@ -787,6 +787,13 @@ class LookupForm(InnerForm):
             instances as values.  Useful only when the table is actually a row
             returning function, otherwise ignored.
           kwargs -- arguments passed to the parent class
+
+        If one of 'filter', 'sorting', 'columns' or 'grouping' is set, an
+        additional profile named "Initial Profile" is added to form profiles
+        with given parameters and this profile becomes the initial profile
+        regardless the default profile specification or user settings.  It is
+        not possible to save this profile and no parameters are influenced by
+        previous user specific form settings.
         
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
@@ -794,10 +801,29 @@ class LookupForm(InnerForm):
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
-        self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"),
-                                        filter=filter, sorting=sorting, columns=columns,
-                                        grouping=grouping)
-        self._profiles = self._load_profiles()
+        self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"))
+        self._profiles = profile_manager().load_profiles(self._profile_spec_name(),
+                                                         self._form_name(),
+                                                         self._view, self._data,
+                                                         self._default_profile)
+        if filter or sorting or columns or grouping:
+            # When profile parameters were passed to the constructor, create an
+            # additional profile according to these paramaters.
+            self._initial_profile = Profile('__constructor_profile__', _(u"Počáteční profil"),
+                                            filter=filter, sorting=sorting, columns=columns,
+                                            grouping=grouping)
+            self._profiles.insert(0, self._initial_profile)
+        else:
+            # Note, that the profile 0 may not be the same as
+            # self._default_profile, but a saved user customized version.
+            default_profile = self._profiles[0]
+            profile_id = (self._get_saved_setting('initial_profile') 
+                          or self._view.profiles().default())
+            if profile_id:
+                self._initial_profile = (find(profile_id, self._profiles, key=lambda p: p.id())
+                                         or default_profile)
+            else:
+                self._initial_profile = default_profile
         self._initial_profile_applied = False
         # The profile instances may contain None values to denote default
         # values.  We need to remember the corresponding real values to be able
@@ -873,16 +899,8 @@ class LookupForm(InnerForm):
         # This must be called in _on_idle espacially because the initial
         # profile may not be valid and we want to make use of handling invalid
         # profiles in _cmd_apply_profile().
-        # Note, that the profile 0 may not be self._default_profile, but
-        # its customization.
-        default_profile = self._profiles[0]
-        profile_id = self._get_saved_setting('initial_profile') or self._view.profiles().default()
-        if profile_id:
-            profile = find(profile_id, self._profiles, key=lambda p: p.id()) or default_profile
-        else:
-            profile = default_profile
-        if profile is not self._current_profile:
-            self._cmd_apply_profile(self._profiles.index(profile))
+        if self._initial_profile is not self._current_profile:
+            self._cmd_apply_profile(self._profiles.index(self._initial_profile))
             dual = self._dualform()
             if dual and self is not dual.main_form():
                 # Force focus back to mainform, as _apply_profile() (for
@@ -1028,11 +1046,6 @@ class LookupForm(InnerForm):
     def _save_profile(self, profile):
         profile_manager().save_profile(self._profile_spec_name(), self._form_name(), profile)
     
-    def _load_profiles(self):
-        manager = profile_manager()
-        return manager.load_profiles(self._profile_spec_name(), self._form_name(), self._view, self._data,
-                                     self._default_profile)
-
     def _apply_profile_parameters(self, profile):
         """Set the form state attributes according to given 'Profile' instance.
 
@@ -1154,7 +1167,8 @@ class LookupForm(InnerForm):
         self.focus()
 
     def _can_update_profile(self):
-        return self._current_profile_changed()
+        return (self._current_profile.id() != '__constructor_profile__'
+                and self._current_profile_changed())
         
     def _cmd_update_profile(self):
         current = self._current_profile
@@ -1186,6 +1200,8 @@ class LookupForm(InnerForm):
         profile_id = self._current_profile.id()
         if profile_id == self._default_profile.id():
             profile = self._default_profile
+        elif profile_id == '__constructor_profile__':
+            profile = self._initial_profile
         else:
             profile = find(profile_id, self._view.profiles(), key=lambda p: p.id())
         profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile_id)
@@ -1193,7 +1209,8 @@ class LookupForm(InnerForm):
         self._apply_profile(profile)
 
     def _can_set_initial_profile(self):
-        return self._current_profile.id() != self._get_saved_setting('initial_profile')
+        return self._current_profile.id() not in (self._get_saved_setting('initial_profile'),
+                                                  '__constructor_profile__')
         
     def _cmd_set_initial_profile(self):
         profile_id = self._current_profile.id()

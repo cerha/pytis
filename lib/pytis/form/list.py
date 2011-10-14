@@ -3106,7 +3106,7 @@ class SideBrowseForm(BrowseForm):
         
         """
         bcol, sbcol = self._binding_column, self._side_binding_column
-        if bcol is None:
+        if bcol is None or self._current_profile.id() == '__constructor_profile__':
             return None
         else:
             if self._current_profile.id() == self._default_profile.id():
