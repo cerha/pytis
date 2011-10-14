@@ -206,9 +206,9 @@ class FormProfileManager(UserSetttingsManager):
 
     This manager is a little more complicated then the others as it must
     understand the logic of the data it is saving/restoring.  The
-    'load_profile()' method must read profile data from two different sources,
-    validate them against the current specification
-    join them into a resulting 'pytis.presentation.Profile' instance
+    'load_profiles()' method must read profile data from two different sources,
+    validate them against the current specification combine them into resulting
+    'pytis.presentation.Profile' instances
 
     Moreover, the filters can not be simply pickled/unpickled as they are.  The
     'pytis.data.Operator' instances often refer to values with pytis data
