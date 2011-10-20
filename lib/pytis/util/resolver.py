@@ -90,8 +90,14 @@ class Resolver(object):
         
     def _get_module(self, name):
         for prefix in self._search and [prefix+'.' for prefix in self._search] or ('',):
+            # TODO: a temporary hack to solve the problem with double prefixes
+            # Should be removed when solved correctly.
+            if name.startswith(prefix):
+                to_import = name
+            else:
+                to_import = prefix + name
             try:
-                return self._import_module(prefix+name)
+                return self._import_module(to_import)
             except ImportError as e:
                 continue
         search_info = self._search and (' (searching in %s)' % ', '.join(self._search)) or ''
