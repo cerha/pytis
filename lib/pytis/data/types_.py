@@ -736,6 +736,19 @@ class Float(Number):
             return unicode(self._format_string % value)
 
         
+class Monetary(Float):
+    """Monetary type.
+
+    Just identifies monetary fields and sets the default precision to 2.
+
+    Web forms will be able to render such fields with locale specific monetary
+    formatting.
+    
+    """
+    def __init__(self, **kwargs):
+        Float.__init__(self, precision=2, **kwargs)
+
+
 class String(Limited):
     """Libovolný string.
 

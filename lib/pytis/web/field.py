@@ -86,8 +86,8 @@ class Link(object):
     def target(self):
         return self._target
 
-def localizable_datetime(value):
-    """Try to convert a 'pytis.data.DateTime' value to 'lcg.LocalizableDateTime'.
+def localizable_export(value):
+    """Try to convert a pytis value into a corresponding 'lcg.Localizable'.
 
     Arguemnts:
       value -- 'pytis.data.Value' instance to be converted.
@@ -108,20 +108,26 @@ def localizable_datetime(value):
     if value.value() is not None:
         type_cls = value.type().__class__
         if type_cls is pytis.data.DateTime:
-            format = '%Y-%m-%d %H:%M:%S'
-            localizable = lcg.LocalizableDateTime
+            return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d %H:%M:%S'))
         elif type_cls is pytis.data.Date:
-            format = '%Y-%m-%d'
-            localizable = lcg.LocalizableDateTime
+            return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d'))
         elif type_cls is pytis.data.Time: 
-            format = '%H:%M:%S'
-            localizable = lcg.LocalizableTime
+            return lcg.LocalizableTime(value.value().strftime('%H:%M:%S'))
+        elif type_cls is pytis.data.Monetary: 
+            return lcg.Monetary(value.value(), precision=value.type().precision())
+        elif type_cls is pytis.data.Float:
+            return lcg.Decimal(value.value(), precision=value.type().precision())
+        elif type_cls is pytis.data.Integer: 
+            return lcg.Decimal(value.value())
         else:
             return value.export()
-        return localizable(value.value().strftime(format))
+        return localizable
     else:
         return ''
-    
+
+# For backwards compatibility.
+localizable_datetime = localizable_export
+
     
 class Field(object):
     """Internal form field representation (all attributes are read-only)."""
@@ -173,6 +179,8 @@ class Field(object):
             exporter = MultilineFieldExporter
         elif isinstance(type, pytis.data.String):
             exporter = StringFieldExporter
+        elif isinstance(type, pytis.data.Number):
+            exporter = NumericFieldExporter
         else:
             exporter = TextFieldExporter
         self.exporter = exporter(row, self, form, uri_provider)
@@ -209,7 +217,7 @@ class FieldExporter(object):
 
         """
         field = self._field
-        value = self._value().export()
+        value = localizable_export(self._value())
         if value and not isinstance(value, lcg.Localizable):
             g = context.generator()
             escaped = g.escape(self._row.format(field.id))
@@ -345,13 +353,17 @@ class TextFieldExporter(FieldExporter):
     
     def _editor_kwargs(self, context, prefill, error):
         kwargs = super(TextFieldExporter, self)._editor_kwargs(context, prefill, error)
-        value = prefill or self._value().export()
+        value = prefill or self._format(context)
         maxlen = self._maxlen()
         size = self._field.spec.width(maxlen)
         return dict(kwargs, value=value, size=size, maxlength=maxlen)
 
     def _editor(self, context, **kwargs):
         return context.generator().field(**kwargs)
+
+    
+class NumericFieldExporter(TextFieldExporter):
+    pass
 
     
 class StringFieldExporter(TextFieldExporter):
@@ -411,17 +423,9 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
 class DateTimeFieldExporter(TextFieldExporter):
     _HANDLER = 'pytis.DateTimeField'
     
-    def _format(self, context):
-        return localizable_datetime(self._value())
-    
     def _editor_date_format(self, locale_data):
         return locale_data.date_format + ' ' + locale_data.time_format
     
-    def _editor_kwargs(self, context, prefill, error):
-        kwargs = super(DateTimeFieldExporter, self)._editor_kwargs(context, prefill, error)
-        # Use localizable values also inside editor fields (exported value is used by default).
-        return dict(kwargs, value=prefill or self._format(context))
-
     def _maxlen(self):
         # TODO: Respect date format!
         return 16
@@ -480,7 +484,7 @@ class BooleanFieldExporter(FieldExporter):
     _HANDLER = 'pytis.CheckboxField'
 
     def _format(self, context):
-        # Translators: Boolean value display.  Should be Yes/No in the meaning On/Off.
+        # Translators: Boolean value display.  Should be Yes/No in the meaning True/False.
         fid = self._field.id
         return self._row.display(fid) or self._row[fid].value() and _(u"Yes") or _(u"No")
 
