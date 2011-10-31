@@ -39,9 +39,12 @@ import wx
 class FormProfile(object):
     """Temporary hack to avoid application crashing on unpickling old form profiles."""
     def __init__(self, *args, **kwargs):
-        log(OPERATIONAL, "FormProfile instantiated:", (args, kwargs))
+        log(OPERATIONAL, "%s instantiated:" % self.__class__.__name__, (args, kwargs))
         
 
+class FormSettings(FormProfile):
+    pass
+        
 class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     """Společná nadtřída formulářů.
 
