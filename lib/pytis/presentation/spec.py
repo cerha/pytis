@@ -3076,6 +3076,7 @@ class Field(object):
         completer = self._completer
         if isinstance(completer, basestring):
             # Completer was defined as a specification name.
+            import config
             data_spec = config.resolver.get(completer, 'data_spec')
             completer = pytis.data.DataEnumerator(data_spec, **self._enumerator_kwargs)
         return completer
@@ -3091,6 +3092,7 @@ class Field(object):
         if enumerator is None:
             enumerator = self._codebook
         if isinstance(enumerator, basestring):
+            import config
             enumerator = config.resolver.get(enumerator, 'data_spec')
         if isinstance(enumerator, pytis.data.DataFactory):
             enumerator = pytis.data.DataEnumerator(enumerator, **self._enumerator_kwargs)
