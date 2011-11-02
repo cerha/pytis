@@ -555,6 +555,14 @@ class DescriptiveDualForm(BrowseShowDualForm):
     class _SideForm(ShowForm):
         def _filter_menu(self):
             return None
+        def _apply_profile(self, profile, **kwargs):
+            # It makes little sense to apply profiles in this form.
+            # What is more important: Disabling this method fixes the problem
+            # of choosing wrong row in the side form when
+            # _apply_initial_profile gets called in _on_idle after a row has
+            # been selected in the main form but still before the other row
+            # gets replaced in the side form.
+            pass
     
     def _init_attributes(self, orientation=Orientation.HORIZONTAL, **kwargs):
         self._in_mainform_selection = False
