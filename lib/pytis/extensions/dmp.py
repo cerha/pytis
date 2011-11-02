@@ -304,18 +304,11 @@ class DMPObject(object):
 
     def _specification(self, name, messages):
         resolver = self._resolver()
-        pos = name.rfind('.')
-        if pos == -1:
-            add_message(messages, DMPMessage.NOTE_MESSAGE,
-                        "Ignoring specification without module", (name,))
-            return None
-        module_name = name[:pos].replace('.', '/')
-        class_name = name[pos+1:]
         try:
-            return resolver.specification(module_name, class_name)
+            return resolver.specification(name)
         except Exception as e:
             add_message(messages, DMPMessage.ERROR_MESSAGE,
-                        "Couldn't load specification", (name, e,))
+                        "Couldn't load specification", (e,))
             return None
 
     def _disable_triggers(self, transaction=None):
