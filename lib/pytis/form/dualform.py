@@ -991,6 +991,14 @@ class MultiBrowseDualForm(BrowseDualForm):
             return self._view.bindings()
         def _print_form_kwargs(self):
             return dict(form_bindings=self.bindings())
+        def filter(self, *args, **kwargs):
+            BrowseForm.filter(self, *args, **kwargs)
+            row = self.current_row()
+            if row is None:
+                # How to clear the side form?
+                pass
+            else:
+                self._guardian._do_selection(row)
     
     def _create_view_spec(self):
         return None
