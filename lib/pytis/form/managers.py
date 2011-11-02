@@ -455,7 +455,7 @@ class FormProfileManager(UserSetttingsManager):
         for row in self._rows(spec_name=spec_name, transaction=transaction):
             packed_filter = pickle.loads(base64.b64decode(row['pickle'].value()))
             filter, filter_errors = self._validate_filter(data_object, packed_filter)
-            params, param_errors = load_params(profile.id())
+            params, param_errors = load_params(row['profile_id'].value())
             profiles.append(Profile(row['profile_id'].value(),
                                     row['title'].value(),
                                     filter=filter,
