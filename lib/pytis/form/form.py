@@ -904,7 +904,7 @@ class LookupForm(InnerForm):
         return {}
 
     def _apply_initial_profile(self):
-        # This must be called in _on_idle espacially because the initial
+        # This must be called in _on_idle especially because the initial
         # profile may not be valid and we want to make use of handling invalid
         # profiles in _cmd_apply_profile().
         if self._initial_profile is not self._current_profile:
