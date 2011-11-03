@@ -1499,10 +1499,18 @@ def init_access_rights(connection_data):
         return
     _user_roles = roles
     S = pytis.data.String()
+    _access_rights = {}
+    # Prefill _access_rights so that default access by specification rights in
+    # has_action_access is possible only for shortnames without any rights
+    # defined in DMP.
+    actions_data = pytis.data.dbtable('e_pytis_action_rights', ('shortname', 'status',),
+                                      connection_data)
+    condition = pytis.data.LE('status', pytis.data.Value(pytis.data.Integer(), 0))
+    for value in actions_data.distinct('shortname', condition=condition):
+        _access_rights[value.value()] = {}
     rights_data = pytis.data.dbtable('pytis_view_user_rights',
                                      (('shortname', S,), ('rights', S,), ('columns', S,),),
                                      connection_data, arguments=())
-    _access_rights = {}
     def process(row):
         shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
         if columns_string:
