@@ -1145,7 +1145,11 @@ class LookupForm(InnerForm):
                     self._profiles[index] = profile
                 profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile.id())
         else:
-            self._apply_profile(profile)
+            orig_profile = self._current_profile
+            try:
+                self._apply_profile(profile)
+            except UserBreakException:
+                self._apply_profile(orig_profile)
         self.focus()
 
     def _cmd_save_new_profile(self, title):

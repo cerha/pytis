@@ -178,6 +178,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._update_label_height()
         self._update_grid(init_columns=True)
         self._refresh(when=self.DOIT_IMMEDIATELY)
+        # Force to count at least one line.  This is to allow user
+        # break in case the first cursor operation is very slow.  We
+        # must do it here, otherwise the delay happens later in
+        # _on_idle where we can't handle it.
+        self._table.number_of_rows(min_value=1)
             
     def _profile_parameters_to_save(self):
         return dict(super(ListForm, self)._profile_parameters_to_save(),
@@ -590,6 +595,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._in_select_cell = True
         if __debug__:
             log(DEBUG, 'Přechod na buňku gridu:', (row, col))
+        self._table.number_of_rows(min_value=1)
         try:
             g = self._grid
             current_row = g.GetGridCursorRow()
