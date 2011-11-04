@@ -554,11 +554,16 @@ class RadioFieldExporter(CodebookFieldExporter):
     
     def _editor(self, context, id=None, **kwargs):
         g = context.generator()
-        value = self._value().value()
+        value = self._value()
         radios = []
-        for i, (val, strval, display) in enumerate(self._enumeration(context)):
+        choices = self._enumeration(context)
+        if not value.type().not_null():
+            null_display = self._field.spec.null_display()
+            if null_display:
+                choices.insert(0, (None, '', null_display))
+        for i, (val, strval, display) in enumerate(choices):
             radio_id = id +'-'+ str(i)
-            radio = g.radio(value=strval, checked=(val==value), id=radio_id, **kwargs)
+            radio = g.radio(value=strval, checked=(val==value.value()), id=radio_id, **kwargs)
             label = g.label(display, radio_id)
             radios.append(g.div(radio + label))
         return g.div(radios, id=id, cls='radio-group')
