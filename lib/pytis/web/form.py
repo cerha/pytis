@@ -584,14 +584,19 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             import simplejson as json
         request_number = req.param('_pytis_form_update_request')
         changed_field = str(req.param('_pytis_form_changed_field'))
-        filters = json.loads(req.param('_pytis_form_filter_state'))
+        filter_state = req.param('_pytis_form_filter_state')
+        if filter_state:
+            filters = json.loads(filter_state)
+        else:
+            filters = {}
         fields = {}
         computed_fields = [f.id() for f in row.fields() if f.computer() is not None]
         for fid in layout.order():
             fields[fid] = fdata = {}
             if fid != changed_field:
                 fdata['editable'] = row.editable(fid)
-                if fid in computed_fields and row.invalid_string(fid) is None:
+                if fid in computed_fields and row.invalid_string(fid) is None \
+                        and not isinstance(row.type(fid), pd.Binary):
                     value = row[fid]
                     if isinstance(value.type(), pd.DateTime):
                         exported_value = localizable_datetime(value)
