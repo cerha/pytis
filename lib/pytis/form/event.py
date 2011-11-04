@@ -328,7 +328,11 @@ _idle_blocked = False
 
 def idle_blocked():
     """Return whether idle events are blocked."""
-    return is_busy_cursor() or _idle_blocked
+    # We used to check for busy_cursor here as well.
+    # But that didn't work: Message dialog didn't show its content.  Apparently
+    # pytis dialogs depend on _on_idle action invocation, while the cursor is
+    # set to busy, to finish their construction.
+    return _idle_blocked
 
 def block_idle(block):
     """Block or unblock idle events.
@@ -350,6 +354,8 @@ def block_idle(block):
 
 
 def _stop_check(start_time, confirmed, command_number):
+    if is_busy_cursor():
+        return confirmed
     running, number = CommandHandler.command_running()
     if not running or number != command_number:
         return False
