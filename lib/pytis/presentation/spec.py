@@ -3406,6 +3406,11 @@ class Specification(object):
         if self.__class__.__module__:
             spec_name = self.__class__.__module__ + '.' + spec_name
         spec_name = spec_name.replace('/', '.')
+        import config
+        for prefix in config.search_modules:
+            prefix = prefix + '.'
+            if spec_name.startswith(prefix) and len(spec_name) > len(prefix):
+                spec_name = spec_name[len(prefix):]
         return spec_name
 
     def _create_data_spec(self):
