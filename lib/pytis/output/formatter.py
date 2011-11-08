@@ -393,7 +393,7 @@ class LCGFormatter(object):
         presentation.landscape = self._page_layout.get(PAGE_LANDSCAPE_MODE)
         start_time_export = pytis.data.DateTime.now()
         exporter = lcg.pdf.PDFExporter()
-        presentation_args = [(presentation, lcg.ContentMatcher(),)] + (self._style or [])
+        presentation_args = (self._style or [])
         presentation_set = lcg.PresentationSet(presentation_args)
         context = exporter.context(lcg_content, None, presentation=presentation_set)
         try:
