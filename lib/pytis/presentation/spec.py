@@ -2293,32 +2293,41 @@ class Link(object):
 
     """
     
-    def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None, enabled=True):
+    def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None,
+                 enabled=True, filtered=False):
         """Arguments:
 
           name -- name of the referred specification as a string.
 
-          column -- column identifier in the referred specification.  This column is used to locate
-            the record corresponding to the current value of the refering field.
+          column -- column identifier in the referred specification.  This
+            column is used to locate the record corresponding to the current
+            value of the refering field.
 
-          type -- type of the form used to display the referred view/record as one of 'FormType'
-            constants.  The default type is 'FormType.BROWSE'.  This argument may also be used as
-            positional.
+          type -- type of the form used to display the referred view/record as
+            one of 'FormType' constants.  The default type is
+            'FormType.BROWSE'.  This argument may also be used as positional.
 
-          binding -- 'Binding' specification identifier (string) determining the current side view
-            shown along with the referred record.  A binding with given identifier must exist in the
-            'bindings' specification of 'name'.
+          binding -- 'Binding' specification identifier (string) determining
+            the current side view shown along with the referred record.  A
+            binding with given identifier must exist in the 'bindings'
+            specification of 'name'.
 
           label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
             pojmenován automaticky a zařazen mezi automaticky generované
             odkazy.  Pokud je titulek uveden, bude v uživatelském rozhraní
             odkaz uveden samostatně před všemi automaticky generovanými odkazy.
             
-          enabled -- funkce, vracející pravdu, pokud má být odkaz aktivní a
-            nepravdu v opačném případě.  Funkci je předán jeden argument --
-            instance `PresentedRow' aktuálního řádku.  Namísto funkce může být
-            předána též přímo boolean hodnota, která dostupnost akce určuje
-            staticky.
+          enabled -- function of one argument ('PresentedRow' instance)
+            returning True when the link is active for given record or False
+            otherwise.  A boolean value may also be used directly instead of a
+            function when the state can be defined statically (or determined in
+            advance).
+
+          filtered -- True when the referred form is to be filtered to contain
+            only records currently present in the referring view (using the in
+            operator).  The current filtering condition of the referring form
+            will also be respected in the referred form filter.  Only relevant
+            for links with 'type'='FormType.BROWSE'.
             
         """
         assert isinstance(name, basestring)
@@ -2327,36 +2336,35 @@ class Link(object):
         assert type in public_attributes(FormType)
         assert label is None or isinstance(label, basestring)
         assert isinstance(enabled, collections.Callable) or isinstance(enabled, bool)
+        assert isinstance(filtered, bool) and not filtered or type == FormType.BROWSE
         self._name = name
         self._column = column
         self._binding = binding
         self._type = type
         self._label = label
         self._enabled = enabled
+        self._filtered = filtered
                 
     def name(self):
-        """Vrať název specifikace odkazovaného náhledu."""
         return self._name
 
     def column(self):
-        """Vrať id odpovídajícího sloupce v odkazovaném náhledu."""
         return self._column
 
     def type(self):
-        """Vrať konstantu typu formuláře, který má být otevřen."""
         return self._type
 
     def binding(self):
-        """Return the identifier of the target binding specification or None."""
         return self._binding
 
     def label(self):
-        """Vrať typ formuláře, který má být otevřen."""
         return self._label
 
     def enabled(self):
-        """Vrať funkci k zjištění dostupnosti akce, nebo přímo bool hodnotu."""
         return self._enabled
+    
+    def filtered(self):
+        return self._filtered
     
 
 class ListLayout(object):

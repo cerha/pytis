@@ -2921,22 +2921,16 @@ class BrowseForm(FoldableForm):
                                           [(f, link)]) for link in f.links()])
         # Create automatic links for codebook fields.
         self._automatic_links = []
-        links = [(f, Link(cb, col))  for f, cb, col in
-                 remove_duplicates([(f, cb, e.value_column()) for f, cb, e in
-                                    [(f, self._row.codebook(f.id()),
-                                      self._row.type(f.id()).enumerator())
-                                     for f in self._fields] if e and cb])]
         linkdict = {}
-        # Group automatic links by target spec name.
-        for f, link in links:
-            try:
-                a = linkdict[link.name()]
-            except KeyError:
-                a = linkdict[link.name()] = []
-            a.append((f, link))
-        linklist = linkdict.items()
-        linklist.sort()
-        self._automatic_links = [(link_title(name), items) for name, items in linklist]
+        for f, cb, col in remove_duplicates([(f, cb, e.value_column()) for f, cb, e in
+                                             [(f, self._row.codebook(f.id()),
+                                               self._row.type(f.id()).enumerator())
+                                              for f in self._fields] if e and cb]):
+            links = linkdict.setdefault(cb, [])
+            links.append((f, Link(cb, col)))
+            links.append((f, Link(cb, col, filtered=True)))
+        self._automatic_links = [(link_title(name), items)
+                                 for name, items in sorted(linkdict.items())]
         
     def _formatter_parameters(self):
         name = self._name
@@ -2965,30 +2959,44 @@ class BrowseForm(FoldableForm):
     def _link_mitems(self, row, linkspec):
         def mitem(title, f, link, row):
             type, name, enabled = link.type(), link.name(), link.enabled()
-            pair = {link.column(): row[f.id()]}
             if type == FormType.INSERT:
-                cmd = Application.COMMAND_NEW_RECORD(name=name,prefill=pair)
+                cmd = Application.COMMAND_NEW_RECORD(name=name,
+                                                     prefill={link.column(): row[f.id()]})
                 hlp = _(u"Vložit záznam pro hodnotu '%s' sloupce '%s'.") \
                       % (row.format(f.id(), secure=''), f.column_label())
                 icon = 'link-new-record'
             else:
                 kwargs = {}
-                if name.find('::') != -1:
-                    assert type == FormType.BROWSE
-                    cls = BrowseDualForm
-                elif link.binding():
-                    assert type == FormType.BROWSE
-                    cls = MultiBrowseDualForm
-                    kwargs['binding'] = link.binding()
-                else:
-                    mapping = {FormType.BROWSE: BrowseForm,
-                               FormType.EDIT:   PopupEditForm,
-                               FormType.VIEW:   ShowForm}
-                    cls = mapping[type]
-                cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls, select_row=pair,
+                if type == FormType.BROWSE:
+                    if name.find('::') != -1:
+                        cls = BrowseDualForm
+                    elif link.binding():
+                        cls = MultiBrowseDualForm
+                        kwargs['binding'] = link.binding()
+                    else:
+                        cls = BrowseForm
+                    if link.filtered():
+                        if self._current_profile.id() == self._default_profile.id():
+                            profile_id = None
+                        else:
+                            profile_id = self._current_profile.id()
+                        kwargs['filter'] = pytis.form.IN(link.column(), self.name(), f.id(),
+                                                         profile_id)
+                        hlp = _(u"Filtrovat řádky aktuálně obsažené ve sloupci '%(column)s' "
+                                "aktuálního náhledu.")
+                    else:
+                        hlp = _(u"Vyhledat záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
+                elif type == FormType.EDIT:
+                    cls = PopupEditForm
+                    hlp = _(u"Upravit záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
+                elif type == FormType.VIEW:
+                    cls = ShowForm
+                    hlp = _(u"Upravit záznam pro hodnotu '%(value)s' sloupce '%s(column)'.")
+                cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls,
+                                                   select_row={link.column(): row[f.id()]},
                                                    **kwargs)
-                hlp = _(u"Vyhledat záznam pro hodnotu '%s' sloupce '%s'.") \
-                      % (row.format(f.id(), secure=''), f.column_label())
+                hlp %= dict(value=row.format(f.id(), secure=''),
+                            column=f.column_label())
                 icon = 'link'
             if isinstance(enabled, collections.Callable):
                 enabled = enabled(row)
@@ -3002,8 +3010,13 @@ class BrowseForm(FoldableForm):
                 f, link = links[0]
                 items.append(mitem(title, f, link, row))
             elif len(links) != 0:
-                subitems = [mitem(_(u"Přes hodnotu sloupce '%s'") % f.label(), f, link, row)
-                            for f, link in links]
+                subitems = []
+                for f, link in links:
+                    if link.filtered():
+                        subtitle = _(u"Filtrovat podle sloupce '%s'") % f.label()
+                    else:
+                        subtitle = _(u"Vyhledat aktuální hodnotu sloupce '%s'") % f.label()
+                    subitems.append(mitem(subtitle, f, link, row))
                 items.append(Menu(title, subitems))
         return items
                            
