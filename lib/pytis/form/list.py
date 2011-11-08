@@ -2915,7 +2915,7 @@ class BrowseForm(FoldableForm):
             return mapping[type] % title
         # Create links lists as accepted by _link_mitems()
         self._explicit_links = []
-        for  f in self._fields:
+        for f in self._fields:
             self._explicit_links.extend([(link.label() or
                                           link_title(link.name(), link.type(), link.binding()),
                                           [(f, link)]) for link in f.links()])
@@ -2927,8 +2927,9 @@ class BrowseForm(FoldableForm):
                                                self._row.type(f.id()).enumerator())
                                               for f in self._fields] if e and cb]):
             links = linkdict.setdefault(cb, [])
-            links.append((f, Link(cb, col)))
-            links.append((f, Link(cb, col, filtered=True)))
+            links.extend(((f, Link(cb, col)),
+                          (f, Link(cb, col, filter=Link.FILTER_IN)),
+                          (f, Link(cb, col, filter=Link.FILTER_NOT_IN))))
         self._automatic_links = [(link_title(name), items)
                                  for name, items in sorted(linkdict.items())]
         
@@ -2957,11 +2958,12 @@ class BrowseForm(FoldableForm):
         return items
 
     def _link_mitems(self, row, linkspec):
-        def mitem(title, f, link, row):
+        def mitem(f, link, row, force_title=None):
             type, name, enabled = link.type(), link.name(), link.enabled()
             if type == FormType.INSERT:
                 cmd = Application.COMMAND_NEW_RECORD(name=name,
                                                      prefill={link.column(): row[f.id()]})
+                title = _(u"Vložit aktuální hodnotu")
                 hlp = _(u"Vložit záznam pro hodnotu '%s' sloupce '%s'.") \
                       % (row.format(f.id(), secure=''), f.column_label())
                 icon = 'link-new-record'
@@ -2975,49 +2977,56 @@ class BrowseForm(FoldableForm):
                         kwargs['binding'] = link.binding()
                     else:
                         cls = BrowseForm
-                    if link.filtered():
-                        if self._current_profile.id() == self._default_profile.id():
-                            profile_id = None
+                    title = _(u"Vyhledat aktuální hodnotu")
+                    hlp = _(u"Vyhledat záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
+                    filter = link.filter()
+                    if filter:
+                        if filter in (Link.FILTER_IN, Link.FILTER_NOT_IN):
+                            if self._current_profile.id() == self._default_profile.id():
+                                profile_id = None
+                            else:
+                                profile_id = self._current_profile.id()
+                            kwargs['filter'] = pytis.form.IN(link.column(), self.name(), f.id(),
+                                                             profile_id)
+                            if filter == Link.FILTER_NOT_IN:
+                                kwargs['filter'] = pytis.data.NOT(kwargs['filter'])
+                                title = _(u"Filtrovat nepřítomné hodnoty")
+                                hlp = _(u"Filtrovat řádky neobsažené ve sloupci '%(column)s' "
+                                        u"současného náhledu.")
+                            else:
+                                title = _(u"Filtrovat přítomné hodnoty")
+                                hlp = _(u"Filtrovat řádky aktuálně obsažené ve sloupci '%(column)s' "
+                                        u"současného náhledu.")
                         else:
-                            profile_id = self._current_profile.id()
-                        kwargs['filter'] = pytis.form.IN(link.column(), self.name(), f.id(),
-                                                         profile_id)
-                        hlp = _(u"Filtrovat řádky aktuálně obsažené ve sloupci '%(column)s' "
-                                "aktuálního náhledu.")
-                    else:
-                        hlp = _(u"Vyhledat záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
+                            kwargs['filter'] = filter(row)
                 elif type == FormType.EDIT:
                     cls = PopupEditForm
+                    title = _(u"Upravit záznam sloupce '%s'") % f.label()
                     hlp = _(u"Upravit záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
                 elif type == FormType.VIEW:
                     cls = ShowForm
+                    title = _(u"Zobrazit záznam sloupce '%s'") % f.label()
                     hlp = _(u"Upravit záznam pro hodnotu '%(value)s' sloupce '%s(column)'.")
                 cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls,
                                                    select_row={link.column(): row[f.id()]},
                                                    **kwargs)
-                hlp %= dict(value=row.format(f.id(), secure=''),
-                            column=f.column_label())
                 icon = 'link'
             if isinstance(enabled, collections.Callable):
                 enabled = enabled(row)
             if not enabled:
                 cmd = Application.COMMAND_NOTHING(enabled=False)
-            return MItem(title, command=cmd, help=hlp, icon=icon)
+            return MItem(force_title or title, command=cmd,
+                         help=hlp % dict(value=row.format(f.id(), secure=''),
+                                         column=f.column_label()),
+                         icon=icon)
         items = []
         for title, links in linkspec:
             links = [(f, link) for f, link in links if row[f.id()].value() is not None]
             if len(links) == 1:
                 f, link = links[0]
-                items.append(mitem(title, f, link, row))
+                items.append(mitem(f, link, row, title))
             elif len(links) != 0:
-                subitems = []
-                for f, link in links:
-                    if link.filtered():
-                        subtitle = _(u"Filtrovat podle sloupce '%s'") % f.label()
-                    else:
-                        subtitle = _(u"Vyhledat aktuální hodnotu sloupce '%s'") % f.label()
-                    subitems.append(mitem(subtitle, f, link, row))
-                items.append(Menu(title, subitems))
+                items.append(Menu(title, [mitem(f, link, row) for f, link in links]))
         return items
                            
     def _context_menu(self):

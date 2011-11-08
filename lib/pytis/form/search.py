@@ -320,6 +320,9 @@ class SFDialog(SFSDialog):
             return (op, col1, col2, value),
         elif name == 'IN' and isinstance(operator, pytis.form.IN):
             return ((operator,),)
+        elif name == 'NOT' and len(operator.args()) == 1 \
+                and isinstance(operator.args()[0], pytis.form.IN):
+            return ((operator,),)
         else:
             raise Exception("Unsupported operator: "+ name)
 
@@ -354,11 +357,16 @@ class SFDialog(SFSDialog):
                 button(_(u"Odebrat"), lambda e: self._on_remove(i),
                        _(u"Zrušit tuto podmínku"), enabled=n > 1))
         def create_in_operator(i, n, operator):
+            if operator.name() == 'NOT':
+                op_label = _(u"NOT IN")
+                operator = operator.args()[0]
+            else:
+                op_label = _(u"IN")
             col = self._find_column(operator.column_id())
             spec = operator.spec_title()
             if operator.profile_name():
                 spec += ' / ' + operator.profile_name()
-            text = "%s IN %s (%s)" % (col.label(), spec, operator.table_column_label())
+            text = "%s %s %s (%s)" % (col.label(), op_label, spec, operator.table_column_label())
             ctrl = label(text)
             ctrl._pytis_in_operator = operator
             return (ctrl,
