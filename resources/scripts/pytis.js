@@ -69,10 +69,11 @@ pytis.FormHandler = Class.create({
 		// checkbox fields are not there if unchecked.
 		if ((id in values || id in last_values) && values[id] != last_values[id]) {
 		    document.body.style.cursor = "wait";
+		    var filter_state = (this._filters ? $H(this._filters).toJSON() : {});
 		    this._form.request({
 			parameters: {_pytis_form_update_request: ++this._last_request_number,
 			             _pytis_form_changed_field: id,
- 			             _pytis_form_filter_state: $H(this._filters).toJSON()},
+ 			             _pytis_form_filter_state: filter_state},
 			onSuccess: this.update.bind(this)
 		    });
 		    break;
