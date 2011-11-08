@@ -397,7 +397,7 @@ class LCGFormatter(object):
         presentation_set = lcg.PresentationSet(presentation_args)
         context = exporter.context(lcg_content, None, presentation=presentation_set)
         try:
-            pdf = exporter.export(context)
+            pdf = exporter.export(context, global_presentation=presentation)
         except lcg.SubstitutionIterator.IteratorError, e:
             message = _("Chybné použití iterátoru.\n"
                         "Možná se v tabulce odkazujete na neexistující nebo nepřístupný objekt?\n")
