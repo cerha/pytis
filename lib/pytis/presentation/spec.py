@@ -1160,7 +1160,7 @@ class ViewSpec(object):
 
           title -- the title of this view as a (unicode) string.  The title is
             used in browse form headings and in other contexts, where the
-            entity is refered as whole (all the records).  Thus the title
+            entity is referred as whole (all the records).  Thus the title
             should mostly be in plural (for example 'Invoices').
             
           singular -- the title of a single item (one record) of the entity as
@@ -2244,7 +2244,7 @@ class CodebookSpec(object):
         return self._display
     
     def prefer_display(self):
-        """Return true if the display should be prefered over the internal codebook value."""
+        """Return true if the display should be preferred over the internal codebook value."""
         return self._prefer_display
         
     def display_size(self):
@@ -2296,17 +2296,17 @@ class Link(object):
     def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None, enabled=True):
         """Arguments:
 
-          name -- name of the refered specification as a string.
+          name -- name of the referred specification as a string.
 
-          column -- column identifier in the refered specification.  This column is used to locate
+          column -- column identifier in the referred specification.  This column is used to locate
             the record corresponding to the current value of the refering field.
 
-          type -- type of the form used to display the refered view/record as one of 'FormType'
+          type -- type of the form used to display the referred view/record as one of 'FormType'
             constants.  The default type is 'FormType.BROWSE'.  This argument may also be used as
             positional.
 
           binding -- 'Binding' specification identifier (string) determining the current side view
-            shown along with the refered record.  A binding with given identifier must exist in the
+            shown along with the referred record.  A binding with given identifier must exist in the
             'bindings' specification of 'name'.
 
           label -- titulek odkazu v menu.  Pokud není uveden, bude odkaz
@@ -2702,7 +2702,7 @@ class Field(object):
             constructor of field's data type instance.  These arguments
             override the values of arguments, that the system would normally
             use for data type construction, so you can override certain data
-            type properties this way.  It is prefered to overriding the type
+            type properties this way.  It is preferred to overriding the type
             completely by passing a 'pytis.data.Type' instance as the 'type'
             argument.  See also 'type' argument's documentation.
 
