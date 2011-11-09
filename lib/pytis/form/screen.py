@@ -2426,7 +2426,9 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         style = wx.TE_MULTILINE | wx.TE_DONTWRAP | wx.TE_READONLY
         ctrl = wx.TextCtrl(parent, style=style)
         ctrl.SetValue(content)
-        ctrl.SetBestFittingSize(char2px(ctrl, width, height))
+        size = char2px(ctrl, width, height)
+        # Slightly enlarge the size to avoid scrollbars when not necessary (for small sizes).
+        ctrl.SetBestFittingSize((size[0]+30, size[1]+2))
         return ctrl
     elif format == TextFormat.LCG:
         html = lcg_to_html(content)
