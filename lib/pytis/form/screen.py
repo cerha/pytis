@@ -50,8 +50,6 @@ if config.http_proxy is not None:
     session = libwebkit.webkit_get_default_session()
     libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
 
-clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-clipboard.connect("owner-change", lambda clipboard, event: on_clipboard_copy(clipboard.wait_for_text()))
 
 _WX_COLORS = {}
 _WX_COLOR_DB = {}
@@ -118,7 +116,7 @@ def copy_to_clipboard(text):
 
     Even though this function itself doesn't handle windows clipboard, the text
     will be automatically propagated if pytis.windows is available thanks to
-    the 'on_clipboard_copy' callback.
+    the 'Application._on_clipboard_copy' callback.
 
     """
     assert isinstance(text, basestring)
@@ -137,24 +135,6 @@ def copy_to_clipboard(text):
     ctrl.SetSelection(0, len(text))
     ctrl.Copy()
     ctrl.Destroy()
-
-def on_clipboard_copy(text):
-    """Handle event of text copied into system clipboard.
-
-    This function propagates all local clipboard changes into the remote
-    windows clipboard when pytis.windows is available.  Don't use it to copy
-    things to the clipboard.  Copy them to the local system clipboard
-    (eg. through standard wx methods of wx controls or using the function
-    copy_to_clipboard() when no aplicable control is available).
-
-    """
-    assert isinstance(text, basestring)
-    if pytis.windows.windows_available():
-        nx_ip  = pytis.windows.nx_ip()
-        log(EVENT, 'Copy text to windows clipboard on %s' % (nx_ip,))
-        if isinstance(text, str):
-            text = unicode(text)
-        pytis.windows.set_clipboard_text(text)
 
 def paste_from_clipboard(ctrl):
     """Paste text from clipboard to 'wx.TextCtrl' widget.
