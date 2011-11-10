@@ -638,6 +638,9 @@ class TableRowIterator(object):
     def __iter__(self):
         return self
 
+    def __len__(self):
+        return len(self._rows)
+
     def next(self):
         self._pointer += 1
         if self._pointer >= len(self._rows):
