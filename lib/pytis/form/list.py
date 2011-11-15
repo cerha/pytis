@@ -2895,12 +2895,12 @@ class BrowseForm(FoldableForm):
             menu += (MSeparator(),) + tuple(action_items)
         self._context_menu_static_part = menu
         # The dynamic part of the menu is created based on the links.
-        def link_title(name, type=FormType.BROWSE, binding=None):
+        def spec_title(name, binding=None):
             if name.find('::') != -1:
                 name1, name2 = name.split('::')
                 title = resolver().get(name1, 'binding_spec')[name2].title() or \
-                        ' / '.join((resolver().get(name1, 'view_spec').title(),
-                                    resolver().get(name2, 'view_spec').title()))
+                    ' / '.join((resolver().get(name1, 'view_spec').title(),
+                                resolver().get(name2, 'view_spec').title()))
             else:
                 spec = resolver().get(name, 'view_spec')
                 title = spec.title()
@@ -2908,6 +2908,8 @@ class BrowseForm(FoldableForm):
                     b = find(binding, spec.bindings(), key=lambda b: b.id())
                     assert b is not None, "Unknown binding for %s: %s" % (name, binding)
                     title += ' / ' + resolver().get(b.name(), 'view_spec').title()
+            return title
+        def link_label(title, type=FormType.BROWSE):
             mapping = {FormType.BROWSE: _(u"Odskok - %s"),
                        FormType.EDIT:   _(u"Editovat %s"),
                        FormType.VIEW:   _(u"Náhled %s"),
@@ -2915,24 +2917,34 @@ class BrowseForm(FoldableForm):
             return mapping[type] % title
         # Create links lists as accepted by _link_mitems()
         self._explicit_links = []
+        automatic_links = {}
+        self._in_operator_links = []
         for f in self._fields:
-            self._explicit_links.extend([(link.label() or
-                                          link_title(link.name(), link.type(), link.binding()),
-                                          [(f, link)]) for link in f.links()])
-        # Create automatic links for codebook fields.
-        self._automatic_links = []
-        linkdict = {}
-        for f, cb, col in remove_duplicates([(f, cb, e.value_column()) for f, cb, e in
-                                             [(f, self._row.codebook(f.id()),
-                                               self._row.type(f.id()).enumerator())
-                                              for f in self._fields] if e and cb]):
-            links = linkdict.setdefault(cb, [])
-            links.extend(((f, Link(cb, col)),
-                          (f, Link(cb, col, filter=Link.FILTER_IN)),
-                          (f, Link(cb, col, filter=Link.FILTER_NOT_IN))))
-        self._automatic_links = [(link_title(name), items)
-                                 for name, items in sorted(linkdict.items())]
-        
+            # Use explicitly defined links from specification.
+            for link in f.links():
+                label = link.label()
+                if link.label() is None:
+                    label = link_label(spec_title(link.name(), link.binding()), link.type())
+                self._explicit_links.append((label, [(f, link)]))
+                item = (link.name(), link.column(), f, spec_title(link.name()))
+                if item not in self._in_operator_links:
+                    self._in_operator_links.append(item)
+            # Create automatic links for codebook fields.
+            enumerator = self._row.type(f.id()).enumerator()
+            codebook = self._row.codebook(f.id())
+            if enumerator and codebook:
+                links = automatic_links.setdefault(codebook, [])
+                item = (codebook, enumerator.value_column(), f)
+                if item not in links:
+                    links.append(item)
+                in_item = (codebook, enumerator.value_column(), f, spec_title(codebook))
+                if in_item not in self._in_operator_links:
+                    self._in_operator_links.append(in_item)
+        self._automatic_links = [(link_label(spec_title(name)),
+                                  [(f, Link(name, column)) for name, column, f in items])
+                                 for name, items in sorted(automatic_links.items())]
+        self._in_operator_links.sort()
+                    
     def _formatter_parameters(self):
         name = self._name
         return {(name+'/'+pytis.output.P_CONDITION): pytis.data.AND(self._current_condition()),
@@ -2979,26 +2991,9 @@ class BrowseForm(FoldableForm):
                         cls = BrowseForm
                     title = _(u"Vyhledat aktuální hodnotu")
                     hlp = _(u"Vyhledat záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
-                    filter = link.filter()
-                    if filter:
-                        if filter in (Link.FILTER_IN, Link.FILTER_NOT_IN):
-                            if self._current_profile.id() == self._default_profile.id():
-                                profile_id = None
-                            else:
-                                profile_id = self._current_profile.id()
-                            kwargs['filter'] = pytis.form.IN(link.column(), self.name(), f.id(),
-                                                             profile_id)
-                            if filter == Link.FILTER_NOT_IN:
-                                kwargs['filter'] = pytis.data.NOT(kwargs['filter'])
-                                title = _(u"Filtrovat nepřítomné hodnoty")
-                                hlp = _(u"Filtrovat řádky neobsažené ve sloupci '%(column)s' "
-                                        u"současného náhledu.")
-                            else:
-                                title = _(u"Filtrovat přítomné hodnoty")
-                                hlp = _(u"Filtrovat řádky aktuálně obsažené ve sloupci '%(column)s' "
-                                        u"současného náhledu.")
-                        else:
-                            kwargs['filter'] = filter(row)
+                    filter_func = link.filter()
+                    if filter_func:
+                        kwargs['filter'] = filter_func(row)
                 elif type == FormType.EDIT:
                     cls = PopupEditForm
                     title = _(u"Upravit záznam sloupce '%s'") % f.label()
@@ -3028,15 +3023,43 @@ class BrowseForm(FoldableForm):
             elif len(links) != 0:
                 items.append(Menu(title, [mitem(f, link, row) for f, link in links]))
         return items
+
+    def _in_operator_mitem(self, row, name, column, f, title, not_in=False):
+        if self._current_profile.id() == self._default_profile.id():
+            profile_id = None
+        else:
+            profile_id = self._current_profile.id()
+        filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
+        column_label = f.column_label()
+        if not_in:
+            select_row = None
+            filter = pytis.data.NOT(filter)
+            ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
+                       u"neobsažené ve sloupci „%(column)s“ současného náhledu.")
+        else:
+            select_row = {column: row[f.id()]}
+            ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
+                       u"obsažené ve sloupci „%(column)s“ současného náhledu.")
+        cmd = Application.COMMAND_RUN_FORM(name=name, form_class=BrowseForm,
+                                           select_row=select_row,
+                                           filter=filter)
+        return MItem(ititle % dict(view_title=title, column=column_label), command=cmd)
                            
     def _context_menu(self):
         menu = self._context_menu_static_part
+        row = self.current_row()
         if self._explicit_links:
-            menu += (MSeparator(),) + \
-                    tuple(self._link_mitems(self.current_row(), self._explicit_links))
+            menu += (MSeparator(),) + tuple(self._link_mitems(row, self._explicit_links))
         if self._automatic_links:
-            menu += (MSeparator(),) + \
-                    tuple(self._link_mitems(self.current_row(), self._automatic_links))
+            menu += (MSeparator(),) + tuple(self._link_mitems(row, self._automatic_links))
+        if self._in_operator_links:
+            menu += (Menu(_("Filtrovat přítomné hodnoty (operátor IN)"),
+                          [self._in_operator_mitem(row, name, column, f, title)
+                           for name, column, f, title in self._in_operator_links]),
+                     Menu(_("Filtrovat nepřítomné hodnoty (operátor NOT IN)"),
+                          [self._in_operator_mitem(row, name, column, f, title, not_in=True)
+                           for name, column, f, title in self._in_operator_links]),
+                     )
         return menu
     
     def _cmd_print(self, print_spec_path=None):

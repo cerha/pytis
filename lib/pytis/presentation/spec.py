@@ -2292,25 +2292,6 @@ class Link(object):
     Used as a value of 'Field' constructor argument  'link'.
 
     """
-    FILTER_IN = 'FILTER_IN'
-    """Special value constant for the 'filter' argument of 'Link' constructor.
-
-    The referred form will be filtered to contain only records currently
-    present in the referring view (using the IN operator).  The current
-    filtering condition of the referring form will also be respected in the
-    referred form filter condition.
-
-    """
-    FILTER_NOT_IN = 'FILTER_NOT_IN'
-    """Special value constant for the 'filter' argument of 'Link' constructor.
-
-    The referred form will be filtered to contain only records NOT currently
-    present in the referring view (using the NOT IN operator).  The current
-    filtering condition of the referring form will also be respected in the
-    referred form filter condition.
-
-    """
-    
     def __init__(self, name, column, type=FormType.BROWSE, binding=None, label=None,
                  enabled=True, filter=None):
         """Arguments:
@@ -2343,10 +2324,8 @@ class Link(object):
 
           filter -- function of one argument ('PresentedRow' instance)
             returning a filtering condition ('pytis.data.Operator' instance) to
-            be used for filtering the newly opened form.  Two special values
-            'Link.FILTER_IN', 'Link.FILTER_NOT_IN' may also be used to create
-            special filters using the IN operator.  Only relevant for links
-            with 'type'='FormType.BROWSE'.
+            be used for filtering the newly opened form.  Only relevant for
+            links with 'type'='FormType.BROWSE'.
 
         """
         assert isinstance(name, basestring)
@@ -2355,8 +2334,7 @@ class Link(object):
         assert type in public_attributes(FormType)
         assert label is None or isinstance(label, basestring)
         assert isinstance(enabled, collections.Callable) or isinstance(enabled, bool)
-        assert filter in (None, Link.FILTER_NOT_IN, Link.FILTER_IN) \
-            or isinstance(filter, collections.Callable), filter
+        assert filter is None or isinstance(filter, collections.Callable), filter
         assert filter is None or type == FormType.BROWSE, (filter, type)
         self._name = name
         self._column = column
