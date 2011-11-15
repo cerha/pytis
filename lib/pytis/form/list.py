@@ -174,7 +174,25 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._column_widths = dict(profile.column_widths() or {})
         
     def _apply_profile(self, profile, refresh=True):
+        def is_in(operator):
+            if operator.name() in ('AND', 'OR', 'NOT'):
+                for op in operator.args():
+                    if is_in(op):
+                        return True
+                return False
+            elif operator.name() == 'IN':
+                return True
+            else:
+                return False
         self._apply_profile_parameters(profile)
+        if self._folding_enabled() and self._lf_filter is not None and is_in(self._lf_filter):
+            if not run_dialog(Question, _(u"Pokoušíte se uplatnit filtr s operátorem IN\n"
+                                          u"na rozbalovacím formuláři. Tato operace může\n"
+                                          u"trvat i několik minut.\n"
+                                          u"Opravdu chcete pokračovat?"), True):
+                # This should abort profile selection in _cmd_apply_profile and
+                # return the previously selected profile.
+                raise UserBreakException()
         self._update_label_height()
         self._update_grid(init_columns=True)
         self._refresh(when=self.DOIT_IMMEDIATELY)
