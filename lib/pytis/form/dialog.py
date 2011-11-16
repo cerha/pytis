@@ -1041,9 +1041,8 @@ class Calendar(GenericDialog):
         
     def _create_content(self, sizer):
         cal = calendar.CalendarCtrl(self._dialog, -1, style=self._style)
-        if wx.MAJOR_VERSION == 2 and wx.MINOR_VERSION < 6:
-            size = cal.GetSize()
-            cal.SetMinSize((size.GetWidth()+150, size.GetHeight()))
+        size = cal.GetSize()
+        cal.SetMinSize((size.GetWidth()+10, size.GetHeight()))
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
