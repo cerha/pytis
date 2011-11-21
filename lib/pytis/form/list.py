@@ -3069,12 +3069,12 @@ class BrowseForm(FoldableForm):
         if self._explicit_links:
             menu += (MSeparator(),) + tuple(self._link_mitems(row, self._explicit_links))
         if self._automatic_links:
-            menu += (MSeparator(),) + tuple(self._link_mitems(row, self._automatic_links))
+            menu += (Menu(_(u"Odskoky"), self._link_mitems(row, self._automatic_links)),)
         if self._in_operator_links:
-            menu += (Menu(_("Filtrovat přítomné hodnoty (operátor IN)"),
+            menu += (Menu(_(u"Filtrovat přítomné hodnoty (operátor IN)"),
                           [self._in_operator_mitem(row, name, column, f, title)
                            for name, column, f, title in self._in_operator_links]),
-                     Menu(_("Filtrovat nepřítomné hodnoty (operátor NOT IN)"),
+                     Menu(_(u"Filtrovat nepřítomné hodnoty (operátor NOT IN)"),
                           [self._in_operator_mitem(row, name, column, f, title, not_in=True)
                            for name, column, f, title in self._in_operator_links]),
                      )
