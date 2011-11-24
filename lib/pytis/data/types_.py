@@ -1697,7 +1697,7 @@ class Binary(Limited):
         provided, but these are mostly here for convenience.
         
         """
-        def __init__(self, data, filename=None, type=None):
+        def __init__(self, data, filename=None, mime_type=None):
             """Initialize a new buffer instance and validate the input data.
 
             Arguemnts:
@@ -1715,7 +1715,7 @@ class Binary(Limited):
                 buffer is.  It is optional and its usage may be application
                 specific.
                 
-              type -- MIME type of buffer data as a string or None.  It is
+              mime_type -- MIME type of buffer data as a string or None.  It is
                 optional and its usage may be application specific.
 
             Raises 'ValidationError' if the data don't conform to the binary
@@ -1735,9 +1735,9 @@ class Binary(Limited):
             else:
                 raise ProgramError("Invalid Buffer data:", data)
             assert filename is None or isinstance(filename, basestring)
-            assert type is None or isinstance(type, basestring)
+            assert mime_type is None or isinstance(mime_type, basestring)
             self._filename = filename
-            self._type = type
+            self._mime_type = mime_type
 
         def __len__(self):
             return len(self._buffer)
@@ -1760,10 +1760,10 @@ class Binary(Limited):
             """Return the suggested filename as passed to the constructor."""
             return self._filename
 
-        def type(self):
-            """Return the suggested mime type as passed to the constructor."""
-            return self._type
-
+        def mime_type(self):
+            """Return the suggested MIME type as passed to the constructor."""
+            return self._mime_type
+        
         def path(self):
             """Return the path to the input file or None.
             
@@ -1824,8 +1824,8 @@ class Binary(Limited):
         assert enumerator is None, ("Enumerators can not be used with binary data types")
         super(Binary, self).__init__(**kwargs)
         
-    def _validate(self, object, filename=None, type=None, **kwargs):
-        value = Value(self, self.Buffer(object, filename=filename, type=type))
+    def _validate(self, object, filename=None, mime_type=None, **kwargs):
+        value = Value(self, self.Buffer(object, filename=filename, mime_type=mime_type))
         return value, None
 
     def _export(self, value):

@@ -1,4 +1,4 @@
-# Copyright (C) 2007 Brailcom, o.p.s.
+# Copyright (C) 2007, 2011 Brailcom, o.p.s.
 # Author: Tomas Cerha <cerha@brailcom.org>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@ class FileUpload(object):
         """Return the original filename (without path) as a unicode string."""
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
         
-    def type(self):
+    def mime_type(self):
         """Return the mime type provided byt he UA as a string"""
         raise ProgramError("Pytis FileUpload interface not implemented by derived class!")
 
