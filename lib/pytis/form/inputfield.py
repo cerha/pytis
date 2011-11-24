@@ -84,7 +84,7 @@ class _Completer(wx.PopupWindow):
         event.Skip()
 
     def _on_toggle_up(self, event):
-        if self._ctrl.GetInsertionPoint() == self._last_insertion_point:
+        if self._ctrl.GetInsertionPoint() == self._last_insertion_point and self._ctrl.IsEditable():
             self._show(not self.IsShown())
         event.Skip()
 
@@ -770,7 +770,7 @@ class TextField(InputField):
         return (x, x)
         
     def on_key_down(self, event):
-        if self._completer and self._completer.on_key_down(event):
+        if self._enabled and self._completer and self._completer.on_key_down(event):
             return
         super(TextField, self).on_key_down(event)
 
