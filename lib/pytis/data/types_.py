@@ -41,7 +41,7 @@ import datetime
 import math
 import re
 import string
-from cStringIO import StringIO
+import cStringIO
 import thread
 import time
 
@@ -1717,7 +1717,7 @@ class Binary(Limited):
                 self._buffer = data
             elif isinstance(data, basestring):
                 self.load(data)
-            elif isinstance(data, (file, StringIO)):
+            elif isinstance(data, (file, cStringIO.OutputType)):
                 self._load(data)
             else:
                 raise ProgramError("Invalid Buffer data:", data)
@@ -1860,7 +1860,7 @@ class Image(Binary, Big):
             super(Image.Buffer, self)._validate(data)
             import PIL.Image
             # The stream must stay open for the whole life of the Image object.
-            f = StringIO(data)
+            f = cStringIO.StringIO(data)
             try:
                 image = PIL.Image.open(f)
             except IOError:
