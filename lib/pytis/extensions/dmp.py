@@ -1023,7 +1023,10 @@ class DMPRoles(DMPObject):
                 # pg_roles.  We don't know why but let's not crash in such a
                 # case.
                 return
-            role = roles_by_names[roleid]
+            try:
+                role = roles_by_names[roleid]
+            except KeyError:            # semi excluded roles
+                return
             role_members = role.members() or []
             if member not in role_members:
                 role.set_members(role_members + [member])
