@@ -83,11 +83,28 @@ class Resolver(object):
         self._method_result_cache = SimpleCache(self._get_method_result)
 
     def _import_module(self, name):
-        module = __import__(name)
-        for component in name.split('.')[1:]:
-            module = getattr(module, component)
+        components = name.split('.')
+        try:
+            module = __import__(name)
+        except ImportError as e:
+            if str(e) == 'No module named %s' % components[-1]:
+                # Raise resolver error only if the import error actually
+                # related to importing the named module itself and not to some
+                # nested import within this module.
+                raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
+            else:
+                # The error inside the imported module (typically the imported
+                # module attempts to import a python module which is not
+                # installed) must raise the original exception so that we can
+                # detect such errors normally.
+                raise
+        for component in components[1:]:
+            try:
+                module = getattr(module, component)
+            except AttributeError as e:
+                raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
         return module
-        
+    
     def _get_specification_cls(self, name):
         if '.' in name:
             module_name, spec_name = name.rsplit('.', 1)
@@ -111,12 +128,9 @@ class Resolver(object):
                     search_module_name = prefix
                 try:
                     module = self._import_module(search_module_name)
-                except ImportError as e:
-                    if False:
-                        # TODO: continue only if the import error related to search_module_name.
-                        continue
-                    else:
-                        raise
+                except ResolverError:
+                    # Try another search path prefix.
+                    continue
                 if name in ('application', 'app_commands', 'ui', 'export'):
                     # Hack: See above.
                     return module
@@ -133,9 +147,10 @@ class Resolver(object):
             if module_name is None:
                 raise ResolverError("Resolver error loading specification '%s': " % name +
                                     "Top level name can not be resolved when search is not set.")
+            module = self._import_module(module_name)
             try:
-                module = self._import_module(module_name)
-            except (ImportError, AttributeError) as e:
+                specification = getattr(module, spec_name)
+            except AttributeError as e:
                 raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
         # Note, that 'specification' is a Specification class here, but may be
         # also a Wiking module class in Wiking resolver (derived from pytis
