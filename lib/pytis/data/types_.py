@@ -2616,7 +2616,7 @@ def sval(value):
       value -- internal value of the 'Value' instance, basestring
 
     """
-    assert value is None or isinstance(value, basestring)
+    assert value is None or isinstance(value, basestring), value
     return Value(String(), value)
 
 def ival(value):
@@ -2627,7 +2627,7 @@ def ival(value):
       value -- internal value of the 'Value' instance, integer
 
     """
-    assert value is None or isinstance(value, int)
+    assert value is None or isinstance(value, int), value
     return Value(Integer(), value)
 
 def fval(value):
@@ -2638,7 +2638,7 @@ def fval(value):
       value -- internal value of the 'Float' instance, float
 
     """
-    assert value is None or isinstance(value, float)
+    assert value is None or isinstance(value, float), value
     return Value(Float(), value)
 
 def bval(value):
@@ -2649,7 +2649,7 @@ def bval(value):
       value -- internal value of the 'Value' instance, basestring
 
     """
-    assert value is None or isinstance(value, bool)
+    assert value is None or isinstance(value, bool), value
     return Value(Boolean(), value)
 
 def dval(value):
@@ -2660,7 +2660,7 @@ def dval(value):
       value -- internal value of the 'Date' instance, datetime.date
 
     """
-    assert value is None or isinstance(value, datetime.date)
+    assert value is None or isinstance(value, datetime.date), value
     return Value(Date(), value)
 
 def dtval(value):
@@ -2671,7 +2671,7 @@ def dtval(value):
       value -- internal value of the 'DateTime' instance, datetime.datetime
 
     """
-    assert value is None or isinstance(value, datetime.datetime)
+    assert value is None or isinstance(value, datetime.datetime), value
     return Value(DateTime(), value)
 
 def tval(value):
@@ -2682,5 +2682,5 @@ def tval(value):
       value -- internal value of the 'Value' instance, datetime.time
 
     """
-    assert value is None or isinstance(value, datetime.time)
+    assert value is None or isinstance(value, datetime.time), value
     return Value(Time(), value)
