@@ -88,53 +88,84 @@ class Resolver(object):
             module = getattr(module, component)
         return module
         
-    def _get_module(self, name):
-        for prefix in self._search and [prefix+'.' for prefix in self._search] or ('',):
-            # TODO: a temporary hack to solve the problem with double prefixes
-            # Should be removed when solved correctly.
-            if name.startswith(prefix):
-                to_import = name
+    def _get_specification_cls(self, name):
+        if '.' in name:
+            module_name, spec_name = name.rsplit('.', 1)
+            allow_search = True not in [(module_name+'.').startswith(prefix+'.')
+                                        for prefix in self._search]
+        else:
+            module_name, spec_name = None, name
+            allow_search = True
+        if self._search and allow_search:
+            for prefix in self._search:
+                if module_name is not None:
+                    search_module_name = prefix +'.'+ module_name
+                elif name in ('application', 'app_commands', 'ui', 'export'):
+                    # TODO: This is a backwards compatibility hack to make top level
+                    # specification files, such as application.py, work.  Application
+                    # specification should be turned into a specification class instead
+                    # of a module with functions.  The names 'ui' and 'export' must be
+                    # here because of some maddness in pytis.form.configui.
+                    search_module_name = prefix +'.'+ spec_name
+                else:
+                    search_module_name = prefix
+                try:
+                    module = self._import_module(search_module_name)
+                except ImportError as e:
+                    if False:
+                        # TODO: continue only if the import error related to search_module_name.
+                        continue
+                    else:
+                        raise
+                if name in ('application', 'app_commands', 'ui', 'export'):
+                    # Hack: See above.
+                    return module
+                try:
+                    specification = getattr(module, spec_name)
+                except AttributeError as e:
+                    continue
+                else:
+                    break
             else:
-                to_import = prefix + name
+                raise ResolverError("Resolver error loading specification '%s': " % name +
+                                    "Not found within %s." % ', '.join(self._search))
+        else:
+            if module_name is None:
+                raise ResolverError("Resolver error loading specification '%s': " % name +
+                                    "Top level name can not be resolved when search is not set.")
             try:
-                return self._import_module(to_import)
-            except ImportError as e:
-                continue
-        search_info = self._search and (' (searching in %s)' % ', '.join(self._search)) or ''
-        raise ResolverError("Resolver error loading module '%s'%s: %s" % (name, search_info, e))
+                module = self._import_module(module_name)
+            except (ImportError, AttributeError) as e:
+                raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
+        # Note, that 'specification' is a Specification class here, but may be
+        # also a Wiking module class in Wiking resolver (derived from pytis
+        # resolver).
+        return specification
 
     def _get_specification(self, key):
         name, kwargs = key
-        if '.' not in name:
-            # TODO: This is a backwards compatibility hack to make top level
-            # specification files, such as application.py, work.  Application
-            # specification should be turned into a specification class instead
-            # of a module with functions.  It is impossible to include
-            # specifications directly in the top level namespace of the
-            # specification module as long as this hack is active.
-            return self._get_module(name)
-        module_name, spec_name = name.rsplit('.', 1)
-        module = self._get_module(module_name)
-        # Note: module.__name__ may not be the same as module_name when self._search is used!
-        try:
-            specification = getattr(module, spec_name)
-        except AttributeError as e:
-            raise ResolverError("Resolver error loading specification '%s.%s': %s" %
-                                (module.__name__, spec_name, e))
+        # This method is split into two parts (_get_specification and
+        # _get_specification_cls) to allow overriding the resolver logic in
+        # Wiking.  Note, that Wiking overrides this method without calling the
+        # super class method (only _get_specification_cls is used in Wiking
+        # resolver).
+        specification = self._get_specification_cls(name)
+        if name in ('application', 'app_commands', 'ui', 'export'):
+            return specification
         import pytis.presentation
         if type(specification) != type(object) or \
                 not issubclass(specification, pytis.presentation.Specification):
-            raise ResolverError("Resolver error loading specification '%s.%s': Not a "
-                                "pytis.presentation.Specification subclass." %
-                                (module.__name__, spec_name))
+            raise ResolverError("Resolver error loading specification '%s': Not a "
+                                "pytis.presentation.Specification subclass." % name)
         if argument_names(specification.__init__):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specifications in
             # applications may override the constructor and expect the resolver
             # argument (typically when they define kwargs).
-            return specification(self, **dict(kwargs))
+            args = (self,)
         else:
-            return specification(**dict(kwargs))
+            args = ()
+        return specification(*args, **dict(kwargs))
 
     def _get_method_result(self, key):
         name, kwargs, method_name = key
@@ -164,10 +195,6 @@ class Resolver(object):
             specification instance constructor
 
         """
-        if '.' not in name:
-            # TODO: May be removed when the dot hack is removed from _get_specification().
-            raise ResolverError("Resolver error loading specification '%s': "
-                                "Name doesn't have a dot (temporarily disabled)." % name)
         return self._specification_cache[(name, tuple(kwargs.items()))]
 
     def get(self, name, method_name, **kwargs):
