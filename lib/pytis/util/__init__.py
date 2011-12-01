@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006, 2010 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2005, 2006, 2010, 2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,5 +22,3 @@ from log import *
 from resolver import *
 from configuration import *
 from test import *
-    
-sys.modules['config'] = Configuration()

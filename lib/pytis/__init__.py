@@ -19,6 +19,9 @@
 __version__ = "1.1.1"
 
 import util
+config = util.Configuration()
+import sys
+sys.modules['config'] = config
 import data
 import form
 import output
