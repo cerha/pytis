@@ -156,6 +156,7 @@ class LCGFormatter(object):
         def _initial_dictionary(self, form, form_bindings, current_row):
             dictionary = _ProxyDict()
             if form is not None:
+                import pytis.form # must be placed before first `pytis' use here
                 if current_row is None:
                     current_row = form.current_row()
                 if current_row is None:
@@ -177,7 +178,6 @@ class LCGFormatter(object):
                         return self._make_agg(op)
                     agg[name] = value
                 if form_bindings:
-                    import pytis.form
                     dictionary['Binding'] = binding_dictionary = _ProxyDict()
                     for binding in form_bindings:
                         form_name = binding.name()
