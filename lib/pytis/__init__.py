@@ -23,5 +23,3 @@ config = util.Configuration()
 import sys
 sys.modules['config'] = config
 import data
-import form
-import output

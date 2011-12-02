@@ -50,7 +50,6 @@ import re
 import StringIO
 
 import pytis.data
-import pytis.form
 from pytis.output import *
 import pytis.presentation
 import lcg
@@ -178,6 +177,7 @@ class LCGFormatter(object):
                         return self._make_agg(op)
                     agg[name] = value
                 if form_bindings:
+                    import pytis.form
                     dictionary['Binding'] = binding_dictionary = _ProxyDict()
                     for binding in form_bindings:
                         form_name = binding.name()
