@@ -336,12 +336,12 @@ class DMPObject(object):
         self._reset()
         return self._load_specifications(**kwargs)
     
-    def retrieve_data(self):
+    def retrieve_data(self, transaction=None):
         """Load DMP data from the database."""
         self._reset()
-        self._retrieve_data()
+        self._retrieve_data(transaction=transaction)
 
-    def _retrieve_data(self):
+    def _retrieve_data(self, transaction=None):
         pass
     
     def store_data(self, fake, transaction=None, specifications=None):
@@ -624,9 +624,9 @@ class DMPMenu(DMPObject):
                 i = i + 1
                 assign(item.children(), item.position())
         assign(self._top_item.children(), self._top_item.position())
-        return messages        
+        return messages
     
-    def _retrieve_data(self):
+    def _retrieve_data(self, transaction=None):
         data = self._data('e_pytis_menu')
         items_by_position = {}
         children_by_position = {}
@@ -655,7 +655,7 @@ class DMPMenu(DMPObject):
                 children_by_position[parent_position] = \
                   children_by_position.get(parent_position, []) + [item]
             return item
-        self._menu = data.select_map(process)
+        self._menu = data.select_map(process, transaction=transaction)
         # Assign parents and children, find top item, reset counter
         min_id = 0
         for item in self._menu:
@@ -812,7 +812,7 @@ class DMPRights(DMPObject):
                 add_rights(form_action_name, print_action_rights)
         return messages
 
-    def _retrieve_data(self):
+    def _retrieve_data(self, transaction=None):
         data = self._data('e_pytis_action_rights')
         condition = pytis.data.LE('status', self._i_(0))
         def process(row):
@@ -823,7 +823,7 @@ class DMPRights(DMPObject):
                               system=row['system'].value(),
                               granted=row['granted'].value(),
                               )
-        self._rights = data.select_map(process, condition=condition)
+        self._rights = data.select_map(process, condition=condition, transaction=transaction)
     
     def _store_data(self, transaction, specifications):
         data = self._data('e_pytis_action_rights')
@@ -947,14 +947,14 @@ class DMPRoles(DMPObject):
                 roleids.append(roleid)
         return []
 
-    def _retrieve_data(self):
+    def _retrieve_data(self, transaction=None):
         data = self._data('e_pytis_roles')
         def process(row):
             return self.Role(name=row['name'].value(),
                              description=row['description'].value(),
                              purposeid=row['purposeid'].value(),
                              )
-        self._roles = data.select_map(process)
+        self._roles = data.select_map(process, transaction=transaction)
     
     def _store_data(self, transaction, specifications):
         S = self._s_
@@ -1087,6 +1087,7 @@ class DMPActions(DMPObject):
         _attributes = (Attribute('fullname', basestring),
                        Attribute('title', basestring, mutable=True),
                        Attribute('description', basestring),
+                       Attribute('special_shortname', basestring),
                        )
 
         def __init__(self, resolver, messages, **kwargs):
@@ -1136,14 +1137,20 @@ class DMPActions(DMPObject):
 
         def shortname(self):
             """Return shortname of the action as a string."""
+            if self.special_shortname():
+                return self.special_shortname()
             components = self._components()
             if components[0] == 'form':
                 shortname = 'form/%s' % (components[2],)
             elif components[0] == 'sub':
+                # Normally the shortname should be given as special_shortname.
+                # But there may be no subform specification in case the subform
+                # is a detail form, web form or so.
                 if len(components) < 5: # only in wrong specifications
-                    shortname = 'form/INVALID'
+                    subform = 'INVALID'
                 else:
-                    shortname = 'form/%s' % (components[4],)
+                    subform = components[4]
+                shortname = 'form/%s' % (subform,)
             elif components[0] == 'print':
                 shortname = 'print/%s' % (components[1],)
             else:
@@ -1184,9 +1191,13 @@ class DMPActions(DMPObject):
             if specifications is None:
                 return True
             fullname = self.fullname()
+            full_components = fullname.split('/')
             short_components = self.shortname().split('/')
             if short_components[0] == 'print':
-                spec_name = fullname.split('/')[-1]
+                spec_name = full_components[-1]
+            elif full_components[0] == 'sub':
+                spec_name = full_components[4]
+                fullname = string.join(full_components[2:], '/')
             else:
                 spec_name = short_components[-1]
             for s in specifications:
@@ -1287,9 +1298,11 @@ class DMPActions(DMPObject):
                     b = bindings[i]
                     subaction_fullname = 'sub/%02d/%s' % (i, action.fullname(),)
                     subaction_title = b.title()
+                    subaction_shortname = 'form/%s' % (b.name(),)
                     self._add_action(self.Action(self._resolver(), messages,
                                                  fullname=subaction_fullname,
-                                                 title=subaction_title))
+                                                 title=subaction_title,
+                                                 special_shortname=subaction_shortname))
         # Form actions
         for a in spec.view_spec().actions(linear=True):
             fullname = 'action/%s/%s' % (a.id(), form_name,)
@@ -1308,15 +1321,16 @@ class DMPActions(DMPObject):
             if not self._shortnames.get(right.shortname()):
                 self._add_action(self.Action.dummy_action(right.shortname()))
 
-    def _retrieve_data(self):
+    def _retrieve_data(self, transaction=None):
         data = self._data('c_pytis_menu_actions')
         def process(row):
             action = self.Action(self._resolver(), None,
                                  fullname=str(row['fullname'].value()),
+                                 special_shortname=str(row['shortname'].value()),
                                  title=row['action_title'].value(),
                                  description=row['description'].value())
             self._add_action(action)    
-        data.select_map(process)
+        data.select_map(process, transaction=transaction)
     
     def _store_data(self, transaction, specifications, subforms_only=False, original_actions=None):
         data = self._data('c_pytis_menu_actions')
@@ -1364,9 +1378,9 @@ class DMPActions(DMPObject):
         """
         messages = []
         original_actions = DMPActions(self._configuration)
-        original_actions.retrieve_data()
+        original_actions.retrieve_data(transaction=transaction)
         menu = DMPMenu(self._configuration)
-        menu.retrieve_data()
+        menu.retrieve_data(transaction=transaction)
         rights = DMPRights(self._configuration)
         rights.load_specifications()
         self.load_specifications(dmp_menu=menu, dmp_rights=rights)
@@ -1534,12 +1548,12 @@ class DMPImport(DMPObject):
         messages += self._dmp_actions.load_specifications(actions=[action])
         messages += self._dmp_actions.store_data(fake, transaction)
         specification = action.form_name()
-        messages += self._dmp_actions.update_forms(fake, [specification], transaction=transaction)
-        self._dmp_menu.retrieve_data()
+        self._dmp_menu.retrieve_data(transaction=transaction)
         menu_item = self._dmp_menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
                                             title=action.title(), action=fullname, position=position)
         messages += self._dmp_menu.store_data(fake, transaction=transaction, specifications=[fullname])
-        self._dmp_rights.retrieve_data()
+        messages += self._dmp_actions.update_forms(fake, [specification], transaction=transaction)
+        self._dmp_rights.retrieve_data(transaction=transaction)
         shortname = action.shortname()
         for a in self._dmp_rights.items():
             if a.shortname() == shortname:
