@@ -117,6 +117,8 @@ class ApplicationRoles(_ApplicationRolesSpecification):
                 pytis.presentation.Binding('previewextmenu', _(u"Rozšířený náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenuExtended',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True)))),
+                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLog',
+                                           condition=lambda r: pytis.data.EQ('username', r['roleid'])),
                 )
     
     def on_delete_record(self, row):
@@ -335,7 +337,9 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                            condition=(lambda row: pytis.data.EQ('shortname', row['shortname']))),
                 pytis.presentation.Binding('profiles', _(u"Profily"), 'profiles.FormProfiles', 'fullname'),
                 pytis.presentation.Binding('settings', _(u"Nastavení"), 'profiles.FormSettings',
-                                           condition=self._form_settings_binding_condition),
+                                           condition=self._spec_name_form_name_binding_condition),
+                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLog',
+                                           condition=self._spec_name_form_name_binding_condition),
                 )
     def actions(self): return (
         pytis.presentation.Action('copy_rights', _(u"Zkopírovat práva z..."), self._copy_rights,
@@ -359,7 +363,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
         result = fullname[:4] != 'sub/' and (fullname.find('::') >= 0 or fullname.find('.Multi') >= 0)
         return pytis.data.Value(pytis.data.Boolean(), result)
 
-    def _form_settings_binding_condition(self, row):
+    def _spec_name_form_name_binding_condition(self, row):
         split_fullname = row['fullname'].value().split('/')
         if len(split_fullname) == 5 and split_fullname[0] == 'form':
             return pytis.data.AND(pytis.data.EQ('spec_name', pytis.data.sval(split_fullname[2])),
