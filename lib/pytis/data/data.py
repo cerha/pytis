@@ -175,8 +175,12 @@ class Operator(object):
         return [relax(arg) for arg in self._args]
 
     def __str__(self):
-        args = string.join(map(unicode, self.args()), ', ')
-        return '%s (%s)' % (self.name(), args)
+        def arg(arg):
+            if isinstance(arg, (pytis.data.Value, pytis.data.WMValue)):
+                arg = repr(arg.value())
+            return arg
+        args = [arg(a) for a in self.args()]
+        return '%s (%s)' % (self.name(), ', '.join(args))
 
     def __cmp__(self, other):
         if sameclass(self, other):
