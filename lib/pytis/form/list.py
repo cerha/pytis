@@ -1977,6 +1977,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 msg = _(u"Nepodařilo se otevřít soubor " + filename + " pro zápis!\n")
                 run_dialog(Error, msg)
                 return
+        log_user_action(self.name(), self._form_name(), 'export',
+                        info=("Format: %s\n" % fileformat +
+                              "Filter: %s\n" % str(self._lf_filter)))
         if fileformat == 'XLS':
             export_function = self._cmd_export_xls
         else:

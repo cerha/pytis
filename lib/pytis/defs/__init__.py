@@ -27,3 +27,4 @@ import menu
 import printing
 import profiles
 import statistics
+import logging

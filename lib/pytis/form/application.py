@@ -149,6 +149,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._form_settings_manager = FormSettingsManager(config.dbconnection)
         self._profile_manager = FormProfileManager(config.dbconnection)
         self._aggregated_views_manager = AggregatedViewsManager(config.dbconnection)
+        # Initialize user action logger.
+        try:
+            self._logger = DbActionLogger(config.dbconnection, config.dbuser)
+        except pytis.data.DBException as e:
+            # Logging is optional.  The application may choose not to include
+            # the logging table in the database schema and this will simply
+            # lead to logging being ignored.
+            log(OPERATIONAL, "Form action logging not activated:", e)
+            self._logger = None
         # Read the stored configuration.
         for option, value in self._application_config_manager.load():
             if hasattr(config, option):
@@ -1135,6 +1144,37 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def aggregated_views_manager(self):
         return self._aggregated_views_manager
 
+    def log(self, spec_name, form_name, action, info=None):
+        if self._logger:
+            self._logger.log(spec_name, form_name, action, info=info)
+        else:
+            log(ACTION, "Form action:", (spec_name, form_name, action, info))
+
+class DbActionLogger(object):
+    """Log user actions into the database."""
+    
+    def __init__(self, dbconnection, username):
+        import config
+        factory = resolver().get('pytis.defs.logging.FormActionLog', 'data_spec')
+        self._data = factory.create(connection_data=config.dbconnection)
+        self._username = username
+
+    def _values(self, **kwargs):
+        return [(key, pytis.data.Value(self._data.find_column(key).type(), value))
+                for key, value in [('username', self._username)] + kwargs.items()]
+    
+    def log(self, spec_name, form_name, action, info=None):
+        rdata = (('timestamp', pytis.data.dtval(pytis.data.DateTime.datetime())),
+                 ('username', pytis.data.sval(self._username)),
+                 ('spec_name', pytis.data.sval(spec_name)),
+                 ('form_name', pytis.data.sval(form_name)),
+                 ('action', pytis.data.sval(action)),
+                 ('info', pytis.data.sval(info)))
+        row = pytis.data.Row(rdata)
+        result, success = self._data.insert(row)
+        if not success:
+            raise pytis.data.DBException(result)
+        
 
 
 # Funkce odpovídající příkazům aplikace.
@@ -1417,6 +1457,10 @@ def form_settings_manager():
 def aggregated_views_manager():
     """Return 'Application.aggregated_views_manager()' of the current application instance."""
     return _application.aggregated_views_manager()
+
+def log_user_action(spec_name, form_name, action, info=None):
+    """Log user action into the database."""
+    return _application.log(spec_name, form_name, action, info=info)
 
 # Ostatní funkce.
 
