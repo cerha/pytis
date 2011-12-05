@@ -203,6 +203,8 @@ class Resolver(object):
         specification = self._specification_cache[(name, tuple(kwargs.items()))]
         import pytis.presentation
         if not isinstance(specification, pytis.presentation.Specification):
+            # We need to avoid returning specification modules here (see
+            # _get_specification for its possible return values).
             raise ResolverError("Resolver error loading specification '%s': %s is not a "
                                 "pytis.presentation.Specification instance." % (name, specification))
         return specification
