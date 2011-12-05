@@ -105,7 +105,12 @@ class Resolver(object):
                 raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
         return module
     
-    def _get_specification_cls(self, name):
+    def _get_object_by_name(self, name):
+        # The returned object is normally a Specification class, but may be
+        # also a python module (for specification modules with specification
+        # methods, such as application.py, app_commands or some modules defined
+        # by applications with proc_spec) or even a Wiking module class in
+        # Wiking resolver (derived from pytis resolver).
         if '.' in name:
             module_name, spec_name = name.rsplit('.', 1)
             allow_search = True not in [(module_name+'.').startswith(prefix+'.')
@@ -117,13 +122,6 @@ class Resolver(object):
             for prefix in self._search:
                 if module_name is not None:
                     search_module_name = prefix +'.'+ module_name
-                elif name in ('application', 'app_commands', 'ui', 'export'):
-                    # TODO: This is a backwards compatibility hack to make top level
-                    # specification files, such as application.py, work.  Application
-                    # specification should be turned into a specification class instead
-                    # of a module with functions.  The names 'ui' and 'export' must be
-                    # here because of some maddness in pytis.form.configui.
-                    search_module_name = prefix +'.'+ spec_name
                 else:
                     search_module_name = prefix
                 try:
@@ -131,47 +129,42 @@ class Resolver(object):
                 except ResolverError:
                     # Try another search path prefix.
                     continue
-                if name in ('application', 'app_commands', 'ui', 'export'):
-                    # Hack: See above.
-                    return module
                 try:
-                    specification = getattr(module, spec_name)
-                except AttributeError as e:
+                    return getattr(module, spec_name)
+                except AttributeError:
+                    # Try another search path prefix.
                     continue
-                else:
-                    break
-            else:
-                raise ResolverError("Resolver error loading specification '%s': " % name +
-                                    "Not found within %s." % ', '.join(self._search))
+            raise ResolverError("Resolver error loading specification '%s': " % name +
+                                "Not found within %s." % ', '.join(self._search))
         else:
             if module_name is None:
                 raise ResolverError("Resolver error loading specification '%s': " % name +
                                     "Top level name can not be resolved when search is not set.")
             module = self._import_module(module_name)
             try:
-                specification = getattr(module, spec_name)
+                return getattr(module, spec_name)
             except AttributeError as e:
                 raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
-        # Note, that 'specification' is a Specification class here, but may be
-        # also a Wiking module class in Wiking resolver (derived from pytis
-        # resolver).
-        return specification
 
-    def _get_specification(self, key):
-        name, kwargs = key
-        # This method is split into two parts (_get_specification and
-        # _get_specification_cls) to allow overriding the resolver logic in
-        # Wiking.  Note, that Wiking overrides this method without calling the
-        # super class method (only _get_specification_cls is used in Wiking
-        # resolver).
-        specification = self._get_specification_cls(name)
-        if name in ('application', 'app_commands', 'ui', 'export'):
-            return specification
+    def _check_specification_class(self, specification):
         import pytis.presentation
         if type(specification) != type(object) or \
                 not issubclass(specification, pytis.presentation.Specification):
-            raise ResolverError("Resolver error loading specification '%s': Not a "
-                                "pytis.presentation.Specification subclass." % name)
+            raise ResolverError("Resolver error loading specification '%s': %s is not a "
+                                "pytis.presentation.Specification subclass." % (name, specification))
+            
+    def _get_specification(self, key):
+        name, kwargs = key
+        # This method is split into two parts (_get_specification and
+        # _get_object_by_name) to allow overriding the resolver logic in
+        # Wiking.  Note, that Wiking overrides this method without calling the
+        # super class method (only _get_object_by_name is used in Wiking
+        # resolver).
+        specification = self._get_object_by_name(name)
+        from types import ModuleType
+        if isinstance(specification, ModuleType):
+            return specification
+        self._check_specification_class(specification)
         if argument_names(specification.__init__):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specifications in
@@ -210,7 +203,9 @@ class Resolver(object):
             specification instance constructor
 
         """
-        return self._specification_cache[(name, tuple(kwargs.items()))]
+        specification = self._specification_cache[(name, tuple(kwargs.items()))]
+        self._check_specification_class(specification)
+        return specification
 
     def get(self, name, method_name, **kwargs):
         """Return the result of calling 'method_name' on specification instance 'name'.
