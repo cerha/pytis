@@ -778,7 +778,12 @@ class DMPRights(DMPObject):
                                                    rightid=p.lower(), colname=c,
                                                    system=True, granted=True)
                                 self._rights.append(right)
+        import config
         for spec_name in self._all_form_specification_names(messages):
+            for prefix in config.search_modules:
+                prefix = prefix + '.'
+                if spec_name.startswith(prefix) and len(spec_name) > len(prefix):
+                    spec_name = spec_name[len(prefix):]
             # Form access rights
             shortname = 'form/' + spec_name
             spec = self._specification(spec_name, messages)
