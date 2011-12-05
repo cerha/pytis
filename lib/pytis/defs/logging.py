@@ -21,7 +21,7 @@ import pytis.data as pd
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, Profile, computer
 
 class FormActionLog(Specification):
-    public = True
+    public = False
     table = 'e_pytis_action_log'
     title = _(u"Log uživatelských akcí")
     fields = (
@@ -39,4 +39,7 @@ class FormActionLog(Specification):
     sorting = (('timestamp', pd.ASCENDENT),)
     columns = ('timestamp', 'username', 'spec_name', 'form_name', 'action')
     layout = ('timestamp', 'username', 'spec_name', 'form_name', 'action', 'info')
+
+class FormActionLogView(Specification):
+    public = True
 

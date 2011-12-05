@@ -117,7 +117,7 @@ class ApplicationRoles(_ApplicationRolesSpecification):
                 pytis.presentation.Binding('previewextmenu', _(u"Rozšířený náhled chystaného menu"), 'menu.ApplicationPreviewRoleMenuExtended',
                                            arguments=(lambda row: dict(roleid=row['roleid'],
                                                                        new=pytis.data.Value(pytis.data.Boolean(), True)))),
-                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLog',
+                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLogView',
                                            condition=lambda r: pytis.data.EQ('username', r['roleid'])),
                 )
     
@@ -338,7 +338,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
                 pytis.presentation.Binding('profiles', _(u"Profily"), 'profiles.FormProfiles', 'fullname'),
                 pytis.presentation.Binding('settings', _(u"Nastavení"), 'profiles.FormSettings',
                                            condition=self._spec_name_form_name_binding_condition),
-                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLog',
+                pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLogView',
                                            condition=self._spec_name_form_name_binding_condition),
                 )
     def actions(self): return (
