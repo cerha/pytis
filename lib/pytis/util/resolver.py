@@ -146,13 +146,6 @@ class Resolver(object):
             except AttributeError as e:
                 raise ResolverError("Resolver error loading specification '%s': %s" % (name, e))
 
-    def _check_specification_class(self, specification):
-        import pytis.presentation
-        if type(specification) != type(object) or \
-                not issubclass(specification, pytis.presentation.Specification):
-            raise ResolverError("Resolver error loading specification '%s': %s is not a "
-                                "pytis.presentation.Specification subclass." % (name, specification))
-            
     def _get_specification(self, key):
         name, kwargs = key
         # This method is split into two parts (_get_specification and
@@ -164,7 +157,11 @@ class Resolver(object):
         from types import ModuleType
         if isinstance(specification, ModuleType):
             return specification
-        self._check_specification_class(specification)
+        import pytis.presentation
+        if type(specification) != type(object) or \
+                not issubclass(specification, pytis.presentation.Specification):
+            raise ResolverError("Resolver error loading specification '%s': %s is not a "
+                                "pytis.presentation.Specification subclass." % (name, specification))
         if argument_names(specification.__init__):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specifications in
@@ -204,7 +201,10 @@ class Resolver(object):
 
         """
         specification = self._specification_cache[(name, tuple(kwargs.items()))]
-        self._check_specification_class(specification)
+        import pytis.presentation
+        if not isinstance(specification, pytis.presentation.Specification):
+            raise ResolverError("Resolver error loading specification '%s': %s is not a "
+                                "pytis.presentation.Specification instance." % (name, specification))
         return specification
 
     def get(self, name, method_name, **kwargs):
