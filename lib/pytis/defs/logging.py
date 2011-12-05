@@ -21,6 +21,9 @@ import pytis.data as pd
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, Profile, computer
 
 class FormActionLog(Specification):
+    # This specification is used for insertion of log record by pytis
+    # internally, so it is not public.  The derived specification
+    # FormActionLogView is used for viewing the logs through admin forms.
     public = False
     table = 'e_pytis_action_log'
     title = _(u"Log uživatelských akcí")
@@ -40,6 +43,9 @@ class FormActionLog(Specification):
     columns = ('timestamp', 'username', 'spec_name', 'form_name', 'action')
     layout = ('timestamp', 'username', 'spec_name', 'form_name', 'action', 'info')
 
+
 class FormActionLogView(Specification):
+    # This specification is used for viewing the logs through admin forms.
     public = True
+    access_rights = pd.AccessRights((None, (['dmp_view'], pd.Permission.VIEW,)))
 
