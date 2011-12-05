@@ -44,7 +44,7 @@ class FormActionLog(Specification):
     layout = ('timestamp', 'username', 'spec_name', 'form_name', 'action', 'info')
 
 
-class FormActionLogView(Specification):
+class FormActionLogView(FormActionLog):
     # This specification is used for viewing the logs through admin forms.
     public = True
     access_rights = pd.AccessRights((None, (['dmp_view'], pd.Permission.VIEW,)))
