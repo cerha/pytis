@@ -1317,10 +1317,10 @@ def db_operation(operation, *args, **kwargs):
 def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
     """Invoke database operation with handling possible exceptions.
 
-    The 'operation' is called with given arguments.  If a 'pytis.data.dbdata.DBException' exception
-    is raised during the operation, the an error dialog is displayed with exception description and
-    a question, whether the user wishes to re-invoke the operation.  The operation is repeated as
-    long as user answers the question positively.
+    'operation' is called with given arguments.  If 'pytis.data.dbdata.DBException'
+    is raised during the operation, an error dialog is displayed with exception description and
+    a question asking whether the user wishes to re-invoke the operation.  The operation is repeated
+    as long as the user answers the question positively.
 
     The exceptions of type 'DBLoginException' result in displaying a login dialog and the supplied
     username and password is set before repeating the operation.
