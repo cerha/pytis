@@ -707,33 +707,27 @@ def pytis_update_rights_redundancy():
             return True
         def default_redundant(self, other):
             for attr in Right.properties:
-                if attr not in ('id', 'redundant', 'roleid', 'colname', 'system', 'granted', 'status',):
+                if attr not in ('id', 'redundant', 'rightid', 'roleid', 'colname', 'system',
+                                'granted', 'status',):
                     if getattr(self, attr) != getattr(other, attr):
                         return False
             if self.system and not other.system:
                 return False
-            if self.roleid not in roles.get(other.roleid, []) and other.roleid != '*':
-                return False
-            if self.colname != other.colname and other.colname:
-                return False
-            if not self.granted and other.granted:
-                return False
-            if self.granted and not other.granted:
-                if (self.roleid != other.roleid or
-                    self.colname != other.colname):
-                    return False
-            if self.granted and other.granted:
-                if self.colname != other.colname:
-                    # The right may be or may not be redundant here, depending
-                    # on whether there is a corresponding right forbidding
-                    # access for all columns (if it exists, the right is NOT
-                    # redundant).
-                    return False
-            return True
+            if ((self.rightid == other.rightid or other.rightid == '*') and
+                (self.roleid in roles.get(other.roleid, []) or other.roleid == '*') and
+                (self.colname == other.colname or other.colname is None)):
+                if self.granted == other.granted:
+                    return True
+                else:
+                    return other
+            return False
         def matches_system_rights(self, system_rights):
             if self.system:
                 return True
             if not system_rights:
+                return True
+            if self.rightid == 'show':
+                # Well, there are typically no SHOW system rights...
                 return True
             for r in system_rights:
                 if ((self.roleid not in roles.get(r.roleid, []) or self.roleid == '*' or r.roleid == '*') and
@@ -771,16 +765,59 @@ def pytis_update_rights_redundancy():
                 redundant_rights.append(r)
         rights[key] = base
     for comrades in rights.values():
-        base = []
+        base = set()
+        maybe_redundant = []
+        sure_redundant = set()
         while comrades:
             r = comrades.pop()
-            for rr in comrades + base:
-                if r is not rr and r.default_redundant(rr):
+            blockers = set()
+            redundant = False
+            # If the right differs from all other rights here completely, it's
+            # not redundant.  If it is compatible with a default ("star")
+            # right, it may be redundant, but only if it doesn't override
+            # another non-redundant default right.  This algorithm may not give
+            # perfect result, but it's important so that it at least doesn't
+            # mark a non-redundant right as redundant.  We only care about
+            # specific->general rules interactions; exact matches should be
+            # already resolved by the strong redundancy pass, i.e. the graph of
+            # blockers should be acyclic (it contains only edges from more
+            # specific to less specific rights).
+            for rr in comrades + list(base):
+                state = r.default_redundant(rr)
+                if state is True:
+                    redundant = True
+                elif state is not False:
+                    blockers.add(state)
+            if redundant:
+                blockers = blockers - sure_redundant
+                if blockers:
+                    if blockers.intersection(base):
+                        base.add(r)
+                    else:
+                        maybe_redundant.append((r, blockers,))
+                else:
                     redundant_rights.append(r)
-                    break
+                    sure_redundant.add(r)
             else:
-                base.append(r)
-        base_rights += base
+                base.add(r)
+        while maybe_redundant:
+            new_maybe_redundant = []
+            for r, blockers in maybe_redundant:
+                blockers = blockers - sure_redundant
+                if blockers:
+                    if blockers.intersection(base):
+                        base.add(r)
+                    else:
+                        new_maybe_redundant.append((r, blockers,))
+                else:
+                    redundant_rights.append(r)
+                    sure_redundant.add(r)
+            if len(new_maybe_redundant) == len(maybe_redundant):
+                for r, blockers in new_maybe_redundant:
+                    base.add(r)
+                break
+            maybe_redundant = new_maybe_redundant
+        base_rights += list(base)
     for r in base_rights:
         if r.redundant:
             plpy.execute("update e_pytis_action_rights set redundant='F' where id='%d' and redundant!='F'" % (r.id,))
