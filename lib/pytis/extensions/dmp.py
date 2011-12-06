@@ -1015,7 +1015,7 @@ class DMPRoles(DMPObject):
                     self._roles.append(new_role)
                     roles_by_names[role] = new_role
                 elif purpose != 'appl':
-                    roles_by_names[role].set_purpose(purposeid)
+                    roles_by_names[role].set_purposeid(purpose)
         data.select_map(process)
         # Membership
         data = self._data('pg_auth_members')
