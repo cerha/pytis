@@ -309,6 +309,8 @@ def pytis_convert_system_rights(shortname):
     q = """create temp table %s as select * from pytis_view_summary_rights('%s', NULL, False, False)
         """ % (temp_old, shortname)
     result = plpy.execute(q)
+    q = "delete from e_pytis_action_rights where shortname='%s' and redundant" % (shortname,)
+    plpy.execute(q)
     q = """insert into e_pytis_action_rights (shortname, roleid, rightid, granted, system)
            values ('%s', '*', '*', False, False)
         """ % shortname
