@@ -730,6 +730,17 @@ def pytis_update_rights_redundancy():
                     # redundant).
                     return False
             return True
+        def matches_system_rights(self, system_rights):
+            if self.system:
+                return True
+            if not system_rights:
+                return True
+            for r in system_rights:
+                if ((self.roleid not in roles.get(r.roleid, []) or self.roleid == '*' or r.roleid == '*') and
+                    (self.rightid == r.rightid or self.rightid == '*' or r.rightid == '*') and
+                    (self.colname == r.colname or self.colname is None or r.colname is None)):
+                    return True
+            return False
     rights = {}
     for row in plpy.execute("select * from e_pytis_action_rights where status>=0"):
         r = Right(**row)
@@ -749,6 +760,15 @@ def pytis_update_rights_redundancy():
                     break
             else:
                 base.append(r)
+        rights[key] = base
+    for key, comrades in rights.items():
+        base = []
+        system_rights = [r for r in comrades if r.system]
+        for r in comrades:
+            if r.matches_system_rights(system_rights):
+                base.append(r)
+            else:
+                redundant_rights.append(r)
         rights[key] = base
     for comrades in rights.values():
         base = []
