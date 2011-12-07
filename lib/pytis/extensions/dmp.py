@@ -1436,18 +1436,20 @@ class DMPActions(DMPObject):
         dbfunction = self._dbfunction('pytis_update_actions_structure')
         dbfunction.call(pytis.data.Row(()), transaction=transaction)
         
-    def update_forms(self, fake, specifications, transaction=None):
+    def update_forms(self, fake, specification, new_fullname=None, transaction=None):
         """Check given form specifications and update the database.
 
-        For given form specification names, load the specifications and check
-        their bindings and actions.  Delete old bindings and actions from the
+        For given form specification name, load the specification and check
+        its bindings and actions.  Delete old bindings and actions from the
         database and insert the new ones.
 
         Arguments:
 
           fake -- iff True, don't actually change the data but return sequence
             of SQL commands (basestrings) that would do so
-          specifications -- sequence of form specification names, strings
+          specification -- specification name, string
+          new_fullname -- if not 'None', it defines new fullname of the
+            specification, string
           transaction -- transaction object to use or 'None'; if not 'None' no
             commit nor rollback is performed in this method regardless 'fake'
             argument value
@@ -1465,23 +1467,36 @@ class DMPActions(DMPObject):
             transaction_ = self._transaction()
         else:
             transaction_ = transaction
-        for s in specifications:
-            self._logger.clear()
-            condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*' % (s,)), ignore_case=False)
-            self._delete_data(transaction=transaction_, condition=condition)
-            self._store_data(transaction=transaction_, specifications=specifications,
-                             subforms_only=True)
-            self._store_data(transaction=transaction_, specifications=specifications,
-                             original_actions=original_actions)
-            if fake:
-                messages += self._logger.messages()
+        self._logger.clear()
+        condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*' % (specification,)), ignore_case=False)
+        self._delete_data(transaction=transaction_, condition=condition)
+        self._store_data(transaction=transaction_, specifications=[specification],
+                         subforms_only=True)
+        self._store_data(transaction=transaction_, specifications=[specification],
+                         original_actions=original_actions)
+        if fake:
+            messages += self._logger.messages()
         self._logger.clear()
         for action in original_actions.items():
-            if (action.specifications_match(specifications) and
+            if (action.specifications_match([specification]) and
                 action.kind() in ('action', 'print',) and
                 action.fullname() not in self._fullnames):
                 condition = pytis.data.EQ('fullname', self._s_(action.fullname()))
                 self._delete_data(transaction_, condition)
+        if new_fullname:
+            data = self._data('c_pytis_menu_actions')
+            actions_to_rename = [a for a in self.items()
+                                 if a.specifications_match([specification]) and
+                                    a.fullname().split('/')[0] == 'form']
+            if not actions_to_rename:
+                add_message(messages, DMPMessage.WARNING_MESSAGE, "No specification to rename")
+            elif len(actions_to_rename) > 1:
+                add_message(messages, DMPMessage.ERROR_MESSAGE,
+                            "More than one specification to rename",
+                            [a.fullname() for a in actions_to_rename])
+            else:
+                row = pytis.data.Row((('fullname', pytis.data.sval(new_fullname),),))
+                data.update(pytis.data.sval(actions_to_rename[0].fullname()), row, transaction=transaction_)
         if fake:
             messages += self._logger.messages()
         if transaction is None:
@@ -1629,7 +1644,7 @@ class DMPImport(DMPObject):
         menu_item = self._dmp_menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
                                             title=action.title(), action=fullname, position=position)
         messages += self._dmp_menu.store_data(fake, transaction=transaction, specifications=[fullname])
-        messages += self._dmp_actions.update_forms(fake, [specification], transaction=transaction)
+        messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction)
         self._dmp_rights.retrieve_data(transaction=transaction)
         shortname = action.shortname()
         for a in self._dmp_rights.items():
@@ -1665,11 +1680,11 @@ def dmp_add_form(parameters, fake, fullname, position):
     configuration = DMPConfiguration(**parameters)
     return DMPImport(configuration).dmp_add_form(fake, fullname, position)
 
-def dmp_update_form(parameters, fake, specification):
+def dmp_update_form(parameters, fake, specification, new_fullname):
     """Update form subforms and actions from specifications."""
     configuration = DMPConfiguration(**parameters)
     messages = []
-    messages += DMPActions(configuration).update_forms(fake, [specification])
+    messages += DMPActions(configuration).update_forms(fake, specification, new_fullname=new_fullname)
     return messages
 
 def dmp_reset_rights(parameters, fake, specification):
