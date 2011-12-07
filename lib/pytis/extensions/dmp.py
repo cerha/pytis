@@ -797,6 +797,16 @@ class DMPRights(DMPObject):
         self._rights.append(item)
         return item
 
+    def remove_item(self, shortname, roleid, rightid, colname, system):
+        rights = self._rights
+        for i in range(len(rights)):
+            r = rights[i]
+            if (r.shortname() == shortname and r.roleid() == roleid and r.rightid() == rightid and
+                r.colname() == colname and r.system() == system):
+                del rights[i]
+                return True
+        return False
+
     def _load_specifications(self):
         messages = []
         def add_rights(shortname, access_specification):
@@ -1693,6 +1703,43 @@ def dmp_delete_shortname(parameters, fake, shortname):
 def dmp_convert_system_rights(parameters, fake, shortname):
     configuration = DMPConfiguration(**parameters)
     return DMPActions(configuration).convert_system_rights(fake, shortname)
+
+def dmp_change_rights(parameters, fake, requests):
+    configuration = DMPConfiguration(**parameters)
+    transaction = pytis.data.DBTransactionDefault(configuration.connection_data())
+    rights = DMPRights(configuration)
+    rights.retrieve_data(transaction=transaction)
+    roles = DMPRoles(configuration)
+    roles.retrieve_data(transaction=transaction)
+    known_roles = [r.name() for r in roles.items()]
+    actions = DMPActions(configuration)
+    actions.retrieve_data(transaction=transaction)
+    known_shortnames = [a.shortname() for a in actions.items()]
+    specifications = set()
+    messages = []
+    for r in requests:        
+        shortname, roleid, rightid, granted, colname, system = r
+        if shortname not in known_shortnames:
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such action", (shortname,))
+            continue
+        if roleid != '*' and roleid not in known_roles:
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such role", (roleid,))
+            continue
+        rights.remove_item(shortname=shortname, roleid=roleid, rightid=rightid,
+                           colname=colname, system=system)
+        if not system or granted:
+            rights.add_item(shortname=shortname, roleid=roleid, rightid=rightid,
+                            colname=colname, system=system, granted=granted)
+        specifications.add(shortname.split('/')[1])
+    specifications = list(specifications)
+    messages += rights.delete_data(fake, transaction, specifications=specifications)
+    messages += rights.store_data(fake, transaction, specifications=specifications)
+    if messages:
+        transaction.rollback()
+        add_message(messages, DMPMessage.ERROR_MESSAGE, "Rights not changed")
+    else:
+        transaction.commit()
+    return messages
 
 def dmp_ls(parameters, fake, what, specifications=None):
     configuration = DMPConfiguration(**parameters)
