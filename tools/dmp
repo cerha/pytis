@@ -187,17 +187,28 @@ def find_command(command_string):
 USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
 
 Commands:
-  ls [ menu | roles | rights [ SPECIFICATION ] ]
+  ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] ]
+    - list DMP menu/roles/rights, possibly limited by SPECIFICATION
   system-rights SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
+    - set/unset system rights for SHORTNAME
   rights SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
-  add-member MEMBER ROLE
-  add-form FULLNAME [ MENU-POSITION | PRECEDING-ITEM-TITLE ]
-  update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
-  delete { SHORTNAME | FULLNAME | MENU-POSITION }
-  convert-system-rights SHORTNAME
+    - set/unset application rights for SHORTNAME
   reset-rights SPECIFICATION-NAME
+    - reset rights to rights given in specification for actions related to the specification
+  convert-system-rights SHORTNAME
+    - convert system rights to application rights for SHORTNAME
+  add-member MEMBER ROLE
+    - add MEMBER to ROLE
+  add-form FULLNAME { MENU-POSITION | PRECEDING-ITEM-TITLE }
+    - add new form to application menu
+  update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
+    - update subforms and actions of the specification form and possibly change form fullname
+  delete { SHORTNAME | FULLNAME | MENU-POSITION }
+    - delete something from DMP
   import
-  commit"""
+    - make new import of DMP from application specification
+  commit
+    - perform all database updates after changes in DMP"""
 
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)

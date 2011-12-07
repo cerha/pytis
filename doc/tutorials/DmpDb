@@ -201,13 +201,29 @@ insert into e_pytis_menu (name, title, position, fullname, help, hotkey, locked)
 Nástroj dmp slouží ke zjednodušení běžných operací s DMP, aby je nebylo nutno
 provádět přímo SQL příkazy v databázi.
 
+Je-li uvedena volba --dry-run, všechny operace se provedou, ale na konci se
+místo commitu příslušné transakce provede rollback a na výstup se vypíší
+provedené SQL příkazy.  Tímto způsobem si lze akci předem reálně vyzkoušet bez
+skutečné změny dat nebo si nachystat dávkové SQL soubory.
+
 Vypsání stručné nápovědy:
 
   tools/dmp --help
 
+Vypsání informací z databáze:
+
+  tools/dmp --config=.../config.py ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] ]
+
+např.
+
+  cd pytis-demo
+  dmp --config=config.py ls rights cb.Countries
+
+(Uvedením SPECIFICATION lze výpis omezit jen na položky odpovídající dané specifikaci.)
+  
 Přidání nové položky menu:
 
-  tools/dmp --config=.../config.py add-form FULLNAME MENU-POSITION
+  tools/dmp --config=.../config.py add-form FULLNAME { MENU-POSITION | PRECEDING-ITEM-TITLE }
 
 např.:
 
@@ -226,184 +242,89 @@ Poznámky:
   hodnoty).  Např. mezi položky s pozicemi 2.1111.1120 a 2.1111.1121 lze vložit
   novou položku uvedením pozice 2.1111.11204.
 
-- Je-li uvedena volba --dry-run, všechny operace se provedou, ale na konci se
-  místo commitu příslušné transakce provede rollback a na výstup se vypíší
-  provedené SQL příkazy.  Tímto způsobem si lze akci předem reálně vyzkoušet
-  bez skutečné změny dat.
+- Místo MENU-POSITION lze uvést titulek položky menu, za kterou se má nová
+  položka zařadit na stejnou úroveň.  Tento titulek musí existovat a musí být
+  jednoznačný.
 
 Aktualizace podformulářů a akcí formuláře:
 
-  tools/dmp [ --dry-run ] --config=.../config.py update-form SPECIFICATION-NAME
+  tools/dmp --config=.../config.py update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
 
 např.:
 
   cd pytis-demo
-  dmp --config=config.py update-form cb.Countries
+  dmp --config=config.py update-form cb.Countries form/pytis.form.BrowseForm/cb.Countries//
+
+(Uvedením NEW-FULLNAME lze změnit fullname hlavního formuláře, typicky to lze
+využít pro změnu typu formuláře.)
+
+Vymazání objektů z DMP:
+
+  tools/dmp --config=.../config.py delete { SHORTNAME | FULLNAME | MENU-POSITION }
+
+např.:
+
+  cd pytis-demo
+  dmp --config=config.py delete form/cb.Countries
+
+Je-li uvedeno shortname nebo fullname, smažou se kompletně odpovídající akce.
+Je-li uvedena pozice v menu, odstraní se pouze odpovídající položka z menu,
+akce v DMP zůstanou.
+
+Změny systémových nebo aplikačních práv:
+
+  dmp --config=config.py system-rights SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
+  dmp --config=config.py rights SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
+
+např.:
+
+  cd pytis-demo
+  dmp --config=config.py system-rights cb.Countries -*:export
+  dmp --config=config.py rights cb.Countries -*:print +hanak:print
 
 Přenačtení práv ze specifikace (smazání současných práv z databáze a uložení
 nových práv do databáze dle specifikace v aplikaci):
 
-  tools/dmp [ --dry-run ] --config=.../config.py reset-rights SPECIFICATION-NAME
+  tools/dmp --config=.../config.py reset-rights SPECIFICATION-NAME
 
 např.:
 
   cd pytis-demo
-  dmp --config=config.py --dry-run reset-rights cb.Countries
+  dmp --config=config.py reset-rights cb.Countries
 
+Zrušení systémových práv ke specifikaci a jejich nahrazení ekvivalentními
+aplikačními právy:
 
-* genmenu
+  tools/dmp --config=.../config.py convert-system-rights SHORTNAME
 
-Nástroj genmenu slouží jednak k importu menu a práv při převodu aplikace na
-dynmamická menu a práva a jednak ke kontrolám a aktualizacím dynamických práv
-vůči statickým specifikacím.
+např.:
 
-Genmenu se volá takto:
+  cd pytis-demo
+  dmp --config=config.py convert-system-rights form/cb.Countries
 
-  tools/genmenu.py DEF_DIR
+Přidání členství v roli:
 
-kde DEF_DIR je adresář obsahující specifikace aplikace.  Kromě toho se obvykle
-genmenu dalšími volbami předávají parametry spojení do databáze, viz
-`tools/genmenu.py --help'.
+  tools/dmp --config=.../config.py add-member MEMBER ROLE
 
-Genmenu má několik režimů práce:
+např.:
 
-  standardní, bez specifických voleb příkazové řádky :: Importuje menu a
-    specifikace do databáze.  Jsou-li již v databázi dynamická menu a práva,
-    jsou smazána a poté znovu naimportována.
+  cd pytis-demo
+  dmp --config=config.py add-member hanak admin
+  
+Kompletní naimportování DMP ze specifikací:
 
-  --delete :: Kompletně vymaže dynamická menu a práva z databáze.
+  tools/dmp --config=.../config.py import
 
-  --check :: Kontroluje dynamická práva v databázi vůči specifikacím aplikace.
-    Zjištěné rozdíly jsou vypisovány na řádcích uvozených prefixem =Check:=.
+např.:
 
-  --check-update :: Stejné jako =--check=, ale navíc vypisuje některé SQL příkazy
-    potřebné k aktualizaci dynamických práv ze specifikací.  Tyto řádky jsou
-    uvozeny prefixem =Update:=.
+  cd pytis-demo
+  dmp --config=config.py import
 
-Vypisovaná hlášení genmenu se dělí do několika skupin podle prefixů
-vypisovaných řádků:
+Provedení všech aktualizací databáze po změnách v DMP:
 
-  Error: :: Došlo k chybové situaci, většinou při importu specifikací, kterou
-    je nutno napravit.  Buď změnou ve specifikacích aplikace, nebo implementací
-    nového rysu do genmenu.
+  tools/dmp --config=.../config.py commit
 
-  Warning: :: Upozornění na situaci, která může a nemusí znamenat chybný import
-    menu a práv.
+např.:
 
-  Note: :: Informace o nějakém zjištění, které za normálních okolností
-    neznamená chybu, ale přesto je dobré ho zkontrolovat.
-
-  Check: :: Nalezená nesrovnalost při kontrole dynamických práv v databázi vůči
-    statickým specifikacím aplikace.  Vypisovánou pouze při použití volby
-    =--check=.
-
-  Update: :: SQL příkaz potřebný ke sladění dynamických práv v databázi a
-    statických specifikací.  Vypisováno pouze při použití volby =--check-update=.
-
-  bez prefixu :: Hlášky o tom, co genmenu právě dělá.
-
-** Vysvětlení některých hlášení genmenu
-
-Chybová a varovná hlášení:
-
-  Special menu item action, define command specification :: Akce menu
-    používající neobvyklé argumenty, které genmenu není schopno zpracovat.
-    Řešením je definovat akci jako příkaz v souboru =defs/commands.py=.
-
-  Unexpected `enabled' value :: Argument =enabled= položky menu definované
-    prostřednictvím funkce =run_procedure_mitem= má hodnotu, jakou genmenu neumí
-    zpracovat.
-
-  Procedure with unhandled `enabled' :: Argumenty položky menu definované
-    prostřednictvím funkce =run_procedure_mitem= mají kombinace hodnot, které
-    genmenu neumí zpracovat.
-
-  Unknown menu item :: Položka menu neznámého typu.  Zpracování tohoto typu
-    položek je nutno v genmenu doimplementovat.
-
-  Unhandled obsolete form specification :: Specifikace formuláře ve tvaru, jaký
-    by se již ve specifikacích neměl vyskytovat.  Nutno opravit ve
-    specifikacích aplikace.
-
-  Couldn't get access rights for form :: Nelze zjistit přístupová práva daného
-    formuláře, přestože by to být možné mělo.
-
-  Can't create specification instance to get form actions :: Nelze vytvořit
-    instanci specifikace obsahující formulářové akce.  Typickým důvodem je, že
-    při vytváření instance dochází k přístupu do databáze.  Je nutné buď
-    specifikaci modifikovat, aby bylo možno vytvořit její instanci (i bez
-    přístupné databáze), nebo její akce do databáze vložit ručně.
-
-  Unknown form action class :: Ve specifikaci formulářových akcí se objevila
-    nečekaná třída.  Nutno doplnit její podporu do genmenu.
-
-  is_in_groups called in %s for groups %s :: Ve specifikacích je používáno
-    volání funkce =is_in_groups= a genmenu místo něho použilo svůj wrapper,
-    protože není možné při importu obecných specifikací zohledňovat přihlášení
-    konkrétního uživatele.  Specifikace používající =is_in_groups= mohou být
-    naimportovány chybně.
-
-  Public specification starting with underscore :: Jméno veřejné specifikace
-    začíná podtržítkem.  Může jít např. o neveřejnou specifikaci, která je
-    potomkem veřejné specifikace.
-
-  Failed to retrieve RUN_FORM command :: Akce =RUN_FORM= specifikuje příkaz,
-    ten však nebyl nalezen.  Akce je ignorována.
-
-  Module not loaded :: Při prohledávání všech specifikací v definičních
-    souborech aplikace se nepodařilo naimportovat uvedený modul.  Jeho obsah je
-    ignorován.
-
-  Actions without met specifications :: K uvedeným akcím nebyly nalezeny
-    specifikace.  Případná přístupová práva nebyla naimportována.
-
-  Not caring about access rights of form :: Speciální typ formuláře, u kterého
-    genmenu neumí zjistit přístupová práva a ani nepředpokládá, že by nějaká
-    přístupová práva mít měl.
-
-  No access rights specified for form %s, assuming everything permitted ::
-    Formulář bez specifikace přístupových práv.
-
-  Private specification, ignored :: Privátní specifikace, genmenu ji nenačítá.
-    Lze potenciálně využít pro kontrolu, zda mezi privátními specifikacemi
-    nezůstala nějaká veřejná.
-
-  Non-form action, no rights assigned :: Jiná než formulářová akce, genmenu
-    předpokládá, že pro takové akce nejsou specifikována přístupová práva.
-
-Hlášení kontrol:
-
-  Extra action :: Akce je v databázi, ale ne ve specifikacích.  Může jít o již
-    nepoužívanou akci nebo nově definovanou akci v databázi.
-
-  Missing action :: Akce je ve specifikacích, ale ne v databázi.  Může jít
-    o novou akci, která ještě není v databázi, nebo o akci, která byla
-    v databázi zrušena.
-
-  Missing action rights :: Akce má nastavena práva ve specifikacích, ale ne
-    v databázi.  Může jít o novou akci, která ještě není v databázi, nebo
-    o akci, která byla v databázi zrušena, nebo o vymazání práv akce
-    v databázi.
-
-  Missing action title in :: Akce nemá v databázi uvedený název.  Je vhodné ho
-    doplnit.
-
-  Missing group rights :: Ve specifikacích jsou uvedena práva akce pro danou
-    skupinu, ale v databázi pro tuto skupinu chybí.  Buď jde o nová práva ve
-    specifikacích, nebo o změněná práva v databázi.
-
-  Missing permission :: Ve specifikacích jsou uvedena práva akce pro danou
-    skupinu, ale v databázi pro tuto skupinu chybí.  Buď jde o nová práva ve
-    specifikacích, nebo o změněná práva v databázi.
-
-  Subactions mismatch :: Seznamy podformulářů jsou v databázi a specifikacích
-    odlišné.  Buď jde o změnu ve specifikacích, nebo o změnu v databázi,
-    případně je potřeba tyto akce do databáze přidat při přechodu ze starší
-    verze DMP.
-
-  Multiple permission in the database :: Uvedené právo se v databázi vyskytuje
-    duplicitně.  Duplicitní záznamy by měly z databáze vymazány, jinak se
-    zobrazují správci DMP v rozpisech práv.
-
-  Different column sets :: Uvedené právo má odlišný seznam sloupců v databázi a
-    ve specifikacích.  Jde o změnu práv buď ve specifikacích, nebo v databázi.
+  cd pytis-demo
+  dmp --config=config.py commit
