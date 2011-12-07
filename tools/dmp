@@ -269,7 +269,7 @@ Commands:
   rights SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   import
   add-member MEMBER ROLE
-  add-form FULLNAME MENU-POSITION
+  add-form FULLNAME [ MENU-POSITION | PRECEDING-ITEM-TITLE ]
   update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
   delete { SHORTNAME | FULLNAME | MENU-POSITION }
   convert-system-rights SHORTNAME

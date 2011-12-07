@@ -79,6 +79,7 @@ script.
 """
 
 import copy
+import re
 import string
 
 import pytis.data
@@ -529,6 +530,7 @@ class DMPMenu(DMPObject):
                        Attribute('children', list, mutable=True),
                        Attribute('action', basestring),
                        Attribute('position', basestring, mutable=True),
+                       Attribute('next_position', basestring, default=None),
                        Attribute('hotkey', basestring),
                        Attribute('help', unicode),
                        Attribute('locked', bool, mutable=True),
@@ -668,6 +670,7 @@ class DMPMenu(DMPObject):
                                  title=row['title'].value(),
                                  action=str(row['fullname'].value()),
                                  position=position,
+                                 next_position=str(row['next_position'].value()),
                                  help=row['help'].value(),
                                  hotkey=str(row['hotkey'].value()),
                                  locked=row['locked'].value(),
@@ -1630,7 +1633,7 @@ class DMPImport(DMPObject):
           fake -- iff True, don't actually change the data but return sequence
             of SQL commands (basestrings) that would do so
           fullname -- fullname of the form invoking action, string
-          position -- menu position of the action, string
+          position -- menu position of the action or preceding item title, basestring
 
         """
         transaction = self._transaction()
@@ -1640,24 +1643,37 @@ class DMPImport(DMPObject):
         messages += self._dmp_actions.load_specifications(actions=[action])
         messages += self._dmp_actions.store_data(fake, transaction)
         specification = action.form_name()
-        self._dmp_menu.retrieve_data(transaction=transaction)
-        menu_item = self._dmp_menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
-                                            title=action.title(), action=fullname, position=position)
-        messages += self._dmp_menu.store_data(fake, transaction=transaction, specifications=[fullname])
-        messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction)
-        self._dmp_rights.retrieve_data(transaction=transaction)
-        shortname = action.shortname()
-        for a in self._dmp_rights.items():
-            if a.shortname() == shortname:
-                break
-        else:
-            for m in self._dmp_menu.items():
-                if (m is not menu_item and
-                    DMPActions.Action(resolver, [], fullname=m.action()).shortname() == shortname):
+        menu = self._dmp_menu
+        menu.retrieve_data(transaction=transaction)
+        if not re.match('[0-9.]+$', position):
+            previous_items = [m for m in menu.items() if m.title() == position]
+            if not previous_items:
+                add_message(messages, DMPMessage.ERROR_MESSAGE, "No such menu item", (position,))
+                position = None
+            elif len(previous_items) > 1:
+                add_message(messages, DMPMessage.ERROR_MESSAGE, "Multiple menu items",
+                            ('%s (%s)' % (position, ', '.join([m.position() for m in previous_items]),),))
+                position = None
+            else:
+                position = previous_items[0].next_position()
+        if position is not None:
+            menu_item = menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
+                                      title=action.title(), action=fullname, position=position)
+            messages += menu.store_data(fake, transaction=transaction, specifications=[fullname])
+            messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction)
+            self._dmp_rights.retrieve_data(transaction=transaction)
+            shortname = action.shortname()
+            for a in self._dmp_rights.items():
+                if a.shortname() == shortname:
                     break
             else:
-                self._dmp_rights.add_item(shortname, granted=False)
-        messages += self._dmp_rights.store_data(fake, transaction=transaction, specifications=[shortname])
+                for m in menu.items():
+                    if (m is not menu_item and
+                        DMPActions.Action(resolver, [], fullname=m.action()).shortname() == shortname):
+                        break
+                else:
+                    self._dmp_rights.add_item(shortname, granted=False)
+            messages += self._dmp_rights.store_data(fake, transaction=transaction, specifications=[shortname])
         if fake:
             transaction.rollback()
         else:
