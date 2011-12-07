@@ -545,8 +545,13 @@ class CodebookFieldExporter(FieldExporter):
         type = self._field.type
         if isinstance(type, pytis.data.Array):
             type = type.inner_type()
-        return [(val, type.export(val), g.escape(display).replace(' ',  '&nbsp;'))
-                for val, display in self._row.enumerate(self._field.id)]
+        def exported(value, display):
+            exported_value = type.export(value)
+            if display is None:
+                display = exported_value
+            exported_display = g.escape(display).replace(' ',  '&nbsp;')
+            return (value, exported_value, exported_display)
+        return [exported(v, d) for v, d in self._row.enumerate(self._field.id)]
 
 
 class RadioFieldExporter(CodebookFieldExporter):
