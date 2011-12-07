@@ -237,7 +237,12 @@ class DMPObject(object):
             self._active = True
         def write(self, message):
             if self._active:
-                self.append('SQL: %s' % (message,))
+                for prefix in ('declare ', 'fetch ', 'move ', 'close ', 'select ',
+                               'savepoint ', 'release ',):
+                    if message.startswith(prefix):
+                        break
+                else:
+                    self.append('SQL: %s' % (message,))
         def append(self, message):
             self._messages.append(message)            
         def clear(self):
