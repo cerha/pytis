@@ -2654,6 +2654,11 @@ class InputForm(PopupEditForm):
         class Spec(Specification):
             data_cls = pytis.data.RestrictedMemData
         for key, value in kwargs.items():
+            if isinstance(value, collections.Callable):
+                # This is necessary to avoid calling functions (such as 'check'
+                # or 'row_style') as methods.
+                funcion = value
+                value = lambda self, *args, **kwargs: funcion(*args, **kwargs)
             setattr(Spec, key, value)
         self._specification = Spec(resolver)
         super(InputForm, self)._full_init(parent, resolver, name, guardian=guardian,
