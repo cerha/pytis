@@ -30,52 +30,24 @@ def run_queries(queries, cursor, connection, dry_run, quiet=False):
     if not quiet:
         print "Changes applied, don't forget to update summary rights to get them fully applied."
 
-def cmd_ls(connection, dry_run, args):
-    cursor = connection.cursor()
-    def ls_menu():
-        cursor.execute("select menuid, position, xtitle, shortname, fullname from ev_pytis_menu order by position")
-        for row in cursor.fetchall():
-            label = ('%s * %s' % (row[1], row[2],))[:40]
-            print '%4s %-40s %-30s %s' % (row[0], label, row[3] or '', row[4] or '',)
-    def ls_roles():
-        cursor.execute("select name, purposeid, coalesce(description, '') from e_pytis_roles order by name")
-        for row in cursor.fetchall():
-            print '%-32s %s %s' % row
-    def ls_rights(shortname):
-        cursor.execute(("select shortname, roleid, granted, substr(rightid, 1, 4), system, redundant, coalesce(colname, '') "
-                        "from e_pytis_action_rights where shortname like %s "
-                        "order by shortname, rightid, roleid, colname, system"), (shortname,))
-        for row in cursor.fetchall():
-            row = list(row)
-            for i, yes, no in ((2, '+', '-',),
-                               (4, 'sys', '   ',),
-                               (5, 'red', '   ',),
-                               ):
-                if row[i]:
-                    row[i] = yes
-                else:
-                    row[i] = no
-            print '%-60s %-32s %s%s %s %s %s' % tuple(row)
-    if not args:
-        args = ['menu']
-    spec = args.pop(0)
-    if spec == 'menu':
-        handler = ls_menu
-    elif spec == 'roles':
-        handler = ls_roles
-    elif spec == 'rights':
-        if args:
-            shortname = args.pop(0)
+def command_ls(parameters, dry_run, args):
+    n_args = len(args)
+    kwargs = {}
+    if n_args <= 1:
+        if n_args == 0:
+            action = 'menu'
         else:
-            shortname = '%'
-        handler = lambda: ls_rights(shortname)
+            action = args[0]
     else:
-        print "Error: wrong argument:", spec
+        action = args[0]
+        if n_args != 2 or action == 'roles':
+            print 'Error: extra arguments'
+            return
+        kwargs['specifications'] = [args[1]]
+    if action not in ('menu', 'roles', 'rights',):
+        print 'Error: invalid action: %s' % (action,)
         return
-    if args:
-        print "Error: extra arguments:", args
-        return
-    handler()
+    return pytis.extensions.dmp_ls(parameters, dry_run, action, **kwargs)
 
 def cmd_add(connection, dry_run, args):
     cursor = connection.cursor()
@@ -325,7 +297,7 @@ def find_command(command_string):
 USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
 
 Commands:
-  ls [ menu | roles | rights [ SHORTNAME ] ]
+  ls [ menu | roles | rights [ SPECIFICATION ] ]
   add { FULLNAME | SHORTNAME } [ TITLE { POSITION | PARENT-TITLE } ]
   sys SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   rig SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...

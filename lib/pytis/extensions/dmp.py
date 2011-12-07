@@ -379,6 +379,8 @@ class DMPObject(object):
     def delete_data(self, fake, transaction=None, specifications=None):
         """Delete DMP data from the database.
 
+        Arguments:
+        
           fake -- iff True, don't actually delete the data but return sequence
             of SQL commands (basestrings) that would do so
           transaction -- transaction object to use or 'None'; if not 'None' no
@@ -410,6 +412,23 @@ class DMPObject(object):
         else:
             condition = self._specifications_condition(transaction, specifications)
         return condition
+
+    def print_data(self, specifications=None):
+        """Print object data.
+
+        Arguments:
+        
+          specifications -- if not 'None' then it is a sequence of specification
+            names to restrict the operation to
+
+        """
+        lines = self._print_data(specifications=specifications)
+        for l in lines:
+            sys.stdout.write('%s\n' % (l,))
+        return []
+
+    def _print_data(self, specifications=None):
+        return []
 
     def _specifications_condition(self, transaction, specifications):
         def spec2cond(s):
@@ -727,6 +746,23 @@ class DMPMenu(DMPObject):
             add_message(messages, DMPMessage.ERROR_MESSAGE, "No such position", (position,))
         return messages
 
+    def _print_data(self, specifications=None):
+        lines = []
+        for item in self.items():
+            fullname = item.action()
+            if fullname is None:
+                if specifications is not None:
+                    continue
+            else:
+                action = DMPActions.Action(self._resolver(), None, fullname=fullname)
+                if not action.specifications_match(specifications):
+                    continue
+            label = ('%s * %s' % (item.position(), item.title(),))[:40]
+            lines.append('%4s %-40s %-30s %s' %
+                         (item.id(), label, action.shortname() or '', fullname or '',))
+        lines.reverse()
+        return lines
+    
 
 class DMPRights(DMPObject):
     """Representation of DMP access rights."""
@@ -738,10 +774,11 @@ class DMPRights(DMPObject):
                        Attribute('colname', basestring),
                        Attribute('system', bool),
                        Attribute('granted', bool),
+                       Attribute('redundant', bool, default=None),
                        )
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
-                      [('e_pytis_action_rights', ('id', 'shortname', 'roleid', 'rightid', 'system', 'granted', 'colname', 'status',),)])
+                      [('e_pytis_action_rights', ('id', 'shortname', 'roleid', 'rightid', 'system', 'granted', 'colname', 'status', 'redundant',),)])
 
     def _reset(self):
         self._rights = []
@@ -827,6 +864,7 @@ class DMPRights(DMPObject):
                               colname=row['colname'].value(),
                               system=row['system'].value(),
                               granted=row['granted'].value(),
+                              redundant=row['redundant'].value(),
                               )
         self._rights = data.select_map(process, condition=condition, transaction=transaction)
     
@@ -852,7 +890,19 @@ class DMPRights(DMPObject):
 
     def _delete_data(self, transaction, condition):
         data = self._data('e_pytis_action_rights')
-        data.delete_many(condition, transaction=transaction)        
+        data.delete_many(condition, transaction=transaction)
+        
+    def _print_data(self, specifications=None):
+        lines = []
+        for right in self.items():
+            shortname = right.shortname()
+            if (specifications is not None and shortname.split('/')[1] not in specifications):
+                continue
+            lines.append('%-60s %-32s %s%s %s %s %s' %
+                         (shortname, right.roleid(), ('+' if right.granted() else '-'),
+                          right.rightid()[:4], ('sys' if right.system() else '   '),
+                          ('red' if right.redundant() else '   '), right.colname() or '',))
+        return lines
 
     def restore(self, fake, specifications):
         """Restore access rights of the given specification.
@@ -989,6 +1039,13 @@ class DMPRoles(DMPObject):
         data_members.delete_many(condition, transaction=transaction)
         data_roles.delete_many(condition, transaction=transaction)
         dbfunction.call(pytis.data.Row(()), transaction=transaction)
+
+    def _print_data(self, specifications=None):
+        lines = []
+        for role in self.items():
+            lines.append('%-32s %s %s' %
+                         (role.name(), role.purposeid(), role.description() or '',))
+        return lines
         
     def load_system_roles(self):
         """Load PostgreSQL roles."""
@@ -1631,3 +1688,17 @@ def dmp_delete_shortname(parameters, fake, shortname):
 def dmp_convert_system_rights(parameters, fake, shortname):
     configuration = DMPConfiguration(**parameters)
     return DMPActions(configuration).convert_system_rights(fake, shortname)
+
+def dmp_ls(parameters, fake, what, specifications=None):
+    configuration = DMPConfiguration(**parameters)
+    if what == 'menu':
+        class_ = DMPMenu
+    elif what == 'roles':
+        class_ = DMPRoles
+    elif what == 'rights':
+        class_ = DMPRights
+    else:
+        raise Exception("Program error", what)
+    instance = class_(configuration)
+    instance.retrieve_data()
+    instance.print_data(specifications=specifications)
