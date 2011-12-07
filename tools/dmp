@@ -48,82 +48,6 @@ def command_ls(parameters, dry_run, args):
         print 'Error: invalid action: %s' % (action,)
         return
     return pytis.extensions.dmp_ls(parameters, dry_run, action, **kwargs)
-
-def cmd_add(connection, dry_run, args):
-    cursor = connection.cursor()
-    if not args:
-        print "Error: missing action"
-        return
-    action = args.pop(0)
-    if args:
-        title = args.pop(0)
-        if not args:
-            print "Error: missing parent menu"
-            return
-        position = args.pop(0)
-        if args:
-            print "Error: extra arguments", args
-            return
-    else:
-        title = position = None
-    components = action.split('/')
-    if len(components) < 2:
-        print "Error: invalid action:", action
-        return
-    if len(components) > 2:
-        if components[0] != 'form':
-            print "Error: invalid action:", action
-            return
-        fullname = action
-        shortname = '%s/%s' % (components[0], components[2])
-    elif components[0] == 'form':
-        fullname = '%s/pytis.form.BrowseForm/%s//' % tuple(components)
-        shortname = action
-    else:
-        fullname = shortname = action
-    queries = []
-    queries.append("insert into c_pytis_menu_actions (fullname, shortname) values ('%s', '%s')" % (fullname, shortname,))
-    if title is not None:
-        last_dot = position.rfind('.')
-        if last_dot < 0:
-            parent_position = position
-            cursor.execute("select fullname, position from e_pytis_menu where title like %s", (position,))
-        else:
-            cursor.execute("select fullname, position from e_pytis_menu where position=%s", (position,))
-            if cursor.rowcount > 0:
-                print "Error: position already present:", position
-                return
-            parent_position = position[:last_dot]
-            cursor.execute("select fullname, position from e_pytis_menu where position=%s", (parent_position,))
-        if not cursor.rowcount:
-            print "Error: no such parent:", parent_position
-            return
-        row = cursor.fetchone()
-        if row[0][:5] != 'menu/':
-            print "Error: parent not a menu:", parent_position
-            return
-        if last_dot < 0:
-            parent_position = row[1]
-            cursor.execute("select position from e_pytis_menu where position~'%s.*{1}' order by position desc limit 1"
-                           % (parent_position,))
-            if cursor.rowcount:
-                row = cursor.fetchone()
-                last_position = row[0]
-                position_components = last_position.split('.')
-                n = str(int(position_components[-1]) + 1)
-                while len(n) < len(position_components[-1]):
-                    n = '0' + n
-                position_components[-1] = n
-                position = string.join(position_components, '.')
-            else:
-                position = parent_position + '.11'
-        if fullname.startswith('menu/'):
-            name = 'NULL'
-        else:
-            name = "'%s'" % (fullname,)
-        queries.append("insert into e_pytis_menu (name, title, position, fullname) values (%s, '%s', '%s', '%s')"
-                       % (name, pg_escape(title), position, fullname,))
-    run_queries(queries, cursor, connection, dry_run)
     
 def command_system_rights(parameters, dry_run, args, system=True):
     if not args:
@@ -264,16 +188,15 @@ USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
 
 Commands:
   ls [ menu | roles | rights [ SPECIFICATION ] ]
-  add { FULLNAME | SHORTNAME } [ TITLE { POSITION | PARENT-TITLE } ]
   system-rights SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
   rights SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
-  import
   add-member MEMBER ROLE
   add-form FULLNAME [ MENU-POSITION | PRECEDING-ITEM-TITLE ]
   update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
   delete { SHORTNAME | FULLNAME | MENU-POSITION }
   convert-system-rights SHORTNAME
   reset-rights SPECIFICATION-NAME
+  import
   commit"""
 
 def parse_options():
