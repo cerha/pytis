@@ -861,7 +861,7 @@ class DMPRights(DMPObject):
                     form_action_rights = ((None, (a.access_groups(), pytis.data.Permission.CALL)),)
                     add_rights(form_action_name, form_action_rights)
             # Print actions access rights
-            for p in spec.print_spec():
+            for p in (spec.print_spec() or []):
                 form_action_name = 'print/%s/%s' % (p.dmp_name(), spec_name,)
                 if access_rights is None:
                     print_access_groups = None
