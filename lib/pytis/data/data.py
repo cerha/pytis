@@ -177,7 +177,10 @@ class Operator(object):
     def __str__(self):
         def arg(arg):
             if isinstance(arg, (pytis.data.Value, pytis.data.WMValue)):
-                return repr(arg.value())
+                value = arg.value()
+                if isinstance(arg.type(), pytis.data.DateTime):
+                    value = str(value)
+                return repr(value)
             else:
                 return str(arg)
         args = [arg(a) for a in self.args()]
