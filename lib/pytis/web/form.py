@@ -512,27 +512,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                        _(u"Fields marked by an asterisk are mandatory.")
         return None
 
-    @classmethod
-    def _op2str(self, operator):
-        # Return a unique string representation of 'pytis.data.Operator' for
-        # storing current runtime filter state during AJAX updates.  The
-        # default 'Operator' __str__ method doesn't work for this purpose since
-        # it doesnt expose argument values.
-        def arg2str(arg):
-            if isinstance(arg, pd.Operator):
-                return self._op2str(arg)
-            elif isinstance(arg, (pd.Value, pd.WMValue)):
-                value = arg.value()
-                if isinstance(arg.type(), pd.DateTime):
-                    value = str(value)
-                return repr(value)
-            else:
-                return repr(arg)
-        if operator is None:
-            return ''
-        else:
-            return '%s(%s)' % (operator.name(), ','.join([arg2str(a) for a in operator.args()]))
-    
     def export(self, context):
         result = super(EditForm, self).export(context)
         layout_fields = self._layout.order()
@@ -545,7 +524,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             required = self._has_not_null_indicator(field)
             runtime_filter = self._row.runtime_filter(fid)
             if runtime_filter is not None:
-                filters[fid] = self._op2str(runtime_filter)
+                filters[fid] = str(runtime_filter)
             handler = field.exporter.handler(context, self._id, active, required)
             field_handlers.append(handler)
         context.resource('prototype.js')
@@ -608,7 +587,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                         fdata['value'] = localized_value
                 if fid in filters:
                     old_filter = filters[fid]
-                    new_filter = cls._op2str(row.runtime_filter(fid))
+                    new_filter = str(row.runtime_filter(fid))
+                    # We rely on the fact, that a stringified
+                    # 'pytis.data.Operator' uniquely represents the
+                    # corresponding runtime filter state.
                     if new_filter != old_filter:
                         enumeration = [(value, translator.translate(label))
                                        for value, label in row.enumerate(fid)]
