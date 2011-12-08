@@ -713,7 +713,8 @@ class DMPMenu(DMPObject):
                 action = DMPActions.Action(self._resolver(), None, fullname=fullname)
                 if not action.specifications_match(specifications):
                     continue
-            row = pytis.data.Row((('menuid', I(item.id()),),
+            item_id_value = I(item.id())
+            row = pytis.data.Row((('menuid', item_id_value,),
                                   ('name', S(item.name()),),
                                   ('title', S(item.title()),),
                                   ('fullname', S(fullname),),
@@ -723,9 +724,10 @@ class DMPMenu(DMPObject):
                                   ('hotkey', S(item.hotkey()),),
                                   ('locked', B(item.locked()),),
                                   ))
-            _, result = data.insert(row, transaction=transaction)
-            if not result:
-                return False
+            if not data.row(item_id_value):
+                _, result = data.insert(row, transaction=transaction)
+                if not result:
+                    return False
         return True
     
     def _delete_data(self, transaction, condition):
