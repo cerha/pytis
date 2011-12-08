@@ -37,6 +37,12 @@ def resolver():
     import config
     return config.resolver
 
+def _issubclass(c1, c2):
+    try:
+        return issubclass(c1, c2)
+    except TypeError:
+        return False
+
 
 class ResolverError(Exception):
     """Specification name resolution error."""
@@ -158,8 +164,7 @@ class Resolver(object):
         if isinstance(specification, ModuleType):
             return specification
         import pytis.presentation
-        if type(specification) != type(object) or \
-                not issubclass(specification, pytis.presentation.Specification):
+        if not _issubclass(specification, pytis.presentation.Specification):
             raise ResolverError("Resolver error loading specification '%s': %s is not a "
                                 "pytis.presentation.Specification subclass." % (name, specification))
         if argument_names(specification.__init__):
@@ -241,7 +246,7 @@ class Resolver(object):
             # Search cls subclasses in given module recursively.
             submodules = []
             for name, value in module.__dict__.items():
-                if type(value) == type(object) and value != cls and issubclass(value, cls) \
+                if _issubclass(value, cls) and value != cls \
                         and value not in classes and name not in names:
                     classes.append(value)
                     names[module.__name__+'.'+name] = value
