@@ -212,13 +212,20 @@ Vypsání stručné nápovědy:
 
 Vypsání informací z databáze:
 
-  tools/dmp --config=.../config.py ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] ]
+  tools/dmp --config=.../config.py ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] | norights ]
 
 např.
 
   cd pytis-demo
   dmp --config=config.py ls rights cb.Countries
 
+Možné výpisy:
+
+  menu -- menu aplikace
+  roles -- definované role
+  rights -- přístupová práva
+  norights -- specifikace bez definovaných přístupových práv
+  
 (Uvedením SPECIFICATION lze výpis omezit jen na položky odpovídající dané specifikaci.)
   
 Přidání nové položky menu:
