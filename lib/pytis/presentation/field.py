@@ -804,8 +804,8 @@ class PresentedRow(object):
                             return ''
                         try:
                             row = enumerator.row(value, transaction=self._transaction,
-                                                  condition=self.runtime_filter(column.id),
-                                                  arguments=self.runtime_arguments(column.id))
+                                                 condition=self.runtime_filter(column.id),
+                                                 arguments=self.runtime_arguments(column.id))
                         except pytis.data.DataAccessException:
                             return ''
                         if row:
@@ -871,7 +871,10 @@ class PresentedRow(object):
         if value is None:
             return column.null_display or ''
         elif display:
-            return display(value)
+            result = display(value)
+            assert isinstance(result, basestring), \
+                "Invalid result of display function for column '%s': %r" % (column.id, result)
+            return result
         else:
             return ''
     
@@ -905,7 +908,12 @@ class PresentedRow(object):
                 sorting = self._resolver.get(column.codebook, 'view_spec').sorting()
             value_column = enumerator.value_column()
             display = self._display_as_row_function(column)
-            return [(row[value_column].value(), display(row))
+            def check_display(row):
+                result = display(row)
+                assert isinstance(result, basestring), \
+                    "Invalid result of display function for column '%s': %r" % (column.id, result)
+                return result
+            return [(row[value_column].value(), check_display(row))
                     for row in enumerator.rows(transaction=self._transaction,
                                                condition=self.runtime_filter(key),
                                                arguments=self.runtime_arguments(key),
