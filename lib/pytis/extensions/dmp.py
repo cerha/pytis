@@ -895,7 +895,7 @@ class DMPRights(DMPObject):
             shortname = right.shortname()
             if specifications is not None:
                 components = shortname.split('/')
-                if len(components) > 1 and components[1] not in specifications:
+                if len(components) <= 1 or components[1] not in specifications:
                     continue
             row = pytis.data.Row((('shortname', S(shortname),),
                                   ('roleid', S(right.roleid()),),
@@ -1675,7 +1675,10 @@ class DMPImport(DMPObject):
                         break
                 else:
                     self._dmp_rights.add_item(shortname, granted=False)
-            messages += self._dmp_rights.store_data(fake, transaction=transaction, specifications=[shortname])
+            components = shortname.split('/')
+            if len(components) > 1:        
+                messages += self._dmp_rights.store_data(fake, transaction=transaction,
+                                                        specifications=[components[1]])
         if fake:
             transaction.rollback()
         else:
