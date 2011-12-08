@@ -1537,6 +1537,21 @@ class DMPActions(DMPObject):
                 transaction.commit()
         return messages
 
+    def dmp_no_rights(self):
+        messages = []
+        self.retrieve_data()
+        rights = DMPRights(self._configuration)
+        rights.retrieve_data()
+        known_shortnames = dict([(r.shortname(), None) for r in rights.items()])
+        for action in self.items():
+            shortname = action.shortname()
+            prefix = shortname.split('/')[0]
+            if (prefix not in ('menu', 'EXIT', 'RELOAD_RIGHTS', 'NEW_RECORD') and
+                shortname not in known_shortnames):
+                add_message(messages, DMPMessage.WARNING_MESSAGE,
+                            "Action without rights", (action.shortname(), action.fullname(),))
+        return messages
+
     def convert_system_rights(self, fake, shortname):
         row = pytis.data.Row((('shortname', pytis.data.sval(shortname),),))
         self._dbfunction('pytis_convert_system_rights').call(row)
@@ -1779,7 +1794,9 @@ def dmp_change_rights(parameters, fake, requests):
 
 def dmp_ls(parameters, fake, what, specifications=None):
     configuration = DMPConfiguration(**parameters)
-    if what == 'menu':
+    if what == 'norights':
+        return DMPActions(configuration).dmp_no_rights()
+    elif what == 'menu':
         class_ = DMPMenu
     elif what == 'roles':
         class_ = DMPRoles
@@ -1789,4 +1806,4 @@ def dmp_ls(parameters, fake, what, specifications=None):
         raise Exception("Program error", what)
     instance = class_(configuration)
     instance.retrieve_data()
-    instance.print_data(specifications=specifications)
+    return instance.print_data(specifications=specifications)
