@@ -177,8 +177,9 @@ class Operator(object):
     def __str__(self):
         def arg(arg):
             if isinstance(arg, (pytis.data.Value, pytis.data.WMValue)):
-                arg = repr(arg.value())
-            return arg
+                return repr(arg.value())
+            else:
+                return str(arg)
         args = [arg(a) for a in self.args()]
         return '%s (%s)' % (self.name(), ', '.join(args))
 
