@@ -352,6 +352,9 @@ class DMPObject(object):
     
     def retrieve_data(self, transaction=None):
         """Load DMP data from the database."""
+        import config
+        config.initial_fetch_size = max(config.initial_fetch_size, 100000)
+        config.fetch_size = max(config.fetch_size, 100000)
         self._reset()
         self._retrieve_data(transaction=transaction)
 
