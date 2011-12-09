@@ -933,7 +933,7 @@ class DMPRights(DMPObject):
                           ('red' if right.redundant() else '   '), right.colname() or '',))
         return lines
 
-    def restore(self, fake, specifications):
+    def dmp_restore(self, fake, specifications):
         """Restore access rights of the given specification.
 
         Access rights of the specification in the database are deleted and
@@ -951,16 +951,56 @@ class DMPRights(DMPObject):
         """
         messages = []
         transaction = self._transaction()
+        self._disable_triggers(transaction=transaction)
         messages += self.delete_data(fake, transaction=transaction, specifications=specifications)
         self.load_specifications()
         messages += self.store_data(fake, transaction=transaction, specifications=specifications)
         messages += self.commit(fake, transaction=transaction)
+        self._enable_triggers(transaction=transaction)
         if fake:
             transaction.rollback()
         else:
             transaction.commit()
         return messages
-        
+
+    def dmp_change_rights(self, fake, requests):
+        transaction = self._transaction()
+        self._disable_triggers(transaction=transaction)
+        rights = DMPRights(self._configuration)
+        rights.retrieve_data(transaction=transaction)
+        roles = DMPRoles(self._configuration)
+        roles.retrieve_data(transaction=transaction)
+        known_roles = [r.name() for r in roles.items()]
+        actions = DMPActions(self._configuration)
+        actions.retrieve_data(transaction=transaction)
+        known_shortnames = [a.shortname() for a in actions.items()]
+        specifications = set()
+        messages = []
+        for r in requests:        
+            shortname, roleid, rightid, granted, colname, system = r
+            if shortname not in known_shortnames:
+                add_message(messages, DMPMessage.ERROR_MESSAGE, "No such action", (shortname,))
+                continue
+            if roleid != '*' and roleid not in known_roles:
+                add_message(messages, DMPMessage.ERROR_MESSAGE, "No such role", (roleid,))
+                continue
+            rights.remove_item(shortname=shortname, roleid=roleid, rightid=rightid,
+                               colname=colname, system=system)
+            if not system or granted:
+                rights.add_item(shortname=shortname, roleid=roleid, rightid=rightid,
+                                colname=colname, system=system, granted=granted)
+            specifications.add(shortname.split('/')[1])
+        specifications = list(specifications)
+        messages += rights.delete_data(fake, transaction, specifications=specifications)
+        messages += rights.store_data(fake, transaction, specifications=specifications)
+        self._enable_triggers(transaction=transaction)
+        if messages:
+            transaction.rollback()
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "Rights not changed")
+        else:
+            transaction.commit()
+        return messages
+
     def commit(self, fake, transaction=None):
         """Commit changes in access rights stored in the database.
 
@@ -1449,6 +1489,18 @@ class DMPActions(DMPObject):
         data.delete_many(condition, transaction=transaction)
         dbfunction = self._dbfunction('pytis_update_actions_structure')
         dbfunction.call(pytis.data.Row(()), transaction=transaction)
+
+    def dmp_update_forms(self, fake, specification, new_fullname=None):
+        transaction = self._transaction()
+        self._disable_triggers(transaction=transaction)
+        result = self.update_forms(fake, specification, new_fullname=new_fullname,
+                                   transaction=transaction)
+        self._enable_triggers(transaction=transaction)
+        if fake:
+            transaction_.rollback()
+        else:
+            transaction_.commit()
+        return result
         
     def update_forms(self, fake, specification, new_fullname=None, transaction=None):
         """Check given form specifications and update the database.
@@ -1534,10 +1586,12 @@ class DMPActions(DMPObject):
             menu = DMPMenu(self._configuration)
             rights = DMPRights(self._configuration)
             transaction = self._transaction()
+            self._disable_triggers(transaction=transaction)
             self._logger.clear()            
             menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
             rights.delete_data(fake, transaction=transaction, specifications=(shortname,))
             self._delete_data(transaction, condition)
+            self._enable_triggers(transaction=transaction)
             if fake:
                 messages += self._logger.messages()
             if fake:
@@ -1719,6 +1773,7 @@ class DMPImport(DMPObject):
 
         """
         transaction = self._transaction()
+        self._disable_triggers(transaction=transaction)
         resolver = self._resolver()
         messages = []
         action = DMPActions.Action(resolver, messages, fullname=fullname)
@@ -1759,6 +1814,7 @@ class DMPImport(DMPObject):
             if len(components) > 1:        
                 messages += self._dmp_rights.store_data(fake, transaction=transaction,
                                                         specifications=[components[1]])
+        self._enable_triggers(transaction=transaction)
         if fake:
             transaction.rollback()
         else:
@@ -1784,9 +1840,7 @@ def dmp_add_form(parameters, fake, fullname, position):
 def dmp_update_form(parameters, fake, specification, new_fullname):
     """Update form subforms and actions from specifications."""
     configuration = DMPConfiguration(**parameters)
-    messages = []
-    messages += DMPActions(configuration).update_forms(fake, specification, new_fullname=new_fullname)
-    return messages
+    return DMPActions(configuration).dmp_update_forms(fake, specification, new_fullname=new_fullname)
 
 def dmp_reset_rights(parameters, fake, specification):
     """Restore access rights of the given specification.
@@ -1796,7 +1850,7 @@ def dmp_reset_rights(parameters, fake, specification):
 
     """
     configuration = DMPConfiguration(**parameters)
-    return DMPRights(configuration).restore(fake, [specification])
+    return DMPRights(configuration).dmp_restore(fake, [specification])
 
 def dmp_commit(parameters, fake):
     """Make access rights prepared in the database actually effective."""
@@ -1822,40 +1876,7 @@ def dmp_convert_system_rights(parameters, fake, shortname):
 
 def dmp_change_rights(parameters, fake, requests):
     configuration = DMPConfiguration(**parameters)
-    transaction = pytis.data.DBTransactionDefault(configuration.connection_data())
-    rights = DMPRights(configuration)
-    rights.retrieve_data(transaction=transaction)
-    roles = DMPRoles(configuration)
-    roles.retrieve_data(transaction=transaction)
-    known_roles = [r.name() for r in roles.items()]
-    actions = DMPActions(configuration)
-    actions.retrieve_data(transaction=transaction)
-    known_shortnames = [a.shortname() for a in actions.items()]
-    specifications = set()
-    messages = []
-    for r in requests:        
-        shortname, roleid, rightid, granted, colname, system = r
-        if shortname not in known_shortnames:
-            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such action", (shortname,))
-            continue
-        if roleid != '*' and roleid not in known_roles:
-            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such role", (roleid,))
-            continue
-        rights.remove_item(shortname=shortname, roleid=roleid, rightid=rightid,
-                           colname=colname, system=system)
-        if not system or granted:
-            rights.add_item(shortname=shortname, roleid=roleid, rightid=rightid,
-                            colname=colname, system=system, granted=granted)
-        specifications.add(shortname.split('/')[1])
-    specifications = list(specifications)
-    messages += rights.delete_data(fake, transaction, specifications=specifications)
-    messages += rights.store_data(fake, transaction, specifications=specifications)
-    if messages:
-        transaction.rollback()
-        add_message(messages, DMPMessage.ERROR_MESSAGE, "Rights not changed")
-    else:
-        transaction.commit()
-    return messages
+    return DMPRights(configuration).dmp_change_rights(fake, requests)
 
 def dmp_ls(parameters, fake, what, specifications=None):
     configuration = DMPConfiguration(**parameters)
