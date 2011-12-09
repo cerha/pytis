@@ -240,7 +240,7 @@ class DMPObject(object):
             if self._active:
                 for prefix in ('declare ', 'fetch ', 'move ', 'close ', 'select ',
                                'savepoint ', 'release ',):
-                    if message.startswith(prefix):
+                    if message.startswith(prefix) and not message.startswith('select * from pytis_'):
                         break
                 else:
                     self.append('SQL: %s' % (message,))
