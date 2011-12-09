@@ -565,7 +565,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         changed_field = str(req.param('_pytis_form_changed_field'))
         filter_state = req.param('_pytis_form_filter_state')
         if filter_state:
-            filters = json.loads(filter_state)
+            import urlparse
+            filters = dict((k, v[0]) for k, v in urlparse.parse_qs(filter_state).items())
         else:
             filters = {}
         fields = {}
