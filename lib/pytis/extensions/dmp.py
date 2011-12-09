@@ -306,7 +306,15 @@ class DMPObject(object):
         return pytis.data.Value(pytis.data.String(), value)
 
     def _all_form_specification_names(self, messages):
-        return pytis.extensions.get_form_defs(self._resolver(), messages)
+        import config
+        def strip_prefix(spec_name):
+            for prefix in config.search_modules:
+                prefix = prefix + '.'
+                if spec_name.startswith(prefix) and len(spec_name) > len(prefix):
+                    spec_name = spec_name[len(prefix):]
+            return spec_name
+        specification_names = pytis.extensions.get_form_defs(self._resolver(), messages)
+        return [strip_prefix(name) for name in specification_names]
 
     def _specification(self, name, messages):
         resolver = self._resolver()
@@ -837,10 +845,6 @@ class DMPRights(DMPObject):
                                 self._rights.append(right)
         import config
         for spec_name in self._all_form_specification_names(messages):
-            for prefix in config.search_modules:
-                prefix = prefix + '.'
-                if spec_name.startswith(prefix) and len(spec_name) > len(prefix):
-                    spec_name = spec_name[len(prefix):]
             # Form access rights
             shortname = 'form/' + spec_name
             spec = self._specification(spec_name, messages)
@@ -1554,6 +1558,62 @@ class DMPActions(DMPObject):
                             "Action without rights", (action.shortname(), action.fullname(),))
         return messages
 
+    def dmp_missing(self):
+        messages = []
+        # Load database actions
+        self.retrieve_data()
+        fullnames = [a.fullname() for a in self.items()
+                     if not a.fullname().startswith('sub/')]
+        known_names = set()
+        form_actions = {}
+        subforms = {}
+        for action in self.items():
+            fullname = action.fullname()
+            shortname = action.shortname()
+            if shortname.startswith('form/'):
+                known_names.add(shortname[5:])
+            if fullname.startswith('sub/'):
+                parent_fullname = fullname[fullname.find('/', 4)+1:]
+                subforms[parent_fullname] = subforms.get(parent_fullname, []) + [action]
+            if (not fullname.startswith('form/') or
+                action.form_class() is None):
+                continue
+            form_name = action.form_name()
+            form_actions[form_name] = form_actions.get(form_name, []) + [action]
+        # Load actions from specifications
+        spec_actions = self.__class__(self._configuration)
+        for name in self._all_form_specification_names(messages):
+            actions = form_actions.get(name)
+            if actions:
+                for a in actions:
+                    spec_actions._load_complete_action(a, messages)
+            elif name not in known_names:
+                add_message(messages, DMPMessage.WARNING_MESSAGE,
+                            "Specification not present in the database", (name,))
+        spec_fullnames = [a.fullname() for a in spec_actions.items()
+                          if not a.fullname().startswith('sub/')]
+        spec_subforms = {}
+        for action in spec_actions.items():
+            fullname = action.fullname()
+            if fullname.startswith('sub/'):
+                parent_fullname = fullname[fullname.find('/', 4)+1:]
+                spec_subforms[parent_fullname] = spec_subforms.get(parent_fullname, []) + [action]
+        # Report missing subactions
+        for fullname in spec_fullnames:
+            if fullname not in fullnames:
+                add_message(messages, DMPMessage.WARNING_MESSAGE,
+                            "Missing form component", (fullname,))
+            else:
+                spec_sub = spec_subforms.get(fullname)
+                if spec_sub:
+                    sub = (subforms.get(fullname) or [])
+                    spec_short = set([s.shortname() for s in spec_sub])
+                    short = set([s.shortname() for s in sub])
+                    for shortname in (spec_short - short):
+                        add_message(messages, DMPMessage.WARNING_MESSAGE,
+                                    "Missing subform", (fullname, shortname,))
+        return messages
+
     def convert_system_rights(self, fake, shortname):
         row = pytis.data.Row((('shortname', pytis.data.sval(shortname),),))
         self._dbfunction('pytis_convert_system_rights').call(row)
@@ -1798,6 +1858,8 @@ def dmp_ls(parameters, fake, what, specifications=None):
     configuration = DMPConfiguration(**parameters)
     if what == 'norights':
         return DMPActions(configuration).dmp_no_rights()
+    elif what == 'missing':
+        return DMPActions(configuration).dmp_missing()
     elif what == 'menu':
         class_ = DMPMenu
     elif what == 'roles':

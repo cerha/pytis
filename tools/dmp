@@ -44,7 +44,7 @@ def command_ls(parameters, dry_run, args):
             print 'Error: extra arguments'
             return
         kwargs['specifications'] = [args[1]]
-    if action not in ('menu', 'roles', 'rights', 'norights'):
+    if action not in ('menu', 'roles', 'rights', 'norights', 'missing',):
         print 'Error: invalid action: %s' % (action,)
         return
     return pytis.extensions.dmp_ls(parameters, dry_run, action, **kwargs)
@@ -187,8 +187,8 @@ def find_command(command_string):
 USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
 
 Commands:
-  ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] | norights ]
-    - list DMP menu/roles/rights/actions without rights, possibly limited by SPECIFICATION
+  ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] | norights | missing ]
+    - list DMP menu/roles/rights/norights actions/missing actions, limited by SPECIFICATION
   system-rights SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
     - set/unset system rights for SHORTNAME
   rights SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
