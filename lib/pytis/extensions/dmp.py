@@ -1012,9 +1012,14 @@ class DMPRights(DMPObject):
             transaction_ = self._transaction()
         else:
             transaction_ = transaction
-        dbfunction = self._dbfunction('pytis_update_summary_rights')
+        dbfunctions = [self._dbfunction(f) for f in ('pytis_update_transitive_roles',
+                                                     'pytis_update_actions_structure',
+                                                     'pytis_update_summary_rights',
+                                                     'pytis_update_rights_redundancy',)]
         self._logger.clear()
-        dbfunction.call(pytis.data.Row(()), transaction=transaction_)
+        empty_row = pytis.data.Row(())
+        for f in dbfunctions:
+            f.call(empty_row, transaction=transaction_)
         if fake:
             messages = self._logger.messages()
         else:
