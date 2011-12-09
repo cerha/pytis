@@ -177,12 +177,7 @@ def command_commit(parameters, dry_run, args):
 def find_command(command_string):
     command = command_string.replace('-', '_')
     command_function = globals().get('command_' + command)
-    if command_function is None:
-        command_function = globals().get('cmd_' + command)
-        new = False
-    else:
-        new = True
-    return command_function, new
+    return command_function
 
 USAGE = """usage: %prog [ OPTIONS ] COMMAND [ COMMAND-OPTIONS ]
 
@@ -225,7 +220,7 @@ def parse_options():
             break
         command_index += 1
     args = sys.argv[command_index:]
-    if not args or not find_command(args[0])[0]:
+    if not args or not find_command(args[0]):
         parser.print_help()
         sys.exit(1)
     options, _args = parser.parse_args(args=sys.argv[1:command_index])
@@ -244,12 +239,9 @@ def run():
             parameters[k] = v    
     command = args[0].replace('-', '_')
     command_args = args[1:]
-    command_function, new = find_command(args[0])
-    if new:
-        parameters['configuration_file'] = options.config
-        connection = parameters
-    else:
-        connection = dbapi.connect(**parameters)
+    command_function = find_command(args[0])
+    parameters['configuration_file'] = options.config
+    connection = parameters
     messages = command_function(connection, options.dry_run, command_args)
     if messages:
         for m in messages:
