@@ -1101,18 +1101,14 @@ class DMPRoles(DMPObject):
                 row = pytis.data.Row((('roleid', S(name),),
                                       ('member', S(member),),))
                 data.insert(row, transaction=transaction)
-        dbfunction = self._dbfunction('pytis_update_transitive_roles')
-        dbfunction.call(pytis.data.Row(()), transaction=transaction)
         return True
 
     def _delete_data(self, transaction, condition):
-        dbfunction = self._dbfunction('pytis_update_transitive_roles')
         data_members = self._data('e_pytis_role_members')
         data_roles = self._data('e_pytis_roles')
         self._logger.clear()
         data_members.delete_many(condition, transaction=transaction)
         data_roles.delete_many(condition, transaction=transaction)
-        dbfunction.call(pytis.data.Row(()), transaction=transaction)
 
     def _print_data(self, specifications=None):
         lines = []
@@ -1485,15 +1481,11 @@ class DMPActions(DMPObject):
                                   ('description', S(unicode(action.description() or '')),),
                                   ))
             data.insert(row, transaction=transaction)
-        dbfunction = self._dbfunction('pytis_update_actions_structure')
-        dbfunction.call(pytis.data.Row(()), transaction=transaction)            
         return True
 
     def _delete_data(self, transaction, condition):
         data = self._data('c_pytis_menu_actions')
         data.delete_many(condition, transaction=transaction)
-        dbfunction = self._dbfunction('pytis_update_actions_structure')
-        dbfunction.call(pytis.data.Row(()), transaction=transaction)
 
     def dmp_update_forms(self, fake, specification, new_fullname=None):
         transaction = self._transaction()
@@ -1727,14 +1719,6 @@ class DMPImport(DMPObject):
         messages += self._dmp_roles.store_data(fake=fake, transaction=transaction_)
         messages += self._dmp_rights.store_data(fake=fake, transaction=transaction_)
         messages += self._dmp_menu.store_data(fake=fake, transaction=transaction_)
-        function_names = ('pytis_update_summary_rights', 'pytis_update_actions_structure',
-                          'pytis_update_transitive_roles',)
-        for name in function_names:
-            dbfunction = self._dbfunction(name)
-            self._logger.clear()
-            dbfunction.call(pytis.data.Row(()), transaction=transaction_)
-            if fake:
-                messages += self._logger.messages()
         if transaction is None:
             if fake:
                 transaction_.rollback()        
