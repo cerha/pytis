@@ -1502,9 +1502,9 @@ class DMPActions(DMPObject):
                                    transaction=transaction)
         self._enable_triggers(transaction=transaction)
         if fake:
-            transaction_.rollback()
+            transaction.rollback()
         else:
-            transaction_.commit()
+            transaction.commit()
         return result
         
     def update_forms(self, fake, specification, new_fullname=None, transaction=None):
