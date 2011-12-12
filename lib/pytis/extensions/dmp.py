@@ -1418,6 +1418,7 @@ class DMPActions(DMPObject):
                                 (name, e,))
             return pytis.presentation.Binding(id=name, title=title, name=name,
                                               binding_column='dummy')
+        resolver = self._resolver()
         if issubclass(form_class, pytis.form.DualForm):
             pos = form_name.find('::')
             if pos == -1:
@@ -1430,21 +1431,34 @@ class DMPActions(DMPObject):
                     b = bindings[i]
                     subaction_fullname = 'sub/%02d/%s' % (i, action.fullname(),)
                     subaction_title = b.title()
-                    subaction_shortname = 'form/%s' % (b.name(),)
-                    self._add_action(self.Action(self._resolver(), messages,
+                    bname = b.name()
+                    subaction_shortname = 'form/%s' % (bname,)
+                    self._add_action(self.Action(resolver, messages,
                                                  fullname=subaction_fullname,
                                                  title=subaction_title,
                                                  special_shortname=subaction_shortname))
+                    subspec = self._specification(bname, [])
+                    if subspec is not None:
+                        for a in subspec.view_spec().actions(linear=True):
+                            fullname = 'action/%s/%s' % (a.id(), bname,)
+                            action = self.Action(resolver, messages,
+                                                 fullname=fullname, title=a.title(raw=True))
+                            self._add_action(action)
+                        for p in subspec.print_spec():
+                            fullname = 'print/%s/%s' % (p.dmp_name(), bname,)
+                            action = self.Action(resolver, messages,
+                                                 fullname=fullname, title=p.title())
+                            self._add_action(action)
         # Form actions
         for a in spec.view_spec().actions(linear=True):
             fullname = 'action/%s/%s' % (a.id(), form_name,)
-            action = self.Action(self._resolver(), messages,
+            action = self.Action(resolver, messages,
                                  fullname=fullname, title=a.title(raw=True))
             self._add_action(action)
         # Print actions
         for p in spec.print_spec():
             fullname = 'print/%s/%s' % (p.dmp_name(), form_name,)
-            action = self.Action(self._resolver(), messages,
+            action = self.Action(resolver, messages,
                                  fullname=fullname, title=p.title())
             self._add_action(action)
         
