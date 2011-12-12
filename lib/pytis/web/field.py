@@ -145,9 +145,7 @@ class Field(object):
         # Initialize the exporter just once here to do most of the
         # decision-making and type checking during initialization.  This speeds
         # up the actual formatting, which is typically performed many times.
-        if isinstance(type, pytis.data.Boolean):
-            exporter = BooleanFieldExporter
-        elif isinstance(type, pytis.data.Password):
+        if isinstance(type, pytis.data.Password):
             exporter = PasswordFieldExporter
         elif isinstance(type, pytis.data.Color):
             exporter = ColorFieldExporter
@@ -167,6 +165,8 @@ class Field(object):
             selection_type = spec.selection_type()
             if selection_type == SelectionType.RADIO:
                 exporter = RadioFieldExporter
+            elif selection_type is None and isinstance(type, pytis.data.Boolean):
+                exporter = BooleanFieldExporter
             elif selection_type in (SelectionType.CHOICE, None):
                 exporter = ChoiceFieldExporter
             else:
