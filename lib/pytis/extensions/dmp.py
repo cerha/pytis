@@ -977,7 +977,7 @@ class DMPRights(DMPObject):
         known_shortnames = [a.shortname() for a in actions.items()]
         specifications = set()
         messages = []
-        for r in requests:        
+        for r in requests:
             shortname, roleid, rightid, granted, colname, system = r
             if shortname not in known_shortnames:
                 add_message(messages, DMPMessage.ERROR_MESSAGE, "No such action", (shortname,))
@@ -993,6 +993,7 @@ class DMPRights(DMPObject):
             specifications.add(shortname)
         specifications = list(specifications)
         messages += rights.delete_data(fake, transaction, specifications=specifications)
+        rights._logger.clear()
         messages += rights.store_data(fake, transaction, specifications=specifications)
         self._enable_triggers(transaction=transaction)
         if messages:
@@ -1599,7 +1600,7 @@ class DMPActions(DMPObject):
             rights = DMPRights(self._configuration)
             transaction = self._transaction()
             self._disable_triggers(transaction=transaction)
-            self._logger.clear()            
+            self._logger.clear()
             menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
             rights.delete_data(fake, transaction=transaction, specifications=(shortname,))
             self._delete_data(transaction, condition)
