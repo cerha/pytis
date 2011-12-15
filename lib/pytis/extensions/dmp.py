@@ -903,9 +903,10 @@ class DMPRights(DMPObject):
         for right in self.items():
             shortname = right.shortname()
             if specifications is not None:
-                components = shortname.split('/')
-                if len(components) <= 1 or components[1] not in specifications:
-                    continue
+                if shortname not in specifications:
+                    components = shortname.split('/')
+                    if len(components) <= 1 or components[1] not in specifications:
+                        continue
             row = pytis.data.Row((('shortname', S(shortname),),
                                   ('roleid', S(right.roleid()),),
                                   ('rightid', S(right.rightid()),),
@@ -989,7 +990,7 @@ class DMPRights(DMPObject):
             if not system or granted:
                 rights.add_item(shortname=shortname, roleid=roleid, rightid=rightid,
                                 colname=colname, system=system, granted=granted)
-            specifications.add(shortname.split('/')[1])
+            specifications.add(shortname)
         specifications = list(specifications)
         messages += rights.delete_data(fake, transaction, specifications=specifications)
         messages += rights.store_data(fake, transaction, specifications=specifications)
