@@ -497,9 +497,22 @@ class BinaryFieldExporter(FieldExporter):
     def _format(self, context):
         buf = self._value().value()
         if buf:
-            # Translators: The label "image"/"file" is used in textual representation of binary
-            # data values, usually as a link to download the actual binary file.
-            return buf.filename() or isinstance(type, pd.Image) and _(u"image") or _(u"file")
+            if buf.filename():
+                return buf.filename()
+            filename_spec = self._field.spec.filename()
+            if filename_spec:
+                if isinstance(filename_spec, collections.Callable):
+                    value = filename_spec(self._row)
+                else:
+                    value = self._row[filename_spec].export()
+                if value:
+                    return value
+            if isinstance(type, pd.Image):
+                # Translators: The label "image"/"file" is used in textual representation of binary
+                # data values, usually as a link to download the actual binary file.
+                return _(u"image")
+            else:
+                return _(u"file")
         else:
             return ""
 
@@ -628,11 +641,19 @@ class ChecklistFieldExporter(CodebookFieldExporter):
 
 
 class FileFieldExporter(TextFieldExporter):
-    # Don't confuse with BinaryFieldExporter! Maybe deprecate?
-    
+    """Special case of string fields with 'filename' specification.
+
+    The contents of such string fields is considered to be a file and the user
+    interface doesn't show the value itself, but provides a link to save it.
+
+    """
     def _format(self, context):
         value, info = self._value().export(), None
         if value:
-            value = self._row[self._field.spec.filename()].export()
+            filename_spec = self._field.spec.filename()
+            if isinstance(filename_spec, collections.Callable):
+                value = filename_spec(self._row)
+            else:
+                value = self._row[filename_spec].export()
             info = format_byte_size(len(value))
         return value

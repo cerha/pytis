@@ -2674,11 +2674,13 @@ class Field(object):
             hypertext link on field's value.  The links will open the related
             form and locate the record corresponding to the value of the
             refering field.
-          filename -- identifier of the field, which provides the filename for
-            downloading/saving the value of this field into a file.  If not
-            None, the user interface should offer downloading/saving the
-            content of the field into a file.  This may be relevant for binary
-            fields, as well as for ordinary string data.
+          filename -- provides the file name for downloading/saving the field
+            value into a file.  The value of this argument may be a function of
+            one argument (a PresentedRow instance representing the current row)
+            or a string identifier of the field, which contains the filename.
+            This is relevant for binary fields, but may be also used for string
+            fields, where it forces the user interface to provide controls for
+            downloading/saving the content of the field as a file.
           text_format -- One of the available 'TextFormat' constants defining
             the format of the field text.  Only relevant for textual fields (of
             type 'pytis.data.String').  The default format 'TextFormat.PLAIN'
