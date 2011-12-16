@@ -533,7 +533,12 @@ class CodebookFieldExporter(FieldExporter):
         fid = self._field.id
         if self._row.prefer_display(fid):
             return self._row.display(fid)
-        value = self._row[fid].export()
+        if isinstance(self._field.type, pd.Boolean):
+            # Boolean fields may by also rendered as radio, etc. when
+            # selection_type is defined.
+            value = self._row[fid].value() and _(u"Yes") or _(u"No")
+        else:
+            value = self._row[fid].export()
         if self._showform:
             # The display value is returned by the _display method in this case...
             return value
