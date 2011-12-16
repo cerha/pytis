@@ -1049,7 +1049,8 @@ class BrowseForm(LayoutForm):
                 # records to be displayed.
                 null_filter = Filter(self._NULL_FILTER_ID, _("All items"), None)
                 filter_set = FilterSet(filter_set_id, filter_set.title(),
-                                       [null_filter] + [f for f in filter_set])
+                                       [null_filter] + [f for f in filter_set],
+                                       default=filter_set.default())
             # Determine the currently selected filter.
             filter_id = param('filter_%s' % (filter_set_id,), str)
             if filter_id is not None:
