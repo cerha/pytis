@@ -2939,7 +2939,8 @@ class BrowseForm(FoldableForm):
         # Create links lists as accepted by _link_mitems()
         self._explicit_links = []
         automatic_links = {}
-        self._in_operator_links = []
+        self._explicit_in_operator_links = []
+        self._automatic_in_operator_links = []
         for f in self._fields:
             # Use explicitly defined links from specification.
             for link in f.links():
@@ -2948,8 +2949,8 @@ class BrowseForm(FoldableForm):
                     label = link_label(spec_title(link.name(), link.binding()), link.type())
                 self._explicit_links.append((label, [(f, link)]))
                 item = (link.name(), link.column(), f, spec_title(link.name()))
-                if item not in self._in_operator_links:
-                    self._in_operator_links.append(item)
+                if item not in self._explicit_in_operator_links:
+                    self._explicit_in_operator_links.append(item)
             # Create automatic links for codebook fields.
             enumerator = self._row.type(f.id()).enumerator()
             codebook = self._row.codebook(f.id())
@@ -2959,12 +2960,13 @@ class BrowseForm(FoldableForm):
                 if item not in links:
                     links.append(item)
                 in_item = (codebook, enumerator.value_column(), f, spec_title(codebook))
-                if in_item not in self._in_operator_links:
-                    self._in_operator_links.append(in_item)
+                if in_item not in self._automatic_in_operator_links:
+                    self._automatic_in_operator_links.append(in_item)
         self._automatic_links = [(link_label(spec_title(name)),
                                   [(f, Link(name, column)) for name, column, f in items])
                                  for name, items in sorted(automatic_links.items())]
-        self._in_operator_links.sort()
+        self._explicit_in_operator_links.sort()
+        self._automatic_in_operator_links.sort()
                     
     def _formatter_parameters(self):
         name = self._name
@@ -3045,43 +3047,52 @@ class BrowseForm(FoldableForm):
                 items.append(Menu(title, [mitem(f, link, row) for f, link in links]))
         return items
 
-    def _in_operator_mitem(self, row, name, column, f, title, not_in=False):
-        if self._current_profile.id() == self._default_profile.id():
-            profile_id = None
-        else:
-            profile_id = self._current_profile.id()
-        filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
-        column_label = f.column_label()
-        if not_in:
-            select_row = None
-            filter = pytis.data.NOT(filter)
-            ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
-                       u"neobsažené ve sloupci „%(column)s“ současného náhledu.")
-        else:
-            select_row = {column: row[f.id()]}
-            ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
-                       u"obsažené ve sloupci „%(column)s“ současného náhledu.")
-        cmd = Application.COMMAND_RUN_FORM(name=name, form_class=BrowseForm,
-                                           select_row=select_row,
-                                           filter=filter)
-        return MItem(ititle % dict(view_title=title, column=column_label), command=cmd)
+    def _in_operator_mitems(self, row, linkspec, not_in=False):
+        def mitem(name, column, f, title):
+            if self._current_profile.id() == self._default_profile.id():
+                profile_id = None
+            else:
+                profile_id = self._current_profile.id()
+            filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
+            column_label = f.column_label()
+            if not_in:
+                select_row = None
+                filter = pytis.data.NOT(filter)
+                ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
+                           u"neobsažené ve sloupci „%(column)s“ současného náhledu.")
+            else:
+                select_row = {column: row[f.id()]}
+                ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
+                           u"obsažené ve sloupci „%(column)s“ současného náhledu.")
+            cmd = Application.COMMAND_RUN_FORM(name=name, form_class=BrowseForm,
+                                               select_row=select_row,
+                                               filter=filter)
+            return MItem(ititle % dict(view_title=title, column=column_label), command=cmd)
+        return [mitem(*args) for args in linkspec]
                            
     def _context_menu(self):
         menu = self._context_menu_static_part
         row = self.current_row()
-        if self._explicit_links or self._automatic_links or self._in_operator_links:
+        if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \
+                or self._automatic_in_operator_links:
             menu += (MSeparator(),)
         if self._explicit_links:
             menu += tuple(self._link_mitems(row, self._explicit_links))
         if self._automatic_links:
             menu += (Menu(_(u"Odskoky"), self._link_mitems(row, self._automatic_links)),)
-        if self._in_operator_links:
+        if self._explicit_in_operator_links or self._automatic_in_operator_links:
+            if self._explicit_in_operator_links and self._automatic_in_operator_links:
+                separator = [MSeparator()]
+            else:
+                separator = []
             menu += (Menu(_(u"Filtrovat přítomné hodnoty (operátor IN)"),
-                          [self._in_operator_mitem(row, name, column, f, title)
-                           for name, column, f, title in self._in_operator_links]),
+                          (self._in_operator_mitems(row, self._explicit_in_operator_links)
+                           + separator + 
+                           self._in_operator_mitems(row, self._automatic_in_operator_links))),
                      Menu(_(u"Filtrovat nepřítomné hodnoty (operátor NOT IN)"),
-                          [self._in_operator_mitem(row, name, column, f, title, not_in=True)
-                           for name, column, f, title in self._in_operator_links]),
+                          (self._in_operator_mitems(row, self._explicit_in_operator_links, True)
+                           + separator + 
+                           self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
                      )
         return menu
     
