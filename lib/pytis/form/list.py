@@ -3069,8 +3069,10 @@ class BrowseForm(FoldableForm):
     def _context_menu(self):
         menu = self._context_menu_static_part
         row = self.current_row()
+        if self._explicit_links or self._automatic_links or self._in_operator_links:
+            menu += (MSeparator(),)
         if self._explicit_links:
-            menu += (MSeparator(),) + tuple(self._link_mitems(row, self._explicit_links))
+            menu += tuple(self._link_mitems(row, self._explicit_links))
         if self._automatic_links:
             menu += (Menu(_(u"Odskoky"), self._link_mitems(row, self._automatic_links)),)
         if self._in_operator_links:
