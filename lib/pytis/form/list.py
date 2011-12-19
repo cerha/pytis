@@ -2996,7 +2996,7 @@ class BrowseForm(FoldableForm):
             if type == FormType.INSERT:
                 cmd = Application.COMMAND_NEW_RECORD(name=name,
                                                      prefill={link.column(): row[f.id()]})
-                title = _(u"Vložit aktuální hodnotu")
+                title = _(u"Vložit hodnotu sloupce '%s'") % f.label()
                 hlp = _(u"Vložit záznam pro hodnotu '%s' sloupce '%s'.") \
                       % (row.format(f.id(), secure=''), f.column_label())
                 icon = 'link-new-record'
@@ -3010,7 +3010,7 @@ class BrowseForm(FoldableForm):
                         kwargs['binding'] = link.binding()
                     else:
                         cls = BrowseForm
-                    title = _(u"Vyhledat aktuální hodnotu")
+                    title = _(u"Vyhledat hodnotu sloupce '%s'") % f.label()
                     hlp = _(u"Vyhledat záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
                     filter_func = link.filter()
                     if filter_func:
