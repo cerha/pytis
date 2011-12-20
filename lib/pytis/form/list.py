@@ -3053,20 +3053,28 @@ class BrowseForm(FoldableForm):
                 profile_id = None
             else:
                 profile_id = self._current_profile.id()
-            filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
             column_label = f.column_label()
             if not_in:
                 select_row = None
-                filter = pytis.data.NOT(filter)
                 ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
                            u"neobsažené ve sloupci „%(column)s“ současného náhledu.")
             else:
                 select_row = {column: row[f.id()]}
                 ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
                            u"obsažené ve sloupci „%(column)s“ současného náhledu.")
-            cmd = Application.COMMAND_RUN_FORM(name=name, form_class=BrowseForm,
-                                               select_row=select_row,
-                                               filter=filter)
+            def handler(form_class, name):
+                # Wrap the actual IN operator construction into a function run
+                # through COMMAND_HANDLED_ACTION instead of invoking
+                # COMMAND_RUN_FORM directly to postpone time consuming IN
+                # operator construction until the menu item is actually
+                # selected.
+                filter = pytis.form.IN(column, name, f.id(), profile_id)
+                if not_in:
+                    filter = pytis.data.NOT(filter)
+                run_form(form_class, name, select_row=select_row, filter=filter)
+            cmd = Application.COMMAND_HANDLED_ACTION(handler=handler, 
+                                                     enabled=Application.COMMAND_RUN_FORM.enabled,
+                                                     name=self.name(), form_class=BrowseForm)
             return MItem(ititle % dict(view_title=title, column=column_label), command=cmd)
         return [mitem(*args) for args in linkspec]
                            
