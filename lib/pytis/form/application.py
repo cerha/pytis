@@ -669,7 +669,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         copy_to_clipboard() when no aplicable control is available).
         
         """
-        print 'xxx', clipboard.wait_for_text()
         # Beware, the `event' here is not a wx event, but a GTK event!
         if pytis.windows.windows_available():
             text = clipboard.wait_for_text()
