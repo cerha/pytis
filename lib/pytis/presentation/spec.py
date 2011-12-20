@@ -2779,32 +2779,31 @@ class Field(object):
             """Return assertion error message."""
             log(OPERATIONAL, "Field '%s':" % id, msg % args)
         assert isinstance(id, basestring)
-        assert dbcolumn is None or isinstance(dbcolumn, basestring)
+        assert dbcolumn is None or isinstance(dbcolumn, basestring), dbcolumn
         if type_ is not None:
             assert type is None
             type = type_
-        assert label is None or isinstance(label, basestring)
-        assert descr is None or isinstance(descr, basestring)
+        assert label is None or isinstance(label, basestring), label
+        assert descr is None or isinstance(descr, basestring), descr
         assert type is None or isinstance(type, pytis.data.Type) \
-            or issubclass(type, pytis.data.Type)
-        assert isinstance(virtual, bool)
-        assert isinstance(disable_column, bool)
-        assert isinstance(fixed, bool)
-        assert isinstance(compact, bool)
-        assert isinstance(nocopy, bool)
-
+            or issubclass(type, pytis.data.Type), type
+        assert isinstance(virtual, bool), virtual
+        assert isinstance(disable_column, bool), disable_column
+        assert isinstance(fixed, bool), fixed
+        assert isinstance(compact, bool), compact
+        assert isinstance(nocopy, bool), nocopy
         assert computer is None or isinstance(computer, Computer), computer
-        
-        assert codebook is None or isinstance(codebook, basestring)
-        assert display is None or isinstance(display, (basestring, collections.Callable))
-        assert completer is None or isinstance(completer, (basestring, tuple, pytis.data.Enumerator))
-        assert prefer_display is None or isinstance(prefer_display, bool)
-        assert display_size is None or isinstance(display_size, int)
-        assert null_display is None or isinstance(null_display, basestring)
+        assert codebook is None or isinstance(codebook, basestring), codebook
+        assert display is None or isinstance(display, (basestring, collections.Callable)), display
+        assert completer is None or isinstance(completer, (basestring, tuple, pytis.data.Enumerator)), completer
+        assert prefer_display is None or isinstance(prefer_display, bool), prefer_display
+        assert display_size is None or isinstance(display_size, int), display_size
+        assert null_display is None or isinstance(null_display, basestring), null_display
         # TODO: Enable this after merging data-type-cleanup! (belongs to the line above)
         # and not not_null and (codebook or enumerator)
-        assert isinstance(allow_codebook_insert, bool)
-        assert codebook_insert_spec is None or isinstance(codebook_insert_spec, basestring)
+        assert isinstance(allow_codebook_insert, bool), allow_codebook_insert
+        assert codebook_insert_spec is None \
+            or isinstance(codebook_insert_spec, basestring), codebook_insert_spec
         assert codebook_insert_prefill is None \
             or isinstance(codebook_insert_prefill, collections.Callable), codebook_insert_prefill
         assert width is None or isinstance(width, int)
@@ -2813,23 +2812,22 @@ class Field(object):
             runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
         assert runtime_arguments is None or isinstance(runtime_arguments, Computer), runtime_arguments
-        assert selection_type is None or selection_type in public_attributes(SelectionType)
-        assert selection_type is None or selection_type in public_attributes(SelectionType)
-        assert orientation in public_attributes(Orientation)
+        assert selection_type is None or selection_type in public_attributes(SelectionType), selectiontype
+        assert orientation in public_attributes(Orientation), orientation
         assert post_process is None or isinstance(post_process, collections.Callable) \
-            or post_process in public_attributes(PostProcess)
-        assert filter is None or filter in public_attributes(TextFilter)
-        assert filter not in ('INCLUDE_LIST', 'EXCLUDE_LIST') or is_sequence(filter_list)
+            or post_process in public_attributes(PostProcess), post_process
+        assert filter is None or filter in public_attributes(TextFilter), filter
+        assert filter not in ('INCLUDE_LIST', 'EXCLUDE_LIST') or is_sequence(filter_list), filter_list
         assert style is None or isinstance(style, (Style, collections.Callable)), \
             err("Invalid 'style' specification: %s", style)
-        assert filename is None or isinstance(filename, basestring)
+        assert filename is None or isinstance(filename, (basestring, collections.Callable)), filename
         assert text_format in public_attr_values(TextFormat), text_format
-        assert isinstance(printable, bool)
-        assert crypto_name is None or isinstance(crypto_name, basestring)
+        assert isinstance(printable, bool), printable
+        assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         if enumerator is None:
             enumerator = codebook
         else:
-            assert isinstance(enumerator, (basestring, pytis.data.DataFactory, pytis.data.Enumerator))
+            assert isinstance(enumerator, (basestring, pytis.data.DataFactory, pytis.data.Enumerator)), enumerator
         enumerator_kwargs = dict([(k, v) for k, v
                                   in dict(value_column=value_column,
                                           validity_column=validity_column,
