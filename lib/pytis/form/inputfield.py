@@ -1367,12 +1367,16 @@ class GenericCodebookField(InputField):
 
     def _codebook_insert(self):
         value_column = self._type.enumerator().value_column()
-        if not self._valid and self._modified():
-            prefill = {value_column: self._get_value()}
+        fspec = self.spec()
+        prefill_function = fspec.codebook_insert_prefill()
+        if prefill_function:
+            prefill = prefill_function(self._row)
         else:
             prefill = {}
-        spec = self.spec().codebook_insert_spec() or self._cb_name
-        result = new_record(spec, prefill=prefill, transaction=self._row.transaction())
+        if not self._valid and self._modified():
+            prefill[value_column] = self._get_value()
+        spec_name = fspec.codebook_insert_spec() or self._cb_name
+        result = new_record(spec_name, prefill=prefill, transaction=self._row.transaction())
         if result and value_column in result:
             self._set_value(result[value_column].export())
         
