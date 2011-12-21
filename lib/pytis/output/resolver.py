@@ -411,7 +411,7 @@ class OutputResolver(Resolver):
     def get(self, module_name, spec_name, **kwargs):
         try:
             return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
-        except ResolverError, e:
+        except ResolverError:
             return self._specification_resolver.get(module_name, spec_name, **kwargs)
     
     def output_parameter(self, name, **kwargs):

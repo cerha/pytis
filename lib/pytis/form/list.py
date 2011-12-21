@@ -2826,7 +2826,7 @@ class BrowseForm(FoldableForm):
             # Supply a default specification module (old style spec).
             try:
                 x = super(BrowseForm._PrintResolver, self)._get_module(name)
-            except ResolverError, e:
+            except ResolverError:
                 x = self._Spec(self)
             return x
 
@@ -2834,7 +2834,7 @@ class BrowseForm(FoldableForm):
             # Supply a default specification class (new style spec).
             try:
                 x = super(BrowseForm._PrintResolver, self)._get_instance(key)
-            except ResolverError, e:
+            except ResolverError:
                 x = self._Spec(self)
             return x
 
