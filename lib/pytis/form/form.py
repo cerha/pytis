@@ -508,12 +508,12 @@ class InnerForm(Form):
         if has_access(self.name(), perm=pytis.data.Permission.PRINT):
             menu.append(MSeparator())
             menu.append(pytis.extensions.new_record_mitem(_("Nová sestava"), printing_form,
-                                                          prefill=dict(module=pd.sval(name))))
+                                                          prefill=dict(module=pytis.data.sval(name))))
             if db_print_spec:
                 mitem = pytis.extensions.run_form_mitem
                 edit_submenu = [mitem(label, printing_form, PopupEditForm,
-                                      select_row=dict(module=pd.sval(module),
-                                                      specification=pd.sval(label)))
+                                      select_row=dict(module=pytis.data.sval(module),
+                                                      specification=pytis.data.sval(label)))
                                 for module, label in db_print_spec]
                 mitem = pytis.extensions.run_procedure_mitem
                 delete_submenu = [mitem(label, printing_form, 'delete_template',
