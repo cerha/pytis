@@ -127,7 +127,7 @@ class Style(object):
                  overstrike=None, underline=None, name=None):
         """Arguments:
 
-          foreground -- background color as one of 'Color' constants, a tuple of three integers
+          foreground -- foreground color as one of 'Color' constants, a tuple of three integers
             (RGB), or a hexadecimal string representation (such as '#ff0000')
           background -- background color in the same format as the foreground color
           bold -- flag indicating bold text
@@ -537,7 +537,7 @@ class ActionGroup(_ActionItem):
           title -- název skupiny jako řetězec
 
           actions -- obsah této skupiny.  Zde platí rekurzívně stejná pravidla
-            jako pro stejnojmennný argument konstruktoru ViesSpec.
+            jako pro stejnojmenný argument konstruktoru ViewSpec.
 
         """
         assert isinstance(actions, (list, tuple))
@@ -688,7 +688,7 @@ class AggregatedView(object):
     """Predefined aggregated view specification.
 
     Aggregated view can be displayed for any pytis form.  It displays form data
-    aggregated using given aggregation functions and groupped by given "group
+    aggregated using given aggregation functions and grouped by given "group
     by" columns.
 
     The user interface allows simple invocation of aggregated views defined in
@@ -876,8 +876,8 @@ class GroupSpec(object):
     second category and specifies grouping of fields of a single record in this
     kind of forms.
 
-    The layout constitutes of a group of items, where each of the items one of
-    the following:
+    The layout constitutes of a group of items, where each of the items is one
+    of the following:
 
       * string identifier refering to one of the fields present in fields
         specification,
@@ -1139,7 +1139,7 @@ class LayoutSpec(object):
 
 
 class ViewSpec(object):
-    """Kompletující specifikace prezentačních vlastnoostí pro formuláře.
+    """Kompletující specifikace prezentačních vlastností pro formuláře.
 
     Instance této třídy zná veškeré prezentační vlasnosti určité entity
     (tabulky z pohledu aplikace).  Třída definuje API pro přístup k těmto
@@ -1148,7 +1148,7 @@ class ViewSpec(object):
     Každá instance této třídy definuje vlastnosti pro všechny způsoby
     zobrazení (editační formulář, editační seznam, apod.).
 
-    Každý typ formuláře z potom využívá ze specifikace pouze tu část, která je
+    Každý typ formuláře potom využívá ze specifikace pouze tu část, která je
     pro něj relevantní.
 
     """
@@ -2097,8 +2097,8 @@ def computer(function):
         c = computer(lambda r, aa, bb: aa + bb)
 
     The first argument (row) is always passed, but should not be used to access field values
-    (fields accessed this way would not be visible in computer's dependencis).  It may still be
-    usefull, however, to access other information needed by the computer function.
+    (fields accessed this way would not be visible in computer's dependencies).  It may still be
+    useful, however, to access other information needed by the computer function.
 
     """
     assert isinstance(function, collections.Callable) and not isinstance(function, Computer)
@@ -2192,7 +2192,7 @@ class CodebookSpec(object):
             user visible value is then computed by invoking the function, passing it the code
             (internal Python value of the codebook field) as an argument.  The returned value must
             be a string.  If a function is passed and this function has just one argument named
-            'row', the function will recieve the data row of the corresponding codebook data object
+            'row', the function will receive the data row of the corresponding codebook data object
             as an argument (instead of just the internal codebook value).
           prefer_display -- If true, the user interface will show the display value instead of the
             codebook internal value wherever possible.  For example the browse from will show the
@@ -2201,7 +2201,7 @@ class CodebookSpec(object):
           display_size -- width of the codebook display field in characters.  It is possible to
             override this value by the argument of the same name within the field specification
             (for particular field).
-          begin_search -- None or an identifier of a column, where incremental search whould be
+          begin_search -- None or an identifier of a column, where incremental search would be
             automatically started when a codebook form is invoked (GUI only).
 
         The user visible value of the codebook is used in several situations.  The codebook field
@@ -2287,7 +2287,7 @@ class FormType(object):
 
 
 class Link(object):
-    """Specification of a link from field to a differnt view.
+    """Specification of a link from field to a different view.
 
     Used as a value of 'Field' constructor argument  'link'.
 
@@ -2531,7 +2531,7 @@ class Field(object):
     reports etc.
 
     Only certain subset of information defined here is relevant for each
-    situation.  The exact way of interpretarion of this specification depends
+    situation.  The exact way of interpretation of this specification depends
     on classes implementing the user interface and the details also depend on
     the kind of user interface (GUI forms, web forms, printed reports).  Not
     all features may be supported by all user interface implementations.
@@ -2568,7 +2568,7 @@ class Field(object):
             unless there is a serious reason for it.
           type -- explicit data type as a 'pytis.data.Type' class or instance.
             None value means to use the default type determined from the
-            underlying data object (or the default type 'pyttis.data.String'
+            underlying data object (or the default type 'pytis.data.String'
             for virtual fields not present in the data object).  If a class is
             passed, the instance of this class will be created automatically
             and the system will pass it all arguments which it is able to
@@ -2616,7 +2616,7 @@ class Field(object):
             above the field, not on the left which is the default.  This way
             the field will span to the full width of the field group.
           nocopy -- iff true, the field's value will be omitted during record
-            copying (user command for creation of a new record as a copy af an
+            copying (user command for creation of a new record as a copy of an
             existing record).  Key columns and computed fields depending on key
             columns are omitted automatically.
           default -- default value or a function for computing the default
@@ -2747,7 +2747,7 @@ class Field(object):
             currently only support one link per field and present it as a
             hypertext link on field's value.  The links will open the related
             form and locate the record corresponding to the value of the
-            refering field.
+            referring field.
           filename -- provides the file name for downloading/saving the field
             value into a file.  The value of this argument may be a function of
             one argument (a PresentedRow instance representing the current row)
@@ -3218,7 +3218,7 @@ FieldSpec = Field
 
 
 class Fields(object):
-    """Deprecarted -- use `Specification._inherited_fields()' instead."""
+    """Deprecated -- use `Specification._inherited_fields()' instead."""
 
     def __init__(self, fields):
         self._fields = tuple(fields)

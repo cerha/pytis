@@ -147,8 +147,8 @@ class Type(object):
           not_null -- příznak udávající, zda hodnoty tohoto typu smí být
             prázdné.  Za prázdnou hodnotu je považována hodnota None, nebo
             libovolná jiná hodnota na None mapovaná (viz. konstanta
-            _SPECIAL_VALUES).  Pokud tento argument pravdivý, neprojde prázdná
-            hodnota validací.
+            _SPECIAL_VALUES).  Pokud je tento argument pravdivý, neprojde
+            prázdná hodnota validací.
           enumerator -- specifikace enumerátoru, jako instance `Enumerator',
             nebo None.  Slouží k realizaci integritních omezení výčtového
             typu.  Více viz dokumentace třídy `Enumerator'.

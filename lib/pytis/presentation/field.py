@@ -83,7 +83,7 @@ class PresentedRow(object):
     
     def __init__(self, fields, data, row, prefill=None, singleline=False, new=False,
                  resolver=None, transaction=None):
-        """Inicialize the instance.
+        """Initialize the instance.
         
         Arguments:
 
@@ -95,10 +95,10 @@ class PresentedRow(object):
             field identifiers and the values can be either 'pytis.data.Value' instances or the
             corresponding Python internal values (matching the field type).  These values take
             precedence before default values, the values contained within the passed 'row' as well
-            as the computed values (the computers for prefilled values are not invoked.
-          singleline -- a boolean flag indicating, that the exported values of all fields will be
+            as the computed values (the computers for prefilled values are not invoked).
+          singleline -- a boolean flag indicating that the exported values of all fields will be
             formatted to single line (influences the 'format()' method behavior).
-          new -- boolean flag determining, whether the row represents a new record for insertion or
+          new -- boolean flag determining whether the row represents a new record for insertion or
             an existing row for select or update.
           resolver -- a 'Resolver' instance for specification retrieval.  If not used, the global
             resolver returned by 'pytis.util.resolver()' will be used.
