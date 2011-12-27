@@ -212,7 +212,7 @@ Vypsání stručné nápovědy:
 
 Vypsání informací z databáze:
 
-  tools/dmp --config=.../config.py ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] | norights | missing ]
+  tools/dmp --config=.../config.py ls [ menu [ SPECIFICATION ] | roles | rights [ SPECIFICATION ] | norights | missing | extra ]
 
 např.
 
@@ -226,6 +226,7 @@ Možné výpisy:
   rights -- přístupová práva
   norights -- specifikace bez definovaných přístupových práv
   missing -- specifikace chybějící v databázi
+  extra -- přebývající specifikace v databázi
   
 (Uvedením SPECIFICATION lze výpis omezit jen na položky odpovídající dané specifikaci.)
   

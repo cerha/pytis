@@ -1628,8 +1628,7 @@ class DMPActions(DMPObject):
                             "Action without rights", (action.shortname(), action.fullname(),))
         return messages
 
-    def dmp_missing(self):
-        messages = []
+    def _load_database_and_specifications(self, messages):
         # Load database actions
         self.retrieve_data()
         fullnames = [a.fullname() for a in self.items()
@@ -1668,7 +1667,13 @@ class DMPActions(DMPObject):
             if fullname.startswith('sub/'):
                 parent_fullname = fullname[fullname.find('/', 4)+1:]
                 spec_subforms[parent_fullname] = spec_subforms.get(parent_fullname, []) + [action]
-        # Report missing subactions
+        # Return actions
+        return fullnames, subforms, spec_fullnames, spec_subforms
+        
+    def dmp_missing(self):
+        messages = []
+        fullnames, subforms, spec_fullnames, spec_subforms = \
+                   self._load_database_and_specifications(messages)
         for fullname in spec_fullnames:
             if fullname not in fullnames:
                 add_message(messages, DMPMessage.WARNING_MESSAGE,
@@ -1684,6 +1689,38 @@ class DMPActions(DMPObject):
                                     "Missing subform", (fullname, shortname,))
         return messages
 
+    def dmp_extra(self):
+        messages = []
+        fullnames, subforms, spec_fullnames, spec_subforms = \
+                   self._load_database_and_specifications(messages)
+        known_spec_fullnames = set(spec_fullnames)
+        for action_list in spec_subforms.values():
+            fullnames_set = set([a.fullname() for a in action_list])
+            known_spec_fullnames = known_spec_fullnames.union(fullnames_set)
+        for fullname in fullnames:
+            components = fullname.split('/')
+            kind = components[0]
+            if kind == 'menu' or kind == kind.upper():
+                continue
+            if kind in ('action', 'print',):
+                if fullname not in known_spec_fullnames:
+                    add_message(messages, DMPMessage.WARNING_MESSAGE,
+                                "Extra action", (fullname,))
+                continue
+            if fullname in spec_fullnames:
+                sub = subforms.get(fullname)
+                if sub:
+                    spec_sub = (spec_subforms.get(fullname) or [])
+                    short = set([s.shortname() for s in sub])
+                    spec_short = set([s.shortname() for s in spec_sub])
+                    for shortname in (short - spec_short):
+                        add_message(messages, DMPMessage.WARNING_MESSAGE,
+                                    "Extra form action", (fullname, shortname,))                    
+            else:
+                add_message(messages, DMPMessage.WARNING_MESSAGE,
+                            "Extra action", (fullname,))
+        return messages
+        
     def convert_system_rights(self, fake, shortname):
         row = pytis.data.Row((('shortname', pytis.data.sval(shortname),),))
         self._dbfunction('pytis_convert_system_rights').call(row)
@@ -1893,6 +1930,8 @@ def dmp_ls(parameters, fake, what, specifications=None):
         return DMPActions(configuration).dmp_no_rights()
     elif what == 'missing':
         return DMPActions(configuration).dmp_missing()
+    elif what == 'extra':
+        return DMPActions(configuration).dmp_extra()
     elif what == 'menu':
         class_ = DMPMenu
     elif what == 'roles':
