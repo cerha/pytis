@@ -704,8 +704,7 @@ class BrowseForm(LayoutForm):
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
                  search=None, query=None, allow_query_search=None, filter=None, message=None, 
                  filter_sets=None, profiles=None, filter_fields=None, immediate_filters=True,
-                 top_actions=False, bottom_actions=True,
-                 **kwargs):
+                 top_actions=False, bottom_actions=True, row_actions=False, **kwargs):
         """Arguments:
 
           uri_provider -- as in the parent class.
@@ -852,9 +851,14 @@ class BrowseForm(LayoutForm):
             When 'filter_fields' are present, filters must always be applied
             using a button, so this argument is ignored in this case.
           top_actions -- boolean flag to control the presence of the
-            global actions menu above the form.
+            global action buttons above the form.
           bottom_actions -- boolean flag to control the presence of the
-            global actions menu below the form.
+            global action buttons menu below the form.
+          row_actions -- boolean flag to control the presence of the row level
+            action buttons within the form.  Row actions are normally disabled,
+            so that the user must visit the ShowForm by clicking the row link
+            and invoke actions from there.  Including action buttons directly
+            within the browse form allows direct access but clutters the UI.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -1208,6 +1212,10 @@ class BrowseForm(LayoutForm):
         cells = [g.td(self._export_cell(context, field), align=self._align.get(field.id),
                       **self._field_style(field, row))
                  for field in self._column_fields]
+        if self._row_actions:
+            actions = self._export_actions(context, row,
+                                           self._uri_provider(row, None, type=UriType.LINK))
+            cells.append(g.td(actions, cls='actions'))
         return g.tr(cells, **self._row_style(row, n, highlight_found_record))
 
     def _export_aggregation(self, context, op):
@@ -1261,7 +1269,10 @@ class BrowseForm(LayoutForm):
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
                     result += ' '+ g.span(sign, cls='sorting-sign')
             return result
-        return concat([g.th(label(f)) for f in self._column_fields])
+        headings = [g.th(label(f)) for f in self._column_fields]
+        if self._row_actions:
+            headings.append(g.th(_("Actions")))
+        return headings
 
     def _conditions(self, condition=None):
         conditions = [c for c in (self._condition, self._filter, self._query_condition, condition,
@@ -1297,8 +1308,9 @@ class BrowseForm(LayoutForm):
                          for op in self._view.aggregations()]
         else:
             foot_rows = []
-        foot_rows.append(g.tr(g.td(summary, colspan=len(self._column_fields))))
-        return g.table((g.thead(g.tr(self._export_headings(context))),
+        headings = self._export_headings(context)
+        foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
+        return g.table((g.thead(g.tr(headings)),
                         g.tfoot(foot_rows),
                         g.tbody(rows)), border=1)
     
@@ -1738,6 +1750,11 @@ class ListView(BrowseForm):
             # Hack: Add a fake container to force the heading level start at 4.
             container = lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
+        if self._row_actions:
+            actions = self._export_actions(context, row,
+                                           self._uri_provider(row, None, type=UriType.LINK))
+            if actions:
+                parts.append(actions)
         # We use only css class name from row_style, since other attributes are
         # BrowseForm specific.
         cls = self._row_style(row, n, highlight_found_record)['cls']
