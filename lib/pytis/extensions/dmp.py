@@ -1774,7 +1774,9 @@ class DMPImport(DMPObject):
           fake -- iff True, don't actually change the data but return sequence
             of SQL commands (basestrings) that would do so
           fullname -- fullname of the form invoking action, string
-          position -- menu position of the action or preceding item title, basestring
+          position -- menu position of the action or preceding item title,
+            basestring, or True (in such a case the form is added to actions
+            but no menu item is created)
 
         """
         transaction = self._transaction()
@@ -1785,23 +1787,25 @@ class DMPImport(DMPObject):
         messages += self._dmp_actions.load_specifications(actions=[action])
         messages += self._dmp_actions.store_data(fake, transaction)
         specification = action.form_name()
-        menu = self._dmp_menu
-        menu.retrieve_data(transaction=transaction)
-        if not re.match('[0-9.]+$', position):
-            previous_items = [m for m in menu.items() if m.title() == position]
-            if not previous_items:
-                add_message(messages, DMPMessage.ERROR_MESSAGE, "No such menu item", (position,))
-                position = None
-            elif len(previous_items) > 1:
-                add_message(messages, DMPMessage.ERROR_MESSAGE, "Multiple menu items",
-                            ('%s (%s)' % (position, ', '.join([m.position() for m in previous_items]),),))
-                position = None
-            else:
-                position = previous_items[0].next_position()
+        if position is not True:
+            menu = self._dmp_menu
+            menu.retrieve_data(transaction=transaction)
+            if not re.match('[0-9.]+$', position):
+                previous_items = [m for m in menu.items() if m.title() == position]
+                if not previous_items:
+                    add_message(messages, DMPMessage.ERROR_MESSAGE, "No such menu item", (position,))
+                    position = None
+                elif len(previous_items) > 1:
+                    add_message(messages, DMPMessage.ERROR_MESSAGE, "Multiple menu items",
+                                ('%s (%s)' % (position, ', '.join([m.position() for m in previous_items]),),))
+                    position = None
+                else:
+                    position = previous_items[0].next_position()
         if position is not None:
-            menu_item = menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
-                                      title=action.title(), action=fullname, position=position)
-            messages += menu.store_data(fake, transaction=transaction, specifications=[fullname])
+            if position is not True:
+                menu_item = menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
+                                          title=action.title(), action=fullname, position=position)
+                messages += menu.store_data(fake, transaction=transaction, specifications=[fullname])
             messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction)
             self._dmp_rights.retrieve_data(transaction=transaction)
             shortname = action.shortname()
@@ -1809,7 +1813,7 @@ class DMPImport(DMPObject):
                 if a.shortname() == shortname:
                     break
             else:
-                for m in menu.items():
+                for m in ([] if position is True else menu.items()):
                     if (m is not menu_item and
                         DMPActions.Action(resolver, [], fullname=m.action()).shortname() == shortname):
                         break

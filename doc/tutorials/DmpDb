@@ -231,7 +231,7 @@ Možné výpisy:
   
 Přidání nové položky menu:
 
-  tools/dmp --config=.../config.py add-form FULLNAME { MENU-POSITION | PRECEDING-ITEM-TITLE }
+  tools/dmp --config=.../config.py add-form FULLNAME [ MENU-POSITION | PRECEDING-ITEM-TITLE ]
 
 např.:
 
@@ -250,9 +250,13 @@ Poznámky:
   hodnoty).  Např. mezi položky s pozicemi 2.1111.1120 a 2.1111.1121 lze vložit
   novou položku uvedením pozice 2.1111.11204.
 
-- Místo MENU-POSITION lze uvést titulek položky menu, za kterou se má nová
-  položka zařadit na stejnou úroveň.  Tento titulek musí existovat a musí být
-  jednoznačný.
+- Místo MENU-POSITION lze uvést titulek položky menu (PRECEDING-ITEM-TITLE), za
+  kterou se má nová položka zařadit na stejnou úroveň.  Tento titulek musí
+  existovat a musí být jednoznačný.
+
+- Pokud není pozice vůbec uvedena, formulář se pouze přidá do akcí.  (To je
+  užitečné například pro přidání formulářů, které se používají pouze
+  v procedurách.)
 
 Aktualizace podformulářů a akcí formuláře:
 
