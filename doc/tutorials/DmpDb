@@ -305,6 +305,15 @@ např.:
   cd pytis-demo
   dmp --config=config.py reset-rights cb.Countries
 
+Zkopírování práv z jedné specifikace do druhé:
+
+  tools/dmp --config=.../config.py copy-rights FROM-SHORTNAME TO-SHORTNAME
+
+např.:
+
+  cd pytis-demo
+  dmp --config=config.py copy-rights form/cb.Countries form/cb.Continents
+
 Zrušení systémových práv ke specifikaci a jejich nahrazení ekvivalentními
 aplikačními právy:
 

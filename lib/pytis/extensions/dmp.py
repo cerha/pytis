@@ -1003,6 +1003,20 @@ class DMPRights(DMPObject):
             transaction.commit()
         return messages
 
+    def dmp_copy_rights(self, fake, from_shortname, to_shortname):
+        transaction = self._transaction()
+        row = pytis.data.Row((('copy_from', pytis.data.sval(from_shortname),),
+                              ('copy_to', pytis.data.sval(to_shortname),),))
+        dbfunction = self._dbfunction('pytis_copy_rights')
+        dbfunction.call(row, transaction=transaction)
+        if fake:
+            messages = self._logger.messages()
+            transaction.rollback()
+        else:
+            messages = []
+            transaction.commit()
+        return messages
+
     def commit(self, fake, transaction=None):
         """Commit changes in access rights stored in the database.
 
@@ -1923,6 +1937,10 @@ def dmp_convert_system_rights(parameters, fake, shortname):
 def dmp_change_rights(parameters, fake, requests):
     configuration = DMPConfiguration(**parameters)
     return DMPRights(configuration).dmp_change_rights(fake, requests)
+
+def dmp_copy_rights(parameters, fake, from_shortname, to_shortname):
+    configuration = DMPConfiguration(**parameters)
+    return DMPRights(configuration).dmp_copy_rights(fake, from_shortname, to_shortname)
 
 def dmp_ls(parameters, fake, what, specifications=None):
     configuration = DMPConfiguration(**parameters)
