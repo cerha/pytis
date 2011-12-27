@@ -1642,6 +1642,26 @@ class DMPActions(DMPObject):
                             "Action without rights", (action.shortname(), action.fullname(),))
         return messages
 
+    def dmp_extra_rights(self):
+        messages = []
+        self.retrieve_data()
+        rights = DMPRights(self._configuration)
+        rights.retrieve_data()
+        known_shortnames = set()
+        for a in self.items():
+            shortname = a.shortname()
+            match = re.match('form/(.+)::(.+)', shortname)
+            if match:
+                known_shortnames.add('form/' + match.group(1))
+                known_shortnames.add('form/' + match.group(2))
+            else:
+                known_shortnames.add(shortname)
+        for r in rights.items():
+            if r.shortname() not in known_shortnames:
+                add_message(messages, DMPMessage.WARNING_MESSAGE,
+                            "Right without action", (r.shortname(),))
+        return messages        
+
     def _load_database_and_specifications(self, messages):
         # Load database actions
         self.retrieve_data()
@@ -1946,6 +1966,8 @@ def dmp_ls(parameters, fake, what, specifications=None):
     configuration = DMPConfiguration(**parameters)
     if what == 'norights':
         return DMPActions(configuration).dmp_no_rights()
+    elif what == 'exrights':
+        return DMPActions(configuration).dmp_extra_rights()
     elif what == 'missing':
         return DMPActions(configuration).dmp_missing()
     elif what == 'extra':
