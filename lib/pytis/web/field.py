@@ -217,7 +217,7 @@ class FieldExporter(object):
 
         """
         field = self._field
-        value = localizable_export(self._value())
+        value = self._exported_value()
         if value and not isinstance(value, lcg.Localizable):
             g = context.generator()
             escaped = g.escape(self._row.format(field.id))
@@ -261,6 +261,9 @@ class FieldExporter(object):
                     value = g.div(value)
         return value
 
+    def _exported_value(self):
+        return localizable_export(self._value())
+    
     def _display(self, context):
         """Additional information about the field value (see '_format()' for more info)."""
         return None
@@ -353,7 +356,7 @@ class TextFieldExporter(FieldExporter):
     
     def _editor_kwargs(self, context, prefill, error):
         kwargs = super(TextFieldExporter, self)._editor_kwargs(context, prefill, error)
-        value = prefill or self._format(context)
+        value = prefill or self._exported_value()
         maxlen = self._maxlen()
         size = self._field.spec.width(maxlen)
         return dict(kwargs, value=value, size=size, maxlength=maxlen)
