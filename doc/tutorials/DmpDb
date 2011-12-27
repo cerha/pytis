@@ -271,6 +271,14 @@ např.:
 (Uvedením NEW-FULLNAME lze změnit fullname hlavního formuláře, typicky to lze
 využít pro změnu typu formuláře.)
 
+Změna názvu specifikace:
+
+  tools/dmp --config=.../config.py rename-specification OLD-NAME NEW-NAME
+
+např.:
+
+  tools/dmp --config=.../config.py rename-specification cb.Countries cb.XCountries
+
 Vymazání objektů z DMP:
 
   tools/dmp --config=.../config.py delete { SHORTNAME | FULLNAME | MENU-POSITION }

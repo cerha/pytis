@@ -1898,6 +1898,20 @@ class DMPImport(DMPObject):
         else:
             transaction.commit()
         return messages
+    
+    def dmp_rename_specification(self, fake, old_name, new_name):
+        transaction = self._transaction()
+        row = pytis.data.Row((('old_name', pytis.data.sval(old_name),),
+                              ('new_name', pytis.data.sval(new_name),),))
+        dbfunction = self._dbfunction('pytis_change_specification_name')
+        dbfunction.call(row, transaction=transaction)
+        if fake:
+            messages = self._logger.messages()
+            transaction.rollback()
+        else:
+            messages = []
+            transaction.commit()
+        return messages
 
 
 def dmp_import(parameters, fake):
@@ -1919,6 +1933,10 @@ def dmp_update_form(parameters, fake, specification, new_fullname):
     """Update form subforms and actions from specifications."""
     configuration = DMPConfiguration(**parameters)
     return DMPActions(configuration).dmp_update_forms(fake, specification, new_fullname=new_fullname)
+
+def dmp_rename_specification(parameters, fake, old_name, new_name):
+    configuration = DMPConfiguration(**parameters)
+    return DMPImport(configuration).dmp_rename_specification(fake, old_name, new_name)
 
 def dmp_reset_rights(parameters, fake, specification):
     """Restore access rights of the given specification.

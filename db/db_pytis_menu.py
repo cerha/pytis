@@ -335,7 +335,7 @@ def pytis_convert_system_rights(shortname):
         
 _plpy_function('pytis_convert_system_rights', (TString,), 'void',
                body=pytis_convert_system_rights,
-               depends=('e_pytis_action_rights',))
+               depends=('e_pytis_action_rights',))    
 
 
 ### Menus
@@ -1582,3 +1582,50 @@ union
 """,
          grant=db_rights,
          depends=('typ_changed_rights', 'pytis_view_summary_rights',))
+
+
+def pytis_change_shortname(shortname, old_name, new_name):
+    shortname, old_name, new_name = args
+    if shortname is None:
+        return shortname
+    components = shortname.split('/')
+    if (len(components) == 3 and
+        components[0] in ('action', 'print',) and components[2] == old_name):
+        components[2] = new_name
+    elif (len(components) == 2 and
+          components[0] == 'form' and components[1] == old_name):
+        components[1] = new_name
+    return '/'.join(components)
+_plpy_function('pytis_change_shortname', (TString, TString, TString), TString,
+               body=pytis_change_shortname)
+
+def pytis_change_fullname(fullname, old_name, new_name):
+    fullname, old_name, new_name = args
+    if fullname is None:
+        return fullname
+    components = fullname.split('/')
+    if (len(components) == 3 and
+        components[0] in ('action', 'print',) and components[2] == old_name):
+        components[2] = new_name
+    elif (len(components) >= 3 and
+          components[0] == 'form' and components[2] == old_name):
+        components[2] = new_name
+    elif (len(components) >= 5 and
+          components[0] == 'sub' and components[4] == old_name):
+        components[4] = new_name
+    return '/'.join(components)        
+_plpy_function('pytis_change_fullname', (TString, TString, TString), TString,
+               body=pytis_change_fullname)
+
+function('pytis_change_specification_name', (TString, TString), 'void',
+         body="""
+insert into e_pytis_disabled_dmp_triggers (id) values (''genmenu'');
+update c_pytis_menu_actions set fullname=pytis_change_fullname(fullname, $1, $2), shortname=pytis_change_shortname(shortname, $1, $2) where shortname != pytis_change_shortname(shortname, $1, $2) or fullname != pytis_change_fullname(fullname, $1, $2);
+update e_pytis_menu set fullname=pytis_change_fullname(fullname, $1, $2) where fullname != pytis_change_fullname(fullname, $1, $2);
+update e_pytis_action_rights set shortname=pytis_change_shortname(shortname, $1, $2) where shortname != pytis_change_shortname(shortname, $1, $2);
+update a_pytis_actions_structure set fullname=pytis_change_fullname(fullname, $1, $2), shortname=pytis_change_shortname(shortname, $1, $2) where shortname != pytis_change_shortname(shortname, $1, $2) or fullname != pytis_change_fullname(fullname, $1, $2);
+delete from e_pytis_disabled_dmp_triggers where id=''genmenu'';
+""",
+         depends=('pytis_change_shortname', 'pytis_change_fullname', 'e_pytis_disabled_dmp_triggers',
+                  'c_pytis_menu_actions', 'e_pytis_menu', 'e_pytis_action_rights',
+                  'a_pytis_actions_structure',))

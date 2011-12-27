@@ -154,6 +154,16 @@ def command_update_form(parameters, dry_run, args):
     specification = args[0]
     return pytis.extensions.dmp_update_form(parameters, dry_run, specification, new_fullname=fullname)
 
+def command_rename_specification(parameters, dry_run, args):
+    if len(args) < 2:
+        print "Error: missing name"
+        return
+    if len(args) > 2:
+        print 'Error: extra arguments'
+        return
+    old_name, new_name = args
+    return pytis.extensions.dmp_rename_specification(parameters, dry_run, old_name, new_name)
+
 def command_delete(parameters, dry_run, args):
     if not args:
         print "Error: missing action identifier"
@@ -214,6 +224,8 @@ Commands:
     - add new form to application menu
   update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
     - update subforms and actions of the specification form and possibly change form fullname
+  rename-specification OLD-NAME NEW-NAME
+    - rename specification in all DMP tables
   delete { SHORTNAME | FULLNAME | MENU-POSITION }
     - delete something from DMP
   import
