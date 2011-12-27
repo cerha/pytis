@@ -37,6 +37,7 @@ import collections
 import string
 
 from pytis.web import *
+from pytis.presentation import ActionContext
 
 _ = lcg.TranslatableTextFactory('pytis')
 
@@ -53,12 +54,13 @@ class Type(pd.Type):
 class Form(lcg.Content):
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
-    def __init__(self, view, row, handler='#', prefill=None, hidden=(), name=None,
-                 uri_provider=None, **kwargs):
+    def __init__(self, view, req, row, handler='#', prefill=None, hidden=(), name=None,
+                 uri_provider=None, actions=None, **kwargs):
         """Arguments:
 
           view -- presentation specification as a 'pytis.presentation.ViewSpec'
             instance.
+          req -- instance of a class implementing the 'Request' API.
           row -- 'pytis.presentation.PresentedRow' instance.
           handler -- form handler URI as a string.  This URI is used in the
             form's 'action' attribute.
@@ -87,6 +89,14 @@ class Form(lcg.Content):
           name -- form name as a string or None.  This name will be sent as a
             hidden field and used to distinguish which request parameters
             belong to which form.
+          actions -- form actions as a sequence of pytis.presentation.Action
+            instances or a callable object returning such a sequence when given
+            two positional arguments: (FORM, RECORD), where FORM is the 'Form'
+            instance and RECORD is the form record as a
+            'pytis.presentation.PresentedRow' instance or None when asking for
+            global actions (see 'pytis.presentation.ActionContext').  The
+            default value (None) means to use the actions as defined in the
+            specification.
 
         """
         super(Form, self).__init__(**kwargs)
@@ -94,7 +104,9 @@ class Form(lcg.Content):
         assert isinstance(row, pytis.presentation.PresentedRow), row
         assert isinstance(handler, basestring), handler
         assert isinstance(hidden, (tuple, list)), hidden
+        assert actions is None or isinstance(actions, (tuple, list, collections.Callable)), actions
         self._view = view
+        self._req = req
         self._row = row
         self._key = row.data().key()[0].id()
         self._handler = handler
@@ -103,6 +115,7 @@ class Form(lcg.Content):
         self._hidden = list(hidden)
         self._name = name
         self._id = 'x%x' % positive_id(self)
+        self._actions = actions
 
     def _export_body(self, context):
         pass
@@ -134,6 +147,48 @@ class Form(lcg.Content):
 
         """
         return None
+
+    def _export_actions(self, context, record, uri):
+        g = context.generator()
+        if record is not None:
+            required_context = ActionContext.RECORD
+            function_args = (record,)
+        else:
+            required_context = ActionContext.GLOBAL
+            function_args = (self._req,)
+        def is_visible(action):
+            context = action.context()
+            if context != required_context:
+                return False
+            visible = action.visible()
+            if isinstance(visible, collections.Callable):
+                visible = visible(*function_args)
+            return visible
+        def action_button(action):
+            enabled = action.enabled()
+            if isinstance(enabled, collections.Callable):
+                enabled = enabled(*function_args)
+            params = (('action', action.id()),)
+            #if record:
+            #    params += ((key, record[self._key].export()),)
+            params += tuple(action.kwargs().items())
+            return g.form([g.hidden(name, value is True and 'true' or value)
+                           for name, value in params] +
+                          [g.button(g.span(action.title()), title=action.descr(),
+                                    disabled=not enabled,
+                                    cls='action-'+action.id() + (not enabled and ' disabled' or ''))],
+                          action=uri)
+        if self._actions is not None:
+            actions = self._actions
+            if isinstance(actions, collections.Callable):
+                actions = actions(self, record)
+        else:
+            actions = self._view.actions()
+        buttons = [action_button(action) for action in actions if is_visible(action)]
+        if buttons:
+            return g.div(buttons, cls='actions module-actions-' + self._name)
+        else:
+            return ''
 
 
 class FieldForm(Form):
@@ -245,10 +300,10 @@ class LayoutForm(FieldForm):
         def content(self):
             return self._content
             
-    def __init__(self, view, row, layout=None, **kwargs):
+    def __init__(self, view, req, row, layout=None, **kwargs):
         assert layout is None or isinstance(layout, GroupSpec)
         self._layout = layout
-        super(LayoutForm, self).__init__(view, row, **kwargs)
+        super(LayoutForm, self).__init__(view, req, row, **kwargs)
         
     def _export_group(self, context, group, inner=False, id=None, omit_first_field_label=False):
         g = context.generator()
@@ -368,9 +423,9 @@ class LayoutForm(FieldForm):
 
 class _SingleRecordForm(LayoutForm):
 
-    def __init__(self, view, row, layout=None, **kwargs):
+    def __init__(self, view, req, row, layout=None, **kwargs):
         layout = layout or view.layout().group()
-        super(_SingleRecordForm, self).__init__(view, row, layout=layout, **kwargs)
+        super(_SingleRecordForm, self).__init__(view, req, row, layout=layout, **kwargs)
         
     def _export_body(self, context):
         return self._export_group(context, self._layout)
@@ -379,7 +434,7 @@ class _SingleRecordForm(LayoutForm):
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
 
-    def __init__(self, view, row, submit=_(u"Submit"), reset=_(u"Undo all changes"), **kwargs):
+    def __init__(self, view, req, row, submit=_(u"Submit"), reset=_(u"Undo all changes"), **kwargs):
         """Arguments:
 
           submit -- custom submit buttons as a sequence of (label, name) pairs.
@@ -396,7 +451,7 @@ class _SubmittableForm(Form):
         self._submit = submit
         self._reset = reset
         self._enctype = None
-        super(_SubmittableForm, self).__init__(view, row, **kwargs)
+        super(_SubmittableForm, self).__init__(view, req, row, **kwargs)
     
     def _export_submit(self, context):
         g = context.generator()
@@ -418,13 +473,18 @@ class _SubmittableForm(Form):
 class ShowForm(_SingleRecordForm):
     _CSS_CLS = 'show-form'
     _ALIGN_NUMERIC_FIELDS = True
+
+    def export(self, context):
+        return context.generator().div((super(ShowForm, self).export(context),
+                                        self._export_actions(context, self._row, self._req.uri())))
+
     
     
 class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     _EDITABLE = True
     
-    def __init__(self, view, row, errors=(), **kwargs):
+    def __init__(self, view, req, row, errors=(), **kwargs):
         """Arguments:
 
           errors -- a sequence of error messages to display within the form
@@ -440,7 +500,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(EditForm, self).__init__(view, row, **kwargs)
+        super(EditForm, self).__init__(view, req, row, **kwargs)
         key, order = self._key, tuple(self._layout.order())
         self._hidden += [(k, v) for k, v in self._prefill.items()
                          if view.field(k) and not k in order and k != key]
@@ -622,11 +682,11 @@ class FilterForm(EditForm):
     # The whole thing needs some further work to be generally usable ...
     _CSS_CLS = 'edit-form filter-form'
     
-    def __init__(self, fields, row, **kwargs):
+    def __init__(self, fields, req, row, **kwargs):
         view = ViewSpec(_(u"Filter"), fields)
         kwargs['reset'] = kwargs.get('reset') # Default to None in this class.
         kwargs['submit'] = kwargs.get('submit', _(u"Apply Filter"))
-        super(FilterForm, self).__init__(view, row, **kwargs)
+        super(FilterForm, self).__init__(view, req, row, **kwargs)
         
     def _export_footer(self, context):
         return None
@@ -639,22 +699,15 @@ class BrowseForm(LayoutForm):
                            pytis.data.DESCENDANT: 'desc'}
     _NULL_FILTER_ID = '-'
 
-    def __init__(self, view, row, req=None, uri_provider=None, condition=None, arguments=None,
+    def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
                  columns=None, sorting=None, grouping=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
                  search=None, query=None, allow_query_search=None, filter=None, message=None, 
                  filter_sets=None, profiles=None, filter_fields=None, immediate_filters=True,
+                 top_actions=False, bottom_actions=True,
                  **kwargs):
         """Arguments:
 
-          req -- instance of a class implementing the 'Request' API.  The form
-            state (sorting, paging etc) will be set up according to the reqest
-            parameters, if the request includes them (form controls were used
-            to submit the form).  The constructor argument 'name' (defined in
-            parent class) may be used to distinguish between multiple forms on
-            one page.  If this parameter was passed, it is sent as the request
-            argument 'form_name'.  Thus if this argument doesn't match the form
-            name, the request arguments are ignored.
           uri_provider -- as in the parent class.
           condition -- current condition for filtering the records as
             'pytis.data.Operator' instance or None.
@@ -685,14 +738,13 @@ class BrowseForm(LayoutForm):
             form will include controls for navigation between these pages.
             None value results in an unlimited list -- all records will be
             printed on just one page and paging controls will be disabled.  The
-            request parameter 'limit' overrides this value if 'req' is passed
-            and it is stored as a cookie.  The cookie has lower precedence than
-            the request parameter, but still higher than the 'limit'
-            constructor argument, so this argument really only serves as a
-            default value.  The request parameter/cookie is checked against the
-            'limits' argument (see below) and if it is not one of the values
-            defined there, it is ignored, so the user may only use one of the
-            allowed limits.
+            request parameter 'limit' overrides this value and it is stored as
+            a cookie.  The cookie has lower precedence than the request
+            parameter, but still higher than the 'limit' constructor argument,
+            so this argument really only serves as a default value.  The
+            request parameter/cookie is checked against the 'limits' argument
+            (see below) and if it is not one of the values defined there, it is
+            ignored, so the user may only use one of the allowed limits.
           limits -- a sequence of available 'limit' values.  These values are
             used to create the limit selection control and also determine valid
             values of the 'limit' request parameter and cookie (described
@@ -702,8 +754,8 @@ class BrowseForm(LayoutForm):
             current select.  The page, which contains this record will be
             displayed if possible.  If not (the listing is shorter than given
             number), the nearest page is displayed.  The request argument
-            'offset' overrides this value if 'req' is passed.  Also request
-            arguments 'next' and 'prev' modify this value.
+            'offset' overrides this value.  Also request arguments 'next' and
+            'prev' modify this value.
           search -- search condition as a 'pytis.data.Operator' instance or
             None.  If used, the offset will be set automatically to ensure,
             that the first record matching the search condition will be
@@ -761,7 +813,6 @@ class BrowseForm(LayoutForm):
             the profile selector.  If None, the default filter sets from the
             specification are used.  If not None, the filter sets defined by
             the specification are ignored.
-
           profiles -- specification of form profiles as a 'Profiles' instance
             or a sequence of 'Profile' instances.  These profiles will be
             available in the user interface for user's selection.  If None, the
@@ -769,7 +820,6 @@ class BrowseForm(LayoutForm):
             None, the profiles from specification are ignored.  This argument
             is mostly useful to construct the list of profiles dynamically
             (specification profiles are static).
-            
           filter_fields -- specification of editable filter fields as a
             sequence of tuples of three items (field_specification, operator,
             field_id), where 'field_specification' is a
@@ -801,6 +851,10 @@ class BrowseForm(LayoutForm):
             when False, there is a separate button for filter application.
             When 'filter_fields' are present, filters must always be applied
             using a button, so this argument is ignored in this case.
+          top_actions -- boolean flag to control the presence of the
+            global actions menu above the form.
+          bottom_actions -- boolean flag to control the presence of the
+            global actions menu below the form.
 
         See the parent classes for definition of the remaining arguments.
 
@@ -814,7 +868,7 @@ class BrowseForm(LayoutForm):
                 return uri_provider(row, cid, type=type)
         else:
             browse_form_uri_provider = None
-        super(BrowseForm, self).__init__(view, row, uri_provider=browse_form_uri_provider, **kwargs)
+        super(BrowseForm, self).__init__(view, req, row, uri_provider=browse_form_uri_provider, **kwargs)
         def param(name, func=None, default=None):
             # Consider request params only if they belong to the current form.
             if req.param('form_name') == self._name and req.has_param(name):
@@ -960,6 +1014,9 @@ class BrowseForm(LayoutForm):
             self._lang = None
         self._init_filter_fields(req, filter_fields or ())
         self._immediate_filters = immediate_filters
+        self._top_actions = top_actions
+        self._bottom_actions = bottom_actions
+        self._row_actions = row_actions
 
     def _init_filter_fields(self, req, filter_fields_spec):
         columns = []
@@ -1534,9 +1591,16 @@ class BrowseForm(LayoutForm):
 
     def export(self, context):
         form = super(BrowseForm, self).export(context)
-        content = (self._export_controls(context),
+        content = [self._export_controls(context),
                    form,
-                   self._export_controls(context, bottom=True))
+                   self._export_controls(context, bottom=True)]
+        actions = self._export_actions(context, None,
+                                       self._uri_provider(None, None, type=UriType.LINK))
+        if actions:
+            if self._top_actions:
+                content.insert(0, actions)
+            if self._bottom_actions:
+                content.append(actions)
         return concat([c for c in content if c], separator="\n")
 
     def heading_info(self):
@@ -1597,10 +1661,12 @@ class ListView(BrowseForm):
         def __getitem__(self, key):
             return self._func(key)
 
-    def __init__(self, view, row, **kwargs):
-        self._list_layout = list_layout = view.list_layout()
+    def __init__(self, view, req, row, list_layout=None, **kwargs):
+        if list_layout is None:
+            list_layout = view.list_layout()
         layout = list_layout and list_layout.layout() or None
-        super(ListView, self).__init__(view, row, layout=layout, **kwargs)
+        super(ListView, self).__init__(view, req, row, layout=layout, **kwargs)
+        self._list_layout = list_layout
         if list_layout is None:
             super_ = super(ListView, self)
             self._CSS_CLS = super_._CSS_CLS
@@ -1708,7 +1774,7 @@ class ItemizedView(BrowseForm):
     
     _CSS_CLS = 'itemized-view'
     
-    def __init__(self, view, row, columns=None, separator=', ', template=None, **kwargs):
+    def __init__(self, view, req, row, columns=None, separator=', ', template=None, **kwargs):
         """Arguments:
 
           columns -- an explicit list of fields shown for each record.  Only
@@ -1730,7 +1796,7 @@ class ItemizedView(BrowseForm):
         """
         if not columns:
             columns = (view.columns()[0],) # Include just the first column by default.
-        super(ItemizedView, self).__init__(view, row, columns=columns, **kwargs)
+        super(ItemizedView, self).__init__(view, req, row, columns=columns, **kwargs)
         assert isinstance(separator, basestring)
         assert template is None or isinstance(template, (lcg.TranslatableText, collections.Callable))
         self._separator = separator
@@ -1769,7 +1835,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     checked rows.
     
     """
-    def __init__(self, view, row, check_columns=None, limits=(), limit=None, **kwargs):
+    def __init__(self, view, req, row, check_columns=None, limits=(), limit=None, **kwargs):
         """Arguments:
 
           check_columns -- a sequence of column identifiers for which the
@@ -1779,7 +1845,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
           See the parent classes for definition of the remaining arguments.
 
         """
-        super(CheckRowsForm, self).__init__(view, row, limits=limits, limit=limit, **kwargs)
+        super(CheckRowsForm, self).__init__(view, req, row, limits=limits, limit=limit, **kwargs)
         assert isinstance(check_columns, (list, tuple)), check_columns
         if __debug__:
             for cid in check_columns:
