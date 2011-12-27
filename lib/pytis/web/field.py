@@ -656,12 +656,20 @@ class FileFieldExporter(TextFieldExporter):
 
     """
     def _format(self, context):
-        value, info = self._value().export(), None
-        if value:
+        if self._value().value() is not None:
             filename_spec = self._field.spec.filename()
             if isinstance(filename_spec, collections.Callable):
                 value = filename_spec(self._row)
             else:
                 value = self._row[filename_spec].export()
-            info = format_byte_size(len(value))
+        else:
+            value = ''
         return value
+
+    def _display(self, context):
+        value = self._value().value()
+        if value:
+            return format_byte_size(len(value))
+        else:
+            return None
+    
