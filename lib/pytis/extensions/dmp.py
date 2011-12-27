@@ -1299,8 +1299,6 @@ class DMPActions(DMPObject):
                 else:
                     subform = components[4]
                 shortname = 'form/%s' % (subform,)
-            elif components[0] == 'print':
-                shortname = 'print/%s' % (components[1],)
             else:
                 shortname = self.fullname()
             return shortname

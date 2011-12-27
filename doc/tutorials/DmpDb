@@ -121,7 +121,6 @@ insert into c_pytis_menu_actions (fullname, shortname, action_title, description
 
   FULLNAME ... identifikátor akce vytvořený dle pravidel výše
   SHORTNAME ... pro akce s prefixem `form/' a `sub/' má podobu `form/FORM_NAME',
-    pro akce s prefixem `print/' má podobu `print/PRINT_ACTION_NAME',
     pro ostatní akce je shodné s FULLNAME
   TITLE ... libovolný stručný titulek akce, odpovídá atributu `title' ve specifikaci
   DESCRIPTION ... nepovinná poznámka vztahující se k akci, správce DMP ji může
