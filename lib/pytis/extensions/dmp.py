@@ -926,8 +926,10 @@ class DMPRights(DMPObject):
         lines = []
         for right in self.items():
             shortname = right.shortname()
-            if (specifications is not None and shortname.split('/')[1] not in specifications):
-                continue
+            if specifications is not None:
+                components = shortname.split('/')
+                if len(components) < 2 or components[1] not in specifications:
+                    continue
             lines.append('%-60s %-32s %s%s %s %s %s' %
                          (shortname, right.roleid(), ('+' if right.granted() else '-'),
                           right.rightid()[:4], ('sys' if right.system() else '   '),
