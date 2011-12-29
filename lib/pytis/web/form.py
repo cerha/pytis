@@ -168,10 +168,9 @@ class Form(lcg.Content):
             enabled = action.enabled()
             if isinstance(enabled, collections.Callable):
                 enabled = enabled(*function_args)
-            params = (('action', action.id()),)
-            #if record:
-            #    params += ((key, record[self._key].export()),)
-            params += tuple(action.kwargs().items())
+            params = (('action', action.id()),
+                      ('__form_class', self.__class__.__name__),) + \
+                      tuple(action.kwargs().items())
             return g.form([g.hidden(name, value is True and 'true' or value)
                            for name, value in params] +
                           [g.button(g.span(action.title()), title=action.descr(),
