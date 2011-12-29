@@ -1271,6 +1271,8 @@ class BrowseForm(LayoutForm):
             return result
         headings = [g.th(label(f)) for f in self._column_fields]
         if self._row_actions:
+            # Translators: Label for a column with buttons to invoke various
+            # actions on database records, such as update or delete.
             headings.append(g.th(_("Actions")))
         return headings
 
