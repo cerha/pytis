@@ -169,7 +169,7 @@ class Form(lcg.Content):
             if isinstance(enabled, collections.Callable):
                 enabled = enabled(*function_args)
             params = (('action', action.id()),
-                      ('__form_class', self.__class__.__name__),) + \
+                      ('__invoked_from', self.__class__.__name__),) + \
                       tuple(action.kwargs().items())
             return g.form([g.hidden(name, value is True and 'true' or value)
                            for name, value in params] +
@@ -454,8 +454,11 @@ class _SubmittableForm(Form):
     
     def _export_submit(self, context):
         g = context.generator()
-        result = [g.hidden(k, v) for k, v in self._hidden] + \
-                 [g.hidden('form_name', self._name)] + \
+        hidden = self._hidden + [('form_name', self._name)]
+        invoked_from = self._req.param('__invoked_from')
+        if invoked_from is not None:
+            hidden.append(('__invoked_from', invoked_from))
+        result = [g.hidden(name, value) for name, value in hidden] + \
                  [g.button(g.span(label), name=name, value='1', title=_(u"Submit the form"))
                   for label, name in self._submit]
         if self._reset:
