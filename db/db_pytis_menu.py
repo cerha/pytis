@@ -46,6 +46,7 @@ _std_table('e_pytis_roles',
                         ("'admin_roles'", "'Administrátor rolí'", "'admn'", 'NULL',),
                         ("'admin_menu'", "'Administrátor menu'", "'admn'", 'NULL',),
                         ("'admin'", "'Administrátor rolí a menu'", "'admn'", 'NULL',),
+                        ("'__pytis'", "'Zástupná role pro číselník sloupců'", "'admn'", 'NULL',),
                         ),
            grant=db_rights,
            doc="Application user roles.",
@@ -1527,7 +1528,11 @@ viewng('ev_pytis_user_roles',
 
 sql_raw("""
 create or replace view ev_pytis_colnames as select distinct shortname, colname
-from e_pytis_action_rights where system = 't' and colname is not null;
+from e_pytis_action_rights where colname is not null;
+
+create or replace rule ev_pytis_colnames_insert as on insert to ev_pytis_colnames do instead
+insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, granted)
+       values (new.shortname, '__pytis', '*', new.colname, False, False);
 """,
         name='ev_pytis_colnames',
         depends=('e_pytis_action_rights',))

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -465,6 +465,8 @@ class ApplicationRights(pytis.presentation.Specification):
     cb = pytis.presentation.CodebookSpec(display='description')
 
 def _colname_description(row, shortname, colname):
+    if shortname is None:
+        return "Tady se sloupci manipulovat nelze."
     components = shortname.split('/')
     if components[0] != 'form':
         return None
@@ -548,6 +550,8 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
         Field('colname', _(u"Sloupec"),
               fixed=True,
               codebook='menu.ApplicationColumns', not_null=False,
+              allow_codebook_insert=True,
+              codebook_insert_prefill=(lambda row: dict(shortname=row['shortname'])),
               runtime_filter=pytis.presentation.Computer(lambda row: pytis.data.EQ('shortname', row['shortname']), depends=('shortname',)),
               descr=_(u"Sloupec, na který se právo vztahuje")),
         Field('rightid', _(u"Právo"), codebook='menu.ApplicationRights',
