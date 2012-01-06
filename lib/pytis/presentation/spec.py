@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2463,6 +2463,64 @@ class ListLayout(object):
 
     def allow_index(self):
         return self._allow_index
+
+
+class Enumeration(object):
+    """Specification of an enumeration.
+
+    This class defines a code based enumeration (as oposed to database based
+    enumeration typically implemented using a codebook with its own pytis
+    'Specification').
+
+    You can define an enumeration directly within 'Field' specification by
+    defining 'enumerator', 'display', 'selection_type', 'prefer_display' and,
+    'default' attributes.  The same combination of those attributes, however,
+    typically tends to repeat several times within one application.  This is
+    why you may group them into this class and refer to the same class several
+    times.  When a class derived from 'Enumeration' is passed to the
+    'enumerator' attribute of a 'Field' specification, all the above named
+    attributes (when nor redefined explicitly for given field) will default to
+    values defined by this enumeration.  Note, that the default values of some
+    attributes may be different in this class than the default values of the
+    same 'Field' specification attributes.  See the documentation of individual
+    attributes below.
+
+    Code based enumerations are typically practical when the application logic
+    depends on the knowledge of enumeration values. They can also define
+    translatable labels (the translations are often easier to manage within the
+    code than in the database).
+
+    """
+    enumeration = ()
+    """Sequence of pairs (value, label) determining inner values and displayed labels.
+
+    The inner values must correspond to the python value of the data type of
+    the 'Field' specification where the enumeration is used (typically python
+    strings or ints).  The resulting enumerator will be a
+    'pytis.data.FixedEnumerator' with these values.
+
+    Labels are user interface strings representing the corresponding inner
+    value.  The default 'display' of a Field using this enumeration will return these
+    labels.
+    """
+
+    default = None
+    """Overrides Field's 'default' attribute.
+
+    Must be one of the enumeration's inner values.
+    """
+
+    selection_type = SelectionType.CHOICE
+    """Overrides Field's 'selection_type' attribute."""
+    
+    prefer_display = True
+    """Overrides Field's 'prefer_display' attribute.
+
+    Note, that the default value is True here, while the default value of the
+    Field attribute is False, so when Enumeration is used, the default is to
+    always show labels instead of enumeration inner values.
+
+    """
     
     
 class Field(object):
@@ -2589,13 +2647,17 @@ class Field(object):
             Specifying 'codebook' causes 'selection_type' to default to
             'SelectionType.CODEBOOK'.  From the other perspective
             'SelectionType.CODEBOOK' requires 'codebook' to be defined.
-          enumerator -- field data type enumerator as a string (name of a
-            specification for 'pytis.data.DataEnumerator' construction),
-            'pytis.data.DataFactory' instance (for 'pytis.data.DataEnumerator'
-            construction) or a 'pytis.data.Enumerator' instance directly.
-            Unlike 'codebook', 'enumerator' is only used for field's data type
-            construction and has no effect on 'selection_type'.  If None,
-            enumerator will default to the value of 'codebook'.
+          enumerator -- determines the field'd data type enumerator.  You can
+            pass a 'pytis.data.Enumerator' instance directly, a string
+            specification name, which will be automatically converted to the
+            corresponding 'pytis.data.DataEnumerator' instance,
+            'pytis.data.DataFactory' instance (also converted to
+            'pytis.data.DataEnumerator') or a class derived from 'Enumeration'.
+            When an 'Enumeration' class is used, it will be converted to a
+            'pytis.data.FixedEnumerator' instance and other attributes, such as
+            'display', 'prefer_display' etc. of this field will be influenced
+            as described in the 'Enumeration' class docstring.
+            If None, the enumerator will default to the value of 'codebook'.
           display -- overrides the same 'CodebookSpec' option for this
             particular field.  If not defined, the value defaults to the value
             defined by the related codebook.
@@ -2812,7 +2874,7 @@ class Field(object):
             runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
         assert runtime_arguments is None or isinstance(runtime_arguments, Computer), runtime_arguments
-        assert selection_type is None or selection_type in public_attributes(SelectionType), selectiontype
+        assert selection_type is None or selection_type in public_attributes(SelectionType), selection_type
         assert orientation in public_attributes(Orientation), orientation
         assert post_process is None or isinstance(post_process, collections.Callable) \
             or post_process in public_attributes(PostProcess), post_process
@@ -2826,6 +2888,23 @@ class Field(object):
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         if enumerator is None:
             enumerator = codebook
+        elif __builtins__['type'](enumerator) == __builtins__['type'](Enumeration) \
+                and issubclass(enumerator, Enumeration):
+            e = enumerator
+            enumerator = pytis.data.FixedEnumerator([v for v, l in e.enumeration])
+            assert e.selection_type in public_attributes(SelectionType), e.selection_type
+            if selection_type is None:
+                selection_type = e.selection_type
+            if default is None and e.default is not None:
+                assert e.default in [v for v, l in e.enumeration]
+                default = e.default
+            if display is None:
+                labels = dict(e.enumeration)
+                def display(value):
+                    return labels.get(value, value)
+            if prefer_display is None:
+                assert isinstance(e.prefer_display, bool)
+                prefer_display = e.prefer_display
         else:
             assert isinstance(enumerator, (basestring, pytis.data.DataFactory, pytis.data.Enumerator)), enumerator
         enumerator_kwargs = dict([(k, v) for k, v
