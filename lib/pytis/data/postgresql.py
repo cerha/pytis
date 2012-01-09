@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1909,7 +1909,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if timeout is not None:
                         stop_time = time.time() + timeout
                     while (not self._pg_finished and
-                           (timeout is None or time.time() <= stop_time) and
+                           (min_value is not None or timeout is None or time.time() <= stop_time) and
                            (min_value is None or self._pg_current_count < min_value)):
                         stop_check(start_time)
                         t = self._PG_STOP_CHECK_TIMEOUT
