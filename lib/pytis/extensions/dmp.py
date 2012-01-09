@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2009-2012 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -1457,14 +1457,14 @@ class DMPActions(DMPObject):
                     if subspec is not None:
                         for a in subspec.view_spec().actions(linear=True):
                             fullname = 'action/%s/%s' % (a.id(), bname,)
-                            action = self.Action(resolver, messages,
-                                                 fullname=fullname, title=a.title(raw=True))
-                            self._add_action(action)
+                            subsubaction = self.Action(resolver, messages,
+                                                       fullname=fullname, title=a.title(raw=True))
+                            self._add_action(subsubaction)
                         for p in subspec.print_spec():
                             fullname = 'print/%s/%s' % (p.dmp_name(), bname,)
-                            action = self.Action(resolver, messages,
-                                                 fullname=fullname, title=p.title())
-                            self._add_action(action)
+                            subsubaction = self.Action(resolver, messages,
+                                                       fullname=fullname, title=p.title())
+                            self._add_action(subsubaction)
         # Form actions
         for a in spec.view_spec().actions(linear=True):
             fullname = 'action/%s/%s' % (a.id(), form_name,)
