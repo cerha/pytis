@@ -3,7 +3,7 @@
 #
 # Nástroj pro zpracování specifikací databází
 # 
-# Copyright (C) 2002, 2003, 2005, 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2009, 2010, 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2386,10 +2386,7 @@ class _GviewsqlRaw(_GsqlSpec):
         return result
 
     def reoutput(self):
-        sys.stdout.write(
-            _gsql_warning("Raw SQL commands not considered: %s" %
-                          self.name()))
-        return super(_GviewsqlRaw, self).reoutput()
+        return self._output()
 
     def db_update(self, connection):
         return _gsql_warning('Raw command not considered: %s' % self.name())
