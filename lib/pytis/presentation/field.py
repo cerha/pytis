@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002-2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -922,7 +922,9 @@ class PresentedRow(object):
             display = self._display(column)
             if display is None:
                 display = lambda v: column.type.export(v)
-            return [(v, display(v)) for v in enumerator.values()]
+            runtime_filter = self.runtime_filter(key)
+            return [(v, display(v)) for v in enumerator.values()
+                    if runtime_filter is None or runtime_filter(v)]
 
     def _runtime_limit(self, key, dirty_dict, value_dict, column_attribute):
         try:

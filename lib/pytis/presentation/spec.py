@@ -2679,13 +2679,20 @@ class Field(object):
             a PresentedRow instance as an argument representing the current
             record.  Only relevant when 'allow_codebook_insert' is true.
           runtime_filter -- provider of enumeration runtime filter as a
-            'Computer' instance.  The computer function computes the filter
-            condition based on the current row data and returns it as a
-            'pytis.data.Operator' instance.  This condition is used to filter
-            out enumerator data for codebook fields as well as available
+            'Computer' instance.  The computer function computes the filtering
+            condition based on the current row data.  This condition is used to
+            filter out enumerator data for codebook fields as well as available
             completions when autocompletion is enabled.  This is mostly useful
             for modification of available codebook values based on the current
-            values of other fields within the form.
+            values of other fields within the form.  The returned value is a
+            'pytis.data.Operator' instance when the enumerator is a
+            'pythis.data.DataEnumerator' (enumeration values are in a database
+            table) or a function otherwise (typically for static enumerations
+            using 'pytis.data.FixedEnumerator').  None may be returned in both
+            cases when no filtering is to be done.  The function in the later
+            case must accept the enumeration value as an argument and return
+            True when the value is valid or False if the value is to be
+            filtered out.
           runtime_arguments -- provider of codebook table function arguments as a
             'Computer' instance.  This is similar to 'runtime_filter' argument,
             except that the computer function returns dictionary of table
