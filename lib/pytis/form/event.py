@@ -2,7 +2,7 @@
 
 # Zpracování událostí
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -353,9 +353,11 @@ def block_idle(block):
     _idle_blocked = block
 
 
+_stop_check_running = False
 def _stop_check(start_time, confirmed, command_number):
-    if is_busy_cursor():
-        return confirmed
+    global _stop_check_running
+    if _stop_check_running:
+        return False
     running, number = CommandHandler.command_running()
     if not running or number != command_number:
         return False
@@ -367,9 +369,11 @@ def _stop_check(start_time, confirmed, command_number):
         # invoked during command processing when idle events shouldn't be run
         # yet.
         block_idle(True)
+        _stop_check_running = True
         try:
             answer = run_dialog(Question, u"Zobrazení formuláře už trvá dlouho, má se přerušit?")
         finally:
+            _stop_check_running = False
             block_idle(False)
         if answer:
             raise UserBreakException()
