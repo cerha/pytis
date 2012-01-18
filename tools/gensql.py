@@ -2500,6 +2500,7 @@ class _GsqlDefs(UserDict.UserDict):
             for option, accessor in (('user', _GsqlConfig.dbuser),
                                      ('password', _GsqlConfig.dbpassword),
                                      ('host', _GsqlConfig.dbhost),
+                                     ('port', _GsqlConfig.dbport),
                                      ('dbname', _GsqlConfig.dbname)):
                 value = accessor
                 if value != None:
@@ -2758,6 +2759,7 @@ class _GsqlConfig:
     warnings = True
     dbname = None
     dbhost = None
+    dbport = None
     dbuser = None
     dbpassword = None
     check_presence = False
@@ -2774,6 +2776,7 @@ _GSQL_OPTIONS = (
     ('fix-db=DATABASE  ', 'update DATABASE contents according to definitions'),
     ('no-warn          ', 'suppress warnings when checking/fixing'),
     ('host=HOST        ', 'connect to DATABASE at HOST'),
+    ('port=PORT        ', 'connect to DATABASE via PORT'),
     ('user=USER        ', 'connect to DATABASE as USER'),
     ('password=PASSWORD', 'use PASSWORD when connecting to DATABASE'),
     ('database=DATABASE', 'DATABASE for connection string'),
@@ -2812,6 +2815,8 @@ def _go(argv=None):
             _usage()
         elif o == '--host':
             _GsqlConfig.dbhost = v
+        elif o == '--port':
+            _GsqlConfig.dbport = v
         elif o == '--user':
             _GsqlConfig.dbuser = v
         elif o == '--password':
