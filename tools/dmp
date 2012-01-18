@@ -221,7 +221,7 @@ Commands:
   add-member MEMBER ROLE
     - add MEMBER to ROLE
   add-form FULLNAME [ MENU-POSITION | PRECEDING-ITEM-TITLE ]
-    - add new form to application menu
+    - add new form to application menu (or just to the codebook of actions)
   update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
     - update subforms and actions of the specification form and possibly change form fullname
   rename-specification OLD-NAME NEW-NAME
