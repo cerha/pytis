@@ -1435,7 +1435,7 @@ class DMPActions(DMPObject):
             return pytis.presentation.Binding(id=name, title=title, name=name,
                                               binding_column='dummy')
         resolver = self._resolver()
-        if issubclass(form_class, pytis.form.DualForm):
+        if form_class is not None and issubclass(form_class, pytis.form.DualForm):
             pos = form_name.find('::')
             if pos == -1:
                 bindings = spec.view_spec().bindings()
