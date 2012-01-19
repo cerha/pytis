@@ -1150,7 +1150,7 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
             r = computed_rights.get((subforms[0], roleid,)) # main form
             if r is not None:
                 total = set([rr for rr in total if rr in r.total or (rr[0], None,) in r.total])
-            subforms_total = []
+            subforms_total = set()
             for sub in subforms[1:]:
                 r = computed_rights.get((sub, roleid,))
                 if r is None:
