@@ -812,7 +812,10 @@ class PresentedRow(object):
                 else:
                     row_function = None
                 if row_function:
-                    enumerator = column.type.enumerator()
+                    if isinstance(column.type, pytis.data.Array):
+                        enumerator = column.type.inner_type().enumerator()
+                    else:
+                        enumerator = column.type.enumerator()
                     def display(value):
                         if value is None or self._transaction and not self._transaction.open():
                             return ''
@@ -885,7 +888,10 @@ class PresentedRow(object):
         if value is None:
             return column.null_display or ''
         elif display:
-            result = display(value)
+            if isinstance(column.type, pytis.data.Array):
+                result = ', '.join([display(v.value()) for v in value])
+            else:
+                result = display(value)
             assert isinstance(result, basestring), \
                 "Invalid result of display function for column '%s': %r" % (column.id, result)
             return result
