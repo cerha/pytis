@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2011 Brailcom, o.p.s.
+# Copyright (C) 2006-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,6 +104,7 @@ class Form(lcg.Content):
         assert isinstance(row, pytis.presentation.PresentedRow), row
         assert isinstance(handler, basestring), handler
         assert isinstance(hidden, (tuple, list)), hidden
+        assert prefill is None or isinstance(prefill, dict), prefill
         assert actions is None or isinstance(actions, (tuple, list, collections.Callable)), actions
         self._view = view
         self._req = req
