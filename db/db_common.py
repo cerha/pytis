@@ -662,7 +662,7 @@ f_update_statistic = function('update_statistic', (), TInteger,
 
 def _log_update_trigger():
     def pg_escape(val):
-        return val.replace("'", "''")
+        return val.replace("'", "''").replace(chr(92),2*chr(92))
     event = TD["event"]
     if event == "DELETE":
         newold = "old"
