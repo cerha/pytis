@@ -303,7 +303,7 @@ def pytis_convert_system_rights(shortname):
         """ % shortname
     result = plpy.execute(q)
     if result[0]["pocet"] == 0:
-        plpy.error('No system rights found for %' % shortname)
+        plpy.error('No system rights found for %s' % shortname)
     result = plpy.execute(q)
     temp_old = plpy.execute("select new_tempname() as jmeno")[0]["jmeno"]
     temp_new = plpy.execute("select new_tempname() as jmeno")[0]["jmeno"]
