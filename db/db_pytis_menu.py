@@ -1116,6 +1116,9 @@ def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_a
                 if not c in columns:
                     columns[c] = set()
                 columns[c].add(r)
+            for r, c in forbidden_rights:
+                if not c in columns:
+                    columns[c] = set()
             if not max_rights:
                 for r in item_rights.values():
                     if r.system:
