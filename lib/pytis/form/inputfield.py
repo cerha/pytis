@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -531,7 +531,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
 
     def _change_callback(self):
         # Field value change signalization from PresentedRow.
-        value = self._row.format(self.id())
+        value = self._row.format(self.id(), secure=True)
         if self._get_value() != value:
             self._set_value(value)
 
