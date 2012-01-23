@@ -2500,7 +2500,9 @@ class FoldableForm(ListForm):
         if self._folding_enabled() and is_in(condition):
             if not run_dialog(Question, _(u"Pokoušíte se uplatnit filtr s operátorem IN\n"
                                           u"na rozbalovacím formuláři. Tato operace může\n"
-                                          u"trvat i několik minut.\n"
+                                          u"trvat i několik minut. Vypnutím rozbalování\n"
+                                          u"(přepnutím řazení podle jiného sloupce) můžete\n"
+                                          u"operaci podstatně urychlit.\n"
                                           u"Opravdu chcete pokračovat?"), True):
                 # This should abort profile selection in _cmd_apply_profile and
                 # return the previously selected profile.
