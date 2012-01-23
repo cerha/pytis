@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -278,12 +278,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
         return result
 
     def _is_valid_spec(self, name):
-        # This is a simple way to test whether the specification still exists.
+        # Determine whether the specification name still exists.
+        if '::' in name:
+            name, side_name = name.split('::')
+        else:
+            side_name = None
         try:
-            has_access(name)
-        except:
+            view_spec = resolver().get(name, 'view_spec')
+        except ResolverError:
             return False
         else:
+            if side_name:
+                if not self._is_valid_spec(side_name):
+                    return False
+                try:
+                    bindings = resolver().get(name, 'binding_spec')
+                except ResolverError:
+                    return False
+                if not isinstance(bindings, dict) or side_name not in bindings:
+                    return False
             return True
 
     def _public_spec(self, name):
