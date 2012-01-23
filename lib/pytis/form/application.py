@@ -610,6 +610,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._set_state_param(self._STATE_STARTUP_FORMS, tuple(startup_forms))
                 else:
                     self._unset_state_param(self._STATE_STARTUP_FORMS)
+            self._set_state_param(self._STATE_RECENT_FORMS, tuple(self._recent_forms))
         except Exception as e:
             safelog(str(e))
         try:
