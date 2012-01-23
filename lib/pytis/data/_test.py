@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -299,6 +299,30 @@ class DateTime(_TypeCheck):
         result2 = exp(val2, format='%d.%m.%Y')
         assert result2 == '02.07.1841', result2
 tests.add(DateTime)
+
+class ISODateTime(_TypeCheck):
+    _test_instance = pytis.data.ISODateTime()
+    def test_validation(self):
+        tzinfo = pytis.data.DateTime.UTC_TZINFO
+        vkwargs = dict(local=False, format=pytis.data.ISODateTime.SQL_FORMAT)
+        self._test_validity(None, '2012-01-23 11:14:39.23104+01:00',
+                            datetime.datetime(2012,1,23,10,14,39,231040,tzinfo=tzinfo),
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '2999-12-31 0:0:0', None,
+                            kwargs=vkwargs, ekwargs=vkwargs)
+    def test_export(self):
+        tzinfo = pytis.data.DateTime.UTC_TZINFO
+        vkwargs = dict(local=False, format=pytis.data.ISODateTime.SQL_FORMAT)
+        v, e = self._test_validity(None, '2012-01-23 11:14:39.023104+01:00',
+                                   datetime.datetime(2012,1,23,10,14,39,23104,tzinfo=tzinfo),
+                                   kwargs=vkwargs, ekwargs=vkwargs,
+                                   check_export=False)
+        exp = v.type().export
+        val = v.value()
+        result = exp(val, **vkwargs)
+        assert result == '2012-01-23 10:14:39.023104+00:00', ('Invalid date export', result)
+        assert v.primitive_value() == '2012-01-23 10:14:39.023104+00:00', v.primitive_value()
+tests.add(ISODateTime)
 
 class Date(_TypeCheck):
     _test_instance = pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT)
@@ -836,6 +860,7 @@ class _DBTest(_DBBaseTest):
                   "create table dist (x int, y int)",
                   "create table bin(id int, data bytea)",
                   "create table fulltext(id int, text1 varchar(256), text2 text, index tsvector)",
+                  "create table dateformats (id int primary key, datetime timestamptz default now())",
                   "create trigger textindexupdate before update or insert on fulltext for each row execute procedure tsvector_update_trigger(index,'pg_catalog.simple',text1,text2)",
                   "insert into fulltext (id, text1, text2) values(1, 'Hello, world!', 'bear')",
                   "insert into fulltext (id, text1, text2) values(2, 'The quick brown fox jumps over the lazy dog.', 'cat')",
@@ -858,6 +883,7 @@ class _DBTest(_DBBaseTest):
                   "insert into dist values (3, 2)",
                   "insert into dist values (4, 2)",
                   "insert into dist values (5, 3)",
+                  "insert into dateformats (id) values (1)",
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
@@ -894,8 +920,8 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % (t,))
             except:
                 pass            
-        for t in ('bin', 'fulltext', 'dist', 'xcosi', 'denik', 'cosnova', 'cstat', 'viewtest2',
-                  'viewtest0', 'viewtest6',):
+        for t in ('bin', 'dateformats', 'fulltext', 'dist', 'xcosi', 'denik', 'cosnova', 'cstat',
+                  'viewtest2', 'viewtest0', 'viewtest6',):
             try:
                 self._sql_command('drop table %s' % (t,))
             except:
@@ -1021,6 +1047,13 @@ class DBDataDefault(_DBTest):
              B('index', 'fulltext', 'index', type_=pytis.data.FullTextIndex(columns=('text1','text2',))),),
             key,
             conn)
+        # dateformats
+        key = B('id', 'dateformats', 'id')
+        dateformats = pytis.data.DBDataDefault(
+            (key,
+             B('datetime', 'dateformats', 'datetime', type_=pytis.data.ISODateTime()),),
+            key,
+            conn)
         # views
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
@@ -1048,6 +1081,7 @@ class DBDataDefault(_DBTest):
         self.dbin = dbin
         self.fulltext = fulltext
         self.fulltext1 = fulltext1
+        self.dateformats = dateformats
         self.view = view
         self.view3 = view3
         self.view4 = view4
@@ -1514,6 +1548,14 @@ class DBDataDefault(_DBTest):
         check1('lazy&fox', ["The quick brown <b>fox</b> jumps over the <b>lazy</b> dog. * cat",
                             "GNU's Not Unix * <b>lazy</b> <b>fox</b> and <b>lazy</b> dog"])
         check1('world', ["Hello, <b>world</b>! * bear"])
+    def test_dateformats(self):
+        data = self.dateformats
+        row = data.row(pytis.data.ival(1))
+        assert row is not None
+        value = row[1].value()
+        delta = datetime.datetime.now(pytis.data.DateTime.UTC_TZINFO) - value
+        assert delta >= datetime.timedelta(), value
+        assert delta < datetime.timedelta(seconds=3600), value
     def test_backslash(self):
         data = self.dstat
         backslash = 'back\\012slash'

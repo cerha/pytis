@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1090,7 +1090,7 @@ class _CommonDateTime(Type):
           utc -- specifies whether timestamp in the database is in UTC
 
         """
-        assert isinstance(format, basestring), format
+        assert format is True or isinstance(format, basestring), format
         assert isinstance(utc, bool), utc
         self._format = format
         self._utc = utc
@@ -1224,6 +1224,8 @@ class DateTime(_CommonDateTime):
     """Formát data a času používaný standardně SQL stroji."""
     CZECH_FORMAT = '%d.%m.%Y %H:%M:%S'
     """Český \"účetnický\" formát data a času."""
+    
+    _ISO_TZ_MATCHER = re.compile('(?P<sign>[-+])(?P<hours>[0-9]+):(?P<minutes>[0-9]+)')
 
     def __init__(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
         """Inicializuj instanci.
@@ -1246,27 +1248,48 @@ class DateTime(_CommonDateTime):
         super(DateTime, self).__init__(format=format, utc=utc, **kwargs)
         if mindate:
             try:
-                self._mindate = datetime.datetime.strptime(mindate, self.SQL_FORMAT)
+                self._mindate = datetime.datetime.strptime(mindate, self.DEFAULT_FORMAT)
             except:
-                raise ProgramError('Bad value for mindate', mindate, self.SQL_FORMAT)
+                raise ProgramError('Bad value for mindate', mindate, self.DEFAULT_FORMAT)
         else:
             self._mindate = None
         if maxdate:
             try:
-                self._maxdate = datetime.datetime.strptime(maxdate, self.SQL_FORMAT)
+                self._maxdate = datetime.datetime.strptime(maxdate, self.DEFAULT_FORMAT)
             except:
                 raise ProgramError('Bad value for maxdate', maxdate)
         else:
             self._maxdate = None
 
-    def _validate(self, *args, **kwargs):
-        value, error = super(DateTime, self)._validate(*args, **kwargs)
+    def _validate(self, string_, format=None, **kwargs):
+        if format is True:
+            value, error = self._validate_iso(string_)
+        else:
+            value, error = super(DateTime, self)._validate(string_, format=format, **kwargs)
         if value is not None:
             dt = value.value()
             if ((self._mindate and dt < self._mindate) or
                 (self._maxdate and dt > self._maxdate)):
                 value, error = None, self._validation_error(self.VM_DT_AGE)
         return value, error
+
+    def _validate_iso(self, string_):
+        common_string, shift_string = string_[:-6], string_[-6:]
+        match = self._ISO_TZ_MATCHER.match(shift_string)
+        if match is None:
+            return None, self._validation_error(self.VM_DT_FORMAT)
+        groups = match.groupdict()
+        shift = int(groups['hours']) * 3600 + int(groups['minutes']) * 60
+        if groups['sign'] == '-':
+            shift = -shift
+        try:
+            value = datetime.datetime.strptime(common_string, '%Y-%m-%d %H:%M:%S.%f')
+        except:
+            return None, self._validation_error(self.VM_DT_FORMAT)
+        value = value - datetime.timedelta(seconds=shift)
+        value = datetime.datetime(value.year, value.month, value.day, value.hour, value.minute,
+                                  value.second, value.microsecond, self.UTC_TZINFO)
+        return Value(self, value), None
 
     def _export(self, value, local=None, format=None):
         """Stejné jako v předkovi až na klíčované argumenty.
@@ -1286,7 +1309,11 @@ class DateTime(_CommonDateTime):
         else:
             tzinfo = self.UTC_TZINFO
         value = value.astimezone(tzinfo)
-        return self._strftime(value, format or self._format)
+        if format is True:
+            exported = value.isoformat(' ')
+        else:
+            exported = self._strftime(value, format or self._format)
+        return exported
 
     def _strftime(self, value, format):
         # Python datetime.strftime() doesn't support dates before 1900-01-01.
@@ -1366,6 +1393,21 @@ class DateTime(_CommonDateTime):
         """
         return class_.datetime()
 
+class ISODateTime(DateTime):
+    """Datetime represented by the ISO datetime format in the database.
+    """
+    SQL_FORMAT = True
+    
+    def primitive_value(self, value):
+        """Return given value represented as a string.
+        
+        I've no idea why this method should return a string, on the contrary to
+        'Time.primitive_value' description.  But it's consistent with the
+        superclass method return value.
+        
+        """
+        return self.export(value, format=True, local=False)
+    
 class Date(DateTime):
     """Datum bez časového údaje."""
 
