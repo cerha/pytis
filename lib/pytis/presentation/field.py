@@ -943,7 +943,8 @@ class PresentedRow(object):
             if display is None:
                 display = lambda v: column.type.export(v)
             runtime_filter = self.runtime_filter(key)
-            return [(v, display(v)) for v in enumerator.values()
+            runtime_arguments = self.runtime_arguments(key)
+            return [(v, display(v)) for v in enumerator.values(**runtime_arguments)
                     if runtime_filter is None or runtime_filter(v)]
 
     def _runtime_limit(self, key, dirty_dict, value_dict, column_attribute):

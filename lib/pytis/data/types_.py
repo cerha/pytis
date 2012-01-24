@@ -2438,6 +2438,28 @@ class DataEnumerator(Enumerator):
             return self._data.permitted(self._data.key()[0].id(), pytis.data.Permission.VIEW)
         else:
             return True
+
+
+class DynamicEnumerator(Enumerator):
+    """Enumerator with values depending dynamically on the given argument.
+
+    The argument may be an arbitrary object recognized by the enumerator.  The
+    list of values is generated, based on the argument, using
+    '_dynamic_values()' method.  The method should return a list of
+    basestrings, containing the permitted values.
+    
+    """
+    def _dynamic_values(self, argument):
+        raise Exception("Not implemented")
+        
+    def check(self, value, argument=None):
+        values = self._dynamic_values(argument)
+        if values is None:
+            return True
+        return value in values
+
+    def values(self, argument=None):
+        return self._dynamic_values(argument) or ()
     
 
 class ValidationError(Exception):
