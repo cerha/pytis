@@ -464,38 +464,18 @@ class ApplicationRights(pytis.presentation.Specification):
     layout = ('rightid', 'description',)
     cb = pytis.presentation.CodebookSpec(display='description')
 
-def _colname_description(row, shortname, colname):
-    if shortname is None:
-        return "Tady se sloupci manipulovat nelze."
-    components = shortname.split('/')
-    if components[0] != 'form':
-        return None
-    if not colname:
-        return _(u"Celý formulář")
-    spec_name = components[1]
-    resolver = pytis.util.resolver()
-    try:
-        view_spec = resolver.get(spec_name, 'view_spec')
-    except pytis.util.ResolverError:
-        return None
-    field = view_spec.field(colname)
-    if field is None:
-        return None
-    description = field.label()
-    return description
-class ApplicationColumns(pytis.presentation.Specification):
-    public = True
-    table = 'ev_pytis_colnames'
-    title = "Sloupce"
-    fields = (
-        Field('colname', _(u"Identifikátor"), fixed=True),
-        Field('shortname', _(u"Akce")),
-        Field('description', _(u"Popis"), type=pytis.data.String(),
-              virtual=True, computer=pytis.presentation.computer(_colname_description)),
-        )
-    columns = ('colname', 'description',)
-    layout = ('colname', 'description',)
-    cb = pytis.presentation.CodebookSpec(display='colname')
+class ColnameEnumerator(pytis.data.DynamicEnumerator):    
+    def _dynamic_values(self, argument):
+        if argument is None:
+            return None
+        import config
+        resolver = config.resolver
+        try:
+            specification = resolver.specification(argument)
+        except ResolverError:
+            return None
+        fields = specification.view_spec().fields()
+        return [f.id() for f in fields]
 
 class _ApplicationMenuRightsBase(pytis.presentation.Specification):
     public = False
@@ -538,7 +518,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
     public = True
     table = 'ev_pytis_action_rights'
     title = _(u"Práva")
-    fields = (
+    def fields(self): return (
         Field('id', _(u"Id"), default=nextval('e_pytis_action_rights_id_seq')),
         Field('roleid', _(u"Role"), codebook='menu.ApplicationRoles',
               fixed=True),
@@ -548,11 +528,8 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
               codebook='menu.ApplicationShortActions',
               descr=_(u"Identifikátor akce související s danou položkou menu")),
         Field('colname', _(u"Sloupec"),
-              fixed=True,
-              codebook='menu.ApplicationColumns', not_null=False,
-              allow_codebook_insert=True,
-              codebook_insert_prefill=(lambda row: dict(shortname=row['shortname'])),
-              runtime_filter=pytis.presentation.Computer(lambda row: pytis.data.EQ('shortname', row['shortname']), depends=('shortname',)),
+              fixed=True, enumerator=ColnameEnumerator(), not_null=False,
+              runtime_arguments=pytis.presentation.computer(self._specification_arguments),
               descr=_(u"Sloupec, na který se právo vztahuje")),
         Field('rightid', _(u"Právo"), codebook='menu.ApplicationRights',
               fixed=True,
@@ -571,6 +548,13 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
     access_rights = pytis.data.AccessRights((None, (['admin'], pytis.data.Permission.ALL)),)
     def _row_editable(self, row):
         return not row['system'].value()
+    def _specification_arguments(self, row, shortname):
+        if shortname is None:
+            return {}
+        components = shortname.split('/')
+        if len(components) < 2:
+            return {}
+        return dict(argument=components[1])
     def on_new_record(self, *args, **kwargs):
         self._before_edit_checks()
         result = pytis.form.run_form(pytis.form.PopupInsertForm,
