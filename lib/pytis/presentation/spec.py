@@ -2686,7 +2686,7 @@ class Field(object):
             for modification of available codebook values based on the current
             values of other fields within the form.  The returned value is a
             'pytis.data.Operator' instance when the enumerator is a
-            'pythis.data.DataEnumerator' (enumeration values are in a database
+            'pytis.data.DataEnumerator' (enumeration values are in a database
             table) or a function otherwise (typically for static enumerations
             using 'pytis.data.FixedEnumerator').  None may be returned in both
             cases when no filtering is to be done.  The function in the later
