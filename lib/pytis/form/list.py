@@ -1959,18 +1959,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 msg = _(u"Nepodařilo se otevřít soubor " + filename + " pro zápis!\n")
                 run_dialog(Error, msg)
                 return
-        log_user_action(self.name(), self._form_name(), 'export',
-                        info=("Format: %s\n" % fileformat +
-                              "Filter: %s\n" % str(self._lf_filter)))
         if fileformat == 'XLS':
             export_function = self._cmd_export_xls
         else:
             export_function = self._cmd_export_csv
+        if remote:
+            export_filename = filename.name()
+        else:
+            export_filename = filename
+        log(ACTION, "Export action:", (export_filename, self.name(), self._form_name(),
+                                       "Filter: %s\n" % str(self._lf_filter)))
+        log_user_action(self.name(), self._form_name(), 'export',
+                        info=("Format: %s\n" % fileformat +
+                              "Filter: %s\n" % str(self._lf_filter)))
         if export_function(export_file) and remote:
             pytis.windows.launch_file(filename.name())
 
     def _cmd_export_csv(self, filename):
-        log(EVENT, 'Vyvolání CSV exportu')
+        log(EVENT, 'Called CSV export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         export_encoding = config.export_encoding
         db_encoding = 'utf-8'
@@ -2029,12 +2035,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         log(EVENT, 'Called XLS export')
         column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
         import datetime
-        try:
-            import pyExcelerator as pyxls
-        except:
-            msg = _(u"Modul pro práci s XLS soubory není nainstalován. Končím.")
-            run_dialog(Error, msg)
-            return False
+        import pyExcelerator as pyxls
         number_rows = self._table.number_of_rows()
         def _process_table(update):
             w = pyxls.Workbook()
