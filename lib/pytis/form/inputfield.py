@@ -1086,56 +1086,44 @@ class CheckBoxField(Unlabeled, InputField):
         wxvalue = value == 'T' and True or False
         self._ctrl.SetValue(wxvalue)
         self._on_change() # call manually, since SetValue() doesn't emit an event.
+        
 
+class GenericEnumerationField(InputField):
 
-class EnumerationField(InputField):
-    """Common base class for fields with fixed enumerations.
-    
-    All the derived input fields are represented with a control which contains some sort of fixed
-    enumeration of values, such as combo boxes, radio buttons etc.
+    def _init_attributes(self):
+        super(GenericEnumerationField, self)._init_attributes()
+        self._enumeration_changed = False
+        self._row.register_callback(self._row.CALL_ENUMERATION_CHANGE, self._id,
+                                    self._on_enumeration_change)
 
-    """
-    _INVALID_SELECTION = wx.NOT_FOUND
+    def _on_enumeration_change(self):
+        # Callback může být volán i když už je list mrtev.
+        if not self._readonly:
+            self._needs_validation = True
+            self._enumeration_changed = True
 
-    def _enumeration(self):
-        return self._row.enumerate(self.id())
-    
-    def _choices(self):
-        return [label for value, label in self._enumeration()]
+    def _on_idle(self, event):
+        if self._enumeration_changed:
+            self._reload_enumeration()
+            self._enumeration_changed = False
+        return super(GenericEnumerationField, self)._on_idle(event)
 
-    def _get_value(self):
-        i = self._ctrl.GetSelection()
-        if i == wx.NOT_FOUND:
-            value = None
-        else:
-            value = self._enumeration()[i][0]
-        return self._type.export(value)
+    def _reload_enumeration(self):
+        raise ProgramError("Runtime enumeration changes not supported for %s." % self.__class__)
 
-    def _set_value(self, value):
-        assert isinstance(value, basestring), value
-        values = [self._type.export(v) for v, l in self._enumeration()]
-        try:
-            selection = values.index(value)
-        except ValueError:
-            selection = self._INVALID_SELECTION
-        self._ctrl.SetSelection(selection)
-        self._on_change() # call manually, since SetSelection() doesn't emit an event.
+    def reload_enumeration(self):
+        """Force reloading of field's enumeration data.
 
-
-class ChoiceField(EnumerationField):
-    """Field with a fixed enumeration represented by 'wx.Choice'."""
-    _INVALID_SELECTION = 0
-    
-    def _enumeration(self):
-        return [(None, self._spec.null_display() or '')] + super(ChoiceField, self)._enumeration()
-    
-    def _create_ctrl(self, parent):
-        control = wx.Choice(parent, choices=self._choices())
-        wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
-        return control
+        Public method to be used by application code in specific cases,
+        typically when the enumeration depends on some external condition which
+        is not detected by the PresentedRow row automatic callbacks.
+        
+        """
+        self._reload_enumeration()
+        
     
 
-class RadioBoxField(Unlabeled, EnumerationField):
+class RadioBoxField(Unlabeled, GenericEnumerationField):
     """Field with a fixed enumeration represented by 'wx.RadioBox'.
 
     Field specification interpretation details:
@@ -1157,30 +1145,108 @@ class RadioBoxField(Unlabeled, EnumerationField):
         label = self.spec().label()
         if label:
             label = label + ':'
-        control = wx.RadioBox(parent, -1, label, choices=self._choices(), style=style,
-                              majorDimension=dimension)
+        # Radio Box enumeration is STATIC.
+        enumeration = self._row.enumerate(self.id())
+        self._radio_values = [self._type.export(value) for value, label_ in enumeration]
+        control = wx.RadioBox(parent, -1, label, style=style, majorDimension=dimension,
+                              choices=[label for value, label in enumeration])
         wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
         return control
+    
+    def _get_value(self):
+        i = self._ctrl.GetSelection()
+        if i == wx.NOT_FOUND:
+            value = None
+        else:
+            value = self._radio_values[i]
+        return value
+        
+    def _set_value(self, value):
+        assert isinstance(value, basestring), value
+        try:
+            selection = self._radio_values.index(value)
+        except ValueError:
+            selection = wx.NOT_FOUND
+        self._ctrl.SetSelection(selection)
+        self._on_change() # call manually, since SetSelection() doesn't emit an event.
 
+    
+class EnumerationField(GenericEnumerationField):
+    """Common base class for fields based on 'wx.ControlWithItems'."""
+    _INVALID_SELECTION = wx.NOT_FOUND
 
+    def _enumeration(self):
+        return self._row.enumerate(self.id())
+    
+    def _append_items(self, ctrl):
+        for value, label in self._enumeration():
+            ctrl.Append(label, self._type.export(value))
+        
+    def _get_value(self):
+        i = self._ctrl.GetSelection()
+        if i == wx.NOT_FOUND:
+            value = self._type.export(None)
+        else:
+            value = self._ctrl.GetClientData(i)
+        return value
+
+    def _set_value(self, value):
+        assert isinstance(value, basestring), value
+        for i in range(self._ctrl.GetCount()):
+            if self._ctrl.GetClientData(i) == value:
+                selection = i
+                break
+        else:
+            selection = self._INVALID_SELECTION
+        self._ctrl.SetSelection(selection)
+        self._on_change() # call manually, since SetSelection() doesn't emit an event.
+
+    def _reload_enumeration(self):
+        orig_value = self._get_value()
+        self._ctrl.Clear()
+        self._append_items(self._ctrl)
+        self._set_value(orig_value)
+        self._update_size(self._ctrl)
+        
+    def _update_size(self, ctrl):
+        ctrl.SetSize(ctrl.GetBestSize())
+
+        
+class ChoiceField(EnumerationField):
+    """Field with a fixed enumeration represented by 'wx.Choice'."""
+    _INVALID_SELECTION = 0
+    
+    def _enumeration(self):
+        return [(None, self._spec.null_display() or '')] + super(ChoiceField, self)._enumeration()
+
+    def _create_ctrl(self, parent):
+        control = wx.Choice(parent)
+        self._append_items(control)
+        wx_callback(wx.EVT_CHOICE, control, control.GetId(), self._on_change)
+        return control
+
+    
 class ListBoxField(EnumerationField):
     """Field with a fixed enumeration represented by 'wx.ListBox'."""
     _DEFAULT_HEIGHT = None
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     
     def _create_ctrl(self, parent):
-        control = wx.ListBox(parent, choices=self._choices(),
-                             style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
-        if self.height() is not None:
-            height = char2px(control, 1, float(10)/7).height * self.height()
-            control.SetMinSize((control.GetSize().width, height))
+        control = wx.ListBox(parent, style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
+        self._append_items(control)
+        self._update_size(control)
         wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
         return control
+
+    def _update_size(self, ctrl):
+        width = ctrl.GetBestSize().width
+        height = char2px(ctrl, 1, float(10)/7).height * (self.height() or ctrl.GetCount())
+        ctrl.SetMinSize((width, height))
     
     def _set_value(self, value):
         super(ListBoxField, self)._set_value(value)
         self._ctrl.SetFirstItem(self._ctrl.GetSelection())
-        
+
 
 class Invocable(object, CommandHandler):
     """Mix-in class for fields capable to invoke a selection.
@@ -1302,7 +1368,7 @@ class ColorSelectionField(Invocable, TextField):
         return super(ColorSelectionField, self)._set_value(value)
 
     
-class GenericCodebookField(InputField):
+class GenericCodebookField(GenericEnumerationField):
     """Společná nadtřída číselníkových políček."""
 
     def _init_attributes(self):
@@ -1315,28 +1381,9 @@ class GenericCodebookField(InputField):
         self._cb_name = cb_name
         self._cb_spec = cb_spec
         super(GenericCodebookField, self)._init_attributes()
-        self._enumeration_changed = False
-        self._row.register_callback(self._row.CALL_ENUMERATION_CHANGE, self._id,
-                                    self._on_enumeration_change)
         
-    def _on_enumeration_change(self):
-        # Callback může být volán i když už je list mrtev.
-        if not self._readonly:
-            self._needs_validation = True
-            self._enumeration_changed = True
-
-    def _on_idle(self, event):
-        if self._enumeration_changed:
-            self._reload_enumeration()
-            self._enumeration_changed = False
-        return super(GenericCodebookField, self)._on_idle(event)
-
     def _reload_enumeration(self):
         pass
-
-    def reload_enumeration(self):
-        """Reload enumeration data."""
-        self._reload_enumeration()
         
     def _select_row_arg(self):
         """Return the value for RecordForm 'select_row' argument."""
