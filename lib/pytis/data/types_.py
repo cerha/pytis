@@ -338,7 +338,7 @@ class Type(object):
             message %= kwargs
         return ValidationError(message)
         
-    def _check_constraints(self, value, transaction=None, condition=None, **kwargs):
+    def _check_constraints(self, value, transaction=None, condition=None, arguments=None):
         if value is None:
             if self._not_null:
                 raise self._validation_error(self.VM_NULL_VALUE)
@@ -346,10 +346,10 @@ class Type(object):
                 return True
         if self._enumerator is not None:
             if isinstance(self._enumerator, DataEnumerator):
-                check_kwargs = dict(transaction=transaction, condition=condition)
+                kwargs = dict(transaction=transaction, condition=condition, arguments=arguments)
             else:
-                check_kwargs = {}
-            if not self._enumerator.check(value, **check_kwargs):
+                kwargs = arguments or {}
+            if not self._enumerator.check(value, **kwargs):
                 raise self._validation_error(self.VM_INVALID_VALUE)
         for c in self._constraints:
             cresult = c(value)
