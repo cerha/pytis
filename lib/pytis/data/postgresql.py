@@ -2772,6 +2772,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             result = "'%s days %s seconds'" % (v.days, v.seconds,)
         elif isinstance(value.type(), Float):
             result = value.type().export(v, locale_format=False)
+        elif isinstance(value.type(), Array):
+            sequence = value.type().export(v)
+            result = "'{%s}'" % (string.join(sequence, ', '),)
         else:
             result = value.type().export(v)
         return result
