@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
+ * Copyright (C) 2009, 2010, 2011, 2012 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,23 +25,24 @@
  *   - displaying field validation info,
  *   - updating values of computed fields,
  *   - updating field editability dynamically,
- *   - updating enumerations based on pytis runtime codebook filters.
+ *   - updating enumerations based on pytis runtime filters and arguments.
  */
 
 var pytis = {};
 
 pytis.FormHandler = Class.create({
-    initialize: function(form_id, fields, filters) {
+    initialize: function(form_id, fields, state) {
 	/* form_id ... HTML id of the form to connect to (string)
 	 * fields ... array of form fields as pytis.Field instances
-	 * filters ... initial state of form's runtime filters as an
-	 *    associative array (hash) keyed by field id where value is a
-	 *    string representation of the filter for server side comparisons.
+	 * state ... initial state of form's runtime filters and arguments as
+	 *    an associative array (hash) keyed by field id where value is a
+	 *    string representation of the filter and arguments for server side
+	 *    comparisons.
 	 */
 	var form = $(form_id);
 	this._form = form;
 	this._fields = {};
-	this._filters = filters;
+	this._state = state;
 	var observe = false;
 	for (var i=0; i<fields.length; i++) {
 	    var field = fields[i];
@@ -69,11 +70,11 @@ pytis.FormHandler = Class.create({
 		// checkbox fields are not there if unchecked.
 		if ((id in values || id in last_values) && values[id] != last_values[id]) {
 		    document.body.style.cursor = "wait";
-		    var filter_state = (this._filters ? $H(this._filters).toQueryString() : null);
+		    var state = (this._state ? $H(this._state).toQueryString() : null);
 		    this._form.request({
 			parameters: {_pytis_form_update_request: ++this._last_request_number,
 			             _pytis_form_changed_field: id,
- 			             _pytis_form_filter_state: filter_state},
+ 			             _pytis_form_state: state},
 			onSuccess: this.update.bind(this)
 		    });
 		    break;
@@ -104,7 +105,7 @@ pytis.FormHandler = Class.create({
 			    if (key == 'enumeration')   field.set_enumeration(value, cdata['links']);
 			    else if (key == 'value')    field.set_value(value);
 		            else if (key == 'editable') field.set_editability(value);
-			    else if (key == 'filter')   this._filters[id] = value;
+			    else if (key == 'state')    this._state[id] = value;
 			}
 			if (cdata.enumeration && !cdata.value) {
 			    // Retain the value of enumeration fields even

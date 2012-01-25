@@ -579,21 +579,22 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         result = super(EditForm, self).export(context)
         layout_fields = self._layout.order()
         field_handlers = []
-        filters = {}
+        state = {}
         g = context.generator()
         for fid in layout_fields:
             field = self._fields[fid]
             active = self._row.depends(fid, layout_fields)
             required = self._has_not_null_indicator(field)
-            runtime_filter = self._row.runtime_filter(fid)
-            if runtime_filter is not None:
-                filters[fid] = str(runtime_filter)
+            if field.runtime_filter() or field.runtime_arguments():
+                # NOTE: The format here must be same as in EditForm.ajax_response()!
+                state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
+                                            self._row.runtime_arguments(fid))
             handler = field.exporter.handler(context, self._id, active, required)
             field_handlers.append(handler)
         context.resource('prototype.js')
         context.resource('pytis.js')
         result += g.script("new pytis.FormHandler('%s', [%s], %s)" %
-                           (self._id, ', '.join(field_handlers), g.js_value(filters)))
+                           (self._id, ', '.join(field_handlers), g.js_value(state)))
         return result
 
     @classmethod
@@ -626,12 +627,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             import simplejson as json
         request_number = req.param('_pytis_form_update_request')
         changed_field = str(req.param('_pytis_form_changed_field'))
-        filter_state = req.param('_pytis_form_filter_state')
-        if filter_state:
+        state = req.param('_pytis_form_state')
+        if state:
             import urlparse
-            filters = dict((k, v[0]) for k, v in urlparse.parse_qs(filter_state).items())
+            field_states = dict((k, v[0]) for k, v in urlparse.parse_qs(state).items())
         else:
-            filters = {}
+            field_states = {}
         fields = {}
         computed_fields = [f.id() for f in row.fields() if f.computer() is not None]
         for fid in layout.order():
@@ -649,16 +650,16 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     # Values of disabled fields are not in the request, so send them always...
                     if not req.has_param(fid) or localized_value != req.param(fid):
                         fdata['value'] = localized_value
-                if fid in filters:
-                    old_filter = filters[fid]
-                    new_filter = str(row.runtime_filter(fid))
+                if fid in field_states:
+                    old_state = field_states[fid]
+                    new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
                     # We rely on the fact, that a stringified
                     # 'pytis.data.Operator' uniquely represents the
                     # corresponding runtime filter state.
-                    if new_filter != old_filter:
+                    if new_state != old_state:
                         enumeration = [(value, translator.translate(label))
                                        for value, label in row.enumerate(fid)]
-                        fdata['filter'] = new_filter
+                        fdata['state'] = new_state
                         fdata['enumeration'] = enumeration
                         if uri_provider and isinstance(row.type(fid), pd.Array):
                             func = uri_provider(row, fid, type=UriType.LINK)
