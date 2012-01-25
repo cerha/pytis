@@ -75,7 +75,6 @@ class PresentedRow(object):
             self.runtime_filter = f.runtime_filter()
             self.runtime_arguments = f.runtime_arguments()
             self.data_column = data.find_column(self.id)
-            self.filename = f.filename()
             self.virtual = f.virtual()
             self.secret_computer = False # Set dynamically during initialization.
         def __str__(self):
@@ -504,24 +503,10 @@ class PresentedRow(object):
             # Může nastat například v případě, kdy k danému sloupci nejsou
             # přístupová práva.
             return ''
-        column = self._coldict[key]
         if secure is False or self.permitted(key, permission=pytis.data.Permission.VIEW):
             value_type = value.type()
             if pretty and isinstance(value_type, PrettyType):
                 svalue = value_type.pretty_export(value.value(), row=self, form=form, **kwargs)
-            elif value.value() is not None and isinstance(value_type, pytis.data.Binary):
-                bytesize = format_byte_size(len(value.value()))
-                if column.filename:
-                    if isinstance(column.filename, collections.Callable):
-                        filename = column.filename(self)
-                    else:
-                        filename = self[column.filename].export()
-                    if filename:
-                        svalue = filename +' ('+ bytesize +')'
-                    else:
-                        svalue = bytesize
-                else:
-                    svalue = bytesize
             else:
                 svalue = value.export(**kwargs)
         else:
@@ -529,6 +514,7 @@ class PresentedRow(object):
                 svalue = value.type().secret_export()
             else:
                 svalue = secure
+        column = self._coldict[key]
         if self._singleline and column.line_separator is not None:
             svalue = string.join(svalue.splitlines(), column.line_separator)
         self._cache[key] = svalue
