@@ -308,6 +308,9 @@ class ISODateTime(_TypeCheck):
         self._test_validity(None, '2012-01-23 11:14:39.23104+01:00',
                             datetime.datetime(2012,1,23,10,14,39,231040,tzinfo=tzinfo),
                             kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '2012-01-23 11:14:39+01:00',
+                            datetime.datetime(2012,1,23,10,14,39,0,tzinfo=tzinfo),
+                            kwargs=vkwargs, ekwargs=vkwargs)
         self._test_validity(None, '2999-12-31 0:0:0', None,
                             kwargs=vkwargs, ekwargs=vkwargs)
     def test_export(self):

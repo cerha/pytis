@@ -1282,8 +1282,12 @@ class DateTime(_CommonDateTime):
         shift = int(groups['hours']) * 3600 + int(groups['minutes']) * 60
         if groups['sign'] == '-':
             shift = -shift
+        if common_string.find('.') >= 0:
+            format_ = '%Y-%m-%d %H:%M:%S.%f'
+        else:
+            format_ = '%Y-%m-%d %H:%M:%S'
         try:
-            value = datetime.datetime.strptime(common_string, '%Y-%m-%d %H:%M:%S.%f')
+            value = datetime.datetime.strptime(common_string, format_)
         except:
             return None, self._validation_error(self.VM_DT_FORMAT)
         value = value - datetime.timedelta(seconds=shift)
