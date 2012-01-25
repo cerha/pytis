@@ -2155,74 +2155,101 @@ class Array(Limited):
 # Pomocné třídy
 
 class Enumerator(object):
-    """Realizace výčtu hodnot použitelného pro integritní omezení datového typu.
+    """Generic interface for enumerations of data type values for integrity constraints.
 
-    Enumerátor je především poskytovatelem validace pro ověření, zda je nějaká
-    hodnota přítomna v určité množině hodnot.  Způsob ověření a určení množiny
-    hodnot je předmětem implementace různých tříd enumerátorů.  Ověřovaná
-    hodnota je vždy vnitřní (Pythonovou) hodnotou typu, ve kterém je enumerátor
-    použit.
+    The enumerator provides an interface for validation if a given value
+    belongs to the set of valid values (the 'check()' method) and also a means
+    to retrieve all valid enumeration values (the 'values()' method).  The
+    means of retrieving the values and performing the check is the subject of
+    implementation of particular derived classes.
 
-    Instanci enumerátoru je potom možno předat konstruktoru datového typu a
-    uvalit tak na daný typ příslušné integritní omezení.  Více informací také
-    viz 'Type.__init__()'.
-    
-    Tato třída pouze definuje povinné rozhraní enumerátorů.  Kromě zde
-    definovaných povinných metod mohou konkrétní třídy enumerátorů nabízet
-    ještě další služby.
+    This class defines the mandatory enumerator API.  Derived classes may also
+    offer extended interface for specific services.  An instance of an
+    enumerator class (a derived class implementing the mandatory API) may be
+    used as the 'enumerator' argument of a data 'Type' constructor.
 
-    Generally, enumerators must be thread-safe as thy can be used in shared 'Type' instances.  Any
-    enumerator method which is not thread-safe must be clearly marked as such and it may not be
-    used with enumerator instances used in types.
+    Generally, enumerators must be thread-safe as thy can be used in shared
+    'Type' instances.  Any enumerator method which is not thread-safe must be
+    clearly marked as such and it may not be used with enumerator instances
+    used in types.
     
     """
-    def check(self, value):
-        """Vrať pravdu, pokud 'value' je prvkem množiny enumerátoru.
+    def check(self, value, **kwargs):
+        """Return true, iff 'value' belongs to the enumeration.
 
-        Argumenty:
+        Arguments:
         
-          value -- vnitřní (Pythonová) hodnota datového typu, pro který je
-            enumerátor použit.
+          value -- internal Python value of the corresponding data type, for
+            which the enumerator is used.
+
+          **kwargs -- keyword arguments as accepted by 'values()'.
+
+        The default implementation simply retrieves all values and checks the
+        presence of 'value' in the returned sequence.  This may be suboptimal
+        for potentionaly large sets so it may be overriden in derived classes
+        using a more sophisticated method.
         
         """
-        raise ProgramError('Not implemented', 'Enumerator.check()')
+        return value in self.values(**kwargs)
 
-    def values(self):
-        """Vrať sekvenci všech správných uživatelských hodnot typu."""
+    def values(self, **kwargs):
+        """Return a sequence of all valid enumeration values."""
         raise ProgramError('Not implemented', 'Enumerator.values()')
     
 
 class FixedEnumerator(Enumerator):
-    """Enumerator with a fixed enumeration."""
+    """Enumerator with a fixed enumeration passed to the constructor.
+
+    The method 'values()' (and thus 'check()' as well) accepts no keyword
+    arguments.
+
+    """
     
     def __init__(self, enumeration):
         """Initialize the instance.
         
         Arguments:
         
-          enumeration -- a sequence of values compatible with internal (Python) values of the type,
-            for which the enumerator is used.
+          enumeration -- a sequence of values compatible with internal (Python)
+            values of the type, for which the enumerator is used.
           
         """
         super(FixedEnumerator, self).__init__()
         self._enumeration = tuple(enumeration)
 
-    def check(self, value):
-        for v in self._enumeration:
-            if v == value:
-                return True
-        return False
-
     def values(self):
         return self._enumeration
         
+
+class DynamicEnumerator(Enumerator):
+    """Enumerator with values depending dynamically on the given argument.
+
+    The argument may be an arbitrary object recognized by the enumerator.  The
+    list of values is generated, based on the argument, using
+    '_dynamic_values()' method.  The method should return a list of
+    basestrings, containing the permitted values.
+    
+    """
+    def _dynamic_values(self, argument):
+        raise Exception("Not implemented")
         
+    def values(self, argument=None):
+        return self._dynamic_values(argument) or ()
+
+    
 class DataEnumerator(Enumerator):
     """Enumerator retrieving the enumeration values from a data object.
 
-    The enumerator uses one column of the data object to get the set of enumeration values.  This
-    is typically the key column (by default), but it is possible to choose any other column by
-    passing proper constructor arguments.
+    The enumerator uses one column of the data object to get the set of
+    enumeration values.  This is typically the key column (by default), but it
+    is possible to choose any other column by passing proper constructor
+    arguments.
+
+    One special thing about this enumerator is that it is internally handled
+    specifically throughout Pytis.  It's instances are created automatically
+    when a specification name is passed to a 'codebook' or 'enumerator'
+    attribute of 'Field' constructor and its extended API is also used where
+    appropriate.
 
     """
     def __init__(self, data_factory, value_column=None, validity_column=None,
@@ -2340,7 +2367,7 @@ class DataEnumerator(Enumerator):
             result = True
         return result
 
-    def values(self, condition=None, transaction=None, sort=(), max=None, arguments=None):
+    def values(self, transaction=None, condition=None, arguments=None, sort=(), max=None):
         if arguments is None:
             arguments = {}
         the_condition = self._condition(condition=condition)
@@ -2438,28 +2465,6 @@ class DataEnumerator(Enumerator):
             return self._data.permitted(self._data.key()[0].id(), pytis.data.Permission.VIEW)
         else:
             return True
-
-
-class DynamicEnumerator(Enumerator):
-    """Enumerator with values depending dynamically on the given argument.
-
-    The argument may be an arbitrary object recognized by the enumerator.  The
-    list of values is generated, based on the argument, using
-    '_dynamic_values()' method.  The method should return a list of
-    basestrings, containing the permitted values.
-    
-    """
-    def _dynamic_values(self, argument):
-        raise Exception("Not implemented")
-        
-    def check(self, value, argument=None):
-        values = self._dynamic_values(argument)
-        if values is None:
-            return True
-        return value in values
-
-    def values(self, argument=None):
-        return self._dynamic_values(argument) or ()
     
 
 class ValidationError(Exception):
