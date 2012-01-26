@@ -583,9 +583,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         g = context.generator()
         for fid in layout_fields:
             field = self._fields[fid]
+            view_field = self._view.field(fid)
             active = self._row.depends(fid, layout_fields)
             required = self._has_not_null_indicator(field)
-            if field.runtime_filter() or field.runtime_arguments():
+            if view_field.runtime_filter() or view_field.runtime_arguments():
                 # NOTE: The format here must be same as in EditForm.ajax_response()!
                 state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
                                             self._row.runtime_arguments(fid))
