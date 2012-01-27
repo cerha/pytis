@@ -583,10 +583,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         g = context.generator()
         for fid in layout_fields:
             field = self._fields[fid]
-            view_field = self._view.field(fid)
             active = self._row.depends(fid, layout_fields)
             required = self._has_not_null_indicator(field)
-            if view_field.runtime_filter() or view_field.runtime_arguments():
+            if field.spec.runtime_filter() or field.spec.runtime_arguments():
                 # NOTE: The format here must be same as in EditForm.ajax_response()!
                 state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
                                             self._row.runtime_arguments(fid))
@@ -653,10 +652,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                         fdata['value'] = localized_value
                 if fid in field_states:
                     old_state = field_states[fid]
-                    new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
                     # We rely on the fact, that a stringified
                     # 'pytis.data.Operator' uniquely represents the
                     # corresponding runtime filter state.
+                    new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
                     if new_state != old_state:
                         enumeration = [(value, translator.translate(label))
                                        for value, label in row.enumerate(fid)]
