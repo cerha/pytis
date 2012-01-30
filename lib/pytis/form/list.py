@@ -3068,6 +3068,13 @@ class BrowseForm(FoldableForm):
                 # run through COMMAND_HANDLED_ACTION here is to postpone the
                 # time consuming IN operator construction until the menu item
                 # is actually selected.
+                if self._current_profile_changed():
+                    msg = _("Filtrování nemůže být provedeno, pokud aktuální profil není uložen!")
+                    bsave, bquit = _("Uložit"), _("Zrušit")
+                    if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit),
+                                  default=bsave) != bsave:
+                        return
+                    self._cmd_update_profile()
                 filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
                 if not_in:
                     filter = pytis.data.NOT(filter)
