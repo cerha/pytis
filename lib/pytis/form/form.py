@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2252,6 +2252,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 not self._row.permitted(fid, pytis.data.Permission.VIEW) and
                 fid in self._row and not self._row[fid].value()):
                 self._row[fid] = self._row.original_row()[fid]
+            elif (self._mode == self.MODE_INSERT and
+                  not self._row.permitted(fid, pytis.data.Permission.VIEW)):
+                for rf in self._row.fields():
+                    if rf.id() == fid:
+                        self._row[fid] = pytis.data.Value(self._row.type(fid), rf.default())
+                        break
             elif self._mode == self.MODE_INSERT or self._row.field_changed(fid):
                 if f.enabled() and not f.validate():
                     f.set_focus()
