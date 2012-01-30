@@ -1714,8 +1714,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             result = run_dialog(AggregationSetupDialog,
                                 aggregation_functions=self._available_aggregations(),
                                 grouping_functions=grouping_functions,
-                                columns=[(f.id(), f.label(), self._row.type(f.id()))
-                                         for f in self._fields if not f.virtual()],
+                                columns=[(c.id(), c.label(), c.type())
+                                         for c in self._lf_sfs_columns()],
                                 aggregation_valid=self._aggregation_valid,
                                 name=name, group_by_columns=group_by_columns,
                                 aggregation_columns=aggregation_columns)
