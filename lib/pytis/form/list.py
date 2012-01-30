@@ -3064,18 +3064,17 @@ class BrowseForm(FoldableForm):
                 ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
                            u"obsažené ve sloupci „%(column)s“ současného náhledu.")
             def handler(form_class, name):
-                # Wrap the actual IN operator construction into a function run
-                # through COMMAND_HANDLED_ACTION instead of invoking
-                # COMMAND_RUN_FORM directly to postpone time consuming IN
-                # operator construction until the menu item is actually
-                # selected.
-                filter = pytis.form.IN(column, name, f.id(), profile_id)
+                # The main reason for wrapping COMMAND_RUN_FORM in a function
+                # run through COMMAND_HANDLED_ACTION here is to postpone the
+                # time consuming IN operator construction until the menu item
+                # is actually selected.
+                filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
                 if not_in:
                     filter = pytis.data.NOT(filter)
                 run_form(form_class, name, select_row=select_row, filter=filter)
             cmd = Application.COMMAND_HANDLED_ACTION(handler=handler, 
                                                      enabled=Application.COMMAND_RUN_FORM.enabled,
-                                                     name=self.name(), form_class=BrowseForm)
+                                                     name=name, form_class=BrowseForm)
             return MItem(ititle % dict(view_title=title, column=column_label), command=cmd)
         return [mitem(*args) for args in linkspec]
                            
