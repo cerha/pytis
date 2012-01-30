@@ -2256,7 +2256,15 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                   not self._row.permitted(fid, pytis.data.Permission.VIEW)):
                 for rf in self._row.fields():
                     if rf.id() == fid:
-                        self._row[fid] = pytis.data.Value(self._row.type(fid), rf.default())
+                        type_ = self._row.type(fid)
+                        default = rf.default()
+                        if default is not None:
+                            if isinstance(default, collections.Callable):
+                                default = default()
+                            value = pytis.data.Value(type_, default)
+                        else:
+                            value = type_.default_value()
+                        self._row[fid] = value
                         break
             elif self._mode == self.MODE_INSERT or self._row.field_changed(fid):
                 if f.enabled() and not f.validate():
