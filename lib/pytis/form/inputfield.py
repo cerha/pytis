@@ -261,6 +261,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             field = DateField
         elif isinstance(type, pytis.data.Time):
             field = TimeField
+        elif isinstance(type, pytis.data.DateTime):
+            field = DateTimeField
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
         elif isinstance(type, pytis.data.Password):
@@ -1337,6 +1339,32 @@ class DateField(Invocable, TextField, SpinnableField):
             self._set_value(self._type.export(date))
 
 
+class DateTimeField(DateField):
+    """Input field for values of type 'pytis.data.DateTime'.
+
+    The date part can be changed using the calendar widget.
+    
+    Spinning changes the date by one day per one step.
+
+    """
+    _DEFAULT_WIDTH = 19
+
+    def _on_invoke_selection(self, alternate=False):
+        if self._valid:
+            dt = self._row[self._id].value()
+        else:
+            dt = None
+        date = run_dialog(Calendar, dt)
+        if date != None:
+            if dt:
+                kwargs = dict(hour=dt.hour, minute=dt.minute, second=dt.second)
+            else:
+                kwargs = {}
+            dt = datetime.datetime(year=date.year, month=date.month, day=date.day,
+                                   tzinfo=self._type.timezone(), **kwargs)
+            self._set_value(self._type.export(dt))
+
+            
 class TimeField(TextField, SpinnableField):
     """Input field for values of type 'pytis.data.Time'.
     

@@ -1123,7 +1123,11 @@ class _CommonDateTime(Type):
     def utc(self):
         """Return 'utc' flag value given in the constructor, boolean."""
         return self._utc
-        
+
+    def timezone(self):
+        """Return 'datetime.tzinfo' object corresponding to the time zone."""
+        return self._timezone
+    
     def is_utc(self):
         """Deprecated.  Use 'utc' instead."""
         return self.utc()
@@ -1505,10 +1509,6 @@ class Time(_CommonDateTime):
             value = Value(value.type(), value.value().timetz())
         return value, error
     
-    def timezone(self):
-        """Return 'datetime.tzinfo' object corresponding to the time zone."""
-        return self._timezone
-
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
 
