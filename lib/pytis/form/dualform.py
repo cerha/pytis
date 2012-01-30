@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -800,7 +800,14 @@ class MultiForm(Form, Refreshable):
         return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
         
     def _cmd_filter_by_sideform(self, index):
-        condition = self._forms[index].side_form_in_condition()
+        form = self._forms[index]
+        if form.COMMAND_UPDATE_PROFILE.enabled():
+            msg = _("Filtrování nemůže být provedeno, pokud aktuální profil není uložen!")
+            bsave, bquit = _("Uložit"), _("Zrušit")
+            if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit), default=bsave) != bsave:
+                return
+            form.COMMAND_UPDATE_PROFILE.invoke()
+        condition = form.side_form_in_condition()
         self._main_form.filter(condition, append=True)
         
     def show(self):
