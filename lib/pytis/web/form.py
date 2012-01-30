@@ -1014,10 +1014,10 @@ class BrowseForm(LayoutForm):
                             if not f.type.enumerator() and isinstance(f.type, pd.Number)])
         self._custom_message = message
         # Hack allowing locale dependent index search controls.  The method
-        # 'prefered_language()' is Wiking specific so it is not correct to rely
+        # 'preferred_language()' is Wiking specific so it is not correct to rely
         # on it here.
         try:
-            self._lang = str(req.prefered_language())
+            self._lang = str(req.preferred_language())
         except:
             self._lang = None
         self._init_filter_fields(req, filter_fields or ())

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -85,7 +85,7 @@ class Menu(wiking.PytisModule):
             else:
                 raise wiking.NotFound()
         variants = [str(row['lang'].value()) for row in rows]
-        lang = req.prefered_language(variants)
+        lang = req.preferred_language(variants)
         row = rows[variants.index(lang)]
         del req.unresolved_path[:self.ITEM_PATH_LENGTH]
         return row
