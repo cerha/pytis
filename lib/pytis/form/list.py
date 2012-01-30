@@ -145,7 +145,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _get_aggregation_result(self, key):
         cid, operation = key
         c = self._data.find_column(cid)
-        if c is not None and self._aggregation_valid(operation, c.type()):
+        if (c is not None and
+            self._aggregation_valid(operation, c.type()) and
+            self._row.permitted(cid, pytis.data.Permission.VIEW)):
             return self._data.select_aggregate((operation, cid),
                                                condition=self._current_condition(),
                                                transaction=self._transaction)
@@ -1247,14 +1249,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             else:
                                 align = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT
                             label_rect = (x-d+2, y, width+d, row_height)
-                            if self._row.permitted(id, pytis.data.Permission.VIEW):
-                                value = value.export()
-                            else:
-                                value = ''
+                            exported_value = value.export()
                             if icon:
-                                dc.DrawImageLabel(' '+ value, icon, label_rect, align)
+                                dc.DrawImageLabel(' '+ exported_value, icon, label_rect, align)
                             else:
-                                dc.DrawLabel(label +' '+ value, label_rect, align)
+                                dc.DrawLabel(label +' '+ exported_value, label_rect, align)
                         y += row_height
                 dc.DrawLine(x-d, y, x+width, y)
             x += width
