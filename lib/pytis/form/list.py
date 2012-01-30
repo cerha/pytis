@@ -1247,10 +1247,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                             else:
                                 align = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT
                             label_rect = (x-d+2, y, width+d, row_height)
-                            if icon:
-                                dc.DrawImageLabel(' '+ value.export(), icon, label_rect, align)
+                            if self._row.permitted(id, pytis.data.Permission.VIEW):
+                                value = value.export()
                             else:
-                                dc.DrawLabel(label +' '+ value.export(), label_rect, align)
+                                value = ''
+                            if icon:
+                                dc.DrawImageLabel(' '+ value, icon, label_rect, align)
+                            else:
+                                dc.DrawLabel(label +' '+ value, label_rect, align)
                         y += row_height
                 dc.DrawLine(x-d, y, x+width, y)
             x += width
