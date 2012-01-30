@@ -3431,10 +3431,12 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
         super(DBPostgreSQLFunction, self).__init__(
             bindings=bindings, key=bindings, connection_data=connection_data,
             **kwargs)
-        arg_query = "select pronargs from pg_proc where proname='%s'" % name
+        arg_query = "select proargtypes from pg_proc where proname='%s'" % (name,)
         data = self._pg_query(arg_query, outside_transaction=True)
-        narg = int(data[0][0])
-        arguments = string.join(('%s',)*narg, ', ')
+        arg_types = [int(x) for x in string.split(data[0][0])]
+        def arg_spec(arg):
+            return '%%s' if arg == 17 else '%s'
+        arguments = string.join([arg_spec(a) for a in arg_types], ', ')
         self._pdbb_function_call = 'select * from %s(%s)' % (name, arguments)
         
     def _db_bindings_to_column_spec(self, __bindings):
@@ -3483,18 +3485,22 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
     
     def call(self, row, transaction=None):
         log(EVENT, 'Function call:', self._name)
-        arguments = tuple([self._pg_value(item) for item in row])
+        arguments = []
+        query_args = []
+        for item in row:
+            l = query_args if isinstance(item.type(), Binary) else arguments
+            l.append(self._pg_value(item))
         if transaction is None:
             outside_transaction = True
         else:
             outside_transaction = False
-        data = self._pg_query(self._pdbb_function_call % arguments,
+        data = self._pg_query(self._pdbb_function_call % tuple(arguments),
                               transaction=transaction,
-                              outside_transaction=outside_transaction
-                              )
+                              outside_transaction=outside_transaction,
+                              query_args=tuple(query_args))
         if transaction is None:
             self._pg_query ('commit', outside_transaction=outside_transaction)
-        result = [self._pg_make_row_from_raw_data([row]) for row in data]
+        result = [self._pg_make_row_from_raw_data([r]) for r in data]
         log(EVENT, 'Function call result:', (self._name, result))
         return result
 
