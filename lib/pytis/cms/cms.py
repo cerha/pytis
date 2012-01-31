@@ -254,10 +254,10 @@ class Menu(Specification):
                       "pomlčky a podtržítka a musí začínat písmenem.")),
         Field('lang', _("Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
               value_column='lang', selection_type=pp.SelectionType.CHOICE),
-        Field('title_or_identifier', _("Název"), width=30, type=_TreeOrder),
-        Field('title', _("Název"), width=20, not_null=True, maxlen=32,
+        Field('title_or_identifier', _("Název"), width=30, type=_TreeOrder()),
+        Field('title', _("Název"), width=20, type=pd.String(maxlen=32, not_null=True),
               descr=_("Název položky menu - krátký a výstižný.")),
-        Field('heading', _("Nadpis"), width=32, maxlen=40,
+        Field('heading', _("Nadpis"), width=32, type=pd.String(maxlen=40),
               descr=_("Hlavní nadpis při zobrazení stránky.  Pokud ponecháte nevyplněné, "
                       "použije se název položky.  Ten je ale někdy kvůli použití v menu příliš "
                       "krátký, takže zde je možné určit jeho delší variantu.")),
@@ -266,12 +266,12 @@ class Menu(Specification):
         Field('content', _("Obsah"), compact=True, height=20, width=80,
               text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
-        Field('mod_id', _("Modul"), not_null=False,
+        Field('mod_id', _("Modul"), type=pd.String(not_null=False),
               codebook=self._spec_name('Modules', False), allow_codebook_insert=True,
               descr=_("Vyberte rozšiřující modul zobrazený uvnitř stránky.  Ponechte prázdné pro "
                       "prostou textovou stránku.")),
         Field('modname', _("Modul")),
-        Field('parent', _("Nadřízená položka"), not_null=False,
+        Field('parent', _("Nadřízená položka"), type=pd.String(not_null=False),
               codebook=self._spec_name('MenuParents', False), value_column='menu_item_id',
               runtime_filter=computer(self._parent_filter),
               descr=_("Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
@@ -403,7 +403,7 @@ class Roles(Specification):
     def fields(self): return (
         Field('role_id', default=nextval('cms_roles_role_id_seq')),
         Field('name', _("Název"), width=16),
-        Field('system_role', _("Systémová role"), width=16, not_null=True),
+        Field('system_role', _("Systémová role"), width=16, type=pd.String(not_null=True)),
         Field('description', _("Popis"), width=64),
         )
     layout = ('name', 'description')

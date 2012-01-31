@@ -336,7 +336,7 @@ class ApplicationMenuM(pytis.presentation.Specification):
               editable=pytis.presentation.Editable.NEVER),
         Field('position', _(u"Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions',
               editable=pytis.presentation.Editable.NEVER,
-              type=pytis.data.LTree, text=False, not_null=True),
+              type=pytis.data.LTree(not_null=True, text=False)),
         Field('position_nsub', _(u"Počet poduzlů"),
               editable=pytis.presentation.Editable.NEVER),
         Field('xaction', _(u"Navěšená akce"), virtual=True,
