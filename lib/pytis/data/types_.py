@@ -1746,21 +1746,19 @@ class Binary(Limited):
         def __init__(self, data, filename=None, mime_type=None):
             """Initialize a new buffer instance and validate the input data.
 
-            Arguemnts:
+            Arguments:
             
               data -- The buffer data.  It can be a Python 'buffer' object,
                 input file path as a string or an open stream (a file-like
                 object).  A buffer object is used directly, file path is opened
                 and read and file-like object is just read (the caller is
                 responsible for closing it).
-
               filename -- Filename for the buffer data as a string or None.
                 This name does not include directory and does not refer to any
                 actual file (has nothing to do with the input file for reading
                 the data).  It may be used to suggest what the contents of the
                 buffer is.  It is optional and its usage may be application
                 specific.
-                
               mime_type -- MIME type of buffer data as a string or None.  It is
                 optional and its usage may be application specific.
 
