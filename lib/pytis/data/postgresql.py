@@ -1110,46 +1110,39 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         try:
             type_class_ = TYPE_MAPPING[type_]
         except KeyError:
-            raise DBException('Unhandled database type', None, type_)
-        if ctype is None or type(ctype) == type(pytis.data.Type):
-            if type_kwargs is None:
-                type_kwargs = {}
-            if not_null in (1, 'T') and 'not_null' not in type_kwargs:
-                type_kwargs['not_null'] = True
-            if 'unique' not in type_kwargs and type_class_ != Boolean:
-                type_kwargs['unique'] = unique
-            if type_class_ == String and 'maxlen' not in type_kwargs:
-                if type_ != 'text':
-                    try:
-                        size = int(size_string) - 4
-                    except:
-                        size = None
-                    if size < 0:
-                        size = None
-                    type_kwargs['maxlen'] = size
-            elif type_class_ == Float and 'precision' not in type_kwargs:
-                spec = int(size_string)
-                precision = (spec & 0xFFFF) - 4
-                if precision >= 0 and precision <= 100:
-                    type_kwargs['precision'] = precision
-            elif type_class_ == Integer and serial:
-                type_class_ = Serial
-            if ctype:
-                assert (type_class_ == Binary or # maybe a crypto column
-                        issubclass(ctype, type_class_)), \
-                       ("User type doesn't match DB type", ctype, type_class_)
-                type_class_ = ctype
-            result = type_class_(**type_kwargs)
-        else:
-            if __debug__:
-                if type_class_ == Binary: # maybe a crypto column
-                    pass
-                elif isinstance(ctype, TimeInterval) and type_class_ == Time: # temporary hack
-                    pass
-                else:
-                    assert isinstance(ctype, type_class_), \
-                        ("User type doesn't match DB type", ctype, type_class_)
-            result = ctype
+            raise pytis.data.DBException('Unhandled database type', None, type_)
+        default_type_kwargs = {}
+        if not_null in (1, 'T'):
+            default_type_kwargs['not_null'] = True
+        if type_class_ != Boolean:
+            default_type_kwargs['unique'] = unique
+        if type_class_ == String:
+            if type_ != 'text':
+                try:
+                    size = int(size_string) - 4
+                except:
+                    size = None
+                if size < 0:
+                    size = None
+                default_type_kwargs['maxlen'] = size
+        elif type_class_ == Float:
+            spec = int(size_string)
+            precision = (spec & 0xFFFF) - 4
+            if precision >= 0 and precision <= 100:
+                default_type_kwargs['precision'] = precision
+        elif type_class_ == Integer and serial:
+            type_class_ = Serial
+        result = type_class_(**default_type_kwargs)
+        if ctype:
+            if type(ctype) == type(pytis.data.Type):
+                ctype = ctype()
+            assert (type_class_ == Binary # maybe a crypto column
+                    or isinstance(ctype, TimeInterval) and type_class_ == Time # temporary hack
+                    or isinstance(ctype, type_class_)), \
+                    ("User type doesn't match DB type", ctype, type_class_)
+            result = result.clone(ctype)
+        if type_kwargs:
+            result = result.clone(result.__class__(**type_kwargs))
         return result
 
     def _db_bindings_to_column_spec(self, bindings):
