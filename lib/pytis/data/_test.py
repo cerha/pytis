@@ -115,6 +115,23 @@ class Type(_TypeCheck):
                'different types equal'
         assert pytis.data.String(maxlen=2) != pytis.data.String(maxlen=3), \
                'different types equal'
+    def test_cloning(self):
+        i1 = pytis.data.Integer()
+        i2 = pytis.data.Integer(not_null=True)
+        i12 = i1.clone(i2)
+        assert i1.not_null() == False and i12.not_null() == True
+        i21 = i2.clone(i1)
+        assert i21.not_null() == True
+        i3 = pytis.data.Integer(not_null=False)
+        i23 = i2.clone(i3)
+        assert i23.not_null() == False
+        i31 = i3.clone(i1)
+        assert i31.not_null() == False
+        s1 = pytis.data.String(maxlen=4)
+        s2 = pytis.data.RegexString(regex='\d-\d+')
+        s12 = s1.clone(s2)
+        assert isinstance(s12, pytis.data.RegexString)
+        assert s12.maxlen() == 4
 tests.add(Type)
 
 

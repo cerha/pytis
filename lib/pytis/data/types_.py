@@ -74,15 +74,38 @@ class UnsupportedPrimitiveValueConversion(Exception):
     def __init__(self, type):
         msg = 'Object of type %s can not be converted to a primitive value.' % type
         super(UnsupportedPrimitiveValueConversion, self).__init__(msg)
+
     
 class Type(object):
-    """Abstraktní třída sloužící jako společný základ všech typů.
+    """Abstract base class for all data type specific classes.
 
-    Tuto třídu musí povinně dědit všechny typové třídy.
+    All type classes are required to derive from this class.
 
-    Instance této třídy jsou považovány za immutable, nesmí být po své
-    inicializaci modifikovány a mohou být neomezeně sdíleny.
-    
+    Instances of this class are considered to be immutable.  They can not be
+    modified during their life time and may be shared without a limitation.
+
+    Constructor arguments:
+        
+      not_null -- flag saying the value must not be empty.  Empty value is
+        None or any other value mapped to None in '_SPECIAL_VALUES'.
+      enumerator -- enumerator specification as 'Enumerator' instance or
+        None.  Enumerators are used to implement referential integrity or
+        static enumeration checking.  See 'Enumerator' class documentation
+        for more information.
+      constraints -- sekvence validačních funkcí sloužících k realizaci
+        libovolných integritních omezení.  Každá z těchto funkcí je funkcí
+        jednoho argumentu, kterým je vnitřní hodnota typu.  Funkce pro tuto
+        hodnotu musí vrátit buď 'None', je-li hodnota správná, nebo chybovou
+        hlášku jako string v opačném případě.
+      validation_messages -- dictionary identifikátorů a validačních hlášek.
+        Klíče jsou identifikátory validačních hlášek definované konstantami
+        třídy s názvy začínajícími prefixem 'VM_' a hodnoty jsou hlášky coby
+        řetězce.  Hlášky z tohoto argumentu, jsou-li pro daný identifikátor
+        definovány, mají přednost před implicitními hláškami definovanými
+        typem.
+      unique -- flag saying the value must be unique within its column in a
+        table
+
     """
     __metaclass__ = _MType
     
@@ -156,36 +179,18 @@ class Type(object):
         return class_._make(class_, *args, **kwargs)
     make = classmethod(make)
 
-    def __init__(self, not_null=False, enumerator=None, constraints=(),
-                 validation_messages=None, unique=False):
-        """Inicializuj instanci.
+    def __init__(self, **kwargs):
+        """Inicialize the instance.
 
-        Argumenty:
+        See the class docstring for description of available arguments.
         
-          not_null -- příznak udávající, zda hodnoty tohoto typu smí být
-            prázdné.  Za prázdnou hodnotu je považována hodnota None, nebo
-            libovolná jiná hodnota na None mapovaná (viz. konstanta
-            _SPECIAL_VALUES).  Pokud je tento argument pravdivý, neprojde
-            prázdná hodnota validací.
-          enumerator -- specifikace enumerátoru, jako instance `Enumerator',
-            nebo None.  Slouží k realizaci integritních omezení výčtového
-            typu.  Více viz dokumentace třídy `Enumerator'.
-          constraints -- sekvence validačních funkcí sloužících k realizaci
-            libovolných integritních omezení.  Každá z těchto funkcí je funkcí
-            jednoho argumentu, kterým je vnitřní hodnota typu.  Funkce pro tuto
-            hodnotu musí vrátit buď 'None', je-li hodnota správná, nebo
-            chybovou hlášku jako string v opačném případě.
-          validation_messages -- dictionary identifikátorů a validačních
-            hlášek.  Klíče jsou identifikátory validačních hlášek definované
-            konstantami třídy s názvy začínajícími prefixem 'VM_' a hodnoty
-            jsou hlášky coby řetězce.  Hlášky z tohoto argumentu, jsou-li pro
-            daný identifikátor definovány, mají přednost před implicitními
-            hláškami definovanými typem.
-          unique -- flag saying the value must be unique within its column in a
-            table
-
         """
+        self._constructor_kwargs = kwargs
+        self._init(**kwargs)
         super(Type, self).__init__()
+                 
+    def _init(self, not_null=False, enumerator=None, constraints=(),
+              validation_messages=None, unique=False):
         assert isinstance(not_null, types.BooleanType)
         assert isinstance(unique, types.BooleanType)
         assert enumerator is None or isinstance(enumerator, Enumerator)
@@ -211,6 +216,18 @@ class Type(object):
                 self._validation_cache.reset()
             enumerator.add_callback_on_change(callback)
 
+    def clone(self, other):
+        """Clone this type by another type and return the cloned instance.
+
+        The cloned instance will inherit all attributes of this type and the
+        other type passed as argument, where the attributes of the later type
+        take precedence.
+
+        """
+        assert isinstance(other, self.__class__), other
+        kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
+        return other.__class__(**kwargs)
+            
     def type_table(class_):
         """Vrať tabulku typů jako instanci '_TypeTable'.
 
@@ -469,6 +486,13 @@ class Number(Type):
     Třída víceméně nic nového nedefinuje, je určena pouze k podědění všemi
     numerickými typy, aby tyto byly jakožto číselné snadno rozpoznatelné.
 
+    Constructor arguments:
+      
+      minimum -- minimal value; 'None' denotes no limit.
+      maximum -- maximal value; 'None' denotes no limit.
+            
+    Other arguments are passed to the parent constructor.
+        
     """
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     
@@ -479,20 +503,10 @@ class Number(Type):
     # Translators: User input validation error message.
     _VM_MAXIMUM_MSG = _(u"Maximal value is %(maximum)s")
 
-    def __init__(self, minimum=None, maximum=None, **kwargs):
-        """Initialize the instance.
-        
-        Arguments:
-        
-          minimum -- minimal value; 'None' denotes no limit.
-          maximum -- maximal value; 'None' denotes no limit.
-             
-        Other arguments are passed to the parent constructor.
-
-        """
+    def _init(self, minimum=None, maximum=None, **kwargs):
         self._minimum = minimum
         self._maximum = maximum
-        super(Number, self).__init__(**kwargs)
+        super(Number, self)._init(**kwargs)
 
     def __cmp__(self, other):
         """Return 0 if 'self' and 'other' are of the same class and constraints."""
@@ -550,6 +564,16 @@ class Limited(Type):
     Minimal and maximal length of a value of this type can be limited by passing the
     `minlen' and `maxlen' constructor arguments.
     
+    Constructor arguments:
+     
+      minlen -- minimal length of a value of this type as integer or
+        'None'; 'None' denotes unlimited minimal length.
+          
+      maxlen -- maximal length of a value of this type as integer or
+        'None'; 'None' denotes unlimited maximal length.
+          
+    Other arguments are passed to the parent constructor.
+    
     """
 
     VM_MINLEN = 'VM_MINLEN'
@@ -559,20 +583,10 @@ class Limited(Type):
     # Translators: User input validation error message.
     _VM_MAXLEN_MSG = _(u"Maximal length %(maxlen)s characters exceeded")
 
-    def __init__(self, minlen=None, maxlen=None, **kwargs):
-        """Initialize the instance.
-        
-        Arguments:
-        
-          maxlen -- maximal length of a value of this type as integer or
-            'None'; 'None' denotes unlimited length.
-             
-        Other arguments are passed to the parent constructor.
-
-        """
+    def _init(self, minlen=None, maxlen=None, **kwargs):
         self._minlen = minlen
         self._maxlen = maxlen
-        super(Limited, self).__init__(**kwargs)
+        super(Limited, self)._init(**kwargs)
 
     def __cmp__(self, other):
         """Return 0 if 'self' and 'other' are of the same class and maxlen."""
@@ -757,7 +771,18 @@ class LargeSerial(Integer):
 
 
 class Float(Number):
-    """Číslo v pohyblivé řádové čárce v rozsahu podporovaném Pythonem."""
+    """Číslo v pohyblivé řádové čárce v rozsahu podporovaném Pythonem.
+
+    Constructor arguments:
+
+      precision -- nezáporný integer udávající počet čísel za desetinnou
+        čárkou uváděný při exportu, nebo 'None' (pak není přesnost uměle
+        omezena)
+      digits -- maximum number of digits, integer
+
+    Ostatní klíčové argumenty jsou shodné, jako v předkovi.
+
+    """
 
     CEILING = 'CEILING'
     """Konstanta pro typ zaokrouhlení ve 'validate'."""
@@ -768,21 +793,10 @@ class Float(Number):
     # Translators: User input validation error message.
     _VM_INVALID_NUMBER_MSG = _(u"Invalid number")
     
-    def __init__(self, precision=None, digits=None, **kwargs):
-        """Definuj typ reálného čísla.
-
-        Argumenty:
-
-          precision -- nezáporný integer udávající počet čísel za desetinnou
-            čárkou uváděný při exportu, nebo 'None' (pak není přesnost uměle
-            omezena)
-          digits -- maximum number of digits, integer
-
-        Ostatní klíčové argumenty jsou shodné, jako v předkovi.
-             
-        """
-        super(Float, self).__init__(**kwargs)
-        assert precision is None or precision >= 0, ('Invalid precision', precision)
+    def _init(self, precision=None, digits=None, **kwargs):
+        super(Float, self)._init(**kwargs)
+        assert precision is None or precision >= 0, \
+               ('Invalid precision', precision)
         if precision is None:
             format = '%f'
         else:
@@ -905,7 +919,7 @@ class String(Limited):
     """Libovolný string.
 
     Lze také specifikovat, že řetězec může mít pouze omezenou délku, blíže viz
-    metody '__init__' a 'maxlen'.
+    metody '_init' a 'maxlen'.
 
     """
 
@@ -974,6 +988,29 @@ class Password(String):
     verification (the user enters the password just once), it is thus necessary to pass the same
     value twice (as the validated value and as the 'verify' argument).
 
+    Constructor arguments:
+    
+      md5 -- boolean flag indicating, that the password is stored as a hexadeximal md5 hash.
+        This will lead to automatic conversion of user input to its md5 hash, so the original
+        password is no more visible anywhere after successful validation.  The conversion is
+        only done when the 'verify' argument is passed to the 'validate()' method.  When
+        'verify' is not used, the input string is not considered to be user input, but an
+        already hashed value (eg. read from data source).
+
+      verify -- boolean flag indicating, that user input should be verified by the user
+        interface by presenting two controls for entering the password.  Both inputs must match
+        to pass validation.
+
+      strength -- specification of password strength checking.  If 'None',
+        no special checks are performed.  If 'True', default checking
+        implemented in the '_check_strength' method is performed.  If
+        anything else, it must be a function of a single argument, the
+        password string, that returns either 'None' when the password is
+        strong enough or an error message if the password is weak.
+         
+    Other arguments are passed to the parent constructor.
+
+
     """
     VM_PASSWORD = 'VM_PASSWORD'
     # Translators: User input validation error message.
@@ -988,33 +1025,8 @@ class Password(String):
     # Translators: User input validation error message.
     _VM_MIX_CHARACTERS_MSG = _(u"Please use mix of letters and non-letters in your password")
     
-    def __init__(self, md5=False, verify=True, strength=None, **kwargs):
-        """Initialize the instance.
-        
-        Arguments:
-        
-          md5 -- boolean flag indicating, that the password is stored as a hexadeximal md5 hash.
-            This will lead to automatic conversion of user input to its md5 hash, so the original
-            password is no more visible anywhere after successful validation.  The conversion is
-            only done when the 'verify' argument is passed to the 'validate()' method.  When
-            'verify' is not used, the input string is not considered to be user input, but an
-            already hashed value (eg. read from data source).
-
-          verify -- boolean flag indicating, that user input should be verified by the user
-            interface by presenting two controls for entering the password.  Both inputs must match
-            to pass validation.
-
-          strength -- specification of password strength checking.  If 'None',
-            no special checks are performed.  If 'True', default checking
-            implemented in the '_check_strength' method is performed.  If
-            anything else, it must be a function of a single argument, the
-            password string, that returns either 'None' when the password is
-            strong enough or an error message if the password is weak.
-             
-        Other arguments are passed to the parent constructor.
-
-        """
-        super(Password, self).__init__(**kwargs)
+    def _init(self, md5=False, verify=True, strength=None, **kwargs):
+        super(Password, self)._init(**kwargs)
         assert isinstance(md5, bool)
         assert isinstance(verify, bool)
         self._md5 = md5
@@ -1076,8 +1088,8 @@ class RegexString(String):
     _VM_FORMAT_MSG = _(u"Invalid format")
     _REGEX = None
     
-    def __init__(self, regex=None, **kwargs):
-        super(RegexString, self).__init__(**kwargs)
+    def _init(self, regex=None, **kwargs):
+        super(RegexString, self)._init(**kwargs)
         self._regex = re.compile(regex or self._REGEX)
     
     def _validate(self, string, *args, **kwargs):
@@ -1183,17 +1195,16 @@ class FullTextIndex(String):
     to 'pytis.data.FT' operator and to enable access to full text search result
     headlines.
     
+    Constructor arguments:
+
+      columns -- tuple of column ids (strings), these columns will be included
+        for the purpose of generating full text search headlines when a column
+        of this type is included in the full text search
+
     """
-    def __init__(self, columns=(), **kwargs):
-        """Arguments:
-
-          columns -- tuple of column ids (strings), these columns will be
-            included for the purpose of generating full text search headlines
-            when a column of this type is included in the full text search
-
-        """
+    def _init(self, columns=(), **kwargs):
         assert is_sequence(columns), ("Invalid argument type", columns,)
-        super(FullTextIndex, self).__init__(**kwargs)
+        super(FullTextIndex, self)._init(**kwargs)
         self._columns = columns
 
     def columns(self):
@@ -1257,6 +1268,13 @@ class _CommonDateTime(Type):
 
     All the derived classes use classes from Python 'datetime' module to
     represent the date and/or time values.
+    
+    Constructor arguments:
+    
+      format -- specification of both input and output format of date
+        and/or time in the form accepted by `time.strftime()'.
+      mindate, maxdate -- limits of acceptable date/time
+      utc -- specifies whether timestamp in the database is in UTC
 
     """
     
@@ -1272,16 +1290,7 @@ class _CommonDateTime(Type):
     UTC_TZINFO = _UTCTimezone()
     LOCAL_TZINFO = _LocalTimezone()
     
-    def __init__(self, format, utc=True, **kwargs):
-        """
-        Argumenty:
-
-          format -- specification of both input and output format of date
-            and/or time in the form accepted by `time.strftime()'.
-          mindate, maxdate -- limits of acceptable date/time
-          utc -- specifies whether timestamp in the database is in UTC
-
-        """
+    def _init(self, format, utc=True, **kwargs):
         assert format is True or isinstance(format, basestring), format
         assert isinstance(utc, bool), utc
         self._format = format
@@ -1291,7 +1300,7 @@ class _CommonDateTime(Type):
         else:
             self._timezone = self.LOCAL_TZINFO
         self._check_matcher = {}
-        super(_CommonDateTime, self).__init__(**kwargs)
+        super(_CommonDateTime, self)._init(**kwargs)
         
     def _check_format(self, format, string):
         try:
@@ -1331,7 +1340,7 @@ class _CommonDateTime(Type):
 
           string -- stejné jako v předkovi
           format -- požadovaný formát hodnoty 'string', ve tvaru požadovaném
-            metodou '__init__()'
+            metodou '_init()'
           local -- if true, handle the given value as a local time value; if
             false, handle it as a UTC value; if 'None' handle it according to
             utc flag of the type
@@ -1414,8 +1423,18 @@ class DateTime(_CommonDateTime):
     zone.
 
     The date and time format is the same for both import and export and is
-    determined by the '__init__()' method parameter.
-    
+    determined by constructor arguments.
+
+    Constructor arguments:
+
+      format -- specification of both input and output format of date
+        and/or time in the form accepted by `time.strftime()'.
+        May be also None in which case the configuration option
+        'config.date_time_format' is used.  The class defines '*_FORMAT'
+        constants which may be used as a value of this argument.
+      mindate, maxdate -- limits of acceptable date/time
+      utc -- specifies, if timestamp in database is in UTC
+
     """
     DEFAULT_FORMAT = '%Y-%m-%d %H:%M:%S'
     """Implicitní formát data a času."""
@@ -1426,25 +1445,13 @@ class DateTime(_CommonDateTime):
     
     _ISO_TZ_MATCHER = re.compile('(?P<sign>[-+])(?P<hours>[0-9]+):(?P<minutes>[0-9]+)')
 
-    def __init__(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
-        """Inicializuj instanci.
-
-        Argumenty:
-          format -- specification of both input and output format of date
-            and/or time in the form accepted by `time.strftime()'.
-            May be also None in which case the configuration option
-            'config.date_time_format' is used.  The class defines '*_FORMAT'
-            constants which may be used as a value of this argument.
-          mindate, maxdate -- limits of acceptable date/time
-          utc -- specifies, if timestamp in database is in UTC
-
-        """
+    def _init(self, format=None, mindate=None, maxdate=None, utc=True, **kwargs):
         assert mindate is None or isinstance(mindate, basestring)
         assert maxdate is None or isinstance(maxdate, basestring)
         if format is None:
             import config
             format = config.date_time_format
-        super(DateTime, self).__init__(format=format, utc=utc, **kwargs)
+        super(DateTime, self)._init(format=format, utc=utc, **kwargs)
         if mindate:
             try:
                 self._mindate = datetime.datetime.strptime(mindate, self.DEFAULT_FORMAT)
@@ -1633,7 +1640,17 @@ class ISODateTime(DateTime):
         return self.export(value, format=True, local=False)
     
 class Date(DateTime):
-    """Datum bez časového údaje."""
+    """Date without a time.
+
+    Constructor arguments:
+
+      format -- specification of both input and output format of date
+        and/or time in the form accepted by `time.strftime()'.
+         May be also None in which case the configuration option
+        'config.date_time_format' is used.  The class defines '*_FORMAT'
+         constants which may be used as a value of this argument.
+
+    """
 
     DEFAULT_FORMAT = '%Y-%m-%d'
     """Implicitní formát data."""
@@ -1642,22 +1659,11 @@ class Date(DateTime):
     CZECH_FORMAT = '%d.%m.%Y'
     """Český \"účetnický\" formát data."""
 
-    def __init__(self, format=None, **kwargs):
-        """Inicializuj instanci.
-
-        Argumenty:
-
-          format -- specification of both input and output format of date
-            and/or time in the form accepted by `time.strftime()'.
-            May be also None in which case the configuration option
-            'config.date_time_format' is used.  The class defines '*_FORMAT'
-            constants which may be used as a value of this argument.
-
-        """
+    def _init(self, format=None, **kwargs):
         if format is None:
             import config
             format = config.date_format
-        super(Date, self).__init__(format=format, utc=False, **kwargs)
+        super(Date, self)._init(format=format, utc=False, **kwargs)
 
     def _validate(self, *args, **kwargs):
         value, error = super(Date, self)._validate(*args, **kwargs)
@@ -1703,6 +1709,14 @@ class Time(_CommonDateTime):
     time with local timezones, either use 'DateTime' or don't mix timezones in
     constructor, validation and exports.
     
+    Constructor arguments:
+
+      format -- specification of both input and output format of date
+        and/or time in the form accepted by `time.strftime()'.
+        May be also None in which case the configuration option
+        'config.date_time_format' is used.  The class defines '*_FORMAT'
+        constants which may be used as a value of this argument.
+        
     """
 
     DEFAULT_FORMAT = '%H:%M:%S'
@@ -1712,22 +1726,11 @@ class Time(_CommonDateTime):
     SHORT_FORMAT = '%H:%M'
     """Formát času bez zobrazení sekund."""
 
-    def __init__(self, format=None, **kwargs):
-        """Inicializuj instanci.
-
-        Argumenty:
-
-          format -- specification of both input and output format of date
-            and/or time in the form accepted by `time.strftime()'.
-            May be also None in which case the configuration option
-            'config.date_time_format' is used.  The class defines '*_FORMAT'
-            constants which may be used as a value of this argument.
-
-        """
+    def _init(self, format=None, **kwargs):
         if format is None:
             import config
             format = config.time_format
-        super(Time, self).__init__(format=format, **kwargs)
+        super(Time, self)._init(format=format, **kwargs)
 
     def _validate(self, *args, **kwargs):
         value, error = super(Time, self)._validate(*args, **kwargs)
@@ -1769,7 +1772,15 @@ class Time(_CommonDateTime):
             
 
 class TimeInterval(Type):
-    """Amount of time between two moments."""
+    """Amount of time between two moments.
+                    
+    Constructor arguments:
+
+      format -- specification of both input and output format of the time
+        interval; only a limited set of specification constructs is
+        supported
+
+    """
 
     VM_TI_FORMAT = 'VM_TI_INVALID_FORMAT'
     _VM_TI_FORMAT_MSG = _(u"Invalid format")
@@ -1783,16 +1794,8 @@ class TimeInterval(Type):
     
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def __init__(self, format=None, **kwargs):
-        """
-        Argumenty:
-
-          format -- specification of both input and output format of the time
-            interval; only a limited set of specification constructs is
-            supported
-            
-        """
-        super(TimeInterval, self).__init__(**kwargs)
+    def _init(self, format=None, **kwargs):
+        super(TimeInterval, self)._init(**kwargs)
         self._format = format
         if format is None:
             self._matcher = self._MATCHER
@@ -1921,9 +1924,9 @@ class Boolean(Type):
 
     _SPECIAL_VALUES = ((True, 'T'), (False, 'F'), (None, ''))
     
-    def __init__(self, not_null=True):
+    def _init(self, not_null=True):
         e = FixedEnumerator((True, False))
-        super(Boolean, self).__init__(enumerator=e, not_null=not_null)
+        super(Boolean, self)._init(enumerator=e, not_null=not_null)
 
     def _validate(self, object, extended=False):
         if extended:
@@ -2095,9 +2098,9 @@ class Binary(Limited):
             self._filename = filename
             self._mime_type = mime_type
             
-    def __init__(self, enumerator=None, **kwargs):
+    def _init(self, enumerator=None, **kwargs):
         assert enumerator is None, ("Enumerators can not be used with binary data types")
-        super(Binary, self).__init__(**kwargs)
+        super(Binary, self)._init(**kwargs)
         
     def _validate(self, object, filename=None, mime_type=None, **kwargs):
         value = Value(self, self.Buffer(object, filename=filename, mime_type=mime_type))
@@ -2132,6 +2135,20 @@ class Image(Binary, Big):
 
     The Python Imaging Library (PIL) must be installed when using this class.
     
+    Constructor arguments:
+        
+      minsize -- maximal image size in pixels as a sequence of two integers
+        (WIDTH, HEIGHT).  'None' in either value indicates an unlimited
+        size in the corresponding direction...
+      maxsize -- maximal image size in pixels; same rules as for 'minsize'
+      formats -- list of allowed input formats as a sequence of strings,
+        each string being one of PIL supported file formats, such as 'PNG',
+        'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX' etc.  Full list of the
+        supported formats depends upon your PIL version.  If None, all
+        formats supported by the Python Imaging Library are allowed.
+      
+    Other arguments are passed to the parent constructor.
+        
     """
     
     VM_MAXSIZE = 'VM_MAXSIZE'
@@ -2162,25 +2179,8 @@ class Image(Binary, Big):
             """Return the image as a 'PIL.Image' instance."""
             return self._image
 
-    def __init__(self, minsize=(None, None), maxsize=(None, None),
-                 formats=None, **kwargs):
-        """Initialize the instance.
-        
-        Arguments:
-        
-          minsize -- maximal image size in pixels as a sequence of two integers
-            (WIDTH, HEIGHT).  'None' in either value indicates an unlimited
-            size in the corresponding direction...
-          maxsize -- maximal image size in pixels; same rules as for 'minsize'
-          formats -- list of allowed input formats as a sequence of strings,
-            each string being one of PIL supported file formats, such as 'PNG',
-            'JPEG', 'TIFF', 'GIF', 'BMP', 'PCX' etc.  Full list of the
-            supported formats depends upon your PIL version.  If None, all
-            formats supported by the Python Imaging Library are allowed.
-          
-        Other arguments are passed to the parent constructor.
-
-        """
+    def _init(self, minsize=(None, None), maxsize=(None, None),
+              formats=None, **kwargs):
         if __debug__:
             for size in minsize, maxsize:
                 assert (isinstance(size, (tuple, list)) and len(size) == 2 and
@@ -2196,7 +2196,7 @@ class Image(Binary, Big):
         self._minsize = tuple(minsize)
         self._maxsize = tuple(maxsize)
         self._formats = formats and tuple(formats)
-        super(Image, self).__init__(**kwargs)
+        super(Image, self)._init(**kwargs)
 
     def __cmp__(self, other):
         result = super(Image, self).__cmp__(other)
@@ -2267,6 +2267,13 @@ class LTree(Type):
 
     - The items between dots may not be empty, may contain only alphanumeric
       characters and may be at most 255 characters long (each of them).
+      
+    Constructor arguments:
+
+      text -- if true, handle the type values as text values, otherwise
+        handle them as true ltree values.  This makes difference in
+        sorting -- when true, sort textually, when false, sort
+        lexicographically.
 
     """
     VM_TREE_FORMAT = 'VM_TREE_FORMAT'
@@ -2280,17 +2287,8 @@ class LTree(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    def __init__(self, text=True, **kwargs):
-        """
-        Arguments:
-
-          text -- if true, handle the type values as text values, otherwise
-            handle them as true ltree values.  This makes difference in
-            sorting -- when true, sort textually, when false, sort
-            lexicographically.
-          
-        """
-        super(LTree, self).__init__(**kwargs)
+    def _init(self, text=True, **kwargs):
+        super(LTree, self)._init(**kwargs)
         self._text = text
 
     def text(self):
@@ -2342,10 +2340,10 @@ class Array(Limited):
     """
     _SPECIAL_VALUES = Limited._SPECIAL_VALUES + ((None, ''),)
     
-    def __init__(self, inner_type, **kwargs):
+    def _init(self, inner_type, **kwargs):
         assert isinstance(inner_type, Type)
         self._inner_type = inner_type
-        super(Array, self).__init__(**kwargs)
+        super(Array, self)._init(**kwargs)
         
     def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
