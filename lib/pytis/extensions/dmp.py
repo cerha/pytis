@@ -730,7 +730,6 @@ class DMPMenu(DMPObject):
                                   ('title', S(item.title()),),
                                   ('fullname', S(fullname),),
                                   ('position', S(item.position()),),
-                                  ('next_position', S(item.position() + '4'),),
                                   ('help', S(item.help()),),
                                   ('hotkey', S(item.hotkey()),),
                                   ('locked', B(item.locked()),),
