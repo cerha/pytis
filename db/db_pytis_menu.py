@@ -419,6 +419,7 @@ def e_pytis_menu_trigger():
         def _update_positions(self, new=None, old=None):
             if old and new and old['position'] == new['position'] and old['next_position'] == new['next_position']:
                 return
+            plpy.execute('lock e_pytis_menu in exclusive mode')
             if old and new:
                 old_position = old['position']
                 new_position = new['position']
