@@ -3077,11 +3077,13 @@ class Field(object):
             """Return assertion error message."""
             return "Field '%s': " % id + msg % args
         def log_(msg, *args):
-            """Return assertion error message."""
-            log(OPERATIONAL, "Field '%s':" % id, msg % args)
+            import inspect
+            filename, line = inspect.stack()[3][1:3]
+            log(OPERATIONAL, "%s, line %s: %s" % (filename, line, msg % args))
         assert isinstance(id, basestring)
         assert dbcolumn is None or isinstance(dbcolumn, basestring), dbcolumn
         if type_ is not None:
+            # type_ is deprecated!
             assert type is None
             type = type_
         assert label is None or isinstance(label, basestring), label
@@ -3175,7 +3177,7 @@ class Field(object):
             # Temporary: The following test replaces the commented out assertion above.  The
             # assertion would break older applications, so we just log for now.
             if enumerator_kwargs and isinstance(enumerator, pytis.data.Enumerator):
-                log_(u"'enumerator' defined as Enumerator instance and '%s' passed.",
+                log_("'enumerator' defined as instance and '%s' passed.",
                      enumerator_kwargs.keys()[0])
             for lnk in links:
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
@@ -3184,18 +3186,11 @@ class Field(object):
                              'minimum', 'maximum',
                              'encrypted',
                              'precision', 'format', 'mindate', 'maxdate', 'utc',
-                             'validation_messages', 'inner_type', 'minsize', 'maxsize',
-                             'formats', 'strength', 'md5', 'verify', 'text',), \
-                    err("Invalid argument: %r", k)
-            if isinstance(type, pytis.data.Type):
-                for arg, value in (('codebook', codebook),
-                                   ('enumerator', enumerator),
-                                   (enumerator_kwargs, enumerator_kwargs.keys()),
-                                   (kwargs, kwargs.keys())):
-                    #assert not value, err("'type' defined as Type instance and '%s' passed.", arg)
-                    # Temporary: Assertion would break older applications, so we just log for now.
-                    if value:
-                        log_(u"'type' defined as Type instance and '%s' passed.", arg)
+                             'validation_messages', 'inner_type',
+                             'minsize', 'maxsize', 'formats', 'strength', 'md5', 'verify', 'text',), \
+                             err("Invalid argument: %r", k)
+            if kwargs:
+                log_("Passing data type arguemnts to Field is deprecated: %r", tuple(kwargs.keys()))
         self._id = id
         self._dbcolumn = dbcolumn or id
         if label is None:
