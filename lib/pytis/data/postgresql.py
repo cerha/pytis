@@ -248,6 +248,7 @@ class PostgreSQLAccessor(object_2_5):
         """
         self._postgresql_initialize_transactions(connection)
         self._postgresql_initialize_coding(connection)
+        self._postgresql_initialize_crypto(connection)
         
     def _postgresql_initialize_transactions(self, connection):
         """Nastav způsob provádění transakcí pro konkrétní backend."""
@@ -264,6 +265,16 @@ class PostgreSQLAccessor(object_2_5):
         coding = result[0].result().fetchone()[0]
         if coding != 'UTF8':
             self._pg_encoding = coding
+
+    def _postgresql_initialize_crypto(self, connection):
+        import config
+        self._postgresql_query(connection, "savepoint __pytis_init_crypto", False)
+        query = "select pytis_crypto_unlock_current_user_passwords(%s)"
+        query_args = (config.dbconnection.password() or '',)
+        try:
+            self._postgresql_query(connection, query, False, query_args=query_args)
+        except DBUserException:
+            self._postgresql_query(connection, "rollback to __pytis_init_crypto", False)
 
     def _postgresql_initialize_search_path(self, connection, schemas):
         if schemas:

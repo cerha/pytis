@@ -83,6 +83,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
 
     def OnInit(self):
+        import pytis.extensions
+        from pytis.util import identity
         clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
         clipboard.connect("owner-change", self._on_clipboard_copy)
         init_colors()
@@ -167,6 +169,37 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 self._saved_state[option] = value
         # Read in access rights.
         init_access_rights(config.dbconnection)
+        # Unlock crypto keys
+        if config.dbconnection.password():
+            try:
+                data = pytis.data.dbtable('ev_pytis_fresh_crypto_keys',
+                                          ('key_id', 'name',),
+                                          config.dbconnection)
+            except pytis.data.DBException:
+                data = None
+            if data is not None:
+                login_password_value = pytis.data.sval(config.dbconnection.password())
+                while True:
+                    rows = data.select_map(identity)
+                    if not rows:
+                        break
+                    message = (_("Zadejte heslo pro odemčení šifrovacích klíčů těchto oblastí: ") +
+                               string.join([r['name'].value() for r in rows], ', '))
+                    password = run_dialog(pytis.form.Password, message=message)
+                    if not password:
+                        break
+                    password_value = pytis.data.sval(password)
+                    for r in rows:
+                        try:
+                            pytis.extensions.dbfunction('pytis_crypto_change_password',
+                                                        ('id_', r['key_id'],),
+                                                        ('old_psw', password_value,),
+                                                        ('new_psw', login_password_value,))
+                        except pytis.data.DBException:
+                            pass
+                data.close()
+                pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
+                                            ('password_', login_password_value,))
         # Init the recent forms list.
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
