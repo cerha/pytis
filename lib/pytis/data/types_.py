@@ -2222,22 +2222,6 @@ class FixedEnumerator(Enumerator):
     def values(self):
         return self._enumeration
         
-
-class DynamicEnumerator(Enumerator):
-    """Enumerator with values depending dynamically on the given argument.
-
-    The argument may be an arbitrary object recognized by the enumerator.  The
-    list of values is generated, based on the argument, using
-    '_dynamic_values()' method.  The method should return a list of
-    basestrings, containing the permitted values.
-    
-    """
-    def _dynamic_values(self, argument):
-        raise Exception("Not implemented")
-        
-    def values(self, argument=None):
-        return self._dynamic_values(argument) or ()
-
     
 class DataEnumerator(Enumerator):
     """Enumerator retrieving the enumeration values from a data object.

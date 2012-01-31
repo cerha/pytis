@@ -464,10 +464,11 @@ class ApplicationRights(pytis.presentation.Specification):
     layout = ('rightid', 'description',)
     cb = pytis.presentation.CodebookSpec(display='description')
 
-class ColnameEnumerator(pytis.data.DynamicEnumerator):    
-    def _dynamic_values(self, argument):
+class ColnameEnumerator(pytis.data.Enumerator):
+        
+    def values(self, argument=None):
         if argument is None:
-            return None
+            return ()
         import config
         resolver = config.resolver
         try:
