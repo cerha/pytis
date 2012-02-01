@@ -285,10 +285,10 @@ class SyslogLogger(Logger):
     def _prefix(self, kind, message, data):
         pid = os.getpid()
         user = getpass.getuser()
-        prefix = '[%s] %s %s %s %s[%s]: ' % \
-                 (pid, user, kind, self._module, self._class_name, self._id)
+        prefix = '[%s] %s %s %s %s %s[%s]: ' % \
+                 (pid, self._database, user, kind, self._module, self._class_name, self._id)
         return prefix
-        
+
     def _send(self, kind, formatted):
         if kind == OPERATIONAL:
             priority = syslog.LOG_ERR
