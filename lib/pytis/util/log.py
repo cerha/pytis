@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,6 +93,7 @@ class Logger(object):
         except IOError:
             self._translator = None
         self._host = socket.gethostname()
+        self._database = config.dbname
         self._module_filter = config.log_module_filter
         try:
             class_ = list(config.log_class_filter)
@@ -165,8 +166,8 @@ class Logger(object):
         host = self._host
         user = getpass.getuser()
         pid = os.getpid()
-        prefix = '%s %s@%s[%s] %s %s %s[%s]: ' % \
-                 (datetime, user, host, pid, kind, self._module,
+        prefix = '%s %s@%s/%s[%s] %s %s %s[%s]: ' % \
+                 (datetime, user, host, self._database, pid, kind, self._module,
                   self._class_name, self._id)
         return prefix
         
