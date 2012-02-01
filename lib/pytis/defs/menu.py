@@ -478,6 +478,62 @@ class ColnameEnumerator(pytis.data.Enumerator):
         fields = specification.view_spec().fields()
         return [f.id() for f in fields]
 
+class ColnameData(pytis.data.RestrictedMemData):
+
+    def __init__(self, *args, **kwargs):
+        self._last_argument = None
+        super(ColnameData, self).__init__(*args, **kwargs)
+
+    def _update_data(self, arguments):
+        argument = arguments.get('argument')
+        if argument == self._last_argument:
+            return
+        self._last_argument = argument
+        if argument is None:
+            self._mem_data = []
+            return
+        import config
+        resolver = config.resolver
+        try:
+            specification = resolver.specification(argument)
+        except ResolverError:
+            return None
+        fields = specification.view_spec().fields()
+        self._mem_data = mem_data = []
+        for f in fields:
+            label = (f.column_label() or f.label() or f.id())
+            mem_data.append(pytis.data.Row((('colname', pytis.data.sval(f.id()),),
+                                            ('label', pytis.data.sval(label),),)))
+        
+    def row(self, key, columns=None, arguments={}, transaction=None):
+        self._update_data(arguments)
+        return super(ColnameData, self).row(key, columns=columns)
+        
+    def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
+               arguments={}, async_count=False, stop_check=None):
+        self._update_data(arguments)
+        return super(ColnameData, self).select(condition=condition, reuse=reuse, sort=sort,
+                                               columns=columns, transaction=transaction,
+                                               arguments=arguments, async_count=async_count,
+                                               stop_check=stop_check)
+    
+    def search(self, condition, direction=pytis.data.FORWARD, transaction=None, arguments={}):
+        self._update_data(arguments)
+        return super(ColnameData, self).search(condition, direction=direction, transaction=transaction)
+
+class ColnameCodebook(pytis.presentation.Specification):
+    public = True
+    title = _("Sloupce")
+    data_cls = ColnameData
+    cb = pytis.presentation.CodebookSpec(display='label', enable_autocompletion=False)
+    
+    def fields(self): return (
+        pytis.presentation.Field('colname', _("Identifikátor"), type=pytis.data.String,
+                                 editable=pytis.presentation.Editable.NEVER, not_null=True),
+        pytis.presentation.Field('label', _("Popis"), type=pytis.data.String,
+                                 editable=pytis.presentation.Editable.NEVER, not_null=True),
+        )
+
 class _ApplicationMenuRightsBase(pytis.presentation.Specification):
     public = False
     
@@ -529,7 +585,7 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
               codebook='menu.ApplicationShortActions',
               descr=_(u"Identifikátor akce související s danou položkou menu")),
         Field('colname', _(u"Sloupec"),
-              fixed=True, enumerator=ColnameEnumerator(), not_null=False,
+              fixed=True, codebook='menu.ColnameCodebook', not_null=False,
               runtime_arguments=pytis.presentation.computer(self._specification_arguments),
               descr=_(u"Sloupec, na který se právo vztahuje")),
         Field('rightid', _(u"Právo"), codebook='menu.ApplicationRights',
