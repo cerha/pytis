@@ -1528,7 +1528,21 @@ class RecordForm(LookupForm):
             data.rewind()
             return data.search(pytis.data.EQ(key, row[key]), transaction=self._transaction,
                                arguments=self._current_arguments())
-        success, result = db_operation(dbop)
+        try:
+            success, result = db_operation(dbop)
+        except pytis.data.Data.UnsupportedOperation:    # MemData
+            key_value = row[key].value()
+            data.select(arguments=self._current_arguments())
+            success = False
+            result = 1
+            while True:
+                r = data.fetchone()
+                if r is None:
+                    return
+                if r[key].value() == key_value:
+                    success = True
+                    break
+                result += 1
         if not success or result == 0:
             return None
         else:

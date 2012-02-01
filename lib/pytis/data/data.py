@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -580,7 +580,7 @@ class Data(object_2_5):
         
         """
         for i in range(count):
-            if self.fetchone(direction) == None:
+            if self.fetchone(direction=direction) == None:
                 return i
         return count
 
@@ -1023,7 +1023,7 @@ class MemData(Data):
             if t is not None:
                 return self._condition2pyfunc(t)
             else:
-                raise ProgramError("Operator not supported:", op_name)
+                raise self.UnsupportedOperation(op_name)
 
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
                arguments={}, async_count=False, stop_check=None):
