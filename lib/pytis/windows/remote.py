@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -78,12 +78,16 @@ def _request(request, *args, **kwargs):
     
 def get_clipboard_text():
     try:
-        return _request('get_clipboard_text')
+        text = _request('get_clipboard_text')
     except:
         return None
+    if text:
+        text = text.replace('\r\n', '\n')
+    return text
 
 def set_clipboard_text(text):
     assert isinstance(text, unicode), text
+    text = text.replace('\n', '\r\n')
     try:
         _request('set_clipboard_text', text)
     except:
