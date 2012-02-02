@@ -164,7 +164,7 @@ class LCGFormatter(object):
                 else:
                     current_row_dictionary = dict([(k, current_row.format(k, secure=True),)
                                                    for k in current_row.keys()
-                                                   if not isinstance(current_row[k], pytis.data.Binary)])
+                                                   if not isinstance(current_row[k].type(), pytis.data.Binary)])
                 dictionary['current_row'] = current_row_dictionary
                 dictionary['data'] = _FormDataIterator(self._selected_resolver, form,
                                                        transaction=self._transaction)
