@@ -98,7 +98,8 @@ class _DataIterator(lcg.SubstitutionIterator):
         super(_DataIterator, self).__init__()
     def _value(self):
         row = self._presented_row
-        return dict([(k, row.format(k, secure=True),) for k in row.keys()])
+        return dict([(k, row.format(k, secure=True),) for k in row.keys()
+                     if not isinstance(row[k].type(), pytis.data.Binary)])
     def _next(self):
         row = self._data.fetchone(transaction=self._transaction)
         if row is None:
@@ -162,7 +163,8 @@ class LCGFormatter(object):
                     current_row_dictionary = LCGFormatter._DummyDict()
                 else:
                     current_row_dictionary = dict([(k, current_row.format(k, secure=True),)
-                                                   for k in current_row.keys()])
+                                                   for k in current_row.keys()
+                                                   if not isinstance(current_row[k], pytis.data.Binary)])
                 dictionary['current_row'] = current_row_dictionary
                 dictionary['data'] = _FormDataIterator(self._selected_resolver, form,
                                                        transaction=self._transaction)
