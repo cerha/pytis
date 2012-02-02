@@ -303,14 +303,20 @@ akce v DMP zůstanou.
 
 Změny systémových nebo aplikačních práv:
 
-  dmp --config=config.py system-rights SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/COLUMN] ...
-  dmp --config=config.py rights SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/COLUMN] ...
+  dmp --config=config.py system-rights SHORTNAME [+|-]ROLE:{view|insert|update|delete|print|export|call|*}[/[/]COLUMN[/...]] ...
+  dmp --config=config.py rights SHORTNAME [+|-]ROLE:{show|view|insert|update|delete|print|export|call|*}[/[/]COLUMN[/...]] ...
 
 např.:
 
   cd pytis-demo
   dmp --config=config.py system-rights cb.Countries -*:export
   dmp --config=config.py rights cb.Countries -*:print +hanak:print
+  dmp --config=config.py rights cb.Continents -hanak:view/name
+  dmp --config=config.py rights cb.Countries -hanak:view//name/continent
+
+Pokud je seznam sloupců oddělen dvěma zpětnými lomítky místo jednoho, aplikuje
+se příkaz na doplněk uvedených sloupců, tj. na všechny sloupce ze specifikace
+kromě sloupců uvedených v příkazu.
 
 Přenačtení práv ze specifikace (smazání současných práv z databáze a uložení
 nových práv do databáze dle specifikace v aplikaci):
