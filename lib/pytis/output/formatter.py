@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 # 
-# Copyright (C) 2002-2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,7 +73,6 @@ PAGE_LANDSCAPE_MODE = 'landscape_mode'
 class AbortOutput(Exception):
     """Exception raised when printing should be aborted."""
 
-    
 class _ProxyDict(dict):
     def __getitem__(self, key):
         result = dict.__getitem__(self, key)
@@ -99,7 +98,7 @@ class _DataIterator(lcg.SubstitutionIterator):
         super(_DataIterator, self).__init__()
     def _value(self):
         row = self._presented_row
-        return dict([(k, row[k].export(),) for k in row.keys()])
+        return dict([(k, row.format(k, secure=True),) for k in row.keys()])
     def _next(self):
         row = self._data.fetchone(transaction=self._transaction)
         if row is None:
@@ -162,7 +161,7 @@ class LCGFormatter(object):
                 if current_row is None:
                     current_row_dictionary = LCGFormatter._DummyDict()
                 else:
-                    current_row_dictionary = dict([(k, current_row[k].export(),)
+                    current_row_dictionary = dict([(k, current_row.format(k, secure=True),)
                                                    for k in current_row.keys()])
                 dictionary['current_row'] = current_row_dictionary
                 dictionary['data'] = _FormDataIterator(self._selected_resolver, form,
@@ -212,18 +211,20 @@ class LCGFormatter(object):
             dictionary = _ProxyDict()
             for column in self._form.data().columns():
                 if op == pytis.data.Data.AGG_COUNT or isinstance(column.type(), pytis.data.Number):
-                    colid = column.id()
-                    def value(colid=colid):
-                        return self._make_agg_value(op, colid)
-                    dictionary[colid] = value
+                    def value(column=column):
+                        return self._make_agg_value(op, column)
+                    dictionary[column.id()] = value
             return dictionary
         def _make_agg_value(self, op, column):
             form = self._form
             if form is None:
                 return lcg.Content()
+            colid = column.id()
+            if not pytis.form.has_access(form.name(), perm=pytis.data.Permission.VIEW, column=colid):
+                return column.type().secret_export()
             data = form.data()
             condition = form.condition()
-            return data.select_aggregate((op, column,), condition=condition,
+            return data.select_aggregate((op, colid,), condition=condition,
                                          transaction=self._transaction).value()
         def _make_binding(self, binding, current_row):
             binding_dictionary = {}
