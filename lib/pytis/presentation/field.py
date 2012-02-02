@@ -516,7 +516,10 @@ class PresentedRow(object):
                 svalue = secure
         column = self._coldict[key]
         if self._singleline and column.line_separator is not None:
-            svalue = string.join(svalue.splitlines(), column.line_separator)
+            if svalue is None:
+                svalue = ''
+            else:
+                svalue = string.join(svalue.splitlines(), column.line_separator)
         self._cache[key] = svalue
         return svalue
 
