@@ -103,6 +103,7 @@ class _DataIterator(lcg.SubstitutionIterator):
     def _next(self):
         row = self._data.fetchone(transaction=self._transaction)
         if row is None:
+            self._data.close()
             return False
         self._presented_row.set_row(row)
         return True
