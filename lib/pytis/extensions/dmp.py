@@ -988,7 +988,7 @@ class DMPRights(DMPObject):
                 continue
             rights.remove_item(shortname=shortname, roleid=roleid, rightid=rightid,
                                colname=colname, system=system)
-            if not system or granted:
+            if granted is not None and (not system or granted):
                 rights.add_item(shortname=shortname, roleid=roleid, rightid=rightid,
                                 colname=colname, system=system, granted=granted)
             specifications.add(shortname)
