@@ -132,7 +132,7 @@ class LCGFormatter(object):
             return ''
 
     class _LCGGlobals(_ProxyDict):
-        def __init__(self, resolvers, form, form_bindings, current_row=None):
+        def __init__(self, resolvers, form, form_bindings, codebooks, current_row=None):
             self._resolvers = resolvers
             if form is not None:
                 name = form.name()
@@ -151,9 +151,9 @@ class LCGFormatter(object):
             import config
             T = pytis.data.DBTransactionDefault
             self._transaction = T(connection_data=config.dbconnection, isolation=T.SERIALIZABLE)
-            dictionary = self._initial_dictionary(form, form_bindings, current_row)
+            dictionary = self._initial_dictionary(form, form_bindings, codebooks, current_row)
             _ProxyDict.__init__(self, dictionary)
-        def _initial_dictionary(self, form, form_bindings, current_row):
+        def _initial_dictionary(self, form, form_bindings, codebooks, current_row):
             dictionary = _ProxyDict()
             if form is not None:
                 import pytis.form # must be placed before first `pytis' use here
@@ -198,6 +198,22 @@ class LCGFormatter(object):
                             binding_dictionary[binding_id] = MakeBinding(binding,
                                                                          self._make_binding,
                                                                          current_row)
+                if codebooks:
+                    dictionary['codebook'] = codebook_dictionary = {}
+                    form_name = form.name()
+                    for field_id, cb_fields, cb in codebooks:
+                        permitted = current_row.permitted(field_id, pytis.data.Permission.VIEW)
+                        codebook_dictionary[field_id] = field_dictionary = _ProxyDict()
+                        for cb_id, _cb_label in cb_fields:
+                            if (permitted and
+                                pytis.form.has_access(cb, perm=pytis.data.Permission.VIEW,
+                                                      column=cb_id)):
+                                def cb_value(current_row=current_row, field_id=field_id, cb_id=cb_id):
+                                    return current_row.cb_value(field_id, cb_id).export()
+                            else:
+                                def cb_value(current_row=current_row, field_id=field_id, cb_id=cb_id):
+                                    return current_row.cb_value(field_id, cb_id).secret_export()
+                            field_dictionary[cb_id] = cb_value
             return dictionary
         def _make_table(self):
             form = self._form
@@ -330,6 +346,10 @@ class LCGFormatter(object):
         self._form_bindings = form_bindings
         self._row_template, __ = self._resolve(template_id, 'row', default=None)
         self._application_variables, __ = self._resolve(template_id, 'variables', default={})
+        if form is None:
+            self._codebooks = None
+        else:
+            self._codebooks = self._retrieve_codebooks(form.view_spec())
 
     def _resolve(self, template_id, element, default=''):
         result = default
@@ -342,6 +362,23 @@ class LCGFormatter(object):
         else:
             resolver = None
         return result, resolver
+
+    @classmethod
+    def _retrieve_codebooks(class_, view_spec):
+        resolver = pytis.util.resolver()
+        codebooks = []
+        for field in view_spec.fields():
+            cb = field.codebook()
+            if cb:
+                try:
+                    cb_spec = resolver.get(cb, 'view_spec')
+                except ResolverError:
+                    cb_spec = None
+                if cb_spec:
+                    cb_fields = [(f.id(), f.label(),) for f in cb_spec.fields() if f.label()]
+                    if cb_fields:
+                        codebooks.append((field.id(), cb_fields, cb,))
+        return codebooks
 
     def _template_parameters(self, template):
         if isinstance(template, StructuredText):
@@ -359,7 +396,7 @@ class LCGFormatter(object):
             row_template = self._row_template
             for row in self._form.presented_rows():
                 row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
-                                                   current_row=row)
+                                                   self._codebooks, current_row=row)
                 id_ = 'pytissubdoc%d' % (i,)    
                 row_template_lcg = row_template.lcg()
                 parameters = self._template_parameters(row_template)
@@ -368,7 +405,8 @@ class LCGFormatter(object):
                                            **parameters)
                 children.append(document)
                 i += 1
-        lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings)
+        lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
+                                       self._codebooks)
         lcg_globals['app'] = self._application_variables
         body = self._body
         if not body:
@@ -475,6 +513,12 @@ class LCGFormatter(object):
         for field in view_spec.fields():
             text += _("  %s ... %s\n") % (field.id(), field.label(),)
         text += "\n"
+        codebooks = LCGFormatter._retrieve_codebooks(view_spec)
+        if codebooks:
+            text += _("Číselníky:\n")
+            for field_id, cb_fields, _cb in codebooks:
+                for cb_id, cb_label in cb_fields:
+                    text += "  ${codebook.%s.%s} ... %s\n" % (field_id, cb_id, cb_label,)
         if bindings:
             text += _("Vedlejší formuláře:\n")
             for b in bindings:
@@ -488,6 +532,13 @@ class LCGFormatter(object):
                     sub_view_spec = resolver.get(b.name(), 'view_spec')
                     for field in sub_view_spec.fields():
                         text += _("    %s ... %s\n") % (field.id(), field.label(),)
+                    codebooks = LCGFormatter._retrieve_codebooks(sub_view_spec)
+                    if codebooks:
+                        text += _("  Číselníky:\n")
+                        for field_id, cb_fields, _cb in codebooks:
+                            for cb_id, cb_label in cb_fields:
+                                text += ("  ${Binding.%s.codebook.%s.%s} ... %s\n" %
+                                         (binding_id, field_id, cb_id, cb_label,))
                     text += "\n"
         text += _("""Agregační proměnné:
   ${agg.min.IDENTIFIKÁTOR_SLOUPCE} ..... minimum

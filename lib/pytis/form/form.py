@@ -360,6 +360,10 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         """Vrať titulek ze specifikace formuláře jako řetězec."""
         return self._view.title()
 
+    def view_spec(self):
+        """Return 'ViewSpec' instance corresponding to the form."""
+        return self._view
+
     def guardian(self):
         """Vrať guardian zadané v konstruktoru (nebo parent)."""
         return self._guardian
