@@ -533,8 +533,11 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             sign = g.sup("*", cls="not-null")
         else:
             sign = ''
-        return g.label(field.label, field.unique_id) + sign + ":"
-        
+        cls='field-label id-'+field.id
+        if not self._row.editable(field.id):
+            cls += ' disabled'
+        return g.span(g.label(field.label, field.unique_id) + sign + ":", cls=cls)
+            
     def _export_field_help(self, context, field):
         descr = field.spec.descr()
         if descr:

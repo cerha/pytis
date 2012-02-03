@@ -160,6 +160,18 @@ pytis.Field = Class.create({
 
     set_editability: function(value) {
 	// Disable/enable field editability.
+	var labels = $$('.field-label.id-'+this._id);
+	if (labels) {
+	    var label = labels[0]
+	    if (value && label.hasClassName('disabled'))
+		label.removeClassName('disabled');
+	    if (!value && !label.hasClassName('disabled'))
+		label.addClassName('disabled');
+	}
+	this._set_editability(value);
+    },
+
+    _set_editability: function(value) {
 	this._ctrl.disabled = !value;
     },
     
@@ -194,7 +206,7 @@ pytis.RadioField = Class.create(pytis.Field, {
 	}
     },
 
-    set_editability: function(value) {
+    _set_editability: function(value) {
 	for (var i=0; i<this._ctrl.length; i++) {
 	    this._ctrl[i].disabled = !value;
 	}
@@ -250,7 +262,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 	});
     },
 
-    set_editability: function(value) {
+    _set_editability: function(value) {
 	this._checkboxes().each(function(checkbox) {
 	    checkbox.disabled = !value;
 	});
@@ -287,7 +299,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 });
 
 pytis.DateTimeField = Class.create(pytis.Field, {
-    set_editability: function(value) {
+    _set_editability: function(value) {
 	this._ctrl.disabled = !value;
 	var button = $(this._ctrl.id+'-button')
 	button.disabled = !value;
