@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 # 
-# Copyright (C) 2002-2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -764,7 +764,7 @@ class Image(_Mark):
 class StructuredText(_Mark):
     """LCG structured text."""
 
-    _SIDE_DATA_MATCHER = re.compile(r'(\${[^}]+\.data\.)')
+    _SIDE_DATA_MATCHER = re.compile(r'(\${[^}]+\.(data|codebook)\.)')
     
     def __init__(self, text):
         """

@@ -86,7 +86,39 @@ class HashableDict(dict):
     def __setitem__(self, key, value):
         raise Exception('immutable object')
 class _DataIterator(lcg.SubstitutionIterator):
-    def __init__(self, resolver, form_name, condition, sorting, transaction):
+    class _CodebookDictionary(dict):
+        def __init__(self, row, field_id, columns, secret_columns):
+            self._row = row
+            self._field_id = field_id
+            self._secret_columns = secret_columns
+            data = [(c, True,) for c in columns]
+            dict.__init__(self, data)
+        def get(self, key, default=None):
+            try:
+                value = self._row.cb_value(self._field_id, key)
+            except KeyError:
+                return default
+            result = value.secret_export() if key in self._secret_columns else value.export()
+            return result
+    class _RowDictionary(dict):
+        def __init__(self, row, codebooks):
+            if codebooks is None:
+                keys = row.keys()
+            else:
+                keys = codebooks.keys()
+            dict.__init__(self, [(k, True,) for k in keys])
+            self._row = row
+            self._codebooks = codebooks
+        def get(self, key, default=None):
+            try:
+                if self._codebooks is None:
+                    return self._row.format(key, secure=True)
+                else:
+                    columns, secret_columns = self._codebooks[key]                
+                    return _DataIterator._CodebookDictionary(self._row, key, columns, secret_columns)
+            except KeyError:
+                return default
+    def __init__(self, resolver, form_name, condition, sorting, transaction, codebooks=None):
         self._transaction = transaction
         view = resolver.get(form_name, 'view_spec')
         data_spec = resolver.get(form_name, 'data_spec')
@@ -95,11 +127,24 @@ class _DataIterator(lcg.SubstitutionIterator):
         self._data.select(condition=condition, sort=sorting, transaction=transaction)
         self._presented_row = pytis.presentation.PresentedRow(view.fields(), self._data, None,
                                                               singleline=True)
+        self._codebooks = None
+        if codebooks:
+            self._codebooks = {}
+            for field_id, cb_fields, cb in codebooks:
+                permitted = pytis.form.has_access(form_name, perm=pytis.data.Permission.VIEW,
+                                                  column=field_id)
+                columns = []
+                secret_columns = []
+                for cb_id, _cb_label in cb_fields:
+                    columns.append(cb_id)
+                    if (not permitted or
+                        not pytis.form.has_access(cb, perm=pytis.data.Permission.VIEW,
+                                                  column=cb_id)):
+                        secret_columns.append(cb_id)
+                self._codebooks[field_id] = (columns, secret_columns)
         super(_DataIterator, self).__init__()
     def _value(self):
-        row = self._presented_row
-        return dict([(k, row.format(k, secure=True),) for k in row.keys()
-                     if not isinstance(row[k].type(), pytis.data.Binary)])
+        return self._RowDictionary(self._presented_row, self._codebooks)
     def _next(self):
         row = self._data.fetchone(transaction=self._transaction)
         if row is None:
@@ -123,7 +168,6 @@ class _FormDataIterator(_DataIterator):
             sorting = resolver.p((name, P_SORTING))
         super(_FormDataIterator, self).__init__(resolver, name, condition=condition,
                                                 sorting=sorting, transaction=transaction)
-
 
 class LCGFormatter(object):
     """LCG based formatter."""
@@ -247,6 +291,7 @@ class LCGFormatter(object):
                                          transaction=self._transaction).value()
         def _make_binding(self, binding, current_row):
             binding_dictionary = {}
+            binding_name = binding.name()
             binding_condition = binding.condition()
             binding_column = binding.binding_column()
             if binding_column and current_row is not None:
@@ -260,9 +305,14 @@ class LCGFormatter(object):
             table = pytis.output.data_table(self._selected_resolver, binding.name(), condition=condition,
                                             sorting=(), transaction=self._transaction)
             binding_dictionary['table'] = table.lcg()
-            binding_dictionary['data'] = _DataIterator(self._selected_resolver, binding.name(),
+            binding_dictionary['data'] = _DataIterator(self._selected_resolver, binding_name,
                                                        condition=condition, sorting=(),
                                                        transaction=self._transaction)
+            codebooks = LCGFormatter._retrieve_codebooks(self._selected_resolver.get(binding_name, 'view_spec'))
+            binding_dictionary['codebook'] = _DataIterator(self._selected_resolver, binding_name,
+                                                           condition=condition, sorting=(),
+                                                           transaction=self._transaction,
+                                                           codebooks=codebooks)
             return binding_dictionary
         
     def __init__(self, resolvers, template_id, form=None, form_bindings=None):
