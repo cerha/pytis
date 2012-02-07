@@ -344,7 +344,6 @@ class PresentedRow(object):
         return "<%s: %s>" % (self.__class__.__name__, info)
 
     def _run_callback(self, kind, key=None):
-        print '  *', kind, key, stack_info(3)
         callbacks = self._callbacks.get(kind, {})
         if key is None:
             for callback in callbacks.values():
