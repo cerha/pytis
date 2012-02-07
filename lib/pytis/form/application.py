@@ -69,6 +69,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     
     """
     _menubar_forms = {}
+    _log_login = True
 
     _WINDOW_MENU_TITLE = _(u"Okn&a")
 
@@ -1359,6 +1360,10 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
         try:
             result = operation(*args, **kwargs)
             if _application:
+                import config
+                if _application._log_login:
+                    log(ACTION, "Login action:", (config.dbhost, config.dbname, config.dbuser, 'True'))
+                    _application._log_login = False
                 _application.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException as e:
@@ -1367,6 +1372,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
         except pytis.data.DBLoginException as e:
             import config
             if config.dbconnection.password() is not None and _application:
+                log(ACTION, "Login action:", (config.dbhost, config.dbname, config.dbuser, 'False'))
                 _application.login_hook(success=False)
             login_and_password = run_dialog(Login, _(u"Zadejte heslo pro přístup do databáze"),
                                             login=config.dbuser)
