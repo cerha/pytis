@@ -587,10 +587,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(ACTION, msg, *args)
             except:
                 print msg, args
-        safelog('Voláno ukončení aplikace')
+        safelog('Application exit called', (config.dbschemas,))
         try:
             if not self._modals.empty():
-                log(EVENT, "Není možno zavřít aplikaci s modálním oknem:",
+                log(EVENT, "Couldn't close application with modal windows:",
                     self._modals.top())
                 return False
             forms = [(f.__class__, f.name(), f.title(), True) for f in self._windows.items()
@@ -1362,7 +1362,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if _application:
                 import config
                 if _application._log_login:
-                    log(ACTION, "Login action:", (config.dbhost, config.dbname, config.dbuser, 'True'))
+                    log(ACTION, "Login action:", (config.dbschemas, 'True'))
                     _application._log_login = False
                 _application.login_hook(success=True)
             return True, result
@@ -1372,7 +1372,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
         except pytis.data.DBLoginException as e:
             import config
             if config.dbconnection.password() is not None and _application:
-                log(ACTION, "Login action:", (config.dbhost, config.dbname, config.dbuser, 'False'))
+                log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
             login_and_password = run_dialog(Login, _(u"Zadejte heslo pro přístup do databáze"),
                                             login=config.dbuser)

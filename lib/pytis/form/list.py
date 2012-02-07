@@ -1967,7 +1967,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_function = self._cmd_export_xls
         else:
             export_function = self._cmd_export_csv
-        log(ACTION, "Export action:", (self.name(), self._form_name(),
+        log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
         log_user_action(self.name(), self._form_name(), 'export',
                         info=("Format: %s\n" % fileformat +
