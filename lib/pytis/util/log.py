@@ -166,7 +166,7 @@ class Logger(object):
         host = self._host
         user = getpass.getuser()
         pid = os.getpid()
-        prefix = '%s %s@%s/%s[%s] %s %s %s[%s]: ' % \
+        prefix = u'%s %s@%s/%s[%s] %s %s %s[%s]: ' % \
                  (datetime, user, host, self._database, pid, kind, self._module,
                   self._class_name, self._id)
         return prefix
@@ -176,29 +176,24 @@ class Logger(object):
 
     def _formatted_data(self, prefix, fmessage, data):
         if data is not None:
-            if type(data) == type(()):
-                repr_ = repr(tuple(map(deepstr, data)))
-            elif type(data) == type(''):
-                repr_ = data
-            else:
-                repr_ = repr(data)
-            datalines = map(lambda l, prefix=prefix: '%s%s' % (prefix, l),
-                            string.split(repr_, '\n'))
+            printable = deepstr(data)
+            datalines = map(lambda l, prefix=prefix: u'%s%s' % (prefix, l),
+                            string.split(printable, '\n'))
             n = len(datalines)
             if n <= 1:
                 if fmessage and fmessage[-1] == ':':
                     import config
                     if config.log_one_line_preferred:
-                        return '*%s%s %s' % (prefix, fmessage, repr_)
-                data_string = '=%s%s' % (prefix, repr_)
+                        return u'*%s%s %s' % (prefix, fmessage, printable)
+                data_string = u'=%s%s' % (prefix, printable)
             else:
-                datalines[0] = '<%s' % datalines[0]
-                datalines[n-1] = '>%s' % datalines[n-1]
-                datalines[1:n-1] = map(lambda l: ' %s' % l, datalines[1:n-1])
+                datalines[0] = u'<%s' % datalines[0]
+                datalines[n-1] = u'>%s' % datalines[n-1]
+                datalines[1:n-1] = map(lambda l: u' %s' % l, datalines[1:n-1])
                 data_string = string.join(datalines, '\n')
-            formatted = '@%s%s\n%s' % (prefix, fmessage, data_string)
+            formatted = u'@%s%s\n%s' % (prefix, fmessage, data_string)
         else:
-            formatted = '*%s%s' % (prefix, fmessage)
+            formatted = u'*%s%s' % (prefix, fmessage)
         return formatted
 
     def _formatted(self, kind, message, data):

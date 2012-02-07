@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1587,11 +1587,18 @@ def deepstr(obj):
 
     If 'obj' is a sequence, apply the function on it recursively.
 
+    The function is intended to be primarily used in logging, for various
+    purposes.
+
     """
     if is_sequence(obj):
-        transformed = map(deepstr, obj)
-        if isinstance(obj, tuple):
-            transformed = tuple(transformed)
+        transformed_list = map(deepstr, obj)
+        template = u'(%s,)' if isinstance(obj, tuple) else u'[%s]'
+        transformed = template % (string.join(transformed_list, ', '),)
+    elif isinstance(obj, unicode):
+        transformed = u'"%s"' % (obj.replace('"', '\\"'),)
+    elif isinstance(obj, str):
+        transformed = '"%s"' % (obj.replace('"', '\\"'),)
     else:
         transformed = obj
     try:            
