@@ -344,6 +344,7 @@ class PresentedRow(object):
         return "<%s: %s>" % (self.__class__.__name__, info)
 
     def _run_callback(self, kind, key=None):
+        print '  *', kind, key, stack_info(3)
         callbacks = self._callbacks.get(kind, {})
         if key is None:
             for callback in callbacks.values():
@@ -354,22 +355,37 @@ class PresentedRow(object):
                 callback()
             
     def _resolve_dependencies(self, key=None):
-        # Recompute dependencies for all fields when the key is None or recompute
-        # just fields depending on given field (after its change).
-        if key is not None and key in self._dependent:
-            for k in self._dependent[key]:
+        changed_enumerations = []
+        if key is None:
+            # Recompute all computed fields when key is None.
+            for k in self._runtime_filter_dirty:
+                self._runtime_filter_dirty[k] = True
+                changed_enumerations.append(k)
+            for k in self._runtime_arguments_dirty:
+                self._runtime_arguments_dirty[k] = True
+                changed_enumerations.append(k)
+        else:
+            # Recompute just fields depending on given field (after its change).
+            for k in self._dependent.get(key, ()):
                 self._dirty[k] = True
+            for k in self._runtime_filter_dependent.get(key, ()):
+                self._runtime_filter_dirty[k] = True
+                changed_enumerations.append(k)
+            for k in self._runtime_arguments_dependent.get(key, ()):
+                self._runtime_arguments_dirty[k] = True
+                changed_enumerations.append(k)
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._recompute_editability(key)
-        self._notify_runtime_filter_change(key)
+        for k in remove_duplicates(changed_enumerations):
+            self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
         if self._callbacks and key is not None and key in self._dependent:
             # Call 'chage_callback' for all remaining dirty fields.  Some fields may already have
             # been recomputed during the editability and runtime filter recomputations.  The
             # callbacks for those fields have already been generated, but here we neen to handle
             # the rest.
-            for key, dirty in self._dirty.items():
+            for k, dirty in self._dirty.items():
                 if dirty:
-                    self._run_callback(self.CALL_CHANGE, key)
+                    self._run_callback(self.CALL_CHANGE, k)
     
     def _recompute_editability(self, key=None):
         if key is None:
@@ -395,18 +411,6 @@ class PresentedRow(object):
         self._editability_dirty[key] = False
         return result
     
-    def _notify_runtime_filter_change(self, key=None):
-        if key is None:
-            keys = (self._runtime_filter_dirty.keys() +
-                    self._runtime_arguments_dirty.keys())
-        else:
-            keys = (self._runtime_filter_dependent.get(key, []) +
-                    self._runtime_arguments_dependent.get(key, []))
-        for k in remove_duplicates(keys):
-            self._runtime_filter_dirty[k] = True
-            self._runtime_arguments_dirty[k] = True
-            self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
-
     def get(self, key, default=None, lazy=False, secure=False):
         """Return the value for the KEY if it exists or the DEFAULT otherwise.
 
