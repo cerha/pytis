@@ -395,6 +395,9 @@ def e_pytis_menu_trigger():
             parent = string.join(components[:-1], '.')
             if parent and not plpy.execute("select menuid from e_pytis_menu where position='%s'" % (parent,)):
                 raise Exception('error', "No menu item parent")
+        def _check_consistency(self):
+            if plpy.execute("select count(*) as n from e_pytis_menu e1, e_pytis_menu e2 where e1.position=e2.next_position")[0]['n'] > 0:
+                plpy.error("collision of position and next_position")
         def _do_before_insert(self):
             self._maybe_new_action()
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
@@ -423,8 +426,9 @@ def e_pytis_menu_trigger():
             if old and new:
                 old_position = old['position']
                 new_position = new['position']
-                plpy.execute("update e_pytis_menu set position='%s'||subpath(position, nlevel('%s')) where position <@ '%s'" %
-                             (new_position, old_position, old_position,))
+                if old_position != new_position:
+                    plpy.execute("update e_pytis_menu set position='%s'||subpath(position, nlevel('%s')) where position <@ '%s'" %
+                                 (new_position, old_position, old_position,))
             if new:
                 data = plpy.execute("select position, next_position from e_pytis_menu where position != '' order by position")
                 sequences = {}
@@ -442,8 +446,7 @@ def e_pytis_menu_trigger():
                 for position_list in sequences.values():
                     position_list_len = len(position_list)
                     for i in range(position_list_len - 1):
-                        position = position_list[i][0]
-                        next_position = position_list[i][1]
+                        position, next_position = position_list[i]
                         next_item_position = position_list[i+1][0]
                         if (len(position) != len(next_position) or
                             position >= next_position or
@@ -453,6 +456,8 @@ def e_pytis_menu_trigger():
                             suffix += '0' * max(len(next_suffix) - len(suffix), 0)
                             next_suffix += '0' * max(len(suffix) - len(next_suffix), 0)
                             new_suffix = str(long((long(suffix) + long(next_suffix)) / 2))
+                            while len(new_suffix) < len(next_suffix):
+                                new_suffix = '0' + new_suffix
                             if new_suffix == suffix:
                                 new_suffix = suffix + '4'
                             next_position = position[:-1] + [new_suffix]
@@ -472,6 +477,7 @@ def e_pytis_menu_trigger():
                 return
             plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
             self._update_positions(new=self._new)
+            self._check_consistency()
             plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
         def _do_after_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
@@ -482,6 +488,7 @@ def e_pytis_menu_trigger():
                 plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" % (self._old['fullname'],))
                 plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" % (self._old['fullname'],))
             self._update_positions(new=self._new, old=self._old)
+            self._check_consistency()
             plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
