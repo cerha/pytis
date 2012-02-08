@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -380,6 +380,9 @@ class FormProfileManager(UserSetttingsManager):
             kwargs['transaction'] = transaction
             operation(*args, **kwargs)
 
+    def _profile_params(self, profile):
+        return dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
+            
     def save_profile(self, spec_name, form_name, profile, transaction=None):
         """Save user specific configuration of a form.
         
@@ -394,7 +397,7 @@ class FormProfileManager(UserSetttingsManager):
 
         """
         def save_params(transaction):
-            params = dict([(param, getattr(profile, param)()) for param in self._PROFILE_PARAMS])
+            params = self._profile_params(profile)
             self._params_manager.save(spec_name, form_name, profile.id(), params,
                                       dump=self._dump_params(params),
                                       errors=self._errors(profile, lambda p: p != 'filter'),
@@ -449,6 +452,9 @@ class FormProfileManager(UserSetttingsManager):
             # condition would be EQ('date', '2011-03-01') for example).
             params, errors = load_params(profile.id())
             if not errors:
+                for param, value in self._profile_params(profile).items():
+                    if params.get(param) is None:
+                        params[param] = value
                 profile = Profile(profile.id(), profile.title(), filter=profile.filter(), **params)
             profiles.append(profile)
         # Now load also user defined profiles.
