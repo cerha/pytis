@@ -611,16 +611,6 @@ class DBColumnBinding(DBBinding):
         assert isinstance(type_, Type) or type(type_) == type(Type) or type_ is None, type_
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         assert encrypt_empty is None or isinstance(encrypt_empty, bool), encrypt_empty
-        if __debug__:
-            if isinstance(type_, Type):
-                kwargs_copy = copy.copy(kwargs)
-                if type_.not_null() == kwargs_copy.get('not_null', type_.not_null()):
-                    for a in ('not_null', 'enumerator',):
-                        try:
-                            del kwargs_copy[a]
-                        except KeyError:
-                            pass
-                assert kwargs_copy == {}, (type_, kwargs)
         self._table = table
         self._column = column
         self._related_to = related_to
