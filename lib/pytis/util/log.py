@@ -297,12 +297,12 @@ class SyslogLogger(Logger):
             raise ProgramError('Unknown message kind', kind)
         if self._facility is not None:
             priority = priority | self._facility
-        if isinstance(formatted, unicode):
-            formatted = formatted.encode('utf-8')
         while formatted:
-            syslog.syslog(priority, formatted[:self._MAX_MESSAGE_LENGTH])
+            msg = formatted[:self._MAX_MESSAGE_LENGTH]
+            if isinstance(msg, unicode):
+                msg = msg.encode('utf-8')
+            syslog.syslog(priority, msg)
             formatted = formatted[self._MAX_MESSAGE_LENGTH:]
-
 
 
 ###
