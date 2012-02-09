@@ -1969,9 +1969,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             export_function = self._cmd_export_csv
         log(ACTION, "Export action:", (self.name(), self._form_name(), config.dbschemas,
                                        "Filter: %s\n" % str(self._lf_filter)))
-        log_user_action(self.name(), self._form_name(), 'export',
-                        info=("Format: %s\n" % fileformat +
-                              "Filter: %s\n" % str(self._lf_filter)))
         if export_function(export_file) and remote:
             pytis.windows.launch_file(filename.name())
 
