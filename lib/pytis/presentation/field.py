@@ -730,7 +730,7 @@ class PresentedRow(object):
         Arguments:
         
           key -- field identifier (string).
-          permisson -- one of 'pytis.data.Permission' constants determinint the perission to be
+          permission -- one of 'pytis.data.Permission' constants determining the permission to be
             checked or 'True' in which case corresponding editing permission
             (insert or update) is checked.
           
