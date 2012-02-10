@@ -246,6 +246,13 @@ class Type(object):
             #result = compare_objects(self, other)
         return result
 
+    def __str__(self):
+        name, module = self.__class__.__name__, self.__class__.__module__
+        if module != 'pytis.data.types_':
+            name = module +'.'+ name
+        args = ['%s=%s' % x for x in self._constructor_kwargs.items()]
+        return "<%s %s>" % (name, ', '.join(args))
+
     def __hash__(self):
         return hash(self.__class__.__name__)
 
