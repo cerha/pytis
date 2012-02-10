@@ -170,6 +170,7 @@ class Type(object):
         return result
     _make = staticmethod(_make)
 
+    @classmethod
     def make(class_, *args, **kwargs):
         """Pouze pro účely zpětné kompatibility a pro metatřídu.
 
@@ -177,8 +178,18 @@ class Type(object):
 
         """
         return class_._make(class_, *args, **kwargs)
-    make = classmethod(make)
 
+    @classmethod
+    def type_table(class_):
+        """Vrať tabulku typů jako instanci '_TypeTable'.
+
+        Jediný účel této metody je zpřístupnit tabulku typů pro vzdálené
+        předávání typů ze serveru na klienta.  Pro jiné účely by tabulka typů
+        neměla být používána.
+
+        """
+        return Type._type_table
+    
     def __init__(self, **kwargs):
         """Inicialize the instance.
 
@@ -216,29 +227,6 @@ class Type(object):
                 self._validation_cache.reset()
             enumerator.add_callback_on_change(callback)
 
-    def clone(self, other):
-        """Clone this type by another type and return the cloned instance.
-
-        The cloned instance will inherit all attributes of this type and the
-        other type passed as argument, where the attributes of the later type
-        take precedence.
-
-        """
-        assert isinstance(other, self.__class__), other
-        kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
-        return other.__class__(**kwargs)
-            
-    def type_table(class_):
-        """Vrať tabulku typů jako instanci '_TypeTable'.
-
-        Jediný účel této metody je zpřístupnit tabulku typů pro vzdálené
-        předávání typů ze serveru na klienta.  Pro jiné účely by tabulka typů
-        neměla být používána.
-
-        """
-        return Type._type_table
-    type_table = classmethod(type_table)
-    
     def __cmp__(self, other):
         """Vrať 0, právě když 'self' a 'other' reprezentují tentýž typ."""
         if not sameclass(self, other):
@@ -270,6 +258,18 @@ class Type(object):
             raise InvalidAccessError('Invalid type identifier', state)
         self._id = state
 
+    def clone(self, other):
+        """Clone this type by another type and return the cloned instance.
+
+        The cloned instance will inherit all attributes of this type and the
+        other type passed as argument, where the attributes of the later type
+        take precedence.
+
+        """
+        assert isinstance(other, self.__class__), other
+        kwargs = dict(self._constructor_kwargs, **other._constructor_kwargs)
+        return other.__class__(**kwargs)
+            
     def validate(self, object, strict=True, transaction=None, condition=None, arguments=None,
                  **kwargs):
         """Validate the 'object' and return a 'Value' instance and an error.
