@@ -1604,8 +1604,17 @@ def init_access_rights(connection_data):
             columns = [None]
         rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
         action_rights = _access_rights[shortname] = _access_rights.get(shortname, {})
+        relaxed_action_rights = action_rights.get(True)
+        if relaxed_action_rights is None:
+            # Relaxed access rights are access rights to the action as a whole.
+            # The action is accessible if it is accessible itself or if any of
+            # its columns is accessible.
+            action_rights[True] = relaxed_action_rights = []
         for c in columns:
             action_rights[c] = rights
+            for r in rights:
+                if r not in relaxed_action_rights:
+                    relaxed_action_rights.append(r)
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
     
@@ -1669,9 +1678,12 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
             if access_rights is not None:
                 result = access_rights.permitted(perm, _user_roles, column=column)
         else:
-            permissions = rights.get(column, None)
-            if permissions is None:
-                permissions = rights.get(None, ())
+            if column is None:
+                permissions = rights.get(True, None)
+            else:
+                permissions = rights.get(column, None)
+                if permissions is None:
+                    permissions = rights.get(None, ())
             result = perm in permissions
     return result
 

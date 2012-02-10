@@ -3416,12 +3416,12 @@ class Specification(object):
             else:
                 rights = []
             for c in columns:
+                if c is None:
+                    shortname_rights[False] = rights
                 shortname_rights[c] = rights
         rights_data.select_map(process)
         # Transform access rights specifications to AccessRights instances
         def process(column, permissions):
-            if column is None:
-                column = False
             return (column, (None,) + tuple(permissions),)
         for shortname, rights in access_rights.items():
             access_rights_spec = [process(column, permissions) for column, permissions in rights.items()]
