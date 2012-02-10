@@ -198,8 +198,6 @@ class AccessRights(object):
         groups = self._permitted_groups(permission, column)
         if column is None:
             groups += self._permitted_groups(permission, True)
-        else:
-            groups += self._permitted_groups(permission, None)            
         return remove_duplicates(list(groups))
 
     def specification(self):
