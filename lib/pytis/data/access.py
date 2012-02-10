@@ -2,7 +2,7 @@
 
 # Access rights
 # 
-# Copyright (C) 2002-2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,12 +95,13 @@ class AccessRights(object):
             PERMISSIONS is a sequence of 'Permission' class constants
 
         PERMISSIONS makes corresponding actions allowed, anything what is not
-        allowed is forbidden.  When COLUMN, resp. GROUP, is 'None', it's an
-        implicit value that applies to the given column, resp. group, if no
+        allowed is forbidden.  When COLUMN or GROUP is 'None', it's an implicit
+        value that applies to the given column or group respectively, if no
         more specific permission is defined for it.  Implicit permissions are
-        added to the explicit permissions given to a column, resp. group, so
-        they can be extended but not limited.  If COLUMN is 'False', it applies
-        only to those columns which don't have any own rights defined.
+        added to the explicit permissions given to a column or group, so they
+        can be extended but not limited.  If a column name is 'False', it
+        applies only to those columns which don't have any own rights defined
+        for the given permission.
 
         If a column or a group within a column is given multiple times, the
         corresponding permissions are added together.
@@ -196,7 +197,7 @@ class AccessRights(object):
         """
         groups = self._permitted_groups(permission, column)
         if column is None:
-            groups += self._permitted_groups(permission, False)
+            groups += self._permitted_groups(permission, True)
         else:
             groups += self._permitted_groups(permission, None)            
         return remove_duplicates(list(groups))
