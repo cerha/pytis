@@ -645,7 +645,7 @@ class Float(Number):
     VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
     _VM_INVALID_NUMBER_MSG = _(u"Není to povolené číslo")
     
-    def __init__(self, precision=None, **kwargs):
+    def __init__(self, precision=None, digits=None, **kwargs):
         """Definuj typ reálného čísla.
 
         Argumenty:
@@ -653,6 +653,7 @@ class Float(Number):
           precision -- nezáporný integer udávající počet čísel za desetinnou
             čárkou uváděný při exportu, nebo 'None' (pak není přesnost uměle
             omezena)
+          digits -- maximum number of digits, integer
 
         Ostatní klíčové argumenty jsou shodné, jako v předkovi.
              
@@ -670,6 +671,10 @@ class Float(Number):
     def precision(self):
         """Vrať přesnost čísla zadanou v konstruktoru jako integer."""
         return self._precision
+
+    def digits(self):
+        """Return number of digits given in the constructor, integer."""
+        return self._digits
     
     def _validate(self, string, precision=None, rounding=None, locale_format=True):
         """Pokus se převést 'string' na float.

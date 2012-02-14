@@ -1441,7 +1441,7 @@ def reversed_sorting(sorting):
 # Pomocné třídy
 
 
-class ColumnSpec:
+class ColumnSpec(object):
     """Specifikace sloupce tabulkových dat.
 
     Každý sloupec je identifikován svým názvem (string) a typem (instance třídy
@@ -1462,6 +1462,8 @@ class ColumnSpec:
         používat prázdný řetězec jako regulérní název sloupce.
 
         """
+        assert isinstance(id, basestring), id
+        assert isinstance(type, Type), type
         self._id = id
         self._type = type
 
