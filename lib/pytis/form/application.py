@@ -1561,6 +1561,51 @@ _access_rights = None
 _access_dbconnection = None
 _user_roles = ()
 
+def _dump_rights():
+    import pytis.extensions
+    registered_shortnames = set()
+    if _access_rights not in (None, 'nonuser',):
+        registered_shortnames = registered_shortnames.union(_access_rights.keys())
+    if Specification._access_rights not in (None, 'nonuser'):
+        registered_shortnames = registered_shortnames.union(Specification._access_rights.keys())
+    import config
+    resolver = config.resolver
+    output = sys.stderr
+    output.write("--- BEGIN list of registered rights ---\n")
+    output.write("# source shortname right column permitted\n")
+    def find_columns(spec_name):
+        try:
+            specification = resolver.specification(spec_name)
+        except ResolverError:
+            specification = None
+        if specification is None:
+            columns = []
+        else:
+            columns = [f.id() for f in specification.view_spec().fields()]
+        return columns
+    all_permissions = pytis.data.Permission.all_permissions()
+    for shortname in registered_shortnames:
+        if shortname.startswith('form/'):
+            columns = find_columns(shortname[5:])
+        else:
+            columns = []
+        for permission in all_permissions:
+            permitted = action_has_access(shortname, permission)
+            output.write('actions %s %s None %s\n' % (shortname, permission, permitted,))
+            for c in columns:
+                permitted = action_has_access(shortname, permission, c)
+                output.write('actions %s %s %s %s\n' % (shortname, permission, c, permitted,))
+    specification_names = pytis.extensions.get_form_defs(resolver)
+    for spec_name in specification_names:
+        columns = find_columns(spec_name)
+        for permission in all_permissions:
+            permitted = has_access(spec_name, permission)
+            output.write('specifications %s %s None %s\n' % (spec_name, permission, permitted,))
+            for c in columns:
+                permitted = has_access(spec_name, permission, c)
+                output.write('specifications %s %s %s %s\n' % (spec_name, permission, c, permitted,))        
+    output.write("--- END list of registered rights ---\n")
+
 def init_access_rights(connection_data):
     """Read application access rights from the database.
 
@@ -1617,6 +1662,8 @@ def init_access_rights(connection_data):
                     relaxed_action_rights.append(r)
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
+    if config.debug:
+        _dump_rights()
     
 def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     """Return true if the current user has given permission for given form specification.
