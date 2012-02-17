@@ -890,7 +890,7 @@ class _DBTest(_DBBaseTest):
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
-                  "create view viewtest1 as select * from viewtest2 where true",
+                  "create view viewtest1 as select *, x||'%s%s'::text as foo from viewtest2 where true",
                   "create rule viewtest1_update as on update to viewtest1 do instead update viewtest2 set x=new.x;",
                   "create view viewtest3 as select * from viewtest1",
                   "create rule viewtest3_insert as on insert to viewtest3 do instead insert into viewtest2 values (new.x)",

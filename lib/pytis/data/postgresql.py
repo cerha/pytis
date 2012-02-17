@@ -1318,6 +1318,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     except DBUserException:
                         return False
                 lock_tables = [c for c in lock_candidates if check_candidate(c)]
+                lock_query = lock_query.replace('%', '%%')
                 def find_real_key():
                     keyname = first_key_column.split('.')[-1]
                     for colspec in ev_action[0]['targetList']:
