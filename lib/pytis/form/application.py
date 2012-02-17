@@ -1679,7 +1679,7 @@ def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
                 result = access_rights.permitted(perm, _user_roles, column=column)
         else:
             if column is None:
-                permissions = rights.get(True, None)
+                permissions = rights.get(True, ())
             else:
                 permissions = rights.get(column, None)
                 if permissions is None:
