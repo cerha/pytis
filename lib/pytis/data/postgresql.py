@@ -2662,10 +2662,21 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def _pg_begin_transaction (self, isolation=None):
         if self._pg_is_in_select:
             self.close()
-        self._pg_allocate_connection()
-        self._postgresql_begin_transaction()
-        if isolation:
-            self._pg_query(self._pdbb_command_isolation % (isolation,))
+        limit = 10
+        while True:
+            self._pg_allocate_connection()
+            try:
+                self._postgresql_begin_transaction()
+                if isolation:
+                    self._pg_query(self._pdbb_command_isolation % (isolation,))
+                else:
+                    self._pg_query("select null")
+                break
+            except DBRetryException:
+                # Maybe database connection lost in past, try again
+                limit -= 1
+                if limit <= 0:
+                    raise
         
     def _pg_commit_transaction (self):
         self._postgresql_commit_transaction()

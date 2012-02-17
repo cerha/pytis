@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -268,11 +268,19 @@ class DBConnectionPool:
             except KeyError:
                 allocated_connections = self._allocated_connections[spec_id] \
                     = weakref.WeakKeyDictionary()
-            if connections:
-                if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
-                c = connections.pop()
-            else:
+            c = None
+            broken_connections_present = False            
+            while connections:
+                c_candidate = connections.pop()
+                if c_candidate.connection_info('broken'):
+                    broken_connections_present = True
+                else:
+                    c = c_candidate
+                    if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
+                    break
+            if c is None or broken_connections_present:
                 gc.collect()
+            if c is None:
                 if (config.connection_limit is not None and
                     len(allocated_connections) >= config.connection_limit):
                     if __debug__:
@@ -647,6 +655,19 @@ class DBSystemException(DBException):
     
     """
 
+
+class DBRetryException(DBSystemException):
+    """Exception thrown on broken database connections.
+
+    It is thrown when a database connection is broken and could be possibly
+    recovered (this typically happens after database server restart), but
+    automatic recovery inside low level database communication is not possible
+    due to an open transaction.  Higher level parts of the database backend may
+    catch this exception and attempt to reexecute the transaction
+    queries(typically when it is raised at the beginning of a transaction).
+
+    """
+    
 
 class DBUserException(DBException):
     """Výjimka nahazovaná v případě vzniku uživatelské databázové chyby.

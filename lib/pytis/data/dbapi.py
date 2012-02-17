@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -105,7 +105,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             return cursor
         def retry(message, exception):
             connection.set_connection_info('broken', True)
-            if _retry and outside_transaction:
+            if _retry:
+                if not outside_transaction:
+                    raise DBRetryException(message, exception, exception.args, query)
                 cdata = connection.connection_data()
                 new_connection = self._postgresql_new_connection(cdata)
                 try:
