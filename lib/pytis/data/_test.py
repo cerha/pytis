@@ -2568,7 +2568,7 @@ class AccessRightsTest(_DBBaseTest):
         groups = a.permitted_groups(P.UPDATE, 'column1')
         assert groups == ['group1', 'group3'], ('Invalid groups', groups,)
         groups = a.permitted_groups(P.UPDATE, None)
-        assert groups == ['group3'], ('Invalid groups', groups,)
+        assert groups == ['group1', 'group2', 'group3'], ('Invalid groups', groups,)
         groups = a.permitted_groups(P.INSERT, 'column4')
         assert groups == ['group1', 'group2'], ('Invalid groups', groups,)
     def test_permitted(self):
@@ -2584,7 +2584,9 @@ class AccessRightsTest(_DBBaseTest):
             'Invalid permission'
         assert a.permitted(P.UPDATE, ('group3',)),\
             'Invalid permission'
-        assert not a.permitted(P.VIEW, ('group3',)),\
+        assert a.permitted(P.VIEW, ('group3',)),\
+            'Invalid permission'
+        assert not a.permitted(P.VIEW, ('group4',)),\
             'Invalid permission'
 tests.add(AccessRightsTest)
 
