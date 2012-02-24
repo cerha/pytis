@@ -3407,7 +3407,9 @@ class Specification(object):
             if columns_string:
                 columns = string.split(columns_string, ' ')
             else:
-                columns = [None]
+                # This trick sets default permissions without adding them to
+                # column specific permissions in AccessRights
+                columns = ['__pytis_magic_column']
             shortname_rights = access_rights.get(shortname)
             if shortname_rights is None:
                 shortname_rights = access_rights[shortname] = {}
@@ -3416,7 +3418,7 @@ class Specification(object):
             else:
                 rights = []
             for c in columns:
-                if c is None:
+                if c == '__pytis_magic_column':
                     shortname_rights[False] = rights
                 shortname_rights[c] = rights
         rights_data.select_map(process)
