@@ -395,9 +395,6 @@ def e_pytis_menu_trigger():
             parent = string.join(components[:-1], '.')
             if parent and not plpy.execute("select menuid from e_pytis_menu where position='%s'" % (parent,)):
                 raise Exception('error', "No menu item parent")
-        def _check_consistency(self):
-            if plpy.execute("select count(*) as n from e_pytis_menu e1, e_pytis_menu e2 where e1.position=e2.next_position")[0]['n'] > 0:
-                plpy.error("collision of position and next_position")
         def _do_before_insert(self):
             self._maybe_new_action()
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
@@ -473,11 +470,10 @@ def e_pytis_menu_trigger():
                             next_position = position[:-1] + [str(long(position[-1]) + 1)]
                         update_next_position(position, next_position)
         def _do_after_insert(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='import'"):
                 return
             plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
             self._update_positions(new=self._new)
-            self._check_consistency()
             plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
         def _do_after_update(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='positions'"):
@@ -488,10 +484,9 @@ def e_pytis_menu_trigger():
                 plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" % (self._old['fullname'],))
                 plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" % (self._old['fullname'],))
             self._update_positions(new=self._new, old=self._old)
-            self._check_consistency()
             plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
         def _do_after_delete(self):
-            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
+            if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='import'"):
                 return
             plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
             if not self._old['name'] and self._old['title']:

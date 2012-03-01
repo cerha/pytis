@@ -325,13 +325,17 @@ class DMPObject(object):
                         "Couldn't load specification", (e,))
             return None
 
-    def _disable_triggers(self, transaction=None):
+    def _disable_triggers(self, transaction=None, disable_import=False):
         data = self._data('e_pytis_disabled_dmp_triggers')
         data.insert(pytis.data.Row((('id', self._s_('genmenu'),),)), transaction=transaction)
+        if disable_import:
+            data.insert(pytis.data.Row((('id', self._s_('import'),),)), transaction=transaction)
 
-    def _enable_triggers(self, transaction=None):
+    def _enable_triggers(self, transaction=None, disable_import=False):
         data = self._data('e_pytis_disabled_dmp_triggers')
         data.delete_many(pytis.data.EQ('id', self._s_('genmenu')), transaction=transaction)
+        if disable_import:
+            data.delete_many(pytis.data.EQ('id', self._s_('import')), transaction=transaction)
 
     def items(self):
         """Return sequence of all data items registered in the instance."""
@@ -1769,7 +1773,7 @@ class DMPImport(DMPObject):
         self._dmp_rights = DMPRights(configuration)
         self._dmp_roles = DMPRoles(configuration)
         self._dmp_actions = DMPActions(configuration)
-        
+
     def load_specifications(self, **kwargs):
         messages = []
         messages += self._dmp_menu.load_specifications()
@@ -1825,12 +1829,12 @@ class DMPImport(DMPObject):
             
         """
         transaction = self._transaction()
-        self._disable_triggers(transaction=transaction)
+        self._disable_triggers(transaction=transaction, disable_import=True)
         messages = []
         messages += self.load_specifications()
         messages += self.delete_data(fake, transaction=transaction)
         messages += self.store_data(fake, transaction=transaction)
-        self._enable_triggers(transaction=transaction)
+        self._enable_triggers(transaction=transaction, disable_import=True)
         if fake:
             transaction.rollback()
         else:
