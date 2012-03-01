@@ -764,7 +764,7 @@ class Image(_Mark):
 class StructuredText(_Mark):
     """LCG structured text."""
 
-    _SIDE_DATA_MATCHER = re.compile(r'(\${[^}]+\.(data|codebook)\.)')
+    _ITERATOR_MATCHER = re.compile(r'\|([^|]*\${(?:data\.|[^}]+\.(?:data|codebook)\.))')
     
     def __init__(self, text):
         """
@@ -774,8 +774,7 @@ class StructuredText(_Mark):
 
         """
         super(StructuredText, self).__init__()
-        text = text.replace('${data.', '@iterate ${data.')
-        text = self._SIDE_DATA_MATCHER.sub(r'@iterate \1', text)
+        text = self._ITERATOR_MATCHER.sub(r'| @iterate\1', text)
         self._text = text
         self._parameters = {}
 
