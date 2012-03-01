@@ -515,6 +515,21 @@ for each row execute procedure e_pytis_menu_trigger();
         name='e_pytis_menu_triggers',
         depends=('e_pytis_menu_trigger',))
 
+sql_raw("""
+create or replace function e_pytis_menu_check_trigger() returns trigger as $$
+begin
+  if select count(*)>0 from (select position from e_pytis_menu intersect select next_position from e_pytis_menu) positions then
+    raise exception 'position / next_position conflict';
+  end if;
+  return null;
+end;
+$$ language plpgsql;
+create trigger e_pytis_menu_zcheck_after after insert or update or delete on e_pytis_menu
+for each statement execute procedure e_pytis_menu_check_trigger();
+""",
+        name='e_pytis_menu_special_triggers',
+        depends=('e_pytis_menu',))
+
 def e_pytis_menu_trigger_rights():
     class Menu(BaseTriggerObject):
         def _pg_escape(self, val):
@@ -664,7 +679,8 @@ _std_table('e_pytis_action_rights',
 1 = new (not yet active, to be activated after the next global rights update)."""
               ),
             ),
-           """Assignments of access rights to actions.
+           sql="unique (shortname, roleid, rightid, colname, system, granted, status)",
+           doc="""Assignments of access rights to actions.
 
 Extent of each action right is strictly limited by its granted system
 permissions.  Non-system rights can only further limit the system rights.  If
