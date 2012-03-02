@@ -1053,7 +1053,7 @@ class BrowseForm(LayoutForm):
                 # fields (by copying the relevant part of the above mentioned
                 # method).
                 if isinstance(ftype, pd.DateTime):
-                    locale_data = lcg.GettextTranslator(self._lang, fallback=True).locale_data()
+                    locale_data = lcg.Localizer(self._lang).locale_data()
                     if isinstance(ftype, pd.Date):
                         format = locale_data.date_format
                     elif isinstance(ftype, pd.Time):
