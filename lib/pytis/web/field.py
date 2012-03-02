@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006-2011 Brailcom, o.p.s.
+# Copyright (C) 2006-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,16 +108,17 @@ def localizable_export(value):
     if value.value() is not None:
         type_cls = value.type().__class__
         if type_cls is pytis.data.DateTime:
-            return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d %H:%M:%S'))
+            return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d %H:%M:%S'),
+                                           utc=value.type().utc())
         elif type_cls is pytis.data.Date:
             return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d'))
-        elif type_cls is pytis.data.Time: 
+        elif type_cls is pytis.data.Time:
             return lcg.LocalizableTime(value.value().strftime('%H:%M:%S'))
-        elif type_cls is pytis.data.Monetary: 
+        elif type_cls is pytis.data.Monetary:
             return lcg.Monetary(value.value(), precision=value.type().precision())
         elif type_cls is pytis.data.Float:
             return lcg.Decimal(value.value(), precision=value.type().precision())
-        elif type_cls is pytis.data.Integer: 
+        elif type_cls is pytis.data.Integer:
             return lcg.Decimal(value.value())
         else:
             return value.export()
