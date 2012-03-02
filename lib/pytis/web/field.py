@@ -415,7 +415,7 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
         super(StructuredTextFieldExporter, self).__init__(*args, **kwargs)
 
     def _format(self, context):
-        blocks = self._parser.parse(context.translate(self._value().export()))
+        blocks = self._parser.parse(context.localize(self._value().export()))
         if len(blocks) == 1 and isinstance(blocks[0], lcg.Paragraph):
             content = lcg.Container(blocks[0].content())
         else:
@@ -447,10 +447,10 @@ class DateTimeFieldExporter(TextFieldExporter):
         js_values = dict(
             id = kwargs['id'],
             format = self._editor_date_format(locale_data),
-            today = context.translate(_(u"today")),
-            day_names = g.js_value([context.translate(lcg.week_day_name(i, abbrev=True))
+            today = context.localize(_(u"today")),
+            day_names = g.js_value([context.localize(lcg.week_day_name(i, abbrev=True))
                                     for i in (6,0,1,2,3,4,5)]),
-            month_names = g.js_value([context.translate(lcg.month_name(i))
+            month_names = g.js_value([context.localize(lcg.month_name(i))
                                       for i in range(12)]),
             first_week_day = (locale_data.first_week_day + 1) % 7,
             )

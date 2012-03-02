@@ -234,7 +234,7 @@ class FieldForm(Form):
         # (with the current row data).  Delayed translation (which invokes the
         # interpolation) would use invalid row data (the 'PresentedRow'
         # instance is reused and filled with table data row by row).
-        return context.translate(result)
+        return context.localize(result)
     
 
 class LayoutForm(FieldForm):
@@ -601,7 +601,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return result
 
     @classmethod
-    def ajax_response(cls, req, row, layout, errors, translator, uri_provider=None):
+    def ajax_response(cls, req, row, layout, errors, localizer, uri_provider=None):
         """Return the AJAX request response as a JSON encoded data structure.
 
         Arguments:
@@ -611,7 +611,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
           layout -- edited form layout as a 'GroupSpec' instance.
           errors -- form data validation result as a sequence of pairs
             (field_id, error_message).
-          translator -- 'lcg.Translator' instance used for localization of
+          localizer -- 'lcg.Localizer' instance used for localization of
             computed field values (such as dates, numbers, etc).
           uri_provider -- URI provider function same as in the Form constructor
             argument of the same name.
@@ -649,7 +649,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                         exported_value = localizable_datetime(value)
                     else:
                         exported_value = value.export()
-                    localized_value = translator.translate(exported_value)
+                    localized_value = localizer.localize(exported_value)
                     # Values of disabled fields are not in the request, so send them always...
                     if not req.has_param(fid) or localized_value != req.param(fid):
                         fdata['value'] = localized_value
@@ -660,7 +660,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     # corresponding runtime filter state.
                     new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
                     if new_state != old_state:
-                        enumeration = [(value, translator.translate(label))
+                        enumeration = [(value, localizer.localize(label))
                                        for value, label in row.enumerate(fid)]
                         fdata['state'] = new_state
                         fdata['enumeration'] = enumeration
@@ -670,7 +670,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                 lnk = func(value)
                                 if isinstance(lnk, Link):
                                     return dict(href=lnk.uri(),
-                                                title=translator.translate(lnk.title()),
+                                                title=localizer.localize(lnk.title()),
                                                 target=lnk.target())
                                 else:
                                     return dict(href=lnk)
