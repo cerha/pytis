@@ -270,7 +270,7 @@ class PostgreSQLAccessor(object_2_5):
         import config
         self._postgresql_query(connection, "savepoint __pytis_init_crypto", False)
         query = "select pytis_crypto_unlock_current_user_passwords(%s)"
-        query_args = (config.dbconnection.password() or '',)
+        query_args = (config.dbconnection.crypto_password() or '',)
         try:
             self._postgresql_query(connection, query, False, query_args=query_args)
         except DBUserException:

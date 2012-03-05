@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -582,7 +582,7 @@ class Password(InputDialog):
     
     """
     def __init__(self, parent, message=None, title=_(u"Zadejte heslo"),
-                 prompt=_(u"Heslo:"), icon=None):
+                 prompt=_(u"Heslo:"), icon=None, input_width=None):
         """Inicializuj dialog.
 
         Argumenty:
@@ -592,7 +592,7 @@ class Password(InputDialog):
           
         """
         super_(Password).__init__(self, parent, message=message, title=title,
-                                  prompt=prompt, passwd=True, icon=icon)
+                                  prompt=prompt, passwd=True, icon=icon, input_width=input_width)
 
 class Login(InputDialog):
     """Dialog pro zadání uživatelského jména a hesla.

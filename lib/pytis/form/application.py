@@ -170,36 +170,85 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Read in access rights.
         init_access_rights(config.dbconnection)
         # Unlock crypto keys
-        if config.dbconnection.password():
-            try:
-                data = pytis.data.dbtable('ev_pytis_fresh_crypto_keys',
-                                          ('key_id', 'name',),
-                                          config.dbconnection)
-            except pytis.data.DBException:
-                data = None
-            if data is not None:
-                login_password_value = pytis.data.sval(config.dbconnection.password())
+        crypto_password = config.dbconnection.crypto_password()
+        count = 0
+        try:
+            data = pytis.data.dbtable('ev_pytis_user_crypto_keys',
+                                      ('key_id', 'name', 'fresh',),
+                                      config.dbconnection)
+            rows = data.select_map(identity)
+            count = len(rows)
+        except pytis.data.DBException:
+            data = None
+        bad_names = set()
+        if count > 0:
+            if crypto_password is None:
+                condition = pytis.data.EQ('fresh', pytis.data.bval(False))
+                established_names = data.select_map(identity, condition=condition)
                 while True:
-                    rows = data.select_map(identity)
-                    if not rows:
+                    message = _("Zadejte své přihlašovací heslo, pro správu šifrovacích klíčů")
+                    crypto_password = run_dialog(pytis.form.Password, message=message)
+                    if not crypto_password:
                         break
-                    message = (_("Zadejte heslo pro odemčení šifrovacích klíčů těchto oblastí: ") +
-                               string.join([r['name'].value() for r in rows], ', '))
-                    password = run_dialog(pytis.form.Password, message=message)
-                    if not password:
-                        break
-                    password_value = pytis.data.sval(password)
-                    for r in rows:
+                    if not established_names:
+                        message = _("Zadejte své přihlašovací heslo ještě jednou pro ověření")
+                        crypto_password_repeated = run_dialog(pytis.form.Password, message=message)
+                        if crypto_password == crypto_password_repeated:
+                            break
+                        else:
+                            run_dialog(pytis.form.Error, _("Zadaná hesla nejsou shodná"))
+                    else:
+                        if pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
+                                                       ('password_', pytis.data.sval(crypto_password),)):
+                            break
+                        else:
+                            run_dialog(pytis.form.Error, _("Chybné heslo"))
+                if crypto_password:
+                    config.dbconnection.set_crypto_password(crypto_password)
+        if crypto_password and data is not None:
+            crypto_password_value = pytis.data.sval(crypto_password)
+            while True:
+                established_names = set()
+                fresh_names = set()
+                def process(row):
+                    name = row['name'].value()
+                    (fresh_names if row['fresh'].value() else established_names).add(name)
+                data.select_map(process)
+                ok_names = pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
+                                                       ('password_', pytis.data.sval(crypto_password),))
+                if isinstance(ok_names, list):
+                    ok_names = set([row[0].value() for row in ok_names])
+                else:
+                    ok_names = set([ok_names])
+                bad_names = established_names.difference(ok_names)
+                if fresh_names:
+                    name = list(fresh_names)[0]
+                    bad = False
+                elif bad_names:
+                    name = list(bad_names)[0]
+                    bad = True
+                else:
+                    break
+                message = (_("Zadejte heslo pro odemčení šifrovacího klíče oblasti ") + name + '.')
+                if bad:
+                    message = message + _("\n(Patrně se jedná o vaše staré přihlašovací heslo.)")
+                password = run_dialog(pytis.form.Password, message=message, input_width=33)
+                if not password:
+                    break
+                password_value = pytis.data.sval(password)
+                for r in rows:
+                    r_name = r['name'].value()
+                    if r_name == name or (bad and r_name in bad_names):
                         try:
                             pytis.extensions.dbfunction('pytis_crypto_change_password',
                                                         ('id_', r['key_id'],),
                                                         ('old_psw', password_value,),
-                                                        ('new_psw', login_password_value,))
+                                                        ('new_psw', crypto_password_value,))
                         except pytis.data.DBException:
                             pass
-                data.close()
-                pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                            ('password_', login_password_value,))
+            data.close()
+            pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
+                                        ('password_', crypto_password_value,))
         # Init the recent forms list.
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []

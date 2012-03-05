@@ -357,6 +357,7 @@ class DBConnection:
         """
         self._user = user
         self._password = password
+        self._crypto_password = password
         self._host = host
         self._port = port
         self._database = database
@@ -456,6 +457,26 @@ class DBConnection:
         """
         self._user = user
         self._password = password
+        self._crypto_password = password
+
+    def crypto_password(self):
+        """Return crypto password, string.
+
+        This is typically the same as the login password, but it may be
+        different, e.g. when there is no login password.
+
+        """
+        return self._crypto_password
+    
+    def set_crypto_password(self, password):
+        """Set instance crypto password to 'password'.
+
+        Arguments:
+
+          password -- the password, string
+          
+        """
+        self._crypto_password = password
 
 
 class DBBinding:

@@ -143,9 +143,9 @@ _std_table('e_pytis_crypto_keys',
            doc="Table of encryption keys of users for defined encryption areas.",
            depends=('c_pytis_crypto_names',))
 
-viewng('ev_pytis_fresh_crypto_keys',
-       (R('e_pytis_crypto_keys', alias='keys', exclude_columns=('username', 'key', 'fresh',),
-          condition="fresh and username=current_user"),),
+viewng('ev_pytis_user_crypto_keys',
+       (R('e_pytis_crypto_keys', alias='keys', exclude_columns=('username', 'key',),
+          condition="username=current_user"),),
        insert=None,
        update=None,
        delete=None,
