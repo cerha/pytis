@@ -1146,19 +1146,24 @@ class BrowseForm(LayoutForm):
                     filter_id = None
             self._filter_ids[filter_set_id] = filter_id
             self._filter_sets.append(filter_set)
-        
-    def _export_cell(self, context, field):
-        value = self._export_field(context, field)
-        if field.id == self._column_fields[0].id and self._tree_order_column:
+
+    def _tree_level(self):
+        if self._tree_order_column:
             order = self._row[self._tree_order_column].value()
             if order is not None:
                 # Strip, since LTree values look like '0.2.1', but TreeOrder like '.0.2.1'
-                level = len(order.strip('.').split('.')) - 1
-                if level > 0:
-                    g = context.generator()
-                    indent = level * g.span(2*'&nbsp;', cls='tree-indent')
-                    value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
-                    # &#8227 does not work in MSIE
+                return len(order.strip('.').split('.')) - 1
+        return None
+    
+    def _export_cell(self, context, field):
+        value = self._export_field(context, field)
+        if field.id == self._column_fields[0].id:
+            tree_level = self._tree_level()
+            if tree_level is not None and tree_level > 0:
+                g = context.generator()
+                indent = tree_level * g.span(2*'&nbsp;', cls='tree-indent')
+                value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
+                # &#8227 does not work in MSIE
         return value
 
     def _style(self, style):
@@ -1762,10 +1767,13 @@ class ListView(BrowseForm):
                                            self._uri_provider(row, None, type=UriType.LINK))
             if actions:
                 parts.append(actions)
-        # We use only css class name from row_style, since other attributes are
-        # BrowseForm specific.
-        cls = self._row_style(row, n)['cls']
-        return g.div(parts, id=row_id, cls='list-item '+cls)
+        # We use only css class name from row_style, because we consider the
+        # other attributes to be BrowseForm specific.
+        cls = 'list-item ' + self._row_style(row, n)['cls']
+        result = g.div(parts, id=row_id, cls=cls)
+        for tree_level in reversed(range(self._tree_level() or 0)):
+            result = g.div(result, cls='tree-indent tree-level-%d' % (tree_level + 1))
+        return result
 
     def _export_group_heading(self, context):
         #return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
