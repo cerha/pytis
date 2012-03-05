@@ -236,19 +236,52 @@ def command_delete_user(configuration, args):
     print "Key of %s user for area %s deleted" % (user, area,)
 
 def command_encrypt(configuration, args):
-    if len(args) < 4:
+    if len(args) < 3:
         print "Error: not enough arguments"
         return
-    if len(args) > 4:
+    if len(args) > 3:
         print "Error: extra arguments:", args
         return
-    area, table, column, column_type = args
-    if column_type not in ('text', 'int', 'float',):
-        print "Error: invalid column type:", column_type
-        return
+    area, table, column = args
     connection_data = configuration.connection_data()
     connection = dbapi.connect(**configuration.raw_connection_data())
     cursor = connection.cursor()
+    pos = table.find('.')
+    if pos == -1:
+        schema_name = 'public'
+        table_name = table
+    else:
+        schema_name = table[:pos]
+        table_name = table[pos+1:]
+    cursor.execute(("select typname from pg_class join "
+                    "pg_namespace on (relnamespace=pg_namespace.oid) join "
+                    "pg_attribute on (attrelid=pg_class.oid) join "
+                    "pg_type on (atttypid=pg_type.oid) "
+                    "where nspname=%s and relname=%s and attname=%s"),
+                   (schema_name, table_name, column,))
+    row = cursor.fetchone()
+    if row is None:
+        print "Error: column not found: %s.%s.%s" % (schema_name, table_name, column,)
+        return
+    type_ = row[0]
+    mapping = {'bpchar': 'text',
+               'char': 'text',
+               'smallint': 'int',
+               'bigint': 'int',
+               'int2': 'int',
+               'int4': 'int',
+               'int8': 'int',
+               'numeric': 'float',
+               'float4': 'float',
+               'float8': 'float',
+               'name': 'text',
+               'text': 'text',
+               'varchar': 'text',
+               }
+    column_type = mapping.get(type_)
+    if column_type is None:
+        print "Error: unsupported column type:", type_
+        return
     key_id, key = admin_key(area, connection_data)
     if key_id is None:
         print "Error: admin key not found for the area:", area
@@ -288,7 +321,7 @@ Commands:
     - make encryption AREA key accessible for USER
   delete-user AREA USER
     - remove USER's access to encryption AREA
-  encrypt AREA TABLE COLUMN { text | int | float }
+  encrypt AREA TABLE COLUMN
     - encrypt given TABLE COLUMN with the encryption key of AREA"""
 
 def parse_options():
