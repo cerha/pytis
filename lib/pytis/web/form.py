@@ -1191,7 +1191,7 @@ class BrowseForm(LayoutForm):
                 kwargs['style'] = style
         return kwargs
 
-    def _row_style(self, row, n, highlight_found_record=False):
+    def _row_style(self, row, n):
         row_style = self._view.row_style()
         if isinstance(row_style, collections.Callable):
             row_style = row_style(row)
@@ -1200,8 +1200,6 @@ class BrowseForm(LayoutForm):
             cls.append('group-start')
             if n != 0:
                 cls.append('group-change')
-        if highlight_found_record:
-            cls.append('found-record')
         if row_style is not None:
             name = row_style.name()
             if name:
@@ -1214,7 +1212,7 @@ class BrowseForm(LayoutForm):
             kwargs['style'] = style
         return kwargs
     
-    def _export_row(self, context, row, n, highlight_found_record):
+    def _export_row(self, context, row, n, row_id):
         g = context.generator()
         cells = [g.td(self._export_cell(context, field), align=self._align.get(field.id),
                       **self._field_style(field, row))
@@ -1223,7 +1221,7 @@ class BrowseForm(LayoutForm):
             actions = self._export_actions(context, row,
                                            self._uri_provider(row, None, type=UriType.LINK))
             cells.append(g.td(actions, cls='actions'))
-        return g.tr(cells, **self._row_style(row, n, highlight_found_record))
+        return g.tr(cells, id=row_id, **self._row_style(row, n))
 
     def _export_aggregation(self, context, op):
         def export_aggregation_value(data, op, field):
@@ -1377,10 +1375,10 @@ class BrowseForm(LayoutForm):
                         exported_rows.append(group_heading)
             if found and (limit is None and offset == n or \
                           limit is not None and offset == (n + page * limit)):
-                highlight_found_record = True
+                row_id = 'found-record'
             else:
-                highlight_found_record = False
-            exported_rows.append(self._export_row(context, row, n, highlight_found_record))
+                row_id = None
+            exported_rows.append(self._export_row(context, row, n, row_id))
             self._last_group = self._group
             n += 1 
             if limit is not None and n >= limit:
@@ -1710,7 +1708,7 @@ class ListView(BrowseForm):
         self._exported_row_index = []
         return super(ListView, self).export(context)
         
-    def _export_row(self, context, row, n, highlight_found_record):
+    def _export_row(self, context, row, n, row_id):
         layout = self._list_layout
         g = context.generator()
         parser = lcg.Parser()
@@ -1766,8 +1764,8 @@ class ListView(BrowseForm):
                 parts.append(actions)
         # We use only css class name from row_style, since other attributes are
         # BrowseForm specific.
-        cls = self._row_style(row, n, highlight_found_record)['cls']
-        return g.div(parts, cls='list-item '+cls)
+        cls = self._row_style(row, n)['cls']
+        return g.div(parts, id=row_id, cls='list-item '+cls)
 
     def _export_group_heading(self, context):
         #return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
@@ -1828,22 +1826,25 @@ class ItemizedView(BrowseForm):
         self._separator = separator
         self._template = template
         
-    def _export_row(self, context, row, n, highlight_found_record):
+    def _export_row(self, context, row, n, row_id):
+        g = context.generator()
         template = self._template
         if template:
-            return self._interpolate(context, template, row)
+            content = self._interpolate(context, template, row)
         else:
-            fields = [self._export_field(context, field)
-                      for field in self._column_fields if row[field.id].value() is not None]
-            return concat(fields, separator=self._separator)
-
+            content = concat([self._export_field(context, field)
+                              for field in self._column_fields
+                              if row[field.id].value() is not None],
+                             separator=self._separator)
+        return g.li(content, id=row_id)
+        
     def _export_group_heading(self, context):
         #TODO: Create multi-level lists.
         return None
     
     def _wrap_exported_rows(self, context, rows, summary):
         g = context.generator()
-        return g.list(rows)
+        return g.ul(concat(rows))
 
 
 class CheckRowsForm(BrowseForm, _SubmittableForm):
