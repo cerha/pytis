@@ -26,11 +26,11 @@ if not db_rights:
 ## Basic encryption support
 
 sql_raw("""
-create or replace function pytis_crypt_password(name text) returns text as $$
+create or replace function pytis_crypt_password(name_ text) returns text as $$
 declare
   psw text;
 begin
-  select password into strict psw from t_pytis_passwords where name=name;
+  select password into strict psw from t_pytis_passwords where name=name_;
   return psw;
 end;
 $$ language plpgsql stable;
@@ -63,7 +63,7 @@ begin
   exception
     when OTHERS then
       -- pseudorandom value to allow testing with obfuscated data
-      result := select (array['*encrypted*', '**encrypted**', '***encrypted***'])[floor(random()*3)+1];
+      result := (array['*encrypted*', '**encrypted**', '***encrypted***'])[floor(random()*3)+1];
   end;
   return result;
 end;
@@ -131,7 +131,7 @@ _std_table('c_pytis_crypto_names',
 _std_table('e_pytis_crypto_keys',
            (P('key_id', TSerial),
             C('name', TString, constraints=('not null',),
-              references='c_pytis_crypto_names on update cascade on delete cascade'),
+              references='c_pytis_crypto_names on update cascade'),
             C('username', TString, constraints=('not null',),
               doc="Arbitrary user identifier."),
             C('key', 'bytea', constraints=('not null',)),
