@@ -1416,7 +1416,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 'select count(%s) from %s%%(fulltext_queries)s where %%(condition)s and (%s)%s' % \
                 (count_column, table_list, relation, filter_condition,)
         self._pdbb_command_distinct = \
-          'select distinct %%s from %s where %%s and (%s)%s order by %%s' % \
+          'select distinct %%(expression)s from %s where %%(condition)s and (%s)%s order by %%(sorting)s' % \
           (table_list, relation, filter_condition,)
         self._pdbb_command_fetch_last = \
             self._SQLCommandTemplate('fetch last from %s' % (cursor_name,))
@@ -2057,7 +2057,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_select_rows = result
         return result
 
-    def _pg_distinct (self, column, prefix, condition, sort, transaction=None):
+    def _pg_distinct (self, column, prefix, condition, sort, transaction=None,
+                      arguments={}):
         cond_string = self._pdbb_condition2sql(condition)
         colspec = self.find_column(column)
         if prefix:
@@ -2069,7 +2070,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             expr = column
         dir = {ASCENDENT: 'ASC', DESCENDANT: 'DESC'}[sort]
         sort_string = '%s %s' % (column, dir)
-        query = self._pdbb_command_distinct % (expr, cond_string, sort_string)
+        args = dict(expression=expr, condition=cond_string, sorting=sort_string)
+        self._pg_make_arguments(args, arguments)
+        query = self._pdbb_command_distinct % args
         data = self._pg_query(query, transaction=transaction)
         tmpl = self._pg_create_make_row_template((colspec,))
         result = [self._pg_make_row_from_raw_data([r], tmpl)[column]
@@ -2958,7 +2961,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         aggregates = [aggregate_value(cid) for cid in columns]
         return select_result, Row(aggregates)
         
-    def distinct(self, column, prefix=None, condition=None, sort=ASCENDENT, transaction=None):
+    def distinct(self, column, prefix=None, condition=None, sort=ASCENDENT, transaction=None,
+                 arguments={}):
         """Vrať sekvenci všech nestejných hodnot daného sloupce.
 
         Argumenty:
@@ -2971,9 +2975,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           sort -- one of 'ASCENDENT', 'DESCENDANT' constants or None
           transaction -- transaction object to be used when running the SQL
             commands
+          arguments -- dictionary of function call arguments
 
         """
-        return self._pg_distinct(column, prefix, condition, sort, transaction=transaction)
+        return self._pg_distinct(column, prefix, condition, sort, transaction=transaction,
+                                 arguments=arguments)
 
     def fetchone(self, direction=FORWARD, transaction=None):
         """Stejné jako v nadtřídě.

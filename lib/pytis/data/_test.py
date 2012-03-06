@@ -1492,6 +1492,9 @@ class DBDataDefault(_DBTest):
             assert self.funcdata.fetchone() is not None
             assert self.funcdata.fetchone() is not None
             assert self.funcdata.fetchone() is None
+            result = [v.value() for v in self.funcdata.distinct('id', arguments=dict(id=id_value))]
+            assert len(result) == 2
+            assert 5 in result and 999 in result
         finally:
             self.funcdata.close()
     def test_binary(self):
