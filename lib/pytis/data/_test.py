@@ -2390,14 +2390,16 @@ tests.add(DBSearchPath)
 class DBCrypto(_DBBaseTest):
     def setUp(self):
         _DBBaseTest.setUp(self)
-        for q in ("create table t_pytis_passwords (name text, password text)",
-                  "insert into t_pytis_passwords values ('test', 'somepassword')",
+        for q in ("insert into c_pytis_crypto_names (name) values ('test')",
+                  "insert into e_pytis_crypto_keys (name, username, key) values ('test', current_user, pytis_crypto_store_key('somekey', 'somepassword'))",
                   "create table foo (id serial, x bytea, y bytea, z bytea)",):
             try:
                 self._sql_command(q)
             except:
                 self.tearDown()
                 raise
+        import config
+        config.dbconnection.set_crypto_password('somepassword')
         B = pytis.data.DBColumnBinding
         key = B('id', 'foo', 'id')
         spec = pytis.data.DataFactory(
@@ -2409,9 +2411,11 @@ class DBCrypto(_DBBaseTest):
              ),
             key)
         self._data = spec.create(connection_data=self._dconnection)
+        self._data._pg_flush_connections()
     def tearDown(self):
-        for q in ("drop table t_pytis_passwords",
-                  "drop table foo",):
+        for q in ("drop table foo",
+                  "delete from e_pytis_crypto_keys",
+                  "delete from c_pytis_crypto_names",):
             try:
                 self._sql_command(q)
             except:

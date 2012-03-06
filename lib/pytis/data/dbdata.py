@@ -312,6 +312,9 @@ class DBConnectionPool:
         with_lock(self._lock, lfunction)
         if __debug__: log(DEBUG, 'Do poolu vráceno spojení:', connection)
 
+    def flush(self):
+        self._pool = {}
+
 
 ### Specifikační třídy
 

@@ -472,6 +472,9 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             log(DEBUG, 'SQL query result', data)
         return data
 
+    def _pg_flush_connections(self):
+        self._pg_connection_pool().flush()
+
 
 class PostgreSQLUserGroups(PostgreSQLConnector):
     """Třída pro zjišťování skupin uživatele."""
