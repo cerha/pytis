@@ -1826,7 +1826,7 @@ class Binary(Limited):
         def save(self, path):
             """Save the buffer data into a file.
 
-            Arguemnts:
+            Arguments:
             
               path -- string path to the output file.
             
@@ -1842,7 +1842,7 @@ class Binary(Limited):
         def load(self, path, filename=None):
             """Try to load the buffer from a file replacing the current data.
 
-            Arguemnts:
+            Arguments:
             
               path -- string path to the input file.
             
