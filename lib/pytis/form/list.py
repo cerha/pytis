@@ -1772,7 +1772,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if not self._data.permitted(cid, pytis.data.Permission.VIEW):
                 return
             cond = self._current_condition()
-            distinct = self._data.distinct(cid, condition=cond)
+            arguments = self._current_arguments()
+            distinct = self._data.distinct(cid, condition=cond, arguments=arguments)
             if len(distinct) > 60:
                 message(_(u"Příliš mnoho položek pro autofilter."), beep_=True)
                 return
