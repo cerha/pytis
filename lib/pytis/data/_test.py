@@ -1072,6 +1072,9 @@ class DBDataDefault(_DBTest):
         view7 = pytis.data.DBDataDefault((key, col,), key, conn)
         key = B('x', 'rudeview', 'x')
         rudeview = pytis.data.DBDataDefault((key,), key, conn)
+        key = B('id', 'tablefunc', 'id', type_=pytis.data.Integer())
+        col = B('popis', 'tablefunc', 'popis', type_=pytis.data.String())
+        funcdata = pytis.data.DBDataDefault((key, col,), key, conn, arguments=(key,))
         # atributy
         self.data = d
         #self.mdata = md
@@ -1091,6 +1094,7 @@ class DBDataDefault(_DBTest):
         self.view5 = view5
         self.view7 = view7
         self.rudeview = rudeview
+        self.funcdata = funcdata
         #self._to_kill = [d, md, dstat, dstat1, dosnova, dcosi, view]
         self._to_kill = [d, dstat, dstat1, dosnova, dcosi, view]
         # row data
@@ -1483,11 +1487,13 @@ class DBDataDefault(_DBTest):
         lines((3,))
     def test_table_function(self):
         id_value = ival(3)
-        assert self.data.select(arguments=dict(id=id_value)) == 2
-        assert self.data.fetchone() is not None
-        assert self.data.fetchone() is not None
-        assert self.data.fetchone() is None
-        self.data.close()        
+        try:
+            assert self.funcdata.select(arguments=dict(id=id_value)) == 2
+            assert self.funcdata.fetchone() is not None
+            assert self.funcdata.fetchone() is not None
+            assert self.funcdata.fetchone() is None
+        finally:
+            self.funcdata.close()
     def test_binary(self):
         B = pytis.data.Binary()
         I = pytis.data.Integer()
