@@ -904,8 +904,9 @@ class _GsqlTable(_GsqlSpec):
             if isinstance(ct, basestring) and ct.lower() == 'serial' \
                or ct.__class__ == pytis.data.Serial:
                 seqname = "%s_%s_seq" % (self._name, cn)
-                for g in self._grant:                    
-                    result = result + self._grant_command(g, seqname)
+                for g in self._grant:
+                    if g[0].lower() == 'insert':
+                        result = result + self._grant_command(('usage', g[1],), seqname)
             if c.doc is not None:
                 result = result + self._format_column_doc(c)
             if c.index is True:
