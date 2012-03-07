@@ -41,7 +41,7 @@ from pytis.data import *
 import pytis.data
 
 
-# Modifikace tabulek se oznamuje zasláním notifikace `MODIF_table', kde `table'
+# Modifikace tabulek se oznamuje zasláním notifikace `__modif_table', kde `table'
 # je jméno modifikované tabulky.
 
 
@@ -659,7 +659,6 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         def register_notification(self, data, notification):
             if __debug__:
                 log(DEBUG, 'Registruji notifikaci:', notification)
-            notification = notification.lower()
             def lfunction():
                 try:
                     notifications = self._notif_data_objects[data]
@@ -1555,8 +1554,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
           'delete from %s where %%s' % main_table
         self._pdbb_command_isolation = 'set transaction isolation level %s'
         self._pdbb_command_notify = \
-          'notify "MODIF_%s"' % main_table
-        self._pg_notifications = map(lambda t: 'MODIF_%s' % t, table_names)
+          'notify "__modif_%s"' % (main_table.lower(),)
+        self._pg_notifications = map(lambda t: '__modif_%s' % (t.lower(),), table_names)
 
     def _pdbb_condition2sql(self, condition):
         if condition == None:
