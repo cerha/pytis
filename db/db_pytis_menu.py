@@ -513,7 +513,7 @@ for each row execute procedure e_pytis_menu_trigger();
 sql_raw("""
 create or replace function e_pytis_menu_check_trigger() returns trigger as $$
 begin
-  if select count(*)>0 from (select position from e_pytis_menu intersect select next_position from e_pytis_menu) positions then
+  if (select count(*)>0 from (select position from e_pytis_menu intersect select next_position from e_pytis_menu) positions) then
     raise exception 'position / next_position conflict';
   end if;
   return null;
