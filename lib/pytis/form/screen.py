@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1487,7 +1487,8 @@ class StatusBar(wx.StatusBar):
 class InfoWindow(object):
     """Nemodální okno pro zobrazení textových informací."""
     
-    def __init__(self, title, text, format=TextFormat.PLAIN, parent=None, _name='info'):
+    def __init__(self, title, text, format=TextFormat.PLAIN, parent=None,
+                 width=None, height=None, _name='info'):
         """Zobraz nemodální okno nezávislé na hlavním okně aplikace.
         
         Argumenty:
@@ -1516,7 +1517,7 @@ class InfoWindow(object):
         # around the problem of closing a frame whose parent is a modal dialog
         # in StructuredTextField._cmd_preview().  Once that is sorted out, a
         # non-modal frame would be better.
-        view = wx_text_view(frame, text, format)
+        view = wx_text_view(frame, text, format, width=width, height=height)
         frame.SetSize(view.GetSize())
         frame.ShowModal()
         
