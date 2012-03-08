@@ -1351,6 +1351,14 @@ class ViewSpec(object):
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
 
+          argument_provider -- function of no arguments returning a dictionary
+            of database function argument names (strings) as keys and
+            'pytis.data.Value' instances as corresponding database function
+            argument values.  If it is 'None', no arguments are provided.  If
+            it returns 'None', the select should be cancelled.  This argument
+            makes sense only for database table functions, it should be 'None'
+            for standard tables and views.
+
           spec_name -- name of the original form specification if any, string.
 
           public -- boolean flag indicating a public specification.
@@ -1369,7 +1377,8 @@ class ViewSpec(object):
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
-              initial_folding=None, folding=None, spec_name='', arguments=None, public=None):
+              initial_folding=None, folding=None, spec_name='', arguments=None, public=None,
+              argument_provider=None):
         assert isinstance(title, basestring)
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1524,6 +1533,7 @@ class ViewSpec(object):
                isinstance(row_style, collections.Callable)
         assert description is None or isinstance(description, basestring)
         assert help is None or isinstance(help, basestring)
+        assert argument_provider is None or isinstance(argument_provider, collections.Callable)
         self._title = title
         self._singular = singular
         self._columns = columns
@@ -1551,6 +1561,7 @@ class ViewSpec(object):
         self._bindings = tuple(bindings)
         self._folding = folding or initial_folding # initial_folding is deprecated!
         self._arguments = arguments
+        self._argument_provider = argument_provider
         
     def _linearize_actions(self, spec):
         actions = []
@@ -1694,6 +1705,10 @@ class ViewSpec(object):
     def folding(self):
         """Return initial folding as a 'FoldableForm.Folding' instance or 'None'."""
         return self._folding
+
+    def argument_provider(self):
+        """Return 'None' or a function generating database table function arguments."""
+        return self._argument_provider
 
     
 class BindingSpec(object):
@@ -3303,6 +3318,16 @@ class Specification(object):
     it must be 'None'.
     
     May be also defined as a method of the same name."""
+
+    argument_provider = None
+    """Function generating database table function arguments.
+
+    It is a function of no arguments returning a dictionary of database
+    function argument names (strings) as keys and 'pytis.data.Value' instances
+    as corresponding database function argument values.  If it is 'None', no
+    arguments are provided.  If it returns 'None', the select should be
+    cancelled.  This specification makes sense only for database table
+    functions, it should be 'None' for standard tables and views."""
     
     access_rights = None
     """Access rights for the view as an 'AccessRights' instance.

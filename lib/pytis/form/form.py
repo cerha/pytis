@@ -856,6 +856,10 @@ class LookupForm(InnerForm):
         # data object.
         self._lf_condition = condition
         self._lf_search_condition = None
+        if arguments is None and self._view.argument_provider() is not None:
+            arguments = self._view.argument_provider()()
+            if arguments is None:
+                raise Form.InitError()
         self._arguments = arguments
         self._lf_select_count_ = None
         self._init_select(async_count=True)
@@ -904,7 +908,7 @@ class LookupForm(InnerForm):
             return pytis.data.AND(*conditions)
 
     def _current_arguments(self):
-        return {}
+        return self._arguments
 
     def _apply_initial_profile(self):
         # This must be called in _on_idle especially because the initial
