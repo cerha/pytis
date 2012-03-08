@@ -2217,9 +2217,7 @@ class DBDataNotification(DBDataDefault):
         self._ddn_check_result()
         assert d.change_number() == cnumber_1 + 1, (cnumber_1, d.change_number(),)
         assert self.data.change_number() == cnumber_2 + 1, (cnumber_2, self.data.change_number(),)
-# Notification tests don't work for long time for unknown reason,
-# so they are disabled to not confuse test results.
-#tests.add(DBDataNotification)
+tests.add(DBDataNotification)
 
 
 class DBCounter(_DBBaseTest):
