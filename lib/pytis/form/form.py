@@ -2793,26 +2793,8 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
             current_db_value = db_row[self._editor_field_id].value()
             value_before_edits = row.original_row()[self._editor_field_id].value()
             if current_db_value != value_before_edits:
-                import difflib
-                diff = difflib.HtmlDiff()
-                html_diff = diff.make_file(value_before_edits.splitlines(),
-                                           current_db_value.splitlines(),
-                                           _("Původní text"),
-                                           _("Kolegova nová verze"),
-                                           context=True, numlines=3)
-                for src, dst, context in (
-                    # Localize some strings and hack the style sheet.
-                    ('Colors', _(u"Barvy"), '<th> %s </th>'),
-                    ('Legends', _(u"Legenda"), '> %s </th>'),
-                    ('&nbsp;Added&nbsp;', _(u"Přidáno"), '<td class="diff_add">%s</td>'),
-                    ('Changed', _(u"Změněno"), '<td class="diff_chg">%s</td>'),
-                    ('Deleted', _(u"Smazáno"), '<td class="diff_sub">%s</td>'),
-                    ('font-family:Courier', 'font-size:0.9em;cell-padding:2px', 'table.diff {%s; border:medium;}'),
-                    ('background-color:#c0c0c0', 'display:none', '.diff_next {%s}'),
-                    ):
-                    html_diff = html_diff.replace(context % src, context % dst)
-                html_diff = re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '',
-                                   html_diff)
+                diff = pytis.util.html_diff(value_before_edits, current_db_value,
+                                            _("Původní text"), _("Kolegova nová verze"))
                 msg = _(u"Někdo jiný změnil stejný text během doby, kdy jste prováděl(a) "
                         u"tyto úpravy.  Níže vidíte výpis změn, které byly provedeny. "
                         u"Nejbezpečnější je vaše změny zahodit a začít znovu upravovat\n"
@@ -2822,7 +2804,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
                 revert, merge, ignore = (_(u"Zahodit moje změny"), _(u"Sloučit"),
                                          _(u"Ignorovat kolegovy změny"))
                 answer = run_dialog(MultiQuestion, title=_(u"Konflikt editace"), message=msg,
-                                    report=html_diff, report_format=TextFormat.HTML,
+                                    report=diff, report_format=TextFormat.HTML,
                                     buttons=(revert, ignore)) # TODO: Add merge button.
                 if answer == merge:
                     result = self._editor_field_id

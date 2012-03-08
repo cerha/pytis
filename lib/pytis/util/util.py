@@ -1768,3 +1768,36 @@ def lcg_to_html(text, styles=('default.css',), resource_path=()):
     context = exporter.context(node, None)
     html = exporter.export(context)
     return html.encode('utf-8')
+
+def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=3):
+    """Return a human readable overview of differences between given two texts.
+
+    Arguments:
+      text1 -- first text as a basestring
+      text2 -- second text as a basestring
+      name1 -- name of the first text as a basestring
+      name2 -- name of the second text as a basestring
+      wrapcolumn -- column to wrap longer lines in both texts as int or None
+      context -- a context diff is returned if true, full diff otherwise
+      numlines -- number of lines before and after change to show in context diff
+    
+    Returns a string containing a complete HTML document.
+
+    """
+    import difflib
+    diff = difflib.HtmlDiff(wrapcolumn=wrapcolumn)
+    result = diff.make_file(text1.splitlines(), text2.splitlines(), name1, name2,
+                            context=context, numlines=numlines)
+    for src, dst, context in (
+        # Localize some strings and hack the style sheet.
+        ('Colors', _(u"Barvy"), '<th> %s </th>'),
+        ('Legends', _(u"Legenda"), '> %s </th>'),
+        ('&nbsp;Added&nbsp;', _(u"Přidáno"), '<td class="diff_add">%s</td>'),
+        ('Changed', _(u"Změněno"), '<td class="diff_chg">%s</td>'),
+        ('Deleted', _(u"Smazáno"), '<td class="diff_sub">%s</td>'),
+        ('font-family:Courier', 'font-size:0.9em;cell-padding:2px', 'table.diff {%s; border:medium;}'),
+        ('background-color:#c0c0c0', 'display:none', '.diff_next {%s}'),
+        ):
+        result = result.replace(context % src, context % dst)
+    return re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '', result)
+
