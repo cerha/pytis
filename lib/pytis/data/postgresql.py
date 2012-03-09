@@ -473,7 +473,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         return data
 
     def _pg_flush_connections(self):
-        self._pg_connection_pool().flush()
+        self._pg_connection_pool().flush(self._postgresql_close_connection)
 
 
 class PostgreSQLUserGroups(PostgreSQLConnector):
