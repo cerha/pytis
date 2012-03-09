@@ -2026,6 +2026,7 @@ class _GsqlFunction(_GsqlSpec):
     _SQL_NAME = 'FUNCTION'
     
     def __init__(self, name, arguments, output_type, body=None, security_definer=False,
+                 optimizer_attributes='VOLATILE',
                  use_functions=(), schemas=None, **kwargs):
         """Inicializuj instanci.
 
@@ -2053,6 +2054,7 @@ class _GsqlFunction(_GsqlSpec):
             v kterémžto případě je funkce pythonová a musí být hodnotou
             argumentu 'name'
           security_definer -- if True, add 'SECURITY DEFINER' to function definition
+          optimizer_attributes -- specify one of VOLATILE, IMMUTABLE OR STABLE
           kwargs -- argumenty předané konstruktoru předka
 
         """
@@ -2068,6 +2070,7 @@ class _GsqlFunction(_GsqlSpec):
             body = name
         self._body = body
         self._security_definer = security_definer
+        self._optimizer_attributes = optimizer_attributes.strip().upper()
         self._set_schemas(schemas)
         if self._doc is None and not isinstance(body, basestring):
             self._doc = body.__doc__
@@ -2171,6 +2174,12 @@ class _GsqlFunction(_GsqlSpec):
             return " SECURITY DEFINER"
         else:
             return ""
+        
+    def _format_optimizer(self):        
+        if self._optimizer_attributes in ('VOLATILE', 'IMMUTABLE', 'STABLE'):
+            return " %s" % self._optimizer_attributes
+        else:
+            return ""
     
     def _output(self):
         # input_types = string.join(map(_gsql_format_type, self._input_types),
@@ -2181,8 +2190,9 @@ class _GsqlFunction(_GsqlSpec):
         returns = self._format_returns()
         body = self._format_body(self._body)
         security = self._format_security()
-        result = 'CREATE OR REPLACE FUNCTION %s (%s) %s\nAS %s%s;\n' % \
-                 (self._name, arguments, returns, body, security)
+        optimizer = self._format_optimizer()
+        result = 'CREATE OR REPLACE FUNCTION %s (%s) %s\nAS %s%s%s;\n' % \
+                 (self._name, arguments, returns, body, optimizer, security)
         if self._doc:
         #    doc = "COMMENT ON FUNCTION %s (%s) IS '%s';\n" % \
         #          (self._name, input_types, _gsql_escape(self._doc))
