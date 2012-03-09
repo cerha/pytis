@@ -965,6 +965,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if isinstance(top, Refreshable):
                 top.refresh()
         else:
+            if view.arguments() is not None:
+                message(_("Do tohoto formuláře nelze vkládat."), beep_=True)
+                return None
             result = run_form(PopupInsertForm, name, prefill=prefill, inserted_data=inserted_data,
                               multi_insert=multi_insert, transaction=transaction,
                               spec_kwargs=spec_kwargs)
@@ -1383,6 +1386,9 @@ def delete_record(view, data, transaction, record,
         else:
             raise ProgramError("Invalid 'on_delete_record' return value.", result)
     else:
+        if data.arguments() is not None:
+            message(_("V tomto formuláři nelze mazat."), beep_=True)
+            return False
         op, arg = data.delete, key
     if ask and not run_dialog(Question, question):
         return False

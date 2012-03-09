@@ -1739,6 +1739,9 @@ class RecordForm(LookupForm):
         else:
             name = self._name
             redirect = self._view.redirect()
+            if redirect is None and self._data.arguments() is not None:
+                message(_("Tento formulář je needitovatelný."), beep_=True)
+                return
             if redirect is not None:
                 redirected_name = redirect(row)
                 if redirected_name is not None:

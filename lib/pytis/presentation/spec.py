@@ -1706,6 +1706,10 @@ class ViewSpec(object):
         """Return initial folding as a 'FoldableForm.Folding' instance or 'None'."""
         return self._folding
 
+    def arguments(self):
+        """Return 'None' or a sequence of table function arguments."""
+        return self._arguments
+    
     def argument_provider(self):
         """Return 'None' or a function generating database table function arguments."""
         return self._argument_provider
@@ -3486,7 +3490,7 @@ class Specification(object):
             if not attr.startswith('_') and not attr.endswith('_spec') and \
                    attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                                 'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
-                                'data_access_rights', 'arguments', 'crypto_names',
+                                'data_access_rights', 'crypto_names',
                                 'oid', # for backward compatibility 
                                 ):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
