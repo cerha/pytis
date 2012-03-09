@@ -288,11 +288,11 @@ class DualForm(Form, Refreshable):
             self._splitter.SetSashPosition(position)
         event.Skip()
 
-    def _refresh(self, when=None):
+    def _refresh(self, when=None, interactive=False):
         if isinstance(self._main_form, Refreshable):
-            self._main_form.refresh()
+            self._main_form.refresh(interactive=interactive)
         if isinstance(self._side_form, Refreshable):
-            self._side_form.refresh()
+            self._side_form.refresh(interactive=interactive)
 
     def close(self, force=False):
         # Prevent certain actions to happen in the side form when the form is
@@ -878,10 +878,10 @@ class MultiForm(Form, Refreshable):
         if active:
             active.defocus()
 
-    def _refresh(self, when=None):
+    def _refresh(self, when=None, interactive=False):
         active = self.active_form()
         if active and isinstance(active, Refreshable):
-            active.refresh()
+            active.refresh(interactive=interactive)
             
 
 class MultiSideForm(MultiForm):

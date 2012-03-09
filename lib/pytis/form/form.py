@@ -611,7 +611,7 @@ class Refreshable:
         return result
     block_refresh = classmethod(block_refresh)
     
-    def refresh(self, when=None):
+    def refresh(self, when=None, interactive=False):
         """Aktualizuj data formuláře z datového zdroje.
 
         Překresli data ve formuláři v okamžiku daném argumentem 'when'.
@@ -621,19 +621,21 @@ class Refreshable:
           when -- určuje, zda a kdy má být aktualizace provedena, musí to být
             jedna z 'DOIT_*' konstant třídy.  Implicitní hodnota je
             'DOIT_AFTEREDIT', je-li 'reset' 'None', 'DOIT_IMMEDIATELY' jinak.
+          interactive -- indicates whether the refresh was invoked by explicit
+            user request
 
         Vrací: Pravdu, právě když byla aktualizace provedena.
 
         """
         level = Refreshable._block_refresh
         if level == 0:
-            self._refresh(when=when)
+            self._refresh(when=when, interactive=interactive)
         elif level > 0:
             log(OPERATIONAL, "Refresh neproveden kvůli blokaci:", level)
         else:
             raise ProgramError("Nepřípustná hodnota _block_refresh:", level)
 
-    def _refresh(self, when=None):
+    def _refresh(self, when=None, interactive=False):
         """Proveď vlastní refresh.
 
         Tuto metodu nechť předefinují odvozené třídy.
@@ -856,11 +858,9 @@ class LookupForm(InnerForm):
         # data object.
         self._lf_condition = condition
         self._lf_search_condition = None
-        if arguments is None and self._view.argument_provider() is not None:
-            arguments = self._view.argument_provider()()
-            if arguments is None:
-                raise Form.InitError()
         self._arguments = arguments
+        if not self._update_arguments():
+            raise Form.InitError()
         self._lf_select_count_ = None
         self._init_select(async_count=True)
         
@@ -909,6 +909,14 @@ class LookupForm(InnerForm):
 
     def _current_arguments(self):
         return self._arguments
+
+    def _update_arguments(self):
+        if self._view.argument_provider() is not None:
+            arguments = self._view.argument_provider()(self._arguments or {})
+            if arguments is None:
+                return False
+            self._arguments = arguments
+        return True
 
     def _apply_initial_profile(self):
         # This must be called in _on_idle especially because the initial
@@ -2249,7 +2257,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if isinstance(f, Refreshable):
             f.refresh()
 
-    def _refresh(self, when=None):
+    def _refresh(self, when=None, interactive=False):
+        if interactive:
+            self._update_arguments()
         self.Refresh()
 
     def _commit_data(self, op, args):

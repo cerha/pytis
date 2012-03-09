@@ -1378,7 +1378,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=row_number)
         return True
 
-    def _refresh(self, when=None, reset=None, key_update=True):
+    def _refresh(self, when=None, reset=None, key_update=True, interactive=False):
         """Aktualizuj data seznamu z datového zdroje.
 
         Překresli celý seznam v okamžiku daném argumentem 'when' se zachováním
@@ -1395,6 +1395,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             v dictionary existuje klíč (jeden z řetězců 'sorting', 'filter'), a to na hodnotou
             z dictionary pro daný klíč.
           key_update -- if true, try to select the previously selected row
+          interactive -- indicates whether the refresh was invoked by explicit
+            user request
 
         Vrací: Pravdu, právě když byla aktualizace provedena.
 
@@ -1410,6 +1412,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # Jdeme na to
         if __debug__:
             log(DEBUG, 'Refresh request:', (when, reset))
+        if interactive:
+            self._update_arguments()
         if when is self.DOIT_IFNEEDED:
             if self._reshuffle_request == self._last_reshuffle_request or \
                    self._reshuffle_request > time.time():

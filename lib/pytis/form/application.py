@@ -820,10 +820,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._recent_forms[:] = []
         self._update_recent_forms()
 
-    def _cmd_refresh(self):
+    def _cmd_refresh(self, interactive=True):
         for w in (self._modals.top(), self._windows.active()):
             if isinstance(w, Refreshable):
-                w.refresh()
+                w.refresh(interactive=interactive)
 
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
         if form_class is InputForm and name is None:
@@ -1396,7 +1396,7 @@ def delete_record(view, data, transaction, record,
 
 def refresh():
     """Aktualizuj zobrazení viditelných oken aplikace, pokud je to třeba."""
-    Application.COMMAND_REFRESH.invoke()
+    Application.COMMAND_REFRESH.invoke(interactive=False)
 
 def help(topic=None):
     """Zobraz dané téma v proholížeči nápovědy."""
