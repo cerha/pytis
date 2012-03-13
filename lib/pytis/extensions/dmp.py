@@ -829,11 +829,23 @@ class DMPRights(DMPObject):
 
     def _load_specifications(self):
         messages = []
-        def add_rights(shortname, access_specification):
+        def add_rights(shortname, access_specification, all_columns):
+            explicit_columns = {}
             for item in access_specification:
                 columns = item[0]
-                if columns is None:
-                    columns = [None]
+                if isinstance(columns, basestring):
+                    columns = (columns,)
+                if not isinstance(columns, (list, tuple,)):
+                    continue
+                columns = [c for c in columns if isinstance(c, basestring)]
+                for groups_permissions in item[1:]:
+                    for p in groups_permissions[1:]:
+                        for c in columns:
+                            explicit_columns[p] = explicit_columns.get(p, []) + [c]
+            for item in access_specification:
+                columns = item[0]
+                if not isinstance(columns, (list, tuple,)):
+                    columns = [columns]
                 for groups_permissions in item[1:]:
                     groups = groups_permissions[0]
                     permissions = groups_permissions[1:]
@@ -845,18 +857,26 @@ class DMPRights(DMPObject):
                         groups = (groups,)
                     for g in groups:
                         for p in permissions:
-                            for c in columns:
+                            if False in columns:
+                                column_list = ([c for c in columns if c is not False] +
+                                               [c for c in all_columns
+                                                if c not in columns and
+                                                c not in explicit_columns.get(p, [])])
+                            else:
+                                column_list = columns
+                            for c in column_list:
                                 right = self.Right(shortname=shortname, roleid=(g or '*'),
                                                    rightid=p.lower(), colname=c,
                                                    system=True, granted=True)
                                 self._rights.append(right)
         import config
         for spec_name in self._all_form_specification_names(messages):
-            # Form access rights
-            shortname = 'form/' + spec_name
             spec = self._specification(spec_name, messages)
             if spec is None:
                 continue
+            all_columns = [f.id() for f in spec.view_spec().fields() if not f.virtual()]
+            # Form access rights
+            shortname = 'form/' + spec_name
             access_rights = spec.data_spec().access_rights()
             if access_rights is None:
                 add_message(messages, DMPMessage.NOTE_MESSAGE,
@@ -865,14 +885,14 @@ class DMPRights(DMPObject):
                 access_specification = ((None, (None, pytis.data.Permission.ALL)),)
             else:
                 access_specification = access_rights.specification()
-            add_rights(shortname, access_specification)
+            add_rights(shortname, access_specification, all_columns)
             # Form actions access rights
             form_actions = spec.view_spec().actions(linear=True)
             if form_actions:
                 for a in form_actions:
                     form_action_name = 'action/%s/%s' % (a.id(), spec_name,)
                     form_action_rights = ((None, (a.access_groups(), pytis.data.Permission.CALL)),)
-                    add_rights(form_action_name, form_action_rights)
+                    add_rights(form_action_name, form_action_rights, all_columns)
             # Print actions access rights
             for p in (spec.print_spec() or []):
                 form_action_name = 'print/%s/%s' % (p.dmp_name(), spec_name,)
@@ -882,7 +902,7 @@ class DMPRights(DMPObject):
                     print_access_groups = \
                       access_rights.permitted_groups(pytis.data.Permission.PRINT, None)
                 print_action_rights = ((None, (print_access_groups, pytis.data.Permission.PRINT)),)
-                add_rights(form_action_name, print_action_rights)
+                add_rights(form_action_name, print_action_rights, all_columns)
         return messages
 
     def _retrieve_data(self, transaction=None):
