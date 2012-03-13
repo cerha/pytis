@@ -1854,14 +1854,16 @@ class DMPImport(DMPObject):
             but no menu item is created)
 
         """
-        transaction = self._transaction()
-        self._disable_triggers(transaction=transaction)
         resolver = self._resolver()
         messages = []
         action = DMPActions.Action(resolver, messages, fullname=fullname)
+        specification = action.form_name()
+        if self._specification(specification, messages) is None:
+            return messages
+        transaction = self._transaction()
+        self._disable_triggers(transaction=transaction)
         messages += self._dmp_actions.load_specifications(actions=[action])
         messages += self._dmp_actions.store_data(fake, transaction)
-        specification = action.form_name()
         if position is not True:
             menu = self._dmp_menu
             menu.retrieve_data(transaction=transaction)
