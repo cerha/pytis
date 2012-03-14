@@ -379,9 +379,11 @@ def e_pytis_menu_trigger():
             if not self._new['name'] and self._new['title'] and (old is None or not old['title']):
                 # New non-terminal menu item
                 self._new['fullname'] = action = 'menu/' + str(self._new['menuid'])
-                plpy.execute(("insert into c_pytis_menu_actions (fullname, shortname, description) "
+                if not plpy.execute("select * from c_pytis_menu_actions where fullname='%s'" %
+                                    (self._pg_escape(action),)):
+                    plpy.execute(("insert into c_pytis_menu_actions (fullname, shortname, description) "
                               "values ('%s', '%s', '%s')") % (action, action, self._pg_escape("Menu '%s'" % (self._new['title'])),))
-                self._return_code = self._RETURN_CODE_MODYFY
+                    self._return_code = self._RETURN_CODE_MODYFY
         def _check_parent(self, old_position=None):
             # Prevent menu item movement to non-existent parents or to self
             new_position = self._new['position']
