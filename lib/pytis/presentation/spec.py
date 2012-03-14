@@ -3454,7 +3454,8 @@ class Specification(object):
             for c in columns:
                 if c == '__pytis_magic_column':
                     shortname_rights[False] = rights
-                shortname_rights[c] = rights
+                else:
+                    shortname_rights[c] = rights
         rights_data.select_map(process)
         # Transform access rights specifications to AccessRights instances
         def process(column, permissions):            

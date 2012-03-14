@@ -858,10 +858,13 @@ class DMPRights(DMPObject):
                     for g in groups:
                         for p in permissions:
                             if False in columns:
-                                column_list = ([c for c in columns if c is not False] +
-                                               [c for c in all_columns
-                                                if c not in columns and
-                                                c not in explicit_columns.get(p, [])])
+                                if len(columns) == 1:
+                                    column_list = [None]
+                                else:
+                                    column_list = ([c for c in columns if c is not False] +
+                                                   [c for c in all_columns
+                                                    if c not in columns and
+                                                    c not in explicit_columns.get(p, [])])
                             else:
                                 column_list = columns
                             for c in column_list:
