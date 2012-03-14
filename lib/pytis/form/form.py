@@ -884,7 +884,8 @@ class LookupForm(InnerForm):
         return result
 
     def _new_form_kwargs(self):
-        return dict(condition=self._lf_condition, sorting=self._lf_sorting)
+        return dict(condition=self._lf_condition, sorting=self._lf_sorting,
+                    arguments=self._current_arguments())
 
     def _form_log_info(self):
         return 'sort=%s, filter=%s' % (self._lf_sorting, self._lf_filter,)
@@ -1597,7 +1598,7 @@ class RecordForm(LookupForm):
         return None
     
     def _new_form_kwargs(self):
-        return {}
+        return dict(arguments=self._current_arguments())
 
     def _lock_record(self, key):
         success, locked = db_operation(self._data.lock_row, key, transaction=self._transaction)
