@@ -3444,6 +3444,11 @@ class Specification(object):
                 shortname_rights = access_rights[shortname] = {}
             if rights_string:
                 rights = [r.upper() for r in rights_string.split(' ') if r != 'show']
+                if '*' in rights:
+                    rights.remove('*')
+                    for r in pytis.data.Permission.all_permissions():
+                        if r not in rights:
+                            rights.append(r)
             else:
                 rights = []
             for c in columns:
@@ -3452,7 +3457,7 @@ class Specification(object):
                 shortname_rights[c] = rights
         rights_data.select_map(process)
         # Transform access rights specifications to AccessRights instances
-        def process(column, permissions):
+        def process(column, permissions):            
             return (column, (None,) + tuple(permissions),)
         for shortname, rights in access_rights.items():
             access_rights_spec = [process(column, permissions) for column, permissions in rights.items()]
