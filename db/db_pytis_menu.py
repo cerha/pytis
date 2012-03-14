@@ -674,7 +674,8 @@ _std_table('e_pytis_action_rights',
 1 = new (not yet active, to be activated after the next global rights update)."""
               ),
             ),
-           sql="unique (shortname, roleid, rightid, colname, system, granted, status)",
+           sql=("unique (shortname, roleid, rightid, colname, system, granted, status),"
+                "check (granted or not system)"),
            doc="""Assignments of access rights to actions.
 
 Extent of each action right is strictly limited by its granted system
