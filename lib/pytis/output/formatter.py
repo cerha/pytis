@@ -177,6 +177,11 @@ class _FormDataIterator(_DataIterator):
             sorting = resolver.p((name, P_SORTING))
         super(_FormDataIterator, self).__init__(resolver, name, condition=condition,
                                                 sorting=sorting, transaction=transaction)
+class _FakeDataIterator(lcg.SubstitutionIterator):
+    def _value(self):
+        raise lcg.SubstitutionIterator.NotStartedError(None)
+    def _reset(self):
+        pass
 
 class LCGFormatter(object):
     """LCG based formatter."""
@@ -211,6 +216,13 @@ class LCGFormatter(object):
             if form is not None:
                 import pytis.form # must be placed before first `pytis' use here
                 if current_row is None:
+                    dictionary['data'] = _FormDataIterator(self._selected_resolver, form,
+                                                           transaction=self._transaction)
+                else:
+                    # Using `data' iteration in row templates is most likely an error.
+                    # And since it may cause various performance or system problems we forbid it.
+                    dictionary['data'] = _FakeDataIterator()
+                if current_row is None:
                     current_row = form.current_row()
                 if current_row is None:
                     current_row_dictionary = LCGFormatter._DummyDict()
@@ -219,8 +231,6 @@ class LCGFormatter(object):
                                                    for k in current_row.keys()
                                                    if not isinstance(current_row[k].type(), pytis.data.Binary)])
                 dictionary['current_row'] = current_row_dictionary
-                dictionary['data'] = _FormDataIterator(self._selected_resolver, form,
-                                                       transaction=self._transaction)
                 dictionary['table'] = self._make_table
                 dictionary['agg'] = agg = _ProxyDict()
                 for name, op in(('min', pytis.data.Data.AGG_MIN,),
