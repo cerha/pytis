@@ -120,11 +120,11 @@ class _DataIterator(lcg.SubstitutionIterator):
                 return default
     def __init__(self, resolver, form_name, condition, sorting, transaction, codebooks=None):
         self._transaction = transaction
+        self._select_kwargs = dict(condition=condition, sort=sorting, transaction=transaction)
         view = resolver.get(form_name, 'view_spec')
         data_spec = resolver.get(form_name, 'data_spec')
         import config
         self._data = data_spec.create(dbconnection_spec=config.dbconnection)
-        self._data.select(condition=condition, sort=sorting, transaction=transaction)
         self._presented_row = pytis.presentation.PresentedRow(view.fields(), self._data, None,
                                                               singleline=True)
         self._codebooks = None
@@ -143,9 +143,17 @@ class _DataIterator(lcg.SubstitutionIterator):
                         secret_columns.append(cb_id)
                 self._codebooks[field_id] = (columns, secret_columns)
         super(_DataIterator, self).__init__()
+    def _init_select(self):
+        # It is necessary to delay the select until its data is actually used,
+        # otherwise many connections may be opened concurrently when using row
+        # templates.
+        if self._select_kwargs is not None:
+            self._data.select(**self._select_kwargs)
+            self._select_kwargs = None
     def _value(self):
         return self._RowDictionary(self._presented_row, self._codebooks)
     def _next(self):
+        self._init_select()
         row = self._data.fetchone(transaction=self._transaction)
         if row is None:
             self._data.close()
@@ -153,7 +161,8 @@ class _DataIterator(lcg.SubstitutionIterator):
         self._presented_row.set_row(row)
         return True
     def _reset(self):
-        self._data.rewind()
+        if self._select_kwargs is None:
+            self._data.rewind()
 class _FormDataIterator(_DataIterator):
     def __init__(self, resolver, form, transaction):
         name = form.name()
