@@ -2,7 +2,7 @@
 
 # Prostředky pro definici a zpracování konfigurace běhu aplikace
 # 
-# Copyright (C) 2002-2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -428,7 +428,7 @@ class Configuration(object):
 
     class _Option_custom_debug(HiddenOption):
         _DESCR = _(u"Zvláštní ladící funkce, napojená na příkaz 'COMMAND_CUSTOM_DEBUG'.")
-        _DEFAULT = (lambda: None)
+        _DEFAULT = (lambda self: None)
 
     # Cesty a adresáře
 
