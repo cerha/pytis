@@ -148,8 +148,14 @@ class _DataIterator(lcg.SubstitutionIterator):
         # otherwise many connections may be opened concurrently when using row
         # templates.
         if self._select_kwargs is not None:
-            self._data.select(**self._select_kwargs)
+            count = self._data.select(**self._select_kwargs)
             self._select_kwargs = None
+            if count > config.output_row_limit:
+                import pytis.form
+                message = (_("Bude se formátovat tabulka s mnoha řádky (%d).\n") % (count,) +
+                           _("Chcete v tisku přesto pokračovat?"))
+                if not pytis.form.run_dialog(pytis.form.Question, message):
+                    raise pytis.form.UserBreakException()
     def _value(self):
         return self._RowDictionary(self._presented_row, self._codebooks)
     def _next(self):

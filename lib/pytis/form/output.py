@@ -2,7 +2,7 @@
 
 # Formulář s tiskovým preview a tiskem
 # 
-# Copyright (C) 2002-2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -314,6 +314,8 @@ class PrintForm(Form):
             log(OPERATIONAL, 'Print exception caught', tbstring)
             run_dialog(Error, _("Chybné použití identifikátoru `data' v tiskové sestavě.\n"
                                 "Možná jste místo něj chtěli použít `current_row'?"))
+        except UserBreakException:
+            pass
         return result
 
 class PrintFormExternal(PrintForm, PopupForm):

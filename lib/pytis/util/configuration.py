@@ -778,6 +778,11 @@ class Configuration(object):
         _DESCR = _(u"Počet sekund, po kterých se uživateli nabídne přerušení zdlouhavého "
                    u"otevírání formuláře.")
         _DEFAULT = 40
+
+    class _Option_output_row_limit(NumericOption):
+        _DESCR = _(u"Maximální počet řádků, pro který se v tiskových sestavách formátuje "
+                   u"datová tabulka bez potvrzení uživatele.")
+        _DEFAULT = 1000
         
     # Volby přizpůsobení uživatelského rozhraní
         
