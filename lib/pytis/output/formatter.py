@@ -186,7 +186,7 @@ class LCGFormatter(object):
             return ''
 
     class _LCGGlobals(_ProxyDict):
-        def __init__(self, resolvers, form, form_bindings, codebooks, current_row=None):
+        def __init__(self, resolvers, form, form_bindings, codebooks, transaction, current_row=None):
             self._resolvers = resolvers
             if form is not None:
                 name = form.name()
@@ -203,8 +203,7 @@ class LCGFormatter(object):
             self._form = form
             self._form_bindings = form_bindings
             import config
-            T = pytis.data.DBTransactionDefault
-            self._transaction = T(connection_data=config.dbconnection, isolation=T.SERIALIZABLE)
+            self._transaction = transaction
             dictionary = self._initial_dictionary(form, form_bindings, codebooks, current_row)
             _ProxyDict.__init__(self, dictionary)
         def _initial_dictionary(self, form, form_bindings, codebooks, current_row):
@@ -450,13 +449,15 @@ class LCGFormatter(object):
 
     def _pdf(self):
         start_time = pytis.data.DateTime.now()
+        T = pytis.data.DBTransactionDefault
+        transaction = T(connection_data=config.dbconnection, isolation=T.SERIALIZABLE)
         children = []
         if self._form is not None and self._row_template is not None:
             i = 1
             row_template = self._row_template
             for row in self._form.presented_rows():
                 row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
-                                                   self._codebooks, current_row=row)
+                                                   self._codebooks, transaction, current_row=row)
                 id_ = 'pytissubdoc%d' % (i,)    
                 row_template_lcg = row_template.lcg()
                 parameters = self._template_parameters(row_template)
@@ -466,7 +467,7 @@ class LCGFormatter(object):
                 children.append(document)
                 i += 1
         lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
-                                       self._codebooks)
+                                       self._codebooks, transaction)
         lcg_globals['app'] = self._application_variables
         body = self._body
         if not body:
