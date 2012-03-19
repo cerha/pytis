@@ -2888,7 +2888,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self.close()
         if transaction is None:
             self._pg_begin_transaction (isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
-                                        read_only=True)
+                                        read_only=False)
         self._pg_is_in_select = transaction or True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
