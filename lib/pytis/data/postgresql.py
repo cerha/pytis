@@ -2886,7 +2886,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_is_in_select: 
             self.close()
         if transaction is None:
-            self._pg_begin_transaction (isolation=DBPostgreSQLTransaction.SERIALIZABLE)
+            self._pg_begin_transaction (isolation=DBPostgreSQLTransaction.REPEATABLE_READ)
         self._pg_is_in_select = transaction or True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
@@ -3552,7 +3552,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     
     """
 
-    SERIALIZABLE = 'serializable'
+    REPEATABLE_READ = 'repeatable read'
 
     def __init__(self, connection_data, isolation=None, **kwargs):
         """
@@ -3562,8 +3562,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
             parametry připojení, nebo funkce bez argumentů vracející takovou
             instanci 'DBConnection'
           isolation -- transaction isolation level, either 'None' (default
-            isolation level, i.e. read commited) or 'SERIALIZABLE' constant of
-            this class (serializable isolation level)
+            isolation level, i.e. read commited) or 'REPEATABLE_READ' constant of
+            this class (repeatable read isolation level)
 
         """
         super(DBPostgreSQLTransaction, self).__init__(

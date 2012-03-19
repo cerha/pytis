@@ -466,7 +466,7 @@ class LCGFormatter(object):
     def _pdf(self):
         start_time = pytis.data.DateTime.now()
         T = pytis.data.DBTransactionDefault
-        transaction = T(connection_data=config.dbconnection, isolation=T.SERIALIZABLE)
+        transaction = T(connection_data=config.dbconnection, isolation=T.REPEATABLE_READ)
         children = []
         if self._form is not None and self._row_template is not None:
             i = 1
