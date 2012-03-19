@@ -1552,7 +1552,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
            % (schema, main_table_name,))
         self._pdbb_command_delete = \
           'delete from %s where %%s' % main_table
-        self._pdbb_command_isolation = 'set transaction isolation level %s'
+        self._pdbb_command_isolation = 'set transaction isolation level %s%s'
         self._pdbb_command_notify = \
           'notify "__modif_%s"' % (main_table.lower(),)
         self._pg_notifications = map(lambda t: '__modif_%s' % (t.lower(),), table_names)
@@ -2675,7 +2675,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def _pg_deallocate_connection(self):
         self._pg_return_connection(self._pg_connections().pop())
 
-    def _pg_begin_transaction (self, isolation=None):
+    def _pg_begin_transaction (self, isolation=None, read_only=False):
         if self._pg_is_in_select:
             self.close()
         limit = 10
@@ -2684,7 +2684,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             try:
                 self._postgresql_begin_transaction()
                 if isolation:
-                    self._pg_query(self._pdbb_command_isolation % (isolation,))
+                    read_only_string = (" READ ONLY" if read_only else "")
+                    self._pg_query(self._pdbb_command_isolation % (isolation, read_only_string,))
                 else:
                     self._pg_query("select null")
                 break
@@ -2886,7 +2887,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if self._pg_is_in_select: 
             self.close()
         if transaction is None:
-            self._pg_begin_transaction (isolation=DBPostgreSQLTransaction.REPEATABLE_READ)
+            self._pg_begin_transaction (isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
+                                        read_only=True)
         self._pg_is_in_select = transaction or True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
@@ -3577,7 +3579,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         return (), ()
     
     def _pdbb_create_sql_commands(self):
-        self._pdbb_command_isolation = 'set transaction isolation level %s'
+        self._pdbb_command_isolation = 'set transaction isolation level %s%s'
 
     def _trans_connection(self):
         return self._pg_get_connection()
