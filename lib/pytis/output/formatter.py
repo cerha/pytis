@@ -377,12 +377,16 @@ class LCGFormatter(object):
         else:
             self._style = None
         body, __ = self._resolve(template_id, 'body')
-        parameters = copy.copy(self._template_parameters(body))
+        if body is None:
+            # In order to apply style parameters correctly
+            temp_body = StructuredText('')
+        else:
+            temp_body = body
+        parameters = copy.copy(self._template_parameters(temp_body))
         for p, a in (('page_header', self._page_header,),
                      ('page_footer', self._page_footer,),
                      ('first_page_header', self._first_page_header,),
                      ('page_background', self._page_background,),
-                     ('presentation', self._style,),
                      ):
             if p not in parameters:
                 if a is None:
