@@ -1058,6 +1058,8 @@ class BrowseForm(LayoutForm):
                         format = locale_data.date_format
                     elif isinstance(ftype, pd.Time):
                         format = locale_data.exact_time_format
+                    elif hasattr(ftype, 'exact') and not ftype.exact(): # for wiking.DateTime
+                        format = locale_data.date_format +' '+ locale_data.time_format
                     else:
                         format = locale_data.date_format +' '+ locale_data.exact_time_format
                     kwargs = dict(format=format)
