@@ -113,7 +113,7 @@ begin
   update e_pytis_crypto_keys set key=pytis_crypto_store_key(key_, $3), fresh=False where key_id=$1;
   return True;
 end;
-$$ language plpgsql;
+$$ language plpgsql security definer;
 
 create or replace function pytis_crypto_copy_key (name_ text, from_user text, to_user text, from_psw text, to_psw text) returns bool as $$
 declare
