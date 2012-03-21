@@ -228,14 +228,24 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     name = list(bad_names)[0]
                     bad = True
                 else:
-                    break
-                message = (_("Zadejte heslo pro odemčení šifrovacího klíče oblasti ") + name + '.')
+                    break                
+                message = _("Zadejte heslo pro odemčení šifrovacího klíče oblasti %s.") % name
                 if bad:
                     message = message + _("\n(Patrně se jedná o vaše staré přihlašovací heslo.)")
-                password = run_dialog(pytis.form.Password, message=message, input_width=33)
-                if not password:
+                # TODO: temporary solution; when InputDialog properly handle pasting from clipboard
+                #       it will be replaced again with run_dialog.
+                result = run_form(InputForm, title=_("Heslo pro šifrovací klíč"),
+                                  fields=(Field('password', _(""), type=pytis.data.Password(verify=False),
+                                                width = 40, not_null=True, compact=True),),
+                                  layout=(pytis.form.Text(message), 'password')
+                                  )
+                if not (result and result['password'].value()):
                     break
-                password_value = pytis.data.sval(password)
+                password_value = result['password']
+                # password = run_dialog(pytis.form.Password, message=message, input_width=33)
+                #if not password:
+                #    break
+                #password_value = pytis.data.sval(password)
                 for r in rows:
                     r_name = r['name'].value()
                     if r_name == name or (bad and r_name in bad_names):
