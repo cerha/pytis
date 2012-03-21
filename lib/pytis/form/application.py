@@ -236,7 +236,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 #       it will be replaced again with run_dialog.
                 result = run_form(InputForm, title=_("Heslo pro šifrovací klíč"),
                                   fields=(Field('password', _(""), type=pytis.data.Password(verify=False),
-                                                width = 40, not_null=True, compact=True),),
+                                                width=40, not_null=True, compact=True),),
                                   layout=(pytis.form.Text(message), 'password')
                                   )
                 if not (result and result['password'].value()):
