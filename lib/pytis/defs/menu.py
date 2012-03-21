@@ -335,7 +335,8 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                                                        ))),
                 pytis.presentation.Binding('users', _(u"Uživatelé"), 'statistics.FormUserStatisticsNoinfo',
                                            condition=(lambda row: pytis.data.EQ('shortname', row['shortname']))),
-                pytis.presentation.Binding('profiles', _(u"Profily"), 'profiles.FormProfiles', 'fullname'),
+                pytis.presentation.Binding('profiles', _(u"Profily"), 'profiles.FormProfiles',
+                                           condition=self._profiles_binding_condition),
                 pytis.presentation.Binding('settings', _(u"Nastavení"), 'profiles.FormSettings',
                                            condition=self._spec_name_form_name_binding_condition),
                 pytis.presentation.Binding('log', _(u"Log Akcí"), 'logging.FormActionLogView',
@@ -370,6 +371,14 @@ class ApplicationMenuM(pytis.presentation.Specification):
                                   pytis.data.EQ('form_name', pytis.data.sval(split_fullname[1])))
         else:
             return pytis.data.OR()
+
+    def _profiles_binding_condition(self, row):
+        split_shortname = row['shortname'].value().split('/')
+        if split_shortname[0] == 'form':
+            return pytis.data.EQ('spec_name', pytis.data.sval(split_shortname[1]))
+        else:
+            return pytis.data.OR()
+
         
     ## Form actions
 
