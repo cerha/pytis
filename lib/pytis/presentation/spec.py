@@ -1351,11 +1351,13 @@ class ViewSpec(object):
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
 
-          argument_provider -- function of no arguments returning a dictionary
-            of database function argument names (strings) as keys and
-            'pytis.data.Value' instances as corresponding database function
+          argument_provider -- function of a single argument returning a
+            dictionary of database function argument names (strings) as keys
+            and 'pytis.data.Value' instances as corresponding database function
             argument values.  If it is 'None', no arguments are provided.  If
-            it returns 'None', the select should be cancelled.  This argument
+            it returns 'None', the select should be cancelled.  The function
+            argument is the current dictionary of arguments, it is useful
+            e.g. when updating previously supplied arguments.  This argument
             makes sense only for database table functions, it should be 'None'
             for standard tables and views.
 
@@ -3326,12 +3328,14 @@ class Specification(object):
     argument_provider = None
     """Function generating database table function arguments.
 
-    It is a function of no arguments returning a dictionary of database
+    It is a function of a single argument returning a dictionary of database
     function argument names (strings) as keys and 'pytis.data.Value' instances
     as corresponding database function argument values.  If it is 'None', no
     arguments are provided.  If it returns 'None', the select should be
-    cancelled.  This specification makes sense only for database table
-    functions, it should be 'None' for standard tables and views."""
+    cancelled.  The function argument is the current dictionary of arguments,
+    it is useful e.g. when updating previously supplied arguments.  This
+    specification makes sense only for database table functions, it should be
+    'None' for standard tables and views."""
     
     access_rights = None
     """Access rights for the view as an 'AccessRights' instance.
