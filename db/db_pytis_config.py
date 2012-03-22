@@ -65,11 +65,39 @@ _std_table_nolog('e_pytis_form_profile_params',
        C('dump', TString),
        C('errors', TString),
        ),
-      sql='''UNIQUE (username, spec_name, form_name, profile_id)''',
+      sql='UNIQUE (username, spec_name, form_name, profile_id)',
       grant=db_rights,
       schemas=db_schemas,
       doc="""Pytis form profile form type specific parameters."""
       )
+
+
+function('copy_user_profile',
+         (AT(TString, name='profile_id'),
+          AT(TString, name='username'),
+          ),
+         TString,
+         body="""with newid as (
+select ''_user_profile_'' || (max(split_part(profile_id, ''_'',4)::int) + 1)::text as profile_id
+   from ev_pytis_form_profiles p
+   where p.username = $2
+   and p.spec_name = (select spec_name from ev_pytis_form_profiles where id = $1 limit 1)
+   ), profiles as
+  (insert into e_pytis_form_profile_base 
+   (username, spec_name, profile_id, title, pickle)
+    select $2 as username, spec_name, newid.profile_id, title, pickled_filter
+     from ev_pytis_form_profiles profiles, newid
+    where id = $1 returning *), params as
+     (insert into e_pytis_form_profile_params
+      (username, spec_name, profile_id, form_name, pickle)
+       select profiles.username, profiles.spec_name, newid.profile_id, params.form_name,
+              params.pickled_params
+         from ev_pytis_form_profiles params, newid, profiles
+        where params.id = $1 returning *)
+select profiles.id || ''.'' || params.id from profiles, params
+""",
+         doc="Zkopíruje profil z ev_pytis_form_profiles jinému uživateli.",
+         depends=('ev_pytis_form_profiles',))   
 
 viewng('ev_pytis_form_profiles',
        relations=(Relation('e_pytis_form_profile_base', alias='profile', key_column='id',
@@ -91,8 +119,9 @@ viewng('ev_pytis_form_profiles',
                         ),
        insert=None,
        update=None,
-       delete=('delete from e_pytis_form_profile_base where username = old.username and '
-               'spec_name = old.spec_name and profile_id = old.profile_id'),
+       delete=("(delete from e_pytis_form_profile_base where id = split_part(old.id, '.', 1)::int;"
+               "delete from e_pytis_form_profile_params where id = split_part(old.id, '.', 2)::int;)"
+               ),
        depends=('e_pytis_form_profile_base', 'e_pytis_form_profile_params'),
        grant=db_rights,
        schemas=db_schemas,
