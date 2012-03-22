@@ -78,7 +78,7 @@ function('copy_user_profile',
           ),
          TString,
          body="""with newid as (
-select ''_user_profile_'' || (max(split_part(profile_id, ''_'',4)::int) + 1)::text as profile_id
+select ''_user_profile_'' || (coalesce(max(split_part(profile_id, ''_'',4)::int),0) + 1)::text as profile_id
    from ev_pytis_form_profiles p
    where p.username = $2
    and p.spec_name = (select spec_name from ev_pytis_form_profiles where id = $1 limit 1)
