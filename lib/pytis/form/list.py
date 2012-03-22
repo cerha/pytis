@@ -2478,8 +2478,9 @@ class FoldableForm(ListForm):
                     folding=self._folding.folding_state())
     
     def _profile_parameter_changed(self, param, current_value, original_value):
-        if param == 'folding' and self._current_profile.filter():
-            # Avoid indication of changed profile in case od system profiles
+        if (param == 'folding' and self._current_profile.filter() and
+            not self._current_profile.is_user_defined_profile()):
+            # Avoid indication of changed profile in case of system profiles
             # with filter and no folding in specifications with
             # initial_folding.  The default folding is actually different
             # depending on the profile's filter as implemented in

@@ -683,6 +683,8 @@ class Profile(object):
     def errors(self):
         return self._errors
 
+    def is_user_defined_profile(self):
+        return self._id.startswith(pytis.form.FormProfileManager.USER_PROFILE_PREFIX)
     
 class AggregatedView(object):
     """Predefined aggregated view specification.
