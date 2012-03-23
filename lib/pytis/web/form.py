@@ -1348,7 +1348,7 @@ class BrowseForm(LayoutForm):
                 found = True
                 offset = dist - 1
         if limit is not None:
-            page = int(max(0, min(offset, count)) / limit)
+            page = int(max(0, min(offset, count-1)) / limit)
             first_record_offset = page*limit
         else:
             page = 0
