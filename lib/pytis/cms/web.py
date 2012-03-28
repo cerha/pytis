@@ -233,12 +233,8 @@ class Menu(wiking.PytisModule):
             binding = self._embed_binding(modname)
             result = req.forward(self._module(modname), binding=binding, record=record,
                                  title=record['title'].value())
-            if isinstance(result, (int, tuple)):
-                # The request has already been served by the embedded module. 
-                return result
-            else:
+            if isinstance(result, wiking.Document):
                 # Embed the resulting document into the current menu item content.
-                assert isinstance(result, wiking.Document)
                 content = result.content()
                 if isinstance(content, (tuple, list)):
                     content = list(content)
@@ -246,13 +242,16 @@ class Menu(wiking.PytisModule):
                     content = [content]
                 document = result.clone(title=self._document_title(req, record), subtitle=None,
                                         content=pre+content+post, globals=globals)
+            else:
+                # A wiking.Response instance has been returned by the embedded module.
+                return result
         elif text is None and record['parent'].value() is None:
             # Redirect to the first subitem from empty top level items.
             rows = self._data.get_rows(parent=record['menu_item_id'].value(), published=True,
                                        sorting=self._sorting)
             # TODO: Use only items, which are visible to the current user (access rights). 
             if rows:
-                return req.redirect('/'+self._menu_item_identifier(rows[0]))
+                raise wiking.Redirect('/'+self._menu_item_identifier(rows[0]))
             else:
                 document = self._document(req, [], record, globals=globals)
         else:
