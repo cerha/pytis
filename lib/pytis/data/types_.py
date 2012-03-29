@@ -2445,10 +2445,17 @@ class DataEnumerator(Enumerator):
         """Vrať datový typ daného sloupce v datovém objektu enumerátoru."""
         return self._data.find_column(column).type()
 
-    def permitted(self):
-        """Return whether access to this enumerator is permitted."""
+    def permitted(self, column=None):
+        """Return whether VIEW access to given enumerator column is permitted.
+
+        If column is None, key column is used which should give information
+        whether the enumerator itself is permitted.
+
+        """
+        if column is None:
+            column = self._data.key()[0].id()
         if isinstance(self._data, pytis.data.RestrictedData):
-            return self._data.permitted(self._data.key()[0].id(), pytis.data.Permission.VIEW)
+            return self._data.permitted(column, pytis.data.Permission.VIEW)
         else:
             return True
     

@@ -1650,7 +1650,9 @@ class ListField(GenericCodebookField):
                 select_item = i
             for j, id in enumerate(self._columns):
                 value = row[id]
-                if isinstance(value.type(), pytis.data.Boolean):
+                if not enumerator.permitted(id):
+                    exported_value = value.type().secret_export()
+                elif isinstance(value.type(), pytis.data.Boolean):
                     exported_value = value.value() and _(u"Ano") or _(u"Ne")
                 else:
                     exported_value = value.export().replace("\n", ";")
