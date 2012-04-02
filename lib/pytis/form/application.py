@@ -1462,14 +1462,17 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if config.dbconnection.password() is not None and _application:
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
-            login_and_password = run_dialog(Login, _(u"Zadejte heslo pro přístup do databáze"),
-                                            login=config.dbuser)
-	    if not login_and_password:
+            login_result = run_form(InputForm, title=_(u"Přihlášení pro přístup do databáze"),
+                                    fields=(Field('login', _("Uživatelské jméno"),
+                                                  width=24, not_null=True,
+                                                  default=config.dbuser),
+                                            Field('password', _("Heslo"),
+                                                  type=pytis.data.Password(verify=False),
+                                                  width=24, not_null=True),))
+	    if not login_result:
                 return FAILURE
-	    login, password = login_and_password
-            if password is None:
-                return FAILURE
-            config.dbconnection.update_login_data(user=login, password=password)
+            config.dbconnection.update_login_data(user=login_result['login'].value(),
+                                                  password=login_result['password'].value())
         except pytis.data.DBException as e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
@@ -1866,9 +1869,9 @@ def password_dialog(title=_(u"Zadejte heslo"), message=None):
     else:
         layout = ('password',)
     result = run_form(InputForm, title=title,
-                      fields=(Field('password', _("Password"),
+                      fields=(Field('password', _("Heslo"),
                                     type=pytis.data.Password(verify=False),
-                                    width=40, not_null=True, compact=True),),
+                                    width=40, not_null=True),),
                       layout=layout)
     if result:
         return result['password'].value()

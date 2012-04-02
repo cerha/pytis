@@ -575,53 +575,6 @@ class InputDialog(Message):
             return None
 
         
-class Login(InputDialog):
-    """Dialog pro zadání uživatelského jména a hesla.
-
-    """
-    def __init__(self, parent, message=None, title=_(u"Zadejte heslo"),
-                 login='', icon=None, login_prompt=_(u"Uživatelské jméno:"), 
-                 passwd_prompt=_(u"Heslo:")):
-        """Inicializuj dialog.
-
-        Speciální argumenty:
-
-          login -- předvyplněná hodnota uživatelského jména.
-          login_prompt -- výzva pro zadání uživatelského jména.
-          passwd_prompt -- výzva pro zadání hesla.
-          
-        """
-        super_(Login).__init__(self, parent, message=message, title=title, icon=icon)
-        self._login_prompt = login_prompt
-        self._passwd_prompt = passwd_prompt
-        self._value = login
-        
-    def _create_content(self, sizer):
-        if self._message is not None:
-            Message._create_content(self, sizer)
-        grid = wx.FlexGridSizer(2, 2, 2, 5)
-        login_label  = wx.StaticText(self._dialog, -1, self._login_prompt)
-        passwd_label = wx.StaticText(self._dialog, -1, self._passwd_prompt)
-        self._login  = wx.TextCtrl(self._dialog, -1, self._value)
-        self._passwd = wx.TextCtrl(self._dialog, -1,
-                                   style=wx.TE_PASSWORD)
-        style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-        grid.Add(login_label, 0, style, 2)
-        grid.Add(self._login)
-        grid.Add(passwd_label, 0, style, 2)
-        grid.Add(self._passwd)
-        self._handle_keys(self._login, self._passwd)
-        if self._value != '':
-            self._want_focus = self._passwd
-        sizer.Add(grid, 0, wx.ALL|wx.CENTER, 5)
-
-    def _customize_result(self, result):
-        if self._button_label(result) == GenericDialog.BUTTON_OK:
-            return (self._login.GetValue(), self._passwd.GetValue())
-        else:
-            return None
-
-
 class InputDate(InputDialog):
     """Dialog pro zadání datumu.
 
