@@ -815,10 +815,7 @@ class LookupForm(InnerForm):
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
         self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"))
-        self._profiles = profile_manager().load_profiles(self._profile_spec_name(),
-                                                         self._form_name(),
-                                                         self._view, self._data,
-                                                         self._default_profile)
+        self._profiles = self._load_profiles()
         if filter or sorting or columns or grouping:
             # When profile parameters were passed to the constructor, create an
             # additional profile according to these paramaters.
@@ -919,6 +916,10 @@ class LookupForm(InnerForm):
             self._arguments = arguments
         return True
 
+    def _load_profiles(self):
+        return profile_manager().load_profiles(self._profile_spec_name(), self._form_name(),
+                                               self._view, self._data, self._default_profile)
+    
     def _apply_initial_profile(self):
         # This must be called in _on_idle especially because the initial
         # profile may not be valid and we want to make use of handling invalid
@@ -2720,6 +2721,15 @@ class InputForm(PopupEditForm):
     def _create_data_object(self):
         factory = self._specification.data_spec()
         return factory.create()
+
+    def _get_saved_setting(self, option, default=None):
+        return default
+    
+    def _load_profiles(self):
+        return [self._default_profile]
+    
+    def _default_transaction(self):
+        return None
 
     def _print_menu(self):
         return []
