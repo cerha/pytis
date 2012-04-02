@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -254,9 +254,25 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
         
 
 def run_any_form():
-    result = pytis.form.run_dialog(pytis.form.RunFormDialog)
-    if result is not None:
-        pytis.form.run_form(*result)
+    form_types = (
+        ("BrowseForm", pytis.form.BrowseForm),
+        ("PopupEditForm", pytis.form.PopupEditForm),
+        ("PopupInsertForm", pytis.form.PopupInsertForm),
+        ("BrowseDualForm", pytis.form.BrowseDualForm),
+        ("MultiBrowseDualForm", pytis.form.MultiBrowseDualForm),
+        ("CodebookForm", pytis.form.CodebookForm),
+        )
+    row = pytis.form.run_form(
+        pytis.form.InputForm,
+        title=_("Spustit formulář"),
+        fields=(Field('type', _(u"Typ formuláře"), not_null=True,
+                      enumerator=pytis.data.FixedEnumerator([x[0] for x in form_types]),
+                      default='BrowseForm'),
+                Field('name', _(u"Název specifikace"), width=40),
+                ))
+    if row is not None:
+        form_type = dict(form_types)[row['type'].value()]
+        pytis.form.run_form(form_type, row['name'].value())
 cmd_run_any_form = \
            pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 

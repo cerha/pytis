@@ -771,67 +771,6 @@ class InputNumeric(InputDialog):
                 return pytis.data.Value(pytis.data.Float(), None)
 
 
-
-class RunFormDialog(InputDialog):
-    """Dialog pro spuštění formuláře.
-
-    Umožní uživateli vybrat třídu formuláře a zadat název specifikace.  Ty
-    potom vrátí v tuplu jako výsledek volání své metody 'run()'.
-    
-    """
-    _BROWSE_FORM = "BrowseForm"
-    _EDIT_FORM = "PopupEditForm"
-    _INSERT_FORM = "PopupInsertForm"
-    _BROWSE_DUAL_FORM = "BrowseDualForm"
-    _MULTI_BROWSE_DUAL_FORM = "MultiBrowseDualForm"
-    _CODEBOOK_FORM = "CodebookForm"
-
-    def __init__(self, parent, title=_(u"Zobrazit formulář")):
-        """Inicializuj dialog.
-
-        Argumenty:
-
-          Argumenty odpovídají stejným argumentům rodičovské třídy.
-          
-        """
-        super_(RunFormDialog).__init__(self, parent, message=None,
-                                       title=title, input_width=25,
-                                       prompt=_(u"Název specifikace:"),
-                                       icon=self.ICON_TIP)
-        self._FORM_CLASS_MAPPING = {
-            self._BROWSE_DUAL_FORM: pytis.form.BrowseDualForm,
-            self._MULTI_BROWSE_DUAL_FORM: pytis.form.MultiBrowseDualForm,
-            self._BROWSE_FORM: BrowseForm,
-            self._EDIT_FORM: PopupEditForm,
-            self._INSERT_FORM: PopupInsertForm,
-            self._CODEBOOK_FORM: CodebookForm,
-        }
-
-
-    def _create_content(self, sizer):
-        super(RunFormDialog, self)._create_content(sizer)
-        label = wx.StaticText(self._dialog, -1, _(u"Třída formuláře:"))
-        choices = [self._BROWSE_FORM, self._EDIT_FORM, self._INSERT_FORM,
-                   self._BROWSE_DUAL_FORM, self._MULTI_BROWSE_DUAL_FORM, self._CODEBOOK_FORM]
-        control = wx.Choice(self._dialog, -1, (-1,-1), (-1,-1), choices=choices)
-        control.SetSelection(0)
-        self._handle_keys(control)
-        self._form_class_choice = control
-        vsizer = wx.BoxSizer()
-        vsizer.Add(label, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
-        vsizer.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
-        sizer.Add(vsizer, 0, wx.ALL|wx.CENTER, 5)
-
-    def _customize_result(self, result):
-        if self._button_label(result) == GenericDialog.BUTTON_OK:
-            selection = self._form_class_choice.GetStringSelection()
-            selection = self._form_class_choice.GetStringSelection()
-            return (self._FORM_CLASS_MAPPING[selection],
-                    self._control.GetValue())
-        else:
-            return None
-
-        
 class OperationDialog(Message):
     """Dialog pro spuštění dlouhotrvající operace.
     
