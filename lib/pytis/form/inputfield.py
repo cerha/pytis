@@ -352,6 +352,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             permission = pytis.data.Permission.UPDATE
         self._denied = denied = not row.permitted(id, permission)
         self._hidden = not row.permitted(id, pytis.data.Permission.VIEW)
+        encrypted = (spec.crypto_name() and spec.crypto_name() not in decrypted_names())
+        readonly = readonly or encrypted
         self._readonly = readonly or denied or row.hidden_codebook(id)
         self._enabled = not readonly and row.editable(id)
         self._callback_registered = False
