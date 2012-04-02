@@ -232,10 +232,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 message = _("Zadejte heslo pro odemčení šifrovacího klíče oblasti %s.") % name
                 if bad:
                     message = message + _("\n(Patrně se jedná o vaše staré přihlašovací heslo.)")
-                password = password_dialog(_("Heslo pro šifrovací klíč"), message=message),
+                password = password_dialog(_("Heslo pro šifrovací klíč"), message=message)
                 if not password:
                     break
-                password_value = pd.sval(password)
+                password_value = pytis.data.sval(password)
                 for r in rows:
                     r_name = r['name'].value()
                     if r_name == name or (bad and r_name in bad_names):
