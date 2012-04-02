@@ -575,25 +575,6 @@ class InputDialog(Message):
             return None
 
         
-class Password(InputDialog):
-    """Dialog pro zadání hesla.
-
-    Speciální případ dialogu 'InputDialog' určený pro zadávání hesla.
-    
-    """
-    def __init__(self, parent, message=None, title=_(u"Zadejte heslo"),
-                 prompt=_(u"Heslo:"), icon=None, input_width=None):
-        """Inicializuj dialog.
-
-        Argumenty:
-
-          Argumenty odpovídají stejným argumentům rodičovské třídy s tím, že
-          argument 'passwd' je nastaven vždy na pravdivou hodnotu.
-          
-        """
-        super_(Password).__init__(self, parent, message=message, title=title,
-                                  prompt=prompt, passwd=True, icon=icon, input_width=input_width)
-
 class Login(InputDialog):
     """Dialog pro zadání uživatelského jména a hesla.
 
@@ -610,8 +591,7 @@ class Login(InputDialog):
           passwd_prompt -- výzva pro zadání hesla.
           
         """
-        super_(Password).__init__(self, parent, message=message, title=title,
-                                  icon=icon)
+        super_(Login).__init__(self, parent, message=message, title=title, icon=icon)
         self._login_prompt = login_prompt
         self._passwd_prompt = passwd_prompt
         self._value = login

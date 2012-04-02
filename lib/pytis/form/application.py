@@ -187,12 +187,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 established_names = data.select_map(identity, condition=condition)
                 while True:
                     message = _("Zadejte své přihlašovací heslo, pro správu šifrovacích klíčů")
-                    crypto_password = run_dialog(pytis.form.Password, message=message)
+                    crypto_password = password_dialog(message=message)
                     if not crypto_password:
                         break
                     if not established_names:
                         message = _("Zadejte své přihlašovací heslo ještě jednou pro ověření")
-                        crypto_password_repeated = run_dialog(pytis.form.Password, message=message)
+                        crypto_password_repeated = password_dialog(message=message)
                         if crypto_password == crypto_password_repeated:
                             break
                         else:
@@ -232,20 +232,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 message = _("Zadejte heslo pro odemčení šifrovacího klíče oblasti %s.") % name
                 if bad:
                     message = message + _("\n(Patrně se jedná o vaše staré přihlašovací heslo.)")
-                # TODO: temporary solution; when InputDialog properly handle pasting from clipboard
-                #       it will be replaced again with run_dialog.
-                result = run_form(InputForm, title=_("Heslo pro šifrovací klíč"),
-                                  fields=(Field('password', _(""), type=pytis.data.Password(verify=False),
-                                                width=40, not_null=True, compact=True),),
-                                  layout=(pytis.form.Text(message), 'password')
-                                  )
-                if not (result and result['password'].value()):
+                password = password_dialog(_("Heslo pro šifrovací klíč"), message=message),
+                if not password:
                     break
-                password_value = result['password']
-                # password = run_dialog(pytis.form.Password, message=message, input_width=33)
-                #if not password:
-                #    break
-                #password_value = pytis.data.sval(password)
+                password_value = pd.sval(password)
                 for r in rows:
                     r_name = r['name'].value()
                     if r_name == name or (bad and r_name in bad_names):
@@ -1868,3 +1858,19 @@ def block_yield(block=False):
     """
     global _yield_blocked
     _yield_blocked = block
+
+
+def password_dialog(title=_(u"Zadejte heslo"), message=None):
+    if message:
+        layout = (pytis.form.Text(message), 'password')
+    else:
+        layout = ('password',)
+    result = run_form(InputForm, title=title,
+                      fields=(Field('password', _("Password"),
+                                    type=pytis.data.Password(verify=False),
+                                    width=40, not_null=True, compact=True),),
+                      layout=layout)
+    if result:
+        return result['password'].value()
+    else:
+        return None
