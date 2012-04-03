@@ -471,6 +471,7 @@ def e_pytis_menu_trigger():
                         else:
                             next_position = position[:-1] + [str(long(position[-1]) + 1)]
                         update_next_position(position, next_position)
+            plpy.execute("select e_pytis_menu_check_positions()")
         def _do_after_insert(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='import'"):
                 return
@@ -513,10 +514,18 @@ for each row execute procedure e_pytis_menu_trigger();
         depends=('e_pytis_menu_trigger',))
 
 sql_raw("""
-create or replace function e_pytis_menu_check_trigger() returns trigger as $$
+create or replace function e_pytis_menu_check_positions() returns void as $$
 begin
   if (select count(*)>0 from (select position from e_pytis_menu intersect select next_position from e_pytis_menu) positions) then
     raise exception 'position / next_position conflict';
+  end if;
+end;
+$$ language plpgsql;
+
+create or replace function e_pytis_menu_check_trigger() returns trigger as $$
+begin
+  if (select count(*)=0 from e_pytis_disabled_dmp_triggers where id='positions') then
+    perform e_pytis_menu_check_positions();
   end if;
   return null;
 end;
