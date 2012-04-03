@@ -390,7 +390,9 @@ def e_pytis_menu_trigger():
             if new_position == old_position:
                 return
             if old_position is not None:
-                if new_position[:len(old_position)] == old_position:
+                if (new_position[:len(old_position)] == old_position and
+                    (len(new_position) == len(old_position) or
+                     new_position[len(old_position)] == '.')):
                     raise Exception('error', "Can't move menu item to itself")
             components = new_position.split('.')
             import string
