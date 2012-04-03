@@ -1919,10 +1919,10 @@ class DMPImport(DMPObject):
                         break
                 else:
                     self._dmp_rights.add_item(shortname, granted=False)
-            components = shortname.split('/')
-            if len(components) > 1:        
-                messages += self._dmp_rights.store_data(fake, transaction=transaction,
-                                                        specifications=[components[1]])
+                components = shortname.split('/')
+                if len(components) > 1:        
+                    messages += self._dmp_rights.store_data(fake, transaction=transaction,
+                                                            specifications=[components[1]])
         self._enable_triggers(transaction=transaction)
         if fake:
             transaction.rollback()
