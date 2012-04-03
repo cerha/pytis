@@ -39,6 +39,7 @@ import wx
 import lcg
 import pytis.output
 import pytis.util
+import pytis.windows
 import config
 
 
@@ -338,8 +339,27 @@ class PrintFormExternal(PrintForm, PopupForm):
     def _run_viewer(self, file_name):
         import subprocess
         viewer = config.postscript_viewer
+        remote = (config.rpc_remote_view and pytis.windows.windows_available())
         try:
-            if viewer:
+            if remote:
+                suffix = os.path.splitext(file_name)[1]
+                try:
+                    remote_file = pytis.windows.make_temporary_file(suffix=suffix)
+                except:
+                    remote = False
+            if remote:
+                try:
+                    f = open(file_name)
+                    while True:
+                        data = f.read(10000000)
+                        if not data:
+                            break
+                        remote_file.write(data)
+                    f.close()
+                finally:
+                    remote_file.close()
+                pytis.windows.launch_file(remote_file.name())
+            elif viewer:
                 call_args = viewer.split()
                 subprocess.call(call_args + [file_name])
             else:

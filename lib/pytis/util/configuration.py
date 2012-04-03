@@ -684,6 +684,10 @@ class Configuration(object):
     class _Option_rpc_communication_enabled(BooleanOption):
         _DESCR = _("Zapnutí/vypnutí komunikace s windowsovými klientskými stanicemi.")
         _DEFAULT = True
+
+    class _Option_rpc_remote_view(BooleanOption):
+        _DESCR = _("Flag určující, zda prohlížet tiskové soubory na klientské stanici.")
+        _DEFAULT = False
         
     # Ostatní konfigurační volby
 
