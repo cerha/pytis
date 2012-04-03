@@ -124,6 +124,101 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
         return None
 
 
+# Additional handled actions for DMP
+
+class UserDefaultPrinter(object):
+    def __init__(self):
+        try:
+            lpoptions = os.environ["HOME"]
+        except KeyError:
+            try:
+                lpoptions = "/home/" + os.environ["USER"]
+            except KeyError:
+                lpoptions = None
+        if lpoptions:
+            lpoptions += "/.cups/lpoptions"
+        self.lpoptions = lpoptions
+
+    def clear(self):
+        if not self.lpoptions:
+            return
+        try:
+            opts = open(self.lpoptions, 'r').readlines()
+        except IOError:
+            return
+        for i in range (len (opts)):
+            if opts[i].startswith ("Default "):
+                opts[i] = "Dest " + opts[i][8:]
+        open(self.lpoptions, "w").writelines (opts)
+
+    def get(self):
+        if not self.lpoptions:
+            return None
+        try:
+            opts = open(self.lpoptions, 'r').readlines()
+        except IOError:
+            return None
+        for i in range (len (opts)):
+            if opts[i].startswith("Default "):
+                rest = opts[i][8:]
+                slash = rest.find("/")
+                if slash != -1:
+                    space = rest[:slash].find(" ")
+                else:
+                    space = rest.find(" ")
+                return rest[:space]
+        return None
+
+    def set(self, default):
+        import subprocess
+        p = subprocess.Popen([ "lpoptions", "-d", default ],
+                             close_fds=True,
+                             stdin=open("/dev/null", 'r'),
+                             stdout=open("/dev/null", 'w'),
+                             stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        exitcode = p.wait()
+        if exitcode != 0:
+            raise ProgramError(stderr.strip())
+        return
+
+    def __repr__ (self):
+        return "<UserDefaultPrinter (%s)>" % repr (self.get())
+    
+def set_default_printer():
+    try:
+        import cups
+        import cupshelpers
+    except ImportError as e:
+        run_dialog(Error, _("Nastavení výchozí tiskárny nemůže být provedeno.\n"
+                              "Kontaktujte správce systému."))
+        return None
+    connection = cups.Connection()
+    user_default = UserDefaultPrinter()
+    default_printer = user_default.get()
+    if not default_printer:        
+        default_printer = connection.getDefault()
+    printers = cupshelpers.getPrinters(connection)
+    printer_names = printers.keys()
+    fields = (Field('printer', _(""), 
+                    width=40, not_null=True,
+                    type=pytis.data.String,
+                    enumerator=pytis.data.FixedEnumerator(printer_names),
+                    default=default_printer,
+                    ),
+              )
+    layout = (pytis.form.Text(_("Zvolte výchozí tiskárnu:")), 'printer')
+    result = pytis.form.run_form(pytis.form.InputForm,
+                                 title=_("Výběr tiskárny"),
+                                 fields=fields,
+                                 layout=layout)
+    if result:
+        user_default.set(result['printer'].value())
+    return None
+
+cmd_set_default_printer = (pytis.form.Application.COMMAND_HANDLED_ACTION,
+                           dict(handler=set_default_printer))
+
 # Additional constraints
             
 def constraints_email(email):
