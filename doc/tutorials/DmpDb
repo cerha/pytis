@@ -241,17 +241,14 @@ Možné výpisy:
   
 Přidání nové položky menu:
 
-  tools/dmp --config=.../config.py add-form FULLNAME [ MENU-POSITION | PRECEDING-ITEM-TITLE ]
+  tools/dmp --config=.../config.py add-action FULLNAME [ { MENU-POSITION | PRECEDING-ITEM-TITLE } [ MENU-TITLE ] ]
 
 např.:
 
   cd pytis-demo
-  dmp --config=config.py add-form form/pytis.form.EditForm/cb.Countries// 2.1111.11205
+  dmp --config=config.py add-action form/pytis.form.EditForm/cb.Countries// 2.1111.11205
 
 Poznámky:
-
-- Pokud v menu už položka s daným FULLNAME existuje, nová menu položka se
-  nepřidá.
 
 - Uvedená MENU-POSITION musí být volná, jinak dojde k chybě.
 
@@ -267,6 +264,8 @@ Poznámky:
 - Pokud není pozice vůbec uvedena, formulář se pouze přidá do akcí.  (To je
   užitečné například pro přidání formulářů, které se používají pouze
   v procedurách.)
+
+- U akcí, které nemají vlastní specifikaci s titulkem, je potřeba uvést MENU-TITLE.
 
 Aktualizace podformulářů a akcí formuláře:
 

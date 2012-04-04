@@ -745,7 +745,7 @@ class DMPMenu(DMPObject):
         data = self._data('ev_pytis_menu')
         data.delete_many(condition, transaction=transaction)
 
-    def delete_menu(self, fake, condition, transaction=None):
+    def delete_menu(self, fake, condition, position, transaction=None):
         messages = []
         data = self._data('e_pytis_menu')
         present = (data.select(condition=condition) > 0)
@@ -1860,24 +1860,25 @@ class DMPImport(DMPObject):
             transaction.commit()
         return messages
 
-    def dmp_add_form(self, fake, fullname, position):
-        """Add new form invocation action.
+    def dmp_add_action(self, fake, fullname, position, title):
+        """Add new action to the menu.
 
         Arguments:
 
           fake -- iff True, don't actually change the data but return sequence
             of SQL commands (basestrings) that would do so
-          fullname -- fullname of the form invoking action, string
+          fullname -- fullname of the action, string
           position -- menu position of the action or preceding item title,
-            basestring, or True (in such a case the form is added to actions
+            basestring, or True (in such a case the action is added to actions
             but no menu item is created)
+          title -- title of the menu item; unicode or 'None'
 
         """
         resolver = self._resolver()
         messages = []
         action = DMPActions.Action(resolver, messages, fullname=fullname)
         specification = action.form_name()
-        if self._specification(specification, messages) is None:
+        if specification and self._specification(specification, messages) is None:
             return messages
         transaction = self._transaction()
         self._disable_triggers(transaction=transaction)
@@ -1899,8 +1900,14 @@ class DMPImport(DMPObject):
                     position = previous_items[0].next_position()
         if position is not None:
             if position is not True:
+                if title is None:
+                    title = action.title()
+                    if title is None:
+                        add_message(messages, DMPMessage.ERROR_MESSAGE, "Empty menu item title")
+                        transaction.rollback()
+                        return messages
                 menu_item = menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
-                                          title=action.title(), action=fullname, position=position)
+                                          title=title, action=fullname, position=position)
                 messages += menu.store_data(fake, transaction=transaction, specifications=[fullname])
             messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction)
             self._dmp_rights.retrieve_data(transaction=transaction)
@@ -1951,10 +1958,10 @@ def dmp_add_member(parameters, fake, member, role):
     configuration = DMPConfiguration(**parameters)
     return DMPRoles(configuration).dmp_add_member(fake, member, role)
 
-def dmp_add_form(parameters, fake, fullname, position):
-    """Add new form from specifications to database menu."""
+def dmp_add_action(parameters, fake, fullname, position, title):
+    """Add new action from specifications to database menu."""
     configuration = DMPConfiguration(**parameters)
-    return DMPImport(configuration).dmp_add_form(fake, fullname, position)
+    return DMPImport(configuration).dmp_add_action(fake, fullname, position, title)
 
 def dmp_update_form(parameters, fake, specification, new_fullname):
     """Update form subforms and actions from specifications."""
@@ -1983,7 +1990,7 @@ def dmp_commit(parameters, fake):
 def dmp_delete_menu(parameters, fake, position):
     configuration = DMPConfiguration(**parameters)
     condition = pytis.data.EQ('position', pytis.data.sval(position))
-    return DMPMenu(configuration).delete_menu(fake, condition)
+    return DMPMenu(configuration).delete_menu(fake, condition, position)
 
 def dmp_delete_fullname(parameters, fake, fullname):
     configuration = DMPConfiguration(**parameters)

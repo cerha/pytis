@@ -145,19 +145,22 @@ def command_copy_rights(parameters, dry_run, args):
     from_shortname, to_shortname = args
     return pytis.extensions.dmp_copy_rights(parameters, dry_run, from_shortname, to_shortname)
 
-def command_add_form(parameters, dry_run, args):
+def command_add_action(parameters, dry_run, args):
     if len(args) < 1:
         print "Error: missing argument"
         return
-    if len(args) > 2:
+    if len(args) > 3:
         print 'Error: extra arguments'
         return
     fullname = args[0]
+    title = None
     if len(args) > 1:
         position = args[1]
+        if len(args) > 2:
+            title = args[2]
     else:
         position = True
-    return pytis.extensions.dmp_add_form(parameters, dry_run, fullname, position)
+    return pytis.extensions.dmp_add_action(parameters, dry_run, fullname, position, title)
 
 def command_update_form(parameters, dry_run, args):
     if len(args) < 1:
@@ -218,6 +221,8 @@ def command_commit(parameters, dry_run, args):
     return pytis.extensions.dmp_commit(parameters, dry_run)
 
 def find_command(command_string):
+    if command_string == 'add-form':
+        command_string = 'add-action'
     command = command_string.replace('-', '_')
     command_function = globals().get('command_' + command)
     return command_function
@@ -239,8 +244,8 @@ Commands:
     - convert system rights to application rights for SHORTNAME
   add-member MEMBER ROLE
     - add MEMBER to ROLE
-  add-form FULLNAME [ MENU-POSITION | PRECEDING-ITEM-TITLE ]
-    - add new form to application menu (or just to the codebook of actions)
+  add-action FULLNAME [ { MENU-POSITION | PRECEDING-ITEM-TITLE } [ MENU-TITLE ] ]
+    - add new action to application menu (or just to the codebook of actions)
   update-form SPECIFICATION-NAME [ NEW-FULLNAME ]
     - update subforms and actions of the specification form and possibly change form fullname
   rename-specification OLD-NAME NEW-NAME
