@@ -53,11 +53,13 @@ class PresentedRow(object):
     value(s)."""
     
     CALL_ENUMERATION_CHANGE = 'CALL_ENUMERATION_CHANGE'
-
     """Callback called on field enumeration change.
 
     Invoked when the enumaration filter changes due to its dependency on another field's value(s).
     The enumaration is the list of valid field values provided by data type enumarator."""
+
+    class ProtectionError(Exception):
+        """Exception raised on column protection violations."""
     
     class _Column:
         def __init__(self, f, type, data):
@@ -133,6 +135,7 @@ class PresentedRow(object):
         self._coldict = dict([(c.id, c) for c in columns])
         self._cb_spec_cache = {}
         self._completer_cache = {}
+        self._protected = False
         self._init_dependencies()
         self._set_row(row, reset=True, prefill=prefill)
 
@@ -295,12 +298,14 @@ class PresentedRow(object):
         je chování metody nedefinováno.
         
         """
+        column = self._coldict[key]
+        if self._protected and self._secret_column(column):
+            raise self.ProtectionError(key)
         if key in self._row:
             value = self._row[key]
         else:
             value = self._virtual[key]
         if not lazy and self._dirty.get(key):
-            column = self._coldict[key]
             # Reset the dirty flag before calling the computer to allow the computer to retrieve
             # the original value without recursion.
             self._dirty[key] = False
@@ -1062,3 +1067,14 @@ class PresentedRow(object):
                     if k in keys:
                         return True
         return False
+
+    def protected(self):
+        """Return protected copy of the row.
+
+        The protected copy makes raises 'PresentedRow.ProtectionError' on some
+        operations on columns without view permission.
+
+        """
+        row = copy.copy(self)
+        row._protected = True
+        return row

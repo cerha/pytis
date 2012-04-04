@@ -397,7 +397,12 @@ class DataTable(object):
                     value_dict[gcol] = the_row.format(gcol, pretty=True, form=self._form, secure=True)
             # If row_style is defined, lets compute it.
             if isinstance(self._row_style, collections.Callable):
-                style_dict[None] = self._row_style(the_row)
+                protected_row = the_row.protected()
+                try:
+                    row_style = self._row_style(protected_row)
+                except protected_row.ProtectionError:
+                    row_style = None
+                style_dict[None] = row_style
             self._cache[row] = cached_things = [value_dict, style_dict]
         cached_row = cached_things[style and 1 or 0]
         return cached_row[col_id]
