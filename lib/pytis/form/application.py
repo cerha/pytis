@@ -1881,7 +1881,7 @@ def password_dialog(title=_(u"Zadejte heslo"), message=None):
         layout = ('password',)
     result = run_form(InputForm, title=title,
                       fields=(Field('password', _("Heslo"),
-                                    type=pytis.data.Password(verify=False),
+                                    type=pytis.data.Password, verify=False,
                                     width=40, not_null=True),),
                       layout=layout)
     if result:
