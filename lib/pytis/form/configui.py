@@ -52,7 +52,9 @@ _LAYOUT = (
             'auto_menu_accel',
             'show_splash',
             'cache_spec_onstart',
-            'rpc_communication_enabled'),
+            'rpc_communication_enabled',
+            'rpc_remote_view',
+            ),
     LVGroup(_(u"Ostatní"),
             'sender_address'),
     ))),
@@ -80,6 +82,7 @@ _LABELS = {
     'export_directory':      _(u"Výchozí adresář"),
     'export_encoding':       _(u"Kódování exportovaných dat"),
     'rpc_communication_enabled': _(u"Povolení komunikace s windowsovými stanicemi."),
+    'rpc_remote_view':       _(u"Zobrazovat PDF soubory na windows stanici."),
 }
 
 _FIELDSPEC_KWARGS = {
