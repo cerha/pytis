@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -592,14 +592,14 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         if column.id in self._secret_columns:
             style = self._plain_style
         else:
-            row_style = self._row_style
-            if isinstance(row_style, collections.Callable):
-                row_style = self._cached_value(row, None, style=True)
             style = column.style
             if isinstance(style, collections.Callable):
                 style = self._cached_value(row, column.id, style=True)
-            if row_style:
-                style += row_style
+        row_style = self._row_style
+        if isinstance(row_style, collections.Callable):
+            row_style = self._cached_value(row, None, style=True)
+        if row_style:
+            style += row_style
         try:
             fg, bg, font = self._attr_cache[style]
         except KeyError:
