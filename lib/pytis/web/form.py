@@ -1102,7 +1102,7 @@ class BrowseForm(LayoutForm):
         # TODO: self._errors doesn't really belong here -- it belongs to
         # Editform, but it is used within _export_field() so we need to
         # initialize it here or (better) fix _export_field().
-        self._errors = errors
+        self._filter_fields_errors = self._errors = errors
         self._filter_fields = filter_fields
         self._filter_fields_condition = condition
         self._filter_fields_arguments = arguments
@@ -1527,6 +1527,9 @@ class BrowseForm(LayoutForm):
                 submit_button = g.noscript(submit_button)
             else:
                 onchange = None
+            for id, msg in self._filter_fields_errors:
+                f = find(id, self._filter_fields, key=lambda f: f.id)
+                content.append(g.div(g.strong(f.label) + ": " + msg, cls='errors'))
             filter_content = []
             for field in self._filter_fields:
                 filter_content.extend((
