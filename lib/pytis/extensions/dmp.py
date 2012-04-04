@@ -81,12 +81,12 @@ script.
 import copy
 import re
 import string
+import sys
 
 import pytis.data
 import pytis.extensions
 import pytis.form
-from pytis.util import *
-
+from pytis.util import Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure
 
 class DMPMessage(Structure):
     """Message about DMP operation to be presented to the user.
@@ -171,10 +171,6 @@ class DMPConfiguration(object):
             self._resolver = None
         else:
             self._resolver = config.resolver
-        if schemas:
-            schemas_list = [s.strip() for s in schemas_string.split(',')]
-        else:
-            schemas_list = None
         self._connection_data = config.dbconnection
 
     def resolver(self):
@@ -884,7 +880,7 @@ class DMPRights(DMPObject):
             if access_rights is None:
                 add_message(messages, DMPMessage.NOTE_MESSAGE,
                             "No access rights specified for form, assuming everything permitted",
-                            (form_name,))
+                            (spec_name,))
                 access_specification = ((None, (None, pytis.data.Permission.ALL)),)
             else:
                 access_specification = access_rights.specification()
