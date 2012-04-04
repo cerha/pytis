@@ -342,7 +342,7 @@ class PrintFormExternal(PrintForm, PopupForm):
         remote = (config.rpc_remote_view and pytis.windows.windows_available())
         try:
             if remote:
-                suffix = os.path.splitext(file_name)[1]
+                suffix = '.' + (os.path.splitext(file_name)[1] or 'pdf')
                 try:
                     remote_file = pytis.windows.make_temporary_file(suffix=suffix)
                 except:
