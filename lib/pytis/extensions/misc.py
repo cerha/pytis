@@ -190,8 +190,8 @@ def set_default_printer():
         import cups
         import cupshelpers
     except ImportError as e:
-        run_dialog(Error, _("Nastavení výchozí tiskárny nemůže být provedeno.\n"
-                              "Kontaktujte správce systému."))
+        pytis.form.run_dialog(Error, _("Nastavení výchozí tiskárny nemůže být provedeno.\n"
+                                       "Kontaktujte správce systému."))
         return None
     connection = cups.Connection()
     user_default = UserDefaultPrinter()
