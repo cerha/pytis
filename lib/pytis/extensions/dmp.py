@@ -1552,7 +1552,7 @@ class DMPActions(DMPObject):
             transaction.commit()
         return result
         
-    def update_forms(self, fake, specification, new_fullname=None, transaction=None):
+    def update_forms(self, fake, specification, new_fullname=None, transaction=None, keep_old=False):
         """Check given form specifications and update the database.
 
         For given form specification name, load the specification and check
@@ -1569,9 +1569,13 @@ class DMPActions(DMPObject):
           transaction -- transaction object to use or 'None'; if not 'None' no
             commit nor rollback is performed in this method regardless 'fake'
             argument value
+          keep_old -- iff true, don't delete old bindings and actions
 
         """
         messages = []
+        if not specification:
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "Empty specification")
+            return messages
         original_actions = DMPActions(self._configuration)
         original_actions.retrieve_data(transaction=transaction)
         menu = DMPMenu(self._configuration)
@@ -1584,8 +1588,14 @@ class DMPActions(DMPObject):
         else:
             transaction_ = transaction
         self._logger.clear()
-        condition = pytis.data.WM('fullname', self._s_('sub/*/%s/*' % (specification,)), ignore_case=False)
-        self._delete_data(transaction=transaction_, condition=condition)
+        if not keep_old:
+            condition = pytis.data.OR(pytis.data.WM('fullname',
+                                                    self._s_('sub/*/form/?/%s' % (specification,)),
+                                                    ignore_case=False),
+                                      pytis.data.WM('fullname',
+                                                    self._s_('sub/*/form/*/%s/*/' % (specification,)),
+                                                    ignore_case=False))
+            self._delete_data(transaction=transaction_, condition=condition)
         self._store_data(transaction=transaction_, specifications=[specification],
                          subforms_only=True)
         self._store_data(transaction=transaction_, specifications=[specification],
@@ -1782,6 +1792,11 @@ class DMPActions(DMPObject):
         row = pytis.data.Row((('shortname', pytis.data.sval(shortname),),))
         self._dbfunction('pytis_convert_system_rights').call(row)
 
+    def registered(self, fullname, transaction=None):
+        data = self._data('c_pytis_menu_actions')
+        condition = pytis.data.EQ('fullname', pytis.data.sval(fullname))
+        return data.select(condition=condition, transaction=transaction) > 0
+
 
 class DMPImport(DMPObject):
     """Initial import functionality."""
@@ -1880,7 +1895,14 @@ class DMPImport(DMPObject):
         specification = action.form_name()
         if specification and self._specification(specification, messages) is None:
             return messages
+        if not specification and action.kind() in ('form', 'action',):
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "Action without specification")
+            return messages
         transaction = self._transaction()
+        if position is True and self._dmp_actions.registered(fullname, transaction=transaction):
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "Action already present")
+            transaction.rollback()
+            return messages
         self._disable_triggers(transaction=transaction)
         messages += self._dmp_actions.load_specifications(actions=[action])
         messages += self._dmp_actions.store_data(fake, transaction)
@@ -1909,7 +1931,8 @@ class DMPImport(DMPObject):
                 menu_item = menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
                                           title=title, action=fullname, position=position)
                 messages += menu.store_data(fake, transaction=transaction, specifications=[fullname])
-            messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction)
+            messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction,
+                                                       keep_old=True)
             self._dmp_rights.retrieve_data(transaction=transaction)
             shortname = action.shortname()
             for a in self._dmp_rights.items():
