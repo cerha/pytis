@@ -876,7 +876,7 @@ class DMPRights(DMPObject):
             all_columns = [f.id() for f in spec.view_spec().fields() if not f.virtual()]
             # Form access rights
             shortname = 'form/' + spec_name
-            access_rights = spec.data_spec().access_rights()
+            access_rights = spec.access_rights
             if access_rights is None:
                 add_message(messages, DMPMessage.NOTE_MESSAGE,
                             "No access rights specified for form, assuming everything permitted",
