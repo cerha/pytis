@@ -282,7 +282,7 @@ class GenericDialog(Dialog):
         self._end_modal(wx.ID_CANCEL)
         
     def _cmd_help(self):
-        help(topic=self._HELP_TOPIC)
+        Application.COMMAND_HELP.invoke(topic=self._HELP_TOPIC)
 
     def run(self):
         """Zobraz dialog a po jeho ukončení vrať jeho návratovou hodnotu.

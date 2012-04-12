@@ -1411,10 +1411,6 @@ def refresh():
     """Aktualizuj zobrazení viditelných oken aplikace, pokud je to třeba."""
     Application.COMMAND_REFRESH.invoke(interactive=False)
 
-def help(topic=None):
-    """Zobraz dané téma v proholížeči nápovědy."""
-    return Application.COMMAND_HELP.invoke(topic=topic)
-
 def exit():
     """Ukonči uživatelské rozhraní aplikace."""
     return Application.COMMAND_EXIT.invoke()
