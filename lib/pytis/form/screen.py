@@ -1863,7 +1863,7 @@ class Browser(wx.Panel, CommandHandler):
                 gtk_scrolled_window.add(webview)
                 gtk_scrolled_window.show_all()
                 webview.connect('notify::load-status', self._on_load_status_changed)
-                webview.connect('navigation-policy-decision-requested', self._on_navigation)
+                webview.connect('navigation-policy-decision-requested', self._on_navigation_request)
         if self._webview is not None:
             # Perform webview interaction asyncronously to avoid blocking the
             # main application.  This also allows the public methods load_uri
@@ -1889,7 +1889,7 @@ class Browser(wx.Panel, CommandHandler):
         busy_cursor(busy)
         message(msg)
 
-    def _on_navigation(self, webview, frame, req, action, decision):
+    def _on_navigation_request(self, webview, frame, req, action, decision):
         uri = req.get_uri()
         if uri == 'about:blank':
             # This URI gets loaded several times while other document is
@@ -1905,7 +1905,10 @@ class Browser(wx.Panel, CommandHandler):
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
         else:
-            return False
+            return self._on_navigation(uri, action)
+        
+    def _on_navigation(self, uri, action):
+        return False
         
     def _can_go_forward(self):
         return self._webview.can_go_forward()
