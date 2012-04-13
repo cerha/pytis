@@ -1809,17 +1809,13 @@ class LocationBar(wx.TextCtrl):
         else:
             self.SetOwnBackgroundColour(config.field_disabled_color)
             self.Refresh()
-
+        browser = uicmd.args()['_command_handler']
+        browser.set_uri_change_callback(lambda uri: self.SetValue(uri))
 
     def _on_update_ui(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
-        if enabled:
-            form = current_form(inner=True)
-            if isinstance(form, WebForm):
-                browser = form._browser
-                browser.connect_location_bar(self)
                 
     def _on_enter(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
@@ -1841,6 +1837,7 @@ class Browser(wx.Panel, CommandHandler):
         self._webview = None
         self._async_queue = []
         self._restricted_navigation_uri = None
+        self._uri_change_callback = None
         wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _on_idle(self, event):
@@ -1867,7 +1864,6 @@ class Browser(wx.Panel, CommandHandler):
                 gtk_scrolled_window.show_all()
                 webview.connect('notify::load-status', self._on_load_status_changed)
                 webview.connect('navigation-policy-decision-requested', self._on_navigation)
-            self._location_bar = None
         if self._webview is not None:
             # Perform webview interaction asyncronously to avoid blocking the
             # main application.  This also allows the public methods load_uri
@@ -1907,10 +1903,10 @@ class Browser(wx.Panel, CommandHandler):
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
         else:
-            if self._location_bar:
-                self._location_bar.SetValue(uri)
+            if self._uri_change_callback:
+                self._uri_change_callback(uri)
             return False
-
+        
     def _can_go_forward(self):
         return self._webview.can_go_forward()
         
@@ -1941,9 +1937,9 @@ class Browser(wx.Panel, CommandHandler):
             return super(Browser, self).can_command(command, **kwargs)
         else:
             return False
-        
-    def connect_location_bar(self, ctrl):
-        self._location_bar = ctrl
+
+    def set_uri_change_callback(self, callback):
+        self._uri_change_callback = callback
 
     def load_uri(self, uri, restrict_navigation=None):
         def f():
