@@ -124,7 +124,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._windows = XStack()
         self._modals = Stack()
         self._statusbar = StatusBar(frame, self._spec('status_fields',()))
-        self._help_controller = None
+        self._help_browser = None
         self._help_files = self._find_help_files()
         self._login_hook = self._spec('login_hook')
         keymap = self.keymap = Keymap()
@@ -445,8 +445,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(OPERATIONAL, "Menu nápovědy nalezeno - nevytvářím vlastní.")
             return
         items = [mitem(UICommands.PYTIS_HELP)]
-        items.extend([MItem(title, command=Application.COMMAND_HELP(topic=index))
-                      for file, index, title in self._help_files if index != 'pytis'])
+        #items.extend([MItem(title, command=Application.COMMAND_HELP(topic=index))
+        #              for file, index, title in self._help_files if index != 'pytis'])
         items.extend((MSeparator(),
                       mitem(UICommands.HELP),
                       mitem(UICommands.DESCRIBE)))
@@ -728,8 +728,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except Exception as e:
             safelog("Saving changed configuration failed:", str(e))
         try:
-            if self._help_controller is not None:
-                self._help_controller.GetFrame().Close()
+            if self._help_browser is not None:
+                self._help_browser.GetFrame().Close()
         except Exception as e:
             safelog(str(e))
         return True
@@ -1027,7 +1027,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top_level_exception()
         return result
 
-    def _cmd_help(self, topic=None):
+    def _cmd_help(self, topic='pytis'):
         """Zobraz dané téma v prohlížeči nápovědy."""
         if not self._help_files:
             msg = _(u"Žádný soubor s nápovědou nebyl nalezen.\n" +
@@ -1036,18 +1036,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     u"a zda adresář obsahuje soubory nápovědy.")
             self.run_dialog(Warning, msg % config.help_dir)
             return
-        if self._help_controller is None:
-            self._help_controller = controller = wx.html.HtmlHelpController()
-            controller.SetTitleFormat(_(u"Nápověda")+": %s")
-            wx.FileSystem_AddHandler(wx.ZipFSHandler())
-            for filename, index, title in self._help_files:
-                controller.AddBook(filename)
-        self._help_controller.Display((topic or self._help_files[0][1])+'.html')
-
-    def _can_help(self, topic=None):
-        if topic == 'pytis':
-            return 'pytis' in [index for filename, index, title in self._help_files]
-        return True
+        browser = self._help_browser
+        if browser:
+            browser.Raise()
+        else:
+            self._help_browser = browser = HelpBrowserFrame()
+        browser.load_uri('help:' + topic)
 
     def _cmd_reload_rights(self):
         init_access_rights(config.dbconnection)
