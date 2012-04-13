@@ -1878,6 +1878,8 @@ class Browser(wx.Panel, CommandHandler):
         if status == webkit.LOAD_FINISHED:
             msg = _(u"Dokument byl načten.")
             busy = False
+            if self._uri_change_callback:
+                self._uri_change_callback(webview.get_property('uri'))
         elif status == webkit.LOAD_FAILED:
             msg = _(u"Načtení dokumentu se nezdařilo.")
             busy = False
@@ -1903,8 +1905,6 @@ class Browser(wx.Panel, CommandHandler):
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
         else:
-            if self._uri_change_callback:
-                self._uri_change_callback(uri)
             return False
         
     def _can_go_forward(self):
