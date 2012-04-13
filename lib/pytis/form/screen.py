@@ -1977,26 +1977,6 @@ class Browser(wx.Panel, CommandHandler):
         self._async_queue.append(f)
 
 
-class BrowserWindow(wx.Frame):
-    """Simple web browser in a standalone frame."""
- 
-    def __init__(self):
-        wx.Frame.__init__(self, None)
-        self._ctrl = ctrl = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
-        self._browser = browser = Browser(self)
-        ctrl.Bind(wx.EVT_TEXT_ENTER, self._on_url_enter)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(ctrl, proportion=0, flag=wx.EXPAND)
-        sizer.Add(browser, proportion=1, flag=wx.EXPAND)
-        self.SetSizer(sizer)
-        self.SetSize((800,600))
-        self.SendSizeEvent()
- 
-    def _on_url_enter(self, event):
-        uri = self._ctrl.GetValue()
-        self._browser.load_uri(uri)
-        self.SetTitle(uri)
-
 
 class IN(pytis.data.Operator):
     """Symbolic specification of pytis.data.IN operator.
