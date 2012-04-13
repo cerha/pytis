@@ -2934,31 +2934,9 @@ class WebForm(Form):
         super_(WebForm)._init_attributes(self, **kwargs)
         self._async_browser_interaction = None
         
-    def _toolbar_commands(self):
-        handler = self._browser
-        return ((UICommand(Browser.COMMAND_GO_BACK(_command_handler=handler),
-                           _(u"Zpět"),
-                           _(u"Zobrazit předchozí položku historie prohlížení")),
-                 UICommand(Browser.COMMAND_GO_FORWARD(_command_handler=handler),
-                           _(u"Vpřed"),
-                           _(u"Zobrazit následující položku historie prohlížení")),
-                 UICommand(Browser.COMMAND_RELOAD(_command_handler=handler),
-                           _(u"Obnovit"),
-                           _(u"Načíst aktuální dokument znovu")),
-                 UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=handler),
-                           _(u"Zastavit"),
-                           _(u"Zastavit načítání dokumentu")),
-                 UICommand(Browser.COMMAND_LOAD_URI(_command_handler=handler),
-                           _(u"Adresa"),
-                           _(u"Aktuální adresa prohlížeče"),
-                           ctrl=(LocationBar, dict(size=(600, 25), editable=False))),
-                 ),
-                )
-
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self)
-        toolbar = self._create_toolbar()
-        sizer.Add(toolbar, 0, wx.EXPAND|wx.FIXED_MINSIZE)
+        sizer.Add(browser.toolbar(self), 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(browser, 1, wx.EXPAND)
 
     def load_uri(self, uri):

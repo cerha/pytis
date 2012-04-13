@@ -1937,6 +1937,29 @@ class Browser(wx.Panel, CommandHandler):
             return super(Browser, self).can_command(command, **kwargs)
         else:
             return False
+        
+    def toolbar(self, parent):
+        toolbar = wx.ToolBar(parent)
+        for uicmd in (UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
+                                _(u"Zpět"),
+                                _(u"Zobrazit předchozí položku historie prohlížení")),
+                      UICommand(Browser.COMMAND_GO_FORWARD(_command_handler=self),
+                                _(u"Vpřed"),
+                                _(u"Zobrazit následující položku historie prohlížení")),
+                      UICommand(Browser.COMMAND_RELOAD(_command_handler=self),
+                                _(u"Obnovit"),
+                                _(u"Načíst aktuální dokument znovu")),
+                      UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=self),
+                                _(u"Zastavit"),
+                                _(u"Zastavit načítání dokumentu")),
+                      UICommand(Browser.COMMAND_LOAD_URI(_command_handler=self),
+                                _(u"Adresa"),
+                                _(u"Aktuální adresa prohlížeče"),
+                                ctrl=(LocationBar, dict(size=(600, 25), editable=False))),
+                      ):
+            uicmd.create_toolbar_ctrl(toolbar)
+        toolbar.Realize()
+        return toolbar
 
     def set_uri_change_callback(self, callback):
         self._uri_change_callback = callback
