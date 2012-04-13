@@ -2018,6 +2018,54 @@ class Browser(wx.Panel, CommandHandler):
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), resource_provider=node.resource_provider())
 
+class HelpBrowser(Browser):
+
+    def __init__(self, parent):
+        super(HelpBrowser, self).__init__(parent)
+        self._loading_help = False
+
+    def _on_navigation(self, uri, action):
+        if uri.startswith('help:') and not self._loading_help:
+            # We need to protect loading help by the flag self._loading_help
+            # because the signal gets called recursively for unknown reason
+            # when webview.load_string() is called.
+            self._loading_help = True
+            page = self._get_help_page(uri[5:])
+            self._webview.load_string(page.encode('utf-8'), 'text/html', 'utf-8', uri)
+            if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
+                                       webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
+                                       webkit.WEB_NAVIGATION_REASON_OTHER):
+                history = self._webview.get_back_forward_list()
+                history.add_item(webkit.WebHistoryItem(uri, uri))
+            self._loading_help = False
+            return True
+        else:
+            return super(HelpBrowser, self)._on_navigation(uri)
+
+    def _get_help_page(self, topic):
+        return ('<html>'
+                '<pre>Topic: ' + topic + '</pre>'
+                '<hr>'
+                '<a href="help:pytis">Pytis</a> | '
+                '<a href="http://www.brailcom.org">Brailcom</a>'
+                '</html>')
+        
+
+class HelpBrowserFrame(wx.Frame):
+
+    def __init__(self):
+        wx.Frame.__init__(self, None)
+        self._browser = browser = HelpBrowser(self)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(browser.toolbar(self), proportion=0, flag=wx.EXPAND)
+        sizer.Add(browser, proportion=1, flag=wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetSize((800,600))
+        self.SendSizeEvent()
+
+    def load_uri(self, uri):
+        self._browser.load_uri(uri)
+
 
 class IN(pytis.data.Operator):
     """Symbolic specification of pytis.data.IN operator.
