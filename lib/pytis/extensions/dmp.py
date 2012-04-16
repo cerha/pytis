@@ -1650,6 +1650,17 @@ class DMPActions(DMPObject):
             self._logger.clear()
             messages += menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
             messages += rights.delete_data(fake, transaction=transaction, specifications=(shortname,))
+            components = name.split('/')
+            if action_type == 'shortname' and len(components) == 2 and components[0] == 'form':
+                forms = components[1].split('::')
+                if len(forms) > 1:
+                    subconditions = [pytis.data.AND(pytis.data.EQ('shortname', self._s_('form/'+f)),
+                                                    pytis.data.WM('fullname',
+                                                                  self._s_('sub/*/form/*/%s/*' %
+                                                                           (components[1],)),
+                                                                  ignore_case=False))
+                                     for f in forms]
+                    condition = pytis.data.OR(condition, *subconditions)
             self._delete_data(transaction, condition)
             self._enable_triggers(transaction=transaction)
             if fake:
