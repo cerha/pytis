@@ -1648,8 +1648,8 @@ class DMPActions(DMPObject):
             transaction = self._transaction()
             self._disable_triggers(transaction=transaction)
             self._logger.clear()
-            menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
-            rights.delete_data(fake, transaction=transaction, specifications=(shortname,))
+            messages += menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
+            messages += rights.delete_data(fake, transaction=transaction, specifications=(shortname,))
             self._delete_data(transaction, condition)
             self._enable_triggers(transaction=transaction)
             if fake:
