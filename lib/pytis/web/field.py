@@ -497,6 +497,7 @@ class BooleanFieldExporter(FieldExporter):
 
 
 class BinaryFieldExporter(FieldExporter):
+    _HANDLER = 'pytis.FileUploadField'
 
     def _format(self, context):
         buf = self._value().value()

@@ -65,20 +65,21 @@ pytis.FormHandler = Class.create({
 	var values = value.parseQuery(); 
 	var last_values = this._observer.lastValue.parseQuery();
 	for (var id in this._fields) {
-	    if (this._fields[id].active()) {
-		// Disabled fields are not present in values/last_values, but also
-		// checkbox fields are not there if unchecked.
-		if ((id in values || id in last_values) && values[id] != last_values[id]) {
-		    document.body.style.cursor = "wait";
-		    var state = (this._state ? $H(this._state).toQueryString() : null);
-		    this._form.request({
-			parameters: {_pytis_form_update_request: ++this._last_request_number,
-			             _pytis_form_changed_field: id,
- 			             _pytis_form_state: state},
-			onSuccess: this.update.bind(this)
-		    });
-		    break;
-		}
+	    var field = this._fields[id];
+	    var value = field.value();
+	    // Disabled fields are not present in values/last_values, but also
+	    // checkbox fields are not there if unchecked.
+	    if (field.active()
+		&& (id in values || id in last_values) && values[id] != last_values[id]) {
+		document.body.style.cursor = "wait";
+		var state = (this._state ? $H(this._state).toQueryString() : null);
+		this._form.request({
+		    parameters: {_pytis_form_update_request: ++this._last_request_number,
+				 _pytis_form_changed_field: id,
+ 				 _pytis_form_state: state},
+		    onSuccess: this.update.bind(this)
+		});
+		break
 	    }
 	}
     },
@@ -304,4 +305,51 @@ pytis.DateTimeField = Class.create(pytis.Field, {
 	var button = $(this._ctrl.id+'-button')
 	button.disabled = !value;
     }
+});
+
+pytis.FileUploadField = Class.create(pytis.Field, {
+
+    initialize: function($super, form_id, field_id, id, active, required) {
+	$super(form_id, field_id, id, active, required);
+	// Observe file field changes separately as they are 1) ignored by
+	// form.observe (by Prototype.js, not sure why) and 2) only "active"
+	// fields are currently observed by pytis form updated (field is active
+	// when computers depend on it).  When we ever decide to send ajax
+	// updates for all fields (to support continuous validation) we can
+	// solve file size validation within the main form updates.
+	this._observer = new Form.Element.Observer(this._ctrl, 1, this.on_change.bind(this));
+    },
+
+    on_change: function(form, value) {
+	if (this._ctrl.files && this._ctrl.files.length) {
+	    var file = this._ctrl.files[0];
+	    document.body.style.cursor = "wait";
+	    var parameters = {_pytis_form_update_request: true,
+			      _pytis_form_changed_field: this._id};
+	    parameters['_pytis_file_size_'+this._id] = file.size;
+	    parameters[this._id] = null; // Avoid sending the whole file through ajax.
+	    this._form.request({parameters: parameters, onSuccess: this.update.bind(this)});
+	}
+    },
+    
+    update: function(response) {
+	// Update the form state in reaction to previously sent AJAX request.
+	var data = response.responseJSON;
+	if (data != null) {
+	    var error = data['fields'][this._id]['error'];
+	    var div = this._ctrl.next('.error');
+	    if (error) {
+		if (div)
+		    div.update(error);
+		else
+		    this._ctrl.insert({after: new Element('div', {class: 'error'}).update(error)});
+	    } 
+	    else if (div)
+		div.remove();
+	    
+	}
+	document.body.style.cursor = "default";
+    }
+
+
 });

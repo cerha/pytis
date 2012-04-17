@@ -679,7 +679,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                                        for (value, display) in enumeration])
         for fid, error in errors:
             if fid in fields:
-                fields[fid]['error'] = error
+                fields[fid]['error'] = localizer.localize(error)
         return json.dumps(dict(request_number=request_number, fields=fields))
 
     
