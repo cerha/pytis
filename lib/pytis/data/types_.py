@@ -45,6 +45,9 @@ import cStringIO
 import thread
 import time
 
+import sqlalchemy.types
+import sqlalchemy.dialects.postgresql
+
 from pytis.data import *
 
 
@@ -431,6 +434,10 @@ class Type(object):
         
         """
         return value
+
+    def sqlalchemy_type(self):
+        """Return corresponding SQLAlchemy type, sqlalchemy.types.TypeEngine instance."""
+        raise Exception("Not implemented")
        
 
 class Number(Type):
@@ -504,6 +511,9 @@ class Big(Type):
     e.g. they are not printed to the terminal log.
     
     """
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.BigInteger()
+    
 
 class Large(Big):
     """Mixin class denoting types with really large values.
@@ -620,6 +630,9 @@ class Integer(Number):
         else:
             result = None, self._validation_error(self.VM_NONINTEGER)
         return result
+
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.Integer()
 
 
 class Serial(Integer):
@@ -742,6 +755,9 @@ class Float(Number):
         else:
             return unicode(self._format_string % value)
 
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.Float(precision=self.precision())
+
         
 class Monetary(Float):
     """Monetary type.
@@ -787,6 +803,9 @@ class String(Limited):
         assert isinstance(object, basestring)
         return WMValue(self, object), None
     
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.String(length=self.maxlen())
+
     
 class Password(String):
     """Specialized string type for password fields.
@@ -955,6 +974,9 @@ class Inet(String):
         value = '%s/%s' % ('.'.join(numbers), mask)
         return Value(self, unicode(value)), None
 
+    def sqlalchemy_type(self):
+        return sqlalchemy.dialects.postgresql.INET()
+
 
 class Macaddr(String):
     """MAC adresa."""
@@ -971,6 +993,9 @@ class Macaddr(String):
         value = ':'.join( [macaddr[x:x+2]
                             for x in range(0,len(macaddr),2)] )
         return Value(self, unicode(value)), None
+    
+    def sqlalchemy_type(self):
+        return sqlalchemy.dialects.postgresql.MACADDR()
 
 
 class TreeOrderBase(Type):
@@ -1217,6 +1242,9 @@ class _CommonDateTime(Type):
     @classmethod
     def _datetime(class_, tz):
         raise Exception("Not implemented")
+    
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.DateTime(timezone=True)
 
 class DateTime(_CommonDateTime):
     """Time stamp represented by a 'datetime.datetime' instance.
@@ -1476,6 +1504,9 @@ class Date(DateTime):
         dt = super(Date, class_)._datetime(tz)
         return dt.date()
 
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.Date()
+
 class Time(_CommonDateTime):
     """Time of day without the date part.
 
@@ -1544,6 +1575,9 @@ class Time(_CommonDateTime):
     def _datetime(class_, tz):
         dt = datetime.datetime.now(tz)        
         return dt.astimezone(tz).timetz()
+    
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.Time(timezone=True)
             
 
 class TimeInterval(Type):
@@ -1628,6 +1662,9 @@ class TimeInterval(Type):
         
         """
         return self.export(value)
+    
+    def sqlalchemy_type(self):
+        return sqlalchemy.dialects.postgresql.INTERVAL()
 
 def date_and_time(date, time):
     """Combine given 'date' and 'time' 'Value's into a 'datetime.datetime' return value.
@@ -1711,6 +1748,9 @@ class Boolean(Type):
     
     def secret_export(self):
         return ''
+    
+    def sqlalchemy_type(self):
+        return sqlalchemy.types.Boolean()
 
     
 class Binary(Limited):
@@ -1878,6 +1918,9 @@ class Binary(Limited):
 
     def _format_length(self, length):
         return format_byte_size(length)
+
+    def sqlalchemy_type(self):
+        return sqlalchemy.dialects.postgresql.BYTEA()
         
     
 class Image(Binary, Big):
@@ -2153,6 +2196,8 @@ class Array(Limited):
     def inner_type(self):
         return self._inner_type
 
+    def sqlalchemy_type(self):
+        return sqlalchemy.dialects.postgresql.ARRAY(self.inner_type().sqlalchemy_type())
 
 
 # Pomocné třídy
