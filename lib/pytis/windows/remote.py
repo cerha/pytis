@@ -98,7 +98,7 @@ def launch_file(path):
     wpath = path.replace('/', '\\')
     try:
         return _request('launch_file', wpath)
-    except Exception, e:
+    except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Soubor %s se nepodařilo otevřít: %s") % (wpath, e,))
 
@@ -109,6 +109,14 @@ def launch_url(url):
     except:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("URL %s se nepodařilo otevřít") % (url,))
+
+def open_selected_file(template=None):
+    assert template is None or isinstance(template, basestring), template
+    try:
+        return _request('open_selected_file', template)
+    except Exception as e:
+        import pytis.form
+        pytis.form.run_dialog(pytis.form.Error, _("Nepodařilo se vybrat soubor ke stažení: %s") % (e,))    
 
 def make_temporary_file(suffix='', encoding=None):
     assert isinstance(suffix, basestring), suffix

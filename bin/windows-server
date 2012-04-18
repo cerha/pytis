@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -139,6 +140,40 @@ class PytisUserService(PytisService):
         """
         assert isinstance(path, basestring), path
         os.startfile(path)
+
+    def exposed_open_selected_file(self, template=None):
+        """Return a read-only 'file' like object of a user selected file.
+
+        The file is selected by the user using a GUI dialog.  If the user
+        cancels the dialog, 'None' is returned.
+
+        Arguments:
+
+          template -- a string defining the required file name pattern, or 'None'
+
+        """
+        assert template is None or isinstance(template, basestring), template
+        import win32ui
+        if template is None:
+            file_filter = None
+        else:
+            file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
+                           (template, template,))
+        dialog = win32ui.CreateFileDialog(1, filter=file_filter)
+        filename = dialog.GetPathName()
+        if filename is None:
+            return None
+        class Wrapper(object):
+            def __init__(self, filename):
+                self._f = open(filename, 'rb')
+                self._filename = filename
+            def exposed_read(self, size):
+                return self._f.read(size)
+            def exposed_close(self):
+                self._f.close()
+            def exposed_name(self):
+                return self._filename
+        return Wrapper(filename)
 
     def exposed_make_temporary_file(self, suffix='', encoding=None):
         """Create a temporary file and return its instance.
