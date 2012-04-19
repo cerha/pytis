@@ -21,6 +21,7 @@
 
 import copy
 import sqlalchemy
+from sqlalchemy.ext.compiler import compiles
 import pytis.data
 
 ## SQLAlchemy extensions
@@ -30,6 +31,25 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
     def visit_view(self, view, create_ok=False):
         command = 'CREATE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition,)
         self.connection.execute(command)
+
+class _TableComment(sqlalchemy.schema.DDLElement):
+    def __init__(self, table, comment):
+        self.table = table
+        self.comment = comment
+@compiles(_TableComment)
+def visit_table_comment(element, compiler, **kw):
+    return ("COMMENT ON TABLE \"%s\".\"%s\" IS '%s'" %
+            (element.table.schema, element.table.name, element.comment.replace("'", "''"),))
+
+class _ColumnComment(sqlalchemy.schema.DDLElement):
+    def __init__(self, table, field):
+        self.table = table
+        self.field = field
+@compiles(_ColumnComment)
+def visit_column_comment(element, compiler, **kw):
+    return ("COMMENT ON COLUMN \"%s\".\"%s\".\"%s\" IS '%s'" %
+            (element.table.schema, element.table.name, element.field.id(),
+             element.field.doc().replace("'", "''"),))
     
 ## Columns
         
@@ -142,15 +162,11 @@ class SQLTable(sqlalchemy.Table):
     def _create_comments(self):
         doc = self.__doc__
         if doc:
-            command = ("COMMENT ON TABLE \"%s\".\"%s\" IS '%s'" %
-                       (self.schema, self.name, doc.replace("'", "''"),))
-            sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
+            sqlalchemy.event.listen(self, 'after_create', _TableComment(self, doc))
         for c in self.fields:
             doc = c.doc()
             if doc:
-                command = ("COMMENT ON COLUMN \"%s\".\"%s\".\"%s\" IS '%s'" %
-                           (self.schema, self.name, c.id(), doc.replace("'", "''"),))
-                sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
+                sqlalchemy.event.listen(self, 'after_create', _ColumnComment(self, c))
 
     def create(self, bind=None, checkfirst=False):
         super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
