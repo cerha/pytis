@@ -1864,6 +1864,11 @@ class Browser(wx.Panel, CommandHandler):
                 gtk_scrolled_window.show_all()
                 webview.connect('notify::load-status', self._on_load_status_changed)
                 webview.connect('navigation-policy-decision-requested', self._on_navigation_request)
+                webview.connect('resource-request-starting', self._on_resource)
+                settings = webview.get_settings()
+                settings.props.user_agent += ' Pytis ' + pytis.__version__
+                #settings.props.enable_developer_extras = True # Doesn't work...
+                webview.set_settings(settings)
         if self._webview is not None:
             # Perform webview interaction asyncronously to avoid blocking the
             # main application.  This also allows the public methods load_uri
