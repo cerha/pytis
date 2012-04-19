@@ -21,22 +21,43 @@
 
 import copy
 import sqlalchemy
-import sqlalchemy.dialects.postgresql
 import pytis.data
 
+## SQLAlchemy extensions
 
-class Column(sqlalchemy.schema.Column, pytis.data.ColumnSpec):
+class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
+
+    def visit_view(self, view, create_ok=False):
+        command = 'CREATE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition,)
+        self.connection.execute(command)
+    
+## Columns
+        
+class Column(pytis.data.ColumnSpec):
     
     def __init__(self, name, type, doc=None, unique=False, check=None,
-                 default=None, references=None, primary_key=False, index=False):
-        alchemy_type = type.sqlalchemy_type()
-        args = []
-        if references: # sqlalchemy.schema.ForeignKey instance
-            args.append(references)
-        sqlalchemy.schema.Column.__init__(self, name, alchemy_type, *args, default=default, doc=doc,
-                                          index=index, nullable=(not type.not_null()),
-                                          primary_key=primary_key, unique=unique)
+                 default=None, references=None, primary_key=False, index=False):        
         pytis.data.ColumnSpec.__init__(self, name, type)
+        self._doc = doc
+        self._unique = unique
+        self._check = check
+        self._default = default
+        self._references = references
+        self._primary_key = primary_key
+        self._index = index
+
+    def doc(self):
+        return self._doc
+
+    def sqlalchemy_column(self):
+        alchemy_type = self.type().sqlalchemy_type()
+        args = []
+        if self._references:
+            args.append(sqlalchemy.ForeignKey(self._references))
+        return sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
+                                 doc=self._doc, index=self._index,
+                                 nullable=(not self.type().not_null()),
+                                 primary_key=self._primary_key, unique=self._unique)
 
 class PrimaryColumn(Column):
     
@@ -45,8 +66,40 @@ class PrimaryColumn(Column):
         kwargs['primary_key'] = True
         super(PrimaryColumn, self).__init__(*args, **kwargs)
 
+## Utilities
 
-class SQLTable(sqlalchemy.schema.Table):
+_metadata = sqlalchemy.MetaData()
+
+class SQLException(Exception):
+    pass
+
+class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
+    
+    _name_mapping = {}
+    
+    def __init__(cls, clsname, bases, clsdict):
+        is_specification = not clsname.startswith('SQL')
+        if is_specification:
+            name = cls.name
+            if name is None:
+                name = pytis.util.camel_case_to_lower(clsname)
+            if (name in _PytisTableMetaclass._name_mapping and 
+                _PytisTableMetaclass._name_mapping[name] is not cls):
+                raise SQLException("Duplicate object name", (cls, _PytisTableMetaclass._name_mapping[name],))
+            _PytisTableMetaclass._name_mapping[name] = cls
+            cls.name = name
+        sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
+        if is_specification:
+            for schema in cls.schemas:
+                cls(_metadata, schema)
+
+def t(name):
+    return _metadata.tables[name]
+        
+## Database objects
+
+class SQLTable(sqlalchemy.Table):
+    __metaclass__ = _PytisTableMetaclass
     
     name = None
     schemas = ('public',)
@@ -61,13 +114,13 @@ class SQLTable(sqlalchemy.schema.Table):
     with_oids = False
 
     def __new__(cls, metadata, schema):
-        columns = cls.fields
+        columns = tuple([c.sqlalchemy_column() for c in cls.fields])
         args = (cls.name, metadata,) + columns
         for check in cls.check:
-            args += (sqlalchemy.schema.CheckConstraint(check),)
+            args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
-            args += (sqlalchemy.schema.UniqueConstraint (*unique),)
-        return sqlalchemy.schema.Table.__new__(cls, *args, schema=schema)
+            args += (sqlalchemy.UniqueConstraint (*unique),)
+        return sqlalchemy.Table.__new__(cls, *args, schema=schema)
 
     def _init(self, *args, **kwargs):
         super(SQLTable, self)._init(*args, **kwargs)
@@ -93,10 +146,10 @@ class SQLTable(sqlalchemy.schema.Table):
                        (self.schema, self.name, doc.replace("'", "''"),))
             sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
         for c in self.fields:
-            doc = c.doc
+            doc = c.doc()
             if doc:
                 command = ("COMMENT ON COLUMN \"%s\".\"%s\".\"%s\" IS '%s'" %
-                           (self.schema, self.name, c.name, doc.replace("'", "''"),))
+                           (self.schema, self.name, c.id(), doc.replace("'", "''"),))
                 sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
 
     def create(self, bind=None, checkfirst=False):
@@ -113,14 +166,30 @@ class SQLTable(sqlalchemy.schema.Table):
                 connection.execute(insert)
 
 
+class SQLView(sqlalchemy.Table):
+
+    name = None
+    schemas = ('public',)
+    search_path = ('public',)           # TODO: how to handle this in SQLAlchemy?
+    condition = None
+
+    __visit_name__ = 'view'
+
+    def __new__(cls, metadata, schema):
+        columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.condition.columns])
+        args = (cls.name, metadata,) + columns
+        return sqlalchemy.Table.__new__(cls, *args, schema=schema)
+
+    def create(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+
+
 ## Sample demo
 
 
 class Foo(SQLTable):
     """Foo table."""
     name = 'foo'
-    schemas = ('public',)
-    search_path = ('public',)
     fields = (PrimaryColumn('id', pytis.data.Serial()),
               Column('foo', pytis.data.String(), doc='some string'),
               Column('n', pytis.data.Integer(not_null=True), doc='some number'),
@@ -134,26 +203,42 @@ class Foo(SQLTable):
     unique = (('foo', 'n',),)
     with_oids = False
 
-
-class Bar(Foo):
-    """Bar table."""
-    name = 'bar'
+class Foo2(Foo):
+    name = 'foofoo'
     inherits = (Foo,)
-    fields = copy.deepcopy(Foo.fields) + (Column('bar', pytis.data.String()),)
+    fields = Foo.fields + (Column('bar', pytis.data.String()),)
     check = ('n > 0',)
     init_columns = ()
     init_values = ()
     with_oids = False
+        
+class Bar(SQLTable):
+    """Bar table."""
+    fields = (PrimaryColumn('id', pytis.data.Serial()),
+              # TODO: How to set schema in references automatically?
+              Column('foo_id', pytis.data.Integer(), references='public.foo.id'),
+              Column('description', pytis.data.String()),
+              )
+    init_columns = ('foo_id', 'description',)
+    init_values = ((1, 'some text'),
+                   )
 
+class Baz(SQLView):
+    """Baz view."""
+    name = 'baz'
+    condition = sqlalchemy.union(sqlalchemy.select([t('public.foo').c.id, t('public.bar').c.description],
+                                                   from_obj=[t('public.foo').join(t('public.bar'))]),
+                                 sqlalchemy.select([t('public.foofoo').c.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
 
 if __name__ == '__main__':
     # TODO: How to just output SQL commands without connection to the database?
     # See sqlalchemy.engine.base.Connection; if we can override it and make an
     # engine around it then we could do whatever we want with the SQL commands.
     engine = sqlalchemy.create_engine('postgresql:///test', echo=True)
-    metadata = sqlalchemy.MetaData()
-    for cls in (Foo, Bar,):
+    for cls in (Foo, Foo2, Bar):
         for schema in cls.schemas:
-            table = cls(metadata, schema)
+            table = t('%s.%s' % (schema, cls.name,))
             table.create(engine)
+    view = Baz(_metadata, 'public')
+    view.create(engine)
 
