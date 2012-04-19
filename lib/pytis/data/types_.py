@@ -45,7 +45,7 @@ import cStringIO
 import thread
 import time
 
-import sqlalchemy.types
+import sqlalchemy
 import sqlalchemy.dialects.postgresql
 
 from pytis.data import *
@@ -512,7 +512,7 @@ class Big(Type):
     
     """
     def sqlalchemy_type(self):
-        return sqlalchemy.types.BigInteger()
+        return sqlalchemy.BigInteger()
     
 
 class Large(Big):
@@ -632,7 +632,7 @@ class Integer(Number):
         return result
 
     def sqlalchemy_type(self):
-        return sqlalchemy.types.Integer()
+        return sqlalchemy.Integer()
 
 
 class Serial(Integer):
@@ -756,7 +756,7 @@ class Float(Number):
             return unicode(self._format_string % value)
 
     def sqlalchemy_type(self):
-        return sqlalchemy.types.Float(precision=self.precision())
+        return sqlalchemy.Float(precision=self.precision())
 
         
 class Monetary(Float):
@@ -804,7 +804,7 @@ class String(Limited):
         return WMValue(self, object), None
     
     def sqlalchemy_type(self):
-        return sqlalchemy.types.String(length=self.maxlen())
+        return sqlalchemy.String(length=self.maxlen())
 
     
 class Password(String):
@@ -1244,7 +1244,7 @@ class _CommonDateTime(Type):
         raise Exception("Not implemented")
     
     def sqlalchemy_type(self):
-        return sqlalchemy.types.DateTime(timezone=True)
+        return sqlalchemy.DateTime(timezone=True)
 
 class DateTime(_CommonDateTime):
     """Time stamp represented by a 'datetime.datetime' instance.
@@ -1505,7 +1505,7 @@ class Date(DateTime):
         return dt.date()
 
     def sqlalchemy_type(self):
-        return sqlalchemy.types.Date()
+        return sqlalchemy.Date()
 
 class Time(_CommonDateTime):
     """Time of day without the date part.
@@ -1577,7 +1577,7 @@ class Time(_CommonDateTime):
         return dt.astimezone(tz).timetz()
     
     def sqlalchemy_type(self):
-        return sqlalchemy.types.Time(timezone=True)
+        return sqlalchemy.Time(timezone=True)
             
 
 class TimeInterval(Type):
@@ -1750,7 +1750,7 @@ class Boolean(Type):
         return ''
     
     def sqlalchemy_type(self):
-        return sqlalchemy.types.Boolean()
+        return sqlalchemy.Boolean()
 
     
 class Binary(Limited):
