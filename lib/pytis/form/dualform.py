@@ -920,14 +920,24 @@ class MultiSideForm(MultiForm):
     class TabbedWebForm(TabbedForm, WebForm):
         def _init_attributes(self, binding, main_form, **kwargs):
             if binding.uri():
-                self._function = binding.uri()
-                self._load = self.load_uri
+                get_uri = binding.uri()
+                def load_content(row):
+                    uri = get_uri(row)
+                    restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*',
+                                                 lambda m: m.group(1), uri)
+                    self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
             else:
-                self._function = binding.content()
-                self._load = self.load_html
+                get_content = binding.content()
+                def load_content(row):
+                    content = get_content(row)
+                    if isinstance(content, basestring):
+                        self._browser.load_html(content, restrict_navigation='-')
+                    else:
+                        self._browser.load_content(content)
+            self._load_content = load_content
             super(MultiSideForm.TabbedWebForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):
-            self._load(self._function(row))
+            self._load_content(row)
             
     def _init_attributes(self, main_form, **kwargs):
         assert isinstance(main_form, Form), main_form

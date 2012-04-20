@@ -1911,13 +1911,14 @@ class Binding(object):
             this case the arguments 'name', 'binding_column', 'condition',
             'arguments' and 'prefill' make no sense and must be None.
           content -- function of one argument (PresentedRow instance) returning
-            an HTML string to be displayed as side form content.  If not None,
-            the binding referes to a "web form" -- an embedded browser window
-            showing given content.  In this case the arguments 'name',
-            'binding_column', 'condition', 'arguments' and 'prefill' make no
-            sense and must be None.  The function 'pytis.util.lcg_to_html()'
-            may be useful if you need to display the formatted content of a
-            field containing LCG Structured Text.
+            either an HTML string or 'lcg.ContentNode' instance to be displayed
+            as side form content.  If not None, the binding referes to a "web
+            form" -- an embedded browser window showing given content.  In this
+            case the arguments 'name', 'binding_column', 'condition',
+            'arguments' and 'prefill' make no sense and must be None.  The
+            functions 'pytis.util.lcg_to_html()' or
+            'pytis.util.parse_lcg_text()' may be useful if you need to display
+            the formatted content of a field containing LCG Structured Text.
           
         """
         assert isinstance(id, basestring), id

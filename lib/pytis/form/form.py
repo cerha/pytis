@@ -2938,13 +2938,3 @@ class WebForm(Form):
         self._browser = browser = Browser(self)
         sizer.Add(browser.toolbar(self), 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(browser, 1, wx.EXPAND)
-
-    def load_uri(self, uri):
-        restrict_navigation = re.sub(r'^(https?://[a-z0-9][a-z0-9\.-]*).*', lambda m: m.group(1),
-                                     uri)
-        self._browser.load_uri(uri, restrict_navigation=restrict_navigation)
-
-    def load_html(self, html):
-        self._browser.load_html(html, restrict_navigation='-')
-
-
