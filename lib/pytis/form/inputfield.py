@@ -29,6 +29,7 @@ The actual class representing each field is determined by its specification and 
 import collections
 import pytis.data
 from pytis.form import *
+from pytis.presentation import computer
 import pytis.windows
 import wx.lib.colourselect
 from cStringIO import StringIO
@@ -2016,7 +2017,11 @@ class StructuredTextField(TextField):
             (UICommand(self.COMMAND_LINK(),
                        _(u"Hypertextový odkaz"),
                        _(u"Vložit hypertextový odkaz.")),
-             UICommand(self.COMMAND_ITEMIZE(style='bullet'),
+             ) + (self._row.has_key(self._id+'.attachments-storage') and
+                  (UICommand(self.COMMAND_ATTACHMENT(kind='image'),
+                             _(u"Obrázek"),
+                             _(u"Vložit obrázek.")),) or ()) +
+            (UICommand(self.COMMAND_ITEMIZE(style='bullet'),
                        _(u"Odrážkový seznam"),
                        _(u"Vytvořit položku odrážkového seznamu.")),
              UICommand(self.COMMAND_ITEMIZE(style='numbered'),
@@ -2218,6 +2223,75 @@ class StructuredTextField(TextField):
         ctrl.WriteText(new_text)
         if not selection:
             ctrl.SetInsertionPoint(position+6)
+        self.set_focus()
+        
+    def _cmd_attachment(self, kind='image'):
+        directory = self._row[self._id+'.attachments-storage'].value()
+        image_size = (800, 800)
+        thumbnail_size = (200, 200)
+        if kind == 'image':
+            file_type, type_kwargs = pytis.data.Image, dict()
+        else:
+            file_type, type_kwargs = pytis.data.Binary, dict()
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        files = sorted([filename for filename in os.listdir(directory)
+                        if os.path.isfile(os.path.join(directory, filename))
+                        and True in [filename.lower().endswith(suffix) for suffix in
+                                     ('jpg', 'jpeg', 'png', 'gif')]])
+        def file_computer(row, filename):
+            return filename and file_type.Buffer(os.path.join(directory, filename),
+                                                 filename=filename) or None
+        fields = (
+            Field('filename', _(u"Dříve vložené soubory"), height=5, not_null=False,
+                  selection_type=pytis.presentation.SelectionType.LIST_BOX,
+                  enumerator=pytis.data.FixedEnumerator(files)),
+            Field('file', _(u"Soubor"), codebook='cms.Attachments',
+                  computer=computer(file_computer),
+                  editable=pytis.presentation.Editable.ALWAYS,
+                  type=file_type(not_null=True, maxlen=5*1024*1024, **type_kwargs),
+                  descr=_(u"Vyberte jeden z dostupných souborů, "
+                          "nebo vložte nový z vašeho počítače.")),
+            #Field('title', _(u"Název"), width=50,
+            #      descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
+            #              u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
+            #              u"předchozím políčku.")),
+            Field('tooltip', _(u"Tooltip"), width=50,
+                  descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
+            )
+        row = run_form(InputForm, title=_(u"Vložte obrázek"), fields=fields)
+        if row:
+            attachment, tooltip = [row[k].value() for k in ('file', 'tooltip')]
+            filename = attachment.filename()
+            if filename not in files:
+                import PIL.Image
+                img_format = os.path.splitext(filename)[1].strip('.').upper().replace('JPG', 'JPEG')
+                f = open(os.path.join(directory, filename), 'w')
+                try:
+                    f.write(attachment.buffer())
+                finally:
+                    f.close()
+                try:
+                    for size, subdir in ((thumbnail_size, 'thumbnails'), (image_size, 'resized')):
+                        if not os.path.exists(os.path.join(directory, subdir)):
+                            os.makedirs(os.path.join(directory, subdir))
+                        resized = attachment.image().copy()
+                        resized.thumbnail(size, PIL.Image.ANTIALIAS)
+                        f = open(os.path.join(directory, subdir, filename), 'w')
+                        try:
+                            resized.save(f, img_format)
+                        finally:
+                            f.close()
+                except:
+                    for subdir in ('', 'thumbnails', 'resized'):
+                        path = os.path.join(directory, subdir, filename)
+                        if os.path.exists(path):
+                            os.remove(path)
+                    raise
+            link = filename
+            if tooltip:
+                link += ' '+ link +' | '+ tooltip
+            self._ctrl.WriteText('[' + link + ']')
         self.set_focus()
         
     def _cmd_link(self):

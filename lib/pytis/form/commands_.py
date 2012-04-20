@@ -2,7 +2,7 @@
 
 # Definice uživatelských příkazů
 # 
-# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -266,6 +266,8 @@ Command(StructuredTextField, 'UNDERLINED',
         "Insert markup for underlined text.")
 Command(StructuredTextField, 'LINK',
         "Insert markup for a hypertext link.")
+Command(StructuredTextField, 'ATTACHMENT',
+        "Insert attachment.")
 Command(StructuredTextField, 'LINEBREAK',
         "Insert markup for a forced line break.")
 Command(StructuredTextField, 'ITEMIZE',
@@ -433,6 +435,7 @@ COMMAND_ICONS = (
     (StructuredTextField.COMMAND_EMPHASIZED,               'text-italic'),
     (StructuredTextField.COMMAND_UNDERLINED,               'text-underlined'),
     (StructuredTextField.COMMAND_LINK,                     'text-link'),
+    (StructuredTextField.COMMAND_ATTACHMENT(kind='image'), 'text-image'),
     (StructuredTextField.COMMAND_LINEBREAK,                'text-linebreak'),
     (StructuredTextField.COMMAND_ITEMIZE(style='bullet'),  'text-bullet-list'),
     (StructuredTextField.COMMAND_ITEMIZE(style='numbered'),'text-numbered-list'),
