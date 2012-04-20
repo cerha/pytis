@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ CMS in an existing Pytis Application are:
 
 """
 
-from cms import Menu, MenuParents, Languages, Modules, Actions, GenericActions, \
+from cms import find_resources, Menu, MenuParents, Languages, Modules, Actions, GenericActions, \
      Users, Roles, SystemRoles, AllRoles, UserRoles, RoleUsers, Rights, SessionLog, AccessLog, \
      UserSessionLog, Themes
 import web
