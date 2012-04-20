@@ -1661,6 +1661,11 @@ class DMPActions(DMPObject):
                                                                   ignore_case=False))
                                      for f in forms]
                     condition = pytis.data.OR(condition, *subconditions)
+                else:
+                    condition = pytis.data.OR(condition,
+                                              pytis.data.WM('fullname',
+                                                            self._s_('action/*/%s' % (components[1],)),
+                                                            ignore_case=False))
             self._delete_data(transaction, condition)
             self._enable_triggers(transaction=transaction)
             if fake:
