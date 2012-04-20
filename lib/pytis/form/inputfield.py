@@ -1955,6 +1955,8 @@ class StructuredTextField(TextField):
                                   r'(?:[\t ]+(?:\*|(?P<anchor>[\w\d_-]+)))? *$')
 
     def _commands(self):
+        allow_attachments = (self._row.has_key(self._id+'.attachments-storage')
+                             and self._row[self._id+'.attachments-storage'].value() is not None)
         commands = ()
         if isinstance(self._guardian, StructuredTextEditor):
             # Add form commands only in a standalone editor, not in ordinary forms.
@@ -2017,7 +2019,7 @@ class StructuredTextField(TextField):
             (UICommand(self.COMMAND_LINK(),
                        _(u"Hypertextový odkaz"),
                        _(u"Vložit hypertextový odkaz.")),
-             ) + (self._row.has_key(self._id+'.attachments-storage') and
+             ) + (allow_attachments and
                   (UICommand(self.COMMAND_ATTACHMENT(kind='image'),
                              _(u"Obrázek"),
                              _(u"Vložit obrázek.")),) or ()) +
@@ -2227,6 +2229,8 @@ class StructuredTextField(TextField):
         
     def _cmd_attachment(self, kind='image'):
         directory = self._row[self._id+'.attachments-storage'].value()
+        if not directory:
+            return
         image_size = (800, 800)
         thumbnail_size = (200, 200)
         if kind == 'image':

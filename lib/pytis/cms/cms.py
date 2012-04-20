@@ -311,8 +311,11 @@ class Menu(Specification):
         )
     def _attachments_storage(self, record, identifier):
         # Determines the directory for storing the attachments for the 'content' field.
-        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE', '/var/lib/pytis/attachments')
-        return identifier and os.path.join(directory, identifier) or None
+        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
+        if directory and identifier:
+            return os.path.join(directory, identifier)
+        else:
+            return None
     def _check_menu_order_condition(self, record):
         # Return a list of 'pd.Operator' instances to find menu items with duplicate order at the
         # same level.  The returned operators will be applied in conjunction.  Designed to allow
@@ -373,7 +376,10 @@ class Menu(Specification):
         text = row['content'].value()
         if text:
             directory = row['content.attachments-storage'].value()
-            resources = find_resources(directory, 'resource:')
+            if directory:
+                resources = find_resources(directory, 'resource:')
+            else:
+                resources = ()
             return pu.parse_lcg_text(text, resources=resources)
         else:
             return ''

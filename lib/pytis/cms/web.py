@@ -160,8 +160,11 @@ class Menu(wiking.PytisModule):
     def _handle_subpath(self, req, record):
         if req.unresolved_path[0] == 'attachments':
             directory = record['content.attachments-storage'].value()
-            filename = os.path.join(directory, *req.unresolved_path[1:])
-            return wiking.serve_file(req, filename)
+            if directory:
+                filename = os.path.join(directory, *req.unresolved_path[1:])
+                return wiking.serve_file(req, filename)
+            else:
+                raise wiking.NotFound()
         return super(Menu, self)._handle_subpath(req, record)
             
     def menu(self, req):
@@ -228,8 +231,11 @@ class Menu(wiking.PytisModule):
         modname = record['modname'].value()
         globals = self.globals(req)
         directory = record['content.attachments-storage'].value()
-        attachment_base_uri = '/'+ self._menu_item_identifier(record) +'/attachments/'
-        resources = cms.find_resources(directory, attachment_base_uri)
+        if directory:
+            attachment_base_uri = '/'+ self._menu_item_identifier(record) +'/attachments/'
+            resources = cms.find_resources(directory, attachment_base_uri)
+        else:
+            resources = ()
         if resources:
             resources.extend((lcg.Script('prototype.js'),
                               lcg.Script('effects.js'),
