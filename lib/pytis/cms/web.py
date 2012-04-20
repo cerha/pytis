@@ -157,6 +157,13 @@ class Menu(wiking.PytisModule):
     def _menu_item_identifier(self, row):
         return str(row['identifier'].value())
 
+    def _handle_subpath(self, req, record):
+        if req.unresolved_path[0] == 'attachments':
+            directory = record['content.attachments-storage'].value()
+            filename = os.path.join(directory, *req.unresolved_path[1:])
+            return wiking.serve_file(req, filename)
+        return super(Menu, self)._handle_subpath(req, record)
+            
     def menu(self, req):
         children = {None: []}
         translations = {}
@@ -220,6 +227,15 @@ class Menu(wiking.PytisModule):
         text = record['content'].value()
         modname = record['modname'].value()
         globals = self.globals(req)
+        directory = record['content.attachments-storage'].value()
+        attachment_base_uri = '/'+ self._menu_item_identifier(record) +'/attachments/'
+        resources = cms.find_resources(directory, attachment_base_uri)
+        if resources:
+            resources.extend((lcg.Script('prototype.js'),
+                              lcg.Script('effects.js'),
+                              lcg.Script('builder.js'),
+                              lcg.Script('lightbox.js'),
+                              lcg.Stylesheet('lightbox.css')))
         if text:
             text = lcg.MacroParser(globals=globals).parse(text)
             parser = lcg.Parser()
@@ -241,7 +257,7 @@ class Menu(wiking.PytisModule):
                 else:
                     content = [content]
                 document = result.clone(title=self._document_title(req, record), subtitle=None,
-                                        content=pre+content+post, globals=globals)
+                                        content=pre+content+post, globals=globals, resources=resources)
             else:
                 # A wiking.Response instance has been returned by the embedded module.
                 return result
@@ -253,9 +269,9 @@ class Menu(wiking.PytisModule):
             if rows:
                 raise wiking.Redirect('/'+self._menu_item_identifier(rows[0]))
             else:
-                document = self._document(req, [], record, globals=globals)
+                document = self._document(req, [], record, globals=globals, resources=resources)
         else:
-            document = self._document(req, pre+post, record, globals=globals)
+            document = self._document(req, pre+post, record, globals=globals, resources=resources)
         if modname is None:
             # Module access is logged in EmbeddablePytisModule._handle().
             self._module('AccessLog').log(req, None, None)

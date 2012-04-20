@@ -27,8 +27,7 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 """
 
-import collections
-import socket
+import collections, socket, os
 import lcg
 import pytis.data as pd, pytis.util as pu, pytis.presentation as pp
 from pytis.presentation import Field, HGroup, VGroup, Binding, Action, CodebookSpec, \
@@ -46,6 +45,33 @@ def nextval(seq):
         return config.dbconnection
     counter = pd.DBCounterDefault(seq, conn_spec)
     return lambda transaction=None: counter.next(transaction=transaction)
+
+def find_resources(directory, base_uri):
+    """Find resources in given directory and return a list of lcg.Resource instances.
+
+    The function expects the directory to contain files in a certain
+    arrangement.  Normal files have just one file per resource in given
+    directory, but images may have a resized version in the 'resized'
+    subdirectory and a thumbnail in 'thumbnails' subdirectory.  In such case
+    the image is represented by a resource pointing to the resized version of
+    the image, which defines the 'thumbnail' pointing to the thumbnailed
+    version.
+
+    """
+    import lcg, os
+    resources = []
+    for filename in os.listdir(directory):
+        if os.path.isfile(os.path.join(directory, filename)):
+            if any([filename.lower().endswith(suffix) for suffix in ('jpg', 'png', 'gif')]):
+                thumbnail = lcg.Image(os.path.join('thumbnails', filename),
+                                      src_file=os.path.join(directory, 'thumbnails', filename),
+                                      uri=base_uri+'thumbnails/'+filename)
+                image = lcg.Image(filename,
+                                  src_file=os.path.join(directory, 'resized', filename),
+                                  uri=base_uri+'resized/'+filename,
+                                  thumbnail=thumbnail)
+                resources.extend((thumbnail, image))
+    return resources
 
 
 class _TreeOrder(pp.PrettyFoldable, pd.String):
@@ -262,6 +288,8 @@ class Menu(Specification):
               descr=_("Stručný popis stránky (zobrazen v menu jako tooltip).")),
         Field('content', _("Obsah"), text_format=pp.TextFormat.LCG, compact=True, height=20, width=80,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
+        Field('content.attachments-storage', virtual=True,
+              computer=computer(self._attachments_storage)),
         Field('mod_id', _("Modul"), not_null=False,
               codebook=self._spec_name('Modules', False), allow_codebook_insert=True,
               descr=_("Vyberte rozšiřující modul zobrazený uvnitř stránky.  Ponechte prázdné pro "
@@ -280,6 +308,10 @@ class Menu(Specification):
                       "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zařazena "
                       "na konec.")),
         )
+    def _attachments_storage(self, record, identifier):
+        # Determines the directory for storing the attachments for the 'content' field.
+        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE', '/var/lib/pytis/attachments')
+        return identifier and os.path.join(directory, identifier) or None
     def _check_menu_order_condition(self, record):
         # Return a list of 'pd.Operator' instances to find menu items with duplicate order at the
         # same level.  The returned operators will be applied in conjunction.  Designed to allow
@@ -333,9 +365,17 @@ class Menu(Specification):
                     condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id']),
                     prefill=lambda r: {'menu_item_id': r['menu_item_id'].value(),
                                        'mod_id': r['mod_id'].value()}),
-            Binding('content', _("Obsah"),
-                    content=lambda r: pu.lcg_to_html(r['content'].value() or ''),),
+            Binding('content', _("Obsah"), content=self._page_content),
             )
+    
+    def _page_content(self, row):
+        text = row['content'].value()
+        if text:
+            directory = row['content.attachments-storage'].value()
+            resources = find_resources(directory, 'resource:')
+            return pu.parse_lcg_text(text, resources=resources)
+        else:
+            return ''
 
 
 class Users(Specification):
