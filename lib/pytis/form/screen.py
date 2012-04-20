@@ -1836,6 +1836,7 @@ class Browser(wx.Panel, CommandHandler):
         wx.Panel.__init__(self, parent)
         self._webview = None
         self._async_queue = []
+        self._resource_provider = None
         self._restricted_navigation_uri = None
         self._uri_change_callback = None
         wx_callback(wx.EVT_IDLE, self, self._on_idle)
@@ -1864,7 +1865,7 @@ class Browser(wx.Panel, CommandHandler):
                 gtk_scrolled_window.show_all()
                 webview.connect('notify::load-status', self._on_load_status_changed)
                 webview.connect('navigation-policy-decision-requested', self._on_navigation_request)
-                webview.connect('resource-request-starting', self._on_resource)
+                webview.connect('resource-request-starting', self._on_resource_request)
                 settings = webview.get_settings()
                 settings.props.user_agent += ' Pytis ' + pytis.__version__
                 #settings.props.enable_developer_extras = True # Doesn't work...
@@ -1904,7 +1905,7 @@ class Browser(wx.Panel, CommandHandler):
             # restriction messages so we beter ignore it now.
             return False
         restricted_navigation_uri = self._restricted_navigation_uri
-        if restricted_navigation_uri is not None and \
+        if not uri.startswith('resource:') and restricted_navigation_uri is not None and \
                 not uri.startswith(restricted_navigation_uri):
             decision.ignore()
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
@@ -1915,6 +1916,26 @@ class Browser(wx.Panel, CommandHandler):
     def _on_navigation(self, uri, action):
         return False
         
+    def _on_resource_request(self, webview, frame, resource, req, response):
+        uri = resource.get_uri()
+        # Note, when load_html() is performed, this method gets called with uri
+        # equal to base_uri passed to load_html().
+        if uri.startswith('resource:') and self._resource_provider is not None:
+            for r in self._resource_provider.resources():
+                # Try searching the existing resources by URI first to get the
+                # best match when uri remapping is used for some reason (such
+                # as in pytis.cms.find_resources).
+                if r.uri() == uri:
+                    break
+            else:
+                # If URI doesn't match any existing resource, try locating the
+                # resource using the standard resource provider's algorithm
+                # (including searching resource directories).
+                r = self._resource_provider.resource(uri[9:])
+            if r and r.src_file():
+                # Redirect the request to load the resource file from filesystem.
+                req.set_uri("file://" + r.src_file())
+                
     def _can_go_forward(self):
         return self._webview.can_go_forward()
         
@@ -1974,16 +1995,27 @@ class Browser(wx.Panel, CommandHandler):
 
     def load_uri(self, uri, restrict_navigation=None):
         def f():
+            self._resource_provider = None
             self._restricted_navigation_uri = restrict_navigation
             self._webview.load_uri(uri)
         self._async_queue.append(f)
 
-    def load_html(self, html, base_uri='', restrict_navigation=None):
+    def load_html(self, html, base_uri='', restrict_navigation=None, resource_provider=None):
         def f():
+            self._resource_provider = resource_provider
             self._restricted_navigation_uri = restrict_navigation
             self._webview.load_html_string(html, base_uri)
         self._async_queue.append(f)
 
+    def load_content(self, node):
+        """Load browser content from lcg.ContentNode instance."""
+        import lcg, os
+        class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
+            pass
+        exporter = Exporter(styles=('default.css',), inlinestyles=True)
+        context = exporter.context(node, None)
+        html = exporter.export(context)
+        self.load_html(html.encode('utf-8'), resource_provider=node.resource_provider())
 
 
 class IN(pytis.data.Operator):
