@@ -60,17 +60,18 @@ def find_resources(directory, base_uri):
     """
     import lcg, os
     resources = []
-    for filename in os.listdir(directory):
-        if os.path.isfile(os.path.join(directory, filename)):
-            if any([filename.lower().endswith(suffix) for suffix in ('jpg', 'png', 'gif')]):
-                thumbnail = lcg.Image(os.path.join('thumbnails', filename),
-                                      src_file=os.path.join(directory, 'thumbnails', filename),
-                                      uri=base_uri+'thumbnails/'+filename)
-                image = lcg.Image(filename,
-                                  src_file=os.path.join(directory, 'resized', filename),
-                                  uri=base_uri+'resized/'+filename,
-                                  thumbnail=thumbnail)
-                resources.extend((thumbnail, image))
+    if os.path.isdir(directory):
+        for filename in os.listdir(directory):
+            if os.path.isfile(os.path.join(directory, filename)):
+                if any([filename.lower().endswith(suffix) for suffix in ('jpg', 'png', 'gif')]):
+                    thumbnail = lcg.Image(os.path.join('thumbnails', filename),
+                                          src_file=os.path.join(directory, 'thumbnails', filename),
+                                          uri=base_uri+'thumbnails/'+filename)
+                    image = lcg.Image(filename,
+                                      src_file=os.path.join(directory, 'resized', filename),
+                                      uri=base_uri+'resized/'+filename,
+                                      thumbnail=thumbnail)
+                    resources.extend((thumbnail, image))
     return resources
 
 
