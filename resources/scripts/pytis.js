@@ -364,7 +364,9 @@ pytis.FileUploadField = Class.create(pytis.Field, {
 	    } 
 	    else if (div)
 		div.remove();
-	    
+	    var submit = this._form.down('button[type="submit"]');
+	    if (submit)
+		submit.disabled = (error != null);
 	}
 	document.body.style.cursor = "default";
     }
