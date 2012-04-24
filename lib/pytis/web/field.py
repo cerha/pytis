@@ -176,6 +176,8 @@ class Field(object):
             exporter = FileFieldExporter
         elif spec.text_format() == TextFormat.LCG:
             exporter = StructuredTextFieldExporter
+        elif spec.text_format() == TextFormat.HTML:
+            exporter = HtmlFieldExporter
         elif spec.height() > 1:
             exporter = MultilineFieldExporter
         elif isinstance(type, pytis.data.String):
@@ -424,6 +426,33 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
         return context.generator().div(content.export(context))
 
 
+class HtmlFieldExporter(MultilineFieldExporter):
+    _HANDLER = 'pytis.HtmlField'
+
+    def _format(self, context):
+        return context.generator().div(context.localize(self._value().export()))
+    
+    def _editor(self, context, **kwargs):
+        content = super(HtmlFieldExporter, self)._editor(context, **kwargs)
+        if context.resource('ckeditor/ckeditor.js'):
+            g = context.generator()
+            toolbar = (
+                ('clipboard',   ('Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo')),
+                ('editing',     ('Find','Replace','-','SelectAll')),
+                ('basicstyles', ('Bold','Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat')),
+                ('tools',       ('Source','Maximize', 'ShowBlocks','-','About')),
+                ('/', None),
+                ('styles',      ('Format',)),#'Font','FontSize')),
+                ('paragraph',   ('NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiLtr','BidiRtl')),
+                ('links',       ('Image','Link','Unlink','Anchor')),
+                ('insert',      ('Table','HorizontalRule','Smiley','SpecialChar','PageBreak')),
+                )
+            config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
+                          language=context.lang())
+            content += g.script(g.js_call('CKEDITOR.replace', self._field.unique_id, config))
+        return content
+
+    
 class DateTimeFieldExporter(TextFieldExporter):
     _HANDLER = 'pytis.DateTimeField'
     

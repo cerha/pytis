@@ -299,6 +299,24 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 
 });
 
+pytis.HtmlField = Class.create(pytis.Field, {
+    initialize: function($super, form_id, field_id, id, active, required) {
+	$super(form_id, field_id, id, active, required);
+        if (typeof(CKEDITOR) != 'undefined') {
+	    CKEDITOR.on('dialogDefinition', function(event) {
+		if (event.data.name == 'link') {
+		    event.data.definition.removeContents('advanced');
+		    event.data.definition.removeContents('target');
+		}
+		if (event.data.name == 'image') {
+		    event.data.definition.removeContents('advanced');
+		    event.data.definition.removeContents('Link');
+		}
+	    });
+	}
+    }
+});
+
 pytis.DateTimeField = Class.create(pytis.Field, {
     _set_editability: function(value) {
 	this._ctrl.disabled = !value;
