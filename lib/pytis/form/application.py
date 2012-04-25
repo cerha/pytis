@@ -1471,7 +1471,8 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                                                   default=config.dbuser),
                                             Field('password', _("Heslo"),
                                                   type=pytis.data.Password(verify=False),
-                                                  width=24, not_null=True),))
+                                                  width=24, not_null=True),),
+                                    focus_field='password')
 	    if not login_result:
                 return FAILURE
             config.dbconnection.update_login_data(user=login_result['login'].value(),
