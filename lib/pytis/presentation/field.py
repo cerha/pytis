@@ -343,7 +343,12 @@ class PresentedRow(object):
                 
     def __unicode__(self):
         if hasattr(self, '_row'):
-            info = ', '.join([c.id + '=' + unicode(self[c.id].value()) for c in self._columns])
+            def strval(column):
+                if isinstance(column.type, pytis.data.Password):
+                    return "***"
+                else:
+                    return unicode(self[column.id].value())
+            info = ', '.join([c.id + '=' + strval(c) for c in self._columns])
         else:
             info = '%x' % positive_id(self)
         return "<%s: %s>" % (self.__class__.__name__, info)
