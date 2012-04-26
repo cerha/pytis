@@ -29,7 +29,7 @@ import pytis.data
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def visit_view(self, view, create_ok=False):
-        command = 'CREATE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition,)
+        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition,)
         self.connection.execute(command)
 
 class _TableComment(sqlalchemy.schema.DDLElement):
