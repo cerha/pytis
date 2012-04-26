@@ -1878,10 +1878,13 @@ class Binding(object):
             returning function.  Otherwise 'arguments' must be 'None'.
           descr -- binding description text (to be used in on-line help etc).
           single -- boolean flag indicating whether this binding corresponds to
-            a 1:1 relation (True value) or 1:N relation (False value).  The
-            value of this flag determines the meaning of the 'binding_column'
-            argument.  For the 1:1 relation, there is exactly one record in the
-            related view corresponding to one record of the main form.  The
+            a 1:1 relation (True value) or 1:N relation (False value).  Simply
+            put, when single is False (the default), the side form is a list of
+            related records (browse form), when True, the side form is a view
+            of a single related record (show form).  Consequently, the value of
+            this flag determines the meaning of the 'binding_column' argument.
+            For the 1:1 relation, there is exactly one record in the related
+            view corresponding to one record of the main form.  The
             'binding_column' in this case is the identifier of a column in main
             form specification which must have a codebook specification
             pointing to the related view.  For the 1:N relation the binding
