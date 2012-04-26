@@ -174,12 +174,10 @@ class SQLTable(sqlalchemy.Table):
         
     def _insert_values(self, bind):
         if self.init_values:
-            # TODO: This performs the SQL statements but doesn't log them.
-            connection = bind.connect()
             for row in self.init_values:
                 values = dict(zip(self.init_columns, row))
                 insert = self.insert().values(**values)
-                connection.execute(insert)
+                bind.execute(insert)
 
 
 class SQLView(sqlalchemy.Table):
@@ -246,15 +244,46 @@ class Baz(SQLView):
                                                    from_obj=[t('public.foo').join(t('public.bar'))]),
                                  sqlalchemy.select([t('public.foofoo').c.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
 
+
+engine = None
+def _dump_sql_command(sql, *multiparams, **params):
+    if isinstance(sql, str):
+        output = unicode(sql)
+    elif isinstance(sql, unicode):
+        output = sql
+    else:
+        compiled = sql.compile(dialect=engine.dialect)
+        if isinstance(sql, sqlalchemy.sql.expression.Insert):
+            # SQLAlchemy apparently doesn't work so well without a database
+            # connection.  We probably have no better choice than to handle some
+            # things manually here, despite the corresponding functionality is
+            # present in SQLAlchemy.
+            parameters = {}
+            sql_parameters = sql.parameters
+            if len(sql_parameters) != len(compiled.binds):
+                # Probably default key value
+                for k in compiled.binds.keys():
+                    if k not in sql_parameters:
+                        column = sql.table.columns[k]
+                        parameters[k] = "nextval('%s_%s_seq')" % (column.table.name, column.name,)
+            for k, v in sql_parameters.items():
+                if v is None:
+                    value = 'NULL'
+                elif isinstance(v, (int, long, float,)):
+                    value = v
+                else:
+                    value = "'%s'" % (v.replace('\\', '\\\\').replace("'", "''"),)
+                parameters[k] = value
+            output = unicode(compiled) % parameters
+        else:
+            output = unicode(compiled)
+    print output
+
 if __name__ == '__main__':
-    # TODO: How to just output SQL commands without connection to the database?
-    # See sqlalchemy.engine.base.Connection; if we can override it and make an
-    # engine around it then we could do whatever we want with the SQL commands.
-    engine = sqlalchemy.create_engine('postgresql:///test', echo=True)
+    engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     for cls in (Foo, Foo2, Bar):
         for schema in cls.schemas:
             table = t('%s.%s' % (schema, cls.name,))
-            table.create(engine)
+            table.create(engine, checkfirst=False)
     view = Baz(_metadata, 'public')
-    view.create(engine)
-
+    view.create(engine, checkfirst=False)
