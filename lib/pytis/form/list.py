@@ -2956,7 +2956,7 @@ class BrowseForm(FoldableForm):
                 if link.label() is None:
                     label = link_label(spec_title(link.name(), link.binding()), link.type())
                 self._explicit_links.append((label, [(f, link)]))
-                item = (link.name(), link.column(), f, spec_title(link.name()))
+                item = (link.name(), link.column(), f, spec_title(link.name()), link.binding())
                 if item not in self._explicit_in_operator_links:
                     self._explicit_in_operator_links.append(item)
             # Create automatic links for codebook fields.
@@ -2967,7 +2967,7 @@ class BrowseForm(FoldableForm):
                 item = (codebook, enumerator.value_column(), f)
                 if item not in links:
                     links.append(item)
-                in_item = (codebook, enumerator.value_column(), f, spec_title(codebook))
+                in_item = (codebook, enumerator.value_column(), f, spec_title(codebook), None)
                 if in_item not in self._automatic_in_operator_links:
                     self._automatic_in_operator_links.append(in_item)
         self._automatic_links = [(link_label(spec_title(name)),
@@ -3056,7 +3056,7 @@ class BrowseForm(FoldableForm):
         return items
 
     def _in_operator_mitems(self, row, linkspec, not_in=False):
-        def mitem(name, column, f, title):
+        def mitem(name, column, f, title, binding):
             if self._current_profile.id() == self._default_profile.id():
                 profile_id = None
             else:
@@ -3070,7 +3070,7 @@ class BrowseForm(FoldableForm):
                 select_row = {column: row[f.id()]}
                 ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
                            u"obsažené ve sloupci „%(column)s“ současného náhledu.")
-            def handler(form_class, name):
+            def handler(form_class, name, **kwargs):
                 # The main reason for wrapping COMMAND_RUN_FORM in a function
                 # run through COMMAND_HANDLED_ACTION here is to postpone the
                 # time consuming IN operator construction until the menu item
@@ -3085,10 +3085,16 @@ class BrowseForm(FoldableForm):
                 filter = pytis.form.IN(column, self.name(), f.id(), profile_id)
                 if not_in:
                     filter = pytis.data.NOT(filter)
-                run_form(form_class, name, select_row=select_row, filter=filter)
+                run_form(form_class, name, select_row=select_row, filter=filter, **kwargs)
+            if binding:
+                form_class = MultiBrowseDualForm
+                kwargs = dict(binding=binding)
+            else:
+                form_class = BrowseForm
+                kwargs = {}
             cmd = Application.COMMAND_HANDLED_ACTION(handler=handler, 
                                                      enabled=Application.COMMAND_RUN_FORM.enabled,
-                                                     name=name, form_class=BrowseForm)
+                                                     form_class=form_class, name=name, **kwargs)
             return MItem(ititle % dict(view_title=title, column=column_label), command=cmd)
         return [mitem(*args) for args in linkspec]
                            
