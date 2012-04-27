@@ -90,6 +90,9 @@ class PrimaryColumn(Column):
 
 _metadata = sqlalchemy.MetaData()
 
+def t(name):
+    return _metadata.tables[name]
+
 class SQLException(Exception):
     pass
 
@@ -98,7 +101,7 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
     _name_mapping = {}
     
     def __init__(cls, clsname, bases, clsdict):
-        is_specification = not clsname.startswith('SQL')
+        is_specification = not clsname.startswith('SQL') and not clsname.startswith('_SQL')
         if is_specification:
             name = cls.name
             if name is None:
@@ -112,14 +115,20 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
         if is_specification:
             for schema in cls.schemas:
                 cls(_metadata, schema)
-
-def t(name):
-    return _metadata.tables[name]
         
 ## Database objects
 
-class SQLTable(sqlalchemy.Table):
+class _SQLTabular(sqlalchemy.Table):
     __metaclass__ = _PytisTableMetaclass
+    
+    def _init(self, *args, **kwargs):
+        super(_SQLTabular, self)._init(*args, **kwargs)
+        self._add_dependencies()
+
+    def _add_dependencies(self):
+        pass
+    
+class SQLTable(_SQLTabular):
     
     name = None
     schemas = ('public',)
@@ -146,6 +155,10 @@ class SQLTable(sqlalchemy.Table):
         super(SQLTable, self)._init(*args, **kwargs)
         self._create_parameters()
         self._create_comments()
+
+    def _add_dependencies(self):
+        for inherited in self.inherits:
+            self.add_is_dependent_on(t('%s.%s' % (self.schema, inherited.name,)))
 
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
@@ -180,7 +193,7 @@ class SQLTable(sqlalchemy.Table):
                 bind.execute(insert)
 
 
-class SQLView(sqlalchemy.Table):
+class SQLView(_SQLTabular):
 
     name = None
     schemas = ('public',)
@@ -193,6 +206,20 @@ class SQLView(sqlalchemy.Table):
         columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.condition.columns])
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=schema)
+
+    def _add_dependencies(self):
+        objects = [self.condition]
+        seen = []
+        while objects:
+            o = objects.pop()
+            if o in seen:
+                continue
+            elif isinstance(o, sqlalchemy.Table):
+                self.add_is_dependent_on(o)
+                seen.append(o)
+            elif isinstance(o, sqlalchemy.sql.ClauseElement):
+                objects += o.get_children()
+                seen.append(o)
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
@@ -281,9 +308,5 @@ def _dump_sql_command(sql, *multiparams, **params):
 
 if __name__ == '__main__':
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
-    for cls in (Foo, Foo2, Bar):
-        for schema in cls.schemas:
-            table = t('%s.%s' % (schema, cls.name,))
-            table.create(engine, checkfirst=False)
-    view = Baz(_metadata, 'public')
-    view.create(engine, checkfirst=False)
+    for t in _metadata.sorted_tables:
+        t.create(engine, checkfirst=False)
