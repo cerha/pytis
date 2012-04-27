@@ -277,7 +277,7 @@ def _dump_sql_command(sql, *multiparams, **params):
             output = unicode(compiled) % parameters
         else:
             output = unicode(compiled)
-    print output
+    print output + ';'
 
 if __name__ == '__main__':
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
