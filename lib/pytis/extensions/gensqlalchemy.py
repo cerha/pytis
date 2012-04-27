@@ -20,6 +20,7 @@
 
 
 import copy
+import string
 import sqlalchemy
 from sqlalchemy.ext.compiler import compiles
 import pytis.data
@@ -30,6 +31,21 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def visit_view(self, view, create_ok=False):
         command = 'CREATE OR REPLACE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition,)
+        self.connection.execute(command)
+
+    def visit_function(self, function, create_ok=False):
+        def arg(column):
+            a_column = column.sqlalchemy_column()
+            return '"%s" %s' % (a_column.name, a_column.type,)
+        arguments = string.join([arg(c) for c in function.arguments], ', ')
+        result_type = function.result_type[0].sqlalchemy_column().type
+        if function.multirow:
+            result_type = 'SETOF ' + result_type
+        command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$ %s $$ LANGUAGE %s %s' %
+                   (function.schema, function.name, arguments, result_type, function.body(),
+                    function._LANGUAGE, function.stability,))
+        if function.security_definer:
+            command += ' SECURITY DEFINER'
         self.connection.execute(command)
 
 class _TableComment(sqlalchemy.schema.DDLElement):
@@ -121,18 +137,21 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
 class _SQLTabular(sqlalchemy.Table):
     __metaclass__ = _PytisTableMetaclass
     
+    name = None
+    schemas = ('public',)
+    search_path = ('public',)           # TODO: how to handle this in SQLAlchemy?
+    depends_on = ()
+
     def _init(self, *args, **kwargs):
         super(_SQLTabular, self)._init(*args, **kwargs)
         self._add_dependencies()
 
     def _add_dependencies(self):
-        pass
+        for o in self.depends_on:
+            self.add_is_dependent_on(o)
     
 class SQLTable(_SQLTabular):
     
-    name = None
-    schemas = ('public',)
-    search_path = ('public',)           # TODO: how to handle this in SQLAlchemy?
     fields = ()
     inherits = ()
     tablespace = None
@@ -157,6 +176,7 @@ class SQLTable(_SQLTabular):
         self._create_comments()
 
     def _add_dependencies(self):
+        super(SQLTable, self)._add_dependencies()
         for inherited in self.inherits:
             self.add_is_dependent_on(t('%s.%s' % (self.schema, inherited.name,)))
 
@@ -192,12 +212,8 @@ class SQLTable(_SQLTabular):
                 insert = self.insert().values(**values)
                 bind.execute(insert)
 
-
 class SQLView(_SQLTabular):
 
-    name = None
-    schemas = ('public',)
-    search_path = ('public',)           # TODO: how to handle this in SQLAlchemy?
     condition = None
 
     __visit_name__ = 'view'
@@ -208,6 +224,7 @@ class SQLView(_SQLTabular):
         return sqlalchemy.Table.__new__(cls, *args, schema=schema)
 
     def _add_dependencies(self):
+        super(SQLView, self)._add_dependencies()
         objects = [self.condition]
         seen = []
         while objects:
@@ -223,6 +240,34 @@ class SQLView(_SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+
+class SQLFunctional(_SQLTabular):
+
+    arguments = ()
+    result_type = None
+    multirow = False
+    security_definer = False
+    stability = 'volatile'
+
+    _LANGUAGE = None
+
+    __visit_name__ = 'function'
+
+    def __new__(cls, metadata, schema):
+        columns = tuple([c.sqlalchemy_column() for c in cls.result_type])
+        args = (cls.name, metadata,) + columns
+        return sqlalchemy.Table.__new__(cls, *args, schema=schema)
+
+    def create(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+
+    def __call__(self, *arguments):
+        name = '"%s"."%s"' % (self.schema, self.name,)
+        return getattr(sqlalchemy.sql.expression.func, name)(*arguments)
+
+class SQLFunction(SQLFunctional):
+    
+    _LANGUAGE = 'sql'
 
 
 ## Sample demo
@@ -270,6 +315,14 @@ class Baz(SQLView):
     condition = sqlalchemy.union(sqlalchemy.select([t('public.foo').c.id, t('public.bar').c.description],
                                                    from_obj=[t('public.foo').join(t('public.bar'))]),
                                  sqlalchemy.select([t('public.foofoo').c.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
+
+class Func(SQLFunction):
+    name = 'plus'
+    arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
+    result_type = (Column('z', pytis.data.Integer()),)
+
+    def body(self):
+        return 'SELECT $1 + $2'
 
 
 engine = None
