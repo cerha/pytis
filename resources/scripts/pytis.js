@@ -317,6 +317,19 @@ pytis.HtmlField = Class.create(pytis.Field, {
     }
 });
 
+pytis.HtmlField.select_file = function (uri) {
+    // Static method to be called when a file is selected in HtmlField's file
+    // browser.  The browser window will be closed and the file uri will be
+    // inserted into the HtmlField's file/image dialog.  The file browser is
+    // invoked from this dialog using the URI provider with
+    // `pytis.web.UriType.*_BROWSER' type.
+    var re = new RegExp('(?:[\?&]|&amp;)CKEditorFuncNum=([^&]+)', 'i');
+    var match = window.location.search.match(re);
+    var func_num = (match && match.length > 1) ? match[1] : '';
+    window.opener.CKEDITOR.tools.callFunction(func_num, uri, '');
+    window.parent.close();
+};
+
 pytis.DateTimeField = Class.create(pytis.Field, {
     _set_editability: function(value) {
 	this._ctrl.disabled = !value;

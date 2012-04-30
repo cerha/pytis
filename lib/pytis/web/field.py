@@ -64,7 +64,48 @@ class UriType(object):
     in their specification for this kind of URI.
     
     """
+    FILE_BROWSER = 'FILE_BROWSER'
+    """URI of a file browser to be used by HTML editor.
 
+    The file browser will be opened by the HTML editor field (used for fields
+    with text_format='TextFormat.HTML') to provide a selection from files
+    available on the server for given field.  This uri is opened in a separate
+    window.  The file selection should be indicated by a call to the JavaScript
+    method 'pytis.HtmlField.select_file()'.  Calling this method will insert
+    the file uri passed as an argument to the currently opened file link dialog
+    and close the browser window.
+
+    When None is returned for this URI type, browsing the server files will not
+    be available in the UI.
+
+    """
+    IMAGE_BROWSER = 'IMAGE_BROWSER'
+    """URI of an image browser to be used by HTML editor.
+
+    The behavior is the same as for 'FILE_BROWSER' uri, but the selection
+    should only include images which may be displayed inline in page contents.
+    The presentation will probably also be different (will show the images).
+    
+    """
+    FILE_UPLOAD = 'FILE_UPLOAD'
+    """URI of a server side file upload handler used by HTML editor.
+
+    The URI will be used whenever a new file is uploaded from the HTML field's
+    file link dialog.  The uploaded file should be added to the list of files
+    available on the server for given field in the through the file browser
+    (see 'UriType.FILE_BROWSER').  When None, file upload will not be available
+    in the UI.
+    
+    """
+    IMAGE_UPLOAD = 'IMAGE_UPLOAD'
+    """URI of a server side image upload handler used by HTML editor.
+
+    Same as 'FILE_UPLOAD', but will specifically used to upload a new image be
+    displayed inline in page contents.
+
+    """
+
+    
 class Link(object):
     """Link representation for 'uri_provider' returned value.
 
@@ -448,7 +489,16 @@ class HtmlFieldExporter(MultilineFieldExporter):
                 ('insert',      ('Table','HorizontalRule','Smiley','SpecialChar','PageBreak')),
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
-                          language=context.lang())
+                          language=context.lang(),
+                          filebrowserBrowseUrl=self._uri_provider(self._row, self._field.id,
+                                                                  type=UriType.FILE_BROWSER),
+                          filebrowserImageBrowseUrl=self._uri_provider(self._row, self._field.id,
+                                                                       type=UriType.IMAGE_BROWSER),
+                          filebrowserUploadUrl=self._uri_provider(self._row, self._field.id,
+                                                                  type=UriType.FILE_UPLOAD),
+                          filebrowserImageUploadUrl=self._uri_provider(self._row, self._field.id,
+                                                                       type=UriType.IMAGE_UPLOAD),
+                          )
             content += g.script(g.js_call('CKEDITOR.replace', self._field.unique_id, config))
         return content
 
