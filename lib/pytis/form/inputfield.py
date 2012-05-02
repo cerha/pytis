@@ -1846,19 +1846,12 @@ class FileField(Invocable, InputField):
         return self._enabled
         
     def _cmd_load(self):
-        msg = _(u"Vyberte soubor pro políčko '%s'") % self.spec().label()
-        dir = FileField._last_load_dir or FileField._last_save_dir or ''
-        dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN,
-                            defaultDir=dir)
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            filename = os.path.split(path)[1]
-            FileField._last_load_dir = os.path.dirname(path)
+        def load(data, filename):
             try:
                 if self._buffer:
-                    self._buffer.load(path, filename=filename)
+                    self._buffer.load(data, filename=filename)
                 else:
-                    self._buffer = self._type.Buffer(path, filename=filename)
+                    self._buffer = self._type.Buffer(data, filename=filename)
             except pytis.data.ValidationError as e:
                 message(e.message(), beep_=True)
             except IOError as e:
@@ -1867,6 +1860,23 @@ class FileField(Invocable, InputField):
                 self._on_set_value()
                 self._on_change()
                 message(_(u"Soubor načten."))
+        msg = _(u"Vyberte soubor pro políčko '%s'") % self.spec().label()
+        if pytis.windows.windows_available():
+            f = pytis.windows.open_selected_file()
+            filename = f.name().split('\\')[-1] # We are splitting a Windows filename on Linux!
+            try:
+                load(f, filename)
+            finally:
+                f.close()
+        else:
+            dir = FileField._last_load_dir or FileField._last_save_dir or ''
+            dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN, defaultDir=dir)
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            path = dlg.GetPath()
+            filename = os.path.split(path)[1]
+            FileField._last_load_dir = os.path.dirname(path)
+            load(path, filename)
         
     def _can_save(self):
         return self._buffer is not None

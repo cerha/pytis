@@ -1768,20 +1768,7 @@ class Binary(Limited):
             Raises 'IOError' if the input file can not be read.
             
             """
-            self._path = None
-            if isinstance(data, buffer):
-                self._validate(data)
-                self._buffer = data
-            elif isinstance(data, basestring):
-                self.load(data)
-            elif isinstance(data, (file, cStringIO.OutputType)):
-                self._load(data)
-            else:
-                raise ProgramError("Invalid Buffer data:", data)
-            assert filename is None or isinstance(filename, basestring)
-            assert mime_type is None or isinstance(mime_type, basestring)
-            self._filename = filename
-            self._mime_type = mime_type
+            self.load(data, filename=filename, mime_type=mime_type)
 
         def __len__(self):
             return len(self._buffer)
@@ -1790,12 +1777,6 @@ class Binary(Limited):
             if not isinstance(data, buffer):
                 raise ValidationError(_(u"Not a buffer object: %r") % data)
             
-        def _load(self, f):
-            # Load and validate data from a file-like object.
-            data = buffer(f.read())
-            self._validate(data)
-            self._buffer = data
-                
         def buffer(self):
             """Return the binary data as a Python buffer instance."""
             return self._buffer
@@ -1839,12 +1820,12 @@ class Binary(Limited):
             finally:
                 f.close()
                 
-        def load(self, path, filename=None):
-            """Try to load the buffer from a file replacing the current data.
+        def load(self, data, filename=None, mime_type=None):
+            """Try to re-load buffer data with new content.
 
             Arguments:
             
-              path -- string path to the input file.
+              data, filename, mime_type -- same as in constructor.
             
             Raises 'IOError' if the file can not be read.
 
@@ -1853,15 +1834,29 @@ class Binary(Limited):
             The original buffer contents remains unchanged in case of any error.
             
             """
+            assert filename is None or isinstance(filename, basestring)
+            assert mime_type is None or isinstance(mime_type, basestring)
+            if isinstance(data, buffer):
+                path = None
+                buf = data
+            elif isinstance(data, basestring):
+                path = data
+                f = open(path, 'rb')
+                try:
+                    buf = buffer(f.read())
+                    self._validate(buf)
+                finally:
+                    f.close()
+            elif hasattr(data, 'read') and isinstance(data.read, collections.Callable):
+                path = None
+                buf = buffer(data.read())
+                self._validate(buf)
+            else:
+                raise ProgramError("Invalid Buffer data:", data)
+            self._validate(buf)
+            self._buffer = buf
             self._path = path
-            f = open(path, 'rb')
-            try:
-                self._load(f)
-            finally:
-                f.close()
-            if filename is not None:
-                assert isinstance(filename, basestring)
-                self._filename = filename
+            self._filename = filename
             
                 
     def __init__(self, enumerator=None, **kwargs):
