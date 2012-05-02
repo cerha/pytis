@@ -1862,8 +1862,9 @@ class FileField(Invocable, InputField):
                 message(_(u"Soubor načten."))
         msg = _(u"Vyberte soubor pro políčko '%s'") % self.spec().label()
         if pytis.windows.windows_available():
+            import ntpath
             f = pytis.windows.open_selected_file()
-            filename = f.name().split('\\')[-1] # We are splitting a Windows filename on Linux!
+            filename = ntpath.split(f.name())[-1]
             try:
                 load(f, filename)
             finally:
