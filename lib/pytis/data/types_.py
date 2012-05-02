@@ -1844,13 +1844,11 @@ class Binary(Limited):
                 f = open(path, 'rb')
                 try:
                     buf = buffer(f.read())
-                    self._validate(buf)
                 finally:
                     f.close()
             elif hasattr(data, 'read') and isinstance(data.read, collections.Callable):
                 path = None
                 buf = buffer(data.read())
-                self._validate(buf)
             else:
                 raise ProgramError("Invalid Buffer data:", data)
             self._validate(buf)
