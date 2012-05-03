@@ -1245,6 +1245,14 @@ class ListBoxField(EnumerationField):
 
     def _update_size(self, ctrl):
         width = ctrl.GetBestSize().width
+        min_char_width = self.spec().width(None)
+        if min_char_width:
+            min_width = dlg2px(ctrl, 4*min_char_width)
+            # When width is specified, it is used as minimal field width (used
+            # when the list is empty or contains only short values) and also
+            # the maximal field size is restricted to 3x the specified width to
+            # avoid very wide field when values are too long.
+            width = min(max(width, min_width), 3*min_width)
         height = char2px(ctrl, 1, float(10)/7).height * (self.height() or ctrl.GetCount())
         ctrl.SetMinSize((width, height))
     
@@ -2350,7 +2358,7 @@ class StructuredTextField(TextField):
                 align = 'inline'
         fields = (
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
-                  default=filename, compact=True,
+                  default=filename, compact=True, width=25,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX,
                   enumerator=self.AttachmentsEnumerator(directory)),
             Field('preview', _(u"Náhled"), codebook='cms.Attachments', compact=True,
@@ -2369,7 +2377,7 @@ class StructuredTextField(TextField):
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
             )
         button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
-        row = run_form(InputForm, title=_(u"Vložte obrázek"), fields=fields,
+        row = run_form(InputForm, title=_(u"Vložit obrázek"), fields=fields,
                        layout=(pytis.presentation.ColumnLayout(('filename', button), 'preview'),
                                'align', 'tooltip'))
         if row:
