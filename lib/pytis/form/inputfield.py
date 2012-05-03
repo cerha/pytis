@@ -2246,6 +2246,7 @@ class StructuredTextField(TextField):
         directory = self._attachments_directory()
         if not directory:
             return
+        ctrl = self._ctrl
         image_size = (800, 800)
         thumbnail_size = (200, 200)
         if kind == 'image':
@@ -2258,11 +2259,23 @@ class StructuredTextField(TextField):
                         if os.path.isfile(os.path.join(directory, filename))
                         and True in [filename.lower().endswith(suffix) for suffix in
                                      ('jpg', 'jpeg', 'png', 'gif')]])
+        # Find out whether the current cursor position is within an existing
+        # attachment link.
+        position = ctrl.GetInsertionPoint()
+        column_number, line_number = ctrl.PositionToXY(position)
+        line_text = ctrl.GetLineText(line_number)
+        start = line_text[:column_number].rfind('[')
+        end = line_text[column_number:].find(']')
+        if start != -1 and end != -1 and line_text[start+1:column_number+end] in files:
+            current_filename = line_text[start+1:column_number+end]
+        else:
+            current_filename = None
         def file_computer(row, filename):
             return filename and file_type.Buffer(os.path.join(directory, filename),
                                                  filename=filename) or None
         fields = (
             Field('filename', _(u"Dříve vložené soubory"), height=5, not_null=False,
+                  default=current_filename,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX,
                   enumerator=pytis.data.FixedEnumerator(files)),
             Field('file', _(u"Soubor"), codebook='cms.Attachments',
@@ -2310,7 +2323,7 @@ class StructuredTextField(TextField):
             link = filename
             if tooltip:
                 link += ' '+ link +' | '+ tooltip
-            self._ctrl.WriteText('[' + link + ']')
+            ctrl.WriteText('[' + link + ']')
         self.set_focus()
         
     def _cmd_link(self):
