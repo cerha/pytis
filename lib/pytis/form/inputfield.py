@@ -1973,6 +1973,10 @@ class StructuredTextField(TextField):
                            and True in [filename.lower().endswith(suffix) for suffix in
                                         ('jpg', 'jpeg', 'png', 'gif')]])
             
+    class ImageAlignments(pytis.presentation.Enumeration):
+        enumeration = (('inline', _("Do řádku")),
+                       ('left', _("Vlevo")),
+                       ('right', _("Vpravo")))
 
     _HEADING_MATCHER = re.compile(r'^(?P<level>=+) (?P<title>.*) (?P=level)' +
                                   r'(?:[\t ]+(?:\*|(?P<anchor>[\w\d_-]+)))? *$')
@@ -2322,10 +2326,6 @@ class StructuredTextField(TextField):
         if not directory:
             return
         ctrl = self._ctrl
-        if kind == 'image':
-            file_type, type_kwargs = pytis.data.Image, dict()
-        else:
-            file_type, type_kwargs = pytis.data.Binary, dict()
         if not os.path.exists(directory):
             os.makedirs(directory)
         # Find out whether the current cursor position is within an existing
@@ -2336,10 +2336,18 @@ class StructuredTextField(TextField):
         start = line_text[:column_number].rfind('[')
         end = line_text[column_number:].find(']')
         filename = None
+        align = 'inline'
         if start != -1 and end != -1:
             filename = line_text[start+1:column_number+end]
+            if filename.startswith('<'):
+                filename = filename[1:]
+                align = 'left'
+            elif filename.startswith('>'):
+                filename = filename[1:]
+                align = 'right'
             if filename not in self.AttachmentsEnumerator(directory).values():
                 filename = None
+                align = 'inline'
         fields = (
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
                   default=filename, compact=True,
@@ -2351,6 +2359,8 @@ class StructuredTextField(TextField):
                   type=pytis.data.Image(not_null=True, maxlen=5*1024*1024),
                   descr=_(u"Vyberte jeden z dostupných souborů, "
                           "nebo vložte nový z vašeho počítače.")),
+            Field('align', _(u"Zarovnání"), not_null=True, default=align,
+                  enumerator=self.ImageAlignments),
             #Field('title', _(u"Název"), width=50,
             #      descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
             #              u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
@@ -2361,12 +2371,16 @@ class StructuredTextField(TextField):
         button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
         row = run_form(InputForm, title=_(u"Vložte obrázek"), fields=fields,
                        layout=(pytis.presentation.ColumnLayout(('filename', button), 'preview'),
-                               'tooltip'))
+                               'align', 'tooltip'))
         if row:
             link = row['filename'].value()
             tooltip = row['tooltip'].value()
             if tooltip:
                 link += ' '+ link +' | '+ tooltip
+            if row['align'].value() == 'left':
+                link = '<' + link
+            if row['align'].value() == 'right':
+                link = '>' + link
             ctrl.WriteText('[' + link + ']')
         self.set_focus()
         
