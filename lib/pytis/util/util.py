@@ -1509,6 +1509,23 @@ def camel_case_to_lower(string, separator='-'):
     """Return a lowercase string using 'separator' to concatenate words."""
     return separator.join([w.lower() for w in split_camel_case(string)])
 
+def nextval(seq):
+    """Return a function generating next value from given DB sequence.
+
+    The argument 'seq' is the string name of a database sequence object.  The
+    returned function accepts one optional argument transaction and returns the
+    next value from given sequence when called.
+
+    Designed for convenient specification of 'default' argument in 'Field'
+    constructor, such as default=nextval('my_table_id_seq').
+    
+    """
+    import pytis.data
+    def conn_spec():
+        import config
+        return config.dbconnection
+    counter = pytis.data.DBCounterDefault(seq, conn_spec)
+    return lambda transaction=None: counter.next(transaction=transaction)
 
 
 # Různé

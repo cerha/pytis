@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 """Pomůcky pro operace s datovými objekty a daty obecně.""" 
 
 from pytis.extensions import *
+from pytis.util import nextval
 
 import config
 
@@ -188,19 +189,6 @@ def dbfunction(name, *args, **kwargs):
     if len(result) == 1 and len(result[0]) == 1:
         return result[0][0].value()
     return result
-
-
-def nextval(seq):
-    """Vrať funkci pro výpočet výchozí hodnoty sloupce z dané sekvence.
-
-    Argumentem je název sekvence v databázi.  Vhodné pro zjednodušení
-    specifikace 'default' ve fieldspec.
-    
-    """
-    def conn_spec():
-        return config.dbconnection
-    counter = pytis.data.DBCounterDefault(seq, conn_spec)
-    return lambda transaction=None: counter.next(transaction=transaction)
 
 
 def enum(name, **kwargs):
