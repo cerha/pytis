@@ -287,10 +287,9 @@ class Menu(Specification):
                       "krátký, takže zde je možné určit jeho delší variantu.")),
         Field('description', _("Popis"), width=72,
               descr=_("Stručný popis stránky (zobrazen v menu jako tooltip).")),
-        Field('content', _("Obsah"), text_format=pp.TextFormat.LCG, compact=True, height=20, width=80,
+        Field('content', _("Obsah"), compact=True, height=20, width=80,
+              text_format=pp.TextFormat.LCG, attachments_directory=self._attachments_directory,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
-        Field('content.attachments-storage', virtual=True,
-              computer=computer(self._attachments_storage)),
         Field('mod_id', _("Modul"), not_null=False,
               codebook=self._spec_name('Modules', False), allow_codebook_insert=True,
               descr=_("Vyberte rozšiřující modul zobrazený uvnitř stránky.  Ponechte prázdné pro "
@@ -309,11 +308,11 @@ class Menu(Specification):
                       "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zařazena "
                       "na konec.")),
         )
-    def _attachments_storage(self, record, identifier):
+    def _attachments_directory(self, record):
         # Determines the directory for storing the attachments for the 'content' field.
-        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
-        if directory and identifier:
-            return os.path.join(directory, identifier)
+        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_DIRECTORY')
+        if directory and record['identifier'].value():
+            return os.path.join(directory, record['identifier'].value())
         else:
             return None
     def _check_menu_order_condition(self, record):
@@ -375,7 +374,7 @@ class Menu(Specification):
     def _page_content(self, row):
         text = row['content'].value()
         if text:
-            directory = row['content.attachments-storage'].value()
+            directory = self._attachments_directory(row)
             if directory:
                 resources = find_resources(directory, 'resource:')
             else:

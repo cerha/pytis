@@ -2792,6 +2792,15 @@ class Field(object):
             should respect this (field editation may offer some extended
             controls, the field text is processed by LCG before displayed).
             Other formats are currently unsupported.
+          attachments_directory -- full path name of the directory where file
+            attachments for the field are stored.  Attachments are used with
+            rich text fields to represent external resources used within the
+            text, such as images or other media files.  The value of this
+            argument may be the string directory name directly or function of
+            one argument (a 'PresentedRow' instance representing the current
+            row) which returns the directory name as a string.  This argument
+            is currently supported by wx forms for fields with
+            text_format='TextFormat.LCG'.
           printable -- iff True, the user interface should allow the value of
             this field to be printed as a separate document.  This is most
             often useful with fields containing structured text content, which
@@ -2864,7 +2873,8 @@ class Field(object):
               codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
-              style=None, link=(), filename=None, text_format=TextFormat.PLAIN, printable=False,
+              style=None, link=(), filename=None,
+              text_format=TextFormat.PLAIN, attachments_directory=None, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
               validity_condition=None, crypto_name=None,
               **kwargs):
@@ -2918,6 +2928,8 @@ class Field(object):
             err("Invalid 'style' specification: %s", style)
         assert filename is None or isinstance(filename, (basestring, collections.Callable)), filename
         assert text_format in public_attr_values(TextFormat), text_format
+        assert attachments_directory is None or \
+            isinstance(attachments_directory, (basestring, collections.Callable)), attachments_directory
         assert isinstance(printable, bool), printable
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         if enumerator is None:
@@ -3044,6 +3056,7 @@ class Field(object):
         self._links = links
         self._filename = filename
         self._text_format = text_format
+        self._attachments_directory = attachments_directory
         self._printable = printable
         self._slider = slider
         self._crypto_name = crypto_name
@@ -3194,6 +3207,9 @@ class Field(object):
     def text_format(self):
         return self._text_format
     
+    def attachments_directory(self):
+        return self._attachments_directory
+
     def printable(self):
         return self._printable
     
