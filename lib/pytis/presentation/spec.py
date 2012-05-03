@@ -1722,6 +1722,8 @@ class ViewSpec(object):
 class BindingSpec(object):
     """Specifikace vazby dvou náhledů při propojení do duálního formuláře.
 
+    DEPRECATED: Use 'Binding' instead.
+    
     Definuje vlastnosti napojení dvou formulářů při jejich spojení do duálního
     formuláře.  Definována je jak datová vazba, tak některé prezentační
     vlastnosti spojení.
@@ -1847,12 +1849,19 @@ class BindingSpec(object):
 class Binding(object):
     """Specification of a binding to other view.
 
-    Experimental alternative to BindingSpec to be used with MultiBrowseDualForm.
+    Defines the relation of two specifications for their use within a
+    dual/multi form.  The presentation is usually implemented as a pair of
+    forms where one is master (main form) and the other is slave (side form).
+    Multi form has one main form and several side forms, but one binding always
+    defines the relation of one main form and one side form.  This relation is
+    defiend within the 'bindings' parameter of 'ViewSpec' specification of the
+    main form and defines its connection to the side form.
 
     """
     def __init__(self, id, title, name=None, binding_column=None, condition=None, descr=None,
                  single=False, arguments=None, prefill=None, search=None, uri=None, content=None):
         """Arguments:
+        
           id -- identifier of the binding as a string.  It must be unique among
             all objects identifiers within a given form.
           title -- title used for the list of related records
