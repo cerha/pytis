@@ -2202,9 +2202,16 @@ class StructuredTextField(TextField):
 
     def _cmd_export_pdf(self):
         import tempfile
-        exporter = lcg.pdf.PDFExporter() #translations=cfg.translation_path)
+        directory = self._attachments_directory()
+        if directory:
+            from pytis.cms import find_resources
+            resources = find_resources(directory, 'resource:')
+        else:
+            resources = ()
         content = lcg.Container(lcg.Parser().parse(self._get_value()))
-        node = lcg.ContentNode('export', title=_(u"Náhled"), content=content)
+        node = lcg.ContentNode('export', title=_(u"Náhled"), content=content,
+                               resource_provider=lcg.ResourceProvider(dirs=(), resources=resources))
+        exporter = lcg.pdf.PDFExporter() #translations=cfg.translation_path)
         context = exporter.context(node, 'cs')
         pdf = exporter.export(context)
         process = Popen(config.printing_command, from_child=dev_null_stream('w'))
