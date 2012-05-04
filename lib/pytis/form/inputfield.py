@@ -2402,7 +2402,11 @@ class StructuredTextField(TextField):
                 link = '<' + link
             if row['align'].value() == 'right':
                 link = '>' + link
-            ctrl.WriteText('[' + link + ']')
+            if filename is not None:
+                ctrl.Remove(position-column_number+start+1, position+end)
+                ctrl.WriteText(link)
+            else:
+                ctrl.WriteText('[' + link + ']')
         self.set_focus()
         
     def _cmd_link(self):
