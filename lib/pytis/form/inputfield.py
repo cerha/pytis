@@ -2289,7 +2289,7 @@ class StructuredTextField(TextField):
             source_file = pytis.windows.open_selected_file()
             if source_file is None:
                 return
-            filename = ntpath.split(f.name())[-1]
+            filename = ntpath.split(source_file.name())[-1]
         else:
             dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.OPEN,
                                 defaultDir=self._last_load_dir or '')
