@@ -154,12 +154,18 @@ class PytisUserService(PytisService):
         """
         assert template is None or isinstance(template, basestring), template
         import win32ui
+        import win32con
         if template is None:
-            file_filter = None
+            file_filter = "*.*"
         else:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
-        dialog = win32ui.CreateFileDialog(1, filter=file_filter)
+        dialog = win32ui.CreateFileDialog(1, None, "%s" % template,
+                                          win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
+                                          file_filter)
+        result = dialog.DoModal()
+        if result != 1:
+            return None
         filename = dialog.GetPathName()
         if filename is None:
             return None
@@ -167,8 +173,8 @@ class PytisUserService(PytisService):
             def __init__(self, filename):
                 self._f = open(filename, 'rb')
                 self._filename = filename
-            def exposed_read(self, size):
-                return self._f.read(size)
+            def exposed_read(self):
+                return self._f.read()
             def exposed_close(self):
                 self._f.close()
             def exposed_name(self):
