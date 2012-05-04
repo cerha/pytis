@@ -2192,7 +2192,13 @@ class StructuredTextField(TextField):
             parent = form.GetParent()
         else:
             parent = None
-        InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG)
+        directory = self._attachments_directory()
+        if directory:
+            from pytis.cms import find_resources
+            resources = find_resources(directory, 'resource:')
+        else:
+            resources = ()
+        InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG, resources=resources)
 
     def _cmd_export_pdf(self):
         import tempfile
