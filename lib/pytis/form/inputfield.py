@@ -2358,6 +2358,7 @@ class StructuredTextField(TextField):
         end = line_text[column_number:].find(']')
         filename = None
         align = 'inline'
+        tooltip = None
         if start != -1 and end != -1:
             filename = line_text[start+1:column_number+end]
             if filename.startswith('<'):
@@ -2366,9 +2367,18 @@ class StructuredTextField(TextField):
             elif filename.startswith('>'):
                 filename = filename[1:]
                 align = 'right'
+            if '|' in filename:
+                filename, tooltip = [x.strip() for x in filename.split('|', 1)]
+                if ' ' in filename:
+                    filename = filename.split(' ', 1)[0]
             if filename not in self.AttachmentsEnumerator(directory).values():
+                # If the current link filename doesn't match any existing file
+                # name, the link is probably invlid (damaged by hand editation)
+                # and we rather don't replace it, but insert the new link
+                # inside, leaving it up to the user to clean up the result...
                 filename = None
                 align = 'inline'
+                tooltip = None
         fields = (
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
                   default=filename, compact=True, width=25,
@@ -2386,7 +2396,7 @@ class StructuredTextField(TextField):
             #      descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
             #              u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
             #              u"předchozím políčku.")),
-            Field('tooltip', _(u"Tooltip"), width=50,
+            Field('tooltip', _(u"Tooltip"), width=50, default=tooltip,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
             )
         button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
