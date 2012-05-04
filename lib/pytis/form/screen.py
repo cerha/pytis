@@ -1488,36 +1488,23 @@ class InfoWindow(object):
     """Nemodální okno pro zobrazení textových informací."""
     
     def __init__(self, title, text, format=TextFormat.PLAIN, parent=None,
-                 width=None, height=None, _name='info'):
-        """Zobraz nemodální okno nezávislé na hlavním okně aplikace.
+                 _name='info', **kwargs):
+        """Display information window in a standalone frame.
         
-        Argumenty:
+        Arguments:
         
-          title -- titulek okna jako řetězec.
-          text -- text, který bude zobrazen v okně.  Způsob zpravování je určen
-            argumentem 'format'.
-          format -- vstupní formát textu, jako konstanta 'TextFormat'.  V
-            případě prostého textu ('TextFormat.PLAIN') zůstane řádkování i
-            veškeré další formátování nedotčeno (je ponecháno na volající
-            straně).  V případě formátu 'TextFormat.HTML' je vstupní text
-            považován přímo za text s HTML zančkováním.  Pokud text není sám o
-            sobě kompletním HTML dokumentem (neobsahuje hlavičku, ani značky
-            <html> a <body>), bude automaticky obalen příslušným HTML kódem.
+          title -- Frame title as a basestring.
           parent -- parent wx Frame or None to use the main application frame
+          text, format, **kwargs -- passed to 'wx_text_view()' ('text' as 'content').
 
         """
-        assert isinstance(title, basestring)
-        assert isinstance(text, basestring)
-        assert format in public_attr_values(TextFormat)
-        if parent is None:
-            parent = wx_frame()
-        frame = wx.Dialog(parent, title=title, name=_name,
+        frame = wx.Dialog(parent or wx_frame(), title=title, name=_name,
                           style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-        # Temporarily us a modal dialog instead an ordinary frame to work
+        # Temporarily use a modal dialog instead an ordinary frame to work
         # around the problem of closing a frame whose parent is a modal dialog
         # in StructuredTextField._cmd_preview().  Once that is sorted out, a
         # non-modal frame would be better.
-        view = wx_text_view(frame, text, format, width=width, height=height)
+        view = wx_text_view(frame, text, format, **kwargs)
         frame.SetSize(view.GetSize())
         frame.ShowModal()
         
@@ -2455,8 +2442,37 @@ def wx_checkbox(parent, label=None, tooltip=None, checked=False):
     return checkbox
 
 
-def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=None):
+def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=None, resources=()):
+    """Return a wx widget displaying given text content.
+
+    Arguments:
+    
+      content -- text content to be displayed.  The text is treated according
+        to 'format' (see below).
+      format -- input format of the text content as one of 'TextFormat'
+        constants.  In case of plain text ('TextFormat.PLAIN'), the text is
+        displayed as is in a 'wx.TextCtrl' widget.  In case of
+        'TextFormat.HTML', the HTML content is displayed within an embedded
+        HTML 'Browser' window.  The content can be either a complete document
+        (including <html>, <head> and <body> tags) or an HTML fragment (the
+        surrounding tags will be added automatically).  In case of
+        'TextFormat.LCG', the text is first processed by LCG Parser and
+        exported into HTML and further treated as HTML.
+     width -- window width in characters.  If None, the width is automatically
+       set to fit the text width (the longest line length) when 'format' is
+       TextFormat.PLAIN or 90 characters for other formats.
+     height -- window height in characters.  If None, the width is
+       automatically set to fit the text height (number of lines with maximum
+       of 20 characters) when 'format' is TextFormat.PLAIN or 30 characters for
+       other formats.
+     resources -- sequence of statically defined 'lcg.Resource' instances
+       representing external files (such as images) used within the content.
+       Only applicable when 'format' is 'TextFormat.LCG'.
+
+    """
     import wx
+    assert isinstance(content, basestring)
+    assert format == TextFormat.LCG or not resources
     if format == TextFormat.PLAIN:
         lines = content.splitlines()
         if width is None:
@@ -2470,29 +2486,33 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         # Slightly enlarge the size to avoid scrollbars when not necessary (for small sizes).
         ctrl.SetBestFittingSize((size[0]+30, size[1]+2))
         return ctrl
-    elif format == TextFormat.LCG:
-        html = lcg_to_html(content)
-    elif format == TextFormat.HTML:
-        if isinstance(content, unicode):
-            content = content.encode('utf-8')
-        if '<html' in content:
-            html = content
-        else:
-            html = ('<html>'
-                    '<head><meta content="text/html; charset=UTF-8" http-equiv="content-type"></head>'
-                    '<body>' + content + '</body>'
-                    '</html>')
     else:
-        raise ProgramError("Unknown text format: %s" % format)
-    # We can' adjust the default size according to the content size, but since
-    # webkit 1.3.8, there should be a new method webview.get_viewport_attributes(),
-    # which will allow it.
-    if width is None:
-        width = 90
-    if height is None:
-        height = 30
-    browser = Browser(parent)
-    browser.load_html(html)
-    browser.SetSize(char2px(parent, width, height))
+        browser = Browser(parent)
+        if format == TextFormat.LCG:
+            node = parse_lcg_text(content, resources=resources)
+            browser.load_content(node)
+        elif format == TextFormat.HTML:
+            if isinstance(content, unicode):
+                content = content.encode('utf-8')
+            if '<html' not in content.lower():
+                cotnent = ('<html>'
+                           '<head>'
+                           '<meta content="text/html; charset=UTF-8" http-equiv="content-type">'
+                           '</head>'
+                           '<body>'
+                           + content +
+                           '</body>'
+                           '</html>')
+            browser.load_html(content)
+        else:
+            raise ProgramError("Unknown text format: %s" % format)
+        # We can' adjust the default size according to the content size, but since
+        # webkit 1.3.8, there should be a new method webview.get_viewport_attributes(),
+        # which will allow it.
+        if width is None:
+            width = 90
+        if height is None:
+            height = 30
+        browser.SetSize(char2px(parent, width, height))
     return browser
 
