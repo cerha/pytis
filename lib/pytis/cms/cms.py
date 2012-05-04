@@ -310,7 +310,7 @@ class Menu(Specification):
         )
     def _attachments_directory(self, record):
         # Determines the directory for storing the attachments for the 'content' field.
-        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_DIRECTORY')
+        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
         if directory and record['identifier'].value():
             return os.path.join(directory, record['identifier'].value())
         else:
