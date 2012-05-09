@@ -471,7 +471,7 @@ class HtmlFieldExporter(MultilineFieldExporter):
     _HANDLER = 'pytis.HtmlField'
 
     def _format(self, context):
-        return context.generator().div(context.localize(self._value().export()))
+        return context.localize(self._value().export())
     
     def _editor(self, context, **kwargs):
         content = super(HtmlFieldExporter, self)._editor(context, **kwargs)
