@@ -373,7 +373,7 @@ pytis.FileUploadField = Class.create(pytis.Field, {
 		if (div)
 		    div.update(error);
 		else
-		    this._ctrl.insert({after: new Element('div', {class: 'error'}).update(error)});
+		    this._ctrl.insert({after: new Element('div', {'class': 'error'}).update(error)});
 	    } 
 	    else if (div)
 		div.remove();
