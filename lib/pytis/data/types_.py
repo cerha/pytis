@@ -1855,6 +1855,7 @@ class Binary(Limited):
             self._buffer = buf
             self._path = path
             self._filename = filename
+            self._mime_type = mime_type
             
                 
     def __init__(self, enumerator=None, **kwargs):
