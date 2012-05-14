@@ -1893,19 +1893,27 @@ class FileField(Invocable, InputField):
         return self._buffer is not None
         
     def _cmd_save(self):
-        msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
-        dir = FileField._last_save_dir or FileField._last_load_dir or ''
-        dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg,
-                            defaultDir=dir)
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            FileField._last_save_dir = os.path.dirname(path)
+        if pytis.windows.windows_available():
+            f = pytis.windows.make_selected_file()
+        else:
+            msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
+            dir = FileField._last_save_dir or FileField._last_load_dir or ''
+            dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir)
+            if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+                FileField._last_save_dir = os.path.dirname(path)
+                f = open(path, 'wb')
+            else:
+                f = None
+        if f:
             try:
-                self._buffer.save(path)
+                f.write(self._buffer.buffer())
             except IOError as e:
                 message(_(u"Chyba při zápisu souboru:")+' '+str(e), beep_=True)
             else:
-                message(_(u"Soubor uložen."))
+                message(_(u"Soubor byl uložen"))
+            finally:
+                f.close()
         
     def _can_clear(self):
         return self._enabled and self._buffer is not None
