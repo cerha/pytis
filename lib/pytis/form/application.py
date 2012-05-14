@@ -350,13 +350,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # Pozor, pokud během inicializace aplikace nedojde k připojení k
             # databázi (není vyvolána žádná databázová operace), nemusí být
             # hodnoty správně.
-            title = frame.GetTitle()
+            title = self._frame.GetTitle()
             title += " %s@%s" % (conn.user(), conn.database())
             if conn.host():
                 title += " "+conn.host()
                 if conn.port():
                     title += ":%d" % conn.port()
-            frame.SetTitle(title)
+            self._frame.SetTitle(title)
 
     def _spec(self, name, default=None, **kwargs):
         try:
