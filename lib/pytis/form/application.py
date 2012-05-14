@@ -278,11 +278,15 @@ class Application(wx.App, KeyHandler, CommandHandler):
             for uicmd in group:
                 uicmd.create_toolbar_ctrl(self._toolbar)
         toolbar.Realize()
+        wx.CallAfter(self._init)
+        return True
+
+    def _init(self):
         # Run application specific initialization.
         self._spec('init')
         if self._windows.empty():
             self._panel.SetFocus()
-        # Open the startup forms.
+        # (Re)open the startup forms saved on last exit.
         startup_forms = []
         if config.startup_forms:
             for name in config.startup_forms.split(','):
@@ -353,7 +357,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if conn.port():
                     title += ":%d" % conn.port()
             frame.SetTitle(title)
-        return True
 
     def _spec(self, name, default=None, **kwargs):
         try:
