@@ -160,7 +160,7 @@ class PytisUserService(PytisService):
         else:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
-        dialog = win32ui.CreateFileDialog(1, None, "%s" % template,
+        dialog = win32ui.CreateFileDialog(1, None, "%s" % (template,),
                                           win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
                                           file_filter)
         result = dialog.DoModal()
@@ -180,6 +180,50 @@ class PytisUserService(PytisService):
             def exposed_name(self):
                 return self._filename
         return Wrapper(filename)
+
+    def exposed_make_selected_file(self, template=None, encoding=None):
+        """Return a write-only 'file' like object of a user selected file.
+
+        The file is selected by the user using a GUI dialog.  If the user
+        cancels the dialog, 'None' is returned.
+
+        Arguments:
+
+          template -- a string defining the required file name pattern, or 'None'
+          encoding -- output encoding, string or None
+
+        """
+        assert template is None or isinstance(template, basestring), template
+        import win32ui
+        import win32con
+        if template is None:
+            file_filter = "*.*"
+        else:
+            file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
+                           (template, template,))
+        dialog = win32ui.CreateFileDialog(1, None, "%s" % (template,),
+                                          win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
+                                          file_filter)
+        result = dialog.DoModal()
+        if result != 1:
+            return None
+        filename = dialog.GetPathName()
+        if filename is None:
+            return None
+        class Wrapper(object):
+            def __init__(self, handle, filename, encoding):
+                self._f = os.fdopen(handle, 'w')
+                self._filename = filename
+                self._encoding = encoding
+            def exposed_write(self, data):
+                if self._encoding is not None:
+                    data = data.encode(self._encoding)
+                self._f.write(data)
+            def exposed_close(self):
+                self._f.close()
+            def exposed_name(self):
+                return self._filename
+        return Wrapper(filename, encoding)
 
     def exposed_make_temporary_file(self, suffix='', encoding=None):
         """Create a temporary file and return its instance.

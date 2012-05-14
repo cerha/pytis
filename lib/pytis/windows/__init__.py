@@ -23,4 +23,4 @@ except ImportError as e:
     def run_proxy(*args, **kwargs):
         raise e
 from remote import nx_ip, windows_available, get_clipboard_text, set_clipboard_text, \
-     launch_file, launch_url, open_selected_file, make_temporary_file
+     launch_file, launch_url, open_selected_file, make_selected_file, make_temporary_file
