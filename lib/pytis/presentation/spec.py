@@ -3588,14 +3588,12 @@ class Specification(object):
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
-            bindings = []
-            for f in self.fields:
-                if f.virtual():
-                    continue
-                bindings.append(B(f.id(), table, f.dbcolumn(), type_=f.type(),
-                                  crypto_name=f.crypto_name(), **f.type_kwargs()))
-                if f.inline_display():
-                    bindings.append(B(f.inline_display(), table, f.inline_display()))
+            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), crypto_name=f.crypto_name(),
+                          **f.type_kwargs())
+                        for f in self.fields if not f.virtual()]
+            bindings.extend([B(f.inline_display(), table, f.inline_display())
+                             for f in self.fields if f.inline_display()
+                             and f.inline_display() not in [b.id() for b in bindings]])
             if self.key:
                 keyid = self.key
                 if isinstance(keyid, (list, tuple)):
