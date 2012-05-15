@@ -62,17 +62,32 @@ class PresentedRow(object):
         """Exception raised on column protection violations."""
     
     class _Column:
-        def __init__(self, f, type, data):
+        def __init__(self, f, type, data, resolver):
             self.id = f.id()
             self.type = type
             self.computer = f.computer()
             self.line_separator = f.line_separator()
             self.default = f.default()
             self.editable = f.editable()
-            self.display = f.display()
+            self.codebook = codebook = f.codebook()
+            if codebook:
+                try:
+                    cbspec = resolver.get(codebook, 'cb_spec')
+                except ResolverError as e:
+                    cbspec = CodebookSpec()
+            else:
+                cbspec = None
+            self.cbspec = cbspec
+            self.display = f.display() or cbspec and cbspec.display()
             self.null_display = f.null_display()
-            self.prefer_display = f.prefer_display()
-            self.codebook = f.codebook()
+            self.inline_display = f.inline_display()
+            prefer_display = f.prefer_display()
+            if prefer_display is None:
+                if cbspec is not None:
+                    prefer_display = cbspec.prefer_display()
+                else:
+                    prefer_display = False
+            self.prefer_display = prefer_display
             self.completer = f.completer
             self.runtime_filter = f.runtime_filter()
             self.runtime_arguments = f.runtime_arguments()
@@ -131,9 +146,9 @@ class PresentedRow(object):
         self._invalid = {}
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
-        self._columns = columns = tuple([self._Column(f, self._type(f), data) for f in fields])
+        self._columns = columns = tuple([self._Column(f, self._type(f), data, self._resolver)
+                                         for f in fields])
         self._coldict = dict([(c.id, c) for c in columns])
-        self._cb_spec_cache = {}
         self._completer_cache = {}
         self._protected = False
         self._init_dependencies()
@@ -207,6 +222,10 @@ class PresentedRow(object):
                     value = row[key]
             return value
         row_data = [(c.id, genval(c.id, False)) for c in self._columns if not c.virtual]
+        if row:
+            # Add any extra row columns - they may include inline_display values.
+            keys = [x[0] for x in row_data]
+            row_data.extend([(key, row[key]) for key in row.keys() if key not in keys])
         virtual = [(c.id, genval(c.id, True)) for c in self._columns if c.virtual]
         for key in self._dirty.keys():
             self._dirty[key] = not (not self._new and row is None or
@@ -764,21 +783,6 @@ class PresentedRow(object):
             permitted = True
         return permitted
 
-    def _cb_spec(self, column):
-        try:
-            cb_spec = self._cb_spec_cache[column.id]
-        except KeyError:
-            codebook = column.codebook
-            if codebook:
-                try:
-                    cb_spec = self._resolver.get(codebook, 'cb_spec')
-                except ResolverError as e:
-                    cb_spec = CodebookSpec()
-            else:
-                cb_spec = CodebookSpec()
-            self._cb_spec_cache[column.id] = cb_spec
-        return cb_spec
-
     def _completer(self, column):
         try:
             completer = self._completer_cache[column.id]
@@ -786,8 +790,7 @@ class PresentedRow(object):
             completer = column.completer()
             if not completer and column.type.enumerator() \
                     and isinstance(column.type, pytis.data.String):
-                cb_spec = self._cb_spec(column)
-                if not cb_spec or cb_spec.enable_autocompletion():
+                if column.cbspec is None or column.cbspec.enable_autocompletion():
                     completer = column.type.enumerator()
             self._completer_cache[column.id] = completer
         return completer
@@ -798,7 +801,7 @@ class PresentedRow(object):
             hidden_value = column.type.secret_export()
             display = lambda v: hidden_value
         else:
-            display = column.display or self._cb_spec(column).display()
+            display = column.display
             if display:
                 if isinstance(display, basestring):
                     display_column = display
@@ -841,7 +844,7 @@ class PresentedRow(object):
             hidden_value = column.type.secret_export()
             display = lambda row: hidden_value
         else:
-            display = column.display or self._cb_spec(column).display()
+            display = column.display
             if display is None:
                 value_column = column.type.enumerator().value_column()
                 display = lambda row: row[value_column].export()
@@ -860,10 +863,7 @@ class PresentedRow(object):
 
     def prefer_display(self, key):
         column = self._coldict[key]
-        if column.prefer_display is not None:
-            return column.prefer_display
-        else:
-            return self._cb_spec(column).prefer_display()
+        return column.prefer_display
         
     def display(self, key):
         """Return enumerator `display' value for given field as a string.
@@ -880,6 +880,9 @@ class PresentedRow(object):
         column = self._coldict[key]
         if self._secret_column(column):
             return ''
+        inline_display = column.inline_display
+        if inline_display and inline_display in self._row:
+            return self._row[inline_display].export()
         display = self._display(column)
         if not display:
             computer = column.computer
@@ -923,9 +926,8 @@ class PresentedRow(object):
             return None
         elif isinstance(enumerator, pytis.data.DataEnumerator):
             sorting = None
-            cb_spec = self._cb_spec(column)
-            if cb_spec:
-                sorting = cb_spec.sorting()
+            if column.cbspec:
+                sorting = column.cbspec.sorting()
             if sorting is None and column.codebook is not None:
                 sorting = self._resolver.get(column.codebook, 'view_spec').sorting()
             value_column = enumerator.value_column()

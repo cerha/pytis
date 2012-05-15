@@ -2877,8 +2877,8 @@ class Field(object):
               type=None, type_=None, width=None, column_width=None, disable_column=False,
               fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
               computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
-              display_size=None, null_display=None, allow_codebook_insert=False,
-              codebook_insert_spec=None, codebook_insert_prefill=None,
+              display_size=None, null_display=None, inline_display=None,
+              allow_codebook_insert=False, codebook_insert_spec=None, codebook_insert_prefill=None,
               codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
@@ -2914,6 +2914,7 @@ class Field(object):
         assert prefer_display is None or isinstance(prefer_display, bool), prefer_display
         assert display_size is None or isinstance(display_size, int), display_size
         assert null_display is None or isinstance(null_display, basestring), null_display
+        assert inline_display is None or isinstance(inline_display, basestring), inline_display
         # TODO: Enable this after merging data-type-cleanup! (belongs to the line above)
         # and not not_null and (codebook or enumerator)
         assert isinstance(allow_codebook_insert, bool), allow_codebook_insert
@@ -3043,6 +3044,7 @@ class Field(object):
         self._prefer_display = prefer_display
         self._display_size = display_size
         self._null_display = null_display
+        self._inline_display = inline_display
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_insert_prefill = codebook_insert_prefill
@@ -3173,6 +3175,9 @@ class Field(object):
 
     def null_display(self):
         return self._null_display
+
+    def inline_display(self):
+        return self._inline_display
 
     def allow_codebook_insert(self):
         return self._allow_codebook_insert
@@ -3571,9 +3576,14 @@ class Specification(object):
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
-            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), crypto_name=f.crypto_name(),
-                          **f.type_kwargs())
-                        for f in self.fields if not f.virtual()]
+            bindings = []
+            for f in self.fields:
+                if f.virtual():
+                    continue
+                bindings.append(B(f.id(), table, f.dbcolumn(), type_=f.type(),
+                                  crypto_name=f.crypto_name(), **f.type_kwargs()))
+                if f.inline_display():
+                    bindings.append(B(f.inline_display(), table, f.inline_display()))
             if self.key:
                 keyid = self.key
                 if isinstance(keyid, (list, tuple)):
