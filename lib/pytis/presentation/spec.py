@@ -2673,6 +2673,18 @@ class Field(object):
             not part of the enumeration, but if the field is not 'not_null', it
             is a valid field value, but as it is not within the enumeration,
             'display' may not be used.
+          inline_display -- name of the codebook display column in the current
+            table (string).  The 'display' column refers to a column in the
+            codebook table.  Retrieving codebook values from the codebook table
+            when 'prefer_display' is true would cause nested database queries
+            for each row in the list.  To optimize such inefficiency, it is
+            possible to specify the name of the display column in the current
+            table (where the current codebook field is used).  The application
+            developer is responsible to include the display column in the
+            underlying database view (typically by joining it with the codebook
+            table).  The inline_display column doesn't need to be explicitly
+            defined in 'fields' specification. it is appended automatically if
+            not present.
           line_separator -- line separator in single line field value
             presentation.
           codebook -- name (string) of the specification which acts as a
