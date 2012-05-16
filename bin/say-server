@@ -31,6 +31,11 @@ def say(target_ip, request, *arguments):
     connection = rpyc.connect('localhost', config.rpc_local_port)
     try:
         result = connection.root.request(target_ip, None, request, *arguments)
+    except AttributeError:
+        if request == 'version':
+            sys.stdout.write('-old-\n')
+            return
+        raise
     except:
         sys.stderr.write("Connection unavailable\n")
         return
