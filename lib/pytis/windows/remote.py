@@ -75,7 +75,20 @@ def _request(request, *args, **kwargs):
         import rpyc
         _connection = rpyc.connect('localhost', config.rpc_local_port)
     return _connection.root.request(target_ip, user_name, request, *args, **kwargs)
-    
+
+def version():
+    try:
+        version = _request('version')
+    except:
+        try:
+            if _request('echo', 'hello') == 'hello':
+                version = '-old-'
+            else:
+                version = ''
+        except:
+            version = ''
+    return version
+
 def get_clipboard_text():
     try:
         text = _request('get_clipboard_text')

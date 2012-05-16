@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2011 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,11 @@ def say(target_ip, request, *arguments):
     else:
         arguments = [a.decode('utf-8') for a in arguments]
     connection = rpyc.connect('localhost', config.rpc_local_port)
-    result = connection.root.request(target_ip, None, request, *arguments)
+    try:
+        result = connection.root.request(target_ip, None, request, *arguments)
+    except:
+        sys.stderr.write("Connection unavailable\n")
+        return
     if result is not None:
         sys.stdout.write(unicode(result).encode('utf-8'))
         sys.stdout.write('\n')
@@ -42,6 +46,7 @@ def usage(exit_code=0):
     get_clipboard_text
     set_clipboard_text TEXT
     echo TEXT
+    version
     user_port USERNAME
 """)
     sys.exit(exit_code)

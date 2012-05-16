@@ -17,6 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+# ATTENTION: This should be updated on each code change.
+_VERSION = '2012-05-16 12:00'
+
 import logging
 import os
 import rpyc
@@ -95,6 +98,10 @@ class PytisService(rpyc.Service):
         
         """
         return text
+
+    def exposed_version(self):
+        """Return server version."""
+        return _VERSION
 
 class PytisUserService(PytisService):
         
@@ -419,3 +426,7 @@ if __name__ == '__main__':
         win32serviceutil.HandleCommandLine(WindowsService)
     else:
         run()
+
+# Local Variables:
+# time-stamp-pattern: "30/^_VERSION = '%Y-%02m-%02d %02H:%02M'"
+# End:
