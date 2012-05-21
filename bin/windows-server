@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-05-16 12:00'
+_VERSION = '2012-05-21 13:37'
 
 import logging
 import os
@@ -104,6 +104,13 @@ class PytisService(rpyc.Service):
         return _VERSION
 
 class PytisUserService(PytisService):
+
+    def exposed_restart(self):
+        """Restart the user service."""
+        file_name = sys.argv[0]
+        if file_name[:-4] == '.pyc':
+            file_name = file_name[:-1]
+        execfile(file_name)
         
     def exposed_get_clipboard_text(self):
         """Return current clipboard text, as unicode.
@@ -268,6 +275,51 @@ class PytisAdminService(PytisService):
         # attribute too.
         return self._conn._config.get('credentials')
 
+    def exposed_restart(self, delay=1):
+        """Restart the admin service after given timeout.
+
+        Arguments:
+
+          delay -- number of minutes to wait before the server gets restarted
+
+        """
+        import pythoncom
+        import win32com.taskscheduler
+        scheduler = pythoncom.CoCreateInstance(win32com.taskscheduler.CLSID_CTaskScheduler,
+                                               None,
+                                               pythoncom.CLSCTX_INPROC_SERVER,
+                                               win32com.taskscheduler.IID_ITaskScheduler)
+        def add_task(name, command, run_time):
+            if '%s.job' % (name,) not in scheduler.Enum():
+                task = scheduler.NewWorkItem(name)
+                cmd = command.split()
+                task.SetApplicationName(cmd[0])
+                task.SetParameters(' '.join(cmd[1:]))
+                task.SetPriority(win32com.taskscheduler.REALTIME_PRIORITY_CLASS)
+                task.SetFlags(win32com.taskscheduler.TASK_FLAG_DELETE_WHEN_DONE|
+                              win32com.taskscheduler.TASK_FLAG_RUN_ONLY_IF_LOGGED_ON)
+                task.SetAccountInformation('', None)
+                scheduler.AddWorkItem(name, task)
+                __, task_trigger = task.CreateTrigger()
+                trigger = task_trigger.GetTrigger()
+                trigger.Flags = 0
+                time_tupple = time.localtime(run_time)
+                trigger.BeginYear = time_tupple[0]
+                trigger.BeginMonth = time_tupple[1]
+                trigger.BeginDay = time_tupple[2]
+                trigger.StartHour = time_tupple[3]
+                trigger.StartMinute = time_tupple[4]
+                trigger.TriggerType = int(win32com.taskscheduler.TASK_TIME_TRIGGER_DAILY)
+                task_trigger.SetTrigger(trigger)
+                persist_file = task.QueryInterface(pythoncom.IID_IPersistFile)
+                persist_file.Save(None, 1)
+            else:
+                raise KeyError("%s already exists" % (name,))
+            task = scheduler.Activate(name)
+        now = time.time()
+        add_task('pytis_service_stop', 'sc stop PytisService', now + delay*60)
+        add_task('pytis_service_start', 'sc start PytisService', now + (delay+1)*60)
+        
     def exposed_register_user(self, user, port):
         assert isinstance(user, basestring), user
         assert isinstance(port, int), port
@@ -286,8 +338,6 @@ class PytisAdminService(PytisService):
         self._upgrade(file_name, source)
         file_name = os.path.join(os.path.dirname(file_name), 'windows_user_server.py')
         self._upgrade(file_name, source)
-        global _stop
-        _stop = True
 
     def _upgrade(self, file_name, source):
         new_file_name = file_name + '.new'

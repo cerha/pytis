@@ -47,6 +47,7 @@ def usage(exit_code=0):
     sys.stdout.write('usage: %s IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
     sys.stdout.write("""Available requests:
     upgrade NEW-WINDOWS-SERVER-FILE
+    restart
     launch_file { FILE-NAME | URL }
     get_clipboard_text
     set_clipboard_text TEXT
