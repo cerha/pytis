@@ -181,6 +181,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         except pytis.data.DBException:
             data = None
         bad_names = set()
+        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
+                                             ('key_name_', pytis.data.sval('pytis'),))
         if count > 0:
             if crypto_password is None:
                 condition = pytis.data.EQ('fresh', pytis.data.bval(False))
@@ -194,10 +196,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         message = _("Zadejte své přihlašovací heslo ještě jednou pro ověření")
                         crypto_password_repeated = password_dialog(message=message)
                         if crypto_password == crypto_password_repeated:
+                            crypto_password = rsa_encrypt(db_key, crypto_password)
                             break
                         else:
                             run_dialog(pytis.form.Error, _("Zadaná hesla nejsou shodná"))
                     else:
+                        crypto_password = rsa_encrypt(db_key, crypto_password)
                         if pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
                                                        ('password_', pytis.data.sval(crypto_password),)):
                             break
@@ -216,7 +220,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     (fresh_names if row['fresh'].value() else established_names).add(name)
                 data.select_map(process)
                 ok_names = pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                                       ('password_', pytis.data.sval(crypto_password),))
+                                                       ('password_', crypto_password_value,))
                 if isinstance(ok_names, list):
                     ok_names = set([row[0].value() for row in ok_names])
                 else:
@@ -237,6 +241,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 password = password_dialog(_("Heslo pro šifrovací klíč"), message=message)
                 if not password:
                     break
+                password = rsa_encrypt(db_key, password)
                 password_value = pytis.data.sval(password)
                 for r in rows:
                     r_name = r['name'].value()

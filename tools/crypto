@@ -305,6 +305,29 @@ def command_encrypt(configuration, args):
     print ("Original column data retained in column %s._tmp_%s, drop it after testing and backup." %
            (table, column,))
 
+def command_new_communication_key(configuration, args):
+    if len(args) < 1:
+        print "Error: not enough arguments"
+        return
+    if len(args) > 1:
+        print "Error: extra arguments:", args
+        return
+    bits = int(args[0])
+    if bits < 1024:
+        print "Error: BITS must be at least 1024"
+        return
+    n = bits
+    while n > 1:
+        if n % 2 != 0:
+            print "Error: BITS must be power of 2"
+            return
+        n = n / 2
+    connection_data = configuration.connection_data()
+    connection = dbapi.connect(**configuration.raw_connection_data())
+    cursor = connection.cursor()
+    cursor.execute("select pytis_crypto_create_db_key('pytis', %s)", (bits,))
+    connection.commit()
+    
 def find_command(command_string):
     command = command_string.replace('-', '_')
     command_function = globals().get('command_' + command)
@@ -322,7 +345,9 @@ Commands:
   delete-user AREA USER
     - remove USER's access to encryption AREA
   encrypt AREA TABLE COLUMN
-    - encrypt given TABLE COLUMN with the encryption key of AREA"""
+    - encrypt given TABLE COLUMN with the encryption key of AREA
+  new-communication-key BITS
+    - generate new communication key and remove the old one"""
 
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)

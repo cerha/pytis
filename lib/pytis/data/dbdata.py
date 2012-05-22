@@ -475,7 +475,10 @@ class DBConnection:
         """
         self._user = user
         self._password = password
-        self._crypto_password = password
+        import pytis.extensions
+        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
+                                             ('key_name_', pytis.data.sval('pytis'),))        
+        self._crypto_password = rsa_encrypt(db_key, password)
 
     def crypto_password(self):
         """Return crypto password, string.

@@ -1527,6 +1527,25 @@ def nextval(seq):
     counter = pytis.data.DBCounterDefault(seq, conn_spec)
     return lambda transaction=None: counter.next(transaction=transaction)
 
+def rsa_encrypt(key, text):
+    """Return text encrypted using RSA 'key' and base64 encoded.
+
+    If key is 'None', return 'text'.
+
+    Arguments:
+
+      key -- public key to use for encryption; string or 'None'
+      text -- text to encrypt
+
+    """
+    if key:
+        import Crypto.PublicKey.RSA, base64
+        rsa = Crypto.PublicKey.RSA.importKey(key)
+        encrypted = rsa.encrypt(str(text), None)[0]
+        return base64.encodestring(encrypted)
+    else:
+        return text
+
 
 # Různé
 

@@ -99,10 +99,12 @@ $$ language plpgsql;
 create or replace function pytis_crypto_change_password (id_ int, old_psw text, new_psw text) returns bool as $$
 declare
   key_ text;
+  plain_old_psw text := pytis_crypto_decrypt_db_password(old_psw, 'pytis');
+  plain_new_psw text := pytis_crypto_decrypt_db_password(new_psw, 'pytis');
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   begin
-    select pytis_crypto_extract_key(key, $2) into key_ from e_pytis_crypto_keys where key_id=$1;
+    select pytis_crypto_extract_key(key, plain_old_psw) into key_ from e_pytis_crypto_keys where key_id=id_;
   exception
     when OTHERS then
       key_ := null;
@@ -110,7 +112,7 @@ begin
   if key_ is null then
     return False;
   end if;
-  update e_pytis_crypto_keys set key=pytis_crypto_store_key(key_, $3), fresh=False where key_id=$1;
+  update e_pytis_crypto_keys set key=pytis_crypto_store_key(key_, plain_new_psw), fresh=False where key_id=id_;
   return True;
 end;
 $$ language plpgsql security definer;
@@ -157,8 +159,83 @@ sqltype('pytis_crypto_t_user_contact',
          C('gpg_key', TString),
          ))
 
+table('pytis_crypto_db_keys',
+      (P('key_name', TString),
+       C('public', TString),
+       C('private', TString),
+       ),
+      doc="""
+Table of asymetric encryption keys.
+It is currently used to encrypt user passwords passed to some database functions.
+Use select pytis_crypto_create_db_key('pytis', 1024) to create a key for that purpose.
+""")
+
+sqltype('pytis_crypto_t_key_pair',
+        (C('public', TString),
+         C('private', TString),
+         ))
+
+def pytis_crypto_generate_key(bits):
+    bits = args[0]
+    import Crypto.PublicKey.RSA
+    rsa = Crypto.PublicKey.RSA.generate(bits)
+    public = rsa.publickey().exportKey()
+    private = rsa.exportKey()
+    return [public, private]
+_plpy_function('pytis_crypto_generate_key', (TInteger,), 'pytis_crypto_t_key_pair',
+               body=pytis_crypto_generate_key,
+               depends=())
+
+def pytis_crypto_decrypt_using_key(private, encrypted):
+    private, encrypted = args
+    import Crypto.PublicKey.RSA, base64
+    rsa = Crypto.PublicKey.RSA.importKey(private)
+    return rsa.decrypt(base64.decodestring(encrypted))
+_plpy_function('pytis_crypto_decrypt_using_key', (TString, TString,), TString,
+               body=pytis_crypto_decrypt_using_key,
+               depends=())
+
+def pytis_crypto_encrypt_using_key(public, text):
+    public, text = args
+    import Crypto.PublicKey.RSA, base64
+    rsa = Crypto.PublicKey.RSA.importKey(public)
+    encrypted = rsa.encrypt(text, None)[0]
+    return base64.encodestring(encrypted)
+_plpy_function('pytis_crypto_encrypt_using_key', (TString, TString,), TString,
+               body=pytis_crypto_encrypt_using_key,
+               depends=())
+
 sql_raw("""
+create or replace function pytis_crypto_db_key (key_name_ text) returns text as $$
+declare
+  key text;
+begin
+  select public into strict key from pytis_crypto_db_keys where key_name=key_name_;
+  return key;
+exception
+  when NO_DATA_FOUND then return null;
+end;
+$$ language plpgsql stable security definer;
+
+create or replace function pytis_crypto_decrypt_db_password (password_ text, key_name_ text) returns text as $$
+declare
+  key text;
+begin
+  select private into strict key from pytis_crypto_db_keys where key_name=key_name_;
+  return pytis_crypto_decrypt_using_key(key, password_);
+exception
+  when NO_DATA_FOUND then return password_;
+end;
+$$ language plpgsql stable;
+
+create or replace function pytis_crypto_create_db_key (key_name_ text, bits int) returns void as $$
+  delete from pytis_crypto_db_keys where key_name=$1;
+  insert into pytis_crypto_db_keys (select $1, * from pytis_crypto_generate_key($2));
+$$ language sql;
+
 create or replace function pytis_crypto_unlock_passwords (user_ text, password_ text) returns setof text as $$
+declare
+  plain_password text := pytis_crypto_decrypt_db_password(password_, 'pytis');
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   begin
@@ -168,9 +245,9 @@ begin
       create temp table t_pytis_passwords (name text, password text);
   end;
   insert into t_pytis_passwords
-         (select name, pytis_crypto_extract_key(key, password_)
+         (select name, pytis_crypto_extract_key(key, plain_password)
                  from e_pytis_crypto_keys
-                 where username=user_ and pytis_crypto_extract_key(key, password_) is not null);
+                 where username=user_ and pytis_crypto_extract_key(key, plain_password) is not null);
   return query select name from t_pytis_passwords;
 end;
 $$ language plpgsql;
@@ -182,4 +259,4 @@ $$ language sql;
 -- create function pytis_crypto_user_contact (username text) returns pytis_crypto_t_user_contact as ...
 """,
         name='pytis_login_key_functions',
-        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions',))
+        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions', 'pytis_crypto_db_keys',))
