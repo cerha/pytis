@@ -143,7 +143,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         def test():
             bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id) for id in ('tablename',)]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
-            dummy_data = factory.create(connection_data=config.dbconnection)
+            factory.create(connection_data=config.dbconnection)
         db_operation(test)
         self._initial_config = [(o, copy.copy(getattr(config, o))) for o in configurable_options()]
         self._saved_state = {}
@@ -373,7 +373,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             side_name = None
         try:
-            view_spec = resolver().get(name, 'view_spec')
+            resolver().get(name, 'view_spec')
         except ResolverError:
             return False
         else:
@@ -391,7 +391,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _public_spec(self, name):
         try:
             spec_class = resolver().specification(name)
-        except Exception as e:
+        except Exception:
             return True
         else:
             return spec_class.public
