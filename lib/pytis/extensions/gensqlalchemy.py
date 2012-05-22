@@ -20,6 +20,8 @@
 
 
 import copy
+import inspect
+import re
 import string
 import sqlalchemy
 from sqlalchemy.ext.compiler import compiles
@@ -41,7 +43,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         result_type = function.result_type[0].sqlalchemy_column().type
         if function.multirow:
             result_type = 'SETOF ' + result_type
-        command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$ %s $$ LANGUAGE %s %s' %
+        command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$\n%s\n$$ LANGUAGE %s %s' %
                    (function.schema, function.name, arguments, result_type, function.body(),
                     function._LANGUAGE, function.stability,))
         if function.security_definer:
@@ -269,6 +271,52 @@ class SQLFunction(SQLFunctional):
     
     _LANGUAGE = 'sql'
 
+class SQLPlpyFunction(SQLFunctional):
+
+    _LANGUAGE = 'plpythonu'
+
+    _STATICMETHOD_MATCHER = re.compile('( *)@staticmethod\r?\n?', re.MULTILINE)
+    
+    def body(self):
+        arglist = string.join([c.id() for c in self.arguments], ', ')
+        lines = ['#def %s(%s):' % (self.name, arglist,),
+                 '    %s = args' % (arglist,)] # hard-wired indentation
+        main_lines = self._method_source_lines(self.name, 0)
+        main_lines = main_lines[1:]
+        prefix = 'sub_'
+        for name in dir(self):
+            if name.startswith(prefix):
+                function_lines = self._method_source_lines(name, 4) # hard-wired forev^h^h now
+                first_line = function_lines[0]
+                i = first_line.find(prefix)
+                j = i + len(prefix)
+                function_lines[0] = first_line[:i] + first_line[j:]
+                lines += function_lines
+        lines += main_lines
+        return string.join(lines, '\n')
+
+    def _method_source_lines(self, name, indentation):
+        method = getattr(self, name)
+        try:
+            lines = inspect.getsourcelines(method)[0]
+        except Exception as e:
+            raise SQLException("Invalid plpythonu method", (self.__class__.__name__, name, e))
+        match = self._STATICMETHOD_MATCHER.match(lines[0])
+        if not match:
+            self.SQLException("@staticmethod decorator not found", (self.__class__.__name__, name))
+        indentation = indentation - len(match.group(1))
+        if indentation == 0:
+            def reindent(line):
+                return line
+        elif indentation > 0:
+            def reindent(line):
+                return ' '*indentation + line
+        else:
+            def reindent(line):
+                return line[-indentation:]
+        lines = [l.rstrip() for l in lines[1:]]
+        return [reindent(l) for l in lines if l.strip()]
+    
 
 ## Sample demo
 
@@ -324,6 +372,18 @@ class Func(SQLFunction):
     def body(self):
         return 'SELECT $1 + $2'
 
+class PlpyFunc(SQLPlpyFunction):
+    name = 'times'
+    arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
+    result_type = (Column('z', pytis.data.Integer()),)
+
+    @staticmethod
+    def times(x, y):
+        return pythonic(x, y)
+
+    @staticmethod
+    def sub_pythonic(x, y):
+        return x * y
 
 engine = None
 def _dump_sql_command(sql, *multiparams, **params):
