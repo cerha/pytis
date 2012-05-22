@@ -1363,6 +1363,17 @@ class ViewSpec(object):
             makes sense only for database table functions, it should be 'None'
             for standard tables and views.
 
+          referer -- id of the referer column as a string (one of the id's
+            defined by 'fields') or None.  If None, the id of the data key
+            column is used.  The exported value of the referer column is used
+            to refer to the given record in URI's.  Thus it should be a unique
+            column and its exported values must contain only characters valid
+            in the context of URI.  For example, if the referer column value is
+            123 and given pytis view (module) is mapped to the base URI
+            '/some/path' by the web application, the record's URI will look
+            like '/some/path/123'.  Obviously, this attribute is currently only
+            used in web applications.
+
           spec_name -- name of the original form specification if any, string.
 
           public -- boolean flag indicating a public specification.
@@ -1381,8 +1392,8 @@ class ViewSpec(object):
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
-              initial_folding=None, folding=None, spec_name='', arguments=None, public=None,
-              argument_provider=None):
+              initial_folding=None, folding=None, arguments=None, argument_provider=None,
+              referer=None, spec_name='', public=None):
         assert isinstance(title, basestring)
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1447,6 +1458,8 @@ class ViewSpec(object):
                                    _(u"Unknown field id '%s' in dependencies "
                                      "for '%s' specification of '%s'.") % \
                                      (dep, s, f.id())
+            if referer is not None:
+                assert referer in [f.id() for f in fields], referer
         # Initialize `columns' specification parameter
         if columns is None:
             columns = tuple([f.id() for f in self._fields
@@ -1566,6 +1579,7 @@ class ViewSpec(object):
         self._folding = folding or initial_folding # initial_folding is deprecated!
         self._arguments = arguments
         self._argument_provider = argument_provider
+        self._referer = referer
         
     def _linearize_actions(self, spec):
         actions = []
@@ -1717,6 +1731,10 @@ class ViewSpec(object):
     def argument_provider(self):
         """Return 'None' or a function generating database table function arguments."""
         return self._argument_provider
+
+    def referer(self):
+        """Return the id of the referer column as a string or 'None'."""
+        return self._referer
 
     
 class BindingSpec(object):
@@ -2683,8 +2701,19 @@ class Field(object):
             developer is responsible to include the display column in the
             underlying database view (typically by joining it with the codebook
             table).  The inline_display column doesn't need to be explicitly
-            defined in 'fields' specification. it is appended automatically if
+            defined in 'fields' specification -- it is appended automatically if
             not present.
+          inline_referer -- name of the codebook referer column in the current
+            table (string).  The 'referer' specification in the codebook's
+            'ViewSpec' refers to a column in the codebook table.  Retrieving
+            referer values from the codebook table would cause nested database
+            queries for each row in the list in cases, where the referer column
+            is not the same column as the 'value_column'.  To optimize such
+            inefficiency, it is possible to specify the name of the referer
+            column in the current table (where the current codebook field is
+            used).  The application developer is responsible to include the
+            referer column in the underlying database view (typically by
+            joining it with the codebook table).
           line_separator -- line separator in single line field value
             presentation.
           codebook -- name (string) of the specification which acts as a
@@ -2889,7 +2918,7 @@ class Field(object):
               type=None, type_=None, width=None, column_width=None, disable_column=False,
               fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
               computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
-              display_size=None, null_display=None, inline_display=None,
+              display_size=None, null_display=None, inline_display=None, inline_referer=None,
               allow_codebook_insert=False, codebook_insert_spec=None, codebook_insert_prefill=None,
               codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
@@ -2927,6 +2956,7 @@ class Field(object):
         assert display_size is None or isinstance(display_size, int), display_size
         assert null_display is None or isinstance(null_display, basestring), null_display
         assert inline_display is None or isinstance(inline_display, basestring), inline_display
+        assert inline_referer is None or isinstance(inline_referer, basestring), inline_referer
         # TODO: Enable this after merging data-type-cleanup! (belongs to the line above)
         # and not not_null and (codebook or enumerator)
         assert isinstance(allow_codebook_insert, bool), allow_codebook_insert
@@ -3057,6 +3087,7 @@ class Field(object):
         self._display_size = display_size
         self._null_display = null_display
         self._inline_display = inline_display
+        self._inline_referer = inline_referer
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_insert_prefill = codebook_insert_prefill
@@ -3190,6 +3221,9 @@ class Field(object):
 
     def inline_display(self):
         return self._inline_display
+    
+    def inline_referer(self):
+        return self._inline_referer
 
     def allow_codebook_insert(self):
         return self._allow_codebook_insert
@@ -3339,6 +3373,9 @@ class Specification(object):
     Each specification should explicitly set this attribute in order to make
     the status of the specification clear.  Set it to True iff the
     specification is public.
+
+    Note: This attribute is currently ignored in web applications based on
+    Wiking.
     
     """
     
