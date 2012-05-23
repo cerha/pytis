@@ -881,7 +881,10 @@ class PresentedRow(object):
         if self._secret_column(column):
             return ''
         inline_display = column.inline_display
-        if inline_display and inline_display in self._row:
+        if inline_display and inline_display in self._row and not self.field_changed(key):
+            # The row doesn't contain inline_display when it was created in
+            # _set_row (not passed from the data intrerface) and inline_display
+            # field is not explicitly present in fields.
             return self._row[inline_display].export()
         display = self._display(column)
         if not display:
