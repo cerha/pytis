@@ -267,6 +267,9 @@ class SQLFunctional(_SQLTabular):
         name = '"%s"."%s"' % (self.schema, self.name,)
         return getattr(sqlalchemy.sql.expression.func, name)(*arguments)
 
+    def body(self):
+        return open(self.name + '.sql').read()
+
 class SQLFunction(SQLFunctional):
     
     _LANGUAGE = 'sql'
@@ -374,6 +377,11 @@ class Func(SQLFunction):
 
     def body(self):
         return 'SELECT $1 + $2'
+
+class FileFunc(SQLFunction):
+    name = 'minus'
+    arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
+    result_type = (Column('z', pytis.data.Integer()),)
 
 class PyFunc(SQLPyFunction):
     name = 'times'
