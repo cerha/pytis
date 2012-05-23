@@ -885,7 +885,11 @@ class PresentedRow(object):
             # The row doesn't contain inline_display when it was created in
             # _set_row (not passed from the data intrerface) and inline_display
             # field is not explicitly present in fields.
-            return self._row[inline_display].export()
+            value = self._row[inline_display]
+            if value.value() is None:
+                return column.null_display or ''
+            else:
+                return value.export()
         display = self._display(column)
         if not display:
             computer = column.computer
