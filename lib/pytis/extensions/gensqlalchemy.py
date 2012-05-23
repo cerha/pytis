@@ -271,6 +271,10 @@ class SQLFunction(SQLFunctional):
     
     _LANGUAGE = 'sql'
 
+class SQLPlFunction(SQLFunctional):
+
+    _LANGUAGE = 'plpgsql'
+    
 class SQLPyFunction(SQLFunctional):
 
     _LANGUAGE = 'plpythonu'
