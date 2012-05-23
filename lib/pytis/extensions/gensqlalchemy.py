@@ -271,7 +271,7 @@ class SQLFunction(SQLFunctional):
     
     _LANGUAGE = 'sql'
 
-class SQLPlpyFunction(SQLFunctional):
+class SQLPyFunction(SQLFunctional):
 
     _LANGUAGE = 'plpythonu'
 
@@ -316,7 +316,6 @@ class SQLPlpyFunction(SQLFunctional):
                 return line[-indentation:]
         lines = [l.rstrip() for l in lines[1:]]
         return [reindent(l) for l in lines if l.strip()]
-    
 
 ## Sample demo
 
@@ -372,7 +371,7 @@ class Func(SQLFunction):
     def body(self):
         return 'SELECT $1 + $2'
 
-class PlpyFunc(SQLPlpyFunction):
+class PyFunc(SQLPyFunction):
     name = 'times'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
     result_type = (Column('z', pytis.data.Integer()),)
