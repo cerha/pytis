@@ -21,7 +21,7 @@ import rpyc
 import pytis.windows
 import config
 
-def say(target_ip, request, *arguments):
+def say(user_name, target_ip, request, *arguments):
     if request == 'upgrade':
         if len(arguments) != 1:
             usage(1)
@@ -30,7 +30,7 @@ def say(target_ip, request, *arguments):
         arguments = [a.decode('utf-8') for a in arguments]
     connection = rpyc.connect('localhost', config.rpc_local_port)
     try:
-        result = connection.root.request(target_ip, None, request, *arguments)
+        result = connection.root.request(target_ip, user_name, request, *arguments)
     except AttributeError:
         if request == 'version':
             sys.stdout.write('-old-\n')
@@ -44,7 +44,7 @@ def say(target_ip, request, *arguments):
         sys.stdout.write('\n')
 
 def usage(exit_code=0):
-    sys.stdout.write('usage: %s IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
+    sys.stdout.write('usage: %s [ --user USERNAME ] IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
     sys.stdout.write("""Available requests:
     upgrade NEW-WINDOWS-SERVER-FILE
     restart
@@ -60,7 +60,13 @@ def usage(exit_code=0):
 def run(args):
     if not args or args[0] == '--help':
         usage()
-    say(*args)
+    user_name = None
+    if args[0] == '--user':
+        if len(args) < 2:
+            usage()
+        user_name = args[1]
+        args = args[2:]
+    say(user_name, *args)
 
 if __name__ == '__main__':
     run(sys.argv[1:])
