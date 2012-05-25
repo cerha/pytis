@@ -233,7 +233,9 @@ class SQLView(_SQLTabular):
         seen = []
         while objects:
             o = objects.pop()
-            if o in seen:
+            if isinstance(o, sqlalchemy.sql.Alias):
+                objects += o.get_children()
+            elif o in seen:
                 continue
             elif isinstance(o, sqlalchemy.Table):
                 self.add_is_dependent_on(o)
@@ -392,6 +394,11 @@ class Baz(SQLView):
     condition = sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
                                                    from_obj=[t.Foo.join(t.Bar)]),
                                  sqlalchemy.select([c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
+
+class AliasView(SQLView):
+    name = 'aliased'
+    condition = (lambda foo1=t.Foo.alias('foo1'), foo2=t.Foo.alias('foo2'):
+                 sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n<foo2.c.n)]))()
 
 class Func(SQLFunction):
     name = 'plus'
