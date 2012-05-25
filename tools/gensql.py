@@ -326,6 +326,65 @@ class _GsqlSpec(object):
         return result
     db_remove = classmethod(db_remove)
 
+    def _convert_indent(self, text, level):
+        if text is None:
+            return None
+        lines = text.split('\n')
+        lines = [' '*level + l for l in lines]
+        return string.join(lines, '\n')
+
+    def _convert_name(self, name=None):
+        if name is None:
+            name = self._name
+        components = [c.capitalize() for c in name.split('_')]
+        return string.join(components, '')
+
+    def _convert_doc(self):
+        doc = self._doc
+        if doc is None:
+            return '""'
+        doc = doc.replace('\\', '\\\\')
+        doc = doc.replace('"', '\\"')
+        return '"""%s"""' % (doc,)
+
+    def _convert_column(self, column):
+        cls = column.__class__.__name__
+        name = repr(column.name)
+        constraints = [c.lower() for c in column.constraints]
+        if isinstance(column.type, pytis.data.Type):
+            type_ = 'pytis.data.%s(' % (column.type.__class__.__name__,)
+            if 'not null' in constraints:
+                type_ += 'not_null=True'
+            type_ += ')' 
+        else:
+            type_ = {}.get(column.type)
+            if type_ is None:
+                type_ = 'XXX: %s' % (column.type,)
+        unique = 'unique' in constraints
+        default = column.default
+        if column.references:
+            references = column.references
+        else:
+            references = None
+        if isinstance(column.index, dict):
+            # index = ('sqlalchemy.Index("foo", mytable.c.data, postgresql_using="%s")' %
+            #          (column.index['method'],))
+            index = 'XXX: %s' % (column.name,)
+        elif column.index:
+            index = 'True'
+        else:
+            index = 'False'
+        spec = ('%s(%s, %s, doc=%s, unique=%s, check=None, default=%s, references=%s, index=%s)' %
+                (cls, name, type_, repr(column.doc), repr(unique), default, references, index))
+        for c in constraints:
+            if c not in ('unique', 'not null',):
+                spec = spec + (' #XXX:%s' % (c,))
+        return spec
+        
+    def convert(self):
+        "Vrať novou pythonovou specifikaci daného objektu jako string."
+        return '#XXX:%s' % (self,)
+
 
 class Column(object):
     """Úložná třída specifikace sloupce."""
@@ -518,7 +577,7 @@ class SelectSet(object):
         if self.settype:
             outputset = ' ' * (indent+1) + self._FORMAT_SET[self.settype]
             output = '%s\n%s' % (outputset, output)
-        return output    
+        return output
 
     def sort_columns(self, aliases):
         self.select.sort_columns(aliases)
@@ -1190,6 +1249,44 @@ class _GsqlTable(_GsqlSpec):
             result = super(_GsqlTable, self).db_update(connection)
         return result
 
+    def convert(self):
+        items = ['class %s(SQLTable):' % (self._convert_name(),)]
+        items.append(self._convert_indent(self._convert_doc(), 4))
+        items.append('    name=%s' % (repr(self._name),))
+        items.append('    fields = (')
+        for column in self._columns:
+            items.append(self._convert_indent(self._convert_column(column), 15) + ',')
+        items.append('             )')
+        inherits = [self._convert_name(name) for name in (self._inherits or ())]
+        inherits = string.join(inherits, ', ')
+        if inherits:
+            inherits += ','
+        items.append('    inherits = (%s)' % (inherits,))
+        items.append('    tablespace = %s' % (repr(self._tablespace),))
+        init_columns = [c.name if isinstance(c, Column) else c for c in self._init_columns]
+        if not init_columns:
+            if init_values:
+                init_columns = [c.name for c in self.columns]
+            else:
+                init_columns = None
+        items.append('    init_columns = %s' % (repr(tuple(init_columns)),))
+        init_values = self._init_values
+        if init_values:
+            items.append('    init_values = (')
+            for row in init_values:
+                if row:
+                    row_values = string.join(row, ', ')
+                    items.append('                    (%s,),' % (row_values,))
+            items.append('                  )')
+        else:
+            items.append('    init_values = ()')
+        items.append('    check = ()')
+        items.append('    unique = ()')
+        items.append('    with_oids = %s' % (repr(self._with_oids),))
+        if self._sql:
+            items.append('#XXX: %s' % (self._sql,))
+        return string.join(items, '\n') + '\n'
+
     
 class Select(_GsqlSpec):
     """Specifikace SQL selectu."""
@@ -1391,7 +1488,104 @@ class Select(_GsqlSpec):
 
     def _output(self):
         return ''
-    
+
+    def _convert_raw_columns(self, columns):
+        string_columns = ["'%s'" % (c.strip(),) for c in columns.split(',')]
+        return string.join(string_columns, ', ')
+
+    def _convert_raw_condition(self, condition):
+        return "'%s'" % (condition,)
+
+    def _convert_columns(self):
+        return [self._convert_column(c) for c in self._columns]
+
+    def _convert_column(self, column):
+        if isinstance(column, basestring):
+            cname = alias = column
+        else:
+            if column.sql:
+                cname = column.sql
+            else:    
+                cname = column.name
+            alias = column.alias
+        if type is None:
+            cname = 'NULL'
+        elif isinstance(type, pytis.data.Type):
+            cname = 'NULL::%s' % _gsql_format_type(type)
+        elif isinstance(type, basestring):
+            cname = 'NULL::%s' % type
+        return '%s AS %s' % (cname, alias)
+
+    def _convert_relations(self):
+        aliases = []
+        def convert_relation(i, rel):
+            jtype = rel.jointype
+            if isinstance(rel.relation, Select):
+                sel = rel.relation.convert_select()
+                relation = '(%s)' % (sel,)
+            elif (isinstance(rel, SelectRelation) and
+                  rel.schema is not None):
+                relation = '%s.%s' % (rel.schema, rel.relation,)
+                if rel.alias:
+                    aliases.append((rel.alias, relation,))
+            else:
+                relation = rel.relation
+            alias = rel.alias or ''
+            if i == 0 or rel.condition is None:
+                condition = ''
+            else:    
+                condition = rel.condition
+            if jtype == JoinType.FROM:
+                result = relation
+            elif jtype == JoinType.INNER:
+                result = '.join(%s, %s)' % (relation, self._convert_raw_condition(condition),)
+            elif jtype == JoinType.LEFT_OUTER:
+                result = '.outerjoin(%s, %s)' % (relation, self._convert_raw_condition(condition),)
+            else:
+                result = '.XXX:%s(%s, %s)' % (jtype, relation, self._convert_raw_condition(condition),)
+            return result
+        wherecondition = self._relations[0].condition
+        joins = [convert_relation(i, r) for i, r in enumerate(self._relations)]
+        result = ''.join(joins)
+        if wherecondition:
+            result = '%s.where(%s)' % (result, self._convert_raw_condition(wherecondition),)
+        if aliases:
+            parameters = string.join(["%s=object_by_name(%s)" % (alias, repr(relation),)
+                                      for alias, relation in aliases],
+                                     ', ')
+            result = '(lambda %s: %s)()' % (parameters, result,)
+        return result
+        
+    def _convert_select(self):
+        if self._set:
+            selects = []
+            aliases = [c.alias for c in self._columns[0]]
+            for r in self._relations:
+                r.sort_columns(aliases)
+                if isinstance(r, SelectSet):
+                    output = r.select._convert_select()        
+                    if r.settype:
+                        output = '.%s(%s)' % (r.settype.lower(), output,)
+                        selects[-1] = selects[-1] + output
+                    else:
+                        selects.append(output)
+                else:
+                    selects.append(r._convert_select())
+            condition = ''.join(selects)
+        else:
+            relations = self._convert_relations()
+            columns = self._convert_columns()
+            condition = 'sqlalchemy.select([%s], from_obj=[%s])' % (columns, relations,)
+            if self._group_by:
+                condition += '.group_by(%s)' % (self._convert_raw_columns(self._group_by),)
+            if self._having:
+                condition += '.having(%s)' % (self._convert_raw_condition(self._having),)
+        if self._order_by:
+            condition += '.order_by(%s)' % (self._convert_raw_columns(self._order_by),)
+        if self._limit:
+            condition += '.limit(%d)' % (self._limit,)
+        return condition
+     
 
 class _GsqlViewNG(Select):
     """Specifikace view (nová)."""
@@ -1625,6 +1819,15 @@ class _GsqlViewNG(Select):
     
     def reoutput(self, table_keys):
         return self.output(table_keys)
+
+    def convert(self):
+        items = ['class %s(SQLView):' % (self._convert_name(),)]
+        items.append(self._convert_indent(self._convert_doc(), 4))
+        items.append('    name=%s' % (repr(self._name),))
+        condition = self._convert_select()
+        items.append('    condition=%s' % (condition,))
+        return string.join(items, '\n') + '\n'
+        
 
 ViewNG = _GsqlViewNG    
 
@@ -2657,7 +2860,13 @@ database dumps if you want to be sure about your schema.
                 sys.stdout.write(self[o].reoutput())
             sys.stdout.write('\n')
         self._process_resolved(process)
-        
+
+    def convert(self):
+        def process(o):
+            sys.stdout.write(self[o].convert())
+            sys.stdout.write('\n')
+        self._process_resolved(process)
+
 
 _gsql_defs = _GsqlDefs()
 
@@ -2763,6 +2972,7 @@ class _GsqlConfig:
     GEALL = _gsql_defs.gensqlall
     RGNDB = _gsql_defs.regensql
     CHKDB = _gsql_defs.check_db
+    CONVE = _gsql_defs.convert
     FIXDB = _gsql_defs.fix_db
     UPDVW = _gsql_defs.update_views
 
@@ -2783,6 +2993,7 @@ _GSQL_OPTIONS = (
     ('recreate         ', 'recreate all non-data database objects'),
     ('check-db=DATABASE', 'check DATABASE contents against definitions'),
     ('check-presence   ', 'just check for presence rather than generating updates'),
+    ('convert          ', 'convert to gensqlalchemy specifications'),
     ('update-views=object', 'update views dependent on specified object (table or view)'),
     ('fix-db=DATABASE  ', 'update DATABASE contents according to definitions'),
     ('no-warn          ', 'suppress warnings when checking/fixing'),
@@ -2845,6 +3056,8 @@ def _go(argv=None):
             _GsqlConfig.dbname = v
         elif o == '--check-presence':
             _GsqlConfig.check_presence = True
+        elif o == '--convert':
+            _GsqlConfig.request = _GsqlConfig.CONVE
         elif o == '--update-views':
             _GsqlConfig.request = _GsqlConfig.UPDVW
             _GsqlConfig.update_views = v
