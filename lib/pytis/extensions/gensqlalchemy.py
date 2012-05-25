@@ -90,7 +90,7 @@ class Column(pytis.data.ColumnSpec):
     def sqlalchemy_column(self):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
-        if self._references:
+        if self._references is not None:
             args.append(sqlalchemy.ForeignKey(self._references))
         return sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
                                  doc=self._doc, index=self._index,
@@ -108,9 +108,6 @@ class PrimaryColumn(Column):
 
 _metadata = sqlalchemy.MetaData()
 
-def t(name):
-    return _metadata.tables[name]
-
 class SQLException(Exception):
     pass
 
@@ -121,9 +118,7 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
     def __init__(cls, clsname, bases, clsdict):
         is_specification = not clsname.startswith('SQL') and not clsname.startswith('_SQL')
         if is_specification:
-            name = cls.name
-            if name is None:
-                name = pytis.util.camel_case_to_lower(clsname)
+            name = cls.pytis_name()
             if (name in _PytisTableMetaclass._name_mapping and 
                 _PytisTableMetaclass._name_mapping[name] is not cls):
                 raise SQLException("Duplicate object name", (cls, _PytisTableMetaclass._name_mapping[name],))
@@ -151,6 +146,13 @@ class _SQLTabular(sqlalchemy.Table):
     def _add_dependencies(self):
         for o in self.depends_on:
             self.add_is_dependent_on(o)
+
+    @classmethod
+    def pytis_name(class_):
+        name = class_.name
+        if name is None:
+            name = pytis.util.camel_case_to_lower(class_.__name__)
+        return name
     
 class SQLTable(_SQLTabular):
     
@@ -180,7 +182,7 @@ class SQLTable(_SQLTabular):
     def _add_dependencies(self):
         super(SQLTable, self)._add_dependencies()
         for inherited in self.inherits:
-            self.add_is_dependent_on(t('%s.%s' % (self.schema, inherited.name,)))
+            self.add_is_dependent_on(object_by_name('%s.%s' % (self.schema, inherited.name,)))
 
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
@@ -324,8 +326,29 @@ class SQLPyFunction(SQLFunctional):
         lines = [l.rstrip() for l in lines[1:]]
         return [reindent(l) for l in lines if l.strip()]
 
-## Sample demo
+## Utilities
+    
+def object_by_name(name):
+    return _metadata.tables[name]
 
+def object_by_specification(specification):
+    class_ = globals()[specification]
+    assert issubclass(class_, _SQLTabular)
+    table_name = class_.pytis_name()
+    schema = class_.schemas[0]      # TODO: handle all schemas
+    return object_by_name('%s.%s' % (schema, table_name,))
+    
+class TableLookup(object):
+    def __getattr__(self, specification):
+        return object_by_specification(specification)
+t = TableLookup()
+
+class ColumnLookup(object):
+    def __getattr__(self, specification):
+        return object_by_specification(specification).c
+c = ColumnLookup()
+
+## Sample demo
 
 class Foo(SQLTable):
     """Foo table."""
@@ -356,7 +379,7 @@ class Bar(SQLTable):
     """Bar table."""
     fields = (PrimaryColumn('id', pytis.data.Serial()),
               # TODO: How to set schema in references automatically?
-              Column('foo_id', pytis.data.Integer(), references='public.foo.id'),
+              Column('foo_id', pytis.data.Integer(), references=c.Foo.id),
               Column('description', pytis.data.String()),
               )
     init_columns = ('foo_id', 'description',)
@@ -366,9 +389,9 @@ class Bar(SQLTable):
 class Baz(SQLView):
     """Baz view."""
     name = 'baz'
-    condition = sqlalchemy.union(sqlalchemy.select([t('public.foo').c.id, t('public.bar').c.description],
-                                                   from_obj=[t('public.foo').join(t('public.bar'))]),
-                                 sqlalchemy.select([t('public.foofoo').c.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
+    condition = sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
+                                                   from_obj=[t.Foo.join(t.Bar)]),
+                                 sqlalchemy.select([c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
 
 class Func(SQLFunction):
     name = 'plus'
