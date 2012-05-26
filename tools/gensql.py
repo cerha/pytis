@@ -342,30 +342,78 @@ class _GsqlSpec(object):
     def _convert_doc(self):
         doc = self._doc
         if doc is None:
-            return '""'
+            return None
         doc = doc.replace('\\', '\\\\')
         doc = doc.replace('"', '\\"')
         return '"""%s"""' % (doc,)
 
+    def _convert_value(self, value):
+        if value.lower() == 'null':
+            return 'None'
+        elif value.lower() in ("'f'", 'false',):
+            return 'False'
+        elif value.lower() in ("'t'", 'true',):
+            return 'True'
+        elif value in ('localtimestamp', 'now()', 'current_user', 'user',):
+            return "'%s'" % (value,)
+        elif value[0] == "'" and value[-1] == "'" and value[1:-1].find("'") == -1:
+            return value
+        else:
+            try:
+                float(value)
+                return value
+            except:
+                return 'XXX:%s' % (value,)
+
     def _convert_column(self, column):
-        cls = column.__class__.__name__
-        name = repr(column.name)
+        name = column.name
+        pos = name.rfind('.')
+        if pos >= 0:
+            name = name[pos+1:]
+        cls = 'PrimaryColumn' if name in self.key_columns() else 'Column'
+        name = repr(name)
         constraints = [c.lower() for c in column.constraints]
         if isinstance(column.type, pytis.data.Type):
             type_ = 'pytis.data.%s(' % (column.type.__class__.__name__,)
-            if 'not null' in constraints:
+            if 'not null' in constraints or 'unique not null' in constraints:
                 type_ += 'not_null=True'
             type_ += ')' 
         else:
-            type_ = {}.get(column.type)
+            type_ = {'name': 'pytis.data.String(maxlen=64)'}.get(column.type)
             if type_ is None:
                 type_ = 'XXX: %s' % (column.type,)
-        unique = 'unique' in constraints
-        default = column.default
+        unique = 'unique' in constraints or 'unique not null' in constraints
+        default = None if column.default is None else self._convert_value(column.default)
         if column.references:
-            references = column.references
+            components = column.references.split(' ')
+            references = "a(object_by_name(%s)" % (repr(components.pop(0),))
+            while components:
+                if components.pop(0).lower() == 'on':
+                    action = (components and components.pop(0).lower())
+                    if (components and action in ('update', 'delete',) and
+                        components[0].lower() in ('cascade', 'delete', 'restrict',)):
+                        references += ", on%s='%s'" % (action, components.pop(0).upper(),)
+                    else:
+                        references = None
+                        break
+                else:
+                    references = None
+                    break
+            if references is None:
+                references = 'None #XXX: %s' % (column.references,)
+            else:
+                references += ')'
         else:
             references = None
+        spec = ('%s(%s, %s' % (cls, name, type_,))
+        if column.doc:
+            spec += ', doc="%s"' % (column.doc,)
+        if unique:
+            spec += ', unique=%s' % (repr(unique),)
+        if default is not None:
+            spec += ', default=%s' % (default,)
+        if references is not None:
+            spec += ', references=%s' % (references,)
         if isinstance(column.index, dict):
             # index = ('sqlalchemy.Index("foo", mytable.c.data, postgresql_using="%s")' %
             #          (column.index['method'],))
@@ -373,9 +421,10 @@ class _GsqlSpec(object):
         elif column.index:
             index = 'True'
         else:
-            index = 'False'
-        spec = ('%s(%s, %s, doc=%s, unique=%s, check=None, default=%s, references=%s, index=%s)' %
-                (cls, name, type_, repr(column.doc), repr(unique), default, references, index))
+            index = None
+        if index:
+            spec += ', index=%s' % (index,)
+        spec += ')'
         for c in constraints:
             if c not in ('unique', 'not null',):
                 spec = spec + (' #XXX:%s' % (c,))
@@ -1251,40 +1300,55 @@ class _GsqlTable(_GsqlSpec):
 
     def convert(self):
         items = ['class %s(SQLTable):' % (self._convert_name(),)]
-        items.append(self._convert_indent(self._convert_doc(), 4))
-        items.append('    name=%s' % (repr(self._name),))
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
         items.append('    fields = (')
         for column in self._columns:
-            items.append(self._convert_indent(self._convert_column(column), 15) + ',')
+            items.append(self._convert_indent(self._convert_column(column), 14) + ',')
         items.append('             )')
         inherits = [self._convert_name(name) for name in (self._inherits or ())]
         inherits = string.join(inherits, ', ')
         if inherits:
             inherits += ','
-        items.append('    inherits = (%s)' % (inherits,))
-        items.append('    tablespace = %s' % (repr(self._tablespace),))
+            items.append('    inherits = (%s)' % (inherits,))
+        if self._tablespace:
+            items.append('    tablespace = %s' % (repr(self._tablespace),))
         init_columns = [c.name if isinstance(c, Column) else c for c in self._init_columns]
-        if not init_columns:
-            if init_values:
-                init_columns = [c.name for c in self.columns]
-            else:
-                init_columns = None
-        items.append('    init_columns = %s' % (repr(tuple(init_columns)),))
         init_values = self._init_values
+        if not init_columns and init_values:
+            init_columns = [c.name for c in self.columns]
         if init_values:
+            items.append('    init_columns = %s' % (repr(tuple(init_columns)),))
             items.append('    init_values = (')
             for row in init_values:
                 if row:
-                    row_values = string.join(row, ', ')
-                    items.append('                    (%s,),' % (row_values,))
+                    row_values = string.join([self._convert_value(v) for v in row], ', ')
+                    items.append('                   (%s,),' % (row_values,))
             items.append('                  )')
-        else:
-            items.append('    init_values = ()')
-        items.append('    check = ()')
-        items.append('    unique = ()')
         items.append('    with_oids = %s' % (repr(self._with_oids),))
-        if self._sql:
-            items.append('#XXX: %s' % (self._sql,))
+        unique = None
+        sql = self._sql
+        if sql:
+            sql = sql.strip()
+            start = sql.find('(')
+            end = sql.find(')')
+            if (sql.lower().startswith('unique') and
+                start >= 0 and end >= 0 and start < end and
+                sql[start+1:end].find('(') == -1):
+                components = sql[start+1:end].split(',')
+                components = ["'%s'" % (c.strip(),) for c in components]
+                unique = "(%s,)" % (string.join(components, ', '),)
+                sql = None
+        if self._indexes:
+            items.append('#XXX: %s' % (self._indexes,))
+        if unique:
+            items.append('    unique = (%s,)' % (unique,))
+        if False:
+            items.append('    check = ()')
+        if sql:            
+            items.append('#XXX: %s' % (sql,))
         return string.join(items, '\n') + '\n'
 
     
@@ -1822,10 +1886,12 @@ class _GsqlViewNG(Select):
 
     def convert(self):
         items = ['class %s(SQLView):' % (self._convert_name(),)]
-        items.append(self._convert_indent(self._convert_doc(), 4))
-        items.append('    name=%s' % (repr(self._name),))
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
         condition = self._convert_select()
-        items.append('    condition=%s' % (condition,))
+        items.append('    condition = %s' % (condition,))
         return string.join(items, '\n') + '\n'
         
 
