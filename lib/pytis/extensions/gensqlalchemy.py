@@ -90,8 +90,11 @@ class Column(pytis.data.ColumnSpec):
     def sqlalchemy_column(self):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
-        if self._references is not None:
-            args.append(sqlalchemy.ForeignKey(self._references))
+        references = self._references
+        if references is not None:
+            if not isinstance(references, a):
+                references = a(references)
+            args.append(sqlalchemy.ForeignKey(*references.args(), **references.kwargs()))
         return sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
                                  doc=self._doc, index=self._index,
                                  nullable=(not self.type().not_null()),
@@ -128,7 +131,36 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
         if is_specification:
             for schema in cls.schemas:
                 cls(_metadata, schema)
-        
+    
+def object_by_name(name):
+    return _metadata.tables[name]
+
+def object_by_specification(specification):
+    class_ = globals()[specification]
+    assert issubclass(class_, _SQLTabular)
+    table_name = class_.pytis_name()
+    schema = class_.schemas[0]      # TODO: handle all schemas
+    return object_by_name('%s.%s' % (schema, table_name,))
+    
+class TableLookup(object):
+    def __getattr__(self, specification):
+        return object_by_specification(specification)
+t = TableLookup()
+
+class ColumnLookup(object):
+    def __getattr__(self, specification):
+        return object_by_specification(specification).c
+c = ColumnLookup()
+
+class a(object):
+    def __init__(self, *args, **kwargs):
+        self._args = args
+        self._kwargs = kwargs
+    def args(self):
+        return self._args
+    def kwargs(self):
+        return self._kwargs
+
 ## Database objects
 
 class _SQLTabular(sqlalchemy.Table):
@@ -328,28 +360,6 @@ class SQLPyFunction(SQLFunctional):
         lines = [l.rstrip() for l in lines[1:]]
         return [reindent(l) for l in lines if l.strip()]
 
-## Utilities
-    
-def object_by_name(name):
-    return _metadata.tables[name]
-
-def object_by_specification(specification):
-    class_ = globals()[specification]
-    assert issubclass(class_, _SQLTabular)
-    table_name = class_.pytis_name()
-    schema = class_.schemas[0]      # TODO: handle all schemas
-    return object_by_name('%s.%s' % (schema, table_name,))
-    
-class TableLookup(object):
-    def __getattr__(self, specification):
-        return object_by_specification(specification)
-t = TableLookup()
-
-class ColumnLookup(object):
-    def __getattr__(self, specification):
-        return object_by_specification(specification).c
-c = ColumnLookup()
-
 ## Sample demo
 
 class Foo(SQLTable):
@@ -376,18 +386,17 @@ class Foo2(Foo):
     init_columns = ()
     init_values = ()
     with_oids = False
-        
+
 class Bar(SQLTable):
     """Bar table."""
     fields = (PrimaryColumn('id', pytis.data.Serial()),
               # TODO: How to set schema in references automatically?
-              Column('foo_id', pytis.data.Integer(), references=c.Foo.id),
+              Column('foo_id', pytis.data.Integer(), references=a(c.Foo.id, onupdate='CASCADE')),
               Column('description', pytis.data.String()),
               )
     init_columns = ('foo_id', 'description',)
     init_values = ((1, 'some text'),
                    )
-
 class Baz(SQLView):
     """Baz view."""
     name = 'baz'
