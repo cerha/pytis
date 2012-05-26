@@ -1560,25 +1560,33 @@ class Select(_GsqlSpec):
     def _convert_raw_condition(self, condition):
         return "'%s'" % (condition,)
 
-    def _convert_columns(self):
-        return [self._convert_column(c) for c in self._columns]
+    def _convert_select_columns(self):
+        return [self._convert_select_column(c) for c in self._columns]
 
-    def _convert_column(self, column):
+    def _convert_select_column(self, column):
         if isinstance(column, basestring):
-            cname = alias = column
+            cname = column
+            alias = None
         else:
             if column.sql:
                 cname = column.sql
             else:    
                 cname = column.name
-            alias = column.alias
+            plain_name = cname
+            pos = plain_name.rfind('.')
+            if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
+                plain_name = plain_name[pos+1:]
+            alias = None if column.alias == plain_name else column.alias
         if type is None:
-            cname = 'NULL'
+            cname = '#XXX:NULL'
         elif isinstance(type, pytis.data.Type):
-            cname = 'NULL::%s' % _gsql_format_type(type)
+            cname = '#XXX:NULL::%s' % _gsql_format_type(type)
         elif isinstance(type, basestring):
-            cname = 'NULL::%s' % type
-        return '%s AS %s' % (cname, alias)
+            cname = '#XXX:NULL::%s' % type
+        column = cname
+        if alias:
+            column += ' AS %s' % (alias,)
+        return column
 
     def _convert_relations(self):
         aliases = []
@@ -1589,11 +1597,11 @@ class Select(_GsqlSpec):
                 relation = '(%s)' % (sel,)
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
-                relation = '%s.%s' % (rel.schema, rel.relation,)
+                relation = "object_by_name('%s.%s')" % (rel.schema, rel.relation,)
                 if rel.alias:
                     aliases.append((rel.alias, relation,))
             else:
-                relation = rel.relation
+                relation = "object_by_name('%s')" % (rel.relation,)
             alias = rel.alias or ''
             if i == 0 or rel.condition is None:
                 condition = ''
@@ -1638,8 +1646,8 @@ class Select(_GsqlSpec):
             condition = ''.join(selects)
         else:
             relations = self._convert_relations()
-            columns = self._convert_columns()
-            condition = 'sqlalchemy.select([%s], from_obj=[%s])' % (columns, relations,)
+            columns = self._convert_select_columns()
+            condition = 'sqlalchemy.select(%s, from_obj=[%s])' % (columns, relations,)
             if self._group_by:
                 condition += '.group_by(%s)' % (self._convert_raw_columns(self._group_by),)
             if self._having:
