@@ -1904,24 +1904,26 @@ class Browser(wx.Panel, CommandHandler):
         return False
         
     def _on_resource_request(self, webview, frame, resource, req, response):
+        def redirect(resource):
+            if resource and resource.src_file():
+                # Redirect the request to load the resource file from filesystem.
+                req.set_uri("file://" + resource.src_file())
         uri = resource.get_uri()
         # Note, when load_html() is performed, this method gets called with uri
         # equal to base_uri passed to load_html().
         if uri.startswith('resource:') and self._resource_provider is not None:
-            for r in self._resource_provider.resources():
-                # Try searching the existing resources by URI first to get the
-                # best match when uri remapping is used for some reason (such
-                # as in pytis.cms.find_resources).
-                if r.uri() == uri:
-                    break
-            else:
-                # If URI doesn't match any existing resource, try locating the
-                # resource using the standard resource provider's algorithm
-                # (including searching resource directories).
-                r = self._resource_provider.resource(uri[9:])
-            if r and r.src_file():
-                # Redirect the request to load the resource file from filesystem.
-                req.set_uri("file://" + r.src_file())
+            # Try searching the existing resources by URI first.
+            for resource in self._resource_provider.resources():
+                if resource.uri() == uri:
+                    return redirect(resource)
+                if isinstance(resource, lcg.Image):
+                    thumbnail = resource.thumbnail()
+                    if thumbnail and thumbnail.uri() == uri:
+                        return redirect(thumbnail)
+            # If URI doesn't match any existing resource, try locating the
+            # resource using the standard resource provider's algorithm
+            # (including searching resource directories).
+            return redirect(self._resource_provider.resource(uri[9:]))
                 
     def _can_go_forward(self):
         return self._webview.can_go_forward()

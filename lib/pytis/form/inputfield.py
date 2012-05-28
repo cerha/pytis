@@ -1979,15 +1979,12 @@ class ImageField(FileField):
             os.remove(path)
 
 class StructuredTextField(TextField):
-    class AttachmentsEnumerator(pytis.data.Enumerator):
-        def __init__(self, directory):
-            self._directory = directory
-            super(StructuredTextField.AttachmentsEnumerator, self).__init__()
+    class AttachmentEnumerator(pytis.data.Enumerator):
+        def __init__(self, storage):
+            self._storage = storage
+            super(StructuredTextField.AttachmentEnumerator, self).__init__()
         def values(self):
-            return sorted([filename for filename in os.listdir(self._directory)
-                           if os.path.isfile(os.path.join(self._directory, filename))
-                           and True in [filename.lower().endswith(suffix) for suffix in
-                                        ('jpg', 'jpeg', 'png', 'gif')]])
+            return [r.filename() for r in self._storage.resources('resource:')]
             
     class ImageAlignments(pytis.presentation.Enumeration):
         enumeration = (('inline', _("Do řádku")),
@@ -2060,10 +2057,9 @@ class StructuredTextField(TextField):
             (UICommand(self.COMMAND_LINK(),
                        _(u"Hypertextový odkaz"),
                        _(u"Vložit hypertextový odkaz.")),
-             ) + (self._attachments_directory() is not None and
-                  (UICommand(self.COMMAND_ATTACHMENT(kind='image'),
-                             _(u"Obrázek"),
-                             _(u"Vložit obrázek.")),) or ()) +
+             ) + (self._storage and (UICommand(self.COMMAND_ATTACHMENT(kind='image'),
+                                               _(u"Obrázek"),
+                                               _(u"Vložit obrázek.")),) or ()) +
             (UICommand(self.COMMAND_ITEMIZE(style='bullet'),
                        _(u"Odrážkový seznam"),
                        _(u"Vytvořit položku odrážkového seznamu.")),
@@ -2135,6 +2131,10 @@ class StructuredTextField(TextField):
         self._completer = None
         self._update_completions = None
         self._last_load_dir = None
+        storage = self._spec.attachment_storage()
+        if isinstance(storage, collections.Callable):
+            storage = storage(self._row)
+        self._storage = storage
         return ctrl
         
     def _create_widget(self, parent):
@@ -2200,20 +2200,16 @@ class StructuredTextField(TextField):
             parent = form.GetParent()
         else:
             parent = None
-        directory = self._attachments_directory()
-        if directory:
-            from pytis.cms import find_resources
-            resources = find_resources(directory, 'resource:')
+        if self._storage:
+            resources = self._storage.resources('resource:')
         else:
             resources = ()
         InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG, resources=resources)
 
     def _cmd_export_pdf(self):
         import tempfile
-        directory = self._attachments_directory()
-        if directory:
-            from pytis.cms import find_resources
-            resources = find_resources(directory, 'resource:')
+        if self._storage:
+            resources = self._storage.resources('resource:')
         else:
             resources = ()
         content = lcg.Container(lcg.Parser().parse(self._get_value()))
@@ -2282,22 +2278,13 @@ class StructuredTextField(TextField):
             ctrl.SetInsertionPoint(position+6)
         self.set_focus()
 
-    def _attachments_directory(self):
-        directory = self._spec.attachments_directory()
-        if isinstance(directory, collections.Callable):
-            directory = directory(self._row)
-        return directory
-    
     def _load_new_file(self, row):
-        import PIL.Image
-        image_size = (800, 800)
-        thumbnail_size = (200, 200)
         if pytis.windows.windows_available():
             import ntpath
-            source_file = pytis.windows.open_selected_file()
-            if source_file is None:
+            file_object = pytis.windows.open_selected_file()
+            if file_object is None:
                 return
-            filename = ntpath.split(source_file.name())[-1]
+            filename = ntpath.split(file_object.name())[-1]
         else:
             dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.OPEN,
                                 defaultDir=self._last_load_dir or '')
@@ -2305,58 +2292,35 @@ class StructuredTextField(TextField):
                 return
             path = dlg.GetPath()
             self._last_load_dir = os.path.dirname(path)
-            source_file = open(path)
+            file_object = open(path)
             filename = os.path.split(path)[1]
         try:
-            data = source_file.read()
-        finally:
-            source_file.close()
-        directory = self._attachments_directory()
-        img_format = os.path.splitext(filename)[1].strip('.').upper().replace('JPG', 'JPEG')
-        try:
-            image = PIL.Image.open(StringIO(data))
-        except IOError:
+            try:
+                self._storage.insert(file_object, filename)
+            finally:
+                file_object.close()
+        except AttachmentStorage.InvalidImageFormat as e:
             message(_(u"Neplatný grafický formát!"), beep_=True)
-            return
-        f = open(os.path.join(directory, filename), 'w')
-        try:
-            f.write(data)
-        finally:
-            f.close()
-        try:
-            for size, subdir in ((thumbnail_size, 'thumbnails'), (image_size, 'resized')):
-                if not os.path.exists(os.path.join(directory, subdir)):
-                    os.makedirs(os.path.join(directory, subdir))
-                resized = image.copy()
-                resized.thumbnail(size, PIL.Image.ANTIALIAS)
-                f = open(os.path.join(directory, subdir, filename), 'w')
-                try:
-                    resized.save(f, img_format)
-                finally:
-                    f.close()
-        except:
-            for subdir in ('', 'thumbnails', 'resized'):
-                path = os.path.join(directory, subdir, filename)
-                if os.path.exists(path):
-                    os.remove(path)
-            raise
-        row.form().field('filename').reload_enumeration()
-        row['filename'] = pytis.data.Value(row.type('filename'), filename)
+        except IOError as e:
+            message(_("Operace se nezdařila: %s" % e), beep_=True)
+        else:
+            row.form().field('filename').reload_enumeration()
+            row['filename'] = pytis.data.Value(row.type('filename'), filename)
 
     def _image_preview_computer(self, row, filename):
         if filename:
-            directory = self._attachments_directory()
-            return pytis.data.Image.Buffer(os.path.join(directory, filename), filename=filename)
-        else:
-            return None
+            f = self._storage.retrieve(filename)
+            if f:
+                try:
+                    return pytis.data.Image.Buffer(f, filename=filename)
+                finally:
+                    f.close()
+        return None
         
     def _cmd_attachment(self, kind='image'):
-        directory = self._attachments_directory()
-        if not directory:
+        if not self._storage:
             return
         ctrl = self._ctrl
-        if not os.path.exists(directory):
-            os.makedirs(directory)
         # Find out whether the current cursor position is within an existing
         # attachment link.
         position = ctrl.GetInsertionPoint()
@@ -2367,6 +2331,7 @@ class StructuredTextField(TextField):
         filename = None
         align = 'inline'
         tooltip = None
+        enumerator = self.AttachmentEnumerator(self._storage)
         if start != -1 and end != -1:
             filename = line_text[start+1:column_number+end]
             if filename.startswith('<'):
@@ -2379,7 +2344,7 @@ class StructuredTextField(TextField):
                 filename, tooltip = [x.strip() for x in filename.split('|', 1)]
                 if ' ' in filename:
                     filename = filename.split(' ', 1)[0]
-            if filename not in self.AttachmentsEnumerator(directory).values():
+            if filename not in enumerator.values():
                 # If the current link filename doesn't match any existing file
                 # name, the link is probably invlid (damaged by hand editation)
                 # and we rather don't replace it, but insert the new link
@@ -2391,7 +2356,7 @@ class StructuredTextField(TextField):
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
                   default=filename, compact=True, width=25,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX,
-                  enumerator=self.AttachmentsEnumerator(directory)),
+                  enumerator=enumerator),
             Field('preview', _(u"Náhled"), codebook='cms.Attachments', compact=True,
                   computer=computer(self._image_preview_computer), width=200, height=200,
                   editable=pytis.presentation.Editable.NEVER,

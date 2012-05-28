@@ -46,34 +46,6 @@ def nextval(seq):
     counter = pd.DBCounterDefault(seq, conn_spec)
     return lambda transaction=None: counter.next(transaction=transaction)
 
-def find_resources(directory, base_uri):
-    """Find resources in given directory and return a list of lcg.Resource instances.
-
-    The function expects the directory to contain files in a certain
-    arrangement.  Normal files have just one file per resource in given
-    directory, but images may have a resized version in the 'resized'
-    subdirectory and a thumbnail in 'thumbnails' subdirectory.  In such case
-    the image is represented by a resource pointing to the resized version of
-    the image, which defines the 'thumbnail' pointing to the thumbnailed
-    version.
-
-    """
-    import lcg, os
-    resources = []
-    if os.path.isdir(directory):
-        for filename in os.listdir(directory):
-            if os.path.isfile(os.path.join(directory, filename)):
-                if any([filename.lower().endswith(suffix) for suffix in ('jpg', 'png', 'gif')]):
-                    thumbnail = lcg.Image(os.path.join('thumbnails', filename),
-                                          src_file=os.path.join(directory, 'thumbnails', filename),
-                                          uri=base_uri+'thumbnails/'+filename)
-                    image = lcg.Image(filename,
-                                      src_file=os.path.join(directory, 'resized', filename),
-                                      uri=base_uri+'resized/'+filename,
-                                      thumbnail=thumbnail)
-                    resources.extend((thumbnail, image))
-    return resources
-
 
 class _TreeOrder(pp.PrettyFoldable, pd.String):
     def __init__(self, **kwargs):
@@ -288,7 +260,7 @@ class Menu(Specification):
         Field('description', _("Popis"), width=72,
               descr=_("Stručný popis stránky (zobrazen v menu jako tooltip).")),
         Field('content', _("Obsah"), compact=True, height=20, width=80,
-              text_format=pp.TextFormat.LCG, attachments_directory=self._attachments_directory,
+              text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
         Field('mod_id', _("Modul"), not_null=False,
               codebook=self._spec_name('Modules', False), allow_codebook_insert=True,
@@ -308,11 +280,12 @@ class Menu(Specification):
                       "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zařazena "
                       "na konec.")),
         )
-    def _attachments_directory(self, record):
+    def _attachment_storage(self, record):
         # Determines the directory for storing the attachments for the 'content' field.
-        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
-        if directory and record['identifier'].value():
-            return os.path.join(directory, record['identifier'].value())
+        base_directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
+        if base_directory and record['identifier'].value():
+            directory = os.path.join(base_directory, record['identifier'].value())
+            return pp.FileAttachmentStorage(directory)
         else:
             return None
     def _check_menu_order_condition(self, record):
@@ -374,9 +347,9 @@ class Menu(Specification):
     def _page_content(self, row):
         text = row['content'].value()
         if text:
-            directory = self._attachments_directory(row)
-            if directory:
-                resources = find_resources(directory, 'resource:')
+            storage = self._attachment_storage(row)
+            if storage:
+                resources = storage.resources('resource:')
             else:
                 resources = ()
             return pu.parse_lcg_text(text, resources=resources)

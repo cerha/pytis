@@ -2842,14 +2842,12 @@ class Field(object):
             should respect this (field editation may offer some extended
             controls, the field text is processed by LCG before displayed).
             Other formats are currently unsupported.
-          attachments_directory -- full path name of the directory where file
-            attachments for the field are stored.  Attachments are used with
+          attachment_storage -- instance of 'AttachmentStorage' subclass, None
+            or a function of row (a 'PresentedRow' instance representing the
+            current row), returning one of those.  Attachments are used with
             rich text fields to represent external resources used within the
-            text, such as images or other media files.  The value of this
-            argument may be the string directory name directly or function of
-            one argument (a 'PresentedRow' instance representing the current
-            row) which returns the directory name as a string.  This argument
-            is currently supported by wx forms for fields with
+            text, such as images or other media files.  This argument is
+            currently supported by wx forms for fields with
             text_format='TextFormat.LCG'.
           printable -- iff True, the user interface should allow the value of
             this field to be printed as a separate document.  This is most
@@ -2924,7 +2922,7 @@ class Field(object):
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
               style=None, link=(), filename=None,
-              text_format=TextFormat.PLAIN, attachments_directory=None, printable=False,
+              text_format=TextFormat.PLAIN, attachment_storage=None, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
               validity_condition=None, crypto_name=None,
               **kwargs):
@@ -2980,8 +2978,8 @@ class Field(object):
             err("Invalid 'style' specification: %s", style)
         assert filename is None or isinstance(filename, (basestring, collections.Callable)), filename
         assert text_format in public_attr_values(TextFormat), text_format
-        assert attachments_directory is None or \
-            isinstance(attachments_directory, (basestring, collections.Callable)), attachments_directory
+        assert attachment_storage is None or \
+            isinstance(attachment_storage, (AttachmentStorage, collections.Callable)), attachment_storage
         assert isinstance(printable, bool), printable
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         if enumerator is None:
@@ -3110,7 +3108,7 @@ class Field(object):
         self._links = links
         self._filename = filename
         self._text_format = text_format
-        self._attachments_directory = attachments_directory
+        self._attachment_storage = attachment_storage
         self._printable = printable
         self._slider = slider
         self._crypto_name = crypto_name
@@ -3267,8 +3265,8 @@ class Field(object):
     def text_format(self):
         return self._text_format
     
-    def attachments_directory(self):
-        return self._attachments_directory
+    def attachment_storage(self):
+        return self._attachment_storage
 
     def printable(self):
         return self._printable
@@ -3341,6 +3339,193 @@ class Fields(object):
         return [override.get(f.id(), f) for f in self._fields if f.id() not in exclude]
     
 
+class AttachmentStorage(object):
+    """Abstract base class defining the API for storing file attachments.
+
+    Attachments are external file resources used within LCG Structured text
+    content (within fields with text_format='TextFormat.LCG').  If it is
+    desired to let the user use attachments within a particular structured text
+    field, an instance of an 'AttachmentStorage' subclass must be passed as
+    'attachment_storage' argument to the 'Field' specification.
+
+    This class only defines an abstract API.  Use subclasses defined here or
+    define your own subclasses implementing this API.  Different subclasses
+    will usually define theyr own constructor arguments, but otherwise they
+    will obey the here defined interface.
+
+    It is up to the application developer's decision to choose the appropriate
+    level on which the attachments are shared.  There can be just one common
+    storage for the whole application, separate storage for each view, separate
+    for each record (the 'attachment_storage' argument of 'Field' can be a row
+    function) or any other logic.  It just depends on how the instances are
+    created (which constructor arguments they receive).
+    
+    """
+
+    class InvalidImageFormat(Exception):
+        """Exception raised by 'insert()' when image of unknown or invalid type is inserted."""
+        pass
+    
+    def insert(self, data, filename):
+        """Insert a new attachment into the storage.
+
+        Arguments:
+          data -- file-like object which may be read to retrieve the attachment
+            data.  The calling side is responsible for closing the file after
+            this method returns.
+          filename -- the file name of the attachment as a basestring.
+
+        Raises 'InvalidImageFormat' exception if an image of unknown or invalid
+          type is inserted.
+        Raises 'IOError' if storing the file fails.
+
+        """
+        pass
+
+    def delete(self, filename):
+        """Not supported yet"""
+        pass
+    
+    def resources(self, base_uri):
+        """Return a list of all files currently present in the storage.
+
+        The returned list consists of 'lcg.Resource' instances corresponding to
+        attachment files.  Image resources will automatically have a
+        'thumbnail' attribute if the user requested to display a smaller
+        version of the image.
+
+        The argument 'base_uri' is a string representing the base URI on which
+        the application handles attachments.  The storage may, however, choose
+        to ignore this base URI and supply its own base URI if it handles
+        attachments itself.
+
+        """
+        pass
+
+    def find_resource(self, uri):
+        """Find resource corresponding to given resource URI.
+
+        Searches the resources returned by 'resources()'.  The given URI is a
+        relative URI of the resource.  It corresponds to the final part of
+        'resource.uri()' when the value of 'base_uri' (passed to 'resources()')
+        is stripped.
+
+        None is returned when a corresponding resource is not found.
+        
+        """
+        import lcg
+        for resource in self.resources(''):
+            if resource.uri() == uri:
+                return resource
+            if isinstance(resource, lcg.Image):
+                thumbnail = resource.thumbnail()
+                if thumbnail and thumbnail.uri() == uri:
+                    return thumbnail
+        return None
+        
+    def retrieve(self, filename):
+        """Retieve the contents of an attachment file of given name.
+
+        The returned value is an open file like object with methods 'read()'
+        and 'close()'.  The calling side is responsible for calling 'close()'
+        after reading file data.
+
+        The 'filename' is the string value as returned by 'resource.filename()'
+        of one of the resources returned by 'resources()'.
+        
+        None is returned when a corresponding attachment is not found.
+        
+        """
+        pass
+
+    
+class FileAttachmentStorage(AttachmentStorage):
+    """Simple AttachmentStorage API implementation storing files in a filesystem.
+
+    The constructor arguemnt 'directory' determines the filesystem path where
+    attachment files are stored.  This directory must either exist and be
+    writable by the users who are expected to edit the field for which the
+    storage is used or when it doesn't exist, it will be created automatically,
+    but in this case one of its parent directories must exist and be writable.
+
+    The files are store the directory in a certain arrangement.  Normal files
+    have just one file per resource in given directory, but images may have a
+    resized version in the 'resized' subdirectory and a thumbnail in
+    'thumbnails' subdirectory.  In such case the image is represented by a
+    resource pointing to the resized version of the image, which defines the
+    'thumbnail' pointing to the thumbnailed version.
+
+    Attachment files are often shared between a wx and web application.  Both
+    applications must have access to this directory.  Wx app users editing the
+    fields must have write access, wx app users displaying the field contents
+    need read access and the web server user needs read access (editing
+    attachments is currently not supported by web forms).  If both applications
+    run on a different machine, the directory must be shared through a network
+    filesystem.
+    
+    """
+
+    def __init__(self, directory):
+        """Arguments:
+        
+          directory -- full path name of the directory where file attachments
+            are stored.  See class description for more information.
+            
+        """
+        assert isinstance(directory, basestring)
+        self._directory = directory
+        
+    def insert(self, data, filename, image_size=(800, 800), thumbnail_size=(200, 200)):
+        import PIL.Image
+        try:
+            image = PIL.Image.open(data)
+        except IOError as e:
+            raise self.InvalidImageFormat(e)
+        directory = self._directory
+        image.save(os.path.join(directory, filename))
+        try:
+            for size, subdir in ((thumbnail_size, 'thumbnails'), (image_size, 'resized')):
+                if not os.path.exists(os.path.join(directory, subdir)):
+                    os.makedirs(os.path.join(directory, subdir))
+                resized = image.copy()
+                resized.thumbnail(size, PIL.Image.ANTIALIAS)
+                resized.save(os.path.join(directory, subdir, filename))
+        except:
+            for subdir in ('', 'thumbnails', 'resized'):
+                path = os.path.join(directory, subdir, filename)
+                if os.path.exists(path):
+                    os.remove(path)
+            raise
+
+    def _resource(self, filename, base_uri):
+        import lcg
+        thumbnail = lcg.Image(os.path.join('thumbnails', filename),
+                              src_file=os.path.join(self._directory, 'thumbnails', filename),
+                              uri=base_uri+'thumbnails/'+filename)
+        return lcg.Image(filename, src_file=os.path.join(self._directory, 'resized', filename),
+                         uri=base_uri+'resized/'+filename,
+                         thumbnail=thumbnail)
+    
+    def resources(self, base_uri):
+        directory = self._directory
+        if os.path.isdir(directory):
+            return [
+                self._resource(filename, base_uri)
+                for filename in sorted([filename for filename in os.listdir(directory)
+                                        if os.path.isfile(os.path.join(directory, filename))
+                                        and any([filename.lower().endswith(suffix) for suffix in
+                                                 ('jpg', 'jpeg', 'png', 'gif')])])]
+        else:
+            return []
+
+    def retrieve(self, filename):
+        path = os.path.join(self._directory, filename)
+        if os.path.exists(path):
+            return open(path)
+        else:
+            return None
+   
+    
 class Specification(object):
     """Souhrnná specifikační třída sestavující specifikace automaticky.
 
