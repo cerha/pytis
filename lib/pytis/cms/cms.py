@@ -282,10 +282,14 @@ class Menu(Specification):
         )
     def _attachment_storage(self, record):
         # Determines the directory for storing the attachments for the 'content' field.
-        base_directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
-        if base_directory and record['identifier'].value():
-            directory = os.path.join(base_directory, record['identifier'].value())
-            return pp.FileAttachmentStorage(directory)
+        storage = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
+        if storage and record['identifier'].value():
+            if storage.startswith('http://') or storage.startswith('https://'):
+                uri = storage +'/'+ record['identifier'].value()
+                return pp.HttpAttachmentStorage(uri)
+            else:
+                directory = os.path.join(storage, record['identifier'].value())
+                return pp.FileAttachmentStorage(directory)
         else:
             return None
     def _check_menu_order_condition(self, record):
