@@ -3524,6 +3524,82 @@ class FileAttachmentStorage(AttachmentStorage):
             return open(path)
         else:
             return None
+
+        
+class HttpAttachmentStorage(AttachmentStorage):
+    """Remote AttachmentStorage implementation storing files through HTTP.
+
+    The constructor arguemnt 'uri' determines the HTTP uri of a server
+    application implementing the attachment storage protocol.  One sample
+    implementation of the server side as a Wiking module is the module
+    'pytis.cms.web.Attachments'.
+
+    """
+
+    def __init__(self, uri):
+        """Arguments:
+        
+          uri -- full URI of the attachment storage server application
+            (including the initial 'http://' or 'https://' protocol
+            specification).
+            
+        """
+        assert isinstance(uri, basestring) \
+            and (uri.startswith('http://') or uri.startswith('https://'))
+        self._uri = uri.rstrip('/')
+        
+    def insert(self, data, filename, image_size=(800, 800), thumbnail_size=(200, 200)):
+        import urllib2, mimetools, mimetypes, pytis, base64
+        boundary = mimetools.choose_boundary()
+        content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+        parts = ['--' + boundary,
+                 'MIME-Version: 1.0',
+                 'Content-Disposition: file; name="data"; filename="%s"' % filename.encode('utf-8'),
+                 'Content-Transfer-Encoding: base64',
+                 'Content-Type: application/octet-stream',
+                 '',
+                 data.read()] #base64.b64encode()]
+        #for name, value in ():
+        #    parts.extend(['--' + boundary,
+        #                     'Content-Disposition: form-data; name="%s"' % name,
+        #                     '',
+        #                     value]
+        parts.extend(('--' + boundary + '--', ''))
+        body = '\r\n'.join(parts)
+        request = urllib2.Request(self._uri)
+        request.add_header('User-agent', 'Pytis ' + pytis.__version__)
+        request.add_header('Content-type', 'multipart/form-data; boundary=%s' % boundary)
+        request.add_header('Content-length', len(body))
+        request.add_data(body)
+        response = urllib2.urlopen(request).read()
+        if response != 'OK':
+            raise Exception(response)
+        
+    def _resource(self, filename, base_uri):
+        import lcg
+        thumbnail = lcg.Image(os.path.join('thumbnails', filename),
+                              uri=self._uri+'/thumbnails/'+filename)
+        return lcg.Image(filename,
+                         uri=self._uri+'/resized/'+filename,
+                         thumbnail=thumbnail)
+    
+    def resources(self, base_uri):
+        import urllib2
+        connection = urllib2.urlopen(self._uri)
+        try:
+            response = connection.read()
+        finally:
+            connection.close()
+        return [self._resource(line.strip(), base_uri) for line in response.splitlines()]
+
+    def retrieve(self, filename):
+        import urllib2
+        try:
+            return urllib2.urlopen(self._uri+'/'+filename)
+        except urllib2.HTTPError as e:
+            if e.code == 404:
+                return None
+            raise
    
     
 class Specification(object):
