@@ -87,6 +87,9 @@ class Column(pytis.data.ColumnSpec):
     def doc(self):
         return self._doc
 
+    def index(self):
+        return self._index
+
     def sqlalchemy_column(self):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
@@ -95,8 +98,12 @@ class Column(pytis.data.ColumnSpec):
             if not isinstance(references, a):
                 references = a(references)
             args.append(sqlalchemy.ForeignKey(*references.args(), **references.kwargs()))
+        if self._index and not isinstance(self._index, dict):
+            index = '%s' % (self._index,)
+        else:
+            index = None
         return sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
-                                 doc=self._doc, index=self._index,
+                                 doc=self._doc, index=index,
                                  nullable=(not self.type().not_null()),
                                  primary_key=self._primary_key, unique=self._unique)
 
@@ -209,6 +216,7 @@ class SQLTable(_SQLTabular):
     def _init(self, *args, **kwargs):
         super(SQLTable, self)._init(*args, **kwargs)
         self._create_parameters()
+        self._create_special_indexes()
         self._create_comments()
 
     def _add_dependencies(self):
@@ -227,6 +235,19 @@ class SQLTable(_SQLTabular):
         for table in self.inherits:
             # TODO: How about schemas here?
             self._alter_table('INHERIT "%s"' % (table.name,))
+
+    def _create_special_indexes(self):
+        args = ()
+        for f in self.fields:
+            index = f.index()
+            if isinstance(index, dict):
+                assert index.keys() == ['method'], index
+                method = index['method']
+                column_name = f.id()
+                index = sqlalchemy.Index('%s_%s_%s_idx' % (self.name, column_name, method,),
+                                         getattr(self.c, column_name), postgresql_using=method)
+                sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
+        return args
 
     def _create_comments(self):
         doc = self.__doc__
@@ -366,7 +387,7 @@ class Foo(SQLTable):
     """Foo table."""
     name = 'foo'
     fields = (PrimaryColumn('id', pytis.data.Serial()),
-              Column('foo', pytis.data.String(), doc='some string'),
+              Column('foo', pytis.data.String(), doc='some string', index=dict(method='hash')),
               Column('n', pytis.data.Integer(not_null=True), doc='some number'),
               )
     inherits = ()
