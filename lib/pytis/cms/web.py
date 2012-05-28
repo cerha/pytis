@@ -434,12 +434,14 @@ class AccessLog(wiking.PytisModule):
 class Application(wiking.CookieAuthentication, wiking.Application):
     
     _MAPPING = dict(wiking.Application._MAPPING,
-                    _resources='Resources')
+                    _resources='Resources',
+                    _attachments='Attachments')
     
     _RIGHTS = {'Documentation': (wiking.Roles.ANYONE,),
                'Stylesheets': (wiking.Roles.ANYONE,),
                'Resources': (wiking.Roles.ANYONE,),
-               'SiteIcon': (wiking.Roles.ANYONE,)}
+               'SiteIcon': (wiking.Roles.ANYONE,),
+               'Attachments': (wiking.Roles.ANYONE,)}
     
     def _auth_user(self, req, login):
         return self._module('Users').user(req, login)
@@ -713,3 +715,74 @@ class Themes(wiking.PytisModule):
     def theme(self, theme_id):
         return self.Theme(self._data.get_row(theme_id=theme_id))
 
+
+class Attachments(wiking.Module, wiking.RequestHandler):
+    """Implements the server side of 'pp.HttpAttachmentStorage'.
+
+    The environment variable 'PYTIS_CMS_ATTACHMENTS_STORAGE' must be set to a
+    filesystem path where attachments are stored.  The
+    'pytis.presentation.FileAttachmentStorage' backend is actually used by the
+    server side to store attachments and the HTTP backend (connecting to this
+    server side module) actually only works as a HTTP proxy between the file
+    storage and the remote application.
+    
+    Override the method '_authorized()' to control authorization per directory.
+
+    """
+    def _handle(self, req):
+        directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
+        assert not (directory.startswith('http://') or directory.startswith('http://'))
+        if not directory or not req.unresolved_path:
+            raise wiking.Forbidden
+        identifier = req.unresolved_path[0]
+        del req.unresolved_path[0]
+        storage = pp.FileAttachmentStorage(os.path.join(directory, identifier))
+        if not req.unresolved_path:
+            data = req.param('data')
+            if data:
+                return self._insert(req, storage, data.file(), data.filename())
+            else:
+                return self._list(req, storage)
+        elif len(req.unresolved_path) == 1:
+            return self._retrieve(req, storage, req.unresolved_path[0])
+        else:
+            return self._find_resource(req, storage, '/'.join(req.unresolved_path))
+
+    def _authorized(self, req):
+        return True
+
+    def _insert(self, req, storage, data, filename):
+        try:
+            storage.insert(data, filename)
+        except Exception as e:
+            response = str(e)
+        else:
+            response = 'OK'
+        return wiking.Response(response, content_type='text/plain')
+    
+    def _list(self, req, storage):
+        filenames = [r.filename() for r in storage.resources('')]
+        return wiking.Response('\n'.join(filenames), content_type='text/plain')
+        
+    def _retrieve(self, req, storage, filename):
+        f = storage.retrieve(filename)
+        if f:
+            def proxy(f):
+                try:
+                    while True:
+                        data = f.read(524288)
+                        if not data:
+                            break
+                        yield data
+                finally:
+                    f.close()
+            return wiking.Response(proxy(f), content_type='application/octet-stream')
+        else:
+            raise wiking.NotFound
+    
+    def _find_resource(self, req, storage, uri):
+        resource = storage.find_resource(uri)
+        if resource:
+            return wiking.serve_file(req, resource.src_file())
+        else:
+            raise wiking.NotFound
