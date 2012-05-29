@@ -345,6 +345,7 @@ class _GsqlSpec(object):
             return None
         doc = doc.replace('\\', '\\\\')
         doc = doc.replace('"', '\\"')
+        doc = string.join([line.strip() for line in doc.split('\n')], '\n')
         return '"""%s"""' % (doc,)
 
     def _convert_value(self, value):
@@ -379,7 +380,11 @@ class _GsqlSpec(object):
                 type_ += 'not_null=True'
             type_ += ')' 
         else:
-            type_ = {'name': 'pytis.data.String(maxlen=64)'}.get(column.type)
+            mapping = {'name': 'pytis.data.String(maxlen=64)',
+                       'smallint': 'pytis.data.Integer()',
+                       'bytea': 'pytis.data.Binary()',
+                       }
+            type_ = mapping.get(column.type)
             if type_ is None:
                 type_ = 'XXX: %s' % (column.type,)
         unique = 'unique' in constraints or 'unique not null' in constraints
@@ -393,6 +398,10 @@ class _GsqlSpec(object):
                     if (components and action in ('update', 'delete',) and
                         components[0].lower() in ('cascade', 'delete', 'restrict',)):
                         references += ", on%s='%s'" % (action, components.pop(0).upper(),)
+                    elif (len(components) >= 2 and action in ('update', 'delete',) and
+                        (components[0].lower(), components[1].lower(),) == ('set', 'null',)):
+                        references += ", on%s='SET NULL'" % (action,)
+                        components = components[2:]
                     else:
                         references = None
                         break
@@ -407,19 +416,15 @@ class _GsqlSpec(object):
             references = None
         spec = ('%s(%s, %s' % (cls, name, type_,))
         if column.doc:
-            spec += ', doc="%s"' % (column.doc,)
+            spec += ', doc="%s"' % (column.doc.replace('\n', '\\n'),)
         if unique:
             spec += ', unique=%s' % (repr(unique),)
         if default is not None:
             spec += ', default=%s' % (default,)
         if references is not None:
             spec += ', references=%s' % (references,)
-        if isinstance(column.index, dict):
-            # index = ('sqlalchemy.Index("foo", mytable.c.data, postgresql_using="%s")' %
-            #          (column.index['method'],))
-            index = 'XXX: %s' % (column.name,)
-        elif column.index:
-            index = 'True'
+        if column.index:
+            index = str(column.index)
         else:
             index = None
         if index:
@@ -1558,7 +1563,7 @@ class Select(_GsqlSpec):
         return string.join(string_columns, ', ')
 
     def _convert_raw_condition(self, condition):
-        return "'%s'" % (condition,)
+        return "'%s'" % (_gsql_escape(condition),)
 
     def _convert_select_columns(self):
         return [self._convert_select_column(c) for c in self._columns]
@@ -1613,6 +1618,8 @@ class Select(_GsqlSpec):
                 result = '.join(%s, %s)' % (relation, self._convert_raw_condition(condition),)
             elif jtype == JoinType.LEFT_OUTER:
                 result = '.outerjoin(%s, %s)' % (relation, self._convert_raw_condition(condition),)
+            elif jtype == JoinType.CROSS and not condition:
+                result = ', %s' % (relation,)
             else:
                 result = '.XXX:%s(%s, %s)' % (jtype, relation, self._convert_raw_condition(condition),)
             return result
@@ -2937,6 +2944,7 @@ database dumps if you want to be sure about your schema.
 
     def convert(self):
         def process(o):
+            sys.stdout.write('# -*- coding: utf-8\n')
             sys.stdout.write(self[o].convert())
             sys.stdout.write('\n')
         self._process_resolved(process)
