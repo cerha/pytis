@@ -21,26 +21,38 @@
 
 import copy
 import inspect
+import os
 import re
 import string
 import sqlalchemy
 from sqlalchemy.ext.compiler import compiles
+import types
 import pytis.data
 
 ## SQLAlchemy extensions
 
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
+    def _set_search_path(self, search_path):
+        _set_current_search_path(search_path)
+        path_list = [_sql_id_escape(s) for s in search_path]
+        path = string.join(path_list, ',')
+        command = 'SET SEARCH PATH TO %s' % (path,)
+        self.connection.execute(command)
+
     def visit_view(self, view, create_ok=False):
-        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition,)
+        self._set_search_path(view.search_path())
+        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition(),)
         self.connection.execute(command)
 
     def visit_function(self, function, create_ok=False):
+        search_path = function.search_path()
+        self._set_search_path(search_path)
         def arg(column):
-            a_column = column.sqlalchemy_column()
+            a_column = column.sqlalchemy_column(search_path)
             return '"%s" %s' % (a_column.name, a_column.type,)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
-        result_type = function.result_type[0].sqlalchemy_column().type
+        result_type = function.result_type[0].sqlalchemy_column(search_path).type
         if function.multirow:
             result_type = 'SETOF ' + result_type
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$\n%s\n$$ LANGUAGE %s %s' %
@@ -90,14 +102,17 @@ class Column(pytis.data.ColumnSpec):
     def index(self):
         return self._index
 
-    def sqlalchemy_column(self):
+    def sqlalchemy_column(self, search_path):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
         references = self._references
         if references is not None:
             if not isinstance(references, a):
                 references = a(references)
-            args.append(sqlalchemy.ForeignKey(*references.args(), **references.kwargs()))
+            r_args = references.args()
+            if isinstance(r_args[0], ReferenceLookup.Reference):
+                r_args = (r_args[0].get(),) + r_args[1:]
+            args.append(sqlalchemy.ForeignKey(*r_args, **references.kwargs()))
         if self._index and not isinstance(self._index, dict):
             index = '%s' % (self._index,)
         else:
@@ -115,6 +130,39 @@ class PrimaryColumn(Column):
         super(PrimaryColumn, self).__init__(*args, **kwargs)
 
 ## Utilities
+
+_current_search_path = None
+
+def _set_current_search_path(search_path):
+    global _current_search_path
+    _current_search_path = search_path
+    
+def _sql_id_escape(identifier):
+    return '"%s"' % (identifier.replace('"', '""'),)
+
+class SQLFlexibleValue(object):
+    
+    def __init__(self, name, default=None, environment=None):
+        assert isinstance(name, basestring), name
+        assert isinstance(environment, (basestring, types.NoneType,)), environment
+        self._name = name
+        self._default = default
+        self._environment = environment
+
+    def value(self):
+        value = None
+        name = None
+        if self._environment is not None:
+            name = os.getenv(self._environment)
+        if name is None:
+            name = self._name
+        value = globals().get(name)
+        if value is None:
+            value = self._default
+        return value
+
+_default_schemas = SQLFlexibleValue('default_schemas', environment='GSQL_DEFAULT_SCHEMAS',
+                                    default=(('public',),))
 
 _metadata = sqlalchemy.MetaData()
 
@@ -136,18 +184,29 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
             cls.name = name
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
         if is_specification:
-            for schema in cls.schemas:
-                cls(_metadata, schema)
+            schemas = cls.schemas
+            if isinstance(schemas, SQLFlexibleValue):
+                schemas = schemas.value()
+            for search_path in schemas:
+                _set_current_search_path(search_path)
+                cls(_metadata, search_path)
     
 def object_by_name(name):
     return _metadata.tables[name]
+
+def object_by_path(name, search_path):
+    for schema in search_path:
+        try:
+            return object_by_name('%s.%s' % (schema, name,))
+        except KeyError:
+            continue
+    raise SQLException("Object not found", (schema, name,))
 
 def object_by_specification(specification):
     class_ = globals()[specification]
     assert issubclass(class_, _SQLTabular)
     table_name = class_.pytis_name()
-    schema = class_.schemas[0]      # TODO: handle all schemas
-    return object_by_name('%s.%s' % (schema, table_name,))
+    return object_by_path(table_name, _current_search_path)
     
 class TableLookup(object):
     def __getattr__(self, specification):
@@ -158,6 +217,23 @@ class ColumnLookup(object):
     def __getattr__(self, specification):
         return object_by_specification(specification).c
 c = ColumnLookup()
+
+class ReferenceLookup(object):
+    class Reference(object):
+        def __init__(self, specification, column):
+            self._specification = specification
+            self._column = column
+        def get(self):
+            columns = object_by_specification(self._specification).c
+            return columns[self._column]
+    class ColumnLookup(object):
+        def __init__(self, specification):
+            self._specification = specification
+        def __getattr__(self, column):
+            return ReferenceLookup.Reference(self._specification, column)
+    def __getattr__(self, specification):
+        return self.ColumnLookup(specification)
+r = ReferenceLookup()
 
 class a(object):
     def __init__(self, *args, **kwargs):
@@ -174,17 +250,20 @@ class _SQLTabular(sqlalchemy.Table):
     __metaclass__ = _PytisTableMetaclass
     
     name = None
-    schemas = ('public',)
-    search_path = ('public',)           # TODO: how to handle this in SQLAlchemy?
+    schemas = _default_schemas
     depends_on = ()
 
     def _init(self, *args, **kwargs):
         super(_SQLTabular, self)._init(*args, **kwargs)
+        self._search_path = _current_search_path
         self._add_dependencies()
 
     def _add_dependencies(self):
         for o in self.depends_on:
             self.add_is_dependent_on(o)
+
+    def search_path(self):
+        return self._search_path
 
     @classmethod
     def pytis_name(class_):
@@ -204,20 +283,33 @@ class SQLTable(_SQLTabular):
     unique = ()
     with_oids = False
 
-    def __new__(cls, metadata, schema):
-        columns = tuple([c.sqlalchemy_column() for c in cls.fields])
+    def __new__(cls, metadata, search_path):
+        columns = tuple([c.sqlalchemy_column(search_path) for c in cls.fields])
         args = (cls.name, metadata,) + columns
         for check in cls.check:
             args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
             args += (sqlalchemy.UniqueConstraint (*unique),)
-        return sqlalchemy.Table.__new__(cls, *args, schema=schema)
+        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
     def _init(self, *args, **kwargs):
         super(SQLTable, self)._init(*args, **kwargs)
         self._create_parameters()
         self._create_special_indexes()
         self._create_comments()
+
+    def _table_name(self, table):
+        name = table.name
+        schemas = table.schemas
+        if isinstance(schemas, SQLFlexibleValue):
+            schemas = schemas.value()
+        table_schemas = [s[0] for s in schemas]
+        for schema in self.search_path():
+            if schema in table_schemas:
+                break
+        else:
+            raise SQLException("No matching table schema", (name, self.search_path(),))
+        return '"%s"."%s"' % (schema, name,)
 
     def _add_dependencies(self):
         super(SQLTable, self)._add_dependencies()
@@ -233,8 +325,7 @@ class SQLTable(_SQLTabular):
         if self.tablespace:
             self._alter_table('SET TABLESPACE "%s"' % (self.tablespace,))
         for table in self.inherits:
-            # TODO: How about schemas here?
-            self._alter_table('INHERIT "%s"' % (table.name,))
+            self._alter_table('INHERIT %s' % (self._table_name(table),))
 
     def _create_special_indexes(self):
         args = ()
@@ -271,18 +362,20 @@ class SQLTable(_SQLTabular):
 
 class SQLView(_SQLTabular):
 
-    condition = None
+    @classmethod
+    def condition(class_):
+        return None
 
     __visit_name__ = 'view'
 
-    def __new__(cls, metadata, schema):
-        columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.condition.columns])
+    def __new__(cls, metadata, search_path):
+        columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.condition().columns])
         args = (cls.name, metadata,) + columns
-        return sqlalchemy.Table.__new__(cls, *args, schema=schema)
+        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
     def _add_dependencies(self):
         super(SQLView, self)._add_dependencies()
-        objects = [self.condition]
+        objects = [self.condition()]
         seen = []
         while objects:
             o = objects.pop()
@@ -312,10 +405,10 @@ class SQLFunctional(_SQLTabular):
 
     __visit_name__ = 'function'
 
-    def __new__(cls, metadata, schema):
-        columns = tuple([c.sqlalchemy_column() for c in cls.result_type])
+    def __new__(cls, metadata, search_path):
+        columns = tuple([c.sqlalchemy_column(search_path) for c in cls.result_type])
         args = (cls.name, metadata,) + columns
-        return sqlalchemy.Table.__new__(cls, *args, schema=schema)
+        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
@@ -455,9 +548,9 @@ class Foo2(Foo):
 
 class Bar(SQLTable):
     """Bar table."""
+    schemas = (('private', 'public',),)
     fields = (PrimaryColumn('id', pytis.data.Serial()),
-              # TODO: How to set schema in references automatically?
-              Column('foo_id', pytis.data.Integer(), references=a(c.Foo.id, onupdate='CASCADE')),
+              Column('foo_id', pytis.data.Integer(), references=a(r.Foo.id, onupdate='CASCADE')),
               Column('description', pytis.data.String()),
               )
     init_columns = ('foo_id', 'description',)
@@ -466,14 +559,20 @@ class Bar(SQLTable):
 class Baz(SQLView):
     """Baz view."""
     name = 'baz'
-    condition = sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
-                                                   from_obj=[t.Foo.join(t.Bar)]),
-                                 sqlalchemy.select([c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
+    schemas = (('private', 'public',),)
+    @classmethod
+    def condition(class_):
+        return sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
+                                                  from_obj=[t.Foo.join(t.Bar)]),
+                                sqlalchemy.select([c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
 
 class AliasView(SQLView):
     name = 'aliased'
-    condition = (lambda foo1=t.Foo.alias('foo1'), foo2=t.Foo.alias('foo2'):
-                 sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n<foo2.c.n)]))()
+    @classmethod
+    def condition(class_):
+        foo1 = t.Foo.alias('foo1')
+        foo2 = t.Foo.alias('foo2')
+        return sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n<foo2.c.n)])
 
 class Func(SQLFunction):
     name = 'plus'
@@ -501,41 +600,11 @@ class PyFunc(SQLPyFunction):
     def sub_pythonic(x, y):
         return x * y
 
-engine = None
-def _dump_sql_command(sql, *multiparams, **params):
-    if isinstance(sql, str):
-        output = unicode(sql)
-    elif isinstance(sql, unicode):
-        output = sql
-    else:
-        compiled = sql.compile(dialect=engine.dialect)
-        if isinstance(sql, sqlalchemy.sql.expression.Insert):
-            # SQLAlchemy apparently doesn't work so well without a database
-            # connection.  We probably have no better choice than to handle some
-            # things manually here, despite the corresponding functionality is
-            # present in SQLAlchemy.
-            parameters = {}
-            sql_parameters = sql.parameters
-            if len(sql_parameters) != len(compiled.binds):
-                # Probably default key value
-                for k in compiled.binds.keys():
-                    if k not in sql_parameters:
-                        column = sql.table.columns[k]
-                        parameters[k] = "nextval('%s_%s_seq')" % (column.table.name, column.name,)
-            for k, v in sql_parameters.items():
-                if v is None:
-                    value = 'NULL'
-                elif isinstance(v, (int, long, float,)):
-                    value = v
-                else:
-                    value = "'%s'" % (v.replace('\\', '\\\\').replace("'", "''"),)
-                parameters[k] = value
-            output = unicode(compiled) % parameters
-        else:
-            output = unicode(compiled)
-    print output + ';'
+def run():
+    global engine
+    engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    for table in _metadata.sorted_tables:
+        table.create(engine, checkfirst=False)
 
 if __name__ == '__main__':
-    engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
-    for t in _metadata.sorted_tables:
-        t.create(engine, checkfirst=False)
+    run()
