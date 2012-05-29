@@ -381,6 +381,51 @@ class SQLPyFunction(SQLFunctional):
         lines = [l.rstrip() for l in lines[1:]]
         return [reindent(l) for l in lines if l.strip()]
 
+## Specification processing
+
+engine = None
+def _dump_sql_command(sql, *multiparams, **params):
+    if isinstance(sql, str):
+        output = unicode(sql)
+    elif isinstance(sql, unicode):
+        output = sql
+    else:
+        compiled = sql.compile(dialect=engine.dialect)
+        if isinstance(sql, sqlalchemy.sql.expression.Insert):
+            # SQLAlchemy apparently doesn't work so well without a database
+            # connection.  We probably have no better choice than to handle some
+            # things manually here, despite the corresponding functionality is
+            # present in SQLAlchemy.
+            parameters = {}
+            sql_parameters = sql.parameters
+            if len(sql_parameters) != len(compiled.binds):
+                # Probably default key value
+                for k in compiled.binds.keys():
+                    if k not in sql_parameters:
+                        column = sql.table.columns[k]
+                        parameters[k] = "nextval('%s_%s_seq')" % (column.table.name, column.name,)
+            for k, v in sql_parameters.items():
+                if v is None:
+                    value = 'NULL'
+                elif isinstance(v, (int, long, float,)):
+                    value = v
+                else:
+                    value = "'%s'" % (v.replace('\\', '\\\\').replace("'", "''"),)
+                parameters[k] = value
+            output = unicode(compiled) % parameters
+        else:
+            output = unicode(compiled)
+    print output + ';'
+
+def gsql_file(file_name):
+    global _metadata
+    _metadata = sqlalchemy.MetaData()
+    execfile(file_name, copy.copy(globals()))
+    global engine
+    engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    for table in _metadata.sorted_tables:
+        table.create(engine, checkfirst=False)
+    
 ## Sample demo
 
 class Foo(SQLTable):
