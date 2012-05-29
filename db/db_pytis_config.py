@@ -17,7 +17,7 @@ if not db_rights:
 
 _std_table_nolog('e_pytis_config',
       (P('id', TSerial),
-       C('username', TUser, constraints=('UNIQUE NOT NULL',)),
+       C('username', TUser, constraints=('UNIQUE', 'NOT NULL',)),
        C('pickle', TString, constraints=('NOT NULL',)),
        ),
       grant=db_rights,
@@ -100,14 +100,15 @@ select profiles.id || ''.'' || params.id from profiles, params
          depends=('ev_pytis_form_profiles',))   
 
 viewng('ev_pytis_form_profiles',
-       relations=(Relation('e_pytis_form_profile_base', alias='profile', key_column='id',
-                           exclude_columns=('id', 'username', 'spec_name', 'profile_id', 'pickle', 'dump', 'errors')),
-                  Relation('e_pytis_form_profile_params', alias='params', key_column='lang',
-                           jointype=JoinType.RIGHT_OUTER,
+       relations=(Relation('e_pytis_form_profile_params', alias='params', key_column='lang',
+                           exclude_columns=('id', 'pickle', 'dump', 'errors')),
+                  Relation('e_pytis_form_profile_base', alias='profile', key_column='id',
+                           exclude_columns=('id', 'username', 'spec_name', 'profile_id', 'pickle', 'dump', 'errors'),
+                           jointype=JoinType.LEFT_OUTER,
                            condition=('profile.username = params.username and '
                                       'profile.spec_name = params.spec_name and '
-                                      'profile.profile_id = params.profile_id'),
-                           exclude_columns=('id', 'pickle', 'dump', 'errors')),
+                                      'profile.profile_id = params.profile_id')
+                           ),
                   ),
        include_columns=(ViewColumn(None, alias='id', sql="profile.id||'.'||params.id"),
                         ViewColumn(None, alias='fullname', sql="'form/'|| params.form_name ||'/'|| profile.spec_name ||'//'"),
