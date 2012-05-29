@@ -194,7 +194,9 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
 def object_by_name(name):
     return _metadata.tables[name]
 
-def object_by_path(name, search_path):
+def object_by_path(name, search_path=True):
+    if search_path is True:
+        search_path = _current_search_path
     for schema in search_path:
         try:
             return object_by_name('%s.%s' % (schema, name,))

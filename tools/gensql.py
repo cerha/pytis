@@ -1606,7 +1606,7 @@ class Select(_GsqlSpec):
                 if rel.alias:
                     aliases.append((rel.alias, relation,))
             else:
-                relation = "object_by_name('%s')" % (rel.relation,)
+                relation = "object_by_path('%s')" % (rel.relation,)
             alias = rel.alias or ''
             if i == 0 or rel.condition is None:
                 condition = ''
@@ -1629,7 +1629,7 @@ class Select(_GsqlSpec):
         if wherecondition:
             result = '%s.where(%s)' % (result, self._convert_raw_condition(wherecondition),)
         if aliases:
-            parameters = string.join(["%s=object_by_name(%s)" % (alias, repr(relation),)
+            parameters = string.join(["%s=object_by_path(%s)" % (alias, repr(relation),)
                                       for alias, relation in aliases],
                                      ', ')
             result = '(lambda %s: %s)()' % (parameters, result,)
@@ -1905,8 +1905,11 @@ class _GsqlViewNG(Select):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
+        if self._schemas:
+            schemas = tuple([tuple(s.split(',')) for s in self._schemas])
+            items.append('    schemas = %s' % (repr(schemas),))
         condition = self._convert_select()
-        items.append('    condition = %s' % (condition,))
+        items.append('    @classmethod\n    def condition(self):\n        return %s' % (condition,))
         return string.join(items, '\n') + '\n'
         
 
