@@ -562,10 +562,10 @@ def _dump_sql_command(sql, *multiparams, **params):
             output = unicode(compiled) % parameters
         elif isinstance(sql, sqlalchemy.sql.expression.Select):
             output = unicode(compiled) % compiled.params
-            if hasattr(sql, 'pytis_prefix'):
-                output = sql.pytis_prefix + output
         else:
             output = unicode(compiled)
+        if hasattr(sql, 'pytis_prefix'):
+            output = sql.pytis_prefix + output
     print output + ';'
 
 def gsql_file(file_name):
