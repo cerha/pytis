@@ -37,7 +37,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         _set_current_search_path(search_path)
         path_list = [_sql_id_escape(s) for s in search_path]
         path = string.join(path_list, ',')
-        command = 'SET SEARCH PATH TO %s' % (path,)
+        command = 'SET SEARCH_PATH TO %s' % (path,)
         self.connection.execute(command)
 
     def visit_view(self, view, create_ok=False):
@@ -119,9 +119,9 @@ class Column(pytis.data.ColumnSpec):
                 r_args = (r_args[0].get(table_name, key_name),) + r_args[1:]
             args.append(sqlalchemy.ForeignKey(*r_args, **references.kwargs()))
         if self._index and not isinstance(self._index, dict):
-            index = '%s' % (self._index,)
+            index = True
         else:
-            index = None
+            index = False
         return sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
                                  doc=self._doc, index=index,
                                  nullable=(not self.type().not_null()),
