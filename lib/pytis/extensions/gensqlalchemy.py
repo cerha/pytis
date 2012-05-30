@@ -327,14 +327,23 @@ class SQLTable(_SQLTabular):
     def __new__(cls, metadata, search_path):
         table_name = cls.pytis_name()
         key = []
-        for c in cls.fields:
+        fields = cls.fields
+        for i in cls.inherits:
+            fields = fields + i.fields
+        for c in fields:
             if c.primary_key():
                 key.append(c.id())
         if len(key) == 1:
             key_name = '%s.%s.%s' % (search_path[0], table_name, key[0],)
         else:
             key_name = None
-        columns = tuple([c.sqlalchemy_column(search_path, table_name, key_name) for c in cls.fields])
+        columns = ()
+        for i in cls.inherits:
+            orig_table_name = i.pytis_name()
+            columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, orig_table_name)
+                                       for c in i.fields])
+        columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, table_name)
+                                   for c in cls.fields])
         args = (table_name, metadata,) + columns
         for check in cls.check:
             args += (sqlalchemy.CheckConstraint(check),)
@@ -364,7 +373,7 @@ class SQLTable(_SQLTabular):
     def _add_dependencies(self):
         super(SQLTable, self)._add_dependencies()
         for inherited in self.inherits:
-            self.add_is_dependent_on(object_by_name('%s.%s' % (self.schema, inherited.name,)))
+            self.add_is_dependent_on(object_by_name('%s.%s' % (self.schema, inherited.pytis_name(),)))
 
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
@@ -598,7 +607,7 @@ class Foo(SQLTable):
 class Foo2(Foo):
     name = 'foofoo'
     inherits = (Foo,)
-    fields = Foo.fields + (Column('bar', pytis.data.String()),)
+    fields = (Column('bar', pytis.data.String()),)
     check = ('n > 0',)
     init_columns = ()
     init_values = ()
