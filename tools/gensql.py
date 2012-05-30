@@ -371,7 +371,7 @@ class _GsqlSpec(object):
         pos = name.rfind('.')
         if pos >= 0:
             name = name[pos+1:]
-        cls = 'PrimaryColumn' if name in self.key_columns() else 'Column'
+        cls = 'PrimaryColumn' if name in [c.split('.')[-1] for c in self.key_columns()] else 'Column'
         name = repr(name)
         constraints = [c.lower() for c in column.constraints]
         if isinstance(column.type, pytis.data.Type):
@@ -391,7 +391,7 @@ class _GsqlSpec(object):
         default = None if column.default is None else self._convert_value(column.default)
         if column.references:
             components = column.references.split(' ')
-            references = "a(object_by_name(%s)" % (repr(components.pop(0),))
+            references = "a(object_by_reference(%s)" % (repr(components.pop(0),))
             while components:
                 if components.pop(0).lower() == 'on':
                     action = (components and components.pop(0).lower())
@@ -1314,10 +1314,10 @@ class _GsqlTable(_GsqlSpec):
             items.append(self._convert_indent(self._convert_column(column), 14) + ',')
         items.append('             )')
         inherits = [self._convert_name(name) for name in (self._inherits or ())]
-        inherits = string.join(inherits, ', ')
-        if inherits:
-            inherits += ','
-            items.append('    inherits = (%s)' % (inherits,))
+        inherits_string = string.join(inherits, ', ')
+        if inherits_string:
+            inherits_string += ','
+            items.append('    inherits = (%s)' % (inherits_string,))
         if self._tablespace:
             items.append('    tablespace = %s' % (repr(self._tablespace),))
         init_columns = [c.name if isinstance(c, Column) else c for c in self._init_columns]
@@ -1562,8 +1562,11 @@ class Select(_GsqlSpec):
         string_columns = ["'%s'" % (c.strip(),) for c in columns.split(',')]
         return string.join(string_columns, ', ')
 
-    def _convert_raw_condition(self, condition):
-        return "'%s'" % (_gsql_escape(condition),)
+    def _convert_raw_condition(self, condition, as_object=False):
+        converted = "'%s'" % (_gsql_escape(condition or ''),)
+        if as_object:
+            converted = 'RawCondition(%s)' % (converted,)
+        return converted
 
     def _convert_select_columns(self):
         return [self._convert_select_column(c) for c in self._columns]
@@ -1603,11 +1606,11 @@ class Select(_GsqlSpec):
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = "object_by_name('%s.%s')" % (rel.schema, rel.relation,)
-                if rel.alias:
-                    aliases.append((rel.alias, relation,))
             else:
                 relation = "object_by_path('%s')" % (rel.relation,)
-            alias = rel.alias or ''
+            if rel.alias:
+                aliases.append((rel.alias, relation,))
+                relation = rel.alias
             if i == 0 or rel.condition is None:
                 condition = ''
             else:    
@@ -1615,46 +1618,45 @@ class Select(_GsqlSpec):
             if jtype == JoinType.FROM:
                 result = relation
             elif jtype == JoinType.INNER:
-                result = '.join(%s, %s)' % (relation, self._convert_raw_condition(condition),)
+                result = '.join(%s, %s)' % (relation, self._convert_raw_condition(condition, True),)
             elif jtype == JoinType.LEFT_OUTER:
-                result = '.outerjoin(%s, %s)' % (relation, self._convert_raw_condition(condition),)
+                result = '.outerjoin(%s, %s)' % (relation, self._convert_raw_condition(condition, True),)
             elif jtype == JoinType.CROSS and not condition:
                 result = ', %s' % (relation,)
             else:
                 result = '.XXX:%s(%s, %s)' % (jtype, relation, self._convert_raw_condition(condition),)
             return result
-        wherecondition = self._relations[0].condition
         joins = [convert_relation(i, r) for i, r in enumerate(self._relations)]
         result = ''.join(joins)
-        if wherecondition:
-            result = '%s.where(%s)' % (result, self._convert_raw_condition(wherecondition),)
         if aliases:
-            parameters = string.join(["%s=object_by_path(%s)" % (alias, repr(relation),)
+            parameters = string.join(["%s=%s" % (alias, relation,)
                                       for alias, relation in aliases],
                                      ', ')
-            result = '(lambda %s: %s)()' % (parameters, result,)
-        return result
+            result = '(lambda %s: [%s])()' % (parameters, result,)
+        condition = self._convert_raw_condition(self._relations[0].condition)
+        return result, condition
         
     def _convert_select(self):
         if self._set:
-            selects = []
+            condition = ''
             aliases = [c.alias for c in self._columns[0]]
             for r in self._relations:
                 r.sort_columns(aliases)
                 if isinstance(r, SelectSet):
                     output = r.select._convert_select()        
                     if r.settype:
-                        output = '.%s(%s)' % (r.settype.lower(), output,)
-                        selects[-1] = selects[-1] + output
+                        assert condition
+                        condition = 'sqlalchemy.%s(%s, %s)' % (r.settype.lower(), condition, output,)
                     else:
-                        selects.append(output)
+                        assert not condition, condition
+                        condition = output
                 else:
                     selects.append(r._convert_select())
-            condition = ''.join(selects)
         else:
-            relations = self._convert_relations()
+            relations, where_condition = self._convert_relations()
             columns = self._convert_select_columns()
-            condition = 'sqlalchemy.select(%s, from_obj=[%s])' % (columns, relations,)
+            condition = ('sqlalchemy.select(%s, from_obj=%s, whereclause=%s)' %
+                         (columns, relations, where_condition,))
             if self._group_by:
                 condition += '.group_by(%s)' % (self._convert_raw_columns(self._group_by),)
             if self._having:
@@ -2946,8 +2948,8 @@ database dumps if you want to be sure about your schema.
         self._process_resolved(process)
 
     def convert(self):
+        sys.stdout.write('# -*- coding: utf-8\n')
         def process(o):
-            sys.stdout.write('# -*- coding: utf-8\n')
             sys.stdout.write(self[o].convert())
             sys.stdout.write('\n')
         self._process_resolved(process)

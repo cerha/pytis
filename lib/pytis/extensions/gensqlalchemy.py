@@ -250,6 +250,14 @@ def object_by_specification(specification):
     assert issubclass(class_, _SQLTabular)
     table_name = class_.pytis_name()
     return object_by_path(table_name, _current_search_path)
+
+
+class RawCondition(object):
+    def __init__(self, condition):
+        self._condition = condition
+        self._from_objects = []
+    def _compiler_dispatch(self, *args, **kwargs):
+        return self._condition
     
 class TableLookup(object):
     def __getattr__(self, specification):
