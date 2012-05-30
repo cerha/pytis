@@ -51,10 +51,10 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         search_path = function.search_path()
         self._set_search_path(search_path)
         def arg(column):
-            a_column = column.sqlalchemy_column(search_path, None, None)
+            a_column = column.sqlalchemy_column(search_path, None, None, None)
             return '"%s" %s' % (a_column.name, a_column.type,)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
-        result_type = function.result_type[0].sqlalchemy_column(search_path, None, None).type
+        result_type = function.result_type[0].sqlalchemy_column(search_path, None, None, None).type
         if function.multirow:
             result_type = 'SETOF ' + result_type
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$\n%s\n$$ LANGUAGE %s %s' %
@@ -107,7 +107,7 @@ class Column(pytis.data.ColumnSpec):
     def primary_key(self):
         return self._primary_key
 
-    def sqlalchemy_column(self, search_path, table_name, key_name):
+    def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
         references = self._references
@@ -122,10 +122,12 @@ class Column(pytis.data.ColumnSpec):
             index = True
         else:
             index = False
-        return sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
-                                 doc=self._doc, index=index,
-                                 nullable=(not self.type().not_null()),
-                                 primary_key=self._primary_key, unique=self._unique)
+        column = sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
+                                   doc=self._doc, index=index,
+                                   nullable=(not self.type().not_null()),
+                                   primary_key=self._primary_key, unique=self._unique)
+        column.pytis_orig_table = orig_table_name
+        return column
 
 class PrimaryColumn(Column):
     
@@ -349,7 +351,9 @@ class SQLTable(_SQLTabular):
             args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
             args += (sqlalchemy.UniqueConstraint (*unique),)
-        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        obj.pytis_key = key
+        return obj
 
     def _init(self, *args, **kwargs):
         super(SQLTable, self)._init(*args, **kwargs)
@@ -469,7 +473,7 @@ class SQLFunctional(_SQLTabular):
     __visit_name__ = 'function'
 
     def __new__(cls, metadata, search_path):
-        columns = tuple([c.sqlalchemy_column(search_path, None, None) for c in cls.result_type])
+        columns = tuple([c.sqlalchemy_column(search_path, None, None, None) for c in cls.result_type])
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
@@ -555,11 +559,12 @@ def _dump_sql_command(sql, *multiparams, **params):
             parameters = {}
             sql_parameters = sql.parameters
             if len(sql_parameters) != len(compiled.binds):
-                # Probably default key value
-                for k in compiled.binds.keys():
+                # Perhaps default key value
+                for k in sql.table.pytis_key:
                     if k not in sql_parameters:
                         column = sql.table.columns[k]
-                        parameters[k] = "nextval('%s_%s_seq')" % (column.table.name, column.name,)
+                        parameters[k] = ("nextval('%s.%s_%s_seq')" %
+                                         (column.table.schema, column.pytis_orig_table, column.name,))
             for k, v in sql_parameters.items():
                 if v is None:
                     value = 'NULL'
@@ -621,8 +626,8 @@ class Bar(SQLTable):
               Column('description', pytis.data.String()),
               )
     init_columns = ('foo_id', 'description',)
-    init_values = ((1, 'some text'),
-                   )
+    init_values = ((1, 'some text'),)
+
 class Baz(SQLView):
     """Baz view."""
     name = 'baz'
