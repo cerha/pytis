@@ -3386,7 +3386,7 @@ class AttachmentStorage(object):
         """Not supported yet"""
         pass
     
-    def resources(self, base_uri):
+    def resources(self):
         """Return a list of all files currently present in the storage.
 
         The returned list consists of 'lcg.Resource' instances corresponding to
@@ -3394,27 +3394,20 @@ class AttachmentStorage(object):
         'thumbnail' attribute if the user requested to display a smaller
         version of the image.
 
-        The argument 'base_uri' is a string representing the base URI on which
-        the application handles attachments.  The storage may, however, choose
-        to ignore this base URI and supply its own base URI if it handles
-        attachments itself.
-
         """
         pass
 
-    def find_resource(self, uri):
+    def find_resource_by_uri(self, uri):
         """Find resource corresponding to given resource URI.
 
-        Searches the resources returned by 'resources()'.  The given URI is a
-        relative URI of the resource.  It corresponds to the final part of
-        'resource.uri()' when the value of 'base_uri' (passed to 'resources()')
-        is stripped.
+        Searches all the resources returned by 'resources()' including nested
+        resources, such as thumbnails of Image resources.
 
         None is returned when a corresponding resource is not found.
         
         """
         import lcg
-        for resource in self.resources(''):
+        for resource in self.resources():
             if resource.uri() == uri:
                 return resource
             if isinstance(resource, lcg.Image):
@@ -3465,15 +3458,19 @@ class FileAttachmentStorage(AttachmentStorage):
     
     """
 
-    def __init__(self, directory):
+    def __init__(self, directory, base_uri):
         """Arguments:
         
           directory -- full path name of the directory where file attachments
             are stored.  See class description for more information.
+          base_uri -- attachments base URI as a string.  This is the URI on
+            which the application handles attachments.
+
             
         """
         assert isinstance(directory, basestring)
         self._directory = directory
+        self._base_uri = base_uri
         
     def insert(self, data, filename, image_size=(800, 800), thumbnail_size=(200, 200)):
         import PIL.Image
@@ -3497,20 +3494,20 @@ class FileAttachmentStorage(AttachmentStorage):
                     os.remove(path)
             raise
 
-    def _resource(self, filename, base_uri):
+    def _resource(self, filename):
         import lcg
         thumbnail = lcg.Image(os.path.join('thumbnails', filename),
                               src_file=os.path.join(self._directory, 'thumbnails', filename),
-                              uri=base_uri+'thumbnails/'+filename)
+                              uri=self._base_uri+'thumbnails/'+filename)
         return lcg.Image(filename, src_file=os.path.join(self._directory, 'resized', filename),
-                         uri=base_uri+'resized/'+filename,
+                         uri=self._base_uri+'resized/'+filename,
                          thumbnail=thumbnail)
     
-    def resources(self, base_uri):
+    def resources(self):
         directory = self._directory
         if os.path.isdir(directory):
             return [
-                self._resource(filename, base_uri)
+                self._resource(filename)
                 for filename in sorted([filename for filename in os.listdir(directory)
                                         if os.path.isfile(os.path.join(directory, filename))
                                         and any([filename.lower().endswith(suffix) for suffix in
@@ -3575,7 +3572,7 @@ class HttpAttachmentStorage(AttachmentStorage):
         if response != 'OK':
             raise Exception(response)
         
-    def _resource(self, filename, base_uri):
+    def _resource(self, filename):
         import lcg
         thumbnail = lcg.Image(os.path.join('thumbnails', filename),
                               uri=self._uri+'/thumbnails/'+filename)
@@ -3583,14 +3580,14 @@ class HttpAttachmentStorage(AttachmentStorage):
                          uri=self._uri+'/resized/'+filename,
                          thumbnail=thumbnail)
     
-    def resources(self, base_uri):
+    def resources(self):
         import urllib2
         connection = urllib2.urlopen(self._uri)
         try:
             response = connection.read()
         finally:
             connection.close()
-        return [self._resource(line.strip(), base_uri) for line in response.splitlines()]
+        return [self._resource(line.strip()) for line in response.splitlines()]
 
     def retrieve(self, filename):
         import urllib2

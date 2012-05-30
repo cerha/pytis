@@ -280,7 +280,7 @@ class Menu(Specification):
                       "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zařazena "
                       "na konec.")),
         )
-    def _attachment_storage(self, record):
+    def _attachment_storage(self, record, base_uri='resource:'):
         # Determines the directory for storing the attachments for the 'content' field.
         storage = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
         if storage and record['identifier'].value():
@@ -289,7 +289,7 @@ class Menu(Specification):
                 return pp.HttpAttachmentStorage(uri)
             else:
                 directory = os.path.join(storage, record['identifier'].value())
-                return pp.FileAttachmentStorage(directory)
+                return pp.FileAttachmentStorage(directory, base_uri)
         else:
             return None
     def _check_menu_order_condition(self, record):
@@ -353,7 +353,7 @@ class Menu(Specification):
         if text:
             storage = self._attachment_storage(row)
             if storage:
-                resources = storage.resources('resource:')
+                resources = storage.resources()
             else:
                 resources = ()
             return pu.parse_lcg_text(text, resources=resources)

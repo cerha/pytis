@@ -1984,7 +1984,7 @@ class StructuredTextField(TextField):
             self._storage = storage
             super(StructuredTextField.AttachmentEnumerator, self).__init__()
         def values(self):
-            return [r.filename() for r in self._storage.resources('resource:')]
+            return [r.filename() for r in self._storage.resources()]
             
     class ImageAlignments(pytis.presentation.Enumeration):
         enumeration = (('inline', _("Do řádku")),
@@ -2201,7 +2201,7 @@ class StructuredTextField(TextField):
         else:
             parent = None
         if self._storage:
-            resources = self._storage.resources('resource:')
+            resources = self._storage.resources()
         else:
             resources = ()
         InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG, resources=resources)
@@ -2209,7 +2209,7 @@ class StructuredTextField(TextField):
     def _cmd_export_pdf(self):
         import tempfile
         if self._storage:
-            resources = self._storage.resources('resource:')
+            resources = self._storage.resources()
         else:
             resources = ()
         content = lcg.Container(lcg.Parser().parse(self._get_value()))

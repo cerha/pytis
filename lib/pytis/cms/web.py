@@ -153,15 +153,19 @@ class Menu(wiking.PytisModule):
                 if module.name() == menu_record['modname'].value():
                     return rights.permitted_roles(menu_item_id, action)
         return ()
+    
+    def _attachment_storage(self, record):
+        base_uri = '/'+ self._menu_item_identifier(record) +'/attachments/'
+        return self._view.field('content').attachment_storage()(record, base_uri)
 
     def _menu_item_identifier(self, row):
         return str(row['identifier'].value())
 
     def _handle_subpath(self, req, record):
         if req.unresolved_path[0] == 'attachments':
-            storage = self._view.field('content').attachment_storage()(record)
+            storage = self._attachment_storage(record)
             if storage:
-                resource = storage.find_resource('/'.join(req.unresolved_path[1:]))
+                resource = storage.find_resource_by_uri(req.uri())
                 if resource and resource.src_file():
                     return wiking.serve_file(req, resource.src_file())
             raise wiking.NotFound()
@@ -230,10 +234,9 @@ class Menu(wiking.PytisModule):
         text = record['content'].value()
         modname = record['modname'].value()
         globals = self.globals(req)
-        storage = self._view.field('content').attachment_storage()(record)
+        storage = self._attachment_storage(record)
         if storage:
-            attachment_base_uri = '/'+ self._menu_item_identifier(record) +'/attachments/'
-            resources = storage.resources(attachment_base_uri)
+            resources = storage.resources()
         else:
             resources = ()
         if resources:
@@ -722,10 +725,9 @@ class Attachments(wiking.Module, wiking.RequestHandler):
     The environment variable 'PYTIS_CMS_ATTACHMENTS_STORAGE' must be set to a
     filesystem path where attachments are stored.  The
     'pytis.presentation.FileAttachmentStorage' backend is actually used by the
-    server side to store attachments and the HTTP backend (connecting to this
-    server side module) actually only works as a HTTP proxy between the file
-    storage and the remote application.
-    
+    server side to store attachments.  The HTTP storage works as a HTTP proxy
+    between the application and the server side file storage backend.
+
     Override the method '_authorized()' to control authorization per directory.
 
     """
@@ -736,7 +738,7 @@ class Attachments(wiking.Module, wiking.RequestHandler):
             raise wiking.Forbidden
         identifier = req.unresolved_path[0]
         del req.unresolved_path[0]
-        storage = pp.FileAttachmentStorage(os.path.join(directory, identifier))
+        storage = pp.FileAttachmentStorage(os.path.join(directory, identifier), '')
         if not req.unresolved_path:
             data = req.param('data')
             if data:
@@ -746,7 +748,11 @@ class Attachments(wiking.Module, wiking.RequestHandler):
         elif len(req.unresolved_path) == 1:
             return self._retrieve(req, storage, req.unresolved_path[0])
         else:
-            return self._find_resource(req, storage, '/'.join(req.unresolved_path))
+            resource = storage.find_resource_by_uri(req.uri())
+            if resource:
+                return wiking.serve_file(req, resource.src_file())
+            else:
+                raise wiking.NotFound
 
     def _authorized(self, req):
         return True
@@ -761,7 +767,7 @@ class Attachments(wiking.Module, wiking.RequestHandler):
         return wiking.Response(response, content_type='text/plain')
     
     def _list(self, req, storage):
-        filenames = [r.filename() for r in storage.resources('')]
+        filenames = [r.filename() for r in storage.resources()]
         return wiking.Response('\n'.join(filenames), content_type='text/plain')
         
     def _retrieve(self, req, storage, filename):
@@ -777,12 +783,5 @@ class Attachments(wiking.Module, wiking.RequestHandler):
                 finally:
                     f.close()
             return wiking.Response(proxy(f), content_type='application/octet-stream')
-        else:
-            raise wiking.NotFound
-    
-    def _find_resource(self, req, storage, uri):
-        resource = storage.find_resource(uri)
-        if resource:
-            return wiking.serve_file(req, resource.src_file())
         else:
             raise wiking.NotFound
