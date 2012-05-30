@@ -437,7 +437,7 @@ class Type(object):
 
     def sqlalchemy_type(self):
         """Return corresponding SQLAlchemy type, sqlalchemy.types.TypeEngine instance."""
-        raise Exception("Not implemented")
+        raise Exception("Not implemented", self)
        
 
 class Number(Type):
@@ -2091,6 +2091,21 @@ class LTree(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
+    class LTreeType(sqlalchemy.types.UserDefinedType):
+
+        def get_col_spec(self):
+            return 'ltree'
+
+        def bind_processor(self, dialect):
+            def process(value):
+                return value
+            return process
+
+        def result_processor(self, dialect, coltype):
+            def process(value):
+                return value
+            return process
+    
     def __init__(self, text=True, **kwargs):
         """
         Arguments:
@@ -2134,6 +2149,9 @@ class LTree(Type):
     def wm_validate(self, object):
         assert isinstance(object, basestring)
         return WMValue(self, object), None
+    
+    def sqlalchemy_type(self):
+        return self.LTreeType()
 
 
 class Array(Limited):
