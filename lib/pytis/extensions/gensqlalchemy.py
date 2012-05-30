@@ -147,6 +147,13 @@ def _set_current_search_path(search_path):
 def _sql_id_escape(identifier):
     return '"%s"' % (identifier.replace('"', '""'),)
 
+def _sql_value_escape(value):
+    if isinstance(value, basestring):
+        result = value.replace('\\', '\\\\').replace("'", "''")
+    else:
+        result = str(value)
+    return result
+
 class SQLFlexibleValue(object):
     
     def __init__(self, name, default=None, environment=None):
@@ -567,7 +574,12 @@ def _dump_sql_command(sql, *multiparams, **params):
             parameters = {}
             sql_parameters = sql.parameters
             if len(sql_parameters) != len(compiled.binds):
-                # Perhaps default key value
+                for k in compiled.binds.keys():
+                    if k not in sql_parameters:
+                        column = sql.table.columns[k]
+                        if column.default is not None:
+                            parameters[k] = _sql_value_escape(column.default.arg)
+                # Perhaps also default key value
                 for k in sql.table.pytis_key:
                     if k not in sql_parameters:
                         column = sql.table.columns[k]
