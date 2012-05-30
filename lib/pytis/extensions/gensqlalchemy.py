@@ -42,8 +42,10 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def visit_view(self, view, create_ok=False):
         self._set_search_path(view.search_path())
-        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS %s' % (view.schema, view.name, view.condition(),)
-        self.connection.execute(command)
+        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS ' % (view.schema, view.name,)
+        condition = view.condition()
+        condition.pytis_prefix = command
+        self.connection.execute(condition)
 
     def visit_function(self, function, create_ok=False):
         search_path = function.search_path()
@@ -508,6 +510,10 @@ def _dump_sql_command(sql, *multiparams, **params):
                     value = "'%s'" % (v.replace('\\', '\\\\').replace("'", "''"),)
                 parameters[k] = value
             output = unicode(compiled) % parameters
+        elif isinstance(sql, sqlalchemy.sql.expression.Select):
+            output = unicode(compiled) % compiled.params
+            if hasattr(sql, 'pytis_prefix'):
+                output = sql.pytis_prefix + output
         else:
             output = unicode(compiled)
     print output + ';'
