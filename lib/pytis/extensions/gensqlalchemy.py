@@ -397,6 +397,10 @@ class SQLView(_SQLTabular):
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
+@compiles(SQLView)
+def visit_view(element, compiler, **kw):
+    return '"%s"."%s"' % (element.schema, element.name,)
+
 class SQLFunctional(_SQLTabular):
 
     arguments = ()
@@ -573,6 +577,12 @@ class Baz(SQLView):
         return sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
                                                   from_obj=[t.Foo.join(t.Bar)]),
                                 sqlalchemy.select([c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
+
+class Baz2(SQLView):
+    schemas = (('private', 'public',),)
+    @classmethod
+    def condition(class_):
+        return sqlalchemy.select([c.Baz.id], from_obj=[t.Baz], whereclause=(c.Baz.id > '0'))
 
 class AliasView(SQLView):
     name = 'aliased'
