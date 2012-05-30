@@ -51,10 +51,10 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         search_path = function.search_path()
         self._set_search_path(search_path)
         def arg(column):
-            a_column = column.sqlalchemy_column(search_path)
+            a_column = column.sqlalchemy_column(search_path, None, None)
             return '"%s" %s' % (a_column.name, a_column.type,)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
-        result_type = function.result_type[0].sqlalchemy_column(search_path).type
+        result_type = function.result_type[0].sqlalchemy_column(search_path, None, None).type
         if function.multirow:
             result_type = 'SETOF ' + result_type
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$\n%s\n$$ LANGUAGE %s %s' %
@@ -104,7 +104,10 @@ class Column(pytis.data.ColumnSpec):
     def index(self):
         return self._index
 
-    def sqlalchemy_column(self, search_path):
+    def primary_key(self):
+        return self._primary_key
+
+    def sqlalchemy_column(self, search_path, table_name, key_name):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
         references = self._references
@@ -112,8 +115,8 @@ class Column(pytis.data.ColumnSpec):
             if not isinstance(references, a):
                 references = a(references)
             r_args = references.args()
-            if isinstance(r_args[0], ReferenceLookup.Reference):
-                r_args = (r_args[0].get(),) + r_args[1:]
+            if isinstance(r_args[0], (ReferenceLookup.Reference, _Reference)):
+                r_args = (r_args[0].get(table_name, key_name),) + r_args[1:]
             args.append(sqlalchemy.ForeignKey(*r_args, **references.kwargs()))
         if self._index and not isinstance(self._index, dict):
             index = '%s' % (self._index,)
@@ -206,6 +209,40 @@ def object_by_path(name, search_path=True):
             continue
     raise SQLException("Object not found", (schema, name,))
 
+class _Reference(object):
+    def __init__(self, name, column):
+        self._name = name
+        self._column = column
+    def get(self, table_name, key_name):
+        if table_name == self._name:
+            reference = key_name
+        else:
+            table = object_by_path(self._name)
+            if self._column:
+                column = self._column
+            else:
+                column = None
+                for c in table.c:
+                    if c.primary_key:
+                        if column is not None:
+                            raise SQLException("Can't identify column reference (multikey)", (table,))
+                        column = c
+                if column is None:
+                    raise SQLException("Can't identify column reference (no key)", (table,))
+                column = column.name
+            reference = table.c[column]
+        return reference
+def object_by_reference(name):
+    name = name.strip()
+    pos = name.find('(')
+    if pos > 0:
+        table = name[:pos].strip()
+        column = name[pos+1:-1].strip()
+    else:
+        table = name
+        column = None
+    return _Reference(table, column)
+
 def object_by_specification(specification):
     class_ = globals()[specification]
     assert issubclass(class_, _SQLTabular)
@@ -227,7 +264,7 @@ class ReferenceLookup(object):
         def __init__(self, specification, column):
             self._specification = specification
             self._column = column
-        def get(self):
+        def get(self, table_name, key_name):
             columns = object_by_specification(self._specification).c
             return columns[self._column]
     class ColumnLookup(object):
@@ -288,8 +325,17 @@ class SQLTable(_SQLTabular):
     with_oids = False
 
     def __new__(cls, metadata, search_path):
-        columns = tuple([c.sqlalchemy_column(search_path) for c in cls.fields])
-        args = (cls.name, metadata,) + columns
+        table_name = cls.pytis_name()
+        key = []
+        for c in cls.fields:
+            if c.primary_key():
+                key.append(c.id())
+        if len(key) == 1:
+            key_name = '%s.%s.%s' % (search_path[0], table_name, key[0],)
+        else:
+            key_name = None
+        columns = tuple([c.sqlalchemy_column(search_path, table_name, key_name) for c in cls.fields])
+        args = (table_name, metadata,) + columns
         for check in cls.check:
             args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
@@ -414,7 +460,7 @@ class SQLFunctional(_SQLTabular):
     __visit_name__ = 'function'
 
     def __new__(cls, metadata, search_path):
-        columns = tuple([c.sqlalchemy_column(search_path) for c in cls.result_type])
+        columns = tuple([c.sqlalchemy_column(search_path, None, None) for c in cls.result_type])
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
