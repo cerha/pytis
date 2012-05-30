@@ -3386,13 +3386,25 @@ class AttachmentStorage(object):
         """Not supported yet"""
         pass
     
+    def resource(self, filename):
+        """Return a 'lcg.Resource' instance for given 'filename' if it exists or None.
+
+        Image resources will automatically have a 'thumbnail' attribute if the
+        user requested to display a smaller version of the image.  The storage
+        may pass also additional information about the attachment in the 'info'
+        argument of 'lcg.Resource' (available through the method
+        'resource.info()').
+        
+        """
+        pass
+
     def resources(self):
         """Return a list of all files currently present in the storage.
 
         The returned list consists of 'lcg.Resource' instances corresponding to
-        attachment files.  Image resources will automatically have a
-        'thumbnail' attribute if the user requested to display a smaller
-        version of the image.
+        attachment files.  See 'resource()' for more information about the
+        returned resource instances.
+
 
         """
         pass
@@ -3503,6 +3515,13 @@ class FileAttachmentStorage(AttachmentStorage):
                          uri=self._base_uri+'resized/'+filename,
                          thumbnail=thumbnail)
     
+    def resource(self, filename):
+        path = os.path.join(self._directory, filename)
+        if os.path.isfile(path):
+            return self._resource(filename)
+        else:
+            return None
+        
     def resources(self):
         directory = self._directory
         if os.path.isdir(directory):
@@ -3580,6 +3599,14 @@ class HttpAttachmentStorage(AttachmentStorage):
                          uri=self._uri+'/resized/'+filename,
                          thumbnail=thumbnail)
     
+    def resource(self):
+        connection = self.retrieve(filename)
+        if connection:
+            connection.close()
+            return self._resource(filename)
+        else:
+            return None
+
     def resources(self):
         import urllib2
         connection = urllib2.urlopen(self._uri)
