@@ -579,6 +579,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return None
 
     def export(self, context):
+        context.resource('prototype.js')
+        context.resource('pytis.js')
         result = super(EditForm, self).export(context)
         layout_fields = self._layout.order()
         field_handlers = []
@@ -594,8 +596,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                             self._row.runtime_arguments(fid))
             handler = field.exporter.handler(context, self._id, active, required)
             field_handlers.append(handler)
-        context.resource('prototype.js')
-        context.resource('pytis.js')
         result += g.script("new pytis.FormHandler('%s', [%s], %s)" %
                            (self._id, ', '.join(field_handlers), g.js_value(state)))
         return result
@@ -628,59 +628,96 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             import json
         except:
             import simplejson as json
-        request_number = req.param('_pytis_form_update_request')
-        changed_field = str(req.param('_pytis_form_changed_field'))
-        state = req.param('_pytis_form_state')
-        if state:
-            import urlparse
-            field_states = dict((k, v[0]) for k, v in urlparse.parse_qs(state).items())
-        else:
-            field_states = {}
-        fields = {}
-        computed_fields = [f.id() for f in row.fields() if f.computer() is not None]
-        for fid in layout.order():
-            fields[fid] = fdata = {}
-            if fid != changed_field:
-                fdata['editable'] = row.editable(fid)
-                if fid in computed_fields and row.invalid_string(fid) is None \
-                        and not isinstance(row.type(fid), pd.Binary):
-                    value = row[fid]
-                    if isinstance(value.type(), pd.DateTime):
-                        exported_value = localizable_datetime(value)
+        storage_request_field = req.param('_pytis_attachment_storage_request')
+        if storage_request_field:
+            field = find(storage_request_field, row.fields(), key=lambda f: f.id())
+            if not field:
+                raise wiking.BadRequest()
+            storage = field.attachment_storage()
+            if isinstance(storage, collections.Callable):
+                storage = storage(row)
+            def resource2dict(resource):
+                result = dict([(attr, getattr(resource, attr)())
+                               for attr in ('filename', 'uri', 'title', 'descr')],
+                              type=resource.__class__.__name__,
+                              **(resource.info() or {}))
+                if isinstance(resource, lcg.Image) and resource.thumbnail():
+                    result['thumbnail'] = resource2dict(resource.thumbnail())
+                return result
+            filename = req.param('filename')
+            if filename:
+                # This is a get_attachment() request.
+                if storage is None:
+                    raise wiking.BadRequest()
+                else:
+                    if False:
+                        # TODO: Not implemented yet!
+                        parameters = {}
+                        result = storage.update(filename, parameters)
                     else:
-                        exported_value = value.export()
-                    localized_value = localizer.localize(exported_value)
-                    # Values of disabled fields are not in the request, so send them always...
-                    if not req.has_param(fid) or localized_value != req.param(fid):
-                        fdata['value'] = localized_value
-                if fid in field_states:
-                    old_state = field_states[fid]
-                    # We rely on the fact, that a stringified
-                    # 'pytis.data.Operator' uniquely represents the
-                    # corresponding runtime filter state.
-                    new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
-                    if new_state != old_state:
-                        enumeration = [(value, localizer.localize(label))
-                                       for value, label in row.enumerate(fid)]
-                        fdata['state'] = new_state
-                        fdata['enumeration'] = enumeration
-                        if uri_provider and isinstance(row.type(fid), pd.Array):
-                            func = uri_provider(row, fid, type=UriType.LINK)
-                            def link(value):
-                                lnk = func(value)
-                                if isinstance(lnk, Link):
-                                    return dict(href=lnk.uri(),
-                                                title=localizer.localize(lnk.title()),
-                                                target=lnk.target())
-                                else:
-                                    return dict(href=lnk)
-                            if func:
-                                fdata['links'] = dict([(value, link(value))
-                                                       for (value, display) in enumeration])
-        for fid, error in errors:
-            if fid in fields:
-                fields[fid]['error'] = localizer.localize(error)
-        return json.dumps(dict(request_number=request_number, fields=fields))
+                        resource = storage.resource(filename)
+                        result = resource and resource2dict(resource)
+            else:
+                # This is a list_attachments() request.
+                if storage is None:
+                    result = []
+                else:
+                    result = [resource2dict(r) for r in storage.resources()]
+        else:
+            request_number = req.param('_pytis_form_update_request')
+            changed_field = str(req.param('_pytis_form_changed_field'))
+            state = req.param('_pytis_form_state')
+            if state:
+                import urlparse
+                field_states = dict((k, v[0]) for k, v in urlparse.parse_qs(state).items())
+            else:
+                field_states = {}
+            fields = {}
+            computed_fields = [f.id() for f in row.fields() if f.computer() is not None]
+            for fid in layout.order():
+                fields[fid] = fdata = {}
+                if fid != changed_field:
+                    fdata['editable'] = row.editable(fid)
+                    if fid in computed_fields and row.invalid_string(fid) is None \
+                            and not isinstance(row.type(fid), pd.Binary):
+                        value = row[fid]
+                        if isinstance(value.type(), pd.DateTime):
+                            exported_value = localizable_datetime(value)
+                        else:
+                            exported_value = value.export()
+                        localized_value = localizer.localize(exported_value)
+                        # Values of disabled fields are not in the request, so send them always...
+                        if not req.has_param(fid) or localized_value != req.param(fid):
+                            fdata['value'] = localized_value
+                    if fid in field_states:
+                        old_state = field_states[fid]
+                        # We rely on the fact, that a stringified
+                        # 'pytis.data.Operator' uniquely represents the
+                        # corresponding runtime filter state.
+                        new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
+                        if new_state != old_state:
+                            enumeration = [(value, localizer.localize(label))
+                                           for value, label in row.enumerate(fid)]
+                            fdata['state'] = new_state
+                            fdata['enumeration'] = enumeration
+                            if uri_provider and isinstance(row.type(fid), pd.Array):
+                                func = uri_provider(row, fid, type=UriType.LINK)
+                                def link(value):
+                                    lnk = func(value)
+                                    if isinstance(lnk, Link):
+                                        return dict(href=lnk.uri(),
+                                                    title=localizer.localize(lnk.title()),
+                                                    target=lnk.target())
+                                    else:
+                                        return dict(href=lnk)
+                                if func:
+                                    fdata['links'] = dict([(value, link(value))
+                                                           for (value, display) in enumeration])
+            for fid, error in errors:
+                if fid in fields:
+                    fields[fid]['error'] = localizer.localize(error)
+            result = dict(request_number=request_number, fields=fields)
+        return json.dumps(result)
 
     
 class FilterForm(EditForm):

@@ -66,7 +66,6 @@ pytis.FormHandler = Class.create({
 	var last_values = this._observer.lastValue.parseQuery();
 	for (var id in this._fields) {
 	    var field = this._fields[id];
-	    var value = field.value();
 	    // Disabled fields are not present in values/last_values, but also
 	    // checkbox fields are not there if unchecked.
 	    if (field.active()
@@ -145,6 +144,8 @@ pytis.Field = Class.create({
 	    // TODO: handle aria-required also for compound fields (radio group, checklist).
 	    this._ctrl.setAttribute('aria-required', 'true');
 	}
+	// To allow accessing the field handler instance in pytis-ckeditor.js.
+	this._element._pytis_field_instance = this;
     },
 
     id: function() {
@@ -303,32 +304,42 @@ pytis.HtmlField = Class.create(pytis.Field, {
     initialize: function($super, form_id, field_id, id, active, required) {
 	$super(form_id, field_id, id, active, required);
         if (typeof(CKEDITOR) != 'undefined') {
-	    CKEDITOR.on('dialogDefinition', function(event) {
-		if (event.data.name == 'link') {
-		    event.data.definition.removeContents('advanced');
-		    event.data.definition.removeContents('target');
-		}
-		if (event.data.name == 'image') {
-		    event.data.definition.removeContents('advanced');
-		    event.data.definition.removeContents('Link');
-		}
-	    });
+	    // The function pytis.HtmlField.plugin is defined in pytis-ckeditor.js.
+	    CKEDITOR.plugins.add('pytis-attachments', {init: pytis.HtmlField.plugin});
+	    CKEDITOR.on('dialogDefinition', pytis.HtmlField.on_dialog);
 	}
+    },
+    
+    list_attachments: function() {
+	var req = this._form.request({
+	    parameters: {_pytis_form_update_request: 1,
+			 _pytis_attachment_storage_request: this._id},
+	    asynchronous: false
+	});
+	return req.transport.responseText.evalJSON();
+    },
+    
+    get_attachment: function(filename) {
+	var req = this._form.request({
+	    parameters: {_pytis_form_update_request: 1,
+			 _pytis_attachment_storage_request: this._id,
+			 filename: filename},
+	    asynchronous: false
+	});
+	return req.transport.responseText.evalJSON();
+    },
+
+    update_attachment: function(filename, parameters) {
+	parameters['_pytis_form_update_request'] = 1;
+	parameters['_pytis_attachment_storage_request'] = this._id;
+	parameters['filename'] = filename;
+	var req = this._form.request({
+	    parameters: parameters,
+	    asynchronous: false
+	});
+	return req.transport.responseText.evalJSON();
     }
 });
-
-pytis.HtmlField.select_file = function (uri) {
-    // Static method to be called when a file is selected in HtmlField's file
-    // browser.  The browser window will be closed and the file uri will be
-    // inserted into the HtmlField's file/image dialog.  The file browser is
-    // invoked from this dialog using the URI provider with
-    // `pytis.web.UriType.*_BROWSER' type.
-    var re = new RegExp('(?:[\?&]|&amp;)CKEditorFuncNum=([^&]+)', 'i');
-    var match = window.location.search.match(re);
-    var func_num = (match && match.length > 1) ? match[1] : '';
-    window.opener.CKEDITOR.tools.callFunction(func_num, uri, '');
-    window.parent.close();
-};
 
 pytis.DateTimeField = Class.create(pytis.Field, {
     _set_editability: function(value) {
