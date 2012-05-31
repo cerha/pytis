@@ -1012,7 +1012,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 result = block_refresh(proc, *args, **kwargs)
             else:
                 result = proc(*args, **kwargs)
-            log(ACTION, "Návratová hodnota procedury:", result)
+            if False:
+                # The return value may contain secret data, so we don't log it.
+                log(ACTION, u"Návratová hodnota procedury:", result)
             if focused:
                 focused.SetFocus()
         except UserBreakException:
