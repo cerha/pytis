@@ -310,35 +310,30 @@ pytis.HtmlField = Class.create(pytis.Field, {
 	}
     },
     
-    list_attachments: function() {
+    _attachment_storage_request: function(request, parameters) {
+	parameters['_pytis_form_update_request'] = 1;
+	parameters['_pytis_attachment_storage_field'] = this._id;
+	parameters['_pytis_attachment_storage_request'] = request;
 	var req = this._form.request({
-	    parameters: {_pytis_form_update_request: 1,
-			 _pytis_attachment_storage_request: this._id},
-	    asynchronous: false
-	});
-	return req.transport.responseText.evalJSON();
-    },
-    
-    get_attachment: function(filename) {
-	var req = this._form.request({
-	    parameters: {_pytis_form_update_request: 1,
-			 _pytis_attachment_storage_request: this._id,
-			 filename: filename},
+	    parameters: parameters,
 	    asynchronous: false
 	});
 	return req.transport.responseText.evalJSON();
     },
 
+    get_attachment: function(filename) {
+	return this._attachment_storage_request('get', {filename: filename});
+    },
+
+    list_attachments: function() {
+	return this._attachment_storage_request('list', {});
+    },
+    
+    },
+
     update_attachment: function(filename, values) {
-	var req = this._form.request({
-	    parameters: {
-		_pytis_form_update_request: 1,
-		_pytis_attachment_storage_request: this._id,
-		filename: filename,
-		values: Object.toJSON(values)},
-	    asynchronous: false
-	});
-	return req.transport.responseText.evalJSON();
+	return this._attachment_storage_request('update', {filename: filename,
+							   values: Object.toJSON(values)});
     }
 });
 
