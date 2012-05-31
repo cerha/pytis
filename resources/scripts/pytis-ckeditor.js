@@ -295,11 +295,12 @@ pytis.HtmlField.dialog = function(editor) {
 		      var dialog = CKEDITOR.dialog.getCurrent();
 		      var filename = dialog.getValueOf('image', 'identifier')
 		      var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-		      field.update_attachment(filename, {
+		      var error = field.update_attachment(filename, {
 			  'title': dialog.getValueOf('details', 'title'),
 			  'description': dialog.getValueOf('details', 'description'),
 			  'thumbnail_size': dialog.getValueOf('details', 'thumbnail_size')
 		      });
+		      // TODO: Display error message when error != null.
 		  }}
 	     ]
 	    },

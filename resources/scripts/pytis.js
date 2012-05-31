@@ -329,12 +329,13 @@ pytis.HtmlField = Class.create(pytis.Field, {
 	return req.transport.responseText.evalJSON();
     },
 
-    update_attachment: function(filename, parameters) {
-	parameters['_pytis_form_update_request'] = 1;
-	parameters['_pytis_attachment_storage_request'] = this._id;
-	parameters['filename'] = filename;
+    update_attachment: function(filename, values) {
 	var req = this._form.request({
-	    parameters: parameters,
+	    parameters: {
+		_pytis_form_update_request: 1,
+		_pytis_attachment_storage_request: this._id,
+		filename: filename,
+		values: Object.toJSON(values)},
 	    asynchronous: false
 	});
 	return req.transport.responseText.evalJSON();

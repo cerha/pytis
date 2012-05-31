@@ -646,15 +646,16 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 return result
             filename = req.param('filename')
             if filename:
-                # This is a get_attachment() request.
+                # This is a get_attachment() or update_attachment() request.
                 if storage is None:
                     raise wiking.BadRequest()
                 else:
-                    if False:
-                        # TODO: Not implemented yet!
-                        parameters = {}
-                        result = storage.update(filename, parameters)
+                    values = req.param('values')
+                    if values:
+                        # update_attachment()
+                        result = storage.update(filename, json.loads(values))
                     else:
+                        # get_attachment()
                         resource = storage.resource(filename)
                         result = resource and resource2dict(resource)
             else:

@@ -3409,6 +3409,45 @@ class AttachmentStorage(object):
         """
         pass
 
+    def retrieve(self, filename):
+        """Retieve the contents of an attachment file of given name.
+
+        The returned value is an open file like object with methods 'read()'
+        and 'close()'.  The calling side is responsible for calling 'close()'
+        after reading file data.
+
+        The 'filename' is the string value as returned by 'resource.filename()'
+        of one of the resources returned by 'resources()'.
+        
+        None is returned when a corresponding attachment is not found.
+        
+        """
+        pass
+
+
+    def update(self, filename, values):
+        """Update the information about given attachment.
+
+        Arguments:
+        
+          filename -- string filename uniquely identifying the resource.  Must
+             be one of existing filenames as returned by 'resource.filename()'
+             of one of the resources returned by 'resources()'.
+             
+          values -- dictionary of values of attachment parameters to
+             update.  The keys may be 'title', 'descr' (corresponding to
+             'resource.title()' and 'resource.descr()') or any additional
+             application defined attachment parameters (usually passed through
+             'resource.info()').
+        
+        Returns None when the update is performed ok or an error message string
+        when error occurres.
+        
+        """
+        pass
+
+    # Helper methods which don't need to be implemented in derived classes.
+
     def find_resource_by_uri(self, uri):
         """Find resource corresponding to given resource URI.
 
@@ -3428,20 +3467,6 @@ class AttachmentStorage(object):
                     return thumbnail
         return None
         
-    def retrieve(self, filename):
-        """Retieve the contents of an attachment file of given name.
-
-        The returned value is an open file like object with methods 'read()'
-        and 'close()'.  The calling side is responsible for calling 'close()'
-        after reading file data.
-
-        The 'filename' is the string value as returned by 'resource.filename()'
-        of one of the resources returned by 'resources()'.
-        
-        None is returned when a corresponding attachment is not found.
-        
-        """
-        pass
 
     
 class FileAttachmentStorage(AttachmentStorage):
