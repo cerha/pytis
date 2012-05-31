@@ -742,7 +742,7 @@ class Attachments(wiking.Module, wiking.RequestHandler):
         if not req.unresolved_path:
             data = req.param('data')
             if data:
-                return self._insert(req, storage, data.file(), data.filename())
+                return self._insert(req, storage, data.filename(), data.file())
             else:
                 return self._list(req, storage)
         elif len(req.unresolved_path) == 1:
@@ -759,7 +759,7 @@ class Attachments(wiking.Module, wiking.RequestHandler):
 
     def _insert(self, req, storage, data, filename):
         try:
-            storage.insert(data, filename)
+            storage.insert(filename, data)
         except Exception as e:
             response = str(e)
         else:

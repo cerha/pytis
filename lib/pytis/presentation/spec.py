@@ -3366,14 +3366,18 @@ class AttachmentStorage(object):
         """Exception raised by 'insert()' when image of unknown or invalid type is inserted."""
         pass
     
-    def insert(self, data, filename):
+    def insert(self, filename, data, values):
         """Insert a new attachment into the storage.
 
         Arguments:
+          filename -- unique file name of the attachment as a basestring.
           data -- file-like object which may be read to retrieve the attachment
             data.  The calling side is responsible for closing the file after
             this method returns.
-          filename -- the file name of the attachment as a basestring.
+          values -- dictionary of values of attachment parameters to set.  The
+             keys may be 'title', 'descr' (corresponding to 'resource.title()'
+             and 'resource.descr()') or any additional application defined
+             attachment parameters (usually passed through 'resource.info()').
 
         Raises 'InvalidImageFormat' exception if an image of unknown or invalid
           type is inserted.
@@ -3382,10 +3386,46 @@ class AttachmentStorage(object):
         """
         pass
 
+    def update(self, filename, values):
+        """Update the information about given attachment.
+
+        Arguments:
+        
+          filename -- unique file name (basestring) identifying the resource.
+             Must be one of existing filenames as returned by
+             'resource.filename()' of one of the resources returned by
+             'resources()'.
+          values -- dictionary of values of attachment parameters to
+             update.  The keys may be 'title', 'descr' (corresponding to
+             'resource.title()' and 'resource.descr()') or any additional
+             application defined attachment parameters (usually passed through
+             'resource.info()').
+        
+        Returns None when the update is performed ok or an error message string
+        when error occurres.
+        
+        """
+        pass
+    
     def delete(self, filename):
         """Not supported yet"""
         pass
     
+    def retrieve(self, filename):
+        """Retieve the contents of an attachment file of given name.
+
+        The returned value is an open file like object with methods 'read()'
+        and 'close()'.  The calling side is responsible for calling 'close()'
+        after reading file data.
+
+        The 'filename' is the string value as returned by 'resource.filename()'
+        of one of the resources returned by 'resources()'.
+        
+        None is returned when a corresponding attachment is not found.
+        
+        """
+        pass
+
     def resource(self, filename):
         """Return a 'lcg.Resource' instance for given 'filename' if it exists or None.
 
@@ -3406,43 +3446,6 @@ class AttachmentStorage(object):
         returned resource instances.
 
 
-        """
-        pass
-
-    def retrieve(self, filename):
-        """Retieve the contents of an attachment file of given name.
-
-        The returned value is an open file like object with methods 'read()'
-        and 'close()'.  The calling side is responsible for calling 'close()'
-        after reading file data.
-
-        The 'filename' is the string value as returned by 'resource.filename()'
-        of one of the resources returned by 'resources()'.
-        
-        None is returned when a corresponding attachment is not found.
-        
-        """
-        pass
-
-
-    def update(self, filename, values):
-        """Update the information about given attachment.
-
-        Arguments:
-        
-          filename -- string filename uniquely identifying the resource.  Must
-             be one of existing filenames as returned by 'resource.filename()'
-             of one of the resources returned by 'resources()'.
-             
-          values -- dictionary of values of attachment parameters to
-             update.  The keys may be 'title', 'descr' (corresponding to
-             'resource.title()' and 'resource.descr()') or any additional
-             application defined attachment parameters (usually passed through
-             'resource.info()').
-        
-        Returns None when the update is performed ok or an error message string
-        when error occurres.
-        
         """
         pass
 
@@ -3509,12 +3512,15 @@ class FileAttachmentStorage(AttachmentStorage):
         self._directory = directory
         self._base_uri = base_uri
         
-    def insert(self, data, filename, image_size=(800, 800), thumbnail_size=(200, 200)):
+    def insert(self, filename, data, values):
         import PIL.Image
         try:
             image = PIL.Image.open(data)
         except IOError as e:
             raise self.InvalidImageFormat(e)
+        # TODO: Make allow setting image sizes through 'values'.
+        image_size=(800, 800)
+        thumbnail_size=(200, 200)
         directory = self._directory
         image.save(os.path.join(directory, filename))
         try:
@@ -3589,7 +3595,7 @@ class HttpAttachmentStorage(AttachmentStorage):
             and (uri.startswith('http://') or uri.startswith('https://'))
         self._uri = uri.rstrip('/')
         
-    def insert(self, data, filename, image_size=(800, 800), thumbnail_size=(200, 200)):
+    def insert(self, filename, data, values):
         import urllib2, mimetools, mimetypes, pytis, base64
         boundary = mimetools.choose_boundary()
         content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
