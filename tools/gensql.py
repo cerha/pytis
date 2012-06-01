@@ -1629,7 +1629,7 @@ class Select(_GsqlSpec):
         joins = [convert_relation(i, r) for i, r in enumerate(self._relations)]
         result = ''.join(joins)
         if aliases:
-            parameters = string.join(["%s=%s" % (alias, relation,)
+            parameters = string.join(["%s=%s.alias('%s')" % (alias, relation, alias,)
                                       for alias, relation in aliases],
                                      ', ')
             result = '(lambda %s: [%s])()' % (parameters, result,)
