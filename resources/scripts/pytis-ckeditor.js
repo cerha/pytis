@@ -310,14 +310,66 @@ pytis.HtmlField.dialog = function(editor) {
 	     label: 'Upload new image',
 	     elements : [
 		 {type: 'file',
-		  id: 'filename',
+		  id: 'upload',
 		  label: editor.lang.image.btnUpload,
-		  style: 'height:40px'},
+		  style: 'height:50px',
+		  setup: function(element) {
+		      var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+		      this.on('formLoaded', function() {
+			  var frameDocument = CKEDITOR.document.getById(this._.frameId).getFrameDocument();
+			  if (frameDocument.$.forms.length > 0) {
+			      /* This is a little tricky as the file upload
+			       * form is inside an IFRAME.  It is not possible
+			       * to submit the AttachmentStorage request
+			       * through AJAX due to certain browser
+			       * limitations so it is submitted within the
+			       * iframe.  We must copy all hidden form fields
+			       * from the main edited form to mimic the
+			       * bahavior of pytis form AJAX updates and to get
+			       * the uploaded data within the Python code in
+			       * 'EditForm._attachment_storage_insert()'.
+			       */
+			      var form = frameDocument.$.forms[0];
+			      field._file_upload_form = form;
+			      if (form.getAttribute('action') != field._form.getAttribute('action')) {
+				  form.setAttribute('action', field._form.getAttribute('action'));
+				  hidden_fields = {'_pytis_form_update_request': 1,
+						   '_pytis_attachment_storage_field': field._id,
+						   '_pytis_attachment_storage_request': 'insert'};
+				  for (var i = 0; i < field._form.elements.length; i++) {
+				      var e = field._form.elements[i];
+				      if (e.type == 'hidden') // && e.name != 'submit')
+     					  hidden_fields[e.name] = e.value;
+				  }
+				  for (var name in hidden_fields) {
+     				      Element.insert(form, new Element('input',
+								       {'type': 'hidden',
+									'name': name, 
+									'value': hidden_fields[name]}));
+				  }
+			      }
+			  }
+		      }, this);
+		  }
+		 },
 		 {type: 'fileButton',
-		  id: 'uploadButton',
 		  filebrowser: 'upload:filename',
 		  label: editor.lang.image.btnUpload,
-		  'for': ['upload', 'filename']}
+		  'for': ['upload', 'upload'],
+		  onClick: function() {
+		      var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+		      // We can't simply call form.submit(), because Wiking
+		      // uses a hidden field named 'submit' for its internal
+		      // purposes and this hidden field masks the submit method
+		      // (not really clever...).
+		      var result = document.createElement('form').submit.call(field._file_upload_form);
+		      // TODO: The server response is a JSON string.  It is now
+		      // displayed within the iframe as is.  It should rather
+		      // be replaced by HTML message and on success, we should
+		      // probably redisplay the form to allow another upload.
+		      return false;
+		  }
+		 }
 	     ]}
 	],
 

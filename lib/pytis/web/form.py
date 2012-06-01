@@ -728,6 +728,17 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         except:
             import simplejson as json
         return storage.update(req.param('filename'), json.loads(req.param('values')))
+
+    @classmethod
+    def _attachment_storage_insert(cls, req, row, storage):
+        upload = req.param('upload')
+        if not upload:
+            raise wiking.BadRequest()
+        error = storage.insert(upload.filename(), upload.file(), dict(mime_type=upload.mime_type()))
+        if error:
+            return _("Error")+': '+error
+        else:
+            return _("File uploaded succesfully.")
     
     
 class FilterForm(EditForm):

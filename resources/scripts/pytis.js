@@ -329,8 +329,10 @@ pytis.HtmlField = Class.create(pytis.Field, {
 	return this._attachment_storage_request('list', {});
     },
     
-    },
-
+    // Insert attachment doesn't go through AJAX due to browser limitations.
+    // Iframe upload is performed as implemented in CKeditor and
+    // customized in ckeditor-plugin.js so a method is not needed here.
+    
     update_attachment: function(filename, values) {
 	return this._attachment_storage_request('update', {filename: filename,
 							   values: Object.toJSON(values)});
