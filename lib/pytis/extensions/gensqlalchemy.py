@@ -662,7 +662,7 @@ class Baz2(SQLView):
     schemas = (('private', 'public',),)
     @classmethod
     def condition(class_):
-        return sqlalchemy.select([c.Baz.id], from_obj=[t.Baz], whereclause=(c.Baz.id > '0'))
+        return sqlalchemy.select([c.Baz.id], from_obj=[t.Baz], whereclause=(c.Baz.id > 0))
 
 class AliasView(SQLView):
     name = 'aliased'
