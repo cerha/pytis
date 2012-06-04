@@ -759,7 +759,7 @@ class Attachments(wiking.Module, wiking.RequestHandler):
 
     def _insert(self, req, storage, data, filename):
         try:
-            storage.insert(filename, data)
+            storage.insert(filename, data, {})
         except Exception as e:
             response = str(e)
         else:

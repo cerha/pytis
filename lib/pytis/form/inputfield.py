@@ -2296,7 +2296,7 @@ class StructuredTextField(TextField):
             filename = os.path.split(path)[1]
         try:
             try:
-                self._storage.insert(filename, file_object)
+                self._storage.insert(filename, file_object, {})
             finally:
                 file_object.close()
         except AttachmentStorage.InvalidImageFormat as e:
