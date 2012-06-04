@@ -3365,6 +3365,114 @@ class AttachmentStorage(object):
     class InvalidImageFormat(Exception):
         """Exception raised by 'insert()' when image of unknown or invalid type is inserted."""
         pass
+
+    def _resource(self, filename, title=None, descr=None, has_thumbnail=False, thumbnail_size=None,
+                  info=None):
+        """Return the corresponding resource instance for given filename and args.
+
+        This is a helper method for simple creation of resource instances in
+        derived classes.  This method is not designed to be overriden in
+        derived classes but used by the implementation of methods 'resource()'
+        and 'resources()'.  It implements the logic which should be common to
+        all derived classes - autodetection of resource class by resource
+        filename and automatic creation of thumbnail resource for image
+        resources.
+
+        The derived classes will typically override the methods
+        '_resource_uri()', '_image_uri()', '_thumbnail_uri()',
+        '_resource_src_file()', '_image_src_file()' and
+        '_thumbnail_src_file()'.
+        
+        """
+        import lcg
+        try:
+            ext = filename.rsplit('.', 1)[1].lower()
+        except IndexError:
+            ext = None
+        if ext in ('jpeg', 'jpg', 'gif', 'png'):
+            if has_thumbnail:
+                thumbnail = lcg.Image(filename, title=title, descr=descr, size=thumbnail_size,
+                                      uri=self._thumbnail_uri(filename),
+                                      src_file=self._thumbnail_src_file(filename))
+            else:
+                thumbnail = None
+            resource = lcg.Image(filename, title=title, descr=descr, info=info,
+                                 uri=self._image_uri(filename),
+                                 src_file=self._image_src_file(filename),
+                                 thumbnail=thumbnail)
+        else:
+            if ext in ('mp3', 'ogg'):
+                cls = lcg.Audio
+            elif ext == 'flv':
+                cls = lcg.Video
+            elif ext == 'swf':
+                cls = lcg.Flash
+            else:
+                cls = Resource
+            resource = cls(filename, title=title, descr=descr, info=info,
+                           uri=self._resource_uri(filename),
+                           src_file=self._resource_src_file(filename))
+        return resource
+
+    def _resource_uri(self, filename):
+        """Return the URI of a resource of given 'filename'.
+
+        Used by '_resource()' to get the value for 'uri' argument for non-image
+        resources and image resources which don't have a thumbnail (are
+        displayed full-size within the document).
+        
+        """
+        pass
+    
+    def _image_uri(self, filename):
+        """Return the URI of an image resource of given 'filename'.
+
+        Used by '_resource()' to get the value for 'uri' argument for image
+        resources which have a thumbnail (this URI should lead to an enlarged
+        variant of the image (not necessarily the original)).
+        
+        """
+        pass
+    
+    def _thumbnail_uri(self, filename):
+        """Return the URI of an image thumbnail returned by '_resource()'.
+        
+        Used by '_resource()' to get the value for 'uri' argument for an image
+        thumbnail.
+        
+        """
+        pass
+    
+    def _resource_src_file(self, filename):
+        """Return source file path of a resource of given 'filename' or None.
+
+        Used by '_resource()' to get the value for 'src_file' argument for
+        non-image resources.  May return None when the storage doesn't support
+        source files.
+        
+        """
+        return None
+    
+    def _image_src_file(self, filename):
+        """Return image source file path of a resource of given 'filename' or None.
+
+        Used by '_resource()' to get the value for 'src_file' argument for
+        image resources which have a thumbnail (this path should point to an
+        enlarged variant of the image (not necessarily the original)).  May
+        return None when the storage doesn't support source files.
+        
+        """
+        return None
+    
+    def _thumbnail_src_file(self, filename):
+        """Return thumbnail source file path of a resource of given 'filename' or None.
+
+        Used by '_resource()' to get the value for 'src_file' argument for
+        image thumbnails.  May return None when the storage doesn't support
+        source files.
+        
+        """
+        return None
     
     def insert(self, filename, data, values):
         """Insert a new attachment into the storage.
@@ -3509,9 +3617,30 @@ class FileAttachmentStorage(AttachmentStorage):
             
         """
         assert isinstance(directory, basestring)
+        assert isinstance(base_uri, basestring)
         self._directory = directory
+        if not (base_uri.endswith('/') or base_uri.endswith(':')):
+            base_uri += '/'
         self._base_uri = base_uri
         
+    def _resource_uri(self, filename):
+        return self._base_uri+'/'+filename
+    
+    def _image_uri(self, filename):
+        return self._base_uri+'resized/'+filename
+    
+    def _thumbnail_uri(self, filename):
+        return self._base_uri+'thumbnails/'+filename
+    
+    def _resource_src_file(self, filename):
+        return os.path.join(self._directory, filename)
+    
+    def _image_src_file(self, filename):
+        return os.path.join(self._directory, 'resized', filename)
+    
+    def _thumbnail_src_file(self, filename):
+        return os.path.join(self._directory, 'thumbnails', filename)
+    
     def insert(self, filename, data, values):
         import PIL.Image
         try:
@@ -3537,19 +3666,13 @@ class FileAttachmentStorage(AttachmentStorage):
                     os.remove(path)
             raise
 
-    def _resource(self, filename):
-        import lcg
-        thumbnail = lcg.Image(os.path.join('thumbnails', filename),
-                              src_file=os.path.join(self._directory, 'thumbnails', filename),
-                              uri=self._base_uri+'thumbnails/'+filename)
-        return lcg.Image(filename, src_file=os.path.join(self._directory, 'resized', filename),
-                         uri=self._base_uri+'resized/'+filename,
-                         thumbnail=thumbnail)
-    
+    def _has_thumbnail(self, filename):
+        return os.path.isfile(self._thumbnail_src_file(filename))
+
     def resource(self, filename):
-        path = os.path.join(self._directory, filename)
+        path = self._resource_src_file(filename)
         if os.path.isfile(path):
-            return self._resource(filename)
+            return self._resource(filename, has_thumbnail=self._has_thumbnail(filename))
         else:
             return None
         
@@ -3557,7 +3680,7 @@ class FileAttachmentStorage(AttachmentStorage):
         directory = self._directory
         if os.path.isdir(directory):
             return [
-                self._resource(filename)
+                self._resource(filename, has_thumbnail=self._has_thumbnail(filename))
                 for filename in sorted([filename for filename in os.listdir(directory)
                                         if os.path.isfile(os.path.join(directory, filename))
                                         and any([filename.lower().endswith(suffix) for suffix in
@@ -3622,13 +3745,14 @@ class HttpAttachmentStorage(AttachmentStorage):
         if response != 'OK':
             raise Exception(response)
         
-    def _resource(self, filename):
-        import lcg
-        thumbnail = lcg.Image(os.path.join('thumbnails', filename),
-                              uri=self._uri+'/thumbnails/'+filename)
-        return lcg.Image(filename,
-                         uri=self._uri+'/resized/'+filename,
-                         thumbnail=thumbnail)
+    def _resource_uri(self, filename):
+        return self._uri+'/'+filename
+    
+    def _image_uri(self, filename):
+        return self._uri+'resized/'+filename
+    
+    def _thumbnail_uri(self, filename):
+        return self._uri+'thumbnails/'+filename
     
     def resource(self):
         connection = self.retrieve(filename)
