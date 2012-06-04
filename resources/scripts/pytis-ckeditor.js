@@ -54,7 +54,7 @@ pytis.HtmlField.plugin = function(editor) {
 pytis.HtmlField.dialog = function(editor) {
     // Return the dialog
     return {
-	title: 'Image',
+	title: pytis._('Image'),
 	minWidth: 600,
 	minHeight: 300,
 	contents: [
@@ -66,7 +66,7 @@ pytis.HtmlField.dialog = function(editor) {
 
 		 {type: 'select',
 		  id: 'identifier',
-		  label: 'Image',
+		  label: pytis._('Image'),
 		  items: [],
 		  onShow: function(element) {
 		      this.onChange(element);
@@ -137,8 +137,8 @@ pytis.HtmlField.dialog = function(editor) {
 
 		 {type: 'select',
 		  id: 'align',
-		  label: 'Align',
-		  items: [['left'], ['right']],
+		  label: pytis._('Align'),
+		  items: [[pytis._('Left'), 'left'], [pytis._('Right'), 'right']],
 		  setup: function(element) {
 		      // Read alignment of the image
 		      var img = element.getFirst();
@@ -154,7 +154,7 @@ pytis.HtmlField.dialog = function(editor) {
 
 		 {type: 'select',
 		  id: 'link-type',
-		  label: 'Link',
+		  label: pytis._('Link'),
 		  items: [['Original', 'original', 'original-link'],
 			  ['Anchor inside page', 'anchor', 'anchor-link'],
 			  ['External link', 'external', 'external-link']],
@@ -221,7 +221,7 @@ pytis.HtmlField.dialog = function(editor) {
 
 		 {type: 'select',
 		  id: 'anchor-link',
-		  label: 'Link to anchor',
+		  label: pytis._('Link to anchor'),
 		  items: [],
 		  onShow: function (element) {
 		      // Construct a list of anchors in this page
@@ -252,7 +252,7 @@ pytis.HtmlField.dialog = function(editor) {
 
 		 {type: 'text',
 		  id: 'external-link',
-		  label: 'External link',
+		  label: pytis._('External link'),
 		  setup: function(element) {
 		      var dialog = CKEDITOR.dialog.getCurrent();
 		      if (dialog.getValueOf('image', 'link-type') == 'external') {
@@ -276,21 +276,21 @@ pytis.HtmlField.dialog = function(editor) {
 
 	    // Tab Image Details
 	    {id: 'details',
-	     label: 'Image Details',
+	     label: pytis._('Image Details'),
 	     elements: [
 		 {type: 'text',
 		  id: 'title',
-		  label: 'Title'},
+		  label: pytis._('Title')},
 		 {type: 'text',
 		  id: 'description',
-		  label: 'Description'},
+		  label: pytis._('Description')},
 		 {type: 'select',
 		  id: 'thumbnail_size',
 		  label: 'Preview size',
 		  items: [['full'], ['small'], ['medium'], ['large']]},
 		 {type: 'button',
 		  id: 'update',
-		  label: 'Update',
+		  label: pytis._('Update'),
 		  onClick: function() {
 		      var dialog = CKEDITOR.dialog.getCurrent();
 		      var filename = dialog.getValueOf('image', 'identifier')
@@ -307,7 +307,7 @@ pytis.HtmlField.dialog = function(editor) {
 
 	    // Tab Upload
 	    {id: 'upload',
-	     label: 'Upload new image',
+	     label: pytis._('Upload new image'),
 	     elements : [
 		 {type: 'file',
 		  id: 'upload',
