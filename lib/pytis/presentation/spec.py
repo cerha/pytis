@@ -3623,18 +3623,20 @@ class FileAttachmentStorage(AttachmentStorage):
         assert isinstance(directory, basestring)
         assert isinstance(base_uri, basestring)
         self._directory = directory
-        if not (base_uri.endswith('/') or base_uri.endswith(':')):
-            base_uri += '/'
-        self._base_uri = base_uri
+        self._base_uri = base_uri.rstrip('/')
         
     def _resource_uri(self, filename):
-        return self._base_uri+'/'+filename
+        base_uri = self._base_uri
+        if not base_uri.endswith(':'):
+            # Example: base_uri = 'resource:' in webkit browser in wx forms.
+            base_uri += '/'
+        return base_uri+filename
     
     def _image_uri(self, filename):
-        return self._base_uri+'resized/'+filename
+        return self._base_uri+'/resized/'+filename
     
     def _thumbnail_uri(self, filename):
-        return self._base_uri+'thumbnails/'+filename
+        return self._base_uri+'/thumbnails/'+filename
     
     def _resource_src_file(self, filename):
         return os.path.join(self._directory, filename)
