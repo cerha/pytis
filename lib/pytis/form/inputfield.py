@@ -1980,11 +1980,14 @@ class ImageField(FileField):
 
 class StructuredTextField(TextField):
     class AttachmentEnumerator(pytis.data.Enumerator):
-        def __init__(self, storage):
+        def __init__(self, storage, images=True):
             self._storage = storage
+            self._images = images
             super(StructuredTextField.AttachmentEnumerator, self).__init__()
         def values(self):
-            return [r.filename() for r in self._storage.resources()]
+            import lcg
+            return [r.filename() for r in self._storage.resources()
+                    if isinstance(r, lcg.Image) ^ (not self._images)]
             
     class ImageAlignments(pytis.presentation.Enumeration):
         enumeration = (('inline', _("Do řádku")),
@@ -2057,9 +2060,12 @@ class StructuredTextField(TextField):
             (UICommand(self.COMMAND_LINK(),
                        _(u"Hypertextový odkaz"),
                        _(u"Vložit hypertextový odkaz.")),
-             ) + (self._storage and (UICommand(self.COMMAND_ATTACHMENT(kind='image'),
+             ) + (self._storage and (UICommand(self.COMMAND_IMAGE(),
                                                _(u"Obrázek"),
-                                               _(u"Vložit obrázek.")),) or ()) +
+                                               _(u"Vložit obrázek.")),
+                                     UICommand(self.COMMAND_ATTACHMENT(),
+                                               _(u"Příloha"),
+                                               _(u"Vložit soubor.")),) or ()) +
             (UICommand(self.COMMAND_ITEMIZE(style='bullet'),
                        _(u"Odrážkový seznam"),
                        _(u"Vytvořit položku odrážkového seznamu.")),
@@ -2317,7 +2323,7 @@ class StructuredTextField(TextField):
                     f.close()
         return None
         
-    def _cmd_attachment(self, kind='image'):
+    def _cmd_image(self):
         if not self._storage:
             return
         ctrl = self._ctrl
@@ -2331,7 +2337,7 @@ class StructuredTextField(TextField):
         filename = None
         align = 'inline'
         tooltip = None
-        enumerator = self.AttachmentEnumerator(self._storage)
+        enumerator = self.AttachmentEnumerator(self._storage, images=True)
         if start != -1 and end != -1:
             filename = line_text[start+1:column_number+end]
             if filename.startswith('<'):
@@ -2392,6 +2398,59 @@ class StructuredTextField(TextField):
                 ctrl.WriteText('[' + link + ']')
         self.set_focus()
         
+    def _cmd_attachment(self):
+        if not self._storage:
+            return
+        ctrl = self._ctrl
+        # Find out whether the current cursor position is within an existing
+        # attachment link.
+        position = ctrl.GetInsertionPoint()
+        column_number, line_number = ctrl.PositionToXY(position)
+        line_text = ctrl.GetLineText(line_number)
+        start = line_text[:column_number].rfind('[')
+        end = line_text[column_number:].find(']')
+        filename = None
+        tooltip = None
+        enumerator = self.AttachmentEnumerator(self._storage, images=False)
+        if start != -1 and end != -1:
+            filename = line_text[start+1:column_number+end]
+            if '|' in filename:
+                filename, tooltip = [x.strip() for x in filename.split('|', 1)]
+                if ' ' in filename:
+                    filename = filename.split(' ', 1)[0]
+            if filename not in enumerator.values():
+                # If the current link filename doesn't match any existing file
+                # name, the link is probably invlid (damaged by hand editation)
+                # and we rather don't replace it, but insert the new link
+                # inside, leaving it up to the user to clean up the result...
+                filename = None
+                tooltip = None
+        fields = (
+            Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
+                  default=filename, compact=True, width=25,
+                  selection_type=pytis.presentation.SelectionType.LIST_BOX,
+                  enumerator=enumerator),
+            Field('title', _(u"Název"), width=50,
+                  descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
+                          u"prázdné, pokud chcete zobrazit přímo název souboru.")),
+            Field('tooltip', _(u"Tooltip"), width=50, default=tooltip,
+                  descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
+            )
+        button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
+        row = run_form(InputForm, title=_(u"Vložit přílohu"), fields=fields,
+                       layout=('filename', button, 'title', 'tooltip'))
+        if row:
+            link = row['filename'].value()
+            tooltip = row['tooltip'].value()
+            if tooltip:
+                link += ' '+ link +' | '+ tooltip
+            if filename is not None:
+                ctrl.Remove(position-column_number+start+1, position+end)
+                ctrl.WriteText(link)
+            else:
+                ctrl.WriteText('[' + link + ']')
+        self.set_focus()
+
     def _cmd_link(self):
         ctrl = self._ctrl
         from pytis.presentation import Field

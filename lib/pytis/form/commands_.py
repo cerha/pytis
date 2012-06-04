@@ -268,6 +268,8 @@ Command(StructuredTextField, 'LINK',
         "Insert markup for a hypertext link.")
 Command(StructuredTextField, 'ATTACHMENT',
         "Insert attachment.")
+Command(StructuredTextField, 'IMAGE',
+        "Insert image.")
 Command(StructuredTextField, 'LINEBREAK',
         "Insert markup for a forced line break.")
 Command(StructuredTextField, 'ITEMIZE',
@@ -435,7 +437,8 @@ COMMAND_ICONS = (
     (StructuredTextField.COMMAND_EMPHASIZED,               'text-italic'),
     (StructuredTextField.COMMAND_UNDERLINED,               'text-underlined'),
     (StructuredTextField.COMMAND_LINK,                     'text-link'),
-    (StructuredTextField.COMMAND_ATTACHMENT(kind='image'), 'text-image'),
+    (StructuredTextField.COMMAND_IMAGE,                    'text-image'),
+    (StructuredTextField.COMMAND_ATTACHMENT,               'text-attachment'),
     (StructuredTextField.COMMAND_LINEBREAK,                'text-linebreak'),
     (StructuredTextField.COMMAND_ITEMIZE(style='bullet'),  'text-bullet-list'),
     (StructuredTextField.COMMAND_ITEMIZE(style='numbered'),'text-numbered-list'),
