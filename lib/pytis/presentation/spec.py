@@ -3385,35 +3385,39 @@ class AttachmentStorage(object):
         
         """
         import lcg
+        cls = self._resource_cls(filename)
+        if issubclass(cls, lcg.Image) and has_thumbnail:
+            uri = self._image_uri(filename)
+            src_file = self._image_src_file(filename)
+            kwargs = dict(thumbnail=lcg.Image('t/'+filename, title=title, descr=descr,
+                                              size=thumbnail_size,
+                                              uri=self._thumbnail_uri(filename),
+                                              src_file=self._thumbnail_src_file(filename)))
+        else:
+            uri = self._resource_uri(filename)
+            src_file = self._resource_src_file(filename)
+            kwargs = {}
+        return cls(filename, title=title, descr=descr, uri=uri, src_file=src_file, info=info, **kwargs)
+
+    def _resource_cls(self, filename):
+        import lcg
         try:
             ext = filename.rsplit('.', 1)[1].lower()
         except IndexError:
-            ext = None
-        if ext in ('jpeg', 'jpg', 'gif', 'png'):
-            if has_thumbnail:
-                thumbnail = lcg.Image(filename, title=title, descr=descr, size=thumbnail_size,
-                                      uri=self._thumbnail_uri(filename),
-                                      src_file=self._thumbnail_src_file(filename))
-            else:
-                thumbnail = None
-            resource = lcg.Image(filename, title=title, descr=descr, info=info,
-                                 uri=self._image_uri(filename),
-                                 src_file=self._image_src_file(filename),
-                                 thumbnail=thumbnail)
+            cls = lcg.Resource
         else:
-            if ext in ('mp3', 'ogg'):
+            if ext in ('jpeg', 'jpg', 'gif', 'png'):
+                cls = lcg.Image
+            elif ext in ('mp3', 'ogg'):
                 cls = lcg.Audio
             elif ext == 'flv':
                 cls = lcg.Video
             elif ext == 'swf':
                 cls = lcg.Flash
             else:
-                cls = Resource
-            resource = cls(filename, title=title, descr=descr, info=info,
-                           uri=self._resource_uri(filename),
-                           src_file=self._resource_src_file(filename))
-        return resource
-
+                cls = lcg.Resource
+        return cls
+    
     def _resource_uri(self, filename):
         """Return the URI of a resource of given 'filename'.
 
