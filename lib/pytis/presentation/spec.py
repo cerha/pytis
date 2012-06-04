@@ -3648,30 +3648,39 @@ class FileAttachmentStorage(AttachmentStorage):
         return os.path.join(self._directory, 'thumbnails', filename)
     
     def insert(self, filename, data, values):
-        import PIL.Image
-        try:
-            image = PIL.Image.open(data)
-        except IOError as e:
-            raise self.InvalidImageFormat(e)
-        # TODO: Make allow setting image sizes through 'values'.
-        image_size=(800, 800)
-        thumbnail_size=(200, 200)
-        directory = self._directory
-        image.save(os.path.join(directory, filename))
-        try:
-            for size, subdir in ((thumbnail_size, 'thumbnails'), (image_size, 'resized')):
-                if not os.path.exists(os.path.join(directory, subdir)):
-                    os.makedirs(os.path.join(directory, subdir))
-                resized = image.copy()
-                resized.thumbnail(size, PIL.Image.ANTIALIAS)
-                resized.save(os.path.join(directory, subdir, filename))
-        except:
-            for subdir in ('', 'thumbnails', 'resized'):
-                path = os.path.join(directory, subdir, filename)
-                if os.path.exists(path):
-                    os.remove(path)
-            raise
-
+        import lcg, PIL.Image
+        path = self._resource_src_file(filename)
+        if issubclass(self._resource_cls(filename), lcg.Image):
+            try:
+                image = PIL.Image.open(data)
+            except IOError as e:
+                raise self.InvalidImageFormat(e)
+            # TODO: Make allow setting image sizes through 'values'.
+            image_size = (800, 800)
+            thumbnail_size = (200, 200)
+            image.save(path)
+            try:
+                for size, path in ((thumbnail_size, self._thumbnail_src_file(filename)),
+                                   (image_size, self._image_src_file(filename))):
+                    directory = os.path.split(path)[0]
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)
+                    resized = image.copy()
+                    resized.thumbnail(size, PIL.Image.ANTIALIAS)
+                    resized.save(path)
+            except:
+                for subdir in ('', 'thumbnails', 'resized'):
+                    path = os.path.join(directory, subdir, filename)
+                    if os.path.exists(path):
+                        os.remove(path)
+                raise
+        else:
+            f = open(path, 'wb')
+            try:
+                f.write(data.read())
+            finally:
+                f.close()
+            
     def _has_thumbnail(self, filename):
         return os.path.isfile(self._thumbnail_src_file(filename))
 
@@ -3685,12 +3694,9 @@ class FileAttachmentStorage(AttachmentStorage):
     def resources(self):
         directory = self._directory
         if os.path.isdir(directory):
-            return [
-                self._resource(filename, has_thumbnail=self._has_thumbnail(filename))
-                for filename in sorted([filename for filename in os.listdir(directory)
-                                        if os.path.isfile(os.path.join(directory, filename))
-                                        and any([filename.lower().endswith(suffix) for suffix in
-                                                 ('jpg', 'jpeg', 'png', 'gif')])])]
+            return [self._resource(filename, has_thumbnail=self._has_thumbnail(filename))
+                    for filename in sorted([filename for filename in os.listdir(directory)
+                                            if os.path.isfile(os.path.join(directory, filename))])]
         else:
             return []
 
