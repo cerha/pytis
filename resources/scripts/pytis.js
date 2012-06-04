@@ -30,6 +30,9 @@
 
 var pytis = {};
 
+pytis.gettext = new Gettext({domain:'pytis'});
+pytis._ = function (msg){ return pytis.gettext.gettext(msg); };
+
 pytis.FormHandler = Class.create({
     initialize: function(form_id, fields, state) {
 	/* form_id ... HTML id of the form to connect to (string)
