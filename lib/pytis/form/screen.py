@@ -1853,6 +1853,7 @@ class Browser(wx.Panel, CommandHandler):
                 webview.connect('notify::load-status', self._on_load_status_changed)
                 webview.connect('navigation-policy-decision-requested', self._on_navigation_request)
                 webview.connect('resource-request-starting', self._on_resource_request)
+                #webview.connect('load-error', self._on_load_error)
                 settings = webview.get_settings()
                 settings.props.user_agent += ' Pytis ' + pytis.__version__
                 #settings.props.enable_developer_extras = True # Doesn't work...
@@ -1882,6 +1883,16 @@ class Browser(wx.Panel, CommandHandler):
         busy_cursor(busy)
         message(msg)
 
+    def _on_load_error(self, webview, frame, uri, gerror):
+        # For debugging only! (non portable hack)
+        import ctypes
+        ptr = int(str(gerror)[13:-1], 16)
+        ptrtype = ctypes.POINTER(ctypes.c_char_p)
+        msgptr = ctypes.cast(ptr + 8, ptrtype)
+        message = msgptr[0]
+        print "LOAD ERROR:", message
+        return False
+        
     def _on_navigation_request(self, webview, frame, req, action, decision):
         uri = req.get_uri()
         if uri == 'about:blank':
