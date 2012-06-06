@@ -1986,8 +1986,13 @@ class StructuredTextField(TextField):
             super(StructuredTextField.AttachmentEnumerator, self).__init__()
         def values(self):
             import lcg
-            return [r.filename() for r in self._storage.resources()
-                    if isinstance(r, lcg.Image) ^ (not self._images)]
+            try:
+                return [r.filename() for r in self._storage.resources()
+                        if isinstance(r, lcg.Image) ^ (not self._images)]
+            except AttachmentStorage.StorageError as e:
+                run_dialog(Error, title=_(u"Chyba přísutu k úložišti příloh"),
+                           message=_(u"Chyba přísutu k úložišti příloh:\n%s") % e)
+                return []
             
     class ImageAlignments(pytis.presentation.Enumeration):
         enumeration = (('inline', _("Do řádku")),

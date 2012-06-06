@@ -3362,7 +3362,11 @@ class AttachmentStorage(object):
     
     """
 
-    class InvalidImageFormat(Exception):
+    class StorageError(Exception):
+        """Exception raised by storage methods when a storage access problem occurres."""
+        pass
+    
+    class InvalidImageFormat(StorageError):
         """Exception raised by 'insert()' when image of unknown or invalid type is inserted."""
         pass
 
@@ -3776,7 +3780,10 @@ class HttpAttachmentStorage(AttachmentStorage):
 
     def resources(self):
         import urllib2
-        connection = urllib2.urlopen(self._uri)
+        try:
+            connection = urllib2.urlopen(self._uri)
+        except (urllib2.HTTPError, urllib2.URLError) as e:
+            raise self.StorageError(str(e))
         try:
             response = connection.read()
         finally:
