@@ -1659,6 +1659,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert len(op_args) == 4, ('Invalid number or arguments', op_args)
             col, data, table_col, cond = op_args
             table = data._key_binding[0].table()
+            if data._condition is not None:
+                cond = pytis.data.AND(data._condition, cond)
             condition = data._pdbb_condition2sql(cond)
             expression = '%s in (select %s from %s where %s)' % \
                          (col, table_col, table, condition)
