@@ -327,7 +327,7 @@ class _SQLTabular(sqlalchemy.Table):
     def pytis_name(class_):
         name = class_.name
         if name is None:
-            name = pytis.util.camel_case_to_lower(class_.__name__)
+            name = pytis.util.camel_case_to_lower(class_.__name__, separator='_')
         return name
     
 class SQLTable(_SQLTabular):
