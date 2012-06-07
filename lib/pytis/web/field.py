@@ -451,10 +451,10 @@ class HtmlFieldExporter(MultilineFieldExporter):
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
                           language=context.lang(),
-                          removePlugins = 'forms,image',
-                          extraPlugins='pytis-attachments',
-                          pytisFieldId=self._field.unique_id,
-                          )
+                          removePlugins = 'forms,image')
+            if self._field.spec.attachment_storage() is not None:
+                config['extraPlugins'] = 'pytis-attachments'
+                config['pytisFieldId'] = self._field.unique_id
             content += g.script(g.js_call('CKEDITOR.replace', self._field.unique_id, config))
         return content
 
