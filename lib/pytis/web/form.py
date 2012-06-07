@@ -50,6 +50,11 @@ class Type(pd.Type):
     # Needed to postpone variable interpolation to translation time.
     pd.Type._validation_error = _validation_error
 
+    
+class BadRequest(Exception):
+    """Exception raised by 'EditForm.ajax_response()' on invalid request parameters."""
+    pass
+    
 
 class Form(lcg.Content):
     _HTTP_METHOD = 'POST'
@@ -624,6 +629,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         response body with the 'application/json' content type set in HTTP
         response headers.  That way the client side code will be able to
         process it.
+
+        May raise 'BadRequest' exception id the request parameters don't make
+        sense.
         
         """
         try:
@@ -693,15 +701,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         try:
             method = getattr(cls, '_attachment_storage_'+method_name)
         except AttributeError:
-            raise wiking.BadRequest()
+            raise BadRequest()
         field = find(req.param('_pytis_attachment_storage_field'), row.fields(), key=lambda f: f.id())
         if not field:
-            raise wiking.BadRequest()
+            raise BadRequest()
         storage = field.attachment_storage()
         if isinstance(storage, collections.Callable):
             storage = storage(row)
         if not storage:
-            raise wiking.BadRequest()
+            raise BadRequest()
         return method(req, row, storage)
 
     @classmethod
@@ -735,7 +743,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def _attachment_storage_insert(cls, req, row, storage):
         upload = req.param('upload')
         if not upload:
-            raise wiking.BadRequest()
+            raise BadRequest()
         error = storage.insert(upload.filename(), upload.file(), dict(mime_type=upload.mime_type()))
         if error:
             return _("Error")+': '+error
