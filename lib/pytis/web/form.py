@@ -580,6 +580,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     def export(self, context):
         context.resource('prototype.js')
+        context.resource('gettext.js')
         context.resource('pytis.js')
         context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
         result = super(EditForm, self).export(context)
