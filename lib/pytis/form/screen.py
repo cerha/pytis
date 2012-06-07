@@ -1855,7 +1855,7 @@ class Browser(wx.Panel, CommandHandler):
                 webview.connect('resource-request-starting', self._on_resource_request)
                 #webview.connect('load-error', self._on_load_error)
                 settings = webview.get_settings()
-                settings.props.user_agent += ' Pytis ' + pytis.__version__
+                settings.props.user_agent += ' Pytis/%s (WebKit)' % pytis.__version__
                 #settings.props.enable_developer_extras = True # Doesn't work...
                 webview.set_settings(settings)
         if self._webview is not None:
