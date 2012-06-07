@@ -468,6 +468,42 @@ class SQLView(_SQLTabular):
                 objects += o.get_children()
                 seen.append(o)
 
+    @classmethod
+    def _exclude(self, tabular, *columns):
+        return [c for c in tabular.c if c not in columns]
+
+    @classmethod
+    def _alias(self, columns, **aliases):
+        aliased = []
+        for c in columns:
+            if c.name in aliases:
+                alias.append('%s AS %s' % (c, aliases[c.name],))
+            else:
+                alias.append(c)
+        return aliased
+
+    @classmethod
+    def _reorder(self, tabular_1, tabular_2):
+        def columns(t):
+            if isinstance(t, _SQLTabular):
+                colums = t.c
+            elif isinstance(t, (tuple, list,)):
+                columns = t
+            else:
+                raise Exception("Program error", t)
+            return columns
+        columns_1 = columns(tabular_1)
+        columns_2 = columns(tabular_2)
+        reordered = []
+        for c in columns_1:
+            for cc in columns_2:
+                if c.name == cc.name:
+                    reordered.append(cc)
+                    break
+            else:
+                raise Exception("Missing column", c)
+        return reordered
+
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
@@ -671,6 +707,19 @@ class AliasView(SQLView):
         foo1 = t.Foo.alias('foo1')
         foo2 = t.Foo.alias('foo2')
         return sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n<foo2.c.n)])
+
+class FromSelect(SQLView):
+    @classmethod
+    def condition(class_):
+        foo = t.Foo
+        select = sqlalchemy.select([foo], from_obj=[foo]).alias('s')
+        return sqlalchemy.select(['s.*'], from_obj=[select], whereclause=('s.n > 0'))
+
+class LimitedView(SQLView):
+    @classmethod
+    def condition(class_):
+        foo = t.Foo
+        return sqlalchemy.select(class_._exclude(foo, foo.c.n))
 
 class Func(SQLFunction):
     name = 'plus'

@@ -1563,13 +1563,61 @@ class Select(_GsqlSpec):
         return string.join(string_columns, ', ')
 
     def _convert_raw_condition(self, condition, as_object=False):
+        if not condition:
+            return ''
         converted = "'%s'" % (_gsql_escape(condition or ''),)
         if as_object:
             converted = 'RawCondition(%s)' % (converted,)
         return converted
 
+    def _convert_relation_name(self, relation):
+        alias = relation.alias
+        return alias if alias else relation.name
+ 
     def _convert_select_columns(self):
-        return [self._convert_select_column(c) for c in self._columns]
+        column_spec = []
+        for r in self._relations:
+            relname = self._convert_relation_name(r)
+            aliases = []
+            exclude = r.exclude_columns or ()
+            if isinstance(exclude, basestring):
+                exclude = (exclude,)
+            if '*' not in exclude:
+                for c in self._relation_columns[r.relation]:
+                    if isinstance(c, basestring):
+                        continue
+                    if c.name in exclude:
+                        continue
+                    if isinstance(c, ViewColumn) and c.sql:
+                        column_spec.append('XXX:sql:%s' % (c,))
+                    cname = c.name
+                    plain_name = cname
+                    pos = plain_name.rfind('.')
+                    if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
+                        plain_name = plain_name[pos+1:]
+                    if isinstance(c, ViewColumn) and c.alias:
+                        if c.alias != plain_name:
+                            aliases.append((plain_name, c.alias,))
+            if exclude or aliases:
+                if '*' in exclude:
+                    continue
+                colist = string.join(["%s.c['%s']" % (relname, c,) for c in exclude], ', ')
+                if exclude:
+                    spec = 'cls._exclude(%s, %s)' % (relname, colist,)
+                else:
+                    spec = '%s.c' % (relname,)
+                if aliases:
+                    alias_spec = string.join(['%s=%s.%s' % (alias, relname, name,)
+                                              for name, alias in aliases],
+                                             ', ')
+                    spec += 'self._alias(%s)' % (spec, alias_spec,)
+                column_spec.append(spec)
+            else:
+                column_spec.append('[%s]' % (relname,))
+        if self._include_columns:
+            included = [self._convert_select_column(c) for c in self._include_columns]
+            column_spec.append('[%s]' % (string.join(included, ', '),))
+        return string.join(column_spec, ' + ')
 
     def _convert_select_column(self, column):
         if isinstance(column, basestring):
@@ -1585,32 +1633,33 @@ class Select(_GsqlSpec):
             if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
                 plain_name = plain_name[pos+1:]
             alias = None if column.alias == plain_name else column.alias
-        if type is None:
-            cname = '#XXX:NULL'
-        elif isinstance(type, pytis.data.Type):
-            cname = '#XXX:NULL::%s' % _gsql_format_type(type)
-        elif isinstance(type, basestring):
-            cname = '#XXX:NULL::%s' % type
-        column = cname
+        cstring = cname
         if alias:
-            column += ' AS %s' % (alias,)
-        return column
+            cstring += ' AS %s' % (alias,)
+        return '"%s"' % (cstring.replace('//', '////').replace('"', '\\"').replace('\n', '\\n'),)
 
     def _convert_relations(self):
-        aliases = []
+        definitions = []
         def convert_relation(i, rel):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
                 sel = rel.relation.convert_select()
                 relation = '(%s)' % (sel,)
+                d = None
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
-                relation = "object_by_name('%s.%s')" % (rel.schema, rel.relation,)
+                relation = self._convert_relation_name(rel)
+                d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
             else:
-                relation = "object_by_path('%s')" % (rel.relation,)
+                relation = self._convert_relation_name(rel)
+                d = "%s = object_by_path('%s')" % (relation, rel.relation,)
             if rel.alias:
-                aliases.append((rel.alias, relation,))
-                relation = rel.alias
+                if d is None:
+                    d = '%s = %s' % (rel.alias, relation,)
+                    relation = rel.alias
+                d += ".alias('%s')" % (rel.alias,)
+            if d:
+                definitions.append(d)
             if i == 0 or rel.condition is None:
                 condition = ''
             else:    
@@ -1628,22 +1677,16 @@ class Select(_GsqlSpec):
             return result
         joins = [convert_relation(i, r) for i, r in enumerate(self._relations)]
         result = ''.join(joins)
-        if aliases:
-            parameters = string.join(["%s=%s.alias('%s')" % (alias, relation, alias,)
-                                      for alias, relation in aliases],
-                                     ', ')
-            result = '(lambda %s: [%s])()' % (parameters, result,)
         condition = self._convert_raw_condition(self._relations[0].condition)
-        return result, condition
+        return result, condition, definitions
         
     def _convert_select(self):
         if self._set:
             condition = ''
-            aliases = [c.alias for c in self._columns[0]]
+            definitions = []
             for r in self._relations:
-                r.sort_columns(aliases)
                 if isinstance(r, SelectSet):
-                    output = r.select._convert_select()        
+                    output, d = r.select._convert_select()
                     if r.settype:
                         assert condition
                         condition = 'sqlalchemy.%s(%s, %s)' % (r.settype.lower(), condition, output,)
@@ -1651,12 +1694,15 @@ class Select(_GsqlSpec):
                         assert not condition, condition
                         condition = output
                 else:
-                    selects.append(r._convert_select())
+                    s, d = r._convert_select()
+                    condition += 'XXX:select=%s' % (r,)
+                definitions += d
         else:
-            relations, where_condition = self._convert_relations()
+            relations, where_condition, definitions = self._convert_relations()
             columns = self._convert_select_columns()
-            condition = ('sqlalchemy.select(%s, from_obj=%s, whereclause=%s)' %
-                         (columns, relations, where_condition,))
+            whereclause = ', whereclause=%s' % (where_condition,) if where_condition else ''
+            condition = ('sqlalchemy.select(%s, from_obj=[%s]%s)' %
+                         (columns, relations, whereclause,))
             if self._group_by:
                 condition += '.group_by(%s)' % (self._convert_raw_columns(self._group_by),)
             if self._having:
@@ -1665,7 +1711,7 @@ class Select(_GsqlSpec):
             condition += '.order_by(%s)' % (self._convert_raw_columns(self._order_by),)
         if self._limit:
             condition += '.limit(%d)' % (self._limit,)
-        return condition
+        return condition, definitions
      
 
 class _GsqlViewNG(Select):
@@ -1910,8 +1956,10 @@ class _GsqlViewNG(Select):
         if self._schemas:
             schemas = tuple([tuple(s.split(',')) for s in self._schemas])
             items.append('    schemas = %s' % (repr(schemas),))
-        condition = self._convert_select()
-        items.append('    @classmethod\n    def condition(self):\n        return %s' % (condition,))
+        condition, definitions = self._convert_select()
+        definition_lines = string.join(['        %s\n' % (d,) for d in definitions], '')
+        items.append('    @classmethod\n    def condition(cls):\n%s        return %s' %
+                     (definition_lines, condition,))
         return string.join(items, '\n') + '\n'
         
 
