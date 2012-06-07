@@ -3733,33 +3733,81 @@ class HttpAttachmentStorage(AttachmentStorage):
         assert isinstance(uri, basestring) \
             and (uri.startswith('http://') or uri.startswith('https://'))
         self._uri = uri.rstrip('/')
+        self._credentials = None
         
+    def _login(self, realm):
+        """Return login and password for storage authentication.
+
+        The HttpAttachmentStorage is only used within wx application, so we can
+        afford ask for the credentials directrly through a wx input form.  If
+        that's a problem in some use case, the method may be overriden.
+
+        """
+        from pytis.form import run_form, InputForm
+        from pytis.data import Password
+        result = run_form(InputForm,
+                          title=_(u"Zadejte přihlašovací údaje pro %s" % realm),
+                          fields=(Field('login', _("Uživatelské jméno"),
+                                        width=24, not_null=True, default=config.dbuser),
+                                  Field('password', _("Heslo"),
+                                        type=Password(verify=False), width=24, not_null=True),),
+                          focus_field='password')
+        return result and (result['login'].value(), result['password'].value())
+    
+    def _connect(self, uri, body=None, headers={}):
+        import urllib2, httplib
+        headers['User-Agent'] = 'Pytis/%s (HttpAttachmentStorage)' % pytis.__version__
+        if self._credentials:
+            encoded_credentials = ':'.join(self._credentials).encode("base64").strip()
+            headers['Authorization'] = 'Basic %s' % encoded_credentials
+        if body is not None:
+            headers['Content-Length'] = len(body)
+        req = urllib2.Request(uri, body, headers)
+        try:
+            return urllib2.urlopen(req)
+        except urllib2.HTTPError as e:
+            if e.code == httplib.UNAUTHORIZED:
+                header = hasattr(e, 'headers') and e.headers['WWW-Authenticate']
+                if header and ' realm=' in header:
+                    realm = header.split(' realm=', 1)[1].strip('"')
+                else:
+                    realm = None
+                credentials = self._login(realm)
+                if credentials:
+                    self._credentials = credentials
+                    return self._connect(uri, body=body, headers=headers)
+            raise self.StorageError(str(e))
+        except urllib2.URLError as e:
+            raise self.StorageError(str(e))
+            
     def insert(self, filename, data, values):
-        import urllib2, mimetools, mimetypes, pytis, base64
+        import mimetools, mimetypes
         boundary = mimetools.choose_boundary()
         content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-        parts = ['--' + boundary,
-                 'MIME-Version: 1.0',
-                 'Content-Disposition: file; name="data"; filename="%s"' % filename.encode('utf-8'),
-                 'Content-Transfer-Encoding: base64',
-                 'Content-Type: application/octet-stream',
-                 '',
-                 data.read()] #base64.b64encode()]
+        body = ['--' + boundary,
+                'MIME-Version: 1.0',
+                'Content-Disposition: file; name="data"; filename="%s"' % filename.encode('utf-8'),
+                'Content-Transfer-Encoding: base64',
+                'Content-Type: application/octet-stream',
+                '',
+                data.read()]
         #for name, value in ():
-        #    parts.extend(['--' + boundary,
+        #    body.extend(['--' + boundary,
         #                     'Content-Disposition: form-data; name="%s"' % name,
         #                     '',
         #                     value]
-        parts.extend(('--' + boundary + '--', ''))
-        body = '\r\n'.join(parts)
-        request = urllib2.Request(self._uri)
-        request.add_header('User-agent', 'Pytis ' + pytis.__version__)
-        request.add_header('Content-type', 'multipart/form-data; boundary=%s' % boundary)
-        request.add_header('Content-length', len(body))
-        request.add_data(body)
-        response = urllib2.urlopen(request).read()
-        if response != 'OK':
-            raise Exception(response)
+        body.extend(('--' + boundary + '--', ''))
+        response = self._connect(self._uri, body='\r\n'.join(body), headers=
+                                 {'Content-type': 'multipart/form-data; boundary=%s' % boundary})
+        try:
+            response_text = response.read()
+        finally:
+            response.close()
+        if not response.info().getheader('Content-Type').startswith('text/plain'):
+            raise self.StorageError('Invalid server response')
+        response_text = response.read()
+        if response_text != 'OK':
+            raise self.StorageError(response_text)
         
     def _resource_uri(self, filename):
         return self._uri+'/'+filename
@@ -3779,25 +3827,20 @@ class HttpAttachmentStorage(AttachmentStorage):
             return None
 
     def resources(self):
-        import urllib2
+        response = self._connect(self._uri)
         try:
-            connection = urllib2.urlopen(self._uri)
-        except (urllib2.HTTPError, urllib2.URLError) as e:
-            raise self.StorageError(str(e))
-        try:
-            response = connection.read()
+            response_text = response.read()
         finally:
-            connection.close()
-        return [self._resource(line.strip()) for line in response.splitlines()]
+            response.close()
+        if not response.info().getheader('Content-Type').startswith('text/plain'):
+            raise self.StorageError('Invalid server response')
+        return [self._resource(line.strip()) for line in response_text.splitlines()]
 
     def retrieve(self, filename):
-        import urllib2
         try:
-            return urllib2.urlopen(self._uri+'/'+filename)
-        except urllib2.HTTPError as e:
-            if e.code == 404:
-                return None
-            raise
+            return self._connect(self._uri+'/'+filename)
+        except self.StorageError:
+            return None
    
     
 class Specification(object):

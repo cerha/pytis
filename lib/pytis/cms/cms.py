@@ -353,7 +353,13 @@ class Menu(Specification):
         if text:
             storage = self._attachment_storage(row)
             if storage:
-                resources = storage.resources()
+                try:
+                    resources = storage.resources()
+                except pp.AttachmentStorage.StorageError as e:
+                    from pytis.form import run_dialog, Error
+                    run_dialog(Error, title=_(u"Nelze načíst přílohy"),
+                               message=_(u"Chyba přísutu k úložišti příloh:\n%s") % e)
+                    resources = ()
             else:
                 resources = ()
             return pu.parse_lcg_text(text, resources=resources)
