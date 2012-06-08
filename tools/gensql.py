@@ -569,7 +569,7 @@ class SelectRelation(object):
             zahrnuty. Je-li None, budou použity všechny sloupce ze všech
             relací (pozor na konflikty jmen!). Pokud je v seznamu
             znak '*', týká se specifikace všech sloupců dané relace.
-          columns_aliases -- seznam dvojic (column, alias) uvádějící
+          column_aliases -- seznam dvojic (column, alias) uvádějící
             alias pro uvedený sloupec.
           jointype -- typ joinu.
           condition -- podmínka, která se použije ve specifikaci ON
@@ -1512,7 +1512,6 @@ class Select(_GsqlSpec):
         else:
             columns = self._columns
         return [ViewColumn(c.alias) for c in columns]           
-            
 
     def sort_columns(self, aliases):
         # Check length and column aliases
@@ -1578,7 +1577,7 @@ class Select(_GsqlSpec):
         column_spec = []
         for r in self._relations:
             relname = self._convert_relation_name(r)
-            aliases = []
+            aliases = list(r.column_aliases)
             exclude = r.exclude_columns or ()
             if isinstance(exclude, basestring):
                 exclude = (exclude,)
@@ -1607,10 +1606,10 @@ class Select(_GsqlSpec):
                 else:
                     spec = '%s.c' % (relname,)
                 if aliases:
-                    alias_spec = string.join(['%s=%s.%s' % (alias, relname, name,)
+                    alias_spec = string.join(['%s=%s.c.%s' % (alias, relname, name,)
                                               for name, alias in aliases],
                                              ', ')
-                    spec += 'self._alias(%s)' % (spec, alias_spec,)
+                    spec = 'cls._alias(%s, %s)' % (spec, alias_spec,)
                 column_spec.append(spec)
             else:
                 column_spec.append('cls._exclude(%s)' % (relname,))

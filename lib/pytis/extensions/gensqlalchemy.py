@@ -503,12 +503,13 @@ class SQLView(_SQLTabular):
 
     @classmethod
     def _alias(cls, columns, **aliases):
+        raliases = dict([(v, k,) for k, v in aliases.items()])
         aliased = []
         for c in columns:
-            if c.name in aliases:
-                alias.append('%s AS %s' % (c, aliases[c.name],))
+            if c in raliases:
+                aliased.append('%s AS %s' % (c, raliases[c],))
             else:
-                alias.append(c)
+                aliased.append(c)
         return aliased
 
     @classmethod
