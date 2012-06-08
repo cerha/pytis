@@ -1581,7 +1581,12 @@ class Select(_GsqlSpec):
             exclude = r.exclude_columns or ()
             if isinstance(exclude, basestring):
                 exclude = (exclude,)
-            if '*' not in exclude:
+            if isinstance(r.relation, Select):
+                if exclude:
+                    column_spec.append('XXX:selrel:%s' % (r.relation,))
+                elif not r.alias:
+                    column_spec.append('XXX:selnone:%s' % (r.relation,))
+            elif '*' not in exclude:
                 for c in self._relation_columns[r.relation]:
                     if isinstance(c, basestring):
                         continue
@@ -1642,8 +1647,10 @@ class Select(_GsqlSpec):
         def convert_relation(i, rel):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
-                sel = rel.relation.convert_select()
-                relation = '(%s)' % (sel,)
+                sel, dd = rel.relation._convert_select()
+                relation = sel
+                for d in dd:
+                    definitions.append(d)
                 d = None
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
