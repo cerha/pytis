@@ -733,7 +733,7 @@ class Attachments(wiking.Module, wiking.RequestHandler):
     """
     def _handle(self, req):
         directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
-        assert not (directory.startswith('http://') or directory.startswith('http://'))
+        assert not (directory.startswith('http://') or directory.startswith('https://'))
         if not directory or not req.unresolved_path:
             raise wiking.Forbidden
         identifier = req.unresolved_path[0]
