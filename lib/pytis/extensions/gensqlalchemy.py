@@ -469,11 +469,40 @@ class SQLView(_SQLTabular):
                 seen.append(o)
 
     @classmethod
-    def _exclude(self, tabular, *columns):
-        return [c for c in tabular.c if c not in columns]
+    def _exclude(cls, tabular, *columns_tables, **kwargs):
+        inherited = kwargs.get('inherited', True)
+        columns = []
+        tables = []
+        for x in columns_tables:
+            if isinstance(x, SQLTable):
+                tables.append(x)
+            elif isinstance(x, sqlalchemy.sql.Alias):
+                tables.append(x.original)
+            else:
+                columns.append(x)
+        if inherited:
+            the_tabular = tabular.original if isinstance(tabular, sqlalchemy.sql.Alias) else tabular
+            if isinstance(the_tabular, SQLTable):
+                path = _current_search_path
+                try:
+                    _set_current_search_path(the_tabular.search_path())
+                    tables += [object_by_path(t.pytis_name()) for t in the_tabular.inherits]
+                finally:
+                    _set_current_search_path(path)
+        included = []
+        for c in tabular.c:
+            if c in columns:
+                continue
+            cname = c.name
+            for t in tables:
+                if cname in t.c:
+                    break
+            else:
+                included.append(c)
+        return included
 
     @classmethod
-    def _alias(self, columns, **aliases):
+    def _alias(cls, columns, **aliases):
         aliased = []
         for c in columns:
             if c.name in aliases:
@@ -483,7 +512,7 @@ class SQLView(_SQLTabular):
         return aliased
 
     @classmethod
-    def _reorder(self, tabular_1, tabular_2):
+    def _reorder(cls, tabular_1, tabular_2):
         def columns(t):
             if isinstance(t, _SQLTabular):
                 colums = t.c

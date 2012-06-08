@@ -1613,7 +1613,7 @@ class Select(_GsqlSpec):
                     spec += 'self._alias(%s)' % (spec, alias_spec,)
                 column_spec.append(spec)
             else:
-                column_spec.append('[%s]' % (relname,))
+                column_spec.append('cls._exclude(%s)' % (relname,))
         if self._include_columns:
             included = [self._convert_select_column(c) for c in self._include_columns]
             column_spec.append('[%s]' % (string.join(included, ', '),))
