@@ -337,7 +337,7 @@ class _GsqlSpec(object):
         if name is None:
             name = self._name
         components = [c.capitalize() for c in name.split('_')]
-        return string.join(components, '')
+        return string.join(components, '').replace('í', 'ii')
 
     def _convert_doc(self):
         doc = self._doc
@@ -355,10 +355,11 @@ class _GsqlSpec(object):
             return 'False'
         elif value.lower() in ("'t'", 'true',):
             return 'True'
-        elif value in ('localtimestamp', 'now()', 'current_user', 'user',):
+        elif (value in ('localtimestamp', 'now()', 'current_user', 'session_user', 'user', 'current_date',) or
+              value[:4] == 'cfg_'):
             return "'%s'" % (value,)
         elif value[0] == "'" and value[-1] == "'" and value[1:-1].find("'") == -1:
-            return value
+            return value.replace('\n', '\\n')
         else:
             try:
                 float(value)
@@ -383,31 +384,64 @@ class _GsqlSpec(object):
             mapping = {'name': 'pytis.data.String(maxlen=64)',
                        'smallint': 'pytis.data.Integer()',
                        'bytea': 'pytis.data.Binary()',
+                       'inet': 'pytis.data.Inet()',
                        }
             type_ = mapping.get(column.type)
             if type_ is None:
-                type_ = 'XXX: %s' % (column.type,)
+                match = re.match('^(?P<var>var)?char\((?P<len>[0-9]+)\)$', column.type)
+                if match:
+                    groups = match.groupdict()
+                    minlen = '' if groups['var'] else 'minlen=%s, ' % (groups['len'],)
+                    type_ = 'pytis.data.String(%smaxlen=%s)' % (minlen, groups['len'],)
+                else:
+                    match = re.match('numeric\(([0-9]+), *([0-9]+)\)', column.type)
+                    if match:
+                        type_ = 'pytis.data.Float(digits=%s, precision=%s)' % match.groups()
+                    else:
+                        type_ = 'XXX: %s' % (column.type,)
         unique = 'unique' in constraints or 'unique not null' in constraints
-        default = None if column.default is None else self._convert_value(column.default)
-        if column.references:
-            components = column.references.split(' ')
-            references = "a(object_by_reference(%s)" % (repr(components.pop(0),))
-            while components:
-                if components.pop(0).lower() == 'on':
-                    action = (components and components.pop(0).lower())
-                    if (components and action in ('update', 'delete',) and
-                        components[0].lower() in ('cascade', 'delete', 'restrict',)):
-                        references += ", on%s='%s'" % (action, components.pop(0).upper(),)
-                    elif (len(components) >= 2 and action in ('update', 'delete',) and
-                        (components[0].lower(), components[1].lower(),) == ('set', 'null',)):
-                        references += ", on%s='SET NULL'" % (action,)
-                        components = components[2:]
+        if column.default is None:
+            default = None
+        else:
+            if isinstance(column.default, tuple):
+                if len(column.default) == 1:
+                    default = self._convert_value(column.default[0])
+                else:
+                    default = 'XXX:default:%s' % (column.default,)
+            else:
+                default = self._convert_value(column.default)
+        c_references = column.references
+        if c_references:
+            if isinstance(c_references, tuple):
+                if len(c_references) == 1:
+                    c_references = c_references[0]
+                else:
+                    c_references = None
+            if c_references:
+                components = c_references.split(' ')
+                references = "a(object_by_reference(%s)" % (repr(components.pop(0),))
+                while components:
+                    if components.pop(0).lower() == 'on':
+                        action = (components and components.pop(0).lower())
+                        if (components and action in ('update', 'delete',) and
+                            components[0].lower() in ('cascade', 'delete', 'restrict',)):
+                            reaction = components.pop(0).upper()
+                            if references and components == ['INITIALLY', 'DEFERRED']:
+                                reaction += ' INITIALLY DEFERRED'
+                                components = []
+                            references += ", on%s='%s'" % (action, reaction,)
+                        elif (len(components) >= 2 and action in ('update', 'delete',) and
+                            (components[0].lower(), components[1].lower(),) == ('set', 'null',)):
+                            references += ", on%s='SET NULL'" % (action,)
+                            components = components[2:]
+                        else:
+                            references = None
+                            break
                     else:
                         references = None
                         break
-                else:
-                    references = None
-                    break
+            else:
+                references = None
             if references is None:
                 references = 'None #XXX: %s' % (column.references,)
             else:
@@ -432,7 +466,7 @@ class _GsqlSpec(object):
         spec += ')'
         for c in constraints:
             if c not in ('unique', 'not null',):
-                spec = spec + (' #XXX:%s' % (c,))
+                spec = spec + (', #XXX:%s' % (c,))
         return spec
         
     def convert(self):
@@ -1571,7 +1605,12 @@ class Select(_GsqlSpec):
 
     def _convert_relation_name(self, relation):
         alias = relation.alias
-        return alias if alias else relation.name
+        if not alias:
+            if isinstance(relation, SelectRelation):
+                alias = relation.relation
+            else:
+                alias = relation.name
+        return alias
  
     def _convert_select_columns(self):
         column_spec = []
@@ -1583,7 +1622,8 @@ class Select(_GsqlSpec):
                 exclude = (exclude,)
             if isinstance(r.relation, Select):
                 if exclude:
-                    column_spec.append('XXX:selrel:%s' % (r.relation,))
+                    if exclude != ('*',):
+                        column_spec.append('XXX:selrel:%s' % (r.relation,))
                 elif not r.alias:
                     column_spec.append('XXX:selnone:%s' % (r.relation,))
             elif '*' not in exclude:

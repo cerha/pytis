@@ -680,6 +680,7 @@ class Float(Number):
             format = '%%.%df' % precision
         self._format_string = format
         self._precision = precision
+        self._digits = digits
 
     def precision(self):
         """Vrať přesnost čísla zadanou v konstruktoru jako integer."""
@@ -756,7 +757,11 @@ class Float(Number):
             return unicode(self._format_string % value)
 
     def sqlalchemy_type(self):
-        return sqlalchemy.Float(precision=self.precision())
+        if self._precision is not None and self._digits is not None:
+            alchemy_type = sqlalchemy.Numeric(precision=self.precision(), scale=self.digits())
+        else:
+            alchemy_type = sqlalchemy.Float(precision=self.precision())
+        return alchemy_type
 
         
 class Monetary(Float):
