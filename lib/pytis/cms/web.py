@@ -757,7 +757,7 @@ class Attachments(wiking.Module, wiking.RequestHandler):
     def _authorized(self, req):
         return True
 
-    def _insert(self, req, storage, data, filename):
+    def _insert(self, req, storage, filename, data):
         try:
             storage.insert(filename, data, {})
         except Exception as e:
