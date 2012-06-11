@@ -486,6 +486,16 @@ class _GsqlSpec(object):
         "Vrať novou pythonovou specifikaci daného objektu jako string."
         return '#XXX:%s' % (self,)
 
+    def _add_conversion_dependency(self, o):
+        if isinstance(o, basestring):
+            pos = o.find('(')
+            if pos >= 0:
+                o = o[:pos].rstrip()
+            if o.startswith('pg_') or o.startswith('sfn_'):
+                return
+        if o not in self._depends and o is not self and o != self._name:
+            self._depends = self._depends + (o,)
+
 
 class Column(object):
     """Úložná třída specifikace sloupce."""
@@ -1714,9 +1724,11 @@ class Select(_GsqlSpec):
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
+                self._add_conversion_dependency(rel.relation)
                 d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
+                self._add_conversion_dependency(rel.relation)
                 d = "%s = object_by_path('%s')" % (relation, rel.relation,)
             if rel.alias:
                 if d is None:
@@ -2820,6 +2832,7 @@ class _GsqlDefs(UserDict.UserDict):
         self._unresolved = []
         self._table_keys = {}
         self._relation_columns = {}
+        self._specifications = []
         
     def _resolvedp(self, spec):
         missing = some(lambda d: d not in self._resolved, spec.depends())
@@ -2864,6 +2877,7 @@ class _GsqlDefs(UserDict.UserDict):
             self._relation_columns[name] = spec.columns()
         
     def add(self, spec):
+        self._specifications.append(spec)
         name = spec.name()
         if isinstance(spec, _GsqlTable):
             if name not in self._table_keys:
@@ -3068,6 +3082,18 @@ database dumps if you want to be sure about your schema.
         self._process_resolved(process)
 
     def convert(self):
+        # Add some dependencies
+        def process(o):
+            self[o].convert()
+        self._process_resolved(process)
+        # Make new processor
+        defs = self.__class__()
+        for s in self._specifications:
+            defs.add(s)
+        # And make the real conversion
+        defs._convert()
+
+    def _convert(self):
         sys.stdout.write('# -*- coding: utf-8\n')
         def process(o):
             sys.stdout.write(self[o].convert())
