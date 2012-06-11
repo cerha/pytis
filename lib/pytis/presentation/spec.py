@@ -3762,7 +3762,7 @@ class HttpAttachmentStorage(AttachmentStorage):
             headers['Authorization'] = 'Basic %s' % encoded_credentials
         if body is not None:
             headers['Content-Length'] = len(body)
-        req = urllib2.Request(uri, body, headers)
+        req = urllib2.Request(uri.encode('utf-8'), body, headers)
         try:
             return urllib2.urlopen(req)
         except urllib2.HTTPError as e:
