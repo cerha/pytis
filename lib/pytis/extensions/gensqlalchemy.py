@@ -122,8 +122,11 @@ class Column(pytis.data.ColumnSpec):
             index = True
         else:
             index = False
+        default = self._default
+        if isinstance(default, (bool, float, int,)):
+            default = sqlalchemy.text(repr(default))
         column = sqlalchemy.Column(self.id(), alchemy_type, *args,
-                                   server_default=self._default,
+                                   server_default=default,
                                    doc=self._doc, index=index,
                                    nullable=(not self.type().not_null()),
                                    primary_key=self._primary_key, unique=self._unique)
@@ -686,6 +689,7 @@ class Foo(SQLTable):
     fields = (PrimaryColumn('id', pytis.data.Serial()),
               Column('foo', pytis.data.String(), doc='some string', index=dict(method='hash')),
               Column('n', pytis.data.Integer(not_null=True), doc='some number'),
+              Column('b', pytis.data.Boolean(), default=True),
               )
     inherits = ()
     tablespace = None
