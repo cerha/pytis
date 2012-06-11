@@ -122,7 +122,8 @@ class Column(pytis.data.ColumnSpec):
             index = True
         else:
             index = False
-        column = sqlalchemy.Column(self.id(), alchemy_type, *args, default=self._default,
+        column = sqlalchemy.Column(self.id(), alchemy_type, *args,
+                                   server_default=self._default,
                                    doc=self._doc, index=index,
                                    nullable=(not self.type().not_null()),
                                    primary_key=self._primary_key, unique=self._unique)
