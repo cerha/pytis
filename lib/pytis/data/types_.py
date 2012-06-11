@@ -510,10 +510,7 @@ class Big(Type):
     Instances of this type are sometimes handled in Pytis in a special way,
     e.g. they are not printed to the terminal log.
     
-    """
-    def sqlalchemy_type(self):
-        return sqlalchemy.BigInteger()
-    
+    """    
 
 class Large(Big):
     """Mixin class denoting types with really large values.
@@ -633,6 +630,10 @@ class Integer(Number):
 
     def sqlalchemy_type(self):
         return sqlalchemy.Integer()
+
+class LargeInteger(Integer):
+    def sqlalchemy_type(self):
+        return sqlalchemy.BigInteger()
 
 
 class Serial(Integer):
@@ -1440,6 +1441,9 @@ class DateTime(_CommonDateTime):
         """Deprecated.  Use 'datetime' method instead.
         """
         return class_.datetime()
+    
+    def sqlalchemy_type(self):
+        return sqlalchemy.DateTime(timezone=(not self._utc))
 
 class ISODateTime(DateTime):
     """Datetime represented by the ISO datetime format in the database.

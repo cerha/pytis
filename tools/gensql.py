@@ -355,9 +355,6 @@ class _GsqlSpec(object):
             return 'False'
         elif value.lower() in ("'t'", 'true',):
             return 'True'
-        elif (value in ('localtimestamp', 'now()', 'current_user', 'session_user', 'user', 'current_date',) or
-              value[:4] == 'cfg_'):
-            return "'%s'" % (value,)
         elif value[0] == "'" and value[-1] == "'" and value[1:-1].find("'") == -1:
             return value.replace('\n', '\\n')
         else:
@@ -365,7 +362,7 @@ class _GsqlSpec(object):
                 float(value)
                 return value
             except:
-                return 'XXX:%s' % (value,)
+                return "sqlalchemy.text('%s')" % (value.replace('\\', '\\\\').replace("'", "\\'"),)
 
     def _convert_column(self, column):
         name = column.name
@@ -383,12 +380,21 @@ class _GsqlSpec(object):
         else:
             mapping = {'name': 'pytis.data.String(maxlen=64)',
                        'smallint': 'pytis.data.Integer()',
+                       'integer': 'pytis.data.Integer()',
+                       'bigint': 'pytis.data.BigInteger()',
                        'bytea': 'pytis.data.Binary()',
                        'inet': 'pytis.data.Inet()',
+                       'date': 'pytis.data.Date()',
+                       'time': 'pytis.data.Time()',
+                       'timestamp': 'pytis.data.DateTime()', # assumes UTC, not always valid
+                       'macaddr': 'pytis.data.Macaddr()',
+                       'ltree': 'pytis.data.LTree()',
+                       'boolean': 'pytis.data.Boolean()',
+                       'bool': 'pytis.data.Boolean()',
                        }
             type_ = mapping.get(column.type)
             if type_ is None:
-                match = re.match('^(?P<var>var)?char\((?P<len>[0-9]+)\)$', column.type)
+                match = re.match('^(?P<var>var)?char\((?P<len>[0-9]+)\)$', column.type, re.I)
                 if match:
                     groups = match.groupdict()
                     minlen = '' if groups['var'] else 'minlen=%s, ' % (groups['len'],)
@@ -398,7 +404,11 @@ class _GsqlSpec(object):
                     if match:
                         type_ = 'pytis.data.Float(digits=%s, precision=%s)' % match.groups()
                     else:
-                        type_ = 'XXX: %s' % (column.type,)
+                        match = re.match('numeric\(([0-9]+)\)', column.type)
+                        if match:
+                            type_ = 'pytis.data.Float(digits=%s)' % match.groups()
+                        else:
+                            type_ = 'XXX: %s' % (column.type,)
         unique = 'unique' in constraints or 'unique not null' in constraints
         if column.default is None:
             default = None
@@ -421,7 +431,8 @@ class _GsqlSpec(object):
                 components = c_references.split(' ')
                 references = "a(object_by_reference(%s)" % (repr(components.pop(0),))
                 while components:
-                    if components.pop(0).lower() == 'on':
+                    keyword = components.pop(0).lower()
+                    if keyword == 'on':
                         action = (components and components.pop(0).lower())
                         if (components and action in ('update', 'delete',) and
                             components[0].lower() in ('cascade', 'delete', 'restrict',)):
@@ -437,6 +448,8 @@ class _GsqlSpec(object):
                         else:
                             references = None
                             break
+                    elif keyword == 'initially' and components.pop(0).lower() == 'deferred' and not components:
+                        references += ", onupdate='NO ACTION INITIALLY DEFERRED', ondelete='NO ACTION INITIALLY DEFERRED'"
                     else:
                         references = None
                         break
@@ -450,7 +463,7 @@ class _GsqlSpec(object):
             references = None
         spec = ('%s(%s, %s' % (cls, name, type_,))
         if column.doc:
-            spec += ', doc="%s"' % (column.doc.replace('\n', '\\n'),)
+            spec += ', doc="%s"' % (column.doc.replace('\n', '\\n').replace('"', '\\"'),)
         if unique:
             spec += ', unique=%s' % (repr(unique),)
         if default is not None:
@@ -809,7 +822,7 @@ class _GsqlTable(_GsqlSpec):
                  on_insert=None, on_update=None, on_delete=None,
                  init_values=(), init_columns=(),
                  tablespace=None, upd_log_trigger=None,
-                 indexes=(), key_columns=(), **kwargs):
+                 indexes=(), key_columns=(), convert=True, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -884,6 +897,7 @@ class _GsqlTable(_GsqlSpec):
                               for c in init_columns]
         self._key_columns = key_columns
         self._indexes = indexes
+        self._convert = convert
 
     def _full_column_name(self, column):
         if not _gsql_column_table_column(column.name)[0]:
@@ -1387,9 +1401,11 @@ class _GsqlTable(_GsqlSpec):
         if False:
             items.append('    check = ()')
         if sql:            
-            items.append('#XXX: %s' % (sql,))
-        return string.join(items, '\n') + '\n'
-
+            items.append('#XXX: %s' % (sql.replace('\n', '\n#'),))
+        result = string.join(items, '\n') + '\n'
+        if not self._convert:
+            result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
+        return result
     
 class Select(_GsqlSpec):
     """Specifikace SQL selectu."""
@@ -1592,13 +1608,13 @@ class Select(_GsqlSpec):
         return ''
 
     def _convert_raw_columns(self, columns):
-        string_columns = ["'%s'" % (c.strip(),) for c in columns.split(',')]
+        string_columns = ["'%s'" % (c.strip().replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n'),) for c in columns.split(',')]
         return string.join(string_columns, ', ')
 
     def _convert_raw_condition(self, condition, as_object=False):
         if not condition:
             return ''
-        converted = "'%s'" % (_gsql_escape(condition or ''),)
+        converted = "'%s'" % (_gsql_escape(condition or '').replace('\n', '\\n'),)
         if as_object:
             converted = 'RawCondition(%s)' % (converted,)
         return converted
@@ -1621,10 +1637,7 @@ class Select(_GsqlSpec):
             if isinstance(exclude, basestring):
                 exclude = (exclude,)
             if isinstance(r.relation, Select):
-                if exclude:
-                    if exclude != ('*',):
-                        column_spec.append('XXX:selrel:%s' % (r.relation,))
-                elif not r.alias:
+                if not r.alias:
                     column_spec.append('XXX:selnone:%s' % (r.relation,))
             elif '*' not in exclude:
                 for c in self._relation_columns[r.relation]:
@@ -1680,7 +1693,7 @@ class Select(_GsqlSpec):
         cstring = cname
         if alias:
             cstring += ' AS %s' % (alias,)
-        return '"%s"' % (cstring.replace('//', '////').replace('"', '\\"').replace('\n', '\\n'),)
+        return '"%s"' % (cstring.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),)
 
     def _convert_relations(self):
         definitions = []
@@ -1693,6 +1706,12 @@ class Select(_GsqlSpec):
                     definitions.append(d)
                 d = None
             elif (isinstance(rel, SelectRelation) and
+                  rel.relation.find('(') >= 0):  # apparently a function call
+                relation = self._convert_relation_name(rel)
+                d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
+                     (relation.replace('(', '__').replace(')', '__'),
+                      rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
+            elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
                 d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
@@ -1701,7 +1720,7 @@ class Select(_GsqlSpec):
                 d = "%s = object_by_path('%s')" % (relation, rel.relation,)
             if rel.alias:
                 if d is None:
-                    d = '%s = %s' % (rel.alias, relation,)
+                    d = '%s = %s' % (rel.alias.replace('(', '__').replace(')', '__'), relation,)
                     relation = rel.alias
                 d += ".alias('%s')" % (rel.alias,)
             if d:
@@ -1735,7 +1754,10 @@ class Select(_GsqlSpec):
                     output, d = r.select._convert_select()
                     if r.settype:
                         assert condition
-                        condition = 'sqlalchemy.%s(%s, %s)' % (r.settype.lower(), condition, output,)
+                        settype = r.settype.lower()
+                        if settype == 'except':
+                            settype += '_'
+                        condition = 'sqlalchemy.%s(%s, %s)' % (settype, condition, output,)
                     else:
                         assert not condition, condition
                         condition = output
@@ -1773,6 +1795,7 @@ class _GsqlViewNG(Select):
     def __init__(self, name, relations, schemas=None,
                  insert=(), update=(), delete=(),
                  insert_order=None, update_order=None, delete_order=None,
+                 convert=True,
                  **kwargs):
         """Inicializuj instanci.
         Argumenty:
@@ -1828,6 +1851,7 @@ class _GsqlViewNG(Select):
         self._insert_order = insert_order
         self._update_order = update_order
         self._delete_order = delete_order
+        self._convert = convert
         self._columns = []
 
     def _format_rule(self, kind, table_keys):
@@ -2006,8 +2030,10 @@ class _GsqlViewNG(Select):
         definition_lines = string.join(['        %s\n' % (d,) for d in definitions], '')
         items.append('    @classmethod\n    def condition(cls):\n%s        return %s' %
                      (definition_lines, condition,))
-        return string.join(items, '\n') + '\n'
-        
+        result = string.join(items, '\n') + '\n'
+        if not self._convert:
+            result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
+        return result
 
 ViewNG = _GsqlViewNG    
 
