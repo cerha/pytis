@@ -3805,7 +3805,6 @@ class HttpAttachmentStorage(AttachmentStorage):
             response.close()
         if not response.info().getheader('Content-Type').startswith('text/plain'):
             raise self.StorageError('Invalid server response')
-        response_text = response.read()
         if response_text != 'OK':
             raise self.StorageError(response_text)
         
