@@ -1705,15 +1705,11 @@ class Select(_GsqlSpec):
             cstring += ' AS %s' % (alias,)
         return '"%s"' % (cstring.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),)
 
-    def _convert_relations(self):
-        definitions = []
+    def _convert_relations(self, definitions):
         def convert_relation(i, rel):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
-                sel, dd = rel.relation._convert_select()
-                relation = sel
-                for d in dd:
-                    definitions.append(d)
+                relation = rel.relation._convert_select(definitions)
                 d = None
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
@@ -1755,30 +1751,31 @@ class Select(_GsqlSpec):
         joins = [convert_relation(i, r) for i, r in enumerate(self._relations)]
         result = ''.join(joins)
         condition = self._convert_raw_condition(self._relations[0].condition)
-        return result, condition, definitions
+        return result, condition
         
-    def _convert_select(self):
+    def _convert_select(self, definitions):
         if self._set:
             condition = ''
-            definitions = []
             for r in self._relations:
                 if isinstance(r, SelectSet):
-                    output, d = r.select._convert_select()
+                    output = r.select._convert_select(definitions)
                     if r.settype:
                         assert condition
                         settype = r.settype.lower()
                         if settype == 'except':
                             settype += '_'
                         condition = 'sqlalchemy.%s(%s, %s)' % (settype, condition, output,)
+                        select_name = 'select_' +  str(len(definitions))
+                        definitions.append('%s = %s' % (select_name, condition,))
+                        condition = select_name
                     else:
                         assert not condition, condition
                         condition = output
                 else:
-                    s, d = r._convert_select()
+                    s = r._convert_select(definitions)
                     condition += 'XXX:select=%s' % (r,)
-                definitions += d
         else:
-            relations, where_condition, definitions = self._convert_relations()
+            relations, where_condition = self._convert_relations(definitions)
             columns = self._convert_select_columns()
             whereclause = ', whereclause=%s' % (where_condition,) if where_condition else ''
             condition = ('sqlalchemy.select(%s, from_obj=[%s]%s)' %
@@ -1787,11 +1784,14 @@ class Select(_GsqlSpec):
                 condition += '.group_by(%s)' % (self._convert_raw_columns(self._group_by),)
             if self._having:
                 condition += '.having(%s)' % (self._convert_raw_condition(self._having),)
+            select_name = 'select_' +  str(len(definitions))
+            definitions.append('%s = %s' % (select_name, condition,))
+            condition = select_name
         if self._order_by:
             condition += '.order_by(%s)' % (self._convert_raw_columns(self._order_by),)
         if self._limit:
             condition += '.limit(%d)' % (self._limit,)
-        return condition, definitions
+        return condition
      
 
 class _GsqlViewNG(Select):
@@ -2038,7 +2038,11 @@ class _GsqlViewNG(Select):
         if self._schemas:
             schemas = tuple([tuple(s.split(',')) for s in self._schemas])
             items.append('    schemas = %s' % (repr(schemas),))
-        condition, definitions = self._convert_select()
+        definitions = []
+        condition = self._convert_select(definitions)
+        if definitions and definitions[-1].startswith(condition + ' = '):
+            condition = definitions.pop()
+            condition = condition[condition.find(' = ')+3:]
         definition_lines = string.join(['        %s\n' % (d,) for d in definitions], '')
         items.append('    @classmethod\n    def condition(cls):\n%s        return %s' %
                      (definition_lines, condition,))
