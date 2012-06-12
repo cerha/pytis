@@ -3832,6 +3832,8 @@ class HttpAttachmentStorage(AttachmentStorage):
         finally:
             response.close()
         if not response.info().getheader('Content-Type').startswith('text/plain'):
+            log(OPERATIONAL, "Invalid server response:", response_text)
+            # TODO: Ošetřit "Přístup odepřen"
             raise self.StorageError('Invalid server response')
         return [self._resource(line.strip()) for line in response_text.splitlines()]
 
