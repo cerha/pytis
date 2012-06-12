@@ -61,7 +61,7 @@ pytis.HtmlField.dialog = function(editor) {
 
 	    // Tab Image
 	    {id: 'image',
-	     label: 'Image',
+	     label: pytis._('Image'),
 	     elements: [
 
 		 {type: 'select',
