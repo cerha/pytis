@@ -128,7 +128,10 @@ class Column(pytis.data.ColumnSpec):
                 if isinstance(dereference, basestring):
                     kwargs['use_alter'] = True
                     kwargs['name'] = '%s__r__%s' % (table_name, dereference.replace('.', '__'),)
-            args.append(sqlalchemy.ForeignKey(*r_args, **kwargs))
+            if not isinstance(dereference, basestring):
+                # Let's disable forward references for now as they can cause
+                # crashes in view definitions.
+                args.append(sqlalchemy.ForeignKey(*r_args, **kwargs))
         if self._index and not isinstance(self._index, dict):
             index = True
         else:
