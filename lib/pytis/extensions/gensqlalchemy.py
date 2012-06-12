@@ -82,6 +82,12 @@ def visit_column_comment(element, compiler, **kw):
     return ("COMMENT ON COLUMN \"%s\".\"%s\".\"%s\" IS '%s'" %
             (element.table.schema, element.table.name, element.field.id(),
              element.field.doc().replace("'", "''"),))
+
+class _SQLExternal(sqlalchemy.sql.expression.FromClause):
+
+    def __init__(self, name):
+        super(_SQLExternal, self).__init__()
+        self.name = name
     
 ## Columns
         
@@ -219,18 +225,26 @@ class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
                 _set_current_search_path(search_path)
                 cls(_metadata, search_path)
     
-def object_by_name(name):
-    return _metadata.tables[name]
+def object_by_name(name, allow_external=True):
+    try:
+        o = _metadata.tables[name]
+    except KeyError:
+        if not allow_external:
+            raise
+        o = _SQLExternal(name)
+    return o
 
-def object_by_path(name, search_path=True):
+def object_by_path(name, search_path=True, allow_external=True):
     if search_path is True:
         search_path = _current_search_path
     for schema in search_path:
         try:
-            return object_by_name('%s.%s' % (schema, name,))
+            return object_by_name('%s.%s' % (schema, name,), allow_external=False)
         except KeyError:
             continue
-    raise SQLNameException((schema, name,))
+    if not allow_external:
+        raise SQLNameException((schema, name,))
+    return _SQLExternal(name)
 
 class _Reference(object):
     def __init__(self, name, column):
@@ -241,7 +255,7 @@ class _Reference(object):
             reference = key_name
         else:
             try:
-                table = object_by_path(self._name)
+                table = object_by_path(self._name, allow_external=False)
             except SQLNameException:
                 return self._name
             if self._column:
@@ -409,7 +423,8 @@ class SQLTable(_SQLTabular):
     def _add_dependencies(self):
         super(SQLTable, self)._add_dependencies()
         for inherited in self.inherits:
-            self.add_is_dependent_on(object_by_name('%s.%s' % (self.schema, inherited.pytis_name(),)))
+            name = '%s.%s' % (self.schema, inherited.pytis_name(),)
+            self.add_is_dependent_on(object_by_name(name, allow_external=False))
 
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
