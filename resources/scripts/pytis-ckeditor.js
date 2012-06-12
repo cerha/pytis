@@ -68,8 +68,25 @@ pytis.HtmlField.dialog = function(editor) {
 		  id: 'identifier',
 		  label: pytis._('Image'),
 		  items: [],
-		  onShow: function(element) {
-		      this.onChange(element);
+		  updateAttachmentList: function(element) {
+		      // Construct a list of Wiking attachments for this page
+		      var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+		      var attachments = field.list_attachments()
+		      var options = this.getInputElement().$.options
+		      // Save field value before options update
+		      value = this.getValue();
+		      // Update options
+		      options.length = 0;
+		      for (var i = 0; i < attachments.length; i++) {
+			  var a = attachments[i];
+			  if (a.type == 'Image') {
+			      var label = (a.title ? a.title + " (" + a.filename + ")": a.filename);
+			      options.add(new Option(label, a.filename));
+			  }
+		      }
+		      // Restore former value
+		      if (value)
+			  this.setValue(value);
 		  },
 		  onChange: function(element) {
 		      // Update image description tab
@@ -93,18 +110,7 @@ pytis.HtmlField.dialog = function(editor) {
 		      }
 		  },
 		  setup: function(element) {
-		      // Construct a list of Wiking attachments for this page
-		      var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-		      var attachments = field.list_attachments()
-		      var options = this.getInputElement().$.options;
-		      options.length = 0;
-		      for (var i = 0; i < attachments.length; i++) {
-			  var a = attachments[i];
-			  if (a.type == 'Image') {
-			      var label = (a.title ? a.title + " (" + a.filename + ")": a.filename);
-			      options.add(new Option(label, a.filename));
-			  }
-		      }
+		      this.updateAttachmentList();
 		      // Read identifier from the image link
 		      var img = element.getFirst();
 		      if (img) {
@@ -309,47 +315,78 @@ pytis.HtmlField.dialog = function(editor) {
 	    {id: 'upload',
 	     label: pytis._('Upload new image'),
 	     elements : [
+		 // Image preview
+		 {type: 'html',
+		  id: 'upload-result',
+		  html: '<div id="ckeditor-upload-result"></div>'
+		 },
 		 {type: 'file',
 		  id: 'upload',
 		  label: editor.lang.image.btnUpload,
 		  style: 'height:50px',
 		  setup: function(element) {
+		      // Register onload hook to respond to upload actions
+		      var frame = CKEDITOR.document.getById(this._.frameId);
+		      // We need to unregister each event listener first to registering it multiple times
+		      this.removeListener('formLoaded', this.onFormLoaded);
+		      this.on('formLoaded', this.onFormLoaded, this);
+		      frame.removeListener('load', this.onIFrameLoaded);
+		      frame.on('load', this.onIFrameLoaded, this);
+		  },
+		  onFormLoaded: function() {
 		      var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-		      this.on('formLoaded', function() {
-			  var frameDocument = CKEDITOR.document.getById(this._.frameId).getFrameDocument();
-			  if (frameDocument.$.forms.length > 0) {
-			      /* This is a little tricky as the file upload
-			       * form is inside an IFRAME.  It is not possible
-			       * to submit the AttachmentStorage request
-			       * through AJAX due to certain browser
-			       * limitations so it is submitted within the
-			       * iframe.  We must copy all hidden form fields
-			       * from the main edited form to mimic the
-			       * bahavior of pytis form AJAX updates and to get
-			       * the uploaded data within the Python code in
-			       * 'EditForm._attachment_storage_insert()'.
-			       */
-			      var form = frameDocument.$.forms[0];
-			      field._file_upload_form = form;
-			      if (form.getAttribute('action') != field._form.getAttribute('action')) {
-				  form.setAttribute('action', field._form.getAttribute('action'));
-				  hidden_fields = {'_pytis_form_update_request': 1,
-						   '_pytis_attachment_storage_field': field._id,
-						   '_pytis_attachment_storage_request': 'insert'};
-				  for (var i = 0; i < field._form.elements.length; i++) {
-				      var e = field._form.elements[i];
-				      if (e.type == 'hidden') // && e.name != 'submit')
-     					  hidden_fields[e.name] = e.value;
-				  }
-				  for (var name in hidden_fields) {
-     				      Element.insert(form, new Element('input',
-								       {'type': 'hidden',
-									'name': name, 
-									'value': hidden_fields[name]}));
-				  }
+		      var frameDocument = CKEDITOR.document.getById(this._.frameId).getFrameDocument();
+		      if (frameDocument.$.forms.length > 0) {
+			  /* This is a little tricky as the file upload
+			   * form is inside an IFRAME.  It is not possible
+			   * to submit the AttachmentStorage request
+			   * through AJAX due to certain browser
+			   * limitations so it is submitted within the
+			   * iframe.  We must copy all hidden form fields
+			   * from the main edited form to mimic the
+			   * bahavior of pytis form AJAX updates and to get
+			   * the uploaded data within the Python code in
+			   * 'EditForm._attachment_storage_insert()'.
+			   */
+			  var form = frameDocument.$.forms[0];
+			  field._file_upload_form = form;
+			  if (form.getAttribute('action') != field._form.getAttribute('action')) {
+			      form.setAttribute('action', field._form.getAttribute('action'));
+			      hidden_fields = {'_pytis_form_update_request': 1,
+					       '_pytis_attachment_storage_field': field._id,
+					       '_pytis_attachment_storage_request': 'insert'};
+			      for (var i = 0; i < field._form.elements.length; i++) {
+				  var e = field._form.elements[i];
+				  if (e.type == 'hidden') // && e.name != 'submit')
+     				      hidden_fields[e.name] = e.value;
+			      }
+			      for (var name in hidden_fields) {
+     				  Element.insert(form, new Element('input',
+								   {'type': 'hidden',
+								    'name': name,
+								    'value': hidden_fields[name]}));
 			      }
 			  }
-		      }, this);
+		      }
+		  },
+		  onIFrameLoaded: function() {
+		      var dialog = CKEDITOR.dialog.getCurrent();
+		      var body_childs = $(this._.frameId).contentWindow.document.body.childNodes;
+		      if ((body_childs.length == 1) && (body_childs[0].tagName.toLowerCase() == 'pre')){
+			  // This is a JSON reply
+			  var reply = body_childs[0].innerHTML.evalJSON();
+			  var msg, cls;
+			  dialog.getContentElement('image', 'identifier').updateAttachmentList();
+			  dialog.getContentElement('upload', 'upload').reset();
+			  if (reply['success'] == true){
+			      msg = pytis._("Upload successful");
+			      cls = "ckeditor-success";
+			  }else{
+			      msg = "Error: " + reply['message'];
+			      cls = "ckeditor-error";
+			  }
+			  $('ckeditor-upload-result').update("<p class=\""+cls+"\">"+msg+"</p>");
+		      }
 		  }
 		 },
 		 {type: 'fileButton',
@@ -363,11 +400,6 @@ pytis.HtmlField.dialog = function(editor) {
 		      // purposes and this hidden field masks the submit method
 		      // (not really clever...).
 		      var result = document.createElement('form').submit.call(field._file_upload_form);
-		      // TODO: The server response is a JSON string.  It is now
-		      // displayed within the iframe as is.  It should rather
-		      // be replaced by HTML message and on success, we should
-		      // probably redisplay the form to allow another upload.
-		      return false;
 		  }
 		 }
 	     ]}
