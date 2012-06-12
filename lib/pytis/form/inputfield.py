@@ -1999,6 +1999,78 @@ class StructuredTextField(TextField):
                        ('left', _("Vlevo")),
                        ('right', _("Vpravo")))
 
+    class LCGLink(object):
+        """Common manipulations with LCG Structured Text links.
+
+        Reads current link properties from the field source text, provides the
+        current values to the UI dialog and writes the user edited values back
+        to the source text after the UI dialog is closed.
+
+        The UI dialog is created independently.  This class only handles common
+        text manipulations.  Dialogs are specific for each link type.
+
+        """
+        def __init__(self, ctrl):
+            self._ctrl = ctrl
+            self._target = None
+            self._title = None
+            self._tooltip = None
+            self._align = 'inline'
+            # Find out whether the current cursor position is within an
+            # existing attachment link.
+            self._position = position = ctrl.GetInsertionPoint()
+            column_number, line_number = ctrl.PositionToXY(position)
+            self._column_number = column_number
+            line_text = ctrl.GetLineText(line_number)
+            self._start = start = line_text[:column_number].rfind('[')
+            self._end = end = line_text[column_number:].find(']')
+            if start != -1 and end != -1:
+                # If we are inside the link, read the current link properties.
+                link_text = line_text[start+1:column_number+end]
+                if link_text.startswith('<'):
+                    link_text = link_text[1:]
+                    self._align = 'left'
+                elif link_text.startswith('>'):
+                    link_text = link_text[1:]
+                    self._align = 'right'
+                if '|' in link_text:
+                    link_text, self._tooltip = [x.strip() for x in link_text.split('|', 1)]
+                if ' ' in link_text:
+                    link_text, self._title = link_text.split(' ', 1)
+                self._target = link_text
+
+        def target(self):
+            return self._target
+
+        def title(self):
+            return self._title
+
+        def tooltip(self):
+            return self._tooltip
+
+        def align(self):
+            return self._align
+
+        def update(self, target, title, tooltip, align=None):
+            """Update link source text with values from a UI dialog."""
+            link_text = target
+            if title:
+                link_text += ' '+ title
+            if tooltip:
+                if not title:
+                    link_text += ' '+ target
+                link_text += ' | '+ tooltip
+            if align == 'left':
+                link_text = '<' + link_text
+            if align == 'right':
+                link_text = '>' + link_text
+            start, end, pos, col = self._start, self._end, self._position, self._column_number
+            if start != -1 and end != -1:
+                self._ctrl.Remove(pos-col+start+1, pos+end)
+                self._ctrl.WriteText(link_text)
+            else:
+                self._ctrl.WriteText('[' + link_text + ']')
+
     _HEADING_MATCHER = re.compile(r'^(?P<level>=+) (?P<title>.*) (?P=level)' +
                                   r'(?:[\t ]+(?:\*|(?P<anchor>[\w\d_-]+)))? *$')
 
@@ -2331,137 +2403,80 @@ class StructuredTextField(TextField):
     def _cmd_image(self):
         if not self._storage:
             return
-        ctrl = self._ctrl
-        # Find out whether the current cursor position is within an existing
-        # attachment link.
-        position = ctrl.GetInsertionPoint()
-        column_number, line_number = ctrl.PositionToXY(position)
-        line_text = ctrl.GetLineText(line_number)
-        start = line_text[:column_number].rfind('[')
-        end = line_text[column_number:].find(']')
-        filename = None
-        align = 'inline'
-        tooltip = None
+        link = self.LCGLink(self._ctrl)
         enumerator = self.AttachmentEnumerator(self._storage, images=True)
-        if start != -1 and end != -1:
-            filename = line_text[start+1:column_number+end]
-            if filename.startswith('<'):
-                filename = filename[1:]
-                align = 'left'
-            elif filename.startswith('>'):
-                filename = filename[1:]
-                align = 'right'
-            if '|' in filename:
-                filename, tooltip = [x.strip() for x in filename.split('|', 1)]
-                if ' ' in filename:
-                    filename = filename.split(' ', 1)[0]
-            if filename not in enumerator.values():
-                # If the current link filename doesn't match any existing file
-                # name, the link is probably invlid (damaged by hand editation)
-                # and we rather don't replace it, but insert the new link
-                # inside, leaving it up to the user to clean up the result...
-                filename = None
-                align = 'inline'
-                tooltip = None
+        if link.target() in enumerator.values():
+            filename = link.target()
+        else:
+            # TODO: Warn the user?
+            filename = None
         fields = (
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
-                  default=filename, compact=True, width=25,
-                  selection_type=pytis.presentation.SelectionType.LIST_BOX,
-                  enumerator=enumerator),
+                  compact=True, width=25, enumerator=enumerator,
+                  selection_type=pytis.presentation.SelectionType.LIST_BOX),
             Field('preview', _(u"Náhled"), codebook='cms.Attachments', compact=True,
                   computer=computer(self._image_preview_computer), width=200, height=200,
                   editable=pytis.presentation.Editable.NEVER,
                   type=pytis.data.Image(not_null=True, maxlen=5*1024*1024),
                   descr=_(u"Vyberte jeden z dostupných souborů, "
                           "nebo vložte nový z vašeho počítače.")),
-            Field('align', _(u"Zarovnání"), not_null=True, default=align,
+            Field('align', _(u"Zarovnání"), not_null=True,
                   enumerator=self.ImageAlignments),
             #Field('title', _(u"Název"), width=50,
             #      descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
             #              u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
             #              u"předchozím políčku.")),
-            Field('tooltip', _(u"Tooltip"), width=50, default=tooltip,
+            Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
             )
         button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
         row = run_form(InputForm, title=_(u"Vložit obrázek"), fields=fields,
+                       prefill=dict(filename=filename,
+                                    align=link.align(),
+                                    tooltip=link.tooltip()),
                        layout=(pytis.presentation.ColumnLayout(('filename', button), 'preview'),
                                'align', 'tooltip'))
         if row:
-            link = row['filename'].value()
-            tooltip = row['tooltip'].value()
-            if tooltip:
-                link += ' '+ link +' | '+ tooltip
-            if row['align'].value() == 'left':
-                link = '<' + link
-            if row['align'].value() == 'right':
-                link = '>' + link
-            if filename is not None:
-                ctrl.Remove(position-column_number+start+1, position+end)
-                ctrl.WriteText(link)
-            else:
-                ctrl.WriteText('[' + link + ']')
+            link.update(target=row['filename'].value(),
+                        title=None,
+                        tooltip=row['tooltip'].value(),
+                        align=row['align'].value())
         self.set_focus()
         
     def _cmd_attachment(self):
         if not self._storage:
             return
-        ctrl = self._ctrl
-        # Find out whether the current cursor position is within an existing
-        # attachment link.
-        position = ctrl.GetInsertionPoint()
-        column_number, line_number = ctrl.PositionToXY(position)
-        line_text = ctrl.GetLineText(line_number)
-        start = line_text[:column_number].rfind('[')
-        end = line_text[column_number:].find(']')
-        filename, title, tooltip = None, None, None
+        link = self.LCGLink(self._ctrl)
         enumerator = self.AttachmentEnumerator(self._storage, images=False)
-        if start != -1 and end != -1:
-            filename = line_text[start+1:column_number+end]
-            if '|' in filename:
-                filename, tooltip = [x.strip() for x in filename.split('|', 1)]
-            if ' ' in filename:
-                filename, title = filename.split(' ', 1)
-            if filename not in enumerator.values():
-                # If the current link filename doesn't match any existing file
-                # name, the link is probably invlid (damaged by hand editation)
-                # and we rather don't replace it, but insert the new link
-                # inside, leaving it up to the user to clean up the result...
-                filename, title, tooltip = None, None, None
+        if link.target() in enumerator.values():
+            filename = link.target()
+        else:
+            # TODO: Warn the user?
+            filename = None
         fields = (
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
-                  default=filename, compact=True, width=25,
-                  selection_type=pytis.presentation.SelectionType.LIST_BOX,
-                  enumerator=enumerator),
-            Field('title', _(u"Název"), width=50, default=title,
+                  compact=True, width=25, enumerator=enumerator,
+                  selection_type=pytis.presentation.SelectionType.LIST_BOX),
+            Field('title', _(u"Název"), width=50,
                   descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
                           u"prázdné, pokud chcete zobrazit přímo název souboru.")),
-            Field('tooltip', _(u"Tooltip"), width=50, default=tooltip,
+            Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
             )
         button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
         row = run_form(InputForm, title=_(u"Vložit přílohu"), fields=fields,
+                       prefill=dict(filename=filename,
+                                    title=link.title(),
+                                    tooltip=link.tooltip()),
                        layout=('filename', button, 'title', 'tooltip'))
         if row:
-            link = row['filename'].value()
-            title = row['title'].value()
-            tooltip = row['tooltip'].value()
-            if title:
-                link += ' '+ title
-            if tooltip:
-                if not title:
-                    link += ' '+ link
-                link += ' | '+ tooltip
-            if filename is not None:
-                ctrl.Remove(position-column_number+start+1, position+end)
-                ctrl.WriteText(link)
-            else:
-                ctrl.WriteText('[' + link + ']')
+            link.update(target=row['filename'].value(),
+                        title=row['title'].value(),
+                        tooltip=row['tooltip'].value())
         self.set_focus()
 
     def _cmd_link(self):
-        ctrl = self._ctrl
-        from pytis.presentation import Field
+        link = self.LCGLink(self._ctrl)
         fields = (
             Field('target', _(u"Cíl"), width=50, not_null=True,
                   descr=_(u"Zadejte absolutní URL ve tvaru např. "
@@ -2474,18 +2489,14 @@ class StructuredTextField(TextField):
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
             )
-        row = run_form(InputForm, title=_(u"Zadejte parametry odkazu"), fields=fields)
+        row = run_form(InputForm, title=_(u"Zadejte parametry odkazu"), fields=fields,
+                       prefill=dict(target=link.target(),
+                                    title=link.title(),
+                                    tooltip=link.tooltip()))
         if row:
-            target, title, tooltip = [row[k].value() for k in ('target', 'title', 'tooltip')]
-            if tooltip:
-                title = (title or '') + ' | ' + tooltip
-            if title:
-                result = '[' + target + ' ' + title + ']'
-            elif True in [target.startswith(proto+'://') for proto in ('http', 'https', 'ftp')]:
-                result = target
-            else:
-                result = '[' + target + ']'
-            ctrl.WriteText(result)
+            link.update(target=row['target'].value(),
+                        title=row['title'].value(),
+                        tooltip=row['tooltip'].value())
         self.set_focus()
 
     def _cmd_linebreak(self):
