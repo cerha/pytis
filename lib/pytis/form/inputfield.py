@@ -2414,28 +2414,26 @@ class StructuredTextField(TextField):
         line_text = ctrl.GetLineText(line_number)
         start = line_text[:column_number].rfind('[')
         end = line_text[column_number:].find(']')
-        filename = None
-        tooltip = None
+        filename, title, tooltip = None, None, None
         enumerator = self.AttachmentEnumerator(self._storage, images=False)
         if start != -1 and end != -1:
             filename = line_text[start+1:column_number+end]
             if '|' in filename:
                 filename, tooltip = [x.strip() for x in filename.split('|', 1)]
-                if ' ' in filename:
-                    filename = filename.split(' ', 1)[0]
+            if ' ' in filename:
+                filename, title = filename.split(' ', 1)
             if filename not in enumerator.values():
                 # If the current link filename doesn't match any existing file
                 # name, the link is probably invlid (damaged by hand editation)
                 # and we rather don't replace it, but insert the new link
                 # inside, leaving it up to the user to clean up the result...
-                filename = None
-                tooltip = None
+                filename, title, tooltip = None, None, None
         fields = (
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
                   default=filename, compact=True, width=25,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX,
                   enumerator=enumerator),
-            Field('title', _(u"Název"), width=50,
+            Field('title', _(u"Název"), width=50, default=title,
                   descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
                           u"prázdné, pokud chcete zobrazit přímo název souboru.")),
             Field('tooltip', _(u"Tooltip"), width=50, default=tooltip,
@@ -2446,9 +2444,14 @@ class StructuredTextField(TextField):
                        layout=('filename', button, 'title', 'tooltip'))
         if row:
             link = row['filename'].value()
+            title = row['title'].value()
             tooltip = row['tooltip'].value()
+            if title:
+                link += ' '+ title
             if tooltip:
-                link += ' '+ link +' | '+ tooltip
+                if not title:
+                    link += ' '+ link
+                link += ' | '+ tooltip
             if filename is not None:
                 ctrl.Remove(position-column_number+start+1, position+end)
                 ctrl.WriteText(link)
