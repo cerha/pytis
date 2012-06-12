@@ -1668,7 +1668,7 @@ class Select(_GsqlSpec):
             if exclude or aliases:
                 if '*' in exclude:
                     continue
-                colist = string.join(["%s.c['%s']" % (relname, c,) for c in exclude], ', ')
+                colist = string.join(["'%s.%s'" % (relname, c,) for c in exclude], ', ')
                 if exclude:
                     spec = 'cls._exclude(%s, %s)' % (relname, colist,)
                 else:
