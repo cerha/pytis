@@ -307,6 +307,7 @@ pytis.HtmlField.dialog = function(editor) {
 			  'thumbnail_size': dialog.getValueOf('details', 'thumbnail_size')
 		      });
 		      // TODO: Display error message when error != null.
+		      dialog.getContentElement('image', 'identifier').updateAttachmentList();
 		  }}
 	     ]
 	    },
