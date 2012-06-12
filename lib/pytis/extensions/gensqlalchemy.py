@@ -115,9 +115,14 @@ class Column(pytis.data.ColumnSpec):
             if not isinstance(references, a):
                 references = a(references)
             r_args = references.args()
+            kwargs = copy.copy(references.kwargs())
             if isinstance(r_args[0], (ReferenceLookup.Reference, _Reference)):
-                r_args = (r_args[0].get(table_name, key_name),) + r_args[1:]
-            args.append(sqlalchemy.ForeignKey(*r_args, **references.kwargs()))
+                dereference = r_args[0].get(table_name, key_name)
+                r_args = (dereference,) + r_args[1:]
+                if isinstance(dereference, basestring):
+                    kwargs['use_alter'] = True
+                    kwargs['name'] = '%s__r__%s' % (table_name, dereference.replace('.', '__'),)
+            args.append(sqlalchemy.ForeignKey(*r_args, **kwargs))
         if self._index and not isinstance(self._index, dict):
             index = True
         else:
@@ -187,6 +192,11 @@ _metadata = sqlalchemy.MetaData()
 class SQLException(Exception):
     pass
 
+class SQLNameException(SQLException):
+    def __init__(self, *args):
+        super(SQLNameException, self).__init__("Object not found", *args)
+
+
 class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
     
     _name_mapping = {}
@@ -220,7 +230,7 @@ def object_by_path(name, search_path=True):
             return object_by_name('%s.%s' % (schema, name,))
         except KeyError:
             continue
-    raise SQLException("Object not found", (schema, name,))
+    raise SQLNameException((schema, name,))
 
 class _Reference(object):
     def __init__(self, name, column):
@@ -230,7 +240,10 @@ class _Reference(object):
         if table_name == self._name:
             reference = key_name
         else:
-            table = object_by_path(self._name)
+            try:
+                table = object_by_path(self._name)
+            except SQLNameException:
+                return self._name
             if self._column:
                 column = self._column
             else:
@@ -718,6 +731,16 @@ class Bar(SQLTable):
               )
     init_columns = ('foo_id', 'description',)
     init_values = ((1, 'some text'),)
+
+class Circular1(SQLTable):
+    """Circular REFERENCES, together with Circular2."""
+    fields = (PrimaryColumn('id', pytis.data.Integer()),
+              Column('x', pytis.data.Integer(), references=a(object_by_reference('public.circular2.id'))),
+              )
+class Circular2(SQLTable):
+    fields = (PrimaryColumn('id', pytis.data.Integer()),
+              Column('x', pytis.data.Integer(), references=a(object_by_reference('public.circular1.id'))),
+              )
 
 class Baz(SQLView):
     """Baz view."""
