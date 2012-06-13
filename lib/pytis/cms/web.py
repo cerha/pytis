@@ -763,6 +763,8 @@ class Attachments(wiking.Module, wiking.RequestHandler):
                 return self._retrieve(req, storage, filename)
             elif action == 'info':
                 return self._info(req, storage, filename)
+            elif action == 'update':
+                return self._update(req, storage, filename)
             else:
                 raise wiking.BadRequest()
 
@@ -823,3 +825,16 @@ class Attachments(wiking.Module, wiking.RequestHandler):
         else:
             response = 'OK'
         return wiking.Response(response, content_type='text/plain')
+    
+    def _update(self, req, storage, filename):
+        import json
+        values = json.loads(req.param('values'))
+        try:
+            storage.update(filename, values)
+        except Exception as e:
+            response = str(e)
+        else:
+            response = 'OK'
+        return wiking.Response(response, content_type='text/plain')
+    
+        

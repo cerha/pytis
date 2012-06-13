@@ -3669,25 +3669,16 @@ class FileAttachmentStorage(AttachmentStorage):
                 image = PIL.Image.open(data)
             except IOError as e:
                 raise self.InvalidImageFormat(e)
-            # TODO: Make allow setting image sizes through 'values'.
-            image_size = (800, 800)
-            thumbnail_size = (200, 200)
             image.save(path)
-            try:
-                for size, path in ((thumbnail_size, self._thumbnail_src_file(filename)),
-                                   (image_size, self._image_src_file(filename))):
-                    directory = os.path.split(path)[0]
-                    if not os.path.exists(directory):
-                        os.makedirs(directory)
-                    resized = image.copy()
-                    resized.thumbnail(size, PIL.Image.ANTIALIAS)
-                    resized.save(path)
-            except:
-                for subdir in ('', 'thumbnails', 'resized'):
-                    path = os.path.join(directory, subdir, filename)
-                    if os.path.exists(path):
-                        os.remove(path)
-                raise
+            if values.get('has_thumbnail', False):
+                try:
+                    self._resize_image(filename, image, values)
+                except:
+                    for subdir in ('', 'thumbnails', 'resized'):
+                        path = os.path.join(self._directory, subdir, filename)
+                        if os.path.exists(path):
+                            os.remove(path)
+                    raise
         else:
             f = open(path, 'wb')
             try:
@@ -3732,6 +3723,31 @@ class FileAttachmentStorage(AttachmentStorage):
         else:
             return None
 
+    def _resize_image(self, filename, image, values):
+        import PIL.Image
+        image_size = values.get('image_size', (1024, 800))
+        thumbnail_size = values.get('thumbnail_size', (200, 200))
+        for size, path in ((thumbnail_size, self._thumbnail_src_file(filename)),
+                           (image_size, self._image_src_file(filename))):
+            directory = os.path.split(path)[0]
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            resized = image.copy()
+            resized.thumbnail(size, PIL.Image.ANTIALIAS)
+            resized.save(path)
+        
+    def update(self, filename, values):
+        if 'has_thumbnail' in values:
+            if values['has_thumbnail']:
+                import PIL.Image
+                path = self._resource_src_file(filename)
+                image = PIL.Image.open(path)
+                self._resize_image(filename, image, values)
+            else:
+                for subdir in ('thumbnails', 'resized'):
+                    path = os.path.join(self._directory, subdir, filename)
+                    if os.path.exists(path):
+                        os.remove(path)
         
 class HttpAttachmentStorage(AttachmentStorage):
     """Remote AttachmentStorage implementation storing files through HTTP.
@@ -3878,6 +3894,11 @@ class HttpAttachmentStorage(AttachmentStorage):
         body.extend(('--' + boundary + '--', ''))
         self._post_data(self._uri, '\r\n'.join(body),
                         headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
+        
+    def update(self, filename, values):
+        import urllib, json
+        data = urllib.urlencode(dict(action='update', values=json.dumps(values)))
+        self._post_data(self._uri+'/'+filename, data)
         
     
 class Specification(object):
