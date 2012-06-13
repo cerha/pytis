@@ -2001,8 +2001,8 @@ class StructuredTextField(TextField):
     class ImageSizes(pytis.presentation.Enumeration):
         SMALL_THUMBNAIL_SIZE = 200
         LARGE_THUMBNAIL_SIZE = 350
-        enumeration = (('small-thumbnail', _("Malý náhled (%d px)" % SMALL_THUMBNAIL_SIZE)),
-                       ('large-thumbnail', _("Větší náhled (%d px)" % LARGE_THUMBNAIL_SIZE)),
+        enumeration = (('small-thumbnail', _("Malý náhled (%d px), kliknutím se zvětší" % SMALL_THUMBNAIL_SIZE)),
+                       ('large-thumbnail', _("Větší náhled (%d px), kliknutím se zvětší" % LARGE_THUMBNAIL_SIZE)),
                        #('custom-thumbnail', _("Vlastní velikost náhledu")),
                        ('full-size', _("V plné velikosti (vhodné pro snímek obrazovky apod.)")))
         @classmethod
