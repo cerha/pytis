@@ -738,7 +738,8 @@ class Attachments(wiking.Module, wiking.RequestHandler):
             raise wiking.Forbidden
         identifier = req.unresolved_path[0]
         del req.unresolved_path[0]
-        storage = pp.FileAttachmentStorage(os.path.join(directory, identifier), '')
+        storage = pp.FileAttachmentStorage(os.path.join(directory, identifier),
+                                           self._base_uri(req)+'/'+identifier)
         if not req.unresolved_path:
             data = req.param('data')
             if data:
