@@ -1998,6 +1998,35 @@ class StructuredTextField(TextField):
         enumeration = (('inline', _("Do řádku")),
                        ('left', _("Vlevo")),
                        ('right', _("Vpravo")))
+    class ImageSizes(pytis.presentation.Enumeration):
+        SMALL_THUMBNAIL_SIZE = 200
+        LARGE_THUMBNAIL_SIZE = 350
+        enumeration = (('small-thumbnail', _("Malý náhled (%d px)" % SMALL_THUMBNAIL_SIZE)),
+                       ('large-thumbnail', _("Větší náhled (%d px)" % LARGE_THUMBNAIL_SIZE)),
+                       #('custom-thumbnail', _("Vlastní velikost náhledu")),
+                       ('full-size', _("V plné velikosti (vhodné pro snímek obrazovky apod.)")))
+        @classmethod
+        def matching_size(cls, thumbnail):
+            if thumbnail:
+                size = max(*thumbnail.size())
+                if size == cls.SMALL_THUMBNAIL_SIZE:
+                    return 'small-thumbnail'
+                elif size == cls.LARGE_THUMBNAIL_SIZE:
+                    return 'large-thumbnail'
+                else:
+                    return 'custom-thumbnail'
+            else:
+                return 'full-size'
+        @classmethod
+        def thumbnail_size(cls, size, px_size):
+            if size == 'small-thumbnail':
+                return (cls.SMALL_THUMBNAIL_SIZE, cls.SMALL_THUMBNAIL_SIZE)
+            elif size == 'large-thumbnail':
+                return (cls.LARGE_THUMBNAIL_SIZE, cls.LARGE_THUMBNAIL_SIZE)
+            elif size == 'custom-thumbnail':
+                return (px_size, px_size)
+            elif size == 'full-size':
+                return None
 
     class LCGLink(object):
         """Common manipulations with LCG Structured Text links.
@@ -2377,9 +2406,11 @@ class StructuredTextField(TextField):
             self._last_load_dir = os.path.dirname(path)
             file_object = open(path)
             filename = os.path.split(path)[1]
+        size = self.ImageSizes.thumbnail_size(row['size'].value(), None)
         try:
             try:
-                self._storage.insert(filename, file_object, {})
+                self._storage.insert(filename, file_object, dict(has_thumbnail=(size is not None),
+                                                                 thumbnail_size=size))
             finally:
                 file_object.close()
         except AttachmentStorage.InvalidImageFormat as e:
@@ -2398,6 +2429,38 @@ class StructuredTextField(TextField):
                     return pytis.data.Image.Buffer(f, filename=filename)
                 finally:
                     f.close()
+        return None
+        
+    def _size_computer(self, row, filename):
+        thumbnail = None
+        if filename:
+            resource = self._storage.resource(filename)
+            if resource:
+                thumbnail = resource.thumbnail()
+        return self.ImageSizes.matching_size(thumbnail)
+        
+    def _real_size_computer(self, row, filename):
+        thumbnail = None
+        if filename:
+            resource = self._storage.resource(filename)
+            if resource:
+                thumbnail = resource.thumbnail()
+                if thumbnail and thumbnail.size():
+                    return "%dx%d px" % tuple(thumbnail.size())
+                elif resource.size():
+                    return "%dx%d px" % tuple(resource.size())
+        return None
+        
+    def _resize_computer(self, row, filename):
+        thumbnail = None
+        if filename:
+            resource = self._storage.resource(filename)
+            if resource and resource.size():
+                thumbnail = resource.thumbnail()
+                if thumbnail and thumbnail.size():
+                    resize = thumbnail.size()[0]/resource.size()[0]*100
+                    return str(resize)+'%'
+                return thumbnail
         return None
         
     def _cmd_image(self):
@@ -2419,7 +2482,18 @@ class StructuredTextField(TextField):
                   editable=pytis.presentation.Editable.NEVER,
                   type=pytis.data.Image(not_null=True, maxlen=5*1024*1024),
                   descr=_(u"Vyberte jeden z dostupných souborů, "
-                          "nebo vložte nový z vašeho počítače.")),
+                          u"nebo vložte nový z vašeho počítače.")),
+            Field('size', _(u"Zobrazit jako"), enumerator=self.ImageSizes,
+                  selection_type=pytis.presentation.SelectionType.RADIO,
+                  editable=pytis.presentation.Editable.ALWAYS,
+                  computer=computer(self._size_computer),
+                  descr=_(u"Vyberte jeden z uvedených způsobů zobrazení obrázku ve stránce. "
+                          u"Při použití náhledu se po kliknutí zobrazí zvětšená podoba "
+                          u"obrázku.")),
+            Field('real_size', _(u"Skutečná velikost náhledu"),
+                  computer=computer(self._real_size_computer)),
+            Field('resize', _(u"Poměr zmenšení"),
+                  computer=computer(self._resize_computer)),
             Field('align', _(u"Zarovnání"), not_null=True,
                   enumerator=self.ImageAlignments),
             #Field('title', _(u"Název"), width=50,
@@ -2430,14 +2504,24 @@ class StructuredTextField(TextField):
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
             )
         button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
+        Columns = pytis.presentation.ColumnLayout
         row = run_form(InputForm, title=_(u"Vložit obrázek"), fields=fields,
                        prefill=dict(filename=filename,
                                     align=link.align(),
                                     tooltip=link.tooltip()),
-                       layout=(pytis.presentation.ColumnLayout(('filename', button), 'preview'),
-                               'align', 'tooltip'))
+                       layout=(Columns(('filename', button), 'preview'),
+                               'align', 'size', 'real_size', 'tooltip'))
         if row:
-            link.update(target=row['filename'].value(),
+            filename = row['filename'].value()
+            if row['size'].value() != self._size_computer(row, filename):
+                size = self.ImageSizes.thumbnail_size(row['size'].value(), None)
+                try:
+                    self._storage.update(filename, dict(has_thumbnail=(size is not None),
+                                                        thumbnail_size=size))
+                except AttachmentStorage.StorageError as e:
+                    run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
+                               message=_(u"Chyba při aktualizaci:\n%s") % e)
+            link.update(target=filename,
                         title=None,
                         tooltip=row['tooltip'].value(),
                         align=row['align'].value())
