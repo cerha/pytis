@@ -3837,30 +3837,44 @@ class HttpAttachmentStorage(AttachmentStorage):
     
     def _thumbnail_uri(self, filename):
         return self._uri+'/thumbnails/'+filename
-    
-    def resource(self):
-        connection = self.retrieve(filename)
-        if connection:
-            connection.close()
-            return self._resource(filename)
-        else:
-            return None
 
-    def resources(self):
-        response = self._connect(self._uri)
+    def _json_data(self, uri):
+        import json
+        response = self._connect(uri)
         try:
             response_text = response.read()
         finally:
             response.close()
-        if not response.info().getheader('Content-Type').startswith('text/plain'):
+        if not response.info().getheader('Content-Type') == 'application/json':
             log(OPERATIONAL, "Invalid server response:", response_text)
             # TODO: Ošetřit "Přístup odepřen"
             raise self.StorageError('Invalid server response')
-        return [self._resource(line.strip()) for line in response_text.splitlines()]
+        return json.loads(response_text)
+
+    def _resource_kwargs(self, info):
+        kwargs = dict(title=info.get('title'),
+                      descr=info.get('descr'),
+                      has_thumbnail=info.get('has_thumbnail', False))
+        if 'thumbnail_size' in info:
+            kwargs['thumbnail_size'] = info['thumbnail_size']
+        if 'size' in info:
+            kwargs['size'] = info['size']
+        return kwargs
+    
+    def resource(self, filename):
+        try:
+            info = self._json_data(self._uri+'/'+filename+'?action=info')
+        except self.StorageError:
+            return None
+        return self._resource(filename, **self._resource_kwargs(info))
+
+    def resources(self):
+        return [self._resource(filename, **self._resource_kwargs(info))
+                for filename, info in self._json_data(self._uri)]
 
     def retrieve(self, filename):
         try:
-            return self._connect(self._uri+'/'+filename)
+            return self._connect(self._uri+'/'+filename+'?action=retrieve')
         except self.StorageError:
             return None
    

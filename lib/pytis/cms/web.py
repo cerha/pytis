@@ -740,20 +740,31 @@ class Attachments(wiking.Module, wiking.RequestHandler):
         del req.unresolved_path[0]
         storage = pp.FileAttachmentStorage(os.path.join(directory, identifier),
                                            self._base_uri(req)+'/'+identifier)
-        if not req.unresolved_path:
-            data = req.param('data')
-            if data:
-                return self._insert(req, storage, data.filename(), data.file())
+        action = req.param('action')
+        if action is None:
+            if req.unresolved_path:
+                resource = storage.find_resource_by_uri(req.uri())
+                if resource:
+                    return wiking.serve_file(req, resource.src_file())
+                else:
+                    raise wiking.NotFound
             else:
-                return self._list(req, storage)
-        elif len(req.unresolved_path) == 1:
-            return self._retrieve(req, storage, req.unresolved_path[0])
+                data = req.param('data')
+                if data:
+                    return self._insert(req, storage, data.filename(), data.file())
+                else:
+                    return self._list(req, storage)
         else:
-            resource = storage.find_resource_by_uri(req.uri())
-            if resource:
-                return wiking.serve_file(req, resource.src_file())
+            filename = req.unresolved_path[0]
+            del req.unresolved_path[0]
+            if req.unresolved_path:
+                raise wiking.BadRequest()
+            if action == 'retrieve':
+                return self._retrieve(req, storage, filename)
+            elif action == 'info':
+                return self._info(req, storage, filename)
             else:
-                raise wiking.NotFound
+                raise wiking.BadRequest()
 
     def _authorized(self, req):
         return True
@@ -767,9 +778,33 @@ class Attachments(wiking.Module, wiking.RequestHandler):
             response = 'OK'
         return wiking.Response(response, content_type='text/plain')
     
+    def _resource_info(self, resource):
+        info = resource.info() or {}
+        if resource.title():
+            info['title'] = resource.title()
+        if resource.descr():
+            info['descr'] = resource.descr()
+        if isinstance(resource, lcg.Image):
+            thumbnail = resource.thumbnail()
+            if thumbnail:
+                info['has_thumbnail'] = True
+                info['thumbnail_size'] = thumbnail.size()
+            info['size'] = resource.size()
+        return info
+
     def _list(self, req, storage):
-        filenames = [r.filename() for r in storage.resources()]
-        return wiking.Response('\n'.join(filenames), content_type='text/plain')
+        import json
+        result = [[r.filename(), self._resource_info(r)] for r in storage.resources()]
+        return wiking.Response(json.dumps(result), content_type='application/json')
+        
+    def _info(self, req, storage, filename):
+        resource = storage.resource(filename)
+        if resource:
+            import json
+            info = self._resource_info(resource)
+            return wiking.Response(json.dumps(info), content_type='application/json')
+        else:
+            raise wiking.NotFound
         
     def _retrieve(self, req, storage, filename):
         f = storage.retrieve(filename)
