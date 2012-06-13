@@ -2567,6 +2567,9 @@ class Enumeration(object):
     selection_type = SelectionType.CHOICE
     """Overrides Field's 'selection_type' attribute."""
     
+    null_display = None
+    """Overrides Field's 'null_display' attribute."""
+
     prefer_display = True
     """Overrides Field's 'prefer_display' attribute.
 
@@ -3001,6 +3004,8 @@ class Field(object):
             if prefer_display is None:
                 assert isinstance(e.prefer_display, bool)
                 prefer_display = e.prefer_display
+            if null_display is None:
+                null_display = e.null_display
         else:
             assert isinstance(enumerator, (basestring, pytis.data.DataFactory, pytis.data.Enumerator)), enumerator
         enumerator_kwargs = dict([(k, v) for k, v
