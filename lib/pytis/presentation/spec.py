@@ -3375,8 +3375,8 @@ class AttachmentStorage(object):
         """Exception raised by 'insert()' when image of unknown or invalid type is inserted."""
         pass
 
-    def _resource(self, filename, title=None, descr=None, has_thumbnail=False, thumbnail_size=None,
-                  info=None):
+    def _resource(self, filename, title=None, descr=None, size=None,
+                  has_thumbnail=False, thumbnail_size=None, info=None):
         """Return the corresponding resource instance for given filename and args.
 
         This is a helper method for simple creation of resource instances in
@@ -3395,17 +3395,22 @@ class AttachmentStorage(object):
         """
         import lcg
         cls = self._resource_cls(filename)
-        if issubclass(cls, lcg.Image) and has_thumbnail:
+        is_image = issubclass(cls, lcg.Image)
+        if is_image and has_thumbnail:
             uri = self._image_uri(filename)
             src_file = self._image_src_file(filename)
-            kwargs = dict(thumbnail=lcg.Image('t/'+filename, title=title, descr=descr,
+            kwargs = dict(size=size,
+                          thumbnail=lcg.Image('t/'+filename, title=title, descr=descr,
                                               size=thumbnail_size,
                                               uri=self._thumbnail_uri(filename),
                                               src_file=self._thumbnail_src_file(filename)))
         else:
             uri = self._resource_uri(filename)
             src_file = self._resource_src_file(filename)
-            kwargs = {}
+            if is_image:
+                kwargs = dict(size=size)
+            else:
+                kwargs = {}
         return cls(filename, title=title, descr=descr, uri=uri, src_file=src_file, info=info, **kwargs)
 
     def _resource_cls(self, filename):
@@ -3690,20 +3695,31 @@ class FileAttachmentStorage(AttachmentStorage):
             finally:
                 f.close()
             
-    def _has_thumbnail(self, filename):
-        return os.path.isfile(self._thumbnail_src_file(filename))
+    def _resource_kwargs(self, filename):
+        import lcg
+        if issubclass(self._resource_cls(filename), lcg.Image):
+            import PIL.Image
+            thumbnail_filename = self._thumbnail_src_file(filename)
+            if os.path.isfile(thumbnail_filename):
+                img = PIL.Image.open(thumbnail_filename)
+                return dict(has_thumbnail=True, thumbnail_size=img.size)
+            else:
+                img = PIL.Image.open(self._resource_src_file(filename))
+                return dict(size=img.size)
+        else:
+            return {}
 
     def resource(self, filename):
         path = self._resource_src_file(filename)
         if os.path.isfile(path):
-            return self._resource(filename, has_thumbnail=self._has_thumbnail(filename))
+            return self._resource(filename, **self._resource_kwargs(filename))
         else:
             return None
         
     def resources(self):
         directory = self._directory
         if os.path.isdir(directory):
-            return [self._resource(filename, has_thumbnail=self._has_thumbnail(filename))
+            return [self._resource(filename, **self._resource_kwargs(filename))
                     for filename in sorted([filename for filename in os.listdir(directory)
                                             if os.path.isfile(os.path.join(directory, filename))])]
         else:
