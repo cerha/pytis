@@ -1704,13 +1704,18 @@ class Select(_GsqlSpec):
         if alias:
             cstring += ' AS %s' % (alias,)
         return '"%s"' % (cstring.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),)
-
+    
     def _convert_relations(self, definitions):
+        for r in self._relations:
+            if isinstance(r.relation, Select):
+                return self._convert_complex_relations(definitions)
+        return self._convert_simple_relations(definitions)
+
+    def _convert_simple_relations(self, definitions):
         def convert_relation(i, rel):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
-                relation = rel.relation._convert_select(definitions)
-                d = None
+                raise Exception("Program error")
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
@@ -1752,6 +1757,62 @@ class Select(_GsqlSpec):
         result = ''.join(joins)
         condition = self._convert_raw_condition(self._relations[0].condition)
         return result, condition
+
+    def _convert_complex_relations(self, definitions):
+        def convert_relation(rel, last_relation):
+            jtype = rel.jointype
+            if isinstance(rel.relation, Select):
+                relation = rel.relation._convert_select(definitions)
+                d = None
+            elif (isinstance(rel, SelectRelation) and
+                  rel.relation.find('(') >= 0):  # apparently a function call
+                relation = self._convert_relation_name(rel)
+                d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
+                     (relation.replace('(', '__').replace(')', '__'),
+                      rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
+            elif (isinstance(rel, SelectRelation) and
+                  rel.schema is not None):
+                relation = self._convert_relation_name(rel)
+                self._add_conversion_dependency(rel.relation)
+                d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
+            else:
+                relation = self._convert_relation_name(rel)
+                self._add_conversion_dependency(rel.relation)
+                d = "%s = object_by_path('%s')" % (relation, rel.relation,)
+            if rel.alias:
+                if d is None:
+                    d = '%s = %s' % (rel.alias.replace('(', '__').replace(')', '__'), relation,)
+                    relation = rel.alias
+                d += ".alias('%s')" % (rel.alias,)
+            if d:
+                definitions.append(d)
+            if last_relation is None or rel.condition is None:
+                condition = ''
+            else:    
+                condition = rel.condition
+            if last_relation is None and jtype != JoinType.FROM:
+                raise Exception("Error", (self, jtype,))
+            if jtype == JoinType.FROM:
+                result = relation
+            elif jtype == JoinType.INNER:
+                c = self._convert_raw_condition(condition, True)
+                result = '%s.join(%s, %s)' % (last_relation, relation, c,)
+            elif jtype == JoinType.LEFT_OUTER:
+                c = self._convert_raw_condition(condition, True)
+                result = '%s.outerjoin(%s, %s)' % (last_relation, relation, c,)
+            elif jtype == JoinType.CROSS and not condition:
+                result = '%s, %s XXX:cross-in-complex' % (last_relation, relation,)
+            else:
+                c = self._convert_raw_condition(condition)
+                result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)
+            dname = 'join_' + str(len(definitions))
+            definitions.append('%s = %s' % (dname, result,))
+            return dname
+        last_relation = None
+        for r in self._relations:
+            last_relation = convert_relation(r, last_relation)
+        condition = self._convert_raw_condition(self._relations[0].condition)
+        return last_relation, condition
         
     def _convert_select(self, definitions):
         if self._set:
