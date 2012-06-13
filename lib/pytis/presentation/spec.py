@@ -3801,34 +3801,6 @@ class HttpAttachmentStorage(AttachmentStorage):
         except urllib2.URLError as e:
             raise self.StorageError(str(e))
             
-    def insert(self, filename, data, values):
-        import mimetools, mimetypes
-        boundary = mimetools.choose_boundary()
-        content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-        body = ['--' + boundary,
-                'MIME-Version: 1.0',
-                'Content-Disposition: file; name="data"; filename="%s"' % filename.encode('utf-8'),
-                'Content-Transfer-Encoding: base64',
-                'Content-Type: application/octet-stream',
-                '',
-                data.read()]
-        #for name, value in ():
-        #    body.extend(['--' + boundary,
-        #                     'Content-Disposition: form-data; name="%s"' % name,
-        #                     '',
-        #                     value]
-        body.extend(('--' + boundary + '--', ''))
-        response = self._connect(self._uri, body='\r\n'.join(body), headers=
-                                 {'Content-type': 'multipart/form-data; boundary=%s' % boundary})
-        try:
-            response_text = response.read()
-        finally:
-            response.close()
-        if not response.info().getheader('Content-Type').startswith('text/plain'):
-            raise self.StorageError('Invalid server response')
-        if response_text != 'OK':
-            raise self.StorageError(response_text)
-        
     def _resource_uri(self, filename):
         return self._uri+'/'+filename
     
@@ -3851,6 +3823,18 @@ class HttpAttachmentStorage(AttachmentStorage):
             raise self.StorageError('Invalid server response')
         return json.loads(response_text)
 
+    def _post_data(self, uri, data, headers=None):
+        response = self._connect(uri, body=data, headers=(headers or {}))
+        try:
+            response_text = response.read()
+        finally:
+            response.close()
+        if not response.info().getheader('Content-Type').startswith('text/plain'):
+            log(OPERATIONAL, "Invalid server response:", response_text)
+            raise self.StorageError('Invalid server response')
+        if response_text != 'OK':
+            raise self.StorageError(response_text)
+    
     def _resource_kwargs(self, info):
         kwargs = dict(title=info.get('title'),
                       descr=info.get('descr'),
@@ -3878,6 +3862,23 @@ class HttpAttachmentStorage(AttachmentStorage):
         except self.StorageError:
             return None
    
+    def insert(self, filename, data, values):
+        import mimetools, mimetypes, json
+        boundary = mimetools.choose_boundary()
+        content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+        body = ['--' + boundary,
+                'MIME-Version: 1.0',
+                'Content-Disposition: file; name="data"; filename="%s"' % filename.encode('utf-8'),
+                'Content-Transfer-Encoding: base64',
+                'Content-Type: application/octet-stream',
+                '',
+                data.read()]
+        body.extend(['--' + boundary,
+                     'Content-Disposition: form-data; name="values"', '', json.dumps(values)])
+        body.extend(('--' + boundary + '--', ''))
+        self._post_data(self._uri, '\r\n'.join(body),
+                        headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
+        
     
 class Specification(object):
     """Souhrnná specifikační třída sestavující specifikace automaticky.

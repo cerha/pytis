@@ -769,15 +769,6 @@ class Attachments(wiking.Module, wiking.RequestHandler):
     def _authorized(self, req):
         return True
 
-    def _insert(self, req, storage, filename, data):
-        try:
-            storage.insert(filename, data, {})
-        except Exception as e:
-            response = str(e)
-        else:
-            response = 'OK'
-        return wiking.Response(response, content_type='text/plain')
-    
     def _resource_info(self, resource):
         info = resource.info() or {}
         if resource.title():
@@ -821,3 +812,14 @@ class Attachments(wiking.Module, wiking.RequestHandler):
             return wiking.Response(proxy(f), content_type='application/octet-stream')
         else:
             raise wiking.NotFound
+
+    def _insert(self, req, storage, filename, data):
+        import json
+        values = json.loads(req.param('values'))
+        try:
+            storage.insert(filename, data, values)
+        except Exception as e:
+            response = str(e)
+        else:
+            response = 'OK'
+        return wiking.Response(response, content_type='text/plain')
