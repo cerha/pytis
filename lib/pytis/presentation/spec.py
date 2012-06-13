@@ -3833,10 +3833,10 @@ class HttpAttachmentStorage(AttachmentStorage):
         return self._uri+'/'+filename
     
     def _image_uri(self, filename):
-        return self._uri+'resized/'+filename
+        return self._uri+'/resized/'+filename
     
     def _thumbnail_uri(self, filename):
-        return self._uri+'thumbnails/'+filename
+        return self._uri+'/thumbnails/'+filename
     
     def resource(self):
         connection = self.retrieve(filename)
