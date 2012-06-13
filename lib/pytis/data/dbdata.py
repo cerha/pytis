@@ -476,9 +476,14 @@ class DBConnection:
         self._user = user
         self._password = password
         import pytis.extensions
+        # If `password' is wrong then the following dbfunction call will
+        # initiate new password dialog and will invoke this method recursively.
+        # In such a case we must not set the wrong password here.
+        self._crypto_password = None
         db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
-                                             ('key_name_', pytis.data.sval('pytis'),))        
-        self._crypto_password = rsa_encrypt(db_key, password)
+                                             ('key_name_', pytis.data.sval('pytis'),))
+        if self._crypto_password is None:
+            self._crypto_password = rsa_encrypt(db_key, password)
 
     def crypto_password(self):
         """Return crypto password, string.
