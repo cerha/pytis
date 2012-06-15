@@ -529,6 +529,11 @@ class SQLView(_SQLTabular):
             if c in columns:
                 continue
             cname = c.name
+            cc = cname.split()
+            if len(cc) >= 3 and cc[-2] == 'AS':
+                cname = cc[-1]
+            if cname in columns:
+                continue
             for t in tables:
                 if cname in t.c:
                     break
