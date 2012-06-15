@@ -1801,7 +1801,7 @@ class Select(_GsqlSpec):
                 c = self._convert_raw_condition(condition, True)
                 result = '%s.outerjoin(%s, %s)' % (last_relation, relation, c,)
             elif jtype == JoinType.CROSS and not condition:
-                result = '%s, %s XXX:cross-in-complex' % (last_relation, relation,)
+                result = '%s.join(%s, "true")' % (last_relation, relation,)
             else:
                 c = self._convert_raw_condition(condition)
                 result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)
