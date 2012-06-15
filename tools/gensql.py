@@ -1636,7 +1636,7 @@ class Select(_GsqlSpec):
                 alias = relation.relation
             else:
                 alias = relation.name
-        return alias
+        return alias.replace('(', '__').replace(')', '__')
  
     def _convert_select_columns(self):
         column_spec = []
