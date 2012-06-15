@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-06-01 16:28+0200\n"
+"POT-Creation-Date: 2012-06-15 11:46+0200\n"
 "PO-Revision-Date: 2012-05-31 16:04+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -16,55 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
-
-#: ../resources/scripts/pytis-ckeditor.js:57
-#: ../resources/scripts/pytis-ckeditor.js:69
-msgid "Image"
-msgstr "Obrázek"
-
-#: ../resources/scripts/pytis-ckeditor.js:140
-msgid "Align"
-msgstr "Zarovnání"
-
-#: ../resources/scripts/pytis-ckeditor.js:141
-msgid "Left"
-msgstr "Vlevo"
-
-#: ../resources/scripts/pytis-ckeditor.js:141
-msgid "Right"
-msgstr "Vpravo"
-
-#: ../resources/scripts/pytis-ckeditor.js:157
-msgid "Link"
-msgstr "Odkaz"
-
-#: ../resources/scripts/pytis-ckeditor.js:224
-msgid "Link to anchor"
-msgstr "Odkaz na kotvu"
-
-#: ../resources/scripts/pytis-ckeditor.js:255
-msgid "External link"
-msgstr "Externí odkaz"
-
-#: ../resources/scripts/pytis-ckeditor.js:279
-msgid "Image Details"
-msgstr "Detaily obrázku"
-
-#: ../resources/scripts/pytis-ckeditor.js:283
-msgid "Title"
-msgstr "Titulek"
-
-#: ../resources/scripts/pytis-ckeditor.js:286
-msgid "Description"
-msgstr "Popis"
-
-#: ../resources/scripts/pytis-ckeditor.js:293
-msgid "Update"
-msgstr "Aktualizovat"
-
-#: ../resources/scripts/pytis-ckeditor.js:309
-msgid "Upload new image"
-msgstr "Nahrát nový obrázek"
 
 #. All the messages below are validation errors.
 #: ../lib/pytis/web/__init__.py:40
@@ -166,8 +117,8 @@ msgstr "Minimální rozměr %(minsize)s pixelů nedodržen"
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:437
-#: ../lib/pytis/web/form.py:450
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:442
+#: ../lib/pytis/web/form.py:455
 msgid "Submit"
 msgstr "Odeslat"
 
@@ -175,89 +126,90 @@ msgstr "Odeslat"
 msgid "today"
 msgstr "dnes"
 
-#: ../lib/pytis/web/field.py:528 ../lib/pytis/web/field.py:578
+#: ../lib/pytis/web/field.py:528 ../lib/pytis/web/field.py:579
 msgid "Yes"
 msgstr "Ano"
 
-#: ../lib/pytis/web/field.py:528 ../lib/pytis/web/field.py:578
+#: ../lib/pytis/web/field.py:528 ../lib/pytis/web/field.py:579
 msgid "No"
 msgstr "Ne"
 
-#. Test
-#: ../lib/pytis/web/field.py:552
+#. The label "image"/"file" is used in textual representation of binary
+#. data values, usually as a link to download the actual binary file.
+#: ../lib/pytis/web/field.py:553
 #, fuzzy
-msgid "image2"
+msgid "image"
 msgstr "obrázek"
 
-#: ../lib/pytis/web/field.py:554
+#: ../lib/pytis/web/field.py:555
 msgid "file"
 msgstr "soubor"
 
-#: ../lib/pytis/web/form.py:217 ../lib/pytis/web/form.py:219
+#: ../lib/pytis/web/form.py:222 ../lib/pytis/web/form.py:224
 msgid "Print"
 msgstr "Tisknout"
 
-#: ../lib/pytis/web/form.py:221
+#: ../lib/pytis/web/form.py:226
 msgid "Export the contents of this field into PDF"
 msgstr "Exportovat obsah tohoto políčka do PDF"
 
-#: ../lib/pytis/web/form.py:437
+#: ../lib/pytis/web/form.py:442
 msgid "Undo all changes"
 msgstr "Zrušit všechny provedené změny"
 
-#: ../lib/pytis/web/form.py:463
+#: ../lib/pytis/web/form.py:468
 msgid "Submit the form"
 msgstr "Odeslat formulář"
 
-#: ../lib/pytis/web/form.py:466
+#: ../lib/pytis/web/form.py:471
 msgid "Reset"
 msgstr "Vrátit původní hodnoty"
 
-#: ../lib/pytis/web/form.py:578
+#: ../lib/pytis/web/form.py:583
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označená hvězdičkou jsou povinná."
 
 #. Label of filter selection box.
 #. Filtering limits the displayed form records by
 #. certain criterias.
-#: ../lib/pytis/web/form.py:731 ../lib/pytis/web/form.py:1587
+#: ../lib/pytis/web/form.py:757 ../lib/pytis/web/form.py:1613
 msgid "Filter"
 msgstr "Filtr"
 
-#: ../lib/pytis/web/form.py:733
+#: ../lib/pytis/web/form.py:759
 msgid "Apply Filter"
 msgstr "Aplikovat filtr"
 
-#: ../lib/pytis/web/form.py:951
+#: ../lib/pytis/web/form.py:977
 msgid "Profile"
 msgstr "Profil"
 
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1158
+#: ../lib/pytis/web/form.py:1184
 msgid "All items"
 msgstr "Všechny položky"
 
-#: ../lib/pytis/web/form.py:1279
+#: ../lib/pytis/web/form.py:1305
 msgid "Sum"
 msgstr "Součet"
 
-#: ../lib/pytis/web/form.py:1280
+#: ../lib/pytis/web/form.py:1306
 msgid "Average"
 msgstr "Průměr"
 
-#: ../lib/pytis/web/form.py:1281
+#: ../lib/pytis/web/form.py:1307
 msgid "Minimum"
 msgstr "Minimum"
 
-#: ../lib/pytis/web/form.py:1282
+#: ../lib/pytis/web/form.py:1308
 msgid "Maximum"
 msgstr "Maximum"
 
 #. Label for a column with buttons to invoke various
 #. actions on database records, such as update or delete.
-#: ../lib/pytis/web/form.py:1326
+#: ../lib/pytis/web/form.py:1352
 msgid "Actions"
 msgstr "Akce"
 
@@ -265,7 +217,7 @@ msgstr "Akce"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1348
+#: ../lib/pytis/web/form.py:1374
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -275,18 +227,18 @@ msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu."
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1440
+#: ../lib/pytis/web/form.py:1466
 msgid "No records."
 msgstr "Žádné záznamy."
 
-#: ../lib/pytis/web/form.py:1443
+#: ../lib/pytis/web/form.py:1469
 msgid "Total records:"
 msgstr "Počet záznamů celkem:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1451
+#: ../lib/pytis/web/form.py:1477
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
@@ -306,28 +258,28 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkem %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1525
+#: ../lib/pytis/web/form.py:1551
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na „%(prefix)s“:"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1530
+#: ../lib/pytis/web/form.py:1556
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Přejít na první záznam začínající na „%s“"
 
-#: ../lib/pytis/web/form.py:1552
+#: ../lib/pytis/web/form.py:1578
 msgid "Search expression"
 msgstr "Hledaný výraz"
 
 #. Search button label.
-#: ../lib/pytis/web/form.py:1557 ../lib/pytis/web/form.py:1612
+#: ../lib/pytis/web/form.py:1583 ../lib/pytis/web/form.py:1638
 msgid "Search"
 msgstr "Hledat"
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1561
+#: ../lib/pytis/web/form.py:1587
 msgid "Change filters"
 msgstr "Změnit filtry"
 
@@ -335,45 +287,99 @@ msgstr "Změnit filtry"
 #. keyboard combination to use for selection
 #. without unexpected invocation of the
 #. option.
-#: ../lib/pytis/web/form.py:1592 ../lib/pytis/web/form.py:1621
-#: ../lib/pytis/web/form.py:1639
+#: ../lib/pytis/web/form.py:1618 ../lib/pytis/web/form.py:1647
+#: ../lib/pytis/web/form.py:1665
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použijte ALT+šipka dolů pro výběr)"
 
 #. Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse
 #. forward/backwards.
-#: ../lib/pytis/web/form.py:1618 ../lib/pytis/web/form.py:1620
+#: ../lib/pytis/web/form.py:1644 ../lib/pytis/web/form.py:1646
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:1626
+#: ../lib/pytis/web/form.py:1652
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/web/form.py:1627
+#: ../lib/pytis/web/form.py:1653
 msgid "Go to previous page"
 msgstr "Přejít na předchozí stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1629
+#: ../lib/pytis/web/form.py:1655
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/web/form.py:1630
+#: ../lib/pytis/web/form.py:1656
 msgid "Go to next page"
 msgstr "Přejít na následující stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1636 ../lib/pytis/web/form.py:1638
+#: ../lib/pytis/web/form.py:1662 ../lib/pytis/web/form.py:1664
 msgid "Records per page"
 msgstr "Počet záznamů na stránku"
 
-#: ../lib/pytis/web/form.py:1643
+#: ../lib/pytis/web/form.py:1669
 msgid "Go"
 msgstr "Jdi"
 
-#: ../lib/pytis/web/form.py:1688
+#: ../lib/pytis/web/form.py:1714
 msgid "filtered by: "
 msgstr "s filtry: "
+
+#: ../resources/scripts/pytis-ckeditor.js:57
+#: ../resources/scripts/pytis-ckeditor.js:64
+#: ../resources/scripts/pytis-ckeditor.js:70
+msgid "Image"
+msgstr "Obrázek"
+
+#: ../resources/scripts/pytis-ckeditor.js:154
+msgid "Align"
+msgstr "Zarovnání"
+
+#: ../resources/scripts/pytis-ckeditor.js:155
+msgid "Left"
+msgstr "Vlevo"
+
+#: ../resources/scripts/pytis-ckeditor.js:155
+msgid "Right"
+msgstr "Vpravo"
+
+#: ../resources/scripts/pytis-ckeditor.js:171
+msgid "Link"
+msgstr "Odkaz"
+
+#: ../resources/scripts/pytis-ckeditor.js:238
+msgid "Link to anchor"
+msgstr "Odkaz na kotvu"
+
+#: ../resources/scripts/pytis-ckeditor.js:269
+msgid "External link"
+msgstr "Externí odkaz"
+
+#: ../resources/scripts/pytis-ckeditor.js:287
+msgid "Image Details"
+msgstr "Detaily obrázku"
+
+#: ../resources/scripts/pytis-ckeditor.js:291
+msgid "Title"
+msgstr "Titulek"
+
+#: ../resources/scripts/pytis-ckeditor.js:294
+msgid "Description"
+msgstr "Popis"
+
+#: ../resources/scripts/pytis-ckeditor.js:301
+msgid "Update"
+msgstr "Aktualizovat"
+
+#: ../resources/scripts/pytis-ckeditor.js:319
+msgid "Upload new image"
+msgstr "Nahrát nový obrázek"
+
+#: ../resources/scripts/pytis-ckeditor.js:385
+msgid "Upload successful"
+msgstr ""
 
 #~ msgid "Apply"
 #~ msgstr "Použij"
