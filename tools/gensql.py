@@ -1668,7 +1668,7 @@ class Select(_GsqlSpec):
             if exclude or aliases:
                 if '*' in exclude:
                     continue
-                colist = string.join(["'%s.%s'" % (relname, c,) for c in exclude], ', ')
+                colist = string.join(["'%s'" % (c,) for c in exclude], ', ')
                 if exclude:
                     spec = 'cls._exclude(%s, %s)' % (relname, colist,)
                 else:
@@ -1704,14 +1704,17 @@ class Select(_GsqlSpec):
         if alias:
             cstring += ' AS %s' % (alias,)
         return '"%s"' % (cstring.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),)
-    
-    def _convert_relations(self, definitions):
+
+    def _convert_add_definition(self, definitions, d, level):
+        definitions.append('    ' * level + d)
+        
+    def _convert_relations(self, definitions, level):
         for r in self._relations:
             if isinstance(r.relation, Select):
-                return self._convert_complex_relations(definitions)
-        return self._convert_simple_relations(definitions)
+                return self._convert_complex_relations(definitions, level)
+        return self._convert_simple_relations(definitions, level)
 
-    def _convert_simple_relations(self, definitions):
+    def _convert_simple_relations(self, definitions, level):
         def convert_relation(i, rel):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
@@ -1737,7 +1740,7 @@ class Select(_GsqlSpec):
                     relation = rel.alias
                 d += ".alias('%s')" % (rel.alias,)
             if d:
-                definitions.append(d)
+                self._convert_add_definition(definitions, d, level)
             if i == 0 or rel.condition is None:
                 condition = ''
             else:    
@@ -1758,11 +1761,11 @@ class Select(_GsqlSpec):
         condition = self._convert_raw_condition(self._relations[0].condition)
         return result, condition
 
-    def _convert_complex_relations(self, definitions):
+    def _convert_complex_relations(self, definitions, level):
         def convert_relation(rel, last_relation):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
-                relation = rel.relation._convert_select(definitions)
+                relation = rel.relation._convert_select(definitions, level)
                 d = None
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
@@ -1785,7 +1788,7 @@ class Select(_GsqlSpec):
                     relation = rel.alias
                 d += ".alias('%s')" % (rel.alias,)
             if d:
-                definitions.append(d)
+                self._convert_add_definition(definitions, d, level)
             if last_relation is None or rel.condition is None:
                 condition = ''
             else:    
@@ -1806,7 +1809,7 @@ class Select(_GsqlSpec):
                 c = self._convert_raw_condition(condition)
                 result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)
             dname = 'join_' + str(len(definitions))
-            definitions.append('%s = %s' % (dname, result,))
+            self._convert_add_definition(definitions, '%s = %s' % (dname, result,), level)
             return dname
         last_relation = None
         for r in self._relations:
@@ -1814,12 +1817,12 @@ class Select(_GsqlSpec):
         condition = self._convert_raw_condition(self._relations[0].condition)
         return last_relation, condition
         
-    def _convert_select(self, definitions):
+    def _convert_select(self, definitions, level):
         if self._set:
             condition = ''
             for r in self._relations:
                 if isinstance(r, SelectSet):
-                    output = r.select._convert_select(definitions)
+                    output = r.select._convert_select(definitions, level)
                     if r.settype:
                         assert condition
                         settype = r.settype.lower()
@@ -1827,16 +1830,18 @@ class Select(_GsqlSpec):
                             settype += '_'
                         condition = 'sqlalchemy.%s(%s, %s)' % (settype, condition, output,)
                         select_name = 'select_' +  str(len(definitions))
-                        definitions.append('%s = %s' % (select_name, condition,))
+                        self._convert_add_definition(definitions, '%s = %s' % (select_name, condition,), level)
                         condition = select_name
                     else:
                         assert not condition, condition
                         condition = output
                 else:
-                    s = r._convert_select(definitions)
+                    s = r._convert_select(definitions, level)
                     condition += 'XXX:select=%s' % (r,)
         else:
-            relations, where_condition = self._convert_relations(definitions)
+            select_name = 'select_' +  str(len(definitions))
+            self._convert_add_definition(definitions, 'def %s():' % (select_name,), level)
+            relations, where_condition = self._convert_relations(definitions, level + 1)
             columns = self._convert_select_columns()
             whereclause = ', whereclause=%s' % (where_condition,) if where_condition else ''
             condition = ('sqlalchemy.select(%s, from_obj=[%s]%s)' %
@@ -1845,9 +1850,8 @@ class Select(_GsqlSpec):
                 condition += '.group_by(%s)' % (self._convert_raw_columns(self._group_by),)
             if self._having:
                 condition += '.having(%s)' % (self._convert_raw_condition(self._having),)
-            select_name = 'select_' +  str(len(definitions))
-            definitions.append('%s = %s' % (select_name, condition,))
-            condition = select_name
+            self._convert_add_definition(definitions, '    return %s' % (condition,), level)
+            condition = select_name + '()'
         if self._order_by:
             condition += '.order_by(%s)' % (self._convert_raw_columns(self._order_by),)
         if self._limit:
@@ -2100,7 +2104,7 @@ class _GsqlViewNG(Select):
             schemas = tuple([tuple(s.split(',')) for s in self._schemas])
             items.append('    schemas = %s' % (repr(schemas),))
         definitions = []
-        condition = self._convert_select(definitions)
+        condition = self._convert_select(definitions, 0)
         if definitions and definitions[-1].startswith(condition + ' = '):
             condition = definitions.pop()
             condition = condition[condition.find(' = ')+3:]
