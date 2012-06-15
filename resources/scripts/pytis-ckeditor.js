@@ -63,84 +63,92 @@ pytis.HtmlField.dialog = function(editor) {
 	    {id: 'image',
 	     label: pytis._('Image'),
 	     elements: [
-
-		 {type: 'select',
-		  id: 'identifier',
-		  label: pytis._('Image'),
-		  items: [],
-		  updateAttachmentList: function(element) {
-		      // Construct a list of Wiking attachments for this page
-		      var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-		      var attachments = field.list_attachments()
-		      var options = this.getInputElement().$.options
-		      // Save field value before options update
-		      value = this.getValue();
-		      // Update options
-		      options.length = 0;
-		      for (var i = 0; i < attachments.length; i++) {
+		 {type: 'hbox',
+		  children: [
+		      {type: 'select',
+		       id: 'identifier',
+		       label: pytis._('Image'),
+		       size: 12,
+		       items: [],
+		       updateAttachmentList: function(element) {
+			   // Construct a list of Wiking attachments for this page
+			   var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+			   var attachments = field.list_attachments()
+			   var options = this.getInputElement().$.options
+			   // Save field value before options update
+			   value = this.getValue();
+			   // Update options
+			   options.length = 0;
+			   for (var i = 0; i < attachments.length; i++) {
 			  var a = attachments[i];
-			  if (a.type == 'Image') {
-			      var label = (a.title ? a.title + " (" + a.filename + ")": a.filename);
-			      options.add(new Option(label, a.filename));
-			  }
+			       if (a.type == 'Image') {
+				   var label = (a.title ? a.title + " (" + a.filename + ")": a.filename);
+				   options.add(new Option(label, a.filename));
+			       }
+			   }
+			   // Restore former value
+			   if (value)
+			       this.setValue(value);
+		       },
+		       onChange: function(element) {
+			   // Update image description tab
+			   var filename = this.getValue();
+			   if (filename) {
+			       var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+			       var attachment = field.get_attachment(filename);
+			       if (attachment) {
+				   var dialog = CKEDITOR.dialog.getCurrent();
+				   var fields = ['title', 'description', 'thumbnail_size'];
+				   for (var i = 0; i < fields.length; i++) {
+				       dialog.setValueOf('details', fields[i], attachment[fields[i]]);
+				   }
+				   // Update image preview
+				   if (attachment.thumbnail)
+				       $('image-preview').src = attachment.thumbnail.uri;
+				   else
+				       $('image-preview').src = attachment.uri;
+				   $('image-preview').alt = attachment.description;
+			       }
+			   }
+		       },
+		       setup: function(element) {
+			   this.updateAttachmentList();
+			   // Read identifier from the image link
+			   var img = element.getFirst();
+			   if (img) {
+			       var link = img.getAttribute("src");
+			       if (link) {
+				   var filename = link.match(/\/([^\/]+)\?/)[1];
+				   if (filename)
+				       this.setValue(filename);
+			       }
+			   }
+		       },
+		       commit: function(element) {
+			   // Set image source
+			   var filename = this.getValue();
+			   if (filename) {
+			       var field = $(editor.config.pytisFieldId)._pytis_field_instance;
+			       var attachment = field.get_attachment(filename);
+			       if (attachment) {
+				   var uri;
+				   if (attachment.thumbnail)
+				       uri = attachment.thumbnail.uri;
+				   else
+				       uri = attachment.uri;
+				   var img = element.getFirst();
+				   img.setAttribute('src', uri);
+			       }
+			   }
+		       }
+		      },
+		      
+		      // Image preview
+		      {type: 'html',
+		       id: 'image-preview',
+		       html: '<img id="image-preview" src="" alt="" />'
 		      }
-		      // Restore former value
-		      if (value)
-			  this.setValue(value);
-		  },
-		  onChange: function(element) {
-		      // Update image description tab
-		      var filename = this.getValue();
-		      if (filename) {
-			  var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-			  var attachment = field.get_attachment(filename);
-			  if (attachment) {
-			      var dialog = CKEDITOR.dialog.getCurrent();
-			      var fields = ['title', 'description', 'thumbnail_size'];
-			      for (var i = 0; i < fields.length; i++) {
-				  dialog.setValueOf('details', fields[i], attachment[fields[i]]);
-			      }
-			      // Update image preview
-			      if (attachment.thumbnail)
-				  $('image-preview').src = attachment.thumbnail.uri;
-			      else
-				  $('image-preview').src = attachment.uri;
-			      $('image-preview').alt = attachment.description;
-			  }
-		      }
-		  },
-		  setup: function(element) {
-		      this.updateAttachmentList();
-		      // Read identifier from the image link
-		      var img = element.getFirst();
-		      if (img) {
-			  var link = img.getAttribute("src");
-			  if (link) {
-			      var filename = link.match(/\/([^\/]+)\?/)[1];
-			      if (filename)
-				  this.setValue(filename);
-			  }
-		      }
-		  },
-		  commit: function(element) {
-		      // Set image source
-		      var filename = this.getValue();
-		      if (filename) {
-			  var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-			  var attachment = field.get_attachment(filename);
-			  if (attachment) {
-			      var uri;
-			      if (attachment.thumbnail)
-				  uri = attachment.thumbnail.uri;
-			      else
-				  uri = attachment.uri;
-			      var img = element.getFirst();
-			      img.setAttribute('src', uri);
-			  }
-		      }
-		  }
-		 },
-
+		  ]},
 		 {type: 'select',
 		  id: 'align',
 		  label: pytis._('Align'),
@@ -271,12 +279,6 @@ pytis.HtmlField.dialog = function(editor) {
 			  element.setAttribute('href', this.getValue());
 		  }
 		 },
-
-		 // Image preview
-		 {type: 'html',
-		  id: 'image-preview',
-		  html: '<img id="image-preview" src="" alt="" />'
-		 }
 	     ]
 	    },
 
