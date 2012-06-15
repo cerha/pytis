@@ -438,6 +438,8 @@ class HtmlFieldExporter(MultilineFieldExporter):
         if context.resource('ckeditor/ckeditor.js'):
             g = context.generator()
             context.resource('pytis-ckeditor.js')
+            context.resource('swfobject.js')
+            context.resource('flash.js')
             toolbar = (
                 ('clipboard',   ('Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo')),
                 ('editing',     ('Find','Replace','-','SelectAll')),
@@ -446,7 +448,7 @@ class HtmlFieldExporter(MultilineFieldExporter):
                 ('/', None),
                 ('styles',      ('Format',)),#'Font','FontSize')),
                 ('paragraph',   ('NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiLtr','BidiRtl')),
-                ('links',       ('PytisAttachment','Link','Unlink','Anchor')),
+                ('links',       ('PytisAttachmentImage','PytisAttachmentAudio','PytisAttachmentVideo','PytisAttachmentResource','Link','Unlink','Anchor')),
                 ('insert',      ('Table','HorizontalRule','Smiley','SpecialChar','PageBreak')),
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
