@@ -381,7 +381,7 @@ class _GsqlSpec(object):
             mapping = {'name': 'pytis.data.String(maxlen=64)',
                        'smallint': 'pytis.data.Integer()',
                        'integer': 'pytis.data.Integer()',
-                       'bigint': 'pytis.data.BigInteger()',
+                       'bigint': 'pytis.data.LargeInteger()',
                        'bytea': 'pytis.data.Binary()',
                        'inet': 'pytis.data.Inet()',
                        'date': 'pytis.data.Date()',
