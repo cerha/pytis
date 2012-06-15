@@ -2483,7 +2483,7 @@ class StructuredTextField(TextField):
                   type=pytis.data.Image(not_null=True, maxlen=5*1024*1024),
                   descr=_(u"Vyberte jeden z dostupných souborů, "
                           u"nebo vložte nový z vašeho počítače.")),
-            Field('size', _(u"Zobrazit jako"), enumerator=self.ImageSizes,
+            Field('size', _(u"Zobrazit ve stránce jako"), enumerator=self.ImageSizes,
                   selection_type=pytis.presentation.SelectionType.RADIO,
                   editable=pytis.presentation.Editable.ALWAYS,
                   computer=computer(self._size_computer),
