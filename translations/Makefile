@@ -15,7 +15,7 @@ all: $(mo_files) $(resource_po_files)
 ../resources/translations/pytis.%.po: pytis.%.po ../resources/translations
 	cp $< $@
 
-pytis.pot: $(shell find ../lib/pytis/web -name "*.py")
+pytis.pot: $(shell find ../lib/pytis/web -name "*.py") $(shell find ../resources/scripts -name "*.js")
 	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/web/ ../resources/scripts/ -o pytis.pot
 
 $(shell ls *.po): pytis.%.po: pytis.pot
