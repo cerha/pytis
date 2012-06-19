@@ -759,7 +759,9 @@ class Float(Number):
 
     def sqlalchemy_type(self):
         if self._precision is not None and self._digits is not None:
-            alchemy_type = sqlalchemy.Numeric(precision=self.precision(), scale=self.digits())
+            alchemy_type = sqlalchemy.Numeric(precision=self.digits(), scale=self.precision())
+        elif self._digits is not None:
+            alchemy_type = sqlalchemy.Numeric(precision=self.digits())
         else:
             alchemy_type = sqlalchemy.Float(precision=self.precision())
         return alchemy_type
