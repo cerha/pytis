@@ -1695,15 +1695,26 @@ class Select(_GsqlSpec):
                 cname = column.sql
             else:    
                 cname = column.name
-            plain_name = cname
-            pos = plain_name.rfind('.')
-            if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
-                plain_name = plain_name[pos+1:]
-            alias = None if column.alias == plain_name else column.alias
-        cstring = cname
+        plain_name = cname
+        pos = plain_name.rfind('.')
+        if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
+            plain_name = plain_name[pos+1:]
+        alias = None if (column.alias == plain_name and cname == plain_name) else column.alias
+        if alias is None:
+            cname, alias = self._convert_unalias_column(cname)
+        cstring = ('sqlalchemy.sql.literal_column("%s")' %
+                   (cname.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
         if alias:
-            cstring += ' AS %s' % (alias,)
-        return '"%s"' % (cstring.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),)
+            cstring += ".label('%s')" % (alias,)
+        return cstring
+
+    def _convert_unalias_column(self, cname):
+        alias = None
+        c = cname.split()
+        if len(c) >= 3 and c[-2] == 'AS':
+            alias = c[-1]
+            cname = string.join(c[:-2])
+        return cname, alias
 
     def _convert_add_definition(self, definitions, d, level):
         definitions.append('    ' * level + d)

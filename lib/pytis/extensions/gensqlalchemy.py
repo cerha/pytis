@@ -529,9 +529,6 @@ class SQLView(_SQLTabular):
             if c in columns:
                 continue
             cname = c.name
-            cc = cname.split()
-            if len(cc) >= 3 and cc[-2] == 'AS':
-                cname = cc[-1]
             if cname in columns:
                 continue
             for t in tables:
@@ -547,7 +544,7 @@ class SQLView(_SQLTabular):
         aliased = []
         for c in columns:
             if c in raliases:
-                aliased.append('%s AS %s' % (c, raliases[c],))
+                aliased.append(c.label(raliases[c]))
             else:
                 aliased.append(c)
         return aliased
