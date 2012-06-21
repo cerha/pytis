@@ -57,6 +57,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         result_type = function.result_type[0].sqlalchemy_column(search_path, None, None, None).type
         if function.multirow:
             result_type = 'SETOF ' + result_type
+        body = function.body().strip()
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$\n%s\n$$ LANGUAGE %s %s' %
                    (function.schema, function.name, arguments, result_type, function.body(),
                     function._LANGUAGE, function.stability,))
@@ -803,6 +804,7 @@ class Func(SQLFunction):
     name = 'plus'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
     result_type = (Column('z', pytis.data.Integer()),)
+    stability = 'immutable'
 
     def body(self):
         return 'SELECT $1 + $2'
@@ -811,11 +813,13 @@ class FileFunc(SQLFunction):
     name = 'minus'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
     result_type = (Column('z', pytis.data.Integer()),)
+    stability = 'immutable'
 
 class PyFunc(SQLPyFunction):
     name = 'times'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
     result_type = (Column('z', pytis.data.Integer()),)
+    stability = 'immutable'
 
     @staticmethod
     def times(x, y):
