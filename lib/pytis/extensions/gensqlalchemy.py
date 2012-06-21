@@ -47,22 +47,35 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         condition.pytis_prefix = command
         self.connection.execute(condition)
 
-    def visit_function(self, function, create_ok=False):
+    def visit_function(self, function, create_ok=False, result_type=None):
         search_path = function.search_path()
         self._set_search_path(search_path)
         def arg(column):
             a_column = column.sqlalchemy_column(search_path, None, None, None)
             return '"%s" %s' % (a_column.name, a_column.type,)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
-        result_type = function.result_type[0].sqlalchemy_column(search_path, None, None, None).type
+        if result_type is None:
+            result_type = function.result_type[0].sqlalchemy_column(search_path, None, None, None).type
         if function.multirow:
             result_type = 'SETOF ' + result_type
         body = function.body().strip()
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$\n%s\n$$ LANGUAGE %s %s' %
-                   (function.schema, function.name, arguments, result_type, function.body(),
+                   (function.schema, function.name, arguments, result_type, body,
                     function._LANGUAGE, function.stability,))
         if function.security_definer:
             command += ' SECURITY DEFINER'
+        self.connection.execute(command)
+
+    def visit_trigger(self, trigger, create_ok=False):
+        self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
+        events = string.join(trigger.events, ' OR ')
+        table = object_by_path(trigger.table.name, trigger.search_path())
+        row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
+        trigger_call = trigger(*trigger.arguments)
+        command = (('CREATE TRIGGER "%s"."%s__%s_trigger" %s %s ON %s '
+                    'FOR EACH %s EXECUTE PROCEDURE %s') %
+                   (trigger.schema, trigger.name, trigger.position, trigger.position, events, table,
+                    row_or_statement, trigger_call,))
         self.connection.execute(command)
 
 class _TableComment(sqlalchemy.schema.DDLElement):
@@ -660,6 +673,21 @@ class SQLPyFunction(SQLFunctional):
         lines = [l.rstrip() for l in lines[1:]]
         return [reindent(l) for l in lines if l.strip()]
 
+class SQLEventHandler(SQLFunctional):
+    
+    table = None
+
+class SQLTrigger(SQLEventHandler):
+    
+    position = 'after'
+    events = ('insert', 'update', 'delete', 'truncate',)
+    each_row = True
+    call_arguments = ()
+
+    result_type = ()
+    
+    __visit_name__ = 'trigger'
+
 ## Specification processing
 
 engine = None
@@ -752,6 +780,16 @@ class Bar(SQLTable):
               )
     init_columns = ('foo_id', 'description',)
     init_values = ((1, 'some text'),)
+
+class BarTrigger(SQLPlFunction, SQLTrigger):
+    table = Bar
+    events = ('insert',)
+    def body(self):
+        return """
+begin
+  insert into foo (n, foo) values (foo_id, description);
+end;
+"""
 
 class Circular1(SQLTable):
     """Circular REFERENCES, together with Circular2."""
