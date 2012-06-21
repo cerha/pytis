@@ -1793,7 +1793,7 @@ class ListView(BrowseForm):
         anchor = self._anchor
         if anchor:
             anchor = anchor % self._Interpolator(lambda key: row[key].export())
-            heading = g.link(title, None, name=anchor)
+            heading = g.link('', None, name=anchor) + title
         else:
             heading = title
         if layout.allow_index():
