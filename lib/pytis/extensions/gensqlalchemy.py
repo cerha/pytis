@@ -857,6 +857,12 @@ class SQLTrigger(SQLEventHandler):
     result_type = ()
     
     __visit_name__ = 'trigger'
+    
+    def _add_dependencies(self):
+        super(SQLTrigger, self)._add_dependencies()
+        t = object_by_class(self.table, search_path=(self.schema,))
+        assert t is not None, ("Trigger table not found", self)
+        self.add_is_dependent_on(t)
 
 ## Specification processing
 
