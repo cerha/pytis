@@ -79,6 +79,10 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                     row_or_statement, trigger_call,))
         self.connection.execute(command)
 
+    def visit_raw(self, raw, create_ok=False):
+        self._set_search_path(raw.search_path())
+        return self.connection.execute(raw.sql())
+
 class _TableComment(sqlalchemy.schema.DDLElement):
     def __init__(self, table, comment):
         self.table = table
@@ -311,6 +315,8 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
                 if issubclass(cls, SQLSequence):
                     o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
                             start=cls.start, increment=cls.increment)
+                elif issubclass(cls, SQLRaw):
+                    o = cls(search_path)
                 else:
                     o = cls(_metadata, search_path)
                 _PytisSchematicMetaclass.objects.append(o)
@@ -893,6 +899,26 @@ class SQLTrigger(SQLEventHandler):
         assert t is not None, ("Trigger table not found", self)
         self.add_is_dependent_on(t)
 
+class SQLRaw(sqlalchemy.schema.DDLElement, SQLObject):
+    __metaclass__ = _PytisSchematicMetaclass
+    
+    name = None
+    schemas = _default_schemas
+    depends_on = ()
+    # TODO: dependencies are ignored now
+    
+    __visit_name__ = 'raw'
+    
+    def __init__(self, search_path):
+        super(SQLRaw, self).__init__()
+        self._search_path = search_path
+        
+    def search_path(self):
+        return self._search_path
+    
+    def create(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+
 ## Specification processing
 
 engine = None
@@ -1104,6 +1130,13 @@ class PyFunc(SQLPyFunction):
     @staticmethod
     def sub_pythonic(x, y):
         return x * y
+
+class NeverUseThis(SQLRaw):
+    schemas = ((Private, 'public',),)
+    depends_on = (Baz,)
+    @classmethod
+    def sql(class_):
+        return "select 'never use raw constructs'"
 
 def run():
     global engine
