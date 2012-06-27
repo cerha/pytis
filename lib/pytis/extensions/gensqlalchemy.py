@@ -46,6 +46,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         condition = view.condition()
         condition.pytis_prefix = command
         self.connection.execute(condition)
+        view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def visit_function(self, function, create_ok=False, result_type=None):
         search_path = function.search_path()
@@ -96,6 +97,28 @@ def visit_column_comment(element, compiler, **kw):
     return ("COMMENT ON COLUMN \"%s\".\"%s\".\"%s\" IS '%s'" %
             (element.table.schema, element.table.name, element.field.id(),
              element.field.doc().replace("'", "''"),))
+
+class _Rule(sqlalchemy.schema.DDLElement):
+    def __init__(self, table, action, kind, commands):
+        self.table = table
+        self.action = action
+        self.kind = kind
+        self.commands = commands
+@compiles(_Rule)
+def visit_rule(element, compiler, **kw):
+    commands = element.commands
+    if commands:
+        sql_commands = [_make_sql_command(c) for c in commands]
+        if len(sql_commands) == 1:
+            sql = sql_commands[0]
+        else:
+            sql = '(%s)' % (string.join(sql_commands, '; '),)
+    else:
+        sql = 'NOTHING'
+    table = element.table
+    rule_name = '%s__%s_%s' % (table.name, element.action.lower(), element.kind.lower(),)
+    return ('CREATE OR REPLACE RULE "%s".%s AS ON %s TO "%s"."%s" DO %s %s' %
+            (table.schema, rule_name, element.action, table.schema, table.name, element.kind, sql,))
 
 class _SQLExternal(sqlalchemy.sql.expression.FromClause):
 
@@ -185,6 +208,12 @@ def _sql_value_escape(value):
     else:
         result = str(value)
     return result
+
+def _sql_plain_name(name):
+    pos = name.rfind('.')
+    if pos >= 0:
+        name = name[pos+1:]
+    return name
 
 class SQLFlexibleValue(object):
     
@@ -300,12 +329,16 @@ def object_by_reference(name):
         column = None
     return _Reference(table, column)
 
+def object_by_class(class_, search_path=None):
+    assert issubclass(class_, _SQLTabular)
+    if search_path is None:
+        search_path = _current_search_path
+    table_name = class_.pytis_name()
+    return object_by_path(table_name, search_path)    
+
 def object_by_specification(specification):
     class_ = globals()[specification]
-    assert issubclass(class_, _SQLTabular)
-    table_name = class_.pytis_name()
-    return object_by_path(table_name, _current_search_path)
-
+    return object_by_class(class_, _current_search_path)
 
 class RawCondition(object):
     def __init__(self, condition):
@@ -358,11 +391,15 @@ class _SQLTabular(sqlalchemy.Table):
     name = None
     schemas = _default_schemas
     depends_on = ()
+    insert_order = None
+    update_order = None
+    delete_order = None
 
     def _init(self, *args, **kwargs):
         super(_SQLTabular, self)._init(*args, **kwargs)
         self._search_path = _current_search_path
         self._add_dependencies()
+        self._create_rules()
 
     def _add_dependencies(self):
         for o in self.depends_on:
@@ -377,6 +414,80 @@ class _SQLTabular(sqlalchemy.Table):
         if name is None:
             name = pytis.util.camel_case_to_lower(class_.__name__, separator='_')
         return name
+
+    def _create_rules(self):
+        def make_rule(action, kind, commands):
+            if commands is None:
+                return
+            if not commands and kind == 'ALSO':
+                return
+            rule = _Rule(self, action, kind, commands)
+            sqlalchemy.event.listen(self, 'after_create', rule)
+        make_rule('INSERT', 'INSTEAD', self.on_insert())
+        make_rule('UPDATE', 'INSTEAD', self.on_update())
+        make_rule('DELETE', 'INSTEAD', self.on_delete())
+        make_rule('INSERT', 'ALSO', self.on_insert_also())
+        make_rule('UPDATE', 'ALSO', self.on_update_also())
+        make_rule('DELETE', 'ALSO', self.on_delete_also())
+
+    def _rule_assignments(self, tabular):
+        assignments = {}
+        for c in tabular.c:
+            if tabular.c.contains_column(c):
+                name = _sql_plain_name(c.name)
+                assignments[name] = sqlalchemy.literal_column('new.'+name)
+        return assignments
+
+    def _rule_condition(self, tabular):
+        conditions = []
+        for c in tabular.primary_key.columns:
+            name = _sql_plain_name(c.name)
+            conditions.append(c == sqlalchemy.literal_column('old.'+name))
+        # returning
+        return sqlalchemy.and_(*conditions)
+
+    def _rule_tables(self, order):
+        return [object_by_class(tabular, self.search_path()) for tabular in order]
+
+    def on_insert(self):
+        if self.insert_order is None:
+            return None
+        commands = []
+        for tabular in self._rule_tables(self.insert_order):
+            assignments = self._rule_assignments(tabular)
+            c = tabular.insert().values(**assignments)
+            commands.append(c)
+        return commands
+
+    def on_update(self):
+        if self.update_order is None:
+            return None
+        commands = []
+        for tabular in self._rule_tables(self.update_order):
+            assignments = self._rule_assignments(tabular)
+            condition = self._rule_condition(tabular)
+            c = tabular.update().values(**assignments).where(condition)
+            commands.append(c)
+        return commands
+
+    def on_delete(self):
+        if self.delete_order is None:
+            return None
+        commands = []
+        for tabular in self._rule_tables(self.delete_order):
+            condition = self._rule_condition(tabular)
+            c = tabular.delete().where(condition)
+            commands.append(c)
+        return commands
+
+    def on_insert_also(self):
+        return ()
+
+    def on_update_also(self):
+        return ()
+
+    def on_delete_also(self):
+        return ()
     
 class SQLTable(_SQLTabular):
     
@@ -691,7 +802,7 @@ class SQLTrigger(SQLEventHandler):
 ## Specification processing
 
 engine = None
-def _dump_sql_command(sql, *multiparams, **params):
+def _make_sql_command(sql, *multiparams, **params):
     if isinstance(sql, str):
         output = unicode(sql)
     elif isinstance(sql, unicode):
@@ -722,8 +833,10 @@ def _dump_sql_command(sql, *multiparams, **params):
                     value = 'NULL'
                 elif isinstance(v, (int, long, float,)):
                     value = v
-                else:
+                elif isinstance(v, basestring):
                     value = "'%s'" % (v.replace('\\', '\\\\').replace("'", "''"),)
+                else:
+                    value = unicode(v)
                 parameters[k] = value
             output = unicode(compiled) % parameters
         elif isinstance(sql, sqlalchemy.sql.expression.Select):
@@ -732,6 +845,9 @@ def _dump_sql_command(sql, *multiparams, **params):
             output = unicode(compiled)
         if hasattr(sql, 'pytis_prefix'):
             output = sql.pytis_prefix + output
+    return output
+def _dump_sql_command(sql, *multiparams, **params):
+    output = _make_sql_command(sql, *multiparams, **params)
     print output + ';'
 
 def gsql_file(file_name):
@@ -780,6 +896,12 @@ class Bar(SQLTable):
               )
     init_columns = ('foo_id', 'description',)
     init_values = ((1, 'some text'),)
+    def on_delete(self):
+        return ()
+    def on_insert_also(self):
+        return (object_by_class(Foo2).insert().values(n=sqlalchemy.literal_column('new.id'),
+                                                      foo=sqlalchemy.literal_column('new.description')),
+                "select 42",)
 
 class BarTrigger(SQLPlFunction, SQLTrigger):
     table = Bar
@@ -805,6 +927,7 @@ class Baz(SQLView):
     """Baz view."""
     name = 'baz'
     schemas = (('private', 'public',),)
+    update_order = (Foo, Bar,)
     @classmethod
     def condition(class_):
         return sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
