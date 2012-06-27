@@ -490,20 +490,30 @@ class _SQLTabular(sqlalchemy.Table, SQLObject):
         make_rule('UPDATE', 'ALSO', self.on_update_also())
         make_rule('DELETE', 'ALSO', self.on_delete_also())
 
+    def _original_columns(self):
+        return self.c
+    
     def _rule_assignments(self, tabular):
         assignments = {}
-        for c in tabular.c:
-            if tabular.c.contains_column(c):
+        for c in self._original_columns():
+            table_c = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+            if table_c.table is tabular:
                 name = _sql_plain_name(c.name)
-                assignments[name] = sqlalchemy.literal_column('new.'+name)
+                table_column_name = _sql_plain_name(table_c.name)
+                assignments[table_column_name] = sqlalchemy.literal_column('new.'+name)
         return assignments
 
     def _rule_condition(self, tabular):
         conditions = []
-        for c in tabular.primary_key.columns:
+        for table_c in tabular.primary_key.columns:
+            for c in self._original_columns():
+                tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                if tc is table_c:
+                    break
+            else:
+                raise Exception("Table key column not found in the view", table_c)
             name = _sql_plain_name(c.name)
-            conditions.append(c == sqlalchemy.literal_column('old.'+name))
-        # returning
+            conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
         return sqlalchemy.and_(*conditions)
 
     def _rule_tables(self, order):
@@ -753,7 +763,10 @@ class SQLView(_SQLTabular):
             else:
                 raise Exception("Missing column", c)
         return reordered
-
+    
+    def _original_columns(self):
+        return self.condition().inner_columns
+    
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
@@ -938,6 +951,7 @@ class Foo(SQLTable):
               Column('foo', pytis.data.String(), doc='some string', index=dict(method='hash')),
               Column('n', pytis.data.Integer(not_null=True), doc='some number'),
               Column('b', pytis.data.Boolean(), default=True),
+              Column('description', pytis.data.String()),
               )
     inherits = ()
     tablespace = None
@@ -966,6 +980,7 @@ class Bar(SQLTable):
               )
     init_columns = ('foo_id', 'description',)
     init_values = ((1, 'some text'),)
+    depends_on = (Foo2,)
     def on_delete(self):
         return ()
     def on_insert_also(self):
@@ -997,7 +1012,6 @@ class Baz(SQLView):
     """Baz view."""
     name = 'baz'
     schemas = ((Private, 'public',),)
-    update_order = (Foo, Bar,)
     @classmethod
     def condition(class_):
         return sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
@@ -1030,6 +1044,15 @@ class LimitedView(SQLView):
     def condition(class_):
         foo = t.Foo
         return sqlalchemy.select(class_._exclude(foo, foo.c.n))
+
+class EditableView(SQLView):
+    schemas = ((Private, 'public',),)
+    update_order = (Foo, Bar,)
+    @classmethod
+    def condition(class_):
+        return sqlalchemy.select([c.Foo.id, c.Foo.description.label('d1'),
+                                  c.Bar.id.label('id2'), c.Bar.description.label('d2')],
+                                 from_obj=[t.Foo.join(t.Bar)])
 
 class Func(SQLFunction):
     name = 'plus'
