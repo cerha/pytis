@@ -215,6 +215,28 @@ def _sql_plain_name(name):
         name = name[pos+1:]
     return name
 
+def _expand_schemas(schemas):
+    if isinstance(schemas, SQLFlexibleValue):
+        schemas = schemas.value()
+    expanded_schemas = []
+    for search_path in schemas:
+        expanded_path = []
+        for s in search_path:
+            if isinstance(s, basestring):
+                pass
+            elif issubclass(s, SQLSchema):
+                for o in _PytisSimpleMetaclass.objects:
+                    if isinstance(o, s):
+                        s = o.pytis_name()
+                        break
+                else:
+                    raise Exception("Schema instance not found", s)
+            else:
+                raise Exception("Invalid schema reference", s)
+            expanded_path.append(s)
+        expanded_schemas.append(expanded_path)
+    return expanded_schemas
+
 class SQLFlexibleValue(object):
     
     def __init__(self, name, default=None, environment=None):
@@ -249,24 +271,37 @@ class SQLNameException(SQLException):
         super(SQLNameException, self).__init__("Object not found", *args)
 
 
-class _PytisTableMetaclass(sqlalchemy.sql.visitors.VisitableType):
+class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     
     _name_mapping = {}
     
     def __init__(cls, clsname, bases, clsdict):
-        is_specification = not clsname.startswith('SQL') and not clsname.startswith('_SQL')
-        if is_specification:
+        if cls._is_specification(clsname):
             name = cls.pytis_name()
-            if (name in _PytisTableMetaclass._name_mapping and 
+            if (name in _PytisBaseMetaclass._name_mapping and 
                 _PytisTableMetaclass._name_mapping[name] is not cls):
                 raise SQLException("Duplicate object name", (cls, _PytisTableMetaclass._name_mapping[name],))
             _PytisTableMetaclass._name_mapping[name] = cls
             cls.name = name
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
-        if is_specification:
-            schemas = cls.schemas
-            if isinstance(schemas, SQLFlexibleValue):
-                schemas = schemas.value()
+
+    def _is_specification(cls, clsname):
+        return not clsname.startswith('SQL') and not clsname.startswith('_SQL')
+
+class _PytisSimpleMetaclass(_PytisBaseMetaclass):
+    
+    objects = []
+    
+    def __init__(cls, clsname, bases, clsdict):
+        _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
+        if cls._is_specification(clsname):
+            _PytisSimpleMetaclass.objects.append(cls())
+
+class _PytisTableMetaclass(_PytisBaseMetaclass):
+    def __init__(cls, clsname, bases, clsdict):
+        _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
+        if cls._is_specification(clsname):
+            schemas = _expand_schemas(cls.schemas)
             for search_path in schemas:
                 _set_current_search_path(search_path)
                 cls(_metadata, search_path)
@@ -383,9 +418,26 @@ class a(object):
     def kwargs(self):
         return self._kwargs
 
+class SQLObject(object):    
+    @classmethod
+    def pytis_name(class_):
+        name = class_.name
+        if name is None:
+            name = pytis.util.camel_case_to_lower(class_.__name__)
+        return name
+
 ## Database objects
 
-class _SQLTabular(sqlalchemy.Table):
+class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
+    __metaclass__ = _PytisSimpleMetaclass
+    __visit_name__ = 'schema'
+    name = None    
+@compiles(SQLSchema)
+def visit_schema(element, compiler, **kw):
+    command = sqlalchemy.schema.CreateSchema(element.name)
+    return _make_sql_command(command)
+
+class _SQLTabular(sqlalchemy.Table, SQLObject):
     __metaclass__ = _PytisTableMetaclass
     
     name = None
@@ -537,9 +589,7 @@ class SQLTable(_SQLTabular):
 
     def _table_name(self, table):
         name = table.name
-        schemas = table.schemas
-        if isinstance(schemas, SQLFlexibleValue):
-            schemas = schemas.value()
+        schemas = _expand_schemas(table.schemas)
         table_schemas = [s[0] for s in schemas]
         for schema in self.search_path():
             if schema in table_schemas:
@@ -856,10 +906,15 @@ def gsql_file(file_name):
     execfile(file_name, copy.copy(globals()))
     global engine
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    for o in _PytisSimpleMetaclass.objects:
+        engine.execute(o)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
     
 ## Sample demo
+
+class Private(SQLSchema):
+    name = 'private'
 
 class Foo(SQLTable):
     """Foo table."""
@@ -889,7 +944,7 @@ class Foo2(Foo):
 
 class Bar(SQLTable):
     """Bar table."""
-    schemas = (('private', 'public',),)
+    schemas = ((Private, 'public',),)
     fields = (PrimaryColumn('id', pytis.data.Serial()),
               Column('foo_id', pytis.data.Integer(), references=a(r.Foo.id, onupdate='CASCADE')),
               Column('description', pytis.data.String()),
@@ -926,7 +981,7 @@ class Circular2(SQLTable):
 class Baz(SQLView):
     """Baz view."""
     name = 'baz'
-    schemas = (('private', 'public',),)
+    schemas = ((Private, 'public',),)
     update_order = (Foo, Bar,)
     @classmethod
     def condition(class_):
@@ -935,7 +990,7 @@ class Baz(SQLView):
                                 sqlalchemy.select([c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
 
 class Baz2(SQLView):
-    schemas = (('private', 'public',),)
+    schemas = ((Private, 'public',),)
     @classmethod
     def condition(class_):
         return sqlalchemy.select([c.Baz.id], from_obj=[t.Baz], whereclause=(c.Baz.id > 0))
@@ -993,6 +1048,8 @@ class PyFunc(SQLPyFunction):
 def run():
     global engine
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    for o in _PytisSimpleMetaclass.objects:
+        engine.execute(o)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
 
