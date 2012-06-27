@@ -279,9 +279,9 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         if cls._is_specification(clsname):
             name = cls.pytis_name()
             if (name in _PytisBaseMetaclass._name_mapping and 
-                _PytisTableMetaclass._name_mapping[name] is not cls):
-                raise SQLException("Duplicate object name", (cls, _PytisTableMetaclass._name_mapping[name],))
-            _PytisTableMetaclass._name_mapping[name] = cls
+                _PytisSchematicMetaclass._name_mapping[name] is not cls):
+                raise SQLException("Duplicate object name", (cls, _PytisSchematicMetaclass._name_mapping[name],))
+            _PytisSchematicMetaclass._name_mapping[name] = cls
             cls.name = name
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
 
@@ -297,22 +297,31 @@ class _PytisSimpleMetaclass(_PytisBaseMetaclass):
         if cls._is_specification(clsname):
             _PytisSimpleMetaclass.objects.append(cls())
 
-class _PytisTableMetaclass(_PytisBaseMetaclass):
+class _PytisSchematicMetaclass(_PytisBaseMetaclass):
+
+    objects = []
+
     def __init__(cls, clsname, bases, clsdict):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
         if cls._is_specification(clsname):
             schemas = _expand_schemas(cls.schemas)
             for search_path in schemas:
                 _set_current_search_path(search_path)
-                cls(_metadata, search_path)
+                # hack
+                if issubclass(cls, SQLSequence):
+                    o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
+                            start=cls.start, increment=cls.increment)
+                else:
+                    o = cls(_metadata, search_path)
+                _PytisSchematicMetaclass.objects.append(o)
 
-class _PytisTriggerMetaclass(_PytisTableMetaclass):
+class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
         if cls._is_specification(clsname):
             if cls.table is None:
                 raise Exception("Trigger without table", cls)
             cls.schemas = cls.table.schemas
-        _PytisTableMetaclass.__init__(cls, clsname, bases, clsdict)
+        _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
     
 def object_by_name(name, allow_external=True):
     try:
@@ -445,8 +454,15 @@ def visit_schema(element, compiler, **kw):
     command = sqlalchemy.schema.CreateSchema(element.name)
     return _make_sql_command(command)
 
+class SQLSequence(sqlalchemy.Sequence, SQLObject):
+    __metaclass__ = _PytisSchematicMetaclass
+    name = None
+    schemas = _default_schemas
+    start = None
+    increment = None
+    
 class _SQLTabular(sqlalchemy.Table, SQLObject):
-    __metaclass__ = _PytisTableMetaclass
+    __metaclass__ = _PytisSchematicMetaclass
     
     name = None
     schemas = _default_schemas
@@ -936,6 +952,9 @@ def gsql_file(file_name):
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     for o in _PytisSimpleMetaclass.objects:
         engine.execute(o)
+    for o in _PytisSchematicMetaclass.objects:
+        if not isinstance(o, _SQLTabular):
+            o.create(engine, checkfirst=False)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
     
@@ -943,6 +962,9 @@ def gsql_file(file_name):
 
 class Private(SQLSchema):
     name = 'private'
+
+class Counter(SQLSequence):
+    pass
 
 class Foo(SQLTable):
     """Foo table."""
@@ -1088,6 +1110,9 @@ def run():
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     for o in _PytisSimpleMetaclass.objects:
         engine.execute(o)
+    for o in _PytisSchematicMetaclass.objects:
+        if not isinstance(o, _SQLTabular):
+            o.create(engine, checkfirst=False)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
 
