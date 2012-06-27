@@ -305,6 +305,14 @@ class _PytisTableMetaclass(_PytisBaseMetaclass):
             for search_path in schemas:
                 _set_current_search_path(search_path)
                 cls(_metadata, search_path)
+
+class _PytisTriggerMetaclass(_PytisTableMetaclass):
+    def __init__(cls, clsname, bases, clsdict):
+        if cls._is_specification(clsname):
+            if cls.table is None:
+                raise Exception("Trigger without table", cls)
+            cls.schemas = cls.table.schemas
+        _PytisTableMetaclass.__init__(cls, clsname, bases, clsdict)
     
 def object_by_name(name, allow_external=True):
     try:
@@ -839,6 +847,7 @@ class SQLEventHandler(SQLFunctional):
     table = None
 
 class SQLTrigger(SQLEventHandler):
+    __metaclass__ = _PytisTriggerMetaclass
     
     position = 'after'
     events = ('insert', 'update', 'delete', 'truncate',)
