@@ -3690,13 +3690,13 @@ class FileAttachmentStorage(AttachmentStorage):
         import lcg
         if issubclass(self._resource_cls(filename), lcg.Image):
             import PIL.Image
+            img = PIL.Image.open(self._resource_src_file(filename))
+            kwargs = dict(size=img.size)
             thumbnail_filename = self._thumbnail_src_file(filename)
             if os.path.isfile(thumbnail_filename):
                 img = PIL.Image.open(thumbnail_filename)
-                return dict(has_thumbnail=True, thumbnail_size=img.size)
-            else:
-                img = PIL.Image.open(self._resource_src_file(filename))
-                return dict(size=img.size)
+                kwargs = dict(kwargs, has_thumbnail=True, thumbnail_size=img.size)
+            return kwargs
         else:
             return {}
 
