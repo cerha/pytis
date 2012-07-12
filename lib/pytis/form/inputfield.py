@@ -2018,15 +2018,27 @@ class StructuredTextField(TextField):
             else:
                 return 'full-size'
         @classmethod
-        def thumbnail_size(cls, size, px_size):
+        def thumbnail_size_bounds(cls, size, custom_size):
             if size == 'small-thumbnail':
                 return (cls.SMALL_THUMBNAIL_SIZE, cls.SMALL_THUMBNAIL_SIZE)
             elif size == 'large-thumbnail':
                 return (cls.LARGE_THUMBNAIL_SIZE, cls.LARGE_THUMBNAIL_SIZE)
             elif size == 'custom-thumbnail':
-                return (px_size, px_size)
+                return (custom_size, custom_size)
             elif size == 'full-size':
                 return None
+        @classmethod
+        def preview_size(cls, size, custom_size, orig_size):
+            if size == 'small-thumbnail':
+                size = cls.SMALL_THUMBNAIL_SIZE
+            elif size == 'large-thumbnail':
+                size = cls.LARGE_THUMBNAIL_SIZE
+            elif size == 'custom-thumbnail':
+                size = custom_size
+            elif size == 'full-size':
+                return tuple(orig_size)
+            scale = float(size)/float(max(*orig_size))
+            return (round(scale*orig_size[0]), round(scale*orig_size[1]))
 
     class LCGLink(object):
         """Common manipulations with LCG Structured Text links.
@@ -2406,7 +2418,7 @@ class StructuredTextField(TextField):
             self._last_load_dir = os.path.dirname(path)
             file_object = open(path)
             filename = os.path.split(path)[1]
-        size = self.ImageSizes.thumbnail_size(row['size'].value(), None)
+        size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
         try:
             try:
                 self._storage.insert(filename, file_object, dict(has_thumbnail=(size is not None),
@@ -2439,16 +2451,24 @@ class StructuredTextField(TextField):
                 thumbnail = resource.thumbnail()
         return self.ImageSizes.matching_size(thumbnail)
         
-    def _real_size_computer(self, row, filename):
+    def _preview_size_computer(self, row, filename, size):
         thumbnail = None
         if filename:
             resource = self._storage.resource(filename)
             if resource:
-                thumbnail = resource.thumbnail()
-                if thumbnail and thumbnail.size():
-                    return "%dx%d px" % tuple(thumbnail.size())
-                elif resource.size():
-                    return "%dx%d px" % tuple(resource.size())
+                orig_size = resource.size()
+                if orig_size:
+                    return "%dx%d px" % self.ImageSizes.preview_size(size, None, orig_size)
+        return None
+    
+    def _orig_size_computer(self, row, filename, size):
+        thumbnail = None
+        if filename:
+            resource = self._storage.resource(filename)
+            if resource:
+                orig_size = resource.size()
+                if orig_size:
+                    return "%dx%d px" % tuple(orig_size)
         return None
         
     def _resize_computer(self, row, filename):
@@ -2490,8 +2510,10 @@ class StructuredTextField(TextField):
                   descr=_(u"Vyberte jeden z uvedených způsobů zobrazení obrázku ve stránce. "
                           u"Při použití náhledu se po kliknutí zobrazí zvětšená podoba "
                           u"obrázku.")),
-            Field('real_size', _(u"Skutečná velikost náhledu"),
-                  computer=computer(self._real_size_computer)),
+            Field('orig_size', _(u"Velikost originálu"),
+                  computer=computer(self._orig_size_computer)),
+            Field('preview_size', _(u"Velikost náhledu"),
+                  computer=computer(self._preview_size_computer)),
             Field('resize', _(u"Poměr zmenšení"),
                   computer=computer(self._resize_computer)),
             Field('align', _(u"Zarovnání"), not_null=True,
@@ -2510,11 +2532,11 @@ class StructuredTextField(TextField):
                                     align=link.align(),
                                     tooltip=link.tooltip()),
                        layout=(Columns(('filename', button), 'preview'),
-                               'align', 'size', 'real_size', 'tooltip'))
+                               'align', 'size', 'orig_size', 'preview_size', 'tooltip'))
         if row:
             filename = row['filename'].value()
             if row['size'].value() != self._size_computer(row, filename):
-                size = self.ImageSizes.thumbnail_size(row['size'].value(), None)
+                size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
                 try:
                     self._storage.update(filename, dict(has_thumbnail=(size is not None),
                                                         thumbnail_size=size))
