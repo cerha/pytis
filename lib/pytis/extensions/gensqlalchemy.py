@@ -485,6 +485,9 @@ class _SQLTabular(sqlalchemy.Table, SQLObject):
 
     def _add_dependencies(self):
         for o in self.depends_on:
+            if not isinstance(o, SQLObject):
+                assert issubclass(o, SQLObject), ("Invalid dependency", o,)
+                o = object_by_class(o, search_path=self._search_path)
             self.add_is_dependent_on(o)
 
     def search_path(self):
@@ -717,6 +720,8 @@ class SQLView(_SQLTabular):
             elif isinstance(o, sqlalchemy.sql.ClauseElement):
                 objects += o.get_children()
                 seen.append(o)
+            else:
+                raise Exception("Invalid dependency", o)
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):
