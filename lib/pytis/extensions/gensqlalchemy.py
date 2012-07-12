@@ -57,11 +57,10 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         arguments = string.join([arg(c) for c in function.arguments], ', ')
         if result_type is None:
             result_type = function.result_type[0].sqlalchemy_column(search_path, None, None, None).type
-        if function.multirow:
-            result_type = 'SETOF ' + result_type
+        result_type_prefix = 'SETOF ' if function.multirow else ''
         body = function.body().strip()
-        command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s AS $$\n%s\n$$ LANGUAGE %s %s' %
-                   (function.schema, function.name, arguments, result_type, body,
+        command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n%s\n$$ LANGUAGE %s %s' %
+                   (function.schema, function.name, arguments, result_type_prefix, result_type, body,
                     function._LANGUAGE, function.stability,))
         if function.security_definer:
             command += ' SECURITY DEFINER'
