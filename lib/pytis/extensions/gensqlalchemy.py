@@ -315,8 +315,6 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
                 if issubclass(cls, SQLSequence):
                     o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
                             start=cls.start, increment=cls.increment)
-                elif issubclass(cls, SQLRaw):
-                    o = cls(search_path)
                 else:
                     o = cls(_metadata, search_path)
                 _PytisSchematicMetaclass.objects.append(o)
@@ -388,7 +386,7 @@ def object_by_reference(name):
     return _Reference(table, column)
 
 def object_by_class(class_, search_path=None):
-    assert issubclass(class_, _SQLTabular)
+    assert issubclass(class_, SQLObject)
     if search_path is None:
         search_path = _current_search_path
     table_name = class_.pytis_name()
@@ -449,6 +447,13 @@ class SQLObject(object):
             name = pytis.util.camel_case_to_lower(class_.__name__)
         return name
 
+    def _add_dependencies(self):
+        for o in self.depends_on:
+            if not isinstance(o, SQLObject):
+                assert issubclass(o, SQLObject), ("Invalid dependency", o,)
+                o = object_by_class(o, search_path=self._search_path)
+            self.add_is_dependent_on(o)
+
 ## Database objects
 
 class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
@@ -482,13 +487,6 @@ class _SQLTabular(sqlalchemy.Table, SQLObject):
         self._search_path = _current_search_path
         self._add_dependencies()
         self._create_rules()
-
-    def _add_dependencies(self):
-        for o in self.depends_on:
-            if not isinstance(o, SQLObject):
-                assert issubclass(o, SQLObject), ("Invalid dependency", o,)
-                o = object_by_class(o, search_path=self._search_path)
-            self.add_is_dependent_on(o)
 
     def search_path(self):
         return self._search_path
@@ -914,16 +912,21 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLObject):
     name = None
     schemas = _default_schemas
     depends_on = ()
-    # TODO: dependencies are ignored now
     
     __visit_name__ = 'raw'
     
-    def __init__(self, search_path):
+    def __init__(self, metadata, search_path):
+        self._extra_dependencies = set()
         super(SQLRaw, self).__init__()
         self._search_path = search_path
+        self._add_dependencies()
+        metadata._add_table(self.pytis_name(), search_path[0], self)
         
     def search_path(self):
         return self._search_path
+
+    def add_is_dependent_on(self, table):
+        self._extra_dependencies.add(table)
     
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
@@ -1162,19 +1165,23 @@ class PyFuncZeroArg(SQLPyFunction):
 
 class NeverUseThis(SQLRaw):
     schemas = ((Private, 'public',),)
-    depends_on = (Baz,)
+    depends_on = (Baz,)                 # just to test dependencies
     @classmethod
     def sql(class_):
         return "select 'never use raw constructs'"
+
+class ReallyNeverUseThis(SQLRaw):
+    schemas = ((Private, 'public',),)
+    depends_on = (NeverUseThis,)                 # just to test dependencies
+    @classmethod
+    def sql(class_):
+        return "select 'do not use raw constructs anymore'"
 
 def run():
     global engine
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     for o in _PytisSimpleMetaclass.objects:
         engine.execute(o)
-    for o in _PytisSchematicMetaclass.objects:
-        if not isinstance(o, _SQLTabular):
-            o.create(engine, checkfirst=False)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
 
