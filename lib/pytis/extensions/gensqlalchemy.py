@@ -839,8 +839,12 @@ class SQLPyFunction(SQLFunctional):
     
     def body(self):
         arglist = string.join([c.id() for c in self.arguments], ', ')
-        lines = ['#def %s(%s):' % (self.name, arglist,),
-                 '    %s = args' % (arglist,)] # hard-wired indentation
+        lines = ['#def %s(%s):' % (self.name, arglist,)]
+        if arglist:
+            l = '    %s = args' % (arglist,) # hard-wired indentation
+            if len(arglist):
+                l += '[0]'
+            lines.append(l)
         main_lines = self._method_source_lines(self.name, 0)
         main_lines = main_lines[1:]
         prefix = 'sub_'
@@ -1130,6 +1134,26 @@ class PyFunc(SQLPyFunction):
     @staticmethod
     def sub_pythonic(x, y):
         return x * y
+
+class PyFuncSingleArg(SQLPyFunction):
+    name = 'single_argument'
+    arguments = (Column('x', pytis.data.Integer()),)
+    result_type = (Column('z', pytis.data.Integer()),)
+    stability = 'immutable'
+
+    @staticmethod
+    def single_argument(x):
+        return x + 1
+
+class PyFuncZeroArg(SQLPyFunction):
+    name = 'zero_arguments'
+    arguments = ()
+    result_type = (Column('z', pytis.data.Integer()),)
+    stability = 'immutable'
+
+    @staticmethod
+    def zero_arguments():
+        return 42
 
 class NeverUseThis(SQLRaw):
     schemas = ((Private, 'public',),)
