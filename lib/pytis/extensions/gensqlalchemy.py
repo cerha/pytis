@@ -306,7 +306,7 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
 
     def _is_specification(cls, clsname):
-        return not clsname.startswith('SQL') and not clsname.startswith('_SQL')
+        return not clsname.startswith('SQL') and not clsname.startswith('_')
 
 class _PytisSimpleMetaclass(_PytisBaseMetaclass):
     
