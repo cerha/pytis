@@ -875,7 +875,7 @@ class SQLPyFunction(SQLFunctional):
         lines = ['#def %s(%s):' % (self.name, arglist,)]
         if arglist:
             l = '    %s = args' % (arglist,) # hard-wired indentation
-            if len(arglist):
+            if len(self.arguments) == 1:
                 l += '[0]'
             lines.append(l)
         main_lines = self._method_source_lines(self.name, 0)
