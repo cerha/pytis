@@ -48,6 +48,12 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         self.connection.execute(condition)
         view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
+    def visit_type(self, type_name, columns):
+        sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
+        column_string = string.join(['%s %s' % (c.name, c.type,) for c in sqlalchemy_columns], ', ')
+        command = 'CREATE TYPE %s AS (%s)' % (type_name, column_string,)
+        self.connection.execute(command)
+
     def visit_function(self, function, create_ok=False, result_type=None):
         search_path = function.search_path()
         self._set_search_path(search_path)
@@ -56,7 +62,14 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             return '"%s" %s' % (a_column.name, a_column.type,)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
         if result_type is None:
-            result_type = function.result_type[0].sqlalchemy_column(search_path, None, None, None).type
+            function_type = function.result_type
+            if isinstance(function_type, (tuple, list,)):
+                result_type = 't_' + function.pytis_name()
+                self.visit_type(result_type, function_type)
+            elif isinstance(function_type, Column):
+                result_type = function_type.sqlalchemy_column(search_path, None, None, None).type
+            elif issubclass(function_type, SQLTable):
+                result_type = object_by_class(function_type, search_path).pytis_name()
         result_type_prefix = 'SETOF ' if function.multirow else ''
         body = function.body().strip()
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n%s\n$$ LANGUAGE %s %s' %
@@ -811,9 +824,27 @@ class SQLFunctional(_SQLTabular):
     __visit_name__ = 'function'
 
     def __new__(cls, metadata, search_path):
-        columns = tuple([c.sqlalchemy_column(search_path, None, None, None) for c in cls.result_type])
+        result_type = cls.result_type
+        if result_type is None:
+            columns = ()
+        elif isinstance(result_type, (tuple, list,)):
+            columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
+                             for c in result_type])
+        elif isinstance(result_type, Column):
+            columns = (result_type.sqlalchemy_column(search_path, None, None, None),)
+        elif issubclass(result_type, _SQLTabular):
+            columns = tuple([sqlalchemy.Column(c.name, c.type)
+                             for c in object_by_class(result_type, search_path).c])
+        else:
+            raise Exception("Invalid result type", result_type)
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+
+    def _add_dependencies(self):
+        super(SQLFunctional, self)._add_dependencies()
+        result_type = self.result_type
+        if result_type is not None and not isinstance(result_type, (tuple, list, Column,)):
+            self.add_is_dependent_on(object_by_class(result_type, self._search_path))
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
@@ -895,8 +926,6 @@ class SQLTrigger(SQLEventHandler):
     each_row = True
     call_arguments = ()
 
-    result_type = ()
-    
     __visit_name__ = 'trigger'
     
     def _add_dependencies(self):
@@ -1115,7 +1144,7 @@ class EditableView(SQLView):
 class Func(SQLFunction):
     name = 'plus'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
-    result_type = (Column('z', pytis.data.Integer()),)
+    result_type = Column('z', pytis.data.Integer())
     stability = 'immutable'
 
     def body(self):
@@ -1124,13 +1153,13 @@ class Func(SQLFunction):
 class FileFunc(SQLFunction):
     name = 'minus'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
-    result_type = (Column('z', pytis.data.Integer()),)
+    result_type = Column('z', pytis.data.Integer())
     stability = 'immutable'
 
 class PyFunc(SQLPyFunction):
     name = 'times'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
-    result_type = (Column('z', pytis.data.Integer()),)
+    result_type = Column('z', pytis.data.Integer())
     stability = 'immutable'
 
     @staticmethod
@@ -1144,7 +1173,7 @@ class PyFunc(SQLPyFunction):
 class PyFuncSingleArg(SQLPyFunction):
     name = 'single_argument'
     arguments = (Column('x', pytis.data.Integer()),)
-    result_type = (Column('z', pytis.data.Integer()),)
+    result_type = Column('z', pytis.data.Integer())
     stability = 'immutable'
 
     @staticmethod
@@ -1154,12 +1183,39 @@ class PyFuncSingleArg(SQLPyFunction):
 class PyFuncZeroArg(SQLPyFunction):
     name = 'zero_arguments'
     arguments = ()
-    result_type = (Column('z', pytis.data.Integer()),)
+    result_type = Column('z', pytis.data.Integer())
     stability = 'immutable'
 
     @staticmethod
     def zero_arguments():
         return 42
+
+class TableSelectFunction(SQLPyFunction):
+    name = 'tableselect'
+    schemas = (('public', Private,),)
+    arguments = (Column('foo', pytis.data.Integer()),)
+    result_type = Bar
+    multirow = True
+    stability = 'stable'
+
+    @staticmethod
+    def tableselect(foo):
+        return plpy.execute("select * from private.bar where foo_id >= %s" % (foo,)) 
+    
+class TableFunction(SQLPyFunction):
+    name = 'pseudotable'
+    arguments = (Column('n', pytis.data.Integer()),)
+    result_type = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()), Column('z', pytis.data.Integer()),)
+    multirow = True
+    stability = 'immutable'
+
+    @staticmethod
+    def pseudotable(n):
+        result = []
+        for i in range(1, n + 1):
+            for j in range(1, n + 1):
+                result.append([i, j, i * j])
+        return result
 
 class NeverUseThis(SQLRaw):
     schemas = ((Private, 'public',),)
