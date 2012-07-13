@@ -903,10 +903,10 @@ class SQLPyFunction(SQLFunctional):
         try:
             lines = inspect.getsourcelines(method)[0]
         except Exception as e:
-            raise SQLException("Invalid plpythonu method", (self.__class__.__name__, name, e))
+            raise Exception("Invalid plpythonu method", (self.__class__.__name__, name, e))
         match = self._STATICMETHOD_MATCHER.match(lines[0])
         if not match:
-            self.SQLException("@staticmethod decorator not found", (self.__class__.__name__, name))
+            self.Exception("@staticmethod decorator not found", (self.__class__.__name__, name))
         indentation = indentation - len(match.group(1))
         if indentation == 0:
             def reindent(line):
