@@ -84,16 +84,18 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         self.connection.execute(command)
 
     def visit_trigger(self, trigger, create_ok=False):
-        self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
-        events = string.join(trigger.events, ' OR ')
-        table = object_by_path(trigger.table.name, trigger.search_path())
-        row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
-        trigger_call = trigger(*trigger.arguments)
-        command = (('CREATE TRIGGER "%s__%s__%s_trigger" %s %s ON %s '
-                    'FOR EACH %s EXECUTE PROCEDURE %s') %
-                   (trigger.schema, trigger.name, trigger.position, trigger.position, events, table,
-                    row_or_statement, trigger_call,))
-        self.connection.execute(command)
+        if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
+            self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
+        if trigger.events:
+            events = string.join(trigger.events, ' OR ')
+            table = object_by_path(trigger.table.name, trigger.search_path())
+            row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
+            trigger_call = trigger(*trigger.arguments).value
+            command = (('CREATE TRIGGER "%s__%s__%s_trigger" %s %s ON %s '
+                        'FOR EACH %s EXECUTE PROCEDURE %s') %
+                       (trigger.schema, trigger.name, trigger.position, trigger.position, events, table,
+                        row_or_statement, trigger_call,))
+            self.connection.execute(command)
 
     def visit_raw(self, raw, create_ok=False):
         self._set_search_path(raw.search_path())
@@ -343,8 +345,10 @@ class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
         if cls._is_specification(clsname):
             if cls.table is None:
-                raise Exception("Trigger without table", cls)
-            cls.schemas = cls.table.schemas
+                if cls.events:
+                    raise Exception("Trigger without table", cls)
+            else:
+                cls.schemas = cls.table.schemas
         _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
     
 def object_by_name(name, allow_external=True):
@@ -938,7 +942,7 @@ class SQLTrigger(SQLEventHandler):
     __metaclass__ = _PytisTriggerMetaclass
     
     position = 'after'
-    events = ('insert', 'update', 'delete', 'truncate',)
+    events = ('insert', 'update', 'delete',)
     each_row = True
     call_arguments = ()
 
@@ -946,9 +950,18 @@ class SQLTrigger(SQLEventHandler):
     
     def _add_dependencies(self):
         super(SQLTrigger, self)._add_dependencies()
-        t = object_by_class(self.table, search_path=(self.schema,))
-        assert t is not None, ("Trigger table not found", self)
-        self.add_is_dependent_on(t)
+        search_path = (self.schema,)
+        if self.table:
+            t = object_by_class(self.table, search_path=search_path)
+            assert t is not None, ("Trigger table not found", self)
+            self.add_is_dependent_on(t)
+        if type(self.body) != types.MethodType:
+            self.add_is_dependent_on(object_by_class(self.body, search_path=search_path))
+
+    def __call__(self, *arguments):
+        if type(self.body) == types.MethodType:
+            return super(SQLTrigger, self).__call__(*arguments)
+        return object_by_class(self.body)(*arguments)
 
 class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
@@ -1092,6 +1105,31 @@ begin
   insert into foo (n, foo) values (foo_id, description);
 end;
 """
+
+class LogTable(SQLTable):
+    fields = (PrimaryColumn('id', pytis.data.Serial()),
+              Column('table_name', pytis.data.String(),),
+              Column('action', pytis.data.String()),
+              )
+
+class LogFunction(SQLPyFunction, SQLTrigger):
+    events = ()
+    arguments = ()
+    depends_on = (LogTable,)
+    @staticmethod
+    def log_function():
+        plpy.execute("insert into log_table (table_name, action) values ('%s', '%s')" %
+                     (TD['args'][0], TD['event'],))
+
+class _LogTrigger(SQLTrigger):
+    events = ('insert', 'update', 'delete',)
+    body = LogFunction
+    
+class LoggingTable(SQLTable):
+    fields = (PrimaryColumn('id', pytis.data.Integer()),)
+class LoggingTableTrigger(_LogTrigger):
+    table = LoggingTable
+    arguments = (LoggingTable.pytis_name(),)
 
 class Circular1(SQLTable):
     """Circular REFERENCES, together with Circular2."""
