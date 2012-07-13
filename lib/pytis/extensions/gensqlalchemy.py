@@ -223,10 +223,14 @@ def _sql_id_escape(identifier):
     return '"%s"' % (identifier.replace('"', '""'),)
 
 def _sql_value_escape(value):
-    if isinstance(value, basestring):
-        result = value.replace('\\', '\\\\').replace("'", "''")
+    if value is None:
+        result = 'NULL'
+    elif isinstance(value, (int, long, float,)):
+        result = value
+    elif isinstance(value, basestring):
+        result = "'%s'" % (value.replace('\\', '\\\\').replace("'", "''"),)
     else:
-        result = str(value)
+        result = unicode(value)
     return result
 
 def _sql_plain_name(name):
@@ -857,7 +861,13 @@ class SQLFunctional(_SQLTabular):
 
     def __call__(self, *arguments):
         name = '"%s"."%s"' % (self.schema, self.name,)
-        return getattr(sqlalchemy.sql.expression.func, name)(*arguments)
+        # We can't use standard SQLAlchemy function call here
+        # (i.e. getattr(sqlalchemy.sql.expression.func, name)(*arguments))
+        # since this puts argument symbols instead of argument values into the
+        # argument list.
+        argument_list = [_sql_value_escape(a) for a in arguments]
+        expression = u'%s(%s)' % (name, string.join(argument_list, ', '),)
+        return sqlalchemy.literal(expression)
 
     def body(self):
         return open(self.name + '.sql').read()
@@ -994,15 +1004,7 @@ def _make_sql_command(sql, *multiparams, **params):
                         parameters[k] = ("nextval('%s.%s_%s_seq')" %
                                          (column.table.schema, column.pytis_orig_table, column.name,))
             for k, v in sql_parameters.items():
-                if v is None:
-                    value = 'NULL'
-                elif isinstance(v, (int, long, float,)):
-                    value = v
-                elif isinstance(v, basestring):
-                    value = "'%s'" % (v.replace('\\', '\\\\').replace("'", "''"),)
-                else:
-                    value = unicode(v)
-                parameters[k] = value
+                parameters[k] = _sql_value_escape(v)
             output = unicode(compiled) % parameters
         elif isinstance(sql, sqlalchemy.sql.expression.Select):
             output = unicode(compiled) % compiled.params
