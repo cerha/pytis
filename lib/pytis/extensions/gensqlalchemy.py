@@ -68,8 +68,12 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                 self.visit_type(result_type, function_type)
             elif isinstance(function_type, Column):
                 result_type = function_type.sqlalchemy_column(search_path, None, None, None).type
+            elif isinstance(function_type, pytis.data.Type):
+                result_type = function_type.sqlalchemy_type()
             elif issubclass(function_type, SQLTable):
                 result_type = object_by_class(function_type, search_path).pytis_name()
+            else:
+                raise Exception("Invalid result type", function_type)
         result_type_prefix = 'SETOF ' if function.multirow else ''
         body = function.body().strip()
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n%s\n$$ LANGUAGE %s %s' %
@@ -832,6 +836,8 @@ class SQLFunctional(_SQLTabular):
                              for c in result_type])
         elif isinstance(result_type, Column):
             columns = (result_type.sqlalchemy_column(search_path, None, None, None),)
+        elif isinstance(result_type, pytis.data.Type):
+            columns = (sqlalchemy.Column('result', result_type.sqlalchemy_type()),)
         elif issubclass(result_type, _SQLTabular):
             columns = tuple([sqlalchemy.Column(c.name, c.type)
                              for c in object_by_class(result_type, search_path).c])
@@ -843,7 +849,7 @@ class SQLFunctional(_SQLTabular):
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()
         result_type = self.result_type
-        if result_type is not None and not isinstance(result_type, (tuple, list, Column,)):
+        if result_type is not None and not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
 
     def create(self, bind=None, checkfirst=False):
@@ -1144,7 +1150,7 @@ class EditableView(SQLView):
 class Func(SQLFunction):
     name = 'plus'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
-    result_type = Column('z', pytis.data.Integer())
+    result_type = pytis.data.Integer()
     stability = 'immutable'
 
     def body(self):
@@ -1153,13 +1159,13 @@ class Func(SQLFunction):
 class FileFunc(SQLFunction):
     name = 'minus'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
-    result_type = Column('z', pytis.data.Integer())
+    result_type = pytis.data.Integer()
     stability = 'immutable'
 
 class PyFunc(SQLPyFunction):
     name = 'times'
     arguments = (Column('x', pytis.data.Integer()), Column('y', pytis.data.Integer()),)
-    result_type = Column('z', pytis.data.Integer())
+    result_type = pytis.data.Integer()
     stability = 'immutable'
 
     @staticmethod
@@ -1173,7 +1179,7 @@ class PyFunc(SQLPyFunction):
 class PyFuncSingleArg(SQLPyFunction):
     name = 'single_argument'
     arguments = (Column('x', pytis.data.Integer()),)
-    result_type = Column('z', pytis.data.Integer())
+    result_type = pytis.data.Integer()
     stability = 'immutable'
 
     @staticmethod
@@ -1183,7 +1189,7 @@ class PyFuncSingleArg(SQLPyFunction):
 class PyFuncZeroArg(SQLPyFunction):
     name = 'zero_arguments'
     arguments = ()
-    result_type = Column('z', pytis.data.Integer())
+    result_type = pytis.data.Integer()
     stability = 'immutable'
 
     @staticmethod
