@@ -438,12 +438,13 @@ class a(object):
     def kwargs(self):
         return self._kwargs
 
-class SQLObject(object):    
+class SQLObject(object):
+    
     @classmethod
     def pytis_name(class_):
         name = class_.name
         if name is None:
-            name = pytis.util.camel_case_to_lower(class_.__name__)
+            name = pytis.util.camel_case_to_lower(class_.__name__, separator='_')
         return name
 
     def _add_dependencies(self):
@@ -452,6 +453,17 @@ class SQLObject(object):
                 assert issubclass(o, SQLObject), ("Invalid dependency", o,)
                 o = object_by_class(o, search_path=self._search_path)
             self.add_is_dependent_on(o)
+
+class SQLSchematicObject(SQLObject):
+    
+    schemas = _default_schemas
+
+    def __init__(self, *args, **kwargs):
+        self._search_path = None
+        super(SQLSchematicObject, self).__init__(*args, **kwargs)
+
+    def search_path(self):
+        return self._search_path
 
 ## Database objects
 
@@ -464,18 +476,16 @@ def visit_schema(element, compiler, **kw):
     command = sqlalchemy.schema.CreateSchema(element.name)
     return _make_sql_command(command)
 
-class SQLSequence(sqlalchemy.Sequence, SQLObject):
+class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
     name = None
-    schemas = _default_schemas
     start = None
     increment = None
     
-class _SQLTabular(sqlalchemy.Table, SQLObject):
+class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
     
     name = None
-    schemas = _default_schemas
     depends_on = ()
     insert_order = None
     update_order = None
@@ -486,16 +496,6 @@ class _SQLTabular(sqlalchemy.Table, SQLObject):
         self._search_path = _current_search_path
         self._add_dependencies()
         self._create_rules()
-
-    def search_path(self):
-        return self._search_path
-
-    @classmethod
-    def pytis_name(class_):
-        name = class_.name
-        if name is None:
-            name = pytis.util.camel_case_to_lower(class_.__name__, separator='_')
-        return name
 
     def _create_rules(self):
         def make_rule(action, kind, commands):
@@ -905,11 +905,10 @@ class SQLTrigger(SQLEventHandler):
         assert t is not None, ("Trigger table not found", self)
         self.add_is_dependent_on(t)
 
-class SQLRaw(sqlalchemy.schema.DDLElement, SQLObject):
+class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
     
     name = None
-    schemas = _default_schemas
     depends_on = ()
     
     __visit_name__ = 'raw'
