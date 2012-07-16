@@ -483,7 +483,7 @@ class _GsqlSpec(object):
         return spec
 
     def _convert_depends(self):
-        depends_string = string.join(["specification_by_name(%s)" % (d,) for d in self._depends], ', ')
+        depends_string = string.join(["specification_by_name('%s')" % (d,) for d in self._depends], ', ')
         if depends_string:
             depends_string += ','
         return '    depends = (%s)' % (depends_string,)
