@@ -2136,6 +2136,47 @@ class _GsqlViewNG(Select):
         definition_lines = string.join(['        %s\n' % (d,) for d in definitions], '')
         items.append('    @classmethod\n    def condition(cls):\n%s        return %s' %
                      (definition_lines, condition,))
+        def quote(command):
+            if '\n' in command:
+                command = '""%s""' % (command,)
+            return command
+        def add_rule(kind, command, order):
+            if command is None:
+                return
+            if isinstance(command, basestring):
+                items.append('    def on_%s():' % (kind,))
+                items.append ('        return ("%s",)' % (quote(command),))
+            else:
+                def make_table_name(r):
+                    table_name = r.relation
+                    if isinstance(r, SelectRelation) and r.schema is not None:
+                        table_name = '%s.%s' % (r.schema, table_name,)
+                    return table_name
+                def relations(list_order):
+                    if self._set:
+                        return ()
+                    if list_order is None:
+                        rels = self._relations
+                    else:
+                        rels = []
+                        for r in list_order:
+                            rel = find(r, self._relations, lambda x: x.relation)
+                            if rel is not None and \
+                               not isinstance(rel.relation, SelectRelation):
+                                rels.append(rel)
+                    return [make_table_name(r) for r in rels]
+                real_order = relations(order)
+                order_string = string.join(["class_by_name('%s')" % (o,) for o in real_order], ', ')
+                if order_string:
+                    order_string += ','
+                items.append('    %s_order = (%s)' % (kind, order_string,))
+                command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
+                if command_string:
+                    items.append('    def on_%s_also():' % (kind,))
+                    items.append ('        return %s' % (command_string,))
+        add_rule('insert', self._insert, self._insert_order)
+        add_rule('update', self._update, self._update_order)
+        add_rule('delete', self._delete, self._delete_order)
         result = string.join(items, '\n') + '\n'
         if not self._convert:
             result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
