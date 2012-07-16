@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2010, 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,22 +18,166 @@
 
 """Classes used for generating help for Pytis applications.
 
-Help generation is implemented using the LCG Python librarry.  The classes defined below
-automatically create the hierarchy of documents according to the application specification.
-
-The classes 'MenuReader' and 'DescrReader', can be used within the help source files.  If they
-define the class named 'Reader', this class is automatically used by LCG to build the document
-hierarchy subtree.  The 'MenuReader' defines
-
-So the typical usage is to include the following line in the python source file:
-
-from pytis.extensions.help import MenuReader as Reader
-
-See the LCG documentation for more information.
+Help texts are stored in the database and edited by help administrator.  This
+module includes scripts intended to create initial help texts for new
+specifications.  These texts are supposed to be further edited by help
+administrator before published to be visible to application users.
 
 """ 
 
-import sys, os, lcg, pytis.form, pytis.util
+import sys, os, lcg, pytis.data as pd, pytis.form, pytis.util, config
+
+class HelpGenerator(object):
+    """Generate initial help page contents for application menu items from specification.
+
+    The initial help contents is created automatically based on the information
+    available in specifications.  It is supposed to be further edited and
+    maintained by help administrator.  The output should be used just as a
+    skeleton for the actual man-made help pages.
+
+    """
+    def __init__(self, directory):
+        self._diretory = directory
+        self._menu_help_data = pd.dbtable('e_pytis_menu_help', ('menuid', 'content'),
+                                                  config.dbconnection)
+
+    def _save_menu_help(self, menuid, content):
+        data = self._menu_help_data
+        key = (pd.ival(menuid),)
+        row = data.row(key)
+        if row:
+            data.update(key, pd.Row((('content', pd.sval(content)),)))
+        else:
+            data.insert(pd.Row((('menuid', pd.ival(menuid)), ('content', pd.sval(content)))))
+
+    def _generate_menu_item_help(self, shortname, fullname, title):
+        kind, specname = shortname.split('/', 1)
+        if kind == 'menu':
+            return None
+        elif kind == 'form':
+            form_class = fullname.split('/')[1]
+            if form_class.endswith('.ConfigForm'):
+                return self._generate_config_help(specname)
+            elif '::' in specname:
+                mainname, sidename = specname.split('::')
+                return "= %s =\n\n%s\n\n= %s =\n\n%s" % (
+                    _(u"Hlavní formulář"),
+                    self._generate_form_help('mainform', mainname),
+                    _(u"Vedlejší formulář"),
+                    self._generate_form_help('sideform', sidename))
+            else:
+                return self._generate_form_help(form_class, specname)
+        elif kind == 'proc':
+            procname, specname = specname.strip('/').split('/')
+            return self._generate_proc_help(procname, specname)
+        elif kind == 'handle':
+            action = specname.strip('/').split('/')[0]
+            return self._generate_action_help(action)
+        elif kind == 'NEW_RECORD':
+            return self._generate_new_record_help(specname)
+        elif kind == 'RELOAD_RIGHTS':
+            return self._generate_reload_rights_help()
+        elif kind == 'RUN_FORM':
+            return self._generate_run_form_help(specname)
+        elif kind == 'EXIT':
+            return self._generate_exit_help()
+        else:
+            print "Ignoring menu item of unknown type:", shortname, fullname, title
+
+    def _generate_config_help(self, name):
+        if name == 'ui':
+            return _(u"Vyvolá formulář pro přizpůsobení uživatelského rozhraní aplikace.")
+        if name == 'export':
+            return _(u"Vyvolá formulář uživatelského nastavení exportu dat.")
+        else:
+            return None
+
+    def _generate_form_help(self, form_class, specname):
+        resolver = pytis.util.resolver()
+        try:
+            view_spec = resolver.get(specname, 'view_spec')
+        except pytis.util.ResolverError as e:
+            print e
+            return _(u"Neznámá specifikace %s.") % specname
+        #content = [lcg.Section("Základní informace",
+        #                       lcg.fieldset(self._info(), formatted=True))]
+        filename = os.path.join(self._diretory, 'descr', specname + '.cs.txt')
+        if os.path.exists(filename):
+            content = '\n'.join([line for line in open(filename).read().splitlines()
+                                 if not line.startswith('#')]).strip()
+        else:
+            content = (view_spec.help() or '').strip()
+        related_specnames = []
+        for f in view_spec.fields():
+            for name in [f.codebook()] + [link.name() for link in f.links()]:
+                if name and name not in related_specnames:
+                    related_specnames.append(name)
+        sections = [
+            (_(u"Akce kontextového menu"),
+             ["%s\n  %s\n\n" % (a.title(), a.descr() or '')
+              for a in view_spec.actions(linear=True)] or [_(u"Žádné")]),
+            (_(u"Políčka formuláře"),
+             ["%s\n  %s\n\n" % (f.label(), f.descr() or '')
+              for f in [view_spec.field(fid) for fid in view_spec.layout().order()]] or [_(u"Žádná")]),
+            (_(u"Vedlejší formuláře"),
+             ["[help:%s %s]\n  %s\n\n" % (b.name(), b.title(), b.descr() or '')
+              for b in view_spec.bindings()]),
+            (_(u"Související náhledy"),
+             ["* [help:%s]\n" % name for name in related_specnames]),
+            ]
+        for title, items in sections:
+            content += '\n\n== %s ==\n\n%s' % (title, ''.join(items) or _(u"Žádné"))
+        #data_spec = resolver.get(specname, 'data_spec')
+        #rights = data_spec.access_rights()
+        #if rights:
+        #    content += "\n\n== %s ==\n\n" % _(u"Přístupová práva")
+        #    for perm in (pd.Permission.VIEW,
+        #                 pd.Permission.INSERT,
+        #                 pd.Permission.UPDATE,
+        #                 pd.Permission.DELETE,
+        #                 pd.Permission.EXPORT):
+        #        groups = [g for g in rights.permitted_groups(perm, None) if g]
+        #        content += ":%s:: %s\n" % (perm, ', '.join(map(str, groups)) or _(u"Nedefinováno"))
+        return content
+
+    def _generate_new_record_help(self, specname):
+        return _(u"Vyvolá formulář pro vložení nového záznamu do náhledu [help:%s].") % specname
+    
+    def _generate_proc_help(self, procname, specname):
+        return _(u"Vyvolá proceduru %s nad náhledem [help:%s].") % (procname, specname)
+
+    def _generate_action_help(self, action):
+        return _(u"Vyvolá funkci %s.") % action
+
+    def _generate_reload_rights_help(self):
+        return _(u"Vyvolá přenačtení práv.")
+
+    def _generate_run_form_help(self, formname):
+        return _(u"Vyvolá formulář %s.") % formname
+
+    def _generate_exit_help(self):
+        return _(u"Ukončí běh aplikace.")
+
+    def create_menu_help(self):
+        """Generate help pages for all menu items."""
+        data = pd.dbtable('ev_pytis_menu', ('menuid', 'title', 'shortname', 'fullname', 'position'),
+                                  config.dbconnection)
+        data.select(sort=(('position', pd.ASCENDENT),))
+        while True:
+            row = data.fetchone()
+            if row is None:
+                break
+            if row['shortname'].value():
+                content = self._generate_menu_item_help(row['shortname'].value(), row['fullname'].value(), row['title'].value())
+                self._save_menu_help(row['menuid'].value(), content)
+
+
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# All the following code is a relict of the previous statical help system.
+# It is currently used just for reference and inspitration and will be removed soon.
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 global _used_defs, _menu_items, _refered_defs
 _used_defs = []
@@ -309,11 +453,11 @@ class _SingleDescrReader(_DescrReader):
             return content
         rights = self._data_spec.access_rights()
         perms = [(perm, ', '.join([str(g) for g in rights.permitted_groups(perm, None)]))
-                 for perm in (pytis.data.Permission.VIEW,
-                              pytis.data.Permission.INSERT,
-                              pytis.data.Permission.UPDATE,
-                              pytis.data.Permission.DELETE,
-                              pytis.data.Permission.EXPORT)]
+                 for perm in (pd.Permission.VIEW,
+                              pd.Permission.INSERT,
+                              pd.Permission.UPDATE,
+                              pd.Permission.DELETE,
+                              pd.Permission.EXPORT)]
         content.append(lcg.Section("Přístupová práva", lcg.fieldset(perms, formatted=True)))
         return content
     
@@ -342,8 +486,8 @@ class _DualDescrReader(_DescrReader):
         content = super(_DualDescrReader, self)._content()
         main_rights = self._main_data_spec.access_rights()
         side_rights = self._side_data_spec.access_rights()
-        main_groups = main_rights.permitted_groups(pytis.data.Permission.VIEW, None)
-        groups = [str(g) for g in side_rights.permitted_groups(pytis.data.Permission.VIEW, None)
+        main_groups = main_rights.permitted_groups(pd.Permission.VIEW, None)
+        groups = [str(g) for g in side_rights.permitted_groups(pd.Permission.VIEW, None)
                   if g in main_groups]
         content.append(lcg.Section("Přístupová práva", lcg.p(', '.join(groups or '-'))))
         return content
