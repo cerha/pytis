@@ -1865,7 +1865,7 @@ class Select(_GsqlSpec):
                         assert not condition, condition
                         condition = output
                 else:
-                    s = r._convert_select(definitions, level)
+                    r._convert_select(definitions, level)
                     condition += 'XXX:select=%s' % (r,)
         else:
             select_name = 'select_' +  str(len(definitions))
@@ -2015,10 +2015,7 @@ class _GsqlViewNG(Select):
                                     'VALUES (\n      %s)' % (table_name,
                                                              bodycolumns,
                                                              values))
-                action = self._insert
             elif kind == self._UPDATE:
-                command = 'UPDATE'
-                suffix = 'upd'
                 for r in relations(self._update_order):
                     table_name = make_table_name(r)
                     if isinstance(r.relation, Select):
@@ -2048,10 +2045,7 @@ class _GsqlViewNG(Select):
                         condition = '%s = old.%s' % (key_column, key_column)                        
                         body.append('UPDATE %s SET\n      %s \n    WHERE %s' % 
                                     (table_name, settings, condition))
-                action = self._update
             elif kind == self._DELETE:
-                command = 'DELETE'
-                suffix = 'del'
                 for r in relations(self._delete_order):
                     table_name = make_table_name(r)
                     if isinstance(r.relation, Select):
@@ -2063,7 +2057,6 @@ class _GsqlViewNG(Select):
                     condition = '%s = old.%s' % (key_column, key_column)
                     body.append('DELETE FROM %s \n    WHERE %s' % (table_name,
                                                                    condition,))
-                action = self._delete
             else:
                 raise ProgramError('Invalid rule specifier', kind)
             return body
@@ -2366,7 +2359,6 @@ class _GsqlView(_GsqlSpec):
                 for c in self._complex_columns:
                     names = c.name
                     if not c.sql and names[i] is None:
-                        name = names[i]                      
                         type = c.type
 #                         for j in range(len(names)):
 #                             if i != j and names[j] is not None:
@@ -2577,10 +2569,6 @@ class _GsqlFunction(_GsqlSpec):
           kwargs -- argumenty předané konstruktoru předka
 
         """
-        if isinstance(name, basestring):
-            the_name = name
-        else:
-            the_name = name.__name__
         super(_GsqlFunction, self).__init__(name, **kwargs)
         self._ins, self._outs = self._split_arguments(arguments)
         self._output_type = output_type
@@ -2908,8 +2896,7 @@ class _GviewsqlRaw(_GsqlSpec):
                              ('DELETE', self._delete)):
             result = result + self._format_rule(kind, action)
         if self._doc is not None:
-            doc = "COMMENT ON VIEW %s IS '%s';\n" % (self._name,
-                                                     self._doc)
+            result += "COMMENT ON VIEW %s IS '%s';\n" % (self._name, self._doc)
         result = result + self._revoke_command()
         for g in self._grant:
             result = result + self._grant_command(g)
@@ -2955,7 +2942,6 @@ class _GsqlDefs(UserDict.UserDict):
         for o in self._unresolved:
             missing = [d for d in self[o].depends() if d not in self._resolved]
             _signal_error('Unresolved object: %s %s\n' % (o, missing,))
-        resolved = {}
         for o in self._resolved:
             function(o)
 
@@ -3145,11 +3131,9 @@ database dumps if you want to be sure about your schema.
         self.regensql()
 
     def update_views(self):
-        obj = _GsqlConfig.update_views
         connection = self.get_connection()
         depends = []
         todo = [_GsqlConfig.update_views]
-        views = []
         while todo != []:
             v = todo.pop()
             if v in depends:
