@@ -169,7 +169,13 @@ class DualForm(Form, Refreshable):
         if hasattr(self._main_form, 'select_row'):
             return self._main_form.select_row(*args, **kwargs)
         else:
-            log(EVENT, "Hlavní formulář nepodporuje metodu `select_row()'!")
+            log(EVENT, "Main form doesn't support `select_row()'!")
+
+    def apply_profile(self, *args, **kwargs):
+        if hasattr(self._main_form, 'apply_profile'):
+            return self._main_form.apply_profile(*args, **kwargs)
+        else:
+            log(EVENT, "Main form doesn't support `apply_profile()'!")
         
     def _cmd_other_form(self):
         self._select_form(self._other_form(self._active_form))

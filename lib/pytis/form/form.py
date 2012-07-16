@@ -770,11 +770,11 @@ class LookupForm(InnerForm):
 
     """
     def _init_attributes(self, filter=None, sorting=None, columns=None, grouping=None,
-                         condition=None, arguments=None, **kwargs):
+                         profile_id=None, condition=None, arguments=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
-
+        
           filter -- initial filter condition as a 'pytis.data.Operator'
             instance.  This filter is indicated to the user and can be modified
             as any other user-defined filter (as opposed to the 'condition'
@@ -792,6 +792,11 @@ class LookupForm(InnerForm):
             constructor.  If not None, overrides the grouping of the default
             form profile.  Grouping is actually used only by some derived
             classes (table forms).
+          profile_id -- id of the initial profile to be loaded.  If not None, it
+            must be one of the available system profiles (defined in
+            specification) and the arguments 'filter', sorting', 'columns',
+             and 'grouping' must be None (they are all determined by
+            the profile).
           condition -- 'pytis.data.Operator' instance filtering the rows of the
             underlying data object.  This filter is not indicated to the user
             nor is there a chance to turn it off.
@@ -817,6 +822,7 @@ class LookupForm(InnerForm):
         self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"))
         self._profiles = self._load_profiles()
         if filter or sorting or columns or grouping:
+            assert profile_id is None
             # When profile parameters were passed to the constructor, create an
             # additional profile according to these paramaters.
             self._initial_profile = Profile('__constructor_profile__', _(u"Počáteční profil"),
@@ -827,11 +833,20 @@ class LookupForm(InnerForm):
             # Note, that the profile 0 may not be the same as
             # self._default_profile, but a saved user customized version.
             default_profile = self._profiles[0]
-            profile_id = (self._get_saved_setting('initial_profile') 
-                          or self._view.profiles().default())
+            if profile_id is not None:
+                check_profile_id = True
+            else:
+                profile_id = (self._get_saved_setting('initial_profile')
+                              or self._view.profiles().default())
+                check_profile_id = False
             if profile_id:
-                self._initial_profile = (find(profile_id, self._profiles, key=lambda p: p.id())
-                                         or default_profile)
+                profile = find(profile_id, self._profiles, key=lambda p: p.id())
+                if not profile:
+                    if check_profile_id:
+                        raise ProgramError("Unknown profile '%s'" % profile_id)
+                    else:
+                        profile = default_profile
+                self._initial_profile = profile
             else:
                 self._initial_profile = default_profile
         self._initial_profile_applied = False
@@ -1380,6 +1395,21 @@ class LookupForm(InnerForm):
                 profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile.id())
                 self._profiles.remove(profile)
             self._cmd_save_new_profile(title)
+
+    def apply_profile(self, profile_id):
+        """Apply the profile given by profile_id.
+
+        Arguments:
+        
+          profile_id -- id of the profile to be loaded.  It must be one of the
+            available profiles (defined in specification or user defined
+            profiles).
+
+        """
+        profile = find(profile_id, self._profiles, key=lambda p: p.id())
+        if not profile:
+            raise ProgramError("Unknown profile '%s'" % profile_id)
+        self._apply_profile(profile)
             
     def data(self, init_select=True):
         """Return a new instance of the data object used by the form.

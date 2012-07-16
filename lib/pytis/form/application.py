@@ -894,6 +894,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.filter(kwargs['filter'])
                 if 'binding' in kwargs:
                     form.select_binding(kwargs['binding'])
+                if 'profile_id' in kwargs:
+                    form.apply_profile(kwargs['profile_id'])
                 return result
             if issubclass(form_class, PopupForm):
                 parent = self._modals.top() or self._frame
