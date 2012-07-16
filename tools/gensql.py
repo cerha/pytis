@@ -1362,7 +1362,8 @@ class _GsqlTable(_GsqlSpec):
         return result
 
     def convert(self):
-        items = ['class %s(SQLTable):' % (self._convert_name(),)]
+        spec_name = self._convert_name()
+        items = ['class %s(SQLTable):' % (spec_name,)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -1412,6 +1413,23 @@ class _GsqlTable(_GsqlSpec):
             items.append('    check = ()')
         if sql:            
             items.append('#XXX: %s' % (sql.replace('\n', '\n#'),))
+        def add_rule(kind, command):
+            if command:
+                items.append('    def on_%s_also():' % (kind,))
+                items.append ('        return ("%s",)' % (command,))
+        add_rule('insert', self._on_insert)
+        add_rule('update', self._on_update)
+        add_rule('delete', self._on_delete)
+        if self._upd_log_trigger:
+            keys = ','.join([_gsql_column_table_column(k)[1] for k in self.key_columns()])
+            items.append('class %sLogTrigger(SQLTrigger):' % (spec_name,))
+            items.append('    table = %s' % (spec_name,))
+            items.append("    events = ('insert', 'update', 'delete',)")
+            items.append("    body = object_by_name('public.%s', allow_external=False)" %
+                         (self._upd_log_trigger,))
+            items.append('    arguments = ("%s",)' % (keys,))
+        if self._views:
+            items.append('#XXX: table views: %s' % (self._views,))
         result = string.join(items, '\n') + '\n'
         if not self._convert:
             result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
