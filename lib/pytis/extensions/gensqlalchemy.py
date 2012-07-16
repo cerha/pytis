@@ -305,9 +305,9 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         if cls._is_specification(clsname):
             name = cls.pytis_name()
             if (name in _PytisBaseMetaclass._name_mapping and 
-                _PytisSchematicMetaclass._name_mapping[name] is not cls):
-                raise SQLException("Duplicate object name", (cls, _PytisSchematicMetaclass._name_mapping[name],))
-            _PytisSchematicMetaclass._name_mapping[name] = cls
+                _PytisBaseMetaclass._name_mapping[name] is not cls):
+                raise SQLException("Duplicate object name", (cls, _PytisBaseMetaclass._name_mapping[name],))
+            _PytisBaseMetaclass._name_mapping[name] = cls
             cls.name = name
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
 
