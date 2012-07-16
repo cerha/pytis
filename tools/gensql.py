@@ -829,6 +829,16 @@ class _GsqlSchema(_GsqlSpec):
         result = 'CREATE SCHEMA %s%s;\n' % (self._name, owner)
         return result
 
+    def convert(self):
+        items = ['class %s(SQLSchema):' % (self._convert_name(),)]
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
+        items.append(self._convert_depends())
+        items.append(self._convert_grant())
+        result = string.join(items, '\n') + '\n'
+        return result        
         
 class _GsqlTable(_GsqlSpec):
     """Specifikace SQL tabulky."""
@@ -2833,6 +2843,27 @@ class _GsqlSequence(_GsqlSpec):
             result = result + self._grant_command(g)
         return result
 
+    def convert(self):
+        items = ['class %s(SQLSequence):' % (self._convert_name(),)]
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
+        if self._start:
+            items.append('    start = %s' % (self._start,))
+        if self._increment:
+            items.append('    increment = %s' % (self._increment,))
+        if self._cycle:
+            items.append('    #XXX: cycle = %s' % (self._cycle,))
+        if self._minvalue:
+            items.append('    #XXX: minvalue = %s' % (self._minvalue,))
+        if self._maxvalue:
+            items.append('    #XXX: maxvalue = %s' % (self._maxvalue,))
+        items.append(self._convert_depends())
+        items.append(self._convert_grant())
+        result = string.join(items, '\n') + '\n'
+        return result        
+
 
 class _GsqlRaw(_GsqlSpec):
     """Prosté SQL příkazy."""
@@ -2885,6 +2916,19 @@ class _GsqlRaw(_GsqlSpec):
 
     def db_update(self, connection):
         return _gsql_warning('Raw command not considered: %s' % self.name())
+
+    def convert(self):
+        items = ['class %s(SQLRaw):' % (self._convert_name(),)]
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
+        items.append('    @classmethod')
+        items.append('    def sql(class_):')
+        items.append('        return """%s"""' % (self._sql,))
+        items.append(self._convert_depends())
+        result = string.join(items, '\n') + '\n'
+        return result        
 
 
 class _GviewsqlRaw(_GsqlSpec):
