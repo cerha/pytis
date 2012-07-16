@@ -101,14 +101,15 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         self._set_search_path(raw.search_path())
         return self.connection.execute(raw.sql())
 
-class _TableComment(sqlalchemy.schema.DDLElement):
-    def __init__(self, table, comment):
-        self.table = table
+class _ObjectComment(sqlalchemy.schema.DDLElement):
+    def __init__(self, obj, kind, comment):
+        self.object = obj
+        self.kind = kind
         self.comment = comment
-@compiles(_TableComment)
-def visit_table_comment(element, compiler, **kw):
-    return ("COMMENT ON TABLE \"%s\".\"%s\" IS '%s'" %
-            (element.table.schema, element.table.name, element.comment.replace("'", "''"),))
+@compiles(_ObjectComment)
+def visit_object_comment(element, compiler, **kw):
+    return ("COMMENT ON %s \"%s\".\"%s\" IS '%s'" %
+            (element.kind, element.object.schema, element.object.name, element.comment.replace("'", "''"),))
 
 class _ColumnComment(sqlalchemy.schema.DDLElement):
     def __init__(self, table, field):
@@ -519,6 +520,7 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
     
 class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
+    _DB_OBJECT = None
     
     name = None
     depends_on = ()
@@ -530,7 +532,13 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         super(_SQLTabular, self)._init(*args, **kwargs)
         self._search_path = _current_search_path
         self._add_dependencies()
+        self._create_comments()
         self._create_rules()
+
+    def _create_comments(self):
+        doc = self.__doc__
+        if doc:
+            sqlalchemy.event.listen(self, 'after_create', _ObjectComment(self, self._DB_OBJECT, doc))
 
     def _create_rules(self):
         def make_rule(action, kind, commands):
@@ -617,6 +625,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         return ()
     
 class SQLTable(_SQLTabular):
+    _DB_OBJECT = 'TABLE'
     
     fields = ()
     inherits = ()
@@ -660,7 +669,6 @@ class SQLTable(_SQLTabular):
         super(SQLTable, self)._init(*args, **kwargs)
         self._create_parameters()
         self._create_special_indexes()
-        self._create_comments()
 
     def _table_name(self, table):
         name = table.name
@@ -683,6 +691,13 @@ class SQLTable(_SQLTabular):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
         sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
 
+    def _create_comments(self):
+        super(SQLTable, self)._create_comments()
+        for c in self.fields:
+            doc = c.doc()
+            if doc:
+                sqlalchemy.event.listen(self, 'after_create', _ColumnComment(self, c))
+        
     def _create_parameters(self):
         self._alter_table("SET %s OIDS" % ("WITH" if self.with_oids else "WITHOUT",))
         if self.tablespace:
@@ -703,15 +718,6 @@ class SQLTable(_SQLTabular):
                 sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
         return args
 
-    def _create_comments(self):
-        doc = self.__doc__
-        if doc:
-            sqlalchemy.event.listen(self, 'after_create', _TableComment(self, doc))
-        for c in self.fields:
-            doc = c.doc()
-            if doc:
-                sqlalchemy.event.listen(self, 'after_create', _ColumnComment(self, c))
-
     def create(self, bind=None, checkfirst=False):
         super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
         self._insert_values(bind)
@@ -724,6 +730,7 @@ class SQLTable(_SQLTabular):
                 bind.execute(insert)
 
 class SQLView(_SQLTabular):
+    _DB_OBJECT = 'VIEW'
 
     @classmethod
     def condition(class_):
@@ -834,6 +841,7 @@ def visit_view(element, compiler, **kw):
     return '"%s"."%s"' % (element.schema, element.name,)
 
 class SQLFunctional(_SQLTabular):
+    _DB_OBJECT = 'FUNCTION'
 
     arguments = ()
     result_type = None
