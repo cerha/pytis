@@ -512,7 +512,10 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
     name = None
     start = None
-    increment = None
+    increment = None    
+    def __init__(self, *args, **kwargs):
+        super(SQLSequence, self).__init__(*args, **kwargs)
+        self._create_access_rights()
     
 class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
@@ -1289,6 +1292,8 @@ def run():
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     for o in _PytisSimpleMetaclass.objects:
         engine.execute(o)
+    for sequence in _metadata._sequences.values():
+        sequence.create(engine, checkfirst=False)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
 
