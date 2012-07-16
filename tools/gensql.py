@@ -481,6 +481,15 @@ class _GsqlSpec(object):
             if c not in ('unique', 'not null',):
                 spec = spec + (', #XXX:%s' % (c,))
         return spec
+
+    def _convert_depends(self):
+        depends_string = string.join(["specification_by_name(%s)" % (d,) for d in self._depends], ', ')
+        if depends_string:
+            depends_string += ','
+        return '    depends = (%s)' % (depends_string,)
+
+    def _convert_grant(self):
+        return '    access_rights = %s' % (repr(self._grant),)
         
     def convert(self):
         "Vrať novou pythonovou specifikaci daného objektu jako string."
@@ -1416,6 +1425,8 @@ class _GsqlTable(_GsqlSpec):
             items.append('    check = ()')
         if sql:            
             items.append('#XXX: %s' % (sql.replace('\n', '\n#'),))
+        items.append(self._convert_depends())
+        items.append(self._convert_grant())
         def add_rule(kind, command):
             if command:
                 items.append('    def on_%s_also():' % (kind,))
@@ -2177,6 +2188,8 @@ class _GsqlViewNG(Select):
         add_rule('insert', self._insert, self._insert_order)
         add_rule('update', self._update, self._update_order)
         add_rule('delete', self._delete, self._delete_order)
+        items.append(self._convert_depends())
+        items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'
         if not self._convert:
             result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
