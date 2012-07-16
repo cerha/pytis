@@ -121,6 +121,20 @@ def visit_column_comment(element, compiler, **kw):
             (element.table.schema, element.table.name, element.field.id(),
              element.field.doc().replace("'", "''"),))
 
+class _AccessRight(sqlalchemy.schema.DDLElement):
+    def __init__(self, obj, right, group):
+        self.object = obj
+        self.right = right
+        self.group = group
+@compiles(_AccessRight)
+def visit_access_right(element, compiler, **kw):
+    name = element.object.pytis_name()
+    if isinstance(element, SQLSchematicObject):
+        schema = '"%s".' % (element.schema,)
+    else:
+        schema = ''
+    return ("GRANT %s ON %s%s TO \"%s\"" % (element.right, schema, name, element.group,))
+
 class _Rule(sqlalchemy.schema.DDLElement):
     def __init__(self, table, action, kind, commands):
         self.table = table
@@ -472,6 +486,8 @@ class a(object):
         return self._kwargs
 
 class SQLObject(object):
+
+    access_rights = ()
     
     @classmethod
     def pytis_name(class_):
@@ -486,6 +502,10 @@ class SQLObject(object):
                 assert issubclass(o, SQLObject), ("Invalid dependency", o,)
                 o = object_by_class(o, search_path=self._search_path)
             self.add_is_dependent_on(o)
+
+    def _create_access_rights(self):
+        self._access_right_objects = [_AccessRight(self, right, group)
+                                      for right, group in self.access_rights]
 
 class SQLSchematicObject(SQLObject):
     
@@ -503,7 +523,16 @@ class SQLSchematicObject(SQLObject):
 class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
     __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'schema'
-    name = None    
+    name = None
+    
+    def __init__(self, *args, **kwargs):
+        super(SQLSchema, self).__init__(*args, **kwargs)
+        self._create_access_rights()
+
+    def after_create(self, bind):
+        for o in self._access_right_objects:
+            bind.execute(o)
+
 @compiles(SQLSchema)
 def visit_schema(element, compiler, **kw):
     command = sqlalchemy.schema.CreateSchema(element.name)
@@ -513,10 +542,15 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
     name = None
     start = None
-    increment = None    
+    increment = None
+    
     def __init__(self, *args, **kwargs):
         super(SQLSequence, self).__init__(*args, **kwargs)
         self._create_access_rights()
+
+    def after_create(self, bind):
+        for o in self._access_right_objects:
+            bind.execute(o)
     
 class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
@@ -533,6 +567,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         self._search_path = _current_search_path
         self._add_dependencies()
         self._create_comments()
+        self._create_access_rights()
         self._create_rules()
 
     def _create_comments(self):
@@ -540,6 +575,11 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         if doc:
             sqlalchemy.event.listen(self, 'after_create', _ObjectComment(self, self._DB_OBJECT, doc))
 
+    def _create_access_rights(self):
+        super(_SQLTabular, self)._create_access_rights()
+        for o in self._access_right_objects:
+            sqlalchemy.event.listen(self, 'after_create', o)
+        
     def _create_rules(self):
         def make_rule(action, kind, commands):
             if commands is None:
@@ -1066,9 +1106,10 @@ def gsql_file(file_name):
 
 class Private(SQLSchema):
     name = 'private'
+    access_rights = (('ALL', 'private-users',),)
 
 class Counter(SQLSequence):
-    pass
+    access_rights = (('ALL', 'counter-users',),)
 
 class Foo(SQLTable):
     """Foo table."""
@@ -1087,6 +1128,7 @@ class Foo(SQLTable):
                    )
     unique = (('foo', 'n',),)
     with_oids = False
+    access_rights = (('ALL', 'foo-users',),)
 
 class Foo2(Foo):
     name = 'foofoo'
@@ -1300,8 +1342,10 @@ def run():
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     for o in _PytisSimpleMetaclass.objects:
         engine.execute(o)
+        o.after_create(engine)
     for sequence in _metadata._sequences.values():
         sequence.create(engine, checkfirst=False)
+        sequence.after_create(engine)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
 
