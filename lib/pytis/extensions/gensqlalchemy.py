@@ -314,6 +314,10 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     def _is_specification(cls, clsname):
         return not clsname.startswith('SQL') and not clsname.startswith('_')
 
+    @classmethod
+    def specification_by_name(cls, name):
+        return cls._name_mapping.get(name)
+
 class _PytisSimpleMetaclass(_PytisBaseMetaclass):
     
     objects = []
@@ -419,6 +423,9 @@ def object_by_class(class_, search_path=None):
 def object_by_specification(specification):
     class_ = globals()[specification]
     return object_by_class(class_, _current_search_path)
+
+def specification_by_name(name):
+    return _PytisBaseMetaclass.specification_by_name(name)
 
 class RawCondition(object):
     def __init__(self, condition):

@@ -1428,7 +1428,7 @@ class _GsqlTable(_GsqlSpec):
             items.append('class %sLogTrigger(SQLTrigger):' % (spec_name,))
             items.append('    table = %s' % (spec_name,))
             items.append("    events = ('insert', 'update', 'delete',)")
-            items.append("    body = object_by_name('public.%s', allow_external=False)" %
+            items.append("    body = specification_by_name('%s')" %
                          (self._upd_log_trigger,))
             items.append('    arguments = ("%s",)' % (keys,))
         if self._views:
