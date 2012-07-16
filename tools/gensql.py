@@ -1368,6 +1368,9 @@ class _GsqlTable(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
+        if self._schemas:
+            schemas = tuple([tuple(s.split(',')) for s in self._schemas])
+            items.append('    schemas = %s' % (repr(schemas),))
         items.append('    fields = (')
         for column in self._columns:
             items.append(self._convert_indent(self._convert_column(column), 14) + ',')
