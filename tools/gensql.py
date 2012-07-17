@@ -337,7 +337,7 @@ class _GsqlSpec(object):
         if name is None:
             name = self._name
         components = [c.capitalize() for c in name.split('_')]
-        return string.join(components, '').replace('í', 'ii')
+        return string.join(components, '').replace('í', 'ii').replace('@', 'X')
 
     def _convert_doc(self):
         doc = self._doc
