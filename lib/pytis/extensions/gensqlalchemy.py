@@ -934,7 +934,7 @@ class SQLFunctional(_SQLTabular):
 
     def __call__(self, *arguments):
         name = '"%s"."%s"' % (self.schema, self.name,)
-        # We can't use standard SQLAlchemy function call here
+        # We can't use the standard SQLAlchemy function call here
         # (i.e. getattr(sqlalchemy.sql.expression.func, name)(*arguments))
         # since this puts argument symbols instead of argument values into the
         # argument list.
@@ -1174,7 +1174,7 @@ class BarTrigger(SQLPlFunction, SQLTrigger):
     def body(self):
         return """
 begin
-  insert into foo (n, foo) values (foo_id, description);
+  insert into foo (n, foo) values (new.foo_id, new.description);
 end;
 """
 
