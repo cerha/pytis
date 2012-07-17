@@ -50,7 +50,11 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         self.connection.execute(condition)
         view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
-    def visit_type(self, type_name, columns):
+    def visit_type(self, type_, create_ok=False):
+        self._set_search_path(type_.search_path())
+        self.make_type(type_.name, type_.fields)
+
+    def make_type(self, type_name, columns):
         sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
         column_string = string.join(['%s %s' % (c.name, c.type,) for c in sqlalchemy_columns], ', ')
         command = 'CREATE TYPE %s AS (%s)' % (type_name, column_string,)
@@ -72,7 +76,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                 result_type = 'trigger'
             elif isinstance(function_type, (tuple, list,)):
                 result_type = 't_' + function.pytis_name()
-                self.visit_type(result_type, function_type)
+                self.make_type(result_type, function_type)
             elif isinstance(function_type, Column):
                 result_type = function_type.sqlalchemy_column(search_path, None, None, None).type
             elif isinstance(function_type, pytis.data.Type):
@@ -900,6 +904,20 @@ class SQLView(_SQLTabular):
 def visit_view(element, compiler, **kw):
     return '"%s"."%s"' % (element.schema, element.name,)
 
+class SQLType(_SQLTabular):
+    _DB_OBJECT = 'TYPE'
+
+    __visit_name__ = 'type'
+
+    def __new__(cls, metadata, search_path):
+        columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
+                         for c in cls.fields])
+        args = (cls.name, metadata,) + columns
+        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+
+    def create(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+    
 class SQLFunctional(_SQLTabular):
     _DB_OBJECT = 'FUNCTION'
 
@@ -1351,6 +1369,11 @@ class TableFunction(SQLPyFunction):
             for j in range(1, n + 1):
                 result.append([i, j, i * j])
         return result
+
+class SomeType(SQLType):
+    fields = (Column('x', pytis.data.Integer()),
+              Column('y', pytis.data.Integer()),
+              )
 
 class NeverUseThis(SQLRaw):
     schemas = ((Private, 'public',),)

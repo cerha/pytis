@@ -779,6 +779,34 @@ class _GsqlType(_GsqlSpec):
                   (self._name, columns))
         return result
 
+    def _convert_column(self, column):
+        name = column.name
+        ctype = column.type
+        if isinstance(ctype, pytis.data.Type):
+            type_ = 'pytis.data.%s()' % (ctype.__class__.__name__,)
+        elif isinstance(ctype, basestring):
+            type_ = self._convert_string_type(ctype)
+        else:
+            type_ = '#XXX:ttype:%s' % (ctype,)
+        return 'Column(%s, %s)' % (repr(name), type_,)
+
+    def convert(self):
+        items = ['class %s(SQLType):' % (self._convert_name(),)]
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
+        if self._schemas:
+            items.append(self._convert_schemas())
+        items.append('    fields = (')
+        for c in self._columns:
+            items.append('              %s,' % (self._convert_column(c),))
+        items.append('             )')
+        items.append(self._convert_depends())
+        items.append(self._convert_grant())
+        result = string.join(items, '\n') + '\n'
+        return result        
+
 
 class ArgumentType(object):
     """Úložná třída specifikace typu argumentu pro funkce.
@@ -2807,7 +2835,7 @@ class _GsqlFunction(_GsqlSpec):
         if isinstance(ctype, pytis.data.Type):
             type_ = 'pytis.data.%s()' % (ctype.__class__.__name__,)
         elif isinstance(ctype, _GsqlType):
-            type_ = '#XXX:gtype:%s' % (ctype,)
+            type_ = ctype._convert_name()
         elif isinstance(ctype, basestring):
             type_ = self._convert_string_type(ctype)
         else:
@@ -2840,6 +2868,8 @@ class _GsqlFunction(_GsqlSpec):
             multirow = False
         if isinstance(output_type, pytis.data.Type):
             items.append('    result_type = pytis.data.%s()' % (output_type.__class__.__name__,))
+        elif isinstance(self._output_type, ReturnType):
+            items.append('    result_type = %s' % (self._convert_name(name=output_type),))
         elif isinstance(output_type, basestring):
             items.append('    result_type = %s' % (self._convert_string_type(output_type),))
         elif output_type is None:
@@ -2847,7 +2877,6 @@ class _GsqlFunction(_GsqlSpec):
         else:
             items.append('    #XXX:result_type = %s' % (output_type,))
         items.append('    multirow = %s' % (multirow,))
-            
         if self._security_definer:
             items.append('    security_definer = True')
         if self._optimizer_attributes:
