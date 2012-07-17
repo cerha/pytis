@@ -341,7 +341,7 @@ class _GsqlSpec(object):
 
     def _convert_doc(self):
         doc = self._doc
-        if doc is None:
+        if not doc:
             return None
         doc = doc.replace('\\', '\\\\')
         doc = doc.replace('"', '\\"')
@@ -2943,6 +2943,8 @@ class _GsqlSequence(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
+        if self._schemas:
+            items.append(self._convert_schemas())
         if self._start:
             items.append('    start = %s' % (self._start,))
         if self._increment:
@@ -3017,6 +3019,8 @@ class _GsqlRaw(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
+        if self._schemas:
+            items.append(self._convert_schemas())
         items.append('    @classmethod')
         items.append('    def sql(class_):')
         items.append('        return """%s"""' % (self._sql,))
