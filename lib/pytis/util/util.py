@@ -1790,8 +1790,6 @@ def parse_lcg_text(text, resource_path=(), resources=()):
     
     """
     import lcg, os
-    class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
-        pass
     if not resource_path:
         lcg_dir = os.path.dirname(os.path.dirname(os.path.dirname(lcg.__file__)))
         resource_path = (os.path.join(lcg_dir, 'resources'),)

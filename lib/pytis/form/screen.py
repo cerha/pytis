@@ -32,6 +32,7 @@ import copy
 import string
 import gtk, gtk.gdk
 import webkit
+import lcg
 
 from pytis.form import *
 import wx, wx.combo
@@ -1810,7 +1811,72 @@ class LocationBar(wx.TextCtrl):
         uri = self.GetValue()
         cmd.invoke(uri=uri, **kwargs)
 
-    
+
+class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
+    _BODY_PARTS = ('menu',
+                   'heading',
+                   'content')
+
+    def _uri_resource(self, context, resource):
+        if resource.uri() is not None:
+            return resource.uri()
+        else:
+            return 'resource:' +resource.filename()
+
+    def _menu(self, context):
+        # TODO: This is copied from Wiking! Move to LCG.
+        g = self._generator
+        current = context.node()
+        while current.parent() is not None and current.hidden():
+            current = current.parent()
+        path = current.path()
+        def is_foldable(node):
+            return False
+            if node.foldable():
+                for item in node.children():
+                    if not item.hidden():
+                        return True
+            return False
+        def li_cls(node):
+            if is_foldable(node):
+                cls = 'foldable'
+                if node not in path:
+                    cls += ' folded'
+                return cls
+            return None
+        def item(node):
+            cls = []
+            if node is current:
+                cls.append('current')
+            if not node.active():
+                cls.append('inactive')
+            # The inner span is necessary because MSIE doesn't fire on click events outside the A
+            # tag, so we basically need to indent the link title inside and draw folding controls
+            # in this space.  This is only needed for foldable trees, but we render also fixed
+            # trees in the same manner for consistency.  The CSS class 'bullet' represents either
+            # fixed tree items or leaves in foldable trees (where no further folding is possible).
+            content = g.span(node.title(), cls=not is_foldable(node) and 'bullet' or None)
+            return g.a(content, href='help:'+node.id(), title=node.descr(),
+                       cls=' '.join(cls) or None)
+        def menu(node, indent=0):
+            spaces = ' ' * indent
+            items = [lcg.concat(spaces, '  ',
+                                g.li(lcg.concat(item(n),
+                                                menu(n, indent+4)),
+                                     cls=li_cls(n)),
+                                '\n')
+                     for n in node.children() if not n.hidden()]
+            if items:
+                return lcg.concat("\n", spaces,
+                                g.ul(lcg.concat('\n', items, spaces)),
+                                '\n', ' '*(indent-2))
+            else:
+                return ''
+        return g.div((g.h(g.link(_("Navigace"), None, hotkey="3"), 3),
+                      menu(context.node().root())),
+                     cls='menu-panel')
+
+        
 class Browser(wx.Panel, CommandHandler):
     """Web Browser widget.
     
@@ -1827,6 +1893,7 @@ class Browser(wx.Panel, CommandHandler):
         self._resource_provider = None
         self._restricted_navigation_uri = None
         self._uri_change_callback = None
+        self._loading_help = False
         wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _on_idle(self, event):
@@ -1909,11 +1976,21 @@ class Browser(wx.Panel, CommandHandler):
             decision.ignore()
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
+        elif uri.startswith('help:') and not self._loading_help:
+            # We need to protect loading help by the flag self._loading_help
+            # because the signal gets called recursively for unknown reason
+            # when webview.load_string() is called.
+            self._loading_help = True
+            self._load_help_page(uri[5:])
+            if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
+                                       webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
+                                       webkit.WEB_NAVIGATION_REASON_OTHER):
+                history = self._webview.get_back_forward_list()
+                history.add_item(webkit.WebHistoryItem(uri, uri))
+            self._loading_help = False
+            return True
         else:
-            return self._on_navigation(uri, action)
-        
-    def _on_navigation(self, uri, action):
-        return False
+            return False
         
     def _on_resource_request(self, webview, frame, resource, req, response):
         def redirect(resource):
@@ -1936,6 +2013,47 @@ class Browser(wx.Panel, CommandHandler):
             # resource using the standard resource provider's algorithm
             # (including searching resource directories).
             return redirect(self._resource_provider.resource(uri[9:]))
+        
+    def _load_help_page(self, topic):
+        resource_provider = lcg.ResourceProvider(dirs=('/home/cerha/work/pytis/resources',
+                                                       '/home/cerha/work/lcg/resources'),
+                                                 resources=())
+        def node(row, children):
+            if row['fullname'].value():
+                node_id = row['fullname'].value()
+            elif row['page_id'].value():
+                node_id = 'page/'+ row['page_id'].export()
+            else:
+                node_id = row['help_id'].value()
+            return lcg.ContentNode(node_id, title=row['title'].value(),
+                                   descr=row['description'].value(),
+                                   content=lcg.Container(parser.parse(row['content'].export())),
+                                   resource_provider=resource_provider,
+                                   children=[node(r, children) for r in
+                                             children.get(row['position'].value(), ())])
+        data = pytis.data.dbtable('ev_pytis_help', ('help_id', 'fullname', 'page_id', 'position',
+                                                    'title', 'description', 'content'),
+                                  config.dbconnection)
+        data.select(sort=(('position', pytis.data.ASCENDENT),))
+        children = {}
+        parser = lcg.Parser()
+        while True:
+            row = data.fetchone()
+            if not row:
+                break
+            parent = '.'.join(row['position'].value().split('.')[:-1])
+            children.setdefault(parent, []).append(row)
+        not_found = lcg.ContentNode('NotFound', title=_("Nenalezeno"), hidden=True,
+                                    content=lcg.p(_(u"Požadovaná stránka nápovědy nenalezena.")),
+                                    resource_provider=resource_provider)
+        root = lcg.ContentNode('help', content=lcg.Content(), hidden=True,
+                               children=[not_found] + [node(r, children) for r in children['']],
+                               resource_provider=resource_provider)
+        node = root.find_node(topic) or root.find_node('NotFound')
+        exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
+        #resource_provider.resource('default.css')
+        #resource_provider.resource('pytis-help.css')
+        self.load_content(node, exporter=exporter)
                 
     def _can_go_forward(self):
         return self._webview.can_go_forward()
@@ -2008,54 +2126,22 @@ class Browser(wx.Panel, CommandHandler):
             self._webview.load_html_string(html, base_uri)
         self._async_queue.append(f)
 
-    def load_content(self, node):
+    def load_content(self, node, exporter=None):
         """Load browser content from lcg.ContentNode instance."""
-        import lcg, os
-        class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
-            pass
-        exporter = Exporter(styles=('default.css',), inlinestyles=True)
+        if exporter is None:
+            class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
+                pass
+            exporter = Exporter(styles=('default.css',), inlinestyles=True)
         context = exporter.context(node, None)
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), resource_provider=node.resource_provider())
 
-class HelpBrowser(Browser):
-
-    def __init__(self, parent):
-        super(HelpBrowser, self).__init__(parent)
-        self._loading_help = False
-
-    def _on_navigation(self, uri, action):
-        if uri.startswith('help:') and not self._loading_help:
-            # We need to protect loading help by the flag self._loading_help
-            # because the signal gets called recursively for unknown reason
-            # when webview.load_string() is called.
-            self._loading_help = True
-            page = self._get_help_page(uri[5:])
-            self._webview.load_string(page.encode('utf-8'), 'text/html', 'utf-8', uri)
-            if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
-                                       webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
-                                       webkit.WEB_NAVIGATION_REASON_OTHER):
-                history = self._webview.get_back_forward_list()
-                history.add_item(webkit.WebHistoryItem(uri, uri))
-            self._loading_help = False
-            return True
-        else:
-            return super(HelpBrowser, self)._on_navigation(uri)
-
-    def _get_help_page(self, topic):
-        return ('<html>'
-                '<pre>Topic: ' + topic + '</pre>'
-                '<hr>'
-                '<a href="help:pytis">Pytis</a> | '
-                '<a href="http://www.brailcom.org">Brailcom</a>'
-                '</html>')
-        
 
 class HelpBrowserFrame(wx.Frame):
 
     def __init__(self):
         wx.Frame.__init__(self, None)
-        self._browser = browser = HelpBrowser(self)
+        self._browser = browser = Browser(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(browser.toolbar(self), proportion=0, flag=wx.EXPAND)
         sizer.Add(browser, proportion=1, flag=wx.EXPAND)
