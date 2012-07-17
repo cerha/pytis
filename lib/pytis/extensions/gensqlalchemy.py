@@ -31,6 +31,8 @@ import pytis.data
 
 ## SQLAlchemy extensions
 
+_CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
+
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def _set_search_path(self, search_path):
@@ -65,6 +67,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             function_type = function.result_type
             if function_type is None:
                 result_type = 'void'
+            elif function_type is _CONVERT_THIS_FUNCTION_TO_TRIGGER:
+                result_type = 'trigger'
             elif isinstance(function_type, (tuple, list,)):
                 result_type = 't_' + function.pytis_name()
                 self.visit_type(result_type, function_type)

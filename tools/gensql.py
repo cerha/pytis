@@ -364,6 +364,43 @@ class _GsqlSpec(object):
             except:
                 return "sqlalchemy.text('%s')" % (value.replace('\\', '\\\\').replace("'", "\\'"),)
 
+    def _convert_string_type(self, stype):
+        mapping = {'name': 'pytis.data.String(maxlen=64)',
+                   'smallint': 'pytis.data.Integer()',
+                   'integer': 'pytis.data.Integer()',
+                   'bigint': 'pytis.data.LargeInteger()',
+                   'bytea': 'pytis.data.Binary()',
+                   'inet': 'pytis.data.Inet()',
+                   'date': 'pytis.data.Date()',
+                   'time': 'pytis.data.Time()',
+                   'timestamp': 'pytis.data.DateTime()', # assumes UTC, not always valid
+                   'macaddr': 'pytis.data.Macaddr()',
+                   'ltree': 'pytis.data.LTree()',
+                   'boolean': 'pytis.data.Boolean()',
+                   'bool': 'pytis.data.Boolean()',
+                   'text': 'pytis.data.String()',
+                   'void': 'None',
+                   'trigger': '_CONVERT_THIS_FUNCTION_TO_TRIGGER',
+                   }
+        type_ = mapping.get(stype)
+        if type_ is None:
+            match = re.match('^(?P<var>var)?char\((?P<len>[0-9]+)\)$', stype, re.I)
+            if match:
+                groups = match.groupdict()
+                minlen = '' if groups['var'] else 'minlen=%s, ' % (groups['len'],)
+                type_ = 'pytis.data.String(%smaxlen=%s)' % (minlen, groups['len'],)
+            else:
+                match = re.match('numeric\(([0-9]+), *([0-9]+)\)', stype)
+                if match:
+                    type_ = 'pytis.data.Float(digits=%s, precision=%s)' % match.groups()
+                else:
+                    match = re.match('numeric\(([0-9]+)\)', stype)
+                    if match:
+                        type_ = 'pytis.data.Float(digits=%s)' % match.groups()
+                    else:
+                        type_ = 'XXX: %s' % (stype,)
+        return type_
+        
     def _convert_column(self, column):
         name = column.name
         pos = name.rfind('.')
@@ -378,37 +415,7 @@ class _GsqlSpec(object):
                 type_ += 'not_null=True'
             type_ += ')' 
         else:
-            mapping = {'name': 'pytis.data.String(maxlen=64)',
-                       'smallint': 'pytis.data.Integer()',
-                       'integer': 'pytis.data.Integer()',
-                       'bigint': 'pytis.data.LargeInteger()',
-                       'bytea': 'pytis.data.Binary()',
-                       'inet': 'pytis.data.Inet()',
-                       'date': 'pytis.data.Date()',
-                       'time': 'pytis.data.Time()',
-                       'timestamp': 'pytis.data.DateTime()', # assumes UTC, not always valid
-                       'macaddr': 'pytis.data.Macaddr()',
-                       'ltree': 'pytis.data.LTree()',
-                       'boolean': 'pytis.data.Boolean()',
-                       'bool': 'pytis.data.Boolean()',
-                       }
-            type_ = mapping.get(column.type)
-            if type_ is None:
-                match = re.match('^(?P<var>var)?char\((?P<len>[0-9]+)\)$', column.type, re.I)
-                if match:
-                    groups = match.groupdict()
-                    minlen = '' if groups['var'] else 'minlen=%s, ' % (groups['len'],)
-                    type_ = 'pytis.data.String(%smaxlen=%s)' % (minlen, groups['len'],)
-                else:
-                    match = re.match('numeric\(([0-9]+), *([0-9]+)\)', column.type)
-                    if match:
-                        type_ = 'pytis.data.Float(digits=%s, precision=%s)' % match.groups()
-                    else:
-                        match = re.match('numeric\(([0-9]+)\)', column.type)
-                        if match:
-                            type_ = 'pytis.data.Float(digits=%s)' % match.groups()
-                        else:
-                            type_ = 'XXX: %s' % (column.type,)
+            type_ = self._convert_string_type(column.type)
         unique = 'unique' in constraints or 'unique not null' in constraints
         if column.default is None:
             default = None
@@ -481,6 +488,10 @@ class _GsqlSpec(object):
             if c not in ('unique', 'not null',):
                 spec = spec + (', #XXX:%s' % (c,))
         return spec
+
+    def _convert_schemas(self):
+        schemas = tuple([tuple(s.split(',')) for s in self._schemas])
+        return '    schemas = %s' % (repr(schemas),)
 
     def _convert_depends(self):
         depends_string = string.join(["specification_by_name('%s')" % (d,) for d in self._depends], ', ')
@@ -1390,8 +1401,7 @@ class _GsqlTable(_GsqlSpec):
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
         if self._schemas:
-            schemas = tuple([tuple(s.split(',')) for s in self._schemas])
-            items.append('    schemas = %s' % (repr(schemas),))
+            items.append(self._convert_schemas())
         items.append('    fields = (')
         for column in self._columns:
             items.append(self._convert_indent(self._convert_column(column), 14) + ',')
@@ -2149,8 +2159,7 @@ class _GsqlViewNG(Select):
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
         if self._schemas:
-            schemas = tuple([tuple(s.split(',')) for s in self._schemas])
-            items.append('    schemas = %s' % (repr(schemas),))
+            items.append(self._convert_schemas())
         definitions = []
         condition = self._convert_select(definitions, 0)
         if definitions and definitions[-1].startswith(condition + ' = '):
@@ -2792,6 +2801,89 @@ class _GsqlFunction(_GsqlSpec):
         return names
     db_all_names = classmethod(db_all_names)
     
+    def _convert_column(self, column):
+        name = column.name
+        ctype = column.typ
+        if isinstance(ctype, pytis.data.Type):
+            type_ = 'pytis.data.%s()' % (ctype.__class__.__name__,)
+        elif isinstance(ctype, _GsqlType):
+            type_ = '#XXX:gtype:%s' % (ctype,)
+        elif isinstance(ctype, basestring):
+            type_ = self._convert_string_type(ctype)
+        else:
+            type_ = '#XXX:type:%s' % (ctype,)
+        return 'Column(%s, %s)' % (repr(name), type_,)
+
+    def convert(self):
+        name = self._name
+        body = self._body
+        python = not isinstance(body, basestring)
+        superclass = 'SQLPyFunction' if python else 'SQLFunction'
+        items = ['class %s(%s):' % (self._convert_name(), superclass,)]
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        if self._schemas:
+            items.append(self._convert_schemas())
+        items.append('    name = %s' % (repr(name),))
+        arguments = string.join([self._convert_column(a) for a in self._ins], ', ')
+        if arguments:
+            arguments += ','
+        items.append('    arguments = (%s)' % (arguments,))
+        for a in self._outs:
+            items.append('    #XXX:out:%s' % (a,))
+        output_type = self._output_type
+        if isinstance(output_type, ReturnType):
+            multirow = output_type.setof
+            output_type = output_type.name
+        else:
+            multirow = False
+        if isinstance(output_type, pytis.data.Type):
+            items.append('    result_type = pytis.data.%s()' % (output_type.__class__.__name__,))
+        elif isinstance(output_type, basestring):
+            items.append('    result_type = %s' % (self._convert_string_type(output_type),))
+        elif output_type is None:
+            items.append('    #XXX:result_type = None')
+        else:
+            items.append('    #XXX:result_type = %s' % (output_type,))
+        items.append('    multirow = %s' % (multirow,))
+            
+        if self._security_definer:
+            items.append('    security_definer = True')
+        if self._optimizer_attributes:
+            items.append('    stability = %s' % (repr(self._optimizer_attributes),))
+        items.append(self._convert_depends())
+        items.append(self._convert_grant())
+        items.append('')
+        result = string.join(items, '\n') + '\n'
+        if python:
+            def get_source(f, main):
+                lines, __ = inspect.getsourcelines(f)
+                match = re.match('( *)def( *)([^(]*)', lines[0])
+                indentation = len(match.group(1))
+                name_pos = match.end(2)
+                if main:
+                    lines[0] = lines[0][:name_pos] + name + lines[0][match.end(3):]
+                else:
+                    lines[0] = lines[0][:name_pos] + 'sub_' + lines[0][name_pos:]
+                required_indentation = 4
+                if indentation < required_indentation:
+                    fill = ' ' * (required_indentation - indentation)
+                    lines = [fill + l for l in lines]
+                elif indentation > required_indentation:
+                    cut = indentation - required_indentation
+                    lines = [l[cut:] for l in lines]
+                lines = ['%s@staticmethod\n' % (' ' * required_indentation,)] + lines
+                return string.join(lines, '') + '\n'
+            source_list = ([get_source(f, False) for f in self._use_functions] +
+                           [get_source(body, True)])
+            result += string.join(source_list, '')
+            result += '\n'
+        else:
+            result += '    def body(self):\n'
+            result += '        return """%s"""\n' % (self._body,)
+        return result        
+
 
 class _GsqlSequence(_GsqlSpec):
     """Specifikace sekvence (\"SEQUENCE\")."""
