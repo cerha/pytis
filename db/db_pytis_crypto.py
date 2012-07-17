@@ -182,7 +182,7 @@ def pytis_crypto_generate_key(bits):
     public = rsa.publickey().exportKey()
     private = rsa.exportKey()
     return [public, private]
-_plpy_function('pytis_crypto_generate_key', (TInteger,), 'pytis_crypto_t_key_pair',
+_plpy_function('pytis_crypto_generate_key', (TInteger,), RT('pytis_crypto_t_key_pair'),
                body=pytis_crypto_generate_key,
                depends=())
 
