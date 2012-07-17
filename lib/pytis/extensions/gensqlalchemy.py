@@ -63,7 +63,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         arguments = string.join([arg(c) for c in function.arguments], ', ')
         if result_type is None:
             function_type = function.result_type
-            if isinstance(function_type, (tuple, list,)):
+            if function_type is None:
+                result_type = 'void'
+            elif isinstance(function_type, (tuple, list,)):
                 result_type = 't_' + function.pytis_name()
                 self.visit_type(result_type, function_type)
             elif isinstance(function_type, Column):
@@ -1305,6 +1307,14 @@ class PyFuncZeroArg(SQLPyFunction):
     @staticmethod
     def zero_arguments():
         return 42
+
+class SideEffectFunction(SQLPyFunction):
+    name = 'foo_insert'
+    arguments = (Column('n', pytis.data.Integer()),)
+
+    @staticmethod
+    def foo_insert(n):
+        plpy.execute("insert into foo (n) values (%s)" % (n,))
 
 class TableSelectFunction(SQLPyFunction):
     name = 'tableselect'
