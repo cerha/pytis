@@ -852,7 +852,7 @@ class SQLView(_SQLTabular):
     def _reorder(cls, tabular_1, tabular_2):
         def columns(t):
             if isinstance(t, _SQLTabular):
-                colums = t.c
+                columns = t.c
             elif isinstance(t, (tuple, list,)):
                 columns = t
             else:
