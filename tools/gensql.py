@@ -835,6 +835,8 @@ class _GsqlSchema(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
+        if self._owner:
+            items.append('    owner = %s' % (repr(self._owner),))
         items.append(self._convert_depends())
         items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'

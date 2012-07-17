@@ -488,6 +488,7 @@ class a(object):
 class SQLObject(object):
 
     access_rights = ()
+    owner = None
     
     @classmethod
     def pytis_name(class_):
@@ -532,6 +533,10 @@ class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLO
     def after_create(self, bind):
         for o in self._access_right_objects:
             bind.execute(o)
+        if self.owner:
+            command = ('ALTER SCHEMA "%s" OWNER TO "%s"' %
+                       (self.name, self.owner,))
+            bind.execute(command)
 
 @compiles(SQLSchema)
 def visit_schema(element, compiler, **kw):
@@ -579,6 +584,10 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         super(_SQLTabular, self)._create_access_rights()
         for o in self._access_right_objects:
             sqlalchemy.event.listen(self, 'after_create', o)
+        if self.owner:
+            command = ('ALTER %s "%s"."%s" OWNER TO "%s"' %
+                       (self._DB_OBJECT, self.schema, self.name, self.owner,))
+            sqlalchemy.event.listen(self, 'after_create', command)
         
     def _create_rules(self):
         def make_rule(action, kind, commands):
@@ -1106,6 +1115,7 @@ def gsql_file(file_name):
 
 class Private(SQLSchema):
     name = 'private'
+    owner = 'postgres'
     access_rights = (('ALL', 'private-users',),)
 
 class Counter(SQLSequence):
