@@ -61,7 +61,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         self._set_search_path(search_path)
         def arg(column):
             a_column = column.sqlalchemy_column(search_path, None, None, None)
-            return '"%s" %s' % (a_column.name, a_column.type,)
+            in_out = 'out ' if column.out() else ''
+            return '%s"%s" %s' % (in_out, a_column.name, a_column.type,)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
         if result_type is None:
             function_type = function.result_type
@@ -174,7 +175,7 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
 class Column(pytis.data.ColumnSpec):
     
     def __init__(self, name, type, doc=None, unique=False, check=None,
-                 default=None, references=None, primary_key=False, index=False):        
+                 default=None, references=None, primary_key=False, index=False, out=False):
         pytis.data.ColumnSpec.__init__(self, name, type)
         self._doc = doc
         self._unique = unique
@@ -183,6 +184,7 @@ class Column(pytis.data.ColumnSpec):
         self._references = references
         self._primary_key = primary_key
         self._index = index
+        self._out = out
 
     def doc(self):
         return self._doc
@@ -192,6 +194,9 @@ class Column(pytis.data.ColumnSpec):
 
     def primary_key(self):
         return self._primary_key
+
+    def out(self):
+        return self._out
 
     def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name):
         alchemy_type = self.type().sqlalchemy_type()
