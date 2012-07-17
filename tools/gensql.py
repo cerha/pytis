@@ -1492,9 +1492,10 @@ class _GsqlTable(_GsqlSpec):
             items.append("    body = specification_by_name('%s')" %
                          (self._upd_log_trigger,))
             items.append('    arguments = ("%s",)' % (keys,))
-        if self._views:
-            items.append('#XXX: table views: %s' % (self._views,))
         result = string.join(items, '\n') + '\n'
+        if self._views:
+            for v in self._views:
+                result = result + v.convert() + '\n'
         if not self._convert:
             result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
         return result
@@ -2258,7 +2259,7 @@ class _GsqlView(_GsqlSpec):
     
     def __init__(self, name, columns, key_columns=None,
                  table_alias=None, join=None,
-                 insert=(), update=(), delete=(), **kwargs):
+                 insert=(), update=(), delete=(), convert=True, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -2327,13 +2328,13 @@ class _GsqlView(_GsqlSpec):
                               self._split_columns()
         self._complex_len = self._complex_columns_length()
         self._tables_from, self._tables = self._make_tables()
+        self._convert = convert
 
     def _column_table(self, column):
         return _gsql_column_table_column(column.name)[0]
 
     def _column_column(self, column):
         return _gsql_column_table_column(column.name)[1]
-
 
     def _split_columns(self):
         """Rozdělí sloupce na jednoduché a složené (UNION)."""       
@@ -2635,6 +2636,151 @@ class _GsqlView(_GsqlSpec):
     
     def reoutput(self, table_keys):
         return self.output(table_keys)
+
+    def _convert_column(self, column, i=None, type=UNDEFINED):
+        if isinstance(column, basestring):
+            cname = alias = column
+        else:
+            if i is None:
+                if column.sql:
+                    cname = column.sql
+                else:    
+                    cname = column.name
+            else:
+                if column.sql:               
+                    cname = column.sql[i]
+                else:    
+                    cname = column.name[i]
+            alias = column.alias
+        if type is None:
+            cname = "NULL"
+        elif isinstance(type, pytis.data.Type):
+            cname = "NULL::%s" % (_gsql_format_type(type),)
+        elif isinstance(type, basestring):
+            cname = "NULL::%s" % (type,)
+        crepr = "sqlalchemy.literal_column('%s')" % (cname,)
+        return '%s.label(%s)' % (crepr, repr(alias),)
+
+    def _convert_complex_columns(self):
+        COLSEP = ',\n\t'
+        def format_simple_columns(columns):
+            return string.join(map(self._convert_column, columns), COLSEP)
+        if self._complexp:
+            result_base = format_simple_columns(self._simple_columns)
+            result = []
+            for i in range(self._complex_len):
+                colspecs = []
+                for c in self._complex_columns:
+                    names = c.name
+                    if not c.sql and names[i] is None:
+                        type = c.type
+                        spec = self._convert_column(c, type=type)
+                    else:
+                        spec = self._convert_column(c, i)
+                    colspecs.append(spec)
+                result_complex = string.join(colspecs, COLSEP)
+                if result_base != '':
+                    result_base = result_base + COLSEP
+                result.append(result_base + result_complex)
+        else:
+            result = format_simple_columns(self._columns)
+        return result
+    
+    def convert(self):
+        items = ['class %s(SQLView):' % (self._convert_name(),)]
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
+        if self._schemas:
+            items.append(self._convert_schemas())
+        # The hard part
+        columns = self._convert_complex_columns()
+        is_union = is_sequence(columns)
+        if self._key_columns is None:
+            if is_union:
+                tables = functools.reduce(operator.add, self._tables)
+            else:
+                tables = self._tables
+        if self._join is None:
+            where = ''
+        else:
+            def gen_where(spec):
+                if spec is None:
+                    return ''
+                where = ' WHERE '
+                if isinstance(spec, basestring):
+                    join = spec
+                else:
+                    rels = ['%s = %s' % r for r in spec]
+                    join = string.join(rels, ' AND ')
+                where = where + join
+                return where
+            if is_sequence(columns):
+                where = map(gen_where, self._join)
+            else:
+                where = gen_where(self._join)
+        items.append('    @classmethod\n    def condition(cls):')
+        if is_union:
+            tables = [string.join(t, ', ') for t in self._tables_from]
+            selections = []
+            for t, c, w in zip(tables, columns, where):
+                selections.append('sqlalchemy.select([%s], from_obj=[%s], whereclause=%s)' %
+                                  (c, t, repr(w),))
+            condition = string.join(selections, 'union_all(')
+            condition += ')' * (len(selections) - 1)
+        else:
+            tables = self._tables_from
+            from_obj = []
+            for t in tables:
+                name_alias = t.split(' ')
+                if len(name_alias) > 1:
+                    name, alias = name_alias
+                else:
+                    name = alias = name_alias[0]
+                line = "        %s = object_by_path('%s')" % (alias, name,)
+                if name != alias:
+                    line += '.alias(%s)' % (alias,)
+                items.append(line)
+                from_obj.append(alias)
+            condition = ('sqlalchemy.select([%s], from_obj=[%s], whereclause=%s)' %
+                         (columns, string.join(from_obj, ', '), repr(where),))
+        items.append('        return %s' % (condition,))
+        # Rules
+        def quote(command):
+            if '\n' in command:
+                command = '""%s""' % (command,)
+            return command
+        def add_rule(kind, command):
+            if command is None:
+                return
+            if isinstance(command, basestring):
+                items.append('    def on_%s():' % (kind,))
+                items.append ('        return ("%s",)' % (quote(command),))
+            else:
+                def make_table_name(r):
+                    table_name = r.relation
+                    if isinstance(r, SelectRelation) and r.schema is not None:
+                        table_name = '%s.%s' % (r.schema, table_name,)
+                    return table_name
+                real_order = [make_table_name(r) for r in self._relations]
+                order_string = string.join(["class_by_name('%s')" % (o,) for o in real_order], ', ')
+                if order_string:
+                    order_string += ','
+                items.append('    %s_order = (%s)' % (kind, order_string,))
+                command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
+                if command_string:
+                    items.append('    def on_%s_also():' % (kind,))
+                    items.append ('        return %s' % (command_string,))
+        add_rule('insert', self._insert)
+        add_rule('update', self._update)
+        add_rule('delete', self._delete)
+        items.append(self._convert_depends())
+        items.append(self._convert_grant())
+        result = string.join(items, '\n') + '\n'
+        if not self._convert:
+            result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
+        return result
 
 
 class _GsqlFunction(_GsqlSpec):
