@@ -364,7 +364,7 @@ class _GsqlSpec(object):
             except:
                 return "sqlalchemy.text('%s')" % (value.replace('\\', '\\\\').replace("'", "\\'"),)
 
-    def _convert_string_type(self, stype):
+    def _convert_string_type(self, stype, allow_none=False):
         mapping = {'name': 'pytis.data.String(maxlen=64)',
                    'smallint': 'pytis.data.Integer()',
                    'integer': 'pytis.data.Integer()',
@@ -397,6 +397,8 @@ class _GsqlSpec(object):
                     match = re.match('numeric\(([0-9]+)\)', stype)
                     if match:
                         type_ = 'pytis.data.Float(digits=%s)' % match.groups()
+                    elif allow_none:
+                        type_ = None
                     else:
                         type_ = 'XXX: %s' % (stype,)
         return type_
@@ -3011,10 +3013,11 @@ class _GsqlFunction(_GsqlSpec):
             multirow = False
         if isinstance(output_type, pytis.data.Type):
             items.append('    result_type = pytis.data.%s()' % (output_type.__class__.__name__,))
-        elif isinstance(self._output_type, ReturnType):
-            items.append('    result_type = %s' % (self._convert_name(name=output_type),))
         elif isinstance(output_type, basestring):
-            items.append('    result_type = %s' % (self._convert_string_type(output_type),))
+            type_string = self._convert_string_type(output_type, allow_none=True)
+            if type_string is None:
+                type_string = self._convert_name(name=output_type)
+            items.append('    result_type = %s' % (type_string,))
         elif output_type is None:
             items.append('    #XXX:result_type = None')
         else:
