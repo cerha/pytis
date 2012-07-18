@@ -1142,9 +1142,10 @@ def gsql_file(file_name):
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     for o in _PytisSimpleMetaclass.objects:
         engine.execute(o)
-    for o in _PytisSchematicMetaclass.objects:
-        if not isinstance(o, _SQLTabular):
-            o.create(engine, checkfirst=False)
+        o.after_create(engine)
+    for sequence in _metadata._sequences.values():
+        sequence.create(engine, checkfirst=False)
+        sequence.after_create(engine)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
     
