@@ -1493,9 +1493,6 @@ class _GsqlTable(_GsqlSpec):
                          (self._upd_log_trigger,))
             items.append('    arguments = ("%s",)' % (keys,))
         result = string.join(items, '\n') + '\n'
-        if self._views:
-            for v in self._views:
-                result = result + v.convert() + '\n'
         if not self._convert:
             result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
         return result
