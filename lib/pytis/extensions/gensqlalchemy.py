@@ -81,7 +81,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                 result_type = function_type.sqlalchemy_column(search_path, None, None, None).type
             elif isinstance(function_type, pytis.data.Type):
                 result_type = function_type.sqlalchemy_type()
-            elif issubclass(function_type, SQLTable):
+            elif issubclass(function_type, (SQLTable, SQLType,)):
                 result_type = object_by_class(function_type, search_path).pytis_name()
             else:
                 raise Exception("Invalid result type", function_type)
