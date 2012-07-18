@@ -823,8 +823,8 @@ class SQLView(_SQLTabular):
             elif isinstance(o, sqlalchemy.sql.ClauseElement):
                 objects += o.get_children()
                 seen.append(o)
-            else:
-                raise Exception("Invalid dependency", o)
+            elif not isinstance(o, RawCondition):
+                raise Exception("Unknown condition element", o)
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):
