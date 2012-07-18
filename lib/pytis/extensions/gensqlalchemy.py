@@ -330,6 +330,7 @@ class SQLNameException(SQLException):
 class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     
     _name_mapping = {}
+    _class_mapping = {}
     
     def __init__(cls, clsname, bases, clsdict):
         if cls._is_specification(clsname):
@@ -338,6 +339,7 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
                 _PytisBaseMetaclass._name_mapping[name] is not cls):
                 raise SQLException("Duplicate object name", (cls, _PytisBaseMetaclass._name_mapping[name],))
             _PytisBaseMetaclass._name_mapping[name] = cls
+            _PytisBaseMetaclass._class_mapping[cls.__name__] = cls
             cls.name = name
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
 
@@ -347,6 +349,10 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     @classmethod
     def specification_by_name(cls, name):
         return cls._name_mapping.get(name)
+
+    @classmethod
+    def specification_by_class_name(cls, name):
+        return cls._class_mapping.get(name)
 
 class _PytisSimpleMetaclass(_PytisBaseMetaclass):
     
@@ -450,8 +456,8 @@ def object_by_class(class_, search_path=None):
     table_name = class_.pytis_name()
     return object_by_path(table_name, search_path)    
 
-def object_by_specification(specification):
-    class_ = globals()[specification]
+def object_by_specification_name(specification_name):
+    class_ = _PytisBaseMetaclass.specification_by_class_name(specification_name)
     return object_by_class(class_, _current_search_path)
 
 def specification_by_name(name):
@@ -466,12 +472,12 @@ class RawCondition(object):
     
 class TableLookup(object):
     def __getattr__(self, specification):
-        return object_by_specification(specification)
+        return object_by_specification_name(specification)
 t = TableLookup()
 
 class ColumnLookup(object):
     def __getattr__(self, specification):
-        return object_by_specification(specification).c
+        return object_by_specification_name(specification).c
 c = ColumnLookup()
 
 class ReferenceLookup(object):
@@ -480,7 +486,7 @@ class ReferenceLookup(object):
             self._specification = specification
             self._column = column
         def get(self, table_name, key_name):
-            columns = object_by_specification(self._specification).c
+            columns = object_by_specification_name(self._specification).c
             return columns[self._column]
     class ColumnLookup(object):
         def __init__(self, specification):
