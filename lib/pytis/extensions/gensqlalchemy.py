@@ -644,7 +644,15 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                     if table is table_c.table:
                         break
             else:
-                raise Exception("Table key column not found in the view", table_c)
+                for c in self._original_columns():
+                    tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                    table = tc.table
+                    if isinstance(table, sqlalchemy.sql.expression.Alias):
+                        table = table.element
+                    if table is table_c.table:
+                        break
+                else:
+                    raise Exception("Table key column not found in the view", table_c)
             name = _sql_plain_name(c.name)
             conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
         return sqlalchemy.and_(*conditions)
