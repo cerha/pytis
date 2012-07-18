@@ -381,6 +381,7 @@ class _GsqlSpec(object):
                    'text': 'pytis.data.String()',
                    'void': 'None',
                    'trigger': '_CONVERT_THIS_FUNCTION_TO_TRIGGER',
+                   'record': 'pytis.data.String()',
                    }
         type_ = mapping.get(stype)
         if type_ is None:
