@@ -702,12 +702,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             method = getattr(cls, '_attachment_storage_'+method_name)
         except AttributeError:
             raise BadRequest()
-        field = find(req.param('_pytis_attachment_storage_field'), row.fields(), key=lambda f: f.id())
-        if not field:
-            raise BadRequest()
-        storage = field.attachment_storage()
-        if isinstance(storage, collections.Callable):
-            storage = storage(row)
+        storage = row.attachment_storage(req.param('_pytis_attachment_storage_field'))
         if not storage:
             raise BadRequest()
         return method(req, row, storage)

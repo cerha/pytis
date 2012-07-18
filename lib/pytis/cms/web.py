@@ -156,6 +156,7 @@ class Menu(wiking.PytisModule):
     
     def _attachment_storage(self, record):
         base_uri = '/'+ self._menu_item_identifier(record) +'/attachments/'
+        # We can't use record.attachment_storage() as we need to pass custom arguments.
         return self._view.field('content').attachment_storage()(record, base_uri)
 
     def _menu_item_identifier(self, row):

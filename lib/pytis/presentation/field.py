@@ -94,6 +94,7 @@ class PresentedRow(object):
             self.data_column = data.find_column(self.id)
             self.virtual = f.virtual()
             self.secret_computer = False # Set dynamically during initialization.
+            self.attachment_storage = f.attachment_storage()
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
     
@@ -1092,3 +1093,19 @@ class PresentedRow(object):
         row = copy.copy(self)
         row._protected = True
         return row
+
+    def attachment_storage(self, key):
+        """Return the 'AttachmentStorage' instance for given field or None.
+
+        The result depends on the 'attachment_storage' specification of the
+        field given by 'key'.  If the attachment storage is defined as a
+        callable object, it is automatically called and the result is returned.
+        
+        """
+        column = self._coldict[key]
+        storage = column.attachment_storage
+        if isinstance(storage, collections.Callable):
+            storage = storage(self)
+        else:
+            assert not kwargs, kwargs
+        return storage

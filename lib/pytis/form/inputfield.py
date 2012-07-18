@@ -2255,10 +2255,7 @@ class StructuredTextField(TextField):
         self._completer = None
         self._update_completions = None
         self._last_load_dir = None
-        storage = self._spec.attachment_storage()
-        if isinstance(storage, collections.Callable):
-            storage = storage(self._row)
-        self._storage = storage
+        self._storage = self._row.attachment_storage(self._id)
         return ctrl
         
     def _create_widget(self, parent):

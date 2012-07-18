@@ -56,7 +56,7 @@ class Help(Specification):
                   ),
             Field('description', _(u"Popis"), width=70, editable=computer(self._is_page),),
             Field('content', _(u"Obsah"), width=80, height=20, text_format=pp.TextFormat.LCG, 
-                  compact=True,),
+                  compact=True, attachment_storage=self._attachment_storage),
             Field('parent', _("Nadřízená položka"), not_null=False,
                   codebook='help.HelpParents', value_column='page_id',
                   editable=computer(self._is_page),
@@ -70,10 +70,17 @@ class Help(Specification):
                           "zařazena na konec.")),
             Field('fullname', _(u"Fullname"), width=50),
             )
+
     def _is_page(self, record, page_id):
         return record.new() or page_id is not None
+
     def _parent_filter(self, page_id):
         return pd.NE('page_id', pd.ival(None))
+
+    def _attachment_storage(self, record):
+        directory = '/home/cerha/work/pytis/demo/help/images/'+ record['help_id'].export()
+        return pp.FileAttachmentStorage(directory, base_uri='resource:')
+
     cb = CodebookSpec(display='title')
     columns = ('title', 'description')
     layout = ('title', 'description', 'parent', 'ord', 'content')
