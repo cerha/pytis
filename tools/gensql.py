@@ -2915,7 +2915,7 @@ class _GsqlFunction(_GsqlSpec):
                 output_type = self._output_type.name
                 if self._output_type.setof:
                     output_type = 'SETOF ' + output_type
-                    returns = 'RETURNS ' + output_type
+                returns = 'RETURNS ' + output_type
         else:
             if len(self._outs) > 0:
                 raise GensqlError(
