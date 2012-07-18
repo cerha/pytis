@@ -942,6 +942,8 @@ class SQLFunctional(_SQLTabular):
             columns = (result_type.sqlalchemy_column(search_path, None, None, None),)
         elif isinstance(result_type, pytis.data.Type):
             columns = (sqlalchemy.Column('result', result_type.sqlalchemy_type()),)
+        elif result_type is _CONVERT_THIS_FUNCTION_TO_TRIGGER:
+            columns = ()
         elif issubclass(result_type, _SQLTabular):
             columns = tuple([sqlalchemy.Column(c.name, c.type)
                              for c in object_by_class(result_type, search_path).c])
@@ -953,7 +955,8 @@ class SQLFunctional(_SQLTabular):
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()
         result_type = self.result_type
-        if result_type is not None and not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)):
+        if (result_type not in (None, _CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
+            not isinstance(result_type, (tuple, list, Column, pytis.data.Type,))):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
 
     def create(self, bind=None, checkfirst=False):
