@@ -3664,6 +3664,8 @@ class FileAttachmentStorage(AttachmentStorage):
     def insert(self, filename, data, values):
         import lcg, PIL.Image
         path = self._resource_src_file(filename)
+        if not os.path.exists(self._directory):
+            os.makedirs(self._directory)
         if issubclass(self._resource_cls(filename), lcg.Image):
             try:
                 image = PIL.Image.open(data)
