@@ -1075,6 +1075,7 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
         super(SQLRaw, self).__init__()
         self._search_path = search_path
         self._add_dependencies()
+        self.schema = search_path[0] # required by metadata in certain situations
         metadata._add_table(self.pytis_name(), search_path[0], self)
         
     def search_path(self):
