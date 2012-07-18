@@ -66,7 +66,10 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         def arg(column):
             a_column = column.sqlalchemy_column(search_path, None, None, None)
             in_out = 'out ' if column.out() else ''
-            return '%s"%s" %s' % (in_out, a_column.name, a_column.type,)
+            name = a_column.name
+            if name:
+                name = '"%s" ' % (name,)
+            return '%s%s%s' % (in_out, name, a_column.type,)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
         if result_type is None:
             function_type = function.result_type

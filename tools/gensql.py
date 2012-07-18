@@ -503,7 +503,7 @@ class _GsqlSpec(object):
         return '    depends = (%s)' % (depends_string,)
 
     def _convert_grant(self):
-        return '    access_rights = %s' % (repr(self._grant),)
+        return '    access_rights = %s' % (repr(self._grant).replace('"', ''),)
         
     def convert(self):
         "Vrať novou pythonovou specifikaci daného objektu jako string."
@@ -3057,7 +3057,7 @@ class _GsqlFunction(_GsqlSpec):
             result += '\n'
         else:
             result += '    def body(self):\n'
-            result += '        return """%s"""\n' % (self._body,)
+            result += '        return """%s"""\n' % (self._body.replace("''", "'"),)
         return result        
 
 
