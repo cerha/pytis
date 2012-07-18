@@ -1479,7 +1479,7 @@ class _GsqlTable(_GsqlSpec):
         items.append(self._convert_grant())
         def add_rule(kind, command):
             if command:
-                items.append('    def on_%s_also():' % (kind,))
+                items.append('    def on_%s_also(self):' % (kind,))
                 items.append ('        return ("%s",)' % (command,))
         add_rule('insert', self._on_insert)
         add_rule('update', self._on_update)
@@ -2202,7 +2202,7 @@ class _GsqlViewNG(Select):
             if command is None:
                 return
             if isinstance(command, basestring):
-                items.append('    def on_%s():' % (kind,))
+                items.append('    def on_%s(self):' % (kind,))
                 items.append ('        return ("%s",)' % (quote(command),))
             else:
                 def make_table_name(r):
@@ -2224,13 +2224,13 @@ class _GsqlViewNG(Select):
                                 rels.append(rel)
                     return [make_table_name(r) for r in rels]
                 real_order = relations(order)
-                order_string = string.join(["class_by_name('%s')" % (o,) for o in real_order], ', ')
+                order_string = string.join(["specification_by_name('%s')" % (o,) for o in real_order], ', ')
                 if order_string:
                     order_string += ','
                 items.append('    %s_order = (%s)' % (kind, order_string,))
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
-                    items.append('    def on_%s_also():' % (kind,))
+                    items.append('    def on_%s_also(self):' % (kind,))
                     items.append ('        return %s' % (command_string,))
         add_rule('insert', self._insert, self._insert_order)
         add_rule('update', self._update, self._update_order)
@@ -2752,7 +2752,7 @@ class _GsqlView(_GsqlSpec):
             if command is None:
                 return
             if isinstance(command, basestring):
-                items.append('    def on_%s():' % (kind,))
+                items.append('    def on_%s(self):' % (kind,))
                 items.append ('        return ("%s",)' % (quote(command),))
             else:
                 def make_table_name(r):
@@ -2761,13 +2761,13 @@ class _GsqlView(_GsqlSpec):
                         table_name = '%s.%s' % (r.schema, table_name,)
                     return table_name
                 real_order = [make_table_name(r) for r in self._relations]
-                order_string = string.join(["class_by_name('%s')" % (o,) for o in real_order], ', ')
+                order_string = string.join(["specification_by_name('%s')" % (o,) for o in real_order], ', ')
                 if order_string:
                     order_string += ','
                 items.append('    %s_order = (%s)' % (kind, order_string,))
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
-                    items.append('    def on_%s_also():' % (kind,))
+                    items.append('    def on_%s_also(self):' % (kind,))
                     items.append ('        return %s' % (command_string,))
         add_rule('insert', self._insert)
         add_rule('update', self._update)
