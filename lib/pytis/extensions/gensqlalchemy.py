@@ -641,7 +641,10 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         assignments = {}
         for c in self._original_columns():
             table_c = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-            if table_c.table is tabular:
+            table = table_c.table
+            if isinstance(table, sqlalchemy.sql.expression.Alias):
+                table = table.element
+            if table is tabular:
                 name = _sql_plain_name(c.name)
                 table_column_name = _sql_plain_name(table_c.name)
                 assignments[table_column_name] = sqlalchemy.literal_column('new.'+name)
