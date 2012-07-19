@@ -2708,7 +2708,7 @@ class _GsqlView(_GsqlSpec):
             def gen_where(spec):
                 if spec is None:
                     return ''
-                where = ' WHERE '
+                where = ''
                 if isinstance(spec, basestring):
                     join = spec
                 else:
