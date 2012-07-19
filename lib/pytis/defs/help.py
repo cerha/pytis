@@ -78,8 +78,14 @@ class Help(Specification):
         return pd.NE('page_id', pd.ival(None))
 
     def _attachment_storage(self, record):
-        directory = '/home/cerha/work/pytis/demo/help/images/'+ record['help_id'].export()
-        return pp.FileAttachmentStorage(directory, base_uri='resource:')
+        if record['page_id'].value():
+            table, ref = ('e_pytis_help_pages_attachments', 'page_id')
+        elif record['menuid'].value():
+            table, ref = ('e_pytis_menu_help_attachments', 'menuid')
+        else:
+            # The attachments are not allowed for some special pages, such as the menu root page.
+            return None
+        return pp.DbAttachmentStorage(table, ref, record[ref].value(), base_uri='resource:')
 
     cb = CodebookSpec(display='title')
     columns = ('title', 'description')
