@@ -500,7 +500,7 @@ class _GsqlSpec(object):
         depends_string = string.join(["specification_by_name('%s')" % (d,) for d in self._depends], ', ')
         if depends_string:
             depends_string += ','
-        return '    depends = (%s)' % (depends_string,)
+        return '    depends_on = (%s)' % (depends_string,)
 
     def _convert_grant(self):
         return '    access_rights = %s' % (repr(self._grant).replace('"', ''),)
