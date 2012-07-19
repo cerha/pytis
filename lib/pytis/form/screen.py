@@ -2016,8 +2016,7 @@ class Browser(wx.Panel, CommandHandler):
         
     def _load_help_page(self, topic):
         resource_provider = lcg.ResourceProvider(dirs=('/home/cerha/work/pytis/resources',
-                                                       '/home/cerha/work/lcg/resources'),
-                                                 resources=())
+                                                       '/home/cerha/work/lcg/resources'))
         def node(row, children):
             if row['fullname'].value():
                 node_id = row['fullname'].value()
@@ -2030,7 +2029,10 @@ class Browser(wx.Panel, CommandHandler):
                                    content=lcg.Container(parser.parse(row['content'].export())),
                                    resource_provider=resource_provider,
                                    children=[node(r, children) for r in
-                                             children.get(row['position'].value(), ())])
+                                             children.get(row['position'].value(), ())],
+                                   globals=dict(help_id=row['help_id'].value(),
+                                                menuid=row['menuid'].value(),
+                                                page_id=row['page_id'].value()))
         data = pytis.data.dbtable('ev_pytis_help', ('help_id', 'fullname', 'page_id', 'position',
                                                     'title', 'description', 'content'),
                                   config.dbconnection)
@@ -2050,9 +2052,16 @@ class Browser(wx.Panel, CommandHandler):
                                children=[not_found] + [node(r, children) for r in children['']],
                                resource_provider=resource_provider)
         node = root.find_node(topic) or root.find_node('NotFound')
+        page_id, menuid = node.globals().get('page_id'), node.globals().get('menuid')
+        if page_id or menuid:
+            if page_id:
+                table, ref, refval = ('e_pytis_help_pages_attachments', 'page_id', page_id)
+            else:
+                table, ref, refval = ('e_pytis_menu_help_attachments', 'menuid', menuid)
+            storage = pp.DbAttachmentStorage(table, ref, refval, base_uri='resource:')
+            for resource in storage.resources():
+                resource_provider.add_resource(resource)
         exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
-        #resource_provider.resource('default.css')
-        #resource_provider.resource('pytis-help.css')
         self.load_content(node, exporter=exporter)
                 
     def _can_go_forward(self):
