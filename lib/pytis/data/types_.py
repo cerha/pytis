@@ -814,6 +814,17 @@ class String(Limited):
     def sqlalchemy_type(self):
         return sqlalchemy.String(length=self.maxlen())
 
+
+class Name(String):
+    """String type to be identified as 'name' in the database."""
+    
+    def __init__(self):
+        super(Name, self).__init__()
+
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.NAME()
+
     
 class Password(String):
     """Specialized string type for password fields.

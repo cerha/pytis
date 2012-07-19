@@ -365,7 +365,7 @@ class _GsqlSpec(object):
                 return "sqlalchemy.text('%s')" % (value.replace('\\', '\\\\').replace("'", "\\'"),)
 
     def _convert_string_type(self, stype, allow_none=False):
-        mapping = {'name': 'pytis.data.String(maxlen=64)',
+        mapping = {'name': 'pytis.data.Name()',
                    'smallint': 'pytis.data.Integer()',
                    'integer': 'pytis.data.Integer()',
                    'bigint': 'pytis.data.LargeInteger()',

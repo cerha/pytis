@@ -176,7 +176,13 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
     def __init__(self, name):
         super(_SQLExternal, self).__init__()
         self.name = name
-    
+
+class NAME(sqlalchemy.String):
+    pass
+@compiles(NAME)
+def compile_name(element, compiler, **kwargs):
+    return 'NAME'
+
 ## Columns
         
 class Column(pytis.data.ColumnSpec):
