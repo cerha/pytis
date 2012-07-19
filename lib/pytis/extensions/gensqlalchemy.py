@@ -69,7 +69,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             name = a_column.name
             if name:
                 name = '"%s" ' % (name,)
-            return '%s%s%s' % (in_out, name, a_column.type,)
+            return '%s%s%s' % (in_out, name, a_column.type.compile(engine.dialect),)
         arguments = string.join([arg(c) for c in function.arguments], ', ')
         if result_type is None:
             function_type = function.result_type
@@ -81,9 +81,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                 result_type = 't_' + function.pytis_name()
                 self.make_type(result_type, function_type)
             elif isinstance(function_type, Column):
-                result_type = function_type.sqlalchemy_column(search_path, None, None, None).type
+                result_type = function_type.sqlalchemy_column(search_path, None, None, None).type.compile(engine.dialect)
             elif isinstance(function_type, pytis.data.Type):
-                result_type = function_type.sqlalchemy_type()
+                result_type = function_type.sqlalchemy_type().compile(engine.dialect)
             elif issubclass(function_type, (SQLTable, SQLType,)):
                 result_type = object_by_class(function_type, search_path).pytis_name()
             else:
@@ -179,9 +179,19 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
 
 class NAME(sqlalchemy.String):
     pass
-@compiles(NAME)
+@compiles(NAME, 'postgresql')
 def compile_name(element, compiler, **kwargs):
     return 'NAME'
+@compiles(NAME)
+def compile_name(element, compiler, **kwargs):
+    return 'VARCHAR(64)'
+
+@compiles(sqlalchemy.String, 'postgresql')
+def compile_string(element, compiler, **kwargs):
+    if element.length is None:
+        return 'TEXT'
+    else:
+        return 'VARCHAR(%d)' % (element.length,)
 
 ## Columns
         
