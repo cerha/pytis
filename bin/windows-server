@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-05-21 13:37'
+_VERSION = '2012-06-26 18:00'
 
 import logging
 import os
@@ -285,36 +285,36 @@ class PytisAdminService(PytisService):
         """
         import pythoncom
         import win32com.taskscheduler
-        scheduler = pythoncom.CoCreateInstance(win32com.taskscheduler.CLSID_CTaskScheduler,
+        from win32com.taskscheduler import taskscheduler
+        scheduler = pythoncom.CoCreateInstance(taskscheduler.CLSID_CTaskScheduler,
                                                None,
                                                pythoncom.CLSCTX_INPROC_SERVER,
-                                               win32com.taskscheduler.IID_ITaskScheduler)
+                                               taskscheduler.IID_ITaskScheduler)
         def add_task(name, command, run_time):
-            if '%s.job' % (name,) not in scheduler.Enum():
-                task = scheduler.NewWorkItem(name)
-                cmd = command.split()
-                task.SetApplicationName(cmd[0])
-                task.SetParameters(' '.join(cmd[1:]))
-                task.SetPriority(win32com.taskscheduler.REALTIME_PRIORITY_CLASS)
-                task.SetFlags(win32com.taskscheduler.TASK_FLAG_DELETE_WHEN_DONE|
-                              win32com.taskscheduler.TASK_FLAG_RUN_ONLY_IF_LOGGED_ON)
-                task.SetAccountInformation('', None)
-                scheduler.AddWorkItem(name, task)
-                __, task_trigger = task.CreateTrigger()
-                trigger = task_trigger.GetTrigger()
-                trigger.Flags = 0
-                time_tupple = time.localtime(run_time)
-                trigger.BeginYear = time_tupple[0]
-                trigger.BeginMonth = time_tupple[1]
-                trigger.BeginDay = time_tupple[2]
-                trigger.StartHour = time_tupple[3]
-                trigger.StartMinute = time_tupple[4]
-                trigger.TriggerType = int(win32com.taskscheduler.TASK_TIME_TRIGGER_DAILY)
-                task_trigger.SetTrigger(trigger)
-                persist_file = task.QueryInterface(pythoncom.IID_IPersistFile)
-                persist_file.Save(None, 1)
-            else:
-                raise KeyError("%s already exists" % (name,))
+            if '%s.job' % (name,) in scheduler.Enum():
+                scheduler.Delete(name)
+            task = scheduler.NewWorkItem(name)
+            cmd = command.split()
+            task.SetApplicationName(cmd[0])
+            task.SetParameters(' '.join(cmd[1:]))
+            task.SetPriority(taskscheduler.REALTIME_PRIORITY_CLASS)
+            task.SetFlags(taskscheduler.TASK_FLAG_DELETE_WHEN_DONE|
+                          taskscheduler.TASK_FLAG_RUN_ONLY_IF_LOGGED_ON)
+            task.SetAccountInformation('', None)
+            scheduler.AddWorkItem(name, task)
+            __init__, task_trigger = task.CreateTrigger()
+            trigger = task_trigger.GetTrigger()
+            trigger.Flags = 0
+            time_tupple = time.localtime(run_time)
+            trigger.BeginYear = time_tupple[0]
+            trigger.BeginMonth = time_tupple[1]
+            trigger.BeginDay = time_tupple[2]
+            trigger.StartHour = time_tupple[3]
+            trigger.StartMinute = time_tupple[4]
+            trigger.TriggerType = int(taskscheduler.TASK_TIME_TRIGGER_ONCE)
+            task_trigger.SetTrigger(trigger)
+            persist_file = task.QueryInterface(pythoncom.IID_IPersistFile)
+            persist_file.Save(None, 1)
             task = scheduler.Activate(name)
         now = time.time()
         add_task('pytis_service_stop', 'sc stop PytisService', now + delay*60)
