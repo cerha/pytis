@@ -724,6 +724,19 @@ function('_log_update_trigger', (), 'trigger',
          doc="""Slouží k evidenci editací nad záznamy tabulek.""",
          depends=('_inserts', '_deletes', '_updates'))
 
+# Slouží ke změně políčka zmeneno z děděné tabulky _changes
+sql_raw("""
+CREATE OR REPLACE FUNCTION _update_column_zmeneno()
+	RETURNS TRIGGER AS $$
+	BEGIN
+	   NEW.zmeneno = current_timestamp; 
+	   NEW.zmenil = current_user; 
+	   RETURN NEW;
+	END;
+	$$ language 'plpgsql';""",
+        name="_update_column_zmeneno"
+        )
+
 # Vypne všechny triggers na tabulkou předanou jako parametr funkce.
 sql_raw("""
 CREATE FUNCTION DisableTriggers(Name) RETURNS BOOLEAN AS '
