@@ -3492,6 +3492,17 @@ class AttachmentStorage(object):
         """
         return None
     
+    def _resized_image(self, image, size):
+        """Return the given PIL.Image instance resized to 'size' as a PIL.Image instance.
+
+        Helper method to be used by derived classes.
+
+        """
+        import PIL.Image
+        resized = image.copy()
+        resized.thumbnail(size, PIL.Image.ANTIALIAS)
+        return resized
+
     def insert(self, filename, data, values):
         """Insert a new attachment into the storage.
 
@@ -3674,7 +3685,7 @@ class FileAttachmentStorage(AttachmentStorage):
             image.save(path)
             if values.get('has_thumbnail', False):
                 try:
-                    self._resize_image(filename, image, values)
+                    self._save_resized_image(filename, image, values)
                 except:
                     for subdir in ('', 'thumbnails', 'resized'):
                         path = os.path.join(self._directory, subdir, filename)
@@ -3725,8 +3736,7 @@ class FileAttachmentStorage(AttachmentStorage):
         else:
             return None
 
-    def _resize_image(self, filename, image, values):
-        import PIL.Image
+    def _save_resized_image(self, filename, image, values):
         image_size = values.get('image_size', (1024, 800))
         thumbnail_size = values.get('thumbnail_size', (200, 200))
         for size, path in ((thumbnail_size, self._thumbnail_src_file(filename)),
@@ -3734,9 +3744,7 @@ class FileAttachmentStorage(AttachmentStorage):
             directory = os.path.split(path)[0]
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            resized = image.copy()
-            resized.thumbnail(size, PIL.Image.ANTIALIAS)
-            resized.save(path)
+            self._resized_image(image, size).save(path)
         
     def update(self, filename, values):
         if 'has_thumbnail' in values:
@@ -3744,7 +3752,7 @@ class FileAttachmentStorage(AttachmentStorage):
                 import PIL.Image
                 path = self._resource_src_file(filename)
                 image = PIL.Image.open(path)
-                self._resize_image(filename, image, values)
+                self._save_resized_image(filename, image, values)
             else:
                 for subdir in ('thumbnails', 'resized'):
                     path = os.path.join(self._directory, subdir, filename)
@@ -3903,6 +3911,193 @@ class HttpAttachmentStorage(AttachmentStorage):
         self._post_data(self._uri+'/'+filename, data)
         
     
+class DbAttachmentStorage(AttachmentStorage):
+    """AttachmentStorage implementation storing files in the database.
+
+    Attachments are stored within a database table si binary data and some
+    additional information about them.  The table must have at least the
+    following columns:
+
+       file_id serial primary key,
+       file_name text not null,
+       byte_size int not null,
+       width int,
+       height int,
+       resized_width int,
+       resized_height int,
+       thumbnail_width int,
+       thumbnail_height int,
+       file bytea not null,
+       resized bytea,
+       thumbnail bytea
+
+    The table will additionally include one foreign key column referencing to
+    the entity, to which the attachments are related.  Typically, attachments
+    are related to some "page", which is stored in the database.
+
+    For example, when pages are stored in table 'pages', the additional column
+    will look like:
+
+       page_id int not null references pages(page_id) on delete cascade,
+
+    and we will typically want to ensure that there are only unique file names
+    for one page, so there will be a constraint:
+
+       unique page_id, file_name
+    
+
+    """
+
+    def __init__(self, table, ref_column, ref_value, base_uri):
+        """Arguments:
+
+          table -- string name of the database table to use for storing the
+            attachments.  The table schema must match the specification
+            described in the class docstring.
+          ref_column -- Reference column name (foreign key).
+          ref_value -- Reference column value matching the reference column data type.
+          base_uri -- Attachment URI prefix to use for the returned Resource
+            instance URIs.
+
+        """
+        self._data = pytis.data.dbtable(table,
+                                        ('file_id', ref_column, 'file_name', 'byte_size',
+                                         'width', 'height', 'resized_width', 'resized_height',
+                                         'thumbnail_width', 'thumbnail_height',
+                                         'file', 'resized', 'thumbnail'),
+                                        config.dbconnection)
+        self._ref_column = ref_column
+        self._ref_value = ref_value
+        self._base_uri = base_uri
+
+    def _condition(self, filename=None):
+        condition = pytis.data.EQ(self._ref_column, pytis.data.ival(self._ref_value))
+        if filename is not None:
+            condition = pytis.data.AND(condition,
+                                       pytis.data.EQ('file_name', pytis.data.sval(filename)))
+        return condition
+
+    def _make_row(self, values):
+        rowdata = []
+        for column, value in values.items():
+            t = self._data.find_column(column).type()
+            if isinstance(t, pytis.data.Binary) and value is not None:
+                value = t.Buffer(value)
+            rowdata.append((column, pytis.data.Value(t, value)))
+        return pytis.data.Row(rowdata)
+            
+    def _get_row(self, filename):
+        self._data.select(condition=self._condition(filename))
+        row = self._data.fetchone()
+        self._data.close()
+        return row
+    
+    def _row_resource(self, row):
+        if row['thumbnail_width'].value():
+            thumbnail_size = (row['thumbnail_width'].value(), row['thumbnail_height'].value())
+        else:
+            thumbnail_size = None
+        return self._resource(row['file_name'].value(),
+                              info=dict(byte_size=row['byte_size'].export()),
+                              size=(row['width'].value(), row['height'].value()),
+                              has_thumbnail=thumbnail_size is not None,
+                              thumbnail_size=thumbnail_size)
+
+    def _resource_uri(self, filename):
+        return self._base_uri+'/'+filename
+    
+    def _image_uri(self, filename):
+        return self._base_uri+'/resized/'+filename
+    
+    def _thumbnail_uri(self, filename):
+        return self._base_uri+'/thumbnails/'+filename
+
+    def _image(self, filedata):
+        import PIL.Image, cStringIO
+        try:
+            image = PIL.Image.open(cStringIO.StringIO(filedata))
+        except IOError:
+            image = None
+        return image
+    
+    def _computed_row_values(self, image, has_thumbnail=False,
+                             image_size=(1024, 800), thumbnail_size=(200, 200), **values):
+        import cStringIO
+        row_values = {}
+        for size, column in ((image_size, 'resized'), (thumbnail_size, 'thumbnail')):
+            if has_thumbnail:
+                stream = cStringIO.StringIO()
+                self._resized_image(image, size).save(stream, image.format)
+                buffer_value = buffer(stream.getvalue())
+                width, height = size
+            else:
+                buffer_value, width, height = None, None, None
+            row_values[column] = buffer_value
+            row_values[column+'_width'] = width
+            row_values[column+'_height'] = height
+        return row_values
+    
+    def resource(self, filename):
+        row = self._get_row(filename)
+        if row:
+            return self._row_resource(row)
+        else:
+            return None
+        
+    def resources(self):
+        resources = []
+        columns = [c.id() for c in self._data.columns()
+                   if not isinstance(c.type(), pytis.data.Binary)]
+        self._data.select(condition=self._condition(), columns=columns)
+        while True:
+            row = self._data.fetchone()
+            if row is None:
+                break
+            resources.append(self._row_resource(row))
+        self._data.close()
+        return resources
+ 
+    def insert(self, filename, data, values):
+        filedata = buffer(data.read())
+        rowdata = {self._ref_column: self._ref_value,
+                   'file_name': filename,
+                   'file': filedata,
+                   'byte_size': len(filedata)}
+        image = self._image(filedata)
+        if image:
+            rowdata['width'] = image.size[0]
+            rowdata['height'] = image.size[1]
+            rowdata.update(self._computed_row_values(image, **values))
+        try:
+            self._data.insert(self._make_row(rowdata))
+        except pytis.data.DBException as e:
+            return str(e)
+        else:
+            return None
+        
+    def update(self, filename, values):
+        row = self._get_row(filename)
+        if row:
+            image = self._image(row['file'].value().buffer())
+            if image:
+                rowdata = self._computed_row_values(image, **values)
+                try:
+                    self._data.update(row['file_id'], self._make_row(rowdata))
+                except pytis.data.DBException as e:
+                    return str(e)
+            return None
+        else:
+            return _("Attachment '%s' not found!", filename)
+ 
+    def retrieve(self, filename):
+        row = self._get_row(filename)
+        if row:
+            import cStringIO
+            return cStringIO.StringIO(row['file'].value().buffer())
+        else:
+            return None
+
+        
 class Specification(object):
     """Souhrnná specifikační třída sestavující specifikace automaticky.
 
