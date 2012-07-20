@@ -1070,6 +1070,7 @@ class NumericField(TextField, SpinnableField):
         if self._slider:
             self._slider.Enable(False)
    
+
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
@@ -1125,7 +1126,6 @@ class GenericEnumerationField(InputField):
         
         """
         self._reload_enumeration()
-        
     
 
 class RadioBoxField(Unlabeled, GenericEnumerationField):
@@ -2649,6 +2649,4 @@ class StructuredTextField(TextField):
             return len(match.group('level'))
         else:
             return 0
-        
-        
         
