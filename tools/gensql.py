@@ -412,11 +412,22 @@ class _GsqlSpec(object):
         cls = 'PrimaryColumn' if name in [c.split('.')[-1] for c in self.key_columns()] else 'Column'
         name = repr(name)
         constraints = [c.lower() for c in column.constraints]
-        if isinstance(column.type, pytis.data.Type):
-            type_ = 'pytis.data.%s(' % (column.type.__class__.__name__,)
+        ctype = column.type
+        if isinstance(ctype, pytis.data.Type):
+            arguments = []
+            if isinstance(ctype, pytis.data.String):
+                if ctype.minlen() is not None:
+                    arguments.append('minlen=%s' % (ctype.minlen(),))
+                if ctype.maxlen() is not None:
+                    arguments.append('maxlen=%s' % (ctype.maxlen(),))
+            elif isinstance(ctype, pytis.data.Float):
+                if ctype.precision() is not None:
+                    arguments.append('precision=%s' % (ctype.precision(),))
+                if ctype.digits() is not None:
+                    arguments.append('digits=%s' % (ctype.digits(),))
             if 'not null' in constraints or 'unique not null' in constraints:
-                type_ += 'not_null=True'
-            type_ += ')' 
+                arguments.append('not_null=True')
+            type_ = 'pytis.data.%s(%s)' % (ctype.__class__.__name__, string.join(arguments, ', '),)
         else:
             type_ = self._convert_string_type(column.type)
         unique = 'unique' in constraints or 'unique not null' in constraints
