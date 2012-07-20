@@ -2986,7 +2986,7 @@ class _GsqlFunction(_GsqlSpec):
         return names
     db_all_names = classmethod(db_all_names)
     
-    def _convert_column(self, column):
+    def _convert_column(self, column, out=False):
         name = column.name
         ctype = column.typ
         if isinstance(ctype, pytis.data.Type):
@@ -2997,7 +2997,10 @@ class _GsqlFunction(_GsqlSpec):
             type_ = self._convert_string_type(ctype)
         else:
             type_ = '#XXX:type:%s' % (ctype,)
-        return 'Column(%s, %s)' % (repr(name), type_,)
+        arguments = [repr(name), type_]
+        if out:
+            arguments.append('out=True')
+        return 'Column(%s)' % (string.join(arguments, ', '),)
 
     def convert(self):
         name = self._name
@@ -3011,12 +3014,12 @@ class _GsqlFunction(_GsqlSpec):
         if self._schemas:
             items.append(self._convert_schemas())
         items.append('    name = %s' % (repr(name),))
-        arguments = string.join([self._convert_column(a) for a in self._ins], ', ')
+        argument_list = ([self._convert_column(a) for a in self._ins] +
+                         [self._convert_column(a, out=True) for a in self._outs])
+        arguments = string.join(argument_list, ', ')
         if arguments:
             arguments += ','
         items.append('    arguments = (%s)' % (arguments,))
-        for a in self._outs:
-            items.append('    #XXX:out:%s' % (a,))
         output_type = self._output_type
         if isinstance(output_type, ReturnType):
             multirow = output_type.setof
