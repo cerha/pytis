@@ -1846,7 +1846,7 @@ class Select(_GsqlSpec):
             elif jtype == JoinType.LEFT_OUTER:
                 result = '.outerjoin(%s, %s)' % (relation, self._convert_raw_condition(condition, True),)
             elif jtype == JoinType.CROSS and not condition:
-                result = ', %s' % (relation,)
+                result = '.join(%s, sqlalchemy.sql.true())' % (relation,)
             else:
                 result = '.XXX:%s(%s, %s)' % (jtype, relation, self._convert_raw_condition(condition),)
             return result
@@ -1898,7 +1898,7 @@ class Select(_GsqlSpec):
                 c = self._convert_raw_condition(condition, True)
                 result = '%s.outerjoin(%s, %s)' % (last_relation, relation, c,)
             elif jtype == JoinType.CROSS and not condition:
-                result = '%s.join(%s, "true")' % (last_relation, relation,)
+                result = '%s.join(%s, sqlalchemy.sql.true())' % (last_relation, relation,)
             else:
                 c = self._convert_raw_condition(condition)
                 result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)
