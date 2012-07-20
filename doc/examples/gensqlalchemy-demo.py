@@ -30,7 +30,7 @@ class Foo(SQLTable):
     name = 'foo'
     fields = (PrimaryColumn('id', pytis.data.Serial()),
               Column('foo', pytis.data.String(), doc='some string', index=dict(method='hash')),
-              Column('n', pytis.data.Integer(not_null=True), doc='some number'),
+              Column('n', pytis.data.Integer(not_null=True), check='n<1000', doc='some number'),
               Column('b', pytis.data.Boolean(), default=True),
               Column('description', pytis.data.String()),
               )

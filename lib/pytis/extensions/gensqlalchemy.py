@@ -242,6 +242,8 @@ class Column(pytis.data.ColumnSpec):
                 # Let's disable forward references for now as they can cause
                 # crashes in view definitions.
                 args.append(sqlalchemy.ForeignKey(*r_args, **kwargs))
+        if self._check:
+            args.append(sqlalchemy.CheckConstraint(self._check))
         if self._index and not isinstance(self._index, dict):
             index = True
         else:

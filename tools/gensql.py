@@ -505,10 +505,14 @@ class _GsqlSpec(object):
             index = None
         if index:
             spec += ', index=%s' % (index,)
-        spec += ')'
+        for c in column.constraints:
+            if c.lower().startswith('check(') or c.lower().startswith('check ('):
+                c = c[5:].strip()
+                spec += ', check="%s"' % (c[1:-1],)
         for c in constraints:
-            if c not in ('unique', 'not null',):
+            if c not in ('unique', 'not null',) and not c.startswith('check(') and not c.startswith('check ('):
                 spec = spec + (', #XXX:%s' % (c,))
+        spec += ')'
         return spec
 
     def _convert_schemas(self):
