@@ -56,7 +56,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def make_type(self, type_name, columns):
         sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
-        column_string = string.join(['%s %s' % (c.name, c.type,) for c in sqlalchemy_columns], ', ')
+        def ctype(c):
+            return c.type.compile(engine.dialect)
+        column_string = string.join(['%s %s' % (c.name, ctype(c),) for c in sqlalchemy_columns], ', ')
         command = 'CREATE TYPE %s AS (%s)' % (type_name, column_string,)
         self.connection.execute(command)
 
