@@ -1030,14 +1030,16 @@ class SQLPyFunction(SQLFunctional):
     _STATICMETHOD_MATCHER = re.compile('( *)@staticmethod\r?\n?', re.MULTILINE)
     
     def body(self):
-        arglist = string.join([c.id() for c in self.arguments], ', ')
+        main_method_name = self.name
+        arguments = inspect.getargspec(getattr(self, main_method_name)).args
+        arglist = string.join(arguments, ', ')
         lines = ['#def %s(%s):' % (self.name, arglist,)]
         if arglist:
             l = '    %s = args' % (arglist,) # hard-wired indentation
             if len(self.arguments) == 1:
                 l += '[0]'
             lines.append(l)
-        main_lines = self._method_source_lines(self.name, 0)
+        main_lines = self._method_source_lines(main_method_name, 0)
         main_lines = main_lines[1:]
         prefix = 'sub_'
         for name in dir(self):
