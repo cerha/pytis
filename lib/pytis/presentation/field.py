@@ -1106,6 +1106,4 @@ class PresentedRow(object):
         storage = column.attachment_storage
         if isinstance(storage, collections.Callable):
             storage = storage(self)
-        else:
-            assert not kwargs, kwargs
         return storage
