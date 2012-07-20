@@ -368,6 +368,7 @@ class _GsqlSpec(object):
         mapping = {'name': 'pytis.data.Name()',
                    'smallint': 'pytis.data.Integer()',
                    'integer': 'pytis.data.Integer()',
+                   'int': 'pytis.data.Integer()',
                    'bigint': 'pytis.data.LargeInteger()',
                    'bytea': 'pytis.data.Binary()',
                    'inet': 'pytis.data.Inet()',
@@ -382,6 +383,7 @@ class _GsqlSpec(object):
                    'void': 'None',
                    'trigger': '_CONVERT_THIS_FUNCTION_TO_TRIGGER',
                    'record': 'pytis.data.String()',
+                   'float(40)': 'pytis.data.DoublePrecision()',
                    }
         type_ = mapping.get(stype)
         if type_ is None:

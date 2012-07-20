@@ -766,6 +766,19 @@ class Float(Number):
             alchemy_type = sqlalchemy.Float(precision=self.precision())
         return alchemy_type
 
+
+class DoublePrecision(Float):
+    """Database double precision type.
+
+    Useful in specifications.
+    
+    """
+    def __init__(self):
+        super(DoublePrecision, self).__init__()
+
+    def sqlalchemy_type(self):
+        return sqlalchemy.dialects.postgresql.DOUBLE_PRECISION()
+
         
 class Monetary(Float):
     """Monetary type.
@@ -816,7 +829,11 @@ class String(Limited):
 
 
 class Name(String):
-    """String type to be identified as 'name' in the database."""
+    """String type to be identified as 'name' in the database.
+
+    Useful in database specifications.
+    
+    """
     
     def __init__(self):
         super(Name, self).__init__()
