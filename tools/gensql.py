@@ -2769,13 +2769,7 @@ class _GsqlView(_GsqlSpec):
                 items.append('    def on_%s(self):' % (kind,))
                 items.append ('        return ("%s",)' % (quote(command),))
             else:
-                def make_table_name(r):
-                    table_name = r.relation
-                    if isinstance(r, SelectRelation) and r.schema is not None:
-                        table_name = '%s.%s' % (r.schema, table_name,)
-                    return table_name
-                real_order = [make_table_name(r) for r in self._relations]
-                order_string = string.join(["specification_by_name('%s')" % (o,) for o in real_order], ', ')
+                order_string = string.join(["specification_by_name('%s')" % (o,) for o in self._tables], ', ')
                 if order_string:
                     order_string += ','
                 items.append('    %s_order = (%s)' % (kind, order_string,))
