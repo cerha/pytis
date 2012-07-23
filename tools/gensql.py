@@ -1481,24 +1481,49 @@ class _GsqlTable(_GsqlSpec):
             items.append('                  )')
         items.append('    with_oids = %s' % (repr(self._with_oids),))
         unique = None
+        check = []
         sql = self._sql
-        if sql:
+        while sql:
             sql = sql.strip()
             start = sql.find('(')
-            end = sql.find(')')
-            if (sql.lower().startswith('unique') and
-                start >= 0 and end >= 0 and start < end and
-                sql[start+1:end].find('(') == -1):
+            if start < 0:
+                break
+            level = 1
+            end = start + 1
+            l = len(sql)
+            while end < l:
+                if sql[end] == '(':
+                    level += 1
+                elif sql[end] == ')':
+                    level -= 1
+                    if level <= 0:
+                        break
+                end += 1
+            if level > 0:
+                break
+            action = sql[:start].rstrip().lower()
+            def trim(sql):
+                sql = sql[end+1:].strip()
+                if sql and sql[0] == ',':
+                    sql = sql[1:].lstrip()
+                return sql
+            if action == 'unique':
                 components = sql[start+1:end].split(',')
                 components = ["'%s'" % (c.strip(),) for c in components]
                 unique = "(%s,)" % (string.join(components, ', '),)
-                sql = None
+                sql = trim(sql)
+            elif action == 'check':
+                check.append(sql[start+1:end])
+                sql = trim(sql)
+            else:
+                break
         if self._indexes:
             items.append('#XXX: %s' % (self._indexes,))
         if unique:
             items.append('    unique = (%s,)' % (unique,))
-        if False:
-            items.append('    check = ()')
+        if check:
+            check_string = string.join([repr(c) for c in check], ', ') + ','                
+            items.append('    check = (%s)' % (check_string,))
         if sql:            
             items.append('#XXX: %s' % (sql.replace('\n', '\n#'),))
         items.append(self._convert_depends())
