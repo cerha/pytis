@@ -29,6 +29,7 @@ from sqlalchemy.ext.compiler import compiles
 import types
 import pytis.data
 
+
 ## SQLAlchemy extensions
 
 _CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
@@ -173,6 +174,20 @@ def visit_rule(element, compiler, **kw):
     return ('CREATE OR REPLACE RULE "%s__%s" AS ON %s TO "%s"."%s" DO %s %s' %
             (table.schema, rule_name, element.action, table.schema, table.name, element.kind, sql,))
 
+class FullOuterJoin(sqlalchemy.sql.Join):
+    __visit_name__ = 'full_outer_join'
+    def __init__(self, left, right, onclause=None):
+        super(FullOuterJoin, self).__init__(left, right, onclause=onclause, isouter=True)
+@compiles(FullOuterJoin)
+def visit_full_outer_join(join, compiler, asfrom=False, **kwargs):
+    return (
+        join.left._compiler_dispatch(compiler, asfrom=True, **kwargs) + 
+        " FULL OUTER JOIN " + 
+        join.right._compiler_dispatch(compiler, asfrom=True, **kwargs) + 
+        " ON " + 
+        join.onclause._compiler_dispatch(compiler, **kwargs)
+    )
+
 class _SQLExternal(sqlalchemy.sql.expression.FromClause):
 
     def __init__(self, name):
@@ -195,6 +210,7 @@ def compile_string(element, compiler, **kwargs):
     else:
         return 'VARCHAR(%d)' % (element.length,)
 
+
 ## Columns
         
 class Column(pytis.data.ColumnSpec):
@@ -266,6 +282,7 @@ class PrimaryColumn(Column):
         kwargs['primary_key'] = True
         super(PrimaryColumn, self).__init__(*args, **kwargs)
 
+
 ## Utilities
 
 _current_search_path = None
@@ -563,6 +580,7 @@ class SQLSchematicObject(SQLObject):
     def search_path(self):
         return self._search_path
 
+
 ## Database objects
 
 class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
@@ -1140,6 +1158,7 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
+
 ## Specification processing
 
 engine = None

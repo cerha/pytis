@@ -1857,7 +1857,7 @@ class Select(_GsqlSpec):
         return self._convert_simple_relations(definitions, level)
 
     def _convert_simple_relations(self, definitions, level):
-        def convert_relation(i, rel):
+        def convert_relation(i, rel, prev_result):
             jtype = rel.jointype
             if isinstance(rel.relation, Select):
                 raise Exception("Program error")
@@ -1890,16 +1890,19 @@ class Select(_GsqlSpec):
             if jtype == JoinType.FROM:
                 result = relation
             elif jtype == JoinType.INNER:
-                result = '.join(%s, %s)' % (relation, self._convert_raw_condition(condition, True),)
+                result = '%s.join(%s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True),)
             elif jtype == JoinType.LEFT_OUTER:
-                result = '.outerjoin(%s, %s)' % (relation, self._convert_raw_condition(condition, True),)
+                result = '%s.outerjoin(%s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True),)
             elif jtype == JoinType.CROSS and not condition:
-                result = '.join(%s, sqlalchemy.sql.true())' % (relation,)
+                result = '%s.join(%s, sqlalchemy.sql.true())' % (prev_result, relation,)
+            elif jtype == JoinType.FULL_OUTER:
+                result = 'FullOuterJoin(%s, %s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True))
             else:
-                result = '.XXX:%s(%s, %s)' % (jtype, relation, self._convert_raw_condition(condition),)
+                result = '%s.XXX:%s(%s, %s)' % (prev_result, jtype, relation, self._convert_raw_condition(condition),)
             return result
-        joins = [convert_relation(i, r) for i, r in enumerate(self._relations)]
-        result = ''.join(joins)
+        result = ''
+        for i, r in enumerate(self._relations):
+            result = convert_relation(i, r, result)
         condition = self._convert_raw_condition(self._relations[0].condition)
         return result, condition
 
@@ -1947,6 +1950,9 @@ class Select(_GsqlSpec):
                 result = '%s.outerjoin(%s, %s)' % (last_relation, relation, c,)
             elif jtype == JoinType.CROSS and not condition:
                 result = '%s.join(%s, sqlalchemy.sql.true())' % (last_relation, relation,)
+            elif jtype == JoinType.FULL_OUTER:
+                c = self._convert_raw_condition(condition, True)
+                result = 'FullOuterJoin(%s, %s, %s)' % (last_relation, relation, c,)
             else:
                 c = self._convert_raw_condition(condition)
                 result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)

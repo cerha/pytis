@@ -152,7 +152,7 @@ class FromSelect(SQLView):
     def condition(class_):
         foo = t.Foo
         select = sqlalchemy.select([foo], from_obj=[foo]).alias('s')
-        return sqlalchemy.select(['s.*'], from_obj=[select], whereclause=('s.n > 0'))
+        return sqlalchemy.select(['s.*'], from_obj=[select], whereclause='s.n > 0')
 
 class LimitedView(SQLView):
     @classmethod
@@ -168,6 +168,14 @@ class EditableView(SQLView):
         return sqlalchemy.select([c.Foo.id, c.Foo.description.label('d1'),
                                   c.Bar.id.label('id2'), c.Bar.description.label('d2')],
                                  from_obj=[t.Foo.join(t.Bar)])
+
+class BogusView(SQLView):
+    "One should avoid using outer joins when possible."
+    schemas = ((Private, 'public',),)
+    @classmethod
+    def condition(class_):
+        foo, bar = t.Foo, t.Bar
+        return sqlalchemy.select([foo, bar], from_obj=[FullOuterJoin(foo, bar, foo.c.id==bar.c.id)])
 
 class Func(SQLFunction):
     name = 'plus'
