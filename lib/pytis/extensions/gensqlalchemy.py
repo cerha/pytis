@@ -742,6 +742,7 @@ class SQLTable(_SQLTabular):
     init_values = ()
     check = ()
     unique = ()
+    foreign_keys = ()
     with_oids = False
 
     def __new__(cls, metadata, search_path):
@@ -769,6 +770,12 @@ class SQLTable(_SQLTabular):
             args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
             args += (sqlalchemy.UniqueConstraint (*unique),)
+        for foreign_key in cls.foreign_keys:
+            columns, refcolumns = foreign_key.args()
+            refcolumns = [c.get(None, None) if isinstance(c, ReferenceLookup.Reference) else c
+                          for c in refcolumns]
+            kwargs = foreign_key.kwargs()
+            args += (sqlalchemy.ForeignKeyConstraint(columns, refcolumns, **kwargs),)
         obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
         obj.pytis_key = key
         return obj

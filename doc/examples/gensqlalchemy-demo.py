@@ -105,6 +105,14 @@ class LoggingTableTrigger(_LogTrigger):
     table = LoggingTable
     arguments = (LoggingTable.pytis_name(),)
 
+class ReferencingTable(SQLTable):
+    fields = (PrimaryColumn('id', pytis.data.Serial()),
+              Column('name', pytis.data.String()),
+              Column('action', pytis.data.String()),
+              )
+    foreign_keys = (a(('name', 'action',), (r.LogTable.table_name, r.LogTable.action,),
+                      onupdate='cascade', ondelete='cascade'),)
+
 class Circular1(SQLTable):
     """Circular REFERENCES, together with Circular2."""
     fields = (PrimaryColumn('id', pytis.data.Integer()),
