@@ -1942,10 +1942,24 @@ class RecordForm(LookupForm):
             position is not None and
             (not is_sequence(position) or len(position) != 1 or position[0].value() is not None) and
             row is None):
-            run_dialog(Warning, _(u"Záznam nenalezen"))
+            if self._search_again_unfiltered():
+                self._apply_profile(self._profiles[0])
+                return self.select_row(position)
             return False
         return self._select_row(row, quiet=quiet)
 
+    def _search_again_unfiltered(self):
+        if self._lf_filter:
+            if run_dialog(Question, title=_(u"Záznam nenalezen"),
+                          message=_(u"Požadovaný záznam nebyl nalezen. "
+                                    u"Může to být tím, že formulář má zapnutý filtr.\n"
+                                    u"Chcete aktivovat výchozí profil a zkusit záznam "
+                                    u"vyhledat znovu?")):
+                return True
+        else:
+            run_dialog(Warning, _(u"Záznam nenalezen"))
+        return False
+    
     def current_row(self):
         """Vrať instanci PresentedRow právě aktivního řádku.
 

@@ -1371,7 +1371,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             row_number = self._get_row_number(row)
             if row_number is None:
                 if not quiet:
-                    run_dialog(Warning, _(u"Záznam nenalezen"))
+                    if self._search_again_unfiltered():
+                        self._apply_profile(self._profiles[0])
+                        return self._select_row(row)
                 return False
         else:
             row_number = -1
