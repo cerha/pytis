@@ -258,6 +258,8 @@ _std_table_nolog('c_pytis_menu_actions',
                   C('shortname', TString, constraints=('not null',)),
                   C('action_title', TString),
                   C('description', TString),
+                  # Redundant column computed by c_pytis_menu_actions_trigger_before.
+                  C('spec_name', TString), 
                   ),
                  """List of available application actions.""",
                  grant=db_rights
@@ -283,11 +285,32 @@ _trigger_function('c_pytis_menu_actions_trigger', body=c_pytis_menu_actions_trig
                   depends=('c_pytis_menu_actions', 'pytis_update_actions_structure', 'e_pytis_disabled_dmp_triggers',))
 
 sql_raw("""
+create or replace function c_pytis_menu_actions_trigger_before() returns trigger as $$
+declare
+    kind text;
+begin
+    kind := split_part(new.shortname, '/', 1);
+    new.spec_name = null;
+    if kind in ('action', 'proc', 'print') then
+       new.spec_name = split_part(new.shortname, '/', 3);
+    end if;
+    if kind in ('form', 'NEW_RECORD', 'handle') then
+       new.spec_name = split_part(new.shortname, '/', 2);
+    end if;
+    return new;
+end;
+$$ language plpgsql;
+""", name='c_pytis_menu_actions_trigger_before')
+
+sql_raw("""
 create trigger c_pytis_menu_actions_all_after_rights after insert or update or delete on c_pytis_menu_actions
 for each statement execute procedure c_pytis_menu_actions_trigger();
+
+create trigger c_pytis_menu_actions_all_trigger_before before insert or update on c_pytis_menu_actions
+for each row execute procedure c_pytis_menu_actions_trigger_before();
 """,
         name='c_pytis_menu_actions_triggers',
-        depends=('c_pytis_menu_actions_trigger',))
+        depends=('c_pytis_menu_actions_trigger', 'c_pytis_menu_actions_trigger_before'))
 
 sql_raw("""
 create or replace view ev_pytis_short_actions

@@ -20,7 +20,7 @@
 import pytis.data as pd, pytis.presentation as pp
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, HGroup, Profile, \
     Binding, computer
-from pytis.util import lcg_to_html
+from pytis.util import parse_lcg_text
 
 class _TreeOrderLTree(pp.PrettyFoldable, pd.String):
     pass
@@ -47,7 +47,8 @@ class Help(Specification):
     def fields(self):
         return (
             Field('help_id'),
-            Field('menuid'),
+            Field('fullname', _(u"Fullname"), width=50, editable=Editable.NEVER),
+            Field('spec_name', _("Název specifikace"), width=50, editable=Editable.NEVER),
             Field('page_id'),
             Field('position'),
             Field('position_nsub'),
@@ -55,8 +56,15 @@ class Help(Specification):
                   type=_TreeOrderLTree(tree_column_id='position', subcount_column_id='position_nsub'),
                   ),
             Field('description', _(u"Popis"), width=70, editable=computer(self._is_page),),
-            Field('content', _(u"Obsah"), width=80, height=20, text_format=pp.TextFormat.LCG, 
-                  compact=True, attachment_storage=self._attachment_storage),
+            Field('content', _(u"Obsah"), width=80, height=20, compact=True,
+                  text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
+            Field('short_menu_help', _(u"Popis položky menu"), dbcolumn='menu_help',
+                  width=80, height=2, compact=True, text_format=pp.TextFormat.LCG),
+            Field('menu_help', _(u"Popis položky menu"), width=80, height=20, compact=True,
+                  text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
+            Field('spec_description', _(u"Stručný popis náhledu"), width=80, height=3, compact=True),
+            Field('spec_help', _(u"Podrobná nápověda náhledu"), width=80, height=20, compact=True,
+                  text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
             Field('parent', _("Nadřízená položka"), not_null=False,
                   codebook='help.HelpParents', value_column='page_id',
                   editable=computer(self._is_page),
@@ -68,7 +76,6 @@ class Help(Specification):
                   descr=_("Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné "
                           "úrovni hierarchie).  Pokud nevyplníte, stránka bude automaticky "
                           "zařazena na konec.")),
-            Field('fullname', _(u"Fullname"), width=50),
             )
 
     def _is_page(self, record, page_id):
@@ -80,19 +87,47 @@ class Help(Specification):
     def _attachment_storage(self, record):
         if record['page_id'].value():
             table, ref = ('e_pytis_help_pages_attachments', 'page_id')
-        elif record['menuid'].value():
-            table, ref = ('e_pytis_menu_help_attachments', 'menuid')
+        elif record['spec_name'].value():
+            table, ref = ('e_pytis_help_spec_attachments', 'spec_name')
         else:
             # The attachments are not allowed for some special pages, such as the menu root page.
             return None
         return pp.DbAttachmentStorage(table, ref, record[ref].value(), base_uri='resource:')
-
-    cb = CodebookSpec(display='title')
-    columns = ('title', 'description')
-    layout = ('title', 'description', 'parent', 'ord', 'content')
-    sorting = ('position', pd.ASCENDENT),
-    bindings = (
-        Binding('content', _("Obsah"),
-                content=lambda r: lcg_to_html(r['content'].value() or ''),),
-        )
     
+    def _content(self, record):
+        content = '\n\n'.join([record[f].value()
+                               for f in ('menu_help', 'spec_description', 'spec_help', 'content')
+                               if record[f].value() is not None])
+        storage = self._attachment_storage(record)
+        return parse_lcg_text(content, resources=storage and storage.resources() or ())
+        
+    def redirect(self, record):
+        if record['page_id'].value() is not None:
+            return None
+        elif record['spec_name'].value() is not None:
+            return 'help.SpecHelp'
+        elif record['fullname'].value() is not None:
+            return 'help.MenuHelp'
+        else:
+            return 'help.NoHelp'
+    def bindings(self):
+        return (
+            Binding('content', _("Obsah"), content=self._content),
+            )
+            
+
+    layout = ('title', 'description', 'parent', 'ord', 'content')
+    cb = CodebookSpec(display='title')
+    columns = ('title', 'description', 'spec_name')
+    sorting = ('position', pd.ASCENDENT),
+    
+
+class SpecHelp(Help):
+    layout = ('title', 'fullname', 'short_menu_help', 'spec_name', 'spec_description', 'spec_help')
+
+    
+class MenuHelp(Help):
+    layout = ('title', 'fullname', 'menu_help')
+
+class NoHelp(Help):
+    layout = ('title', pp.Text(_(u"Tato položka nemá editovatelnou nápovědu.")))
