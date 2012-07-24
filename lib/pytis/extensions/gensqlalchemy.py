@@ -194,6 +194,30 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
         super(_SQLExternal, self).__init__()
         self.name = name
 
+    class _PytisColumn(object):
+        def __init__(self, name):
+            self.name = name
+        def __getattr__(self, name, *args, **kwargs):
+            column = '%s.%s' % (self.name, name,)
+            return sqlalchemy.literal_column(column)
+
+    def _pytis_column(self):
+        return self._PytisColumn(self.name)
+    c = property(_pytis_column)
+
+    class _PytisAlias(sqlalchemy.sql.Alias):
+        def __init__(self, selectable, name, c):
+            sqlalchemy.sql.Alias.__init__(self, selectable, name)
+            self._pytis_c = c
+        def _pytis_column(self):
+            return self._pytis_c
+        c = property(_pytis_column)
+        def get_children(self):
+            return (self.element,)
+
+    def alias(self, name):
+        return self._PytisAlias(self, name, self._PytisColumn(self.name))
+
 class NAME(sqlalchemy.String):
     pass
 @compiles(NAME, 'postgresql')
@@ -687,8 +711,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         for table_c in tabular.primary_key.columns:
             for c in self._original_columns():
                 tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-                if tc.name == table_c.name:
-                    table = tc.table
+                table, name = tc.table, tc.name
+                if name == table_c.name:
                     if isinstance(table, sqlalchemy.sql.expression.Alias):
                         table = table.element
                     if table is table_c.table:
@@ -817,8 +841,17 @@ class SQLTable(_SQLTabular):
     def _add_dependencies(self):
         super(SQLTable, self)._add_dependencies()
         for inherited in self.inherits:
-            name = '%s.%s' % (self.schema, inherited.pytis_name(),)
-            self.add_is_dependent_on(object_by_name(name, allow_external=False))
+            pytis_name = inherited.pytis_name()
+            for s in self.search_path():
+                name = '%s.%s' % (s, pytis_name,)
+                try:
+                    o = object_by_name(name, allow_external=False)
+                except:
+                    continue
+                self.add_is_dependent_on(o)
+                break
+            else:
+                raise Exception("Unresolved dependency", (pytis_name, self.search_path(),))
 
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)

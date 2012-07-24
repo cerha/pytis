@@ -174,6 +174,7 @@ class _GsqlSpec(object):
             name = '@%d' % self._serial_number
         self._set_name(name)
         self._depends = depends
+        self._conversion_depends = depends
         self._doc = doc
         self._grant = grant
         for g in grant:
@@ -348,6 +349,9 @@ class _GsqlSpec(object):
         doc = string.join([line.strip() for line in doc.split('\n')], '\n')
         return '"""%s"""' % (doc,)
 
+    def _convert_literal(self, literal):
+        return literal.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+
     def _convert_value(self, value):
         if value.lower() == 'null':
             return 'None'
@@ -418,7 +422,7 @@ class _GsqlSpec(object):
                 arguments.append('precision=%s' % (ctype.precision(),))
             if ctype.digits() is not None:
                 arguments.append('digits=%s' % (ctype.digits(),))
-        elif isinstance(ctype, (pytis.data.DateTime, pytis.data.Time,)):
+        elif isinstance(ctype, (pytis.data.DateTime, pytis.data.Time,)) and not isinstance(ctype, pytis.data.Date):
             if not ctype.utc():
                 arguments.append('utc=False')
         if 'not null' in constraints or 'unique not null' in constraints:
@@ -426,7 +430,7 @@ class _GsqlSpec(object):
         return 'pytis.data.%s(%s)' % (ctype.__class__.__name__, string.join(arguments, ', '),)
         
     def _convert_column(self, column):
-        name = column.name
+        name = column.name.lower()
         pos = name.rfind('.')
         if pos >= 0:
             name = name[pos+1:]
@@ -516,11 +520,15 @@ class _GsqlSpec(object):
         return spec
 
     def _convert_schemas(self):
-        schemas = tuple([tuple(s.split(',')) for s in self._schemas])
+        schemas = tuple([tuple([s.strip() for s in ss.split(',')]) for ss in self._schemas])
         return '    schemas = %s' % (repr(schemas),)
 
     def _convert_depends(self):
-        depends_string = string.join(["specification_by_name('%s')" % (d,) for d in self._depends], ', ')
+        def convert(dependency):
+            dependency = dependency.lower()
+            selector = 'object_by_name' if dependency.find('.') >= 0 else 'specification_by_name'
+            return "%s('%s')" % (selector, dependency,)
+        depends_string = string.join([convert(d) for d in self._conversion_depends], ', ')
         if depends_string:
             depends_string += ','
         return '    depends_on = (%s)' % (depends_string,)
@@ -532,15 +540,20 @@ class _GsqlSpec(object):
         "Vrať novou pythonovou specifikaci daného objektu jako string."
         return '#XXX:%s' % (self,)
 
-    def _add_conversion_dependency(self, o):
+    def _add_conversion_dependency(self, o, schema):
         if isinstance(o, basestring):
             pos = o.find('(')
             if pos >= 0:
                 o = o[:pos].rstrip()
-            if o.startswith('pg_') or o.startswith('sfn_'):
+            if o.startswith('pg_'):
                 return
         if o not in self._depends and o is not self and o != self._name:
             self._depends = self._depends + (o,)
+        if schema is not None:
+            self._conversion_depends = tuple([d for d in self._conversion_depends if d != o])
+            o = '%s.%s' % (schema, o,)
+        if o not in self._conversion_depends and o is not self and o != self._name:
+            self._conversion_depends = self._conversion_depends + (o,)            
 
 
 class Column(object):
@@ -806,7 +819,7 @@ class _GsqlType(_GsqlSpec):
         return result
 
     def _convert_column(self, column):
-        name = column.name
+        name = column.name.lower()
         ctype = column.type
         if isinstance(ctype, pytis.data.Type):
             type_ = self._convert_pytis_type(ctype)
@@ -821,7 +834,7 @@ class _GsqlType(_GsqlSpec):
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
-        items.append('    name = %s' % (repr(self._name),))
+        items.append('    name = %s' % (repr(self._name.lower()),))
         if self._schemas:
             items.append(self._convert_schemas())
         items.append('    fields = (')
@@ -899,7 +912,7 @@ class _GsqlSchema(_GsqlSpec):
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
-        items.append('    name = %s' % (repr(self._name),))
+        items.append('    name = %s' % (repr(self._name.lower()),))
         if self._owner:
             items.append('    owner = %s' % (repr(self._owner),))
         items.append(self._convert_depends())
@@ -1453,7 +1466,7 @@ class _GsqlTable(_GsqlSpec):
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
-        items.append('    name = %s' % (repr(self._name),))
+        items.append('    name = %s' % (repr(self._name.lower()),))
         if self._schemas:
             items.append(self._convert_schemas())
         items.append('    fields = (')
@@ -1767,7 +1780,7 @@ class Select(_GsqlSpec):
                 alias = relation.relation
             else:
                 alias = relation.name
-        return alias.replace('(', '__').replace(')', '__')
+        return alias.lower().replace('(', '__').replace(')', '__')
  
     def _convert_select_columns(self):
         column_spec = []
@@ -1813,11 +1826,16 @@ class Select(_GsqlSpec):
             else:
                 column_spec.append('cls._exclude(%s)' % (relname,))
         if self._include_columns:
-            included = [self._convert_select_column(c) for c in self._include_columns]
+            simple_relations = [r.alias for r in self._relations
+                                if isinstance(r, SelectRelation) and
+                                r.alias is not None and
+                                isinstance(r.relation, basestring) and
+                                r.relation.find('(') == -1]
+            included = [self._convert_select_column(c, simple_relations) for c in self._include_columns]
             column_spec.append('[%s]' % (string.join(included, ', '),))
         return string.join(column_spec, ' + ')
 
-    def _convert_select_column(self, column):
+    def _convert_select_column(self, column, simple_relations):
         if isinstance(column, basestring):
             cname = column
             alias = None
@@ -1829,12 +1847,17 @@ class Select(_GsqlSpec):
         plain_name = cname
         pos = plain_name.rfind('.')
         if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
-            plain_name = plain_name[pos+1:]
-        alias = None if (column.alias == plain_name and cname == plain_name) else column.alias
+            plain_name = plain_name[pos+1:].lower()
+        alias = None if (column.alias.lower() == plain_name and cname == plain_name) else column.alias.lower()
         if alias is None:
             cname, alias = self._convert_unalias_column(cname)
-        cstring = ('sqlalchemy.sql.literal_column("%s")' %
-                   (cname.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
+        match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
+        if match and match.group(1) in simple_relations:
+            if 'd' in simple_relations and match.group(2) == 'uzivatel':
+                import pdb; pdb.set_trace()
+            cstring = '%s.c.%s' % tuple([g.lower() for g in match.groups()])
+        else:
+            cstring = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
         if alias:
             cstring += ".label('%s')" % (alias,)
         return cstring
@@ -1843,7 +1866,7 @@ class Select(_GsqlSpec):
         alias = None
         c = cname.split()
         if len(c) >= 3 and c[-2] == 'AS':
-            alias = c[-1]
+            alias = c[-1].lower()
             cname = string.join(c[:-2])
         return cname, alias
 
@@ -1870,17 +1893,26 @@ class Select(_GsqlSpec):
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
-                self._add_conversion_dependency(rel.relation)
+                self._add_conversion_dependency(rel.relation, rel.schema)
                 d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
-                self._add_conversion_dependency(rel.relation)
-                d = "%s = object_by_path('%s')" % (relation, rel.relation,)
+                rrelation = rel.relation
+                match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
+                if match:
+                    selector = 'object_by_name'
+                    rschema, dependency = match.groups()
+                else:
+                    selector = 'object_by_path'
+                    dependency = rrelation
+                    rschema = None
+                self._add_conversion_dependency(dependency, rschema)
+                d = "%s = %s('%s')" % (relation, selector, rrelation.lower(),)
             if rel.alias:
                 if d is None:
-                    d = '%s = %s' % (rel.alias.replace('(', '__').replace(')', '__'), relation,)
-                    relation = rel.alias
-                d += ".alias('%s')" % (rel.alias,)
+                    d = '%s = %s' % (rel.alias.lower().replace('(', '__').replace(')', '__'), relation,)
+                    relation = rel.alias.lower()
+                d += ".alias('%s')" % (rel.alias.lower(),)
             if d:
                 self._convert_add_definition(definitions, d, level)
             if i == 0 or rel.condition is None:
@@ -1921,12 +1953,21 @@ class Select(_GsqlSpec):
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
-                self._add_conversion_dependency(rel.relation)
+                self._add_conversion_dependency(rel.relation, rel.schema)
                 d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
-                self._add_conversion_dependency(rel.relation)
-                d = "%s = object_by_path('%s')" % (relation, rel.relation,)
+                rrelation = rel.relation
+                match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
+                if match:
+                    selector = 'object_by_name'
+                    rschema, dependency = match.group()
+                else:
+                    selector = 'object_by_path'
+                    dependency = rrelation
+                    rschema = None
+                self._add_conversion_dependency(dependency, rschema)
+                d = "%s = %s('%s')" % (relation, selector, rrelation,)
             if rel.alias:
                 if d is None:
                     d = '%s = %s' % (rel.alias.replace('(', '__').replace(')', '__'), relation,)
@@ -2240,7 +2281,7 @@ class _GsqlViewNG(Select):
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
-        items.append('    name = %s' % (repr(self._name),))
+        items.append('    name = %s' % (repr(self._name.lower()),))
         if self._schemas:
             items.append(self._convert_schemas())
         definitions = []
@@ -2281,7 +2322,7 @@ class _GsqlViewNG(Select):
                                 rels.append(rel)
                     return [make_table_name(r) for r in rels]
                 real_order = relations(order)
-                order_string = string.join(["specification_by_name('%s')" % (o,) for o in real_order], ', ')
+                order_string = string.join(["specification_by_name('%s')" % (o.lower(),) for o in real_order if isinstance(o, basestring)], ', ')
                 if order_string:
                     order_string += ','
                 items.append('    %s_order = (%s)' % (kind, order_string,))
@@ -2712,7 +2753,7 @@ class _GsqlView(_GsqlSpec):
             cname = "NULL::%s" % (_gsql_format_type(type),)
         elif isinstance(type, basestring):
             cname = "NULL::%s" % (type,)
-        crepr = "sqlalchemy.literal_column('%s')" % (cname,)
+        crepr = "sqlalchemy.literal_column('%s')" % (self._convert_literal(cname),)
         return '%s.label(%s)' % (crepr, repr(alias),)
 
     def _convert_complex_columns(self):
@@ -2745,7 +2786,7 @@ class _GsqlView(_GsqlSpec):
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
-        items.append('    name = %s' % (repr(self._name),))
+        items.append('    name = %s' % (repr(self._name.lower()),))
         if self._schemas:
             items.append(self._convert_schemas())
         # The hard part
@@ -2787,12 +2828,16 @@ class _GsqlView(_GsqlSpec):
             tables = self._tables_from
             from_obj = []
             for t in tables:
+                t = t.lower()
                 name_alias = t.split(' ')
+                selector = 'object_by_path'
                 if len(name_alias) > 1:
                     name, alias = name_alias
+                    if re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', name):
+                        selector = 'object_by_name'
                 else:
                     name = alias = name_alias[0]
-                line = "        %s = object_by_path('%s')" % (alias, name,)
+                line = "        %s = %s('%s')" % (alias, selector, name,)
                 if name != alias:
                     line += '.alias(%s)' % (alias,)
                 items.append(line)
