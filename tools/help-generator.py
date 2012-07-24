@@ -61,7 +61,7 @@ def run():
                 sys.exit(1)
         else:
             break
-    generator.create_menu_help()
+    generator.update_menu_help()
 
 if __name__ == '__main__':
     run()

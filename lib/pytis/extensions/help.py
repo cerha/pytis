@@ -38,113 +38,153 @@ class HelpGenerator(object):
     """
     def __init__(self, directory):
         self._diretory = directory
-        self._menu_help_data = pd.dbtable('e_pytis_menu_help', ('menuid', 'content'),
-                                                  config.dbconnection)
+        self._menu_help_data = pd.dbtable('e_pytis_help_menu', ('fullname', 'content'),
+                                          config.dbconnection)
+        self._spec_help_data = pd.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
+                                          config.dbconnection)
+        self._spec_help_items_data = pd.dbtable('e_pytis_help_spec_items',
+                                                ('item_id', 'spec_name', 'kind', 'identifier',
+                                                 'content'), config.dbconnection)
+        self._done = {}
 
-    def _save_menu_help(self, menuid, content):
-        data = self._menu_help_data
-        key = (pd.ival(menuid),)
-        row = data.row(key)
-        if row:
-            data.update(key, pd.Row((('content', pd.sval(content)),)))
-        else:
-            data.insert(pd.Row((('menuid', pd.ival(menuid)), ('content', pd.sval(content)))))
+    def _update(self, data, key, **kwargs):
+        keyvalues = [(k, pd.Value(data.find_column(k).type(), v)) for k, v in key.items()]
+        rowdata = [(k, pd.Value(data.find_column(k).type(), v)) for k, v in kwargs.items()]
+        data.select(condition=pd.AND(*[pd.EQ(k, v) for k, v in keyvalues]))
+        row = data.fetchone()
+        data.close()
+        if row is None:
+            data.insert(pd.Row(keyvalues + rowdata))
+        elif any([row[k].value() != v for k, v in kwargs.items()]):
+            data.update((row[0],), pd.Row(rowdata))
 
-    def _generate_menu_item_help(self, shortname, fullname, title):
-        kind, specname = shortname.split('/', 1)
-        if kind == 'menu':
-            return None
-        elif kind == 'form':
-            form_class = fullname.split('/')[1]
-            if form_class.endswith('.ConfigForm'):
-                return self._generate_config_help(specname)
-            elif '::' in specname:
-                mainname, sidename = specname.split('::')
-                return "= %s =\n\n%s\n\n= %s =\n\n%s" % (
-                    _(u"Hlavní formulář"),
-                    self._generate_form_help('mainform', mainname),
-                    _(u"Vedlejší formulář"),
-                    self._generate_form_help('sideform', sidename))
-            else:
-                return self._generate_form_help(form_class, specname)
-        elif kind == 'proc':
-            procname, specname = specname.strip('/').split('/')
-            return self._generate_proc_help(procname, specname)
-        elif kind == 'handle':
-            action = specname.strip('/').split('/')[0]
-            return self._generate_action_help(action)
-        elif kind == 'NEW_RECORD':
-            return self._generate_new_record_help(specname)
-        elif kind == 'RELOAD_RIGHTS':
-            return self._generate_reload_rights_help()
-        elif kind == 'RUN_FORM':
-            return self._generate_run_form_help(specname)
-        elif kind == 'EXIT':
-            return self._generate_exit_help()
-        else:
-            print "Ignoring menu item of unknown type:", shortname, fullname, title
-
-    def _generate_config_help(self, name):
-        if name == 'ui':
-            return _(u"Vyvolá formulář pro přizpůsobení uživatelského rozhraní aplikace.")
-        if name == 'export':
-            return _(u"Vyvolá formulář uživatelského nastavení exportu dat.")
-        else:
-            return None
-
-    def _generate_form_help(self, form_class, specname):
+    def _update_spec_help(self, spec_name):
+        if self._done.get(spec_name):
+            return
+        self._done[spec_name] = True
         resolver = pytis.util.resolver()
         try:
-            view_spec = resolver.get(specname, 'view_spec')
+            view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
             print e
-            return _(u"Neznámá specifikace %s.") % specname
-        #content = [lcg.Section("Základní informace",
-        #                       lcg.fieldset(self._info(), formatted=True))]
-        filename = os.path.join(self._diretory, 'descr', specname + '.cs.txt')
+            return
+        description = view_spec.description()
+        filename = os.path.join(self._diretory, spec_name + '.cs.txt')
         if os.path.exists(filename):
-            content = '\n'.join([line for line in open(filename).read().splitlines()
-                                 if not line.startswith('#')]).strip()
+            help_text = open(filename).read()
         else:
-            content = (view_spec.help() or '').strip()
-        related_specnames = []
-        for f in view_spec.fields():
-            for name in [f.codebook()] + [link.name() for link in f.links()]:
-                if name and name not in related_specnames:
-                    related_specnames.append(name)
-        sections = [
-            (_(u"Akce kontextového menu"),
-             ["%s\n  %s\n\n" % (a.title(), a.descr() or '')
-              for a in view_spec.actions(linear=True)] or [_(u"Žádné")]),
-            (_(u"Políčka formuláře"),
-             ["%s\n  %s\n\n" % (f.label(), f.descr() or '')
-              for f in [view_spec.field(fid) for fid in view_spec.layout().order()]] or [_(u"Žádná")]),
-            (_(u"Vedlejší formuláře"),
-             ["[help:%s %s]\n  %s\n\n" % (b.name(), b.title(), b.descr() or '')
-              for b in view_spec.bindings()]),
-            (_(u"Související náhledy"),
-             ["* [help:%s]\n" % name for name in related_specnames]),
-            ]
-        for title, items in sections:
-            content += '\n\n== %s ==\n\n%s' % (title, ''.join(items) or _(u"Žádné"))
-        #data_spec = resolver.get(specname, 'data_spec')
-        #rights = data_spec.access_rights()
-        #if rights:
-        #    content += "\n\n== %s ==\n\n" % _(u"Přístupová práva")
-        #    for perm in (pd.Permission.VIEW,
-        #                 pd.Permission.INSERT,
-        #                 pd.Permission.UPDATE,
-        #                 pd.Permission.DELETE,
-        #                 pd.Permission.EXPORT):
-        #        groups = [g for g in rights.permitted_groups(perm, None) if g]
-        #        content += ":%s:: %s\n" % (perm, ', '.join(map(str, groups)) or _(u"Nedefinováno"))
-        return content
+            help_text = (view_spec.help() or '').strip() or None
+        self._update(self._spec_help_data, dict(spec_name=spec_name),
+                     description=description, help=help_text)
+        for kind, items in (('field', view_spec.fields()),
+                            ('profile', view_spec.profiles()),
+                            ('binding', view_spec.bindings()),
+                            ('action', view_spec.actions(linear=True))):
+            for item in items:
+                self._update(self._spec_help_items_data,
+                             dict(spec_name=spec_name, kind=kind, identifier=item.id()),
+                             content=item.descr())
+        
+    def _update_menu_item_help(self, fullname, spec_name):
+        kind = fullname.split('/', 1)[0]
+        if kind == 'menu':
+            content = None
+        elif kind == 'form':
+            form_class = fullname.split('/')[1]
+            content = self._generate_form_help(form_class, spec_name)
+        elif kind == 'proc':
+            procname = fullname.strip('/').split('/')[1]
+            content = self._generate_proc_help(procname, spec_name)
+        elif kind == 'handle':
+            action = fullname.strip('/').split('/')[1]
+            content = self._generate_action_help(action)
+        elif kind == 'NEW_RECORD':
+            if not fullname.endswith('/'):
+                # This is probably possible also for other fullname kinds...
+                command_name = spec_name
+                spec_name = None
+            else:
+                command_name = None
+            content = self._generate_new_record_help(spec_name, command_name)
+        elif kind == 'RELOAD_RIGHTS':
+            content = self._generate_reload_rights_help()
+        elif kind == 'RUN_FORM':
+            content = self._generate_run_form_help(spec_name)
+        elif kind == 'EXIT':
+            content = self._generate_exit_help()
+        else:
+            print "Ignoring menu item of unknown type:", fullname
+            return
+        self._update(self._menu_help_data, dict(fullname=fullname), content=content)
+        if spec_name and kind != 'handle' and spec_name not in ('ui', 'export'):
+            self._update_spec_help(spec_name)
 
-    def _generate_new_record_help(self, specname):
-        return _(u"Vyvolá formulář pro vložení nového záznamu do náhledu [help:%s].") % specname
+    def _spec_link(self, spec_name):
+        resolver = pytis.util.resolver()
+        try:
+            view_spec = resolver.get(spec_name, 'view_spec')
+        except pytis.util.ResolverError as e:
+            print e
+            title = spec_name
+        else:
+            title = view_spec.title()
+        return '[help:%s %s]' % (spec_name, title)
+        
+    def _generate_form_help(self, form_class, spec_name):
+        if form_class.endswith('.ConfigForm'):
+            if spec_name == 'ui':
+                return _(u"Vyvolá formulář pro přizpůsobení uživatelského rozhraní aplikace.")
+            if spec_name == 'export':
+                return _(u"Vyvolá formulář uživatelského nastavení exportu dat.")
+            else:
+                return None
+        elif '::' in spec_name:
+            resolver = pytis.util.resolver()
+            mainname, sidename = spec_name.split('::')
+            b = resolver.get(mainname, 'binding_spec')[sidename]
+            description = b.help() or b.description()
+            if description is None:
+                def clabel(cid, name):
+                    c = resolver.get(name, 'view_spec').field(cid)
+                    return c and c.column_label() or cid
+                description = (_(u"Formuláře jsou propojeny přes shodu hodnot sloupce '%s' "
+                                 u"hlavního formuláře a sloupce '%s' vedlejšího formuláře.") % 
+                               (clabel(mainname, b.binding_column()),
+                                clabel(sidename, b.side_binding_column())))
+            return '%s\n\n:%s::%s\n:%s::%s\n\n%s' % (
+                _(u"Otevře duální formulář:"),
+                _(u"Hlavní formulář"),
+                self._spec_link(mainname),
+                _(u"Vedlejší formulář"),
+                self._spec_link(sidename),
+                description)
+        else:
+            if form_class.startswith('pytis.form.'):
+                form_name = form_class[11:]
+                if form_name.startswith('dualform.'):
+                    form_name = form_name[9:]
+                form_type = getattr(pytis.form, form_name).DESCR
+            else:
+                form_type = form_class
+            return _(u"Otevře %s pro %s") % (form_type, self._spec_link(spec_name))
+
+    def _generate_new_record_help(self, spec_name, command_name):
+        if spec_name:
+            return _(u"Vyvolá formulář pro vložení nového záznamu do náhledu %s.") % self._spec_link(spec_name)
+        else:
+            #resolver = pytis.util.resolver()
+            #try:
+            #    command = resolver.get('app_commands', command_name)
+            #except pytis.util.ResolverError as e:
+            #    print e
+            #    command = None
+            #if command and command.__doc__:
+            #    return command.__doc__
+            #else:
+            return _(u"Vyvolá příkaz %s.") % command_name
     
-    def _generate_proc_help(self, procname, specname):
-        return _(u"Vyvolá proceduru %s nad náhledem [help:%s].") % (procname, specname)
+    def _generate_proc_help(self, procname, spec_name):
+        return _(u"Vyvolá proceduru %s z %s.") % (procname, spec_name)
 
     def _generate_action_help(self, action):
         return _(u"Vyvolá funkci %s.") % action
@@ -158,19 +198,18 @@ class HelpGenerator(object):
     def _generate_exit_help(self):
         return _(u"Ukončí běh aplikace.")
 
-    def create_menu_help(self):
-        """Generate help pages for all menu items."""
-        data = pd.dbtable('ev_pytis_menu', ('menuid', 'title', 'shortname', 'fullname', 'position'),
-                                  config.dbconnection)
+    def update_menu_help(self):
+        """(Re)generate help for all menu items."""
+        data = pd.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'position'),
+                          config.dbconnection)
         data.select(sort=(('position', pd.ASCENDENT),))
         while True:
             row = data.fetchone()
             if row is None:
                 break
-            if row['shortname'].value():
-                content = self._generate_menu_item_help(row['shortname'].value(), row['fullname'].value(), row['title'].value())
-                self._save_menu_help(row['menuid'].value(), content)
-
+            if row['fullname'].value():
+                self._update_menu_item_help(row['fullname'].value(), row['spec_name'].value())
+                
 
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
