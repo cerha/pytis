@@ -1853,8 +1853,6 @@ class Select(_GsqlSpec):
             cname, alias = self._convert_unalias_column(cname)
         match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
         if match and match.group(1) in simple_relations:
-            if 'd' in simple_relations and match.group(2) == 'uzivatel':
-                import pdb; pdb.set_trace()
             cstring = '%s.c.%s' % tuple([g.lower() for g in match.groups()])
         else:
             cstring = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
