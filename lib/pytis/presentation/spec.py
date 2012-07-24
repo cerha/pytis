@@ -569,7 +569,8 @@ class Profile(object):
     user data.
 
     """
-    def __init__(self, id, title, filter=None, sorting=None, columns=None, grouping=None,
+    def __init__(self, id, title, filter=None, descr=None,
+                 sorting=None, columns=None, grouping=None,
                  aggregations=None, folding=None, filter_sets=None,
                  column_widths=None, errors=()):
         """Arguments:
@@ -577,6 +578,7 @@ class Profile(object):
           id -- profile identifier as a string.  It must be unique among all
             profile identifiers within a given form.
           title -- user visible profile name as a string.
+          descr -- profile description as a string.
           filter -- filtering condition as a 'pytis.data.Operator' instance.
             This condition is always applied together (in conjunction) with the
             forms default 'condition' given by it's specification (if not None).
@@ -611,6 +613,7 @@ class Profile(object):
         """
         assert isinstance(id, basestring)
         assert isinstance(title, basestring), title
+        assert descr is None or isinstance(descr, basestring), descr
         assert filter is None or isinstance(filter, pytis.data.Operator), filter
         assert sorting is None or isinstance(sorting, tuple), sorting
         assert grouping is None or isinstance(grouping, (basestring, tuple)), grouping
@@ -622,6 +625,7 @@ class Profile(object):
                 assert isinstance(fs, FilterSet), fs
         self._id = id
         self._title = title
+        self._descr = descr
         self._filter = filter
         self._sorting = sorting
         self._grouping = grouping and xtuple(grouping)
@@ -652,6 +656,10 @@ class Profile(object):
 
     name = title
     """Deprecated: Use title instead."""
+
+    def descr(self):
+        """Return the descr passed to the constructor."""
+        return self._descr
 
     def filter(self):
         """Return the condition passed to the constructor."""
