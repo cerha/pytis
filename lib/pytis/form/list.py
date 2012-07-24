@@ -3124,7 +3124,9 @@ class BrowseForm(FoldableForm):
                            + separator + 
                            self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
                      )
-        if self._view.bindings() and not isinstance(self._dualform(), MultiBrowseDualForm):
+        dual = self._dualform()
+        if self._view.bindings() and not (isinstance(dual, MultiBrowseDualForm)
+                                          and dual.main_form() == self):
             menu += (MSeparator(),
                      MItem(_(u"Zobrazit včetně vedlejších formulářů"),
                            command=Application.COMMAND_RUN_FORM(name=self._name,
