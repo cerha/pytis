@@ -3968,10 +3968,12 @@ class DbAttachmentStorage(AttachmentStorage):
                                         config.dbconnection)
         self._ref_column = ref_column
         self._ref_value = ref_value
+        self._ref_type = self._data.find_column(ref_column).type()
         self._base_uri = base_uri
 
     def _condition(self, filename=None):
-        condition = pytis.data.EQ(self._ref_column, pytis.data.ival(self._ref_value))
+        condition = pytis.data.EQ(self._ref_column,
+                                  pytis.data.Value(self._ref_type, self._ref_value))
         if filename is not None:
             condition = pytis.data.AND(condition,
                                        pytis.data.EQ('file_name', pytis.data.sval(filename)))
