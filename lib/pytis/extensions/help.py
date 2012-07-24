@@ -89,7 +89,7 @@ class HelpGenerator(object):
         kind = fullname.split('/', 1)[0]
         if kind == 'menu':
             content = None
-        elif kind == 'form':
+        elif kind == 'form' and spec_name:
             form_class = fullname.split('/')[1]
             content = self._generate_form_help(form_class, spec_name)
         elif kind == 'proc':
@@ -113,7 +113,7 @@ class HelpGenerator(object):
         elif kind == 'EXIT':
             content = self._generate_exit_help()
         else:
-            print "Ignoring menu item of unknown type:", fullname
+            print "Ignoring menu item of unknown type:", (fullname, spec_name)
             return
         self._update(self._menu_help_data, dict(fullname=fullname), content=content)
         if spec_name and kind != 'handle' and spec_name not in ('ui', 'export'):
@@ -141,12 +141,25 @@ class HelpGenerator(object):
         elif '::' in spec_name:
             resolver = pytis.util.resolver()
             mainname, sidename = spec_name.split('::')
-            b = resolver.get(mainname, 'binding_spec')[sidename]
+            try:
+                bspec = resolver.get(mainname, 'binding_spec')
+            except pytis.util.ResolverError as e:
+                print e
+                return None
+            if not isinstance(bspec, dict):
+                print "Can't create dual form '%s': %s.binding_spec() is not a dictionary" % \
+                    (spec_name, mainname)
+                return None
+            b = bspec[sidename]
             description = b.help() or b.description()
             if description is None:
                 def clabel(cid, name):
-                    c = resolver.get(name, 'view_spec').field(cid)
-                    return c and c.column_label() or cid
+                    try:
+                        c = resolver.get(name, 'view_spec').field(cid)
+                    except pytis.util.ResolverError as e:
+                        print e
+                        return cid
+                    return c.label()
                 description = (_(u"Formuláře jsou propojeny přes shodu hodnot sloupce '%s' "
                                  u"hlavního formuláře a sloupce '%s' vedlejšího formuláře.") % 
                                (clabel(mainname, b.binding_column()),
