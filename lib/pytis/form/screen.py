@@ -2507,7 +2507,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         elif format == TextFormat.HTML:
             if isinstance(content, unicode):
                 content = content.encode('utf-8')
-            if '<html' not in content.lower():
+            if '<html' not in content[:100].lower():
                 cotnent = ('<html>'
                            '<head>'
                            '<meta content="text/html; charset=UTF-8" http-equiv="content-type">'
