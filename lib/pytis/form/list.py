@@ -3122,6 +3122,15 @@ class BrowseForm(FoldableForm):
                            + separator + 
                            self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
                      )
+        if self._view.bindings() and not isinstance(self._dualform(), MultiBrowseDualForm):
+            menu += (MSeparator(),
+                     MItem(_(u"Zobrazit včetně vedlejších formulářů"),
+                           command=Application.COMMAND_RUN_FORM(name=self._name,
+                                                                form_class=MultiBrowseDualForm,
+                                                                select_row=self._current_key()),
+                           help=_(u"Zobrazí aktuální záznam v hlavním formuláři "
+                                  u"se souvisejícími daty ve vedlejších formulářích."),
+                           icon = 'link'))
         return menu
     
     def _cmd_print(self, print_spec_path=None):
