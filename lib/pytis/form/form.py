@@ -1497,6 +1497,7 @@ class RecordForm(LookupForm):
         super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
+        self._initial_select_row = select_row
         self._row = self.record(self._data_row(select_row), prefill=prefill, new=_new,
                                 singleline=_singleline)
 
@@ -1505,6 +1506,21 @@ class RecordForm(LookupForm):
 
     def _select_columns(self):
         return None
+
+    def _on_idle(self, event):
+        if super(RecordForm, self)._on_idle(event):
+            return True
+        if self._initial_select_row:
+            # Repeat row selection even though the row should have been already
+            # selected thanks to the constructor argument.  The problem with
+            # the constructor argument, however, is that when the record is not
+            # found, it is not anounced.  It must be done in _on_idle, because
+            # we need the initial profile to be applied before.
+            select_row = self._initial_select_row
+            self._initial_select_row = None
+            self.select_row(select_row)
+            self.focus()
+        return False
 
     def _find_row_by_number(self, row_number):
         # row_number starts with 0
