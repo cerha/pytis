@@ -128,7 +128,7 @@ class HelpGenerator(object):
             title = spec_name
         else:
             title = view_spec.title()
-        return '[help:%s %s]' % (spec_name, title)
+        return '[help:spec/%s %s]' % (spec_name, title)
         
     def _generate_form_help(self, form_class, spec_name):
         if form_class.endswith('.ConfigForm'):
