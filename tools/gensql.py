@@ -1550,7 +1550,7 @@ class _GsqlTable(_GsqlSpec):
         add_rule('delete', self._on_delete)
         if self._upd_log_trigger:
             keys = ','.join([_gsql_column_table_column(k)[1] for k in self.key_columns()])
-            items.append('class %sLogTrigger(SQLTrigger):' % (spec_name,))
+            items.append('class %sUpdLogTrigger(SQLTrigger):' % (spec_name,))
             items.append('    table = %s' % (spec_name,))
             items.append("    events = ('insert', 'update', 'delete',)")
             items.append("    body = specification_by_name('%s')" %
@@ -1788,6 +1788,7 @@ class Select(_GsqlSpec):
             exclude = r.exclude_columns or ()
             if isinstance(exclude, basestring):
                 exclude = (exclude,)
+            exclude = tuple([c.lower() for c in exclude])
             if isinstance(r.relation, Select):
                 if not r.alias:
                     column_spec.append('XXX:selnone:%s' % (r.relation,))
@@ -1795,7 +1796,7 @@ class Select(_GsqlSpec):
                 for c in self._relation_columns[r.relation]:
                     if isinstance(c, basestring):
                         continue
-                    if c.name in exclude:
+                    if c.name.lower() in exclude:
                         continue
                     if isinstance(c, ViewColumn) and c.sql:
                         column_spec.append('XXX:sql:%s' % (c,))
@@ -1824,9 +1825,8 @@ class Select(_GsqlSpec):
             else:
                 column_spec.append('cls._exclude(%s)' % (relname,))
         if self._include_columns:
-            simple_relations = [r.alias for r in self._relations
+            simple_relations = [r.relation if r.alias is None else r.alias for r in self._relations
                                 if isinstance(r, SelectRelation) and
-                                r.alias is not None and
                                 isinstance(r.relation, basestring) and
                                 r.relation.find('(') == -1]
             included = [self._convert_select_column(c, simple_relations) for c in self._include_columns]
@@ -1850,7 +1850,7 @@ class Select(_GsqlSpec):
         if alias is None:
             cname, alias = self._convert_unalias_column(cname)
         match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
-        if match and match.group(1) in simple_relations:
+        if match and match.group(1) in simple_relations and match.group(2) != 'oid':
             cstring = '%s.c.%s' % tuple([g.lower() for g in match.groups()])
         else:
             cstring = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
@@ -2744,7 +2744,11 @@ class _GsqlView(_GsqlSpec):
             cname = "NULL::%s" % (_gsql_format_type(type),)
         elif isinstance(type, basestring):
             cname = "NULL::%s" % (type,)
-        crepr = "sqlalchemy.literal_column('%s')" % (self._convert_literal(cname),)
+        match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
+        if match and match.group(2) != 'oid':
+            crepr = '%s.c.%s' % tuple([g.lower() for g in match.groups()])
+        else:
+            crepr = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
         return '%s.label(%s)' % (crepr, repr(alias),)
 
     def _convert_complex_columns(self):
@@ -2830,7 +2834,7 @@ class _GsqlView(_GsqlSpec):
                     name = alias = name_alias[0]
                 line = "        %s = %s('%s')" % (alias, selector, name,)
                 if name != alias:
-                    line += '.alias(%s)' % (alias,)
+                    line += '.alias(%s)' % (repr(alias),)
                 items.append(line)
                 from_obj.append(alias)
             condition = ('sqlalchemy.select([%s], from_obj=[%s], whereclause=%s)' %
@@ -3100,7 +3104,7 @@ class _GsqlFunction(_GsqlSpec):
         if isinstance(output_type, pytis.data.Type):
             items.append('    result_type = pytis.data.%s()' % (output_type.__class__.__name__,))
         elif isinstance(output_type, basestring):
-            type_string = self._convert_string_type(output_type, allow_none=True)
+            type_string = self._convert_string_type(output_type.lower(), allow_none=True)
             if type_string is None:
                 type_string = self._convert_name(name=output_type)
             items.append('    result_type = %s' % (type_string,))
