@@ -2013,56 +2013,157 @@ class Browser(wx.Panel, CommandHandler):
             # resource using the standard resource provider's algorithm
             # (including searching resource directories).
             return redirect(self._resource_provider.resource(uri[9:]))
+
+    def _spec_items_descriptions(self, spec_name):
+        data = pytis.data.dbtable('e_pytis_help_spec_items',
+                                        ('spec_name', 'kind', 'identifier', 'content'),
+                                        config.dbconnection)
+        data.select(condition=pytis.data.EQ('spec_name', pytis.data.sval(spec_name)))
+        descriptions = dict([(x, {}) for x in ('field', 'action', 'binding', 'profile')])
+        while True:
+            row = data.fetchone()
+            if row is None:
+                break
+            if row['content'].value():
+                descriptions[row['kind'].value()][row['identifier'].value()] = row['content'].value()
+        data.close()
+        return descriptions
+        
+    def _spec_help_content(self, spec_name):
+        resolver = pytis.util.resolver()
+        def spec_link(spec_name, title=None):
+            if title is None:
+                try:
+                    view_spec = resolver.get(spec_name, 'view_spec')
+                except pytis.util.ResolverError as e:
+                    title = spec_name
+                else:
+                    title = view_spec.title()
+            return lcg.link('help:spec/%s' % spec_name, title)
+        descriptions = self._spec_items_descriptions(spec_name)
+        def description(kind, identifier, default):
+            return descriptions[kind].get(identifier, default or _(u"Popis není k dispozici."))
+        #content = [lcg.Section("Základní informace",
+        #                       lcg.fieldset(self._info(), formatted=True))]
+        try:
+            view_spec = resolver.get(spec_name, 'view_spec')
+        except pytis.util.ResolverError as e:
+            return None, []
+        data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
+                                  config.dbconnection)
+        row = data.row((pytis.data.Value(data.find_column('spec_name').type(), spec_name),))
+        if row:
+            spec_description = row['description'].value()
+            spec_help = row['help'].value()
+        else:
+            spec_description = view_spec.description()
+            spec_help = view_spec.help()
+        parser = lcg.Parser()
+        related_specnames = []
+        for f in view_spec.fields():
+            for name in [f.codebook()] + [link.name() for link in f.links()]:
+                if name and name not in related_specnames:
+                    related_specnames.append(name)
+        sections = [
+            lcg.Section(title=title, content=f(content))
+            for title, f, content in (
+                (_(u"Shrnutí"), lcg.p, spec_description),
+                (_(u"Popis"), parser.parse, spec_help),
+                (_(u"Políčka formuláře"), lcg.dl,
+                 [(f.label(), description('field', f.id(), f.descr()))
+                  for f in [view_spec.field(fid) for fid in view_spec.layout().order()]]),
+                (_(u"Akce kontextového menu"), lcg.dl,
+                 [(a.title(), description('action', a.id(), a.descr()))
+                  for a in view_spec.actions(linear=True)]),
+                (_(u"Vedlejší formuláře"), lcg.dl,
+                 [(spec_link(b.name(), b.title()), description('binding', b.id(), b.descr()))
+                  for b in view_spec.bindings() if b.name()]),
+                (_(u"Související náhledy"), lcg.ul,
+                 [spec_link(name) for name in related_specnames]),
+                )
+            if content]
+        #data_spec = resolver.get(specname, 'data_spec')
+        #rights = data_spec.access_rights()
+        #if rights:
+        #    content += "\n\n== %s ==\n\n" % _(u"Přístupová práva")
+        #    for perm in (pd.Permission.VIEW,
+        #                 pd.Permission.INSERT,
+        #                 pd.Permission.UPDATE,
+        #                 pd.Permission.DELETE,
+        #                 pd.Permission.EXPORT):
+        #        groups = [g for g in rights.permitted_groups(perm, None) if g]
+        #        content += ":%s:: %s\n" % (perm, ', '.join(map(str, groups)) or _(u"Nedefinováno"))
+        return view_spec.title(), sections
         
     def _load_help_page(self, topic):
         resource_provider = lcg.ResourceProvider(dirs=('/home/cerha/work/pytis/resources',
                                                        '/home/cerha/work/lcg/resources'))
-        def node(row, children):
-            if row['fullname'].value():
-                node_id = row['fullname'].value()
-            elif row['page_id'].value():
-                node_id = 'page/'+ row['page_id'].export()
+        def make_node(row, children):
+            if row['help_id'].value() == topic:
+                # If this is the currently displayed node, create the content.
+                # Other nodes are only generated for their presence in the
+                # menu.
+                parser = lcg.Parser()
+                if row['page_id'].value():
+                    content = parser.parse(row['content'].value())
+                else:
+                    content = [lcg.TableOfContents()]
+                    if row['menu_help'].value():
+                        content.extend(parser.parse(row['menu_help'].value()))
+                    if row['spec_name'].value():
+                        content.extend(self._spec_help_content(row['spec_name'].value())[1])
             else:
-                node_id = row['help_id'].value()
-            return lcg.ContentNode(node_id, title=row['title'].value(),
+                content = ()
+            return lcg.ContentNode(row['help_id'].value(), title=row['title'].value(),
                                    descr=row['description'].value(),
-                                   content=lcg.Container(parser.parse(row['content'].export())),
+                                   content=lcg.Container(content),
                                    resource_provider=resource_provider,
-                                   children=[node(r, children) for r in
+                                   children=[make_node(r, children) for r in
                                              children.get(row['position'].value(), ())],
-                                   globals=dict(help_id=row['help_id'].value(),
-                                                menuid=row['menuid'].value(),
-                                                page_id=row['page_id'].value()))
-        data = pytis.data.dbtable('ev_pytis_help', ('help_id', 'fullname', 'page_id', 'position',
-                                                    'title', 'description', 'content'),
+                                   globals=dict(page_id=row['page_id'].value(),
+                                                spec_name=row['spec_name'].value()))
+        data = pytis.data.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'page_id',
+                                                    'position', 'title', 'description',
+                                                    'menu_help', 'content'),
                                   config.dbconnection)
         data.select(sort=(('position', pytis.data.ASCENDENT),))
         children = {}
-        parser = lcg.Parser()
         while True:
             row = data.fetchone()
             if not row:
                 break
             parent = '.'.join(row['position'].value().split('.')[:-1])
             children.setdefault(parent, []).append(row)
-        not_found = lcg.ContentNode('NotFound', title=_("Nenalezeno"), hidden=True,
-                                    content=lcg.p(_(u"Požadovaná stránka nápovědy nenalezena.")),
-                                    resource_provider=resource_provider)
+        data.close()
+        nodes = [lcg.ContentNode('NotFound', title=_("Nenalezeno"), hidden=True,
+                                 content=lcg.p(_(u"Požadovaná stránka nápovědy nenalezena: %s") % topic),
+                                 resource_provider=resource_provider)]
+        if topic.startswith('spec/'):
+            # Separate specification descriptions are not in the menu generated
+            # from ev_pytis_help.  If specification description page is
+            # requested, we generate one and add it to the menu here.
+            spec_name = topic[5:]
+            title, content = self._spec_help_content(spec_name)
+            if title and content:
+                node = lcg.ContentNode(topic, title=title, hidden=True,
+                                       content=lcg.Container([lcg.TableOfContents()] + content),
+                                       resource_provider=resource_provider,
+                                       globals=dict(spec_name=spec_name))
+                nodes.append(node)
         root = lcg.ContentNode('help', content=lcg.Content(), hidden=True,
-                               children=[not_found] + [node(r, children) for r in children['']],
-                               resource_provider=resource_provider)
-        node = root.find_node(topic) or root.find_node('NotFound')
-        page_id, menuid = node.globals().get('page_id'), node.globals().get('menuid')
-        if page_id or menuid:
+                               children=nodes + [make_node(r, children) for r in children['']])
+        current_node = root.find_node(topic) or root.find_node('NotFound')
+        page_id, spec_name = [current_node.globals().get(x) for x in ('page_id', 'spec_name')]
+        if page_id or spec_name:
             if page_id:
                 table, ref, refval = ('e_pytis_help_pages_attachments', 'page_id', page_id)
             else:
-                table, ref, refval = ('e_pytis_menu_help_attachments', 'menuid', menuid)
-            storage = pp.DbAttachmentStorage(table, ref, refval, base_uri='resource:')
+                table, ref, refval = ('e_pytis_help_spec_attachments', 'spec_name', spec_name)
+            storage = pytis.presentation.DbAttachmentStorage(table, ref, refval, base_uri='resource:')
             for resource in storage.resources():
                 resource_provider.add_resource(resource)
         exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
-        self.load_content(node, exporter=exporter)
+        self.load_content(current_node, exporter=exporter)
                 
     def _can_go_forward(self):
         return self._webview.can_go_forward()

@@ -334,7 +334,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     # Zpracování příkazů
    
     def _cmd_help(self):
-        Application.COMMAND_HELP.invoke(topic=make_fullname(self.__class__, self._name))
+        Application.COMMAND_HELP.invoke(topic='spec/'+self._name)
 
     def _cmd_leave_form(self):
         block_yield(True)
