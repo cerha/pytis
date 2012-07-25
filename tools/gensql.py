@@ -147,7 +147,7 @@ class _GsqlSpec(object):
     _group_list = []
     _seen_names = []
     
-    def __init__(self, name, depends=(), doc=None, grant=()):
+    def __init__(self, name, depends=(), doc=None, grant=(), convert=True):
         """Inicializuj instanci.
 
         Argumenty:
@@ -182,6 +182,7 @@ class _GsqlSpec(object):
             if group not in _GsqlSpec._group_list:
                 _GsqlSpec._group_list.append(group)
         self._schemas = None
+        self._convert = convert
 
     def _set_name(self, name):
         if name in self._seen_names:
@@ -931,7 +932,7 @@ class _GsqlTable(_GsqlSpec):
                  on_insert=None, on_update=None, on_delete=None,
                  init_values=(), init_columns=(),
                  tablespace=None, upd_log_trigger=None,
-                 indexes=(), key_columns=(), convert=True, **kwargs):
+                 indexes=(), key_columns=(), **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -1006,7 +1007,6 @@ class _GsqlTable(_GsqlSpec):
                               for c in init_columns]
         self._key_columns = key_columns
         self._indexes = indexes
-        self._convert = convert
 
     def _full_column_name(self, column):
         if not _gsql_column_table_column(column.name)[0]:
@@ -1557,8 +1557,6 @@ class _GsqlTable(_GsqlSpec):
                          (self._upd_log_trigger,))
             items.append('    arguments = ("%s",)' % (keys,))
         result = string.join(items, '\n') + '\n'
-        if not self._convert:
-            result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
         return result
     
 class Select(_GsqlSpec):
@@ -2059,7 +2057,6 @@ class _GsqlViewNG(Select):
     def __init__(self, name, relations, schemas=None,
                  insert=(), update=(), delete=(),
                  insert_order=None, update_order=None, delete_order=None,
-                 convert=True,
                  **kwargs):
         """Inicializuj instanci.
         Argumenty:
@@ -2115,7 +2112,6 @@ class _GsqlViewNG(Select):
         self._insert_order = insert_order
         self._update_order = update_order
         self._delete_order = delete_order
-        self._convert = convert
         self._columns = []
 
     def _format_rule(self, kind, table_keys):
@@ -2334,8 +2330,6 @@ class _GsqlViewNG(Select):
         items.append(self._convert_depends())
         items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'
-        if not self._convert:
-            result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
         return result
 
 ViewNG = _GsqlViewNG    
@@ -2352,7 +2346,7 @@ class _GsqlView(_GsqlSpec):
     
     def __init__(self, name, columns, key_columns=None,
                  table_alias=None, join=None,
-                 insert=(), update=(), delete=(), convert=True, **kwargs):
+                 insert=(), update=(), delete=(), **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -2421,7 +2415,6 @@ class _GsqlView(_GsqlSpec):
                               self._split_columns()
         self._complex_len = self._complex_columns_length()
         self._tables_from, self._tables = self._make_tables()
-        self._convert = convert
 
     def _column_table(self, column):
         return _gsql_column_table_column(column.name)[0]
@@ -2869,8 +2862,6 @@ class _GsqlView(_GsqlSpec):
         items.append(self._convert_depends())
         items.append(self._convert_grant())
         result = string.join(items, '\n') + '\n'
-        if not self._convert:
-            result = string.join(['#'+line for line in ['XXX:'] + string.split(result, '\n')], '\n')
         return result
 
 
@@ -3647,7 +3638,11 @@ database dumps if you want to be sure about your schema.
     def _convert(self):
         sys.stdout.write('# -*- coding: utf-8\n')
         def process(o):
-            sys.stdout.write(self[o].convert())
+            dbobj = self[o]
+            converted = dbobj.convert()
+            if not dbobj._convert:
+                converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
+            sys.stdout.write(converted)
             sys.stdout.write('\n')
         self._process_resolved(process)
 
