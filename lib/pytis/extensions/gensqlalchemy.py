@@ -78,6 +78,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             function_type = function.result_type
             if function_type is None:
                 result_type = 'void'
+            elif function_type == SQLFunctional.RECORD:
+                result_type = 'RECORD'
             elif function_type is _CONVERT_THIS_FUNCTION_TO_TRIGGER:
                 result_type = 'trigger'
             elif isinstance(function_type, (tuple, list,)):
@@ -1033,10 +1035,15 @@ class SQLFunctional(_SQLTabular):
 
     __visit_name__ = 'function'
 
+    RECORD = 'RECORD'
+
     def __new__(cls, metadata, search_path):
         result_type = cls.result_type
         if result_type is None:
             columns = ()
+        elif result_type == cls.RECORD:
+            columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
+                             for c in cls.arguments if c.out()])
         elif isinstance(result_type, (tuple, list,)):
             columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
                              for c in result_type])
@@ -1058,7 +1065,8 @@ class SQLFunctional(_SQLTabular):
         super(SQLFunctional, self)._add_dependencies()
         result_type = self.result_type
         if (result_type not in (None, _CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
-            not isinstance(result_type, (tuple, list, Column, pytis.data.Type,))):
+            not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)) and
+            result_type != SQLFunctional.RECORD):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
 
     def create(self, bind=None, checkfirst=False):

@@ -386,7 +386,7 @@ class _GsqlSpec(object):
                    'text': 'pytis.data.String()',
                    'void': 'None',
                    'trigger': '_CONVERT_THIS_FUNCTION_TO_TRIGGER',
-                   'record': 'pytis.data.String()',
+                   'record': 'SQLFunctional.RECORD',
                    'float(40)': 'pytis.data.DoublePrecision()',
                    }
         type_ = mapping.get(stype)
