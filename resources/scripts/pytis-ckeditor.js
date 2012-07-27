@@ -251,7 +251,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                       },
                       {type: 'fileButton',
                        filebrowser: 'upload:filename',
-                       label: pytis._("Add"),
+                       label: pytis._("Upload new file"),
                        'for': ['main', 'upload'],
                        onClick: function() {
                            var field = $(editor.config.pytisFieldId)._pytis_field_instance;
@@ -411,11 +411,11 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
     dialog['contents'][0].elements = dialog['contents'][0].elements.concat([
         {type: 'select',
          id: 'thumbnail_size',
-         label: pytis._('Preview size'),
-         items: [[pytis._('Full'), 'full'],
-                 [pytis._('Small'), 'small'],
-                 [pytis._('Medium'), 'medium'],
-                 [pytis._('Large'), 'large']]},
+         label: pytis._('Display as'),
+         items: [[pytis._('Full size'), 'full'],
+                 [pytis._('Small preview'), 'small'],
+                 [pytis._('Medium preview'), 'medium'],
+                 [pytis._('Large preview'), 'large']]},
         {type: 'select',
          id: 'align',
          label: pytis._('Align'),
@@ -438,13 +438,13 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
          [
              {type: 'select',
               id: 'link-type',
-              label: pytis._('Link'),
-              items: [[pytis._('Original'), 'original', 'original-link'],
-                      [pytis._('Anchor inside page'), 'anchor', 'anchor-link'],
-                               [pytis._('External link'), 'external', 'external-link']],
+              label: pytis._('Behavior'),
+              items: [[pytis._('Enlarge on click'), 'enlarge', 'enlarge-image'],
+                      [pytis._('Link'), 'external', 'external-link'],
+                      [pytis._('Link to anchor'), 'anchor', 'anchor-link']],
               setup: function(element) {
-                  if (element.hasClass('original-link'))
-                      this.setValue('original');
+                  if (element.hasClass('enlarge-image'))
+                      this.setValue('enlarge');
                   else if (element.hasClass('anchor-link'))
                       this.setValue('anchor');
                   else if (element.hasClass('external-link'))
@@ -455,7 +455,7 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
                       if (link && link.length > 0)
                           this.setValue('external');
                       else
-                          this.setValue('original');
+                          this.setValue('enlarge');
                   }
                   this.onChange(element);
               },
@@ -472,8 +472,8 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
                               element.removeClass(cls);
                       }
                   }
-                  // Handle the 'original' type of link
-                  if (this.getValue() == 'original') {
+                  // Handle the 'enlarge' type of link
+                  if (this.getValue() == 'enlarge') {
                       var attachment = this.attachment;
                       if (attachment) {
                           element.setAttribute('rel', "lightbox[gallery]");
@@ -501,7 +501,7 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
              },
              {type: 'select',
               id: 'anchor-link',
-              label: pytis._('Link to anchor'),
+              label: pytis._('Select the anchor'),
               items: [],
               onShow: function (element) {
                   // Construct a list of anchors in this page
@@ -531,7 +531,7 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
              },
              {type: 'text',
               id: 'external-link',
-              label: pytis._('External link'),
+              label: pytis._('Link target (URL)'),
                        setup: function(element) {
                            var dialog = CKEDITOR.dialog.getCurrent();
                            if (dialog.getValueOf('main', 'link-type') == 'external') {
