@@ -416,6 +416,7 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
                  [pytis._('Small preview'), 'small'],
                  [pytis._('Medium preview'), 'medium'],
                  [pytis._('Large preview'), 'large']]},
+                 //[pytis._('Title (text only)'), 'text']]},
         {type: 'select',
          id: 'align',
          label: pytis._('Align'),
@@ -431,6 +432,7 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
              var img = element.getFirst();
              img.setAttribute('align', this.getValue());
          }
+	 // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.
         },
         {type : 'hbox',
          widths : [ '20%', '80%'],
@@ -440,8 +442,10 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
               id: 'link-type',
               label: pytis._('Behavior'),
               items: [[pytis._('Enlarge on click'), 'enlarge', 'enlarge-image'],
+                      //[pytis._('Download link'), 'download', 'download-link'],
                       [pytis._('Link'), 'external', 'external-link'],
                       [pytis._('Link to anchor'), 'anchor', 'anchor-link']],
+                      //[pytis._('No action'), 'noact', 'no-action'],
               setup: function(element) {
                   if (element.hasClass('enlarge-image'))
                       this.setValue('enlarge');
