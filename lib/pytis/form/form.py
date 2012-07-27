@@ -2537,6 +2537,10 @@ class PopupEditForm(PopupForm, EditForm):
         size = wx.Size(*self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
+        # HACK: Avoid initial selec_row call in popup forms.  It's purpose is
+        # irrelevant here and it causes problems with set_values - the
+        # additional select_row() call resets them.
+        self._initial_select_row = None
 
     def _default_transaction(self):
         return pytis.data.DBTransactionDefault(config.dbconnection)
