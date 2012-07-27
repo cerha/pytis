@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-06-15 11:46+0200\n"
+"POT-Creation-Date: 2012-07-27 13:33+0200\n"
 "PO-Revision-Date: 2011-12-29 12:20+0100\n"
 "Last-Translator: Hynek Hanke <hanke@volny.cz>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
@@ -121,25 +121,25 @@ msgstr "Formato %(format)s no permitido; formatos válidos: %(formats)s"
 msgid "Submit"
 msgstr "Confirmar"
 
-#: ../lib/pytis/web/field.py:485
+#: ../lib/pytis/web/field.py:488
 msgid "today"
 msgstr ""
 
-#: ../lib/pytis/web/field.py:528 ../lib/pytis/web/field.py:579
+#: ../lib/pytis/web/field.py:531 ../lib/pytis/web/field.py:582
 msgid "Yes"
 msgstr "Sí"
 
-#: ../lib/pytis/web/field.py:528 ../lib/pytis/web/field.py:579
+#: ../lib/pytis/web/field.py:531 ../lib/pytis/web/field.py:582
 msgid "No"
 msgstr "No"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:553
+#: ../lib/pytis/web/field.py:556
 msgid "image"
 msgstr "imágen"
 
-#: ../lib/pytis/web/field.py:555
+#: ../lib/pytis/web/field.py:558
 msgid "file"
 msgstr "archivo"
 
@@ -170,16 +170,16 @@ msgstr "Campos marcados con asterisco son obligatorios."
 #. Label of filter selection box.
 #. Filtering limits the displayed form records by
 #. certain criterias.
-#: ../lib/pytis/web/form.py:757 ../lib/pytis/web/form.py:1613
+#: ../lib/pytis/web/form.py:752 ../lib/pytis/web/form.py:1608
 msgid "Filter"
 msgstr "Filtro"
 
-#: ../lib/pytis/web/form.py:759
+#: ../lib/pytis/web/form.py:754
 #, fuzzy
 msgid "Apply Filter"
 msgstr "Filtro"
 
-#: ../lib/pytis/web/form.py:977
+#: ../lib/pytis/web/form.py:972
 #, fuzzy
 msgid "Profile"
 msgstr "archivo"
@@ -187,30 +187,30 @@ msgstr "archivo"
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1184
+#: ../lib/pytis/web/form.py:1179
 msgid "All items"
 msgstr "Todos los registros"
 
-#: ../lib/pytis/web/form.py:1305
+#: ../lib/pytis/web/form.py:1300
 #, fuzzy
 msgid "Sum"
 msgstr "Confirmar"
 
-#: ../lib/pytis/web/form.py:1306
+#: ../lib/pytis/web/form.py:1301
 msgid "Average"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1307
+#: ../lib/pytis/web/form.py:1302
 msgid "Minimum"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1308
+#: ../lib/pytis/web/form.py:1303
 msgid "Maximum"
 msgstr ""
 
 #. Label for a column with buttons to invoke various
 #. actions on database records, such as update or delete.
-#: ../lib/pytis/web/form.py:1352
+#: ../lib/pytis/web/form.py:1347
 msgid "Actions"
 msgstr "Acciones"
 
@@ -218,7 +218,7 @@ msgstr "Acciones"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1374
+#: ../lib/pytis/web/form.py:1369
 #, fuzzy, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
@@ -229,18 +229,18 @@ msgstr[1] ""
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1466
+#: ../lib/pytis/web/form.py:1461
 msgid "No records."
 msgstr "Ningún registro."
 
-#: ../lib/pytis/web/form.py:1469
+#: ../lib/pytis/web/form.py:1464
 msgid "Total records:"
 msgstr "Registros en total:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1477
+#: ../lib/pytis/web/form.py:1472
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Mostrados %(first)s-%(last)s registros de %(total)s en total"
@@ -260,28 +260,28 @@ msgstr "Mostrados %(first)s-%(last)s registros de %(total)s en total"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1551
+#: ../lib/pytis/web/form.py:1546
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s sobre \"%(prefix)s\":"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1556
+#: ../lib/pytis/web/form.py:1551
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Ir al primer registro que empieza con \"%s\""
 
-#: ../lib/pytis/web/form.py:1578
+#: ../lib/pytis/web/form.py:1573
 msgid "Search expression"
 msgstr "Parámetro de búsqueda"
 
 #. Search button label.
-#: ../lib/pytis/web/form.py:1583 ../lib/pytis/web/form.py:1638
+#: ../lib/pytis/web/form.py:1578 ../lib/pytis/web/form.py:1633
 msgid "Search"
 msgstr "Buscar"
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1587
+#: ../lib/pytis/web/form.py:1582
 msgid "Change filters"
 msgstr ""
 
@@ -289,99 +289,141 @@ msgstr ""
 #. keyboard combination to use for selection
 #. without unexpected invocation of the
 #. option.
-#: ../lib/pytis/web/form.py:1618 ../lib/pytis/web/form.py:1647
-#: ../lib/pytis/web/form.py:1665
+#: ../lib/pytis/web/form.py:1613 ../lib/pytis/web/form.py:1642
+#: ../lib/pytis/web/form.py:1660
 msgid "(Use ALT+arrow down to select)"
 msgstr "(Usa ALT+flecha abajo para elegir)"
 
 #. Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse
 #. forward/backwards.
-#: ../lib/pytis/web/form.py:1644 ../lib/pytis/web/form.py:1646
+#: ../lib/pytis/web/form.py:1639 ../lib/pytis/web/form.py:1641
 msgid "Page"
 msgstr "Página"
 
-#: ../lib/pytis/web/form.py:1652
+#: ../lib/pytis/web/form.py:1647
 msgid "Previous"
 msgstr "Anterior"
 
-#: ../lib/pytis/web/form.py:1653
+#: ../lib/pytis/web/form.py:1648
 msgid "Go to previous page"
 msgstr "Ir a la página anterior"
 
-#: ../lib/pytis/web/form.py:1655
+#: ../lib/pytis/web/form.py:1650
 msgid "Next"
 msgstr "Siguiente"
 
-#: ../lib/pytis/web/form.py:1656
+#: ../lib/pytis/web/form.py:1651
 msgid "Go to next page"
 msgstr "Ir a la página siguiente"
 
-#: ../lib/pytis/web/form.py:1662 ../lib/pytis/web/form.py:1664
+#: ../lib/pytis/web/form.py:1657 ../lib/pytis/web/form.py:1659
 msgid "Records per page"
 msgstr "Registros por página"
 
-#: ../lib/pytis/web/form.py:1669
+#: ../lib/pytis/web/form.py:1664
 msgid "Go"
 msgstr "Ir"
 
-#: ../lib/pytis/web/form.py:1714
+#: ../lib/pytis/web/form.py:1709
 msgid "filtered by: "
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:57
-#: ../resources/scripts/pytis-ckeditor.js:64
-#: ../resources/scripts/pytis-ckeditor.js:70
+#: ../resources/scripts/pytis-ckeditor.js:46
+msgid "Edit"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:242
+msgid "Upload successful"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:245
+msgid "Error: "
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:254
+msgid "Upload new file"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:269
+msgid "Title"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:276
+msgid "Description"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:358
 #, fuzzy
 msgid "Image"
 msgstr "imágen"
 
-#: ../resources/scripts/pytis-ckeditor.js:154
+#: ../resources/scripts/pytis-ckeditor.js:414
+msgid "Display as"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:415
+msgid "Full size"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:416
+msgid "Small preview"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:417
+msgid "Medium preview"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:418
+msgid "Large preview"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:422
 msgid "Align"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:155
+#: ../resources/scripts/pytis-ckeditor.js:423
 msgid "Left"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:155
+#: ../resources/scripts/pytis-ckeditor.js:423
 msgid "Right"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:171
+#: ../resources/scripts/pytis-ckeditor.js:443
+msgid "Behavior"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:444
+msgid "Enlarge on click"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:446
 msgid "Link"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:238
+#: ../resources/scripts/pytis-ckeditor.js:447
 msgid "Link to anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:269
-msgid "External link"
+#: ../resources/scripts/pytis-ckeditor.js:508
+msgid "Select the anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:287
-msgid "Image Details"
+#: ../resources/scripts/pytis-ckeditor.js:538
+msgid "Link target (URL)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:291
-msgid "Title"
+#: ../resources/scripts/pytis-ckeditor.js:558
+msgid "Audio"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:294
-msgid "Description"
+#: ../resources/scripts/pytis-ckeditor.js:578
+msgid "Video"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:301
-msgid "Update"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:319
-msgid "Upload new image"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:385
-msgid "Upload successful"
+#: ../resources/scripts/pytis-ckeditor.js:598
+msgid "Attachment"
 msgstr ""
 
 #~ msgid "Apply"
