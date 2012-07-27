@@ -241,8 +241,8 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                if (reply['success'] == true){
                                    msg = pytis._("Upload successful");
                                    cls = "ckeditor-success";
-                               }else{
-                                   msg = pytis._("Error: ") + reply['message'];
+                               } else {
+                                   msg = reply['message'];
                                    cls = "ckeditor-error";
                                }
                                $('ckeditor-upload-result').update("<p class=\""+cls+"\">"+msg+"</p>");
