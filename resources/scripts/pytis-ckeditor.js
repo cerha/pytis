@@ -254,12 +254,18 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        label: pytis._("Upload new file"),
                        'for': ['main', 'upload'],
                        onClick: function() {
+                           var dialog = CKEDITOR.dialog.getCurrent();
                            var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-                           // We can't simply call form.submit(), because Wiking
-                           // uses a hidden field named 'submit' for its internal
-                           // purposes and this hidden field masks the submit method
-                           // (not really clever...).
-                           var result = document.createElement('form').submit.call(field._file_upload_form);
+			   if (dialog.getContentElement('main', 'upload').getValue()) {
+                               // We can't simply call form.submit(), because Wiking
+                               // uses a hidden field named 'submit' for its internal
+                               // purposes and this hidden field masks the submit method
+                               // (not really clever...).
+                               var result = document.createElement('form').submit.call(field._file_upload_form);
+			   } else {
+                               $('ckeditor-upload-result').update(pytis._("Select a file to be uploaded."));
+			   }
+			   return false;
                        }
                       },
                   ]
