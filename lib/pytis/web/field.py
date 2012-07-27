@@ -440,6 +440,7 @@ class HtmlFieldExporter(MultilineFieldExporter):
             context.resource('pytis-ckeditor.js')
             context.resource('swfobject.js')
             context.resource('flash.js')
+            context.resource('ckeditor.css')
             toolbar = (
                 ('clipboard',   ('Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo')),
                 ('editing',     ('Find','Replace','-','SelectAll')),
