@@ -183,7 +183,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                       {type: 'file',
                        id: 'upload',
                        label: editor.lang.image.btnUpload,
-                       style: 'height:50px',
+		       size: '30',
                        setup: function(element) {
                            // Register onload hook to respond to upload actions
                            var frame = CKEDITOR.document.getById(this._.frameId);
