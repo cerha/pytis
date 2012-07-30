@@ -125,7 +125,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._modals = Stack()
         self._statusbar = StatusBar(frame, self._spec('status_fields',()))
         self._help_browser = None
-        self._help_files = self._find_help_files()
         self._login_hook = self._spec('login_hook')
         keymap = self.keymap = Keymap()
         custom_keymap = self._spec('keymap', ())
@@ -401,36 +400,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             return spec_class.public
 
-    def _find_help_files(self):
-        if not os.path.exists(config.help_dir):
-            log(OPERATIONAL, "Neexistující adresář nápovědy:", config.help_dir)
-            return []
-        result = []
-        import zipfile
-        for file in os.listdir(config.help_dir):
-            if os.path.splitext(file)[1].lower() == '.zip':
-                filename = os.path.join(config.help_dir, file)
-                zfile = zipfile.ZipFile(filename)
-                for f in zfile.namelist():
-                    if f.endswith('.hhp'):
-                        values = {}
-                        for line in zfile.read(f).splitlines():
-                            pos = line.find('=')
-                            if pos != -1:
-                                key = line[:pos].lower().strip()
-                                values[key] = line[pos+1:].strip()
-                        if 'default topic' in values and 'title' in values:
-                            title = values['title']
-                            index = os.path.splitext(values['default topic'])[0]
-                            if 'charset' in values:
-                                title = unicode(title, values['charset'])
-                            result.append((filename, index, title))
-
-        if len(result) == 0:
-            log(OPERATIONAL, "Žádné soubory nápovědy nebyly nalezeny:",
-                config.help_dir)
-        return result
-
     def _create_command_menu(self, menus):
         items = []
         for group in FORM_MENU_COMMANDS:
@@ -445,8 +414,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(OPERATIONAL, "Menu nápovědy nalezeno - nevytvářím vlastní.")
             return
         items = [mitem(UICommands.PYTIS_HELP)]
-        #items.extend([MItem(title, command=Application.COMMAND_HELP(topic=index))
-        #              for file, index, title in self._help_files if index != 'pytis'])
         items.extend((MSeparator(),
                       mitem(UICommands.HELP),
                       mitem(UICommands.DESCRIBE)))
@@ -1029,13 +996,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _cmd_help(self, topic='pytis'):
         """Zobraz dané téma v prohlížeči nápovědy."""
-        if not self._help_files:
-            msg = _(u"Žádný soubor s nápovědou nebyl nalezen.\n" +
-                    u"Konfigurační volba 'help_dir' nyní ukazuje na:\n%s\n" +
-                    u"Zkontrolujte zda je cesta správná\n" +
-                    u"a zda adresář obsahuje soubory nápovědy.")
-            self.run_dialog(Warning, msg % config.help_dir)
-            return
         browser = self._help_browser
         if browser:
             browser.Raise()
