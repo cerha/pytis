@@ -67,6 +67,28 @@ pytis.HtmlField.plugin = function(editor) {
         }
     });
 
+    /* Add exercise dialog */
+    CKEDITOR.dialog.add('pytis-exercise', pytis.HtmlField.exercise_dialog);
+    /* Add exercise command */
+    editor.addCommand('insertPytisExercise', new CKEDITOR.dialogCommand('pytis-exercise'));
+    var icon = pytis.HtmlField.base_uri + '/editor-exercise.png';
+    /* Add exercise UI button */
+    editor.ui.addButton('PytisExercise', {
+        label: pytis._("Exercise"),
+        command: 'insertPytisExercise',
+        icon: icon
+    });
+    /* Add exercise context menu entry */
+    if (editor.contextMenu) {
+        editor.addMenuItem('editPytisExerise', {
+            label: pytis._('Edit Exercise'),
+            command: 'insertPytisExercise',
+            group: 'PytisGroup',
+            icon: icon
+        });
+	
+    }
+
 }
 
 pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment_type, attachment_class, attachment_properties, html_elements) {
@@ -615,3 +637,60 @@ pytis.HtmlField.on_dialog = function(event) {
     }
 };
 
+pytis.HtmlField.exercise_dialog = function(editor) {
+    /* CKEditor dialog for editing LCG exercises.
+     *
+     * Arguments:
+     *  editor ... the editor instance
+     *
+     * Return value:
+     *  Returns a dictionary description of the dialog for the CKEDITOR.dialog.add factory.
+     */
+    
+    return {
+        minWidth: 500,
+        minHeight: 380,
+        title: pytis._("Exercise"),
+        contents: [
+            {id: 'main',
+             label: pytis._("Exercise"),
+             elements: [
+		 {type: 'textarea',
+		  id: 'src',
+		  rows: 20,
+		  cols: 60,
+		  label: pytis._('Definition'),
+		  setup: function(element) {
+		      this.setValue(element.$.innerHTML);
+		  },
+		  commit: function(element) {
+                      element.$.innerHTML = this.getValue();
+		  },
+		 },
+             ]},
+	],
+	onShow: function() {
+            // Check if editing an existing element or inserting a new one
+            var element = editor.getSelection().getStartElement();
+            if (element)
+		element = element.getAscendant('div', true);
+            if (!element || element.getName() != 'div' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
+		element = editor.document.createElement('div');
+		element.addClass('lcg-exercise');
+		element.setAttribute('contenteditable', 'false');
+		this.insertMode = true;
+            }
+            else
+		this.insertMode = false;
+            this.element = element;
+	    console.log("***", this.insertMode, element.$);
+            this.setupContent(this.element);
+	},
+	onOk: function(element) {
+            if (this.insertMode){
+		editor.insertElement(this.element);
+            }
+            this.commitContent(this.element);
+	},
+    };
+};

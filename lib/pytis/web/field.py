@@ -449,12 +449,14 @@ class HtmlFieldExporter(MultilineFieldExporter):
                 ('/', None),
                 ('styles',      ('Format',)),#'Font','FontSize')),
                 ('paragraph',   ('NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiLtr','BidiRtl')),
-                ('links',       ('PytisAttachmentImage','PytisAttachmentAudio','PytisAttachmentVideo','PytisAttachmentResource','Link','Unlink','Anchor')),
+                ('links',       ('PytisAttachmentImage','PytisAttachmentAudio','PytisAttachmentVideo','PytisAttachmentResource','PytisExercise','Link','Unlink','Anchor')),
                 ('insert',      ('Table','HorizontalRule','Smiley','SpecialChar','PageBreak')),
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
                           language=context.lang(),
-                          removePlugins = 'forms,image')
+                          removePlugins = 'forms,image',
+                          contentsCss = context.uri(context.resource('ckeditor.css')),
+                          )
             if self._row.attachment_storage(self._field.id) is not None:
                 config['extraPlugins'] = 'pytis-attachments'
                 config['pytisFieldId'] = self._field.unique_id
