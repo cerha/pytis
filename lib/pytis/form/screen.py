@@ -2096,8 +2096,9 @@ class Browser(wx.Panel, CommandHandler):
         return view_spec.title(), sections
         
     def _load_help_page(self, topic):
-        resource_provider = lcg.ResourceProvider(dirs=('/home/cerha/work/pytis/resources',
-                                                       '/home/cerha/work/lcg/resources'))
+        resource_dirs = [d[:-3]+'resources' for d in sys.path
+                         if d.endswith('/pytis/lib') or d.endswith('/lcg/lib')]
+        resource_provider = lcg.ResourceProvider(dirs=resource_dirs)
         def make_node(row, children):
             if row['help_id'].value() == topic:
                 # If this is the currently displayed node, create the content.
