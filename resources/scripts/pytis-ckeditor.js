@@ -683,7 +683,6 @@ pytis.HtmlField.exercise_dialog = function(editor) {
             else
 		this.insertMode = false;
             this.element = element;
-	    console.log("***", this.insertMode, element.$);
             this.setupContent(this.element);
 	},
 	onOk: function(element) {
