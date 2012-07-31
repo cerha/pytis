@@ -154,6 +154,8 @@ class ItemsHelp(Specification):
         return pp.DbAttachmentStorage('e_pytis_help_spec_attachments', 'spec_name',
                                       record['spec_name'].value(), base_uri='resource:')
     def _label(self, record, spec_name, kind, identifier):
+        if not kind or not identifier:
+            return None
         resolver = pytis.util.resolver()
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
