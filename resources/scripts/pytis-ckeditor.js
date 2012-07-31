@@ -673,9 +673,9 @@ pytis.HtmlField.exercise_dialog = function(editor) {
             // Check if editing an existing element or inserting a new one
             var element = editor.getSelection().getStartElement();
             if (element)
-		element = element.getAscendant('div', true);
-            if (!element || element.getName() != 'div' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
-		element = editor.document.createElement('div');
+		element = element.getAscendant('pre', true);
+            if (!element || element.getName() != 'pre' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
+		element = editor.document.createElement('pre');
 		element.addClass('lcg-exercise');
 		element.setAttribute('contenteditable', 'false');
 		this.insertMode = true;
