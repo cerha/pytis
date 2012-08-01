@@ -4100,9 +4100,10 @@ class DbAttachmentStorage(AttachmentStorage):
         for size, column in ((image_size, 'resized'), (thumbnail_size, 'thumbnail')):
             if has_thumbnail:
                 stream = cStringIO.StringIO()
-                self._resized_image(image, size).save(stream, image.format)
+                resized_image = self._resized_image(image, size)
+                image.save(stream, image.format)
                 buffer_value = buffer(stream.getvalue())
-                width, height = size
+                width, height = resized_image.size
             else:
                 buffer_value, width, height = None, None, None
             row_values[column] = buffer_value
