@@ -31,6 +31,8 @@ považovány za immutable, tudíž mohou být libovolně sdíleny.
 
 import collections
 import re
+import BaseHTTPServer
+import weakref
 
 import pytis.data
 
@@ -3967,7 +3969,29 @@ class DbAttachmentStorage(AttachmentStorage):
     
 
     """
+    
+    class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+        """Simple HTTP server to serve attachments to the built-in pytis browser.
 
+        It is only intended for serving attachments in pytis wx application.
+        The client is the built-in webkit browser.
+
+        """
+        def do_GET(self):
+            storage = self.server.storage_weakref()
+            if storage:
+                data = storage.get_data_for_uri(self.path)
+                if data:
+                    import mimetypes
+                    content_type = mimetypes.guess_type(self.path)[0] or 'application/octet-stream'
+                    self.send_response(200)
+                    self.send_header('Content-type', content_type)
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
+            self.send_error(404,'Not Found: %s' % self.path)
+                
+                
     def __init__(self, table, ref_column, ref_value, base_uri):
         """Arguments:
 
@@ -3989,7 +4013,31 @@ class DbAttachmentStorage(AttachmentStorage):
         self._ref_column = ref_column
         self._ref_value = ref_value
         self._ref_type = self._data.find_column(ref_column).type()
-        self._base_uri = base_uri
+        self._server = server = BaseHTTPServer.HTTPServer(("localhost", 0), self.HTTPHandler)
+        # Avoid circular reference to allow shutting down the server
+        # automatically when the storage instance is deleted (see __del__).
+        server.storage_weakref = weakref.ref(self)
+        self._ticket = ticket = self._generate_ticket()
+        self._base_uri = 'http://localhost:%d/%s' % (server.socket.getsockname()[1], ticket)
+        import threading
+        threading.Thread(target=server.serve_forever).start()
+
+    def __del__(self):
+        # Shut down the server when the storage instance is being removed from
+        # memory.  The storage reference is passed to the created resource
+        # instances to make the server live as long as its attachments are in
+        # use.
+        self._server.shutdown()
+        self._server.socket.close()
+
+    def _generate_ticket(self):
+        try:
+            ticket = ''.join(['%02x' % ord(c) for c in os.urandom(16)])
+        except NotImplementedError:
+            import random
+            random.seed()
+            ticket = ''.join(['%02x' % random.randint(0, 255) for i in range(16)])
+        return ticket
 
     def _condition(self, filename=None):
         condition = pytis.data.EQ(self._ref_column,
@@ -4013,14 +4061,17 @@ class DbAttachmentStorage(AttachmentStorage):
         row = self._data.fetchone()
         self._data.close()
         return row
-    
+
     def _row_resource(self, row):
         if row['thumbnail_width'].value():
             thumbnail_size = (row['thumbnail_width'].value(), row['thumbnail_height'].value())
         else:
             thumbnail_size = None
         return self._resource(row['file_name'].value(),
-                              info=dict(byte_size=row['byte_size'].export()),
+                              info=dict(byte_size=row['byte_size'].export(),
+                                        # Pass storage reference to make the storage 
+                                        # live as long as necessary (see __del__).
+                                        storage=self),
                               size=(row['width'].value(), row['height'].value()),
                               has_thumbnail=thumbnail_size is not None,
                               thumbnail_size=thumbnail_size)
@@ -4118,6 +4169,33 @@ class DbAttachmentStorage(AttachmentStorage):
             return cStringIO.StringIO(row['file'].value().buffer())
         else:
             return None
+        
+    def get_data_for_uri(self, uri):
+        """Special method for the DbAttachmentStorage HTTP server communication.
+
+        This method is not part of the AttachmentStorage API and should not be
+        used by applications.  It is only intended for communicatuion with the
+        built-in HTTP server serving attachments in pytis application (the
+        client is the built-in webkit browser).
+
+        """
+        path = uri.lstrip('/').split('/')
+        if path and path[0] == self._ticket:
+            del path[0]
+            if path and path[0] == 'thumbnails':
+                field = 'thumbnail'
+                del path[0]
+            elif path and path[0] == 'resized':
+                field = 'resized'
+                del path[0]
+            else:
+                field = 'file'
+            if len(path) == 1:
+                row = self._get_row(path[0])
+                if row:
+                    return row[field].value().buffer()
+        return None
+    
 
         
 class Specification(object):
