@@ -20,6 +20,7 @@
 
 
 import copy
+import imp
 import inspect
 import os
 import re
@@ -1242,6 +1243,10 @@ def _make_sql_command(sql, *multiparams, **params):
 def _dump_sql_command(sql, *multiparams, **params):
     output = _make_sql_command(sql, *multiparams, **params)
     print output + ';'
+
+def include(file_name):
+    file_, pathname, description = imp.find_module(file_name)
+    execfile(pathname, globals())
 
 def gsql_file(file_name):
     global _metadata

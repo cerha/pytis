@@ -67,6 +67,8 @@ import pytis.data
 imp.reload(sys)
 sys.setdefaultencoding('utf-8')
 
+gensql_file = 'gensql'
+
 
 exit_code = 0
 _EXIT_USAGE = 1
@@ -183,6 +185,7 @@ class _GsqlSpec(object):
                 _GsqlSpec._group_list.append(group)
         self._schemas = None
         self._convert = convert
+        self._gensql_file = gensql_file
 
     def _set_name(self, name):
         if name in self._seen_names:
@@ -3640,14 +3643,38 @@ database dumps if you want to be sure about your schema.
         defs._convert()
 
     def _convert(self):
-        sys.stdout.write('# -*- coding: utf-8\n')
+        coding_header = '# -*- coding: utf-8\n\n'
+        directory = _GsqlConfig.directory
+        if directory is None:
+            sys.stdout.write(coding_header)
+        else:
+            index_file = os.path.join(directory, 'db.py')
+            visited_files = [index_file]
+            f = open(index_file, 'w')
+            f.write(coding_header)
+            f.close()
         def process(o):
             dbobj = self[o]
             converted = dbobj.convert()
             if not dbobj._convert:
                 converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
-            sys.stdout.write(converted)
-            sys.stdout.write('\n')
+            if directory is None:
+                output = sys.stdout
+            else:
+                basename = os.path.basename(dbobj._gensql_file)
+                basename = os.path.splitext(basename)[0]
+                file_name = os.path.join(directory, basename) + '.py'
+                if file_name not in visited_files:
+                    f = open(index_file, 'a')
+                    f.write("include('%s')\n" % (basename,))
+                    f.close()
+                    output = open(file_name, 'w')
+                    output.write(coding_header)
+                    visited_files.append(file_name)
+                else:
+                    output = open(file_name, 'a')
+            output.write(converted)
+            output.write('\n')
         self._process_resolved(process)
 
 
@@ -3732,7 +3759,7 @@ def sql_raw_include(file_name, depends=(), **kwargs):
     return _gsql_process(_GsqlRaw, (sql,), kwargs)
 
 
-def include(file_name):
+def include(file_name, globals_=None):
     """Zpracuj pythonový soubor 'file_name'.
 
     Soubor je zpracován prostřednictvím volání 'execfile()'.
@@ -3743,7 +3770,13 @@ def include(file_name):
         vůči aktuálnímu adresáři
 
     """
-    execfile(file_name, copy.copy(globals()))
+    global gensql_file
+    orig_gensql_file = gensql_file
+    gensql_file = file_name
+    if globals_ is None:
+        globals_ = copy.copy(globals())
+    execfile(file_name, globals_)
+    gensql_file = orig_gensql_file
 
 
 ###############################################################################
@@ -3767,6 +3800,7 @@ class _GsqlConfig:
     dbuser = None
     dbpassword = None
     check_presence = False
+    directory = None
 
 
 _GSQL_OPTIONS = (
@@ -3851,9 +3885,13 @@ def _go(argv=None):
             _GsqlConfig.warnings = False
         else:
             raise ProgramError('Unrecognized option', o)
-    if len(args) != 1:
+    if len(args) == 2 and _GsqlConfig.request is _GsqlConfig.CONVE:
+        _GsqlConfig.directory = args[1]
+    elif len(args) != 1:
         _usage()
-    execfile(args[0], copy.copy(globals()))
+    global gensql_file
+    gensql_file = args[0]
+    execfile(gensql_file, copy.copy(globals()))
     _GsqlConfig.request()
     
 
