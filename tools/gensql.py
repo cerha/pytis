@@ -2330,7 +2330,7 @@ class _GsqlViewNG(Select):
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
-                    items.append ('        return %s' % (command_string,))
+                    items.append ('        return (%s,)' % (command_string,))
         add_rule('insert', self._insert, self._insert_order)
         add_rule('update', self._update, self._update_order)
         add_rule('delete', self._delete, self._delete_order)
