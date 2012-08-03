@@ -398,3 +398,16 @@ pytis.FileUploadField = Class.create(pytis.Field, {
 
 
 });
+
+pytis.init_row_actions_menu = function(element_id, items) {
+    function popup_menu(event) { 
+	var menu = new wiking.PopupMenu(items);
+	menu.popup(event);
+    };
+    var ctrl = $(element_id);
+    ctrl.addClassName('row-actions-ctrl');
+    ctrl.setAttribute('title', pytis._("Popup the menu of actions for this row"));
+    ctrl.setAttribute('href', '#');
+    ctrl.observe('click', popup_menu);
+    ctrl.up('tr').observe('contextmenu', popup_menu);
+};

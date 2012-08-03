@@ -156,6 +156,22 @@ class Form(lcg.Content):
 
     def _export_actions(self, context, record, uri):
         g = context.generator()
+        buttons = [
+            g.form([g.hidden(name, value) for name, value in action.params.items()] +
+                   [g.button(g.span(action.title), title=action.descr,
+                             disabled=not action.enabled,
+                             cls='action-'+action.id + (not action.enabled and ' disabled' or ''))],
+                   action=uri)
+            for action in self._visible_actions(context, record)]
+        if buttons:
+            return g.div(buttons, cls='actions module-actions-' + self._name)
+        else:
+            return ''
+
+    def _visible_actions(self, context, record):
+        class Action(object):
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
         if record is not None:
             required_context = ActionContext.RECORD
             function_args = (record,)
@@ -170,30 +186,27 @@ class Form(lcg.Content):
             if isinstance(visible, collections.Callable):
                 visible = visible(*function_args)
             return visible
-        def action_button(action):
+        def is_enabled(action):
             enabled = action.enabled()
             if isinstance(enabled, collections.Callable):
                 enabled = enabled(*function_args)
-            params = (('action', action.id()),
-                      ('__invoked_from', self.__class__.__name__),) + \
-                      tuple(action.kwargs().items())
-            return g.form([g.hidden(name, value is True and 'true' or value)
-                           for name, value in params] +
-                          [g.button(g.span(action.title()), title=action.descr(),
-                                    disabled=not enabled,
-                                    cls='action-'+action.id() + (not enabled and ' disabled' or ''))],
-                          action=uri)
+            return enabled
         if self._actions is not None:
             actions = self._actions
             if isinstance(actions, collections.Callable):
                 actions = actions(self, record)
         else:
             actions = self._view.actions()
-        buttons = [action_button(action) for action in actions if is_visible(action)]
-        if buttons:
-            return g.div(buttons, cls='actions module-actions-' + self._name)
-        else:
-            return ''
+        return [Action(id=action.id(),
+                       title=action.title(),
+                       descr=action.descr(),
+                       enabled=is_enabled(action),
+                       params=dict([(name, value is True and 'true' or value)
+                                    for name, value in action.kwargs().items()],
+                                   action=action.id(),
+                                   __invoked_from=self.__class__.__name__),
+                       )
+                for action in actions if is_visible(action)]
 
 
 class FieldForm(Form):
@@ -1216,15 +1229,26 @@ class BrowseForm(LayoutForm):
                 return len(order.strip('.').split('.')) - 1
         return None
     
-    def _export_cell(self, context, field):
+    def _export_cell(self, context, row, n, field):
         value = self._export_field(context, field)
         if field.id == self._column_fields[0].id:
+            g = context.generator()
             tree_level = self._tree_level()
             if tree_level is not None and tree_level > 0:
-                g = context.generator()
                 indent = tree_level * g.span(2*'&nbsp;', cls='tree-indent')
                 value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
-                # &#8227 does not work in MSIE
+            # &#8227 does not work in MSIE
+            if self._row_actions:
+                uri = self._uri_provider(row, None, type=UriType.LINK)
+                element_id = '%s-row-%d' % (self._id, n)
+                value += (g.a('', id=element_id) +
+                          g.script(g.js_call('pytis.init_row_actions_menu', element_id,
+                                             [dict(title=a.title,
+                                                   descr=a.descr,
+                                                   # We rely on another Wiking
+                                                   # specific request method!
+                                                   href=self._req.make_uri(uri, **a.params))
+                                              for a in self._visible_actions(context, row)])))
         return value
 
     def _style(self, style):
@@ -1280,13 +1304,9 @@ class BrowseForm(LayoutForm):
     
     def _export_row(self, context, row, n, row_id):
         g = context.generator()
-        cells = [g.td(self._export_cell(context, field), align=self._align.get(field.id),
+        cells = [g.td(self._export_cell(context, row, n, field), align=self._align.get(field.id),
                       **self._field_style(field, row))
                  for field in self._column_fields]
-        if self._row_actions:
-            actions = self._export_actions(context, row,
-                                           self._uri_provider(row, None, type=UriType.LINK))
-            cells.append(g.td(actions, cls='actions'))
         return g.tr(cells, id=row_id, **self._row_style(row, n))
 
     def _export_aggregation(self, context, op):
@@ -1340,12 +1360,7 @@ class BrowseForm(LayoutForm):
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
                     result += ' '+ g.span(sign, cls='sorting-sign')
             return result
-        headings = [g.th(label(f)) for f in self._column_fields]
-        if self._row_actions:
-            # Translators: Label for a column with buttons to invoke various
-            # actions on database records, such as update or delete.
-            headings.append(g.th(_("Actions")))
-        return headings
+        return [g.th(label(f)) for f in self._column_fields]
 
     def _conditions(self, condition=None):
         conditions = [c for c in (self._condition, self._filter, self._query_condition, condition,
@@ -1381,6 +1396,9 @@ class BrowseForm(LayoutForm):
                          for op in self._view.aggregations()]
         else:
             foot_rows = []
+        if self._row_actions:
+            context.resource('wiking.js')
+            context.resource('pytis.js')
         headings = self._export_headings(context)
         foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
         return g.table((g.thead(g.tr(headings)),
@@ -1954,10 +1972,10 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
                                    if isinstance(field.type, pd.Boolean)])
         self._check_columns = check_columns
 
-    def _export_cell(self, context, field):
+    def _export_cell(self, context, row, n, field):
         if field.id in self._check_columns:
             return context.generator().checkbox(name=field.id, value=self._row.format(self._key),
                                                 checked=self._row[field.id].value())
         else:
-            return super(CheckRowsForm, self)._export_cell(context, field)
+            return super(CheckRowsForm, self)._export_cell(context, row, n, field)
 
