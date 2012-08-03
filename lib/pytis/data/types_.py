@@ -1616,7 +1616,7 @@ class Time(_CommonDateTime):
         return dt.astimezone(tz).timetz()
     
     def sqlalchemy_type(self):
-        return sqlalchemy.Time(timezone=True)
+        return sqlalchemy.Time(timezone=(not self._utc))
             
 
 class TimeInterval(Type):
