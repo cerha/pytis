@@ -467,6 +467,7 @@ class _GsqlSpec(object):
             if c_references:
                 components = c_references.split(' ')
                 references = "a(object_by_reference(%s)" % (repr(components.pop(0),))
+                initially = ''
                 while components:
                     keyword = components.pop(0).lower()
                     if keyword == 'on':
@@ -475,7 +476,7 @@ class _GsqlSpec(object):
                             components[0].lower() in ('cascade', 'delete', 'restrict',)):
                             reaction = components.pop(0).upper()
                             if references and components == ['INITIALLY', 'DEFERRED']:
-                                reaction += ' INITIALLY DEFERRED'
+                                initially = 'DEFERRED'
                                 components = []
                             references += ", on%s='%s'" % (action, reaction,)
                         elif (len(components) >= 2 and action in ('update', 'delete',) and
@@ -486,10 +487,13 @@ class _GsqlSpec(object):
                             references = None
                             break
                     elif keyword == 'initially' and components.pop(0).lower() == 'deferred' and not components:
-                        references += ", onupdate='NO ACTION INITIALLY DEFERRED', ondelete='NO ACTION INITIALLY DEFERRED'"
+                        references += ", onupdate='NO ACTION', ondelete='NO ACTION'"
+                        initially = 'DEFERRED'
                     else:
                         references = None
                         break
+                if initially:
+                    references += ", initially='%s'" % (initially,)
             else:
                 references = None
             if references is None:
