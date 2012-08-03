@@ -27,6 +27,7 @@ import re
 import string
 import sqlalchemy
 from sqlalchemy.ext.compiler import compiles
+import sys
 import types
 import pytis.data
 
@@ -587,6 +588,10 @@ class SQLObject(object):
 
     def _add_dependencies(self):
         for o in self.depends_on:
+            if o is None:
+                sys.stderr.write("Unresolved dependency in %s: %s\n" %
+                                 (self.__class__.__name__, self.depends_on,))
+                continue
             if not isinstance(o, SQLObject):
                 assert issubclass(o, SQLObject), ("Invalid dependency", o,)
                 o = object_by_class(o, search_path=self._search_path)
