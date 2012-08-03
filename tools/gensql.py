@@ -541,6 +541,23 @@ class _GsqlSpec(object):
             depends_string += ','
         return '    depends_on = (%s)' % (depends_string,)
 
+    def _convert_add_raw_dependencies(self, raw):
+        while True:
+            match = re.search(' (from|join) ([a-zA-Z_0-9]+)', raw, flags=re.I)
+            if not match:
+                break
+            raw = raw[match.end():].lstrip()
+            identifier = match.group(2)
+            ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror', 'generate_series',
+                               'dblink', 'date_trunc', 'diff',
+                               'bv_users_cfg', 'solv_users_cfg',)
+            if (len(identifier) < 3 or
+                identifier.lower() in ignored_objects or
+                identifier.startswith('temp_') or
+                identifier.find('sogo') >= 0):
+                continue
+            self._add_conversion_dependency(identifier, None)
+        
     def _convert_grant(self):
         return '    access_rights = %s' % (repr(self._grant).replace('"', ''),)
         
@@ -2038,10 +2055,16 @@ class Select(_GsqlSpec):
                 else:
                     r._convert_select(definitions, level)
                     condition += 'XXX:select=%s' % (r,)
+            if self._limit:
+                # .limit() doesn't work well with aliases in sqlalchemy
+                condition += 'XXX:limit=%d' % (self._limit,)
         else:
             select_name = 'select_' +  str(len(definitions))
             self._convert_add_definition(definitions, 'def %s():' % (select_name,), level)
             relations, where_condition = self._convert_relations(definitions, level + 1)
+            if self._limit:
+                # .limit() doesn't work well with aliases in sqlalchemy
+                where_condition = where_condition[:-1] + " LIMIT %d'" % (self._limit,)
             columns = self._convert_select_columns()
             whereclause = ', whereclause=%s' % (where_condition,) if where_condition else ''
             condition = ('sqlalchemy.select(%s, from_obj=[%s]%s)' %
@@ -2054,8 +2077,6 @@ class Select(_GsqlSpec):
             condition = select_name + '()'
         if self._order_by:
             condition += '.order_by(%s)' % (self._convert_raw_columns(self._order_by),)
-        if self._limit:
-            condition += '.limit(%d)' % (self._limit,)
         return condition
      
 
@@ -3121,6 +3142,7 @@ class _GsqlFunction(_GsqlSpec):
         elif isinstance(output_type, basestring):
             type_string = self._convert_string_type(output_type.lower(), allow_none=True)
             if type_string is None:
+                self._add_conversion_dependency(output_type, None)
                 type_string = self._convert_name(name=output_type)
             items.append('    result_type = %s' % (type_string,))
         elif output_type is None:
@@ -3160,6 +3182,7 @@ class _GsqlFunction(_GsqlSpec):
             result += string.join(source_list, '')
             result += '\n'
         else:
+            self._convert_add_raw_dependencies(self._body)
             result += '    def body(self):\n'
             result += '        return """%s"""\n' % (self._body.replace("''", "'"),)
         return result        
@@ -3306,6 +3329,7 @@ class _GsqlRaw(_GsqlSpec):
         items.append('        return """%s"""' % (self._sql,))
         items.append(self._convert_depends())
         result = string.join(items, '\n') + '\n'
+        self._convert_add_raw_dependencies(self._sql)
         return result        
 
 
