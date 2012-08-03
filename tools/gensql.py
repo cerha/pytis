@@ -3645,14 +3645,17 @@ database dumps if you want to be sure about your schema.
     def _convert(self):
         coding_header = '# -*- coding: utf-8\n\n'
         directory = _GsqlConfig.directory
+        visited_files = {}
         if directory is None:
             sys.stdout.write(coding_header)
         else:
             index_file = os.path.join(directory, 'db.py')
-            visited_files = [index_file]
+            visited_files[index_file] = None
             f = open(index_file, 'w')
             f.write(coding_header)
             f.close()
+        last_visited_file = [None]
+        last_visited_suffix = ['']
         def process(o):
             dbobj = self[o]
             converted = dbobj.convert()
@@ -3663,14 +3666,32 @@ database dumps if you want to be sure about your schema.
             else:
                 basename = os.path.basename(dbobj._gensql_file)
                 basename = os.path.splitext(basename)[0]
-                file_name = os.path.join(directory, basename) + '.py'
-                if file_name not in visited_files:
+                file_name = os.path.join(directory, basename)
+                if file_name + '.py' == index_file:
+                    new_file = False
+                else:
+                    new_file = file_name not in visited_files
+                    if file_name == last_visited_file[0]:
+                        suffix = last_visited_suffix[0]
+                    else:                        
+                        index = visited_files.get(file_name, 0)
+                        visited_files[file_name] = index + 1
+                        last_visited_file[0] = file_name
+                        if index:
+                            suffix = '_' + str(index)
+                        else:
+                            suffix = ''
+                        last_visited_suffix[0] = suffix
+                        new_file = True
+                    file_name += suffix
+                    basename += suffix
+                file_name += '.py'
+                if new_file:
                     f = open(index_file, 'a')
                     f.write("include('%s')\n" % (basename,))
                     f.close()
                     output = open(file_name, 'w')
                     output.write(coding_header)
-                    visited_files.append(file_name)
                 else:
                     output = open(file_name, 'a')
             output.write(converted)
