@@ -1888,6 +1888,14 @@ class Select(_GsqlSpec):
             if isinstance(rel.relation, Select):
                 raise Exception("Program error")
             elif (isinstance(rel, SelectRelation) and
+                  rel.relation[0] == '(' and
+                  rel.relation.lower().find('from') >= 0):  # apparently a subselect
+                relation = self._convert_relation_name(rel)
+                d = ('%s = sqlalchemy.select(["*"], from_obj=["%s AS %s"])' %
+                     (relation.replace('(', '__').replace(')', '__'),
+                      rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),
+                      rel.alias,))
+            elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
