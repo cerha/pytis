@@ -893,8 +893,17 @@ class SQLTable(_SQLTabular):
         return args
 
     def create(self, bind=None, checkfirst=False):
+        self._set_search_path(bind)
         super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
         self._insert_values(bind)
+
+    def _set_search_path(self, bind):
+        search_path = self.search_path()
+        _set_current_search_path(search_path)
+        path_list = [_sql_id_escape(s) for s in search_path]
+        path = string.join(path_list, ',')
+        command = 'SET SEARCH_PATH TO %s' % (path,)
+        bind.execute(command)
         
     def _insert_values(self, bind):
         if self.init_values:
