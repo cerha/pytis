@@ -220,7 +220,7 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
             return (self.element,)
 
     def alias(self, name):
-        return self._PytisAlias(self, name, self._PytisColumn(self.name))
+        return self._PytisAlias(self, name, self._PytisColumn(name))
 
 class NAME(sqlalchemy.String):
     pass
