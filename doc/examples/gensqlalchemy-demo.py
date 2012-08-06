@@ -175,7 +175,7 @@ class BogusView(SQLView):
     @classmethod
     def condition(class_):
         foo, bar = t.Foo, t.Bar
-        return sqlalchemy.select([foo, bar], from_obj=[FullOuterJoin(foo, bar, foo.c.id==bar.c.id)])
+        return sqlalchemy.select([foo], from_obj=[FullOuterJoin(foo, bar, foo.c.id==bar.c.id)])
 
 class Func(SQLFunction):
     name = 'plus'
