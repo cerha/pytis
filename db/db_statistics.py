@@ -137,7 +137,7 @@ viewng('ev_pytis_form_users_noinfo',
        delete=None,
        grant=Gall_pytis,
        schemas=db_schemas,
-       depends=('e_pytis_form_log',)
+       depends=('e_pytis_form_log', 'f_user_cfg',)
        )
 
 viewng('ev_pytis_form_user_list',
