@@ -238,6 +238,13 @@ def compile_string(element, compiler, **kwargs):
     else:
         return 'VARCHAR(%d)' % (element.length,)
 
+@compiles(sqlalchemy.sql.expression.Alias)
+def visit_alias(element, compiler, **kwargs):
+    if element.description.find('(') >= 0:
+        # Column aliases may not be quoted
+        element.quote = False
+    return compiler.visit_alias(element, **kwargs)
+
 
 ## Columns
         
