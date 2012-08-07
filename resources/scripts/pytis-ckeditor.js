@@ -54,12 +54,13 @@ pytis.HtmlField.plugin = function(editor) {
     /* Add a common context menu listener handling all the attachment types */
     editor.contextMenu.addListener(function(element) {
         if (element)
-            element = element.getAscendant('a', true);
-        if (element && !element.isReadOnly() && !element.data('cke-realelement')){
+            element = element.getAscendant('a', true) || element.getAscendant('div', true)
+	    || element.getAscendant('span', true);
+        if (element && !element.data('cke-realelement')){
             for (var i=0; i<types.length; i++){
                 if (element.hasClass('lcg-'+types[i].toLowerCase())){
                     var result = {};
-                    result['editPytisAttachment'+types[i]] = CKEDITOR.TRISTATE_OFF;
+                    result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
                     return result;
                 }
             }
@@ -670,4 +671,208 @@ pytis.HtmlField.exercise_dialog = function(editor) {
             this.commitContent(this.element);
 	},
     };
+};
+
+pytis.HtmlField.mathml_dialog = function(editor) {
+
+    name = pytis._("MathML");
+
+    var dialog = {
+        minWidth: 500,
+        minHeight: 380,
+        title: name,
+        contents: [
+            {id: 'main',
+             label: name,
+             elements: [
+		 {type : 'vbox',
+		  id : 'source-ascii-box',
+		  children :
+		  [
+                      {type: 'textarea',
+                       id: 'source-ascii',
+                       label: pytis._("ASCII"),
+                      },
+		      {type: 'html',
+		       html: '<div class="ckeditor-help">'+pytis._("Guide on ")+'<a href="http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html">http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html</a></div>'
+		      },
+		  ]},
+		 {type : 'vbox',
+		  id : 'source-mathml-box',
+		  children :
+		  [
+                      {type: 'textarea',
+                       id: 'source-mathml',
+                       label: pytis._("MathML"),
+                      },
+		      {type: 'html',
+		       html: '<div class="ckeditor-help">'+pytis._("To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)")+'</div>'
+		      },
+		  ]},
+                 {type: 'button',
+                  id: 'toggle-input',
+                  label: "Switch ASCII / MathML editing",
+                 },
+                 {type: 'html',
+                  id: 'math-preview',
+                  html: '<div id="math-preview-container"><div id="math-preview"></div></div>',
+                 },
+             ]
+            }
+        ],
+        onShow: function() {
+            // Check if editing an existing element or inserting a new one
+            var sel = editor.getSelection();
+            var element = sel.getStartElement();
+            var tag = 'span';
+            if (element)
+                element = element.getAscendant(tag, true);
+            if (!element || element.getName() != tag) {
+                element = editor.document.createElement(
+		    tag,
+		    {'attributes': {'contenteditable': 'false'},
+		     'styles': {'display': 'inline-block'}});
+		element.addClass('lcg-mathml');
+		// We do not setup the inner <math> element here because without
+		// a reliable support for .setHtml()/.getHtml() in CKEditor or
+		// innerHTML in browsers, we would have no way to acces its contents
+                this.insertMode = true;
+            }
+            else{
+                this.insertMode = false;
+	    }
+            this.element = element;
+            this.setupContent(this.element);
+
+	    if (this.insertMode){
+		switch_method('ascii');
+	    }else{
+		if (this.getValueOf('main', 'source-ascii')){
+		    switch_method('ascii');
+		    this.setValueOf('main', 'source-mathml', "");
+		}else{
+		    switch_method('mathml');
+		}
+	    }
+
+        },
+        onOk: function(element) {
+            if (this.insertMode){
+                editor.insertElement(this.element);
+            }
+            this.commitContent(this.element);
+        }
+    };
+
+    switch_method = function (method){
+	var dialog = CKEDITOR.dialog.getCurrent();
+        var mathml = dialog.getContentElement('main',  'source-mathml-box');
+        var ascii = dialog.getContentElement('main',  'source-ascii-box');
+
+	if (method == 'mathml'){
+	    mathml.getElement().show();
+	    ascii.getElement().hide();
+	}
+	if (method == 'ascii'){
+	    mathml.getElement().hide();
+	    ascii.getElement().show();
+	}
+    }
+
+    clean_mathml = function(mathml, annotation, source) {
+	var clean = mathml;
+	var production_args = "";
+	// Strip outer math tags, ignoring their attributes
+	var inner_mathml = mathml.replace(/<\/?math.*?>/gi, "");
+	// Rewrap in <math> tags with desired attributes and annotations
+	if (source)
+	    production_args = 'contenteditable="false" style="display:inline-block"';
+	if (annotation.length > 0){
+	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
+		+ '<semantics>'
+		+ '<apply>' + inner_mathml + '</apply>'
+	        + '<annotation encoding="ASCII">' + annotation + '</annotation>'
+		+ '</semantics>'
+		+ '</math>';
+	} else {
+	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
+		+ inner_mathml
+		+ '</math>'
+	}
+    }
+
+    update_mathml_from_ascii = function(element) {
+        var dialog = CKEDITOR.dialog.getCurrent();
+	var mathml = AMparseMath(dialog.getValueOf('main', 'source-ascii')).innerHTML;
+	dialog.setValueOf('main', 'source-mathml', clean_mathml(mathml, source=true));
+    }
+
+
+    ck_element(dialog, 'source-mathml').setup = function(element) {
+        this.setValue(clean_mathml(element.$.innerHTML, annotation="", source=true));
+    }
+
+    ck_element(dialog, 'source-mathml').commit = function(element) {
+        var dialog = CKEDITOR.dialog.getCurrent();
+	ascii_source = dialog.getValueOf('main', 'source-ascii');
+     	element.$.innerHTML = clean_mathml(this.getValue(), annotation=ascii_source, source=false);
+    }
+
+    ck_element(dialog, 'source-mathml').onChange = function(element) {
+	$('math-preview').innerHTML = clean_mathml(this.getValue(), annotation="", source=false);
+    }
+
+    ck_element(dialog, 'source-ascii').setup = function(element) {
+	get_element = function (element, path){
+	    var ch = element.getChildren();
+	    var item;
+	    for (var i=0; i < ch.count(); i++){
+		item = ch.getItem(i);
+		if (typeof(item.getName) == 'function'){ // e.g. comments do not have a name
+		    if ((item.getName() == path[0])){
+			if (path.length > 1){
+			    return get_element(item, path.slice(1));
+			}else{
+			    return item;
+			}
+		    }
+		}
+	    }
+	    return null;
+	}
+	annotation = get_element(element, ['math', 'semantics', 'annotation']);
+	if (annotation){
+	    this.setValue(annotation.$.textContent);
+	}
+    }
+
+    ck_element(dialog, 'source-ascii').onShow = function(element) {
+	if (this.getValue())
+            update_mathml_from_ascii(element);
+    }
+
+    ck_element(dialog, 'source-ascii').onKeyUp = function(element) {
+        update_mathml_from_ascii(element);
+    }
+
+    ck_element(dialog, 'toggle-input').onClick = function(element) {
+	var dialog = CKEDITOR.dialog.getCurrent();
+        var mathml_box = dialog.getContentElement('main',  'source-mathml-box');
+        var ascii = dialog.getContentElement('main',  'source-ascii');
+
+	if (mathml_box.getElement().isVisible()){
+	    switch_method('ascii');
+	}else{
+	    if (ascii.getValue()){
+		var answer = confirm(pytis._("Editing MathML will destroy your ASCII formula. Continue?"));
+		if (answer == false)
+		    return;
+		ascii.setValue("");
+	    }
+	    switch_method('mathml');
+	}
+    }
+
+    return dialog;
+
 };

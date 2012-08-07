@@ -449,6 +449,7 @@ class HtmlFieldExporter(MultilineFieldExporter):
             context.resource('swfobject.js')
             context.resource('flash.js')
             context.resource('ckeditor.css')
+            context.resource('ASCIIMathML.js')
             toolbar = (
                 ('clipboard',   ('Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo')),
                 ('editing',     ('Find','Replace','-','SelectAll')),
