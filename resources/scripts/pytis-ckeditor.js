@@ -24,27 +24,27 @@ pytis.HtmlField.base_uri = pytis.HtmlField.scripts[pytis.HtmlField.scripts.lengt
 
 pytis.HtmlField.plugin = function(editor) {
     // Construct dialog and add toolbar button
-    var types = ['Image', 'Audio', 'Video', 'Resource'];
+    var types = ['Image', 'Audio', 'Video', 'Resource', 'Exercise', 'MathML'];
     editor.addMenuGroup('PytisGroup');
     for (var i=0; i<types.length; i++){
         var type = types[i];
         var ltype = types[i].toLowerCase();
         /* Add dialog */
-        CKEDITOR.dialog.add('pytis-attachments-' + ltype, eval('pytis.HtmlField.' + ltype + '_attachment_dialog'));
+        CKEDITOR.dialog.add('pytis-' + ltype, eval('pytis.HtmlField.' + ltype + '_dialog'));
         /* Add command */
-        editor.addCommand('insertPytisAttachment' + type, new CKEDITOR.dialogCommand('pytis-attachments-' + ltype));
+        editor.addCommand('insertPytis' + type, new CKEDITOR.dialogCommand('pytis-' + ltype));
         var icon = pytis.HtmlField.base_uri + '/editor-' + ltype + '.png';
         /* Add UI button */
-        editor.ui.addButton('PytisAttachment' + type, {
+        editor.ui.addButton('Pytis' + type, {
             label: editor.lang.common.image,
-            command: 'insertPytisAttachment' + type,
+            command: 'insertPytis' + type,
             icon: icon
         });
         /* Add context menu entry */
         if (editor.contextMenu) {
-            editor.addMenuItem('editPytisAttachment' + type, {
+            editor.addMenuItem('editPytis' + type, {
                 label: pytis._('Edit') + ' ' + pytis._(type),
-                command: 'insertPytisAttachment' + type,
+                command: 'insertPytis' + type,
                 group: 'PytisGroup',
                 icon: icon
             });
@@ -66,28 +66,6 @@ pytis.HtmlField.plugin = function(editor) {
             return null;
         }
     });
-
-    /* Add exercise dialog */
-    CKEDITOR.dialog.add('pytis-exercise', pytis.HtmlField.exercise_dialog);
-    /* Add exercise command */
-    editor.addCommand('insertPytisExercise', new CKEDITOR.dialogCommand('pytis-exercise'));
-    var icon = pytis.HtmlField.base_uri + '/editor-exercise.png';
-    /* Add exercise UI button */
-    editor.ui.addButton('PytisExercise', {
-        label: pytis._("Exercise"),
-        command: 'insertPytisExercise',
-        icon: icon
-    });
-    /* Add exercise context menu entry */
-    if (editor.contextMenu) {
-        editor.addMenuItem('editPytisExerise', {
-            label: pytis._('Edit Exercise'),
-            command: 'insertPytisExercise',
-            group: 'PytisGroup',
-            icon: icon
-        });
-	
-    }
 
 }
 
@@ -380,7 +358,7 @@ ck_element = function(dialog, id) {
     return ck_get_element_from_list(elements, id);
 }
 
-pytis.HtmlField.image_attachment_dialog = function(editor) {
+pytis.HtmlField.image_dialog = function(editor) {
 
     dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Image"), 'Image', "lcg-image",
@@ -580,7 +558,7 @@ pytis.HtmlField.image_attachment_dialog = function(editor) {
     return dialog;
 }
 
-pytis.HtmlField.audio_attachment_dialog = function(editor) {
+pytis.HtmlField.audio_dialog = function(editor) {
 
     dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Audio"), 'Audio', "lcg-audio",
@@ -600,7 +578,7 @@ pytis.HtmlField.audio_attachment_dialog = function(editor) {
     return dialog;
 }
 
-pytis.HtmlField.video_attachment_dialog = function(editor) {
+pytis.HtmlField.video_dialog = function(editor) {
 
     dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Video"), 'Video', "lcg-video",
@@ -620,7 +598,7 @@ pytis.HtmlField.video_attachment_dialog = function(editor) {
     return dialog;
 }
 
-pytis.HtmlField.resource_attachment_dialog = function(editor) {
+pytis.HtmlField.resource_dialog = function(editor) {
 
     dialog = pytis.HtmlField.attachment_dialog(
         editor, pytis._("Attachment"), 'Resource', "lcg-resource",
