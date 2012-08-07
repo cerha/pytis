@@ -36,7 +36,7 @@ pytis.HtmlField.plugin = function(editor) {
         var icon = pytis.HtmlField.base_uri + '/editor-' + ltype + '.png';
         /* Add UI button */
         editor.ui.addButton('Pytis' + type, {
-            label: editor.lang.common.image,
+            label: pytis._(types[i]),
             command: 'insertPytis' + type,
             icon: icon
         });
