@@ -457,7 +457,8 @@ class HtmlFieldExporter(MultilineFieldExporter):
                 ('/', None),
                 ('styles',      ('Format',)),#'Font','FontSize')),
                 ('paragraph',   ('NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiLtr','BidiRtl')),
-                ('links',       ('PytisImage','PytisAudio','PytisVideo','PytisResource','PytisExercise','PytisMathML','Link','Unlink','Anchor')),
+                ('pytis',       ('PytisImage','PytisAudio','PytisVideo','PytisResource','PytisExercise','PytisMathML')),
+                ('links',       ('Link','Unlink','Anchor')),
                 ('insert',      ('Table','HorizontalRule','Smiley','SpecialChar','PageBreak')),
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
