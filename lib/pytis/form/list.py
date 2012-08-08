@@ -3031,10 +3031,13 @@ class BrowseForm(FoldableForm):
                     cls = PopupEditForm
                     title = _(u"Upravit záznam sloupce '%s'") % f.label()
                     hlp = _(u"Upravit záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
-                elif type == FormType.VIEW:
-                    cls = ShowForm
+                elif type in (FormType.VIEW, FormType.BROWSABLE_VIEW):
+                    if type == FormType.BROWSABLE_VIEW:
+                        cls = BrowsableShowForm
+                    else:
+                        cls = ShowForm
                     title = _(u"Zobrazit záznam sloupce '%s'") % f.label()
-                    hlp = _(u"Upravit záznam pro hodnotu '%(value)s' sloupce '%s(column)'.")
+                    hlp = _(u"Zobrazit záznam pro hodnotu '%(value)s' sloupce '%s(column)'.")
                 cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls,
                                                    select_row={link.column(): row[f.id()]},
                                                    **kwargs)

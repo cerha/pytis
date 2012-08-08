@@ -2341,6 +2341,9 @@ class FormType(object):
     VIEW = 'VIEW'
     """Otevření needitovatelného náhledu jednoho záznamu."""
     
+    BROWSABLE_VIEW = 'BROWSABLE_VIEW'
+    """Otevření needitovatelného náhledu jednoho záznamu s možností procházení záznamů."""
+    
     EDIT = 'EDIT'
     """Otevření editačního formuláře jednoho záznamu."""
     
