@@ -1743,15 +1743,23 @@ class ListField(GenericCodebookField):
         row = self._type.enumerator().row(self._row[self._id].value(),
                                           transaction=self._row.transaction())
         return PresentedRow(view.fields(), data, row, transaction=self._row.transaction())
+
+    def _selected_item_index(self):
+        return self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
     
     # Command handling
     
     def _can_select(self):
-        return self.enabled()
+        if not self.enabled():
+            return False
+        else:
+            return self._selected_item_index() != -1
     
     def _cmd_select(self):
-        i = self._list.GetNextItem(-1, state=wx.LIST_STATE_FOCUSED)
-        self._set_selection(i)
+        self._set_selection(self._selected_item_index())
+        
+    def _can_show_selected(self):
+        return self._selected_item is not None
         
     def _cmd_show_selected(self):
         self._set_selection(self._selected_item)
