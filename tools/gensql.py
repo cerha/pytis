@@ -542,15 +542,18 @@ class _GsqlSpec(object):
         return '    depends_on = (%s)' % (depends_string,)
 
     def _convert_add_raw_dependencies(self, raw):
+        if raw.find('pracovnik()') >= 0:
+            self._add_conversion_dependency('pracovnik', None)
         while True:
-            match = re.search(' (from|join) ([a-zA-Z_0-9]+)', raw, flags=re.I)
+            match = re.search(' (from|join|on) ([a-zA-Z0-9][a-zA-Z_0-9]+)($|[ ,;(])', raw, flags=re.I|re.M)
             if not match:
                 break
             raw = raw[match.end():].lstrip()
             identifier = match.group(2)
             ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror', 'generate_series',
-                               'dblink', 'date_trunc', 'diff',
-                               'bv_users_cfg', 'solv_users_cfg',)
+                               'dblink', 'date_trunc', 'diff', 'avg', 'case', 'current_date',
+                               'insert', 'update', 'delete', 'view', 'function', 'table',
+                               'bv_users_cfg', 'solv_users_cfg', 'dat_vypisu',)
             if (len(identifier) < 3 or
                 identifier.lower() in ignored_objects or
                 identifier.startswith('temp_') or
@@ -1869,6 +1872,7 @@ class Select(_GsqlSpec):
                 cname = column.sql
             else:    
                 cname = column.name
+        self._convert_add_raw_dependencies(cname)
         plain_name = cname
         pos = plain_name.rfind('.')
         if pos >= 0 and re.match('^[.a-zA-Z_ ]+$', plain_name):
