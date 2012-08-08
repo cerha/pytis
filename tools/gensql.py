@@ -1804,7 +1804,7 @@ class Select(_GsqlSpec):
                 alias = relation.name
         return alias.lower().replace('(', '__').replace(')', '__')
  
-    def _convert_select_columns(self):
+    def _convert_select_columns(self, column_ordering=None):
         column_spec = []
         for r in self._relations:
             relname = self._convert_relation_name(r)
@@ -1855,7 +1855,10 @@ class Select(_GsqlSpec):
                                 r.relation.find('(') == -1]
             included = [self._convert_select_column(c, simple_relations) for c in self._include_columns]
             column_spec.append('[%s]' % (string.join(included, ', '),))
-        return string.join(column_spec, ' + ')
+        result = string.join(column_spec, ' + ')
+        if column_ordering is not None:
+            result = 'reorder_columns(%s, %s)' % (result, column_ordering,)
+        return result
 
     def _convert_select_column(self, column, simple_relations):
         if isinstance(column, basestring):
@@ -2034,12 +2037,15 @@ class Select(_GsqlSpec):
         condition = self._convert_raw_condition(self._relations[0].condition)
         return last_relation, condition
         
-    def _convert_select(self, definitions, level):
+    def _convert_select(self, definitions, level, column_ordering=None):
         if self._set:
+            if column_ordering is not None:
+                raise Exception('Double set', self)
+            column_ordering = [c.alias.lower() for c in self._columns[0]]
             condition = ''
             for r in self._relations:
                 if isinstance(r, SelectSet):
-                    output = r.select._convert_select(definitions, level)
+                    output = r.select._convert_select(definitions, level, column_ordering)
                     if r.settype:
                         assert condition
                         settype = r.settype.lower()
@@ -2065,7 +2071,7 @@ class Select(_GsqlSpec):
             if self._limit:
                 # .limit() doesn't work well with aliases in sqlalchemy
                 where_condition = where_condition[:-1] + " LIMIT %d'" % (self._limit,)
-            columns = self._convert_select_columns()
+            columns = self._convert_select_columns(column_ordering)
             whereclause = ', whereclause=%s' % (where_condition,) if where_condition else ''
             condition = ('sqlalchemy.select(%s, from_obj=[%s]%s)' %
                          (columns, relations, whereclause,))

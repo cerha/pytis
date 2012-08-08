@@ -581,6 +581,18 @@ class a(object):
     def kwargs(self):
         return self._kwargs
 
+def reorder_columns(columns, column_ordering):
+    assert len(columns) == len(column_ordering), (columns, column_ordering,)
+    ordered_columns = []
+    for o in column_ordering:
+        for c in columns:
+            if c.name == o:
+                ordered_columns.append(c)
+                break
+        else:
+            raise Exception("Column not found", o, columns)
+    return ordered_columns
+
 class SQLObject(object):
 
     access_rights = ()
