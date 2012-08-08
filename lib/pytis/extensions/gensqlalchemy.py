@@ -724,6 +724,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _rule_condition(self, tabular):
         conditions = []
         for table_c in tabular.primary_key.columns:
+            # Try to find `tabular' primary key in my columns, perhaps aliased
             for c in self._original_columns():
                 tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
                 table, name = tc.table, tc.name
@@ -733,15 +734,23 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                     if table is table_c.table:
                         break
             else:
+                # The primary key wasn't found, use another column of the same name
                 for c in self._original_columns():
                     tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-                    table = tc.table
-                    if isinstance(table, sqlalchemy.sql.expression.Alias):
-                        table = table.element
-                    if table is table_c.table:
+                    if tc.name == table_c.name:
                         break
                 else:
-                    raise Exception("Table key column not found in the view", table_c)
+                    # The primary key not found at all, use the first column of `tabular' found
+                    for c in self._original_columns():
+                        tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                        table = tc.table
+                        if isinstance(table, sqlalchemy.sql.expression.Alias):
+                            table = table.element
+                        if table is table_c.table:
+                            break
+                    else:
+                        # No luck at all
+                        raise Exception("Table key column not found in the view", table_c)
             name = _sql_plain_name(c.name)
             conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
         return sqlalchemy.and_(*conditions)
