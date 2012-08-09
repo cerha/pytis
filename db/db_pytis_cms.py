@@ -296,7 +296,7 @@ viewng('cms_session_log',
                          NULL::text, NULL::interval, NULL::boolean"""),
        update_order=('cms_session_log_data',),
        delete_order=('cms_session_log_data',),
-       depends=('cms_session', 'cms_session_log_data', cms_users_table),
+       depends=('cms_session', 'cms_session_log_data', cms_users_table, 'cms_users',),
        grant=cms_rights)
 
 table('cms_themes',
