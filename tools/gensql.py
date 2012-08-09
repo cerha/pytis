@@ -112,13 +112,17 @@ def _gsql_format_type(type_):
             result = 'char(%d)' % maxlen
         else:
             result = 'varchar(%d)' % maxlen
+    elif type_.__class__  == pytis.data.DateTime:
+        if type_.utc():
+            result = 'timestamp(0)'
+        else:
+            result = 'timestamp with time zone'
     else:
         MAPPING = {pytis.data.Integer:   'int',
                    pytis.data.Serial:    'serial',
                    pytis.data.Oid:       'oid',
                    pytis.data.Float:     'numeric',
                    pytis.data.Boolean:   'bool',
-                   pytis.data.DateTime:  'timestamp(0)',
                    pytis.data.Date:      'date',
                    pytis.data.Time:      'time',
                    pytis.data.Binary:    'bytea',
