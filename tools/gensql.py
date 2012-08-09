@@ -915,7 +915,7 @@ class _GsqlSchema(_GsqlSpec):
     
     _SQL_NAME = 'SCHEMA'
     
-    def __init__(self, name, owner=None):
+    def __init__(self, name, owner=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
