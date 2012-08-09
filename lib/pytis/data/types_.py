@@ -825,7 +825,11 @@ class String(Limited):
         return WMValue(self, object), None
     
     def sqlalchemy_type(self):
-        return sqlalchemy.String(length=self.maxlen())
+        if self.minlen() and self.maxlen() and self.minlen() == self.maxlen():
+            result = sqlalchemy.CHAR(length=self.minlen())
+        else:
+            result = sqlalchemy.String(length=self.maxlen())
+        return result
 
 
 class Name(String):
