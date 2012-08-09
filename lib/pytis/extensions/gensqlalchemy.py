@@ -793,6 +793,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         commands = []
         for tabular in self._rule_tables(self.update_order):
             assignments = self._rule_assignments(tabular)
+            if not assignments:
+                continue
             condition = self._rule_condition(tabular)
             c = tabular.update().values(**assignments).where(condition)
             commands.append(c)
