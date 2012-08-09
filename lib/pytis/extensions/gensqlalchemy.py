@@ -231,6 +231,13 @@ def compile_name(element, compiler, **kwargs):
 def compile_name(element, compiler, **kwargs):
     return 'VARCHAR(64)'
 
+class SERIAL(sqlalchemy.Integer):
+    # SQLAlchemy currently doesn't support explicit SERIAL types.
+    pass
+@compiles(SERIAL)
+def compile_name(element, compiler, **kwargs):
+    return 'SERIAL'
+
 @compiles(sqlalchemy.String, 'postgresql')
 def compile_string(element, compiler, **kwargs):
     if element.length is None:

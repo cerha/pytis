@@ -645,7 +645,9 @@ class Serial(Integer):
     v řádku při vkládání nového záznamu.
 
     """
-    pass
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.SERIAL()
 
 
 class Float(Number):
