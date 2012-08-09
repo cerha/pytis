@@ -3498,6 +3498,18 @@ class _GsqlDefs(UserDict.UserDict):
             self._unresolved.append(name)
 
     def gensql(self):
+        # Add some dependencies
+        def process(o):
+            self[o].convert()
+        self._process_resolved(process)
+        # Make new processor
+        defs = self.__class__()
+        for s in self._specifications:
+            defs.add(s)
+        # And make the real conversion
+        defs._gensql()
+
+    def _gensql(self):
         def process(o):
             if isinstance(self[o], (_GsqlView, _GsqlViewNG)):
                 sys.stdout.write(self[o].output(self._table_keys))
