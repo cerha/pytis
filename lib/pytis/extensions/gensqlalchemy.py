@@ -1267,7 +1267,7 @@ def _make_sql_command(sql, *multiparams, **params):
             # present in SQLAlchemy.
             parameters = {}
             sql_parameters = sql.parameters
-            if len(sql_parameters) != len(compiled.binds):
+            if set(compiled.binds.keys()) - set(sql_parameters.keys()):
                 for k in compiled.binds.keys():
                     if k not in sql_parameters:
                         column = sql.table.columns[k]
