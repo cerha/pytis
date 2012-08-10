@@ -274,6 +274,13 @@ def visit_alias(element, compiler, **kwargs):
         element.quote = False
     return compiler.visit_alias(element, **kwargs)
 
+@compiles(sqlalchemy.dialects.postgresql.TIMESTAMP)
+def visit_TIMESTAMP(element, compiler, **kwargs):
+    # Current SQLAlchemy implementation is buggy: it omits zero precision.
+    precision = getattr(element, 'precision', None)
+    return "TIMESTAMP%s %s" % ('' if precision is None else "(%d)" % (precision,),
+                               (element.timezone and "WITH" or "WITHOUT") + " TIME ZONE",)
+
 
 ## Columns
         

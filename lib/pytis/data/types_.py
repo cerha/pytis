@@ -1479,7 +1479,7 @@ class DateTime(_CommonDateTime):
         return class_.datetime()
     
     def sqlalchemy_type(self):
-        return sqlalchemy.DateTime(timezone=(not self._utc))
+        return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._utc), precision=0)
 
 class ISODateTime(DateTime):
     """Datetime represented by the ISO datetime format in the database.

@@ -116,7 +116,7 @@ def _gsql_format_type(type_):
         if type_.utc():
             result = 'timestamp(0)'
         else:
-            result = 'timestamp with time zone'
+            result = 'timestamp (0) with time zone'
     else:
         MAPPING = {pytis.data.Integer:   'int',
                    pytis.data.Serial:    'serial',
