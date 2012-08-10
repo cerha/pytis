@@ -3173,24 +3173,50 @@ class _GsqlFunction(_GsqlSpec):
         items.append('')
         result = string.join(items, '\n') + '\n'
         if python:
+            intro_lines = []
             def get_source(f, main):
                 lines, __ = inspect.getsourcelines(f)
-                match = re.match('( *)def( *)([^(]*)', lines[0])
-                indentation = len(match.group(1))
-                name_pos = match.end(2)
-                if main:
-                    lines[0] = lines[0][:name_pos] + name + lines[0][match.end(3):]
-                else:
-                    lines[0] = lines[0][:name_pos] + 'sub_' + lines[0][name_pos:]
+                lines = [l.replace('\\\\', '\\') for l in lines if l.strip() != '']
                 required_indentation = 4
+                skip = 1
+                if f.__doc__ is not None:
+                    skip = skip + len(string.split(f.__doc__, '\n'))
+                if main:
+                    match = re.match('( *)def ( *)([^(]*)', lines[0])
+                else:
+                    body_lines = lines[skip:]
+                    match = re.match('( *)[^ ]', body_lines[0])
+                indentation = len(match.group(1))
+                fill = ' ' * indentation
+                long_fill = ' ' * required_indentation + fill
+                static_method = fill + '@staticmethod\n'
+                if main:
+                    name_pos = match.end(2)
+                    lines[0] = lines[0][:name_pos] + name + lines[0][match.end(3):]
+                    lines = lines[:skip] + [long_fill + l for l in intro_lines] + lines[skip:]
+                    lines.insert(0, static_method)
+                else:
+                    def_regexp = 'def ( *)([^(]*)'
+                    while body_lines and not re.match(def_regexp, body_lines[0][indentation:]):
+                        intro_lines.append(body_lines.pop(0)[indentation:])
+                    lines = []
+                    for line in body_lines:
+                        match = re.match(def_regexp, line[indentation:])
+                        if match:
+                            lines.append(static_method)
+                            sub_pos = indentation + match.end(1)
+                            line = line[:sub_pos] + 'sub_' + line[sub_pos:]
+                        lines.append(line)
+                        if match:
+                            for l in intro_lines:
+                                lines.append(long_fill + l)
                 if indentation < required_indentation:
                     fill = ' ' * (required_indentation - indentation)
                     lines = [fill + l for l in lines]
                 elif indentation > required_indentation:
                     cut = indentation - required_indentation
                     lines = [l[cut:] for l in lines]
-                lines = ['%s@staticmethod\n' % (' ' * required_indentation,)] + lines
-                return string.join(lines, '') + '\n'
+                return string.join(lines, '') + '\n' if lines else ''
             source_list = ([get_source(f, False) for f in self._use_functions] +
                            [get_source(body, True)])
             result += string.join(source_list, '')
