@@ -127,7 +127,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def visit_raw(self, raw, create_ok=False):
         self._set_search_path(raw.search_path())
-        return self.connection.execute(raw.sql())
+        self.connection.execute(raw.sql())
 
 class _ObjectComment(sqlalchemy.schema.DDLElement):
     def __init__(self, obj, kind, comment):
