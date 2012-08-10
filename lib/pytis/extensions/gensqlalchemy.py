@@ -161,12 +161,22 @@ class _AccessRight(sqlalchemy.schema.DDLElement):
         self.group = group
 @compiles(_AccessRight)
 def visit_access_right(element, compiler, **kw):
-    name = element.object.pytis_name()
+    o = element.object
+    name = o.pytis_name()
     if isinstance(element, SQLSchematicObject):
         schema = '"%s".' % (element.schema,)
     else:
         schema = ''
-    return ("GRANT %s ON %s%s TO \"%s\"" % (element.right, schema, name, element.group,))
+    if isinstance(o, SQLFunctional):
+        extra = '(%s)' % (_function_arguments(o),)
+    else:
+        extra = ''
+    if isinstance(o, SQLView):
+        kind = ''                       # PostgreSQL requires this
+    else:
+        kind = o._DB_OBJECT + ' '
+    return ("GRANT %s ON %s%s%s%s TO \"%s\"" %
+            (element.right, kind, schema, name, extra, element.group,))
 
 class _Rule(sqlalchemy.schema.DDLElement):
     def __init__(self, table, action, kind, commands):
@@ -656,6 +666,7 @@ class SQLSchematicObject(SQLObject):
 class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
     __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'schema'
+    _DB_OBJECT = 'SCHEMA'
     name = None
     
     def __init__(self, *args, **kwargs):
@@ -677,6 +688,7 @@ def visit_schema(element, compiler, **kw):
 
 class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
     __metaclass__ = _PytisSchematicMetaclass
+    _DB_OBJECT = 'SEQUENCE'
     name = None
     start = None
     increment = None
