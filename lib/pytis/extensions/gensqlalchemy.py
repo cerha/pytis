@@ -36,6 +36,17 @@ import pytis.data
 
 _CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
 
+def _function_arguments(function):
+    search_path = function.search_path()
+    def arg(column):
+        a_column = column.sqlalchemy_column(search_path, None, None, None)
+        in_out = 'out ' if column.out() else ''
+        name = a_column.name
+        if name:
+            name = '"%s" ' % (name,)
+        return '%s%s%s' % (in_out, name, a_column.type.compile(engine.dialect),)
+    return string.join([arg(c) for c in function.arguments], ', ')
+
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def _set_search_path(self, search_path):
@@ -69,14 +80,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
     def visit_function(self, function, create_ok=False, result_type=None):
         search_path = function.search_path()
         self._set_search_path(search_path)
-        def arg(column):
-            a_column = column.sqlalchemy_column(search_path, None, None, None)
-            in_out = 'out ' if column.out() else ''
-            name = a_column.name
-            if name:
-                name = '"%s" ' % (name,)
-            return '%s%s%s' % (in_out, name, a_column.type.compile(engine.dialect),)
-        arguments = string.join([arg(c) for c in function.arguments], ', ')
+        arguments = _function_arguments(function)
         if result_type is None:
             function_type = function.result_type
             if function_type is None:
@@ -132,8 +136,13 @@ class _ObjectComment(sqlalchemy.schema.DDLElement):
         self.comment = comment
 @compiles(_ObjectComment)
 def visit_object_comment(element, compiler, **kw):
-    return ("COMMENT ON %s \"%s\".\"%s\" IS '%s'" %
-            (element.kind, element.object.schema, element.object.name, element.comment.replace("'", "''"),))
+    o = element.object
+    if isinstance(o, SQLFunctional):
+        extra = '(%s)' % (_function_arguments(o),)
+    else:
+        extra = ''
+    return ("COMMENT ON %s \"%s\".\"%s\"%s IS '%s'" %
+            (element.kind, o.schema, o.name, extra, element.comment.replace("'", "''"),))
 
 class _ColumnComment(sqlalchemy.schema.DDLElement):
     def __init__(self, table, field):
