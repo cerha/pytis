@@ -56,6 +56,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
     def visit_type(self, type_, create_ok=False):
         self._set_search_path(type_.search_path())
         self.make_type(type_.name, type_.fields)
+        type_.dispatch.after_create(type_, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def make_type(self, type_name, columns):
         sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
@@ -103,6 +104,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         if function.security_definer:
             command += ' SECURITY DEFINER'
         self.connection.execute(command)
+        function.dispatch.after_create(function, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def visit_trigger(self, trigger, create_ok=False):
         if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
@@ -117,6 +119,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                        (trigger.schema, trigger.name, trigger.position, trigger.position, events, table,
                         row_or_statement, trigger_call,))
             self.connection.execute(command)
+        trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def visit_raw(self, raw, create_ok=False):
         self._set_search_path(raw.search_path())
