@@ -247,7 +247,7 @@ class SERIAL(sqlalchemy.Integer):
     # SQLAlchemy currently doesn't support explicit SERIAL types.
     pass
 @compiles(SERIAL)
-def compile_name(element, compiler, **kwargs):
+def compile_serial(element, compiler, **kwargs):
     return 'SERIAL'
 
 @compiles(sqlalchemy.String, 'postgresql')
