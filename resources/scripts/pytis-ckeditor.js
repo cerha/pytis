@@ -70,6 +70,114 @@ pytis.HtmlField.plugin = function(editor) {
 
 }
 
+
+function ck_element (dialog, id) {
+    /* Helper function to address a particular element in dialog definition by its id
+     *
+     * The function searches element definitions by their id among the elements
+     * of the first dialog tab. It also searches for childern inside any 'hbox'
+     * and 'vbox' containers.
+     *
+     * Arguments:
+     *  dialog ... the dialog to search for the element
+     *  id  ... id of the element
+     *
+     * Return value:
+     *  Returns the element or nul if none is found
+     */
+
+    function ck_get_element_from_list (elements, id) {
+        for (var i = 0; i < elements.length; i++) {
+            if (elements[i].id == id){
+                return elements[i];
+            }
+            else if (elements[i].type == 'hbox' || elements[i].type == 'vbox'){
+                var el = ck_get_element_from_list(elements[i].children, id)
+                if (el)
+                    return el;
+            }
+        }
+        return null;
+    }
+    for (var i=0; i < dialog['contents'].length; i++){
+	var elements = dialog['contents'][i]['elements'];
+	var result = ck_get_element_from_list(elements, id);
+	if (result)
+	    return result;
+    }
+    return null;
+}
+
+function ck_get_dom_subelement (element, path){
+    /* Get a subelement of the given element according to descent path
+     *
+     * element ... DOM element whose subelement should be returned
+     * path ... an array containing a full path to the subelement. Each entry in the
+     *          array is either a tag name or a class name prepended by '.'
+     *
+     * Example:
+     *  ck_get_dom_subelement(e, ['.lcg-example', 'div', 'a'])
+     *  Will return an 'a' element from a 'div' element from any element with class '.lcg-example'
+     *  being child of the former element _e_.
+     *
+     * Returns the first matching subelement or null.
+     */
+
+    var ch = element.getChildren();
+    var item;
+    for (var i=0; i < ch.count(); i++){
+    	item = ch.getItem(i);
+    	if (typeof(item.getName) == 'function'){ // e.g. comments do not have a name
+    	    if ((item.getName() == path[0]) ||  // match element name
+    		((path[0][0] == '.') && item.hasClass(path[0].slice(1)))) // match element class
+    	    {
+    		if (path.length > 1){
+    		    return ck_get_dom_subelement(item, path.slice(1));
+    		}else{
+    		    return item;
+    		}
+    	    }
+    	}
+    }
+    return null;
+}
+
+function ck_dialog_update_attachment_list (editor, field, attachment_type) {
+    /* Helper function to update attachment list in a select field
+     *
+     * Only entries of the given attachment_type are listed.
+     */
+
+    // Construct a list of Wiking attachments for this page
+    var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
+    var attachments = pytis_field.list_attachments()
+    var options = field.getInputElement().$.options
+    // Save field value before options update
+    var value = field.getValue();
+    // Update options
+    options.length = 0;
+    for (var i = 0; i < attachments.length; i++) {
+        var a = attachments[i];
+        if (a.type == attachment_type) {
+            var label = (a.title ? a.title + " (" + a.filename + ")": a.filename);
+            options.add(new Option(label, a.filename));
+        }
+    }
+    // Restore former value
+    if (value)
+        field.setValue(value);
+}
+
+function ck_dialog_update_media_preview (attachment, id) {
+    /* Helper function to update preview of a media attachment
+     *
+     * The preview si realized via JWPlayer inserted into DOM element with given id.
+     */
+    var flashvars = {'file': attachment.uri};
+    var player_uri = '/_resources/flash/mediaplayer.swf';
+    embed_swf_object(player_uri, id, 400, 400, flashvars, '9', '<p>Flash not available</p>', true);
+}
+
 pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment_type, attachment_class, attachment_properties, html_elements) {
     /* Basic attachment dialog for the various types of attachments
      *
@@ -115,26 +223,9 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        label: attachment_name,
                        className: 'attachment-selector',
                        items: [],
-                       updateAttachmentList: function(element) {
-                           // Construct a list of Wiking attachments for this page
-                           var field = $(editor.config.pytisFieldId)._pytis_field_instance;
-                           var attachments = field.list_attachments()
-                           var options = this.getInputElement().$.options
-                           // Save field value before options update
-                           value = this.getValue();
-                           // Update options
-                           options.length = 0;
-                           for (var i = 0; i < attachments.length; i++) {
-                               var a = attachments[i];
-                               if (a.type == attachment_type) {
-                                   var label = (a.title ? a.title + " (" + a.filename + ")": a.filename);
-                                   options.add(new Option(label, a.filename));
-                               }
-                           }
-                           // Restore former value
-                           if (value)
-                               this.setValue(value);
-                       },
+		       updateAttachmentList: function(element) {
+			   ck_dialog_update_attachment_list(editor, this, attachment_type);
+		       },
                        updatePreview: function(attachment) {
                            // Update preview (to be overriden in children)
                        },
@@ -327,37 +418,6 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
         },
     };
 };
-
-ck_element = function(dialog, id) {
-    /* Helper function to address a particular element in dialog definition by its id
-     *
-     * The function searches element definitions by their id among the elements
-     * of the first dialog tab. It also searches for childern inside any 'hbox'
-     * and 'vbox' containers.
-     *
-     * Arguments:
-     *  dialog ... the dialog to search for the element
-     *  id  ... id of the element
-     *
-     * Return value:
-     *  Returns the element or nul if none is found
-     */
-    ck_get_element_from_list = function (elements, id) {
-        for (var i = 0; i < elements.length; i++) {
-            if (elements[i].id == id){
-                return elements[i];
-            }
-            else if (elements[i].type == 'hbox' || elements[i].type == 'vbox'){
-                var el = ck_get_element_from_list(elements[i].children, id)
-                if (el)
-                    return el;
-            }
-        }
-        return null;
-    }
-    var elements = dialog['contents'][0]['elements'];
-    return ck_get_element_from_list(elements, id);
-}
 
 pytis.HtmlField.image_dialog = function(editor) {
 
@@ -567,14 +627,11 @@ pytis.HtmlField.audio_dialog = function(editor) {
         ['a']);
 
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
-        if (attachment) {
-            var flashvars = {'file': attachment.uri};
-            var player_uri = '/_resources/flash/mediaplayer.swf';
-            embed_swf_object(player_uri, 'audio-preview', 400, 400, flashvars, '9', '<p>Flash not available</p>', true);
-        }
+	if (attachment)
+	    ck_dialog_update_media_preview(attachment, 'audio-preview');
     }
 
-    ck_element(dialog, 'preview').html = '<div class="preview-container"><div id="audio-preview"></div>';
+    ck_element(dialog, 'preview').html = '<div class="preview-container"><div id="audio-preview"></div></div>';
 
     return dialog;
 }
@@ -587,11 +644,8 @@ pytis.HtmlField.video_dialog = function(editor) {
         ['a']);
 
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
-        if (attachment) {
-            var flashvars = {'file': attachment.uri};
-            var player_uri = '/_resources/flash/mediaplayer.swf';
-            embed_swf_object(player_uri, 'video-preview', 400, 400, flashvars, '9', '<p>Flash not available</p>', true);
-        }
+	if (attachment)
+	    ck_dialog_update_media_preview(attachment, 'video-preview');
     }
 
     ck_element(dialog, 'preview').html = '<div class="preview-container"><div id="video-preview"></div></div>';
@@ -625,42 +679,178 @@ pytis.HtmlField.exercise_dialog = function(editor) {
      * Return value:
      *  Returns a dictionary description of the dialog for the CKEDITOR.dialog.add factory.
      */
-    
-    return {
-        minWidth: 500,
-        minHeight: 380,
+
+    var help_url = "/_doc/eurochance/exercises.html";
+
+    var sub_elements = [['instructions', 'pre'],
+			['example', 'pre'],
+			['src', 'pre'],
+			['sound-file', 'a'],
+			['audio-version', 'a'],
+			['transcript', 'pre'],
+			['reading', 'pre'],
+			['explanation', 'pre'],
+		       ];
+
+    var dialog = {
+        minWidth: 950,
+        minHeight: 500,
         title: pytis._("Exercise"),
         contents: [
             {id: 'main',
              label: pytis._("Exercise"),
              elements: [
+		 {type : 'hbox',
+		  children :
+		  [
+		      {type : 'vbox',
+		       children :
+		       [
+			   {type: 'select',
+			    id: 'type',
+			    label: pytis._('Type of exercise'),
+			    items: [[pytis._('True-False Statements'), 'TrueFalseStatements'],
+				    [pytis._('Multiple Choice Questions'), 'MultipleChoiceQuestions'],
+				    [pytis._('Gap Filling'), 'GapFilling'],
+				    [pytis._('Cloze'), 'Cloze'],
+				    [pytis._('Exposed Cloze'), 'ExposedCloze'],
+				    [pytis._('NumberedCloze'), 'NumberedCloze'],
+				    [pytis._('NumberedExposedCloze'), 'NumberedExposedCloze'],
+				    [pytis._('Selections'), 'Selections'],
+				    [pytis._('SentenceCompletion'), 'SentenceCompletion'],
+				    [pytis._('Transformation'), 'Transformation'],
+				    [pytis._('Substitution'), 'Substitution'],
+				    [pytis._('Dictation'), 'Dictation'],
+				   ],
+			   },
+			   {type: 'textarea',
+			    id: 'instructions',
+			    label: pytis._('Instructions'),
+			    rows: 3,
+			    cols: 60,
+			   },
+			   {type: 'textarea',
+			    id: 'example',
+			    rows: 3,
+			    cols: 60,
+			    label: pytis._('Example')
+			   },
+			   {type: 'textarea',
+			    id: 'src',
+			    rows: 15,
+			    cols: 60,
+			    label: pytis._('Exercise body'),
+			   },
+		       ]},
+		      {type : 'html',
+		       id : 'help',
+		       html: '<iframe id="exercise-help" src=""></iframe>'
+		      }
+		  ]},
+	     ]},
+            {id: 'audio',
+             label: pytis._("Audio"),
+             elements: [
+		 {type : 'hbox',
+		  children :
+		  [
+		      {type: 'select',
+		       items: [[pytis._("No sound"), ''],],
+		       id: 'sound-file',
+		       className: 'attachment-selector',
+                       size: 14,
+		       label: pytis._('Sound file'),
+                       updateAttachmentList: function(element) {
+			   ck_dialog_update_attachment_list(editor, this, 'Audio');
+		       },
+		      },
+		      {type: 'html',
+		       id: 'sound-file-preview',
+		       html: '<div class="preview-container"><div id="exercise-sound-file-preview"></div></div>'
+		      }
+		  ]},
+		 {type : 'hbox',
+		  children :
+		  [
+		      {type: 'select',
+		       items: [[pytis._("No audio version"), ''],],
+		       id: 'audio-version',
+		       className: 'attachment-selector',
+                       size: 14,
+		       label: pytis._('Audio version'),
+                       updateAttachmentList: function(element) {
+			   ck_dialog_update_attachment_list(editor, this, 'Audio');
+		       },
+		      },
+		      {type: 'html',
+		       id: 'audio-version-preview',
+		       html: '<div class="preview-container"><div id="exercise-audio-version-preview"></div></div>'
+		      }
+		  ]},
+	     ]
+	    },
+            {id: 'transcript',
+             label: pytis._("Transcript"),
+             elements: [
 		 {type: 'textarea',
-		  id: 'src',
+		  id: 'transcript',
+		  label: pytis._('Transcript'),
 		  rows: 20,
-		  cols: 60,
-		  label: pytis._('Definition'),
-		  setup: function(element) {
-		      this.setValue(element.$.innerHTML);
-		  },
-		  commit: function(element) {
-                      element.$.innerHTML = this.getValue();
-		  },
 		 },
-             ]},
+	     ]
+	    },
+            {id: 'reading',
+             label: pytis._("Reading"),
+             elements: [
+		 {type: 'textarea',
+		  id: 'reading',
+		  label: pytis._('Reading'),
+		  rows: 20,
+		 },
+	     ]
+	    },
+            {id: 'explanation',
+             label: pytis._("Explanation"),
+             elements: [
+		 {type: 'textarea',
+		  id: 'explanation',
+		  label: pytis._('Explanation'),
+		  rows: 20,
+		 },
+	     ]
+	    },
 	],
 	onShow: function() {
+	    function insert_subelement(element, name, id){
+		    var sub_element = editor.document.createElement(name);
+		    sub_element.addClass('lcg-exercise-' + id);
+		    element.append(sub_element);
+	    }
             // Check if editing an existing element or inserting a new one
             var element = editor.getSelection().getStartElement();
             if (element)
-		element = element.getAscendant('pre', true);
-            if (!element || element.getName() != 'pre' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
-		element = editor.document.createElement('pre');
+		element = element.getAscendant('div', true);
+            if (!element || element.getName() != 'div' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
+		// Create a new exercise structure
+		element = editor.document.createElement('div',
+							{'attributes': {'contenteditable': 'false'},
+							 'styles': {'display': 'inline-block'}});
 		element.addClass('lcg-exercise');
 		element.setAttribute('contenteditable', 'false');
+		for (var i = 0; i < sub_elements.length; i++){
+		    insert_subelement(element, sub_elements[i][1], sub_elements[i][0]);
+		}
 		this.insertMode = true;
             }
-            else
+            else{
+		// We have encountered an existing exercise structure, check it for completeness
+		for (var i = 0; i < sub_elements.length; i++){
+		    if (!ck_get_dom_subelement(element, ['.lcg-exercise-'+sub_elements[i][0]])){
+			insert_subelement(element, sub_elements[i][1], sub_elements[i][0]);
+		    }
+		}
 		this.insertMode = false;
+	    }
             this.element = element;
             this.setupContent(this.element);
 	},
@@ -671,6 +861,136 @@ pytis.HtmlField.exercise_dialog = function(editor) {
             this.commitContent(this.element);
 	},
     };
+
+    function get_content(id, element, field){
+	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
+    	field.setValue(subel.getHtml());
+    }
+    function put_content(id, element, field){
+	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
+    	subel.setHtml(field.getValue());
+    }
+
+    ck_element(dialog, 'type').setup = function(element){
+	// Using HTML 5 data attributes to store exercise type
+	this.setValue(element.data('type'));
+    }
+
+    ck_element(dialog, 'type').commit = function(element){
+	element.data('type', this.getValue());
+    }
+
+    ck_element(dialog, 'type').onChange = function(element){
+	$('exercise-help').src = help_url + '#' + this.getValue();
+    }
+
+    ck_element(dialog, 'instructions').setup = function(element){
+	get_content('instructions', element, this);
+    }
+    ck_element(dialog, 'instructions').commit = function(element){
+	put_content('instructions', element, this);
+    }
+
+    ck_element(dialog, 'example').setup = function(element){
+	get_content('example', element, this);
+    }
+
+    ck_element(dialog, 'example').commit = function(element){
+	put_content('example', element, this);
+    }
+
+    ck_element(dialog, 'src').setup = function(element){
+	get_content('src', element, this);
+    }
+
+    ck_element(dialog, 'src').commit = function(element){
+	put_content('src', element, this);
+    }
+
+    ck_element(dialog, 'reading').setup = function(element){
+	get_content('reading', element, this);
+    }
+
+    ck_element(dialog, 'reading').commit = function(element){
+	put_content('reading', element, this);
+    }
+
+    ck_element(dialog, 'transcript').setup = function(element){
+	get_content('transcript', element, this);
+    }
+
+    ck_element(dialog, 'transcript').commit = function(element){
+	put_content('transcript', element, this);
+    }
+
+    ck_element(dialog, 'explanation').setup = function(element){
+	get_content('explanation', element, this);
+    }
+
+    ck_element(dialog, 'explanation').commit = function(element){
+	put_content('explanation', element, this);
+    }
+
+    function get_resource(id, element, field){
+	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
+        var link = subel.getAttribute("href");
+        if (link) {
+            var filename = link.match(/\/([^\/]+)$/)[1];
+            if (filename)
+		field.setValue(filename);
+        }
+    }
+    function put_resource(id, element, field){
+	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
+	var id = field.getValue();
+	if (id){
+	    if (field.attachment){
+    		subel.setAttribute('href', field.attachment.uri);
+     		subel.setText(id);
+	    }
+	}else{
+	    subel.setAttribute('href', '');
+    	    subel.setText('');
+	}
+    }
+
+    ck_element(dialog, 'audio-version').setup = function(element){
+	this.updateAttachmentList();
+	get_resource('audio-version', element, this);
+    }
+
+    ck_element(dialog, 'audio-version').onChange = function(element){
+        var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
+	this.attachment = pytis_field.get_attachment(this.getValue());
+	if (this.attachment)
+	    ck_dialog_update_media_preview(this.attachment, 'exercise-audio-version-preview');
+    }
+
+    ck_element(dialog, 'audio-version').commit = function(element){
+	put_resource('audio-version', element, this);
+    }
+
+    ck_element(dialog, 'sound-file').setup = function(element){
+	this.updateAttachmentList();
+	get_resource('sound-file', element, this);
+    }
+
+    ck_element(dialog, 'sound-file').onChange = function(element){
+        var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
+	this.attachment = pytis_field.get_attachment(this.getValue());
+	if (this.attachment)
+	    ck_dialog_update_media_preview(this.attachment, 'exercise-sound-file-preview');
+    }
+
+    ck_element(dialog, 'sound-file').commit = function(element){
+	put_resource('sound-file', element, this);
+    }
+
+    ck_element(dialog, 'help').setup = function(element){
+	$('exercise-help').src = help_url + '#' + 'exercise-header';
+    }
+
+    return dialog;
 };
 
 pytis.HtmlField.mathml_dialog = function(editor) {
@@ -823,24 +1143,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     }
 
     ck_element(dialog, 'source-ascii').setup = function(element) {
-	get_element = function (element, path){
-	    var ch = element.getChildren();
-	    var item;
-	    for (var i=0; i < ch.count(); i++){
-		item = ch.getItem(i);
-		if (typeof(item.getName) == 'function'){ // e.g. comments do not have a name
-		    if ((item.getName() == path[0])){
-			if (path.length > 1){
-			    return get_element(item, path.slice(1));
-			}else{
-			    return item;
-			}
-		    }
-		}
-	    }
-	    return null;
-	}
-	annotation = get_element(element, ['math', 'semantics', 'annotation']);
+	annotation = ck_get_dom_subelement(element, ['math', 'semantics', 'annotation']);
 	if (annotation){
 	    this.setValue(annotation.$.textContent);
 	}
