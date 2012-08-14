@@ -267,6 +267,15 @@ def compile_string(element, compiler, **kwargs):
     else:
         return 'VARCHAR(%d)' % (element.length,)
 
+@compiles(sqlalchemy.schema.CreateTable, 'postgresql')
+def visit_create_table(element, compiler, **kwargs):
+    result = compiler.visit_create_table(element, **kwargs)
+    table = element.element
+    if table.inherits:
+        inherited = [table._table_name(t) for t in table.inherits]
+        result = '%s\nINHERITS (%s)\n\n' % (result.rstrip(), string.join(inherited, ', '),)
+    return result
+
 @compiles(sqlalchemy.sql.expression.Alias)
 def visit_alias(element, compiler, **kwargs):
     if element.description.find('(') >= 0:
@@ -310,7 +319,7 @@ class Column(pytis.data.ColumnSpec):
     def out(self):
         return self._out
 
-    def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name):
+    def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name, inherited=False):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
         references = self._references
@@ -342,7 +351,9 @@ class Column(pytis.data.ColumnSpec):
                                    server_default=default,
                                    doc=self._doc, index=index,
                                    nullable=(not self.type().not_null()),
-                                   primary_key=self._primary_key, unique=self._unique)
+                                   primary_key=(self._primary_key and not inherited),
+                                   unique=self._unique,
+                                   info=dict(inherited=inherited))
         column.pytis_orig_table = orig_table_name
         return column
 
@@ -879,7 +890,8 @@ class SQLTable(_SQLTabular):
         columns = ()
         for i in cls.inherits:
             orig_table_name = i.pytis_name()
-            columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, orig_table_name)
+            columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name,
+                                                           orig_table_name, inherited=True)
                                        for c in i.fields])
         columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, table_name)
                                    for c in cls.fields])
@@ -899,9 +911,17 @@ class SQLTable(_SQLTabular):
         return obj
 
     def _init(self, *args, **kwargs):
+        self._pytis_create_p = False
         super(SQLTable, self)._init(*args, **kwargs)
         self._create_parameters()
         self._create_special_indexes()
+
+    @property
+    def columns(self):
+        columns = super(SQLTable, self).columns
+        if self._pytis_create_p:
+            columns = sqlalchemy.sql.ColumnCollection(*[c for c in columns if not c.info['inherited']])
+        return columns
 
     def _table_name(self, table):
         name = table.name
@@ -944,8 +964,6 @@ class SQLTable(_SQLTabular):
         self._alter_table("SET %s OIDS" % ("WITH" if self.with_oids else "WITHOUT",))
         if self.tablespace:
             self._alter_table('SET TABLESPACE "%s"' % (self.tablespace,))
-        for table in self.inherits:
-            self._alter_table('INHERIT %s' % (self._table_name(table),))
 
     def _create_special_indexes(self):
         args = ()
@@ -962,7 +980,11 @@ class SQLTable(_SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         self._set_search_path(bind)
-        super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
+        self._pytis_create_p = True
+        try:
+            super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
+        finally:
+            self._pytis_create_p = False
         self._insert_values(bind)
 
     def _set_search_path(self, bind):
