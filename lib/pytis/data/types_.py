@@ -775,8 +775,8 @@ class DoublePrecision(Float):
     Useful in specifications.
     
     """
-    def __init__(self):
-        super(DoublePrecision, self).__init__()
+    def __init__(self, **kwargs):
+        super(DoublePrecision, self).__init__(**kwargs)
 
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.DOUBLE_PRECISION()
@@ -841,8 +841,8 @@ class Name(String):
     
     """
     
-    def __init__(self):
-        super(Name, self).__init__()
+    def __init__(self, **kwargs):
+        super(Name, self).__init__(**kwargs)
 
     def sqlalchemy_type(self):
         import pytis.extensions.gensqlalchemy

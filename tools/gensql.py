@@ -376,7 +376,7 @@ class _GsqlSpec(object):
             except:
                 return "sqlalchemy.text('%s')" % (value.replace('\\', '\\\\').replace("'", "\\'"),)
 
-    def _convert_string_type(self, stype, allow_none=False):
+    def _convert_string_type(self, stype, allow_none=False, constraints=()):
         mapping = {'name': 'pytis.data.Name()',
                    'smallint': 'pytis.data.Integer()',
                    'integer': 'pytis.data.Integer()',
@@ -416,6 +416,10 @@ class _GsqlSpec(object):
                         type_ = None
                     else:
                         type_ = 'XXX: %s' % (stype,)
+        if 'not null' in constraints or 'unique not null' in constraints and type_ and type_[-1] == ')':
+            if type_[-2] != '(':
+                type_ = type_[:-1] + ', )'
+            type_ = type_[:-1] + 'not_null=True)'
         return type_
 
     def _convert_pytis_type(self, ctype, constraints=()):
@@ -449,7 +453,7 @@ class _GsqlSpec(object):
         if isinstance(ctype, pytis.data.Type):
             type_ = self._convert_pytis_type(ctype, constraints)
         else:
-            type_ = self._convert_string_type(column.type)
+            type_ = self._convert_string_type(column.type, constraints=constraints)
         unique = 'unique' in constraints or 'unique not null' in constraints
         if column.default is None:
             default = None
