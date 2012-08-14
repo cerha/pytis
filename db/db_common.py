@@ -3,7 +3,7 @@
 import pytis.data
 
 # Konstanty pro datové typy
-TBoolean  = pytis.data.Boolean()
+TBoolean  = pytis.data.Boolean(not_null=False)
 TDate     = pytis.data.Date()
 TTime     = pytis.data.Time()
 TDateTime = pytis.data.DateTime()
