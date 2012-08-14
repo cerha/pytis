@@ -85,6 +85,7 @@ class LogTable(SQLTable):
               Column('table_name', pytis.data.String(),),
               Column('action', pytis.data.String()),
               )
+    unique = (('table_name', 'action',),)
 
 class LogFunction(SQLPyFunction, SQLTrigger):
     events = ()
