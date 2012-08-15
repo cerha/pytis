@@ -387,6 +387,7 @@ class _GsqlSpec(object):
                    'date': 'pytis.data.Date()',
                    'time': 'pytis.data.Time()',
                    'timestamp': 'pytis.data.DateTime()', # assumes UTC, not always valid
+                   'timestamp(0)': 'pytis.data.DateTime()', # assumes UTC, not always valid
                    'macaddr': 'pytis.data.Macaddr()',
                    'ltree': 'pytis.data.LTree()',
                    'boolean': 'pytis.data.Boolean()',
