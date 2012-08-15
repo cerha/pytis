@@ -878,8 +878,9 @@ class SQLTable(_SQLTabular):
         table_name = cls.pytis_name()
         key = []
         fields = cls.fields
+        field_names = [f.id() for f in cls.fields]
         for i in cls.inherits:
-            fields = fields + i.fields
+            fields = fields + tuple([f for f in i.fields if f.id() not in field_names])
         for c in fields:
             if c.primary_key():
                 key.append(c.id())
@@ -892,7 +893,7 @@ class SQLTable(_SQLTabular):
             orig_table_name = i.pytis_name()
             columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name,
                                                            orig_table_name, inherited=True)
-                                       for c in i.fields])
+                                       for c in i.fields if c.id() not in field_names])
         columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, table_name)
                                    for c in cls.fields])
         args = (table_name, metadata,) + columns
@@ -1047,21 +1048,22 @@ class SQLView(_SQLTabular):
                 tables.append(x.original)
             else:
                 columns.append(x)
+        inherited_columns = {}
         if inherited:
-            the_tabular = tabular.original if isinstance(tabular, sqlalchemy.sql.Alias) else tabular
-            if isinstance(the_tabular, SQLTable):
-                path = _current_search_path
-                try:
-                    _set_current_search_path(the_tabular.search_path())
-                    tables += [object_by_path(t.pytis_name()) for t in the_tabular.inherits]
-                finally:
-                    _set_current_search_path(path)
+            t = tabular
+            if isinstance(t, sqlalchemy.sql.expression.Alias):
+                t = t.element
+            for c in t.c:
+                if isinstance(c, sqlalchemy.Column) and c.info.get('inherited'):
+                    inherited_columns[c.name] = True
         included = []
         for c in tabular.c:
             if c in columns:
                 continue
             cname = c.name
             if cname in columns:
+                continue
+            if inherited_columns.get(cname):
                 continue
             for t in tables:
                 if cname in t.c:
@@ -1074,10 +1076,16 @@ class SQLView(_SQLTabular):
     def _alias(cls, columns, **aliases):
         raliases = dict([(v, k,) for k, v in aliases.items()])
         aliased = []
+        columns = [c for c in columns]
+        inherited = {}
+        if columns and isinstance(columns[0].table, sqlalchemy.sql.expression.Alias):
+            for cc in columns[0].table.element.columns:
+                if cc.info.get('inherited'):
+                    inherited[cc.name] = True
         for c in columns:
             if c in raliases:
                 aliased.append(c.label(raliases[c]))
-            else:
+            elif not inherited.get(c.name):
                 aliased.append(c)
         return aliased
 
