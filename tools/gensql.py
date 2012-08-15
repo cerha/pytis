@@ -378,7 +378,7 @@ class _GsqlSpec(object):
 
     def _convert_string_type(self, stype, allow_none=False, constraints=()):
         mapping = {'name': 'pytis.data.Name()',
-                   'smallint': 'pytis.data.Integer()',
+                   'smallint': 'pytis.data.SmallInteger()',
                    'integer': 'pytis.data.Integer()',
                    'int': 'pytis.data.Integer()',
                    'bigint': 'pytis.data.LargeInteger()',

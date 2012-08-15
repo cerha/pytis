@@ -631,6 +631,10 @@ class Integer(Number):
     def sqlalchemy_type(self):
         return sqlalchemy.Integer()
 
+class SmallInteger(Integer):
+    def sqlalchemy_type(self):
+        return sqlalchemy.SmallInteger()
+
 class LargeInteger(Integer):
     def sqlalchemy_type(self):
         return sqlalchemy.BigInteger()
