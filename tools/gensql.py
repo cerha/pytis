@@ -445,7 +445,11 @@ class _GsqlSpec(object):
         return 'pytis.data.%s(%s)' % (ctype.__class__.__name__, string.join(arguments, ', '),)
         
     def _convert_column(self, column):
-        name = column.name.lower()
+        name = column.name
+        if name[0] == '"':
+            name = name.strip('"')
+        else:
+            name = name.lower()
         pos = name.rfind('.')
         if pos >= 0:
             name = name[pos+1:]
@@ -1897,7 +1901,7 @@ class Select(_GsqlSpec):
         else:
             cstring = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
         if alias:
-            cstring += ".label('%s')" % (alias,)
+            cstring += ".label('%s')" % (alias.strip(),)
         return cstring
 
     def _convert_unalias_column(self, cname):
@@ -2806,7 +2810,7 @@ class _GsqlView(_GsqlSpec):
             crepr = '%s.c.%s' % tuple([g.lower() for g in match.groups()])
         else:
             crepr = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
-        return '%s.label(%s)' % (crepr, repr(alias),)
+        return '%s.label(%s)' % (crepr, repr(alias.strip()),)
 
     def _convert_complex_columns(self):
         COLSEP = ',\n\t'
