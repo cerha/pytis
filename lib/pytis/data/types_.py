@@ -988,6 +988,9 @@ class Color(RegexString):
     _VM_FORMAT_MSG = _(u"Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')")
     _REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
+    def sqlalchemy_type(self):
+        return sqlalchemy.String(length=7)
+
     
 class Inet(String):
     """IPv4 nebo IPv6 adresa."""
