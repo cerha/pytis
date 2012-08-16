@@ -40,7 +40,7 @@ _std_table('e_pytis_roles',
            (P('name', TUser),
             C('description', pytis.data.String(maxlen=64)),
             C('purposeid', pytis.data.String(minlen=4, maxlen=4), constraints=('not null',), default="'appl'",
-              references='c_pytis_role_purposes on update cascade'),
+              references='c_pytis_role_purposes'),
             C('deleted', TDate),),
            init_values=(("'*'", "'Zástupná role pro všechny role'", "'admn'", 'NULL',),
                         ("'admin_roles'", "'Administrátor rolí'", "'admn'", 'NULL',),
@@ -258,6 +258,7 @@ _std_table_nolog('c_pytis_menu_actions',
                   C('shortname', TString, constraints=('not null',)),
                   C('action_title', TString),
                   C('description', TString),
+                  C('parent_action', TString),
                   # Redundant column computed by c_pytis_menu_actions_trigger_before.
                   C('spec_name', TString), 
                   ),
@@ -314,7 +315,7 @@ for each row execute procedure c_pytis_menu_actions_trigger_before();
 
 sql_raw("""
 create or replace view ev_pytis_short_actions
-as select distinct shortname from c_pytis_menu_actions;
+as select distinct shortname from c_pytis_menu_actions ORDER BY c_pytis_menu_actions.shortname;
 """,
         name='ev_pytis_short_actions',
         depends=('c_pytis_menu_actions',))
@@ -370,12 +371,12 @@ _std_table('e_pytis_menu',
               doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators."),
             C('title', pytis.data.String(maxlen=64),
               doc='User title of the item. If NULL then it is a separator.'),
-            C('position', TLTree, constraints=('not null', 'unique',),
+            C('position', TLTree, constraints=('unique',),
               index=dict(method='gist'),
               doc=("Unique identifier of menu item placement within menu. "
                    "The top-menu item position is ''. "
                    "Each submenu has exactly one label more than its parent. ")),
-            C('next_position', TLTree, constraints=('not null', 'unique',),
+            C('next_position', TLTree, constraints=('unique',),
               default="'dummy'",
               doc=("Free position just after this menu item.")),
             C('fullname', TString, references='c_pytis_menu_actions on update cascade',
@@ -387,7 +388,7 @@ _std_table('e_pytis_menu',
             C('hotkey', TString,
               doc=("Sequence of command keys, separated by single spaces."
                    "The space key is represented by SPC string.")),
-            C('locked', TBoolean, default="'f'",
+            C('locked', TBoolean,
               doc=("Iff true, this item may not be edited.")),
             ),
            """Menu structure definition.""",
@@ -590,7 +591,8 @@ for each statement execute procedure e_pytis_menu_trigger_rights();
 
 viewng('ev_pytis_menu',
        (SelectRelation('e_pytis_menu', alias='main', exclude_columns=('fullname',)),
-        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('description',),
+        SelectRelation('c_pytis_menu_actions', alias='actions',
+                       exclude_columns=('description', 'spec_name', 'parent_action',),
                        condition='main.fullname = actions.fullname', jointype=JoinType.LEFT_OUTER),
         ),
        include_columns=(V(None, 'position_nsub',
@@ -605,13 +607,15 @@ viewng('ev_pytis_menu',
        )
 
 viewng('ev_pytis_menu_structure',
-       (SelectRelation('a_pytis_actions_structure', alias='structure', exclude_columns=('menuid',)),
+       (SelectRelation('a_pytis_actions_structure', alias='structure',
+                       exclude_columns=('menuid', 'summary_id', 'summaryid',)),
         SelectRelation('e_pytis_menu', alias='menu', exclude_columns=('name', 'fullname', 'position', 'title',),
                        condition='structure.menuid = menu.menuid', jointype=JoinType.LEFT_OUTER),
         SelectRelation('c_pytis_action_types', alias='atypes', exclude_columns=('type',),
                        column_aliases=(('description', 'actiontype',),),
                        condition='structure.type = atypes.type', jointype=JoinType.LEFT_OUTER),
-        SelectRelation('c_pytis_menu_actions', alias='actions', exclude_columns=('fullname', 'shortname', 'action_title',),
+        SelectRelation('c_pytis_menu_actions', alias='actions',
+                       exclude_columns=('fullname', 'shortname', 'action_title', 'spec_name', 'parent_action',),
                        condition='structure.fullname = actions.fullname', jointype=JoinType.LEFT_OUTER)
         ),
        include_columns=(V(None, 'position_nsub',
@@ -710,8 +714,7 @@ _std_table('e_pytis_action_rights',
 1 = new (not yet active, to be activated after the next global rights update)."""
               ),
             ),
-           sql=("unique (shortname, roleid, rightid, colname, system, granted, status),"
-                "check (granted or not system)"),
+           sql=("unique (shortname, roleid, rightid, colname, system, granted, status)"),
            doc="""Assignments of access rights to actions.
 
 Extent of each action right is strictly limited by its granted system
@@ -1281,6 +1284,7 @@ _std_table_nolog('a_pytis_actions_structure',
                     index=dict(method='gist')),
                   C('type', pytis.data.String(minlen=4, maxlen=4), constraints=('not null',),
                     references='c_pytis_action_types'),
+                  C('summaryid', TString),
                   ),
                  """Precomputed actions structure as presented to menu admin.
 Item positions and indentations are determined by positions.

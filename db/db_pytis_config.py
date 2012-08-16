@@ -100,11 +100,11 @@ select profiles.id || ''.'' || params.id from profiles, params
          depends=('ev_pytis_form_profiles',))   
 
 viewng('ev_pytis_form_profiles',
-       relations=(Relation('e_pytis_form_profile_params', alias='params', key_column='lang',
-                           exclude_columns=('id', 'pickle', 'dump', 'errors')),
-                  Relation('e_pytis_form_profile_base', alias='profile', key_column='id',
-                           exclude_columns=('id', 'username', 'spec_name', 'profile_id', 'pickle', 'dump', 'errors'),
-                           jointype=JoinType.LEFT_OUTER,
+       relations=(Relation('e_pytis_form_profile_base', alias='profile', key_column='id',
+                           exclude_columns=('id', 'username', 'spec_name', 'profile_id', 'pickle', 'dump', 'errors')),
+                  Relation('e_pytis_form_profile_params', alias='params', key_column='lang',
+                           exclude_columns=('id', 'pickle', 'dump', 'errors'),
+                           jointype=JoinType.INNER,
                            condition=('profile.username = params.username and '
                                       'profile.spec_name = params.spec_name and '
                                       'profile.profile_id = params.profile_id')
@@ -114,7 +114,6 @@ viewng('ev_pytis_form_profiles',
                         ViewColumn(None, alias='fullname', sql="'form/'|| params.form_name ||'/'|| profile.spec_name ||'//'"),
                         ViewColumn(None, alias='errors', sql="case when profile.errors is not null and params.errors is not null then profile.errors ||'\n'||params.errors else coalesce(profile.errors, params.errors) end"),
                         ViewColumn(None, alias='dump', sql="case when profile.dump is not null and params.dump is not null then profile.dump ||'\n'||params.dump else coalesce(profile.dump, params.dump) end"),
-                        ViewColumn(None, alias='user_defined', sql="profile.id is not NULL"),
                         ViewColumn('profile.pickle', alias='pickled_filter'), 
                         ViewColumn('params.pickle', alias='pickled_params'), 
                         ),

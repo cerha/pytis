@@ -40,7 +40,7 @@ db_schemas = globals().get('Gpytis_schemas', None)
 
 
 def Ctimestamp(name, doc=None):
-    return C(name, TDateTime, constraints=('NOT NULL',), default='localtimestamp', doc=doc)
+    return C(name, TDateTime, constraints=('NOT NULL',), default='now()', doc=doc)
 def Cuser(name, doc=None):
     return C(name, TUser, constraints=('NOT NULL',), default='user', doc=doc)
 
@@ -53,7 +53,7 @@ def _std_table(name, columns, doc, grant=Gall_pytis, **kwargs):
                  **kwargs)
 
 def _std_table_nolog(name, columns, doc, grant=Gall_pytis, **kwargs):
-    return table(name, columns, inherits=('_changes',), grant=grant,
+    return table(name, columns, grant=grant,
                  doc=doc, **kwargs)
 
 def _std_view_raw(name, columns, fromitems, where=None, 
@@ -410,7 +410,7 @@ table('log',
       doc="Tabulka pro logování provedených DML příkazů.")
 
 function('only_digits', (TString,), TBoolean,
-         "SELECT ($1 ~ ''^[0-9]+$'')",
+         "select ($1 ~ ''^[0-9]+$'')",
          doc="Pomocná funkce pro CHECK constraint.")
 
 function('f_date_year', (TDate,), TInteger, "select date_part(''year'', $1)::int",
@@ -806,7 +806,7 @@ function('drop_temptables', (TString,), TInteger,  body=drop_temptables,
 
 # Typ formuláře pro ruční spouštění v pytisu
 _std_table('c_typ_formular',
-           (P('id', pytis.data.String(minlen=2, maxlen=2)),
+           (P('id', pytis.data.String(maxlen=2)),
             C('popis', TString)),
            doc="Slouží jako číselník typů formulářů",
            init_values=(("'BF'", "'Jednoduchý náhled'"),
