@@ -3037,7 +3037,7 @@ class BrowseForm(FoldableForm):
                     else:
                         cls = ShowForm
                     title = _(u"Zobrazit záznam sloupce '%s'") % f.label()
-                    hlp = _(u"Zobrazit záznam pro hodnotu '%(value)s' sloupce '%s(column)'.")
+                    hlp = _(u"Zobrazit záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
                 cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls,
                                                    select_row={link.column(): row[f.id()]},
                                                    **kwargs)
