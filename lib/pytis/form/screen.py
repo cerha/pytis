@@ -1198,7 +1198,8 @@ class MItem(_TitledMenuObject):
         elif kind == 'handle':
             command = pytis.form.Application.COMMAND_HANDLED_ACTION
             function_name = components[1]
-            arguments = dict(handler=find_symbol(function_name))
+            arguments = dict(handler=find_symbol(function_name),
+                             enabled=lambda: action_has_access(action))
         elif kind == 'proc':
             command = pytis.form.Application.COMMAND_RUN_PROCEDURE
             proc_name, spec_name = components[1], components[2]
