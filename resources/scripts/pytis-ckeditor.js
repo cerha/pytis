@@ -142,10 +142,13 @@ function ck_get_dom_subelement (element, path){
     return null;
 }
 
-function ck_dialog_update_attachment_list (editor, field, attachment_type) {
+function ck_dialog_update_attachment_list (editor, field, attachment_type, keep_value) {
     /* Helper function to update attachment list in a select field
      *
-     * Only entries of the given attachment_type are listed.
+     * Only entries of the given attachment_type are listed. keep_value
+     * determines whether to keep the original value before the update
+     * (if possible). keep_value needs to be set to false if called from
+     * inside dialog element setup functions.
      */
 
     // Construct a list of Wiking attachments for this page
@@ -153,7 +156,8 @@ function ck_dialog_update_attachment_list (editor, field, attachment_type) {
     var attachments = pytis_field.list_attachments()
     var options = field.getInputElement().$.options
     // Save field value before options update
-    var value = field.getValue();
+    if (keep_value)
+	var value = field.getValue();
     // Update options
     options.length = 0;
     for (var i = 0; i < attachments.length; i++) {
@@ -164,7 +168,7 @@ function ck_dialog_update_attachment_list (editor, field, attachment_type) {
         }
     }
     // Restore former value
-    if (value)
+    if (keep_value && value)
         field.setValue(value);
 }
 
@@ -223,8 +227,8 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        label: attachment_name,
                        className: 'attachment-selector',
                        items: [],
-		       updateAttachmentList: function(element) {
-			   ck_dialog_update_attachment_list(editor, this, attachment_type);
+		       updateAttachmentList: function(element, keep_value) {
+			   ck_dialog_update_attachment_list(editor, this, attachment_type, keep_value);
 		       },
                        updatePreview: function(attachment) {
                            // Update preview (to be overriden in children)
@@ -246,7 +250,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                            }
                        },
                        setup: function(element) {
-                           this.updateAttachmentList();
+                           this.updateAttachmentList(false);
                            // Read identifier from the source
                            var link = element.getAttribute("href");
                            if (link) {
@@ -328,7 +332,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                // This is a JSON reply
                                var reply = body_childs[0].innerHTML.evalJSON();
                                var msg, cls;
-                               dialog.getContentElement('main', 'identifier').updateAttachmentList();
+                               dialog.getContentElement('main', 'identifier').updateAttachmentList(true);
                                dialog.getContentElement('main', 'upload').reset();
                                if (reply['success'] == true){
                                    msg = pytis._("Upload successful");
@@ -437,7 +441,7 @@ pytis.HtmlField.image_dialog = function(editor) {
     }
 
     ck_element(dialog, 'identifier').setup = function(element) {
-        this.updateAttachmentList();
+        this.updateAttachmentList(false);
         // Read identifier from the image link
         var img = element.getFirst();
         if (img) {
@@ -760,8 +764,8 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 		       className: 'attachment-selector',
                        size: 14,
 		       label: pytis._('Sound file'),
-                       updateAttachmentList: function(element) {
-			   ck_dialog_update_attachment_list(editor, this, 'Audio');
+                       updateAttachmentList: function(element, keep_value) {
+			   ck_dialog_update_attachment_list(editor, this, 'Audio', keep_value);
 		       },
 		      },
 		      {type: 'html',
@@ -778,8 +782,8 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 		       className: 'attachment-selector',
                        size: 14,
 		       label: pytis._('Audio version'),
-                       updateAttachmentList: function(element) {
-			   ck_dialog_update_attachment_list(editor, this, 'Audio');
+                       updateAttachmentList: function(element, keep_value) {
+			   ck_dialog_update_attachment_list(editor, this, 'Audio', keep_value);
 		       },
 		      },
 		      {type: 'html',
@@ -955,7 +959,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     }
 
     ck_element(dialog, 'audio-version').setup = function(element){
-	this.updateAttachmentList();
+	this.updateAttachmentList(false);
 	get_resource('audio-version', element, this);
     }
 
@@ -971,7 +975,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     }
 
     ck_element(dialog, 'sound-file').setup = function(element){
-	this.updateAttachmentList();
+	this.updateAttachmentList(false);
 	get_resource('sound-file', element, this);
     }
 
