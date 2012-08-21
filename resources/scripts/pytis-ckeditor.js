@@ -370,7 +370,13 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                   id: 'title',
                   label: pytis._('Title'),
                   commit: function(element) {
-                      element.setText(this.getValue());
+		      var value = this.getValue();
+		      if (value){
+			  element.setText(this.getValue());
+		      }else{
+			  var dialog = CKEDITOR.dialog.getCurrent();
+			  element.setText(dialog.getValueOf('main', 'identifier'));
+		      }
                   },
                  },
                  {type: 'text',
