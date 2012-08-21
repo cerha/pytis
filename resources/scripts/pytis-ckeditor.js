@@ -51,23 +51,67 @@ pytis.HtmlField.plugin = function(editor) {
 
         }
     }
-    /* Add a common context menu listener handling all the attachment types */
-    editor.contextMenu.addListener(function(element) {
-        if (element)
-            element = element.getAscendant('a', true) || element.getAscendant('div', true)
-	    || element.getAscendant('span', true);
-        if (element && !element.data('cke-realelement')){
-            for (var i=0; i<types.length; i++){
-                if (element.hasClass('lcg-'+types[i].toLowerCase())){
-                    var result = {};
-                    result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
-                    return result;
-                }
-            }
-            return null;
-        }
+
+    /* Create insertSpaceBefore and insertSpaceAfter menu items */
+    function insert_space(direction) {
+	var sel = editor.getSelection();
+	var element = sel.getStartElement();
+	element = element.getAscendant('div', true);
+	var paragraph = new CKEDITOR.dom.element('p');
+	if (direction == 'before')
+	    paragraph.insertBefore(element);
+	else if (direction == 'after'){
+	    paragraph.insertAfter(element);
+	}
+    }
+    editor.addCommand('insertSpaceBefore', new CKEDITOR.command(
+	editor,
+	{
+	    exec : function( editor )
+	    {
+		insert_space('before');
+	    }
+	}));
+    editor.addMenuItem('insertSpaceBefore', {
+	label: pytis._("Insert space before"),
+	command: 'insertSpaceBefore',
+	group: 'PytisGroup',
+    });
+    editor.addCommand('insertSpaceAfter', new CKEDITOR.command(
+	editor,
+	{
+	    exec : function( editor )
+	    {
+		insert_space('after');
+	    }
+	}));
+    editor.addMenuItem('insertSpaceAfter', {
+	label: pytis._("Insert space after"),
+	command: 'insertSpaceAfter',
+	group: 'PytisGroup',
     });
 
+     /* Add a common context menu listener handling all the attachment types */
+    if (editor.contextMenu) {
+	editor.contextMenu.addListener(function(element) {
+            if (element)
+		element = element.getAscendant('a', true) || element.getAscendant('div', true)
+		|| element.getAscendant('span', true);
+            if (element && !element.data('cke-realelement')){
+		var result = {};
+		for (var i=0; i<types.length; i++){
+                    if (element.hasClass('lcg-'+types[i].toLowerCase())){
+			result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
+                    }
+		}
+		if ((element.getName() == 'div') && (element.isReadOnly())){
+                    result['insertSpaceBefore'] = CKEDITOR.TRISTATE_OFF;
+                    result['insertSpaceAfter'] = CKEDITOR.TRISTATE_OFF;
+		}
+		return result;
+	    }
+	});
+    }
 }
 
 
