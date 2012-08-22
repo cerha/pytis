@@ -456,6 +456,10 @@ class HtmlFieldExporter(MultilineFieldExporter):
                           language=context.lang(),
                           removePlugins = 'forms,image',
                           contentsCss = context.uri(context.resource('ckeditor.css')),
+                          entities=False,
+                          entities_greek=False,
+                          entities_latin=False,
+                          entities_processNumerical=False,
                           )
             if self._row.attachment_storage(self._field.id) is not None:
                 config['extraPlugins'] = 'pytis-attachments'
