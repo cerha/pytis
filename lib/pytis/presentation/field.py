@@ -822,19 +822,20 @@ class PresentedRow(object):
                         enumerator = column.type.inner_type().enumerator()
                     else:
                         enumerator = column.type.enumerator()
-                    def display(value):
-                        if value is None or self._transaction and not self._transaction.open():
-                            return ''
-                        try:
-                            row = enumerator.row(value, transaction=self._transaction,
-                                                 condition=self.runtime_filter(column.id),
-                                                 arguments=self.runtime_arguments(column.id))
-                        except pytis.data.DataAccessException:
-                            return ''
-                        if row:
-                            return row_function(row)
-                        else:
-                            return ''
+                    if isinstance(enumerator, pytis.data.DataEnumerator):
+                        def display(value):
+                            if value is None or self._transaction and not self._transaction.open():
+                                return ''
+                            try:
+                                row = enumerator.row(value, transaction=self._transaction,
+                                                     condition=self.runtime_filter(column.id),
+                                                     arguments=self.runtime_arguments(column.id))
+                            except pytis.data.DataAccessException:
+                                return ''
+                            if row:
+                                return row_function(row)
+                            else:
+                                return ''
         return display
 
     def _display_as_row_function(self, column):
