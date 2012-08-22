@@ -267,7 +267,8 @@ class Menu(wiking.PytisModule):
                 else:
                     content = [content]
                 document = result.clone(title=self._document_title(req, record), subtitle=None,
-                                        content=pre+content+post, globals=globals, resources=resources)
+                                        content=lcg.Container(pre+content+post, resources=resources),
+                                        globals=globals)
             else:
                 # A wiking.Response instance has been returned by the embedded module.
                 return result
@@ -279,9 +280,11 @@ class Menu(wiking.PytisModule):
             if rows:
                 raise wiking.Redirect('/'+self._menu_item_identifier(rows[0]))
             else:
-                document = self._document(req, [], record, globals=globals, resources=resources)
+                document = self._document(req, lcg.Container([], resources=resources),
+                                          record, globals=globals)
         else:
-            document = self._document(req, pre+post, record, globals=globals, resources=resources)
+            document = self._document(req, lcg.Container([pre+post], resources=resources),
+                                      record, globals=globals)
         if modname is None:
             # Module access is logged in EmbeddablePytisModule._handle().
             self._module('AccessLog').log(req, None, None)
