@@ -28,6 +28,7 @@ import psycopg2 as dbapi
 
 import pytis.data
 import pytis.extensions
+import pytis.util
 
 admin_user = 'admin'
 
@@ -289,8 +290,15 @@ def command_encrypt(configuration, args):
     password = read_password()
     if not check_password(key, password, connection_data):
         print "Error: invalid admin password for area:", area
-        return    
-    cursor.execute("select pytis_crypto_unlock_passwords (%s, %s)", (admin_user, password,))
+        return
+    cursor.execute("select pytis_crypto_db_key('pytis')")
+    row = cursor.fetchone()
+    if row is None:
+        print "Error: Communication key not present"
+        return
+    db_key = row[0]
+    encrypted_password = pytis.util.rsa_encrypt(db_key, password)
+    cursor.execute("select pytis_crypto_unlock_passwords (%s, %s)", (admin_user, encrypted_password,))
     if not cursor.fetchone():
         print "Error: password not accepted"
         return
