@@ -70,8 +70,11 @@ def read_password(repeat=False, prompt="Password: "):
     if repeat:
         password2 = getpass.getpass(prompt="Repeat password: ")
         if password != password2:
-            return None
-    return password
+            return None, None
+    db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
+                                         ('key_name_', pytis.data.sval('pytis'),))
+    encrypted_password = pytis.util.rsa_encrypt(db_key, password)
+    return password, encrypted_password
 
 def check_password(key, password, connection_data):
     function = pytis.data.DBFunctionDefault('pytis_crypto_extract_key', connection_data)
@@ -115,7 +118,7 @@ def command_new_key(configuration, args):
     if present:
         print "Error: key for the encryption area already present"
         return
-    password = read_password(True, prompt="Key password: ")
+    password, encrypted_password = read_password(True, prompt="Key password: ")
     if password is None:
         print "Error: passwords do not match"
         return
@@ -146,18 +149,18 @@ def command_password(configuration, args):
     if key_id is None:
         print "Error: admin key not found for the area:", area
         return
-    old_password = read_password(prompt="Current password: ")
+    old_password, encrypted_old_password = read_password(prompt="Current password: ")
     if not check_password(key, old_password, connection_data):
         print "Error: invalid password"
         return
-    new_password = read_password(True, prompt="New password: ")
+    new_password, encrypted_new_password = read_password(True, prompt="New password: ")
     if new_password is None:
         print "Error: passwords do not match"
         return
     function = pytis.data.DBFunctionDefault('pytis_crypto_change_password', connection_data)
     row = pytis.data.Row((('id_', key_id,),
-                          ('old_psw', pytis.data.sval(old_password),),
-                          ('new_psw', pytis.data.sval(new_password),),))
+                          ('old_psw', pytis.data.sval(encrypted_old_password),),
+                          ('new_psw', pytis.data.sval(encrypted_new_password),),))
     if not function.call(row)[0][0].value():
         print "Error: password change failed"
         return
@@ -193,7 +196,7 @@ def command_add_user(configuration, args):
         return
     characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789_-=$#%!'
     user_password = string.join([characters[ord(c) % 64] for c in os.urandom(32)], '')
-    admin_password = read_password(prompt="Key password: ")
+    admin_password, encrypted_password = read_password(prompt="Key password: ")
     if not check_password(key, admin_password, connection_data):
         print "Error: invalid password"
         return
@@ -287,17 +290,10 @@ def command_encrypt(configuration, args):
     if key_id is None:
         print "Error: admin key not found for the area:", area
         return
-    password = read_password()
+    password, encrypted_password = read_password()
     if not check_password(key, password, connection_data):
         print "Error: invalid admin password for area:", area
         return
-    cursor.execute("select pytis_crypto_db_key('pytis')")
-    row = cursor.fetchone()
-    if row is None:
-        print "Error: Communication key not present"
-        return
-    db_key = row[0]
-    encrypted_password = pytis.util.rsa_encrypt(db_key, password)
     cursor.execute("select pytis_crypto_unlock_passwords (%s, %s)", (admin_user, encrypted_password,))
     if not cursor.fetchone():
         print "Error: password not accepted"
