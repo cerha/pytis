@@ -72,23 +72,8 @@ class Form(lcg.Content):
           prefill -- form prefill data as a dictionary of string values.
           uri_provider -- callable object (function) returning URIs for form
             fields.  This makes Pytis web forms independent on the
-            application's URI scheme.  The function must accept one positional
-            argument (the 'pytis.presentation.PresentedRow' instance) and two
-            keyword arguments.  The first of them -- 'cid' -- may also be used
-            as positional and denotes the identifier of the field, for which
-            the URI is requested.  It may be None when requesting URI for the
-            whole record.  The later argument 'type' will always be one of
-            'UriType' constants.  It is used for distinction of the purpose,
-            for which the uri us used (eg. for a link or an image src).  The
-            return value may be None for fields which don't link anywhere,
-            string URI if the field links to that URI or a 'pytis.web.Link'
-            instance if it is necessary to specify also some extended link
-            attributes, such as title (tooltip text) or target (such as
-            _blank).  For array fields (when 'cid' belongs to a field of type
-            'pytis.data.Array'), the return value must be a function of one
-            argument -- the internal python value of the field's inner type.
-            The function will return an URI or Link instance as above for given
-            array value.
+            application's URI scheme.  The function must have the interface
+            described below.
           hidden -- hardcoded hidden form fields as a sequence of pairs (name,
             value).
           name -- form name as a string or None.  This name will be sent as a
@@ -103,6 +88,30 @@ class Form(lcg.Content):
             default value (None) means to use the actions as defined in the
             specification.
 
+         URI provider interface
+
+         The function 'uri_provider' must accept three positional arguments:
+           record -- the 'pytis.presentation.PresentedRow' instance
+           kind -- one of 'UriType' constants.  It is used for distinction of
+             the purpose, for which the uri us used (eg. for a field link, image
+             src, action link etc.).
+           target -- the target for which the URI is requested.  This is the
+             'Action' instance for 'UriType.ACTION'.  For other kinds this is
+             either a field identifier (basestring) or None when requesting an
+             URI for the whole record.
+
+         The return value may be:
+           - None when there should be no link,
+           - string URI if the field links to that URI,
+           - a 'pytis.web.Link' instance if it is necessary to specify also
+             some extended link attributes, such as title (tooltip text) or
+             target (such as _blank).
+           - For array fields (when 'cid' belongs to a field of type
+             'pytis.data.Array'), the return value must be a function of one
+             argument -- the internal python value of the field's inner type.
+             The function will return an URI or Link instance as above for
+             given array value.
+            
         """
         super(Form, self).__init__(**kwargs)
         assert isinstance(view, ViewSpec), view
@@ -157,12 +166,15 @@ class Form(lcg.Content):
     def _export_actions(self, context, record, uri):
         g = context.generator()
         buttons = [
-            g.form([g.hidden(name, value) for name, value in action.params.items()] +
-                   [g.button(g.span(action.title), title=action.descr,
-                             disabled=not action.enabled,
-                             cls='action-'+action.id + (not action.enabled and ' disabled' or ''))],
+            g.form([g.hidden(name, value is True and 'true' or value) for name, value in
+                    [('action', action.id()),
+                     ('__invoked_from', self.__class__.__name__),
+                     ] + action.kwargs().items()] +
+                   [g.button(g.span(action.title()), title=action.descr(),
+                             disabled=not enabled,
+                             cls='action-'+action.id() + (not enabled and ' disabled' or ''))],
                    action=uri)
-            for action in self._visible_actions(context, record)]
+            for action, enabled in self._visible_actions(context, record)]
         if buttons:
             return g.div(buttons, cls='actions module-actions-' + self._name)
         else:
@@ -197,16 +209,7 @@ class Form(lcg.Content):
                 actions = actions(self, record)
         else:
             actions = self._view.actions()
-        return [Action(id=action.id(),
-                       title=action.title(),
-                       descr=action.descr(),
-                       enabled=is_enabled(action),
-                       params=dict([(name, value is True and 'true' or value)
-                                    for name, value in action.kwargs().items()],
-                                   action=action.id(),
-                                   __invoked_from=self.__class__.__name__),
-                       )
-                for action in actions if is_visible(action)]
+        return [(action, is_enabled(action)) for action in actions if is_visible(action)]
 
 
 class FieldForm(Form):
@@ -227,7 +230,7 @@ class FieldForm(Form):
             formatted = field.exporter.format(context)
             if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
                 if field.spec.printable():
-                    uri = self._uri_provider(self._row, field.id, type=UriType.PRINT)
+                    uri = self._uri_provider(self._row, UriType.PRINT, field.id)
                     if uri:
                         g = context.generator()
                         img = context.resource('print-field.png')
@@ -690,7 +693,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                         fdata['state'] = new_state
                         fdata['enumeration'] = enumeration
                         if uri_provider and isinstance(row.type(fid), pd.Array):
-                            func = uri_provider(row, fid, type=UriType.LINK)
+                            func = uri_provider(row, UriType.LINK, fid)
                             def link(value):
                                 lnk = func(value)
                                 if isinstance(lnk, Link):
@@ -943,15 +946,15 @@ class BrowseForm(LayoutForm):
 
         """
         if uri_provider:
-            def browse_form_uri_provider(row, cid=None, type=UriType.LINK):
-                if cid == self._columns[0] and type==UriType.LINK and not row_actions:
-                    uri = uri_provider(row, None, type=type)
+            def uri_provider_(row, kind, target):
+                if kind == UriType.LINK and target == self._columns[0]:
+                    uri = uri_provider(row, kind, None)
                     if uri is not None:
                         return uri
-                return uri_provider(row, cid, type=type)
+                return uri_provider(row, kind, target)
         else:
-            browse_form_uri_provider = None
-        super(BrowseForm, self).__init__(view, req, row, uri_provider=browse_form_uri_provider, **kwargs)
+            uri_provider_ = None
+        super(BrowseForm, self).__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
         def param(name, func=None, default=None):
             # Consider request params only if they belong to the current form.
             if req.param('form_name') == self._name and req.has_param(name):
@@ -1239,16 +1242,13 @@ class BrowseForm(LayoutForm):
                 value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
             # &#8227 does not work in MSIE
             if self._row_actions:
-                uri = self._uri_provider(row, None, type=UriType.LINK)
+                actions = [dict(title=action.title(),
+                                descr=action.descr(),
+                                href=self._uri_provider(row, UriType.ACTION, action))
+                           for action, enabled in self._visible_actions(context, row)]
                 element_id = '%s-row-%d' % (self._id, n)
                 value += (g.a('', id=element_id) +
-                          g.script(g.js_call('pytis.init_row_actions_menu', element_id,
-                                             [dict(title=a.title,
-                                                   descr=a.descr,
-                                                   # We rely on another Wiking
-                                                   # specific request method!
-                                                   href=self._req.make_uri(uri, **a.params))
-                                              for a in self._visible_actions(context, row)])))
+                          g.script(g.js_call('pytis.init_row_actions_menu', element_id, actions)))
         return value
 
     def _style(self, style):
@@ -1701,7 +1701,7 @@ class BrowseForm(LayoutForm):
                    form,
                    self._export_controls(context, bottom=True)]
         actions = self._export_actions(context, None,
-                                       self._uri_provider(None, None, type=UriType.LINK))
+                                       self._uri_provider(None, UriType.LINK, None))
         if actions:
             if self._top_actions:
                 content.insert(0, actions)
@@ -1846,7 +1846,7 @@ class ListView(BrowseForm):
             parts.append(g.div(content.export(context), cls=cls))
         if self._row_actions:
             actions = self._export_actions(context, row,
-                                           self._uri_provider(row, None, type=UriType.LINK))
+                                           self._uri_provider(row, UriType.LINK, None))
             if actions:
                 parts.append(actions)
         # We use only css class name from row_style, because we consider the

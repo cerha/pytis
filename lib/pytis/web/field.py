@@ -25,12 +25,12 @@ _ = lcg.TranslatableTextFactory('pytis')
 
 
 class UriType(object):
-    """URI type for 'uri_provider' 'type' argument.
+    """URI type for 'uri_provider' 'kind' argument.
 
-    URI provider is a function passed to the form constructor (and from there to
-    the field constructors) that returns different kinds of URIs for form
-    fields.  The constants defined by this class define the different kinds of
-    links which may be queried.
+    URI provider is a function passed to the form constructor (and from there
+    to the field constructors) that returns different kinds of URIs.  The
+    constants defined by this class define the different kinds of links which
+    may be queried.
 
     """
     LINK = 'LINK'
@@ -40,6 +40,14 @@ class UriType(object):
     field value is rendered as a link pointing to given URI.  If None is
     returned, the field value is not rendered as a link.  The returned URI may
     be either a string or unicode or a 'Link' instance.
+
+    """
+    ACTION = 'ACTION'
+    """Link to a pytis record's action.
+
+    Allows querying URIs for pytis actions.  The target of the URI provider
+    request (the last argument of the provider call) is the
+    'pytis.presentation.Action' instance.
 
     """
     IMAGE = 'IMAGE'
@@ -323,13 +331,13 @@ class FieldExporter(object):
             value, info = value_info
         if value and self._uri_provider:
             g = context.generator()
-            src = self._uri_provider(self._row, fid, type=UriType.IMAGE)
+            src = self._uri_provider(self._row, UriType.IMAGE, fid)
             if src:
                 if info is not None:
                     value += ' ('+ info +')'
                     info = None
                 value = g.img(src, alt=value) #, cls=cls)
-            link = self._uri_provider(self._row, fid, type=UriType.LINK)
+            link = self._uri_provider(self._row, UriType.LINK, fid)
             if link:
                 if isinstance(link, collections.Callable):
                     pass # Ignore array item links here
@@ -661,7 +669,7 @@ class ChecklistFieldExporter(CodebookFieldExporter):
         values = [v.value() for v in self._value().value() or ()]
         # URI provider must return a function of the array value for array fields.
         if self._uri_provider:
-            uri_provider = self._uri_provider(self._row, self._field.id, type=UriType.LINK)
+            uri_provider = self._uri_provider(self._row, UriType.LINK, self._field.id)
         else:
             uri_provider = None
         def checkbox(i, value, strval, display):
