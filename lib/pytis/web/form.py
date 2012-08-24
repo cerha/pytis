@@ -1244,6 +1244,7 @@ class BrowseForm(LayoutForm):
             if self._row_actions:
                 actions = [dict(title=action.title(),
                                 descr=action.descr(),
+                                enabled=enabled,
                                 href=self._uri_provider(row, UriType.ACTION, action))
                            for action, enabled in self._visible_actions(context, row)]
                 element_id = '%s-row-%d' % (self._id, n)
