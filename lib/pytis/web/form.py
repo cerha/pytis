@@ -1249,7 +1249,8 @@ class BrowseForm(LayoutForm):
                            for action, enabled in self._visible_actions(context, row)]
                 element_id = '%s-row-%d' % (self._id, n)
                 value += (g.a('', id=element_id) +
-                          g.script(g.js_call('pytis.init_row_actions_menu', element_id, actions)))
+                          g.script(g.js_call('wiking.init_popup_menu_ctrl', element_id, actions,
+                                             _("Popup the menu of actions for this row"), 'tr')))
         return value
 
     def _style(self, style):
