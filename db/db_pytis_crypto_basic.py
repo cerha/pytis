@@ -29,22 +29,9 @@ begin
 end;
 $$ language plpgsql stable;
 
-create or replace function pytis_crypt_pad_text(string text) returns text as $$
-declare
-  static_length int := 100;
-  random_length int := 100;
-  padded text := string;
-begin
-  if length(padded) < static_length then
-    padded := rpad(padded, static_length);
-  end if;
-  return rpad(padded, static_length + (random_length*random())::int);
-end;
-$$ language plpgsql;
-
 create or replace function pytis_encrypt_text(data text, name text) returns bytea as $$
 begin
-  return pgp_sym_encrypt(pytis_crypt_pad_text(data), pytis_crypt_password(name));
+  return pgp_sym_encrypt(data, pytis_crypt_password(name));
 end;
 $$ language plpgsql;
 
@@ -65,7 +52,7 @@ $$ language plpgsql;
 
 create or replace function pytis_encrypt_int(data int, name text) returns bytea as $$
 begin
-  return pgp_sym_encrypt(pytis_crypt_pad_text(data::text), pytis_crypt_password(name));
+  return pgp_sym_encrypt(data::text, pytis_crypt_password(name));
 end;
 $$ language plpgsql;
 
@@ -86,12 +73,12 @@ $$ language plpgsql;
 
 create or replace function pytis_encrypt_float(data float, name text) returns bytea as $$
 begin
-  return pgp_sym_encrypt(pytis_crypt_pad_text(data::text), pytis_crypt_password(name));
+  return pgp_sym_encrypt(data::text, pytis_crypt_password(name));
 end;
 $$ language plpgsql;
 create or replace function pytis_encrypt_float(data numeric, name text) returns bytea as $$
 begin
-  return pgp_sym_encrypt(pytis_crypt_pad_text(data::text), pytis_crypt_password(name));
+  return pgp_sym_encrypt(data::text, pytis_crypt_password(name));
 end;
 $$ language plpgsql;
 
