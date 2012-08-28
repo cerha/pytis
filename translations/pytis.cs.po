@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2012-08-28 16:44+0200\n"
-"PO-Revision-Date: 2012-07-27 13:34+0200\n"
+"PO-Revision-Date: 2012-08-28 16:46+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -192,7 +192,7 @@ msgstr "Všechny položky"
 
 #: ../lib/pytis/web/form.py:1251
 msgid "Popup the menu of actions for this row"
-msgstr ""
+msgstr "Zobrazit menu akcí pro tento řádek"
 
 #: ../lib/pytis/web/form.py:1323
 msgid "Sum"
@@ -332,11 +332,11 @@ msgstr "Upravit"
 #: ../resources/scripts/pytis-ckeditor.js:653
 #: ../resources/scripts/pytis-ckeditor.js:656
 msgid "Exercise"
-msgstr ""
+msgstr "Cvičení"
 
 #: ../resources/scripts/pytis-ckeditor.js:84
 msgid "Edit Exercise"
-msgstr ""
+msgstr "Upravit cvičení"
 
 #: ../resources/scripts/pytis-ckeditor.js:264
 msgid "Upload successful"
@@ -348,7 +348,7 @@ msgstr "Nahrát nový soubor"
 
 #: ../resources/scripts/pytis-ckeditor.js:288
 msgid "Select a file to be uploaded."
-msgstr ""
+msgstr "Vybrat soubor, který má být vložen"
 
 #: ../resources/scripts/pytis-ckeditor.js:297
 msgid "Title"
@@ -431,9 +431,8 @@ msgid "Attachment"
 msgstr "Příloha"
 
 #: ../resources/scripts/pytis-ckeditor.js:662
-#, fuzzy
 msgid "Definition"
-msgstr "Popis"
+msgstr "Definice"
 
 #~ msgid "Actions"
 #~ msgstr "Akce"
