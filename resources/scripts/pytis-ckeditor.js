@@ -734,7 +734,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
      *  Returns a dictionary description of the dialog for the CKEDITOR.dialog.add factory.
      */
 
-    var help_url = "/_doc/eurochance/exercises.html";
+    var help_url = "/_doc/eurochance/exercises?framed=1";
 
     var sub_elements = [['instructions', 'pre'],
 			['example', 'pre'],
