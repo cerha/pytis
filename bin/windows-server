@@ -170,11 +170,13 @@ class PytisUserService(PytisService):
         import win32ui
         import win32con
         if template is None:
-            file_filter = "*.*"
+            file_filter = u"Všechny soubory (*.*)|*.*||"
+            set_filename = "*.*"
         else:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
-        dialog = win32ui.CreateFileDialog(1, None, "%s" % (template,),
+            set_filename = template
+        dialog = win32ui.CreateFileDialog(1, None, "%s" % set_filename,
                                           win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
                                           file_filter)
         result = dialog.DoModal()
@@ -211,11 +213,13 @@ class PytisUserService(PytisService):
         import win32ui
         import win32con
         if template is None:
-            file_filter = "*.*"
+            file_filter = u"Všechny soubory (*.*)|*.*||"
+            set_filename = "*.*"
         else:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
-        dialog = win32ui.CreateFileDialog(1, None, "%s" % (template,),
+            set_filename = template
+        dialog = win32ui.CreateFileDialog(1, None, "%s" % set_filename,
                                           win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
                                           file_filter)
         result = dialog.DoModal()
