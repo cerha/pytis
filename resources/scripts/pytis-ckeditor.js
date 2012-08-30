@@ -798,7 +798,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 		       ]},
 		      {type : 'html',
 		       id : 'help',
-		       html: '<iframe id="exercise-help" src="" style="width: 420px; height: 460px;"></iframe>'
+		       html: '<iframe id="exercise-help" src=""></iframe>'
 		      }
 		  ]},
 	     ]},
