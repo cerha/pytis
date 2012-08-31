@@ -1159,7 +1159,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 	// Strip outer math tags, ignoring their attributes
 	var inner_mathml = mathml.replace(/<\/?math.*?>/gi, "");
 	// Rewrap in <math> tags with desired attributes and annotations
-	if (source)
+	if (!source)
 	    production_args = 'contenteditable="false" style="display:inline-block"';
 	if (annotation.length > 0){
 	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
@@ -1178,22 +1178,22 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     update_mathml_from_ascii = function(element) {
         var dialog = CKEDITOR.dialog.getCurrent();
 	var mathml = AMparseMath(dialog.getValueOf('main', 'source-ascii')).innerHTML;
-	dialog.setValueOf('main', 'source-mathml', clean_mathml(mathml, source=true));
+	dialog.setValueOf('main', 'source-mathml', clean_mathml(mathml, "", true));
     }
 
 
     ck_element(dialog, 'source-mathml').setup = function(element) {
-        this.setValue(clean_mathml(element.$.innerHTML, annotation="", source=true));
+        this.setValue(clean_mathml(element.$.innerHTML, "", true));
     }
 
     ck_element(dialog, 'source-mathml').commit = function(element) {
         var dialog = CKEDITOR.dialog.getCurrent();
 	ascii_source = dialog.getValueOf('main', 'source-ascii');
-     	element.$.innerHTML = clean_mathml(this.getValue(), annotation=ascii_source, source=false);
+     	element.$.innerHTML = clean_mathml(this.getValue(), ascii_source, false);
     }
 
     ck_element(dialog, 'source-mathml').onChange = function(element) {
-	$('math-preview').innerHTML = clean_mathml(this.getValue(), annotation="", source=false);
+	$('math-preview').innerHTML = clean_mathml(this.getValue(), "", false);
     }
 
     ck_element(dialog, 'source-ascii').setup = function(element) {
