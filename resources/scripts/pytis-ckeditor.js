@@ -1188,9 +1188,15 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     }
 
     update_mathml_from_ascii = function(element) {
+        function get_text(node){
+            /* Convert MathML DOM node to text using a helper element */
+            var helper = document.createElement('span');
+            helper.appendChild(node);
+            return helper.innerHTML;
+        }
         var dialog = CKEDITOR.dialog.getCurrent();
-	var mathml = AMparseMath(dialog.getValueOf('main', 'source-ascii')).innerHTML;
-	dialog.setValueOf('main', 'source-mathml', clean_mathml(mathml, "", true));
+        var mathml = get_text(parseMath(dialog.getValueOf('main', 'source-ascii'), false));
+        dialog.setValueOf('main', 'source-mathml', clean_mathml(mathml, "", true));
     }
 
 
