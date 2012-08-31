@@ -1164,7 +1164,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 	if (annotation.length > 0){
 	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
 		+ '<semantics>'
-		+ '<apply>' + inner_mathml + '</apply>'
+		+ inner_mathml
 	        + '<annotation encoding="ASCII">' + annotation + '</annotation>'
 		+ '</semantics>'
 		+ '</math>';
