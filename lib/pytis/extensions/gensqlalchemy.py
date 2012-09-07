@@ -260,6 +260,12 @@ class SERIAL(sqlalchemy.Integer):
 def compile_serial(element, compiler, **kwargs):
     return 'SERIAL'
 
+class BIGSERIAL(sqlalchemy.Integer):
+    pass
+@compiles(BIGSERIAL)
+def compile_bigserial(element, compiler, **kwargs):
+    return 'BIGSERIAL'
+
 @compiles(sqlalchemy.String, 'postgresql')
 def compile_string(element, compiler, **kwargs):
     if element.length is None:

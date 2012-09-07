@@ -653,6 +653,11 @@ class Serial(Integer):
         import pytis.extensions.gensqlalchemy
         return pytis.extensions.gensqlalchemy.SERIAL()
 
+class LargeSerial(Integer):
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.BIGSERIAL()
+
 
 class Float(Number):
     """Číslo v pohyblivé řádové čárce v rozsahu podporovaném Pythonem."""

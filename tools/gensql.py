@@ -382,6 +382,7 @@ class _GsqlSpec(object):
                    'integer': 'pytis.data.Integer()',
                    'int': 'pytis.data.Integer()',
                    'bigint': 'pytis.data.LargeInteger()',
+                   'bigserial': 'pytis.data.LargeSerial()',
                    'bytea': 'pytis.data.Binary()',
                    'inet': 'pytis.data.Inet()',
                    'date': 'pytis.data.Date()',
