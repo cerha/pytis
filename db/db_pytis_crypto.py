@@ -216,7 +216,11 @@ exception
   when NO_DATA_FOUND then return null;
 end;
 $$ language plpgsql stable security definer;
+""",
+        name='pytis_crypto_db_key',
+        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions', 'pytis_crypto_db_keys',))
 
+sql_raw("""
 create or replace function pytis_crypto_decrypt_db_password (password_ text, key_name_ text) returns text as $$
 declare
   key text;
@@ -227,12 +231,20 @@ exception
   when NO_DATA_FOUND then return password_;
 end;
 $$ language plpgsql stable;
+""",
+        name='pytis_crypto_decrypt_db_password',
+        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions', 'pytis_crypto_db_keys',))
 
+sql_raw("""
 create or replace function pytis_crypto_create_db_key (key_name_ text, bits int) returns void as $$
   delete from pytis_crypto_db_keys where key_name=$1;
   insert into pytis_crypto_db_keys (select $1, * from pytis_crypto_generate_key($2));
 $$ language sql;
+""",
+        name='pytis_crypto_create_db_key',
+        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions', 'pytis_crypto_db_keys',))
 
+sql_raw("""
 create or replace function pytis_crypto_unlock_passwords (user_ text, password_ text) returns setof text as $$
 declare
   plain_password text := pytis_crypto_decrypt_db_password(password_, 'pytis');
@@ -251,12 +263,18 @@ begin
   return query select name from t_pytis_passwords;
 end;
 $$ language plpgsql;
+""",
+        name='pytis_crypto_unlock_passwords',
+        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions', 'pytis_crypto_db_keys',
+                 'pytis_crypto_decrypt_db_password',))
 
+sql_raw("""
 create or replace function pytis_crypto_unlock_current_user_passwords (password_ text) returns setof text as $$
 select * from pytis_crypto_unlock_passwords(current_user, $1);
 $$ language sql;
 
 -- create function pytis_crypto_user_contact (username text) returns pytis_crypto_t_user_contact as ...
 """,
-        name='pytis_login_key_functions',
-        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions', 'pytis_crypto_db_keys',))
+        name='pytis_crypto_unlock_current_user_passwords',
+        depends=('e_pytis_crypto_keys', 'pytis_basic_crypto_functions', 'pytis_crypto_db_keys',
+                 'pytis_crypto_unlock_passwords',))

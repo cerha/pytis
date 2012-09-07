@@ -389,6 +389,7 @@ class _GsqlSpec(object):
                    'time': 'pytis.data.Time()',
                    'timestamp': 'pytis.data.DateTime()', # assumes UTC, not always valid
                    'timestamp(0)': 'pytis.data.DateTime()', # assumes UTC, not always valid
+                   'timestamp(0) without time zone': 'pytis.data.DateTime()',
                    'macaddr': 'pytis.data.Macaddr()',
                    'ltree': 'pytis.data.LTree()',
                    'boolean': 'pytis.data.Boolean()',
@@ -589,7 +590,7 @@ class _GsqlSpec(object):
             pos = o.find('(')
             if pos >= 0:
                 o = o[:pos].rstrip()
-            if o.startswith('pg_'):
+            if o.startswith('pg_') or o.startswith('t_pytis_passwords'):
                 return
         if o not in self._depends and o is not self and o != self._name:
             self._depends = self._depends + (o,)
