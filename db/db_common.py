@@ -104,7 +104,7 @@ def _plpy_function(name, input_types, output_type, body=None,
 def _plpy_trigger_include():
     """Funkce pro vytváření python trigger funkcí"""
 
-    class BaseTriggerObject:
+    class BaseTriggerObject(object):
 
         _RETURN_CODE_MODYFY = "MODIFY"
         _RETURN_CODE_SKIP = "SKIP"
@@ -198,7 +198,7 @@ def _control_function(name, input_types, output_type, body=None,
                       use_functions=(), **kwargs):
     """Pro definici plpython kontrolních funkcí. Přidává na výstup html formátování"""
     return function(name, input_types, output_type, body=body,
-                    use_functions=(_plpy_control_include, _plpy_include) + use_functions, **kwargs)
+                    use_functions=(_plpy_include, _plpy_control_include,) + use_functions, **kwargs)
 
 def partitioning_trigger():
     """Updatuje datum a místo odeslání"""
