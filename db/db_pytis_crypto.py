@@ -140,8 +140,8 @@ $$ language plpgsql;
 
 create or replace function pytis_crypto_delete_key (name_ text, user_ text, force bool) returns bool as $$
 begin
-  lock pytis_crypto_keys in exclusive mode;
-  if not force and (select count(*) from pytis_crypto_keys where name=name_) <= 1 then
+  lock e_pytis_crypto_keys in exclusive mode;
+  if not force and (select count(*) from e_pytis_crypto_keys where name=name_) <= 1 then
     return False;
   end if;
   delete from e_pytis_crypto_keys where name=name_ and username=user_;
