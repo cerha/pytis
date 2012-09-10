@@ -19,8 +19,6 @@
 ;; Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 (defun dump-value (string)
-  (when (string-match "LANGUAGE plpythonu" string)
-    (setq string ""))
   (while (string-match "\\(^[ 	]+\\|[ 	]+$\\|\n--$\\)" string)
     (setq string (replace-match "" nil nil string)))
   (while (string-match "^\\(SET search_path = \\|GRANT \\|REVOKE \\|ALTER .* OWNER TO \\|#def \\).*$" string)
