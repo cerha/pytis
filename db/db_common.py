@@ -53,7 +53,7 @@ def _std_table(name, columns, doc, grant=Gall_pytis, **kwargs):
                  **kwargs)
 
 def _std_table_nolog(name, columns, doc, grant=Gall_pytis, **kwargs):
-    return table(name, columns, grant=grant,
+    return table(name, columns, inherits=('_changes',), grant=grant,
                  doc=doc, **kwargs)
 
 def _std_view_raw(name, columns, fromitems, where=None, 
