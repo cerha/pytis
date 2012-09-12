@@ -18,7 +18,9 @@
 ;; along with this program; if not, write to the Free Software
 ;; Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-(defun dump-value (string)
+(defun dump-value (string no-plpy)
+  (when (and no-plpy (string-match "LANGUAGE plpythonu" string))
+    (setq string ""))
   (while (string-match "\\(^[ 	]+\\|[ 	]+$\\|\n--$\\)" string)
     (setq string (replace-match "" nil nil string)))
   (while (string-match "^\\(SET search_path = \\|GRANT \\|REVOKE \\|ALTER .* OWNER TO \\|#def \\).*$" string)
@@ -89,7 +91,7 @@
       (set-buffer buffer-2)
       (save-buffer))))
 
-(defun dump-read-data (file)
+(defun dump-read-data (file no-plpy)
   (save-excursion
     (let ((buffer (find-file-noselect file))
           (data (make-hash-table :test 'equal))
@@ -117,13 +119,13 @@
           (when (and key
                      (or (string= name "_changes") (not (string-match "^_" name)))
                      (not (member schema '("davical_app" "nobackup" "sogo"))))
-            (puthash key (dump-value (buffer-substring-no-properties beg (point))) data))))
+            (puthash key (dump-value (buffer-substring-no-properties beg (point)) no-plpy) data))))
       data)))
 
-(defun dump-compare (file-1 file-2)
-  (interactive "fFile 1: \nfFile 2: ")
-  (let ((data-1 (dump-read-data file-1))
-        (data-2 (dump-read-data file-2)))
-    (dump-compare-data data-1 data-2 file-1 file-2 )))
+(defun dump-compare (file-1 file-2 &optional no-plpy)
+  (interactive "fFile 1: \nfFile 2: \nP")
+  (let ((data-1 (dump-read-data file-1 no-plpy))
+        (data-2 (dump-read-data file-2 no-plpy)))
+    (dump-compare-data data-1 data-2 file-1 file-2)))
 
 (provide 'dump-compare)
