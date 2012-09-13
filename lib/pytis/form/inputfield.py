@@ -1970,7 +1970,13 @@ class FileField(Invocable, InputField):
         else:
             msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
             dir = FileField._last_save_dir or FileField._last_load_dir or ''
-            dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir)
+            filename_field = self._spec.filename()
+            if filename_field:
+                filename = self._row[filename_field].export()
+            else:
+                filename = None
+            dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir,
+                                defaultFile=filename)
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
                 FileField._last_save_dir = os.path.dirname(path)
