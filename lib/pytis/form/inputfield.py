@@ -1821,6 +1821,7 @@ class FileField(Invocable, InputField):
         ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(parent, size, 1))
         ctrl.SetEditable(False)
         ctrl.SetOwnBackgroundColour(config.field_disabled_color)
+        wx_callback(wx.EVT_LEFT_DCLICK, ctrl, self._on_filename_dclick)
         return ctrl
 
     def _button_size(self, parent):
@@ -1853,6 +1854,9 @@ class FileField(Invocable, InputField):
             else:
                 display = format_byte_size(len(self._buffer))
         self._ctrl.SetValue(display)
+
+    def _on_filename_dclick(self, event):
+        FileField.COMMAND_OPEN.invoke(_command_handler=self)
         
     def _on_invoke_selection(self, alternate=False):
         FileField.COMMAND_LOAD.invoke(_command_handler=self)
