@@ -2216,6 +2216,42 @@ def mitem(uicmd):
     """Return a 'MItem' instance for given 'UICommand' instance."""
     return MItem(uicmd.title(), command=uicmd.command(), args=uicmd.args(), help=uicmd.descr())
 
+def open_data_as_file(data, suffix):
+    remote_file = None
+    if pytis.windows.windows_available():
+        try:
+            remote_file = pytis.windows.make_temporary_file(suffix=suffix)
+        except:
+            pass
+    if remote_file:
+        nxip = pytis.windows.nx_ip()
+        log(OPERATIONAL, "Launching file on Windows at %s:" % nxip, remote_file.name())
+        try:
+            remote_file.write(data)
+        finally:
+            remote_file.close()
+        pytis.windows.launch_file(remote_file.name())
+    else:
+        import mailcap, mimetypes
+        path = os.tempnam() + suffix
+        mime_type = mimetypes.guess_type(path)[0]
+        if mime_type:
+            match = mailcap.findmatch(mailcap.getcaps(), mime_type)[1]
+            if match:
+                command = match['view'] % path
+                log(OPERATIONAL, "Running external file viewer:", command)
+                try:
+                    f = open(path, 'wb')
+                    try:
+                        f.write(data)
+                    finally:
+                        f.close()
+                        os.system(command)
+                finally:
+                    os.remove(path)
+                return
+        run_dialog(Error, _("Nenalezen odpovídající prohlížeč pro '%s'." % suffix))
+
 
 def popup_menu(parent, items, keymap=None, position=None):
     """Pop-up a wx context menu.

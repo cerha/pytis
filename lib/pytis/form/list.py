@@ -3104,8 +3104,25 @@ class BrowseForm(FoldableForm):
         return [mitem(*args) for args in linkspec]
                            
     def _context_menu(self):
+        def open_file(field_id, filename):
+            suffix = os.path.splitext(filename)[1]
+            value = row[field_id]
+            if isinstance(value.type, pytis.data.Binary):
+                data = value.value().buffer()
+            else:
+                data = value.export()
+            open_data_as_file(data, suffix=suffix)
         menu = self._context_menu_static_part
         row = self.current_row()
+        file_open_mitems = [MItem(_(u"Otevřít soubor „%s“" % filename),
+                                  command=Application.COMMAND_HANDLED_ACTION(handler=open_file,
+                                                                             field_id=f.id(),
+                                                                             filename=filename),
+                                  help=_(u"Otevřít hodnotu políčka „%s“ jako soubor.") % f.label())
+                            for f, filename in [(f, row.filename(f.id())) for f in self._fields]
+                            if filename]
+        if file_open_mitems:
+            menu += (MSeparator(),) + tuple(file_open_mitems)
         if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \
                 or self._automatic_in_operator_links:
             menu += (MSeparator(),)

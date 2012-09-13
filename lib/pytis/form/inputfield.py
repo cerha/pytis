@@ -1891,37 +1891,7 @@ class FileField(Invocable, InputField):
         return self._buffer is not None and self._filename_extension() is not None
         
     def _cmd_open(self):
-        ext = self._filename_extension()
-        remote_file = None
-        if pytis.windows.windows_available():
-            try:
-                remote_file = pytis.windows.make_temporary_file(suffix=ext)
-            except:
-                pass
-        if remote_file:
-            log(OPERATIONAL,
-                "Launching file on Windows at %s:" % pytis.windows.nx_ip(), remote_file.name())
-            try:
-                remote_file.write(self._buffer.buffer())
-            finally:
-                remote_file.close()
-            pytis.windows.launch_file(remote_file.name())
-        else:
-            import mailcap, mimetypes
-            path = os.tempnam() + ext
-            mime_type = mimetypes.guess_type(path)[0]
-            if mime_type:
-                match = mailcap.findmatch(mailcap.getcaps(), mime_type)[1]
-                if match:
-                    command = match['view'] % path
-                    log(OPERATIONAL, "Running external file viewer:", command)
-                    try:
-                        self._buffer.save(path)
-                        os.system(command)
-                    finally:
-                        os.remove(path)
-                    return
-            run_dialog(Error, _("Nenalezen odpovídající prohlížeč pro '%s'." % ext))
+        open_data_as_file(self._buffer.buffer(), suffix=self._filename_extension())
 
     def _can_load(self):
         return self._enabled
