@@ -1910,10 +1910,15 @@ class FileField(Invocable, InputField):
             else:
                 self._on_change()
                 message(_(u"Soubor načten."))
+        filename_extensions = self._spec.filename_extensions()
+        if filename_extensions:
+            template = ';'.join(['*.%s' % ext for ext in filename_extensions])
+        else:
+            template = None
         msg = _(u"Vyberte soubor pro políčko '%s'") % self.spec().label()
         if pytis.windows.windows_available():
             import ntpath
-            f = pytis.windows.open_selected_file()
+            f = pytis.windows.open_selected_file(template=template)
             if f is None:
                 return
             filename = ntpath.split(f.name())[-1]
@@ -1922,8 +1927,16 @@ class FileField(Invocable, InputField):
             finally:
                 f.close()
         else:
-            dir = FileField._last_load_dir or FileField._last_save_dir or ''
-            dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN, defaultDir=dir)
+            directory = FileField._last_load_dir or FileField._last_save_dir or ''
+            filters = _(u"Všechny soubory (*.*)|*.*")
+            if filename_extensions:
+                # Construct filename matchers to be case insensitive, such as '*.[jJ][pP][gG]'.
+                # This will only work on GTK!
+                matchers = ';'.join(['*.'+''.join(['[%s%s]' % (c.lower(), c.upper()) for c in ext])
+                                     for ext in filename_extensions])
+                filters = _(u"Soubory požadovaného typu (%s)") % template +'|'+ matchers + '|'+ filters
+            dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN,
+                                defaultDir=directory, wildcard=filters)
             if dlg.ShowModal() != wx.ID_OK:
                 return
             path = dlg.GetPath()

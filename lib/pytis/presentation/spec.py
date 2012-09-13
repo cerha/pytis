@@ -2846,6 +2846,10 @@ class Field(object):
             This is relevant for binary fields, but may be also used for string
             fields, where it forces the user interface to provide controls for
             downloading/saving the content of the field as a file.
+          filename_extensions -- sequence of allowed filename extensions to be
+            used for filtering a file open dialog contents when selecting a
+            file to be used as field value.  Relevant for binary fields, but
+            may be also used for string fields with 'filename' set (see above).
           text_format -- One of the available 'TextFormat' constants defining
             the format of the field text.  Only relevant for textual fields (of
             type 'pytis.data.String').  The default format 'TextFormat.PLAIN'
@@ -2935,7 +2939,7 @@ class Field(object):
               codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
-              style=None, link=(), filename=None,
+              style=None, link=(), filename=None, filename_extensions=(),
               text_format=TextFormat.PLAIN, attachment_storage=None, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
               validity_condition=None, crypto_name=None,
@@ -2991,6 +2995,7 @@ class Field(object):
         assert style is None or isinstance(style, (Style, collections.Callable)), \
             err("Invalid 'style' specification: %s", style)
         assert filename is None or isinstance(filename, (basestring, collections.Callable)), filename
+        assert isinstance(filename_extensions, (list, tuple)), filename_extensions
         assert text_format in public_attr_values(TextFormat), text_format
         assert attachment_storage is None or \
             isinstance(attachment_storage, (AttachmentStorage, collections.Callable)), attachment_storage
@@ -3123,6 +3128,7 @@ class Field(object):
         self._style = style
         self._links = links
         self._filename = filename
+        self._filename_extensions = filename_extensions
         self._text_format = text_format
         self._attachment_storage = attachment_storage
         self._printable = printable
@@ -3277,6 +3283,9 @@ class Field(object):
 
     def filename(self):
         return self._filename
+
+    def filename_extensions(self):
+        return self._filename_extensions
 
     def text_format(self):
         return self._text_format
