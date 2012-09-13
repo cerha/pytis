@@ -1948,13 +1948,14 @@ class FileField(Invocable, InputField):
         return self._buffer is not None
         
     def _cmd_save(self):
+        default_filename = self._row.filename(self._id)
         if pytis.windows.windows_available():
-            f = pytis.windows.make_selected_file()
+            f = pytis.windows.make_selected_file(template=default_filename)
         else:
             msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
             dir = FileField._last_save_dir or FileField._last_load_dir or ''
             dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir,
-                                defaultFile=self._row.filename(self._id))
+                                defaultFile=default_filename)
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
                 FileField._last_save_dir = os.path.dirname(path)
