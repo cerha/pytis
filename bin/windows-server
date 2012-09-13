@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-08-30 13:33'
+_VERSION = '2012-09-13 15:40'
 
 import logging
 import os
@@ -219,7 +219,7 @@ class PytisUserService(PytisService):
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
             set_filename = template
-        dialog = win32ui.CreateFileDialog(1, None, "%s" % set_filename,
+        dialog = win32ui.CreateFileDialog(0, None, "%s" % set_filename,
                                           win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
                                           file_filter)
         result = dialog.DoModal()
