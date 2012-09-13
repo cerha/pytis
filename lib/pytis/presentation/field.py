@@ -95,6 +95,7 @@ class PresentedRow(object):
             self.virtual = f.virtual()
             self.secret_computer = False # Set dynamically during initialization.
             self.attachment_storage = f.attachment_storage()
+            self.filename = f.filename()
         def __str__(self):
             return "<_Column id='%s' type='%s' virtual='%s'>" % (self.id, self.type, self.virtual)
     
@@ -1108,3 +1109,25 @@ class PresentedRow(object):
         if isinstance(storage, collections.Callable):
             storage = storage(self)
         return storage
+    
+    def filename(self, key):
+        """Return the file name for given field or None.
+
+        Returns a string denoting the file name for saving the field value or
+        None is the field value is not to be saved as a file.
+
+        The result depends on the 'filename' specification of the field given
+        by 'key'.  If the filename is defined as a callable object, it is
+        automatically called and the result is returned.  If defined as a field
+        id, the exported value of given field is returned.
+        
+        """
+        column = self._coldict[key]
+        filename_spec = column.filename
+        if filename_spec:
+            if isinstance(filename_spec, collections.Callable):
+                return filename_spec(self)
+            else:
+                return self._row[filename_spec].export()
+        else:
+            return None

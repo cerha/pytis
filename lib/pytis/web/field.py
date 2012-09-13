@@ -558,15 +558,10 @@ class BinaryFieldExporter(FieldExporter):
         if buf:
             if buf.filename():
                 return buf.filename()
-            filename_spec = self._field.spec.filename()
-            if filename_spec:
-                if isinstance(filename_spec, collections.Callable):
-                    value = filename_spec(self._row)
-                else:
-                    value = self._row[filename_spec].export()
-                if value:
-                    return value
-            if isinstance(type, pd.Image):
+            filename = self._row.filename(self._field.id)
+            if filename:
+                return filename
+            elif isinstance(type, pd.Image):
                 # Translators: The label "image"/"file" is used in textual representation of binary
                 # data values, usually as a link to download the actual binary file.
                 return _(u"image")
@@ -713,11 +708,7 @@ class FileFieldExporter(TextFieldExporter):
     """
     def _format(self, context):
         if self._value().value() is not None:
-            filename_spec = self._field.spec.filename()
-            if isinstance(filename_spec, collections.Callable):
-                value = filename_spec(self._row)
-            else:
-                value = self._row[filename_spec].export()
+            value = self._row.filename(self._field.id)
         else:
             value = ''
         return value

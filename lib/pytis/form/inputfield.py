@@ -1813,9 +1813,9 @@ class FileField(Invocable, InputField):
         super(FileField, self)._init_attributes()
         
     def _create_ctrl(self, parent):
-        filename_field = self._spec.filename()
-        if filename_field:
-            size = 50 # TODO: Use the real fielname field size.
+        filename = self._row.filename(self._id)
+        if filename:
+            size = 50
         else:
             size = 10
         ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(parent, size, 1))
@@ -1848,11 +1848,12 @@ class FileField(Invocable, InputField):
         if self._buffer is None:
             display = ""
         else:
-            filename_field = self._spec.filename()
-            if filename_field:
-                display = self._row[filename_field].export()
+            filename = self._row.filename(self._id)
+            bytesize = format_byte_size(len(self._buffer))
+            if filename:
+                display = '%s (%s)' % (filename, bytesize)
             else:
-                display = format_byte_size(len(self._buffer))
+                display = bytesize
         self._ctrl.SetValue(display)
 
     def _on_filename_dclick(self, event):
@@ -1863,12 +1864,11 @@ class FileField(Invocable, InputField):
 
     def _filename_extension(self):
         if self._buffer:
-            filename_field = self._spec.filename()
-            if filename_field:
-                return os.path.splitext(self._row[filename_field].export())[1]
+            filename = self._row.filename(self._id)
+            if filename:
+                return os.path.splitext(filename)[1]
             else:
                 return None
-            return self._buffer.image().format.lower()
         else:
             return None
 
@@ -1970,13 +1970,8 @@ class FileField(Invocable, InputField):
         else:
             msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
             dir = FileField._last_save_dir or FileField._last_load_dir or ''
-            filename_field = self._spec.filename()
-            if filename_field:
-                filename = self._row[filename_field].export()
-            else:
-                filename = None
             dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir,
-                                defaultFile=filename)
+                                defaultFile=self._row.filename(self._id))
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
                 FileField._last_save_dir = os.path.dirname(path)
