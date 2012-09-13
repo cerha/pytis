@@ -246,8 +246,8 @@ Command(FileField, 'SAVE',
         "Uložení objektu z databáze do soborového systému.")
 Command(FileField, 'CLEAR',
         "Vynulování nastavené hodnoty políčka.")
-Command(ImageField, 'VIEW',
-        "Otevření náhledu obrázku v prohlížeči.")
+Command(FileField, 'OPEN',
+        "Otevření souboru ve výchozí aplikaci.")
 Command(StructuredTextField, 'SEARCH',
         "Search for a string within the text field content.")
 Command(StructuredTextField, 'SEARCH_AND_REPLACE',

@@ -1813,7 +1813,12 @@ class FileField(Invocable, InputField):
         super(FileField, self)._init_attributes()
         
     def _create_ctrl(self, parent):
-        ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(parent, 8, 1))
+        filename_field = self._spec.filename()
+        if filename_field:
+            size = 50 # TODO: Use the real fielname field size.
+        else:
+            size = 10
+        ctrl = wx.TextCtrl(parent, -1, '', size=self._px_size(parent, size, 1))
         ctrl.SetEditable(False)
         ctrl.SetOwnBackgroundColour(config.field_disabled_color)
         return ctrl
@@ -1832,24 +1837,44 @@ class FileField(Invocable, InputField):
     def _set_value(self, value):
         assert value is None or isinstance(value, buffer)
         self._buffer = value and self._type.Buffer(value) or None
-        self._on_set_value()
         self._on_change()
 
-    def _on_set_value(self):
+    def _on_change_hook(self):
+        super(FileField, self)._on_change_hook()
+        self._on_file_changed()
+        
+    def _on_file_changed(self):
         if self._buffer is None:
             display = ""
         else:
-            display = format_byte_size(len(self._buffer))
+            filename_field = self._spec.filename()
+            if filename_field:
+                display = self._row[filename_field].export()
+            else:
+                display = format_byte_size(len(self._buffer))
         self._ctrl.SetValue(display)
-
+        
     def _on_invoke_selection(self, alternate=False):
         FileField.COMMAND_LOAD.invoke(_command_handler=self)
+
+    def _filename_extension(self):
+        if self._buffer:
+            filename_field = self._spec.filename()
+            if filename_field:
+                return os.path.splitext(self._row[filename_field].export())[1]
+            else:
+                return None
+            return self._buffer.image().format.lower()
+        else:
+            return None
 
     def _menu(self):
         # We really want to use Invocable's super method, since we don't
         # want the Invocable menu items.
         return super(Invocable, self)._menu() + \
                (None,
+                UICommand(FileField.COMMAND_OPEN(), _(u"Otevřít"),
+                          _(u"Otevřít soubor v preferované aplikaci.")),
                 UICommand(FileField.COMMAND_LOAD(), _(u"Nastavit ze souboru"),
                           _(u"Nahradit hodnotu políčka daty ze souboru. ")),
                 UICommand(FileField.COMMAND_SAVE(), _(u"Uložit do souboru"),
@@ -1857,6 +1882,42 @@ class FileField(Invocable, InputField):
                 UICommand(FileField.COMMAND_CLEAR(), _(u"Vynulovat"),
                           _(u"Nastavit prázdnou hodnotu.")),
                 )
+
+    def _can_open(self):
+        return self._buffer is not None and self._filename_extension() is not None
+        
+    def _cmd_open(self):
+        ext = self._filename_extension()
+        remote_file = None
+        if pytis.windows.windows_available():
+            try:
+                remote_file = pytis.windows.make_temporary_file(suffix=ext)
+            except:
+                pass
+        if remote_file:
+            log(OPERATIONAL,
+                "Launching file on Windows at %s:" % pytis.windows.nx_ip(), remote_file.name())
+            try:
+                remote_file.write(self._buffer.buffer())
+            finally:
+                remote_file.close()
+            pytis.windows.launch_file(remote_file.name())
+        else:
+            import mailcap, mimetypes
+            path = os.tempnam() + ext
+            mime_type = mimetypes.guess_type(path)[0]
+            if mime_type:
+                match = mailcap.findmatch(mailcap.getcaps(), mime_type)[1]
+                if match:
+                    command = match['view'] % path
+                    log(OPERATIONAL, "Running external file viewer:", command)
+                    try:
+                        self._buffer.save(path)
+                        os.system(command)
+                    finally:
+                        os.remove(path)
+                    return
+            run_dialog(Error, _("Nenalezen odpovídající prohlížeč pro '%s'." % ext))
 
     def _can_load(self):
         return self._enabled
@@ -1873,7 +1934,6 @@ class FileField(Invocable, InputField):
             except IOError as e:
                 message(_(u"Chyba při čtení souboru:")+' '+str(e), beep_=True)
             else:
-                self._on_set_value()
                 self._on_change()
                 message(_(u"Soubor načten."))
         msg = _(u"Vyberte soubor pro políčko '%s'") % self.spec().label()
@@ -1963,29 +2023,19 @@ class ImageField(FileField):
         return wx.EmptyBitmap(1, 1, depth=1)
     
     def _on_button(self):
-        if self.COMMAND_VIEW.enabled():
-            self.COMMAND_VIEW.invoke()
+        if self.COMMAND_OPEN.enabled():
+            self.COMMAND_OPEN.invoke()
     
-    def _on_set_value(self):
-        self._ctrl.SetBitmapLabel(self._bitmap())
-    
-    def _can_view(self):
-        return self._buffer is not None 
-        
-    def _cmd_view(self):
-        path = os.tempnam()+"."+self._buffer.image().format.lower()
-        command = config.image_viewer
-        if command.find('%f') != -1:
-            command = command.replace('%f', path)
+    def _filename_extension(self):
+        if self._buffer:
+            return "." + self._buffer.image().format.lower()
         else:
-            command += " "+path
-        log(OPERATIONAL, "Running external viewer:", command)
-        try:
-            self._buffer.save(path)
-            os.system(command)
-        finally:
-            os.remove(path)
+            return None
+        
+    def _on_file_changed(self):
+        self._ctrl.SetBitmapLabel(self._bitmap())
 
+    
 class StructuredTextField(TextField):
     class AttachmentEnumerator(pytis.data.Enumerator):
         def __init__(self, storage, images=True):

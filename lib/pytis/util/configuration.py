@@ -656,13 +656,6 @@ class Configuration(object):
         _DESCR = _(u"Jméno serveru odchozí pošty.")
         _DEFAULT = 'localhost'
         
-    class _Option_image_viewer(StringOption):
-        _DESCR = _(u"Shellový příkaz pro spuštění prohlížeče obrázků.  Pokud " +
-                   u"příkaz obsahuje řetězec %f, bude tento nahrazen názvem " +
-                   u"otevíraného souboru, jinak je soubor připojen na konec " +
-                   u"příkazu.")
-        _DEFAULT = 'run-mailcap'
-
     # Komunikace s klientskými stanicemi
     
     class _Option_rpc_local_port(NumericOption):
