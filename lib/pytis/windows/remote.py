@@ -131,19 +131,23 @@ def open_selected_file(template=None):
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Nepodařilo se vybrat soubor ke stažení: %s") % (e,))    
 
-def make_selected_file(template=None, encoding=None):
+def make_selected_file(filename=None, template=None, encoding=None, mode='wb'):
+    assert filename is None or isinstance(filename, basestring), filename
     assert template is None or isinstance(template, basestring), template
     assert encoding is None or isinstance(encoding, basestring), encoding
+    assert mode is None or isinstance(mode, basestring), mode
     try:
-        return _request('make_selected_file', template, encoding)
+        return _request('make_selected_file', filename=filename, template=template,
+                        encoding=encoding, mode=mode)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("Nepodařilo se vybrat soubor k uložení: %s") % (e,))    
 
-def make_temporary_file(suffix='', encoding=None):
+def make_temporary_file(suffix='', encoding=None, mode='wb'):
     assert isinstance(suffix, basestring), suffix
     assert encoding is None or isinstance(encoding, basestring), encoding
+    assert mode is None or isinstance(mode, basestring), mode
     try:
-        return _request('make_temporary_file', suffix=suffix, encoding=encoding)
+        return _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode)
     except:
         return None
