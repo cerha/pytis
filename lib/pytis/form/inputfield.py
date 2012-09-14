@@ -1813,8 +1813,7 @@ class FileField(Invocable, InputField):
         super(FileField, self)._init_attributes()
         
     def _create_ctrl(self, parent):
-        filename = self._row.filename(self._id)
-        if filename:
+        if self._spec.filename():
             size = 50
         else:
             size = 10
