@@ -426,3 +426,29 @@ class ReusableSpec:
             return filter(lambda f: f.id() not in args, self._fields)
 
 
+def mime_type_constraint(*allowed_mime_types):
+    """Return a validation function checking the binary vaslue's MIME type.
+
+    The function is designed to be used in 'pytis.data.Binary' data type's
+    constraints as follows:
+
+       type = pytis.data.Binary(constraints=(mime_type_constraint('application/pdf'),))
+    
+    """
+    import magic
+    def constraint(value):
+        m = magic.open(magic.MAGIC_MIME_TYPE)
+        try:
+            m.load()
+            mime_type = m.buffer(str(value.buffer()))
+        finally:
+            m.close()
+        if mime_type in allowed_mime_types:
+            return None
+        else:
+            if len(allowed_mime_types) == 1:
+                allowed_types_msg = _(u"Požadován je typ %s.") % allowed_mime_types
+            else:
+                allowed_types_msg = _(u"Povolené typy jsou %s") % ', '.join(allowed_mime_types)
+            return _(u"Detekována data typu %s. %s") % (mime_type, allowed_types_msg)
+    return constraint
