@@ -3107,7 +3107,7 @@ class BrowseForm(FoldableForm):
         def open_file(field_id, filename):
             suffix = os.path.splitext(filename)[1]
             value = row[field_id]
-            if isinstance(value.type, pytis.data.Binary):
+            if isinstance(value.type(), pytis.data.Binary):
                 data = value.value().buffer()
             else:
                 data = value.export()
