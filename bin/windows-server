@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-09-14 17:37'
+_VERSION = '2012-09-14 19:20'
 
 import logging
 import os
@@ -169,16 +169,20 @@ class PytisUserService(PytisService):
         assert template is None or isinstance(template, basestring), template
         import win32ui
         import win32con
-        if template is None:
-            file_filter = u"Všechny soubory (*.*)|*.*||"
-            set_filename = "*.*"
-        else:
+        extensions = None
+        if template:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
-            set_filename = template
-        dialog = win32ui.CreateFileDialog(1, None, "%s" % set_filename,
+            filename = template
+            if template.find('.') != -1:
+                extension = template.split('.')[-1]
+        else:
+            file_filter = u"Všechny soubory (*.*)|*.*||"
+            filename = "*.*"
+        parent = win32ui.FindWindow(None,None)
+        dialog = win32ui.CreateFileDialog(1, extension, "%s" % filename,
                                           win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
-                                          file_filter)
+                                          file_filter, parent)
         result = dialog.DoModal()
         if result != 1:
             return None
@@ -214,27 +218,28 @@ class PytisUserService(PytisService):
         assert template is None or isinstance(template, basestring), template
         import win32ui
         import win32con
-        if template is None:
-            if filename:
-                name, ext = os.path.splitext(filename)
-                if ext:
-                    template = "*%s" % ext
-                    file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
-                                   (template, template,))
-                else:
-                    file_filter = u"Všechny soubory (*.*)|*.*||"
-            else:
-                file_filter = u"Všechny soubory (*.*)|*.*||"
-        else:
-            file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
-                           (template, template,))
+        file_filter = u"Všechny soubory (*.*)|*.*||"
+        extension = None
         if filename:
-            set_filename = filename
+            name, ext = os.path.splitext(filename)
+            if ext:
+                template = "*" + ext
+                file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
+                               (template, template, file_filter))
+                extension = ext[1:]
         else:
-            set_filename = "*.*"
-        dialog = win32ui.CreateFileDialog(0, None, "%s" % set_filename,
+            filename = "*.*"
+            if template:
+                file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
+                               (template, template, file_filter))
+        # This hack with finding non-specified windows is used so that
+        # we get some parent window for CreateFileDialog.
+        # Without this parent windows the method DoModal doesn't show
+        # the dialog window on top...
+        parent = win32ui.FindWindow(None,None) 
+        dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename,
                                           win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
-                                          file_filter)
+                                          file_filter, parent)
         result = dialog.DoModal()
         if result != 1:
             return None
