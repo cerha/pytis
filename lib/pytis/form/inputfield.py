@@ -1949,7 +1949,7 @@ class FileField(Invocable, InputField):
     def _cmd_save(self):
         default_filename = self._row.filename(self._id)
         if pytis.windows.windows_available():
-            f = pytis.windows.make_selected_file(template=default_filename)
+            f = pytis.windows.make_selected_file(filename=default_filename)
         else:
             msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
             dir = FileField._last_save_dir or FileField._last_load_dir or ''
