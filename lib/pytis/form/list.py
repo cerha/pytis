@@ -3104,11 +3104,21 @@ class BrowseForm(FoldableForm):
         return [mitem(*args) for args in linkspec]
                            
     def _context_menu(self):
-        def open_file(field_id, filename):
+        def open_file(field_id, filename):            
             suffix = os.path.splitext(filename)[1]
             value = row[field_id]
             if isinstance(value.type(), pytis.data.Binary):
-                data = value.value().buffer()
+                data_new = self.data()
+                key_id = row.data().key()[0].id()
+                condition = pytis.data.EQ(key_id, row[key_id])
+                data_new.select(condition=condition, columns=(field_id,),
+                               transaction=row.transaction())
+                row_new = data_new.fetchone()
+                if row_new is None:
+                    new_data.close()
+                    return
+                else:
+                    data = row_new[field_id].value().buffer()
             else:
                 data = value.export()
             open_data_as_file(data, suffix=suffix)
