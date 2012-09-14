@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-09-13 15:40'
+_VERSION = '2012-09-14 17:37'
 
 import logging
 import os
@@ -197,7 +197,7 @@ class PytisUserService(PytisService):
                 return self._filename
         return Wrapper(filename)
 
-    def exposed_make_selected_file(self, template=None, encoding=None):
+    def exposed_make_selected_file(self, filename=None, template=None, encoding=None, mode='wb'):
         """Return a write-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -205,20 +205,33 @@ class PytisUserService(PytisService):
 
         Arguments:
 
+          filename -- default filename or None
           template -- a string defining the required file name pattern, or 'None'
           encoding -- output encoding, string or None
+          mode -- default mode for opening the file 
 
         """
         assert template is None or isinstance(template, basestring), template
         import win32ui
         import win32con
         if template is None:
-            file_filter = u"Všechny soubory (*.*)|*.*||"
-            set_filename = "*.*"
+            if filename:
+                name, ext = os.path.splitext(filename)
+                if ext:
+                    template = "*%s" % ext
+                    file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
+                                   (template, template,))
+                else:
+                    file_filter = u"Všechny soubory (*.*)|*.*||"
+            else:
+                file_filter = u"Všechny soubory (*.*)|*.*||"
         else:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
-            set_filename = template
+        if filename:
+            set_filename = filename
+        else:
+            set_filename = "*.*"
         dialog = win32ui.CreateFileDialog(0, None, "%s" % set_filename,
                                           win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
                                           file_filter)
@@ -229,21 +242,23 @@ class PytisUserService(PytisService):
         if filename is None:
             return None
         class Wrapper(object):
-            def __init__(self, filename, encoding):
-                self._f = open(filename, 'w')
+            def __init__(self, filename, encoding, mode):
+                self._f = open(filename, mode)
                 self._filename = filename
                 self._encoding = encoding
             def exposed_write(self, data):
-                if self._encoding is not None:
+                if isinstance(data, buffer):
+                    data = data[:]
+                elif self._encoding is not None:
                     data = data.encode(self._encoding)
                 self._f.write(data)
             def exposed_close(self):
                 self._f.close()
             def exposed_name(self):
                 return self._filename
-        return Wrapper(filename, encoding)
+        return Wrapper(filename, encoding, mode)
 
-    def exposed_make_temporary_file(self, suffix='', encoding=None):
+    def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb'):
         """Create a temporary file and return its instance.
 
         The return value is a 'tempfile.NamedTemporaryFile' instance.
@@ -253,15 +268,18 @@ class PytisUserService(PytisService):
           suffix -- suffix to use in the temporary file name; if a dot should
             be part of the suffix then it must be explicitly included in it
           encoding -- output encoding, string or None
+          mode -- default mode for opening the file 
         
         """
         class Wrapper(object):
-            def __init__(self, handle, filename, encoding):
-                self._f = os.fdopen(handle, 'w')
+            def __init__(self, handle, filename, encoding, mode):
+                self._f = os.fdopen(handle, mode)
                 self._filename = filename
                 self._encoding = encoding
             def exposed_write(self, data):
-                if self._encoding is not None:
+                if isinstance(data, buffer):
+                    data = data[:]
+                elif self._encoding is not None:
                     data = data.encode(self._encoding)
                 self._f.write(data)
             def exposed_close(self):
@@ -269,7 +287,7 @@ class PytisUserService(PytisService):
             def exposed_name(self):
                 return self._filename
         handle, filename = tempfile.mkstemp(prefix='pytis', suffix=suffix)
-        return Wrapper(handle, filename, encoding)
+        return Wrapper(handle, filename, encoding, mode)
 
 class PytisAdminService(PytisService):
 
