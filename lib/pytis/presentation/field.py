@@ -1128,6 +1128,6 @@ class PresentedRow(object):
             if isinstance(filename_spec, collections.Callable):
                 return filename_spec(self)
             else:
-                return self._row[filename_spec].export()
+                return self[filename_spec].export()
         else:
             return None
