@@ -3104,21 +3104,23 @@ class BrowseForm(FoldableForm):
         return [mitem(*args) for args in linkspec]
                            
     def _context_menu(self):
-        def open_file(field_id, filename):            
+        def open_file(row, field_id, filename):            
             suffix = os.path.splitext(filename)[1]
             value = row[field_id]
             if isinstance(value.type(), pytis.data.Binary):
-                data_new = self.data()
-                key_id = row.data().key()[0].id()
-                condition = pytis.data.EQ(key_id, row[key_id])
-                data_new.select(condition=condition, columns=(field_id,),
-                               transaction=row.transaction())
-                row_new = data_new.fetchone()
-                if row_new is None:
-                    new_data.close()
-                    return
+                if isinstance(value.type(), pytis.data.Big):
+                    # Big values are not included in list form select.
+                    data_object = self.data()
+                    key_id = data_object.key()[0].id()
+                    data_object.select(condition=pytis.data.EQ(key_id, row[key_id]),
+                                       columns=(field_id,), transaction=row.transaction())
+                    complete_row = data_object.fetchone()
+                    data_object.close()
+                    if complete_row is None:
+                        return
+                    data = complete_row[field_id].value().buffer()
                 else:
-                    data = row_new[field_id].value().buffer()
+                    data = value.value().buffer()
             else:
                 data = value.export()
             open_data_as_file(data, suffix=suffix)
@@ -3126,6 +3128,7 @@ class BrowseForm(FoldableForm):
         row = self.current_row()
         file_open_mitems = [MItem(_(u"Otevřít soubor „%s“" % filename),
                                   command=Application.COMMAND_HANDLED_ACTION(handler=open_file,
+                                                                             row=row,
                                                                              field_id=f.id(),
                                                                              filename=filename),
                                   help=_(u"Otevřít hodnotu políčka „%s“ jako soubor.") % f.label())
