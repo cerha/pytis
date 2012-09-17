@@ -2093,7 +2093,10 @@ class Browser(wx.Panel, CommandHandler):
         #                 pd.Permission.EXPORT):
         #        groups = [g for g in rights.permitted_groups(perm, None) if g]
         #        content += ":%s:: %s\n" % (perm, ', '.join(map(str, groups)) or _(u"Nedefinováno"))
-        return view_spec.title(), sections
+        storage = pytis.presentation.DbAttachmentStorage('e_pytis_help_spec_attachments',
+                                                         'spec_name', spec_name,
+                                                         base_uri='resource:')
+        return view_spec.title(), lcg.Container(sections, resources=storage.resources())
         
     def _load_help_page(self, topic):
         resource_dirs = [d[:-3]+'resources' for d in sys.path
@@ -2106,13 +2109,17 @@ class Browser(wx.Panel, CommandHandler):
                 # menu.
                 parser = lcg.Parser()
                 if row['page_id'].value():
-                    content = parser.parse(row['content'].value())
+                    storage = pytis.presentation.DbAttachmentStorage('e_pytis_help_pages_attachments',
+                                                                     'page_id', page_id,
+                                                                     base_uri='resource:')
+                    content = lcg.Container(parser.parse(row['content'].value()),
+                                            resources=storage.resources())
                 else:
                     content = [lcg.TableOfContents()]
                     if row['menu_help'].value():
                         content.extend(parser.parse(row['menu_help'].value()))
                     if row['spec_name'].value():
-                        content.extend(self._spec_help_content(row['spec_name'].value())[1])
+                        content.append(self._spec_help_content(row['spec_name'].value())[1])
             else:
                 content = ()
             return lcg.ContentNode(row['help_id'].value(), title=row['title'].value(),
@@ -2120,9 +2127,7 @@ class Browser(wx.Panel, CommandHandler):
                                    content=lcg.Container(content),
                                    resource_provider=resource_provider,
                                    children=[make_node(r, children) for r in
-                                             children.get(row['position'].value(), ())],
-                                   globals=dict(page_id=row['page_id'].value(),
-                                                spec_name=row['spec_name'].value()))
+                                             children.get(row['position'].value(), ())])
         data = pytis.data.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'page_id',
                                                     'position', 'title', 'description',
                                                     'menu_help', 'content'),
@@ -2147,22 +2152,12 @@ class Browser(wx.Panel, CommandHandler):
             title, content = self._spec_help_content(spec_name)
             if title and content:
                 node = lcg.ContentNode(topic, title=title, hidden=True,
-                                       content=lcg.Container([lcg.TableOfContents()] + content),
-                                       resource_provider=resource_provider,
-                                       globals=dict(spec_name=spec_name))
+                                       content=lcg.Container((lcg.TableOfContents(), content)),
+                                       resource_provider=resource_provider)
                 nodes.append(node)
         root = lcg.ContentNode('help', content=lcg.Content(), hidden=True,
                                children=nodes + [make_node(r, children) for r in children['']])
         current_node = root.find_node(topic) or root.find_node('NotFound')
-        page_id, spec_name = [current_node.globals().get(x) for x in ('page_id', 'spec_name')]
-        if page_id or spec_name:
-            if page_id:
-                table, ref, refval = ('e_pytis_help_pages_attachments', 'page_id', page_id)
-            else:
-                table, ref, refval = ('e_pytis_help_spec_attachments', 'spec_name', spec_name)
-            storage = pytis.presentation.DbAttachmentStorage(table, ref, refval, base_uri='resource:')
-            for resource in storage.resources():
-                resource_provider.add_resource(resource)
         exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
         self.load_content(current_node, exporter=exporter)
                 
