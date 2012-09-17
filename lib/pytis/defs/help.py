@@ -46,7 +46,11 @@ class Help(Specification):
     title = _(u"Nápověda")
     def fields(self):
         return (
-            Field('help_id', computer=computer(lambda r, page_id: 'page/%d' % page_id)),
+            Field('help_id',
+                  # The computer is only used for help pages (with page_id) so
+                  # we don't need to care about other kinds of help_id.  New
+                  # record is always a new page.
+                  computer=computer(lambda r, page_id: 'page/%d' % page_id)),
             Field('fullname', _(u"Fullname"), width=50, editable=Editable.NEVER),
             Field('spec_name', _("Název specifikace"), width=50, editable=Editable.NEVER),
             Field('page_id', default=nextval('e_pytis_help_pages_page_id_seq')),
