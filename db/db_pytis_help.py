@@ -125,8 +125,8 @@ viewng('ev_pytis_help',
         #Relation('e_pytis_help_pages', alias='h', key_column='id'),
         ),
        insert="""(
-       insert into e_pytis_help_pages (title, description, content, parent, position, ord)
-       values (new.title, new.description, new.content, new.parent, '',
+       insert into e_pytis_help_pages (page_id, title, description, content, parent, position, ord)
+       values (new.page_id, new.title, new.description, new.content, new.parent, '',
                coalesce(new.ord, (select max(ord)+100 from e_pytis_help_pages 
                                   where coalesce(parent, 0)=coalesce(new.parent, 0)), 100));
        update e_pytis_help_pages SET position = f_pytis_help_page_position(page_id);

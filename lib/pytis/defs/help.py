@@ -20,6 +20,7 @@
 import pytis.data as pd, pytis.presentation as pp, pytis.util
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, HGroup, Profile, \
     Binding, computer
+from pytis.extensions import nextval
 
 class _TreeOrderLTree(pp.PrettyFoldable, pd.String):
     pass
@@ -45,10 +46,10 @@ class Help(Specification):
     title = _(u"Nápověda")
     def fields(self):
         return (
-            Field('help_id'),
+            Field('help_id', computer=computer(lambda r, page_id: 'page/%d' % page_id)),
             Field('fullname', _(u"Fullname"), width=50, editable=Editable.NEVER),
             Field('spec_name', _("Název specifikace"), width=50, editable=Editable.NEVER),
-            Field('page_id'),
+            Field('page_id', default=nextval('e_pytis_help_pages_page_id_seq')),
             Field('position'),
             Field('position_nsub'),
             Field('title', _(u"Název"), width=20, editable=computer(self._is_page),
@@ -57,8 +58,6 @@ class Help(Specification):
             Field('description', _(u"Popis"), width=70, editable=computer(self._is_page),),
             Field('content', _(u"Obsah"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('short_menu_help', _(u"Popis položky menu"), dbcolumn='menu_help',
-                  width=80, height=2, compact=True, text_format=pp.TextFormat.LCG),
             Field('menu_help', _(u"Popis položky menu"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
             Field('spec_description', _(u"Stručný popis náhledu"), width=80, height=3, compact=True),
@@ -125,7 +124,9 @@ class Help(Specification):
     
 
 class SpecHelp(Help):
-    layout = ('title', 'fullname', 'short_menu_help', 'spec_name', 'spec_description', 'spec_help')
+    def fields(self):
+        return self._inherited_fields(SpecHelp, override=(Field('menu_help', height=2),))
+    layout = ('title', 'fullname', 'menu_help', 'spec_name', 'spec_description', 'spec_help')
 
     
 class MenuHelp(Help):
