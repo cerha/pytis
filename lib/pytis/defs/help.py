@@ -158,6 +158,10 @@ class ItemsHelp(Specification):
             Field('changed', _("Změněno"), editable=pp.Editable.NEVER,
                   computer=computer(lambda r, content: True)),
             )
+    
+    def row_style(self, row):
+        return not row['changed'].value() and pp.Style(background='#ffd') or None
+
     def _attachment_storage(self, record):
         return pp.DbAttachmentStorage('e_pytis_help_spec_attachments', 'spec_name',
                                       record['spec_name'].value(), base_uri='resource:')
