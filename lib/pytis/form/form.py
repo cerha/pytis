@@ -534,16 +534,29 @@ class InnerForm(Form):
 
     def _aggregation_menu(self):
         return None
+
+    def _spec_description(self):
+        try:
+            description = self._cached_spec_description
+        except AttributeError:
+            data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
+                                      config.dbconnection)
+            row = data.row((pytis.data.Value(data.find_column('spec_name').type(), self._name),))
+            if row:
+                description = row['description'].value()
+            else:
+                description = self._view.description()
+            self._cached_spec_description = description
+        return description
     
     def _cmd_describe(self):
         title = self._view.title()
-        description = self._view.help() or self._view.description()
+        description = self._spec_description()
         text = "= "+ title +" =\n\n" + description
         InfoWindow(_(u"Popis náhledu %s") % title, text=text, format=TextFormat.LCG)
         
     def _can_describe(self):
-        description = self._view.help() or self._view.description()
-        return description is not None
+        return self._spec_description() is not None
         
     def _cmd_aggregation_menu(self):
         self._on_menu_button(self._aggregation_menu())
