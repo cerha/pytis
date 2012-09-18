@@ -38,24 +38,32 @@ class HelpGenerator(object):
     """
     def __init__(self, directory):
         self._diretory = directory
-        self._menu_help_data = pd.dbtable('e_pytis_help_menu', ('fullname', 'content'),
+        self._menu_help_data = pd.dbtable('e_pytis_help_menu', ('fullname', 'content', 'changed', 'removed'),
                                           config.dbconnection)
-        self._spec_help_data = pd.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
+        self._spec_help_data = pd.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help', 'changed', 'removed'),
                                           config.dbconnection)
         self._spec_help_items_data = pd.dbtable('e_pytis_help_spec_items',
                                                 ('item_id', 'spec_name', 'kind', 'identifier',
-                                                 'content'), config.dbconnection)
+                                                 'content', 'changed', 'removed'), config.dbconnection)
         self._done = {}
 
-    def _update(self, data, key, **kwargs):
-        keyvalues = [(k, pd.Value(data.find_column(k).type(), v)) for k, v in key.items()]
-        rowdata = [(k, pd.Value(data.find_column(k).type(), v)) for k, v in kwargs.items()]
-        data.select(condition=pd.AND(*[pd.EQ(k, v) for k, v in keyvalues]))
+    def _row(self, data, **kwargs):
+        data.select(condition=pd.AND(*[pd.EQ(k, v) for k, v in self._values(data, **kwargs)]))
         row = data.fetchone()
         data.close()
+        return row
+
+    def _values(self, data, **kwargs):
+        return [(k, pd.Value(data.find_column(k).type(), v)) for k, v in kwargs.items()]
+
+    def _update(self, data, key, **kwargs):
+        row = self._row(data, **key)
+        rowdata = self._values(data, changed=False, removed=False, **kwargs)
         if row is None:
-            data.insert(pd.Row(keyvalues + rowdata))
-        elif any([row[k].value() != v for k, v in kwargs.items()]):
+            print "**", key
+            data.insert(pd.Row(self._values(data, **key) + rowdata))
+        elif not row['changed'].value() and any([row[k].value() != v.value() for k, v in rowdata]):
+            print "==", key
             data.update((row[0],), pd.Row(rowdata))
 
     def _update_spec_help(self, spec_name):
@@ -76,14 +84,32 @@ class HelpGenerator(object):
             help_text = (view_spec.help() or '').strip() or None
         self._update(self._spec_help_data, dict(spec_name=spec_name),
                      description=description, help=help_text)
+        data = self._spec_help_items_data
         for kind, items in (('field', view_spec.fields()),
                             ('profile', view_spec.profiles()),
                             ('binding', view_spec.bindings()),
                             ('action', view_spec.actions(linear=True))):
             for item in items:
-                self._update(self._spec_help_items_data,
-                             dict(spec_name=spec_name, kind=kind, identifier=item.id()),
+                self._update(data, dict(spec_name=spec_name, kind=kind, identifier=item.id()),
                              content=item.descr())
+            conds = [pd.EQ('spec_name', pd.sval(spec_name)),
+                     pd.EQ('kind', pd.sval(kind)),
+                     pd.NOT(pd.ANY_OF('identifier', *[pd.sval(item.id()) for item in items])),
+                     ]
+            # Items which were modified (content changed by hand) are kept with
+            # the 'removed' flag set, since the texts may be reused for other
+            # items in case of identifier change or other rearrangements.  It
+            # will also automatically resurrect texts for items which are
+            # removed temporarily (eg. commented out) which is quite common
+            # during development.  Items which were not ever modified or have
+            # no content may be safely deleted (they contain no hand-edited
+            # data).
+            deleted = data.delete_many(pd.AND(*(conds + [pd.OR(pd.EQ('changed', pd.bval(False)),
+                                                               pd.EQ('content', pd.sval(None)))])))
+            updated = data.update_many(pd.AND(*(conds + [pd.EQ('removed', pd.bval(False))])),
+                                       pd.Row(self._values(data, removed=True)))
+            if deleted or updated:
+                print "xx", spec_name, kind, deleted, updated
         
     def _update_menu_item_help(self, fullname, spec_name):
         kind = fullname.split('/', 1)[0]
