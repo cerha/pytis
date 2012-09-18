@@ -327,6 +327,9 @@ class DataTable(object):
                 self._panic()
             self._presented_row.set_row(result)
             self._current_row = self._CurrentRow(row, copy.copy(self._presented_row))
+
+    def form(self):
+        return self._form
     
     def update(self, columns, row_count, sorting, grouping, inserted_row_number,
                inserted_row_prefill, prefill):
@@ -653,6 +656,16 @@ class TableRowIterator(object):
         else:
             return self._table.row(self._rows[self._pointer])
         
+    def form(self):
+        """Return the current form instance.
+        
+        This method is designed to be used in application code to get to the
+        current form methods from the action handler function (which receives
+        this iterator as an argument when action context is
+        ActionContext.SELECTION).
+
+        """
+        return self._table.form()
     
 
 class InputFieldCellEditor(wx.grid.PyGridCellEditor):
