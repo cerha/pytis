@@ -788,7 +788,7 @@ class Profiles(list):
                 assert isinstance(p, Profile)
                 assert p.id() not in profile_ids, "Duplicate profile id '%s'" % p.id()
                 profile_ids.append(p.id())
-            assert not kwargs
+            assert not kwargs, "Invalid keyword argument(s): %s" % ', '.join(kwargs.keys())
             assert default is None or default in profile_ids, default
         super(Profiles, self).__init__(profiles)
         self._default = default
