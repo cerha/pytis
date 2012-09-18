@@ -60,10 +60,8 @@ class HelpGenerator(object):
         row = self._row(data, **key)
         rowdata = self._values(data, changed=False, removed=False, **kwargs)
         if row is None:
-            print "**", key
             data.insert(pd.Row(self._values(data, **key) + rowdata))
         elif not row['changed'].value() and any([row[k].value() != v.value() for k, v in rowdata]):
-            print "==", key
             data.update((row[0],), pd.Row(rowdata))
 
     def _update_spec_help(self, spec_name):
@@ -104,12 +102,10 @@ class HelpGenerator(object):
             # during development.  Items which were not ever modified or have
             # no content may be safely deleted (they contain no hand-edited
             # data).
-            deleted = data.delete_many(pd.AND(*(conds + [pd.OR(pd.EQ('changed', pd.bval(False)),
-                                                               pd.EQ('content', pd.sval(None)))])))
-            updated = data.update_many(pd.AND(*(conds + [pd.EQ('removed', pd.bval(False))])),
-                                       pd.Row(self._values(data, removed=True)))
-            if deleted or updated:
-                print "xx", spec_name, kind, deleted, updated
+            data.delete_many(pd.AND(*(conds + [pd.OR(pd.EQ('changed', pd.bval(False)),
+                                                     pd.EQ('content', pd.sval(None)))])))
+            data.update_many(pd.AND(*(conds + [pd.EQ('removed', pd.bval(False))])),
+                             pd.Row(self._values(data, removed=True)))
         
     def _update_menu_item_help(self, fullname, spec_name):
         kind = fullname.split('/', 1)[0]
