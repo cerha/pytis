@@ -88,12 +88,9 @@ class HelpGenerator(object):
                             ('binding', view_spec.bindings()),
                             ('action', view_spec.actions(linear=True))):
             for item in items:
-                self._update(data, dict(spec_name=spec_name, kind=kind, identifier=item.id()),
+                self._update(data, dict(spec_name=spec_name, kind=kind,
+                                        identifier=item.id()),
                              content=item.descr())
-            conds = [pd.EQ('spec_name', pd.sval(spec_name)),
-                     pd.EQ('kind', pd.sval(kind)),
-                     pd.NOT(pd.ANY_OF('identifier', *[pd.sval(item.id()) for item in items])),
-                     ]
             # Items which were modified (content changed by hand) are kept with
             # the 'removed' flag set, since the texts may be reused for other
             # items in case of identifier change or other rearrangements.  It
@@ -102,6 +99,10 @@ class HelpGenerator(object):
             # during development.  Items which were not ever modified or have
             # no content may be safely deleted (they contain no hand-edited
             # data).
+            conds = [pd.EQ('spec_name', pd.sval(spec_name)),
+                     pd.EQ('kind', pd.sval(kind)),
+                     pd.NOT(pd.ANY_OF('identifier', *[pd.sval(item.id()) for item in items])),
+                     ]
             data.delete_many(pd.AND(*(conds + [pd.OR(pd.EQ('changed', pd.bval(False)),
                                                      pd.EQ('content', pd.sval(None)))])))
             data.update_many(pd.AND(*(conds + [pd.EQ('removed', pd.bval(False))])),
