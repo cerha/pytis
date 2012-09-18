@@ -1985,7 +1985,17 @@ class RecordForm(LookupForm):
         return self._row
 
     def selected_rows(self):
+        """Return an iterator over all currently selected rows.
+
+        The iterator returns all rows present in the current selection as
+        'PresentedRow' instances in the order of ther presence in the form.
+
+        """
         return ()
+
+    def unselect_selected_rows(self):
+        """Completely clear the current selection of rows in the form."""
+        pass
 
     def current_key(self):
         """Vrať klíč aktuálně vybraného řádku.

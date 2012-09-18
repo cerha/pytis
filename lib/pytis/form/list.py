@@ -589,6 +589,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def selected_rows(self):
         return _grid.TableRowIterator(self._table, self._selected_rows())
+
+    def unselect_selected_rows(self):
+        self._grid.ClearSelection()
     
     def _select_cell(self, row=None, col=None, invoke_callback=True):
         # Vrací pravdu, pokud může být událost provedena (viz _on_select_cell).
