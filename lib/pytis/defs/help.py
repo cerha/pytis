@@ -154,8 +154,9 @@ class ItemsHelp(Specification):
             Field('content', _(u"Popis"), width=80, height=15, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
             Field('label', _(u"Název"), width=30, virtual=True, computer=computer(self._label)),
-            Field('removed', _("Zrušeno")),
-            Field('changed', _("Změněno"), computer=computer(lambda r, content: True)),
+            Field('removed', _("Zrušeno"), editable=pp.Editable.NEVER),
+            Field('changed', _("Změněno"), editable=pp.Editable.NEVER,
+                  computer=computer(lambda r, content: True)),
             )
     def _attachment_storage(self, record):
         return pp.DbAttachmentStorage('e_pytis_help_spec_attachments', 'spec_name',
