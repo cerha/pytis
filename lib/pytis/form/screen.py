@@ -2133,9 +2133,9 @@ class Browser(wx.Panel, CommandHandler):
                                    resource_provider=resource_provider,
                                    children=[make_node(r, children) for r in
                                              children.get(row['position'].value(), ())])
-        data = pytis.data.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'page_id',
-                                                    'position', 'title', 'description',
-                                                    'menu_help', 'content'),
+        data = pytis.data.dbtable('ev_pytis_user_help',
+                                  ('help_id', 'fullname', 'spec_name', 'page_id', 'position', 
+                                   'title', 'description', 'menu_help', 'content'),
                                   config.dbconnection)
         data.select(sort=(('position', pytis.data.ASCENDENT),))
         children = {}
