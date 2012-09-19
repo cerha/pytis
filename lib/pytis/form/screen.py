@@ -2030,6 +2030,9 @@ class Browser(wx.Panel, CommandHandler):
         return descriptions
         
     def _spec_help_content(self, spec_name):
+        if not has_access(spec_name):
+            return (_(u"Přístup odepřen"),
+                    lcg.p(_(u"Nemáte přístup ke specifikaci „%s“.") % spec_name))
         resolver = pytis.util.resolver()
         def spec_link(spec_name, title=None):
             if title is None:
@@ -2048,7 +2051,7 @@ class Browser(wx.Panel, CommandHandler):
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
-            return None, []
+            return None, None
         data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
                                   config.dbconnection)
         row = data.row((pytis.data.Value(data.find_column('spec_name').type(), spec_name),))
@@ -2119,7 +2122,9 @@ class Browser(wx.Panel, CommandHandler):
                     if row['menu_help'].value():
                         content.extend(parser.parse(row['menu_help'].value()))
                     if row['spec_name'].value():
-                        content.append(self._spec_help_content(row['spec_name'].value())[1])
+                        spec_help_content = self._spec_help_content(row['spec_name'].value())[1]
+                        if spec_help_content:
+                            content.append(spec_help_content)
             else:
                 content = ()
             return lcg.ContentNode(row['help_id'].value(), title=row['title'].value(),
