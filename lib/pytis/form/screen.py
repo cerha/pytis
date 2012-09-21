@@ -2083,7 +2083,7 @@ class Browser(wx.Panel, CommandHandler):
                             content.append(spec_help_content)
             else:
                 content = ()
-            return lcg.ContentNode(row['help_id'].value(), title=row['title'].value(),
+            return lcg.ContentNode('help:'+row['help_id'].value(), title=row['title'].value(),
                                    descr=row['description'].value(), foldable=True,
                                    content=lcg.Container(content),
                                    resource_provider=resource_provider,
@@ -2112,13 +2112,13 @@ class Browser(wx.Panel, CommandHandler):
             spec_name = topic[5:]
             title, content = self._spec_help_content(spec_name)
             if title and content:
-                node = lcg.ContentNode(topic, title=title, hidden=True,
+                node = lcg.ContentNode('help:'+topic, title=title, hidden=True,
                                        content=lcg.Container((lcg.TableOfContents(), content)),
                                        resource_provider=resource_provider)
                 nodes.append(node)
         root = lcg.ContentNode('help', content=lcg.Content(), hidden=True,
                                children=nodes + [make_node(r, children) for r in children['']])
-        current_node = root.find_node(topic) or root.find_node('NotFound')
+        current_node = root.find_node('help:'+topic) or root.find_node('NotFound')
         exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
         self.load_content(current_node, exporter=exporter)
                 
