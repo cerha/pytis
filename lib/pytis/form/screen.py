@@ -2067,9 +2067,10 @@ class Browser(wx.Panel, CommandHandler):
                 # menu.
                 parser = lcg.Parser()
                 if row['page_id'].value():
-                    storage = pytis.presentation.DbAttachmentStorage('e_pytis_help_pages_attachments',
-                                                                     'page_id', page_id,
-                                                                     base_uri='resource:')
+                    storage = pytis.presentation.DbAttachmentStorage(
+                        'e_pytis_help_pages_attachments',
+                        'page_id', row['page_id'].value(),
+                        base_uri='resource:')
                     content = lcg.Container(parser.parse(row['content'].value()),
                                             resources=storage.resources())
                 else:
