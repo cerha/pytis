@@ -1242,16 +1242,13 @@ class BrowseForm(LayoutForm):
                 value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
             # &#8227 does not work in MSIE
             if self._row_actions:
-                actions = [dict(title=context.translate(action.title()),
-                                descr=context.translate(action.descr()),
-                                enabled=enabled,
-                                href=self._uri_provider(row, UriType.ACTION, action))
-                           for action, enabled in self._visible_actions(context, row)]
-                element_id = '%s-row-%d' % (self._id, n)
-                tooltip = context.translate(_("Popup the menu of actions for this row"))
-                value += (g.a('', id=element_id) +
-                          g.script(g.js_call('wiking.init_popup_menu_ctrl',
-                                             element_id, actions, tooltip, 'tr')))
+                items = [lcg.PopupMenuItem(action.title(),
+                                           tooltip=action.descr(),
+                                           enabled=enabled,
+                                           uri=self._uri_provider(row, UriType.ACTION, action))
+                         for action, enabled in self._visible_actions(context, row)]
+                ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this row"), 'tr')
+                value += ctrl.export(context)
         return value
 
     def _style(self, style):
@@ -1400,8 +1397,8 @@ class BrowseForm(LayoutForm):
         else:
             foot_rows = []
         if self._row_actions:
-            context.resource('wiking.js')
-            context.resource('pytis.js')
+            context.resource('lcg.js')
+            context.resource('lcg-widgets.css')
         headings = self._export_headings(context)
         foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
         return g.table((g.thead(g.tr(headings)),
