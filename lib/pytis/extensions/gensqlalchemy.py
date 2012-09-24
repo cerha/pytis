@@ -260,7 +260,7 @@ class SERIAL(sqlalchemy.Integer):
 def compile_serial(element, compiler, **kwargs):
     return 'SERIAL'
 
-class BIGSERIAL(sqlalchemy.Integer):
+class BIGSERIAL(SERIAL):
     pass
 @compiles(BIGSERIAL)
 def compile_bigserial(element, compiler, **kwargs):
@@ -741,6 +741,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         self._add_dependencies()
         self._create_comments()
         self._create_access_rights()
+        self._register_access_rights()
         self._create_rules()
 
     def _create_comments(self):
@@ -748,8 +749,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         if doc:
             sqlalchemy.event.listen(self, 'after_create', _ObjectComment(self, self._DB_OBJECT, doc))
 
-    def _create_access_rights(self):
-        super(_SQLTabular, self)._create_access_rights()
+    def _register_access_rights(self):
         for o in self._access_right_objects:
             sqlalchemy.event.listen(self, 'after_create', o)
         if self.owner:
@@ -987,6 +987,18 @@ class SQLTable(_SQLTabular):
                                          getattr(self.c, column_name), postgresql_using=method)
                 sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
         return args
+    
+    def _register_access_rights(self):
+        super(SQLTable, self)._register_access_rights()
+        groups = set([group for right, group in self.access_rights
+                      if right.lower() in ('insert', 'all')])
+        for c in self.c:
+            if isinstance(c.type, SERIAL) and not c.info.get('inherited'):
+                for g in groups:
+                    cname = c.name
+                    command = ('GRANT usage ON "%s"."%s_%s_seq" TO GROUP "%s"' %
+                               (self.schema, self.name, cname, g,))
+                    sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
 
     def create(self, bind=None, checkfirst=False):
         self._set_search_path(bind)
