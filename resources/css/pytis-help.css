@@ -26,3 +26,20 @@ h5,h6,h7,h8,h9 { font-size: 1.1em; }
     background-color: #ccc;
     border-bottom: 1px solid #888;
 }
+#menu button.toggle-menu-expansion {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+}
+
+.foldable-tree-widget {
+    padding: 3px;
+}
+.foldable-tree-widget li.foldable,
+.foldable-tree-widget button.toggle-menu-expansion.expanded {
+    background-image: url(resource:folder-open.png) !important;
+}
+.foldable-tree-widget li.foldable.folded,
+.foldable-tree-widget button.toggle-menu-expansion {
+    background-image: url(resource:folder-closed.png) !important;
+}
