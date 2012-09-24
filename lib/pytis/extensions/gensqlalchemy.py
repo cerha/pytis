@@ -348,7 +348,7 @@ class Column(pytis.data.ColumnSpec):
             if kwargs.get('use_alter'):
                 # SQLAlchemy currently doesn't emit forward references although
                 # it should.  So we have to emit them ourselves.
-                foreign_constraints.append(((self.id(), (r_args[0],)) + r_args[1:], kwargs,))
+                foreign_constraints.append((((self.id(),), (r_args[0],)) + r_args[1:], kwargs,))
         if self._check:
             args.append(sqlalchemy.CheckConstraint(self._check))
         if self._index and not isinstance(self._index, dict):
