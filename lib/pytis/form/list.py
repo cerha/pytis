@@ -940,7 +940,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             columns = [self._view.field(cid) for cid in select_columns]
         import locale
-        columns.sort(key=lambda c: locale.strxfrm(c.label()))
+        columns.sort(key=lambda c: locale.strxfrm(c.column_label()))
         return [CheckItem(_(u"Záhlaví řádků"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
                           state=lambda : self._grid.GetRowLabelSize() != 0)] + \
                [CheckItem(c.column_label(),
