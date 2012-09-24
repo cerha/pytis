@@ -825,9 +825,12 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _rule_tables(self, order):
         return [object_by_class(tabular, self.search_path()) for tabular in order]
 
+    def _default_rule_commands(self):
+        return None
+    
     def on_insert(self):
         if self.insert_order is None:
-            return None
+            return self._default_rule_commands()
         commands = []
         for tabular in self._rule_tables(self.insert_order):
             assignments = self._rule_assignments(tabular)
@@ -837,7 +840,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     def on_update(self):
         if self.update_order is None:
-            return None
+            return self._default_rule_commands()
         commands = []
         for tabular in self._rule_tables(self.update_order):
             assignments = self._rule_assignments(tabular)
@@ -850,7 +853,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     def on_delete(self):
         if self.delete_order is None:
-            return None
+            return self._default_rule_commands()
         commands = []
         for tabular in self._rule_tables(self.delete_order):
             condition = self._rule_condition(tabular)
@@ -1119,6 +1122,9 @@ class SQLView(_SQLTabular):
     
     def _original_columns(self):
         return self.condition().inner_columns
+
+    def _default_rule_commands(self):
+        return ('NOTHING',)
     
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
