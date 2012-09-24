@@ -1948,20 +1948,20 @@ class Browser(wx.Panel, CommandHandler):
             return False
         
     def _on_resource_request(self, webview, frame, resource, req, response):
-        def redirect(resource):
-            if resource and resource.src_file():
+        def redirect(lcg_resource):
+            if lcg_resource and lcg_resource.src_file():
                 # Redirect the request to load the resource file from filesystem.
-                req.set_uri("file://" + resource.src_file())
+                req.set_uri("file://" + lcg_resource.src_file())
         uri = resource.get_uri()
         # Note, when load_html() is performed, this method gets called with uri
         # equal to base_uri passed to load_html().
         if uri.startswith('resource:') and self._resource_provider is not None:
             # Try searching the existing resources by URI first.
-            for resource in self._resource_provider.resources():
-                if resource.uri() == uri:
-                    return redirect(resource)
-                if isinstance(resource, lcg.Image):
-                    thumbnail = resource.thumbnail()
+            for lcg_resource in self._resource_provider.resources():
+                if lcg_resource.uri() == uri:
+                    return redirect(lcg_resource)
+                if isinstance(lcg_resource, lcg.Image):
+                    thumbnail = lcg_resource.thumbnail()
                     if thumbnail and thumbnail.uri() == uri:
                         return redirect(thumbnail)
             # If URI doesn't match any existing resource, try locating the
