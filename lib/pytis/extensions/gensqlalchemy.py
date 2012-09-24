@@ -36,6 +36,8 @@ import pytis.data
 
 _CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
 
+_forward_foreign_keys = []
+
 def _function_arguments(function):
     search_path = function.search_path()
     def arg(column):
@@ -325,7 +327,8 @@ class Column(pytis.data.ColumnSpec):
     def out(self):
         return self._out
 
-    def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name, inherited=False):
+    def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name, inherited=False,
+                          foreign_constraints=None):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
         references = self._references
@@ -340,10 +343,12 @@ class Column(pytis.data.ColumnSpec):
                 if isinstance(dereference, basestring):
                     kwargs['use_alter'] = True
                     kwargs['name'] = '%s__r__%s' % (table_name, dereference.replace('.', '__'),)
-            if not isinstance(dereference, basestring):
-                # Let's disable forward references for now as they can cause
-                # crashes in view definitions.
-                args.append(sqlalchemy.ForeignKey(*r_args, **kwargs))
+            foreign_key = sqlalchemy.ForeignKey(*r_args, **kwargs)
+            args.append(foreign_key)
+            if kwargs.get('use_alter'):
+                # SQLAlchemy currently doesn't emit forward references although
+                # it should.  So we have to emit them ourselves.
+                foreign_constraints.append(((self.id(), (r_args[0],)) + r_args[1:], kwargs,))
         if self._check:
             args.append(sqlalchemy.CheckConstraint(self._check))
         if self._index and not isinstance(self._index, dict):
@@ -903,7 +908,9 @@ class SQLTable(_SQLTabular):
             columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name,
                                                            orig_table_name, inherited=True)
                                        for c in i.fields if c.id() not in field_names])
-        columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, table_name)
+        foreign_constraints = []
+        columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, table_name,
+                                                       foreign_constraints=foreign_constraints)
                                    for c in cls.fields])
         args = (table_name, metadata,) + columns
         for check in cls.check:
@@ -918,6 +925,10 @@ class SQLTable(_SQLTabular):
             args += (sqlalchemy.ForeignKeyConstraint(columns, refcolumns, **kwargs),)
         obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
         obj.pytis_key = key
+        for args, kwargs in foreign_constraints:
+            f = sqlalchemy.ForeignKeyConstraint(*args, table=obj, **kwargs)
+            fk = sqlalchemy.schema.AddConstraint(f)
+            _forward_foreign_keys.append(fk)
         return obj
 
     def _init(self, *args, **kwargs):
@@ -1398,3 +1409,5 @@ def gsql_file(file_name):
         sequence.after_create(engine)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
+    for fk in _forward_foreign_keys:
+        engine.execute(fk)
