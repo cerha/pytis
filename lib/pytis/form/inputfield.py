@@ -1776,6 +1776,7 @@ class ListField(GenericCodebookField):
             run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
                      transaction=self._row.transaction())
         self._reload_enumeration()
+        self.set_focus()
 
     def _can_delete_selected(self):
         return self._selected_item is not None
@@ -1788,14 +1789,17 @@ class ListField(GenericCodebookField):
         question = _(u"Opravdu chcete položku %s zcela vymazat z číselníku?") % self._row[self._id].export()
         delete_record(view, data, transaction, row, question=question)
         self._reload_enumeration()
+        self.set_focus()
         
     def _cmd_new_codebook_record(self):
         self._codebook_insert()
         self._reload_enumeration()
+        self.set_focus()
 
     def _cmd_invoke_codebook_form(self):
         super(ListField, self)._cmd_invoke_codebook_form()
         self._reload_enumeration()
+        self.set_focus()
         
 
 class FileField(Invocable, InputField):
