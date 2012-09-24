@@ -104,6 +104,8 @@ viewng('ev_pytis_help',
                                           V(None, 'position', "text2ltree('999999')||subpath(m.position, 1)", ),
                                           V(None, 'position_nsub',
                                             "(select count(*)-1 from e_pytis_menu where position <@ m.position)"),
+                                          V(None, 'changed', "coalesce(mh.changed, false) or coalesce(sh.changed, false)", ),
+                                          V(None, 'removed', "coalesce(mh.removed, false) or coalesce(sh.removed, false)", ),
                                           ))),
         SelectSet(Select((SelectRelation('generate_series(0, 0)', exclude_columns=('*',)),
                           ),
@@ -123,6 +125,8 @@ viewng('ev_pytis_help',
                                           V(None, 'position', "text2ltree('999999')", ),
                                           V(None, 'position_nsub',
                                             "(select count(*) from e_pytis_menu)"),
+                                          V(None, 'changed', "false", ),
+                                          V(None, 'removed', "false", ),
                                           )),
                   settype=UNION),
         SelectSet(Select((SelectRelation('e_pytis_help_pages', alias='p',),),
@@ -135,6 +139,8 @@ viewng('ev_pytis_help',
                                           V(None, 'spec_help', 'null'),
                                           V(None, 'position_nsub',
                                             "(select count(*)-1 from e_pytis_help_pages where position <@ p.position)"),
+                                          V(None, 'changed', "false", ),
+                                          V(None, 'removed', "false", ),
                                           )),
                   settype=UNION),
         #Relation('e_pytis_help_pages', alias='h', key_column='id'),
@@ -155,20 +161,23 @@ viewng('ev_pytis_help',
          ord = new.ord
          where e_pytis_help_pages.page_id = old.page_id;
        update e_pytis_help_pages set position = f_pytis_help_page_position(page_id);
-       insert into e_pytis_help_menu (fullname, content)
-         select old.fullname, new.menu_help
+       insert into e_pytis_help_menu (fullname, content, changed)
+         select old.fullname, new.menu_help, true
          where new.menu_help is not null and old.fullname not in (select fullname from e_pytis_help_menu);
        update e_pytis_help_menu set
-         content = new.menu_help
+         content = new.menu_help,
+         changed = coalesce(new.menu_help, '') != coalesce(old.menu_help, '')
          where fullname = old.fullname and new.menu_help is not null;
        delete from e_pytis_help_menu
          where fullname = old.fullname and new.menu_help is null;
-       insert into e_pytis_help_spec (spec_name, description, help)
-         select old.spec_name, new.spec_description, new.spec_help
+       insert into e_pytis_help_spec (spec_name, description, help, changed)
+         select old.spec_name, new.spec_description, new.spec_help, true
          where old.spec_name not in (select spec_name from e_pytis_help_spec);
        update e_pytis_help_spec set
          description = new.spec_description,
-         help = new.spec_help
+         help = new.spec_help,
+         changed = coalesce(new.spec_help) != coalesce(old.spec_help)
+                   or coalesce(new.spec_description) != coalesce(old.spec_description)
          where spec_name = old.spec_name;
        )""",
        delete="delete from e_pytis_help_pages where page_id = old.page_id;",
