@@ -78,7 +78,11 @@ class Help(Specification):
                   descr=_("Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné "
                           "úrovni hierarchie).  Pokud nevyplníte, stránka bude automaticky "
                           "zařazena na konec.")),
+            Field('removed', _("Zrušeno"), editable=pp.Editable.NEVER),
+            Field('changed', _("Změněno"), editable=pp.Editable.NEVER),
             )
+    def row_style(self, row):
+        return not row['changed'].value() and pp.Style(background='#ffd') or None
 
     def _is_page(self, record, page_id):
         return record.new() or page_id is not None
@@ -123,8 +127,12 @@ class Help(Specification):
 
     layout = ('title', 'description', 'parent', 'ord', 'content')
     cb = CodebookSpec(display='title')
-    columns = ('title', 'description', 'spec_name')
+    columns = ('title', 'description', 'spec_name', 'changed', 'removed')
     sorting = ('position', pd.ASCENDENT),
+    profiles = pp.Profiles((pp.Profile('active', _("Aktivní"),
+                                       filter=pd.EQ('removed', pd.bval(False)),
+                                       columns=('title', 'description', 'spec_name', 'removed')),),
+                           default='active')
     
 
 class SpecHelp(Help):
@@ -189,7 +197,7 @@ class ItemsHelp(Specification):
         return pd.EQ('kind', pd.sval(self._ITEM_KIND))
     columns = ('identifier', 'label', 'changed', 'removed')
     layout = ('identifier', 'label', 'content')
-    profiles = pp.Profiles((pp.Profile('active', _("Active"),
+    profiles = pp.Profiles((pp.Profile('active', _("Aktivní"),
                                        filter=pd.EQ('removed', pd.bval(False)),
                                        columns=('identifier', 'label', 'changed')),),
                            default='active')
