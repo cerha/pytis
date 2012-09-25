@@ -3286,6 +3286,8 @@ class SideBrowseForm(BrowseForm):
         form profile's filter.
         
         """
+        if not self.initialized():
+            self.full_init()
         bcol, sbcol = self._binding_column, self._side_binding_column
         if bcol is None or self._current_profile.id() == '__constructor_profile__':
             return None
