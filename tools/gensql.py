@@ -1537,7 +1537,7 @@ class _GsqlTable(_GsqlSpec):
                     items.append('                   (%s,),' % (row_values,))
             items.append('                  )')
         items.append('    with_oids = %s' % (repr(self._with_oids),))
-        unique = None
+        unique = ''
         check = []
         sql = self._sql
         while sql:
@@ -1567,7 +1567,7 @@ class _GsqlTable(_GsqlSpec):
             if action == 'unique':
                 components = sql[start+1:end].split(',')
                 components = ["'%s'" % (c.strip(),) for c in components]
-                unique = "(%s,)" % (string.join(components, ', '),)
+                unique += "(%s,)," % (string.join(components, ', '),)
                 sql = trim(sql)
             elif action == 'check':
                 check.append(sql[start+1:end])
@@ -1577,7 +1577,7 @@ class _GsqlTable(_GsqlSpec):
         if self._indexes:
             items.append('#XXX: %s' % (self._indexes,))
         if unique:
-            items.append('    unique = (%s,)' % (unique,))
+            items.append('    unique = (%s)' % (unique,))
         if check:
             check_string = string.join([repr(c) for c in check], ', ') + ','                
             items.append('    check = (%s)' % (check_string,))
