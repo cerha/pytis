@@ -261,7 +261,7 @@ class SERIAL(sqlalchemy.Integer):
 def compile_serial(element, compiler, **kwargs):
     return 'SERIAL'
 
-class BIGSERIAL(SERIAL):
+class BIGSERIAL(sqlalchemy.BigInteger):
     pass
 @compiles(BIGSERIAL)
 def compile_bigserial(element, compiler, **kwargs):
@@ -1006,7 +1006,7 @@ class SQLTable(_SQLTabular):
         groups = set([group for right, group in self.access_rights
                       if right.lower() in ('insert', 'all')])
         for c in self.c:
-            if isinstance(c.type, SERIAL) and not c.info.get('inherited'):
+            if isinstance(c.type, (SERIAL, BIGSERIAL,)) and not c.info.get('inherited'):
                 for g in groups:
                     cname = c.name
                     command = ('GRANT usage ON "%s"."%s_%s_seq" TO GROUP "%s"' %
