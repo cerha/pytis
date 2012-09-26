@@ -2035,6 +2035,9 @@ class Browser(wx.Panel, CommandHandler):
                 (_(u"Políčka formuláře"), lcg.dl,
                  [(field_label(f), description('field', f.id(), f.descr()))
                   for f in [view_spec.field(fid) for fid in view_spec.layout().order()]]),
+                (_(u"Profily"), lcg.dl,
+                 [(p.title(), description('profile', p.id(), p.descr()))
+                  for p in view_spec.profiles()]),
                 (_(u"Akce kontextového menu"), lcg.dl,
                  [(a.title(), description('action', a.id(), a.descr()))
                   for a in view_spec.actions(linear=True)]),
