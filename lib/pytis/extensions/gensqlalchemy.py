@@ -19,6 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import collections
 import copy
 import imp
 import inspect
@@ -35,8 +36,6 @@ import pytis.data
 ## SQLAlchemy extensions
 
 _CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
-
-_forward_foreign_keys = []
 
 def _function_arguments(function):
     search_path = function.search_path()
@@ -338,17 +337,18 @@ class Column(pytis.data.ColumnSpec):
             r_args = references.args()
             kwargs = copy.copy(references.kwargs())
             if isinstance(r_args[0], (ReferenceLookup.Reference, _Reference)):
-                dereference = r_args[0].get(table_name, key_name)
-                r_args = (dereference,) + r_args[1:]
-                if isinstance(dereference, basestring):
+                dereference = r_args[0].get()
+                if dereference is None:
                     kwargs['use_alter'] = True
-                    kwargs['name'] = '%s__r__%s' % (table_name, dereference.replace('.', '__'),)
-            foreign_key = sqlalchemy.ForeignKey(*r_args, **kwargs)
-            args.append(foreign_key)
-            if kwargs.get('use_alter'):
-                # SQLAlchemy currently doesn't emit forward references although
-                # it should.  So we have to emit them ourselves.
-                foreign_constraints.append((((self.id(),), (r_args[0],)) + r_args[1:], kwargs,))
+                    kwargs['name'] = '%s__r__' % (table_name,)
+                    f = _ForwardForeignKey(search_path, self.id(), r_args[0],
+                                           r_args[1:], kwargs, None)
+                    foreign_constraints.append(f)
+                else:
+                    r_args = (dereference,) + r_args[1:]
+            if not kwargs.get('use_alter'):
+                foreign_key = sqlalchemy.ForeignKey(*r_args, **kwargs)
+                args.append(foreign_key)
         if self._check:
             args.append(sqlalchemy.CheckConstraint(self._check))
         if self._index and not isinstance(self._index, dict):
@@ -549,27 +549,26 @@ class _Reference(object):
     def __init__(self, name, column):
         self._name = name
         self._column = column
-    def get(self, table_name, key_name):
-        if table_name == self._name:
-            reference = key_name
+    def get(self, search_path=True):
+        try:
+            table = object_by_path(self._name, search_path=search_path, allow_external=False)
+        except SQLNameException:
+            return None
+            assert self._column, ('No column name in a forward reference', self._name,)
+            return '%s.%s' % (self._name, self._column,)
+        if self._column:
+            column = self._column
         else:
-            try:
-                table = object_by_path(self._name, allow_external=False)
-            except SQLNameException:
-                return self._name
-            if self._column:
-                column = self._column
-            else:
-                column = None
-                for c in table.c:
-                    if c.primary_key:
-                        if column is not None:
-                            raise SQLException("Can't identify column reference (multikey)", (table,))
-                        column = c
-                if column is None:
-                    raise SQLException("Can't identify column reference (no key)", (table,))
-                column = column.name
-            reference = table.c[column]
+            column = None
+            for c in table.c:
+                if c.primary_key:
+                    if column is not None:
+                        raise SQLException("Can't identify column reference (multikey)", (table,))
+                    column = c
+            if column is None:
+                raise SQLException("Can't identify column reference (no key)", (table,))
+            column = column.name
+        reference = table.c[column]
         return reference
 def object_by_reference(name):
     name = name.strip()
@@ -618,7 +617,7 @@ class ReferenceLookup(object):
         def __init__(self, specification, column):
             self._specification = specification
             self._column = column
-        def get(self, table_name, key_name):
+        def get(self):
             columns = object_by_specification_name(self._specification).c
             return columns[self._column]
     class ColumnLookup(object):
@@ -650,6 +649,11 @@ def reorder_columns(columns, column_ordering):
         else:
             raise Exception("Column not found", o, columns)
     return ordered_columns
+
+_forward_foreign_keys = []
+_ForwardForeignKey = collections.namedtuple('_ForwardForeignKey',
+                                            ('search_path', 'column_name', 'reference',
+                                             'args', 'kwargs', 'table',))
 
 class SQLObject(object):
 
@@ -919,16 +923,14 @@ class SQLTable(_SQLTabular):
             args += (sqlalchemy.UniqueConstraint (*unique),)
         for foreign_key in cls.foreign_keys:
             columns, refcolumns = foreign_key.args()
-            refcolumns = [c.get(None, None) if isinstance(c, ReferenceLookup.Reference) else c
+            refcolumns = [c.get() if isinstance(c, ReferenceLookup.Reference) else c
                           for c in refcolumns]
             kwargs = foreign_key.kwargs()
             args += (sqlalchemy.ForeignKeyConstraint(columns, refcolumns, **kwargs),)
         obj = sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
         obj.pytis_key = key
-        for args, kwargs in foreign_constraints:
-            f = sqlalchemy.ForeignKeyConstraint(*args, table=obj, **kwargs)
-            fk = sqlalchemy.schema.AddConstraint(f)
-            _forward_foreign_keys.append(fk)
+        for f in foreign_constraints:
+            _forward_foreign_keys.append(_ForwardForeignKey(*(f[:5] + (obj,))))
         return obj
 
     def _init(self, *args, **kwargs):
@@ -1409,5 +1411,11 @@ def gsql_file(file_name):
         sequence.after_create(engine)
     for table in _metadata.sorted_tables:
         table.create(engine, checkfirst=False)
-    for fk in _forward_foreign_keys:
-        engine.execute(fk)
+    for ffk in _forward_foreign_keys:
+        target = ffk.reference.get(ffk.search_path)
+        kwargs = ffk.kwargs
+        kwargs['name'] += target.name.replace('.', '__')
+        f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
+                                            table=ffk.table, **kwargs)
+        fdef = sqlalchemy.schema.AddConstraint(f)
+        engine.execute(fdef)

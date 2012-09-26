@@ -117,11 +117,11 @@ class ReferencingTable(SQLTable):
 class Circular1(SQLTable):
     """Circular REFERENCES, together with Circular2."""
     fields = (PrimaryColumn('id', pytis.data.Integer()),
-              Column('x', pytis.data.Integer(), references=a(object_by_reference('public.circular2.id'))),
+              Column('x', pytis.data.Integer(), references=a(object_by_reference('circular2(id)'))),
               )
 class Circular2(SQLTable):
     fields = (PrimaryColumn('id', pytis.data.Integer()),
-              Column('x', pytis.data.Integer(), references=a(object_by_reference('public.circular1.id'))),
+              Column('x', pytis.data.Integer(), references=a(object_by_reference('circular1(id)'))),
               )
 
 class Baz(SQLView):
