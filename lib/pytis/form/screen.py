@@ -2001,8 +2001,13 @@ class Browser(wx.Panel, CommandHandler):
         descriptions = self._spec_items_descriptions(spec_name)
         def description(kind, identifier, default):
             return descriptions[kind].get(identifier, default or _(u"Popis není k dispozici."))
-        #content = [lcg.Section("Základní informace",
-        #                       lcg.fieldset(self._info(), formatted=True))]
+        def field_label(f):
+            label = f.column_label()
+            if not label:
+                label = f.label() or f.id()
+            elif f.label() and f.label() != label:
+                label += ' ('+ f.label()+')'
+            return label
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
@@ -2028,7 +2033,7 @@ class Browser(wx.Panel, CommandHandler):
                 (_(u"Shrnutí"), lcg.p, spec_description),
                 (_(u"Popis"), parser.parse, spec_help),
                 (_(u"Políčka formuláře"), lcg.dl,
-                 [(f.label(), description('field', f.id(), f.descr()))
+                 [(field_label(f), description('field', f.id(), f.descr()))
                   for f in [view_spec.field(fid) for fid in view_spec.layout().order()]]),
                 (_(u"Akce kontextového menu"), lcg.dl,
                  [(a.title(), description('action', a.id(), a.descr()))
