@@ -73,7 +73,7 @@ class PresentedRow(object):
             if codebook:
                 try:
                     cbspec = resolver.get(codebook, 'cb_spec')
-                except ResolverError as e:
+                except pytis.util.ResolverError as e:
                     cbspec = CodebookSpec()
             else:
                 cbspec = None
