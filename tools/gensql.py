@@ -455,7 +455,7 @@ class _GsqlSpec(object):
         pos = name.rfind('.')
         if pos >= 0:
             name = name[pos+1:]
-        cls = 'PrimaryColumn' if name in [c.split('.')[-1] for c in self.key_columns()] else 'Column'
+        cls = 'PrimaryColumn' if name in [c.split('.')[-1].lower() for c in self.key_columns()] else 'Column'
         name = repr(name)
         constraints = [c.lower() for c in column.constraints]
         ctype = column.type
