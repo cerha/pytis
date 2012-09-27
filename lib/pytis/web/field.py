@@ -451,16 +451,23 @@ class HtmlFieldExporter(MultilineFieldExporter):
             context.resource('ckeditor.css')
             context.resource('ASCIIMathML.js')
             toolbar = (
-                ('clipboard',   ('Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo')),
-                ('editing',     ('Find','Replace','-','SelectAll')),
-                ('basicstyles', ('Bold','Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat')),
-                ('tools',       ('Source','Maximize', 'ShowBlocks','-','About')),
+                ('clipboard',   ('Cut', 'Copy', 'Paste', 'PasteText', #'PasteFromWord',
+                                 '-', 'Undo', 'Redo')),
+                ('editing',     ('Find', 'Replace', '-', 'SelectAll')),
+                ('basicstyles', ('Bold', 'Italic', 'Underline', #'Strike',
+                                 'Subscript', 'Superscript', '-', 'RemoveFormat')),
+                ('tools',       ('Source', 'Maximize', 'ShowBlocks','-', 'About')),
                 ('/', None),
                 ('styles',      ('Format',)),#'Font','FontSize')),
-                ('paragraph',   ('NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiLtr','BidiRtl')),
-                ('pytis',       ('PytisImage','PytisAudio','PytisVideo','PytisResource','PytisExercise','PytisMathML')),
-                ('links',       ('Link','Unlink','Anchor')),
-                ('insert',      ('Table','HorizontalRule','Smiley','SpecialChar','PageBreak')),
+                ('paragraph',   ('NumberedList','BulletedList','-',
+                                 'Outdent','Indent','-', #'Blockquote','-',
+                                 'JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
+                                 # '-', 'BidiLtr','BidiRtl'
+                                 )),
+                ('pytis',       ('PytisImage', 'PytisAudio', 'PytisVideo', 'PytisResource',
+                                 'PytisExercise', 'PytisMathML')),
+                ('links',       ('Link', 'Unlink', 'Anchor')),
+                ('insert',      ('HorizontalRule', 'PageBreak', 'SpecialChar')), #'Table', 'Smiley',
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
                           language=context.lang(),
