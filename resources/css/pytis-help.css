@@ -1,13 +1,13 @@
 #menu { 
     float: left;
-    width: 200px;
+    width: 220px;
     font-size: 11px;
 }
 #heading { 
-    margin-left: 216px;
+    margin-left: 236px;
 }
 #content { 
-    margin-left: 216px;
+    margin-left: 236px;
 }
 h1 { font-size: 1.6em; }
 h2 { font-size: 1.5em; }
@@ -30,6 +30,10 @@ h5,h6,h7,h8,h9 { font-size: 1.1em; }
     position: absolute;
     top: 4px;
     right: 5px;
+}
+
+div.table-of-contents {
+    clear: none;
 }
 
 .foldable-tree-widget {
