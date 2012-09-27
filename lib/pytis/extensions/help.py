@@ -36,8 +36,7 @@ class HelpGenerator(object):
     skeleton for the actual man-made help pages.
 
     """
-    def __init__(self, directory):
-        self._diretory = directory
+    def __init__(self):
         self._menu_help_data = pd.dbtable('e_pytis_help_menu', ('fullname', 'content', 'changed', 'removed'),
                                           config.dbconnection)
         self._spec_help_data = pd.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help', 'changed', 'removed'),
@@ -75,11 +74,7 @@ class HelpGenerator(object):
             print e
             return
         description = view_spec.description()
-        filename = os.path.join(self._diretory, spec_name + '.cs.txt')
-        if os.path.exists(filename):
-            help_text = open(filename).read()
-        else:
-            help_text = (view_spec.help() or '').strip() or None
+        help_text = (view_spec.help() or '').strip() or None
         self._update(self._spec_help_data, dict(spec_name=spec_name),
                      description=description, help=help_text)
         data = self._spec_help_items_data

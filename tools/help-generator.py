@@ -22,9 +22,8 @@ import pytis.util, pytis.data, pytis.extensions.help, config
 
 def usage(msg=None):
     sys.stderr.write("""Generate help for application menu forms.
-Usage: %s [options] directory
+Usage: %s [options]
    Options are pytis command line options, such as --config or --dbhost and --dbname.
-   Directory is the name of the source directory with initial help texts
 """ % sys.argv[0])
     if msg:
         sys.stderr.write(msg)
@@ -39,9 +38,8 @@ def run():
         config.add_command_line_options(sys.argv)
     except getopt.GetoptError as e:
         usage(e.msg)
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 1:
         usage()
-    directory = sys.argv[1]
     # Disable pytis logging and notification thread (may cause troubles when
     # creating data objects for profile validation).
     config.dblisten = False
@@ -49,7 +47,7 @@ def run():
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
-            generator = pytis.extensions.help.HelpGenerator(directory)
+            generator = pytis.extensions.help.HelpGenerator()
         except pytis.data.DBLoginException as e:
             if config.dbconnection.password() is None:
                 import getpass
