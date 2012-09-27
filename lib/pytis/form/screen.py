@@ -2075,9 +2075,15 @@ class Browser(wx.Panel, CommandHandler):
         try:
             node = self._pytis_help_root_node
         except AttributeError:
-            reader = lcg.reader('/home/cerha/work/pytis/help/src', 'pytis',
-                                ext='txt', recourse=True)
-            node = self._pytis_help_root_node = reader.build()
+            directory = os.path.join(config.help_dir, 'src')
+            reader = lcg.reader(directory, 'pytis', ext='txt')
+            try:
+                node = self._pytis_help_root_node = reader.build()
+            except IOError as e:
+                log(OPERATIONAL, "Unable to read Pytis help files from '%s':" % directory, e)
+                node = lcg.ContentNode('pytis:', title=_(u"Příručka uživatele systému Pytis"),
+                                       content=lcg.p(_(u"Soubory s nápovědou nebyly nalezeny!")),
+                                       hidden=True, resource_provider=resource_provider)
         # We need to clone on every request because set_parent() is called on
         # the result when arred to the help tree and set_parent may not be
         # called multiple times.
