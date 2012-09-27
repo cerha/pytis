@@ -2377,12 +2377,35 @@ class _GsqlViewNG(Select):
                             if rel is not None and \
                                not isinstance(rel.relation, SelectRelation):
                                 rels.append(rel)
-                    return [make_table_name(r) for r in rels]
+                    return rels
+                def updatable(c):
+                    return c.insert if kind == 'insert' else c.update
                 real_order = relations(order)
-                order_string = string.join(["specification_by_name('%s')" % (o.lower(),) for o in real_order if isinstance(o, basestring)], ', ')
+                real_order_relations = []
+                no_update_columns = []
+                for r in real_order:
+                    table_name = make_table_name(r)
+                    if kind != 'insert' and isinstance(r.relation, Select):
+                        continue
+                    table_alias = r.alias or table_name
+                    if kind == 'delete':
+                        real_order_relations.append(make_table_name(r))
+                    else:
+                        for c in self._columns:
+                            if c.name is None:
+                                continue
+                            rel, col = _gsql_column_table_column(c.name)
+                            if rel == table_alias and col != 'oid' and updatable(c):
+                                real_order_relations.append(make_table_name(r))
+                                no_update_columns = [cc.alias for cc in self._columns if not updatable(cc)]
+                                break
+                order_string = string.join(["specification_by_name('%s')" % (o.lower(),) for o in real_order_relations], ', ')
                 if order_string:
                     order_string += ','
                 items.append('    %s_order = (%s)' % (kind, order_string,))
+                if no_update_columns:
+                    column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
+                    items.append('    no_%s_columns = (%s)' % (kind, column_string,))
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))

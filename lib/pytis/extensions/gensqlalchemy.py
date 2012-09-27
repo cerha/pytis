@@ -743,6 +743,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     insert_order = None
     update_order = None
     delete_order = None
+    no_insert_columns = ()
+    no_update_columns = ()
 
     def _init(self, *args, **kwargs):
         super(_SQLTabular, self)._init(*args, **kwargs)
@@ -784,9 +786,11 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _original_columns(self):
         return self.c
     
-    def _rule_assignments(self, tabular):
+    def _rule_assignments(self, tabular, excluded):
         assignments = {}
         for c in self._original_columns():
+            if c.name in excluded:
+                continue
             table_c = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
             table = table_c.table
             if isinstance(table, sqlalchemy.sql.expression.Alias):
@@ -794,7 +798,10 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             if table is tabular:
                 name = _sql_plain_name(c.name)
                 table_column_name = _sql_plain_name(table_c.name)
-                assignments[table_column_name] = sqlalchemy.literal_column('new.'+name)
+                if table_column_name not in assignments:
+                    # A column may appear more than once in a view.
+                    # Let's use its first version here to be consistent with gensql.
+                    assignments[table_column_name] = sqlalchemy.literal_column('new.'+name)
         return assignments
 
     def _rule_condition(self, tabular):
@@ -842,7 +849,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             return self._default_rule_commands()
         commands = []
         for tabular in self._rule_tables(self.insert_order):
-            assignments = self._rule_assignments(tabular)
+            assignments = self._rule_assignments(tabular, self.no_insert_columns)
             c = tabular.insert().values(**assignments)
             commands.append(c)
         return commands
@@ -852,7 +859,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             return self._default_rule_commands()
         commands = []
         for tabular in self._rule_tables(self.update_order):
-            assignments = self._rule_assignments(tabular)
+            assignments = self._rule_assignments(tabular, self.no_update_columns)
             if not assignments:
                 continue
             condition = self._rule_condition(tabular)
