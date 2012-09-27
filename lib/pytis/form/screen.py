@@ -2101,11 +2101,20 @@ class Browser(wx.Panel, CommandHandler):
                     content = lcg.Container(parser.parse(row['content'].value()),
                                             resources=storage.resources())
                 else:
-                    content = [lcg.TableOfContents()]
+                    content = [lcg.TableOfContents(title=_(u"Obsah"))]
+                    fullname, spec_name = row['fullname'].value(), row['spec_name'].value()
                     if row['menu_help'].value():
                         content.extend(parser.parse(row['menu_help'].value()))
-                    if row['spec_name'].value():
-                        spec_help_content = self._spec_help_content(row['spec_name'].value())[1]
+                    if fullname and fullname.startswith('handle/'):
+                        pass
+                    elif fullname and fullname.startswith('proc/'):
+                        pass
+                    elif spec_name == 'export':
+                        pass
+                    elif spec_name == 'ui':
+                        pass
+                    elif spec_name:
+                        spec_help_content = self._spec_help_content(spec_name)[1]
                         if spec_help_content:
                             content.append(spec_help_content)
             else:
