@@ -2063,6 +2063,25 @@ class Browser(wx.Panel, CommandHandler):
                                                          'spec_name', spec_name,
                                                          base_uri='resource:')
         return view_spec.title(), lcg.Container(sections, resources=storage.resources())
+
+    def _pytis_help(self, resource_provider):
+        def clone(node, node_id):
+            # Clone the content node, but force `id' to help URI and `foldable' to True.
+            return lcg.ContentNode(node_id, title=node.title(), descr=node.descr(),
+                                   content=node.content(), hidden=node.hidden(),
+                                   children=[clone(n, 'help:pytis/'+n.id()) for n in node.children()],
+                                   resource_provider=resource_provider,
+                                   foldable=True)
+        try:
+            node = self._pytis_help_root_node
+        except AttributeError:
+            reader = lcg.reader('/home/cerha/work/pytis/help/src', 'pytis',
+                                ext='txt', recourse=True)
+            node = self._pytis_help_root_node = reader.build()
+        # We need to clone on every request because set_parent() is called on
+        # the result when arred to the help tree and set_parent may not be
+        # called multiple times.
+        return clone(node, 'help:pytis')
         
     def _load_help_page(self, topic):
         resource_dirs = [d[:-3]+'resources' for d in sys.path
@@ -2110,8 +2129,14 @@ class Browser(wx.Panel, CommandHandler):
             parent = '.'.join(row['position'].value().split('.')[:-1])
             children.setdefault(parent, []).append(row)
         data.close()
-        nodes = [lcg.ContentNode('NotFound', title=_("Nenalezeno"), hidden=True,
-                                 content=lcg.p(_(u"Požadovaná stránka nápovědy nenalezena: %s") % topic),
+        nodes = [lcg.ContentNode('help:application',
+                                 title=_(u"Nápověda aplikace %s") % config.application_name,
+                                 content=lcg.NodeIndex(), resource_provider=resource_provider,
+                                 children=[make_node(r, children) for r in children['']]),
+                 self._pytis_help(resource_provider),
+                 lcg.ContentNode('NotFound', title=_("Nenalezeno"), hidden=True,
+                                 content=lcg.p(_(u"Požadovaná stránka nápovědy nenalezena: "
+                                                 "%s") % topic),
                                  resource_provider=resource_provider)]
         if topic.startswith('spec/'):
             # Separate specification descriptions are not in the menu generated
@@ -2120,12 +2145,11 @@ class Browser(wx.Panel, CommandHandler):
             spec_name = topic[5:]
             title, content = self._spec_help_content(spec_name)
             if title and content:
-                node = lcg.ContentNode('help:'+topic, title=title, hidden=True,
-                                       content=lcg.Container((lcg.TableOfContents(), content)),
+                content = lcg.Container((lcg.TableOfContents(title=_(u"Obsah")), content))
+                node = lcg.ContentNode('help:'+topic, title=title, hidden=True, content=content,
                                        resource_provider=resource_provider)
                 nodes.append(node)
-        root = lcg.ContentNode('help', content=lcg.Content(), hidden=True,
-                               children=nodes + [make_node(r, children) for r in children['']])
+        root = lcg.ContentNode('help:', content=lcg.Content(), hidden=True, children=nodes)
         current_node = root.find_node('help:'+topic) or root.find_node('NotFound')
         exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
         self.load_content(current_node, exporter=exporter)
