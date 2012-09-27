@@ -119,9 +119,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             table = object_by_path(trigger.table.name, trigger.search_path())
             row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
             trigger_call = trigger(*trigger.arguments).value
-            command = (('CREATE TRIGGER "%s__%s__%s_trigger" %s %s ON %s '
+            command = (('CREATE TRIGGER "%s__%s" %s %s ON %s '
                         'FOR EACH %s EXECUTE PROCEDURE %s') %
-                       (trigger.schema, trigger.name, trigger.position, trigger.position, events, table,
+                       (trigger.name, trigger.position, trigger.position, events, table,
                         row_or_statement, trigger_call,))
             self.connection.execute(command)
         trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
@@ -198,8 +198,8 @@ def visit_rule(element, compiler, **kw):
         sql = 'NOTHING'
     table = element.table
     rule_name = '%s__%s_%s' % (table.name, element.action.lower(), element.kind.lower(),)
-    return ('CREATE OR REPLACE RULE "%s__%s" AS ON %s TO "%s"."%s" DO %s %s' %
-            (table.schema, rule_name, element.action, table.schema, table.name, element.kind, sql,))
+    return ('CREATE OR REPLACE RULE "%s" AS ON %s TO "%s"."%s" DO %s %s' %
+            (rule_name, element.action, table.schema, table.name, element.kind, sql,))
 
 class FullOuterJoin(sqlalchemy.sql.Join):
     __visit_name__ = 'full_outer_join'
