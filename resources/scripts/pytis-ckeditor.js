@@ -305,7 +305,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        },
                        commit: function(element) {
                            if (this.attachment)
-                               element.setAttribute('href', attachment.uri)
+                               element.setAttribute('href', this.attachment.uri)
                        },
                       },
                       {type: 'html',
@@ -599,7 +599,9 @@ pytis.HtmlField.image_dialog = function(editor) {
                   }
                   // Handle the 'enlarge' type of link
                   if (this.getValue() == 'enlarge') {
-                      var attachment = this.attachment;
+                      var dialog = CKEDITOR.dialog.getCurrent();
+		      var field = dialog.getContentElement('main', 'identifier')
+                      var attachment = field.attachment;
                       if (attachment) {
                           element.setAttribute('rel', "lightbox[gallery]");
                           element.setAttribute('href', attachment.uri);
