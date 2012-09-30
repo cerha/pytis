@@ -296,16 +296,15 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        setup: function(element) {
                            this.updateAttachmentList(false);
                            // Read identifier from the source
-                           var link = element.getAttribute("href");
-                           if (link) {
-                               var filename = link.match(/\/([^\/]+)$/)[1];
-                               if (filename)
-                                   this.setValue(filename);
-                           }
+                           var resource = element.getAttribute('data-lcg-resource');
+                           if (resource)
+                               this.setValue(resource);
                        },
                        commit: function(element) {
-                           if (this.attachment)
+                           if (this.attachment) {
+                               element.setAttribute('data-lcg-resource', this.attachment.filename);
                                element.setAttribute('href', this.attachment.uri)
+			   }
                        },
                       },
                       {type: 'html',
@@ -495,12 +494,9 @@ pytis.HtmlField.image_dialog = function(editor) {
         // Read identifier from the image link
         var img = element.getFirst();
         if (img) {
-            var link = img.getAttribute("src");
-            if (link) {
-                var filename = link.match(/\/([^\/]+)\?/)[1];
-                if (filename)
-                    this.setValue(filename);
-            }
+            var attachment = img.getAttribute('data-lcg-resource');
+            if (attachment)
+                this.setValue(attachment);
         }
     }
 
@@ -514,6 +510,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                 uri = attachment.uri;
             var img = element.getFirst();
             img.setAttribute('src', uri);
+            img.setAttribute('data-lcg-resource', attachment.filename);
         }
     }
 
@@ -1002,10 +999,12 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 	if (id){
 	    if (field.attachment){
     		subel.setAttribute('href', field.attachment.uri);
+		subel.setAttribute('data-lcg-resource', field.attachment.filename);
      		subel.setText(id);
 	    }
 	}else{
 	    subel.setAttribute('href', '');
+	    subel.setAttribute('data-lcg-resource', '');
     	    subel.setText('');
 	}
     }
