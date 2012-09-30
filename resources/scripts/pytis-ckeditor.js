@@ -538,18 +538,30 @@ pytis.HtmlField.image_dialog = function(editor) {
         {type: 'select',
          id: 'align',
          label: pytis._('Align'),
-                  items: [[pytis._('Left'), 'left'], [pytis._('Right'), 'right']],
+         items: [[pytis._('Inline'), 'inline'],
+		 [pytis._('Left'),   'left'], 
+		 [pytis._('Right'),  'right'],],
          setup: function(element) {
              // Read alignment of the image
              var img = element.getFirst();
-             if (img)
-                 this.setValue(img.getAttribute('align'));
+             if (img) {
+		 var align = img.getAttribute('align');
+		 if (align)
+                     this.setValue(align);
+		 else
+                     this.setValue('inline');
+	     }
          },
          commit: function(element) {
              // Set image alignment
              var img = element.getFirst();
-             if (img)
-		 img.setAttribute('align', this.getValue());
+             if (img) {
+		 var align = this.getValue()
+		 if (align == 'inline')
+		     img.removeAttribute('align');
+		 else
+		     img.setAttribute('align', align);
+	     }
          }
 	 // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.
         },
