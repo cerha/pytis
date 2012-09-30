@@ -503,27 +503,27 @@ pytis.HtmlField.image_dialog = function(editor) {
     ck_element(dialog, 'identifier').commit = function(element) {
         var attachment = this.attachment;
         if (attachment) {
-            var uri;
-            if (attachment.thumbnail)
-                uri = attachment.thumbnail.uri;
-            else
-                uri = attachment.uri;
             var img = element.getFirst();
-            img.setAttribute('src', uri);
-            img.setAttribute('data-lcg-resource', attachment.filename);
+            if (img) {
+		var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
+		img.setAttribute('src', uri);
+		img.setAttribute('data-lcg-resource', attachment.filename);
+	    }
         }
     }
 
     ck_element(dialog, 'preview').html = '<div class="preview-container"><img id="image-preview" src="" alt="" /></div>';
 
     ck_element(dialog, 'title').commit = function(element) {
-        var img = element.getFirst()
-        img.setAttribute('title', this.getValue());
+        var img = element.getFirst();
+        if (img)
+            img.setAttribute('title', this.getValue());
     }
 
     ck_element(dialog, 'description').commit = function(element) {
         var img = element.getFirst()
-        img.setAttribute('alt', this.getValue());
+        if (img)
+            img.setAttribute('alt', this.getValue());
     }
 
     dialog['contents'][0].elements = dialog['contents'][0].elements.concat([
@@ -548,7 +548,8 @@ pytis.HtmlField.image_dialog = function(editor) {
          commit: function(element) {
              // Set image alignment
              var img = element.getFirst();
-             img.setAttribute('align', this.getValue());
+             if (img)
+		 img.setAttribute('align', this.getValue());
          }
 	 // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.
         },
