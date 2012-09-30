@@ -667,12 +667,12 @@ pytis.HtmlField.image_dialog = function(editor) {
              {type: 'text',
               id: 'external-link',
               label: pytis._('Link target (URL)'),
-                       setup: function(element) {
-                           var dialog = CKEDITOR.dialog.getCurrent();
-                           if (dialog.getValueOf('main', 'link-type') == 'external') {
-                               this.setValue(element.getAttribute("href"));
-                           }
-                       },
+              setup: function(element) {
+                  var dialog = CKEDITOR.dialog.getCurrent();
+                  if (dialog.getValueOf('main', 'link-type') == 'external') {
+                      this.setValue(element.getAttribute("href"));
+                  }
+              },
               commit: function(element) {
                   var dialog = CKEDITOR.dialog.getCurrent();
                   if (dialog.getValueOf('main', 'link-type') == 'external')
