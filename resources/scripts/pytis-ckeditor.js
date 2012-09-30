@@ -600,10 +600,8 @@ pytis.HtmlField.image_dialog = function(editor) {
                       var dialog = CKEDITOR.dialog.getCurrent();
 		      var field = dialog.getContentElement('main', 'identifier')
                       var attachment = field.attachment;
-                      if (attachment) {
-                          element.setAttribute('rel', "lightbox[gallery]");
+                      if (attachment)
                           element.setAttribute('href', attachment.uri);
-                      }
                   }
                   // Values for other types of links are handled in the corresponding fields
               },
