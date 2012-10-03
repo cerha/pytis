@@ -539,13 +539,18 @@ class InnerForm(Form):
         try:
             description = self._cached_spec_description
         except AttributeError:
-            data = pytis.data.dbtable('e_pytis_help_spec', ('spec_name', 'description', 'help'),
-                                      config.dbconnection)
-            row = data.row((pytis.data.Value(data.find_column('spec_name').type(), self._name),))
-            if row:
-                description = row['description'].value()
-            else:
+            try:
+                data = pytis.data.dbtable('e_pytis_help_spec',
+                                          ('spec_name', 'description', 'help'),
+                                          config.dbconnection)
+            except pytis.data.DBException:
                 description = self._view.description()
+            else:
+                row = data.row((pytis.data.Value(data.find_column('spec_name').type(), self._name),))
+                if row:
+                    description = row['description'].value()
+                else:
+                    description = self._view.description()
             self._cached_spec_description = description
         return description
     
