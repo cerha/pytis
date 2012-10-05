@@ -226,6 +226,24 @@ function ck_dialog_update_media_preview (attachment, id) {
     embed_swf_object(player_uri, id, 400, 400, flashvars, '9', '<p>Flash not available</p>', true);
 }
 
+function ck_set_protected_attribute(element, attribute, value){
+    /* Set protected attribute on HTML element in editor
+     *
+     * CKEditor protects some HTML element attributes as 'href' and
+     * 'src', because some broswers might change their value
+     * arbitrarily (e.g.  substitute relative links for absolute). For
+     * this reason, CKEditor doesn't trust these attributes and in
+     * processing prefers its own data attribute, carying a copy of
+     * their value. Thus when changing a protected attribute, it is
+     * also necessary to update the coresponding CKEditor data
+     * attribute or otherwise the new value would be lost (this
+     * happens e.g. when saving or switching between preview and
+     * source modes in the editor).
+     */
+    element.setAttribute(attribute, value);
+    element.data('cke-saved-'+attribute, value);
+}
+
 pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment_type, attachment_class, attachment_properties, html_elements) {
     /* Basic attachment dialog for the various types of attachments
      *
@@ -303,8 +321,8 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        commit: function(element) {
                            if (this.attachment) {
                                element.setAttribute('data-lcg-resource', this.attachment.filename);
-                               element.setAttribute('href', this.attachment.uri)
-			   }
+                               ck_set_protected_attribute(element, 'href', this.attachment.uri);
+                           }
                        },
                       },
                       {type: 'html',
@@ -505,10 +523,10 @@ pytis.HtmlField.image_dialog = function(editor) {
         if (attachment) {
             var img = element.getFirst();
             if (img) {
-		var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
-		img.setAttribute('src', uri);
-		img.setAttribute('data-lcg-resource', attachment.filename);
-	    }
+                var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
+                ck_set_protected_attribute(img, 'src',  uri);
+                img.setAttribute('data-lcg-resource', attachment.filename);
+            }
         }
     }
 
@@ -586,7 +604,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                       this.setValue('external');
                   else {
                       // Handle cases where type is not specified
-                      var link = element.getValue('href');
+                      var link = element.getAttribute('href');
                       if (link && link.length > 0)
                           this.setValue('external');
                       else
@@ -612,8 +630,9 @@ pytis.HtmlField.image_dialog = function(editor) {
                       var dialog = CKEDITOR.dialog.getCurrent();
 		      var field = dialog.getContentElement('main', 'identifier')
                       var attachment = field.attachment;
-                      if (attachment)
-                          element.setAttribute('href', attachment.uri);
+                      if (attachment){
+                          ck_set_protected_attribute(element, 'href', attachment.uri);
+                      }
                   }
                   // Values for other types of links are handled in the corresponding fields
               },
@@ -660,7 +679,7 @@ pytis.HtmlField.image_dialog = function(editor) {
               commit: function(element) {
                   var dialog = CKEDITOR.dialog.getCurrent();
                   if (dialog.getValueOf('main', 'link-type') == 'anchor') {
-                      element.setAttribute("href", "#" + this.getValue());
+                      ck_set_protected_attribute(element, 'href', "#" + this.getValue());
                   }
               }
              },
@@ -675,8 +694,9 @@ pytis.HtmlField.image_dialog = function(editor) {
               },
               commit: function(element) {
                   var dialog = CKEDITOR.dialog.getCurrent();
-                  if (dialog.getValueOf('main', 'link-type') == 'external')
-                      element.setAttribute('href', this.getValue());
+                  if (dialog.getValueOf('main', 'link-type') == 'external'){
+                      ck_set_protected_attribute(element, 'href', this.getValue());
+                  }
               }
              },
          ]}]);
@@ -1009,14 +1029,14 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 	var id = field.getValue();
 	if (id){
 	    if (field.attachment){
-    		subel.setAttribute('href', field.attachment.uri);
-		subel.setAttribute('data-lcg-resource', field.attachment.filename);
-     		subel.setText(id);
+                ck_set_protected_attribute(subel, 'href', field.attachment.uri);
+                subel.setAttribute('data-lcg-resource', field.attachment.filename);
+                subel.setText(id);
 	    }
 	}else{
-	    subel.setAttribute('href', '');
-	    subel.setAttribute('data-lcg-resource', '');
-    	    subel.setText('');
+            ck_set_protected_attribute(subel, 'href', '');
+            subel.setAttribute('data-lcg-resource', '');
+            subel.setText('');
 	}
     }
 
