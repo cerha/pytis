@@ -321,7 +321,6 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        commit: function(element) {
                            if (this.attachment) {
                                element.setAttribute('data-lcg-resource', this.attachment.filename);
-                               ck_set_protected_attribute(element, 'href', this.attachment.uri);
                            }
                        },
                       },
@@ -626,17 +625,10 @@ pytis.HtmlField.image_dialog = function(editor) {
                           if (element.hasClass(cls))
                               element.removeClass(cls);
                       }
-                  }
-                  // Handle the 'enlarge' type of link
-                  if (this.getValue() == 'enlarge') {
-                      var dialog = CKEDITOR.dialog.getCurrent();
-		      var field = dialog.getContentElement('main', 'identifier')
-                      var attachment = field.attachment;
-                      if (attachment){
-                          ck_set_protected_attribute(element, 'href', attachment.uri);
+                      if (this.getValue() == 'enlarge') {
+                          ck_set_protected_attribute(element, 'href', '');
                       }
                   }
-                  // Values for other types of links are handled in the corresponding fields
               },
               onChange: function(element) {
                   var dialog = CKEDITOR.dialog.getCurrent();
@@ -1018,28 +1010,21 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     }
 
     function get_resource(id, element, field){
-	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
-        var link = subel.getAttribute("href");
-        if (link) {
-            var filename = link.match(/\/([^\/]+)$/)[1];
-            if (filename)
-		field.setValue(filename);
-        }
+        var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
+        var filename = subel.data('data-lcg-resource');
+        if (filename)
+            field.setValue(filename);
     }
     function put_resource(id, element, field){
 	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
-	var id = field.getValue();
-	if (id){
-	    if (field.attachment){
-                ck_set_protected_attribute(subel, 'href', field.attachment.uri);
-                subel.setAttribute('data-lcg-resource', field.attachment.filename);
-                subel.setText(id);
-	    }
+	if (field.attachment){
+            subel.data('data-lcg-resource', field.attachment.filename);
+            subel.setText(field.attachment.filename);
 	}else{
-            ck_set_protected_attribute(subel, 'href', '');
             subel.setAttribute('data-lcg-resource', '');
             subel.setText('');
 	}
+        subel.setAttribute('href', '');
     }
 
     ck_element(dialog, 'audio-version').setup = function(element){
