@@ -756,7 +756,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if not upload:
             raise BadRequest()
         error = storage.insert(upload.filename(), upload.file(), dict(mime_type=upload.mime_type()))
-        return {'success': error is None, 'message': error and req.localize(error)}
+        return {'success': error is None, 'message': error and req.localize(error),
+                'filename': upload.filename()}
     
 class FilterForm(EditForm):
     """Simple form for displaying a list of fields for advanced filtering."""

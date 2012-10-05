@@ -389,6 +389,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        onIFrameLoaded: function() {
                            var dialog = CKEDITOR.dialog.getCurrent();
                            var body_childs = $(this._.frameId).contentWindow.document.body.childNodes;
+                           var field = $(editor.config.pytisFieldId)._pytis_field_instance;
                            if ((body_childs.length == 1) && (body_childs[0].tagName.toLowerCase() == 'pre')){
                                // This is a JSON reply
                                var reply = body_childs[0].innerHTML.evalJSON();
@@ -398,6 +399,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                if (reply['success'] == true){
                                    msg = pytis._("Upload successful");
                                    cls = "ckeditor-success";
+                                   field.update_attachment(reply['filename'], {'listed': false});
                                } else {
                                    msg = reply['message'];
                                    cls = "ckeditor-error";
