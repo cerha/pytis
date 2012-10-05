@@ -314,13 +314,13 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                        setup: function(element) {
                            this.updateAttachmentList(false);
                            // Read identifier from the source
-                           var resource = element.getAttribute('data-lcg-resource');
+                           var resource = element.data('lcg-resource');
                            if (resource)
                                this.setValue(resource);
                        },
                        commit: function(element) {
                            if (this.attachment) {
-                               element.setAttribute('data-lcg-resource', this.attachment.filename);
+                               element.data('lcg-resource', this.attachment.filename);
                            }
                        },
                       },
@@ -513,7 +513,7 @@ pytis.HtmlField.image_dialog = function(editor) {
         // Read identifier from the image link
         var img = element.getFirst();
         if (img) {
-            var attachment = img.getAttribute('data-lcg-resource');
+            var attachment = img.data('lcg-resource');
             if (attachment)
                 this.setValue(attachment);
         }
@@ -526,7 +526,7 @@ pytis.HtmlField.image_dialog = function(editor) {
             if (img) {
                 var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
                 ck_set_protected_attribute(img, 'src',  uri);
-                img.setAttribute('data-lcg-resource', attachment.filename);
+                img.data('lcg-resource', attachment.filename);
             }
         }
     }
@@ -998,17 +998,17 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 
     function get_resource(id, element, field){
         var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
-        var filename = subel.data('data-lcg-resource');
+        var filename = subel.data('lcg-resource');
         if (filename)
             field.setValue(filename);
     }
     function put_resource(id, element, field){
 	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
 	if (field.attachment){
-            subel.data('data-lcg-resource', field.attachment.filename);
+            subel.data('lcg-resource', field.attachment.filename);
             subel.setText(field.attachment.filename);
 	}else{
-            subel.setAttribute('data-lcg-resource', '');
+            subel.data('lcg-resource', '');
             subel.setText('');
 	}
         subel.setAttribute('href', '');
