@@ -591,19 +591,16 @@ pytis.HtmlField.image_dialog = function(editor) {
              {type: 'select',
               id: 'link-type',
               label: pytis._('Behavior'),
-              items: [[pytis._('Enlarge on click'), 'enlarge', 'enlarge-image'],
-                      //[pytis._('Download link'), 'download', 'download-link'],
-                      [pytis._('Link'), 'external', 'external-link'],
-                      [pytis._('Link to anchor'), 'anchor', 'anchor-link']],
-                      //[pytis._('No action'), 'noact', 'no-action'],
+              items: [[pytis._('Enlarge on click'), 'enlarge'],
+                      //[pytis._('Download link'), 'download'],
+                      [pytis._('Link'), 'external'],
+                      [pytis._('Link to anchor'), 'anchor']],
+                      //[pytis._('No action'), 'noact'],
               setup: function(element) {
-                  if (element.hasClass('enlarge-image'))
-                      this.setValue('enlarge');
-                  else if (element.hasClass('anchor-link'))
-                      this.setValue('anchor');
-                  else if (element.hasClass('external-link'))
-                      this.setValue('external');
-                  else {
+                  var link_type = element.data('lcg-link-type');
+                  if (link_type){
+                      this.setValue(link_type);
+                  } else {
                       // Handle cases where type is not specified
                       var link = element.getAttribute('href');
                       if (link && link.length > 0)
@@ -614,20 +611,10 @@ pytis.HtmlField.image_dialog = function(editor) {
                   this.onChange(element);
               },
               commit: function(element) {
-                  // Remove all link type classes from element and add the new class
-                  for (var i = 0; i < this.items.length; i++) {
-                      var val = this.items[i][1];
-                      var cls = this.items[i][2];
-                      if (val == this.getValue()) {
-                          if (!element.hasClass(cls))
-                              element.addClass(cls);
-                      } else {
-                          if (element.hasClass(cls))
-                              element.removeClass(cls);
-                      }
-                      if (this.getValue() == 'enlarge') {
-                          ck_set_protected_attribute(element, 'href', '');
-                      }
+                  var link_type = this.getValue();
+                  element.data('lcg-link-type', link_type);
+                  if (link_type == 'enlarge') {
+                      ck_set_protected_attribute(element, 'href', '');
                   }
               },
               onChange: function(element) {
