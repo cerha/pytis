@@ -556,10 +556,10 @@ pytis.HtmlField.image_dialog = function(editor) {
                  //[pytis._('Title (text only)'), 'text']]},
         {type: 'select',
          id: 'align',
-         label: pytis._('Align'),
-         items: [[pytis._('Inline'), 'inline'],
-		 [pytis._('Left'),   'left'], 
-		 [pytis._('Right'),  'right'],],
+         label: pytis._('Text wrapping'),
+         items: [[pytis._('No wrapping'), 'inline'],
+                 [pytis._('Wrap left'), 'left'],
+                 [pytis._('Wrap right'), 'right'],],
          setup: function(element) {
              // Read alignment of the image
              var img = element.getFirst();
