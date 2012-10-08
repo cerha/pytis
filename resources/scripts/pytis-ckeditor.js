@@ -1071,7 +1071,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 		  [
                       {type: 'textarea',
                        id: 'source-ascii',
-                       label: pytis._("ASCII"),
+                       label: "ASCII",
                       },
 		      {type: 'html',
 		       html: '<div class="ckeditor-help">'+pytis._("Guide on ")+'<a href="http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html">http://www1.chapman.edu/~jipsen/mathml/asciimathsyntax.html</a></div>'
@@ -1083,7 +1083,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 		  [
                       {type: 'textarea',
                        id: 'source-mathml',
-                       label: pytis._("MathML"),
+                       label: "MathML",
                       },
 		      {type: 'html',
 		       html: '<div class="ckeditor-help">'+pytis._("To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)")+'</div>'
@@ -1091,7 +1091,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 		  ]},
                  {type: 'button',
                   id: 'toggle-input',
-                  label: "Switch ASCII / MathML editing",
+                  label: pytis._("Switch ASCII / MathML editing"),
                  },
                  {type: 'html',
                   id: 'math-preview',
