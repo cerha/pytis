@@ -576,10 +576,14 @@ pytis.HtmlField.image_dialog = function(editor) {
              var img = element.getFirst();
              if (img) {
 		 var align = this.getValue()
-		 if (align == 'inline')
+		 if (align == 'inline') {
 		     img.removeAttribute('align');
-		 else
+		     img.setAttribute('style', 'margin: .5em .8em;');
+		 } else {
 		     img.setAttribute('align', align);
+		     img.setAttribute('style', 'margin: .25em ' + 
+				      (align == 'left' ? '1em .25em 0;' : '0 .25em 1em'));
+		 }
 	     }
          }
 	 // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.
