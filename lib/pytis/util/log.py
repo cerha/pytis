@@ -193,7 +193,12 @@ class Logger(object):
                 data_string = string.join(datalines, '\n')
             formatted = u'@%s%s\n%s' % (prefix, fmessage, data_string)
         else:
-            formatted = u'*%s%s' % (prefix, fmessage)
+            try:
+                formatted = u'*%s%s' % (prefix, fmessage)
+            except UnicodeDecodeError:
+                def escape(text):
+                    return re.sub(r'[^\x01-\x7F]', '?', text)
+                formatted = u'*%s%s' % (prefix, escape(fmessage))                
         return formatted
 
     def _formatted(self, kind, message, data):
