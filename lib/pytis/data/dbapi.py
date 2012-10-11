@@ -142,7 +142,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 elif e.args[0].find('server closed the connection unexpectedly') != -1:
                     result, connection = retry(_(u"Database connection error"), e)
                 else:
-                    raise DBUserException(None, e, e.args, query)
+                    data = '%s [search_path=%s]' % (query, connection.connection_info('search_path'),)
+                    raise DBUserException(None, e, e.args, data)
             else:
                 raise DBUserException(None, e, e.args, query)
         except dbapi.DataError as e:
