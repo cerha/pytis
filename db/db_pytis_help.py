@@ -176,8 +176,8 @@ viewng('ev_pytis_help',
        update e_pytis_help_spec set
          description = new.spec_description,
          help = new.spec_help,
-         changed = coalesce(new.spec_help) != coalesce(old.spec_help)
-                   or coalesce(new.spec_description) != coalesce(old.spec_description)
+         changed = coalesce(new.spec_help, '') != coalesce(old.spec_help, '')
+                   or coalesce(new.spec_description, '') != coalesce(old.spec_description, '')
          where spec_name = old.spec_name;
        )""",
        delete="delete from e_pytis_help_pages where page_id = old.page_id;",
