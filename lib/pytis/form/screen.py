@@ -162,6 +162,8 @@ def paste_from_clipboard(ctrl):
                 text = do.GetText()
             else:
                 text = None
+        else:
+            text = None
     if text:
         text_length = len(text)
         orig_text = ctrl.GetValue()
