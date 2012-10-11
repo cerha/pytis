@@ -332,8 +332,8 @@ class Column(pytis.data.ColumnSpec):
         args = []
         references = self._references
         if references is not None:
-            if not isinstance(references, a):
-                references = a(references)
+            if not isinstance(references, Arguments):
+                references = Arguments(references)
             r_args = references.args()
             kwargs = copy.copy(references.kwargs())
             if isinstance(r_args[0], (ReferenceLookup.Reference, _Reference)):
@@ -629,7 +629,7 @@ class ReferenceLookup(object):
         return self.ColumnLookup(specification)
 r = ReferenceLookup()
 
-class a(object):
+class Arguments(object):
     def __init__(self, *args, **kwargs):
         self._args = args
         self._kwargs = kwargs
@@ -637,6 +637,7 @@ class a(object):
         return self._args
     def kwargs(self):
         return self._kwargs
+a = Arguments
 
 def reorder_columns(columns, column_ordering):
     assert len(columns) == len(column_ordering), (columns, column_ordering,)
