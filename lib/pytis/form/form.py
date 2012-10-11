@@ -1740,6 +1740,22 @@ class RecordForm(LookupForm):
                 return top
         return None
 
+    def _secondary_context_form(self):
+        dual_form = self._dualform()
+        if dual_form:
+            if dual_form.main_form() is self:
+                form = dual_form.side_form()
+                if isinstance(form, MultiForm):
+                    form = form.active_form()
+            else:
+                form = dual_form.main_form()
+        else:
+            form = None
+        if isinstance(form, RecordForm):
+            return form
+        else:
+            return None
+                
     def _context_action_args(self, action):
         context = action.context()
         if context == ActionContext.RECORD:
@@ -1750,13 +1766,7 @@ class RecordForm(LookupForm):
             raise ProgramError("Unsupported action context:", context)
         scontext = action.secondary_context()
         if scontext is not None:
-            dual = self._dualform()
-            if dual.main_form() is self:
-                form = dual.side_form()
-                if isinstance(form, MultiForm):
-                    form = form.active_form()
-            else:
-                form = dual.main_form()
+            form = self._secondary_context_form()
             if scontext == ActionContext.RECORD:
                 args += (form.current_row(),)
             elif scontext == ActionContext.SELECTION:
@@ -1833,7 +1843,7 @@ class RecordForm(LookupForm):
     def _can_context_action(self, action):
         if action.context() == ActionContext.SELECTION and len(self.selected_rows()) < 1:
             return False
-        if action.secondary_context() is not None and not self._dualform():
+        if action.secondary_context() is not None and self._secondary_context_form() is None:
             return False
         if not pytis.data.is_in_groups(action.access_groups()):
             return False
