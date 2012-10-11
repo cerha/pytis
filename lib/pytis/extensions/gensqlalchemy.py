@@ -1401,9 +1401,11 @@ def _dump_sql_command(sql, *multiparams, **params):
     output = _make_sql_command(sql, *multiparams, **params)
     print output + ';'
 
-def include(file_name):
+def include(file_name, globals_=None):
+    if globals_ is None:
+        globals_ = globals()
     file_, pathname, description = imp.find_module(file_name)
-    execfile(pathname, globals())
+    execfile(pathname, globals_)
 
 def gsql_file(file_name):
     global _metadata

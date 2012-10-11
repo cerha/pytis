@@ -551,8 +551,10 @@ class _GsqlSpec(object):
     def _convert_depends(self):
         def convert(dependency):
             dependency = dependency.lower()
-            selector = 'object_by_name' if dependency.find('.') >= 0 else 'specification_by_name'
-            return "%s('%s')" % (selector, dependency,)
+            if dependency.find('.') >= 0:
+                return "object_by_name('%s')" % (dependency,)
+            else:
+                return self._convert_name(dependency)
         depends_string = string.join([convert(d) for d in self._conversion_depends], ', ')
         if depends_string:
             depends_string += ','
@@ -1597,8 +1599,8 @@ class _GsqlTable(_GsqlSpec):
             items.append('class %sUpdLogTrigger(SQLTrigger):' % (spec_name,))
             items.append('    table = %s' % (spec_name,))
             items.append("    events = ('insert', 'update', 'delete',)")
-            items.append("    body = specification_by_name('%s')" %
-                         (self._upd_log_trigger,))
+            items.append("    body = %s" %
+                         (self._convert_name(self._upd_log_trigger),))
             items.append('    arguments = ("%s",)' % (keys,))
         result = string.join(items, '\n') + '\n'
         return result
@@ -2399,7 +2401,7 @@ class _GsqlViewNG(Select):
                                 real_order_relations.append(make_table_name(r))
                                 no_update_columns = [cc.alias for cc in self._columns if not updatable(cc)]
                                 break
-                order_string = string.join(["specification_by_name('%s')" % (o.lower(),) for o in real_order_relations], ', ')
+                order_string = string.join([self._convert_name(o.lower()) for o in real_order_relations], ', ')
                 if order_string:
                     order_string += ','
                 items.append('    %s_order = (%s)' % (kind, order_string,))
@@ -2938,7 +2940,7 @@ class _GsqlView(_GsqlSpec):
                 items.append('    def on_%s(self):' % (kind,))
                 items.append ('        return ("%s",)' % (quote(command),))
             else:
-                order_string = string.join(["specification_by_name('%s')" % (o,) for o in self._tables], ', ')
+                order_string = string.join([self._convert_name(o) for o in self._tables], ', ')
                 if order_string:
                     order_string += ','
                 items.append('    %s_order = (%s)' % (kind, order_string,))
@@ -3812,7 +3814,7 @@ database dumps if you want to be sure about your schema.
                 file_name += '.py'
                 if new_file:
                     f = open(index_file, 'a')
-                    f.write("include('%s')\n" % (basename,))
+                    f.write("include('%s', globals())\n" % (basename,))
                     f.close()
                     output = open(file_name, 'w')
                     output.write(coding_header)
