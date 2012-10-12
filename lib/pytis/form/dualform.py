@@ -634,8 +634,11 @@ class MultiForm(Form, Refreshable):
         pass
         
     def _create_form(self):
-        self._notebook = nb = wx.Notebook(self)
-        #nb.SetPadding((0,0))
+        import wx.aui
+        self._notebook = nb = wx.aui.AuiNotebook(self, style=(wx.aui.AUI_NB_TOP |
+                                                              wx.aui.AUI_NB_TAB_MOVE |
+                                                              wx.aui.AUI_NB_SCROLL_BUTTONS |
+                                                              wx.aui.AUI_NB_WINDOWLIST_BUTTON))
         self._forms = forms = []
         for title, form in self._create_forms(nb):
             forms.append(form)
@@ -648,25 +651,22 @@ class MultiForm(Form, Refreshable):
             if form:
                 self._set_notebook_selection(i)
                 break
-        wx_callback(wx.EVT_NOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
-        wx_callback(wx.EVT_LEFT_DOWN, nb, self._on_mouse_left)
-        wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_mouse_right)
+        tabctrl = [child for child in nb.GetChildren() if isinstance(child, wx.aui.AuiTabCtrl)][0]
+        wx_callback(wx.EVT_LEFT_DOWN, tabctrl, self._on_mouse_left)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, nb.GetId(), self._on_mouse_right)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
         #self.set_callback(self.CALL_USER_INTERACTION, lambda : self._select_form(self))
 
     def _on_mouse_right(self, event):
-        i = self._notebook.HitTest(event.GetPosition())[0]
-        if i != -1:
-            menu = (MItem(_(u"Filtrovat hlavní formulář podle tohoto vedlejšího formuláře"),
-                          help=_("Zobrazit pouze ty řádky hlavního formuláře, pro které tento "
-                                 "vedlejší formulář obsahuje v aktuálním profilu nenulový "
-                                 "počet řádků."),
-                          command=self.COMMAND_FILTER_BY_SIDEFORM(index=i,
-                                                                  _command_handler=self)),)
-            popup_menu(self._notebook, menu, self._get_keymap())
-        else:
-            self._run_callback(self.CALL_USER_INTERACTION)
+        menu = (MItem(_(u"Filtrovat hlavní formulář podle tohoto vedlejšího formuláře"),
+                      help=_("Zobrazit pouze ty řádky hlavního formuláře, pro které tento "
+                             "vedlejší formulář obsahuje v aktuálním profilu nenulový "
+                             "počet řádků."),
+                      command=self.COMMAND_FILTER_BY_SIDEFORM(index=event.GetSelection(),
+                                                              _command_handler=self)),)
+        popup_menu(self._notebook, menu, self._get_keymap())
         event.Skip()
         
     def _on_mouse_left(self, event):
@@ -701,7 +701,7 @@ class MultiForm(Form, Refreshable):
         # return wrong values, causing undesired database queries.
         self._old_notebook_selection = self._current_notebook_selection
         self._current_notebook_selection = i
-        self._notebook.ChangeSelection(i)
+        self._notebook.SetSelection(i)
         if self._old_notebook_selection != self._current_notebook_selection:
             self._on_page_change()
         
@@ -721,12 +721,12 @@ class MultiForm(Form, Refreshable):
         if selection != -1:
             form = self._forms[selection]
             if form:
-                # The ChangeSelection call below is necessary here to make
+                # The SetSelection call below is necessary here to make
                 # WebForm work in sideforms, as they need the panel to be shown
                 # before the webkit widget can be embedded into it.  And the
                 # embedding is done within _init_subform(), so we must ensure
                 # the page is changed before.
-                self._notebook.ChangeSelection(selection)
+                self._notebook.SetSelection(selection)
                 self._init_subform(form)
                 row = self._last_selection
                 if row is not None:
