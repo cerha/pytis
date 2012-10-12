@@ -1063,12 +1063,13 @@ class SQLView(_SQLTabular):
         super(SQLView, self)._add_dependencies()
         objects = [self.condition()]
         seen = []
+        # We may add some objects multiple times here but that doesn't matter.
+        # Trying to prune the list in trivial ways makes gsql many times slower
+        # because there may be many comparisons here.
         while objects:
             o = objects.pop()
             if isinstance(o, sqlalchemy.sql.Alias):
                 objects += o.get_children()
-            elif o in seen:
-                continue
             elif isinstance(o, sqlalchemy.Table):
                 self.add_is_dependent_on(o)
                 seen.append(o)
