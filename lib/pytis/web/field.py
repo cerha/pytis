@@ -489,11 +489,11 @@ class DateTimeFieldExporter(TextFieldExporter):
     _HANDLER = 'pytis.DateTimeField'
     
     def _editor_date_format(self, locale_data):
-        return locale_data.date_format + ' ' + locale_data.time_format
+        return locale_data.date_format + ' ' + locale_data.exact_time_format
     
     def _maxlen(self):
         # TODO: Respect date format!
-        return 16
+        return 18
     
     def _editor(self, context, **kwargs):
         result = super(DateTimeFieldExporter, self)._editor(context, **kwargs)
