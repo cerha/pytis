@@ -2072,7 +2072,11 @@ class Select(_GsqlSpec):
             else:
                 c = self._convert_raw_condition(condition)
                 result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)
-            dname = 'join_' + str(len(definitions))
+            if result == relation:
+                return relation
+            dname = 'join_%s_%s' % (last_relation.rstrip('_'), relation.rstrip('_'),)
+            if dname.startswith('join_join_'):
+                dname = dname[5:]
             self._convert_add_definition(definitions, '%s = %s' % (self._convert_local_name(dname), result,),
                                          level)
             return dname
@@ -2083,6 +2087,13 @@ class Select(_GsqlSpec):
         return last_relation, condition
         
     def _convert_select(self, definitions, level, column_ordering=None):
+        def select_n(prefix):
+            n = 1
+            defprefix = 'def %s_' % (prefix,)
+            for d in definitions:
+                if d.lstrip().startswith(defprefix):
+                    n += 1
+            return '%s_%s' % (prefix, n,)
         if self._set:
             if column_ordering is not None:
                 raise Exception('Double set', self)
@@ -2097,8 +2108,8 @@ class Select(_GsqlSpec):
                         if settype == 'except':
                             settype += '_'
                         condition = 'sqlalchemy.%s(%s, %s)' % (settype, condition, output,)
-                        select_name = 'select_' +  str(len(definitions))
-                        self._convert_add_definition(definitions, '%s = %s' % (self._convert_local_name(select_name), condition,), level)
+                        select_name = select_n('set')
+                        self._convert_add_definition(definitions, '%s = %s' % (select_name, condition,), level)
                         condition = select_name
                     else:
                         assert not condition, condition
@@ -2110,7 +2121,7 @@ class Select(_GsqlSpec):
                 # .limit() doesn't work well with aliases in sqlalchemy
                 condition += 'XXX:limit=%d' % (self._limit,)
         else:
-            select_name = 'select_' +  str(len(definitions))
+            select_name = select_n('select')
             self._convert_add_definition(definitions, 'def %s():' % (select_name,), level)
             relations, where_condition = self._convert_relations(definitions, level + 1)
             if self._limit:
@@ -2370,9 +2381,16 @@ class _GsqlViewNG(Select):
         if definitions and definitions[-1].startswith(condition + ' = '):
             condition = definitions.pop()
             condition = condition[condition.find(' = ')+3:]
+        if (condition == 'select_1()' and
+            definitions and
+            definitions[0] == 'def select_1():' and
+            all([d and d[0] == ' ' for d in definitions[1:]])):
+            definitions = [d[4:] for d in definitions[1:]]
+            condition = None
         definition_lines = string.join(['        %s\n' % (d,) for d in definitions], '')
-        items.append('    @classmethod\n    def condition(cls):\n%s        return %s' %
-                     (definition_lines, condition,))
+        items.append('    @classmethod\n    def condition(cls):\n%s' % (definition_lines,))
+        if condition is not None:
+            items[-1] += '        return %s' % (condition,)
         def quote(command):
             if '\n' in command:
                 command = '""%s""' % (command,)
