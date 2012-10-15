@@ -694,6 +694,12 @@ class SQLSchematicObject(SQLObject):
     def search_path(self):
         return self._search_path
 
+## gensql abbreviations -- do not use in new code!
+
+gL = sqlalchemy.sql.literal_column
+gO = object_by_path
+gR = RawCondition
+    
 
 ## Database objects
 

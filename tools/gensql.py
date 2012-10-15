@@ -582,7 +582,12 @@ class _GsqlSpec(object):
         
     def _convert_grant(self):
         return '    access_rights = %s' % (repr(self._grant).replace('"', ''),)
-        
+    
+    def _convert_local_name(self, name):
+        if name in ('a', 'c', 'r', 't',):
+            name = name + '_'
+        return name
+               
     def convert(self):
         "Vrať novou pythonovou specifikaci daného objektu jako string."
         return '#XXX:%s' % (self,)
@@ -1814,7 +1819,7 @@ class Select(_GsqlSpec):
             return ''
         converted = "'%s'" % (_gsql_escape(condition or '').replace('\n', '\\n'),)
         if as_object:
-            converted = 'RawCondition(%s)' % (converted,)
+            converted = 'gR(%s)' % (converted,)
         return converted
 
     def _convert_relation_name(self, relation):
@@ -1824,7 +1829,8 @@ class Select(_GsqlSpec):
                 alias = relation.relation
             else:
                 alias = relation.name
-        return alias.lower().replace('(', '__').replace(')', '__')
+        name = alias.lower().replace('(', '__').replace(')', '__')
+        return self._convert_local_name(name)
  
     def _convert_select_columns(self, column_ordering=None):
         column_spec = []
@@ -1863,7 +1869,7 @@ class Select(_GsqlSpec):
                 else:
                     spec = '%s.c' % (relname,)
                 if aliases:
-                    alias_spec = string.join(['%s=%s.c.%s' % (alias, relname, name,)
+                    alias_spec = string.join(['%s=%s.c.%s' % (self._convert_local_name(alias), relname, name,)
                                               for name, alias in aliases],
                                              ', ')
                     spec = 'cls._alias(%s, %s)' % (spec, alias_spec,)
@@ -1901,9 +1907,10 @@ class Select(_GsqlSpec):
             cname, alias = self._convert_unalias_column(cname)
         match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
         if match and match.group(1) in simple_relations and match.group(2) != 'oid':
-            cstring = '%s.c.%s' % tuple([g.lower() for g in match.groups()])
+            cstring = '%s.c.%s' % (self._convert_local_name(match.group(1).lower()),
+                                   match.group(2).lower(),)
         else:
-            cstring = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
+            cstring = 'gL("%s")' % (self._convert_literal(cname),)
         if alias:
             cstring += ".label('%s')" % (alias.strip(),)
         return cstring
@@ -1935,20 +1942,21 @@ class Select(_GsqlSpec):
                   rel.relation.lower().find('from') >= 0):  # apparently a subselect
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s AS %s"])' %
-                     (relation.replace('(', '__').replace(')', '__'),
+                     (self._convert_local_name(relation.replace('(', '__').replace(')', '__')),
                       rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),
                       rel.alias,))
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
-                     (relation.replace('(', '__').replace(')', '__'),
+                     (self._convert_local_name(relation.replace('(', '__').replace(')', '__')),
                       rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
                 self._add_conversion_dependency(rel.relation, rel.schema)
-                d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
+                d = "%s = object_by_name('%s.%s')" % (self._convert_local_name(relation),
+                                                      rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
                 rrelation = rel.relation
@@ -1956,15 +1964,19 @@ class Select(_GsqlSpec):
                 if match:
                     selector = 'object_by_name'
                     rschema, dependency = match.groups()
-                else:
-                    selector = 'object_by_path'
+                    d = "%s = %s('%s')" % (self._convert_local_name(relation), selector, rrelation.lower(),)
+                elif rrelation.startswith('pg_'):
                     dependency = rrelation
                     rschema = None
+                    d = "%s = gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
+                else:
+                    dependency = rrelation
+                    rschema = None
+                    d = "%s = t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation),)
                 self._add_conversion_dependency(dependency, rschema)
-                d = "%s = %s('%s')" % (relation, selector, rrelation.lower(),)
             if rel.alias:
                 if d is None:
-                    d = '%s = %s' % (rel.alias.lower().replace('(', '__').replace(')', '__'), relation,)
+                    d = '%s = %s' % (self._convert_local_name(rel.alias.lower().replace('(', '__').replace(')', '__')), relation,)
                     relation = rel.alias.lower()
                 d += ".alias('%s')" % (rel.alias.lower(),)
             if d:
@@ -1973,6 +1985,7 @@ class Select(_GsqlSpec):
                 condition = ''
             else:    
                 condition = rel.condition
+            relation = self._convert_local_name(relation)
             if jtype == JoinType.FROM:
                 result = relation
             elif jtype == JoinType.INNER:
@@ -2002,13 +2015,14 @@ class Select(_GsqlSpec):
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
-                     (relation.replace('(', '__').replace(')', '__'),
+                     (self._convert_local_name(relation.replace('(', '__').replace(')', '__')),
                       rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
                 self._add_conversion_dependency(rel.relation, rel.schema)
-                d = "%s = object_by_name('%s.%s')" % (relation, rel.schema, rel.relation,)
+                d = "%s = object_by_name('%s.%s')" % (self._convert_local_name(relation),
+                                                      rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
                 rrelation = rel.relation
@@ -2016,15 +2030,20 @@ class Select(_GsqlSpec):
                 if match:
                     selector = 'object_by_name'
                     rschema, dependency = match.group()
-                else:
-                    selector = 'object_by_path'
+                    d = "%s = %s('%s')" % (self._convert_local_name(relation), selector, rrelation,)
+                elif rrelation.startswith('pg_'):
                     dependency = rrelation
                     rschema = None
+                    d = "%s = gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
+                else:
+                    dependency = rrelation
+                    rschema = None
+                    d = "%s = t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation),)
                 self._add_conversion_dependency(dependency, rschema)
-                d = "%s = %s('%s')" % (relation, selector, rrelation,)
             if rel.alias:
                 if d is None:
-                    d = '%s = %s' % (rel.alias.replace('(', '__').replace(')', '__'), relation,)
+                    d = '%s = %s' % (self._convert_local_name(rel.alias.replace('(', '__').replace(')', '__')),
+                                     relation,)
                     relation = rel.alias
                 d += ".alias('%s')" % (rel.alias,)
             if d:
@@ -2035,6 +2054,8 @@ class Select(_GsqlSpec):
                 condition = rel.condition
             if last_relation is None and jtype != JoinType.FROM:
                 raise Exception("Error", (self, jtype,))
+            last_relation = self._convert_local_name(last_relation)
+            relation = self._convert_local_name(relation)            
             if jtype == JoinType.FROM:
                 result = relation
             elif jtype == JoinType.INNER:
@@ -2052,7 +2073,8 @@ class Select(_GsqlSpec):
                 c = self._convert_raw_condition(condition)
                 result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)
             dname = 'join_' + str(len(definitions))
-            self._convert_add_definition(definitions, '%s = %s' % (dname, result,), level)
+            self._convert_add_definition(definitions, '%s = %s' % (self._convert_local_name(dname), result,),
+                                         level)
             return dname
         last_relation = None
         for r in self._relations:
@@ -2076,7 +2098,7 @@ class Select(_GsqlSpec):
                             settype += '_'
                         condition = 'sqlalchemy.%s(%s, %s)' % (settype, condition, output,)
                         select_name = 'select_' +  str(len(definitions))
-                        self._convert_add_definition(definitions, '%s = %s' % (select_name, condition,), level)
+                        self._convert_add_definition(definitions, '%s = %s' % (self._convert_local_name(select_name), condition,), level)
                         condition = select_name
                     else:
                         assert not condition, condition
@@ -2834,9 +2856,10 @@ class _GsqlView(_GsqlSpec):
             cname = "NULL::%s" % (type,)
         match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*) *$', cname)
         if match and match.group(2) != 'oid':
-            crepr = '%s.c.%s' % tuple([g.lower() for g in match.groups()])
+            crepr = '%s.c.%s' % (self._convert_local_name(match.group(1).lower()),
+                                 match.group(2).lower(),)
         else:
-            crepr = 'sqlalchemy.sql.literal_column("%s")' % (self._convert_literal(cname),)
+            crepr = 'gL("%s")' % (self._convert_literal(cname),)
         return '%s.label(%s)' % (crepr, repr(alias.strip()),)
 
     def _convert_complex_columns(self):
@@ -2913,14 +2936,14 @@ class _GsqlView(_GsqlSpec):
             for t in tables:
                 t = t.lower()
                 name_alias = t.split(' ')
-                selector = 'object_by_path'
+                selector = 'gO'
                 if len(name_alias) > 1:
                     name, alias = name_alias
                     if re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', name):
                         selector = 'object_by_name'
                 else:
                     name = alias = name_alias[0]
-                line = "        %s = %s('%s')" % (alias, selector, name,)
+                line = "        %s = %s('%s')" % (self._convert_local_name(alias), selector, name,)
                 if name != alias:
                     line += '.alias(%s)' % (repr(alias),)
                 items.append(line)
