@@ -68,7 +68,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBLoginException()
             raise DBSystemException(_(u"Can't connect to database"), e)
         connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
-        return class_._postgresql_Connection(connection, connection_data)
+        connection_instance = class_._postgresql_Connection(connection, connection_data)
+        connection_instance.set_connection_info('transaction_commands', [])
+        return connection_instance
 
     @classmethod
     def _postgresql_close_connection(class_, connection):
@@ -99,9 +101,12 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     cursor.execute(query, query_args)
                 else:
                     cursor.execute(query)
+                connection.connection_info('transaction_commands').append(query)
             finally:
                 if outside_transaction:
                     raw_connection.commit()
+                    connection.set_connection_info('transaction_commands', [])
+                    connection.connection_info('transaction_commands').append('commit')
             return cursor
         def retry(message, exception):
             connection.set_connection_info('broken', True)
@@ -142,6 +147,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 elif e.args[0].find('server closed the connection unexpectedly') != -1:
                     result, connection = retry(_(u"Database connection error"), e)
                 else:
+                    log(OPERATIONAL, "Transaction commands:", connection.connection_info('transaction_commands'))
                     data = '%s [search_path=%s]' % (query, connection.connection_info('search_path'),)
                     raise DBUserException(None, e, e.args, data)
             else:
@@ -203,9 +209,12 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._maybe_connection_error(e)
     
     def _postgresql_commit_transaction(self):
-        connection = self._pg_get_connection().connection()
+        connection = self._pg_get_connection()
+        connection.set_connection_info('transaction_commands', [])
+        raw_connection = connection.connection()
         try:
-            connection.commit()
+            raw_connection.commit()
+            connection.connection_info('transaction_commands').append('commit')
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         
@@ -218,10 +227,12 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # For unknown reasons, connection client encoding gets reset after
         # rollback
         cursor = connection.cursor()
+        query = 'set client_encoding to "utf-8"'
         try:
-            cursor.execute('set client_encoding to "utf-8"')
+            cursor.execute(query)
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
+        connection.connection_info('transaction_commands').append(query)
 
     def _maybe_connection_error(self, e):
         if e.args[0].find('server closed the connection unexpectedly') != -1:
