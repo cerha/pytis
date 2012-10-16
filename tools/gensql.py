@@ -1882,8 +1882,8 @@ class Select(_GsqlSpec):
                                 isinstance(r.relation, basestring) and
                                 r.relation.find('(') == -1]
             included = [self._convert_select_column(c, simple_relations) for c in self._include_columns]
-            column_spec.append('[%s]' % (string.join(included, ', '),))
-        result = string.join(column_spec, ' + ')
+            column_spec.append('[%s]' % (string.join(included, ',\n    '),))
+        result = string.join(column_spec, ' +\n    ')
         if column_ordering is not None:
             result = 'reorder_columns(%s, %s)' % (result, column_ordering,)
         return result
@@ -1923,8 +1923,13 @@ class Select(_GsqlSpec):
             cname = string.join(c[:-2])
         return cname, alias
 
-    def _convert_add_definition(self, definitions, d, level):
-        definitions.append('    ' * level + d)
+    def _convert_add_definition(self, definitions, d, level, split=False):
+        indentation = '    ' * level
+        if split:
+            indented = string.join([indentation + dd for dd in d.split('\n')], '\n')
+        else:
+            indented = indentation + d
+        definitions.append(indented)
         
     def _convert_relations(self, definitions, level):
         for r in self._relations:
@@ -2089,7 +2094,10 @@ class Select(_GsqlSpec):
     def _convert_select(self, definitions, level, column_ordering=None):
         def select_n(prefix):
             n = 1
-            defprefix = 'def %s_' % (prefix,)
+            if prefix == 'select':
+                defprefix = 'def %s_' % (prefix,)
+            else:
+                defprefix = 'set_'
             for d in definitions:
                 if d.lstrip().startswith(defprefix):
                     n += 1
@@ -2127,15 +2135,25 @@ class Select(_GsqlSpec):
             if self._limit:
                 # .limit() doesn't work well with aliases in sqlalchemy
                 where_condition = where_condition[:-1] + " LIMIT %d'" % (self._limit,)
-            columns = self._convert_select_columns(column_ordering)
-            whereclause = ', whereclause=%s' % (where_condition,) if where_condition else ''
-            condition = ('sqlalchemy.select(%s, from_obj=[%s]%s)' %
+            converted_columns = self._convert_select_columns(column_ordering)
+            in_list = 0
+            split_columns = []
+            for c in converted_columns.split('\n'):
+                indentation = '    ' + ' ' * in_list
+                split_columns.append(indentation + c)
+                if c.lstrip().startswith('['):
+                    in_list += 1
+                if c.rstrip().endswith(']'):
+                    in_list -= 1
+            columns = string.join(split_columns, '\n')
+            whereclause = ',\n        whereclause=%s' % (where_condition,) if where_condition else ''
+            condition = ('sqlalchemy.select(\n    %s,\n        from_obj=[%s]%s\n        )' %
                          (columns, relations, whereclause,))
             if self._group_by:
                 condition += '.group_by(%s)' % (self._convert_raw_columns(self._group_by),)
             if self._having:
                 condition += '.having(%s)' % (self._convert_raw_condition(self._having),)
-            self._convert_add_definition(definitions, '    return %s' % (condition,), level)
+            self._convert_add_definition(definitions, '    return %s' % (condition,), level, True)
             condition = select_name + '()'
         if self._order_by:
             condition += '.order_by(%s)' % (self._convert_raw_columns(self._order_by),)
@@ -2385,10 +2403,15 @@ class _GsqlViewNG(Select):
             definitions and
             definitions[0] == 'def select_1():' and
             all([d and d[0] == ' ' for d in definitions[1:]])):
-            definitions = [d[4:] for d in definitions[1:]]
+            new_definitions = []
+            for d in definitions[1:]:
+                new_definitions.append(string.join([dd[4:] for dd in d.split('\n')], '\n'))
+            definitions = new_definitions
             condition = None
-        definition_lines = string.join(['        %s\n' % (d,) for d in definitions], '')
-        items.append('    @classmethod\n    def condition(cls):\n%s' % (definition_lines,))
+        definition_lines = []
+        for d in definitions:
+            definition_lines.append(string.join(['        %s\n' % (dd,) for dd in d.split('\n')], ''))
+        items.append('    @classmethod\n    def condition(cls):\n%s' % (string.join(definition_lines, ''),))
         if condition is not None:
             items[-1] += '        return %s' % (condition,)
         def quote(command):
@@ -2669,7 +2692,7 @@ class _GsqlView(_GsqlSpec):
         return '%s AS %s' % (cname, alias)
 
     def _format_complex_columns(self):
-        COLSEP = ',\n\t'
+        COLSEP = ',\n        '
         def format_simple_columns(columns):
             return string.join(map(self._format_column, columns), COLSEP)
         if self._complexp:
@@ -2881,7 +2904,7 @@ class _GsqlView(_GsqlSpec):
         return '%s.label(%s)' % (crepr, repr(alias.strip()),)
 
     def _convert_complex_columns(self):
-        COLSEP = ',\n\t'
+        COLSEP = ',\n        '
         def format_simple_columns(columns):
             return string.join(map(self._convert_column, columns), COLSEP)
         if self._complexp:
@@ -2941,10 +2964,10 @@ class _GsqlView(_GsqlSpec):
                 where = gen_where(self._join)
         items.append('    @classmethod\n    def condition(cls):')
         if is_union:
-            tables = [string.join(t, ', ') for t in self._tables_from]
+            tables = [string.join(t, ',\n    ') for t in self._tables_from]
             selections = []
             for t, c, w in zip(tables, columns, where):
-                selections.append('sqlalchemy.select([%s], from_obj=[%s], whereclause=%s)' %
+                selections.append('sqlalchemy.select(\n    [\n%s],\n    from_obj=[%s],\n    whereclause=%s)' %
                                   (c, t, repr(w),))
             condition = string.join(selections, 'union_all(')
             condition += ')' * (len(selections) - 1)
@@ -2966,7 +2989,21 @@ class _GsqlView(_GsqlSpec):
                     line += '.alias(%s)' % (repr(alias),)
                 items.append(line)
                 from_obj.append(alias)
-            condition = ('sqlalchemy.select([%s], from_obj=[%s], whereclause=%s)' %
+            converted_columns = columns
+            in_list = 0
+            split_columns = []
+            for c in converted_columns.split('\n'):
+                if split_columns:
+                    indentation = '     ' + ' ' * in_list
+                else:
+                    indentation = ''
+                split_columns.append(indentation + c)
+                if c.lstrip().startswith('['):
+                    in_list += 1
+                if c.rstrip().endswith(']'):
+                    in_list -= 1
+            columns = string.join(split_columns, '\n')
+            condition = ('sqlalchemy.select(\n            [%s],\n            from_obj=[%s],\n            whereclause=%s)' %
                          (columns, string.join(from_obj, ', '), repr(where),))
         items.append('        return %s' % (condition,))
         # Rules
