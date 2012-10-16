@@ -3257,9 +3257,12 @@ class _GsqlFunction(_GsqlSpec):
         items.append('    name = %s' % (repr(name),))
         argument_list = ([self._convert_column(a) for a in self._ins] +
                          [self._convert_column(a, out=True) for a in self._outs])
-        arguments = string.join(argument_list, ', ')
-        if arguments:
-            arguments += ','
+        if argument_list:
+            arguments = string.join([argument_list[0] + ','] +
+                                    ['                 ' + a + ',' for a in argument_list[1:]],
+                                    '\n')
+        else:
+            arguments = ''
         items.append('    arguments = (%s)' % (arguments,))
         output_type = self._output_type
         if isinstance(output_type, ReturnType):
