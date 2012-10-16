@@ -210,23 +210,24 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     
     def _postgresql_commit_transaction(self):
         connection = self._pg_get_connection()
-        connection.set_connection_info('transaction_commands', [])
         raw_connection = connection.connection()
         try:
             raw_connection.commit()
-            connection.connection_info('transaction_commands').append('commit')
+            connection.set_connection_info('transaction_commands', ['commit'])
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         
     def _postgresql_rollback_transaction(self):
-        connection = self._pg_get_connection().connection()
+        connection = self._pg_get_connection()
+        raw_connection = connection.connection()
         try:
-            connection.rollback()
+            raw_connection.rollback()
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         # For unknown reasons, connection client encoding gets reset after
         # rollback
-        cursor = connection.cursor()
+        connection.set_connection_info('transaction_commands', ['rollback'])
+        cursor = raw_connection.cursor()
         query = 'set client_encoding to "utf-8"'
         try:
             cursor.execute(query)
