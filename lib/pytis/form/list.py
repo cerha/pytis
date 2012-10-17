@@ -2742,7 +2742,9 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         if not hasattr(self, '_focus_forced_to_grid'):
             self._grid.SetFocus()
             self._focus_forced_to_grid = True
-        if self._begin_search:
+        # Starting incremental on a table with just one row freezes the
+        # application, thus the aditional condition below as a work around.
+        if self._begin_search and self._table.number_of_rows(min_value=1) > 1:
             begin_search = self._begin_search
             self._begin_search = None
             prefill = None
