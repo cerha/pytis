@@ -696,6 +696,8 @@ class SQLSchematicObject(SQLObject):
 
 ## gensql abbreviations -- do not use in new code!
 
+def gA(table, **kwargs):
+    return Arguments(object_by_reference(table), **kwargs)
 gL = sqlalchemy.sql.literal_column
 gO = object_by_path
 gR = RawCondition

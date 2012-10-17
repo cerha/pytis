@@ -483,7 +483,7 @@ class _GsqlSpec(object):
                     c_references = None
             if c_references:
                 components = c_references.split(' ')
-                references = "Arguments(object_by_reference(%s)" % (repr(components.pop(0),))
+                references = "gA(%s" % (repr(components.pop(0),))
                 initially = ''
                 while components:
                     keyword = components.pop(0).lower()
