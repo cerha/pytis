@@ -2035,8 +2035,9 @@ class Browser(wx.Panel, CommandHandler):
                 (_(u"Shrnutí"), lcg.p, spec_description),
                 (_(u"Popis"), parser.parse, spec_help),
                 (_(u"Políčka formuláře"), lcg.dl,
-                 [(field_label(f), description('field', f.id(), f.descr()))
-                  for f in [view_spec.field(fid) for fid in view_spec.layout().order()]]),
+                 sorted([(field_label(f), description('field', f.id(), f.descr()))
+                         for f in view_spec.fields()],
+                        key=lambda x: x[0])),
                 (_(u"Profily"), lcg.dl,
                  [(p.title(), description('profile', p.id(), p.descr()))
                   for p in view_spec.profiles()]),
