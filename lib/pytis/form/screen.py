@@ -2010,6 +2010,16 @@ class Browser(wx.Panel, CommandHandler):
             elif f.label() and f.label() != label:
                 label += ' ('+ f.label()+')'
             return label
+        def field_description(f):
+            result = description('field', f.id(), f.descr())
+            related_specnames = [name for name in
+                                 [f.codebook()] + [link.name() for link in f.links()] if name]
+            if related_specnames:
+                remove_duplicates(related_specnames)
+                result = (result,
+                          lcg.p(_(u"Související náhledy:")),
+                          lcg.ul([spec_link(name) for name in related_specnames]))
+            return result
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
         except pytis.util.ResolverError as e:
@@ -2024,19 +2034,13 @@ class Browser(wx.Panel, CommandHandler):
             spec_description = view_spec.description()
             spec_help = view_spec.help()
         parser = lcg.Parser()
-        related_specnames = []
-        for f in view_spec.fields():
-            for name in [f.codebook()] + [link.name() for link in f.links()]:
-                if name and name not in related_specnames:
-                    related_specnames.append(name)
         sections = [
             lcg.Section(title=title, content=f(content))
             for title, f, content in (
                 (_(u"Shrnutí"), lcg.p, spec_description),
                 (_(u"Popis"), parser.parse, spec_help),
                 (_(u"Políčka formuláře"), lcg.dl,
-                 sorted([(field_label(f), description('field', f.id(), f.descr()))
-                         for f in view_spec.fields()],
+                 sorted([(field_label(f), field_description(f)) for f in view_spec.fields()],
                         key=lambda x: x[0])),
                 (_(u"Profily"), lcg.dl,
                  [(p.title(), description('profile', p.id(), p.descr()))
@@ -2047,8 +2051,6 @@ class Browser(wx.Panel, CommandHandler):
                 (_(u"Vedlejší formuláře"), lcg.dl,
                  [(spec_link(b.name(), b.title()), description('binding', b.id(), b.descr()))
                   for b in view_spec.bindings() if b.name()]),
-                (_(u"Související náhledy"), lcg.ul,
-                 [spec_link(name) for name in related_specnames]),
                 )
             if content]
         #data_spec = resolver.get(specname, 'data_spec')
