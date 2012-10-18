@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,24 +16,34 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Classes used for generating help for Pytis applications.
+"""Classes for management and generation of help for Pytis applications.
 
-Help texts are stored in the database and edited by help administrator.  This
-module includes scripts intended to create initial help texts for new
-specifications.  These texts are supposed to be further edited by help
-administrator before published to be visible to application users.
+Help texts are stored in the database and edited by help administrator.
 
+This module includes the following classes:
+
+  'HelpUpdater' -- Create/update initial help texts in the database according
+    to specifications.
+   
+The last important part of the pytis help system is the user interface for
+managment of the help texts in the database by help administrators.  This is
+defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
+'pytis.defs' is in resolver search path).
+  
 """ 
 
 import sys, os, lcg, pytis.data as pd, pytis.form, pytis.util, config
 
-class HelpGenerator(object):
-    """Generate initial help page contents for application menu items from specification.
+class HelpUpdater(object):
+    """Create/update initial help texts in the database according to specifications.
 
     The initial help contents is created automatically based on the information
     available in specifications.  It is supposed to be further edited and
-    maintained by help administrator.  The output should be used just as a
-    skeleton for the actual man-made help pages.
+    maintained by help administrator.  The contents of the database must be
+    regularly synchronized with the specifications after changes in the
+    application, so that new objects (views, fields, profiles etc.) get visible
+    in the help database, old objects are removed and changed or renamed
+    objects are updated.
 
     """
     def __init__(self):
@@ -229,7 +239,7 @@ class HelpGenerator(object):
     def _generate_exit_help(self):
         return _(u"Ukončí běh aplikace.")
 
-    def update_menu_help(self):
+    def update(self):
         """(Re)generate help for all menu items."""
         data = pd.dbtable('ev_pytis_help', ('help_id', 'fullname', 'spec_name', 'position'),
                           config.dbconnection)
@@ -240,4 +250,3 @@ class HelpGenerator(object):
                 break
             if row['fullname'].value():
                 self._update_menu_item_help(row['fullname'].value(), row['spec_name'].value())
-                

@@ -18,10 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, getopt, types
-import pytis.util, pytis.data, pytis.extensions.help, config
+import pytis.util, pytis.data, pytis.help, config
 
 def usage(msg=None):
-    sys.stderr.write("""Generate help for application menu forms.
+    sys.stderr.write("""Update DB help texts for a Pytis application
 Usage: %s [options]
    Options are pytis command line options, such as --config or --dbhost and --dbname.
 """ % sys.argv[0])
@@ -47,7 +47,7 @@ def run():
     config.log_exclude = [pytis.util.ACTION, pytis.util.EVENT, pytis.util.DEBUG, pytis.util.OPERATIONAL]
     while True:
         try:
-            generator = pytis.extensions.help.HelpGenerator()
+            updater = pytis.help.HelpUpdater()
         except pytis.data.DBLoginException as e:
             if config.dbconnection.password() is None:
                 import getpass
@@ -59,7 +59,7 @@ def run():
                 sys.exit(1)
         else:
             break
-    generator.update_menu_help()
+    updater.update()
 
 if __name__ == '__main__':
     run()
