@@ -3525,7 +3525,7 @@ class AttachmentStorage(object):
         resized.thumbnail(size, PIL.Image.ANTIALIAS)
         return resized
 
-    def insert(self, filename, data, values):
+    def insert(self, filename, data, values, transaction=None):
         """Insert a new attachment into the storage.
 
         Arguments:
@@ -3534,9 +3534,16 @@ class AttachmentStorage(object):
             data.  The calling side is responsible for closing the file after
             this method returns.
           values -- dictionary of values of attachment parameters to set.  The
-             keys may be 'title', 'descr' (corresponding to 'resource.title()'
-             and 'resource.descr()') or any additional application defined
-             attachment parameters (usually passed through 'resource.info()').
+            keys may be 'title', 'descr' (corresponding to 'resource.title()'
+            and 'resource.descr()') or any additional application defined
+            attachment parameters (usually passed through 'resource.info()').
+          transaction -- current database transaction instance.  The particular
+            attachment storage may choose to use or ignore this argument as
+            approppriate (obviously, it makes sense only when they store
+            something in the same database).  The caller should always pass it,
+            however, unles he surely know which storage implementation is in
+            use.
+             
 
         Raises 'InvalidImageFormat' exception if an image of unknown or invalid
           type is inserted.
@@ -3545,20 +3552,26 @@ class AttachmentStorage(object):
         """
         pass
 
-    def update(self, filename, values):
+    def update(self, filename, values, transaction=None):
         """Update the information about given attachment.
 
         Arguments:
         
           filename -- unique file name (basestring) identifying the resource.
-             Must be one of existing filenames as returned by
-             'resource.filename()' of one of the resources returned by
-             'resources()'.
+            Must be one of existing filenames as returned by
+            'resource.filename()' of one of the resources returned by
+            'resources()'.
           values -- dictionary of values of attachment parameters to
-             update.  The keys may be 'title', 'descr' (corresponding to
-             'resource.title()' and 'resource.descr()') or any additional
-             application defined attachment parameters (usually passed through
-             'resource.info()').
+            update.  The keys may be 'title', 'descr' (corresponding to
+            'resource.title()' and 'resource.descr()') or any additional
+            application defined attachment parameters (usually passed through
+            'resource.info()').
+          transaction -- current database transaction instance.  The particular
+            attachment storage may choose to use or ignore this argument as
+            approppriate (obviously, it makes sense only when they store
+            something in the same database).  The caller should always pass it,
+            however, unles he surely know which storage implementation is in
+            use.
         
         Returns None when the update is performed ok or an error message string
         when error occurres.
@@ -3566,27 +3579,50 @@ class AttachmentStorage(object):
         """
         pass
     
-    def delete(self, filename):
+    def delete(self, filename, transaction=None):
         """Not supported yet"""
         pass
     
-    def retrieve(self, filename):
+    def retrieve(self, filename, transaction=None):
         """Retieve the contents of an attachment file of given name.
+
+        Arguments:
+        
+          filename -- unique file name (basestring) identifying the resource.
+            Must be one of existing filenames as returned by
+            'resource.filename()' of one of the resources returned by
+            'resources()'.
+          transaction -- current database transaction instance.  The particular
+            attachment storage may choose to use or ignore this argument as
+            approppriate (obviously, it makes sense only when they store
+            something in the same database).  The caller should always pass it,
+            however, unles he surely know which storage implementation is in
+            use.
 
         The returned value is an open file like object with methods 'read()'
         and 'close()'.  The calling side is responsible for calling 'close()'
         after reading file data.
-
-        The 'filename' is the string value as returned by 'resource.filename()'
-        of one of the resources returned by 'resources()'.
         
         None is returned when a corresponding attachment is not found.
         
         """
         pass
 
-    def resource(self, filename):
+    def resource(self, filename, transaction=None):
         """Return a 'lcg.Resource' instance for given 'filename' if it exists or None.
+
+        Arguments:
+        
+          filename -- unique file name (basestring) identifying the resource.
+            Must be one of existing filenames as returned by
+            'resource.filename()' of one of the resources returned by
+            'resources()'.
+          transaction -- current database transaction instance.  The particular
+            attachment storage may choose to use or ignore this argument as
+            approppriate (obviously, it makes sense only when they store
+            something in the same database).  The caller should always pass it,
+            however, unles he surely know which storage implementation is in
+            use.
 
         Image resources will automatically have a 'thumbnail' attribute if the
         user requested to display a smaller version of the image.  The storage
@@ -3597,22 +3633,40 @@ class AttachmentStorage(object):
         """
         pass
 
-    def resources(self):
+    def resources(self, transaction=None):
         """Return a list of all files currently present in the storage.
 
+        Arguments:
+        
+          transaction -- current database transaction instance.  The particular
+            attachment storage may choose to use or ignore this argument as
+            approppriate (obviously, it makes sense only when they store
+            something in the same database).  The caller should always pass it,
+            however, unles he surely know which storage implementation is in
+            use.
+             
         The returned list consists of 'lcg.Resource' instances corresponding to
         attachment files.  See 'resource()' for more information about the
         returned resource instances.
-
 
         """
         pass
 
     # Helper methods which don't need to be implemented in derived classes.
 
-    def find_resource_by_uri(self, uri):
+    def find_resource_by_uri(self, uri, transaction=None):
         """Find resource corresponding to given resource URI.
 
+        Arguments:
+
+          uri -- the searched resource URI as a basestring.
+          transaction -- current database transaction instance.  The particular
+            attachment storage may choose to use or ignore this argument as
+            approppriate (obviously, it makes sense only when they store
+            something in the same database).  The caller should always pass it,
+            however, unles he surely know which storage implementation is in
+            use.
+             
         Searches all the resources returned by 'resources()' including nested
         resources, such as thumbnails of Image resources.
 
@@ -3620,7 +3674,7 @@ class AttachmentStorage(object):
         
         """
         import lcg
-        for resource in self.resources():
+        for resource in self.resources(transaction=transaction):
             if resource.uri() == uri:
                 return resource
             if isinstance(resource, lcg.Image):
@@ -3694,7 +3748,7 @@ class FileAttachmentStorage(AttachmentStorage):
     def _thumbnail_src_file(self, filename):
         return os.path.join(self._directory, 'thumbnails', filename)
     
-    def insert(self, filename, data, values):
+    def insert(self, filename, data, values, transaction=None):
         import lcg, PIL.Image
         path = self._resource_src_file(filename)
         if not os.path.exists(self._directory):
@@ -3735,14 +3789,14 @@ class FileAttachmentStorage(AttachmentStorage):
         else:
             return {}
 
-    def resource(self, filename):
+    def resource(self, filename, transaction=None):
         path = self._resource_src_file(filename)
         if os.path.isfile(path):
             return self._resource(filename, **self._resource_kwargs(filename))
         else:
             return None
         
-    def resources(self):
+    def resources(self, transaction=None):
         directory = self._directory
         if os.path.isdir(directory):
             return [self._resource(filename, **self._resource_kwargs(filename))
@@ -3751,7 +3805,7 @@ class FileAttachmentStorage(AttachmentStorage):
         else:
             return []
 
-    def retrieve(self, filename):
+    def retrieve(self, filename, transaction=None):
         path = os.path.join(self._directory, filename)
         if os.path.exists(path):
             return open(path)
@@ -3768,7 +3822,7 @@ class FileAttachmentStorage(AttachmentStorage):
                 os.makedirs(directory)
             self._resized_image(image, size).save(path)
         
-    def update(self, filename, values):
+    def update(self, filename, values, transaction=None):
         if 'has_thumbnail' in values:
             if values['has_thumbnail']:
                 import PIL.Image
@@ -3893,24 +3947,24 @@ class HttpAttachmentStorage(AttachmentStorage):
             kwargs['size'] = info['size']
         return kwargs
     
-    def resource(self, filename):
+    def resource(self, filename, transaction=None):
         try:
             info = self._json_data(self._uri+'/'+filename+'?action=info')
         except self.StorageError:
             return None
         return self._resource(filename, **self._resource_kwargs(info))
 
-    def resources(self):
+    def resources(self, transaction=None):
         return [self._resource(filename, **self._resource_kwargs(info))
                 for filename, info in self._json_data(self._uri)]
 
-    def retrieve(self, filename):
+    def retrieve(self, filename, transaction=None):
         try:
             return self._connect(self._uri+'/'+filename+'?action=retrieve')
         except self.StorageError:
             return None
    
-    def insert(self, filename, data, values):
+    def insert(self, filename, data, values, transaction=None):
         import mimetools, mimetypes, json
         boundary = mimetools.choose_boundary()
         content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
@@ -3927,7 +3981,7 @@ class HttpAttachmentStorage(AttachmentStorage):
         self._post_data(self._uri, '\r\n'.join(body),
                         headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
         
-    def update(self, filename, values):
+    def update(self, filename, values, transaction=None):
         import urllib, json
         data = urllib.urlencode(dict(action='update', values=json.dumps(values)))
         self._post_data(self._uri+'/'+filename, data)
@@ -4056,8 +4110,8 @@ class DbAttachmentStorage(AttachmentStorage):
             rowdata.append((column, pytis.data.Value(t, value)))
         return pytis.data.Row(rowdata)
             
-    def _get_row(self, filename):
-        self._data.select(condition=self._condition(filename))
+    def _get_row(self, filename, transaction=None):
+        self._data.select(condition=self._condition(filename), transaction=transaction)
         row = self._data.fetchone()
         self._data.close()
         return row
@@ -4111,18 +4165,18 @@ class DbAttachmentStorage(AttachmentStorage):
             row_values[column+'_height'] = height
         return row_values
     
-    def resource(self, filename):
-        row = self._get_row(filename)
+    def resource(self, filename, transaction=None):
+        row = self._get_row(filename, transaction=transaction)
         if row:
             return self._row_resource(row)
         else:
             return None
         
-    def resources(self):
+    def resources(self, transaction=None):
         resources = []
         columns = [c.id() for c in self._data.columns()
                    if not isinstance(c.type(), pytis.data.Binary)]
-        self._data.select(condition=self._condition(), columns=columns)
+        self._data.select(condition=self._condition(), columns=columns, transaction=transaction)
         while True:
             row = self._data.fetchone()
             if row is None:
@@ -4131,7 +4185,7 @@ class DbAttachmentStorage(AttachmentStorage):
         self._data.close()
         return resources
  
-    def insert(self, filename, data, values):
+    def insert(self, filename, data, values, transaction=None):
         filedata = buffer(data.read())
         rowdata = {self._ref_column: self._ref_value,
                    'file_name': filename,
@@ -4143,28 +4197,29 @@ class DbAttachmentStorage(AttachmentStorage):
             rowdata['height'] = image.size[1]
             rowdata.update(self._computed_row_values(image, **values))
         try:
-            self._data.insert(self._make_row(rowdata))
+            self._data.insert(self._make_row(rowdata), transaction=transaction)
         except pytis.data.DBException as e:
             return str(e)
         else:
             return None
         
-    def update(self, filename, values):
-        row = self._get_row(filename)
+    def update(self, filename, values, transaction=None):
+        row = self._get_row(filename, transaction=transaction)
         if row:
             image = self._image(row['file'].value().buffer())
             if image:
                 rowdata = self._computed_row_values(image, **values)
                 try:
-                    self._data.update(row['file_id'], self._make_row(rowdata))
+                    self._data.update(row['file_id'], self._make_row(rowdata),
+                                      transaction=transaction)
                 except pytis.data.DBException as e:
                     return str(e)
             return None
         else:
             return _("Attachment '%s' not found!", filename)
  
-    def retrieve(self, filename):
-        row = self._get_row(filename)
+    def retrieve(self, filename, transaction=None):
+        row = self._get_row(filename, transaction=transaction)
         if row:
             import cStringIO
             return cStringIO.StringIO(row['file'].value().buffer())
