@@ -2029,15 +2029,15 @@ class ImageField(FileField):
 
     
 class StructuredTextField(TextField):
-    class AttachmentEnumerator(pytis.data.Enumerator):
+    class AttachmentEnumerator(pytis.data.Enumerator, pytis.data.TransactionalEnumerator):
         def __init__(self, storage, images=True):
             self._storage = storage
             self._images = images
             super(StructuredTextField.AttachmentEnumerator, self).__init__()
-        def values(self):
+        def values(self, transaction=None):
             import lcg
             try:
-                return [r.filename() for r in self._storage.resources()
+                return [r.filename() for r in self._storage.resources(transaction=transaction)
                         if isinstance(r, lcg.Image) ^ (not self._images)]
             except AttachmentStorage.StorageError as e:
                 run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
@@ -2372,7 +2372,7 @@ class StructuredTextField(TextField):
         else:
             parent = None
         if self._storage:
-            resources = self._storage.resources()
+            resources = self._storage.resources(transaction=self._row.transaction())
         else:
             resources = ()
         InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG, resources=resources)
@@ -2380,7 +2380,7 @@ class StructuredTextField(TextField):
     def _cmd_export_pdf(self):
         import tempfile
         if self._storage:
-            resources = self._storage.resources()
+            resources = self._storage.resources(transaction=self._row.transaction())
         else:
             resources = ()
         content = lcg.Container(lcg.Parser().parse(self._get_value()))
@@ -2469,7 +2469,8 @@ class StructuredTextField(TextField):
         try:
             try:
                 self._storage.insert(filename, file_object, dict(has_thumbnail=(size is not None),
-                                                                 thumbnail_size=size))
+                                                                 thumbnail_size=size),
+                                     transaction=self._row.transaction())
             finally:
                 file_object.close()
         except AttachmentStorage.InvalidImageFormat as e:
@@ -2482,7 +2483,7 @@ class StructuredTextField(TextField):
 
     def _image_preview_computer(self, row, filename):
         if filename:
-            f = self._storage.retrieve(filename)
+            f = self._storage.retrieve(filename, transaction=self._row.transaction())
             if f:
                 try:
                     return pytis.data.Image.Buffer(f, filename=filename)
@@ -2493,7 +2494,7 @@ class StructuredTextField(TextField):
     def _size_computer(self, row, filename):
         thumbnail = None
         if filename:
-            resource = self._storage.resource(filename)
+            resource = self._storage.resource(filename, transaction=self._row.transaction())
             if resource:
                 thumbnail = resource.thumbnail()
         return self.ImageSizes.matching_size(thumbnail)
@@ -2501,7 +2502,7 @@ class StructuredTextField(TextField):
     def _preview_size_computer(self, row, filename, size):
         thumbnail = None
         if filename:
-            resource = self._storage.resource(filename)
+            resource = self._storage.resource(filename, transaction=self._row.transaction())
             if resource:
                 orig_size = resource.size()
                 if orig_size:
@@ -2511,7 +2512,7 @@ class StructuredTextField(TextField):
     def _orig_size_computer(self, row, filename, size):
         thumbnail = None
         if filename:
-            resource = self._storage.resource(filename)
+            resource = self._storage.resource(filename, transaction=self._row.transaction())
             if resource:
                 orig_size = resource.size()
                 if orig_size:
@@ -2521,7 +2522,7 @@ class StructuredTextField(TextField):
     def _resize_computer(self, row, filename):
         thumbnail = None
         if filename:
-            resource = self._storage.resource(filename)
+            resource = self._storage.resource(filename, transaction=self._row.transaction())
             if resource and resource.size():
                 thumbnail = resource.thumbnail()
                 if thumbnail and thumbnail.size():
@@ -2535,7 +2536,8 @@ class StructuredTextField(TextField):
             return
         link = self.LCGLink(self._ctrl)
         enumerator = self.AttachmentEnumerator(self._storage, images=True)
-        if link.target() in enumerator.values():
+        transaction = self._row.transaction()
+        if link.target() in enumerator.values(transaction=transaction):
             filename = link.target()
         else:
             # TODO: Warn the user?
@@ -2579,14 +2581,16 @@ class StructuredTextField(TextField):
                                     align=link.align(),
                                     tooltip=link.tooltip()),
                        layout=(Columns(('filename', button), 'preview'),
-                               'align', 'size', 'orig_size', 'preview_size', 'tooltip'))
+                               'align', 'size', 'orig_size', 'preview_size', 'tooltip'),
+                       transaction=transaction)
         if row:
             filename = row['filename'].value()
             if row['size'].value() != self._size_computer(row, filename):
                 size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
                 try:
                     self._storage.update(filename, dict(has_thumbnail=(size is not None),
-                                                        thumbnail_size=size))
+                                                        thumbnail_size=size),
+                                         transaction=transaction)
                 except AttachmentStorage.StorageError as e:
                     run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
                                message=_(u"Chyba při aktualizaci:\n%s") % e)
@@ -2601,7 +2605,7 @@ class StructuredTextField(TextField):
             return
         link = self.LCGLink(self._ctrl)
         enumerator = self.AttachmentEnumerator(self._storage, images=False)
-        if link.target() in enumerator.values():
+        if link.target() in enumerator.values(transaction=self._row.transaction()):
             filename = link.target()
         else:
             # TODO: Warn the user?
