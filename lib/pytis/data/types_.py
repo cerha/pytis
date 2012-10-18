@@ -346,9 +346,11 @@ class Type(object):
                 return True
         if self._enumerator is not None:
             if isinstance(self._enumerator, DataEnumerator):
-                kwargs = dict(transaction=transaction, condition=condition, arguments=arguments)
+                kwargs = dict(condition=condition, arguments=arguments)
             else:
                 kwargs = arguments or {}
+            if isinstance(self._enumerator, TransactionalEnumerator):
+                kwargs['transaction'] = transaction
             if not self._enumerator.check(value, **kwargs):
                 raise self._validation_error(self.VM_INVALID_VALUE)
         for c in self._constraints:
@@ -2193,6 +2195,15 @@ class Enumerator(object):
         raise ProgramError('Not implemented', 'Enumerator.values()')
     
 
+class TransactionalEnumerator(object):
+    """Mix-in class for enumerators which need a database transaction.
+
+    The methods 'values()' and 'check()' of such enumerators accept one
+    mandatory keyword argument 'transaction' representing the current database
+    transaction.
+    
+    """
+    
 class FixedEnumerator(Enumerator):
     """Enumerator with a fixed enumeration passed to the constructor.
 
@@ -2217,7 +2228,7 @@ class FixedEnumerator(Enumerator):
         return self._enumeration
         
     
-class DataEnumerator(Enumerator):
+class DataEnumerator(Enumerator, TransactionalEnumerator):
     """Enumerator retrieving the enumeration values from a data object.
 
     The enumerator uses one column of the data object to get the set of
