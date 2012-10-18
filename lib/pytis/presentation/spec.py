@@ -3386,6 +3386,15 @@ class AttachmentStorage(object):
     for each record (the 'attachment_storage' argument of 'Field' can be a row
     function) or any other logic.  It just depends on how the instances are
     created (which constructor arguments they receive).
+
+    All public methods transaction accept the argument 'transaction'.  The
+    particular attachment storage implementation may choose to use or ignore
+    this argument as approppriate (obviously, it makes sense only when they
+    store something in the same database from which the transaction
+    originates).  The caller should always pass the transaction, however,
+    unless he surely knows which storage implementation is in use.  Of course,
+    the transaction may only be passed in contexts where one exists.  If there
+    is no transaction in progress, None is passed.
     
     """
 
@@ -3537,12 +3546,8 @@ class AttachmentStorage(object):
             keys may be 'title', 'descr' (corresponding to 'resource.title()'
             and 'resource.descr()') or any additional application defined
             attachment parameters (usually passed through 'resource.info()').
-          transaction -- current database transaction instance.  The particular
-            attachment storage may choose to use or ignore this argument as
-            approppriate (obviously, it makes sense only when they store
-            something in the same database).  The caller should always pass it,
-            however, unles he surely know which storage implementation is in
-            use.
+          transaction -- current database transaction instance or None.  See
+            the class docstring for more details.
              
 
         Raises 'InvalidImageFormat' exception if an image of unknown or invalid
@@ -3566,12 +3571,8 @@ class AttachmentStorage(object):
             'resource.title()' and 'resource.descr()') or any additional
             application defined attachment parameters (usually passed through
             'resource.info()').
-          transaction -- current database transaction instance.  The particular
-            attachment storage may choose to use or ignore this argument as
-            approppriate (obviously, it makes sense only when they store
-            something in the same database).  The caller should always pass it,
-            however, unles he surely know which storage implementation is in
-            use.
+          transaction -- current database transaction instance or None.  See
+            the class docstring for more details.
         
         Returns None when the update is performed ok or an error message string
         when error occurres.
@@ -3592,12 +3593,8 @@ class AttachmentStorage(object):
             Must be one of existing filenames as returned by
             'resource.filename()' of one of the resources returned by
             'resources()'.
-          transaction -- current database transaction instance.  The particular
-            attachment storage may choose to use or ignore this argument as
-            approppriate (obviously, it makes sense only when they store
-            something in the same database).  The caller should always pass it,
-            however, unles he surely know which storage implementation is in
-            use.
+          transaction -- current database transaction instance or None.  See
+            the class docstring for more details.
 
         The returned value is an open file like object with methods 'read()'
         and 'close()'.  The calling side is responsible for calling 'close()'
@@ -3617,12 +3614,8 @@ class AttachmentStorage(object):
             Must be one of existing filenames as returned by
             'resource.filename()' of one of the resources returned by
             'resources()'.
-          transaction -- current database transaction instance.  The particular
-            attachment storage may choose to use or ignore this argument as
-            approppriate (obviously, it makes sense only when they store
-            something in the same database).  The caller should always pass it,
-            however, unles he surely know which storage implementation is in
-            use.
+          transaction -- current database transaction instance or None.  See
+            the class docstring for more details.
 
         Image resources will automatically have a 'thumbnail' attribute if the
         user requested to display a smaller version of the image.  The storage
@@ -3638,12 +3631,8 @@ class AttachmentStorage(object):
 
         Arguments:
         
-          transaction -- current database transaction instance.  The particular
-            attachment storage may choose to use or ignore this argument as
-            approppriate (obviously, it makes sense only when they store
-            something in the same database).  The caller should always pass it,
-            however, unles he surely know which storage implementation is in
-            use.
+          transaction -- current database transaction instance or None.  See
+            the class docstring for more details.
              
         The returned list consists of 'lcg.Resource' instances corresponding to
         attachment files.  See 'resource()' for more information about the
@@ -3660,12 +3649,8 @@ class AttachmentStorage(object):
         Arguments:
 
           uri -- the searched resource URI as a basestring.
-          transaction -- current database transaction instance.  The particular
-            attachment storage may choose to use or ignore this argument as
-            approppriate (obviously, it makes sense only when they store
-            something in the same database).  The caller should always pass it,
-            however, unles he surely know which storage implementation is in
-            use.
+          transaction -- current database transaction instance or None.  See
+            the class docstring for more details.
              
         Searches all the resources returned by 'resources()' including nested
         resources, such as thumbnails of Image resources.
