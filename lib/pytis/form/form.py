@@ -2815,7 +2815,7 @@ class InputForm(PopupEditForm):
         self._specification = Spec(resolver)
         super(InputForm, self)._full_init(parent, resolver, name, guardian=guardian,
                                           mode=self.MODE_INSERT, multi_insert=False,
-                                          prefill=prefill)
+                                          prefill=prefill, transaction=transaction)
         
     def _create_view_spec(self):
         return self._specification.view_spec()
