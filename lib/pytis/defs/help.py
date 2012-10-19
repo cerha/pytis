@@ -100,13 +100,6 @@ class Help(Specification):
             return None
         return pp.DbAttachmentStorage(table, ref, record[ref].value(), base_uri='resource:')
     
-    def _content(self, record):
-        content = '\n\n'.join([record[f].value()
-                               for f in ('menu_help', 'spec_description', 'spec_help', 'content')
-                               if record[f].value() is not None])
-        storage = self._attachment_storage(record)
-        return pytis.util.parse_lcg_text(content, resources=storage and storage.resources() or ())
-        
     def redirect(self, record):
         if record['page_id'].value() is not None:
             return None
@@ -118,7 +111,7 @@ class Help(Specification):
             return 'help.NoHelp'
     def bindings(self):
         return (
-            Binding('content', _("Obsah"), content=self._content),
+            Binding('content', _("Obsah"), uri=lambda r: 'help:'+r['help_id'].value()),
             Binding('fields', _("Políčka"), 'help.FieldItemsHelp', 'spec_name'),
             Binding('profiles', _("Profily"), 'help.ProfileItemsHelp', 'spec_name'),
             Binding('actions', _("Akce"), 'help.ActionItemsHelp', 'spec_name'),
