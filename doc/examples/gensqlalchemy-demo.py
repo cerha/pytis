@@ -129,7 +129,7 @@ class Baz(SQLView):
     name = 'baz'
     schemas = ((Private, 'public',),)
     @classmethod
-    def condition(class_):
+    def query(class_):
         return sqlalchemy.union(sqlalchemy.select([c.Foo.id, c.Bar.description],
                                                   from_obj=[t.Foo.join(t.Bar)]),
                                 sqlalchemy.select([c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
@@ -137,27 +137,27 @@ class Baz(SQLView):
 class Baz2(SQLView):
     schemas = ((Private, 'public',),)
     @classmethod
-    def condition(class_):
+    def query(class_):
         return sqlalchemy.select([c.Baz.id], from_obj=[t.Baz], whereclause=(c.Baz.id > 0))
 
 class AliasView(SQLView):
     name = 'aliased'
     @classmethod
-    def condition(class_):
+    def query(class_):
         foo1 = t.Foo.alias('foo1')
         foo2 = t.Foo.alias('foo2')
         return sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n<foo2.c.n)])
 
 class FromSelect(SQLView):
     @classmethod
-    def condition(class_):
+    def query(class_):
         foo = t.Foo
         select = sqlalchemy.select([foo], from_obj=[foo]).alias('s(keycol)')
         return sqlalchemy.select(['s.*'], from_obj=[select], whereclause='s.n > 0')
 
 class LimitedView(SQLView):
     @classmethod
-    def condition(class_):
+    def query(class_):
         foo = t.Foo
         return sqlalchemy.select(class_._exclude(foo, foo.c.n))
 
@@ -165,7 +165,7 @@ class EditableView(SQLView):
     schemas = ((Private, 'public',),)
     update_order = (Foo, Bar,)
     @classmethod
-    def condition(class_):
+    def query(class_):
         return sqlalchemy.select([c.Foo.id, c.Foo.description.label('d1'),
                                   c.Bar.id.label('id2'), c.Bar.description.label('d2')],
                                  from_obj=[t.Foo.join(t.Bar)])
@@ -174,7 +174,7 @@ class BogusView(SQLView):
     "One should avoid using outer joins when possible."
     schemas = ((Private, 'public',),)
     @classmethod
-    def condition(class_):
+    def query(class_):
         foo, bar = t.Foo, t.Bar
         return sqlalchemy.select([foo], from_obj=[FullOuterJoin(foo, bar, foo.c.id==bar.c.id)])
 

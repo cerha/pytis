@@ -2411,7 +2411,7 @@ class _GsqlViewNG(Select):
         definition_lines = []
         for d in definitions:
             definition_lines.append(string.join(['        %s\n' % (dd,) for dd in d.split('\n')], ''))
-        items.append('    @classmethod\n    def condition(cls):\n%s' % (string.join(definition_lines, ''),))
+        items.append('    @classmethod\n    def query(cls):\n%s' % (string.join(definition_lines, ''),))
         if condition is not None:
             items[-1] += '        return %s' % (condition,)
         def quote(command):
@@ -2962,7 +2962,7 @@ class _GsqlView(_GsqlSpec):
                 where = map(gen_where, self._join)
             else:
                 where = gen_where(self._join)
-        items.append('    @classmethod\n    def condition(cls):')
+        items.append('    @classmethod\n    def query(cls):')
         if is_union:
             tables = [string.join(t, ',\n    ') for t in self._tables_from]
             selections = []

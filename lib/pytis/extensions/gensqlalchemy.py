@@ -60,9 +60,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
     def visit_view(self, view, create_ok=False):
         self._set_search_path(view.search_path())
         command = 'CREATE OR REPLACE VIEW "%s"."%s" AS ' % (view.schema, view.name,)
-        condition = view.condition()
-        condition.pytis_prefix = command
-        self.connection.execute(condition)
+        query = view.query()
+        query.pytis_prefix = command
+        self.connection.execute(query)
         view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def visit_type(self, type_, create_ok=False):
@@ -1057,19 +1057,19 @@ class SQLView(_SQLTabular):
     _DB_OBJECT = 'VIEW'
 
     @classmethod
-    def condition(class_):
+    def query(class_):
         return None
 
     __visit_name__ = 'view'
 
     def __new__(cls, metadata, search_path):
-        columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.condition().columns])
+        columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.query().columns])
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
     def _add_dependencies(self):
         super(SQLView, self)._add_dependencies()
-        objects = [self.condition()]
+        objects = [self.query()]
         seen = []
         # We may add some objects multiple times here but that doesn't matter.
         # Trying to prune the list in trivial ways makes gsql many times slower
@@ -1163,7 +1163,7 @@ class SQLView(_SQLTabular):
         return reordered
     
     def _original_columns(self):
-        return self.condition().inner_columns
+        return self.query().inner_columns
 
     def _default_rule_commands(self):
         return ('NOTHING',)
