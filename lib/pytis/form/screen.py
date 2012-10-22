@@ -1856,9 +1856,13 @@ class Browser(wx.Panel, CommandHandler):
                 gtk_scrolled_window.add(webview)
                 gtk_scrolled_window.show_all()
                 webview.connect('notify::load-status', self._on_load_status_changed)
+                #webview.connect('notify::title', self._on_title_changed)
                 webview.connect('navigation-policy-decision-requested', self._on_navigation_request)
                 webview.connect('resource-request-starting', self._on_resource_request)
                 #webview.connect('load-error', self._on_load_error)
+                #features = webview.get_window_features()
+                #features.set_property('statusbar_visible', True)
+                #features.set_property('locationbar-visible', True)
                 settings = webview.get_settings()
                 settings.props.user_agent += ' Pytis/%s (WebKit)' % pytis.__version__
                 #settings.props.enable_developer_extras = True # Doesn't work...
