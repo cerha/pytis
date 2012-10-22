@@ -2,7 +2,7 @@
 
 # Prvky uživatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -359,14 +359,15 @@ class SFDialog(SFSDialog):
         def create_in_operator(i, n, operator):
             if operator.name() == 'NOT':
                 op_label = _(u"NOT IN")
-                operator = operator.args()[0]
+                op_in = operator.args()[0]
             else:
                 op_label = _(u"IN")
-            col = self._find_column(operator.column_id())
-            spec = operator.spec_title()
-            if operator.profile_name():
-                spec += ' / ' + operator.profile_name()
-            text = "%s %s %s (%s)" % (col.label(), op_label, spec, operator.table_column_label())
+                op_in = operator
+            col = self._find_column(op_in.column_id())
+            spec = op_in.spec_title()
+            if op_in.profile_name():
+                spec += ' / ' + op_in.profile_name()
+            text = "%s %s %s (%s)" % (col.label(), op_label, spec, op_in.table_column_label())
             ctrl = label(text)
             ctrl._pytis_in_operator = operator
             return (ctrl,
