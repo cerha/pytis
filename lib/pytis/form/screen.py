@@ -1830,7 +1830,7 @@ class Browser(wx.Panel, CommandHandler):
         self._resource_provider = None
         self._restricted_navigation_uri = None
         self._uri_change_callback = None
-        self._loading_help = False
+        self._last_help_uri = None
         wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _on_idle(self, event):
@@ -1913,22 +1913,23 @@ class Browser(wx.Panel, CommandHandler):
             decision.ignore()
             message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
-        elif uri.startswith('help:') and not self._loading_help:
-            # We need to protect loading help by the flag self._loading_help
-            # because the signal gets called recursively for unknown reason
-            # when webview.load_string() is called.
-            self._loading_help = True
+        elif uri.startswith('help:'):
+            if self._last_help_uri == uri \
+                    and action.get_reason() == webkit.WEB_NAVIGATION_REASON_OTHER:
+                # Calling load_content() below triggers _on_navigation_request again,
+                # but the later call must be ignored to avoid recursion.
+                self._last_help_uri = None
+                return False
             self._last_help_uri = uri
             from pytis.help import HelpGenerator, HelpExporter
             node = HelpGenerator().help_page(uri[5:])
             exporter = HelpExporter(styles=('default.css', 'pytis-help.css'))
-            self.load_content(node, exporter=exporter)
+            self.load_content(node, base_uri=uri, exporter=exporter)
             if action.get_reason() in (webkit.WEB_NAVIGATION_REASON_LINK_CLICKED,
                                        webkit.WEB_NAVIGATION_REASON_FORM_SUBMITTED,
-                                       webkit.WEB_NAVIGATION_REASON_OTHER):
+                                       webkit.WEB_NAVIGATION_REASON_OTHER,):
                 history = self._webview.get_back_forward_list()
                 history.add_item(webkit.WebHistoryItem(uri, uri))
-            self._loading_help = False
             return True
         else:
             return False
@@ -2026,7 +2027,7 @@ class Browser(wx.Panel, CommandHandler):
             self._webview.load_html_string(html, base_uri)
         self._async_queue.append(f)
 
-    def load_content(self, node, exporter=None):
+    def load_content(self, node, base_uri='', exporter=None):
         """Load browser content from lcg.ContentNode instance."""
         if exporter is None:
             class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
@@ -2034,7 +2035,8 @@ class Browser(wx.Panel, CommandHandler):
             exporter = Exporter(styles=('default.css',), inlinestyles=True)
         context = exporter.context(node, None)
         html = exporter.export(context)
-        self.load_html(html.encode('utf-8'), resource_provider=node.resource_provider())
+        self.load_html(html.encode('utf-8'), base_uri=base_uri,
+                       resource_provider=node.resource_provider())
 
 
 class HelpBrowserFrame(wx.Frame):
