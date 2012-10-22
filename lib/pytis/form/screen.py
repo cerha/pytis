@@ -1886,7 +1886,7 @@ class Browser(wx.Panel, CommandHandler):
             msg = _(u"Načítám dokument.")
             busy = True
         busy_cursor(busy)
-        message(msg)
+        message(msg, log_=False)
 
     def _on_load_error(self, webview, frame, uri, gerror):
         # For debugging only! (non portable hack)
