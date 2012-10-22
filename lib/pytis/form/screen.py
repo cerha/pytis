@@ -1980,7 +1980,7 @@ class Browser(wx.Panel, CommandHandler):
         self._webview.stop_loading()
         
     def _cmd_reload(self):
-        self._webview.reload()
+        self.reload()
 
     def _cmd_load_uri(self, uri):
         self._webview.load_uri(uri)
@@ -1990,6 +1990,9 @@ class Browser(wx.Panel, CommandHandler):
             return super(Browser, self).can_command(command, **kwargs)
         else:
             return False
+
+    def reload(self):
+        self._webview.reload_bypass_cache()
         
     def toolbar(self, parent):
         toolbar = wx.ToolBar(parent)

@@ -3017,7 +3017,7 @@ class BrowsableShowForm(ShowForm):
         return result
                      
 
-class WebForm(Form):
+class WebForm(Form, Refreshable):
     """Web browser embedded in a Pytis form.
 
     The form shows a browser window as its main content.
@@ -3040,3 +3040,6 @@ class WebForm(Form):
         self._browser = browser = Browser(self)
         sizer.Add(browser.toolbar(self), 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(browser, 1, wx.EXPAND)
+
+    def _refresh(self, when=None, interactive=False):
+        self._browser.reload()
