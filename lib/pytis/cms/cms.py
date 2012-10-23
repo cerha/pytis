@@ -102,6 +102,8 @@ class Modules(Specification):
         if modname:
             for python_module_name in self._SEARCH_MODULES:
                 python_module = __import__(python_module_name)
+                for component in python_module_name.split('.')[1:]:
+                    python_module = getattr(python_module, component)
                 if hasattr(python_module, modname):
                     module = getattr(python_module, modname)
                     import wiking
