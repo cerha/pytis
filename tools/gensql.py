@@ -3247,7 +3247,7 @@ class _GsqlFunction(_GsqlSpec):
         name = self._name
         body = self._body
         python = not isinstance(body, basestring)
-        superclass = 'SQLPyFunction' if python else 'SQLFunction'
+        superclass = '_PyFunctionBase' if python else 'SQLFunction'
         items = ['class %s(%s):' % (self._convert_name(), superclass,)]
         doc = self._convert_doc()
         if doc:
@@ -3309,22 +3309,35 @@ class _GsqlFunction(_GsqlSpec):
                 fill = ' ' * indentation
                 long_fill = ' ' * required_indentation + fill
                 static_method = fill + '@staticmethod\n'
+                ignore_regexp = re.compile('(.* )?(TMoney|TKurz) +=')
                 if main:
                     name_pos = match.end(2)
                     lines[0] = lines[0][:name_pos] + name + lines[0][match.end(3):]
-                    lines = lines[:skip] + [long_fill + l for l in intro_lines] + lines[skip:]
+                    lines = lines[:skip] + [long_fill + l for l in intro_lines if not ignore_regexp.match(l)] + lines[skip:]
                     lines.insert(0, static_method)
                 else:
-                    def_regexp = 'def ( *)([^(]*)'
-                    while body_lines and not re.match(def_regexp, body_lines[0][indentation:]):
-                        intro_lines.append(body_lines.pop(0)[indentation:])
+                    def_regexp = re.compile('def ( *)([^(]*)')
+                    while body_lines and not def_regexp.match(body_lines[0][indentation:]):
+                        line = body_lines.pop(0)[indentation:]
+                        if not ignore_regexp.match(line):
+                            intro_lines.append(line)
                     lines = []
+                    skip = False
                     for line in body_lines:
+                        if ignore_regexp.match(line):
+                            continue
                         match = re.match(def_regexp, line[indentation:])
                         if match:
-                            lines.append(static_method)
                             sub_pos = indentation + match.end(1)
-                            line = line[:sub_pos] + 'sub_' + line[sub_pos:]
+                            sub_name = match.group(2)
+                            if sub_name in ('pg_val', 'pg_escape', 'string', 'boolean', 'num', '_html_table',):
+                                skip = True
+                            else:
+                                skip = False
+                                lines.append(static_method)
+                                line = line[:sub_pos] + 'sub_' + line[sub_pos:]
+                        if skip:
+                            continue
                         lines.append(line)
                         if match:
                             for l in intro_lines:
@@ -3975,6 +3988,7 @@ class _PyFunctionBase(SQLPyFunction):
             visited_files[index_file] = None
             f = open(index_file, 'w')
             f.write(coding_header)
+            f.write(preamble)
             f.close()
         last_visited_file = [None]
         last_visited_suffix = ['']
