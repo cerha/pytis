@@ -2946,10 +2946,11 @@ class BrowseForm(FoldableForm):
                     title += ' / ' + resolver().get(b.name(), 'view_spec').title()
             return title
         def link_label(title, type=FormType.BROWSE):
-            mapping = {FormType.BROWSE: _(u"Odskok - %s"),
-                       FormType.EDIT:   _(u"Editovat %s"),
-                       FormType.VIEW:   _(u"Náhled %s"),
-                       FormType.INSERT: _(u"Nový záznam pro %s")}
+            mapping = {FormType.BROWSE:         _(u"Odskok - %s"),
+                       FormType.EDIT:           _(u"Editovat %s"),
+                       FormType.VIEW:           _(u"Náhled %s"),
+                       FormType.INSERT:         _(u"Nový záznam pro %s"),
+                       FormType.BROWSABLE_VIEW: _(u"Náhled %s")}
             return mapping[type] % title
         # Create links lists as accepted by _link_mitems()
         self._explicit_links = []
