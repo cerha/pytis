@@ -902,6 +902,12 @@ class MultiSideForm(MultiForm):
             super(MultiSideForm.TabbedForm, self)._init_attributes(**kwargs)
         def binding(self):
             return self._binding
+        def focus(self):
+            nb = self._parent
+            if nb.GetPageIndex(self) == nb.GetSelection():
+                # Only perform focus if the form is currently selected in the notebook.
+                super(MultiSideForm.TabbedForm, self).focus()
+            
         
     class TabbedBrowseForm(TabbedForm, SideBrowseForm):
         _ALLOW_TITLE_BAR = False
