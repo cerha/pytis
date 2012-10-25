@@ -818,10 +818,13 @@ class MultiForm(Form, Refreshable):
         
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
+        active = self.active_form()
         for form in self._forms:
             if form and form.initialized():
                 form.show()
                 form._release_data()
+                if form is not active:
+                    form.Show(False)
         self._notebook.Enable(True)
         self._notebook.Show(True)
 
@@ -921,6 +924,7 @@ class MultiSideForm(MultiForm):
                           condition=binding.condition(), arguments=binding.arguments(),
                           prefill=binding.prefill(), search=binding.search())
             super(MultiSideForm.TabbedBrowseForm, self)._init_attributes(binding=binding, **kwargs)
+            
     class TabbedShowForm(TabbedForm, ShowForm):
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
