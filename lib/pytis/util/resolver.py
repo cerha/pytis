@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006, 2008, 2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -265,3 +265,7 @@ class Resolver(object):
         name = dict([(cls, name) for name, cls in names.items()]) # Map classes to their names.
         return [(name[cls], cls) for cls in classes]
 
+    def clear(self):
+        """Clear all resolver caches."""
+        self._specification_cache.clear()
+        self._method_result_cache.clear()

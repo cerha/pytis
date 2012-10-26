@@ -1727,6 +1727,7 @@ def init_access_rights(connection_data):
                     relaxed_action_rights.append(r)
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
+    resolver().clear()
     if config.debug:
         _dump_rights()
     
