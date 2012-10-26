@@ -740,9 +740,11 @@ def object_by_class(class_, search_path=None):
     table_name = class_.pytis_name()
     return object_by_path(table_name, search_path)    
 
-def object_by_specification_name(specification_name):
+def object_by_specification_name(specification_name, search_path=None):
     class_ = _PytisBaseMetaclass.specification_by_class_name(specification_name)
-    return object_by_class(class_, _current_search_path)
+    if class_ is None:
+        return None 
+    return object_by_class(class_, search_path or _current_search_path)
 
 def specification_by_name(name):
     return _PytisBaseMetaclass.specification_by_name(name)
@@ -813,9 +815,11 @@ class ReferenceLookup(object):
         def __init__(self, specification, column):
             self._specification = specification
             self._column = column
-        def get(self):
-            columns = object_by_specification_name(self._specification).c
-            return columns[self._column]
+        def get(self, search_path=None):
+            specification = object_by_specification_name(self._specification, search_path)
+            if specification is None:
+                return None
+            return specification.c[self._column]
     class ColumnLookup(object):
         def __init__(self, specification):
             self._specification = specification
