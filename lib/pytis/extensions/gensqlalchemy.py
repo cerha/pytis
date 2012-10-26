@@ -18,6 +18,51 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Specifications of database objects.
+
+Database objects are specified as classes.  The classes inherit superclasses
+specific for particular kinds of database objects.  The classes define database
+objects by specifying their properties in class attributes or methods.  The
+following main specification classes are available: 'SQLSchema', 'SQLSequence',
+'SQLTable', 'SQLView', 'SQLType', 'SQLFunction', 'SQLPlFunction',
+'SQLPyFunction', 'SQLTrigger'.
+
+Database specifications are based on SQLAlchemy Python library.  In many places
+you can (and should) use SQLAlchemy constructs.
+
+It is important to distinguish between specification classes and their
+instances.  All database objects are specified as classes.  This makes
+specification inheritence easy.  Also a single specification class may define
+multiple database objects, typically a table specification may define the same
+table to be created in multiple schemas.  Particular database objects (e.g. a
+single table in a given schema) are represented by specification instances.
+Those instances are automatically created when a specification class is
+defined.
+
+When defining a specification you can refer to other specifications.  Usually
+you use specification classes in such places.  But sometimes it is necessary to
+use specification instances, in particular, SQLAlchemy can work only with
+specification instances.  You may not create specification instances directly.
+But they are available through instances of auxiliary classes 'TableLookup',
+'ColumnLookup' and 'ReferenceLookup' (available under short names 't', 'c' and
+'r').
+
+Specifications are defined in a Python source file.  Nothing else than
+specification classes and corresponding utilities should be put into the file.
+Names of specification classes may not start with 'SQL' and '_SQL' prefixes,
+those prefixes are reserved for base classes.  Specifications whose names start
+with underscore don't emit database objects, they are typically used as common
+base classes to be used by real specifications.  You can put specifications to
+several files and then include them into the main specification file using
+'include()' function.
+
+SQL code can be generated from the specifications using 'gsql_file()' function.
+
+An example specification is available in
+'pytis/doc/examples/gensqlalchemy-demo.py', you can see all the most important
+constructs there.
+
+"""
 
 import collections
 import copy
@@ -100,7 +145,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             elif issubclass(function_type, (SQLTable, SQLType,)):
                 result_type = object_by_class(function_type, search_path).pytis_name()
             else:
-                raise Exception("Invalid result type", function_type)
+                raise SQLException("Invalid result type", function_type)
         result_type_prefix = 'SETOF ' if function.multirow else ''
         body = function.body().strip()
         command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n%s\n$$ LANGUAGE %s %s' %
@@ -301,10 +346,77 @@ def visit_TIMESTAMP(element, compiler, **kwargs):
 ## Columns
         
 class Column(pytis.data.ColumnSpec):
+    """Specification of a database column.
+
+    It can be used anywhere new column specification is needed, typically in
+    tables or function arguments.  In many other places, typically in views, it
+    is possible to use already defined columns and using already defined
+    columns is preferred.
+
+    Unlike standalone database objects such as tables, columns are not
+    specified by specification classes but by instances of 'Column' class.
+    Column specifications are also not derived from 'sqlalchemy.Column' class,
+    they are transformed to 'sqlalchemy.Column' instance inside gensqlalchemy.
+    When you later retrieve columns from other objects such as tables or views,
+    they are already presented as instances of 'sqlalchemy.Column'.
+
+    Column properties are specified in the class constructor.  Class public
+    methods serve for internal purposes of gensqlalchemy and there are not
+    useful for specifications.  Instead you can inspect 'sqlalchemy.Column'
+    instances when needed in certain places using 'sqlalchemy.Column' public
+    methods.
     
+    """
     def __init__(self, name, type, doc=None, unique=False, check=None,
                  default=None, references=None, primary_key=False, index=False, out=False):
+        """
+        Arguments:
+
+          name -- name of the column; string containing only lower case English
+            letters and underscores.  Empty strings are permitted in special
+            cases where the column name doesn't matter such as in SQL function
+            arguments, however even in such cases it is recommended to use a
+            proper column name as a form of documentation.
+          type -- column type; instance of 'pytis.data.Type' subclass
+          doc -- documentation of the column; basestring or 'None'
+          unique -- if true then the column is marked as unique (if it makes
+            sense at the given place); boolean
+          check -- if not 'None' then it defines SQL construct to use as a
+            check on the given column; basestring
+          default -- default column value; the value type must be compatible
+            with SQLAlchemy requirements for given column type.  When you want
+            to use a database function result as the default value, use
+            'sqlalchemy.text' construct.
+          references -- if not 'None' then it defines column that should be
+            referenced by this 'SQLTable' column.  The value may be the
+            referenced column, the referenced table (then its primary key is
+            used) or 'ReferenceLookup' instance.  Additional keyword arguments
+            from 'sqlalchemy.ForeignKey' constructor (e.g. 'onupdate') may be
+            used, in such a case wrap the target object by 'Arguments' class.
+          primary_key -- if true then the column is marked as part of the table
+            primary key; boolean.  It makes sense only in 'SQLTable'
+            definitions.  You can also use 'PrimaryColumn' class instead of
+            setting this argument, it is equivalent and you can use either the
+            argument or 'PrimaryColumn' class, but it is recommended to be
+            consistent within an application.
+          index -- if True then a default index should be created for this
+            'SQLTable' column; if a dictionary then it contains a single key
+            'method' whose value determines indexing method to be used for this
+            'SQLTable' column; if False then no index creation is requested by
+            the column specification (however the index may still be created
+            based on other information or specification)
+          out -- when the column is an 'SQLFunction' argument, the value
+            defines whether the given function argument is an output argument;
+            boolean
+          
+        """
         pytis.data.ColumnSpec.__init__(self, name, type)
+        assert doc is None or isinstance(doc, basestring), doc
+        assert isinstance(unique, bool), unique
+        assert check is None or isinstance(check, basestring), check
+        assert isinstance(primary_key, bool), primary_key
+        assert isinstance(index, (bool, dict,)), index
+        assert isinstance(out, bool), out
         self._doc = doc
         self._unique = unique
         self._check = check
@@ -369,7 +481,12 @@ class Column(pytis.data.ColumnSpec):
         return column
 
 class PrimaryColumn(Column):
-    
+    """Specification of a column that is part of the primary key.
+
+    Instances of this class are automatically handled as primary keys or their
+    components.  Otherwise there is no difference to 'Column' class.
+
+    """
     def __init__(self, *args, **kwargs):
         kwargs = copy.copy(kwargs)
         kwargs['primary_key'] = True
@@ -419,16 +536,37 @@ def _expand_schemas(schemas):
                         s = o.pytis_name()
                         break
                 else:
-                    raise Exception("Schema instance not found", s)
+                    raise SQLException("Schema instance not found", s)
             else:
-                raise Exception("Invalid schema reference", s)
+                raise SQLException("Invalid schema reference", s)
             expanded_path.append(s)
         expanded_schemas.append(expanded_path)
     return expanded_schemas
 
 class SQLFlexibleValue(object):
-    
+    """Flexible definition of a value.
+
+    Using instances of this class it is possible to define values which can be
+    overridden.  Typical use is in schema definitions or access rights where it
+    is useful to use different values in different databases.
+
+    The rules for retrieving the value are defined in constructor.  The current
+    value can be retrieved using 'value()' method.
+
+    """   
     def __init__(self, name, default=None, environment=None):
+        """
+        Arguments:
+
+          name -- name of the value; string.  It defines the default name of
+            the variable holding the value.
+          default -- the default value
+          environment -- name of the environment variable containing the name
+            of the variable holding the value; string or 'None'
+
+        See also 'value()'.
+
+        """
         assert isinstance(name, basestring), name
         assert isinstance(environment, (basestring, types.NoneType,)), environment
         self._name = name
@@ -436,6 +574,21 @@ class SQLFlexibleValue(object):
         self._environment = environment
 
     def value(self):
+        """Return current object value.
+
+        The value is retrieved as follows:
+
+        - If environment variable given in the constructor exists and contains
+          something then its contents defines the name of the variable holding
+          the value.  The name is looked up in globals and the corresponding
+          value is returned.
+
+        - Otherwise if name given in the constructor exists in globals, return
+          its value.
+
+        - Otherwise the default value given in the constructor is returned.
+        
+        """
         value = None
         name = None
         if self._environment is not None:
@@ -453,12 +606,11 @@ _default_schemas = SQLFlexibleValue('default_schemas', environment='GSQL_DEFAULT
 _metadata = sqlalchemy.MetaData()
 
 class SQLException(Exception):
-    pass
+    """Exception raised on errors in specification processing."
 
 class SQLNameException(SQLException):
     def __init__(self, *args):
         super(SQLNameException, self).__init__("Object not found", *args)
-
 
 class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     
@@ -519,7 +671,7 @@ class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
         if cls._is_specification(clsname):
             if cls.table is None:
                 if cls.events:
-                    raise Exception("Trigger without table", cls)
+                    raise SQLException("Trigger without table", cls)
             else:
                 cls.schemas = cls.table.schemas
         _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
@@ -571,6 +723,8 @@ class _Reference(object):
         reference = table.c[column]
         return reference
 def object_by_reference(name):
+    """
+    """
     name = name.strip()
     pos = name.find('(')
     if pos > 0:
@@ -603,16 +757,60 @@ class RawCondition(object):
         return self._condition
     
 class TableLookup(object):
+    """Accessor for table instances.
+
+    You can use an instance of this class to access instances of table
+    specifications when needed.  The instance makes all defined tables
+    available as its attributes by their specification names.
+
+    An instance of this class is available under short name 't'.  So you can
+    refer to table instances by expressions such as 't.FooTable'.
+
+    """
     def __getattr__(self, specification):
         return object_by_specification_name(specification)
 t = TableLookup()
 
 class ColumnLookup(object):
+    """Accessor for table column instances.
+
+    You can use an instance of this class to access instances of columns of
+    table specifications when needed.  The instance makes SQLAlchemy column
+    accessors available as its attributes named after all defined tables.
+
+    An instance of this class is available under short name 'c'.  So you can
+    refer to column instances by expressions such as 'c.FooTable.bar_column'.
+    'c.FooTable' returns the same object as regular SQLAlchemy table would
+    return with 'FooTable.c'.
+
+    Note the lookup contains only table name and no schema name.  The schema is
+    determined dynamically from the context where the column lookup is used
+    (such as search path of current table).
+
+    """
     def __getattr__(self, specification):
         return object_by_specification_name(specification).c
 c = ColumnLookup()
 
 class ReferenceLookup(object):
+    """Representation of specification columns.
+
+    'ReferenceLookup' works similar to 'ColumnLookup' but it returns a
+    reference to column instance instead of a direct column instance.  This is
+    useful when you want to refer to columns of specifications rather than to
+    columns of particular database objects.  Typical use is in foreign key
+    constraints where you define a table in multiple schemas by a single
+    specification.  If 'ColumnLookup' was used to define the referenced column
+    then all the tables would reference the same table in a single given
+    schema.  With 'ReferenceLookup' the referenced table is determined
+    separately for each of the schemas so the multiple tables can reference
+    their corresponding tables in different schemas.
+
+    An instance of this class is available under short name 'r'.  So you can
+    refer to column specifications by expressions such as
+    'r.FooTable.bar_column'.
+
+    """
     class Reference(object):
         def __init__(self, specification, column):
             self._specification = specification
@@ -630,6 +828,14 @@ class ReferenceLookup(object):
 r = ReferenceLookup()
 
 class Arguments(object):
+    """Wrapper for objects accompanied by arguments.
+
+    By making an instance of this class you can add optional arguments to
+    objects.  This is currently used only in foreign key constraints.
+
+    This class is also available by short name 'a'.
+    
+    """
     def __init__(self, *args, **kwargs):
         self._args = args
         self._kwargs = kwargs
@@ -640,6 +846,18 @@ class Arguments(object):
 a = Arguments
 
 def reorder_columns(columns, column_ordering):
+    """Return 'columns' in 'column_ordering' order.
+
+    Arguments:
+
+      columns -- columns to reorder, sequence of 'sqlalchemy.Column' instances
+      column_ordering -- specification of column ordering; tuple of column
+        names (strings)
+
+    This function is useful in union selects when you need to combine different
+    tables with different column ordering.
+
+    """
     assert len(columns) == len(column_ordering), (columns, column_ordering,)
     ordered_columns = []
     for o in column_ordering:
@@ -648,7 +866,7 @@ def reorder_columns(columns, column_ordering):
                 ordered_columns.append(c)
                 break
         else:
-            raise Exception("Column not found", o, columns)
+            raise SQLException("Column not found", o, columns)
     return ordered_columns
 
 _forward_foreign_keys = []
@@ -657,7 +875,18 @@ _ForwardForeignKey = collections.namedtuple('_ForwardForeignKey',
                                              'args', 'kwargs', 'table',))
 
 class SQLObject(object):
+    """Base class common to all specification classes.
 
+    This class is not usable directly but it defines properties common to all
+    specification classes.
+
+    Properties:
+
+      access-rights -- definition of access rights to the object; sequence of
+        pairs (RIGHT, ROLE)
+      owner -- database owner of the object; string
+
+    """
     access_rights = ()
     owner = None
     
@@ -684,7 +913,25 @@ class SQLObject(object):
                                       for right, group in self.access_rights]
 
 class SQLSchematicObject(SQLObject):
-    
+    """Specification of a database object with schema.
+
+    Most database objects are put into a schema.  This class defines the
+    corresponding property.  The class is not usable directly but is inherited
+    by other specification classes.
+
+    Properties:
+
+      schemas -- sequence of search paths to use when creating the object.
+        Each search path is a sequence of schema names (strings).  For each of
+        the search paths an instance of the database object is created in the
+        first schema of the given search path.
+
+    It is usually a good idea not to specify schemas directly, but to define
+    one or more schemas as 'SQLFlexibleValue' instances and using those
+    instances in 'schemas' property.  This way it is possible to override the
+    predefined schemas when generating SQL.
+
+    """
     schemas = _default_schemas
 
     def __init__(self, *args, **kwargs):
@@ -706,6 +953,13 @@ gR = RawCondition
 ## Database objects
 
 class SQLSchema(sqlalchemy.schema.DDLElement, sqlalchemy.schema.SchemaItem, SQLObject):
+    """Schema specification.
+
+    Properties:
+
+      name -- name of the schema; string
+      
+    """
     __metaclass__ = _PytisSimpleMetaclass
     __visit_name__ = 'schema'
     _DB_OBJECT = 'SCHEMA'
@@ -729,6 +983,18 @@ def visit_schema(element, compiler, **kw):
     return _make_sql_command(command)
 
 class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
+    """Sequence specification.
+
+    Properties:
+
+      name -- name of the sequence; string
+      start -- initial value of the sequence; integer
+      increment -- increment of the sequence; integer
+
+    Note that some sequences are created automatically, e.g. for SERIAL
+    columns, you shouldn't define such sequences in specifications.
+
+    """
     __metaclass__ = _PytisSchematicMetaclass
     _DB_OBJECT = 'SEQUENCE'
     name = None
@@ -744,6 +1010,35 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
             bind.execute(o)
     
 class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
+    """Base class for all table-like specification objects.
+
+    It defines properties common to all specifications of objects which can
+    look like tables, i.e. real tables, views and functions.  It supports
+    especially creation of INSERT, UPDATE and DELETE rules.
+
+    Properties:
+
+      name -- name of the object; string
+      depends_on -- sequence of specification classes this class depends on.
+        Dependencies are usually implicit (typically by refering to another
+        specification class in the specification) and you have to define them
+        here only in case of doing something special (e.g. by using an
+        otherwise unreferenced object inside raw SQL code).
+      insert_order -- sequence of specification classes defining the table
+        object and order of insertion on them when INSERT command is performed
+        on the object.  If the value is 'None' then default insert action
+        (depending on particular tabular object kind) is performed.
+      update_order -- the same as 'insert_order' but it applies to updates
+      delete_order -- the same as 'insert_order' but it applies to deletes
+      no_insert_columns -- sequence of names of columns (strings) to ignore
+        when performing INSERT action on the object
+      no_update_columns -- the same as 'no_insert_columns'
+
+    The class also defines default methods for rule handling, see
+    'on_insert()', 'on_update()', 'on_delete()', 'on_insert_also()',
+    'on_update_also()', 'on_delete_also()'.
+
+    """
     __metaclass__ = _PytisSchematicMetaclass
     _DB_OBJECT = None
     
@@ -842,7 +1137,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                             break
                     else:
                         # No luck at all
-                        raise Exception("Table key column not found in the view", table_c)
+                        raise SQLException("Table key column not found in the view", table_c)
             name = _sql_plain_name(c.name)
             conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
         return sqlalchemy.and_(*conditions)
@@ -854,6 +1149,14 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         return None
     
     def on_insert(self):
+        """Return sequence of SQL commands to be performed on INSERT.
+
+        The method effectively defines an INSERT rule.  The commands are
+        represented by SQLAlchemy insertion objects.  Default implementation
+        based on object properties is provided so it is usually not necessary
+        to redefine the method unless you want to do something special.
+
+        """
         if self.insert_order is None:
             return self._default_rule_commands()
         commands = []
@@ -864,6 +1167,11 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         return commands
 
     def on_update(self):
+        """Return sequence of SQL commands to be performed on UPDATE.
+
+        This is similar to 'on_insert()' except it handles UPDATE.
+        
+        """
         if self.update_order is None:
             return self._default_rule_commands()
         commands = []
@@ -877,6 +1185,11 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         return commands
 
     def on_delete(self):
+        """Return sequence of SQL commands to be performed on DELETE.
+
+        This is similar to 'on_insert()' except it handles DELETE.
+        
+        """
         if self.delete_order is None:
             return self._default_rule_commands()
         commands = []
@@ -887,15 +1200,66 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         return commands
 
     def on_insert_also(self):
+        """Return sequence of additional SQL commands to perfom on INSERT.
+
+        It effectively defines ON INSERT ALSO rule.  The default implementation
+        returns an empty sequence.
+        
+        """
         return ()
 
     def on_update_also(self):
+        """Return sequence of additional SQL commands to perfom on UPDATE.
+
+        This is similar to 'on_insert_also()' except it handles UPDATE.
+        
+        """
         return ()
 
     def on_delete_also(self):
+        """Return sequence of additional SQL commands to perfom on DELETE.
+
+        This is similar to 'on_insert_also()' except it handles DELETE.
+        
+        """
         return ()
     
 class SQLTable(_SQLTabular):
+    """Regular table specification.
+
+    Properties:
+
+      fields -- tuple of 'Column' instances defining table columns in their
+        order, excluding inherited columns
+      inherits -- tuple of inherited tables, specification classes
+      tablespace -- 'None' or string defining tablespace of the table
+      check -- tuple of SQL expressions (basestrings) defining check
+        constraints on the table
+      unique -- tuple of tuples defining unique constraints; each of the tuples
+        contains names of the table columns (strings) creating a unique
+        constraint
+      foreign_keys -- tuple of multicolumn foreign key constraints.  Each of
+        the constraints is 'Arguments' instance with the first argument being a
+        tuple of table column names and the second argument a tuple of the same
+        length containing corresponding foreign table columns or
+        'ReferenceLookup' instances.  Additional keyword arguments from
+        'sqlalchemy.ForeignKey' constructor (e.g. 'onupdate') may be given.
+        For single column foreign key constraints it is preferable to use
+        'references' argument in 'Column' definitions.
+      with_oids -- iff True then oids are assigned to the table rows; boolean
+
+    It is possible to insert predefined rows into the newly created table.  In
+    such a case set the following properties:
+
+      init_columns -- tuple of column names (strings) of 'init_values'
+      init_values -- tuple of tuples; each of the tuples represents a row of
+        values.  The row contains values of columns as specified by
+        'init_columns' in the given count and order and of types required by
+        SQLAlchemy for given columns.
+
+    See also '_SQLTabular' properties.
+    
+    """
     _DB_OBJECT = 'TABLE'
     
     fields = ()
@@ -986,7 +1350,7 @@ class SQLTable(_SQLTabular):
                 self.add_is_dependent_on(o)
                 break
             else:
-                raise Exception("Unresolved dependency", (pytis_name, self.search_path(),))
+                raise SQLException("Unresolved dependency", (pytis_name, self.search_path(),))
 
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
@@ -1054,6 +1418,24 @@ class SQLTable(_SQLTabular):
                 bind.execute(insert)
 
 class SQLView(_SQLTabular):
+    """View specification.
+
+    Views are similar to tables in that they have columns.  But unlike tables
+    view columns are not defined in the view specification directly, they are
+    defined implicitly by included tables and their columns.
+
+    This class doesn't introduce any new properties.  The only additional thing
+    you must define is 'query()' class method which returns the expression
+    defining the view.  The method must return an 'sqlalchemy.ClauseElement'
+    instance (as all the SQLAlchemy expressions do).
+
+    The expression in 'query()' method is typically constructed using means
+    provided by SQLAlchemy.  The class defines a few additional utility class
+    methods which may be useful for constructing the expression:
+    'SQLView._exclude()', 'SQLView._alias()', 'SQLView._reorder()'.  See their
+    documentation strings for more information.
+
+    """
     _DB_OBJECT = 'VIEW'
 
     @classmethod
@@ -1085,10 +1467,12 @@ class SQLView(_SQLTabular):
                 objects += o.get_children()
                 seen.append(o)
             elif not isinstance(o, RawCondition):
-                raise Exception("Unknown condition element", o)
+                raise SQLException("Unknown condition element", o)
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):
+        """
+        """
         inherited = kwargs.get('inherited', True)
         columns = []
         tables = []
@@ -1159,7 +1543,7 @@ class SQLView(_SQLTabular):
                     reordered.append(cc)
                     break
             else:
-                raise Exception("Missing column", c)
+                raise SQLException("Missing column", c)
         return reordered
     
     def _original_columns(self):
@@ -1176,6 +1560,18 @@ def visit_view(element, compiler, **kw):
     return '"%s"."%s"' % (element.schema, element.name,)
 
 class SQLType(_SQLTabular):
+    """Database type specification.
+
+    Subclasses of this class define new types to be stored in the database.
+    There is rarely need to do this.  Typical use of database types is to
+    define return value types of functions returning multicolumn values which
+    is handled automatically in 'SQLFunctional' objects and there is no need to
+    define such types manually.
+
+    This class doesn't introduce new properties.  You typically define just the
+    fields the type should contain.
+
+    """
     _DB_OBJECT = 'TYPE'
 
     __visit_name__ = 'type'
@@ -1190,6 +1586,47 @@ class SQLType(_SQLTabular):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
     
 class SQLFunctional(_SQLTabular):
+    """Base class of function definitions.
+
+    There are several kinds of supported database functions (SQL, PL/pgSQL,
+    PL/Python) but they share most their properties:
+
+      arguments -- tuple of function arguments represented by 'Column'
+        instances in the given order.  If there are output arguments, mark them
+        using 'out' argument in 'Column' constructor.
+      result_type -- return type of the function.  It can be either instance of
+        'pytis.data.Type' (simple return value of the given type) or a 'Column'
+        instance (simple return value of the given column type) or a tuple of
+        'Column' instances (composite return value of the given column types)
+        or a tabular specification (composite return value of values
+        corresponding to the given object columns) or 'SQLFunctional.RECORD'
+        constant (the return value is defined by output function arguments).
+      multirow -- iff true then the function may return multiple results
+        (rows); boolean
+      security_definer -- iff true then the function runs with permissions of
+        its creator rather than the user invoking it; boolean
+      stability -- information about stability of the function return values to
+        the database query optimizer, the given value (string) is used directly
+        in the function definition.  This is useful to set if the function
+        returns the same values for the same input data and without any side
+        effects.
+
+    Function body can be defined in two ways:
+
+    - By putting the function definition in a file named FUNCTION_NAME.sql
+      where FUNCTION_NAME is the name of the function as defined by 'name'
+      property.  The file must be present in the current working directory when
+      specifications are processed for SQL output.
+
+    - By redefining 'body()' function to return the function body as a
+      basestring.
+
+    Functions can be used in SQL expressions of other specifications by calling
+    their instances with corresponding function argument values (of the types
+    required by SQLAlchemy).  You can get the function instance using
+    'TableLookup' accessor.
+
+    """
     _DB_OBJECT = 'FUNCTION'
 
     arguments = ()
@@ -1224,7 +1661,7 @@ class SQLFunctional(_SQLTabular):
             columns = tuple([sqlalchemy.Column(c.name, c.type)
                              for c in object_by_class(result_type, search_path).c])
         else:
-            raise Exception("Invalid result type", result_type)
+            raise SQLException("Invalid result type", result_type)
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
@@ -1240,6 +1677,14 @@ class SQLFunctional(_SQLTabular):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
     def __call__(self, *arguments):
+        """Return 'sqlalchemy.ClauseElement' corresponding to function call.
+
+        Arguments:
+
+          arguments -- tuple of function argument values, of types as required
+            by SQLAlchemy
+        
+        """
         name = '"%s"."%s"' % (self.schema, self.name,)
         # We can't use the standard SQLAlchemy function call here
         # (i.e. getattr(sqlalchemy.sql.expression.func, name)(*arguments))
@@ -1250,18 +1695,55 @@ class SQLFunctional(_SQLTabular):
         return sqlalchemy.literal(expression)
 
     def body(self):
+        """Return function body as basestring.
+
+        The default implementation reads the function body from the file named
+        FUNCTION_NAME.sql where FUNCTION_NAME is the name of the function as
+        defined by 'name' property.
+
+        """
         return open(self.name + '.sql').read()
 
 class SQLFunction(SQLFunctional):
-    
+    """SQL function definition.
+
+    This class doesn't define anything new, see its superclass for information
+    about function definition.
+
+    """
     _LANGUAGE = 'sql'
 
 class SQLPlFunction(SQLFunctional):
+    """PL/pgSQL function definition.
 
+    This class doesn't define anything new, see its superclass for information
+    about function definition.
+
+    """
     _LANGUAGE = 'plpgsql'
     
 class SQLPyFunction(SQLFunctional):
+    """PL/Python function definition.
 
+    Definitions of PL/Python functions are a bit different from other kinds of
+    function definitions.  They share the same properties but their body is
+    defined in a different way (although nothing prevents you from defining
+    your own 'body()' method the same way as in other kinds of functions).
+
+    The function itself is defined as static method of the specification
+    class.  The method must have the same name and arguments as the function.
+    Therefore there are some limits on the name of the function, e.g. it is not
+    a good idea to name a PL/Python function 'body'.
+
+    You can define utility Python functions for use in the PL/Python function.
+    The utility functions are also defined as static methods of the
+    specification class.  The methods must be named sub_NAME, where NAME is the
+    name of the utility function, and must have the same arguments.  Functions
+    defined this way are available for use in the PL/Python function.
+    Utility functions are typically defined in a common base class inherited by
+    specifications of PL/Python functions.
+    
+    """
     _LANGUAGE = 'plpythonu'
 
     _STATICMETHOD_MATCHER = re.compile('( *)@staticmethod\r?\n?', re.MULTILINE)
@@ -1295,10 +1777,10 @@ class SQLPyFunction(SQLFunctional):
         try:
             lines = inspect.getsourcelines(method)[0]
         except Exception as e:
-            raise Exception("Invalid plpythonu method", (self.__class__.__name__, name, e))
+            raise SQLException("Invalid plpythonu method", (self.__class__.__name__, name, e))
         match = self._STATICMETHOD_MATCHER.match(lines[0])
         if not match:
-            self.Exception("@staticmethod decorator not found", (self.__class__.__name__, name))
+            raise SQLException("@staticmethod decorator not found", (self.__class__.__name__, name))
         indentation = indentation - len(match.group(1))
         if indentation == 0:
             def reindent(line):
@@ -1313,14 +1795,40 @@ class SQLPyFunction(SQLFunctional):
         return [reindent(l) for l in lines if l.strip()]
 
 class SQLEventHandler(SQLFunctional):
+    """Definition of a function serving as a table event handler.
+
+    This is basically a normal function defining just one additional property:
+
+      table -- specification of the table the function is bound to
+
+    Subclasses may define more additional properties.
     
+    """
     table = None
 
 class SQLTrigger(SQLEventHandler):
+    """Trigger definition.
+
+    Trigger is defined as a normal function, just note that SQL functions can't
+    be used as triggers in PostgreSQL.  The following properties may be defined
+    in triggers in addition to 'SQLEventHandler' properties:
+
+      events -- tuple of table events the trigger should be invoked for; each
+        of the events must be one of strings 'insert', 'update', 'delete',
+        'truncate'.
+      position -- whether the trigger should be invoked before or after table
+        modification; one of the strings 'before' and 'after'
+      each_row -- if true then the trigger should be invoked for each modified
+        table row otherwise it should be invoked once per statement
+      call_arguments -- if the trigger function has any arguments then this
+        property must define their values and in the right order; tuple of
+        values of types accepted by SQLAlchemy for given argument types.
+    
+    """
     __metaclass__ = _PytisTriggerMetaclass
     
-    position = 'after'
     events = ('insert', 'update', 'delete',)
+    position = 'after'
     each_row = True
     call_arguments = ()
 
@@ -1342,6 +1850,18 @@ class SQLTrigger(SQLEventHandler):
         return object_by_class(self.body)(*arguments)
 
 class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
+    """Raw SQL definition.
+
+    Do not use raw definitions.  If you think you really need one, ask for
+    extension of gensqlalchemy to handle your construction.  If this is not
+    possible you may define the following properties:
+
+      name -- name of the raw definition, string
+      depends_on -- sequence of specification classes this class depends on
+
+    The raw definition must be returned from class method named 'sql'.
+
+    """
     __metaclass__ = _PytisSchematicMetaclass
     
     name = None
@@ -1411,12 +1931,30 @@ def _dump_sql_command(sql, *multiparams, **params):
     print output + ';'
 
 def include(file_name, globals_=None):
+    """Include specification file into current specification.
+
+    Arguments:
+
+      file_name -- name of the specification file to include; basestring
+      globals_ -- global dictionary to use; most often 'globals()' should be
+        given here
+
+    """
     if globals_ is None:
         globals_ = globals()
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
 def gsql_file(file_name):
+    """Generate SQL code from given specification file.
+
+    Arguments:
+
+      file_name -- name of the specification file to process; basestring
+
+    The SQL code is output on standard output.
+
+    """
     global _metadata
     _metadata = sqlalchemy.MetaData()
     execfile(file_name, copy.copy(globals()))
