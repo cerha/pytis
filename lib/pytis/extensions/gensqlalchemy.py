@@ -606,7 +606,7 @@ _default_schemas = SQLFlexibleValue('default_schemas', environment='GSQL_DEFAULT
 _metadata = sqlalchemy.MetaData()
 
 class SQLException(Exception):
-    """Exception raised on errors in specification processing."
+    """Exception raised on errors in specification processing."""
 
 class SQLNameException(SQLException):
     def __init__(self, *args):
@@ -723,8 +723,6 @@ class _Reference(object):
         reference = table.c[column]
         return reference
 def object_by_reference(name):
-    """
-    """
     name = name.strip()
     pos = name.find('(')
     if pos > 0:
