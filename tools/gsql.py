@@ -18,13 +18,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import optparse
 import sys
 
 import pytis.extensions.gensqlalchemy
 
-def run(argv):
-    file_name = argv[0]
-    pytis.extensions.gensqlalchemy.gsql_file(file_name)
+USAGE = """usage: %prog [ --limit REGEXP ] SPECIFICATION-FILE"""
+
+def parse_options():
+    parser = optparse.OptionParser(usage=USAGE)
+    parser.add_option("--limit", default=None, action="store", dest="regexp")
+    options, args = parser.parse_args(args=sys.argv[1:])
+    if len(args) != 1:
+        parser.print_help()
+        sys.exit(1)
+    return options, args[0]
+
+def run():
+    options, file_name = parse_options()
+    pytis.extensions.gensqlalchemy.gsql_file(file_name, regexp=options.regexp)    
 
 if __name__ == '__main__':
-    run(sys.argv[1:])
+    run()

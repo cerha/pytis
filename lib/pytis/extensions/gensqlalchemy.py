@@ -1947,12 +1947,16 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
-def gsql_file(file_name):
+def gsql_file(file_name, regexp=None):
     """Generate SQL code from given specification file.
 
     Arguments:
 
       file_name -- name of the specification file to process; basestring
+      regexp -- if not 'None', generate SQL code only for specifications with
+        specification class names matching this regular expression and
+        view and function specifications dependent on those specifications;
+        basestring
 
     The SQL code is output on standard output.
 
@@ -1962,19 +1966,40 @@ def gsql_file(file_name):
     execfile(file_name, copy.copy(globals()))
     global engine
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    if regexp is not None:
+        matcher = re.compile(regexp)
+    matched = set()
+    def matching(o):
+        if regexp is None:
+            return True
+        if matcher.search(o.__class__.__name__):
+            matched.add(o)
+            return True
+        if isinstance(o, SQLTable):
+            return False
+        if isinstance(o, _SQLTabular):
+            for d in o._extra_dependencies:
+                if d in matched:
+                    matched.add(o)
+                    return True
+        return False
     for o in _PytisSimpleMetaclass.objects:
-        engine.execute(o)
-        o.after_create(engine)
+        if matching(o):
+            engine.execute(o)
+            o.after_create(engine)
     for sequence in _metadata._sequences.values():
-        sequence.create(engine, checkfirst=False)
-        sequence.after_create(engine)
+        if matching(sequence):
+            sequence.create(engine, checkfirst=False)
+            sequence.after_create(engine)
     for table in _metadata.sorted_tables:
-        table.create(engine, checkfirst=False)
+        if matching(table):
+            table.create(engine, checkfirst=False)
     for ffk in _forward_foreign_keys:
-        target = ffk.reference.get(ffk.search_path)
-        kwargs = ffk.kwargs
-        kwargs['name'] += target.name.replace('.', '__')
-        f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
-                                            table=ffk.table, **kwargs)
-        fdef = sqlalchemy.schema.AddConstraint(f)
-        engine.execute(fdef)
+        if matching(ffk.table):
+            target = ffk.reference.get(ffk.search_path)
+            kwargs = ffk.kwargs
+            kwargs['name'] += target.name.replace('.', '__')
+            f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
+                                                table=ffk.table, **kwargs)
+            fdef = sqlalchemy.schema.AddConstraint(f)
+            engine.execute(fdef)
