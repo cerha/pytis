@@ -1,0 +1,91 @@
+#title Tvorba databázových specifikací
+
+* Obecné zásady
+
+Specifikace databázových objektů se zapisují v pythonových souborech.
+Generování SQL z těchto souborů se provádí nástrojem pytis/tools/gsql.py.
+
+Každý databázový objekt je definován jako pythonová třída, která je potomkem
+některé ze tříd SQL* ze souboru pytis/lib/pytis/extensions/gensqlalchemy.py.
+Druh databázového objektu je dán poděděnou SQL* třídou.  K dispozici jsou tyto
+bázové specifikační třídy: SQLSchema, SQLSequence, SQLTable, SQLView, SQLType,
+SQLFunction, SQLPlFunction, SQLPyFunction, SQLTrigger.
+
+Vlastnosti databázového objektu jsou dány definovanými atributy specifikační
+třídy.  Např. společným atributem všech specifikačních tříd je `name' určující
+jméno databázového objektu.  Různé druhy databázových objektů definují různé
+množiny těchto atributů, viz dokumentace a příklady.  V několika málo případech
+jsou vlastnosti objektů specifikovány metodami namísto atributů, typickým
+příkladem je metoda SQLView.query.
+
+Ve specifikačních souborech je automaticky naimportován obsah knihovny
+gensqlalchemy.py, není tedy nutné jej importovat.  Třídy ve specifikacích by
+neměly mít názvy začínající prefixem `SQL', tyto názvy jsou rezervovány pro
+objekty definované gensqlalchemy.py.  Specifikační třídy, jejichž názvy
+začínají podtržítkem, negenerují databázové objekty.  Typicky slouží jako
+bázové třídy, které lze podědit do jiných specifikačních tříd.
+
+Specifikace lze rozdělit do více souborů.  Ve specifikačním souboru lze načíst
+obsah jiného specifikačního souboru voláním
+
+  include('vkládaný-soubor-bez-přípony', globals())
+  
+
+* SQLALchemy
+
+Knihovna gensqlalchemy.py je založena na pythonové knihovně SQLAlchemy
+(http://docs.sqlalchemy.org/), která poskytuje prostředky pro vyjadřování a
+generování SQL konstrukcí.  Z této knihovny využíváme pouze core, nikoliv ORM.
+SQLAlchemy nabízí především prostředky pro práci s tabulkami, jejich sloupci,
+jednoduchými databázovými typy a SQL výrazy, naopak moc neřeší např. databázové
+náhledy, funkce a složené typy.  gensqlalchemy.py doplňuje podporu pro objekty
+a konstrukce, se kterými potřebujeme pracovat a které přitom v SQLAlchemy
+chybí.
+
+Pro tvorbu specifikací jsou nejdůležitější SQL výrazy.  SQLAlchemy nabízí
+široké vyjadřovací prostředky (viz dokumentace SQLAlchemy na
+http://docs.sqlalchemy.org/, odkaz SQL Expression Language Tutorial), které by
+měly pokrýt naprostou většinu běžných potřeb.  V gensqlalchemy.py se tedy
+předpokládá využívání konstrukcí SQLAlchemy ve všech SQL výrazech, kde je to
+možné.  Typickým příkladem je specifikační metoda SQLView.query, kde by se již
+neměly používat pokud možno žádné „raw SQL“ konstrukce.
+
+Je ovšem nutno upozornit na to, že SQLAlchemy na rozdíl od gensqlalchemy.py
+nepoužívá pro specifikaci databázových objektů specifikační třídy, nýbrž
+instance svých tříd.  gensqlalchemy.py tyto instance vytváří na pozadí,
+v metatřídách specifikačních tříd.  Ve specifikačních třídách se na ně lze
+odkazovat jen na některých místech (např. v metodách), zatímco na jiných
+místech (např. v odkazech na vlastní sloupce ve specifikací sloupců tabulky) to
+možné není.  Pak je nezbytné použít SQL výrazy v řetězcové formě.  Viz příklady
+v gensqlalchemy-demo.py.
+
+
+* Další dokumentace a příklady
+
+Příklady použití typických specifikačních konstrukcí jsou v souboru
+pytis/doc/examples/gensqlalchemy-demo.py.  Tento soubor je korektní specifikací
+databáze.  SQL příkazy pro naplnění obsahu databáze se z něj vygenerují
+příkazem
+
+  ../../tools/gsql.py gensqlalchemy-demo.py
+
+Volbou --limit lze omezit generování SQL objektů pouze na objekty odpovídající
+zadanému regulárnímu výrazu a objekty na nich závislé (kromě závislých
+tabulek).
+
+Dokumentace konkrétních databázových objektů a jejich vlastností je v jejich
+dokumentačních řetězcích v souboru pytis/lib/pytis/extensions/gensqlalchemy.py.
+
+
+* Poznámky
+
+Předpokládá se, že specifikační mechanismy budou doplňovány o nové pomocné
+funkce, metody a jiné objekty.  Pokud při tvorbě specifikací narazíte na
+opakované zdlouhavé používání nějaké konstrukce, mělo by se uvažovat
+o zjednodušení prostřednictvím doplnění nové pomůcky do gensqlalchemy.
+
+SQLAlchemy nepodporuje FULL OUTER JOIN a RIGHT OUTER JOIN.  Částečnou podporu
+pro FULL OUTER JOIN doplňuje gensqlalchemy.py, je však lépe se použití FULL
+OUTER JOIN vyhnout, je-li to rozumně možné.  RIGHT OUTER JOIN nelze použít
+vůbec, místo toho je nutné příslušný SELECT přeformulovat s pomocí LEFT OUTER
+JOIN.
