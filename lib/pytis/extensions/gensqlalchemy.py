@@ -1975,27 +1975,28 @@ def gsql_file(file_name, regexp=None, views=False, functions=False):
         matcher = re.compile(regexp)
     matched = set()
     def matching(o):
+        result = True
         if (views or functions):
             if isinstance(o, SQLView):
                 if not views:
-                    return False
+                    result = False
             elif isinstance(o, SQLFunctional) and not isinstance(o, SQLTrigger):
                 if not functions:
-                    return False
+                    result = False
             else:
-                return False
+                result = False
         if regexp is None:
-            return True
+            return result
         if matcher.search(o.__class__.__name__):
             matched.add(o)
-            return True
+            return result
         if isinstance(o, SQLTable):
             return False
         if isinstance(o, _SQLTabular):
             for d in o._extra_dependencies:
                 if d in matched:
                     matched.add(o)
-                    return True
+                    return result
         return False
     for o in _PytisSimpleMetaclass.objects:
         if matching(o):
