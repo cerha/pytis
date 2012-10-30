@@ -2390,7 +2390,7 @@ class DBCrypto(_DBBaseTest):
         _DBBaseTest.setUp(self)
         for q in ("insert into c_pytis_crypto_names (name) values ('test')",
                   "insert into e_pytis_crypto_keys (name, username, key) values ('test', current_user, pytis_crypto_store_key('somekey', 'somepassword'))",
-                  "create table foo (id serial, x bytea, y bytea, z bytea)",):
+                  "create table cfoo (id serial, x bytea, y bytea, z bytea)",):
             try:
                 self._sql_command(q)
             except:
@@ -2399,19 +2399,19 @@ class DBCrypto(_DBBaseTest):
         import config
         config.dbconnection.set_crypto_password('somepassword')
         B = pytis.data.DBColumnBinding
-        key = B('id', 'foo', 'id')
+        key = B('id', 'cfoo', 'id')
         spec = pytis.data.DataFactory(
             pytis.data.DBDataDefault,
             (key,
-             B('x', 'foo', 'x', type_=pytis.data.Integer(), crypto_name='test'),
-             B('y', 'foo', 'y', type_=pytis.data.Float(), crypto_name='test'),
-             B('z', 'foo', 'z', type_=pytis.data.String(), crypto_name='test'),
+             B('x', 'cfoo', 'x', type_=pytis.data.Integer(), crypto_name='test'),
+             B('y', 'cfoo', 'y', type_=pytis.data.Float(), crypto_name='test'),
+             B('z', 'cfoo', 'z', type_=pytis.data.String(), crypto_name='test'),
              ),
             key)
         self._data = spec.create(connection_data=self._dconnection)
         self._data._pg_flush_connections()
     def tearDown(self):
-        for q in ("drop table foo",
+        for q in ("drop table cfoo",
                   "delete from e_pytis_crypto_keys",
                   "delete from c_pytis_crypto_names",):
             try:
