@@ -69,12 +69,17 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             raise DBSystemException(_(u"Can't connect to database"), e)
         connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
         connection_instance = class_._postgresql_Connection(connection, connection_data)
-        connection_instance.set_connection_info('transaction_commands', [])
+        class_._postgresql_reset_connection_info(connection_instance)
         return connection_instance
 
     @classmethod
     def _postgresql_close_connection(class_, connection):
         connection.connection().close()
+
+    @classmethod
+    def _postgresql_reset_connection_info(class_, connection, commands=None):
+        connection.set_connection_info('transaction_commands', (commands or []))
+        connection.set_connection_info('search_path', None)
     
     def _postgresql_query(self, connection, query, outside_transaction, query_args=(), _retry=True):
         result = None
@@ -105,8 +110,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             finally:
                 if outside_transaction:
                     raw_connection.commit()
-                    connection.set_connection_info('transaction_commands', [])
-                    connection.connection_info('transaction_commands').append('commit')
+                    self._postgresql_reset_connection_info(connection, ['commit'])
             return cursor
         def retry(message, exception):
             connection.set_connection_info('broken', True)
@@ -213,7 +217,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         raw_connection = connection.connection()
         try:
             raw_connection.commit()
-            connection.set_connection_info('transaction_commands', ['commit'])
+            self._postgresql_reset_connection_info(connection, ['commit'])
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
         
@@ -226,7 +230,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._maybe_connection_error(e)
         # For unknown reasons, connection client encoding gets reset after
         # rollback
-        connection.set_connection_info('transaction_commands', ['rollback'])
+        self._postgresql_reset_connection_info(connection, ['rollback'])
         cursor = raw_connection.cursor()
         query = 'set client_encoding to "utf-8"'
         try:
