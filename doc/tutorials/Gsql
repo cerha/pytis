@@ -89,3 +89,23 @@ pro FULL OUTER JOIN doplňuje gensqlalchemy.py, je však lépe se použití FULL
 OUTER JOIN vyhnout, je-li to rozumně možné.  RIGHT OUTER JOIN nelze použít
 vůbec, místo toho je nutné příslušný SELECT přeformulovat s pomocí LEFT OUTER
 JOIN.
+
+V převedených specifikacích se hojně používají pomocné funkce začínající
+písmenem `g'.  Ty ošetřují raw SQL kód z původních definic gensql.  V nových
+definicích se tyto funkce již používat nemají.  Příklady převodu těchto
+konstrukcí (jsou to pouze příklady, v některých situacích může převedená
+konstrukce vypadat jinak):
+
+  gA('tabulka(sloupec)) ->
+    a(r.Tabulka.sloupec)
+  gA('tabulka(sloupec)', onupdate='CASCADE') ->
+    a(r.Tabulka.sloupec, onupdate='CASCADE')
+
+  gL('sum(tabulka.sloupec)') ->
+    sqlalchemy.func.sum(tabulka.c.sloupec)
+
+  gO('tabulka') ->
+    t.Tabulka
+
+  gR('tabulka1.sloupec1 = tabulka2.sloupec2') ->
+    tabulka1.c.sloupec1 == tabulka2.c.sloupec2

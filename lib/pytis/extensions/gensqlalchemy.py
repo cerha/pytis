@@ -1473,7 +1473,18 @@ class SQLView(_SQLTabular):
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):
-        """
+        """Return sequence of 'tabular' columns with some exclusions.
+
+        Arguments:
+
+          tabular -- 'SQLTable' instance providing the initial sequence of columns
+          columns_tables -- sequence of objects to exclude from columns of
+            'tabular'.  The objects can be names of the columns to exclude
+            (strings) or tables (or their aliases) in which case all columns
+            with names present among those table column names are excluded.
+          inherited (in kwargs) -- iff true, exclude all inherited columns;
+            boolean
+
         """
         inherited = kwargs.get('inherited', True)
         columns = []
