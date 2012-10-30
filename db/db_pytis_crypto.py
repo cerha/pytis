@@ -23,8 +23,13 @@ db_rights = globals().get('Gall_pytis', None)
 if not db_rights:
     raise ProgramError('No rights specified! Please define Gall_pytis')
 
-execfile('db_pytis_crypto_basic.py', copy.copy(globals()))
+def include_file(filename):
+    import imp
+    file_, pathname, description = imp.find_module(filename)
+    include(pathname, globals())
 
+include_file('db_pytis_crypto_basic')
+    
 ## Optional key management
 
 _std_table('c_pytis_crypto_names',
