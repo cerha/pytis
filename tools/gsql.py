@@ -23,11 +23,16 @@ import sys
 
 import pytis.extensions.gensqlalchemy
 
-USAGE = """usage: %prog [ --limit REGEXP ] SPECIFICATION-FILE"""
+USAGE = """usage: %prog [ OPTIONS ] SPECIFICATION-FILE"""
 
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
-    parser.add_option("--limit", default=None, action="store", dest="regexp")
+    parser.add_option("--limit", default=None, action="store", dest="regexp",
+                      help="output specifications matching and dependent on REGEXP")
+    parser.add_option("--views", action="store_true", dest="views",
+                      help="limit output to views")
+    parser.add_option("--functions", action="store_true", dest="functions",
+                      help="limit output to functions")
     options, args = parser.parse_args(args=sys.argv[1:])
     if len(args) != 1:
         parser.print_help()
@@ -36,7 +41,8 @@ def parse_options():
 
 def run():
     options, file_name = parse_options()
-    pytis.extensions.gensqlalchemy.gsql_file(file_name, regexp=options.regexp)    
+    pytis.extensions.gensqlalchemy.gsql_file(file_name, regexp=options.regexp,
+                                             views=options.views, functions=options.functions)
 
 if __name__ == '__main__':
     run()

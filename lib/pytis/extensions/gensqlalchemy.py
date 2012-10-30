@@ -1947,7 +1947,7 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
-def gsql_file(file_name, regexp=None):
+def gsql_file(file_name, regexp=None, views=False, functions=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -1957,6 +1957,11 @@ def gsql_file(file_name, regexp=None):
         specification class names matching this regular expression and
         view and function specifications dependent on those specifications;
         basestring
+      views -- iff true, output just views; boolean
+      functions -- iff true, output just functions; boolean
+
+    If both 'views' and 'functions' are specified, output both views and
+    functions.
 
     The SQL code is output on standard output.
 
@@ -1970,6 +1975,15 @@ def gsql_file(file_name, regexp=None):
         matcher = re.compile(regexp)
     matched = set()
     def matching(o):
+        if (views or functions):
+            if isinstance(o, SQLView):
+                if not views:
+                    return False
+            elif isinstance(o, SQLFunctional) and not isinstance(o, SQLTrigger):
+                if not functions:
+                    return False
+            else:
+                return False
         if regexp is None:
             return True
         if matcher.search(o.__class__.__name__):
