@@ -45,8 +45,18 @@ import cStringIO
 import thread
 import time
 
-import sqlalchemy
-import sqlalchemy.dialects.postgresql
+try:
+    import sqlalchemy
+except Exception as e:
+    # Ignore import error and re-raise it only when sqlalchemy is actually used
+    # in run-time.
+    class Dummy(object):
+        def __getattr__(self, name):
+            raise e
+    sqlalchemy = Dummy()
+else:
+    import sqlalchemy.dialects.postgresql
+    
 
 from pytis.data import *
 
