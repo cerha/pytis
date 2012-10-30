@@ -460,7 +460,7 @@ class HtmlFieldExporter(MultilineFieldExporter):
                 ('/', None),
                 ('styles',      ('Format',)),#'Font','FontSize')),
                 ('paragraph',   ('NumberedList','BulletedList','-',
-                                 'Outdent','Indent','-', #'Blockquote','-',
+                                 'Outdent','Indent','-', 'Blockquote', 'BlockquoteFooter', '-',
                                  'JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
                                  # '-', 'BidiLtr','BidiRtl'
                                  )),

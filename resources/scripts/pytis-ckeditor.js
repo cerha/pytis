@@ -54,9 +54,7 @@ pytis.HtmlField.plugin = function(editor) {
 
     /* Create insertSpaceBefore and insertSpaceAfter menu items */
     function insert_space(direction) {
-	var sel = editor.getSelection();
-	var element = sel.getStartElement();
-	element = element.getAscendant('div', true);
+	var element = ck_get_ascendant(editor, 'div');
 	var paragraph = new CKEDITOR.dom.element('p');
 	if (direction == 'before')
 	    paragraph.insertBefore(element);
@@ -113,6 +111,35 @@ pytis.HtmlField.plugin = function(editor) {
 	});
     }
 
+    /* Add support for blockquote foters */
+    editor.addCommand('blockquote-footer',
+                      {
+                          exec : function(editor)
+                          {
+                              var blockquote = ck_get_ascendant(editor, 'blockquote');
+			      if (blockquote){
+				  /* Check existing or create new footer */
+				  var footer = ck_get_dom_subelement(blockquote, ['footer']);
+				  if (!footer){
+                                      footer = CKEDITOR.dom.element.createFromHtml("<footer>—&nbsp;</footer>");
+                                      blockquote.append(footer);
+				  }
+				  /* Move caret to footer element */
+				  var range = new CKEDITOR.dom.range(editor.document);
+				  range.moveToElementEditablePosition(footer, true);
+				  editor.getSelection().selectRanges([range]);
+			      } else {
+				  alert(pytis._("Create the blockquote element first, then you can add footer inside it."));
+			      }
+                          }
+                      });
+    var icon = pytis.HtmlField.base_uri + '/editor-blockquote-footer.png';
+    editor.ui.addButton('BlockquoteFooter', {
+        label: pytis._("Block Quote Footer"),
+        command: 'blockquote-footer',
+        icon: icon
+    });
+
     /* Remove all but whitelisted tags on paste */
     editor.on('paste', function(evt) {
         var whitelist = ['div', 'span', 'strike', 'li', 'dt', 'dd',
@@ -166,6 +193,18 @@ function ck_element (dialog, id) {
 	    return result;
     }
     return null;
+}
+
+function ck_get_ascendant(editor, tag){
+    /* Get ascendant element of current editor selection or caret position by tag name
+     *
+     * Returns the ascendant element or null */
+
+    var sel = editor.getSelection();
+    var element = sel.getStartElement();
+    if (element)
+        element = element.getAscendant(tag, true);
+    return element;
 }
 
 function ck_get_dom_subelement (element, path){
@@ -468,10 +507,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
         ],
         onShow: function() {
             // Check if editing an existing element or inserting a new one
-            var sel = editor.getSelection();
-            var element = sel.getStartElement();
-            if (element)
-                element = element.getAscendant(html_elements[0], true);
+            var element = ck_get_ascendant(editor, html_elements[0]);
             if (!element || element.getName() != html_elements[0] || element.data('cke-realelement') || !element.hasClass(attachment_class)) {
                 // The element doesn't exist yet, create it together with all its descendants
                 element = editor.document.createElement(html_elements[0]);
@@ -1118,11 +1154,8 @@ pytis.HtmlField.mathml_dialog = function(editor) {
         ],
         onShow: function() {
             // Check if editing an existing element or inserting a new one
-            var sel = editor.getSelection();
-            var element = sel.getStartElement();
             var tag = 'span';
-            if (element)
-                element = element.getAscendant(tag, true);
+            element = ck_get_ascendant(editor, tag);
             if (!element || element.getName() != tag) {
                 element = editor.document.createElement(
 		    tag,
