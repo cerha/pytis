@@ -458,7 +458,7 @@ class HtmlFieldExporter(MultilineFieldExporter):
                                  'Subscript', 'Superscript', '-', 'RemoveFormat')),
                 ('tools',       ('Source', 'Maximize', 'ShowBlocks','-', 'About')),
                 ('/', None),
-                ('styles',      ('Format',)),#'Font','FontSize')),
+                ('styles',      ('Format', 'Language')), #'Font','FontSize')),
                 ('paragraph',   ('NumberedList','BulletedList','-',
                                  'Outdent','Indent','-', 'Blockquote', 'BlockquoteFooter', '-',
                                  'JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',

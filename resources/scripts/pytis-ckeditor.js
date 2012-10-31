@@ -140,6 +140,19 @@ pytis.HtmlField.plugin = function(editor) {
         icon: icon
     });
 
+
+    /* Add support for marking languages */
+    /* TODO: List of languages for this document should eventually be editable in and taken from CMS */
+    var languages = [["default", pytis._("Default")],
+                     ["cs", pytis._("Czech")],
+                     ["en", pytis._("English")],
+                     ["de", pytis._("German")],
+                     ["es", pytis._("Spanish")],
+                     ["fr", pytis._("French")],
+                     ["ru", pytis._("Russian")],
+                     ["la", pytis._("Latin")]];
+    editor.ui.addRichCombo('Language', ck_language_combo(editor, languages));
+
     /* Remove all but whitelisted tags on paste */
     editor.on('paste', function(evt) {
         var whitelist = ['div', 'span', 'strike', 'li', 'dt', 'dd',
@@ -1292,5 +1305,114 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     }
 
     return dialog;
-
 };
+
+function ck_language_combo(editor, languages) {
+    /* Return CKEditor field definition for managing languages */
+    return {
+        label: pytis._("Language"),
+        title: pytis._("Language"),
+        className : 'cke_format',
+        multiSelect : false,
+        panel :
+        {
+            css : [ editor.config.contentsCss, CKEDITOR.getUrl(editor.skinPath + 'editor.css' )],
+        },
+        init : function()
+        {
+            this.startGroup("Language");
+            for (var i=0; i<languages.length; i++){
+                this.add(languages[i][0], languages[i][1], languages[i][1]); //id, caption, title
+            }
+        },
+        onRender : function()
+        {
+            /* Setup listener for updating language dropdown on selection change */
+            editor.on('selectionChange', function(ev) {
+                var sel = editor.getSelection();
+                var element = sel.getStartElement();
+                this.setValue(element.getAttribute('lang') || 'default');
+            }, this);
+        },
+        onClick : function(value)
+        {
+            function child_of_ancestor(ancestor, node){
+                /* Find the direct child of common ancestor which holds the anchor element. */
+                var parents = node.getParents();
+                var parent = null;
+                for (i=parents.length-1; i>=0; i--){
+                    if (parents[i].$ == ancestor.$)
+                        return parent;
+                    parent = parents[i];
+                }
+                return null;
+            }
+            function remove_lang(element){
+                /* Remove language attributes from element recursively */
+                if (element.type == Node.ELEMENT_NODE){
+                    el.removeAttribute('lang');
+                    el.removeClass('cke-explicit-language');
+                    children = el.getChildren();
+                    for (var i=0; i<children.length; i++){
+                        remove_lang(children);
+                    }
+                }
+            }
+
+            editor.focus();
+            /* Save snapshot for Undo/Redo */
+            editor.fire('saveSnapshot');
+            /* Prepare start and end blocks of the selection */
+            var sel = editor.getSelection();
+            var ranges = sel.getRanges();
+            var ancestor = ranges[0].getCommonAncestor();
+            var start_block = child_of_ancestor(ancestor, ranges[0].startContainer) || ranges[0].startContainer;
+            var end_block = child_of_ancestor(ancestor, ranges[0].endContainer) || ranges[0].endContainer;
+
+            function block_element_with_lang(tag) {
+                /* Returns true if tag with given name is a block element which
+                   can carry a lang attribute */
+                var elements = ['p', 'div', 'blockquote', 'table', 'dd', 'dt',
+                                'header', 'footer', 'ul', 'ol', 'li', 'pre',
+                                'section', 'tbody', 'tfoot', 'th', 'tr',
+                                'caption', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+                for (var i=0; i<elements.length; i++)
+                    if (tag == elements[i]) return true;
+                return false;
+            }
+
+            if (value != 'default'){
+                /* Mark any block elements in the selection with lang attribute.
+                   Ignoring exact offsets inside start and end blocks is intentional. */
+                var block_elements = false;
+                var el = start_block;
+                while (el){
+                    if (el.type == Node.ELEMENT_NODE){
+                        if (block_element_with_lang(el.getName())){
+                            el.setAttribute('lang', value);
+                            el.addClass('cke-explicit-language');
+                            block_elements = true;
+                        }
+                    }
+                    if (el.$ == end_block.$)
+                        break;
+                    el = el.getNext();
+                }
+                /* If there are no blocks in this selection, mark/unmark inline with a span */
+                if (!block_elements) {
+                    editor.insertHtml('<span lang="'+value+'" class="cke-explicit-language">'+sel.getNative()+'</span>');
+                }
+            } else {
+                /* Default language means deletion of language marks */
+                var el = start_block;
+                while(el){
+                    remove_lang(el);
+                    if (el.$ == end_block.$) break;
+                    el = el.getNext();
+                }
+            }
+            /* Save snapshot for Undo/Redo */
+            editor.fire('saveSnapshot');
+        }
+    }
+}
