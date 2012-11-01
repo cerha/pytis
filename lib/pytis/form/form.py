@@ -1757,11 +1757,24 @@ class RecordForm(LookupForm):
             return None
                 
     def _context_action_args(self, action):
+        def selection(form):
+            result = self.selected_rows()
+            if len(result) == 0:
+                class CurrentRowIterator(object):
+                    """See '_grid.TableRowIterator' for documentation."""
+                    def __init__(self, form):
+                        self._form = form
+                    def __iter__(self):
+                        return iter([self._form.current_row()])
+                    def form(self):
+                        return self._form
+                result = CurrentRowIterator(form)
+            return result
         context = action.context()
         if context == ActionContext.RECORD:
             args = (self.current_row(),)
         elif context == ActionContext.SELECTION:
-            args = (self.selected_rows(),)
+            args = (selection(self),)
         else:
             raise ProgramError("Unsupported action context:", context)
         scontext = action.secondary_context()
@@ -1770,7 +1783,7 @@ class RecordForm(LookupForm):
             if scontext == ActionContext.RECORD:
                 args += (form.current_row(),)
             elif scontext == ActionContext.SELECTION:
-                args += (form.selected_rows(),)
+                args += (selection(form),)
             else:
                 raise ProgramError("Unsupported action secondary_context:", scontext)
         return args
@@ -1841,8 +1854,6 @@ class RecordForm(LookupForm):
             return False
         
     def _can_context_action(self, action):
-        if action.context() == ActionContext.SELECTION and len(self.selected_rows()) < 1:
-            return False
         if action.secondary_context() is not None and self._secondary_context_form() is None:
             return False
         if not pytis.data.is_in_groups(action.access_groups()):
@@ -2019,7 +2030,7 @@ class RecordForm(LookupForm):
         'PresentedRow' instances in the order of ther presence in the form.
 
         """
-        return ()
+        return iter([])
 
     def unselect_selected_rows(self):
         """Completely clear the current selection of rows in the form."""

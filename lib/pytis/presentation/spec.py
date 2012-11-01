@@ -320,7 +320,9 @@ class ActionContext(object):
     """Action is performed on the current selection (records selected in the UI).
 
     The action handler will receive the selection as an iterable object itering
-    over the 'PresentedRow' instances as its first positional argument.
+    over the 'PresentedRow' instances as its first positional argument.  If no
+    selection is currently active, the iterator will iter over just one item --
+    the current row.
 
     """
     GLOBAL = 'GLOBAL'
