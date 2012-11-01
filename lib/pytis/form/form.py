@@ -1764,6 +1764,8 @@ class RecordForm(LookupForm):
                     """See '_grid.TableRowIterator' for documentation."""
                     def __init__(self, form):
                         self._form = form
+                    def __len__(self):
+                        return 1
                     def __iter__(self):
                         return iter([self._form.current_row()])
                     def form(self):
