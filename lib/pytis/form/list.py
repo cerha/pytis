@@ -2203,7 +2203,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         row, col = self._current_cell()
         self._grid.DisableCellEditControl()
         self._current_editor = None
-                
+
+    def _can_clear_selection(self):
+        return len(self.selected_rows()) > 0
+
+    def _cmd_clear_selection(self):
+        self.unselect_selected_rows()
+        
     # Veřejné metody
         
     def is_edited(self):
@@ -2919,6 +2925,9 @@ class BrowseForm(FoldableForm):
                   command=ListForm.COMMAND_ACTIVATE(alternate=True),
                   help=_(u"Otevřít formulář s tabulkou nahoře a náhledem v dolní části."),
                   icon='show-record'),
+            MItem(_(u"Zrušit výběr"),
+                  command=ListForm.COMMAND_CLEAR_SELECTION(),
+                  help=_(u"Zrušit výběr řádků pro hromadné akce.")),
             )
         editor_items = [MItem(_(u"Textový editor políčka %s") % f.label(),
                               command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),

@@ -188,6 +188,8 @@ Command(ListForm, 'TOGGLE_ROW_LABELS',
         "Skrytí/zobrazení sloupce záhlaví řádků")
 Command(ListForm, 'CONTEXT_MENU',
         "Zobrazení kontextového menu aktivní buňky")
+Command(ListForm, 'CLEAR_SELECTION',
+        "Clear the current selection of rows in the form.")
 Command(FoldableForm, 'EXPAND_OR_COLLAPSE',
         "Sbalování a rozbalování řádků")
 Command(FoldableForm, 'EXPAND_OR_COLLAPSE_SUBTREE',
