@@ -2701,11 +2701,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     def _full_init(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
         super(CodebookForm, self)._full_init(parent, *args, **kwargs)
-        if self._folding_enabled():
-            height = self._DEFAULT_WINDOW_HEIGHT
-        else:
-            height = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
-        self.SetSize((self._total_width()+30, height))
+        self._set_real_size()
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid, self._on_dclick)
 
     def _init_attributes(self, begin_search=None, **kwargs):
@@ -2728,6 +2724,16 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             self._cb_spec = CodebookSpec()
         self._begin_search = begin_search
         super(CodebookForm, self)._init_attributes(**kwargs)
+
+    def _set_real_size(self):
+        if self._folding_enabled():
+            height = self._DEFAULT_WINDOW_HEIGHT
+        else:
+            height = min(self._DEFAULT_WINDOW_HEIGHT, self._total_height()+50)
+        if self._search_panel:
+            height += 30
+        size = (self._total_width()+30, height)
+        self.SetSize(size)
         
     def _popup_frame_style(self):
         return super(CodebookForm, self)._popup_frame_style() | wx.RESIZE_BORDER
@@ -2770,6 +2776,8 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             if col is not None:
                 self._select_cell(row=0, col=self._columns.index(col))
                 self.COMMAND_INCREMENTAL_SEARCH.invoke(prefill=prefill)
+                self._set_real_size()
+                self.GetParent().SetSize(self.GetSize())
             else:
                 log(OPERATIONAL, "Invalid search column:", col_id)
 
