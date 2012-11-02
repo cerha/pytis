@@ -1623,6 +1623,8 @@ class SQLFunctional(_SQLTabular):
         in the function definition.  This is useful to set if the function
         returns the same values for the same input data and without any side
         effects.
+      sql_directory -- name of the directory where SQL files with function body
+        definitions are stored
 
     Function body can be defined in two ways:
 
@@ -1647,6 +1649,7 @@ class SQLFunctional(_SQLTabular):
     multirow = False
     security_definer = False
     stability = 'volatile'
+    sql_directory = 'sql'
 
     _LANGUAGE = None
 
@@ -1715,7 +1718,7 @@ class SQLFunctional(_SQLTabular):
         defined by 'name' property.
 
         """
-        return open(self.name + '.sql').read()
+        return open(os.path.join(self.sql_directory, self.name + '.sql')).read()
 
 class SQLFunction(SQLFunctional):
     """SQL function definition.
