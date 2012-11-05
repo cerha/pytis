@@ -104,15 +104,27 @@ class LogFunction(SQLPyFunction, SQLTrigger):
         plpy.execute("insert into log_table (table_name, action) values ('%s', '%s')" %
                      (TD['args'][0], TD['event'],))
 
-class _LogTrigger(SQLTrigger):
+class LogTrigger(SQLTrigger):
     events = ('insert', 'update', 'delete',)
     body = LogFunction
+
+class _LoggingTable(SQLTable):
+    """Demonstration of trigger attachment inheritance.
+
+    'LogTrigger' is attached to all subclass specifications.  Note the
+    trick with turning 'trigger' attribute into property.  This works for
+    triggers but may not work for other specification properties.
     
-class LoggingTable(SQLTable):
+    """
+    @property
+    def triggers(self):
+        return ((LogTrigger, self.pytis_name(),),)
+
+class LoggingTable(_LoggingTable):
     fields = (PrimaryColumn('id', pytis.data.Integer()),)
-class LoggingTableTrigger(_LogTrigger):
-    table = LoggingTable
-    arguments = (LoggingTable.pytis_name(),)
+
+class AnotherLoggingTable(_LoggingTable):
+    fields = (PrimaryColumn('x', pytis.data.Integer()),)
 
 class ReferencingTable(SQLTable):
     fields = (PrimaryColumn('id', pytis.data.Serial()),

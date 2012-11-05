@@ -159,7 +159,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
     def visit_trigger(self, trigger, create_ok=False):
         if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
             self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
-        if trigger.events:
+        if trigger.table and trigger.events:
             events = string.join(trigger.events, ' OR ')
             table = object_by_path(trigger.table.name, trigger.search_path())
             row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
@@ -521,6 +521,9 @@ def _sql_plain_name(name):
         name = name[pos+1:]
     return name
 
+def _is_specification_name(name):
+    return not name.startswith('SQL') and not name.startswith('_')
+
 def _expand_schemas(schemas):
     if isinstance(schemas, SQLFlexibleValue):
         schemas = schemas.value()
@@ -629,7 +632,7 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
 
     def _is_specification(cls, clsname):
-        return not clsname.startswith('SQL') and not clsname.startswith('_')
+        return _is_specification_name(clsname)
 
     @classmethod
     def specification_by_name(cls, name):
@@ -669,10 +672,7 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
         if cls._is_specification(clsname):
-            if cls.table is None:
-                if cls.events:
-                    raise SQLException("Trigger without table", cls)
-            else:
+            if cls.table is not None:
                 cls.schemas = cls.table.schemas
         _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
     
@@ -898,6 +898,9 @@ class SQLObject(object):
         if name is None:
             name = pytis.util.camel_case_to_lower(class_.__name__, separator='_')
         return name
+
+    def _is_true_specification(self):
+        return _is_specification_name(self.__class__.__name__)
 
     def _add_dependencies(self):
         for o in self.depends_on:
@@ -1256,6 +1259,14 @@ class SQLTable(_SQLTabular):
         used for this index.  Use this property only for multicolumn indexes,
         specify single column indexes directly in the corresponding 'Column'
         specifications.
+      triggers -- tuple of trigger specifications to assign to this table.  You
+        can assign a trigger to a table directly in 'SQLTrigger' specification.
+        But if the same trigger function is to be used in more than one table
+        then you should define a trigger not bound to a particular table
+        (i.e. with undefined 'table' property) and assign the trigger to
+        corresponding tables in 'triggers'.  Each of 'trigger' elements is
+        either a specification class or a tuple of a specification class and
+        trigger function arguments.
 
     It is possible to insert predefined rows into the newly created table.  In
     such a case set the following properties:
@@ -1281,6 +1292,7 @@ class SQLTable(_SQLTabular):
     foreign_keys = ()
     with_oids = False
     index_columns = ()
+    triggers = ()
 
     def __new__(cls, metadata, search_path):
         table_name = cls.pytis_name()
@@ -1327,7 +1339,9 @@ class SQLTable(_SQLTabular):
         self._pytis_create_p = False
         super(SQLTable, self)._init(*args, **kwargs)
         self._create_parameters()
-        self._create_special_indexes()
+        if self._is_true_specification():
+            self._create_special_indexes()
+            self._create_triggers()
 
     @property
     def columns(self):
@@ -1407,6 +1421,16 @@ class SQLTable(_SQLTabular):
                                      *columns, **ikwargs)
             sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
         return args
+
+    def _create_triggers(self):
+        for t in self.triggers:
+            if not isinstance(t, (tuple, list,)):
+                t = (t,)
+            class T(SQLTrigger):
+                name = '%s__%s' % (self.name, t[0].name,)
+                table = self.__class__
+                arguments = t[1:]
+            sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: T)
     
     def _register_access_rights(self):
         super(SQLTable, self)._register_access_rights()
@@ -1841,6 +1865,11 @@ class SQLEventHandler(SQLFunctional):
     This is basically a normal function defining just one additional property:
 
       table -- specification of the table the function is bound to
+
+    If table is 'None' then the corresponding function (e.g. trigger function)
+    is defined while the event handler itself (e.g. trigger) is not.  You can
+    then assign the function to any number of table event handlers via
+    'SQLTable' properties (such as 'triggers').
 
     Subclasses may define more additional properties.
     
