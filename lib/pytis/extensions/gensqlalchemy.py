@@ -1249,6 +1249,13 @@ class SQLTable(_SQLTabular):
         For single column foreign key constraints it is preferable to use
         'references' argument in 'Column' definitions.
       with_oids -- iff True then oids are assigned to the table rows; boolean
+      index_columns -- tuple of tuples or 'Arguments' instances.  Each of the
+        tuples or 'Arguments' instances contains names of columns to include
+        within a single index.  An additional keyword argument 'method' may be
+        provided in an 'Arguments' whose value determines indexing method to be
+        used for this index.  Use this property only for multicolumn indexes,
+        specify single column indexes directly in the corresponding 'Column'
+        specifications.
 
     It is possible to insert predefined rows into the newly created table.  In
     such a case set the following properties:
@@ -1273,6 +1280,7 @@ class SQLTable(_SQLTabular):
     unique = ()
     foreign_keys = ()
     with_oids = False
+    index_columns = ()
 
     def __new__(cls, metadata, search_path):
         table_name = cls.pytis_name()
@@ -1381,6 +1389,23 @@ class SQLTable(_SQLTabular):
                 index = sqlalchemy.Index('%s_%s_%s_idx' % (self.name, column_name, method,),
                                          getattr(self.c, column_name), postgresql_using=method)
                 sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
+        for index in self.index_columns:
+            ikwargs = {}
+            if isinstance(index, Arguments):
+                colnames = index.args()
+                method = index.kwargs().get('method')
+                if method:
+                    ikwargs['postgresql_using'] = method
+            else:
+                colnames = index
+                method = None
+            columns = [getattr(self.c, c) for c in colnames]
+            index_name = string.join(colnames, '_')
+            if method:
+                index_name += '_' + method
+            index = sqlalchemy.Index('%s_%s_idx' % (self.name, index_name,),
+                                     *columns, **ikwargs)
+            sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: index)
         return args
     
     def _register_access_rights(self):

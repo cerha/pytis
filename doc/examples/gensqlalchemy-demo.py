@@ -80,6 +80,14 @@ begin
 end;
 """
 
+class Indexed(SQLTable):
+    fields = (Column('x', pytis.data.Integer()),
+              Column('y', pytis.data.Integer()),
+              Column('z', pytis.data.Integer()),
+              )
+    index_columns = (('x', 'y',),
+                     a('x', 'y', 'z', method='gist'),)
+
 class LogTable(SQLTable):
     fields = (PrimaryColumn('id', pytis.data.Serial()),
               Column('table_name', pytis.data.String(),),
