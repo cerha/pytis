@@ -1094,10 +1094,19 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     def _original_columns(self):
         return self.c
+
+    def _equivalent_rule_columns(self, column):
+        return [column]
+
+    def _hidden_rule_columns(self, tabular):
+        return []
     
     def _rule_assignments(self, tabular, excluded):
         assignments = {}
+        all_columns = self._hidden_rule_columns(tabular)
         for c in self._original_columns():
+            all_columns.append(c)
+        for c in all_columns:
             if c.name in excluded:
                 continue
             table_c = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
@@ -1116,33 +1125,23 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _rule_condition(self, tabular):
         conditions = []
         for table_c in tabular.primary_key.columns:
-            # Try to find `tabular' primary key in my columns, perhaps aliased
+            # Try to find `tabular' primary key or one of its equivalents in my
+            # columns, perhaps aliased
+            equivalent_columns = [(c.table, c.name,) for c in self._equivalent_rule_columns(table_c)]
             for c in self._original_columns():
                 tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
                 table, name = tc.table, tc.name
-                if name == table_c.name:
-                    if isinstance(table, sqlalchemy.sql.expression.Alias):
-                        table = table.element
-                    if table is table_c.table:
-                        break
+                if isinstance(table, sqlalchemy.sql.expression.Alias):
+                    table = table.element
+                if (table, name,) in equivalent_columns:
+                    break
             else:
-                # The primary key wasn't found, use another column of the same name
-                for c in self._original_columns():
-                    tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-                    if tc.name == table_c.name:
-                        break
+                if False:
+                    # Let's disable the hard error until converted specifications are fixed
+                    raise SQLException("Table key column not found in the view", table_c)
                 else:
-                    # The primary key not found at all, use the first column of `tabular' found
-                    for c in self._original_columns():
-                        tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-                        table = tc.table
-                        if isinstance(table, sqlalchemy.sql.expression.Alias):
-                            table = table.element
-                        if table is table_c.table:
-                            break
-                    else:
-                        # No luck at all
-                        raise SQLException("Table key column not found in the view", table_c)
+                    print ('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s.%s' %
+                           (tabular.name, table_c.table.name, table_c.name,))
             name = _sql_plain_name(c.name)
             conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
         return sqlalchemy.and_(*conditions)
@@ -1475,10 +1474,18 @@ class SQLView(_SQLTabular):
     view columns are not defined in the view specification directly, they are
     defined implicitly by included tables and their columns.
 
-    This class doesn't introduce any new properties.  The only additional thing
-    you must define is 'query()' class method which returns the expression
-    defining the view.  The method must return an 'sqlalchemy.ClauseElement'
-    instance (as all the SQLAlchemy expressions do).
+    The primary specification element of this class is 'query()' class method
+    which returns the expression defining the view.  The method must return an
+    'sqlalchemy.ClauseElement' instance (as all the SQLAlchemy expressions do).
+
+    Additional properties defined by this class:
+
+      join_columns -- tuple of tuples of equivalent columns
+        ('sqlalchemy.Column' instances).  If the view is made by joining some
+        relations, duplicate join columns are excluded from the view and there
+        are modification rules defined for the view then it is necessary to
+        enumerate all equivalent relation columns in 'join_column' tuples in
+        order to make gensqlalchemy generate complete and correct rules.
 
     The expression in 'query()' method is typically constructed using means
     provided by SQLAlchemy.  The class defines a few additional utility class
@@ -1489,6 +1496,7 @@ class SQLView(_SQLTabular):
     """
     _DB_OBJECT = 'VIEW'
 
+    join_columns = ()
     @classmethod
     def query(class_):
         return None
@@ -1519,6 +1527,32 @@ class SQLView(_SQLTabular):
                 seen.append(o)
             elif not isinstance(o, RawCondition):
                 raise SQLException("Unknown condition element", o)
+            
+    def _equivalent_rule_columns(self, column):
+        equivalents = []
+        if column is not None:
+            equivalents = [column]
+        for equivalent_columns in self.join_columns:
+            if column in equivalent_columns:
+                for c in equivalent_columns:
+                    if c is not column:
+                        equivalents.append(c)
+        return equivalents
+    
+    def _hidden_rule_columns(self, tabular):
+        hidden_columns = []
+        original_columns = self._original_columns()
+        for equivalent_columns in self.join_columns:
+            alias = None
+            for c in equivalent_columns:
+                if c in original_columns:
+                    alias = c.name
+                    break
+            if alias:
+                for c in equivalent_columns:
+                    if c.table is tabular and c not in original_columns:
+                        hidden_columns.append(c.label(alias))
+        return hidden_columns
 
     @classmethod
     def _exclude(cls, tabular, *columns_tables, **kwargs):

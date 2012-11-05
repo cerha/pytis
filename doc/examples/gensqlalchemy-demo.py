@@ -190,6 +190,27 @@ class EditableView(SQLView):
                                   c.Bar.id.label('id2'), c.Bar.description.label('d2')],
                                  from_obj=[t.Foo.join(t.Bar)])
 
+class SimplifiedEditableView(SQLView):
+    """Demonstration how to remove duplicate columns in a join.
+
+    If tables are joined on their columns, it is not necessary to put the join
+    column into the view multiple times for each of the view relations.  The
+    column can be present in the query only once and this is all needed for
+    read-only views.  But for views with modification rules it is necessary to
+    tell gensqlalchemy about equivalent join columns using 'join_columns'
+    specification property.
+
+    """
+    schemas = ((Private, 'public',),)
+    insert_order = (Foo, Bar,)
+    update_order = (Foo, Bar,)
+    delete_order = (Foo, Bar,)
+    join_columns = ((c.Foo.id, c.Bar.id,),)
+    @classmethod
+    def query(class_):
+        return sqlalchemy.select([c.Foo.id, c.Foo.description.label('d1'), c.Bar.description.label('d2')],
+                                 from_obj=[t.Foo.join(t.Bar)])
+
 class BogusView(SQLView):
     "One should avoid using outer joins when possible."
     schemas = ((Private, 'public',),)
