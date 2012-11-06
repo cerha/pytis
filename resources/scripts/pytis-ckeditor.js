@@ -133,7 +133,7 @@ pytis.HtmlField.plugin = function(editor) {
 			      }
                           }
                       });
-    var icon = pytis.HtmlField.base_uri + '/editor-blockquote-footer.png';
+    var icon = pytis.HtmlField.base_uri + '/editor-quotation-source.png';
     editor.ui.addButton('BlockquoteFooter', {
         label: pytis._("Supply Quotation Source"),
         command: 'blockquote-footer',
