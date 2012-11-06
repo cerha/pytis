@@ -1137,11 +1137,28 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                     break
             else:
                 if False:
-                    # Let's disable the hard error until converted specifications are fixed
-                    raise SQLException("Table key column not found in the view", table_c)
+                    # Let's apply workaround until converted specifications are fixed
+                   raise SQLException("Table key column not found in the view", table_c)
                 else:
-                    print ('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s.%s' %
-                           (tabular.name, table_c.table.name, table_c.name,))
+                    # The primary key wasn't found, use another column of the same name
+                    for c in self._original_columns():
+                        tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                        if tc.name == table_c.name:
+                            break
+                    else:
+                        # The primary key not found at all, use the first column of `tabular' found
+                        for c in self._original_columns():
+                            tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                            table = tc.table
+                            if isinstance(table, sqlalchemy.sql.expression.Alias):
+                                table = table.element
+                            if table is table_c.table:
+                                break
+                        else:
+                            # No luck at all
+                            raise SQLException("Table key column not found in the view", table_c)
+                    print ('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s %s.%s' %
+                           (self.name, tabular.name, table_c.table.name, table_c.name,))
             name = _sql_plain_name(c.name)
             conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
         return sqlalchemy.and_(*conditions)
