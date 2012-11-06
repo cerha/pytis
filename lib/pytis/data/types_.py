@@ -2158,21 +2158,6 @@ class LTree(Type):
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
-    class LTreeType(sqlalchemy.types.UserDefinedType):
-
-        def get_col_spec(self):
-            return 'ltree'
-
-        def bind_processor(self, dialect):
-            def process(value):
-                return value
-            return process
-
-        def result_processor(self, dialect, coltype):
-            def process(value):
-                return value
-            return process
-    
     def __init__(self, text=True, **kwargs):
         """
         Arguments:
@@ -2218,7 +2203,22 @@ class LTree(Type):
         return WMValue(self, object), None
     
     def sqlalchemy_type(self):
-        return self.LTreeType()
+        class LTreeType(sqlalchemy.types.UserDefinedType):
+
+            def get_col_spec(self):
+                return 'ltree'
+     
+            def bind_processor(self, dialect):
+                def process(value):
+                    return value
+                return process
+     
+            def result_processor(self, dialect, coltype):
+                def process(value):
+                    return value
+                return process
+
+        return LTreeType()
 
 
 class Array(Limited):
