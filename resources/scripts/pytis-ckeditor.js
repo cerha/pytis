@@ -129,13 +129,13 @@ pytis.HtmlField.plugin = function(editor) {
 				  range.moveToElementEditablePosition(footer, true);
 				  editor.getSelection().selectRanges([range]);
 			      } else {
-				  alert(pytis._("Create the blockquote element first, then you can add footer inside it."));
+				  alert(pytis._("Create the quotation first, then you can supply the source inside it."));
 			      }
                           }
                       });
     var icon = pytis.HtmlField.base_uri + '/editor-blockquote-footer.png';
     editor.ui.addButton('BlockquoteFooter', {
-        label: pytis._("Block Quote Footer"),
+        label: pytis._("Supply Quotation Source"),
         command: 'blockquote-footer',
         icon: icon
     });
