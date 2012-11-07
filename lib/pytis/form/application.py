@@ -855,13 +855,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 busy_cursor(False)
                 self._raise_form(form)
                 message(_('Formulář "%s" nalezen na zásobníku oken.') % form.title())
-                if 'select_row' in kwargs:
+                if 'select_row' in kwargs and kwargs['select_row'] is not None:
                     form.select_row(kwargs['select_row'])
-                if 'filter' in kwargs:
+                if 'filter' in kwargs and kwargs['filter'] is not None:
                     form.filter(kwargs['filter'])
-                if 'binding' in kwargs:
+                if 'binding' in kwargs and kwargs['binding'] is not None:
                     form.select_binding(kwargs['binding'])
-                if 'profile_id' in kwargs:
+                if 'profile_id' in kwargs and kwargs['profile_id'] is not None:
                     form.apply_profile(kwargs['profile_id'])
                 return result
             if issubclass(form_class, PopupForm):
