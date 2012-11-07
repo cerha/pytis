@@ -361,7 +361,9 @@ class _GsqlSpec(object):
         return literal.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
 
     def _convert_value(self, value):
-        if value.lower() == 'null':
+        if isinstance(value, int):
+            return str(value)
+        elif value.lower() == 'null':
             return 'None'
         elif value.lower() in ("'f'", 'false',):
             return 'False'
@@ -1848,6 +1850,8 @@ class Select(_GsqlSpec):
                 for c in self._relation_columns[r.relation]:
                     if isinstance(c, basestring):
                         continue
+                    if isinstance(c.name, (tuple, list,)):
+                        continue
                     if c.name.lower() in exclude:
                         continue
                     if isinstance(c, ViewColumn) and c.sql:
@@ -2976,14 +2980,16 @@ class _GsqlView(_GsqlSpec):
             from_obj = []
             for t in tables:
                 t = t.lower()
-                name_alias = t.split(' ')
                 selector = 'gO'
-                if len(name_alias) > 1:
-                    name, alias = name_alias
+                pos = t.rfind(' ')
+                if pos > 0:
+                    name_alias = t.split(' ')
+                    name = t[:pos].rstrip()
+                    alias = t[pos+1:]
                     if re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', name):
                         selector = 'object_by_name'
                 else:
-                    name = alias = name_alias[0]
+                    name = alias = t
                 line = "        %s = %s('%s')" % (self._convert_local_name(alias), selector, name,)
                 if name != alias:
                     line += '.alias(%s)' % (repr(alias),)
