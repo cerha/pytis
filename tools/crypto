@@ -42,19 +42,31 @@ class Configuration(object):
                 o.reset()
             config.config_file = configuration_file
             config.read_configuration_file(configuration_file)
-        parameters = ('schemas', 'database', 'host', 'port', 'user', 'password', 'sslmode',)
+        parameters = ('database', 'host', 'port', 'user', 'password', 'sslmode',)
         dbconnection = config.dbconnection
         for p in parameters:
             value = getattr(dbconnection, p, lambda: None)()
             if value is not None:
                 raw_config[p] = value
         self._connection_data = dbconnection
+        self._schemas = dbconnection.schemas()
         
     def connection_data(self):
         return self._connection_data
 
     def raw_connection_data(self):
         return self._raw_connection_data
+
+    def schemas(self):
+        return self._schemas
+
+    def connect(self):
+        connection = dbapi.connect(**self.raw_connection_data())
+        schemas = self.schemas()
+        if schemas:
+            cursor = connection.cursor()
+            cursor.execute("set search_path to %s" % (string.join(schemas, ','),))
+        return connection
 
 def key_table(connection_data):
     return pytis.data.dbtable('e_pytis_crypto_keys',
@@ -248,7 +260,7 @@ def command_encrypt(configuration, args):
         return
     area, table, column = args
     connection_data = configuration.connection_data()
-    connection = dbapi.connect(**configuration.raw_connection_data())
+    connection = configuration.connect()
     cursor = connection.cursor()
     pos = table.find('.')
     if pos == -1:
@@ -327,7 +339,7 @@ def command_new_communication_key(configuration, args):
             return
         n = n / 2
     connection_data = configuration.connection_data()
-    connection = dbapi.connect(**configuration.raw_connection_data())
+    connection = configuration.connect()
     cursor = connection.cursor()
     cursor.execute("select pytis_crypto_create_db_key('pytis', %s)", (bits,))
     connection.commit()
