@@ -96,6 +96,27 @@ begin
   return result;
 end;
 $$ language plpgsql;
+
+create or replace function pytis_encrypt_binary(data bytea, name text) returns bytea as $$
+begin
+  return pgp_sym_encrypt(encode(data, 'base64'), pytis_crypt_password(name));
+end;
+$$ language plpgsql;
+
+create or replace function pytis_decrypt_binary(data bytea, name text) returns bytea as $$
+declare
+  result bytea;
+begin
+  begin
+    result := decode(pgp_sym_decrypt(data, pytis_crypt_password(name)), 'base64');
+  exception
+    when OTHERS then
+      -- pseudorandom value to allow testing with obfuscated data
+      result := 'abc'::bytea;
+  end;
+  return result;
+end;
+$$ language plpgsql;
 """,
         name='pytis_basic_crypto_functions')
 

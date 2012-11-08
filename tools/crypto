@@ -282,6 +282,7 @@ def command_encrypt(configuration, args):
     type_ = row[0]
     mapping = {'bpchar': 'text',
                'char': 'text',
+               'bytea': 'binary',
                'smallint': 'int',
                'bigint': 'int',
                'int2': 'int',

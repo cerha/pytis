@@ -897,6 +897,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         decryption_function = 'pytis_decrypt_float'
                     elif isinstance(btype, Integer) or isinstance(btype, type) and issubclass(btype, Integer):
                         decryption_function = 'pytis_decrypt_int'
+                    elif isinstance(btype, Binary) or isinstance(btype, type) and issubclass(btype, Binary):
+                        decryption_function = 'pytis_decrypt_binary'
                     else:
                         raise Exception("Encryption support not available for the type", btype)
                     result = "%s(%s, '%s')" % (decryption_function, result, crypto_name,)
@@ -1738,6 +1740,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     encryption_function = 'pytis_encrypt_float'
                 elif isinstance(ctype, Integer):
                     encryption_function = 'pytis_encrypt_int'
+                elif isinstance(ctype, Binary):
+                    encryption_function = 'pytis_encrypt_binary'
                 else:
                     raise Exception("Encryption supported not available for the type", ctype)
                 value = "%s(%s, '%s')" % (encryption_function, value, crypto_name,)
