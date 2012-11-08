@@ -2313,8 +2313,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         escape = len([v for v in vals if isinstance(v, buffer)]) != 0
         for c, v in zip(cols, vals):
             if isinstance(v, buffer):
-                item = "%s=%%s" % c
+                item = "%s=%%s" % (c,)
                 query_args.append(v)
+            elif isinstance(v, tuple):
+                item = "%s=%s" % (c, v[0],)
+                query_args.append(v[1])
             else:
                 if escape:
                     # Quick fix by TC.  TODO: Wouldn't it be better to escape always and then
