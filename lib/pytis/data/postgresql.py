@@ -1744,7 +1744,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     encryption_function = 'pytis_encrypt_binary'
                 else:
                     raise Exception("Encryption supported not available for the type", ctype)
-                value = "%s(%s, '%s')" % (encryption_function, value, crypto_name,)
+                if isinstance(ctype, Binary):
+                    value = ("%s(%%s, '%s')" % (encryption_function, crypto_name,), value,)
+                else:
+                    value = "%s(%s, '%s')" % (encryption_function, value, crypto_name,)
             columns.append(b.column())
             values.append(value)
         return columns, values
@@ -2241,11 +2244,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         cols, vals_ = self._pdbb_table_row_lists(row)
         vals = []
         query_args = []
-        escape = len([v for v in vals_ if isinstance(v, buffer)]) != 0
+        escape = any([v for v in vals_ if isinstance(v, (buffer, tuple,))])
         for v in vals_:
             if isinstance(v, buffer):
                 vals.append('%s')
                 query_args.append(v)
+            elif isinstance(v, tuple):
+                vals.append(v[0])
+                query_args.append(v[1])
             else:
                 if escape:
                     # Quick fix by TC.  TODO: Wouldn't it be better to escape always and then
