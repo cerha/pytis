@@ -3127,8 +3127,7 @@ class BrowseForm(FoldableForm):
         return [mitem(*args) for args in linkspec]
                            
     def _context_menu(self):
-        def open_file(row, field_id, filename):            
-            suffix = os.path.splitext(filename)[1]
+        def file_field_data(row, field_id):
             value = row[field_id]
             if isinstance(value.type(), pytis.data.Binary):
                 if isinstance(value.type(), pytis.data.Big):
@@ -3146,17 +3145,22 @@ class BrowseForm(FoldableForm):
                     data = value.value().buffer()
             else:
                 data = value.export()
+            return data
+        def open_file(data, filename):
+            suffix = os.path.splitext(filename)[1]
             open_data_as_file(data, suffix=suffix)
         menu = self._context_menu_static_part
         row = self.current_row()
         file_open_mitems = [MItem(_(u"Otevřít soubor „%s“" % filename),
                                   command=Application.COMMAND_HANDLED_ACTION(handler=open_file,
-                                                                             row=row,
-                                                                             field_id=f.id(),
+                                                                             data=data,
                                                                              filename=filename),
                                   help=_(u"Otevřít hodnotu políčka „%s“ jako soubor.") % f.label())
-                            for f, filename in [(f, row.filename(f.id())) for f in self._fields]
-                            if filename and row[f.id()].value() is not None]
+                            for f, data, filename in
+                            [(f, file_field_data(row, f.id()), filename)
+                             for f, filename in [(f, row.filename(f.id())) for f in self._fields]
+                             if filename]
+                            if data]
         if file_open_mitems:
             menu += (MSeparator(),) + tuple(file_open_mitems)
         if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \
