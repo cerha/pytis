@@ -588,7 +588,7 @@ class BinaryFieldExporter(FieldExporter):
         return context.generator().upload(**kwargs)
 
     
-class CodebookFieldExporter(FieldExporter):
+class EnumerationFieldExporter(FieldExporter):
     
     def _format(self, context):
         fid = self._field.id
@@ -628,7 +628,7 @@ class CodebookFieldExporter(FieldExporter):
                 for val, display in self._row.enumerate(self._field.id)]
 
 
-class RadioFieldExporter(CodebookFieldExporter):
+class RadioFieldExporter(EnumerationFieldExporter):
     _HANDLER = 'pytis.RadioField'
     
     def _editor(self, context, id=None, **kwargs):
@@ -648,7 +648,7 @@ class RadioFieldExporter(CodebookFieldExporter):
         return g.div(radios, id=id, cls='radio-group')
 
 
-class ChoiceFieldExporter(CodebookFieldExporter):
+class ChoiceFieldExporter(EnumerationFieldExporter):
     _HANDLER = 'pytis.ChoiceField'
     
     def _editor(self, context, **kwargs):
@@ -662,7 +662,7 @@ class ChoiceFieldExporter(CodebookFieldExporter):
             selected = None
         return context.generator().select(options=options, selected=selected, **kwargs)
     
-class ChecklistFieldExporter(CodebookFieldExporter):
+class ChecklistFieldExporter(EnumerationFieldExporter):
     _HANDLER = 'pytis.ChecklistField'
     
     def _format(self, context):
@@ -705,6 +705,10 @@ class ChecklistFieldExporter(CodebookFieldExporter):
     def _display(self, context):
         return None
 
+
+class CodebookFieldExporter(EnumerationFieldExporter, TextFieldExporter):
+    pass
+    
 
 class FileFieldExporter(TextFieldExporter):
     """Special case of string fields with 'filename' specification.
