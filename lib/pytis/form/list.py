@@ -3139,12 +3139,20 @@ class BrowseForm(FoldableForm):
                     complete_row = data_object.fetchone()
                     data_object.close()
                     if complete_row is None:
-                        return
-                    data = complete_row[field_id].value().buffer()
+                        binary_value = None
+                    else:
+                        binary_value = complete_row[field_id].value()
                 else:
-                    data = value.value().buffer()
+                    binary_value = value.value()
+                if binary_value is not None:
+                    data = binary_value.buffer()
+                else:
+                    data = None
             else:
-                data = value.export()
+                if value.value() is not None:
+                    data = value.export()
+                else:
+                    data = None
             return data
         def open_file(data, filename):
             suffix = os.path.splitext(filename)[1]
