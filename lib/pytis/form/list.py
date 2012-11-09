@@ -3156,7 +3156,7 @@ class BrowseForm(FoldableForm):
                                                                              filename=filename),
                                   help=_(u"Otevřít hodnotu políčka „%s“ jako soubor.") % f.label())
                             for f, filename in [(f, row.filename(f.id())) for f in self._fields]
-                            if filename]
+                            if filename and row[f.id()].value() is not None]
         if file_open_mitems:
             menu += (MSeparator(),) + tuple(file_open_mitems)
         if self._explicit_links or self._automatic_links or self._explicit_in_operator_links \
