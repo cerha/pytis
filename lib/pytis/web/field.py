@@ -624,7 +624,8 @@ class EnumerationFieldExporter(FieldExporter):
         type = self._field.type
         if isinstance(type, pytis.data.Array):
             type = type.inner_type()
-        return [(val, type.export(val), g.escape(display).replace(' ',  '&nbsp;'))
+        return [(val, type.export(val),
+                 g.escape(display).replace(' ', '&nbsp;').replace("\n", "<br/>"))
                 for val, display in self._row.enumerate(self._field.id)]
 
 
