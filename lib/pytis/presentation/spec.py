@@ -2057,7 +2057,7 @@ class SelectionType(object):
     """Scrollable list with all codebook columns."""
     # Backwards compatibility options
     RADIO_BOX = RADIO
-    """Depricated."""
+    """Deprecated."""
     
    
 class PostProcess(object):
@@ -2887,6 +2887,14 @@ class Field(object):
             in the application, protected by different passwords.  Not all data
             types support encryption, it is an error to set encryption here for
             field types which don't support it.
+          encrypt_empty -- if True (default) then encrypt also None values (and
+            empty values when they are represented by None values).  Otherwise
+            store empty values as NULLs in the database.  Empty values should
+            be commonly encrypted in the databases so that there is no
+            information about secret data.  But when you want to allow
+            unauthorized users to work with encrypted data in a limited way,
+            e.g. to insert new records with empty secret values, then setting
+            this argument to False is useful.
           **kwargs -- all the remaining keyword arguments are passed to the
             constructor of field's data type instance.  These arguments
             override the values of arguments, that the system would normally
@@ -2946,7 +2954,7 @@ class Field(object):
               style=None, link=(), filename=None, filename_extensions=(),
               text_format=TextFormat.PLAIN, attachment_storage=None, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
-              validity_condition=None, crypto_name=None,
+              validity_condition=None, crypto_name=None, encrypt_empty=True,
               **kwargs):
         def err(msg, *args):
             """Return assertion error message."""
@@ -3005,6 +3013,7 @@ class Field(object):
             isinstance(attachment_storage, (AttachmentStorage, collections.Callable)), attachment_storage
         assert isinstance(printable, bool), printable
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
+        assert encrypt_empty is None or isinstance(encrypt_empty, bool), encrypt_empty
         if enumerator is None:
             enumerator = codebook
         elif __builtins__['type'](enumerator) == __builtins__['type'](Enumeration) \
@@ -3138,6 +3147,7 @@ class Field(object):
         self._printable = printable
         self._slider = slider
         self._crypto_name = crypto_name
+        self._encrypt_empty = encrypt_empty
 
     def __str__(self):
         return "<Field for '%s'>" % self.id()
@@ -3305,6 +3315,9 @@ class Field(object):
 
     def crypto_name(self):
         return self._crypto_name
+
+    def encrypt_empty(self):
+        return self._encrypt_empty
 
     def completer(self):
         """Return field completer as a 'pytis.data.Enumerator' instance."""
@@ -4526,7 +4539,7 @@ class Specification(object):
             B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
             bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), crypto_name=f.crypto_name(),
-                          **f.type_kwargs())
+                          encrypt_empty=f.encrypt_empty(), **f.type_kwargs())
                         for f in self.fields if not f.virtual()]
             bindings.extend([B(f.inline_display(), table, f.inline_display())
                              for f in self.fields if f.inline_display()

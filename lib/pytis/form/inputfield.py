@@ -1839,6 +1839,10 @@ class FileField(Invocable, InputField):
         return self._buffer and self._buffer.buffer()
 
     def _set_value(self, value):
+        if isinstance(value, self._type.Buffer):
+            # Workaround: When inserting an empty value into the field, this
+            # value may appear here. Why?
+            value = value.buffer()
         assert value is None or isinstance(value, buffer)
         self._buffer = value and self._type.Buffer(value) or None
         self._on_change()

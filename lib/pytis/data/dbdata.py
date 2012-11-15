@@ -544,7 +544,8 @@ class DBColumnBinding(DBBinding):
     sdílena.
     
     """
-    def __init__(self, id, table, column, related_to=None, type_=None, crypto_name=None, **kwargs):
+    def __init__(self, id, table, column, related_to=None, type_=None, crypto_name=None,
+                 encrypt_empty=True, **kwargs):
         """Define a column binding.
 
         Argumenty:
@@ -566,6 +567,14 @@ class DBColumnBinding(DBBinding):
             protected by different passwords.  Not all types support
             encryption, it is an error to set encryption here for column types
             which don't support it.
+          encrypt_empty -- if True (default) then encrypt also None values (and
+            empty values when they are represented by None values).  Otherwise
+            store empty values as NULLs in the database.  Empty values should
+            be commonly encrypted in the databases so that there is no
+            information about secret data.  But when you want to allow
+            unauthorized users to work with encrypted data in a limited way,
+            e.g. to insert new records with empty secret values, then setting
+            this argument to False is useful.
           **kwargs -- explicitně definované klíčové argumenty typu.  Pokud jsou definovány
             libovolné klíčové argumenty, budou tyto předány konstruktoru implicitního datového
             typu.  Typ v takovém případě nesmí být explicitně určen argumentem 'type_'.
@@ -584,6 +593,7 @@ class DBColumnBinding(DBBinding):
         assert isinstance(column, basestring), column
         assert isinstance(type_, Type) or type(type_) == type(Type) or type_ is None, type_
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
+        assert encrypt_empty is None or isinstance(encrypt_empty, bool), encrypt_empty
         if __debug__:
             if isinstance(type_, Type):
                 kwargs_copy = copy.copy(kwargs)
@@ -599,6 +609,7 @@ class DBColumnBinding(DBBinding):
         self._related_to = related_to
         self._type = type_
         self._crypto_name = crypto_name
+        self._encrypt_empty = encrypt_empty
         self._kwargs = kwargs
         self._is_hidden = not id
 
@@ -621,6 +632,10 @@ class DBColumnBinding(DBBinding):
     def crypto_name(self):
         """Return 'crypto_name' value given in the constructor, 'None' or string."""
         return self._crypto_name
+    
+    def encrypt_empty(self):
+        """Return 'encrypt_empty' value given in the constructor, boolean."""
+        return self._encrypt_empty
     
     def kwargs(self):
         """Vrať slovník klíčových argumentů konstruktoru dat. typu sloupce."""

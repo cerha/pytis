@@ -1745,9 +1745,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 else:
                     raise Exception("Encryption supported not available for the type", ctype)
                 if isinstance(ctype, Binary):
-                    value = ("%s(%%s, '%s')" % (encryption_function, crypto_name,), value,)
+                    if value == 'NULL':
+                        if b.encrypt_empty():
+                            value = "%s(NULL, '%s')" % (encryption_function, crypto_name,)
+                    else:
+                        value = ("%s(%%s, '%s')" % (encryption_function, crypto_name,), value,)
                 else:
-                    value = "%s(%s, '%s')" % (encryption_function, value, crypto_name,)
+                    if value != 'NULL' or b.encrypt_empty():
+                        value = "%s(%s, '%s')" % (encryption_function, value, crypto_name,)
             columns.append(b.column())
             values.append(value)
         return columns, values
@@ -2251,7 +2256,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 query_args.append(v)
             elif isinstance(v, tuple):
                 vals.append(v[0])
-                query_args.append(v[1])
+                query_args += list(v[1:])
             else:
                 if escape:
                     # Quick fix by TC.  TODO: Wouldn't it be better to escape always and then
@@ -2801,10 +2806,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     
     def _pg_value(self, value):
         v = value.value()
-        if v == None:
+        t = value.type()
+        if v is None:
             result = 'NULL'
-        elif isinstance(value.type(), Boolean):
-            result = "'%s'" % (value.type().export(v),)
+        elif isinstance(t, Boolean):
+            result = "'%s'" % (t.export(v),)
         elif is_anystring(v):
             result = "'%s'" % (pg_escape(v),)
         # datetime strftime works only for years >= 1900, so we have to use
@@ -2817,13 +2823,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             result = "'%s'" % (v.strftime('%H:%M:%S'),)
         elif isinstance(v, datetime.timedelta):
             result = "'%s days %s seconds'" % (v.days, v.seconds,)
-        elif isinstance(value.type(), Float):
-            result = value.type().export(v, locale_format=False)
-        elif isinstance(value.type(), Array):
-            sequence = value.type().export(v)
+        elif isinstance(t, Float):
+            result = t.export(v, locale_format=False)
+        elif isinstance(t, Array):
+            sequence = t.export(v)
             result = "'{%s}'" % (string.join(sequence, ', '),)
+        elif isinstance(t, Binary) and not str(v.buffer()):
+            result = 'NULL'
         else:
-            result = value.type().export(v)
+            result = t.export(v)
         return result
 
     def _pg_key_condition(self, key):
