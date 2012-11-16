@@ -169,7 +169,6 @@ class PytisUserService(PytisService):
         assert template is None or isinstance(template, basestring), template
         import win32ui
         import win32con
-        extensions = None
         if template:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
@@ -311,7 +310,6 @@ class PytisAdminService(PytisService):
 
         """
         import pythoncom
-        import win32com.taskscheduler
         from win32com.taskscheduler import taskscheduler
         scheduler = pythoncom.CoCreateInstance(taskscheduler.CLSID_CTaskScheduler,
                                                None,
