@@ -283,7 +283,7 @@ class Menu(wiking.PytisModule):
                 document = self._document(req, lcg.Container([], resources=resources),
                                           record, globals=globals)
         else:
-            document = self._document(req, lcg.Container([pre+post], resources=resources),
+            document = self._document(req, lcg.Container(pre+post, resources=resources),
                                       record, globals=globals)
         if modname is None:
             # Module access is logged in EmbeddablePytisModule._handle().
