@@ -106,7 +106,7 @@ class Menu(wiking.PytisModule):
         return wiking.Binding(self.EMBED_BINDING_ID, '', modname, condition=lambda r: None)
 
     def _bindings(self, req, record):
-        bindings = super(Menu, self)._bindings(req, record)
+        bindings = list(super(Menu, self)._bindings(req, record))
         modname = record['modname'].value()
         if modname:
             bindings.append(self._embed_binding(modname))
