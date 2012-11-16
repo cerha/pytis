@@ -22,10 +22,15 @@ import pytis.windows
 import config
 
 def say(user_name, target_ip, request, *arguments):
-    if request == 'upgrade':
+    if request in('upgrade', 'run_python',):
         if len(arguments) != 1:
             usage(1)
-        arguments = [open(arguments[0], 'rb').read()]
+        file_name = arguments[0]
+        try:
+            arguments = [open(file_name, 'rb').read()]
+        except IOError:
+            sys.stderr.write("Error: Can't read file %s\n" % (file_name,))
+            return
     else:
         arguments = [a.decode('utf-8') for a in arguments]
     connection = rpyc.connect('localhost', config.rpc_local_port)
@@ -37,7 +42,7 @@ def say(user_name, target_ip, request, *arguments):
             return
         raise
     except:
-        sys.stderr.write("Connection unavailable\n")
+        sys.stderr.write("Error: Connection unavailable\n")
         return
     if result is not None:
         sys.stdout.write(unicode(result).encode('utf-8'))
@@ -49,6 +54,7 @@ def usage(exit_code=0):
     upgrade NEW-WINDOWS-SERVER-FILE
     restart
     launch_file { FILE-NAME | URL }
+    run_python LOCAL-PYTHON-FILE-NAME
     get_clipboard_text
     set_clipboard_text TEXT
     echo TEXT

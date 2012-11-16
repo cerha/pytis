@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-11-16 09:05'
+_VERSION = '2012-11-16 10:44'
 
 import logging
 import os
@@ -102,6 +102,35 @@ class PytisService(rpyc.Service):
     def exposed_version(self):
         """Return server version."""
         return _VERSION
+
+    def exposed_run_python(self, script):
+        """Run Python on given script.
+
+        Arguments:
+
+          script -- source text of the Python script to run
+
+        There is no way to get any output from the script here.  If you need to
+        get some information from the script then you must handle it in the
+        script itself, e.g. by storing it to some file.
+
+        """
+        assert isinstance(script, basestring), script
+        pythonw = sys.executable
+        tmpdir = tempfile.mkdtemp(prefix='pytisexec')
+        try:
+            python_file = os.path.join(tmpdir, 'script.py')
+            try:
+                open(python_file, 'wb').write(script)
+                import win32api
+                win32api.WinExec('%s %s' % (pythonw, python_file,))
+            finally:
+                os.remove(python_file)
+        finally:
+            try:
+                os.rmdir(tmpdir)
+            except:
+                pass
 
 class PytisUserService(PytisService):
 
