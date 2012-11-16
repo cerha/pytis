@@ -727,10 +727,12 @@ class Attachments(wiking.Module, wiking.RequestHandler):
     """Implements the server side of 'pp.HttpAttachmentStorage'.
 
     The environment variable 'PYTIS_CMS_ATTACHMENTS_STORAGE' must be set to a
-    filesystem path where attachments are stored.  The
+    filesystem path where attachments are stored on the server side.  The
     'pytis.presentation.FileAttachmentStorage' backend is actually used by the
     server side to store attachments.  The HTTP storage works as a HTTP proxy
-    between the application and the server side file storage backend.
+    between the application and the server side file storage backend.  The http
+    address of the server side storage must be set in the environment variable
+    'PYTIS_CMS_ATTACHMENTS_STORAGE' on the client side.
 
     Override the method '_authorized()' to control authorization per directory.
 
