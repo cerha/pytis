@@ -2,8 +2,10 @@
 
 * Obecné zásady
 
-Specifikace databázových objektů se zapisují v pythonových souborech.
-Generování SQL z těchto souborů se provádí nástrojem pytis/tools/gsql.py.
+Specifikace databázových objektů se zapisují v pythonových souborech.  Tyto
+soubory musí být umístěny v pythonovém modulu (adresáři), jehož obvyklý název
+je `dbdefs'.  Generování SQL ze specifikačních souborů se provádí nástrojem
+pytis/tools/gsql.py.
 
 Každý databázový objekt je definován jako pythonová třída, která je potomkem
 některé ze tříd SQL* ze souboru pytis/lib/pytis/extensions/gensqlalchemy.py.
@@ -24,11 +26,6 @@ neměly mít názvy začínající prefixem `SQL', tyto názvy jsou rezervovány
 objekty definované gensqlalchemy.py.  Specifikační třídy, jejichž názvy
 začínají podtržítkem, negenerují databázové objekty.  Typicky slouží jako
 bázové třídy, které lze podědit do jiných specifikačních tříd.
-
-Specifikace lze rozdělit do více souborů.  Ve specifikačním souboru lze načíst
-obsah jiného specifikačního souboru voláním
-
-  include('vkládaný-soubor-bez-přípony', globals())
   
 
 * SQLALchemy
@@ -63,11 +60,13 @@ v gensqlalchemy-demo.py.
 * Další dokumentace a příklady
 
 Příklady použití typických specifikačních konstrukcí jsou v souboru
-pytis/doc/examples/gensqlalchemy-demo.py.  Tento soubor je korektní specifikací
-databáze.  SQL příkazy pro naplnění obsahu databáze se z něj vygenerují
-příkazem
+pytis/doc/examples/dbdefs/demo.py.  Adresář tohoto souboru je korektní
+specifikací databáze.  SQL příkazy pro naplnění obsahu databáze se z něj
+vygenerují příkazem
 
-  ../../tools/gsql.py gensqlalchemy-demo.py
+  ../../tools/gsql.py dbdefs
+
+přičemž adresář pytis/doc/examples/ musí být uveden v PYTHONPATH.
 
 Volbou --limit lze omezit generování SQL objektů pouze na objekty odpovídající
 zadanému regulárnímu výrazu a objekty na nich závislé (kromě závislých
@@ -96,16 +95,16 @@ definicích se tyto funkce již používat nemají.  Příklady převodu těchto
 konstrukcí (jsou to pouze příklady, v některých situacích může převedená
 konstrukce vypadat jinak):
 
-  gA('tabulka(sloupec)) ->
-    a(r.Tabulka.sloupec)
-  gA('tabulka(sloupec)', onupdate='CASCADE') ->
-    a(r.Tabulka.sloupec, onupdate='CASCADE')
+  sql.gA('tabulka(sloupec)) ->
+    sql.a(sql.r.Tabulka.sloupec)
+  sql.gA('tabulka(sloupec)', onupdate='CASCADE') ->
+    sql.a(sql.r.Tabulka.sloupec, onupdate='CASCADE')
 
-  gL('sum(tabulka.sloupec)') ->
+  sql.gL('sum(tabulka.sloupec)') ->
     sqlalchemy.func.sum(tabulka.c.sloupec)
 
-  gO('tabulka') ->
-    t.Tabulka
+  sql.gO('tabulka') ->
+    sql.t.Tabulka
 
-  gR('tabulka1.sloupec1 = tabulka2.sloupec2') ->
+  sql.gR('tabulka1.sloupec1 = tabulka2.sloupec2') ->
     tabulka1.c.sloupec1 == tabulka2.c.sloupec2

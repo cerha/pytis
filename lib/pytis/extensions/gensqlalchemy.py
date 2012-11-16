@@ -53,14 +53,14 @@ Names of specification classes may not start with 'SQL' and '_SQL' prefixes,
 those prefixes are reserved for base classes.  Specifications whose names start
 with underscore don't emit database objects, they are typically used as common
 base classes to be used by real specifications.  You can put specifications to
-several files and then include them into the main specification file using
-'include()' function.
+several files in a Pytho module and then include them all in the corresponding
+'__init__.py' file.
 
-SQL code can be generated from the specifications using 'gsql_file()' function.
+SQL code can be generated from the specifications using 'gsql_module()'
+function.
 
-An example specification is available in
-'pytis/doc/examples/gensqlalchemy-demo.py', you can see all the most important
-constructs there.
+An example specification is available in 'pytis/doc/examples/dbdefs/', you can
+see all the most important constructs there.
 
 """
 
@@ -80,7 +80,7 @@ import pytis.data
 
 ## SQLAlchemy extensions
 
-_CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
+G_CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
 
 def _function_arguments(function):
     search_path = function.search_path()
@@ -133,7 +133,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                 result_type = 'void'
             elif function_type == SQLFunctional.RECORD:
                 result_type = 'RECORD'
-            elif function_type is _CONVERT_THIS_FUNCTION_TO_TRIGGER:
+            elif function_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
                 result_type = 'trigger'
             elif isinstance(function_type, (tuple, list,)):
                 result_type = 't_' + function.pytis_name()
@@ -1724,7 +1724,8 @@ class SQLFunctional(_SQLTabular):
         returns the same values for the same input data and without any side
         effects.
       sql_directory -- name of the directory where SQL files with function body
-        definitions are stored
+        definitions are stored; the name is relative to the processed module
+        file name
 
     Function body can be defined in two ways:
 
@@ -1771,7 +1772,7 @@ class SQLFunctional(_SQLTabular):
             columns = (result_type.sqlalchemy_column(search_path, None, None, None),)
         elif isinstance(result_type, pytis.data.Type):
             columns = (sqlalchemy.Column('result', result_type.sqlalchemy_type()),)
-        elif result_type is _CONVERT_THIS_FUNCTION_TO_TRIGGER:
+        elif result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
             columns = ()
         elif issubclass(result_type, _SQLTabular):
             columns = tuple([sqlalchemy.Column(c.name, c.type)
@@ -1784,7 +1785,7 @@ class SQLFunctional(_SQLTabular):
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()
         result_type = self.result_type
-        if (result_type not in (None, _CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
+        if (result_type not in (None, G_CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
             not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)) and
             result_type != SQLFunctional.RECORD):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
@@ -1818,7 +1819,9 @@ class SQLFunctional(_SQLTabular):
         defined by 'name' property.
 
         """
-        return open(os.path.join(self.sql_directory, self.name + '.sql')).read()
+        module_path = os.path.dirname(sys.modules[self.__module__].__file__)
+        sql_file = os.path.join(module_path, self.sql_directory, self.name + '.sql')
+        return open(sql_file).read()
 
 class SQLFunction(SQLFunctional):
     """SQL function definition.
@@ -2066,28 +2069,7 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
-def gsql_file(file_name, regexp=None, views=False, functions=False):
-    """Generate SQL code from given specification file.
-
-    Arguments:
-
-      file_name -- name of the specification file to process; basestring
-      regexp -- if not 'None', generate SQL code only for specifications with
-        specification class names matching this regular expression and
-        view and function specifications dependent on those specifications;
-        basestring
-      views -- iff true, output just views; boolean
-      functions -- iff true, output just functions; boolean
-
-    If both 'views' and 'functions' are specified, output both views and
-    functions.
-
-    The SQL code is output on standard output.
-
-    """
-    global _metadata
-    _metadata = sqlalchemy.MetaData()
-    execfile(file_name, copy.copy(globals()))
+def _gsql_process(regexp, views, functions):
     global engine
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     if regexp is not None:
@@ -2137,3 +2119,51 @@ def gsql_file(file_name, regexp=None, views=False, functions=False):
                                                 table=ffk.table, **kwargs)
             fdef = sqlalchemy.schema.AddConstraint(f)
             engine.execute(fdef)
+    
+def gsql_file(file_name, regexp=None, views=False, functions=False):
+    """Generate SQL code from given specification file.
+
+    Arguments:
+
+      file_name -- name of the specification file to process; basestring
+      regexp -- if not 'None', generate SQL code only for specifications with
+        specification class names matching this regular expression and
+        view and function specifications dependent on those specifications;
+        basestring
+      views -- iff true, output just views; boolean
+      functions -- iff true, output just functions; boolean
+
+    If both 'views' and 'functions' are specified, output both views and
+    functions.
+
+    The SQL code is output on standard output.
+
+    """
+    global _metadata
+    _metadata = sqlalchemy.MetaData()
+    execfile(file_name, copy.copy(globals()))
+    _gsql_process(regexp, views, functions)
+
+def gsql_module(module_name, regexp=None, views=False, functions=False):
+    """Generate SQL code from given specification module.
+
+    Arguments:
+
+      module_name -- name of the specification module to process; basestring
+      regexp -- if not 'None', generate SQL code only for specifications with
+        specification class names matching this regular expression and
+        view and function specifications dependent on those specifications;
+        basestring
+      views -- iff true, output just views; boolean
+      functions -- iff true, output just functions; boolean
+
+    If both 'views' and 'functions' are specified, output both views and
+    functions.
+
+    The SQL code is output on standard output.
+
+    """
+    global _metadata
+    _metadata = sqlalchemy.MetaData()
+    imp.load_module(module_name, *imp.find_module(module_name))
+    _gsql_process(regexp, views, functions)

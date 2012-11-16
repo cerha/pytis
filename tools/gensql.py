@@ -143,6 +143,8 @@ def _gsql_warning(message):
         return ''
 
 
+_convert_local_names = []
+
 class _GsqlSpec(object):
 
     _SQL_NAME = ''
@@ -342,11 +344,16 @@ class _GsqlSpec(object):
         lines = [' '*level + l for l in lines]
         return string.join(lines, '\n')
 
-    def _convert_name(self, name=None):
+    def _convert_name(self, name=None, new=False, short=False):
         if name is None:
             name = self._name
         components = [(c.capitalize() if c else 'X') for c in name.split('_')]
-        return string.join(components, '').replace('í', 'ii').replace('@', 'X')
+        converted = string.join(components, '').replace('í', 'ii').replace('@', 'X')
+        if new:
+            _convert_local_names.append(converted)
+        elif not short and converted not in _convert_local_names:
+            converted = 'db.' + converted
+        return converted
 
     def _convert_doc(self):
         doc = self._doc
@@ -398,8 +405,8 @@ class _GsqlSpec(object):
                    'bool': 'pytis.data.Boolean()',
                    'text': 'pytis.data.String()',
                    'void': 'None',
-                   'trigger': '_CONVERT_THIS_FUNCTION_TO_TRIGGER',
-                   'record': 'SQLFunctional.RECORD',
+                   'trigger': 'sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER',
+                   'record': 'sql.SQLFunctional.RECORD',
                    'float(40)': 'pytis.data.DoublePrecision()',
                    }
         type_ = mapping.get(stype)
@@ -457,7 +464,7 @@ class _GsqlSpec(object):
         pos = name.rfind('.')
         if pos >= 0:
             name = name[pos+1:]
-        cls = 'PrimaryColumn' if name in [c.split('.')[-1].lower() for c in self.key_columns()] else 'Column'
+        cls = 'sql.PrimaryColumn' if name in [c.split('.')[-1].lower() for c in self.key_columns()] else 'sql.Column'
         name = repr(name)
         constraints = [c.lower() for c in column.constraints]
         ctype = column.type
@@ -485,7 +492,7 @@ class _GsqlSpec(object):
                     c_references = None
             if c_references:
                 components = c_references.split(' ')
-                references = "gA(%s" % (repr(components.pop(0),))
+                references = "sql.gA(%s" % (repr(components.pop(0),))
                 initially = ''
                 while components:
                     keyword = components.pop(0).lower()
@@ -554,7 +561,7 @@ class _GsqlSpec(object):
         def convert(dependency):
             dependency = dependency.lower()
             if dependency.find('.') >= 0:
-                return "object_by_name('%s')" % (dependency,)
+                return "sql.object_by_name('%s')" % (dependency,)
             else:
                 return self._convert_name(dependency)
         depends_string = string.join([convert(d) for d in self._conversion_depends], ', ')
@@ -881,10 +888,10 @@ class _GsqlType(_GsqlSpec):
             type_ = self._convert_string_type(ctype)
         else:
             type_ = '#XXX:ttype:%s' % (ctype,)
-        return 'Column(%s, %s)' % (repr(name), type_,)
+        return 'sql.Column(%s, %s)' % (repr(name), type_,)
 
     def convert(self):
-        items = ['class %s(SQLType):' % (self._convert_name(),)]
+        items = ['class %s(sql.SQLType):' % (self._convert_name(new=True),)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -962,7 +969,7 @@ class _GsqlSchema(_GsqlSpec):
         return result
 
     def convert(self):
-        items = ['class %s(SQLSchema):' % (self._convert_name(),)]
+        items = ['class %s(sql.SQLSchema):' % (self._convert_name(new=True),)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -1514,8 +1521,8 @@ class _GsqlTable(_GsqlSpec):
         return result
 
     def convert(self):
-        spec_name = self._convert_name()
-        items = ['class %s(SQLTable):' % (spec_name,)]
+        spec_name = self._convert_name(new=True)
+        items = ['class %s(sql.SQLTable):' % (spec_name,)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -1603,7 +1610,7 @@ class _GsqlTable(_GsqlSpec):
         add_rule('delete', self._on_delete)
         if self._upd_log_trigger:
             keys = ','.join([_gsql_column_table_column(k)[1] for k in self.key_columns()])
-            items.append('class %sUpdLogTrigger(SQLTrigger):' % (spec_name,))
+            items.append('class %sUpdLogTrigger(sql.SQLTrigger):' % (spec_name,))
             items.append('    table = %s' % (spec_name,))
             items.append("    events = ('insert', 'update', 'delete',)")
             items.append("    body = %s" %
@@ -1821,7 +1828,7 @@ class Select(_GsqlSpec):
             return ''
         converted = "'%s'" % (_gsql_escape(condition or '').replace('\n', '\\n'),)
         if as_object:
-            converted = 'gR(%s)' % (converted,)
+            converted = 'sql.gR(%s)' % (converted,)
         return converted
 
     def _convert_relation_name(self, relation):
@@ -1889,7 +1896,7 @@ class Select(_GsqlSpec):
             column_spec.append('[%s]' % (string.join(included, ',\n    '),))
         result = string.join(column_spec, ' +\n    ')
         if column_ordering is not None:
-            result = 'reorder_columns(%s, %s)' % (result, column_ordering,)
+            result = 'sql.reorder_columns(%s, %s)' % (result, column_ordering,)
         return result
 
     def _convert_select_column(self, column, simple_relations):
@@ -1914,7 +1921,7 @@ class Select(_GsqlSpec):
             cstring = '%s.c.%s' % (self._convert_local_name(match.group(1).lower()),
                                    match.group(2).lower(),)
         else:
-            cstring = 'gL("%s")' % (self._convert_literal(cname),)
+            cstring = 'sql.gL("%s")' % (self._convert_literal(cname),)
         if alias:
             cstring += ".label('%s')" % (alias.strip(),)
         return cstring
@@ -1964,24 +1971,24 @@ class Select(_GsqlSpec):
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
                 self._add_conversion_dependency(rel.relation, rel.schema)
-                d = "%s = object_by_name('%s.%s')" % (self._convert_local_name(relation),
+                d = "%s = sql.object_by_name('%s.%s')" % (self._convert_local_name(relation),
                                                       rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
                 rrelation = rel.relation
                 match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
                 if match:
-                    selector = 'object_by_name'
+                    selector = 'sql.object_by_name'
                     rschema, dependency = match.groups()
                     d = "%s = %s('%s')" % (self._convert_local_name(relation), selector, rrelation.lower(),)
                 elif rrelation.startswith('pg_'):
                     dependency = rrelation
                     rschema = None
-                    d = "%s = gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
+                    d = "%s = sql.gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
                 else:
                     dependency = rrelation
                     rschema = None
-                    d = "%s = t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation),)
+                    d = "%s = sql.t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation, short=True),)
                 self._add_conversion_dependency(dependency, rschema)
             if rel.alias:
                 if d is None:
@@ -2004,7 +2011,7 @@ class Select(_GsqlSpec):
             elif jtype == JoinType.CROSS and not condition:
                 result = '%s.join(%s, sqlalchemy.sql.true())' % (prev_result, relation,)
             elif jtype == JoinType.FULL_OUTER:
-                result = 'FullOuterJoin(%s, %s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True))
+                result = 'sql.FullOuterJoin(%s, %s, %s)' % (prev_result, relation, self._convert_raw_condition(condition, True))
             else:
                 result = '%s.XXX:%s(%s, %s)' % (prev_result, jtype, relation, self._convert_raw_condition(condition),)
             return result
@@ -2030,24 +2037,24 @@ class Select(_GsqlSpec):
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
                 self._add_conversion_dependency(rel.relation, rel.schema)
-                d = "%s = object_by_name('%s.%s')" % (self._convert_local_name(relation),
+                d = "%s = sql.object_by_name('%s.%s')" % (self._convert_local_name(relation),
                                                       rel.schema, rel.relation,)
             else:
                 relation = self._convert_relation_name(rel)
                 rrelation = rel.relation
                 match = re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', rrelation)
                 if match:
-                    selector = 'object_by_name'
+                    selector = 'sql.object_by_name'
                     rschema, dependency = match.group()
                     d = "%s = %s('%s')" % (self._convert_local_name(relation), selector, rrelation,)
                 elif rrelation.startswith('pg_'):
                     dependency = rrelation
                     rschema = None
-                    d = "%s = gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
+                    d = "%s = sql.gO('%s')" % (self._convert_local_name(relation), rrelation.lower(),)
                 else:
                     dependency = rrelation
                     rschema = None
-                    d = "%s = t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation),)
+                    d = "%s = sql.t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation, short=True),)
                 self._add_conversion_dependency(dependency, rschema)
             if rel.alias:
                 if d is None:
@@ -2077,7 +2084,7 @@ class Select(_GsqlSpec):
                 result = '%s.join(%s, sqlalchemy.sql.true())' % (last_relation, relation,)
             elif jtype == JoinType.FULL_OUTER:
                 c = self._convert_raw_condition(condition, True)
-                result = 'FullOuterJoin(%s, %s, %s)' % (last_relation, relation, c,)
+                result = 'sql.FullOuterJoin(%s, %s, %s)' % (last_relation, relation, c,)
             else:
                 c = self._convert_raw_condition(condition)
                 result = '%s.XXX:%s(%s, %s)' % (last_relation, jtype, relation, c,)
@@ -2391,7 +2398,7 @@ class _GsqlViewNG(Select):
         return self.output(table_keys)
 
     def convert(self):
-        items = ['class %s(SQLView):' % (self._convert_name(),)]
+        items = ['class %s(sql.SQLView):' % (self._convert_name(new=True),)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -2904,7 +2911,7 @@ class _GsqlView(_GsqlSpec):
             crepr = '%s.c.%s' % (self._convert_local_name(match.group(1).lower()),
                                  match.group(2).lower(),)
         else:
-            crepr = 'gL("%s")' % (self._convert_literal(cname),)
+            crepr = 'sql.gL("%s")' % (self._convert_literal(cname),)
         return '%s.label(%s)' % (crepr, repr(alias.strip()),)
 
     def _convert_complex_columns(self):
@@ -2933,7 +2940,7 @@ class _GsqlView(_GsqlSpec):
         return result
     
     def convert(self):
-        items = ['class %s(SQLView):' % (self._convert_name(),)]
+        items = ['class %s(sql.SQLView):' % (self._convert_name(new=True),)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -2980,14 +2987,14 @@ class _GsqlView(_GsqlSpec):
             from_obj = []
             for t in tables:
                 t = t.lower()
-                selector = 'gO'
+                selector = 'sql.gO'
                 pos = t.rfind(' ')
                 if pos > 0:
                     name_alias = t.split(' ')
                     name = t[:pos].rstrip()
                     alias = t[pos+1:]
                     if re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', name):
-                        selector = 'object_by_name'
+                        selector = 'sql.object_by_name'
                 else:
                     name = alias = t
                 line = "        %s = %s('%s')" % (self._convert_local_name(alias), selector, name,)
@@ -3247,14 +3254,14 @@ class _GsqlFunction(_GsqlSpec):
         arguments = [repr(name), type_]
         if out:
             arguments.append('out=True')
-        return 'Column(%s)' % (string.join(arguments, ', '),)
+        return 'sql.Column(%s)' % (string.join(arguments, ', '),)
 
     def convert(self):
         name = self._name
         body = self._body
         python = not isinstance(body, basestring)
-        superclass = '_PyFunctionBase' if python else 'SQLFunction'
-        items = ['class %s(%s):' % (self._convert_name(), superclass,)]
+        superclass = 'db._PyFunctionBase' if python else 'sql.SQLFunction'
+        items = ['class %s(%s):' % (self._convert_name(new=True), superclass,)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -3432,7 +3439,7 @@ class _GsqlSequence(_GsqlSpec):
         return result
 
     def convert(self):
-        items = ['class %s(SQLSequence):' % (self._convert_name(),)]
+        items = ['class %s(sql.SQLSequence):' % (self._convert_name(new=True),)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -3508,7 +3515,7 @@ class _GsqlRaw(_GsqlSpec):
         return _gsql_warning('Raw command not considered: %s' % self.name())
 
     def convert(self):
-        items = ['class %s(SQLRaw):' % (self._convert_name(),)]
+        items = ['class %s(sql.SQLRaw):' % (self._convert_name(new=True),)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -3882,8 +3889,16 @@ database dumps if you want to be sure about your schema.
         defs._convert()
 
     def _convert(self):
-        coding_header = '# -*- coding: utf-8\n\n'
-        preamble = '''TMoney    = \'numeric(15,2)\'
+        coding_header = '# -*- coding: utf-8\n'
+        local_preamble = '''
+import sqlalchemy
+import pytis.extensions.gensqlalchemy as sql
+import pytis.data
+import dbdefs as db
+
+'''
+        preamble = '''
+TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'
 
 class BaseTriggerObject(object):
@@ -3937,7 +3952,7 @@ class BaseTriggerObject(object):
                 self._do_after_delete()
         return self._return_code
 
-class _PyFunctionBase(SQLPyFunction):
+class _PyFunctionBase(sql.SQLPyFunction):
     @staticmethod
     def sub_pg_escape(val):
         return str(val).replace("\'", "\'\'")
@@ -3990,19 +4005,17 @@ class _PyFunctionBase(SQLPyFunction):
         if directory is None:
             sys.stdout.write(coding_header)
         else:
-            index_file = os.path.join(directory, 'db.py')
+            index_file = os.path.join(directory, '__init__.py')
             visited_files[index_file] = None
             f = open(index_file, 'w')
             f.write(coding_header)
+            f.write(local_preamble)
             f.write(preamble)
             f.close()
         last_visited_file = [None]
         last_visited_suffix = ['']
         def process(o):
             dbobj = self[o]
-            converted = dbobj.convert()
-            if not dbobj._convert:
-                converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
             if directory is None:
                 output = sys.stdout
             else:
@@ -4030,12 +4043,18 @@ class _PyFunctionBase(SQLPyFunction):
                 file_name += '.py'
                 if new_file:
                     f = open(index_file, 'a')
-                    f.write("include('%s', globals())\n" % (basename,))
+                    f.write("from %s import *\n" % (os.path.splitext(basename)[0],))
                     f.close()
                     output = open(file_name, 'w')
                     output.write(coding_header)
+                    output.write(local_preamble)
+                    global _convert_local_names
+                    _convert_local_names = []
                 else:
                     output = open(file_name, 'a')
+            converted = dbobj.convert()
+            if not dbobj._convert:
+                converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
             output.write(converted.replace('_RETURN_CODE_MODYFY', '_RETURN_CODE_MODIFY'))
             output.write('\n')
         self._process_resolved(process)

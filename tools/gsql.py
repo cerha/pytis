@@ -23,7 +23,7 @@ import sys
 
 import pytis.extensions.gensqlalchemy
 
-USAGE = """usage: %prog [ OPTIONS ] SPECIFICATION-FILE"""
+USAGE = """usage: %prog [ OPTIONS ] SPECIFICATION-MODULE"""
 
 def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
@@ -40,9 +40,9 @@ def parse_options():
     return options, args[0]
 
 def run():
-    options, file_name = parse_options()
-    pytis.extensions.gensqlalchemy.gsql_file(file_name, regexp=options.regexp,
-                                             views=options.views, functions=options.functions)
+    options, module = parse_options()
+    pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp,
+                                               views=options.views, functions=options.functions)
 
 if __name__ == '__main__':
     run()
