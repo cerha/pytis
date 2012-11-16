@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-09-14 19:20'
+_VERSION = '2012-11-16 09:05'
 
 import logging
 import os
@@ -352,7 +352,14 @@ class PytisAdminService(PytisService):
 
     def exposed_user_port(self, user):
         assert isinstance(user, basestring), user
-        return _registered_users.get(user)
+        if user == '-':
+            port = None
+            for p in _registered_users.values():
+                if port is None or port > p:
+                    port = p
+        else:
+            port = _registered_users.get(user)
+        return port
 
     def exposed_upgrade(self, source):
         assert source and isinstance(source, basestring), source

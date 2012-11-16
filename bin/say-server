@@ -44,7 +44,7 @@ def say(user_name, target_ip, request, *arguments):
         sys.stdout.write('\n')
 
 def usage(exit_code=0):
-    sys.stdout.write('usage: %s [ --user USERNAME ] IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
+    sys.stdout.write('usage: %s [ --user { USERNAME | - } ] IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
     sys.stdout.write("""Available requests:
     upgrade NEW-WINDOWS-SERVER-FILE
     restart
