@@ -3866,16 +3866,20 @@ class HttpAttachmentStorage(AttachmentStorage):
         that's a problem in some use case, the method may be overriden.
 
         """
-        from pytis.form import run_form, InputForm
-        from pytis.data import Password
-        result = run_form(InputForm,
-                          title=_(u"Zadejte přihlašovací údaje pro %s" % realm),
-                          fields=(Field('login', _("Uživatelské jméno"),
-                                        width=24, not_null=True, default=config.dbuser),
-                                  Field('password', _("Heslo"),
-                                        type=Password(verify=False), width=24, not_null=True),),
-                          focus_field='password')
-        return result and (result['login'].value(), result['password'].value())
+        import config
+        login, password = config.dbconnection.user(), config.dbconnection.password()
+        if not password:
+            from pytis.form import run_form, InputForm
+            from pytis.data import Password
+            result = run_form(InputForm,
+                              title=_(u"Zadejte heslo pro %s@%s" % (login, realm)),
+                              fields=(Field('password', _("Heslo"),
+                                            type=Password(verify=False), width=24, not_null=True),),
+                              focus_field='password')
+            if result:
+                password = result['password'].value()
+            config.dbconnection.update_login_data(user=login, password=password)
+        return (login, password)
     
     def _connect(self, uri, body=None, headers={}):
         import urllib2, httplib
