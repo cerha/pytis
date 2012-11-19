@@ -86,9 +86,9 @@ end;
 """
 
 class Indexed(sql.SQLTable):
-    fields = (sql.Column('x', pytis.data.Integer()),
-              sql.Column('y', pytis.data.Integer()),
-              sql.Column('z', pytis.data.Integer()),
+    fields = (sql.Column('x', pytis.data.LTree()),
+              sql.Column('y', pytis.data.LTree()),
+              sql.Column('z', pytis.data.LTree()),
               )
     index_columns = (('x', 'y',),
                      sql.a('x', 'y', 'z', method='gist'),)
