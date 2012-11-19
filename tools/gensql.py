@@ -1522,7 +1522,8 @@ class _GsqlTable(_GsqlSpec):
 
     def convert(self):
         spec_name = self._convert_name(new=True)
-        items = ['class %s(sql.SQLTable):' % (spec_name,)]
+        superclass = 'db._LogSQLTable' if self._upd_log_trigger else 'sql.SQLTable'
+        items = ['class %s(%s):' % (spec_name, superclass,)]
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
@@ -1608,14 +1609,6 @@ class _GsqlTable(_GsqlSpec):
         add_rule('insert', self._on_insert)
         add_rule('update', self._on_update)
         add_rule('delete', self._on_delete)
-        if self._upd_log_trigger:
-            keys = ','.join([_gsql_column_table_column(k)[1] for k in self.key_columns()])
-            items.append('class %sUpdLogTrigger(sql.SQLTrigger):' % (spec_name,))
-            items.append('    table = %s' % (spec_name,))
-            items.append("    events = ('insert', 'update', 'delete',)")
-            items.append("    body = %s" %
-                         (self._convert_name(self._upd_log_trigger),))
-            items.append('    arguments = ("%s",)' % (keys,))
         result = string.join(items, '\n') + '\n'
         return result
     
@@ -3897,7 +3890,7 @@ import pytis.data
 import dbdefs as db
 
 '''
-        preamble = '''
+        preamble_1 = '''
 TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'
 
@@ -4000,6 +3993,26 @@ class _PyFunctionBase(sql.SQLPyFunction):
         return html_table.replace("\'", "\'\'")
 
 '''
+        preamble_2 = '''
+class _LogTrigger(sql.SQLTrigger):
+    name = \'log\'
+    events = (\'insert\', \'update\', \'delete\',)
+    body = XLogUpdateTrigger
+
+class _LogSQLTable(sql.SQLTable):
+    @property
+    def triggers(self):
+        keys = \',\'.join([f.id() for f in self.fields if f.primary_key()])
+        return ((_LogTrigger, keys,),)
+
+'''
+        preprocessed_names = ('_log_update_trigger', '_inserts', '_updates', '_deletes',)
+        preamble_x = ['']
+        def preprocess(o):
+            dbobj = self[o]
+            if dbobj.name() in preprocessed_names:
+                preamble_x[0] += dbobj.convert()
+        self._process_resolved(preprocess)
         directory = _GsqlConfig.directory
         visited_files = {}
         if directory is None:
@@ -4010,12 +4023,16 @@ class _PyFunctionBase(sql.SQLPyFunction):
             f = open(index_file, 'w')
             f.write(coding_header)
             f.write(local_preamble)
-            f.write(preamble)
+            f.write(preamble_1)
+            f.write(preamble_x[0])
+            f.write(preamble_2)
             f.close()
         last_visited_file = [None]
         last_visited_suffix = ['']
         def process(o):
             dbobj = self[o]
+            if dbobj.name() in preprocessed_names:
+                return
             if directory is None:
                 output = sys.stdout
             else:
@@ -4055,7 +4072,9 @@ class _PyFunctionBase(sql.SQLPyFunction):
             converted = dbobj.convert()
             if not dbobj._convert:
                 converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
-            output.write(converted.replace('_RETURN_CODE_MODYFY', '_RETURN_CODE_MODIFY'))
+            converted = converted.replace('_RETURN_CODE_MODYFY', '_RETURN_CODE_MODIFY')
+            converted = converted.replace('(BaseTriggerObject)', '(db.BaseTriggerObject)')
+            output.write(converted)
             output.write('\n')
         self._process_resolved(process)
 
