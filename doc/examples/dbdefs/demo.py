@@ -255,6 +255,10 @@ class PyFunc(sql.SQLPyFunction):
     def sub_pythonic(x, y):
         return x * y
 
+    class Sub_Computer(object):
+        def compute(self, value):
+            return value + 1
+
 class PyFuncSingleArg(sql.SQLPyFunction):
     name = 'single_argument'
     arguments = (sql.Column('x', pytis.data.Integer()),)

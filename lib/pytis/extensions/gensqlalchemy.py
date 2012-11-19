@@ -1858,14 +1858,17 @@ class SQLPyFunction(SQLFunctional):
     The utility functions are also defined as static methods of the
     specification class.  The methods must be named sub_NAME, where NAME is the
     name of the utility function, and must have the same arguments.  Functions
-    defined this way are available for use in the PL/Python function.
-    Utility functions are typically defined in a common base class inherited by
-    specifications of PL/Python functions.
+    defined this way are available for use in the PL/Python function.  You can
+    also define utility inner classes in a similar way, they must be named
+    Sub_NAME.
+    
+    Utility functions and classes are typically defined in a common base class
+    inherited by specifications of PL/Python functions.
     
     """
     _LANGUAGE = 'plpythonu'
 
-    _STATICMETHOD_MATCHER = re.compile('( *)@staticmethod\r?\n?', re.MULTILINE)
+    _SUBROUTINE_MATCHER = re.compile('( *)(@staticmethod\r?\n?|class )', re.MULTILINE)
     
     def body(self):
         main_method_name = self.name
@@ -1878,16 +1881,26 @@ class SQLPyFunction(SQLFunctional):
                 l += '[0]'
             lines.append(l)
         main_lines = self._method_source_lines(main_method_name, 0)
-        main_lines = main_lines[1:]
+        main_lines = main_lines[2:]
         prefix = 'sub_'
         for name in dir(self):
             if name.startswith(prefix):
                 function_lines = self._method_source_lines(name, 4) # hard-wired forev^h^h now
+                function_lines = function_lines[1:]
                 first_line = function_lines[0]
                 i = first_line.find(prefix)
                 j = i + len(prefix)
                 function_lines[0] = first_line[:i] + first_line[j:]
                 lines += function_lines
+        prefix = 'Sub_'
+        for name in dir(self):
+            if name.startswith(prefix):
+                class_lines = self._method_source_lines(name, 4) # hard-wired forev^h^h now
+                first_line = class_lines[0]
+                i = first_line.find(prefix)
+                j = i + len(prefix)
+                class_lines[0] = first_line[:i] + first_line[j:]
+                lines += class_lines
         lines += main_lines
         return string.join(lines, '\n')
 
@@ -1897,7 +1910,7 @@ class SQLPyFunction(SQLFunctional):
             lines = inspect.getsourcelines(method)[0]
         except Exception as e:
             raise SQLException("Invalid plpythonu method", (self.__class__.__name__, name, e))
-        match = self._STATICMETHOD_MATCHER.match(lines[0])
+        match = self._SUBROUTINE_MATCHER.match(lines[0])
         if not match:
             raise SQLException("@staticmethod decorator not found", (self.__class__.__name__, name))
         indentation = indentation - len(match.group(1))
@@ -1910,7 +1923,7 @@ class SQLPyFunction(SQLFunctional):
         else:
             def reindent(line):
                 return line[-indentation:]
-        lines = [l.rstrip() for l in lines[1:]]
+        lines = [l.rstrip() for l in lines]
         return [reindent(l) for l in lines if l.strip()]
 
 class SQLEventHandler(SQLFunctional):
