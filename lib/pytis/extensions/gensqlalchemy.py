@@ -1442,8 +1442,9 @@ class SQLTable(_SQLTabular):
         for t in self.triggers:
             if not isinstance(t, (tuple, list,)):
                 t = (t,)
-            class T(SQLTrigger):
-                name = '%s__%s' % (self.name, t[0].name,)
+            trigger = t[0]
+            class T(trigger):
+                name = '%s__%s' % (self.name, trigger.name,)
                 table = self.__class__
                 arguments = t[1:]
             sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: T)
