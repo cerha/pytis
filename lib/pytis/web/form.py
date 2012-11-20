@@ -508,7 +508,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     _EDITABLE = True
     
-    def __init__(self, view, req, row, errors=(), **kwargs):
+    def __init__(self, view, req, row, errors=(), multipart=None, **kwargs):
         """Arguments:
 
           errors -- a sequence of error messages to display within the form
@@ -520,6 +520,12 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             current form or even don't exist in the current specification
             (typically for fields which only appear in the underlying database
             objects).
+          multipart -- force form encoding type to 'multipart/form-data'.  If
+            None, the encoding is set to 'multipart/form-data' automatically
+            when the form includes any binary (file upload) fields.  If False,
+            the form will always use the default encoding type (The 'enctype'
+            HTML form attribute is not used) and if True, encoding is always
+            forced to 'multipart/form-data'.
 
           See the parent classes for definition of the remaining arguments.
 
@@ -538,8 +544,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 assert e[0] is None or isinstance(e[0], basestring), ('type error', e[0], errors)
                 assert isinstance(e[1], basestring), ('type error', e[1], errors)
         self._errors = errors
-        binary = [id for id in order if isinstance(self._row.type(id), pytis.data.Binary)]
-        self._enctype = (binary and 'multipart/form-data' or None)
+        assert multipart in (None, True, False), multipart
+        if multipart is None:
+            multipart = any([f for f in order if isinstance(self._row.type(f), pytis.data.Binary)])
+        self._enctype = (multipart and 'multipart/form-data' or None)
 
     def _has_not_null_indicator(self, field):
         type = field.type
