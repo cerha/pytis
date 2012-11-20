@@ -52,6 +52,7 @@ def usage(exit_code=0):
     sys.stdout.write('usage: %s [ --user { USERNAME | - } ] IP-ADDRESS REQUEST [ ARGUMENTS ... ]\n' % (__file__,))
     sys.stdout.write("""Available requests:
     upgrade NEW-WINDOWS-SERVER-FILE
+    upgrade_module NEW-WINDOWS-MODULE-FILE
     restart
     launch_file { FILE-NAME | URL }
     run_python LOCAL-PYTHON-FILE-NAME
