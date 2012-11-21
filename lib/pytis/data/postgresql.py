@@ -1462,14 +1462,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 {'columns': column_list})
         self._pdbb_command_close_select = \
             self._SQLCommandTemplate('close %s' % (cursor_name,))
+        agg_table_list = table_list.replace('%', '%%')
         if self._pdbb_operations:
             self._pdbb_command_select_agg = \
               ('select%s %%s from (select %s from %s where true%s %s) as %s where %%s and (%s)' %
-               (distinct_on, column_list, table_list, filter_condition, groupby, table_names[0], relation,))
+               (distinct_on, column_list, agg_table_list, filter_condition, groupby, table_names[0], relation,))
         else:
             self._pdbb_command_select_agg = \
               ('select%s %%s from %s where %%s and (%s)%s' %
-               (distinct_on, table_list, relation, filter_condition,))
+               (distinct_on, agg_table_list, relation, filter_condition,))
         self._pdbb_command_fetch_forward = \
           self._SQLCommandTemplate('fetch forward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_fetch_backward = \
@@ -2098,7 +2099,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                   for r in data]
         return result
         
-    def _pg_select_aggregate(self, operation, colids, condition, transaction=None):
+    def _pg_select_aggregate(self, operation, colids, condition, transaction=None, arguments={}):
         if __debug__:
             if operation != self.AGG_COUNT:
                 if operation in (self.AGG_MIN, self.AGG_MAX):
@@ -2114,7 +2115,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             close_select = True
         try:
             data = self._pg_select_aggregate_1(operation, colids, condition,
-                                               transaction=transaction)
+                                               transaction=transaction, arguments=arguments)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -2164,15 +2165,18 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             raise ProgramError('Invalid aggregate function identifier',
                                operation)
 
-    def _pg_select_aggregate_1(self, operation, colids, condition, transaction=None):
+    def _pg_select_aggregate_1(self, operation, colids, condition, transaction=None, arguments={}):
         cond_string = self._pdbb_condition2sql(condition)
         colnames = [self._pdbb_btabcol(self._db_column_binding(cid)) for cid in colids]
         function = self._pg_aggregate_name(operation)
         function_list = ['%s (%s)' % (function, cname,) for cname in colnames]
         function_string = string.join(function_list, ', ')
-        return self._pg_query(self._pdbb_command_select_agg %
-                              (function_string, cond_string),
-                              transaction=transaction)
+        query = self._pdbb_command_select_agg % (function_string, cond_string)
+        if arguments:
+            args = {}
+            self._pg_make_arguments(args, arguments)
+            query = query % args
+        return self._pg_query(query, transaction=transaction)
     
     def _pg_fetchmany (self, count, direction, transaction=None):
         """Vrať 'count' řádků selectu jako raw data."""
@@ -2957,12 +2961,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_number_of_rows = row_count_info
         return row_count_info
 
-    def select_aggregate(self, operation, condition=None, transaction=None):
+    def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
         return self._pg_select_aggregate(operation[0], (operation[1],),
-                                         condition=condition, transaction=transaction)[0]
+                                         condition=condition, transaction=transaction,
+                                         arguments=arguments)[0]
     
     def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
-                             columns=None, transaction=None):
+                             columns=None, transaction=None, arguments={}):
         if columns is None:
             function_columns = [g[0] for g in (self._pdbb_column_groups or ()) if g[2] is not None]
             columns = [c.id() for c in self.columns()
@@ -2978,7 +2983,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             number_columns = [cid for cid in columns
                               if isinstance(self.find_column(cid).type(), Number)]
         aggregate_results = self._pg_select_aggregate(operation, number_columns,
-                                                      condition=condition, transaction=transaction)
+                                                      condition=condition, transaction=transaction,
+                                                      arguments=arguments)
         def aggregate_value(cid):
             if number_columns and cid == number_columns[0]:
                 del number_columns[0]

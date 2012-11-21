@@ -2176,6 +2176,23 @@ class DBDataAggregated(DBDataDefault):
         data.select(columns=('count',), sort=('count',))
         data.fetchone()
         data.close()
+    def test_table_function(self):
+        D = pytis.data.DBDataDefault
+        B = pytis.data.DBColumnBinding
+        func_spec = (B('id', 'tablefunc', 'id', type_=pytis.data.Integer()),
+                     B('popis', 'tablefunc', 'popis', type_=pytis.data.String()),
+                     )
+        operations = ((D.AGG_COUNT, 'popis', 'popiscount',),)
+        column_groups = ('id',)
+        data = D(func_spec,
+                 func_spec[0],
+                 self._dconnection,
+                 arguments=(func_spec[0],))
+        try:
+            count = data.select_aggregate((D.AGG_COUNT, 'id',), arguments=dict(id=ival(2))).value()
+            assert count == 3, ('Unexpected number of aggregate rows', count)
+        finally:
+            data.close()
 tests.add(DBDataAggregated)
 
 
