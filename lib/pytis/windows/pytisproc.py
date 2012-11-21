@@ -54,7 +54,14 @@ class PytisService(rpyc.Service):
 
         """
         assert isinstance(script, basestring), script
-        pythonw = sys.executable
+        def get_pythonw_interpreter():
+            osfile = os.__file__
+            libpath = os.path.split(osfile)[0]
+            pythonw = os.path.join(os.path.split(libpath)[0], 'pythonw.exe')
+            if not os.path.exists(pythonw):
+                pythonw = 'pythonw.exe'
+            return pythonw
+        pythonw = get_pythonw_interpreter()
         tmpdir = tempfile.mkdtemp(prefix='pytisexec')
         try:
             python_file = os.path.join(tmpdir, 'script.py')
