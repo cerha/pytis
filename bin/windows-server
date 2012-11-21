@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-11-20 15:20'
+_VERSION = '2012-11-21 14:09'
 
 URLPREFIX='https://ssl.asellus.cz/programs'
 PROCMODULE='pytisproc'
@@ -131,7 +131,7 @@ class PytisThreadedServer(rpyc.utils.server.ThreadedServer):
         return logger
     
     def _accept_method(self, sock):
-        admin = isinstance(self.service, pytisproc.PytisAdminService)
+        admin = (self.service.__name__ == 'PytisAdminService')
         for i in range(3):
             try:
                 reload(pytisproc)
