@@ -129,28 +129,32 @@ class Form(lcg.Content):
         self._uri_provider = uri_provider
         self._hidden = list(hidden)
         self._name = name
-        self._id = 'x%x' % positive_id(self)
         self._actions = actions
 
-    def _export_body(self, context):
-        pass
-    
-    def _export_submit(self, context):
-        pass
-    
-    def _export_footer(self, context):
-        pass
+    def _export_body(self, context, form_id):
+        return []
+
+    def _export_javascript(self, context, form_id):
+        return None
 
     def export(self, context):
         g = context.generator()
-        content = [self._export_body(context)] + \
-                  [g.div(part, cls=name) for part, name in
-                   (self._export_submit(context), 'submit'),
-                   (self._export_footer(context), 'footer') if part]
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
             cls += ' ' + camel_case_to_lower(self._name, '-')
-        return g.div(content, cls=cls)
+        form_id = context.unique_id()
+        form = g.div(self._export_form(context, form_id), cls=cls, id=form_id)
+        javascript = self._export_javascript(context, form_id)
+        if javascript:
+            context.resource('prototype.js')
+            context.resource('gettext.js')
+            context.resource('pytis.js')
+            context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
+            form += g.script(javascript)
+        return form
+
+    def _export_form(self, context, form_id):
+        return self._export_body(context, form_id)
 
     def heading_info(self):
         """Return basestring to be possibly put into a document heading.
@@ -176,9 +180,9 @@ class Form(lcg.Content):
                    action=uri)
             for action, enabled in self._visible_actions(context, record)]
         if buttons:
-            return g.div(buttons, cls='actions module-actions-' + self._name)
+            return [g.div(buttons, cls='actions module-actions-' + self._name)]
         else:
-            return ''
+            return []
 
     def _visible_actions(self, context, record):
         class Action(object):
@@ -448,8 +452,8 @@ class _SingleRecordForm(LayoutForm):
         layout = layout or view.layout().group()
         super(_SingleRecordForm, self).__init__(view, req, row, layout=layout, **kwargs)
         
-    def _export_body(self, context):
-        return self._export_group(context, self._layout)
+    def _export_body(self, context, form_id):
+        return [self._export_group(context, self._layout)]
     
     
 class _SubmittableForm(Form):
@@ -474,33 +478,36 @@ class _SubmittableForm(Form):
         self._enctype = None
         super(_SubmittableForm, self).__init__(view, req, row, **kwargs)
     
+
+    def _export_form(self, context, form_id):
+        g = context.generator()
+        return [g.form((super(_SubmittableForm, self)._export_form(context, form_id) +
+                        self._export_submit(context)),
+                       action=g.uri(self._handler), method=self._HTTP_METHOD,
+                       enctype=self._enctype)]
+
     def _export_submit(self, context):
         g = context.generator()
         hidden = self._hidden + [('form_name', self._name)]
         invoked_from = self._req.param('__invoked_from')
         if invoked_from is not None:
             hidden.append(('__invoked_from', invoked_from))
-        result = [g.hidden(name, value) for name, value in hidden] + \
-                 [g.button(g.span(label), name=name, value='1', title=_(u"Submit the form"))
-                  for label, name in self._submit]
+        content = [g.hidden(name, value) for name, value in hidden] + \
+            [g.button(g.span(label), name=name, value='1', title=_(u"Submit the form"))
+             for label, name in self._submit]
         if self._reset:
-            result.append(g.button(g.span(_(u"Reset")), type='reset', title=self._reset))
-        return result
+            content.append(g.button(g.span(_(u"Reset")), type='reset', title=self._reset))
+        return [g.div(content, cls='submit')]
 
-    def export(self, context):
-        g = context.generator()
-        content = super(_SubmittableForm, self).export(context)
-        return g.form(content, action=g.uri(self._handler), method=self._HTTP_METHOD,
-                      enctype=self._enctype, id=self._id)
 
 
 class ShowForm(_SingleRecordForm):
     _CSS_CLS = 'show-form'
     _ALIGN_NUMERIC_FIELDS = True
 
-    def export(self, context):
-        return context.generator().div((super(ShowForm, self).export(context),
-                                        self._export_actions(context, self._row, self._req.uri())))
+    def _export_form(self, context, form_id):
+        return (super(ShowForm, self)._export_form(context, form_id) +
+                self._export_actions(context, self._row, self._req.uri()))
 
     
     
@@ -587,36 +594,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 msg = g.strong(f and f.label() or id) + ": " + msg
             errors.append(g.p(msg))
         if errors:
-            return g.div(errors, cls='errors')
+            return [g.div(errors, cls='errors')]
         else:
-            return None
-    
-    def _export_body(self, context):
-        errors = self._export_errors(context)
-        body = super(EditForm, self)._export_body(context)
-        if errors:
-            return concat(errors, body)
-        else:
-            return body
-    
-    def _export_footer(self, context):
-        for f in self._fields.values():
-            if f.label and self._has_not_null_indicator(f) and f.id in self._layout.order():
-                g = context.generator()
-                return g.span("*", cls="not-null") +") "+\
-                       _(u"Fields marked by an asterisk are mandatory.")
-        return None
+            return []
 
-    def export(self, context):
-        context.resource('prototype.js')
-        context.resource('gettext.js')
-        context.resource('pytis.js')
-        context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
-        result = super(EditForm, self).export(context)
+    def _export_javascript(self, context, form_id):
+        g = context.generator()
         layout_fields = self._layout.order()
         field_handlers = []
         state = {}
-        g = context.generator()
         for fid in layout_fields:
             field = self._fields[fid]
             active = self._row.depends(fid, layout_fields)
@@ -625,11 +611,20 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 # NOTE: The format here must be same as in EditForm.ajax_response()!
                 state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
                                             self._row.runtime_arguments(fid))
-            handler = field.exporter.handler(context, self._id, active, required)
+            handler = field.exporter.handler(context, form_id, active, required)
             field_handlers.append(handler)
-        result += g.script("new pytis.FormHandler('%s', [%s], %s)" %
-                           (self._id, ', '.join(field_handlers), g.js_value(state)))
-        return result
+        return "new pytis.FormHandler('%s', [%s], %s)" % \
+            (form_id, ', '.join(field_handlers), g.js_value(state))
+        
+    
+    def _export_footer(self, context):
+        for f in self._fields.values():
+            if f.label and self._has_not_null_indicator(f) and f.id in self._layout.order():
+                g = context.generator()
+                return [g.div(g.span("*", cls="not-null") +") "+\
+                                  _(u"Fields marked by an asterisk are mandatory."),
+                              cls='footer')]
+        return []
 
     @classmethod
     def ajax_response(cls, req, row, layout, errors, localizer, uri_provider=None):
@@ -780,7 +775,7 @@ class FilterForm(EditForm):
         super(FilterForm, self).__init__(view, req, row, **kwargs)
         
     def _export_footer(self, context):
-        return None
+        return []
 
     
 class BrowseForm(LayoutForm):
@@ -795,7 +790,8 @@ class BrowseForm(LayoutForm):
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
                  search=None, query=None, allow_query_search=None, filter=None, message=None, 
                  filter_sets=None, profiles=None, filter_fields=None, immediate_filters=True,
-                 top_actions=False, bottom_actions=True, row_actions=False, **kwargs):
+                 top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
+                 **kwargs):
         """Arguments:
 
           uri_provider -- as in the parent class.
@@ -950,6 +946,14 @@ class BrowseForm(LayoutForm):
             so that the user must visit the ShowForm by clicking the row link
             and invoke actions from there.  Including action buttons directly
             within the browse form allows direct access but clutters the UI.
+          async_load -- boolean flag indicating whether form data can be loaded
+            asynchronously through AJAX.  If True, the form will not be
+            rendered on export.  Only a container is created with a JavaScript
+            code which loads the data through AJAX in a separate request.  This
+            may dramatically reduce the time needed for form export so the page
+            can be returned to the client more promptly.  If allowed, the
+            application must also support the asynchronous requests (the
+            parameter '_pytis_async_load_request' is added for such requests).
 
         See the parent classes for definition of the remaining arguments.
 
@@ -1112,6 +1116,7 @@ class BrowseForm(LayoutForm):
         self._top_actions = top_actions
         self._bottom_actions = bottom_actions
         self._row_actions = row_actions
+        self._async_load = async_load
 
     def _init_filter_fields(self, req, filter_fields_spec):
         columns = []
@@ -1397,24 +1402,32 @@ class BrowseForm(LayoutForm):
             msg = None
         return msg
 
-    def _wrap_exported_rows(self, context, rows, summary):
+    def _export_body(self, context, form_id):
         g = context.generator()
-        if self._page + 1 == self._pages:
-            # Display aggregations on the last page.
-            foot_rows = [self._export_aggregation(context, op)
-                         for op in self._view.aggregations()]
+        if True: # TODO: Be False for robot's requests
+            content = [g.div(g.div(_("Loading form data..."), cls='ajax-loading'),
+                             cls='ajax-container')]
         else:
-            foot_rows = []
-        if self._row_actions:
-            context.resource('lcg.js')
-            context.resource('lcg-widgets.css')
-        headings = self._export_headings(context)
-        foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
-        return g.table((g.thead(g.tr(headings)),
-                        g.tfoot(foot_rows),
-                        g.tbody(rows)), border=1)
-    
-    def _export_body(self, context):
+            content = self._export_table(context, form_id)
+        actions = self._export_actions(context, None,
+                                       self._uri_provider(None, UriType.LINK, None))
+        if actions:
+            if self._top_actions:
+                content[0:0] = actions
+            if self._bottom_actions:
+                content += actions
+        return content
+
+    def _export_javascript(self, context, form_id):
+        if self._async_load:
+            uri = self._uri_provider(None, UriType.LINK, None)
+            if uri:
+                g = context.generator()
+                return g.js_call("new pytis.BrowseFormHandler", form_id, uri)
+        return None
+
+    def _export_table(self, context, form_id):
+        g = context.generator()
         data = self._row.data()
         row = self._row
         limit = self._limit
@@ -1424,8 +1437,7 @@ class BrowseForm(LayoutForm):
             arguments.update(dict(self._filter_fields_arguments))
         else:
             arguments = None
-        self._count = count = data.select(condition=self._conditions(), sort=self._sorting,
-                                          arguments=arguments)
+        count = data.select(condition=self._conditions(), sort=self._sorting, arguments=arguments)
         found = False
         offset = self._offset
         if self._search:
@@ -1439,7 +1451,6 @@ class BrowseForm(LayoutForm):
         else:
             page = 0
             first_record_offset = 0
-        self._page = page
         if count == 0:
             pages = 0
         elif limit is None:
@@ -1447,7 +1458,6 @@ class BrowseForm(LayoutForm):
         else:
             pages, modulo = divmod(count, min(limit, count))
             pages += modulo and 1 or 0
-        self._pages = pages
         self._group = True
         self._last_group = None
         group_values = last_group_values = None
@@ -1477,15 +1487,14 @@ class BrowseForm(LayoutForm):
             if limit is not None and n >= limit:
                 break
         data.close()
-        g = context.generator()
         if n == 0:
             if self._message(0):
                 # The message about search/filter results is already printed.
-                return '' 
+                result = None
             else:
                 # Translators: Used in empty list forms.  "Records" refers to
                 # database records in the most generic senese possible.
-                return g.strong(_(u"No records."))
+                result = g.strong(_(u"No records."))
         else:
             if limit is None or count <= self._limits[0]:
                 summary = _(u"Total records:") +' '+ g.strong(str(count))
@@ -1497,8 +1506,30 @@ class BrowseForm(LayoutForm):
                             first=g.strong(str(first_record_offset+1)),
                             last=g.strong(str(first_record_offset+n)),
                             total=g.strong(str(count)))
-            return self._wrap_exported_rows(context, exported_rows, summary)
+            result = self._wrap_exported_rows(context, exported_rows, summary, count, page, pages)
+        return [x for x in
+                (self._export_controls(context, form_id, count, page, pages),
+                 result,
+                 self._export_controls(context, form_id, count, page, pages, bottom=True))
+                if x]
 
+    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
+        g = context.generator()
+        if page + 1 == pages:
+            # Display aggregations on the last page.
+            foot_rows = [self._export_aggregation(context, op)
+                         for op in self._view.aggregations()]
+        else:
+            foot_rows = []
+        if self._row_actions:
+            context.resource('lcg.js')
+            context.resource('lcg-widgets.css')
+        headings = self._export_headings(context)
+        foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
+        return g.table((g.thead(g.tr(headings)),
+                        g.tfoot(foot_rows),
+                        g.tbody(rows)), border=1)
+    
     def _link_ctrl_uri(self, generator, **kwargs):
         if not kwargs.get('sort') and self._user_sorting:
             sorting_column, direction = self._user_sorting
@@ -1580,10 +1611,9 @@ class BrowseForm(LayoutForm):
             result.append(g.div(label +' '+ concat(links, separator=' ')))
         return (g.div(result, cls='index-search-controls'),)
 
-    def _export_controls(self, context, bottom=False):
-        limit, page, count, pages = self._limit, self._page, self._count, self._pages
+    def _export_controls(self, context, form_id, count, page, pages, bottom=False):
         g = context.generator()
-        id = (bottom and '0' or '1') + self._id
+        html_id = form_id + (bottom and '-top' or '-bottom')
         content = []
         # Construct a list of filters for export.
         show_filters = (self._filter_sets and (count or
@@ -1596,7 +1626,7 @@ class BrowseForm(LayoutForm):
             if msg:
                 content.append(g.div(msg, cls='results'))
         if show_query_field and not bottom:
-            query_id = 'filter-' + id
+            query_id = 'filter-' + html_id
             content.append(g.div((g.label(_(u"Search expression") +': ', query_id),
                                   g.field(self._query, name='query', id=query_id,
                                           cls='query-field'),
@@ -1613,8 +1643,8 @@ class BrowseForm(LayoutForm):
                 submit_button = g.noscript(submit_button)
             else:
                 onchange = None
-            for id, msg in self._filter_fields_errors:
-                f = find(id, self._filter_fields, key=lambda f: f.id)
+            for fid, msg in self._filter_fields_errors:
+                f = find(fid, self._filter_fields, key=lambda f: f.id)
                 content.append(g.div(g.strong(f.label) + ": " + msg, cls='errors'))
             filter_content = []
             for field in self._filter_fields:
@@ -1624,7 +1654,7 @@ class BrowseForm(LayoutForm):
             for filter_set in self._filter_sets:
                 filter_set_id = filter_set.id()
                 filter_name = 'filter_%s' % (filter_set_id,)
-                filter_id = filter_name + '-' + id
+                filter_id = filter_name + '-' + html_id
                 filter_set_content = (
                     g.label(filter_set.title()+': ', filter_id),
                     g.select(name=filter_name, id=filter_id,
@@ -1644,7 +1674,8 @@ class BrowseForm(LayoutForm):
                 filter_content.append(g.span(filter_set_content))
             filter_content.append(submit_button)
             content.append(g.div(filter_content, cls="filter"))
-        if limit is not None and count > self._limits[0]:
+        limit, limits = self._limit, self._limits
+        if limit is not None and count > limits[0]:
             controls = ()
             if count > 100:
                 if not bottom:
@@ -1655,7 +1686,7 @@ class BrowseForm(LayoutForm):
                 if index_search_controls:
                     controls += index_search_controls
             if pages > 1:
-                offset_id = 'offset-' + id
+                offset_id = 'offset-' + html_id
                 if not show_query_field and self._allow_query_field:
                     search_button = g.button(g.span(_(u"Search")), name='show_query_field',
                                              value='1', cls='search-button')
@@ -1680,13 +1711,13 @@ class BrowseForm(LayoutForm):
                                               cls='next-page-button'),
                                      ) + (search_button and (search_button,) or ()),
                                     cls="buttons"))
-            limit_id = 'limit-' + id
+            limit_id = 'limit-' + html_id
             controls += (g.span((g.label(_(u"Records per page")+':', limit_id)+' ',
                                  g.select(name='limit', id=limit_id, selected=limit,
                                           title=(_(u"Records per page")+' '+
                                                  _(u"(Use ALT+arrow down to select)")),
                                           onchange='this.form.submit(); return true',
-                                          options=[(str(i), i) for i in self._limits])),
+                                          options=[(str(i), i) for i in limits])),
                                 cls='limit'),
                          g.noscript(g.button(g.span(_(u"Go")), cls='goto-page-button')))
             if controls:
@@ -1705,19 +1736,12 @@ class BrowseForm(LayoutForm):
             return None
 
     def export(self, context):
-        form = super(BrowseForm, self).export(context)
-        content = [self._export_controls(context),
-                   form,
-                   self._export_controls(context, bottom=True)]
-        actions = self._export_actions(context, None,
-                                       self._uri_provider(None, UriType.LINK, None))
-        if actions:
-            if self._top_actions:
-                content.insert(0, actions)
-            if self._bottom_actions:
-                content.append(actions)
-        return concat([c for c in content if c], separator="\n")
-
+        if self._async_load and self._req.param('_pytis_async_load_request'):
+            form_id = context.unique_id()
+            return concat(self._export_table(context, form_id))
+        else:
+            return super(BrowseForm, self).export(context)
+        
     def heading_info(self):
         active_filters = [(k, v) for k, v in self._filter_ids.items() if v is not None]
         filter_labels = []
@@ -1854,10 +1878,8 @@ class ListView(BrowseForm):
             container = lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
         if self._row_actions:
-            actions = self._export_actions(context, row,
-                                           self._uri_provider(row, UriType.LINK, None))
-            if actions:
-                parts.append(actions)
+            parts.extend(self._export_actions(context, row,
+                                              self._uri_provider(row, UriType.LINK, None)))
         # We use only css class name from row_style, because we consider the
         # other attributes to be BrowseForm specific.
         cls = 'list-item ' + self._row_style(row, n)['cls']
@@ -1870,7 +1892,7 @@ class ListView(BrowseForm):
         #return context.generator().h(self._export_field(context, field), 3, cls='group-heding')
         return None
 
-    def _wrap_exported_rows(self, context, rows, summary):
+    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
         g = context.generator()
         result = ()
         if self._exported_row_index:
@@ -1941,7 +1963,7 @@ class ItemizedView(BrowseForm):
         #TODO: Create multi-level lists.
         return None
     
-    def _wrap_exported_rows(self, context, rows, summary):
+    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
         g = context.generator()
         return g.ul(concat(rows))
 

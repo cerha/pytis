@@ -31,18 +31,59 @@
 var pytis = {};
 
 pytis.gettext = new Gettext({domain:'pytis'});
-pytis._ = function (msg){ return pytis.gettext.gettext(msg); };
+pytis._ = function (msg) { return pytis.gettext.gettext(msg); };
+
+pytis.BrowseFormHandler = Class.create({
+    /* Handles asynchronous load of a Pytis browse form.
+
+    The form content is loaded through an AJAX request after the page is
+    displayed.  Special handling is applied to forms which are placed inside
+    notebook tabs (of lcg.Notebook widget).  Such forms are not loaded
+    immediately, but in a callback after the tab is activated.
+      
+     */
+    initialize: function(form_id, uri) {
+	/* form_id ... HTML id of the pytis form top level element (string)
+	   uri ... URI of the AJAX request to retrieve form data
+	 */
+	var form = $(form_id);
+	var container = form.down('.ajax-container');
+	if (container) {
+	    var page = form.up('.notebook-widget div');
+	    if (page) {
+		lcg.Notebook.on_activation(page, function() {
+		    this.load_form_data(uri, container) 
+		}.bind(this));
+	    } else {
+		this.load_form_data(uri, container);
+	    }
+	}
+    },
+
+    load_form_data: function(uri, container) {
+	new Ajax.Request(uri, {
+	    method: 'get',
+	    parameters: {_pytis_async_load_request: 1},
+	    onSuccess: function(transport) {
+		container.update(transport.responseText);
+	    },
+	    onFailure: function(transport) {
+		container.update(pytis._("Failed loading form."));
+	    }
+	});
+    }
+});
 
 pytis.FormHandler = Class.create({
     initialize: function(form_id, fields, state) {
-	/* form_id ... HTML id of the form to connect to (string)
+	/* form_id ... HTML id of the pytis form top level element (string)
 	 * fields ... array of form fields as pytis.Field instances
 	 * state ... initial state of form's runtime filters and arguments as
 	 *    an associative array (hash) keyed by field id where value is a
 	 *    string representation of the filter and arguments for server side
 	 *    comparisons.
 	 */
-	var form = $(form_id);
+	var form = $(form_id).down('form');
 	this._form = form;
 	this._fields = {};
 	this._state = state;
@@ -126,7 +167,9 @@ pytis.FormHandler = Class.create({
 
 pytis.Field = Class.create({
     initialize: function(form_id, field_id, id, active, required) {
-	/* form_id ... HTML id of the form element to which the field belongs.
+
+	/* form_id ... HTML id of the pytis form element to which the field
+	 *    belongs.
 	 * field_id ... HTML id of the form field element.  The element is
          *    usually the form control directly, but may be also a top level
          *    element (div) for compound fields, such as radio group or
@@ -138,7 +181,7 @@ pytis.Field = Class.create({
 	 *    sent for server processing.
 	 * required ... boolean flag; True if this field is required (not null).
 	 */
-	this._form = $(form_id);
+	this._form = $(form_id).down('form');
 	this._element = $(field_id);
 	this._ctrl = this._form[id];
 	this._id = id;
