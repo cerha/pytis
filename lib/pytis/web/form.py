@@ -1404,7 +1404,7 @@ class BrowseForm(LayoutForm):
 
     def _export_body(self, context, form_id):
         g = context.generator()
-        if True: # TODO: Be False for robot's requests
+        if self._async_load: # TODO: Avoid for robot's requests
             content = [g.div(g.div(_("Loading form data..."), cls='ajax-loading'),
                              cls='ajax-container')]
         else:
