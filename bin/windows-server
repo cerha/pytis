@@ -20,6 +20,9 @@
 # ATTENTION: This should be updated on each code change.
 _VERSION = '2012-11-20 15:20'
 
+URLPREFIX='https://ssl.asellus.cz/programs'
+PROCMODULE='pytisproc'
+
 import logging
 import os
 import rpyc
@@ -36,7 +39,29 @@ import win32service
 import win32event
 import servicemanager
 
-import pytisproc
+try:
+    import pytisproc
+except ImportError, e:
+    url = "%s/%s.py" % (URLPREFIX, PROCMODULE)
+    content = None
+    for i in range(10):
+        try:
+            import urllib
+            urllib.urlcleanup()
+            f = urllib.urlopen(url, proxies={})
+            content = f.read()
+            f.close()
+            break
+        except Exception, e:
+            time.sleep(3)
+    if not content:
+        raise e
+    else:
+        procfile = os.path.join(os.path.split(__file__)[0], '%s.py' % PROCMODULE)
+        f = open(procfile, 'w')
+        f.write(content)
+        f.close()
+        import pytisproc
 
 host = '0.0.0.0'
 port = 17984
