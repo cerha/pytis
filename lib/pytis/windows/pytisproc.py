@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-11-20 09:31'
+_VERSION = '2012-11-21 15:19'
 
 import os
 import rpyc
@@ -322,17 +322,17 @@ class PytisAdminService(PytisService):
     def exposed_register_user(self, user, port):
         assert isinstance(user, basestring), user
         assert isinstance(port, int), port
-        self._registration.registered_users[user] = port
+        self.registration.registered_users[user] = port
 
     def exposed_user_port(self, user):
         assert isinstance(user, basestring), user
         if user == '-':
             port = None
-            for p in self._registration.registered_users.values():
+            for p in self.registration.registered_users.values():
                 if port is None or port > p:
                     port = p
         else:
-            port = self._registration.registered_users.get(user)
+            port = self.registration.registered_users.get(user)
         return port
 
     def exposed_upgrade(self, source):
