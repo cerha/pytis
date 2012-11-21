@@ -2083,7 +2083,7 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
-def _gsql_process(regexp, views, functions):
+def _gsql_process(regexp, no_deps, views, functions):
     global engine
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     if regexp is not None:
@@ -2105,6 +2105,8 @@ def _gsql_process(regexp, views, functions):
         if matcher.search(o.__class__.__name__):
             matched.add(o)
             return result
+        if no_deps:
+            return False
         if isinstance(o, SQLTable):
             return False
         if isinstance(o, _SQLTabular):
@@ -2134,7 +2136,7 @@ def _gsql_process(regexp, views, functions):
             fdef = sqlalchemy.schema.AddConstraint(f)
             engine.execute(fdef)
     
-def gsql_file(file_name, regexp=None, views=False, functions=False):
+def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -2144,6 +2146,8 @@ def gsql_file(file_name, regexp=None, views=False, functions=False):
         specification class names matching this regular expression and
         view and function specifications dependent on those specifications;
         basestring
+      no_deps -- iff true, don't output dependent objects when 'regexp' is
+        specified
       views -- iff true, output just views; boolean
       functions -- iff true, output just functions; boolean
 
@@ -2156,9 +2160,9 @@ def gsql_file(file_name, regexp=None, views=False, functions=False):
     global _metadata
     _metadata = sqlalchemy.MetaData()
     execfile(file_name, copy.copy(globals()))
-    _gsql_process(regexp, views, functions)
+    _gsql_process(regexp, no_deps, views, functions)
 
-def gsql_module(module_name, regexp=None, views=False, functions=False):
+def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -2168,6 +2172,8 @@ def gsql_module(module_name, regexp=None, views=False, functions=False):
         specification class names matching this regular expression and
         view and function specifications dependent on those specifications;
         basestring
+      no_deps -- iff true, don't output dependent objects when 'regexp' is
+        specified
       views -- iff true, output just views; boolean
       functions -- iff true, output just functions; boolean
 
@@ -2180,4 +2186,4 @@ def gsql_module(module_name, regexp=None, views=False, functions=False):
     global _metadata
     _metadata = sqlalchemy.MetaData()
     imp.load_module(module_name, *imp.find_module(module_name))
-    _gsql_process(regexp, views, functions)
+    _gsql_process(regexp, no_deps, views, functions)

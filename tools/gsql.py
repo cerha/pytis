@@ -29,6 +29,8 @@ def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
     parser.add_option("--limit", default=None, action="store", dest="regexp",
                       help="output specifications matching and dependent on REGEXP")
+    parser.add_option("--no-deps", action="store_true", dest="no_deps",
+                      help="do not output dependent objects on --limit")
     parser.add_option("--views", action="store_true", dest="views",
                       help="limit output to views")
     parser.add_option("--functions", action="store_true", dest="functions",
@@ -41,7 +43,7 @@ def parse_options():
 
 def run():
     options, module = parse_options()
-    pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp,
+    pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp, no_deps=options.no_deps,
                                                views=options.views, functions=options.functions)
 
 if __name__ == '__main__':
