@@ -49,7 +49,7 @@ pytis.BrowseFormHandler = Class.create({
 	var form = $(form_id);
 	var container = form.down('.ajax-container');
 	if (container) {
-	    var page = form.up('.notebook-widget div');
+	    var page = form.up('.notebook-widget > div');
 	    if (page) {
 		lcg.Notebook.on_activation(page, function() {
 		    this.load_form_data(uri, container) 
