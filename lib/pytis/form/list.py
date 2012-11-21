@@ -150,7 +150,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._row.permitted(cid, pytis.data.Permission.VIEW)):
             return self._data.select_aggregate((operation, cid),
                                                condition=self._current_condition(),
-                                               transaction=self._transaction)
+                                               transaction=self._transaction,
+                                               arguments=self._current_arguments())
         return None
         
     def _init_columns(self, columns=None):
