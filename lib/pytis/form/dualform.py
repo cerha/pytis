@@ -621,6 +621,7 @@ class MultiForm(Form, Refreshable):
         self._form_callbacks_args = []
         self._current_notebook_selection = -1
         self._old_notebook_selection = -1
+        self._moved_notebook_tab = None
         super(MultiForm, self)._full_init(*args, **kwargs)
 
     def _create_view_spec(self):
@@ -651,9 +652,17 @@ class MultiForm(Form, Refreshable):
             if form:
                 self._set_notebook_selection(i)
                 break
+        # Keep a list of tab indexes corresponding to their visual order in the
+        # notebook tab list.  This order is updated on each tab move.  This
+        # gives us information about the order of tabs, because the indexes
+        # used by wx.aui.AuiNotebook don't change when the tabs are moved
+        # around by dragging.
+        self._tab_order = range(len(forms))
         tabctrl = [child for child in nb.GetChildren() if isinstance(child, wx.aui.AuiTabCtrl)][0]
         wx_callback(wx.EVT_LEFT_DOWN, tabctrl, self._on_mouse_left)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, tabctrl.GetId(), self._on_tab_move_started)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, nb.GetId(), self._on_tab_move_done)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, nb.GetId(), self._on_mouse_right)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
@@ -747,6 +756,24 @@ class MultiForm(Form, Refreshable):
                         form.focus()
                         form.SetFocus()
 
+    def _on_tab_move_started(self, event):
+        self._moved_notebook_tab = event.GetSelection()
+        event.Skip()
+                        
+    def _on_tab_move_done(self, event):
+        old_position = self._moved_notebook_tab
+        if old_position is not None:
+            new_position = event.GetSelection()
+            self._moved_notebook_tab = None
+            self._on_tab_move(old_position, new_position)
+        event.Skip()
+
+    def _on_tab_move(self, old_position, new_position):
+        tab_order = self._tab_order
+        index = tab_order[old_position]
+        del tab_order[old_position]
+        tab_order.insert(new_position, index)
+    
     def _exit_check(self):
         for form in self._forms:
             if form and form.initialized() and not form._exit_check():
@@ -787,16 +814,11 @@ class MultiForm(Form, Refreshable):
 
     def _cmd_next_form(self, back=False):
         d = back and -1 or 1
-        i = self._current_notebook_selection + d
-        while i >= 0 and i < len(self._forms):
-            form = self._forms[i]
-            if form:
-                self._init_subform(form)
-                self._set_notebook_selection(i)
-                return
-            i += d
-        msg = back and _(u"Žádný předchozí aktivní formulář") or _(u"Žádný další aktivní formulář")
-        message(msg, beep_=True)
+        old_order = self._tab_order.index(self._current_notebook_selection)
+        new_order = (old_order + d) % len(self._tab_order)
+        i = self._tab_order[new_order]
+        self._init_subform(self._forms[i])
+        self._set_notebook_selection(i)
 
     def forms(self):
         return self._forms
@@ -974,13 +996,18 @@ class MultiSideForm(MultiForm):
         return form_instance
 
     def _create_forms(self, parent):
-        return [(binding.title(), self._create_subform(parent, binding))
-                for binding in self._main_form.bindings()
-                # TODO: Remove this condition to include inactive tabs in multi form.
-                # The wx.Notebook doesn't support inactive tabs and the workaround doesn't
-                # work correctly, so we rather exclude disabled tabs here for now.
-                # binding.name() is None for web forms.
-                if binding.name() is None or has_access(binding.name())]
+        bindings = [binding for binding in self._main_form.bindings()
+                    # TODO: Remove this condition to include inactive tabs in multi form.
+                    # The wx.Notebook doesn't support inactive tabs and the workaround doesn't
+                    # work correctly, so we rather exclude disabled tabs here for now.
+                    # binding.name() is None for web forms.
+                    # UPDATE: inactive tabs might work now with AuiNotebook.
+                    if binding.name() is None or has_access(binding.name())]
+        saved_order = self._get_saved_setting('binding_order')
+        if saved_order:
+            bdict = dict([(b.id(), b) for b in bindings])
+            bindings = [bdict[binding_id] for binding_id in saved_order if binding_id in bdict]
+        return [(binding.title(), self._create_subform(parent, binding)) for binding in bindings]
     
     def _on_page_change(self, event=None):
         if self._leave_form_requested:
@@ -989,6 +1016,12 @@ class MultiSideForm(MultiForm):
         binding = self._forms[self._current_notebook_selection].binding()
         self._run_callback(self.CALL_BINDING_SELECTED, binding)
         
+    def _on_tab_move(self, old_position, new_position):
+        super(MultiSideForm, self)._on_tab_move(old_position, new_position)
+        binding_order = [self._forms[self._tab_order[i]].binding().id()
+                         for i in range(len(self._forms))]
+        self._set_saved_setting('binding_order', tuple(binding_order))
+
     def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.
 
@@ -999,7 +1032,6 @@ class MultiSideForm(MultiForm):
         raised and 'True' is returned.
         
         """
-        assert id in [b.id() for b in self._main_form.bindings()]
         for i, form in enumerate(self._forms):
             if form and form.binding().id() == id:
                 self._init_subform(form)
@@ -1061,7 +1093,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         if selected_binding:
             form.select_binding(selected_binding)
         return form
-        
+
     def _on_binding_selection(self, binding):
         self._set_saved_setting('binding', binding.id())
         
