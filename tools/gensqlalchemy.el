@@ -56,7 +56,7 @@ Currently the mode just defines some key bindings."
   (let ((directory (directory-file-name (gensqlalchemy-specification-directory buffer)))
         name)
     (while (member (file-name-nondirectory directory) gensqlalchemy-common-directories)
-      (setq directory (directory-file-name (file-name-directory default-directory))))
+      (setq directory (directory-file-name (file-name-directory directory))))
     (setq name (file-name-nondirectory directory))
     (when (string= name "")
       (setq name gensqlalchemy-specification-directory))
