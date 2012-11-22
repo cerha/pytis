@@ -3894,57 +3894,6 @@ import dbdefs as db
 TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'
 
-class BaseTriggerObject(object):
-    _RETURN_CODE_MODIFY = "MODIFY"
-    _RETURN_CODE_SKIP = "SKIP"
-    _RETURN_CODE_OK = None
-    def __init__(self, TD):
-        self._TD = TD
-        self._event = TD["event"].lower()
-        self._when = TD["when"].lower()
-        self._level = TD["level"].lower() 
-        self._name = TD["name"].lower()
-        self._table_name = TD["table_name"].lower()
-        self._table_schema = TD["table_schema"].lower()
-        self._table_oid = TD["relid"]
-        self._args = TD["args"]
-        # 
-        self._new = self._old = None
-        if self._event in (\'insert\', \'update\'):
-            self._new = TD["new"]
-        if self._event in (\'delete\', \'update\'):
-            self._old = TD["old"]
-        #
-        self._return_code = self._RETURN_CODE_OK    
-    def _do_after_insert(self):
-        pass
-    def _do_after_update(self):
-        pass
-    def _do_after_delete(self):
-        pass
-    def _do_before_insert(self):
-        pass
-    def _do_before_update(self):
-        pass
-    def _do_before_delete(self):
-        pass        
-    def do_trigger(self):
-        if self._when == \'before\':
-            if self._event == \'insert\':
-                self._do_before_insert()
-            elif self._event == \'update\':
-                self._do_before_update()                    
-            elif self._event == \'delete\':
-                self._do_before_delete()
-        elif self._when == \'after\':
-            if self._event == \'insert\':
-                self._do_after_insert()
-            elif self._event == \'update\':
-                self._do_after_update()                    
-            elif self._event == \'delete\':
-                self._do_after_delete()
-        return self._return_code
-
 class _PyFunctionBase(sql.SQLPyFunction):
     @staticmethod
     def sub_pg_escape(val):
@@ -3991,6 +3940,57 @@ class _PyFunctionBase(sql.SQLPyFunction):
         html_rows.append(\'</table>\')
         html_table = \'\\n\'.join(html_rows)
         return html_table.replace("\'", "\'\'")
+    class Sub_BaseTriggerObject(object):
+        _RETURN_CODE_MODIFY = "MODIFY"
+        _RETURN_CODE_SKIP = "SKIP"
+        _RETURN_CODE_OK = None
+        def __init__(self, TD):
+            self._TD = TD
+            self._event = TD["event"].lower()
+            self._when = TD["when"].lower()
+            self._level = TD["level"].lower() 
+            self._name = TD["name"].lower()
+            self._table_name = TD["table_name"].lower()
+            self._table_schema = TD["table_schema"].lower()
+            self._table_oid = TD["relid"]
+            self._args = TD["args"]
+            # 
+            self._new = self._old = None
+            if self._event in (\'insert\', \'update\'):
+                self._new = TD["new"]
+            if self._event in (\'delete\', \'update\'):
+                self._old = TD["old"]
+            #
+            self._return_code = self._RETURN_CODE_OK    
+        def _do_after_insert(self):
+            pass
+        def _do_after_update(self):
+            pass
+        def _do_after_delete(self):
+            pass
+        def _do_before_insert(self):
+            pass
+        def _do_before_update(self):
+            pass
+        def _do_before_delete(self):
+            pass        
+        def do_trigger(self):
+            if self._when == \'before\':
+                if self._event == \'insert\':
+                    self._do_before_insert()
+                elif self._event == \'update\':
+                    self._do_before_update()                    
+                elif self._event == \'delete\':
+                    self._do_before_delete()
+            elif self._when == \'after\':
+                if self._event == \'insert\':
+                    self._do_after_insert()
+                elif self._event == \'update\':
+                    self._do_after_update()                    
+                elif self._event == \'delete\':
+                    self._do_after_delete()
+            return self._return_code
+
 
 '''
         preamble_2 = '''
@@ -4073,7 +4073,6 @@ class _LogSQLTable(sql.SQLTable):
             if not dbobj._convert:
                 converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
             converted = converted.replace('_RETURN_CODE_MODYFY', '_RETURN_CODE_MODIFY')
-            converted = converted.replace('(BaseTriggerObject)', '(db.BaseTriggerObject)')
             output.write(converted)
             output.write('\n')
         self._process_resolved(process)
