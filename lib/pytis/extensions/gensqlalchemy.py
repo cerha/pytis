@@ -891,6 +891,11 @@ class SQLObject(object):
     """
     access_rights = ()
     owner = None
+    _DB_OBJECT = None
+
+    @classmethod
+    def pytis_kind(class_):
+        return class_._DB_OBJECT
     
     @classmethod
     def pytis_name(class_):
@@ -2083,7 +2088,7 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
-def _gsql_process(regexp, no_deps, views, functions):
+def _gsql_process(regexp, no_deps, views, functions, names_only):
     global engine
     engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
     if regexp is not None:
@@ -2115,19 +2120,34 @@ def _gsql_process(regexp, no_deps, views, functions):
                     matched.add(o)
                     return result
         return False
+    def output_name(obj):
+        kind = obj.pytis_kind()
+        name = obj.pytis_name()
+        if isinstance(obj, SQLSchematicObject):
+            name = '%s.%s' % (obj.schema, name,)
+        print kind, name
     for o in _PytisSimpleMetaclass.objects:
         if matching(o):
-            engine.execute(o)
-            o.after_create(engine)
+            if names_only:
+                output_name(o)
+            else:
+                engine.execute(o)
+                o.after_create(engine)
     for sequence in _metadata._sequences.values():
         if matching(sequence):
-            sequence.create(engine, checkfirst=False)
-            sequence.after_create(engine)
+            if names_only:
+                output_name(sequence)
+            else:
+                sequence.create(engine, checkfirst=False)
+                sequence.after_create(engine)
     for table in _metadata.sorted_tables:
         if matching(table):
-            table.create(engine, checkfirst=False)
+            if names_only:
+                output_name(table)
+            else:
+                table.create(engine, checkfirst=False)
     for ffk in _forward_foreign_keys:
-        if matching(ffk.table):
+        if matching(ffk.table) and not names_only:
             target = ffk.reference.get(ffk.search_path)
             kwargs = ffk.kwargs
             kwargs['name'] += target.name.replace('.', '__')
@@ -2136,7 +2156,8 @@ def _gsql_process(regexp, no_deps, views, functions):
             fdef = sqlalchemy.schema.AddConstraint(f)
             engine.execute(fdef)
     
-def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False):
+def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
+              names_only=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -2150,6 +2171,8 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
         specified
       views -- iff true, output just views; boolean
       functions -- iff true, output just functions; boolean
+      names_only -- iff true, output only kinds and names of the database
+        objects; boolean
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -2160,9 +2183,10 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     global _metadata
     _metadata = sqlalchemy.MetaData()
     execfile(file_name, copy.copy(globals()))
-    _gsql_process(regexp, no_deps, views, functions)
+    _gsql_process(regexp, no_deps, views, functions, names_only)
 
-def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False):
+def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
+                names_only=False):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -2176,6 +2200,8 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
         specified
       views -- iff true, output just views; boolean
       functions -- iff true, output just functions; boolean
+      names_only -- iff true, output only kinds and names of the database
+        objects; boolean
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -2186,4 +2212,4 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     global _metadata
     _metadata = sqlalchemy.MetaData()
     imp.load_module(module_name, *imp.find_module(module_name))
-    _gsql_process(regexp, no_deps, views, functions)
+    _gsql_process(regexp, no_deps, views, functions, names_only)
