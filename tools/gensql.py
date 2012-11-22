@@ -3253,7 +3253,15 @@ class _GsqlFunction(_GsqlSpec):
         name = self._name
         body = self._body
         python = not isinstance(body, basestring)
-        superclass = 'db._PyFunctionBase' if python else 'sql.SQLFunction'
+        if python:
+            for l in inspect.getsourcelines(body)[0]:
+                if l.find('BaseTriggerObject') >= 0:
+                    superclass = 'db._PyTriggerFunctionBase'
+                    break
+            else:
+                superclass = 'db._PyFunctionBase'
+        else:
+            superclass = 'sql.SQLFunction'
         items = ['class %s(%s):' % (self._convert_name(new=True), superclass,)]
         doc = self._convert_doc()
         if doc:
@@ -3940,6 +3948,8 @@ class _PyFunctionBase(sql.SQLPyFunction):
         html_rows.append(\'</table>\')
         html_table = \'\\n\'.join(html_rows)
         return html_table.replace("\'", "\'\'")
+
+class _PyTriggerFunctionBase(_PyFunctionBase):
     class Sub_BaseTriggerObject(object):
         _RETURN_CODE_MODIFY = "MODIFY"
         _RETURN_CODE_SKIP = "SKIP"
