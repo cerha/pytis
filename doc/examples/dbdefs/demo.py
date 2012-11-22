@@ -28,6 +28,7 @@ class Private(sql.SQLSchema):
     access_rights = (('ALL', 'private-users',),)
 
 class Counter(sql.SQLSequence):
+    name = 'counter'
     access_rights = (('ALL', 'counter-users',),)
 
 class Foo(sql.SQLTable):
@@ -60,6 +61,7 @@ class Foo2(Foo):
 
 class Bar(sql.SQLTable):
     """Bar table."""
+    name = 'bar'
     schemas = ((Private, 'public',),)
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('foo_id', pytis.data.Integer(), references=sql.a(sql.r.Foo.id, onupdate='CASCADE')),
@@ -76,6 +78,7 @@ class Bar(sql.SQLTable):
                 "select 42",)
 
 class BarTrigger(sql.SQLPlFunction, sql.SQLTrigger):
+    name = 'bar_trigger'
     table = Bar
     events = ('insert',)
     def body(self):
@@ -86,6 +89,7 @@ end;
 """
 
 class Indexed(sql.SQLTable):
+    name = 'indexed'
     fields = (sql.Column('x', pytis.data.LTree()),
               sql.Column('y', pytis.data.LTree()),
               sql.Column('z', pytis.data.LTree()),
@@ -94,6 +98,7 @@ class Indexed(sql.SQLTable):
                      sql.a('x', 'y', 'z', method='gist'),)
 
 class LogTable(sql.SQLTable):
+    name = 'log_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('table_name', pytis.data.String(),),
               sql.Column('action', pytis.data.String()),
@@ -101,6 +106,7 @@ class LogTable(sql.SQLTable):
     unique = (('table_name', 'action',),)
 
 class LogFunction(sql.SQLPyFunction, sql.SQLTrigger):
+    name = 'log_function'
     events = ()
     arguments = ()
     depends_on = (LogTable,)
@@ -110,6 +116,7 @@ class LogFunction(sql.SQLPyFunction, sql.SQLTrigger):
                      (TD['args'][0], TD['event'],))
 
 class LogTrigger(sql.SQLTrigger):
+    name = 'log_trigger'
     events = ('insert', 'update', 'delete',)
     body = LogFunction
 
@@ -126,12 +133,15 @@ class _LoggingTable(sql.SQLTable):
         return ((LogTrigger, self.pytis_name(),),)
 
 class LoggingTable(_LoggingTable):
+    name = 'logging_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Integer()),)
 
 class AnotherLoggingTable(_LoggingTable):
+    name = 'another_logging_table'
     fields = (sql.PrimaryColumn('x', pytis.data.Integer()),)
 
 class ReferencingTable(sql.SQLTable):
+    name = 'referencing_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String()),
               sql.Column('action', pytis.data.String()),
@@ -141,10 +151,12 @@ class ReferencingTable(sql.SQLTable):
 
 class Circular1(sql.SQLTable):
     """Circular REFERENCES, together with Circular2."""
+    name = 'circular1'
     fields = (sql.PrimaryColumn('id', pytis.data.Integer()),
               sql.Column('x', pytis.data.Integer(), references=sql.r.Circular2.id),
               )
 class Circular2(sql.SQLTable):
+    name = 'circular2'
     fields = (sql.PrimaryColumn('id', pytis.data.Integer()),
               sql.Column('x', pytis.data.Integer(), references=sql.r.Circular1.id),
               )
@@ -160,6 +172,7 @@ class Baz(sql.SQLView):
                                 sqlalchemy.select([sql.c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
 
 class Baz2(sql.SQLView):
+    name = 'baz2'
     schemas = ((Private, 'public',),)
     @classmethod
     def query(class_):
@@ -174,6 +187,7 @@ class AliasView(sql.SQLView):
         return sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n<foo2.c.n)])
 
 class FromSelect(sql.SQLView):
+    name = 'from_select'
     @classmethod
     def query(class_):
         foo = sql.t.Foo
@@ -181,12 +195,14 @@ class FromSelect(sql.SQLView):
         return sqlalchemy.select(['s.*'], from_obj=[select], whereclause='s.n > 0')
 
 class LimitedView(sql.SQLView):
+    name = 'limited_view'
     @classmethod
     def query(class_):
         foo = sql.t.Foo
         return sqlalchemy.select(class_._exclude(foo, foo.c.n))
 
 class EditableView(sql.SQLView):
+    name = 'editable_view'
     schemas = ((Private, 'public',),)
     update_order = (Foo, Bar,)
     @classmethod
@@ -206,6 +222,7 @@ class SimplifiedEditableView(sql.SQLView):
     specification property.
 
     """
+    name = 'simplified_editable_view'
     schemas = ((Private, 'public',),)
     insert_order = (Foo, Bar,)
     update_order = (Foo, Bar,)
@@ -219,6 +236,7 @@ class SimplifiedEditableView(sql.SQLView):
 
 class BogusView(sql.SQLView):
     "One should avoid using outer joins when possible."
+    name = 'bogus_view'
     schemas = ((Private, 'public',),)
     @classmethod
     def query(class_):
@@ -315,11 +333,13 @@ class TableFunction(sql.SQLPyFunction):
         return result
 
 class SomeType(sql.SQLType):
+    name = 'some_type'
     fields = (sql.Column('x', pytis.data.Integer()),
               sql.Column('y', pytis.data.Integer()),
               )
 
 class NeverUseThis(sql.SQLRaw):
+    name = 'never_use_this'
     schemas = ((Private, 'public',),)
     depends_on = (Baz,)                 # just to test dependencies
     @classmethod
@@ -327,6 +347,7 @@ class NeverUseThis(sql.SQLRaw):
         return "select 'never use raw constructs'"
 
 class ReallyNeverUseThis(sql.SQLRaw):
+    name = 'really_never_use_this'
     schemas = ((Private, 'public',),)
     depends_on = (NeverUseThis,)                 # just to test dependencies
     @classmethod

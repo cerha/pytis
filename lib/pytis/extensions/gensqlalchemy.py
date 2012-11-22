@@ -899,10 +899,7 @@ class SQLObject(object):
     
     @classmethod
     def pytis_name(class_):
-        name = class_.name
-        if name is None:
-            name = pytis.util.camel_case_to_lower(class_.__name__, separator='_')
-        return name
+        return class_.name
 
     def _is_true_specification(self):
         return _is_specification_name(self.__class__.__name__)
