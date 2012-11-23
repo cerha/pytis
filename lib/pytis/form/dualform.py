@@ -619,7 +619,6 @@ class MultiForm(Form, Refreshable):
     
     def _full_init(self, *args, **kwargs):
         self._form_callbacks_args = []
-        self._current_notebook_selection = -1
         self._old_notebook_selection = -1
         self._moved_notebook_tab = None
         super(MultiForm, self)._full_init(*args, **kwargs)
@@ -656,7 +655,9 @@ class MultiForm(Form, Refreshable):
         # notebook tab list.  This order is updated on each tab move.  This
         # gives us information about the order of tabs, because the indexes
         # used by wx.aui.AuiNotebook don't change when the tabs are moved
-        # around by dragging.
+        # around by dragging.  The list includes notebook page indexes (which
+        # are also self._forms indexes) in the order of visual appearance of
+        # the corresponding notebook tabs.
         self._tab_order = range(len(forms))
         tabctrl = [child for child in nb.GetChildren() if isinstance(child, wx.aui.AuiTabCtrl)][0]
         wx_callback(wx.EVT_LEFT_DOWN, tabctrl, self._on_mouse_left)
@@ -669,13 +670,6 @@ class MultiForm(Form, Refreshable):
         #self.set_callback(self.CALL_USER_INTERACTION, lambda : self._select_form(self))
 
     def _on_mouse_right(self, event):
-        menu = (MItem(_(u"Filtrovat hlavní formulář podle tohoto vedlejšího formuláře"),
-                      help=_("Zobrazit pouze ty řádky hlavního formuláře, pro které tento "
-                             "vedlejší formulář obsahuje v aktuálním profilu nenulový "
-                             "počet řádků."),
-                      command=self.COMMAND_FILTER_BY_SIDEFORM(index=event.GetSelection(),
-                                                              _command_handler=self)),)
-        popup_menu(self._notebook, menu, self._get_keymap())
         event.Skip()
         
     def _on_mouse_left(self, event):
@@ -706,12 +700,9 @@ class MultiForm(Form, Refreshable):
                 busy_cursor(False)
 
     def _set_notebook_selection(self, i):
-        # Don't use wx.Notebook.GetSelection to query current selection, it may
-        # return wrong values, causing undesired database queries.
-        self._old_notebook_selection = self._current_notebook_selection
-        self._current_notebook_selection = i
+        self._old_notebook_selection = self._notebook.GetSelection()
         self._notebook.SetSelection(i)
-        if self._old_notebook_selection != self._current_notebook_selection:
+        if self._old_notebook_selection != self._notebook.GetSelection():
             self._on_page_change()
         
     def _on_page_change(self, event=None):
@@ -722,10 +713,10 @@ class MultiForm(Form, Refreshable):
             return
         if event:
             #event.Skip()
-            selection = self._current_notebook_selection = event.GetSelection()
+            selection = event.GetSelection()
             old_selection = event.GetOldSelection()
         else:
-            selection = self._current_notebook_selection
+            selection = self._notebook.GetSelection()
             old_selection = self._old_notebook_selection
         if selection != -1:
             form = self._forms[selection]
@@ -814,7 +805,7 @@ class MultiForm(Form, Refreshable):
 
     def _cmd_next_form(self, back=False):
         d = back and -1 or 1
-        old_order = self._tab_order.index(self._current_notebook_selection)
+        old_order = self._tab_order.index(self._notebook.GetSelection())
         new_order = (old_order + d) % len(self._tab_order)
         i = self._tab_order[new_order]
         self._init_subform(self._forms[i])
@@ -822,21 +813,6 @@ class MultiForm(Form, Refreshable):
 
     def forms(self):
         return self._forms
-        
-    def _can_filter_by_sideform(self, index):
-        form = self._forms[index]
-        return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
-        
-    def _cmd_filter_by_sideform(self, index):
-        form = self._forms[index]
-        if form.COMMAND_UPDATE_PROFILE.enabled():
-            msg = _("Filtrování nemůže být provedeno, pokud aktuální profil není uložen!")
-            bsave, bquit = _("Uložit"), _("Zrušit")
-            if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit), default=bsave) != bsave:
-                return
-            form.COMMAND_UPDATE_PROFILE.invoke()
-        condition = form.side_form_in_condition()
-        self._main_form.filter(condition, append=True)
         
     def show(self):
         # Call sub-form show/hide methods, since they may contain initialization/cleanup actions.
@@ -873,7 +849,7 @@ class MultiForm(Form, Refreshable):
         
     def active_form(self):
         """Return the currently active form of this form group."""
-        selection = self._current_notebook_selection
+        selection = self._notebook.GetSelection()
         if selection != -1:
             form = self._forms[selection]
             self._init_subform(form)
@@ -1008,20 +984,95 @@ class MultiSideForm(MultiForm):
             bdict = dict([(b.id(), b) for b in bindings])
             bindings = [bdict[binding_id] for binding_id in saved_order if binding_id in bdict]
         return [(binding.title(), self._create_subform(parent, binding)) for binding in bindings]
-    
+
+    def _on_mouse_right(self, event):
+        selection = event.GetSelection()
+        menu = (MItem(_(u"Zavřít tento formulář"), help=_(u"Zavřít tento formulář"),
+                      command=self.COMMAND_TOGGLE_SIDEFORM(binding=self._forms[selection].binding(),
+                                                           _command_handler=self)),
+                MItem(_(u"Filtrovat hlavní formulář podle tohoto vedlejšího formuláře"),
+                      help=_("Zobrazit pouze ty řádky hlavního formuláře, pro které tento "
+                             "vedlejší formulář obsahuje v aktuálním profilu nenulový "
+                             "počet řádků."),
+                      command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
+                                                              _command_handler=self)),
+                Menu(_(u"Zobrazené formuláře"),
+                     [CheckItem(b.title(), help=_(""),
+                                command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
+                                                                     _command_handler=self),
+                                state=lambda b=b: b.id() in [f.binding().id() for f in self._forms])
+                      for b in sorted(self._main_form.bindings(), key=lambda b: b.title())]),
+                )
+        popup_menu(self._notebook, menu, self._get_keymap())
+        event.Skip()
+        
     def _on_page_change(self, event=None):
         if self._leave_form_requested:
             return
         super(MultiSideForm, self)._on_page_change(event=event)
-        binding = self._forms[self._current_notebook_selection].binding()
+        binding = self._forms[self._notebook.GetSelection()].binding()
         self._run_callback(self.CALL_BINDING_SELECTED, binding)
         
-    def _on_tab_move(self, old_position, new_position):
-        super(MultiSideForm, self)._on_tab_move(old_position, new_position)
-        binding_order = [self._forms[self._tab_order[i]].binding().id()
-                         for i in range(len(self._forms))]
+    def _save_binding_order(self):
+        binding_order = [self._forms[i].binding().id() for i in self._tab_order]
         self._set_saved_setting('binding_order', tuple(binding_order))
 
+    def _on_tab_move(self, old_position, new_position):
+        super(MultiSideForm, self)._on_tab_move(old_position, new_position)
+        self._save_binding_order()
+
+    def _cmd_toggle_sideform(self, binding):
+        nb = self._notebook
+        try:
+            index = [f.binding().id() for f in self._forms].index(binding.id())
+        except ValueError:
+            # Add form to the last position.  Note, that attempts to insert a
+            # page to a given position using nb.InsertPage() failed as the page
+            # indexes seemed to change unreliably.
+            form = self._create_subform(nb, binding)
+            form.full_init()
+            nb.AddPage(form, binding.title(), select=True)
+            self._forms = [nb.GetPage(i) for i in range(nb.GetPageCount())]
+            self._tab_order.append(self._forms.index(form))
+            form.show()
+            row = self._last_selection
+            if row is not None:
+                form.on_selection(row)
+            form.focus()
+        else:
+            # Remove form of given 'index'.
+            form = self._forms[index]
+            order = self._tab_order.index(index)
+            if index != nb.GetPageIndex(form):
+                return
+            if index == self._notebook.GetSelection():
+                self._cmd_next_form(back=order!=0)
+            if form.initialized():
+                form.hide()
+                form._release_data()
+            del self._forms[index]
+            del self._tab_order[order]
+            for i, j in enumerate(self._tab_order):
+                if j > index:
+                    self._tab_order[i] -= 1
+            nb.DeletePage(index)
+        self._save_binding_order()
+        
+    def _can_filter_by_sideform(self, index):
+        form = self._forms[index]
+        return isinstance(form, SideBrowseForm) and form.side_form_in_condition() is not None
+        
+    def _cmd_filter_by_sideform(self, index):
+        form = self._forms[index]
+        if form.COMMAND_UPDATE_PROFILE.enabled():
+            msg = _("Filtrování nemůže být provedeno, pokud aktuální profil není uložen!")
+            bsave, bquit = _("Uložit"), _("Zrušit")
+            if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit), default=bsave) != bsave:
+                return
+            form.COMMAND_UPDATE_PROFILE.invoke()
+        condition = form.side_form_in_condition()
+        self._main_form.filter(condition, append=True)
+        
     def select_binding(self, id):
         """Raise the side form tab corresponfing to the binding of given identifier.
 

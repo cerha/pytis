@@ -210,7 +210,9 @@ Command(DualForm, 'OTHER_FORM',
         "Přechod mezi podformuláři duálního formuláře")
 Command(MultiForm, 'NEXT_FORM',
         "Advance to next/previous tab in a multi-form (arg. 'back')")
-Command(MultiForm, 'FILTER_BY_SIDEFORM',
+Command(MultiSideForm, 'TOGGLE_SIDEFORM',
+        "Show/hide given side form tab. (arg. 'index' (side form index))")
+Command(MultiSideForm, 'FILTER_BY_SIDEFORM',
         "Filter main form rows having non-zero side form rows. (arg. 'index' (side form index))")
 Command(InputField, 'RESET',
         "Vrácení původní hodnoty vstupního políčka")
@@ -484,7 +486,7 @@ COMMAND_ICONS = (
     (LookupForm.COMMAND_JUMP,                              'jump'),
     (LookupForm.COMMAND_RESET_PROFILE,                     'reset-profile'),
     (LookupForm.COMMAND_RELOAD_PROFILE,                    'reload-profile'),
-    (MultiForm.COMMAND_FILTER_BY_SIDEFORM,                         'filter'),
+    (MultiSideForm.COMMAND_FILTER_BY_SIDEFORM,                         'filter'),
     (Browser.COMMAND_GO_BACK,                              wx.ART_GO_BACK),
     (Browser.COMMAND_GO_FORWARD,                           wx.ART_GO_FORWARD),
     (Browser.COMMAND_STOP_LOADING,                         wx.ART_CROSS_MARK),
