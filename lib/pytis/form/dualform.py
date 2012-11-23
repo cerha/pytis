@@ -664,12 +664,16 @@ class MultiForm(Form, Refreshable):
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, tabctrl.GetId(), self._on_tab_move_started)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, nb.GetId(), self._on_tab_move_done)
-        wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, nb.GetId(), self._on_mouse_right)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN, nb, nb.GetId(), self._on_tab_mouse_right)
+        wx_callback(wx.EVT_RIGHT_DOWN, nb, self._on_notebook_mouse_right)
         wx_callback(wx.EVT_SET_FOCUS, self, lambda e: self.focus())
         wx_callback(wx.EVT_SIZE, self, self._on_size)
         #self.set_callback(self.CALL_USER_INTERACTION, lambda : self._select_form(self))
 
-    def _on_mouse_right(self, event):
+    def _on_tab_mouse_right(self, event):
+        event.Skip()
+        
+    def _on_notebook_mouse_right(self, event):
         event.Skip()
         
     def _on_mouse_left(self, event):
@@ -985,7 +989,15 @@ class MultiSideForm(MultiForm):
             bindings = [bdict[binding_id] for binding_id in saved_order if binding_id in bdict]
         return [(binding.title(), self._create_subform(parent, binding)) for binding in bindings]
 
-    def _on_mouse_right(self, event):
+    def _displayed_forms_menu(self):
+        return Menu(_(u"Zobrazené formuláře"),
+                    [CheckItem(b.title(), help=_(""),
+                               command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
+                                                                    _command_handler=self),
+                               state=lambda b=b: b.id() in [f.binding().id() for f in self._forms])
+                     for b in sorted(self._main_form.bindings(), key=lambda b: b.title())])
+
+    def _on_tab_mouse_right(self, event):
         selection = event.GetSelection()
         menu = (MItem(_(u"Zavřít tento formulář"), help=_(u"Zavřít tento formulář"),
                       command=self.COMMAND_TOGGLE_SIDEFORM(binding=self._forms[selection].binding(),
@@ -996,15 +1008,15 @@ class MultiSideForm(MultiForm):
                              "počet řádků."),
                       command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
                                                               _command_handler=self)),
-                Menu(_(u"Zobrazené formuláře"),
-                     [CheckItem(b.title(), help=_(""),
-                                command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
-                                                                     _command_handler=self),
-                                state=lambda b=b: b.id() in [f.binding().id() for f in self._forms])
-                      for b in sorted(self._main_form.bindings(), key=lambda b: b.title())]),
+                self._displayed_forms_menu(),
                 )
         popup_menu(self._notebook, menu, self._get_keymap())
         event.Skip()
+
+    def _on_notebook_mouse_right(self, event):
+        popup_menu(self._notebook, (self._displayed_forms_menu(),), self._get_keymap())
+        event.Skip()
+        
         
     def _on_page_change(self, event=None):
         if self._leave_form_requested:
