@@ -585,7 +585,11 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         else:
             return None
 
-    def _export_errors(self, context):
+    def _export_form(self, context, form_id):
+        return (self._export_errors(context, form_id) +
+                super(EditForm, self)._export_form(context, form_id))
+    
+    def _export_errors(self, context, form_id):
         g = context.generator()
         errors = []
         for id, msg in self._errors:
