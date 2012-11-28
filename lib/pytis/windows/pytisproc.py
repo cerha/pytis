@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-11-21 15:19'
+_VERSION = '2012-11-28 13:40'
 
 import os
 import rpyc
@@ -143,6 +143,7 @@ class PytisUserService(PytisService):
         assert template is None or isinstance(template, basestring), template
         import win32ui
         import win32con
+        extension = None
         if template:
             file_filter = (u"Soubory požadovaného typu (%s)|%s|Všechny soubory (*.*)|*.*||" %
                            (template, template,))
