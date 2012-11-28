@@ -3158,12 +3158,21 @@ class BrowseForm(FoldableForm):
         def open_file(data, filename):
             suffix = os.path.splitext(filename)[1]
             open_data_as_file(data, suffix=suffix)
+        def can_open(fspec):
+            crypto_name = fspec.crypto_name()
+            def can_open_file(data, filename):
+                if crypto_name is None:
+                    return True
+                else:
+                    return crypto_name in decrypted_names()
+            return can_open_file
         menu = self._context_menu_static_part
         row = self.current_row()
         file_open_mitems = [MItem(_(u"Otevřít soubor „%s“" % filename),
                                   command=Application.COMMAND_HANDLED_ACTION(handler=open_file,
                                                                              data=data,
-                                                                             filename=filename),
+                                                                             filename=filename,
+                                                                             enabled=can_open(f)),
                                   help=_(u"Otevřít hodnotu políčka „%s“ jako soubor.") % f.label())
                             for f, data, filename in
                             [(f, file_field_data(row, f.id()), filename)
