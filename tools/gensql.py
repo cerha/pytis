@@ -355,6 +355,9 @@ class _GsqlSpec(object):
             converted = 'db.' + converted
         return converted
 
+    def _convert_id_name(self, name):
+        return name.replace('(', '__').replace(')', '__').replace(', ', '__')
+
     def _convert_doc(self):
         doc = self._doc
         if not doc:
@@ -1831,7 +1834,7 @@ class Select(_GsqlSpec):
                 alias = relation.relation
             else:
                 alias = relation.name
-        name = alias.lower().replace('(', '__').replace(')', '__')
+        name = self._convert_id_name(alias.lower())
         return self._convert_local_name(name)
  
     def _convert_select_columns(self, column_ordering=None):
@@ -1951,14 +1954,14 @@ class Select(_GsqlSpec):
                   rel.relation.lower().find('from') >= 0):  # apparently a subselect
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s AS %s"])' %
-                     (self._convert_local_name(relation.replace('(', '__').replace(')', '__')),
+                     (self._convert_local_name(self._convert_id_name(relation)),
                       rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),
                       rel.alias,))
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
-                     (self._convert_local_name(relation.replace('(', '__').replace(')', '__')),
+                     (self._convert_local_name(self._convert_id_name(relation)),
                       rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
@@ -1985,7 +1988,7 @@ class Select(_GsqlSpec):
                 self._add_conversion_dependency(dependency, rschema)
             if rel.alias:
                 if d is None:
-                    d = '%s = %s' % (self._convert_local_name(rel.alias.lower().replace('(', '__').replace(')', '__')), relation,)
+                    d = '%s = %s' % (self._convert_local_name(self._convert_id_name(rel.alias.lower())), relation,)
                     relation = rel.alias.lower()
                 d += ".alias('%s')" % (rel.alias.lower(),)
             if d:
@@ -2024,7 +2027,7 @@ class Select(_GsqlSpec):
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
-                     (self._convert_local_name(relation.replace('(', '__').replace(')', '__')),
+                     (self._convert_local_name(self._convert_id_name(relation)),
                       rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
@@ -2051,7 +2054,7 @@ class Select(_GsqlSpec):
                 self._add_conversion_dependency(dependency, rschema)
             if rel.alias:
                 if d is None:
-                    d = '%s = %s' % (self._convert_local_name(rel.alias.replace('(', '__').replace(')', '__')),
+                    d = '%s = %s' % (self._convert_local_name(self._convert_id_name(rel.alias)),
                                      relation,)
                     relation = rel.alias
                 d += ".alias('%s')" % (rel.alias,)
