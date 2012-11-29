@@ -1265,8 +1265,10 @@ class BrowseForm(LayoutForm):
                                            enabled=enabled,
                                            uri=self._uri_provider(row, UriType.ACTION, action))
                          for action, enabled in self._visible_actions(context, row)]
-                ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this row"), 'tr')
-                value += ctrl.export(context)
+                if items:
+                    ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this row"),
+                                             'tr')
+                    value += ctrl.export(context)
         return value
 
     def _style(self, style):
