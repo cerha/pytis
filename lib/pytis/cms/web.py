@@ -442,13 +442,13 @@ class Application(wiking.CookieAuthentication, wiking.Application):
     
     _MAPPING = dict(wiking.Application._MAPPING,
                     _resources='Resources',
-                    _attachments='Attachments')
+                    _attachments='HttpAttachmentStorageBackend')
     
     _RIGHTS = {'Documentation': (wiking.Roles.ANYONE,),
                'Stylesheets': (wiking.Roles.ANYONE,),
                'Resources': (wiking.Roles.ANYONE,),
                'SiteIcon': (wiking.Roles.ANYONE,),
-               'Attachments': (wiking.Roles.ANYONE,)}
+               'HttpAttachmentStorageBackend': (wiking.Roles.ANYONE,)}
     
     def _auth_user(self, req, login):
         return self._module('Users').user(req, login)
@@ -723,7 +723,7 @@ class Themes(wiking.PytisModule):
         return self.Theme(self._data.get_row(theme_id=theme_id))
 
 
-class Attachments(wiking.Module, wiking.RequestHandler):
+class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
     """Implements the server side of 'pp.HttpAttachmentStorage'.
 
     The environment variable 'PYTIS_CMS_ATTACHMENTS_STORAGE' must be set to a
@@ -737,6 +737,13 @@ class Attachments(wiking.Module, wiking.RequestHandler):
     Override the method '_authorized()' to control authorization per directory.
 
     """
+    def __init__(self, *args, **kwargs):
+        super(HttpAttachmentStorageBackend, self).__init__(*args, **kwargs)
+        import config
+        self._data = pytis.data.dbtable('e_pytis_http_attachment_storage_keys',
+                                        ('key_id', 'username', 'uri', 'readonly', 'key'),
+                                        config.dbconnection.select(None))
+    
     def _handle(self, req):
         directory = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
         if not directory or not req.unresolved_path:
@@ -757,6 +764,8 @@ class Attachments(wiking.Module, wiking.RequestHandler):
             else:
                 data = req.param('data')
                 if data:
+                    if req.param('authorized_readonly') != False:
+                        raise wiking.AuthorizationError()
                     return self._insert(req, storage, data.filename(), data.file())
                 else:
                     return self._list(req, storage)
@@ -770,12 +779,26 @@ class Attachments(wiking.Module, wiking.RequestHandler):
             elif action == 'info':
                 return self._info(req, storage, filename)
             elif action == 'update':
+                if req.param('authorized_readonly') != False:
+                    raise wiking.AuthorizationError()
                 return self._update(req, storage, filename)
             else:
                 raise wiking.BadRequest()
 
-    def _authorized(self, req):
-        return True
+    def _authorize(self, req):
+        uri = req.server_uri(current=True) + '/' + '/'.join(req.path[:2])
+        username = req.header('X-Pytis-Attachment-Storage-Username')
+        key = req.header('X-Pytis-Attachment-Storage-Key')
+        if username and key:
+            data = self._data
+            data.select(condition=pd.AND(pd.EQ('uri', pd.sval(uri)),
+                                         pd.EQ('username', pd.sval(username))))
+            row = data.fetchone()
+            data.close()
+            if row and row['key'].value() == key:
+                req.set_param('authorized_readonly', row['readonly'].value())
+                return
+        raise wiking.AuthorizationError()
 
     def _resource_info(self, resource):
         info = resource.info() or {}

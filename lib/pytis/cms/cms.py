@@ -288,7 +288,10 @@ class Menu(Specification):
         if storage and record['identifier'].value():
             if storage.startswith('http://') or storage.startswith('https://'):
                 uri = storage +'/'+ record['identifier'].value()
-                return pp.HttpAttachmentStorage(uri)
+                spec_name = self._spec_name('Menu')
+                readonly = not (pytis.form.has_access(spec_name, pytis.data.Permission.UPDATE) or 
+                                pytis.form.has_access(spec_name, pytis.data.Permission.INSERT))
+                return pp.HttpAttachmentStorage(uri, readonly=readonly)
             else:
                 directory = os.path.join(storage, record['identifier'].value())
                 return pp.FileAttachmentStorage(directory, base_uri)
@@ -358,9 +361,8 @@ class Menu(Specification):
                 try:
                     resources = storage.resources()
                 except pp.AttachmentStorage.StorageError as e:
-                    from pytis.form import run_dialog, Error
-                    run_dialog(Error, title=_(u"Nelze načíst přílohy"),
-                               message=_(u"Chyba přísutu k úložišti příloh:\n%s") % e)
+                    from pytis.form import message
+                    message(_(u"Chyba přísutu k úložišti příloh: %s") % e, beep_=True)
                     resources = ()
             else:
                 resources = ()

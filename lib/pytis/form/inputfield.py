@@ -2479,8 +2479,10 @@ class StructuredTextField(TextField):
                 file_object.close()
         except AttachmentStorage.InvalidImageFormat as e:
             message(_(u"Neplatný grafický formát!"), beep_=True)
-        except IOError as e:
-            message(_("Operace se nezdařila: %s" % e), beep_=True)
+        except (IOError, AttachmentStorage.StorageError) as e:
+            # TODO: FileAttachmentStorage should wrap IOError in StorageError!
+            run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
+                       message=_(u"Chyba přístupu k úložišti příloh:\n%s") % e)
         else:
             row.form().field('filename').reload_enumeration()
             row['filename'] = pytis.data.Value(row.type('filename'), filename)
@@ -2597,7 +2599,7 @@ class StructuredTextField(TextField):
                                          transaction=transaction)
                 except AttachmentStorage.StorageError as e:
                     run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
-                               message=_(u"Chyba při aktualizaci:\n%s") % e)
+                               message=_(u"Chyba přístupu k úložišti příloh:\n%s") % e)
             link.update(target=filename,
                         title=None,
                         tooltip=row['tooltip'].value(),
