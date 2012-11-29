@@ -68,6 +68,7 @@ imp.reload(sys)
 sys.setdefaultencoding('utf-8')
 
 gensql_file = 'gensql'
+_CONV_PREPROCESSED_NAMES = ('_log_update_trigger', '_inserts', '_updates', '_deletes',)
 
 
 exit_code = 0
@@ -593,7 +594,14 @@ class _GsqlSpec(object):
             self._add_conversion_dependency(identifier, None)
         
     def _convert_grant(self):
-        return '    access_rights = %s' % (repr(self._grant).replace('"', ''),)
+        if self._grant == (('all', _GsqlConfig.application,),):
+            if self._name in _CONV_PREPROCESSED_NAMES:
+                grant = 'default_access_rights.value()'
+            else:
+                grant = 'db.default_access_rights.value()'
+        else:
+            grant = repr(self._grant).replace('"', '')
+        return '    access_rights = %s' % (grant,)
     
     def _convert_local_name(self, name):
         if name in ('a', 'c', 'r', 't',):
@@ -3262,7 +3270,10 @@ class _GsqlFunction(_GsqlSpec):
                     superclass = 'db._PyTriggerFunctionBase'
                     break
             else:
-                superclass = 'db._PyFunctionBase'
+                if self._name in _CONV_PREPROCESSED_NAMES:
+                    superclass = '_PyFunctionBase'
+                else:
+                    superclass = 'db._PyFunctionBase'
         else:
             superclass = 'sql.SQLFunction'
         items = ['class %s(%s):' % (self._convert_name(new=True), superclass,)]
@@ -3893,15 +3904,30 @@ database dumps if you want to be sure about your schema.
         defs._convert()
 
     def _convert(self):
+        application = _GsqlConfig.application
         coding_header = '# -*- coding: utf-8\n'
         local_preamble = '''
 import sqlalchemy
 import pytis.extensions.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
-
 '''
-        preamble_1 = '''
+        init_local_preamble = local_preamble
+        local_preamble += 'import dbdefs as db\n\n'
+        preamble_1 = ''
+        if application:
+            if application == 'pytis':
+                preamble_1 += """
+default_access_rights = sql.SQLFlexibleValue('app_default_access_rights',
+                                               environment='GSQL_DEFAULT_ACCESS_RIGHTS',
+                                               default=(('all', '%s',),))
+""" % (application,)
+            else:
+                preamble_1 += """
+from pytis.dbdefs import *
+
+app_default_access_rights = (('all', '%s',),)
+""" % (application,)
+        preamble_1 += '''
 TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'
 
@@ -4019,11 +4045,10 @@ class _LogSQLTable(sql.SQLTable):
         return ((_LogTrigger, keys,),)
 
 '''
-        preprocessed_names = ('_log_update_trigger', '_inserts', '_updates', '_deletes',)
         preamble_x = ['']
         def preprocess(o):
             dbobj = self[o]
-            if dbobj.name() in preprocessed_names:
+            if dbobj.name() in _CONV_PREPROCESSED_NAMES:
                 preamble_x[0] += dbobj.convert()
         self._process_resolved(preprocess)
         directory = _GsqlConfig.directory
@@ -4035,7 +4060,7 @@ class _LogSQLTable(sql.SQLTable):
             visited_files[index_file] = None
             f = open(index_file, 'w')
             f.write(coding_header)
-            f.write(local_preamble)
+            f.write(init_local_preamble)
             f.write(preamble_1)
             f.write(preamble_x[0])
             f.write(preamble_2)
@@ -4044,7 +4069,7 @@ class _LogSQLTable(sql.SQLTable):
         last_visited_suffix = ['']
         def process(o):
             dbobj = self[o]
-            if dbobj.name() in preprocessed_names:
+            if dbobj.name() in _CONV_PREPROCESSED_NAMES:
                 return
             if directory is None:
                 output = sys.stdout
@@ -4214,6 +4239,7 @@ class _GsqlConfig:
     dbpassword = None
     check_presence = False
     directory = None
+    application = None
 
 
 _GSQL_OPTIONS = (
@@ -4224,6 +4250,7 @@ _GSQL_OPTIONS = (
     ('check-db=DATABASE', 'check DATABASE contents against definitions'),
     ('check-presence   ', 'just check for presence rather than generating updates'),
     ('convert          ', 'convert to gensqlalchemy specifications'),
+    ('application=APP  ', 'lowercase name of the converted application'),
     ('update-views=object', 'update views dependent on specified object (table or view)'),
     ('fix-db=DATABASE  ', 'update DATABASE contents according to definitions'),
     ('no-warn          ', 'suppress warnings when checking/fixing'),
@@ -4288,6 +4315,8 @@ def _go(argv=None):
             _GsqlConfig.check_presence = True
         elif o == '--convert':
             _GsqlConfig.request = _GsqlConfig.CONVE
+        elif o == '--application':
+            _GsqlConfig.application = v
         elif o == '--update-views':
             _GsqlConfig.request = _GsqlConfig.UPDVW
             _GsqlConfig.update_views = v
