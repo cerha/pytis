@@ -357,7 +357,9 @@ class HelpGenerator(object):
                                                          base_uri='resource:')
         return view_spec.title(), lcg.Container(sections, resources=storage.resources())
 
-    def _pytis_help(self, resource_provider):
+    def _pytis_help(self, resource_dirs):
+        image_dir = os.path.join(config.help_dir, 'img')
+        resource_provider = lcg.ResourceProvider(dirs=[image_dir] + resource_dirs)
         def clone(node, node_id):
             # Clone the content node, but force `id' to help URI and `foldable' to True.
             return lcg.ContentNode(node_id, title=node.title(), descr=node.descr(),
@@ -378,7 +380,7 @@ class HelpGenerator(object):
                                        content=lcg.p(_(u"Soubory s nápovědou nebyly nalezeny!")),
                                        hidden=True, resource_provider=resource_provider)
         # We need to clone on every request because set_parent() is called on
-        # the result when arred to the help tree and set_parent may not be
+        # the result when added to the help tree and set_parent may not be
         # called multiple times.
         return clone(node, 'help:pytis')
 
@@ -442,7 +444,7 @@ class HelpGenerator(object):
                                  title=_(u"Nápověda aplikace %s") % config.application_name,
                                  content=lcg.NodeIndex(), resource_provider=resource_provider,
                                  children=[make_node(r, children) for r in children['']]),
-                 self._pytis_help(resource_provider),
+                 self._pytis_help(resource_dirs),
                  lcg.ContentNode('NotFound', title=_("Nenalezeno"), hidden=True,
                                  content=lcg.p(_(u"Požadovaná stránka nápovědy nenalezena: "
                                                  "%s") % topic),
