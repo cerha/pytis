@@ -1,0 +1,9 @@
+This directory contains the sources for Pytis Users Manual.
+
+The source files use the LCG Structured Text format (sort of wiki markup) and
+are used directly by the Help Browser in any running Pytis application if the
+configuration option help_dir is correctly set to the absolute path to this
+direcory.
+
+The manual is distributed under the terms of the GNU Free Documentation
+License.  See the file fdl.txt for more information.

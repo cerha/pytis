@@ -1,0 +1,23 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Číselníkový formulář =
+
+Číselníkový formulář slouží k výběru hodnoty z [help:pytis/codebook číselníku].
+Jde v podstatě o speciální případ [help:pytis/BrowseForm řádkového formuláře]
+zobrazený v samostatném modálním okně.  Má tedy všechny vlastnosti jako řádkový
+formulář (umožňuje pohyb po záznamech, [help:pytis/searching vyhledávání],
+[help:pytis/sorting řazení], [help:pytis/filtering filtrování] atd).
+
+Po dobu zobrazení číselníkového formuláře není možné pracovat s jinými
+formuláři ani žádnými dalšími okny aplikace.  Uživatel je tak nucen vybrat
+záznam z číselníku a vrátit se do rozpracované editace záznamu, či jiné
+činosti, která číselníková formulář vyvolala.
+
+ * /Pozor:/ Je třeba rozlišovat mezi pojmy „číselník“ a „číselníkový formulář“.
+   [help:pytis/codebook Číselník] může být zobrazen v i obyčejném řádkovém
+   (nebo jiném) formuláři a potom žádné výše popsané omezení neplatí.
+   „Číselníkový formulář“ je v podstatě jen jednou možnou formou prezentace
+   číselníku.

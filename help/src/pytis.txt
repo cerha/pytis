@@ -1,0 +1,17 @@
+# -*- coding: utf-8; mode: structured-text -*-
+#
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+#
+# Permission is granted to copy, distribute and/or modify this document
+# under the terms of the GNU Free Documentation License, Version 1.2
+# or any later version published by the Free Software Foundation;
+# with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+# Texts.
+#
+# You should have received a copy of the GNU Free Documentation License
+# along with this manual; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+= Příručka uživatele systému Pytis =
+
+Obsah: @NodeIndex@

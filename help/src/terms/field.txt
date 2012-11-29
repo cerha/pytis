@@ -1,0 +1,34 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Vstupní políčko =
+
+Vstupní políčko slouží k zadávání a editaci dat uživatelem.  Vstupní políčka se
+vyskytují jak v [help:pytis/PopupEditForm editačním formuláři], tak v
+[help:pytis/BrowseForm řádkovém formuláři] (zde však pouze v režimu
+[help:pytis/inline]).
+
+Podle typu dat pracujeme například těmito typy políček:
+
+ * textové
+ * číselné
+ * zaškrtávací (pravda/nepravda)
+ * datumové
+ * číselníkové (výběr hodnoty z jiné tabulky)
+
+Hodnota políčka po každé editaci podléhá [help:pytis/validation validaci]. 
+
+/Zašedlá políčka jsou needitovatelná/ a mají pouze informativní charakter.
+
+Hodnota některých políček může být dopočítávána dynamicky v závislosti na
+hodnotách jiných políček.  Více viz [help:pytis/computed-field].
+
+Podobně jako hodnota políčka, může být dynamicky vyhodnocována také
+editovatelnost políčka.  Editace takových políček je umožněna nebo znemožněna v
+závislosti na hodnotách jiných políček.  Mluvíme o tzv. /dynamické
+editovatelnosti/.
+
+Políčka navázaná na číselník mají některé rozšířené vlastnosti.  Více viz
+[help:pytis/codebook-field].

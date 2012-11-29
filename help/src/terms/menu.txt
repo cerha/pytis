@@ -1,0 +1,58 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Menu =
+
+V Pytis aplikaci se vyskytují dva druhy menu:
+
+  * /Hlavní menu aplikace/ je  pruh nabídek na horním okraji hlavního
+    aplikačního okna.
+
+  * /Kontextové menu/ je definováno pouze pro určité prvky uživatelského
+    rozhraní, kde to má smysl.  Typicky je to například
+    [help:pytis/context-menu kontextové menu buňky] řádkového formuláře, nebo
+    kontextové menu sloupce.
+
+Přístup do hlavního menu aplikace je možný kromě myši také pomocí klávesnice.
+Pokud název menu obsahuje podtržené písmeno, slouží toto písmeno v kombinaci s
+klávesou Alt k rozbalení daného menu.  Například menu „Okna“ má podtržené
+písmeno „a“, takže klávesovou zkratkou „Alt-a“ otevřeme menu oken.  
+
+Dalším možným způsobem otevření hlavního menu je použít funkční klávesu F10.
+Ta otevře první menu v pořadí.  Na jiná menu se potom lze přesunout pomocí
+šipek vpravo a vlevo.
+
+Pokud jme vyvolali určité menu, můžeme se dále pohybovat po jeho položkách
+pomocí šipek.  Pokud však položka také obsahuje podtržený znak, můžeme položku
+opět rovnou vyvolat stiskem příslušné klávesy.
+
+Klávesová zkratka Ctrl-m potom slouží obecně k rozbalení /kontextového menu/
+aktivního prvku uživatelského rozhraní (pokud se k tomuto prvku nějaké
+kontextové menu váže).  Druhým možným způsobem vyvolání kontextového menu je
+pravé tlačítko myši.
+
+
+== Aktivní a neaktivní položky ==
+  
+Pokud příkaz, který je danou položkou vyvolán, není momentálně k dispozici, je
+položka menu zašedlá a nelze ji vyvolat.  To může nastat z několika důvodů:
+
+  * Příkaz v daném kontextu nemá smysl.  Například není možné vyvolat mazání
+    řádku, pokud není otevřen žádný formulář, ve kterém bychom mohli záznam
+    smazat.
+
+  * Pro vykonání příkazu nejsou splněny nějaké další podmínky.  Například
+    nebude možné splatit fakturu, která již byla jednou splacena apod.
+
+  * K vykonání příkazu přihlášený uživatel nemá dostatečná přístupová práva.
+
+
+== Zobrazení klávesových zkratek ==
+
+Po pravé straně menu je ke každé položce vypsána také odpovídající klávesová
+zkratka, pokud existuje.  Takto si můžete klávesové zkratky snadno zapamatovat
+a příště již vyvolat příkaz přímo z klávesnice bez nutnosti použít menu.
+
+Více o klávesových zkratkách viz kapitola [help:pytis/shortcuts].

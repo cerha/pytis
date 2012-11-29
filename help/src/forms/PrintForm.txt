@@ -1,0 +1,26 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Tisková sestava =
+
+Zobrazuje data naformátovaná a připravená pro tisk.  Nelze zde vkládat, mazat,
+ani opravovat.  Slouží výhradně jako náhled před tiskem.  Nad každým řádkovým
+formulářem, případně duálním formulářem lze vyvolat tiskovou sestavu pomocí
+klávesové zkratky *Ctrl-x p* nebo z tiskového menu.  Tiskové menu vyvoláme
+pomocí tlačítka vpravo na liště titulku každého formuláře, který tisk umožňuje.
+
+V menu je vidět seznam všech zadefinovaných tiskových sestav nad daným
+náhledem.  Většina náhledů nemá explicitně předefinovanou tiskovou sestavu,
+proto se použije implicitní sestava, která se pokusí zobrazovaný formulář
+připravit pro tisk.
+
+*POZOR*: Pro dlouhé řádky může dojít u implicitní tiskové sestavy
+k nekorektnímu zobrazení tisknutých dat.  Proto je nutné v těchto případech
+předefinovat tiskovou sestavu ve spolupráci s vývojáři.  Také pokud jsou na
+tiskovou sestavu kladeny jakékoliv další nároky, které nesplňuje implicitní
+sestava, bude třeba sestavu předefinovat.
+
+Ve vytvořené tiskové sestavě je možné listovat po jednotlivých stránkách,
+případně zvětšovat a zmenšovat náhled, atd.

@@ -1,0 +1,31 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Seskupování =
+
+Funkce slouží k vizuálnímu seskupení záznamů podle hodnot vybraného sloupce.
+Vizuálního efektu seskupení je dosaženo střídavým podbarvením pozadí řádků.
+Podbarvení se mění vždy při změně hodnoty v sloupci, podle kterého seskupujeme,
+takže řádky se stejnou hodnotou mají vždy stejné podbarvení.  Aby takové
+seskupování mělo smysl, musí být řádky podle seskupovacího sloupce také
+seřazeny.  Proto je možné seskupení provést jen podle sloupců, nad kterými je
+momentálně zapnuto řazení.
+
+/Příklad:/ 
+
+Mějme náhled číselníku zemí s následujícími sloupci: 
+ * kód země
+ * název země
+ * kontinent
+
+Použijeme řazení záznamů podle sloupce kontinent a dodatečné řazení podle
+kódu.  Máme tak země ze stejných kontinentů vždy pohromadě a až v rámci
+kontinentu jsou seřazeny abecedně.  Zde použijeme seskupování podle prvního
+třídícího sloupce (kontinent).  Náhled začíná zeměmi prvního kontinentu.
+Všechny jsou podbarveny stejnou barvou.  Jakmile však nastane ve sloupci
+kontinent změna (následují země z druhého kontinentu), změní se i podbarvení
+záznamů.  To se mění cyklicky při každé změně kontinentu.  Vizuální dojem je
+potom takový, že země ze stejného kontinentu tvoří skupiny se stejným
+podbarvením a je tedy snadnější rozpoznat, které země k sobě patří.

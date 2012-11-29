@@ -1,0 +1,49 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Řazení =
+
+Řazení (někdy nesprávně také /třídění/ či sortování) záznamů umožňuje v
+libovolném náhledu určit pořadí zobrazených řádků.  Řádky můžeme řadit
+vzestupně nebo sestupně podle hodnot jednotlivých sloupců.  Číselné hodnoty
+jsou automaticky řazeny číselně, textové abecedně a datumové, jak jinak, než
+podle datumu.
+
+Řadit lze podle několika sloupců zároveň.  Jeden sloupec má vždy nejvyšší
+prioritu řazení.  Ten označujeme jako /primární/.  /Dodatečné řazení/ určuje
+pořadí řádků, které mají shodnou hodnotu ve sloupci primárního řazení.  Sloupců
+dodatečného řazení může být několik.  Každý další sloupec má nižší prioritu,
+takže určuje pořadí záznamů, které mají shodné hodnoty ve všech sloupcích s
+vyšší prioritou.
+
+== Indikátory ==
+
+Aktuální stav řazení je v tabulkových formulářích zobrazen pomocí indikátorů
+řazení na záhlaví sloupců.  Sloupec, podle kterého je řazeno má vždy při
+pravém okraji v záhlaví malý obarvený trojůhelníček.  Trojůhelníček ukazující
+směrem dolů indikuje vzestupné řazení, trojůhelníček ukazující směrem nahoru
+indikuje sestupné řazení.
+
+Sloupec primárního řazení je indikován samotným trojůhelníčkem.  Sloupce
+dodatečného řazení mají u trojůhelníčku vodorovné čárky.  Čím více čárek, tím
+nižší priorita.
+
+== Ovládání ==
+
+Nejjednodušší ovládání je pomocí myši, kdy kliknutím levým tlačítkem myši na
+záhlaví sloupce dojde k primárnímu seřazení celého formuláře podle tohoto
+sloupce.  Pokud již máme formulář seřazený, je možné přidat také dodatečné
+řazení, když na sloupec klikneme se stisknutou klávesou Shift.
+
+Pokud klikneme na sloupec, podle kterého již je řazení zapnuté, přepneme tím
+směr řazení.  Při třetím kliknutí se řazení podle daného sloupce vypne.
+
+Řazení je možné ovládat také pomocí položek kontextového menu sloupce.  To
+vyvoláme pravým tlačítkem myši nad záhlavím sloupce.
+
+Dále je možné řazení ovládat pomocí dialogu.  Ten vyvoláme pomocí klávesy F4.
+
+
+

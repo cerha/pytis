@@ -1,0 +1,14 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Užitečné funkce =
+
+Tato kapitola popisuje některé nejčastěji používané obecné funkce systému.
+Některé funkce je možné použít nad různými [help:pytis/forms typy formulářů],
+jiné fungují pouze v určitých typech.  Bližší informace najdete v popisu
+jednotlivých funkcí.
+
+Obsah: @NodeIndex(1)@
+

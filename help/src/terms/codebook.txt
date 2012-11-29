@@ -1,0 +1,27 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Číselník =
+
+Číselník je v podstatě množina hodnot.  Bývá používán zejména k integritnímu
+omezení platných hodnot datové položky.  
+
+Číselník je nejčastěji realizován samostatnou datovou tabulkou.  Ta má
+například v jednom sloupečku vlastní přípustné hodnoty a v druhém sloupečku
+popisky (vlastní hodnoty bývají často kódy, které bez popisků nemusí být
+srozumitelné).  Odtud také pochází označení „číselník“.  Je to v podstatě
+seznam číselných kódů a jim přiřazených významů.  Dnes však již kódy často
+nebývají číselné.  Typickým příkladem je číselník zemí, který jednotlivým
+dvoupísmenným zkratkám (např. „CZ“, „GB“, „DE“...) přiřazuje názvy států.
+Výhodou použití takových kódů je jejich stručnost a jednoznačnost.  Referenční
+integrita potom zajišťuje, že není možné vyplnit kód země, který neexistuje.
+
+ * /Pozor:/ Je třeba rozlišovat mezi pojmy „číselník“ a „číselníkový
+   formulář“.  Více viz [help:pytis/CodebookForm].
+
+/Poznámka:/ V systému Pytis muže být v podstatě libovolný datový náhled použit
+ve formě číselníku.
+
+

@@ -1,0 +1,11 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+== Skok na záznam ==
+
+V řádkovém formuláři, který obsahuje velké množství záznamů, může uživatel
+využit funkci „Skok na záznam“, která se spouští přes klávesu *Ctrl-j*. Po
+vyvolání funkce se objeví výzva na zadání čísla řádku, na který chce uživatel
+skočit.

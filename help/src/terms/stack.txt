@@ -1,0 +1,24 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Zásobník oken =
+
+Okna formulářů, která si uživatel postupně otevírá, se řadí do tzv. „zásobníku
+oken“.  Menu „Okna“ slouží k ovládání tohoto zásobníku.  Jednotlivé položky
+odpovídají aktuálně otevřeným formulářům.  Z tohoto menu můžeme libovolné okno
+vyzvednout do popředí a dále s ním pracovat.
+
+Pro rychlejší přístup do menu oken můžeme využít klávesovou zkratku =Alt-a=.  V
+rámci menu potom vybereme okno buďto šipkami nebo stiskem příslušné číslice
+(položky jsou očíslovány).  Více také viz [help:pytis/shortcuts].
+
+Mezi otevřenými okny se můžeme také pohybovat pomocí kláves Ctrl-šipka nahoru
+nebo Ctrl-šipka dolů.  Tím se cyklicky posouváme v zásobníku oken jedním nebo
+druhým směrem v přirozeném pořadí oken (tak, jak byla otevřena).
+
+Další praktickou možností pro přepínání mezi otevřenými okny je klávesová
+zkratka Ctrl-w, která vyzvedne okno, které bylo aktivní jako poslední (předtím,
+než jsme vyzvedli nebo otevřeli současné okno).  Takto se lze jednoduše
+cyklicky přepínat mezi dvěma posledními okny.

@@ -1,0 +1,14 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Export =
+
+Uživatelé mohou z jednotlivých náhledů exportovat data do formátu TXT nebo CSV.
+Výsledný soubor se uloží do adresáře, který lze přednastavit v uživatelské
+konfiguraci /Systém -> Nastavení exportu/.  Exportovaný soubor potom lze
+naimportovat do aplikace Open Office Calc nebo MS Excel, a dále s ním pracovat.
+
+Ne všem uživatelům je export vždy povolen.  Uživatel musí být zařazen do
+skupiny, která má k danému náhledu právo exportu.

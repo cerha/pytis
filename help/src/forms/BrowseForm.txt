@@ -1,0 +1,45 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Řádkový formulář =
+
+Klasický jednoduchý tabulkový náhled, který umožňuje sledovat na jedné
+obrazovce desítky záznamů.  Je vhodný k přehlednému získávání informací nebo
+pro rychlé vkládání a editaci dat pomocí tzv [help:pytis/inline].
+
+Záznamy je možné vyhledávat, [help:pytis/sorting třídit], [help:pytis/filtering
+filtrovat] nebo [help:pytis/grouping seskupovat].
+
+Nad [help:pytis/current-record aktuálním řádkem] lze vyvolat
+[help:pytis/context-menu kontextové menu], které nabízí různé související akce.
+
+== Pohyb ==
+
+V tabulce se pohybujeme jednak po řádcích, jednak po sloupcích.  Aktuální
+polohu určuje /kurzor/ (orámovaná buňka).  Řádek, na kterém se kurzor nachází
+ne navíc odlišen barevně a je označován jako [help:pytis/current-record].
+
+ * Ve formuláři se lze pohybovat pomocí běžných /navigačních kláves/, jako jsou
+   šipky a klávesy =PageUp=, =PageDown=, =Home= a =End=.
+
+ * Klávesy =Home= a =End= slouží k přechodu na první, resp. poslední sloupec
+   (začátek, resp. konec řádku).  Stejnou funkci mají také také šipky vlevo a
+   vpravo v kombinaci s klávesou =Ctrl=.
+
+ * =Ctrl-Home=, =Ctrl-End= slouží k rychlému přesunu na začátek/konec tabulky
+   (první/poslední záznam).
+
+Je nutné si uvědomit, že nepracujeme s daty přímo na klientském počítači.
+Záznamy jsou v průběhu pohybu načítány přímo z databáze.  Proto pohyb ve
+velkých tabulkách pomocí šipek nemusí být zrovna tím neefektivnějším způsobem,
+jak se k hledanému záznamu dostat.  Navíc je tím neúměrně zatěžováno síťové
+spojení a další zdroje.  Proto je vhodné v maximální míře využívat
+pokročilejších způsobů pohybu.
+
+Pokročilé funkce pro pohyb po záznamech:
+      
+ * [help:pytis/jumping]
+ * [help:pytis/searching]
+ * [help:pytis/searching-incremental]

@@ -1,0 +1,29 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Editační formulář =
+
+Formulář určený k uživatelsky pohodlnému vkládání a editaci dat záznamu.
+Nejčastěji je vyvolán pomocí klávesy F5 (Editace existujícího záznamu) nebo F6
+(Vložení nového záznamu).  Formulář obsahuje především [help:pytis/field
+vstupní políčka] pro editaci hodnot záznamu.  Mohou se zde nacházet také
+některé další prvky jako políčka sloužící pouze k zobrazení nějakých
+souvisejících hodnot, tlačítka apod.
+
+Ve formuláři se lze pohybovat pomocí klávesy =Tab= nebo =Enter=.  Tím se kurzor
+postupně přesouvá mezi jednotlivými políčky (pouze těmi, která jsou
+editovatelná).  Zpětný pohyb je možný pomocí =Shift-Tab=.
+
+Editační formulář lze potvrdit (tlačítko „Budiž“) -- pak se změny aplikují,
+nebo zrušit (tlačítko „Zrušit“) a pak k žádným změnám v databázi nedojde.
+
+V některých formulářích je možné použít tlačítko „Další“, které uloží záznam,
+ale narozdíl od tlačítka „Budiž“, neuzavře daný formulář, pouze vyčistí
+políčka pro vložení dalšího záznamu.  Tato funkce je vhodná při vkládání
+většího počtu záznamů.
+
+Po potvrzení formuláře se kontrolují zadané hodnoty kontrolními funkcemi.
+Pokud něktará z kontrolních funkcí neprojde, je vypsáno hlášení a formulář není
+uzavřen.  Chyby je třeba napravit a pokusit se formulář znovu potvrdit..

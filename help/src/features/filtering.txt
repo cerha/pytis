@@ -1,0 +1,118 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2007, 2011, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Filtrování =
+
+Funkce omezí viditelné řádky formuláře podle určitých pravidel.  Zapnutý filtr
+je v tabulkovém formuláři indikován zeleným zabarvením záhlaví sloupců.  Navíc
+je u sloupců, které figurují ve filtračních pravidlech, zobrazen v záhlaví malý
+piktogram trychtýře (univerzální symbol pro filtraci).
+
+Filtrační pravidla lze volit pomocí filtračního dialogu.  Jednou definovaný
+filtr lze uložit jako součást uživatelského profilu formuláře.
+
+Obsah: @TOC@
+
+
+== Filtrační dialog == dialog
+
+Filtrační dialog umožňuje interaktivní volbu filtrační podmínky.  Filtrační
+dialog je po otevření vždy přednastaven na právě aktivní filtrační podmínku
+formuláře.  Tato podmínka se může skládat z několika dílčích podmínek spojených
+pomocí logických operátorů AND (a zároveň) a OR (a nebo).
+
+Každá dílčí podmínka uplatňuje porovnání sloupce tabulky s jiným sloupcem, nebo
+přímo se zadanou hodnotou.  Způsob porovnání je určen volbou relačního
+operátoru.  Ovládací prvky každé dílčí podmínky jsou v pořadí zleva do prava
+následující:
+
+  * /Logický operátor/: Určuje způsob spojení s předchozími podmínkami.  Tento
+    ovládací prvek chybí u první dílčí podmínky (není s čím ji spojovat).
+
+  * /První operand/: Umožňuje výběr sloupce, jehož hodnoty chceme porovnávat.
+    Seznam sloupců odpovídá jejich pořadí ve formuláři.  Nezobrazené sloupce
+    jsou zobrazeny na konci seznamu v závorkách.  Některé sloupce
+    (např. binární) nemusí filtraci podporovat, proto v seznamu chybí.
+ 
+  * /Relační operátor/: Výběr způsobu porovnání hodnot.  Podporované relační
+    operátory jsou:
+    * *=* ... je rovno
+    * *<* ... je menší než
+    * *>* ... je větší než
+    * *\=<* ... je menší nebo rovno
+    * *>=* ... je větší nebo rovno
+    * *\=/=* ... není rovno
+ 
+  * /Druhý operand/: Určuje s čím budou porovnávány hodnoty sloupce vybraného
+    jako první operand.  První položka /„*~hodnota~*“/ umožňuje porovnání s
+    hodnotou.  Tato hodnota bude zadána do následujícího vstupního pole.
+    Porovnávat můžeme také s hodnotou jiného sloupce.  Pokud zvolíme sloupec,
+    bude vstupní pole pro zadání hodnoty neaktivní.
+
+  * /Hodnota/: Hodnota druhého operandu (pokud je zvoleno porovnávání s
+    hodnotou).  Jde o řetězec, který musí být platnou vstupní hodnotou
+    odpovídající datovému typu sloupce, se kterým porovnáváme (např. při
+    porovnání s datumem musí řetězec obsahovat platný zápis datumu).  Při
+    použití operátorů rovnosti či nerovnosti („=“ a „=/=“) lze při porovnání
+    textových dat v řetězci použít znak „?“ (otazník) jako zástupný znak pro
+    jeden libovolný znak a „*“ (hvězdička) pro skupinu libovolných znaků
+    (žádný, jeden nebo několik znaků).
+
+  * /Nasát/: Umožní načíst hodnotu z formuláře.  Hodnota sloupce prvního
+    operandu aktuálního řádku formuláře je přednastavena do políčka hodnota pro
+    druhý operand.  Pokud druhým operandem není hodnota, ale sloupec, je funkce
+    nedostupná.
+
+  * /Vymazat/: Přenastaví danou dílčí podmínku do iniciální podoby.
+
+  * /Odebrat/: Odebere danou dílčí podmínku z dialogu.  Funkce není dostupná,
+    pokud je daná podmínka jedinou podmínkou v dialogu.
+
+Tlačítka /„Přidat AND“/ a /„Přidat OR“/ přidávají novou dílčí podmínku do
+dialogu.  Rozdíl je pouze v přednastavení logického operátoru v přidané
+podmínce.
+
+Tlačítkem /„Odebrat vše“/ odebereme všechny podmínky z dialogu a inicializujeme
+jej tak do „prázdného“ stavu.
+
+/Poznámka pro pokročilé uživatele:/ Skládání podmínek pomocí logických
+operátorů funguje vždy tak, že každá podmínka je v relaci se všemi předchozími
+podmínkami.  Například pokud navolíme podmínky:
+
+  * /p1/,
+  * OR /p2/,
+  * AND /p3/,
+  * OR /p4/,
+
+bude matematický zápis výsledné podmínky následující: 
+
+((/p1/ OR /p2/) AND /p3/) OR /p4/
+
+=== Agregační funkce ===
+
+Součástí filtračního dialogu je agregační pole, které umožňuje zjistit
+např. počet, minimum, maximum, součet nebo průměr hodnot určitého sloupce
+odpovídající navolené filtrační podmínce ještě před její aktivací ve formuláři.
+Výsledek vybrané agregační funkce se zobrazí v textovém políčku po stisku
+tlačítka /„Zjistit“/.
+
+=== Tlačítka pro uzavření dialogu ===
+
+Všechna tlačítka na spodním okraji dialogového okna uzavřou dialog.  
+
+ * Tlačítko /„Filtrovat“/ aplikuje ve formuláři filtrační podmínku navolenou v
+   dialogu.
+ * Tlačítko /„Zrušit filtr“/ kompletně zruší filtraci ve formuláři, pokud je
+   zapnuta.
+ * Tlačítko /„Zavřít“/ opustí dialog bez změny filtrace formuláře.  Případné
+   provedené změny filtrační podmínky budou ztraceny.
+
+
+== Ukládání filtrů ==
+
+Aktivní filtr formuláře lze uložit společně s dalšími parametry jako
+uživatelský profil (viz [help:pytis/profiles]). 
+
+

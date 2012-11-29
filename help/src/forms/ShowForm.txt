@@ -1,0 +1,19 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Náhledový formulář =
+
+Slouží pro detailní zobrazení náhledu aktuálního záznamu dat.  Náhled používá
+pro zobrazení jednoho záznamu stejné rozložení políček, jako editační formulář,
+čímž je jednak přehledný a jednak zobrazuje větší množství informací, než kolik
+se vejde do jednoho řádku řádkového formuláře.  Oproti editačnímu formuláři zde
+není možné hodnoty editovat, ale naproti tomu je možné záznamy procházet (jde v
+podstatě o jednořádkový náhled do tabulky).
+
+Z řádkového formuláře je možné vyvolat náhled pomocí Mezerníku, nebo klávesy
+Enter.  Mezerník zobrazí duální náhled, kde v horní části stále vidíme část
+řádkového formuláře a v dolní části je zobrazen náhled aktuálně vybraného
+záznamu.  Enter zobrazí detailní náhled na celou plochu, přičemž pohyb po
+jednotlivých záznamech je možný pomocí kláves PageUp a PageDown.

@@ -1,0 +1,12 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2011 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Typy formulářů =
+
+Formuláře jsou v systému Pytis základním prostředkem pro práci s daty uloženými
+v databázi.  Existují různé typy formulářů vhodné pro různé operace nad daty
+(prohlížení, editace apod.).
+
+Z pohledu uživatele rozlišujeme následující typy formulářů: @NodeIndex(1)@

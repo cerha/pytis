@@ -1,0 +1,12 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Dialogové okno =
+
+Dialogová okna se v aplikaci vyskytují v mnoha podobách.  Může jít např. o
+informační okénko, které umožňuje většinou pouze potvrzení, nebo zrušení akce,
+dialog filtrování, dialog pro zadání datumu apod.  Co mají všechna dilogová
+okna společného je to, že jsou modální.  To znamená, že pokud je okno
+zobrazeno, nelze s ostatními okny aplikace pracovat, dokud okno neuzavřeme.

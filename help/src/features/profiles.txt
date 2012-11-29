@@ -1,0 +1,62 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2011 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Profily formulářů =
+
+Panel nástrojů obsahuje ovládací prvek pro přepínání a správu tzv. „profilů“.
+Profil je souhrn parametrů zobrazení formuláře uložených pod určitým názvem.
+Nad týmiž daty v témže formuláři tak lze vytvářet různé náhledy.
+
+Obsah: @TOC@
+
+== Co je profil? ==
+
+Jak již bylo řečeno v úvodu, profil je souhrn parametrů zobrazení formuláře
+uložených pod určitým názvem.
+
+Těmito parametry konkrétně jsou:
+ * Filtrační podmínka
+ * Řazení záznamů
+ * Zobrazené sloupce
+ * Šířky sloupců
+ * Vizuální seskupování
+ * Stav sbalení/rozbalení stromového formuláře
+ * Zobrazené agregační funkce
+
+Profil je tedy pojmenovaná kombinace všech těchto parametrů.  Díky tomu, že
+profily lze ukládat a mezi uloženými profily se snadno přepínat, může uživatel
+velmi efektivně přecházet mezi různými náhledy na data.  
+
+  Předdefinované profily 
+  Uživatelské profily
+
+== Přepínání profilů ==
+
+Panel nástrojů obsahuje ovládací prvek pro snadné přepínání mezi existujícími
+profily.  Rozbalovací menu zobrazí seznam známých profilů
+
+== Správa profilů ==
+
+Ovládací prvek přepínání profilů v panelu nástrojů umožňuje kromě přepínání
+také správu profilů.  Profily je možné vytvářet, aktualizovat, mazat a
+přejmenovávat.  Také je možné se vrátit k dříve uloženému nastavení, nebo
+zahodit veškeré uživatelské přizpůsobení profilu (u profilů definovaných ve
+specifikaci).
+
+Správu lze provádět skrze kontextové menu, které vyvoláme stiskem pravého
+tlačítka myši na ovládacím prvku v panelu nástrojů.  Všechny příkazy tohoto
+menu se vždy vztahují k právě vybranému profilu.
+
+
+== Indikace změny profilu ==
+
+Kdykoliv uživatel ve formuláři provede změnu zobrazení takovou, že aktuální
+parametry neodpovídají dříve uloženým parametrům aktuálního profilu, bude název
+profilu v ovládacím prvku přepínání profilů v nástrojové liště zvýrazněn
+červenou barvou.  Uživatel tak dostává informaci o tom, že aktuální parametry
+formuláře již neodpovídají uloženému stavu a uživatel musí změny buďto uložit,
+nebo o ně při opuštění formuláře přijde.  Zároveň má uživatel možnost aktuální
+změny zahodit a navrátit se k dříve uloženému stavu pomocí příkazu „Vrátit
+poslední uložené nastavení“ v menu správy profilů (viz výše).

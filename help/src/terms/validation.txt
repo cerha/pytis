@@ -1,0 +1,24 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Validace =
+
+Každá hodnota vložená do [help:pytis/field vstupního políčka] podléhá validaci.
+Jde v podstatě o ověření, zda je hodnota platná jak sama o sobě, tak v daném
+kontextu.  Validace je spouštěna při pokusu o potvrzení hodnoty.  Nesprávná
+hodnota je oznámena a akce (např. uložení záznamu) není provedena.
+
+Každé vstupní políčko (odpovídající nějakému sloupečku v databázi) má pevně
+určený datový typ a z něho vyplývají základní omezení.
+
+Například:
+ * číselná hodnota smí obsahovat pouze číslice
+ * datum musí mít platný formát
+ * řetězec nesmí překročit maximální délku
+
+Rozsah a množina hodnot povolených v daném políčku může být dále omezena:
+ * datum musí být v určitém intervalu,
+ * hodnota musí být platnou hodnotou z [help:pytis/codebook číselníku],
+ * políčko musí být vyplněno (nesmí zůstat prázdné), atd.

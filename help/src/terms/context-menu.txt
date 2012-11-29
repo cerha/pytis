@@ -1,0 +1,46 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+== Kontextové menu řádku ==
+
+Pomocí pravého tlačítka myši je možné nad [help:pytis/current-record aktuálním
+záznamem] [help:pytis/BrowseForm řádkového formuláře] vyvolat nabídku akcí.
+Některé tyto akce pracují se záznamem jako s celkem, některé se vztahují přímo
+k aktuální buňce.
+
+Menu lze také vyvolat přímo z klávesnice pomocí klávesové zkratky =Ctrl-m=.
+
+Menu obsahuje následující položky:
+
+ * /Editovat buňku/ -- Spustí [help:pytis/inline in-line editaci] dané buňky.
+
+ * /Filtrovat podle buňky/ -- Automaticky zapne filtrování náhledu, kdy jsou
+   zobrazeny pouze záznamy, které v daném sloupečku obsahují stejnou hodnotu
+   jako aktuální záznam (nad kterým je akce vyvolána).  Parametry filtrování
+   lze dále upravit, či zrušit, pomocí [help:pytis/filtering filtračního
+   dialogu].
+
+ * /Zkopírovat obsah buňky/ -- Uloží hodnotu buňky do schránky pro možnost
+   pozdějšího vložení (např. do formuláře, či do jiné aplikace).
+
+ * /Editovat záznam/ -- Spustí editaci aktuálního záznamu v
+   [help:pytis/PopupEditForm samostatném editačním formuláři].
+
+ * /Smazat záznam/ -- Smaže aktuální záznam z databáze.
+
+ * /Náhled/ -- Zobrazí aktuální záznam v [help:pytis/ShowForm náhledovém
+   formuláři].
+
+ * /Náhled v druhém formuláři/ -- Zobrazí aktuální záznam v
+   [help:pytis/DescriptiveDualForm duálním náhledovém formuláři].
+
+ * /Zobrazit související číselník/ -- Zobrazí číselník, ze kterého pochází
+    hodnota dané buňky.  Nad buňkami, které neobsahují číselníkové hodnoty je
+    tato funkce neaktivní.
+
+Tyto položky jsou definovány systémem a v kontextovém menu se tedy nachází
+vždy.  Dále může být v aplikaci pro každý náhled definováno ještě několik
+dalších specifických akcí.  Například „Splatit fakturu“ nad náhledem
+zobrazujícím faktury apod.

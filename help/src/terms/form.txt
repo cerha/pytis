@@ -1,0 +1,8 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Formulář =
+
+Formulář je základní prostředek pro práci s daty.  Více viz [help:pytis/forms].

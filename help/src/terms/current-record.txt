@@ -1,0 +1,16 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+== Aktuální záznam ==
+
+V [help:pytis/BrowseForm řádkovém formuláři] se můžeme pohybovat po
+jednotlivých buňkách.  Řádek, na němž je právě umístěn kurzor je nazýván
+„aktuální řádek“, nebo také obecněji „aktuální záznam“.  To je důležité, neboť
+mnohé funkce a příkazy pracují s aktuálním záznamem.
+
+Aktuální záznam je v řádkovém formuláři zvýrazněn barevně.  Ve výchozím
+nastavení je pro zvýraznění použita systémová barva výběru (nejčastěji bílý
+text na tmavě modrém pozadí).  Barevné odlišení aktuálního řádku je možné
+nastavit ve formuláři „Nastavení uživatelského rozhraní“.

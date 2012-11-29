@@ -1,0 +1,19 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Dopočítávané vstupní políčko =
+
+Obsah některých [help:pytis/field vstupních políček] může být automaticky změněn na
+základě změny hodnoty jiného políčka.  Taková políčka nazýváme /dopočítávána
+políčka/.  Každé dopočítávané políčko závisí na jednom nebo více dalších
+políčkách, na jejichž změny reaguje.
+
+Dopočítávaná políčka jsou nejčastěji needitovatelná a potom slouží pouze k
+zobrazení souvisejících informací (například kurz zvolené měny apod.).
+
+Dopočítávané políčko však může být také editovatelné a potom lze jeho hodnotu
+dodatečně změnit.  Zde je však třeba /opratrnosti/, protože pokud opět změníme
+hodnotu políčka, na kterém je toto políčko závislé, bude námi vyplněná hodnota
+přepsána nově vypočtenou hodnotou.

@@ -1,0 +1,10 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2011 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Rejstřík pojmů =
+
+Tato sekce vysvětluje některé často používané pojmy a zavedené názvy.
+
+Index: @NodeIndex@

@@ -1,0 +1,24 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Číselníkové políčko =
+
+Pokud se jedná o políčko navázané na [help:pytis/codebook číselník] a toto je
+aktivní, lze pomocný [help:pytis/CodebookForm číselníkový formulář] vyvolat
+klávesovou zkratkou *F2*, nebo tlačítkem umístěným vedle políčka.  Pomocí
+klávesové zkratky *Ctrl F2* je možné vyvolat číselník s automaticky zapnutým
+inkrementálním vyhledáváním.
+
+V určitých případech může uživatel během editace zjistit, že potřebuje do
+políčka zadat hodnotu, kterou daný číselník ještě neobsahuje.  Pro úspěšné
+zadání dané hodnoty je nutné nejprve doplnit tuto hodnotu do číselníku.  Aby
+uživatel nemusel uzavřít právě otevřený editační formulář, je možné vyvolat
+zadání hodnoty do číselníku pomocí tlačítka „+“ (pokud je k dispozici).  Po
+obnovení číselníku může uživatel pokračovat v zadávání hodnot editačního
+formuláře.
+
+Tlačítko „+“ je vkládáno do vybraných editačních formulářů na žádost
+uživatelů.
+

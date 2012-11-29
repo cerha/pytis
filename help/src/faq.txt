@@ -1,0 +1,65 @@
+# -*- coding: utf-8; mode: structured-text -*-
+
+= Často kaldené dotazy =
+
+@TOC@
+
+
+== Jak mohu s aplikací pracovat efektivněji? ==
+
+Pokud chcete pracovat s aplikacemi systému Pytis opravdu efektivně a strávit
+tak nad obrazovkou počítače co nejméně času, můžete využít následujících
+několika rad:
+
+ * Naučte se ovládat aplikaci pomocí klávesnice.  Přestože uživatelské rozhraní
+   umožňuje veškeré akce provádět pomocí myši, není dobré u tohoto způsobu
+   ovládání skončit.  Myš je vhodná, pokud se s aplikací seznamujete, ale
+   zkušený uživatel by měl využívat především klávesnice.  Více informací
+   naleznete v kapitole [help:pytis/shortcuts].
+
+ * Používejte takzvaný in-line režim vkládání a editace dat.  Vhodný je zejména
+   při práci s méně obsáhlými náhledy (např. číselníky).  Více viz
+   [help:pytis/inline].  Editační formulář používejte střídmě.
+
+ * Maximum informací lze nejrychleji vytěžit z řádkových formulářů.  Seznamte
+   se s následujícími funkcemi: [help:pytis/sorting], [help:pytis/grouping],
+   [help:pytis/jumping], [help:pytis/searching],
+   [help:pytis/searching-incremental] a [help:pytis/filtering].
+
+ * Používejte hledání záznamu v kombinaci s funkcí nasávání políčka.
+
+ * Řádek na spodním okraji okna (tzv. stavová řádka) může obsahovat odpovědi na
+   některé Vaše otázky.
+
+
+== Co dělat v případě zhroucení aplikace? ==
+
+Pokud dojde k chybě programu, vyskočí okno s chybovým hlášením, obsahující
+podrobné informace, díky kterým mohou vývojáři chybu lokalizovat a odstranit.
+
+Chybový dialog má ve spodní části tři tlačítka:
+
+ * Ignoruj
+ * Odešli hlášení o chybě
+ * Uzavři aplikaci
+
+Pokud použijete tlačítko „Odešli hlášení o chybě“, bude otevřeno okno, do
+kterého zadáte /svou/ e-mailovou adresu (nikoli adresu administrátora, ta už je
+v systému pevně zadaná).  Tím vývojáři uvidí kdo chybové hlášení zasílá a mohou
+případně odpovědět.  
+
+Pokud chybu jednou odešlete a podaří se vám stejnou chybu (způsobenou ve
+stejném místě programu se stejnými příznaky a stejným popisem), není nutné
+chybové hlášení odesílat znova.  Musíte si ovšem být jisti, že jde opravdu o
+totožnou chybu.  Potom můžete zkusit chybu ignorovat.  To se však někdy nemusí
+povést, protože chyba mohla příliš narušit stav aplikace.  Potom nezbyde, než
+aplikaci uzavřít a spustit ji znovu.
+
+Ve výjimečných případech se může stát, že se aplikace zcela zhroutí bez
+zobrazení chybového dialogu.  V takovém případě je nutné zaslat zprávu na
+adresu bugs@ebas.cz ručně (s použitím běžného poštovního programu).  Ve zprávě
+se pokuste co nejpřesněji popsat jak ke zhroucení došlo.  Také se pokuste
+aplikaci spustit znovu a chybu zreprodukovat.  Pokud se podaří jednoznačně
+určit postup, při kterém se aplikace hroutí, je pravděpodobné, že chybu bude
+možné odhalit a opravit.
+

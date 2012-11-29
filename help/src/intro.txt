@@ -1,0 +1,40 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2007 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Co je Pytis? =
+
+Pytis je univerzální systém pro tvorbu informačních systémů.  Informačním
+systémem může být libovolná aplikace, která pracuje s daty, nejčastěji
+uloženými v relační databázi.
+
+Pytis odděluje dvě základní části informačního systému:
+
+  * Definice dat, jejich vazeb a vlastností.
+
+  * Realizace uživatelského rozhraní umožňujícího pohodlnou práci uživatele s
+    těmito daty.
+
+Definice dat je úkolem tvůrce informačního systému.  Systém Pytis potom již na
+základě definice dat a jejich vazeb vytváří uživatelské rozhraní automaticky.
+
+Základní funkce uživatelského rozhraní jsou:
+	 
+  * Prezentace dat v podobě formulářů umožňujících zobrazení náhledů, filtraci,
+    řazení, vyhledávání atd.
+
+  * Manipulace s daty, jako např. editace, mázání či vkládání nových záznamů.
+
+  * Správa přístupových práv uživatelů k těmto datům a jednotlivým operacím s
+    nimi.
+
+Výhodou tohoto odděleného přístupu je nejen to, že se tvůrce aplikace nemusí
+uživatelským rozhraním zabývat a může se soustředit především na kvalitní
+datovou reprezentaci implementovaného problému, ale především konzistence
+výsledného uživatelského rozhraní.
+
+Tento manuál se zabývá právě popisem uživatelského rozhraní Pytisu, tedy
+vlastnostmi, které jsou nezávislé na konkrétním informačním systému a datech,
+se kterými uživatel pracuje.  Všechny dále popisované vlastnosti jsou společné
+pro všechny aplikace postavené nad systémem Pytis.

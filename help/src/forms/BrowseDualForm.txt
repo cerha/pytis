@@ -1,0 +1,19 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2006, 2012 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+== Duální řádkový formulář ==
+
+Duální řádkový formulář je typem [help:pytis/DualForm duálního formuláře],
+který zobrazuje dva běžné řádkové formuláře najednou, přičemž v dolním
+formuláři se zobrazují záznamy provázané s [help:pytis/current-record aktuálním
+záznamem] horního formuláře.
+
+Například hlavičky faktur se zobrazují nahoře a jednotlivé položky právě
+vybrané faktury dole.
+
+Při každém pohybu (změně aktuálního záznamu) horního formuláře je spodní
+formulář přefiltrován tak, aby obsahoval pouze záznamy odpovídající aktuálnímu
+záznamu horního formuláře.  Obsah dolního formuláře je tedy závislý na pozici
+v horním formuláři.
