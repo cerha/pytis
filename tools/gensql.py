@@ -183,7 +183,7 @@ class _GsqlSpec(object):
             name = '@%d' % self._serial_number
         self._set_name(name)
         self._depends = depends
-        self._conversion_depends = depends
+        self._conversion_depends = tuple([d for d in depends if d != 'cms_users_table'])
         self._doc = doc
         self._grant = grant
         for g in grant:
@@ -496,7 +496,12 @@ class _GsqlSpec(object):
                     c_references = None
             if c_references:
                 components = c_references.split(' ')
-                references = "sql.gA(%s" % (repr(components.pop(0),))
+                referenced_table = components.pop(0)
+                if referenced_table == 'cms_users_table':
+                    referenced_table = 'db.cms_users_table.value()'
+                else:
+                    referenced_table = repr(referenced_table)
+                references = "sql.gA(%s" % (referenced_table,)
                 initially = ''
                 while components:
                     keyword = components.pop(0).lower()
@@ -599,6 +604,10 @@ class _GsqlSpec(object):
                 grant = 'default_access_rights.value()'
             else:
                 grant = 'db.default_access_rights.value()'
+        elif self._grant == (('all', 'cms',),):
+            grant = 'db.cms_rights.value()'
+        elif self._grant == (('all', 'cmsrw',),):
+            grant = 'db.cms_rights_rw.value()'
         else:
             grant = repr(self._grant).replace('"', '')
         return '    access_rights = %s' % (grant,)
@@ -3920,13 +3929,25 @@ import pytis.data
 default_access_rights = sql.SQLFlexibleValue('app_default_access_rights',
                                                environment='GSQL_DEFAULT_ACCESS_RIGHTS',
                                                default=(('all', '%s',),))
-""" % (application,)
+cms_rights = sql.SQLFlexibleValue('app_cms_rights',
+                                    environment='GSQL_CMS_RIGHTS',
+                                    default=(('all', '%s',),))
+cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
+                                       environment='GSQL_CMS_RIGHTS_RW',
+                                       default=(('all', '%s',),))
+cms_users_table = sql.SQLFlexibleValue('app_cms_rights_rw',
+                                         default='cms_users_table')
+""" % (application, application, application,)
             else:
                 preamble_1 += """
+app_default_access_rights = (('all', '%s',),)
+app_cms_rights = (('all', '%s',),)
+app_cms_rights_rw = (('all', '%s',),)
+app_cms_users_table = 'e_system_user'
+
 from pytis.dbdefs import *
 
-app_default_access_rights = (('all', '%s',),)
-""" % (application,)
+""" % (application, application, application,)
         preamble_1 += '''
 TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'
