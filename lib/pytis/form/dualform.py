@@ -569,6 +569,9 @@ class DescriptiveDualForm(BrowseShowDualForm):
             # been selected in the main form but still before the other row
             # gets replaced in the side form.
             pass
+        def _select_columns(self):
+            return [c.id() for c in self._data.columns() 
+                    if not isinstance(c.type(), pytis.data.Big)]
     
     def _init_attributes(self, orientation=Orientation.HORIZONTAL, **kwargs):
         self._in_mainform_selection = False
