@@ -134,6 +134,18 @@ class Form(lcg.Content):
     def _export_body(self, context, form_id):
         return []
 
+    def _require_javascript_dependencies(self, context):
+        # Javascript dependencies to be allocated before any scripts are used.
+        # This method must be called explicitly at the beginning of
+        # _export_javascript() when Pytis JavaScript code is needed.  It is
+        # important to allocate these scripts before any other scripts
+        # allocated by _export_javascript() to ensure the correct order of
+        # dependencies.
+        context.resource('prototype.js')
+        context.resource('gettext.js')
+        context.resource('pytis.js')
+        context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
+
     def _export_javascript(self, context, form_id):
         return None
 
@@ -146,10 +158,6 @@ class Form(lcg.Content):
         form = g.div(self._export_form(context, form_id), cls=cls, id=form_id)
         javascript = self._export_javascript(context, form_id)
         if javascript:
-            context.resource('prototype.js')
-            context.resource('gettext.js')
-            context.resource('pytis.js')
-            context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
             form += g.script(javascript)
         return form
 
@@ -603,6 +611,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             return []
 
     def _export_javascript(self, context, form_id):
+        self._require_javascript_dependencies(context)
         g = context.generator()
         layout_fields = self._layout.order()
         field_handlers = []
@@ -1428,6 +1437,7 @@ class BrowseForm(LayoutForm):
         if self._async_load:
             uri = self._uri_provider(None, UriType.LINK, None)
             if uri:
+                self._require_javascript_dependencies(context)
                 g = context.generator()
                 return g.js_call("new pytis.BrowseFormHandler", form_id, uri)
         return None
