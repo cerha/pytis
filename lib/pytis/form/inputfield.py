@@ -1845,7 +1845,12 @@ class FileField(Invocable, InputField):
             value = value.buffer()
         assert value is None or isinstance(value, buffer)
         self._buffer = value and self._type.Buffer(value) or None
-        self._on_change()
+        if self._readonly:
+            # _on_change() will not trigger _on_change_hook() for readonly
+            # fields, so we need to run it manually here.
+            self._on_file_changed()
+        else:
+            self._on_change()
 
     def _on_change_hook(self):
         super(FileField, self)._on_change_hook()
