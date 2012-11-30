@@ -608,6 +608,8 @@ class _GsqlSpec(object):
             grant = 'db.cms_rights.value(globals())'
         elif self._grant == (('all', 'cmsrw',),):
             grant = 'db.cms_rights_rw.value(globals())'
+        elif self._grant == (('insert', 'pytis'), ('delete', 'pytis'), ('select', 'pytiswebuser')):
+            grant = 'db.http_attachment_storage_rights.value(globals())'
         else:
             grant = repr(self._grant).replace('"', '')
         return '    access_rights = %s' % (grant,)
@@ -3935,6 +3937,7 @@ app_default_access_rights = (('all', '%s',),)
 app_cms_rights = (('all', '%s',),)
 app_cms_rights_rw = (('all', '%s',),)
 app_cms_users_table = 'e_system_user'
+app_http_attachment_storage_rights = (('insert', '%s'), ('delete', '%s'), ('select', '%swebuser'),)
 
 import imp
 import os
@@ -3943,7 +3946,7 @@ _file, _pathname, _description = imp.find_module('pytis')
 sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))
 
 from db_pytis_base import *
-""" % (application, application, application,)
+""" % (application, application, application, application, application, application,)
         preamble_1 = '''
 default_access_rights = sql.SQLFlexibleValue(\'db.app_default_access_rights\',
                                                environment=\'GSQL_DEFAULT_ACCESS_RIGHTS\',
@@ -3956,8 +3959,11 @@ cms_rights_rw = sql.SQLFlexibleValue(\'db.app_cms_rights_rw\',
                                        default=((\'all\', \'%s\',),))
 cms_users_table = sql.SQLFlexibleValue(\'db.app_cms_users_table\',
                                          default=\'cms_users_table\')
+http_attachment_storage_rights = sql.SQLFlexibleValue(\'db.app_http_attachment_storage_rights\',
+                                                        environment=\'GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS\',
+                                                        default=((\'insert\', \'%s\'), (\'delete\', \'%s\'), (\'select\', \'%swebuser\'),))
 
-''' % (application, application, application,)
+''' % (application, application, application, application, application, application,)
         preamble_1 += '''
 TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'

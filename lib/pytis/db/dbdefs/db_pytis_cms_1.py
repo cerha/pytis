@@ -69,8 +69,8 @@ class CmsAccessLogData(sql.SQLTable):
     depends_on = ()
     access_rights = db.cms_rights_rw.value(globals())
 
-class X176(sql.SQLRaw):
-    name = '@176'
+class X177(sql.SQLRaw):
+    name = '@177'
     @classmethod
     def sql(class_):
         return """create or replace rule session_delete as on delete to cms_session do ( update cms_session_log_data set end_time=old.last_access WHERE session_id=old.session_id;);"""

@@ -31,6 +31,8 @@ include_file('db_pytis_logging')
 include_file('db_output')
 include_file('db_pytis_crypto')
 include_file('db_pytis_help')
+http_attachment_storage_rights = (('insert', 'pytis'), ('delete', 'pytis'), ('select', 'pytiswebuser'),)
+include_file('db_pytis_http_attachment_storage')
 cms_users_table = 'cms_users_table'
 cms_rights = (('all', 'cms'),)
 cms_rights_rw = (('all', 'cmsrw'),)
