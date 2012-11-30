@@ -578,7 +578,7 @@ class SQLFlexibleValue(object):
         self._default = default
         self._environment = environment
 
-    def value(self):
+    def value(self, globals_=None):
         """Return current object value.
 
         The value is retrieved as follows:
@@ -592,7 +592,12 @@ class SQLFlexibleValue(object):
           its value.
 
         - Otherwise the default value given in the constructor is returned.
-        
+
+        Arguments:
+
+          globals_ -- dictionary where to look the value for; if 'None' then
+            'globals()' is used
+
         """
         value = None
         name = None
@@ -600,9 +605,15 @@ class SQLFlexibleValue(object):
             name = os.getenv(self._environment)
         if name is None:
             name = self._name
-        value = globals().get(name)
-        if value is None:
-            value = self._default
+        value = globals() if globals_ is None else globals_
+        for name_part in name.split('.'):
+            if isinstance(value, dict):
+                value = value.get(name_part)
+            else:
+                value = getattr(value, name_part, None)
+            if value is None:
+                value = self._default
+                break
         return value
 
 _default_schemas = SQLFlexibleValue('default_schemas', environment='GSQL_DEFAULT_SCHEMAS',

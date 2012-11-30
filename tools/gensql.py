@@ -498,7 +498,7 @@ class _GsqlSpec(object):
                 components = c_references.split(' ')
                 referenced_table = components.pop(0)
                 if referenced_table == 'cms_users_table':
-                    referenced_table = 'db.cms_users_table.value()'
+                    referenced_table = 'db.cms_users_table.value(globals())'
                 else:
                     referenced_table = repr(referenced_table)
                 references = "sql.gA(%s" % (referenced_table,)
@@ -601,13 +601,13 @@ class _GsqlSpec(object):
     def _convert_grant(self):
         if self._grant == (('all', _GsqlConfig.application,),):
             if self._name in _CONV_PREPROCESSED_NAMES:
-                grant = 'default_access_rights.value()'
+                grant = 'default_access_rights.value(globals())'
             else:
-                grant = 'db.default_access_rights.value()'
+                grant = 'db.default_access_rights.value(globals())'
         elif self._grant == (('all', 'cms',),):
-            grant = 'db.cms_rights.value()'
+            grant = 'db.cms_rights.value(globals())'
         elif self._grant == (('all', 'cmsrw',),):
-            grant = 'db.cms_rights_rw.value()'
+            grant = 'db.cms_rights_rw.value(globals())'
         else:
             grant = repr(self._grant).replace('"', '')
         return '    access_rights = %s' % (grant,)
@@ -3945,16 +3945,16 @@ sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))
 from db_pytis_base import *
 """ % (application, application, application,)
         preamble_1 = '''
-default_access_rights = sql.SQLFlexibleValue(\'app_default_access_rights\',
+default_access_rights = sql.SQLFlexibleValue(\'db.app_default_access_rights\',
                                                environment=\'GSQL_DEFAULT_ACCESS_RIGHTS\',
                                                default=((\'all\', \'%s\',),))
-cms_rights = sql.SQLFlexibleValue(\'app_cms_rights\',
+cms_rights = sql.SQLFlexibleValue(\'db.app_cms_rights\',
                                     environment=\'GSQL_CMS_RIGHTS\',
                                     default=((\'all\', \'%s\',),))
-cms_rights_rw = sql.SQLFlexibleValue(\'app_cms_rights_rw\',
+cms_rights_rw = sql.SQLFlexibleValue(\'db.app_cms_rights_rw\',
                                        environment=\'GSQL_CMS_RIGHTS_RW\',
                                        default=((\'all\', \'%s\',),))
-cms_users_table = sql.SQLFlexibleValue(\'app_cms_users_table\',
+cms_users_table = sql.SQLFlexibleValue(\'db.app_cms_users_table\',
                                          default=\'cms_users_table\')
 
 ''' % (application, application, application,)
