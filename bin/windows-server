@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-11-21 14:09'
+_VERSION = '2012-11-30 17:10'
 
 URLPREFIX='https://ssl.asellus.cz/programs'
 PROCMODULE='pytisproc'
@@ -75,6 +75,7 @@ _stop = False
 class _Registration(object):
     user_port = port + 1
     registered_users = {}
+    version = _VERSION
 _registration = _Registration()
 
 def username():
