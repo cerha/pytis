@@ -51,10 +51,10 @@ Specifications are defined in a Python source file.  Nothing else than
 specification classes and corresponding utilities should be put into the file.
 Names of specification classes may not start with 'SQL' and '_SQL' prefixes,
 those prefixes are reserved for base classes.  Specifications whose names start
-with underscore don't emit database objects, they are typically used as common
-base classes to be used by real specifications.  You can put specifications to
-several files in a Pytho module and then include them all in the corresponding
-'__init__.py' file.
+with underscore or 'Base_' prefix don't emit database objects, they are
+typically used as common base classes to be used by real specifications.  You
+can put specifications to several files in a Pytho module and then include them
+all in the corresponding '__init__.py' file.
 
 SQL code can be generated from the specifications using 'gsql_module()'
 function.
@@ -522,7 +522,9 @@ def _sql_plain_name(name):
     return name
 
 def _is_specification_name(name):
-    return not name.startswith('SQL') and not name.startswith('_')
+    return (not name.startswith('SQL') and
+            not name.startswith('_') and
+            not name.startswith('Base_'))
 
 def _expand_schemas(schemas):
     if isinstance(schemas, SQLFlexibleValue):

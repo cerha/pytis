@@ -1542,7 +1542,7 @@ class _GsqlTable(_GsqlSpec):
 
     def convert(self):
         spec_name = self._convert_name(new=True)
-        superclass = 'db._LogSQLTable' if self._upd_log_trigger else 'sql.SQLTable'
+        superclass = 'db.Base_LogSQLTable' if self._upd_log_trigger else 'sql.SQLTable'
         items = ['class %s(%s):' % (spec_name, superclass,)]
         doc = self._convert_doc()
         if doc:
@@ -3276,13 +3276,13 @@ class _GsqlFunction(_GsqlSpec):
         if python:
             for l in inspect.getsourcelines(body)[0]:
                 if l.find('BaseTriggerObject') >= 0:
-                    superclass = 'db._PyTriggerFunctionBase'
+                    superclass = 'db.Base_PyTriggerFunction'
                     break
             else:
                 if self._name in _CONV_PREPROCESSED_NAMES:
-                    superclass = '_PyFunctionBase'
+                    superclass = 'Base_PyFunction'
                 else:
-                    superclass = 'db._PyFunctionBase'
+                    superclass = 'db.Base_PyFunction'
         else:
             superclass = 'sql.SQLFunction'
         items = ['class %s(%s):' % (self._convert_name(new=True), superclass,)]
@@ -3920,39 +3920,49 @@ import sqlalchemy
 import pytis.extensions.gensqlalchemy as sql
 import pytis.data
 '''
-        init_local_preamble = local_preamble
+        init_preamble = local_preamble
         local_preamble += 'import dbdefs as db\n\n'
-        preamble_1 = ''
+        global_preamble = ''
         if application:
             if application == 'pytis':
-                preamble_1 += """
-default_access_rights = sql.SQLFlexibleValue('app_default_access_rights',
-                                               environment='GSQL_DEFAULT_ACCESS_RIGHTS',
-                                               default=(('all', '%s',),))
-cms_rights = sql.SQLFlexibleValue('app_cms_rights',
-                                    environment='GSQL_CMS_RIGHTS',
-                                    default=(('all', '%s',),))
-cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
-                                       environment='GSQL_CMS_RIGHTS_RW',
-                                       default=(('all', '%s',),))
-cms_users_table = sql.SQLFlexibleValue('app_cms_rights_rw',
-                                         default='cms_users_table')
-""" % (application, application, application,)
+                init_preamble += """
+from db_pytis_base import *
+
+"""
             else:
-                preamble_1 += """
+                init_preamble += """
 app_default_access_rights = (('all', '%s',),)
 app_cms_rights = (('all', '%s',),)
 app_cms_rights_rw = (('all', '%s',),)
 app_cms_users_table = 'e_system_user'
 
-from pytis.dbdefs import *
+import imp
+import os
+import sys
+_file, _pathname, _description = imp.find_module('pytis')
+sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))
 
+from db_pytis_base import *
 """ % (application, application, application,)
+        preamble_1 = '''
+default_access_rights = sql.SQLFlexibleValue(\'app_default_access_rights\',
+                                               environment=\'GSQL_DEFAULT_ACCESS_RIGHTS\',
+                                               default=((\'all\', \'%s\',),))
+cms_rights = sql.SQLFlexibleValue(\'app_cms_rights\',
+                                    environment=\'GSQL_CMS_RIGHTS\',
+                                    default=((\'all\', \'%s\',),))
+cms_rights_rw = sql.SQLFlexibleValue(\'app_cms_rights_rw\',
+                                       environment=\'GSQL_CMS_RIGHTS_RW\',
+                                       default=((\'all\', \'%s\',),))
+cms_users_table = sql.SQLFlexibleValue(\'app_cms_users_table\',
+                                         default=\'cms_users_table\')
+
+''' % (application, application, application,)
         preamble_1 += '''
 TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'
 
-class _PyFunctionBase(sql.SQLPyFunction):
+class Base_PyFunction(sql.SQLPyFunction):
     @staticmethod
     def sub_pg_escape(val):
         return str(val).replace("\'", "\'\'")
@@ -3999,7 +4009,7 @@ class _PyFunctionBase(sql.SQLPyFunction):
         html_table = \'\\n\'.join(html_rows)
         return html_table.replace("\'", "\'\'")
 
-class _PyTriggerFunctionBase(_PyFunctionBase):
+class Base_PyTriggerFunction(Base_PyFunction):
     class Sub_BaseTriggerObject(object):
         _RETURN_CODE_MODIFY = "MODIFY"
         _RETURN_CODE_SKIP = "SKIP"
@@ -4054,16 +4064,16 @@ class _PyTriggerFunctionBase(_PyFunctionBase):
 
 '''
         preamble_2 = '''
-class _LogTrigger(sql.SQLTrigger):
+class Base_LogTrigger(sql.SQLTrigger):
     name = \'log\'
     events = (\'insert\', \'update\', \'delete\',)
     body = XLogUpdateTrigger
 
-class _LogSQLTable(sql.SQLTable):
+class Base_LogSQLTable(sql.SQLTable):
     @property
     def triggers(self):
         keys = \',\'.join([f.id() for f in self.fields if f.primary_key()])
-        return ((_LogTrigger, keys,),)
+        return ((Base_LogTrigger, keys,),)
 
 '''
         preamble_x = ['']
@@ -4081,14 +4091,20 @@ class _LogSQLTable(sql.SQLTable):
             visited_files[index_file] = None
             f = open(index_file, 'w')
             f.write(coding_header)
-            f.write(init_local_preamble)
-            f.write(preamble_1)
-            f.write(preamble_x[0])
-            f.write(preamble_2)
+            f.write(init_preamble)
+            if application == 'pytis':
+                ff = open(os.path.join(directory, 'db_pytis_base.py'), 'w')
+                ff.write(coding_header)
+                ff.write(local_preamble)
+                ff.write(preamble_1)
+                ff.write(preamble_x[0])
+                ff.write(preamble_2)
+                ff.close()
             f.close()
         last_visited_file = [None]
         last_visited_suffix = ['']
         def process(o):
+            local_file = True
             dbobj = self[o]
             if dbobj.name() in _CONV_PREPROCESSED_NAMES:
                 return
@@ -4097,6 +4113,12 @@ class _LogSQLTable(sql.SQLTable):
             else:
                 basename = os.path.basename(dbobj._gensql_file)
                 basename = os.path.splitext(basename)[0]
+                if application == 'pytis':
+                    if not basename.startswith('db_pytis_'):
+                        basename = 'db_pytis_' + basename[3:]
+                elif application:
+                    if basename in ('db_common', 'db_output', 'db_statistics',):
+                        basename = 'db_pytis_' + basename[3:]
                 file_name = os.path.join(directory, basename)
                 if file_name + '.py' == index_file:
                     new_file = False
@@ -4117,24 +4139,33 @@ class _LogSQLTable(sql.SQLTable):
                     file_name += suffix
                     basename += suffix
                 file_name += '.py'
+                if application and application != 'pytis' and basename.startswith('db_pytis_'):
+                    local_file = False
                 if new_file:
                     f = open(index_file, 'a')
                     f.write("from %s import *\n" % (os.path.splitext(basename)[0],))
                     f.close()
-                    output = open(file_name, 'w')
-                    output.write(coding_header)
-                    output.write(local_preamble)
-                    global _convert_local_names
-                    _convert_local_names = []
+                    if local_file:
+                        output = open(file_name, 'w')
+                        output.write(coding_header)
+                        output.write(local_preamble)
+                        global _convert_local_names
+                        _convert_local_names = []
                 else:
-                    output = open(file_name, 'a')
+                    if local_file:
+                        output = open(file_name, 'a')
             converted = dbobj.convert()
             if not dbobj._convert:
                 converted = string.join(['#'+line for line in ['XXX:'] + string.split(converted, '\n')], '\n')
             converted = converted.replace('_RETURN_CODE_MODYFY', '_RETURN_CODE_MODIFY')
-            output.write(converted)
-            output.write('\n')
+            if local_file:
+                output.write(converted)
+                output.write('\n')
         self._process_resolved(process)
+        if application != 'pytis':
+            f = open(index_file, 'a')
+            f.write('\ndel sys.path[-1]\n')
+            f.close()
 
 
 _gsql_defs = _GsqlDefs()
