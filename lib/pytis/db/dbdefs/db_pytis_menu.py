@@ -81,9 +81,9 @@ class EvPytisValidRoles(sql.SQLView):
             whereclause='main.deleted is null or main.deleted > now()'
             )
 
-    insert_order = (EPytisRoles, CPytisRolePurposes,)
-    update_order = (EPytisRoles, CPytisRolePurposes,)
-    delete_order = (EPytisRoles, CPytisRolePurposes,)
+    insert_order = (EPytisRoles,)
+    update_order = (EPytisRoles,)
+    delete_order = (EPytisRoles,)
     depends_on = (EPytisRoles, CPytisRolePurposes,)
     access_rights = db.default_access_rights.value(globals())
 
@@ -1475,6 +1475,7 @@ class EvPytisMenuStructure(sql.SQLView):
             from_obj=[structure.outerjoin(menu, sql.gR('structure.menuid = menu.menuid')).outerjoin(atypes, sql.gR('structure.type = atypes.type')).outerjoin(actions, sql.gR('structure.fullname = actions.fullname'))]
             )
 
+    join_columns = ((sql.c.APytisActionsStructure.fullname, sql.c.CPytisMenuActions.fullname),)
     insert_order = ()
     update_order = (CPytisMenuActions,)
     no_update_columns = ('position_nsub', 'title',)

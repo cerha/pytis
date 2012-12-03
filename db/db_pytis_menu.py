@@ -94,6 +94,9 @@ viewng('ev_pytis_valid_roles',
                        condition='main.purposeid = codebook.purposeid', jointype=JoinType.INNER),
         ),
        grant=db_rights,
+       insert_order=('e_pytis_roles',),
+       update_order=('e_pytis_roles',),
+       delete_order=('e_pytis_roles',),
        depends=('e_pytis_roles', 'c_pytis_role_purposes',)
        )
 
