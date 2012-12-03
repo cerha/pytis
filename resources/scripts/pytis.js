@@ -61,9 +61,11 @@ pytis.BrowseFormHandler = Class.create({
     },
 
     load_form_data: function(uri, container) {
+	var parameters = window.location.search.replace(/;/g, '&').parseQuery();
+	parameters['_pytis_async_load_request'] = 1;
 	new Ajax.Request(uri, {
 	    method: 'get',
-	    parameters: {_pytis_async_load_request: 1},
+	    parameters: parameters,
 	    onSuccess: function(transport) {
 		container.update(transport.responseText);
 	    },
