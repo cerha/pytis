@@ -1365,15 +1365,29 @@ class ViewSpec(object):
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
 
-          argument_provider -- function of a single argument returning a
-            dictionary of database function argument names (strings) as keys
-            and 'pytis.data.Value' instances as corresponding database function
-            argument values.  If it is 'None', no arguments are provided.  If
-            it returns 'None', the select should be cancelled.  The function
-            argument is the current dictionary of arguments, it is useful
-            e.g. when updating previously supplied arguments.  This argument
-            makes sense only for database table functions, it should be 'None'
-            for standard tables and views.
+          argument_provider -- function returning a dictionary of database
+            function argument names (strings) as keys and 'pytis.data.Value'
+            instances as corresponding database function argument values.  If
+            it is 'None', no arguments are provided.  If it returns 'None', the
+            select should be cancelled.  The function has one or two arguments
+            depending on query_fields specification.  The first argument is
+            always the current dictionary of arguments.  It is useful e.g. when
+            updating previously supplied arguments.  The second argument is
+            only supplied when 'query_fields' are defined (see below).  It is a
+            PresentedRow instance containing values of all query fields defined
+            by 'query_fields'.  This allows table function arguments to use
+            interactively entered values from the user interface.  Defining
+            'argument_provider' makes sense only for database table functions,
+            it should be 'None' for standard tables and views.
+            
+          query_fields -- sequence of 'Field' instances defining fields of a
+            "query panel".  If there are any fields defined, an additional
+            panel containing these fields is attached to the list form.  The
+            user can interactively enter values into these fields and refresh
+            the form.  These values are automatically passed to the argument
+            provider function as the second argument (PresentedRow instance
+            containing all defined fields), so the table function arguments may
+            be generated based on these interactively entered values.
 
           referer -- id of the referer column as a string (one of the id's
             defined by 'fields') or None.  If None, the id of the data key
@@ -1405,7 +1419,7 @@ class ViewSpec(object):
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
               initial_folding=None, folding=None, arguments=None, argument_provider=None,
-              referer=None, spec_name='', public=None):
+              query_fields=(), referer=None, spec_name='', public=None):
         assert isinstance(title, basestring)
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1563,6 +1577,10 @@ class ViewSpec(object):
         assert description is None or isinstance(description, basestring)
         assert help is None or isinstance(help, basestring)
         assert argument_provider is None or isinstance(argument_provider, collections.Callable)
+        assert isinstance(query_fields, (tuple, list))
+        if __debug__:
+            for f in query_fields:
+                assert isinstance(f, Field), f
         self._title = title
         self._singular = singular
         self._columns = columns
@@ -1591,6 +1609,7 @@ class ViewSpec(object):
         self._folding = folding or initial_folding # initial_folding is deprecated!
         self._arguments = arguments
         self._argument_provider = argument_provider
+        self._query_fields = query_fields
         self._referer = referer
         
     def _linearize_actions(self, spec):
@@ -1743,6 +1762,10 @@ class ViewSpec(object):
     def argument_provider(self):
         """Return 'None' or a function generating database table function arguments."""
         return self._argument_provider
+
+    def query_fields(self):
+        """Return the sequence of query fields as passed to the constructor."""
+        return self._query_fields
 
     def referer(self):
         """Return the id of the referer column as a string or 'None'."""

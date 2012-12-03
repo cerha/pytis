@@ -941,9 +941,18 @@ class LookupForm(InnerForm):
     def _current_arguments(self):
         return self._arguments
 
+    def _query_fields_row(self):
+        return None
+
     def _update_arguments(self):
-        if self._view.argument_provider() is not None:
-            arguments = self._view.argument_provider()(self._arguments or {})
+        provider = self._view.argument_provider()
+        if provider is not None:
+            previous_arguments = self._arguments or {}
+            row = self._query_fields_row()
+            provider_args = (previous_arguments,)
+            if row:
+                provider_args += (row,)
+            arguments = provider(*provider_args)
             if arguments is None:
                 return False
             self._arguments = arguments
@@ -2784,7 +2793,57 @@ class PopupEditForm(PopupForm, EditForm):
         super(PopupEditForm, self).set_row(row)
 
 
-class InputForm(PopupEditForm):
+class _VirtualEditForm(EditForm):
+    """Edit form defined in runtime by constructor arguments.
+
+    Forms derived from this class don't need to have a statically defined
+    Specification class.  The specification is created in runtime according to
+    keyword arguments passed to the form constructor and the data object is
+    created as MemData object so no "real" database objects are needed as well.  
+    
+    """
+    
+    def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
+                   prefill=None, **kwargs):
+        class Spec(Specification):
+            data_cls = pytis.data.RestrictedMemData
+        for key, value in kwargs.items():
+            if isinstance(value, collections.Callable):
+                # This is necessary to avoid calling functions (such as 'check'
+                # or 'row_style') as methods.
+                funcion = value
+                value = lambda self, *args, **kwargs: funcion(*args, **kwargs)
+            setattr(Spec, key, value)
+        self._specification = Spec(resolver)
+        if isinstance(self, PopupEditForm):
+            additional_kwargs = dict(multi_insert=False)
+        else:
+            additional_kwargs = dict()
+        super(_VirtualEditForm, self)._full_init(parent, resolver, name, guardian=guardian,
+                                             mode=self.MODE_INSERT, prefill=prefill,
+                                             transaction=transaction, **additional_kwargs)
+        
+    def _create_view_spec(self):
+        return self._specification.view_spec()
+
+    def _create_data_object(self):
+        factory = self._specification.data_spec()
+        return factory.create()
+
+    def _get_saved_setting(self, option, default=None):
+        return default
+    
+    def _load_profiles(self):
+        return [self._default_profile]
+    
+    def _default_transaction(self):
+        return None
+
+    def _print_menu(self):
+        return []
+        
+
+class InputForm(_VirtualEditForm, PopupEditForm):
     """Dynamically created virtual form.
 
     This form is not bound to a specification acquired from the resolver, but
@@ -2814,42 +2873,31 @@ class InputForm(PopupEditForm):
     'layout', 'check', etc. may be used.
 
     """
-    def _full_init(self, parent, resolver, name, guardian=None, transaction=None,
-                   prefill=None, **kwargs):
-        class Spec(Specification):
-            data_cls = pytis.data.RestrictedMemData
-        for key, value in kwargs.items():
-            if isinstance(value, collections.Callable):
-                # This is necessary to avoid calling functions (such as 'check'
-                # or 'row_style') as methods.
-                funcion = value
-                value = lambda self, *args, **kwargs: funcion(*args, **kwargs)
-            setattr(Spec, key, value)
-        self._specification = Spec(resolver)
-        super(InputForm, self)._full_init(parent, resolver, name, guardian=guardian,
-                                          mode=self.MODE_INSERT, multi_insert=False,
-                                          prefill=prefill, transaction=transaction)
+    pass
+
+
+class QueryFieldsForm(_VirtualEditForm):
+    """Virtual form to be used internally for query fields (see list.py)."""
+
+    def _full_init(self, *args, **kwargs):
+        _VirtualEditForm._full_init(self, *args, **kwargs)
+        # Set the popup window size according to the ideal form size limited to
+        # the screen size.  If the form size exceeds the screen, scrollbars
+        # will appear.
+        size = wx.Size(*self.size())
+        size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
+        self.SetClientSize(size)
+
+    def _create_form_parts(self, sizer):
+        sizer.Add(self._create_form_controls(), 1, wx.EXPAND)
         
-    def _create_view_spec(self):
-        return self._specification.view_spec()
+    def run(self):
+        raise Exception("This form can not be run.")
 
-    def _create_data_object(self):
-        factory = self._specification.data_spec()
-        return factory.create()
+    def row(self):
+        return self._row
 
-    def _get_saved_setting(self, option, default=None):
-        return default
     
-    def _load_profiles(self):
-        return [self._default_profile]
-    
-    def _default_transaction(self):
-        return None
-
-    def _print_menu(self):
-        return []
-        
-
 class ResizableEditForm(object):
     """Mixin for resizable edit forms with fields expanded to the whole window.
 

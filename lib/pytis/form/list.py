@@ -222,6 +222,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if self._ALLOW_TOOLBAR:
             sizer.Add(self._create_toolbar(), 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(self._create_grid(), 1, wx.EXPAND|wx.FIXED_MINSIZE)
+        query_fields_panel = self._create_query_fields_panel()
+        if query_fields_panel:
+            sizer.Add(query_fields_panel, 0, wx.EXPAND)
 
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
@@ -387,7 +390,44 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             else:
                 attr.SetReadOnly()
             self._grid.SetColAttr(i, attr)
+
+    def _query_fields_row(self):
+        try:
+            form = self._query_fields_form
+        except AttributeError:
+            if self._view.query_fields():
+                return pytis.data.Row([(f.id(), pytis.data.Value(f.type() or pytis.data.String(), None))
+                                       for f in self._view.query_fields()])
+            else:
+                return None
+        else:
+            if form:
+                return self._query_fields_form.row()
+            else:
+                return None
         
+    def _create_query_fields_panel(self):
+        fields = self._view.query_fields()
+        if fields:
+            panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
+            form = QueryFieldsForm(panel, resolver(), None, fields=fields,
+                                   layout=HGroup(*[f.id() for f in fields]))
+            sizer = wx.BoxSizer()
+            sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
+            sizer.Add((0, 0), 1)
+            sizer.Add(wx_button(panel, label=_(u"Aplikovat"),
+                                tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
+                                command=Application.COMMAND_REFRESH()), 0, wx.ALL, 4)
+            #sizer.Add(wx_button(panel, label=_(u"Skrýt"), tooltip=_(u"Skrýt panel dotazu"),
+            #                    icon='close', noborder=True,
+            #                    callback=lambda e: self._hide_query_fields_panel()))
+            panel.SetSizer(sizer)
+        else:
+            panel = None
+            form = None
+        self._query_fields_form = form
+        return panel
+            
     def _context_menu(self):
         """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
 
