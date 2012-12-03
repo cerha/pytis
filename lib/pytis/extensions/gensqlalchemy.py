@@ -1139,43 +1139,38 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     def _rule_condition(self, tabular):
         conditions = []
-        for table_c in tabular.primary_key.columns:
-            # Try to find `tabular' primary key or one of its equivalents in my
-            # columns, perhaps aliased
-            equivalent_columns = [(c.table, c.name,) for c in self._equivalent_rule_columns(table_c)]
-            for c in self._original_columns():
-                tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-                table, name = tc.table, tc.name
-                if isinstance(table, sqlalchemy.sql.expression.Alias):
-                    table = table.element
-                if (table, name,) in equivalent_columns:
-                    break
-            else:
-                if False:
-                    # Let's apply workaround until converted specifications are fixed
-                   raise SQLException("Table key column not found in the view", table_c)
-                else:
-                    # The primary key wasn't found, use another column of the same name
-                    for c in self._original_columns():
-                        tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-                        if tc.name == table_c.name:
+        for table_c in [c for c in tabular.primary_key.columns] + [c for c in tabular.columns]:
+            if (table_c.primary_key or (table_c.unique and not table_c.nullable)):
+                # Try to find `tabular' primary key or one of its equivalents in my
+                # columns, perhaps aliased.  If primary key is not found, look
+                # at primary like (i.e. UNIQUE NOT NULL) columns.
+                equivalent_column_instances = self._equivalent_rule_columns(table_c)
+                equivalent_columns = [(c.table, c.name, c.primary_key,)
+                                      for c in equivalent_column_instances]
+                for c in self._original_columns():
+                    tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                    table, name = tc.table, tc.name
+                    if isinstance(table, sqlalchemy.sql.expression.Alias):
+                        table = table.element
+                    if (table, name, True) in equivalent_columns:
+                        break
+                    if (table, name, False) in equivalent_columns:
+                        primary = [ec for ec in equivalent_column_instances if ec.primary_key]
+                        if primary:
+                            c = primary[0]
                             break
-                    else:
-                        # The primary key not found at all, use the first column of `tabular' found
-                        for c in self._original_columns():
-                            tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
-                            table = tc.table
-                            if isinstance(table, sqlalchemy.sql.expression.Alias):
-                                table = table.element
-                            if table is table_c.table:
-                                break
-                        else:
-                            # No luck at all
-                            raise SQLException("Table key column not found in the view", table_c)
-                    print ('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s %s.%s' %
-                           (self.name, tabular.name, table_c.table.name, table_c.name,))
-            name = _sql_plain_name(c.name)
-            conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
+                else:
+                    continue
+                name = _sql_plain_name(c.name)
+                conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
+                break
+        if not conditions:
+            if False:
+                # Let's just print warning until converted specifications are fixed
+                raise SQLException("Table key column not found in the view", table_c)
+            else:
+                print ('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s' %
+                       (self.name, tabular.name,))
         return sqlalchemy.and_(*conditions)
 
     def _rule_tables(self, order):
