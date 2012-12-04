@@ -1125,6 +1125,9 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             if c.name in excluded:
                 continue
             table_c = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+            if not isinstance(table_c, sqlalchemy.sql.expression.ColumnClause):
+                # Probably literal column, we can't handle it.
+                continue
             table = table_c.table
             if isinstance(table, sqlalchemy.sql.expression.Alias):
                 table = table.element
