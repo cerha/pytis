@@ -129,7 +129,7 @@ class XInserts(sql.SQLTable):
     tabulek."""
     name = '_inserts'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False), doc="identifikace řádku"),
+              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
               sql.Column('vytvoril', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
               sql.Column('vytvoreno', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
               sql.Column('tabulka', pytis.data.String(not_null=False)),
@@ -143,7 +143,7 @@ class XUpdates(sql.SQLTable):
     tabulek."""
     name = '_updates'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False), doc="identifikace změnového řádku"),
+              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace změnového řádku"),
               sql.Column('zmenil', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
               sql.Column('zmeneno', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
               sql.Column('tabulka', pytis.data.String(not_null=False)),
@@ -158,7 +158,7 @@ class XDeletes(sql.SQLTable):
     tabulkách."""
     name = '_deletes'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False), doc="identifikace řádku"),
+              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
               sql.Column('smazal', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
               sql.Column('smazano', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
               sql.Column('tabulka', pytis.data.String(not_null=False)),

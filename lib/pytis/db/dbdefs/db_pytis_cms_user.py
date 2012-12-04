@@ -8,7 +8,7 @@ import dbdefs as db
 class CmsUsersTable(sql.SQLTable):
     name = 'cms_users_table'
     fields = (
-              sql.PrimaryColumn('uid', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('uid', pytis.data.Serial()),
              )
     with_oids = True
     depends_on = ()

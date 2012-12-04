@@ -21,7 +21,7 @@ class EPytisCryptoKeys(db.Base_LogSQLTable):
     """Table of encryption keys of users for defined encryption areas."""
     name = 'e_pytis_crypto_keys'
     fields = (
-              sql.PrimaryColumn('key_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('key_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True), references=sql.gA('c_pytis_crypto_names', onupdate='CASCADE')),
               sql.Column('username', pytis.data.String(not_null=True), doc="Arbitrary user identifier."),
               sql.Column('key', pytis.data.Binary(not_null=True)),

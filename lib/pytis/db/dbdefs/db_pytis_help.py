@@ -9,7 +9,7 @@ class EPytisHelpPages(db.Base_LogSQLTable):
     """Structure of static help pages."""
     name = 'e_pytis_help_pages'
     fields = (
-              sql.PrimaryColumn('page_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('page_id', pytis.data.Serial()),
               sql.Column('parent', pytis.data.Integer(not_null=False), references=sql.gA('e_pytis_help_pages')),
               sql.Column('ord', pytis.data.Integer(not_null=True)),
               sql.Column('position', pytis.data.LTree(not_null=True), unique=True),
@@ -65,7 +65,7 @@ class EPytisHelpSpecItems(db.Base_LogSQLTable):
     """Help texts for specification items, such as fields, bindings, actions."""
     name = 'e_pytis_help_spec_items'
     fields = (
-              sql.PrimaryColumn('item_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('item_id', pytis.data.Serial()),
               sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.gA('e_pytis_help_spec', onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('kind', pytis.data.String(not_null=True), check="kind in ('field', 'profile', 'binding', 'action', 'proc')"),
               sql.Column('identifier', pytis.data.String(not_null=True)),
@@ -233,7 +233,7 @@ class EPytisHelpSpecAttachments(db.Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""
     name = 'e_pytis_help_spec_attachments'
     fields = (
-              sql.PrimaryColumn('file_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('file_id', pytis.data.Serial()),
               sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.gA('e_pytis_help_spec(spec_name)', onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('file_name', pytis.data.String(not_null=True)),
               sql.Column('byte_size', pytis.data.Integer(not_null=True)),
@@ -257,7 +257,7 @@ class EPytisHelpPagesAttachments(db.Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""
     name = 'e_pytis_help_pages_attachments'
     fields = (
-              sql.PrimaryColumn('file_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('file_id', pytis.data.Serial()),
               sql.Column('page_id', pytis.data.Integer(not_null=True), references=sql.gA('e_pytis_help_pages(page_id)', ondelete='CASCADE')),
               sql.Column('file_name', pytis.data.String(not_null=True)),
               sql.Column('byte_size', pytis.data.Integer(not_null=True)),

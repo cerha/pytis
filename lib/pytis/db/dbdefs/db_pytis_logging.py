@@ -9,7 +9,7 @@ class EPytisActionLog(sql.SQLTable):
     """Pytis user actions log."""
     name = 'e_pytis_action_log'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True)),
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('spec_name', pytis.data.String(not_null=True)),

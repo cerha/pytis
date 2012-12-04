@@ -9,7 +9,7 @@ class CmsUserRoleAssignment(sql.SQLTable):
     """Binding table assigning CMS roles to CMS users."""
     name = 'cms_user_role_assignment'
     fields = (
-              sql.PrimaryColumn('user_role_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('user_role_id', pytis.data.Serial()),
               sql.Column('uid', pytis.data.Integer(not_null=True), references=sql.gA(db.cms_users_table.value(globals()), ondelete='CASCADE')),
               sql.Column('role_id', pytis.data.Integer(not_null=True), references=sql.gA('cms_roles', ondelete='CASCADE')),
              )
@@ -22,7 +22,7 @@ class CmsSession(sql.SQLTable):
     """Web user session information for authentication and login history."""
     name = 'cms_session'
     fields = (
-              sql.PrimaryColumn('session_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('session_id', pytis.data.Serial()),
               sql.Column('uid', pytis.data.Integer(not_null=True), references=sql.gA(db.cms_users_table.value(globals()), ondelete='CASCADE')),
               sql.Column('session_key', pytis.data.String(not_null=True)),
               sql.Column('last_access', pytis.data.DateTime(not_null=True)),
@@ -36,7 +36,7 @@ class CmsSessionLogData(sql.SQLTable):
     """Log of web user logins (underlying data)."""
     name = 'cms_session_log_data'
     fields = (
-              sql.PrimaryColumn('log_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('log_id', pytis.data.Serial()),
               sql.Column('session_id', pytis.data.Integer(not_null=False), references=sql.gA('cms_session', ondelete='SET NULL')),
               sql.Column('uid', pytis.data.Integer(not_null=False), references=sql.gA(db.cms_users_table.value(globals()), ondelete='CASCADE')),
               sql.Column('login', pytis.data.String(not_null=True)),
@@ -55,7 +55,7 @@ class CmsAccessLogData(sql.SQLTable):
     """Log of cms page access."""
     name = 'cms_access_log_data'
     fields = (
-              sql.PrimaryColumn('log_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('log_id', pytis.data.Serial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True)),
               sql.Column('uri', pytis.data.String(not_null=True)),
               sql.Column('uid', pytis.data.Integer(not_null=False), references=sql.gA(db.cms_users_table.value(globals()), ondelete='CASCADE')),

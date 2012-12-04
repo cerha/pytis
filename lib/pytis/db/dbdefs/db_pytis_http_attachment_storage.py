@@ -9,7 +9,7 @@ class EPytisHttpAttachmentStorageKeys(sql.SQLTable):
     """Store HttpAttachmentStorage access keys."""
     name = 'e_pytis_http_attachment_storage_keys'
     fields = (
-              sql.PrimaryColumn('key_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('key_id', pytis.data.Serial()),
               sql.Column('username', pytis.data.String(not_null=True)),
               sql.Column('uri', pytis.data.String(not_null=True)),
               sql.Column('created', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),

@@ -9,7 +9,7 @@ class EPytisConfig(sql.SQLTable):
     """Pytis application configuration storage."""
     name = 'e_pytis_config'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True), unique=True),
               sql.Column('pickle', pytis.data.String(not_null=True)),
              )
@@ -22,7 +22,7 @@ class EPytisFormSettings(sql.SQLTable):
     """Storage of pytis profile independent form settings."""
     name = 'e_pytis_form_settings'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('form_name', pytis.data.String(not_null=True)),
@@ -39,7 +39,7 @@ class EPytisFormProfileBase(sql.SQLTable):
     """Pytis form configuration storage."""
     name = 'e_pytis_form_profile_base'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('profile_id', pytis.data.String(not_null=True)),
@@ -58,7 +58,7 @@ class EPytisFormProfileParams(sql.SQLTable):
     """Pytis form profile form type specific parameters."""
     name = 'e_pytis_form_profile_params'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('form_name', pytis.data.String(not_null=True)),
@@ -133,7 +133,7 @@ class EPytisAggregatedViews(sql.SQLTable):
     """Pytis aggregated views storage."""
     name = 'e_pytis_aggregated_views'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('spec_name', pytis.data.String(not_null=True)),
               sql.Column('aggregated_view_id', pytis.data.String(not_null=True)),

@@ -9,7 +9,7 @@ class EPytisOutputTemplates(db.Base_LogSQLTable):
     """Storage of print output templates handled by a DatabaseResolver."""
     name = 'e_pytis_output_templates'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('module', pytis.data.String(not_null=True)),
               sql.Column('specification', pytis.data.String(not_null=True)),
               sql.Column('template', pytis.data.String(not_null=False)),

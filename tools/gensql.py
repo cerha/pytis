@@ -454,7 +454,8 @@ class _GsqlSpec(object):
             if not ctype.utc():
                 arguments.append('utc=False')
         if ctype.not_null() or 'not null' in constraints or 'unique not null' in constraints:
-            arguments.append('not_null=True')
+            if not isinstance(ctype, pytis.data.Serial):
+                arguments.append('not_null=True')
         else:
             arguments.append('not_null=False')
         return 'pytis.data.%s(%s)' % (ctype.__class__.__name__, string.join(arguments, ', '),)

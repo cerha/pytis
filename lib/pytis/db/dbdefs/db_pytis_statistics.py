@@ -47,7 +47,7 @@ class EPytisFormLog(sql.SQLTable):
     """
     name = 'e_pytis_form_log'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('form', pytis.data.String(not_null=True), index=True),
               sql.Column('class', pytis.data.String(not_null=True), index=True),
               sql.Column('info', pytis.data.String(not_null=False), index=True),

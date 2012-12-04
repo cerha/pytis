@@ -111,7 +111,7 @@ class EPytisRoleMembers(db.Base_LogSQLTable):
     """
     name = 'e_pytis_role_members'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False), doc="Just to make logging happy"),
+              sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
               sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', onupdate='CASCADE')),
               sql.Column('member', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', onupdate='CASCADE')),
              )
@@ -359,7 +359,7 @@ class EPytisMenu(db.Base_LogSQLTable):
     """Menu structure definition."""
     name = 'e_pytis_menu'
     fields = (
-              sql.PrimaryColumn('menuid', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('menuid', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=False), doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators.", unique=True),
               sql.Column('title', pytis.data.String(maxlen=64, not_null=False), doc="User title of the item. If NULL then it is a separator."),
               sql.Column('position', pytis.data.LTree(not_null=False), doc="Unique identifier of menu item placement within menu. The top-menu item position is ''. Each submenu has exactly one label more than its parent. ", unique=True, index={'method': 'gist'}),
@@ -699,7 +699,7 @@ class EPytisActionRights(db.Base_LogSQLTable):
     """
     name = 'e_pytis_action_rights'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False), doc="Just to make logging happy"),
+              sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
               sql.Column('shortname', pytis.data.String(not_null=True)),
               sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', onupdate='CASCADE')),
               sql.Column('rightid', pytis.data.String(maxlen=8, not_null=True), references=sql.gA('c_pytis_access_rights', onupdate='CASCADE')),

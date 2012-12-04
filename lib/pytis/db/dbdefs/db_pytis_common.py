@@ -191,7 +191,7 @@ class Log(sql.SQLTable):
     """Tabulka pro logování provedených DML příkazů."""
     name = 'log'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('command', pytis.data.String(not_null=True)),
               sql.Column('login', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
@@ -429,7 +429,7 @@ class XChangesStatistic(sql.SQLTable):
     """Tabulka pro statistiky změn v tabulkách."""
     name = '_changes_statistic'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(not_null=False), doc="identifikace řádku"),
+              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
               sql.Column('uzivatel', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
               sql.Column('datum', pytis.data.Date(not_null=False)),
               sql.Column('inserts', pytis.data.Integer(not_null=False)),

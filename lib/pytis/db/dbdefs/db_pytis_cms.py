@@ -9,7 +9,7 @@ class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
     name = 'cms_languages'
     fields = (
-              sql.PrimaryColumn('lang_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('lang_id', pytis.data.Serial()),
               sql.Column('lang', pytis.data.String(minlen=2, maxlen=2, not_null=True), unique=True),
              )
     with_oids = True
@@ -20,7 +20,7 @@ class CmsModules(sql.SQLTable):
     """Codebook of extension modules available in the CMS."""
     name = 'cms_modules'
     fields = (
-              sql.PrimaryColumn('mod_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('mod_id', pytis.data.Serial()),
               sql.Column('modname', pytis.data.String(maxlen=64, not_null=True), unique=True),
              )
     with_oids = True
@@ -31,7 +31,7 @@ class CmsMenuStructure(sql.SQLTable):
     """Language independent menu structure."""
     name = 'cms_menu_structure'
     fields = (
-              sql.PrimaryColumn('menu_item_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('menu_item_id', pytis.data.Serial()),
               sql.Column('identifier', pytis.data.String(maxlen=32, not_null=True), unique=True),
               sql.Column('parent', pytis.data.Integer(not_null=False), references=sql.gA('cms_menu_structure')),
               sql.Column('mod_id', pytis.data.Integer(not_null=False), references=sql.gA('cms_modules')),
@@ -151,7 +151,7 @@ class CmsRoles(sql.SQLTable):
     """CMS roles."""
     name = 'cms_roles'
     fields = (
-              sql.PrimaryColumn('role_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('role_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True)),
               sql.Column('system_role', pytis.data.String(not_null=False), unique=True),
               sql.Column('description', pytis.data.String(not_null=False)),
@@ -164,7 +164,7 @@ class CmsActions(sql.SQLTable):
     """Enumeration of valid actions (including both module independent actions and per module actions).  Module independent actions have NULL in the mod_id column."""
     name = 'cms_actions'
     fields = (
-              sql.PrimaryColumn('action_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('action_id', pytis.data.Serial()),
               sql.Column('mod_id', pytis.data.Integer(not_null=False), references=sql.gA('cms_modules', ondelete='CASCADE')),
               sql.Column('name', pytis.data.String(maxlen=16, not_null=True)),
               sql.Column('description', pytis.data.String(not_null=True)),
@@ -178,7 +178,7 @@ class CmsRightsAssignment(sql.SQLTable):
     """Underlying binding table between menu items, roles and module actions."""
     name = 'cms_rights_assignment'
     fields = (
-              sql.PrimaryColumn('rights_assignment_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('rights_assignment_id', pytis.data.Serial()),
               sql.Column('menu_item_id', pytis.data.Integer(not_null=True), references=sql.gA('cms_menu_structure', ondelete='CASCADE')),
               sql.Column('role_id', pytis.data.Integer(not_null=True), references=sql.gA('cms_roles', ondelete='CASCADE')),
               sql.Column('action_id', pytis.data.Integer(not_null=True), references=sql.gA('cms_actions', ondelete='CASCADE')),
@@ -218,7 +218,7 @@ class CmsThemes(sql.SQLTable):
     """Definition of available color themes."""
     name = 'cms_themes'
     fields = (
-              sql.PrimaryColumn('theme_id', pytis.data.Serial(not_null=False)),
+              sql.PrimaryColumn('theme_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True), unique=True),
               sql.Column('foreground', pytis.data.Color(not_null=False)),
               sql.Column('background', pytis.data.Color(not_null=False)),
