@@ -2484,11 +2484,14 @@ class StructuredTextField(TextField):
             self._last_load_dir = os.path.dirname(path)
             file_object = open(path)
             filename = os.path.split(path)[1]
-        size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
+        if 'size' in row:
+            size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
+            values = dict(has_thumbnail=(size is not None),
+                          thumbnail_size=size)
+        else:
+            values = dict()
         try:
-            self._storage_op('insert', filename, file_object,
-                             dict(has_thumbnail=(size is not None),
-                                  thumbnail_size=size),
+            self._storage_op('insert', filename, file_object, values,
                              transaction=self._row.transaction())
         finally:
             file_object.close()
