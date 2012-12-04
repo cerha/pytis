@@ -659,6 +659,9 @@ class Serial(Integer):
     v řádku při vkládání nového záznamu.
 
     """
+    def __init__(self, not_null=True, **kwargs):
+        super(Serial, self).__init__(not_null=not_null, **kwargs)
+
     def sqlalchemy_type(self):
         import pytis.extensions.gensqlalchemy
         return pytis.extensions.gensqlalchemy.SERIAL()
