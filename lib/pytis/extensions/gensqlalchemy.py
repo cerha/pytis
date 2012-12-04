@@ -90,7 +90,7 @@ def _function_arguments(function):
         name = a_column.name
         if name:
             name = '"%s" ' % (name,)
-        return '%s%s%s' % (in_out, name, a_column.type.compile(engine.dialect),)
+        return '%s%s%s' % (in_out, name, a_column.type.compile(_engine.dialect),)
     return string.join([arg(c) for c in function.arguments], ', ')
 
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
@@ -118,7 +118,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
     def make_type(self, type_name, columns):
         sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
         def ctype(c):
-            return c.type.compile(engine.dialect)
+            return c.type.compile(_engine.dialect)
         column_string = string.join(['%s %s' % (c.name, ctype(c),) for c in sqlalchemy_columns], ', ')
         command = 'CREATE TYPE %s AS (%s)' % (type_name, column_string,)
         self.connection.execute(command)
@@ -139,9 +139,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                 result_type = 't_' + function.pytis_name()
                 self.make_type(result_type, function_type)
             elif isinstance(function_type, Column):
-                result_type = function_type.sqlalchemy_column(search_path, None, None, None).type.compile(engine.dialect)
+                result_type = function_type.sqlalchemy_column(search_path, None, None, None).type.compile(_engine.dialect)
             elif isinstance(function_type, pytis.data.Type):
-                result_type = function_type.sqlalchemy_type().compile(engine.dialect)
+                result_type = function_type.sqlalchemy_type().compile(_engine.dialect)
             elif issubclass(function_type, (SQLTable, SQLType,)):
                 result_type = object_by_class(function_type, search_path).pytis_name()
             else:
@@ -2040,14 +2040,14 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
 
 ## Specification processing
 
-engine = None
+_engine = None
 def _make_sql_command(sql, *multiparams, **params):
     if isinstance(sql, str):
         output = unicode(sql)
     elif isinstance(sql, unicode):
         output = sql
     else:
-        compiled = sql.compile(dialect=engine.dialect)
+        compiled = sql.compile(dialect=_engine.dialect)
         if isinstance(sql, sqlalchemy.sql.expression.Insert):
             # SQLAlchemy apparently doesn't work so well without a database
             # connection.  We probably have no better choice than to handle some
@@ -2096,9 +2096,17 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
-def _gsql_process(regexp, no_deps, views, functions, names_only):
-    global engine
-    engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+def _gsql_process(*args, **kwargs):
+    global _metadata
+    _metadata = sqlalchemy.MetaData()
+    global _engine
+    _engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    try:
+        _gsql_process_1(*args, **kwargs)
+    finally:
+        _metadata = None
+
+def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
     if regexp is not None:
         matcher = re.compile(regexp)
     matched = set()
@@ -2134,26 +2142,27 @@ def _gsql_process(regexp, no_deps, views, functions, names_only):
         if isinstance(obj, SQLSchematicObject):
             name = '%s.%s' % (obj.schema, name,)
         print kind, name
+    loader()
     for o in _PytisSimpleMetaclass.objects:
         if matching(o):
             if names_only:
                 output_name(o)
             else:
-                engine.execute(o)
-                o.after_create(engine)
+                _engine.execute(o)
+                o.after_create(_engine)
     for sequence in _metadata._sequences.values():
         if matching(sequence):
             if names_only:
                 output_name(sequence)
             else:
-                sequence.create(engine, checkfirst=False)
-                sequence.after_create(engine)
+                sequence.create(_engine, checkfirst=False)
+                sequence.after_create(_engine)
     for table in _metadata.sorted_tables:
         if matching(table):
             if names_only:
                 output_name(table)
             else:
-                table.create(engine, checkfirst=False)
+                table.create(_engine, checkfirst=False)
     for ffk in _forward_foreign_keys:
         if matching(ffk.table) and not names_only:
             target = ffk.reference.get(ffk.search_path)
@@ -2162,7 +2171,7 @@ def _gsql_process(regexp, no_deps, views, functions, names_only):
             f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
                                                 table=ffk.table, **kwargs)
             fdef = sqlalchemy.schema.AddConstraint(f)
-            engine.execute(fdef)
+            _engine.execute(fdef)
     
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
               names_only=False):
@@ -2188,10 +2197,9 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     The SQL code is output on standard output.
 
     """
-    global _metadata
-    _metadata = sqlalchemy.MetaData()
-    execfile(file_name, copy.copy(globals()))
-    _gsql_process(regexp, no_deps, views, functions, names_only)
+    def loader(file_name=file_name):
+        execfile(file_name, copy.copy(globals()))
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only)
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
                 names_only=False):
@@ -2217,7 +2225,6 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     The SQL code is output on standard output.
 
     """
-    global _metadata
-    _metadata = sqlalchemy.MetaData()
-    imp.load_module(module_name, *imp.find_module(module_name))
-    _gsql_process(regexp, no_deps, views, functions, names_only)
+    def loader(module_name=module_name):
+        imp.load_module(module_name, *imp.find_module(module_name))
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only)
