@@ -495,6 +495,7 @@ class PrimaryColumn(Column):
 
 ## Utilities
 
+_full_init = False
 _current_search_path = None
 
 def _set_current_search_path(search_path):
@@ -667,6 +668,8 @@ class _PytisSimpleMetaclass(_PytisBaseMetaclass):
 class _PytisSchematicMetaclass(_PytisBaseMetaclass):
 
     objects = []
+    init_functions = {}
+    init_function_list = []
 
     def __init__(cls, clsname, bases, clsdict):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
@@ -674,13 +677,23 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
             schemas = _expand_schemas(cls.schemas)
             for search_path in schemas:
                 _set_current_search_path(search_path)
-                # hack
-                if issubclass(cls, SQLSequence):
-                    o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
-                            start=cls.start, increment=cls.increment)
+                def init_function(cls=cls, search_path=search_path):
+                    if issubclass(cls, SQLSequence):
+                        # hack
+                        o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
+                                start=cls.start, increment=cls.increment)
+                    else:
+                        o = cls(_metadata, search_path)
+                    _PytisSchematicMetaclass.objects.append(o)
+                if _full_init:
+                    init_function()
                 else:
-                    o = cls(_metadata, search_path)
-                _PytisSchematicMetaclass.objects.append(o)
+                    # Instance construction takes a lot of time.  In some
+                    # situations we may be interested just in classes or only
+                    # in some instances.  In such a case instance creation is
+                    # delayed using the init_function mechanism.
+                    _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_function
+                    _PytisSchematicMetaclass.init_function_list.append((cls, init_function,))
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
@@ -693,9 +706,22 @@ def object_by_name(name, allow_external=True):
     try:
         o = _metadata.tables[name]
     except KeyError:
-        if not allow_external:
-            raise
-        o = _SQLExternal(name)
+        o = None
+        basename = name.split('.')[-1]
+        init_function = _PytisSchematicMetaclass.init_functions.get(basename)
+        if init_function is None:
+            if not allow_external:
+                raise
+        else:
+            del _PytisSchematicMetaclass.init_functions[basename]
+            init_function()
+            try:
+                o = _metadata.tables[name]
+            except KeyError:
+                if not allow_external:
+                    raise
+        if o is None:
+            o = _SQLExternal(name)
     return o
 
 def object_by_path(name, search_path=True, allow_external=True):
@@ -2096,15 +2122,17 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
-def _gsql_process(*args, **kwargs):
+def _gsql_process(loader, regexp, no_deps, views, functions, names_only):
     global _metadata
     _metadata = sqlalchemy.MetaData()
     global _engine
     _engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    global _full_init
+    _full_init = not (names_only or (no_deps and regexp))
     try:
-        _gsql_process_1(*args, **kwargs)
+        _gsql_process_1(loader, regexp, no_deps, views, functions, names_only)
     finally:
-        _metadata = None
+        _full_init = False
 
 def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
     if regexp is not None:
@@ -2112,23 +2140,27 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
     matched = set()
     def matching(o):
         result = True
+        if isinstance(o, SQLObject):
+            cls = o.__class__
+        else:
+            cls = o
         if (views or functions):
-            if isinstance(o, SQLView):
+            if issubclass(cls, SQLView):
                 if not views:
                     result = False
-            elif isinstance(o, SQLFunctional) and not isinstance(o, SQLTrigger):
+            elif issubclass(cls, SQLFunctional) and not issubclass(cls, SQLTrigger):
                 if not functions:
                     result = False
             else:
                 result = False
         if regexp is None:
             return result
-        if matcher.search(o.__class__.__name__):
+        if matcher.search(cls.__name__):
             matched.add(o)
             return result
         if no_deps:
             return False
-        if isinstance(o, SQLTable):
+        if issubclass(cls, SQLTable):
             return False
         if isinstance(o, _SQLTabular):
             for d in o._extra_dependencies:
@@ -2142,7 +2174,19 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
         if isinstance(obj, SQLSchematicObject):
             name = '%s.%s' % (obj.schema, name,)
         print kind, name
+    # Load the objects
     loader()
+    # Preprocessing in case of speed optimized limited output
+    if not _full_init:
+        for o, f in _PytisSchematicMetaclass.init_function_list:
+            if matching(o):
+                if names_only:
+                    output_name(o)
+                else:
+                    f()
+        if names_only:
+            return
+    # Process all available objects
     for o in _PytisSimpleMetaclass.objects:
         if matching(o):
             if names_only:
