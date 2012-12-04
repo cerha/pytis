@@ -79,7 +79,6 @@ class CmsMenuTexts(sql.SQLTable):
               sql.Column('content', pytis.data.String(not_null=False)),
              )
     with_oids = True
-#XXX: PRIMARY KEY (menu_item_id, lang)
     depends_on = (CmsMenuStructure, CmsLanguages,)
     access_rights = db.cms_rights.value(globals())
 

@@ -77,8 +77,7 @@ table('cms_menu_texts',
                Column('description', pd.String()),
                Column('content', pd.String())),
       depends=('cms_menu_structure', 'cms_languages',),
-      grant=cms_rights,
-      sql='PRIMARY KEY (menu_item_id, lang)')
+      grant=cms_rights)
 
 viewng('cms_menu',
        doc="Complete menu structure with texts for each language defined in cms_languages.",
