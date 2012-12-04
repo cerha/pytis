@@ -3751,30 +3751,33 @@ class FileAttachmentStorage(AttachmentStorage):
     def insert(self, filename, data, values, transaction=None):
         import lcg, PIL.Image
         path = self._resource_src_file(filename)
-        if not os.path.exists(self._directory):
-            os.makedirs(self._directory)
-        if issubclass(self._resource_cls(filename), lcg.Image):
-            try:
-                image = PIL.Image.open(data)
-            except IOError as e:
-                raise self.InvalidImageFormat(e)
-            image.save(path)
-            if values.get('has_thumbnail', False):
+        try:
+            if not os.path.exists(self._directory):
+                os.makedirs(self._directory)
+            if issubclass(self._resource_cls(filename), lcg.Image):
                 try:
-                    self._save_resized_image(filename, image, values)
-                except:
-                    for subdir in ('', 'thumbnails', 'resized'):
-                        path = os.path.join(self._directory, subdir, filename)
-                        if os.path.exists(path):
-                            os.remove(path)
-                    raise
-        else:
-            f = open(path, 'wb')
-            try:
-                f.write(data.read())
-            finally:
-                f.close()
-            
+                    image = PIL.Image.open(data)
+                except IOError as e:
+                    raise self.InvalidImageFormat(e)
+                image.save(path)
+                if values.get('has_thumbnail', False):
+                    try:
+                        self._save_resized_image(filename, image, values)
+                    except:
+                        for subdir in ('', 'thumbnails', 'resized'):
+                            path = os.path.join(self._directory, subdir, filename)
+                            if os.path.exists(path):
+                                os.remove(path)
+                        raise
+            else:
+                f = open(path, 'wb')
+                try:
+                    f.write(data.read())
+                finally:
+                    f.close()
+        except IOError as e:
+            raise self.StorageError(str(e))
+
     def _resource_kwargs(self, filename):
         import lcg
         if issubclass(self._resource_cls(filename), lcg.Image):
