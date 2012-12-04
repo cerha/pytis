@@ -2355,6 +2355,16 @@ class StructuredTextField(TextField):
         if step_back:
             ctrl.SetInsertionPoint(ctrl.GetInsertionPoint()-step_back)
 
+    def _storage_op(self, method_name, *args, **kwargs):
+        method = getattr(self._storage, method_name)
+        try:
+            return method(*args, **kwargs)
+        except AttachmentStorage.InvalidImageFormat as e:
+            message(_(u"Neplatný grafický formát!"), beep_=True)
+        except AttachmentStorage.StorageError as e:
+            run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
+                       message=_(u"Chyba přístupu k úložišti příloh:\n%s") % e)
+
     def _cmd_search(self):
         pass
     
@@ -2381,7 +2391,7 @@ class StructuredTextField(TextField):
         else:
             parent = None
         if self._storage:
-            resources = self._storage.resources(transaction=self._row.transaction())
+            resources = self._storage_op('resources', transaction=self._row.transaction()) or ()
         else:
             resources = ()
         InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG, resources=resources)
@@ -2389,7 +2399,7 @@ class StructuredTextField(TextField):
     def _cmd_export_pdf(self):
         import tempfile
         if self._storage:
-            resources = self._storage.resources(transaction=self._row.transaction())
+            resources = self._storage_op('resources', transaction=self._row.transaction()) or ()
         else:
             resources = ()
         content = lcg.Container(lcg.Parser().parse(self._get_value()))
@@ -2476,69 +2486,65 @@ class StructuredTextField(TextField):
             filename = os.path.split(path)[1]
         size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
         try:
-            try:
-                self._storage.insert(filename, file_object, dict(has_thumbnail=(size is not None),
-                                                                 thumbnail_size=size),
-                                     transaction=self._row.transaction())
-            finally:
-                file_object.close()
-        except AttachmentStorage.InvalidImageFormat as e:
-            message(_(u"Neplatný grafický formát!"), beep_=True)
-        except AttachmentStorage.StorageError as e:
-            run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
-                       message=_(u"Chyba přístupu k úložišti příloh:\n%s") % e)
-        else:
-            row.form().field('filename').reload_enumeration()
-            row['filename'] = pytis.data.Value(row.type('filename'), filename)
+            self._storage_op('insert', filename, file_object,
+                             dict(has_thumbnail=(size is not None),
+                                  thumbnail_size=size),
+                             transaction=self._row.transaction())
+        finally:
+            file_object.close()
+        row.form().field('filename').reload_enumeration()
+        row['filename'] = pytis.data.Value(row.type('filename'), filename)
 
     def _image_preview_computer(self, row, filename):
         if filename:
-            f = self._storage.retrieve(filename, transaction=self._row.transaction())
+            f = self._storage_op('retrieve', filename, transaction=self._row.transaction())
             if f:
                 try:
                     return pytis.data.Image.Buffer(f, filename=filename)
                 finally:
                     f.close()
         return None
-        
+
+    def _retrieve_attachment(self, filename):
+        if filename:
+            return self._storage_op('resource', filename, transaction=self._row.transaction())
+        else:
+            return None
+    
     def _size_computer(self, row, filename):
         thumbnail = None
-        if filename:
-            resource = self._storage.resource(filename, transaction=self._row.transaction())
-            if resource:
-                thumbnail = resource.thumbnail()
+        resource = self._retrieve_attachment(filename)
+        if resource:
+            thumbnail = resource.thumbnail()
         return self.ImageSizes.matching_size(thumbnail)
         
     def _preview_size_computer(self, row, filename, size):
         thumbnail = None
-        if filename:
-            resource = self._storage.resource(filename, transaction=self._row.transaction())
-            if resource:
-                orig_size = resource.size()
-                if orig_size:
-                    return "%dx%d px" % self.ImageSizes.preview_size(size, None, orig_size)
+        resource = self._retrieve_attachment(filename)
+        if resource:
+            orig_size = resource.size()
+            if orig_size:
+                return "%dx%d px" % self.ImageSizes.preview_size(size, None, orig_size)
         return None
     
     def _orig_size_computer(self, row, filename, size):
         thumbnail = None
-        if filename:
-            resource = self._storage.resource(filename, transaction=self._row.transaction())
-            if resource:
-                orig_size = resource.size()
-                if orig_size:
-                    return "%dx%d px" % tuple(orig_size)
+        resource = self._retrieve_attachment(filename)
+        if resource:
+            orig_size = resource.size()
+            if orig_size:
+                return "%dx%d px" % tuple(orig_size)
         return None
         
     def _resize_computer(self, row, filename):
         thumbnail = None
-        if filename:
-            resource = self._storage.resource(filename, transaction=self._row.transaction())
-            if resource and resource.size():
-                thumbnail = resource.thumbnail()
-                if thumbnail and thumbnail.size():
-                    resize = thumbnail.size()[0]/resource.size()[0]*100
-                    return str(resize)+'%'
-                return thumbnail
+        resource = self._retrieve_attachment(filename)
+        if resource and resource.size():
+            thumbnail = resource.thumbnail()
+            if thumbnail and thumbnail.size():
+                resize = thumbnail.size()[0]/resource.size()[0]*100
+                return str(resize)+'%'
+            return thumbnail
         return None
         
     def _cmd_image(self):
@@ -2597,13 +2603,9 @@ class StructuredTextField(TextField):
             filename = row['filename'].value()
             if row['size'].value() != self._size_computer(row, filename):
                 size = self.ImageSizes.thumbnail_size_bounds(row['size'].value(), None)
-                try:
-                    self._storage.update(filename, dict(has_thumbnail=(size is not None),
-                                                        thumbnail_size=size),
-                                         transaction=transaction)
-                except AttachmentStorage.StorageError as e:
-                    run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
-                               message=_(u"Chyba přístupu k úložišti příloh:\n%s") % e)
+                self._storage_op('update', filename, dict(has_thumbnail=(size is not None),
+                                                          thumbnail_size=size),
+                                 transaction=transaction)
             link.update(target=filename,
                         title=None,
                         tooltip=row['tooltip'].value(),
