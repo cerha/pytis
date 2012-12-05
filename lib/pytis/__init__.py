@@ -23,3 +23,17 @@ config = util.Configuration()
 import sys
 sys.modules['config'] = config
 import data
+
+# dbdefs has to be imported in a very special way.  It can't be direct
+# pytis.dbdefs module because such a module can't be imported and used on top
+# level inside its module files.  The tricks applied here are apparently
+# necessary to make the whole pytis.dbdefs import work.
+if False:
+    # Import disabled for now as it somewhat slows down import of pytis.
+    import os
+    sys.path.insert(0, os.path.join(__path__[0], 'db'))
+    import dbdefs
+    del sys.path[0]
+    sys.modules['pytis.dbdefs'] = dbdefs
+    del sys.modules['dbdefs']
+    
