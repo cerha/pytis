@@ -42,7 +42,7 @@ pytis.BrowseFormHandler = Class.create({
     immediately, but in a callback after the tab is activated.
       
      */
-    initialize: function(form_id, uri) {
+    initialize: function(form_id, form_name, uri) {
 	/* form_id ... HTML id of the pytis form top level element (string)
 	   uri ... URI of the AJAX request to retrieve form data
 	 */
@@ -52,16 +52,19 @@ pytis.BrowseFormHandler = Class.create({
 	    var page = form.up('.notebook-widget > div');
 	    if (page) {
 		lcg.Notebook.on_activation(page, function() {
-		    this.load_form_data(uri, container) 
+		    this.load_form_data(uri, container, form_name) 
 		}.bind(this));
 	    } else {
-		this.load_form_data(uri, container);
+		this.load_form_data(uri, container, form_name);
 	    }
 	}
     },
 
-    load_form_data: function(uri, container) {
-	var parameters = window.location.search.replace(/;/g, '&').parseQuery();
+    load_form_data: function(uri, container, form_name) {
+	var parameters = {};
+	var query = window.location.search.replace(/;/g, '&').parseQuery();
+	if (query['form_name'] == form_name)
+	    parameters = query;
 	parameters['_pytis_async_load_request'] = 1;
 	new Ajax.Request(uri, {
 	    method: 'get',

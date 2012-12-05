@@ -1433,7 +1433,7 @@ class BrowseForm(LayoutForm):
             uri = self._uri_provider(None, UriType.LINK, None)
             if uri:
                 g = context.generator()
-                return g.js_call("new pytis.BrowseFormHandler", form_id, uri)
+                return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri)
         return None
 
     def _export_table(self, context, form_id):
