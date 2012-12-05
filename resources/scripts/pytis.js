@@ -44,39 +44,101 @@ pytis.BrowseFormHandler = Class.create({
      */
     initialize: function(form_id, form_name, uri) {
 	/* form_id ... HTML id of the pytis form top level element (string)
+ 	   form_name ... Form name used for distinguishing request parameters
+   	     (see form_name in the python class).
 	   uri ... URI of the AJAX request to retrieve form data
 	 */
-	var form = $(form_id);
-	var container = form.down('.ajax-container');
-	if (container) {
-	    var page = form.up('.notebook-widget > div');
-	    if (page) {
+	this.form = $(form_id);
+	this.form_name = form_name;
+	this.uri = uri;
+	this.ajax_container = this.form.down('.ajax-container');
+	if (this.ajax_container) {
+	    var parameters = {};
+	    var query = window.location.search.replace(/;/g, '&').parseQuery();
+	    if (query['form_name'] == form_name)
+		var parameters = query;
+	    else
+		var parameters = {};
+	    var page = this.form.up('.notebook-widget > div');
+	    if (page)
 		lcg.Notebook.on_activation(page, function() {
-		    this.load_form_data(uri, container, form_name) 
+		    this.load_form_data(parameters);
 		}.bind(this));
-	    } else {
-		this.load_form_data(uri, container, form_name);
-	    }
+	    else
+		this.load_form_data(parameters);
 	}
     },
 
-    load_form_data: function(uri, container, form_name) {
-	var parameters = {};
-	var query = window.location.search.replace(/;/g, '&').parseQuery();
-	if (query['form_name'] == form_name)
-	    parameters = query;
+    load_form_data: function(parameters) {
 	parameters['_pytis_async_load_request'] = 1;
-	new Ajax.Request(uri, {
+	new Ajax.Request(this.uri, {
 	    method: 'get',
 	    parameters: parameters,
 	    onSuccess: function(transport) {
-		container.update(transport.responseText);
-	    },
+		try {
+		    this.ajax_container.update(transport.responseText);
+		    this.bind_controls(this.ajax_container.down('.list-form-controls', 0));
+		    this.bind_controls(this.ajax_container.down('.list-form-controls', 1));
+		    document.body.style.cursor = "default";
+		}
+		catch (e) {
+		    // Errors in asynchronous handlers are otherwise silently
+		    // ignored.  This will only work in Firefox with Firebug,
+		    // but it is only useful for debugging anyway...
+		    console.log(e);
+		}
+	    }.bind(this),
 	    onFailure: function(transport) {
-		container.update(pytis._("Failed loading form."));
+		this.ajax_container.update(pytis._("Failed loading form."));
+		document.body.style.cursor = "default";
 	    }
 	});
+    },
+
+    bind_controls: function(panel) {
+	if (panel) {
+	    ['.prev-page-button', 
+	     '.next-page-button',
+	     'select[name=offset]',
+	     'select[name=limit]'
+	    ].each(function(selector) {
+		ctrl = panel.down(selector);
+		if (ctrl) {
+		    var event_type = 'click';
+		    if (ctrl.nodeName == 'SELECT') {
+			ctrl.onchange = null; // Deactivate the original handler.
+			event_type = 'change';
+		    }
+		    ctrl.observe(event_type, function(event) {
+			this.reload_form_data(event.element());
+			event.stop();
+		    }.bind(this));
+		}
+	    }.bind(this));
+	}
+    },
+
+    reload_form_data: function(ctrl) {
+	var form = ctrl.up('form');
+	var parameters = {};
+	form.getElements().each(function(x) {
+	    if (x.tagName != 'BUTTON')
+		parameters[x.name] = x.value;
+	});
+	parameters[ctrl.name] = ctrl.value;
+	document.body.style.cursor = "wait";
+	form.disable();
+	this.load_form_data(parameters);
+    },
+
+    on_show_query_field: function(event) {
+	var query_controls = $(this._form).down('div.query');
+	query_controls.show();
+	query_controls.down('input').focus();
+	event.element().hide();
+	return false;
     }
+
 });
 
 pytis.FormHandler = Class.create({
