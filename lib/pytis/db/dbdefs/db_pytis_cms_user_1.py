@@ -6,7 +6,7 @@ import pytis.data
 import dbdefs as db
 
 class CmsUsers(sql.SQLTable):
-    name = 'cms_users'
+    name = 'pytis_cms_users'
     fields = (
               sql.PrimaryColumn('uid', pytis.data.Serial()),
               sql.Column('login', pytis.data.String(not_null=True), unique=True),

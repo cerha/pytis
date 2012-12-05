@@ -1550,7 +1550,10 @@ class _GsqlTable(_GsqlSpec):
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
-        items.append('    name = %s' % (repr(self._name.lower()),))
+        table_name = repr(self._name.lower())
+        if table_name == "'cms_users'" and _GsqlConfig.application == 'pytis':
+            table_name = "'pytis_cms_users'"
+        items.append('    name = %s' % (table_name,))
         if self._schemas:
             items.append(self._convert_schemas())
         items.append('    fields = (')
