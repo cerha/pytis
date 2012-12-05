@@ -102,7 +102,7 @@ pytis.BrowseFormHandler = Class.create({
 	     'select[name=offset]',
 	     'select[name=limit]'
 	    ].each(function(selector) {
-		ctrl = panel.down(selector);
+		var ctrl = panel.down(selector);
 		if (ctrl) {
 		    var event_type = 'click';
 		    if (ctrl.nodeName == 'SELECT') {
@@ -110,7 +110,7 @@ pytis.BrowseFormHandler = Class.create({
 			event_type = 'change';
 		    }
 		    ctrl.observe(event_type, function(event) {
-			this.reload_form_data(event.element());
+			this.reload_form_data(ctrl);
 			event.stop();
 		    }.bind(this));
 		}
