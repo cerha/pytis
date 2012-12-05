@@ -4098,6 +4098,7 @@ class Base_LogSQLTable(sql.SQLTable):
         visited_files = {}
         if directory is None:
             sys.stdout.write(coding_header)
+            index_file = None
         else:
             index_file = os.path.join(directory, '__init__.py')
             visited_files[index_file] = None
@@ -4174,7 +4175,7 @@ class Base_LogSQLTable(sql.SQLTable):
                 output.write(converted)
                 output.write('\n')
         self._process_resolved(process)
-        if application != 'pytis':
+        if application != 'pytis' and index_file is not None:
             f = open(index_file, 'a')
             f.write('\ndel sys.path[-1]\n')
             f.close()
