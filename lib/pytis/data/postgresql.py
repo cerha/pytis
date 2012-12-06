@@ -2858,7 +2858,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             row_number = self._pg_buffer.current()[1]
         self.select(condition=self._pg_last_select_condition,
                     sort=self._pg_last_select_sorting,
-                    transaction=self._pg_last_select_transaction)
+                    transaction=self._pg_last_select_transaction,
+                    arguments=self._pg_last_select_arguments)
         if row_number >= 0:
             self.skip(row_number)
         return True
@@ -2923,6 +2924,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
         self._pg_last_select_transaction = transaction
+        self._pg_last_select_arguments = arguments
         self._pg_last_fetch_row = None
         self._pg_last_select_row_number = None
         self._pg_stop_check = stop_check
