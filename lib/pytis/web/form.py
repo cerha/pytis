@@ -1429,12 +1429,9 @@ class BrowseForm(LayoutForm):
         return content
 
     def _export_javascript(self, context, form_id):
-        if self._async_load:
-            uri = self._uri_provider(None, UriType.LINK, None)
-            if uri:
-                g = context.generator()
-                return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri)
-        return None
+        g = context.generator()
+        uri = self._uri_provider(None, UriType.LINK, None)
+        return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri)
 
     def _export_table(self, context, form_id):
         g = context.generator()
@@ -1635,15 +1632,16 @@ class BrowseForm(LayoutForm):
             msg = self._message(count)
             if msg:
                 content.append(g.div(msg, cls='results'))
-        if show_query_field and not bottom:
             query_id = 'filter-' + html_id
-            content.append(g.div((g.label(_(u"Search expression") +': ', query_id),
-                                  g.field(self._query, name='query', id=query_id,
-                                          cls='query-field'),
-                                  g.hidden('show_query_field', '1'),
-                                  # Translators: Search button label.
-                                  g.button(g.span(_(u"Search")), cls='search-button')),
-                                 cls='query' + (show_filters and ' with-filter' or '')))
+            if self._allow_query_field:
+                content.append(g.div((g.label(_(u"Search expression") +': ', query_id),
+                                      g.field(self._query, name='query', id=query_id,
+                                              cls='query-field'),
+                                      g.hidden('show_query_field', show_query_field and '1' or ''),
+                                      # Translators: Search button label.
+                                      g.button(g.span(_(u"Search")), cls='search-button')),
+                                     cls='query' + (show_filters and ' with-filter' or ''),
+                                     style=not show_query_field and 'display:none' or None))
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
             submit_button = g.button(g.span(_("Change filters")), cls='apply-filters')
@@ -1697,9 +1695,9 @@ class BrowseForm(LayoutForm):
                     controls += index_search_controls
             if pages > 1:
                 offset_id = 'offset-' + html_id
-                if not show_query_field and self._allow_query_field:
-                    search_button = g.button(g.span(_(u"Search")), name='show_query_field',
-                                             value='1', cls='search-button')
+                if self._allow_query_field:
+                    search_button = g.button(g.span(_(u"Search")), cls='search-button',
+                                             style=show_query_field and 'display:none' or None)
                 else:
                     search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into

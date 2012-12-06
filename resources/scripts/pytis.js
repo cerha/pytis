@@ -52,7 +52,7 @@ pytis.BrowseFormHandler = Class.create({
 	this.form_name = form_name;
 	this.uri = uri;
 	this.ajax_container = this.form.down('.ajax-container');
-	if (this.ajax_container) {
+	if (this.ajax_container && uri) {
 	    var parameters = {};
 	    var query = window.location.search.replace(/;/g, '&').parseQuery();
 	    if (query['form_name'] == form_name)
@@ -66,6 +66,9 @@ pytis.BrowseFormHandler = Class.create({
 		}.bind(this));
 	    else
 		this.load_form_data(parameters);
+	} else {
+	    this.bind_search_button(this.form.down('.list-form-controls', 0));
+	    this.bind_search_button(this.form.down('.list-form-controls', 1));
 	}
     },
 
@@ -115,6 +118,7 @@ pytis.BrowseFormHandler = Class.create({
 		    }.bind(this));
 		}
 	    }.bind(this));
+	    this.bind_search_button(panel);
 	}
     },
 
@@ -131,12 +135,28 @@ pytis.BrowseFormHandler = Class.create({
 	this.load_form_data(parameters);
     },
 
-    on_show_query_field: function(event) {
-	var query_controls = $(this._form).down('div.query');
-	query_controls.show();
-	query_controls.down('input').focus();
-	event.element().hide();
-	return false;
+    bind_search_button: function(panel) {
+	if (panel) {
+	    var button = panel.down('.paging-controls button.search-button');
+	    if (button)
+		button.observe('click', this.on_show_search_controls.bind(this));
+	}
+    },
+
+    on_show_search_controls: function(event) {
+	var search_controls = $(this.form).down('div.query');
+	search_controls.show();
+	search_controls.down('input.query-field').focus();
+	search_controls.down('input[type=hidden]').value = '1';
+	for (var i=0; i<2; i++) {
+	    var panel = this.form.down('.list-form-controls', i);
+	    if (panel) {
+		var button = panel.down('.paging-controls button.search-button');
+		if (button)
+		    button.hide();
+	    }
+	}
+	event.stop();
     }
 
 });
