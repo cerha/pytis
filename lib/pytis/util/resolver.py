@@ -269,3 +269,14 @@ class Resolver(object):
         """Clear all resolver caches."""
         self._specification_cache.clear()
         self._method_result_cache.clear()
+
+    def reload(self):
+        """Reload all specification modules and clear all caches."""
+        # TODO: It only whorks when search path is set!
+        self.clear()
+        to_reload = []
+        for name in sys.modules:
+            for prefix in self._search:
+                if (name == prefix or name.startswith(prefix+'.')) \
+                        and sys.modules[name] is not None:
+                    reload(sys.modules[name])

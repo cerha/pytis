@@ -803,6 +803,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if isinstance(w, Refreshable):
                 w.refresh(interactive=interactive)
 
+    def _cmd_reload_specifications(self):
+        config.resolver.reload()
+
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
         if form_class is InputForm and name is None:
             return True

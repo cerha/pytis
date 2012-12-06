@@ -48,7 +48,9 @@ Command(Application, 'HELP',
 Command(Application, 'BREAK',
         "Přerušení aktuálně prováděné operace")
 Command(Application, 'REFRESH',
-        "Vyžádání obnovení obsahu aktivního formuláře")
+        "Request refresh of currently visible form(s)")
+Command(Application, 'RELOAD_SPECIFICATIONS',
+        "Request reload of specification files (development/tuning)")
 Command(Application, 'NEW_RECORD',
         "Vložení nového záznamu")
 Command(Application, 'RUN_FORM',
@@ -312,6 +314,7 @@ DEFAULT_KEYMAP = (
     ('Ctrl-Up',          Application.COMMAND_RAISE_PREV_FORM),
     ('Ctrl-w',           Application.COMMAND_RAISE_RECENT_FORM),
     ('Ctrl-l',           Application.COMMAND_REFRESH),
+    ('Ctrl-F11',         Application.COMMAND_RELOAD_SPECIFICATIONS),
     ('Ctrl-F1',          Form.COMMAND_HELP),
     ('Escape',           Form.COMMAND_SAFE_LEAVE_FORM),
     ('Ctrl-p',           BrowseForm.COMMAND_PRINT),
