@@ -656,6 +656,17 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     def specification_by_class_name(cls, name):
         return cls._class_mapping.get(name)
 
+    @classmethod
+    def specifications(cls):
+        "Return all registered specifications."
+        return _PytisBaseMetaclass._name_mapping.values()
+
+    @classmethod
+    def clear(cls):
+        "Clear all registered data."
+        _PytisBaseMetaclass._name_mapping = {}
+        _PytisBaseMetaclass._class_mapping = {}
+
 class _PytisSimpleMetaclass(_PytisBaseMetaclass):
     
     objects = []
@@ -694,6 +705,11 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
                     # delayed using the init_function mechanism.
                     _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_function
                     _PytisSchematicMetaclass.init_function_list.append((cls, init_function,))
+
+    @classmethod
+    def clear(cls):
+        _PytisSchematicMetaclass.init_functions = {}
+        _PytisSchematicMetaclass.init_function_list = []
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
@@ -1484,6 +1500,8 @@ class SQLTable(_SQLTabular):
             trigger = t[0]
             class T(trigger):
                 name = '%s__%s' % (self.name, trigger.name,)
+                if self.schema:
+                    name = '%s__%s' % (self.schema, name,)
                 table = self.__class__
                 arguments = t[1:]
             sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: T)
@@ -2123,10 +2141,7 @@ def include(file_name, globals_=None):
     execfile(pathname, globals_)
 
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only):
-    global _metadata
-    _metadata = sqlalchemy.MetaData()
-    global _engine
-    _engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+    clear(full=False)
     global _full_init
     _full_init = not (names_only or (no_deps and regexp))
     try:
@@ -2210,6 +2225,9 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
     for ffk in _forward_foreign_keys:
         if matching(ffk.table) and not names_only:
             target = ffk.reference.get(ffk.search_path)
+            if target is None:
+                raise Exception('Invalid foreign reference',
+                                (ffk.table.name, ffk.reference._name, ffk.reference._column,))
             kwargs = ffk.kwargs
             kwargs['name'] += target.name.replace('.', '__')
             f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
@@ -2272,3 +2290,17 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     def loader(module_name=module_name):
         imp.load_module(module_name, *imp.find_module(module_name))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only)
+
+def clear(full=True):
+    "Clear all loaded specifications."
+    if full:
+        _PytisBaseMetaclass.clear()
+        _PytisSchematicMetaclass.clear()
+    global _metadata
+    _metadata = sqlalchemy.MetaData()
+    global _engine
+    _engine = sqlalchemy.create_engine('postgresql://', strategy='mock', executor=_dump_sql_command)
+
+def specifications():
+    "Return all loaded specification classes."
+    return _PytisBaseMetaclass.specifications()

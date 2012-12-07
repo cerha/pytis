@@ -17,7 +17,7 @@ The top level gensql script should define the following objects:
       cms_users_table -- name of the table of web users.
       cms_rights -- DB rights to be used for CMS DB objects.  These rights should contain 'select'
         (read only) rights for the role used by the webserver (such as 'www-data').
-      cms_rights_rw -- DB rigts for CMS objects requiring read/write access by the webserver user.
+      cms_rights_rw -- DB rights for CMS objects requiring read/write access by the webserver user.
         These rights should contain read/write rights for the DB role used by the webserver (such
         as 'www-data').
 

@@ -7,6 +7,7 @@ import dbdefs as db
 
 class CmsUserRoles(sql.SQLView):
     name = 'cms_user_roles'
+    schemas = db.cms_schemas.value(globals())
     @classmethod
     def query(cls):
         a_ = sql.t.CmsUserRoleAssignment.alias('a')
@@ -32,6 +33,7 @@ class CmsUserRoles(sql.SQLView):
 class CmsSessionLog(sql.SQLView):
     """Log of web user logins (user visible information)."""
     name = 'cms_session_log'
+    schemas = db.cms_schemas.value(globals())
     @classmethod
     def query(cls):
         l = sql.t.CmsSessionLogData.alias('l')

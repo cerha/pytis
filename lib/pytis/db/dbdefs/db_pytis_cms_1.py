@@ -8,6 +8,7 @@ import dbdefs as db
 class CmsUserRoleAssignment(sql.SQLTable):
     """Binding table assigning CMS roles to CMS users."""
     name = 'cms_user_role_assignment'
+    schemas = db.cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('user_role_id', pytis.data.Serial()),
               sql.Column('uid', pytis.data.Integer(not_null=True), references=sql.gA(db.cms_users_table.value(globals()), ondelete='CASCADE')),
@@ -21,6 +22,7 @@ class CmsUserRoleAssignment(sql.SQLTable):
 class CmsSession(sql.SQLTable):
     """Web user session information for authentication and login history."""
     name = 'cms_session'
+    schemas = db.cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('session_id', pytis.data.Serial()),
               sql.Column('uid', pytis.data.Integer(not_null=True), references=sql.gA(db.cms_users_table.value(globals()), ondelete='CASCADE')),
@@ -35,6 +37,7 @@ class CmsSession(sql.SQLTable):
 class CmsSessionLogData(sql.SQLTable):
     """Log of web user logins (underlying data)."""
     name = 'cms_session_log_data'
+    schemas = db.cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('log_id', pytis.data.Serial()),
               sql.Column('session_id', pytis.data.Integer(not_null=False), references=sql.gA('cms_session', ondelete='SET NULL')),
@@ -54,6 +57,7 @@ class CmsSessionLogData(sql.SQLTable):
 class CmsAccessLogData(sql.SQLTable):
     """Log of cms page access."""
     name = 'cms_access_log_data'
+    schemas = db.cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('log_id', pytis.data.Serial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True)),

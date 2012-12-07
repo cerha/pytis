@@ -156,7 +156,7 @@ class _GsqlSpec(object):
     _group_list = []
     _seen_names = []
     
-    def __init__(self, name, depends=(), doc=None, grant=(), convert=True):
+    def __init__(self, name, depends=(), doc=None, grant=(), convert=True, schemas=None):
         """Inicializuj instanci.
 
         Argumenty:
@@ -190,7 +190,7 @@ class _GsqlSpec(object):
             group = g[1]
             if group not in _GsqlSpec._group_list:
                 _GsqlSpec._group_list.append(group)
-        self._schemas = None
+        self._schemas = schemas
         self._convert = convert
         self._gensql_file = gensql_file
 
@@ -403,6 +403,7 @@ class _GsqlSpec(object):
                    'timestamp': 'pytis.data.DateTime()', # assumes UTC, not always valid
                    'timestamp(0)': 'pytis.data.DateTime()', # assumes UTC, not always valid
                    'timestamp(0) without time zone': 'pytis.data.DateTime()',
+                   'timestamp with time zone': 'pytis.data.DateTime(utc=False)',
                    'macaddr': 'pytis.data.Macaddr()',
                    'ltree': 'pytis.data.LTree()',
                    'boolean': 'pytis.data.Boolean()',
@@ -413,7 +414,7 @@ class _GsqlSpec(object):
                    'record': 'sql.SQLFunctional.RECORD',
                    'float(40)': 'pytis.data.DoublePrecision()',
                    }
-        type_ = mapping.get(stype)
+        type_ = mapping.get(stype.lower())
         if type_ is None:
             match = re.match('^(?P<var>var)?char\((?P<len>[0-9]+)\)$', stype, re.I)
             if match:
@@ -421,13 +422,13 @@ class _GsqlSpec(object):
                 minlen = '' if groups['var'] else 'minlen=%s, ' % (groups['len'],)
                 type_ = 'pytis.data.String(%smaxlen=%s)' % (minlen, groups['len'],)
             else:
-                match = re.match('numeric\(([0-9]+), *([0-9]+)\)', stype)
+                match = re.match('(numeric|decimal)\(([0-9]+), *([0-9]+)\)', stype)
                 if match:
-                    type_ = 'pytis.data.Float(digits=%s, precision=%s)' % match.groups()
+                    type_ = 'pytis.data.Float(digits=%s, precision=%s)' % match.groups()[1:]
                 else:
-                    match = re.match('numeric\(([0-9]+)\)', stype)
+                    match = re.match('(numeric|decimal)\(([0-9]+)\)', stype)
                     if match:
-                        type_ = 'pytis.data.Float(digits=%s)' % match.groups()
+                        type_ = 'pytis.data.Float(digits=%s)' % match.groups()[1:]
                     elif allow_none:
                         type_ = None
                     else:
@@ -563,9 +564,22 @@ class _GsqlSpec(object):
         spec += ')'
         return spec
 
-    def _convert_schemas(self):
-        schemas = tuple([tuple([s.strip() for s in ss.split(',')]) for ss in self._schemas])
-        return '    schemas = %s' % (repr(schemas),)
+    def _convert_schemas(self, items):
+        schemas = None
+        if _GsqlConfig.application == 'pytis' and self._name.startswith('cms_'):
+            schemas = 'db.cms_schemas.value(globals())'
+        elif self._schemas:
+            for name, s_tuple in _GsqlConfig.convert_schemas:
+                if s_tuple == self._schemas:
+                    if self._name in _CONV_PREPROCESSED_NAMES:
+                        schemas = '%s' % (name,)
+                    else:
+                        schemas = 'db.%s' % (name,)
+                    break
+            if schemas is None:
+                schemas = repr(tuple([tuple([s.strip() for s in ss.split(',')]) for ss in self._schemas]))
+        if schemas is not None:
+            items.append('    schemas = %s' % (schemas,))
 
     def _convert_depends(self):
         def convert(dependency):
@@ -588,10 +602,12 @@ class _GsqlSpec(object):
                 break
             raw = raw[match.end():].lstrip()
             identifier = match.group(2)
+            if identifier.endswith('_seq'):
+                identifier = string.join(string.split('_')[:-2], '_')
             ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror', 'generate_series',
                                'dblink', 'date_trunc', 'diff', 'avg', 'case', 'current_date',
-                               'insert', 'update', 'delete', 'view', 'function', 'table',
-                               'bv_users_cfg', 'solv_users_cfg', 'dat_vypisu',)
+                               'insert', 'update', 'delete', 'view', 'function', 'table', 'regexp_matches',
+                               'bv_users_cfg', 'solv_users_cfg', 'dat_vypisu', 'nulovy_cenik',)
             if (len(identifier) < 3 or
                 identifier.lower() in ignored_objects or
                 identifier.startswith('temp_') or
@@ -919,8 +935,7 @@ class _GsqlType(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name.lower()),))
-        if self._schemas:
-            items.append(self._convert_schemas())
+        self._convert_schemas(items)
         items.append('    fields = (')
         for c in self._columns:
             items.append('              %s,' % (self._convert_column(c),))
@@ -1074,10 +1089,10 @@ class _GsqlTable(_GsqlSpec):
         super(_GsqlTable, self).__init__(name, **kwargs)
         self._columns = columns
         self._inherits = inherits or ()
+        self._set_schemas(schemas)
         self._views = map(self._make_view, xtuple(view or ()))
         self._with_oids = with_oids
         self._sql = sql
-        self._set_schemas(schemas)
         self._on_insert, self._on_update, self._on_delete = \
           on_insert, on_update, on_delete
         self._init_values = init_values
@@ -1133,6 +1148,8 @@ class _GsqlTable(_GsqlSpec):
                 if self._name not in kwargs['depends']:
                     kwargs['depends'] = kwargs['depends'] + (self._name,)
             view = _GsqlView(*args, **kwargs)
+            if self._schemas:
+                view._set_schemas(self._schemas)
         return view
         
     def _format_column(self, column):
@@ -1554,8 +1571,7 @@ class _GsqlTable(_GsqlSpec):
         if table_name == "'cms_users'" and _GsqlConfig.application == 'pytis':
             table_name = "'pytis_cms_users'"
         items.append('    name = %s' % (table_name,))
-        if self._schemas:
-            items.append(self._convert_schemas())
+        self._convert_schemas(items)
         items.append('    fields = (')
         for column in self._columns:
             items.append(self._convert_indent(self._convert_column(column), 14) + ',')
@@ -2422,8 +2438,7 @@ class _GsqlViewNG(Select):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name.lower()),))
-        if self._schemas:
-            items.append(self._convert_schemas())
+        self._convert_schemas(items)
         definitions = []
         condition = self._convert_select(definitions, 0)
         if definitions and definitions[-1].startswith(condition + ' = '):
@@ -2966,8 +2981,7 @@ class _GsqlView(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name.lower()),))
-        if self._schemas:
-            items.append(self._convert_schemas())
+        self._convert_schemas(items)
         # The hard part
         columns = self._convert_complex_columns()
         is_union = is_sequence(columns)
@@ -3297,8 +3311,7 @@ class _GsqlFunction(_GsqlSpec):
         doc = self._convert_doc()
         if doc:
             items.append(self._convert_indent(doc, 4))
-        if self._schemas:
-            items.append(self._convert_schemas())
+        self._convert_schemas(items)
         items.append('    name = %s' % (repr(name),))
         argument_list = ([self._convert_column(a) for a in self._ins] +
                          [self._convert_column(a, out=True) for a in self._outs])
@@ -3476,8 +3489,7 @@ class _GsqlSequence(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
-        if self._schemas:
-            items.append(self._convert_schemas())
+        self._convert_schemas(items)
         if self._start:
             items.append('    start = %s' % (self._start,))
         if self._increment:
@@ -3552,8 +3564,7 @@ class _GsqlRaw(_GsqlSpec):
         if doc:
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name),))
-        if self._schemas:
-            items.append(self._convert_schemas())
+        self._convert_schemas(items)
         items.append('    @classmethod')
         items.append('    def sql(class_):')
         items.append('        return """%s"""' % (self._sql,))
@@ -3921,6 +3932,9 @@ database dumps if you want to be sure about your schema.
         defs._convert()
 
     def _convert(self):
+        customization_file = 'convert.py'
+        if os.path.exists(customization_file):
+            execfile(customization_file, globals())
         application = _GsqlConfig.application
         coding_header = '# -*- coding: utf-8\n'
         local_preamble = '''
@@ -3932,6 +3946,11 @@ import pytis.data
         local_preamble += 'import dbdefs as db\n\n'
         global_preamble = ''
         if application:
+            if _GsqlConfig.convert_schemas:
+                init_preamble += '\n'
+                for name, s_tuple in _GsqlConfig.convert_schemas:
+                    converted_s_tuple = tuple([tuple(string.split(s, ',')) for s in s_tuple])
+                    init_preamble += '%s = %s\n' % (name, repr(converted_s_tuple),)
             if application == 'pytis':
                 init_preamble += """
 from db_pytis_base import *
@@ -3942,7 +3961,8 @@ from db_pytis_base import *
 app_default_access_rights = (('all', '%s',),)
 app_cms_rights = (('all', '%s',),)
 app_cms_rights_rw = (('all', '%s',),)
-app_cms_users_table = 'e_system_user'
+app_cms_users_table = '%s'
+app_cms_schemas = %s
 app_http_attachment_storage_rights = (('insert', '%s'), ('delete', '%s'), ('select', '%swebuser'),)
 
 import imp
@@ -3950,26 +3970,39 @@ import os
 import sys
 _file, _pathname, _description = imp.find_module('pytis')
 sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))
+""" % (application, application, application, _GsqlConfig.convert_cms_users_table,
+       repr(_GsqlConfig.convert_cms_schemas), application, application, application,)
+                if not _GsqlConfig.convert_include_pytis_dbdefs:
+                    init_preamble += """
+import pytis.extensions.gensqlalchemy
+pytis.extensions.gensqlalchemy.clear()
 
-from db_pytis_base import *
+for m in list(sys.modules.keys()):
+    if m.startswith('dbdefs.db_pytis_'):
+        del sys.modules[m]
+
+"""
+                init_preamble += '\nfrom db_pytis_base import *\n'
+        preamble_1 = """
+default_access_rights = sql.SQLFlexibleValue('db.app_default_access_rights',
+                                               environment='GSQL_DEFAULT_ACCESS_RIGHTS',
+                                               default=(('all', '%s',),))
+cms_rights = sql.SQLFlexibleValue('db.app_cms_rights',
+                                    environment='GSQL_CMS_RIGHTS',
+                                    default=(('all', '%s',),))
+cms_rights_rw = sql.SQLFlexibleValue('db.app_cms_rights_rw',
+                                       environment='GSQL_CMS_RIGHTS_RW',
+                                       default=(('all', '%s',),))
+cms_users_table = sql.SQLFlexibleValue('db.app_cms_users_table',
+                                         default='cms_users_table')
+cms_schemas = sql.SQLFlexibleValue('db.app_cms_schemas',
+                                     environment='GSQL_CMS_SCHEMAS',
+                                     default=(('public',),))
+http_attachment_storage_rights = sql.SQLFlexibleValue('db.app_http_attachment_storage_rights',
+                                                        environment='GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS',
+                                                        default=(('insert', '%s'), ('delete', '%s'), ('select', '%swebuser'),))
+
 """ % (application, application, application, application, application, application,)
-        preamble_1 = '''
-default_access_rights = sql.SQLFlexibleValue(\'db.app_default_access_rights\',
-                                               environment=\'GSQL_DEFAULT_ACCESS_RIGHTS\',
-                                               default=((\'all\', \'%s\',),))
-cms_rights = sql.SQLFlexibleValue(\'db.app_cms_rights\',
-                                    environment=\'GSQL_CMS_RIGHTS\',
-                                    default=((\'all\', \'%s\',),))
-cms_rights_rw = sql.SQLFlexibleValue(\'db.app_cms_rights_rw\',
-                                       environment=\'GSQL_CMS_RIGHTS_RW\',
-                                       default=((\'all\', \'%s\',),))
-cms_users_table = sql.SQLFlexibleValue(\'db.app_cms_users_table\',
-                                         default=\'cms_users_table\')
-http_attachment_storage_rights = sql.SQLFlexibleValue(\'db.app_http_attachment_storage_rights\',
-                                                        environment=\'GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS\',
-                                                        default=((\'insert\', \'%s\'), (\'delete\', \'%s\'), (\'select\', \'%swebuser\'),))
-
-''' % (application, application, application, application, application, application,)
         preamble_1 += '''
 TMoney    = \'numeric(15,2)\'
 TKurz     = \'numeric(12,6)\'
@@ -4155,9 +4188,17 @@ class Base_LogSQLTable(sql.SQLTable):
                 if application and application != 'pytis' and basename.startswith('db_pytis_'):
                     local_file = False
                 if new_file:
-                    f = open(index_file, 'a')
-                    f.write("from %s import *\n" % (os.path.splitext(basename)[0],))
-                    f.close()
+                    if (application and
+                        not re.match('db_pytis_cms_[3-9]', basename) and
+                        # solas hack
+                        (basename != 'db_pytis_cms_1' or application != 'solas')):
+                        f = open(index_file, 'a')
+                        import_name = os.path.splitext(basename)[0]
+                        # solas hack
+                        if import_name == 'db_sluzby_5':
+                            f.write("from db_pytis_cms_1 import *\n")
+                        f.write("from %s import *\n" % (import_name,))
+                        f.close()
                     if local_file:
                         output = open(file_name, 'w')
                         output.write(coding_header)
@@ -4305,7 +4346,11 @@ class _GsqlConfig:
     check_presence = False
     directory = None
     application = None
-
+    convert_schemas = ()
+    convert_cms_schemas = (('public',),)
+    convert_include_pytis_dbdefs = True
+    convert_cms_users_table = 'e_system_user'
+    
 
 _GSQL_OPTIONS = (
     ('help             ', 'print this help message and exit'),

@@ -7,6 +7,7 @@ import dbdefs as db
 
 class CmsUsersTable(sql.SQLTable):
     name = 'cms_users_table'
+    schemas = db.cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('uid', pytis.data.Serial()),
              )
