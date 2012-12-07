@@ -2,7 +2,7 @@
 
 # Resolver pro specifikace výstupu
 # 
-# Copyright (C) 2002, 2005, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2011, 2012 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -239,18 +239,16 @@ class FileResolver(Resolver):
         self._path = xlist(path)
         
     def _get_module(self, name):
-        module = sys.modules.get(name)
-        if module is None:
-            file = None
+        #module = sys.modules.get(name)
+        try:
+            file, pathname, descr = imp.find_module(name, self._path)
+        except ImportError as e:
+            raise ResolverFileError(name, self._path, e)
+        else:
             try:
-                try:
-                    file, pathname, descr = imp.find_module(name, self._path)
-                except ImportError as e:
-                    raise ResolverFileError(name, self._path, e)
                 module = imp.load_module(name, file, pathname, descr)
             finally:
-                if file is not None:
-                    file.close()
+                file.close()
         return module
 
 
