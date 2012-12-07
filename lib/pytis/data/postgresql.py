@@ -1460,6 +1460,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                  (cursor_name, distinct_on_ordering, ordering, table_list, relation, filter_condition, groupby,
                   distinct_on_ordering, ordering,)),
                 {'columns': column_list})
+        self._pdbb_command_dummy_select = \
+            self._SQLCommandTemplate("declare %s scroll cursor for select 1 where false" % (cursor_name,))
         self._pdbb_command_close_select = \
             self._SQLCommandTemplate('close %s' % (cursor_name,))
         agg_table_list = table_list.replace('%', '%%')
@@ -1759,7 +1761,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return columns, values
 
     def _pg_make_arguments(self, args, arguments):
-        if self._arguments is not None:
+        if self._arguments is not None and arguments is not self.UNKNOWN_ARGUMENTS:
             for i in range(len(self._arguments)):
                 b = self._arguments[i]
                 type_ = b.type()
@@ -2059,7 +2061,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pdbb_select_column_list = None
         args['selection'] = self._pdbb_selection_number = \
             self._pdbb_next_selection_number()
-        self._pg_query(self._pdbb_command_select.format(args), transaction=transaction)
+        dummy_select = (self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS)
+        command = self._pdbb_command_dummy_select if dummy_select else self._pdbb_command_select
+        self._pg_query(command.format(args), transaction=transaction)
         if async_count:
             result = self._pg_start_row_counting_thread(transaction, args['selection'])
         elif stop_check is not None:

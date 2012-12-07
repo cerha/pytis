@@ -246,6 +246,8 @@ class Data(object_2_5):
     """Konstanta získání průměrné hodnoty položek pro metodu 'select()'."""
 
     _CACHEABLE = True
+
+    UNKNOWN_ARGUMENTS = 'UNKNOWN_ARGUMENTS'
     
     class UnsupportedOperation(Exception):
         """Signalizuje, že byla žádána nepodporovaná operace."""

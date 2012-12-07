@@ -1135,8 +1135,8 @@ class DBDataDefault(_DBTest):
         assert self.dosnova.find_column('id').type().unique()
         for colname in 'popis', 'druh', 'stat',:
             assert not self.dosnova.find_column(colname).type().unique(), colname
-    def test_select_fetch(self):
-        self.data.select()
+    def test_select_fetch(self, arguments={}):
+        self.data.select(arguments=arguments)
         for r in (self.ROW1, self.ROW2):
             result = self.data.fetchone()
             assert result != None, 'missing lines'
@@ -1348,8 +1348,8 @@ class DBDataDefault(_DBTest):
         test_select(None, 2)
         test_select(pytis.data.LT('id', ival(5)), 1)
         test_select(pytis.data.GT('id', ival(6)), 0)
-    def test_async_select(self):
-        self.data.select(async_count=True)
+    def test_async_select(self, arguments={}):
+        self.data.select(async_count=True, arguments=arguments)
         for r in (self.ROW1, self.ROW2):
             result = self.data.fetchone()
             assert result != None, 'missing lines'
@@ -1359,6 +1359,16 @@ class DBDataDefault(_DBTest):
         assert self.data.fetchone() == None, 'too many lines'
         assert self.data.fetchone() == None, 'data reincarnation'
         self.data.close()
+    def test_dummy_select(self):
+        UNKNOWN_ARGUMENTS = self.data.UNKNOWN_ARGUMENTS
+        self.test_select_fetch(arguments=UNKNOWN_ARGUMENTS)
+        self.test_async_select(arguments=UNKNOWN_ARGUMENTS)
+        assert self.funcdata.select(arguments=UNKNOWN_ARGUMENTS) == 0
+        assert self.funcdata.fetchone () is None
+        count = self.funcdata.select(arguments=UNKNOWN_ARGUMENTS, async_count=True)
+        result = count.count()
+        assert result[0] == 0, result
+        assert self.funcdata.fetchone() is None
     def test_insert(self):
         row = self.newrow
         result, success = self.data.insert(row)
