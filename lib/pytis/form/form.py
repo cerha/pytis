@@ -942,17 +942,21 @@ class LookupForm(InnerForm):
         return self._arguments
 
     def _query_fields_row(self):
+        # This form doesn't support query fields, but see list.py for an overloaded version.
         return None
 
     def _update_arguments(self):
         provider = self._view.argument_provider()
         if provider is not None:
             previous_arguments = self._arguments or {}
-            row = self._query_fields_row()
-            provider_args = (previous_arguments,)
-            if row:
-                provider_args += (row,)
-            arguments = provider(*provider_args)
+            if self._view.query_fields():
+                row = self._query_fields_row()
+                if row is None:
+                    arguments = self._data.UNKNOWN_ARGUMENTS
+                else:
+                    arguments = provider(previous_arguments, row)
+            else:
+                arguments = provider(previous_arguments)
             if arguments is None:
                 return False
             self._arguments = arguments

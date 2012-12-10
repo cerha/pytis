@@ -395,16 +395,20 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         try:
             form = self._query_fields_form
         except AttributeError:
-            if self._view.query_fields():
-                return pytis.data.Row([(f.id(), pytis.data.Value(f.type() or pytis.data.String(), None))
-                                       for f in self._view.query_fields()])
-            else:
-                return None
+            # The first argument provider call is made during form
+            # initialization before the initial select when the form user
+            # interface is not created yet.  Thus query fields are not yet
+            # available as well and we return UNKNOWN_ARGUMENTS without
+            # calling argument provider at all.  UNKNOWN_ARGUMENTS will
+            # result in an empty dummy sellect without calling the
+            # underlying database function.  The form will appear initially
+            # empty and the user will need to submit query fields to see
+            # any data.
+            return None
         else:
-            if form:
-                return self._query_fields_form.row()
-            else:
-                return None
+            # Append query field values as the second argument provider
+            # argument.
+            return form.row()
         
     def _create_query_fields_panel(self):
         fields = self._view.query_fields()
