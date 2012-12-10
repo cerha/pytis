@@ -2141,7 +2141,6 @@ def include(file_name, globals_=None):
     execfile(pathname, globals_)
 
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only):
-    clear(full=False)
     global _full_init
     _full_init = not (names_only or (no_deps and regexp))
     try:
@@ -2291,11 +2290,10 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
         imp.load_module(module_name, *imp.find_module(module_name))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only)
 
-def clear(full=True):
+def clear():
     "Clear all loaded specifications."
-    if full:
-        _PytisBaseMetaclass.clear()
-        _PytisSchematicMetaclass.clear()
+    _PytisBaseMetaclass.clear()
+    _PytisSchematicMetaclass.clear()
     global _metadata
     _metadata = sqlalchemy.MetaData()
     global _engine
@@ -2304,3 +2302,6 @@ def clear(full=True):
 def specifications():
     "Return all loaded specification classes."
     return _PytisBaseMetaclass.specifications()
+
+# Make sure _metadata and _engine are initialized to prevent crashes
+clear()

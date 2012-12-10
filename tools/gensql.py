@@ -3972,15 +3972,12 @@ _file, _pathname, _description = imp.find_module('pytis')
 sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))
 """ % (application, application, application, _GsqlConfig.convert_cms_users_table,
        repr(_GsqlConfig.convert_cms_schemas), application, application, application,)
-                if not _GsqlConfig.convert_include_pytis_dbdefs:
-                    init_preamble += """
-import pytis.extensions.gensqlalchemy
-pytis.extensions.gensqlalchemy.clear()
+                init_preamble += """
+sql.clear()
 
 for m in list(sys.modules.keys()):
     if m.startswith('dbdefs.db_pytis_'):
         del sys.modules[m]
-
 """
                 init_preamble += '\nfrom db_pytis_base import *\n'
         preamble_1 = """
@@ -4348,7 +4345,6 @@ class _GsqlConfig:
     application = None
     convert_schemas = ()
     convert_cms_schemas = (('public',),)
-    convert_include_pytis_dbdefs = True
     convert_cms_users_table = 'e_system_user'
     
 
