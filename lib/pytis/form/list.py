@@ -972,7 +972,11 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             f = BrowsableShowForm
         kwargs = self._new_form_kwargs()
-        run_form(f, self._name, select_row=self._current_key(), **kwargs)
+        if not self._view.query_fields():
+            # DescriptiveDualForm and BrowsableShowForm currently don't work
+            # with query fields.  If this is solved, the condition here can be
+            # removed.
+            run_form(f, self._name, select_row=self._current_key(), **kwargs)
 
     def _scroll_x_offset(self):
         g = self._grid
