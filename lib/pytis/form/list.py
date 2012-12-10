@@ -3324,7 +3324,10 @@ class SideBrowseForm(BrowseForm):
         super(SideBrowseForm, self)._init_attributes(**kwargs)
         
     def _current_arguments(self):
-        return self._selection_arguments
+        arguments = self._arguments
+        if arguments == self._data.UNKNOWN_ARGUMENTS:
+            return self._data.UNKNOWN_ARGUMENTS
+        return dict(self._selection_arguments, **(arguments or {}))
 
     def on_selection(self, row):
         """Update form after main form selection.
@@ -3336,8 +3339,8 @@ class SideBrowseForm(BrowseForm):
         """
         #log(EVENT, 'Filtrace obsahu formuláře:', (self._name, row))
         if self._xarguments is not None:
-            self._selection_arguments = copy.copy(self._arguments or {})
-            self._selection_arguments.update(self._xarguments(row))
+            self._selection_arguments = self._xarguments(row)
+        arguments = self._selection_arguments
         if self._side_prefill:
             prefill = self._side_prefill(row)
         elif self._binding_column:
