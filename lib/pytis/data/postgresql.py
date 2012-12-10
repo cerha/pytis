@@ -3184,6 +3184,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if not self._pg_is_in_select:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
+        if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
+            return 0
         row, pos = self._pg_buffer.current()
         if not row and pos >= 0 and pos < self._pg_number_of_rows_(pos+1):
             self.skip(1, BACKWARD)

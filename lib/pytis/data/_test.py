@@ -1369,6 +1369,8 @@ class DBDataDefault(_DBTest):
         result = count.count()
         assert result[0] == 0, result
         assert self.funcdata.fetchone() is None
+        assert self.funcdata.select(arguments=UNKNOWN_ARGUMENTS) == 0
+        assert self.funcdata.search(None, arguments=UNKNOWN_ARGUMENTS) == 0
     def test_insert(self):
         row = self.newrow
         result, success = self.data.insert(row)
