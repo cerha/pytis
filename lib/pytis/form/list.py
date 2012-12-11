@@ -437,16 +437,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         button = event.GetEventObject()
         panel = button.GetParent()
         sizer = self._top_level_sizer
-        if sizer.GetItem(panel).GetPosition()[1] == 0:
-            new_position = 1
-            icon = 'move-up'
-        else:
-            new_position = 0
+        panel_position, grid_position = sizer.GetItemIndex(panel), sizer.GetItemIndex(self._grid)
+        if panel_position > grid_position:
             icon = 'move-down'
+        else:
+            icon = 'move-up'
         bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
         button.SetBitmapLabel(bitmap)
         sizer.Detach(panel)
-        sizer.Insert(new_position, panel, 0, wx.EXPAND)
+        sizer.Insert(grid_position, panel, 0, wx.EXPAND)
         sizer.Layout()
 
     def _context_menu(self):
