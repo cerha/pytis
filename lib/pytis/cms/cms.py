@@ -287,6 +287,7 @@ class Menu(Specification):
         storage = os.environ.get('PYTIS_CMS_ATTACHMENTS_STORAGE')
         if storage and record['identifier'].value():
             if storage.startswith('http://') or storage.startswith('https://'):
+                import pytis.form
                 uri = storage +'/'+ record['identifier'].value()
                 spec_name = self._spec_name('Menu')
                 readonly = not (pytis.form.has_access(spec_name, pytis.data.Permission.UPDATE) or 
