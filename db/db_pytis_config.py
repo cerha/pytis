@@ -96,6 +96,7 @@ select ''_user_profile_'' || (coalesce(max(split_part(profile_id, ''_'',4)::int)
         where params.id = $1 returning *)
 select profiles.id || ''.'' || params.id from profiles, params
 """,
+         schemas=db_schemas,
          doc="Zkopíruje profil z ev_pytis_form_profiles jinému uživateli.",
          depends=('ev_pytis_form_profiles',))   
 

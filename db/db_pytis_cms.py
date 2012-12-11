@@ -30,12 +30,14 @@ table('cms_languages',
       doc="Codebook of languages available in the CMS.",
       columns=(PrimaryColumn('lang_id', pd.Serial()),
                Column('lang', pd.String(minlen=2, maxlen=2), constraints=('UNIQUE', 'NOT NULL'))),
+      schemas=db_schemas,
       grant=cms_rights)
 
 table('cms_modules',
       doc="Codebook of extension modules available in the CMS.",
       columns=(PrimaryColumn('mod_id', pd.Serial()),
                Column('modname', pd.String(maxlen=64), constraints=('UNIQUE', 'NOT NULL'))),
+      schemas=db_schemas,
       grant=cms_rights)
 
 table('cms_menu_structure',
@@ -46,12 +48,14 @@ table('cms_menu_structure',
                Column('mod_id', pd.Integer(), references='cms_modules',),
                Column('ord', pd.Integer(), constraints=('NOT NULL',)),
                Column('tree_order', pd.LTree())),
+      schemas=db_schemas,
       depends=('cms_modules',),
       grant=cms_rights)
 
 sql_raw("CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order "
         "ON cms_menu_structure (ord, coalesce(parent, 0));",
         name='cms_menu_structure_unique_tree_order',
+        schemas=db_schemas,
         depends=('cms_menu_structure',))
 
 function('cms_menu_structure_tree_order',
@@ -62,6 +66,7 @@ function('cms_menu_structure_tree_order',
                        else cms_menu_structure_tree_order(parent)
                   end || to_char(coalesce(ord, 999999), ''FM000000'')::text as result
            from cms_menu_structure where menu_item_id=$1""",
+         schemas=db_schemas,
          depends=('cms_menu_structure', ))
 
 table('cms_menu_texts',
@@ -76,6 +81,7 @@ table('cms_menu_texts',
                Column('heading', pd.String()),
                Column('description', pd.String()),
                Column('content', pd.String())),
+      schemas=db_schemas,
       depends=('cms_menu_structure', 'cms_languages',),
       grant=cms_rights)
 
@@ -137,6 +143,7 @@ viewng('cms_menu',
                 AND coalesce(new.title, new.heading, new.description, new.content) IS NOT NULL;
        )""",
        delete="(DELETE FROM cms_menu_structure WHERE menu_item_id = old.menu_item_id;)",
+       schemas=db_schemas,
        depends=('cms_menu_structure', 'cms_languages', 'cms_menu_texts', 'cms_modules'),
        grant=cms_rights)
 
@@ -146,6 +153,7 @@ table('cms_roles',
                Column('name', pd.String(), constraints=('NOT NULL',)),
                Column('system_role', pd.String(), constraints=('UNIQUE',)),
                Column('description', pd.String())),
+      schemas=db_schemas,
       grant=cms_rights)
 
 table('cms_user_role_assignment',
@@ -156,6 +164,7 @@ table('cms_user_role_assignment',
                Column('role_id', pd.Integer(), constraints=('NOT NULL',),
                       references='cms_roles ON DELETE CASCADE')),
       sql='UNIQUE (uid, role_id)',
+      schemas=db_schemas,
       depends=(cms_users_table, 'cms_roles'),
       grant=cms_rights)
 
@@ -175,6 +184,7 @@ viewng('cms_user_roles',
        update=("UPDATE cms_user_role_assignment SET uid = new.uid, role_id = new.role_id "
                "WHERE user_role_id=old.user_role_id"),
        delete=("DELETE FROM cms_user_role_assignment WHERE user_role_id = old.user_role_id"),
+       schemas=db_schemas,
        depends=('cms_user_role_assignment', 'cms_users', 'cms_roles'),
        grant=cms_rights)
 
@@ -186,6 +196,7 @@ table('cms_actions',
                Column('name', pd.String(maxlen=16), constraints=('NOT NULL',)),
                Column('description', pd.String(), constraints=('NOT NULL',))),
       sql='UNIQUE (mod_id, name)',
+      schemas=db_schemas,
       depends=('cms_modules',),
       grant=cms_rights)
 
@@ -199,6 +210,7 @@ table('cms_rights_assignment',
                Column('action_id', pd.Integer(), constraints=('NOT NULL',),
                       references='cms_actions ON DELETE CASCADE')),
       sql='UNIQUE (menu_item_id, role_id, action_id)',
+      schemas=db_schemas,
       depends=('cms_menu_structure', 'cms_roles', 'cms_actions'),
       grant=cms_rights)
 
@@ -222,6 +234,7 @@ viewng('cms_rights',
        insert_order=('cms_rights_assignment',),
        update_order=('cms_rights_assignment',),
        delete_order=('cms_rights_assignment',),
+       schemas=db_schemas,
        depends=('cms_rights_assignment', 'cms_menu_structure', 'cms_roles', 'cms_actions'),
        grant=cms_rights)
 
@@ -233,6 +246,7 @@ table('cms_session',
                Column('session_key', pd.String(), constraints=('NOT NULL',)),
                Column('last_access', pd.DateTime(), constraints=('NOT NULL',))),
       sql="UNIQUE (uid, session_key)",
+      schemas=db_schemas,
       depends=(cms_users_table,),
       grant=cms_rights_rw)
 
@@ -250,6 +264,7 @@ table('cms_session_log_data',
                Column('ip_address', pd.String(), constraints=('NOT NULL',)),
                Column('user_agent', pd.String()),
                Column('referer', pd.String())),
+      schemas=db_schemas,
       depends=(cms_users_table,),
       grant=cms_rights_rw)
 
@@ -264,12 +279,14 @@ table('cms_access_log_data',
                Column('ip_address', pd.String(), constraints=('NOT NULL',)),
                Column('user_agent', pd.String()),
                Column('referer', pd.String())),
+      schemas=db_schemas,
       depends=(cms_users_table,),
       grant=cms_rights_rw)
 
 sql_raw("create or replace rule session_delete as on delete to cms_session do ( "
         "update cms_session_log_data set end_time=old.last_access WHERE session_id=old.session_id;"
         ");",
+        schemas=db_schemas,
         depends=('cms_session', 'cms_session_log_data'))
 
 viewng('cms_session_log',
@@ -295,6 +312,7 @@ viewng('cms_session_log',
                          NULL::text, NULL::interval, NULL::boolean"""),
        update_order=('cms_session_log_data',),
        delete_order=('cms_session_log_data',),
+       schemas=db_schemas,
        depends=('cms_session', 'cms_session_log_data', cms_users_table, 'cms_users',),
        grant=cms_rights)
 
@@ -330,4 +348,5 @@ table('cms_themes',
                Column('top_border', pd.Color()),
                Column('highlight_bg', pd.Color()),
                Column('inactive_folder', pd.Color())),
+      schemas=db_schemas,
       grant=cms_rights)
