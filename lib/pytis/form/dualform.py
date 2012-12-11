@@ -999,7 +999,7 @@ class MultiSideForm(MultiForm):
                                                                     _command_handler=self),
                                state=lambda b=b: b.id() in [f.binding().id() for f in self._forms])
                      for b in sorted(self._main_form.bindings(), key=lambda b: b.title())
-                     if binding.name() is None or has_access(binding.name())])
+                     if b.name() is None or has_access(b.name())])
 
     def _on_tab_mouse_right(self, event):
         selection = event.GetSelection()
