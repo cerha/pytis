@@ -411,11 +411,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return form.row()
         
     def _create_query_fields_panel(self):
-        fields = self._view.query_fields()
-        if fields:
+        query_fields = self._view.query_fields()
+        if query_fields:
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
-            form = QueryFieldsForm(panel, resolver(), None, fields=fields,
-                                   layout=HGroup(*[f.id() for f in fields]))
+            form = QueryFieldsForm(panel, resolver(), None, **query_fields.view_spec_kwargs())
             sizer = wx.BoxSizer()
             sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
             sizer.Add((0, 0), 1)

@@ -1152,6 +1152,33 @@ class LayoutSpec(object):
         return self._order
 
 
+class QueryFields(object):
+    """Query fields specification.
+
+    The specification of query fields is expressed using this class.  The
+    constructor arguments correspond to ViewSpec constructor arguments and
+    define complete presentational and functional aspects of the query fields
+    form.
+
+    The differences: The ViewSpec constructor argument 'title' is not present
+    in QueryFields.  The default 'layout' is a horizontal group containing all
+    fields (ViewSpec default layout is vertical).
+
+    """
+    def __init__(self, fields, layout=None, **kwargs):
+        assert fields and isinstance(fields, (tuple, list)), fields
+        if __debug__:
+            for f in fields:
+                assert isinstance(f, Field), f
+        if layout is None:
+            layout = HGroup(*[f.id() for f in fields])
+        self._view_spec_kwargs = dict(fields=fields, layout=layout, **kwargs)
+
+    def view_spec_kwargs(self):
+        """Return constructor arguments for ViewSpec instance creation."""
+        return self._view_spec_kwargs
+
+
 class ViewSpec(object):
     """Kompletující specifikace prezentačních vlastností pro formuláře.
 
@@ -1380,14 +1407,17 @@ class ViewSpec(object):
             'argument_provider' makes sense only for database table functions,
             it should be 'None' for standard tables and views.
             
-          query_fields -- sequence of 'Field' instances defining fields of a
-            "query panel".  If there are any fields defined, an additional
-            panel containing these fields is attached to the list form.  The
-            user can interactively enter values into these fields and refresh
-            the form.  These values are automatically passed to the argument
-            provider function as the second argument (PresentedRow instance
-            containing all defined fields), so the table function arguments may
-            be generated based on these interactively entered values.
+          query_fields -- 'QueryFields' instance defining fields of a "query
+            panel" or None when query fields are not used.  If defined, an
+            additional panel containing these fields is attached to the list
+            form.  The user can interactively enter values into these fields
+            and refresh the form.  These values are automatically passed to the
+            argument provider function as the second argument (PresentedRow
+            instance containing all defined fields), so the table function
+            arguments may be generated based on these interactively entered
+            values.  If a sequence of field specifications is passed, it is
+            automatically converted to a 'QueryFields' instance with given
+            fields.
 
           referer -- id of the referer column as a string (one of the id's
             defined by 'fields') or None.  If None, the id of the data key
@@ -1419,7 +1449,7 @@ class ViewSpec(object):
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
               initial_folding=None, folding=None, arguments=None, argument_provider=None,
-              query_fields=(), referer=None, spec_name='', public=None):
+              query_fields=None, referer=None, spec_name='', public=None):
         assert isinstance(title, basestring)
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1577,10 +1607,10 @@ class ViewSpec(object):
         assert description is None or isinstance(description, basestring)
         assert help is None or isinstance(help, basestring)
         assert argument_provider is None or isinstance(argument_provider, collections.Callable)
-        assert isinstance(query_fields, (tuple, list))
-        if __debug__:
-            for f in query_fields:
-                assert isinstance(f, Field), f
+        if query_fields and isinstance(query_fields, (tuple, list)):
+            query_fields = QueryFields(query_fields)
+        else:
+            assert query_fields is None or isinstance(query_fields, QueryFields), queryfields
         self._title = title
         self._singular = singular
         self._columns = columns
@@ -1764,7 +1794,7 @@ class ViewSpec(object):
         return self._argument_provider
 
     def query_fields(self):
-        """Return the sequence of query fields as passed to the constructor."""
+        """Return a 'QueryFields' instance or None if no query fields are defined."""
         return self._query_fields
 
     def referer(self):
