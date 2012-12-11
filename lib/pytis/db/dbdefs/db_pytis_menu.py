@@ -657,7 +657,7 @@ class CPytisAccessRights(sql.SQLTable):
     name = 'c_pytis_access_rights'
     fields = (
               sql.PrimaryColumn('rightid', pytis.data.String(maxlen=8, not_null=False)),
-              sql.Column('description', pytis.data.String(maxlen=32, not_null=True)),
+              sql.Column('description', pytis.data.String(not_null=True)),
              )
     inherits = (db.XChanges,)
     init_columns = ('rightid', 'description')

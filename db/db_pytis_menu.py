@@ -684,7 +684,7 @@ viewng('ev_pytis_menu_positions',
 
 _std_table_nolog('c_pytis_access_rights',
                  (P('rightid', pytis.data.String(maxlen=8)),
-                  C('description', pytis.data.String(maxlen=32), constraints=('not null',)),
+                  C('description', pytis.data.String(), constraints=('not null',)),
                   ),
                  """Available rights.  Not all rights make sense for all actions and menus.""",
                  init_values=(("'*'", _(u"'Všechna práva'"),),
