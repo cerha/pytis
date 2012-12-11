@@ -421,17 +421,34 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             sizer.Add((0, 0), 1)
             sizer.Add(wx_button(panel, label=_(u"Aplikovat"),
                                 tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
-                                command=Application.COMMAND_REFRESH()), 0, wx.ALL, 4)
-            #sizer.Add(wx_button(panel, label=_(u"Skrýt"), tooltip=_(u"Skrýt panel dotazu"),
-            #                    icon='close', noborder=True,
-            #                    callback=lambda e: self._hide_query_fields_panel()))
+                                command=Application.COMMAND_REFRESH()), 0, wx.ALL|wx.ALIGN_BOTTOM, 4)
+            sizer.Add(wx_button(panel, label=_(u"Přesunout nahoru"),
+                                tooltip=_(u"Přesunout  panel dotazu"),
+                                icon='move-up', noborder=True,
+                                callback=self._on_move_query_fields_button))
             panel.SetSizer(sizer)
         else:
             panel = None
             form = None
         self._query_fields_form = form
         return panel
-            
+
+    def _on_move_query_fields_button(self, event):
+        button = event.GetEventObject()
+        panel = button.GetParent()
+        sizer = self._top_level_sizer
+        if sizer.GetItem(panel).GetPosition()[1] == 0:
+            new_position = 1
+            icon = 'move-up'
+        else:
+            new_position = 0
+            icon = 'move-down'
+        bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
+        button.SetBitmapLabel(bitmap)
+        sizer.Detach(panel)
+        sizer.Insert(new_position, panel, 0, wx.EXPAND)
+        sizer.Layout()
+
     def _context_menu(self):
         """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
 
