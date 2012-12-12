@@ -3493,7 +3493,7 @@ class AttachmentStorage(object):
                 cls = lcg.Image
             elif ext in ('mp3', 'ogg'):
                 cls = lcg.Audio
-            elif ext == 'flv':
+            elif ext in ('flv', 'ogv', 'mp4'):
                 cls = lcg.Video
             elif ext == 'swf':
                 cls = lcg.Flash
