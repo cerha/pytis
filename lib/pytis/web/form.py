@@ -1377,8 +1377,8 @@ class BrowseForm(LayoutForm):
                     new_dir = pytis.data.ASCENDENT
                 else:
                     new_dir = pytis.data.DESCENDANT
-                result = g.link(result, self._link_ctrl_uri(g, sort=field.id,
-                                                            dir=self._SORTING_DIRECTIONS[new_dir]))
+                uri = self._link_ctrl_uri(g, sort=field.id, dir=self._SORTING_DIRECTIONS[new_dir])
+                result = g.a(result, href=uri)
                 if dir:
                     # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
                     sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
@@ -1611,9 +1611,9 @@ class BrowseForm(LayoutForm):
                 label = _('%(label)s on "%(prefix)s":', label=field.label, prefix=search_string)
             else:
                 label = field.label + ":"
-            links = [g.link(v, self._link_ctrl_uri(g, index_search=v)+'#found-record',
-                            # Translators: Index search controls link tooltip.
-                            title=_('Skip to the first record beginning with "%s"', v))
+            links = [g.a(v, href=self._link_ctrl_uri(g, index_search=v)+'#found-record',
+                         # Translators: Index search controls link tooltip.
+                         title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
             result.append(g.div(label +' '+ concat(links, separator=' ')))
         return (g.div(result, cls='index-search-controls'),)
@@ -1847,11 +1847,11 @@ class ListView(BrowseForm):
         anchor = self._anchor
         if anchor:
             anchor = anchor % self._Interpolator(lambda key: row[key].export())
-            heading = g.link('', None, name=anchor) + title
+            heading = g.a('', name=anchor) + title
         else:
             heading = title
         if layout.allow_index():
-            self._exported_row_index.append(g.link(title, '#'+anchor))
+            self._exported_row_index.append(g.li(g.a(title, href='#'+anchor)))
         parts = [g.h(heading, level=3)]
         if layout.image():
             img = self._export_field(context, self._image) 
@@ -1904,7 +1904,7 @@ class ListView(BrowseForm):
         g = context.generator()
         result = ()
         if self._exported_row_index:
-            result += (g.div(g.list(self._exported_row_index), cls="index"),)
+            result += (g.div(g.ul(*self._exported_row_index), cls="index"),)
         columns = self._list_layout.columns()
         if columns > 1:
             n, mod = divmod(len(rows), columns)

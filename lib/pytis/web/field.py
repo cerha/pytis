@@ -342,9 +342,9 @@ class FieldExporter(object):
                 if isinstance(link, collections.Callable):
                     pass # Ignore array item links here
                 elif isinstance(link, basestring):
-                    value = g.link(value, link)
+                    value = g.a(value, href=link)
                 else:
-                    value = g.link(value, link.uri(), title=link.title(), target=link.target())
+                    value = g.a(value, href=link.uri(), title=link.title(), target=link.target())
             if info is not None:
                 value += ' ('+ info +')'
         return value
@@ -694,9 +694,9 @@ class ChecklistFieldExporter(EnumerationFieldExporter):
                 uri = uri_provider(value)
                 if uri:
                     if type(uri) in (str, unicode):
-                        link = g.link(strval, uri)
+                        link = g.a(strval, href=uri)
                     else:
-                        link = g.link(strval, uri.uri(), title=uri.title(), target=uri.target())
+                        link = g.a(strval, href=uri.uri(), title=uri.title(), target=uri.target())
                     result += '&nbsp;['+ link +']'
             return result
         checkboxes = [g.div(checkbox(i, val, strval, display) )
