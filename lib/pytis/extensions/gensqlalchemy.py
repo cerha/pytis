@@ -1136,19 +1136,19 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             sqlalchemy.event.listen(self, 'after_create', command)
         
     def _create_rules(self):
-        def make_rule(action, kind, commands):
-            if commands is None:
+        def make_rule(action, instead_commands, also_commands):
+            if instead_commands is None and not also_commands:
                 return
-            if not commands and kind == 'ALSO':
-                return
+            # We have to attach also_commands to instead_commands because
+            # also_commands may contain references to NEW and OLD which are not
+            # available in ALSO rules.
+            kind = 'ALSO' if instead_commands is None and also_commands else 'INSTEAD'
+            commands = tuple(instead_commands or ()) + tuple(also_commands or ())
             rule = _Rule(self, action, kind, commands)
             sqlalchemy.event.listen(self, 'after_create', rule)
-        make_rule('INSERT', 'INSTEAD', self.on_insert())
-        make_rule('UPDATE', 'INSTEAD', self.on_update())
-        make_rule('DELETE', 'INSTEAD', self.on_delete())
-        make_rule('INSERT', 'ALSO', self.on_insert_also())
-        make_rule('UPDATE', 'ALSO', self.on_update_also())
-        make_rule('DELETE', 'ALSO', self.on_delete_also())
+        make_rule('INSERT', self.on_insert(), self.on_insert_also())
+        make_rule('UPDATE', self.on_update(), self.on_update_also())
+        make_rule('DELETE', self.on_delete(), self.on_delete_also())
 
     def _original_columns(self):
         return self.c
