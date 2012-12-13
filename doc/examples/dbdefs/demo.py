@@ -332,6 +332,18 @@ class TableFunction(sql.SQLPyFunction):
                 result.append([i, j, i * j])
         return result
 
+class MultilinePyArguments(sql.SQLPyFunction):
+    name = 'multilineargs'
+    arguments = tuple([sql.Column(n, pytis.data.Integer()) for n in 'abcdefghi'])
+    result_type = pytis.data.Integer()
+    stability = 'immutable'
+
+    @staticmethod
+    def multilineargs(a, b, c,
+                      d, e, f,
+                      g, h, i):
+        return a + b + c + d + e + f + g + h + i
+
 class SomeType(sql.SQLType):
     name = 'some_type'
     fields = (sql.Column('x', pytis.data.Integer()),

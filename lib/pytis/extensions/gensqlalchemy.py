@@ -1941,8 +1941,12 @@ class SQLPyFunction(SQLFunctional):
             if len(self.arguments) == 1:
                 l += '[0]'
             lines.append(l)
+        def strip_header(lines):
+            while lines and not lines[0].rstrip().endswith('):'):
+                lines.pop(0)
+            lines.pop(0)
         main_lines = self._method_source_lines(main_method_name, 0)
-        main_lines = main_lines[2:]
+        strip_header(main_lines)
         prefix = 'sub_'
         for name in dir(self):
             if name.startswith(prefix):
