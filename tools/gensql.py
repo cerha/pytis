@@ -566,7 +566,11 @@ class _GsqlSpec(object):
 
     def _convert_schemas(self, items):
         schemas = None
-        if _GsqlConfig.application == 'pytis' and self._name.startswith('cms_'):
+        if (_GsqlConfig.application == 'pytis' and
+            (self._name.startswith('cms_') or
+             (isinstance(self, _GsqlRaw) and
+              (self._sql.startswith('create or replace rule session_delete as on delete to cms_session') or
+               self._sql.startswith('CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order'))))):
             schemas = 'db.cms_schemas.value(globals())'
         elif self._schemas:
             for name, s_tuple in _GsqlConfig.convert_schemas:

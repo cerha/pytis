@@ -75,6 +75,7 @@ class CmsAccessLogData(sql.SQLTable):
 
 class X177(sql.SQLRaw):
     name = '@177'
+    schemas = db.cms_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """create or replace rule session_delete as on delete to cms_session do ( update cms_session_log_data set end_time=old.last_access WHERE session_id=old.session_id;);"""

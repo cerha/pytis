@@ -209,8 +209,8 @@ class _AccessRight(sqlalchemy.schema.DDLElement):
 def visit_access_right(element, compiler, **kw):
     o = element.object
     name = o.pytis_name()
-    if isinstance(element, SQLSchematicObject):
-        schema = '"%s".' % (element.schema,)
+    if isinstance(o, SQLSchematicObject):
+        schema = '"%s".' % (o.schema,)
     else:
         schema = ''
     if isinstance(o, SQLFunctional):
@@ -713,9 +713,10 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
-        if cls._is_specification(clsname):
-            if cls.table is not None:
-                cls.schemas = cls.table.schemas
+        if (cls._is_specification(clsname) and
+            cls.schemas is None and
+            cls.table is not None):
+            cls.schemas = cls.table.schemas
         _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
     
 def object_by_name(name, allow_external=True):
@@ -1502,6 +1503,8 @@ class SQLTable(_SQLTabular):
                 name = '%s__%s' % (self.name, trigger.name,)
                 if self.schema:
                     name = '%s__%s' % (self.schema, name,)
+                if _current_search_path:
+                    schemas = (_current_search_path,)
                 table = self.__class__
                 arguments = t[1:]
             sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: T)
