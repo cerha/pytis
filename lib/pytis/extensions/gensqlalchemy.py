@@ -966,10 +966,16 @@ class SQLObject(object):
                 sys.stderr.write("Unresolved dependency in %s: %s\n" %
                                  (self.__class__.__name__, self.depends_on,))
                 continue
-            if not isinstance(o, SQLObject):
+            if isinstance(o, SQLObject):
+                self.add_is_dependent_on(o)
+            else:
                 assert issubclass(o, SQLObject), ("Invalid dependency", o,)
-                o = object_by_class(o, search_path=self._search_path)
-            self.add_is_dependent_on(o)
+                # General dependency must include all schema instances
+                name = o.pytis_name()
+                for search_path in _expand_schemas(o.schemas):
+                    schema = search_path[0]
+                    o = object_by_name('%s.%s' % (schema, name,))
+                    self.add_is_dependent_on(o)
 
     def _create_access_rights(self):
         self._access_right_objects = [_AccessRight(self, right, group)
