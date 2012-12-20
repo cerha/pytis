@@ -439,7 +439,7 @@ class Column(pytis.data.ColumnSpec):
         return self._out
 
     def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name, inherited=False,
-                          foreign_constraints=None):
+                          foreign_constraints=None, check_constraints=None):
         alchemy_type = self.type().sqlalchemy_type()
         args = []
         references = self._references
@@ -462,7 +462,17 @@ class Column(pytis.data.ColumnSpec):
                 foreign_key = sqlalchemy.ForeignKey(*r_args, **kwargs)
                 args.append(foreign_key)
         if self._check:
-            args.append(sqlalchemy.CheckConstraint(self._check))
+            constraint = sqlalchemy.CheckConstraint(self._check)
+            if check_constraints is not None:
+                # In case the constraint contains non-ASCII characters, it has
+                # to be created as a table constraint otherwise SQLAlchemy
+                # would output incorrectly encoded.
+                for c in self._check:
+                    if ord(c) >= 128:
+                        check_constraints.append(constraint)
+                        break
+                else:
+                    args.append(constraint)
         if self._index and not isinstance(self._index, dict):
             index = True
         else:
@@ -1387,16 +1397,19 @@ class SQLTable(_SQLTabular):
         else:
             key_name = None
         columns = ()
+        check_constraints = []
         for i in cls.inherits:
             orig_table_name = i.pytis_name()
             columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name,
-                                                           orig_table_name, inherited=True)
+                                                           orig_table_name, inherited=True,
+                                                           check_constraints=check_constraints)
                                        for c in i.fields if c.id() not in field_names])
         foreign_constraints = []
-        columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name, table_name,
-                                                       foreign_constraints=foreign_constraints)
+        columns = columns + tuple([c.sqlalchemy_column (search_path, table_name, key_name, table_name,
+                                                        foreign_constraints=foreign_constraints,
+                                                        check_constraints=check_constraints)
                                    for c in cls.fields])
-        args = (table_name, metadata,) + columns
+        args = (table_name, metadata,) + columns + tuple(check_constraints)
         for check in cls.check:
             args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
