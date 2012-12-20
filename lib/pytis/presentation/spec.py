@@ -2463,23 +2463,25 @@ class ListLayout(object):
 
     Currently only implemented in web forms.
 
-    This layout defines an alternative presentation of lists of records.  The records are not
-    presented as a table, but as sections, where each record has its own heading, meta information
-    and text (description, annotation, message...).
+    This layout defines an alternative presentation of lists of records.  The
+    records are not presented as a table, but as sections, where each record
+    has its own heading, meta information and text (description, annotation,
+    message...).
     
     """
     def __init__(self, title, meta=(), layout=None, content=(), image=None, anchor=None,
-                 meta_labels=False, columns=1, allow_index=False):
+                 meta_labels=False, columns=1, allow_index=False, popup_actions=False):
         """Arguments:
 
-          title -- identifier of a field which will be used as a title for each item in the list (a
-            string).  An 'lcg.TranslatableText' instance can also be passed as an interpolation
-            template.  In this case the title will be produced by interpolation of formatted row
-            values within given string (with python string formatting syntax).
+          title -- identifier of a field which will be used as a title for each
+            item in the list (a string).  An 'lcg.TranslatableText' instance
+            can also be passed as an interpolation template.  In this case the
+            title will be produced by interpolation of formatted row values
+            within given string (with python string formatting syntax).
 
-          meta -- a sequence of field identifiers (strings) which will be printed underneath each
-            item's title as records meta information.  A single item may be passed as a string
-            directly.
+          meta -- a sequence of field identifiers (strings) which will be
+            printed underneath each item's title as records meta information.
+            A single item may be passed as a string directly.
 
           layout -- 'GroupSpec' instance describing the layout of a fields
             within each item's section.  If used (not None), the fields will be
@@ -2488,25 +2490,31 @@ class ListLayout(object):
             possible to pass a sequence of fields (or 'GroupFpec' instances)
             which will be turned into a vertical group automatically.
 
-          content -- free content provider a field identifier or a function.  If a function is used
-            it must accept one argument (a PresentedRow instance) and return 'lcg.Content' or None.
-            If a field identifier is used, the field value must be a string formatted as LCG
-            structured text.  The field text is parsed to produce the content.  A sequence of
-            functions or field identifiers may also be used to provide more pieces of content
-            concatenated together on the output.
+          content -- free content provider a field identifier or a function.
+            If a function is used it must accept one argument (a PresentedRow
+            instance) and return 'lcg.Content' or None.  If a field identifier
+            is used, the field value must be a string formatted as LCG
+            structured text.  The field text is parsed to produce the content.
+            A sequence of functions or field identifiers may also be used to
+            provide more pieces of content concatenated together on the output.
 
-          image -- identifier of a field which provides an image to be displayed along with each
-            record.
+          image -- identifier of a field which provides an image to be
+            displayed along with each record.
 
-          meta_labels -- boolean flag indicating, whether 'meta' fields should be labeled.  If a
-            sequence is passed, only meta fields with identifiers contained within the sequence
-            will be babeled.
+          meta_labels -- boolean flag indicating, whether 'meta' fields should
+            be labeled.  If a sequence is passed, only meta fields with
+            identifiers contained within the sequence will be babeled.
 
           columns -- number of columns; integer.
 
-          allow_index -- boolean flag indicating, whether an index of all displayed records should
-            be displayed at the top of the list.  Each item in this index makes it possible to jump
-            directly to the record.
+          allow_index -- boolean flag indicating, whether an index of all
+            displayed records should be displayed at the top of the list.  Each
+            item in this index makes it possible to jump directly to the
+            record.
+
+          popup_actions -- display row actions (if enabled) as a popup menu of
+            record title heading, rather than action buttons below the item
+            content.
 
         """
         if isinstance(layout, (list, tuple)):
@@ -2528,6 +2536,7 @@ class ListLayout(object):
         self._meta_labels = meta_labels
         self._columns = columns
         self._allow_index = allow_index
+        self._popup_actions = popup_actions
         
     def title(self):
         return self._title
@@ -2555,6 +2564,9 @@ class ListLayout(object):
 
     def allow_index(self):
         return self._allow_index
+
+    def popup_actions(self):
+        return self._popup_actions
 
 
 class Enumeration(object):

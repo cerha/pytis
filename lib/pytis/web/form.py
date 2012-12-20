@@ -1253,6 +1253,20 @@ class BrowseForm(LayoutForm):
                 # Strip, since LTree values look like '0.2.1', but TreeOrder like '.0.2.1'
                 return len(order.strip('.').split('.')) - 1
         return None
+
+
+    def _export_popup_ctrl(self, context, row, selector):
+        items = [lcg.PopupMenuItem(action.title(),
+                                   tooltip=action.descr(),
+                                   enabled=enabled,
+                                   uri=self._uri_provider(row, UriType.ACTION, action))
+                 for action, enabled in self._visible_actions(context, row)]
+        if items:
+            ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this record"),
+                                     selector)
+            return ctrl.export(context)
+        else:
+            return ''
     
     def _export_cell(self, context, row, n, field):
         value = self._export_field(context, field)
@@ -1264,15 +1278,7 @@ class BrowseForm(LayoutForm):
                 value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
             # &#8227 does not work in MSIE
             if self._row_actions:
-                items = [lcg.PopupMenuItem(action.title(),
-                                           tooltip=action.descr(),
-                                           enabled=enabled,
-                                           uri=self._uri_provider(row, UriType.ACTION, action))
-                         for action, enabled in self._visible_actions(context, row)]
-                if items:
-                    ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this row"),
-                                             'tr')
-                    value += ctrl.export(context)
+                value += self._export_popup_ctrl(context, row, 'tr')
         return value
 
     def _style(self, style):
@@ -1852,6 +1858,8 @@ class ListView(BrowseForm):
             heading = title
         if layout.allow_index():
             self._exported_row_index.append(g.li(g.a(title, href='#'+anchor)))
+        if self._row_actions and layout.popup_actions():
+            heading += self._export_popup_ctrl(context, row, 'h3')
         parts = [g.h(heading, level=3)]
         if layout.image():
             img = self._export_field(context, self._image) 
@@ -1885,7 +1893,7 @@ class ListView(BrowseForm):
             # Hack: Add a fake container to force the heading level start at 4.
             container = lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
-        if self._row_actions:
+        if self._row_actions and not layout.popup_actions():
             parts.extend(self._export_actions(context, row,
                                               self._uri_provider(row, UriType.LINK, None)))
         # We use only css class name from row_style, because we consider the
@@ -1903,6 +1911,9 @@ class ListView(BrowseForm):
     def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
         g = context.generator()
         result = ()
+        if self._row_actions:
+            context.resource('lcg.js')
+            context.resource('lcg-widgets.css')
         if self._exported_row_index:
             result += (g.div(g.ul(*self._exported_row_index), cls="index"),)
         columns = self._list_layout.columns()
