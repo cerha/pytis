@@ -1994,7 +1994,8 @@ class Select(_GsqlSpec):
                 raise Exception("Program error")
             elif (isinstance(rel, SelectRelation) and
                   rel.relation[0] == '(' and
-                  rel.relation.lower().find('from') >= 0):  # apparently a subselect
+                  (rel.relation.lower().find('from') >= 0 or
+                   rel.relation.lower().find('values') >= 0)):  # apparently a subselect
                 relation = self._convert_relation_name(rel)
                 d = ('%s = sqlalchemy.select(["*"], from_obj=["%s AS %s"])' %
                      (self._convert_local_name(self._convert_id_name(relation)),
