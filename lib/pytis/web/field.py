@@ -388,6 +388,7 @@ class StringFieldExporter(TextFieldExporter):
     
 
 class PasswordFieldExporter(StringFieldExporter):
+    _HANDLER = 'pytis.PasswordField'
     
     def _format(self, context):
         if self._showform:

@@ -349,6 +349,27 @@ pytis.RadioField = Class.create(pytis.Field, {
 
 });
 
+pytis.PasswordField = Class.create(pytis.Field, {
+    // Specific handler for a radio button group.
+
+    set_value: function(value) {
+	for (var i=0; i<this._ctrl.length; i++) {
+	    this._ctrl[i].value = value;
+	}
+    },
+
+    _set_editability: function($super, value) {
+	if (typeof(this._ctrl.length) == 'undefined') {
+	    $super(value);
+	} else {
+	    for (var i=0; i<this._ctrl.length; i++) {
+		this._ctrl[i].disabled = !value;
+	    }
+	}
+    }
+
+});
+
 pytis.ChoiceField = Class.create(pytis.Field, {
     // Specific handler for codebook field represented by HTML select control.
 
