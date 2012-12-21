@@ -371,14 +371,14 @@ class _GsqlSpec(object):
     def _convert_literal(self, literal):
         return literal.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
 
-    def _convert_value(self, value):
+    def _convert_value(self, value, ctype=None):
         if isinstance(value, int):
             return str(value)
         elif value.lower() == 'null':
             return 'None'
-        elif value.lower() in ("'f'", 'false',):
+        elif value.lower() in ("'f'", 'false',) and isinstance(ctype, pytis.data.Boolean):
             return 'False'
-        elif value.lower() in ("'t'", 'true',):
+        elif value.lower() in ("'t'", 'true',) and isinstance(ctype, pytis.data.Boolean):
             return 'True'
         elif value[0] == "'" and value[-1] == "'" and value[1:-1].find("'") == -1:
             return value.replace('\n', '\\n')
@@ -484,11 +484,11 @@ class _GsqlSpec(object):
         else:
             if isinstance(column.default, tuple):
                 if len(column.default) == 1:
-                    default = self._convert_value(column.default[0])
+                    default = self._convert_value(column.default[0], ctype)
                 else:
                     default = 'XXX:default:%s' % (column.default,)
             else:
-                default = self._convert_value(column.default)
+                default = self._convert_value(column.default, ctype)
         c_references = column.references
         if c_references:
             if isinstance(c_references, tuple):
@@ -3572,7 +3572,7 @@ class _GsqlRaw(_GsqlSpec):
         self._convert_schemas(items)
         items.append('    @classmethod')
         items.append('    def sql(class_):')
-        items.append('        return """%s"""' % (self._sql,))
+        items.append('        return """%s"""' % (self._sql.replace('\\', '\\\\'),))
         items.append(self._convert_depends())
         result = string.join(items, '\n') + '\n'
         self._convert_add_raw_dependencies(self._sql)
