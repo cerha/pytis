@@ -90,7 +90,7 @@ end;
 
 class Indexed(sql.SQLTable):
     name = 'indexed'
-    fields = (sql.Column('x', pytis.data.LTree()),
+    fields = (sql.Column('x', pytis.data.LTree(), index=dict(method='gist')),
               sql.Column('y', pytis.data.LTree()),
               sql.Column('z', pytis.data.LTree()),
               )
