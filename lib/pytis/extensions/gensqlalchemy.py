@@ -1111,7 +1111,14 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
       delete_order -- the same as 'insert_order' but it applies to deletes
       no_insert_columns -- sequence of names of columns (strings) to ignore
         when performing INSERT action on the object
-      no_update_columns -- the same as 'no_insert_columns'
+      no_update_columns -- the same as 'no_insert_columns' but it applies to
+        updates
+      special_insert_columns -- sequence of tripples (TABLE, COLUMN_NAME, VALUE);
+        each of the tripples defines assignment of special VALUE (SQL
+        expression as basestring) to COLUMN_NAME (basestring column name) of
+        TABLE (specification class or string table name)
+      special_update_columns -- the same as 'special_insert_columns' but it
+        applies to updates
 
     The class also defines default methods for rule handling, see
     'on_insert()', 'on_update()', 'on_delete()', 'on_insert_also()',
@@ -1128,6 +1135,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     delete_order = None
     no_insert_columns = ()
     no_update_columns = ()
+    special_insert_columns = ()
+    special_update_columns = ()
 
     def _init(self, *args, **kwargs):
         super(_SQLTabular, self)._init(*args, **kwargs)
@@ -1175,7 +1184,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _hidden_rule_columns(self, tabular):
         return []
     
-    def _rule_assignments(self, tabular, excluded):
+    def _rule_assignments(self, tabular, excluded, special):
         assignments = {}
         all_columns = self._hidden_rule_columns(tabular)
         for c in self._original_columns():
@@ -1196,7 +1205,14 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                 if table_column_name not in assignments:
                     # A column may appear more than once in a view.
                     # Let's use its first version here to be consistent with gensql.
-                    assignments[table_column_name] = sqlalchemy.literal_column('new.'+name)
+                    for t, n, v in special:
+                        tt = t if isinstance(t, basestring) else t.pytis_name()
+                        if tabular.pytis_name() == tt and n == table_column_name:
+                            value = v
+                            break
+                    else:
+                        value = 'new.' + name
+                    assignments[table_column_name] = sqlalchemy.literal_column(value)
         return assignments
 
     def _rule_condition(self, tabular):
@@ -1254,7 +1270,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             return self._default_rule_commands()
         commands = []
         for tabular in self._rule_tables(self.insert_order):
-            assignments = self._rule_assignments(tabular, self.no_insert_columns)
+            assignments = self._rule_assignments(tabular, self.no_insert_columns,
+                                                 self.special_insert_columns)
             c = tabular.insert().values(**assignments)
             commands.append(c)
         return commands
@@ -1269,7 +1286,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             return self._default_rule_commands()
         commands = []
         for tabular in self._rule_tables(self.update_order):
-            assignments = self._rule_assignments(tabular, self.no_update_columns)
+            assignments = self._rule_assignments(tabular, self.no_update_columns,
+                                                 self.special_update_columns)
             if not assignments:
                 continue
             condition = self._rule_condition(tabular)

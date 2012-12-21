@@ -205,9 +205,10 @@ class EditableView(sql.SQLView):
     name = 'editable_view'
     schemas = ((Private, 'public',),)
     update_order = (Foo, Bar,)
+    special_update_columns = ((Foo, 'n', 'length(new.description)',),)
     @classmethod
     def query(class_):
-        return sqlalchemy.select([sql.c.Foo.id, sql.c.Foo.description.label('d1'),
+        return sqlalchemy.select([sql.c.Foo.id, sql.c.Foo.description.label('d1'), sql.c.Foo.n,
                                   sql.c.Bar.id.label('id2'), sql.c.Bar.description.label('d2')],
                                  from_obj=[sql.t.Foo.join(sql.t.Bar)])
 

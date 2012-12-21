@@ -2495,11 +2495,12 @@ class _GsqlViewNG(Select):
                                not isinstance(rel.relation, SelectRelation):
                                 rels.append(rel)
                     return rels
-                def updatable(c):
+                def update_value(c):
                     return c.insert if kind == 'insert' else c.update
                 real_order = relations(order)
                 real_order_relations = []
                 no_update_columns = []
+                special_update_columns = []
                 for r in real_order:
                     table_name = make_table_name(r)
                     if kind != 'insert' and isinstance(r.relation, Select):
@@ -2512,9 +2513,16 @@ class _GsqlViewNG(Select):
                             if c.name is None:
                                 continue
                             rel, col = _gsql_column_table_column(c.name)
-                            if rel == table_alias and col != 'oid' and updatable(c):
-                                real_order_relations.append(make_table_name(r))
-                                no_update_columns = [cc.alias for cc in self._columns if not updatable(cc)]
+                            if rel == table_alias and col != 'oid' and update_value(c):
+                                t_name = make_table_name(r)
+                                real_order_relations.append(t_name)
+                                for cc in self._columns:
+                                    cc_alias = cc.alias
+                                    u_value = update_value(cc)
+                                    if not u_value:
+                                        no_update_columns.append(cc_alias)
+                                    elif u_value != 'new.%s' % (cc_alias,):
+                                        special_update_columns.append((t_name, cc_alias, u_value,))
                                 break
                 order_string = string.join([self._convert_name(o.lower()) for o in real_order_relations], ', ')
                 if order_string:
@@ -2523,6 +2531,9 @@ class _GsqlViewNG(Select):
                 if no_update_columns:
                     column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
                     items.append('    no_%s_columns = (%s)' % (kind, column_string,))
+                if special_update_columns:
+                    column_string = string.join([repr(c) for c in special_update_columns], ', ') + ','
+                    items.append('    special_%s_columns = (%s)' % (kind, column_string,))
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
@@ -3079,6 +3090,23 @@ class _GsqlView(_GsqlSpec):
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
                     items.append ('        return %s' % (command_string,))
+            def update_value(c):
+                return c.insert if kind == 'insert' else c.update
+            no_update_columns = []
+            special_update_columns = []
+            for cc in self._columns:
+                cc_alias = cc.alias
+                u_value = update_value(cc)
+                if not u_value:
+                    no_update_columns.append(cc_alias)
+                elif u_value != 'new.%s' % (cc_alias,):
+                    special_update_columns.append((self._convert_name(self._tables[0]), cc_alias, u_value.replace('\n', ' '),))
+            if no_update_columns:
+                column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
+                items.append('    no_%s_columns = (%s)' % (kind, column_string,))
+            if special_update_columns:
+                column_string = string.join(["(%s, '%s', '%s')" % c for c in special_update_columns], ', ') + ','
+                items.append('    special_%s_columns = (%s)' % (kind, column_string,))
         add_rule('insert', self._insert)
         add_rule('update', self._update)
         add_rule('delete', self._delete)
