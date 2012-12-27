@@ -100,23 +100,18 @@ pytis.BrowseFormHandler = Class.create({
 
     bind_controls: function(panel) {
 	if (panel) {
-	    ['.prev-page-button', 
-	     '.next-page-button',
-	     'select[name=offset]',
-	     'select[name=limit]'
-	    ].each(function(selector) {
-		var ctrl = panel.down(selector);
-		if (ctrl) {
-		    var event_type = 'click';
-		    if (ctrl.nodeName == 'SELECT') {
-			ctrl.onchange = null; // Deactivate the original handler.
-			event_type = 'change';
-		    }
-		    ctrl.observe(event_type, function(event) {
-			this.reload_form_data(ctrl);
-			event.stop();
-		    }.bind(this));
-		}
+	    panel.select('.prev-page-button, .next-page-button').each(function(ctrl) {
+		ctrl.observe('click', function(event) {
+		    this.reload_form_data(ctrl);
+		    event.stop();
+		}.bind(this));
+	    }.bind(this));
+	    panel.select('select').each(function(ctrl) {
+		ctrl.onchange = null; // Deactivate the original handler.
+		ctrl.observe('change', function(event) {
+		    this.reload_form_data(ctrl);
+		    event.stop();
+		}.bind(this));
 	    }.bind(this));
 	    this.bind_search_button(panel);
 	}
