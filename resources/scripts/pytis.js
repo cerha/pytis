@@ -83,6 +83,7 @@ pytis.BrowseFormHandler = Class.create({
 		    this.bind_controls(this.ajax_container.down('.list-form-controls', 0));
 		    this.bind_controls(this.ajax_container.down('.list-form-controls', 1));
 		    document.body.style.cursor = "default";
+		    if (this.form.down('#found-record')) window.location.hash = '#found-record';
 		}
 		catch (e) {
 		    // Errors in asynchronous handlers are otherwise silently
@@ -113,13 +114,22 @@ pytis.BrowseFormHandler = Class.create({
 		    event.stop();
 		}.bind(this));
 	    }.bind(this));
+	    panel.select('.index-search-controls a').each(function(ctrl) {
+		var params = ctrl.href.replace(/;/g, '&').parseQuery();
+		ctrl.observe('click', function(event) {
+		    this.reload_form_data(ctrl, {index_search: params['index_search'],
+						 sort: params['sort'],
+						 dir: params['dir']});
+		    event.stop();
+		}.bind(this));
+	    }.bind(this));
 	    this.bind_search_button(panel);
 	}
     },
 
-    reload_form_data: function(ctrl) {
+    reload_form_data: function(ctrl, params) {
 	var form = ctrl.up('form');
-	var parameters = {};
+	var parameters = (typeof(params) != 'undefined' ? params : {});
 	form.getElements().each(function(x) {
 	    if (x.tagName != 'BUTTON')
 		parameters[x.name] = x.value;
