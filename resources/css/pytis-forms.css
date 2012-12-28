@@ -64,13 +64,13 @@
 
 .pytis-form.browse-form table {
     border-collapse: collapse;
-    border: 1px solid #bcd;
+    border: 1px solid #ddd;
     margin-top: .3em;
 }
 .pytis-form.browse-form table td, .pytis-form.browse-form table th {
     padding: 2pt;
     vertical-align: top;
-    border: 1px solid #bcd;
+    border: 1px solid #ddd;
 }
 .pytis-form.browse-form table td .tree-node {
     white-space: nowrap;
@@ -79,7 +79,7 @@
 .pytis-form.browse-form table tr { background-color: #f8fafb; }
 .pytis-form.browse-form table tr.even { background-color: #f1f3f2; }
 .pytis-form.browse-form table tr.group-heading th { text-align: left; }
-.pytis-form.browse-form table th { background-color: #d8e0f0; }
+.pytis-form.browse-form table th { background-color: #eee; }
 .pytis-form.browse-form table td .popup-menu-ctrl-widget a {
     display: block;
     float: right;
@@ -215,7 +215,7 @@
 
 .pytis-form .group span.color-display { 
     padding: 0 0.5em;
-    border: 1px solid #bcd;
+    border: 1px solid #bbb;
 }
 .pytis-form .group span.color-value { 
     float: left;
@@ -240,7 +240,7 @@
 .pytis-form.edit-form .group input.text,
 .pytis-form.edit-form textarea,
 .pytis-form.edit-form select, #login, #password { 
-    border: 1px solid #bcd;
+    border: 1px solid #bbb;
 }
 .pytis-form textarea.fullsize {
     width: 100%;
