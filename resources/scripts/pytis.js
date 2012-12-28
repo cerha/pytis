@@ -69,6 +69,7 @@ pytis.BrowseFormHandler = Class.create({
 	} else {
 	    this.bind_search_button(this.form.down('.list-form-controls', 0));
 	    this.bind_search_button(this.form.down('.list-form-controls', 1));
+	    this.bind_table_headings(this.form.down('table'));
 	}
     },
 
@@ -79,11 +80,13 @@ pytis.BrowseFormHandler = Class.create({
 	    parameters: parameters,
 	    onSuccess: function(transport) {
 		try {
-		    this.ajax_container.update(transport.responseText);
-		    this.bind_controls(this.ajax_container.down('.list-form-controls', 0));
-		    this.bind_controls(this.ajax_container.down('.list-form-controls', 1));
+		    var container = this.ajax_container
+		    container.update(transport.responseText);
+		    this.bind_controls(container.down('.list-form-controls', 0));
+		    this.bind_controls(container.down('.list-form-controls', 1));
+		    this.bind_table_headings(container.down('table'));
 		    document.body.style.cursor = "default";
-		    if (this.form.down('#found-record')) window.location.hash = '#found-record';
+		    if (container.down('#found-record')) window.location.hash = '#found-record';
 		}
 		catch (e) {
 		    // Errors in asynchronous handlers are otherwise silently
@@ -127,16 +130,23 @@ pytis.BrowseFormHandler = Class.create({
 	}
     },
 
+    bind_table_headings: function(table) {
+	if (table)
+	    table.select('th.column-heading').each(function(th) {
+		if (th.hasClassName('sortable-column'))
+		    th.observe('click', this.on_table_heading_clicked.bind(this));
+	    }.bind(this));
+    },
+
     reload_form_data: function(ctrl, params) {
-	var form = ctrl.up('form');
 	var parameters = (typeof(params) != 'undefined' ? params : {});
-	form.getElements().each(function(x) {
+	ctrl.up('form').getElements().each(function(x) {
 	    if (x.tagName != 'BUTTON')
 		parameters[x.name] = x.value;
 	});
 	parameters[ctrl.name] = ctrl.value;
 	document.body.style.cursor = "wait";
-	form.disable();
+	this.ajax_container.select('form.list-form-controls').each(function(f) { f.disable(); });
 	this.load_form_data(parameters);
     },
 
@@ -148,6 +158,27 @@ pytis.BrowseFormHandler = Class.create({
 	}
     },
 
+    on_table_heading_clicked: function(event) {
+	var th = event.element();
+	if (th.nodeName != 'TH') th = th.up('th');
+	var colid_cls = $w(th.className).find(function(x) { return x.startsWith('column-id-') });
+	if (colid_cls) {
+	    var column_id = colid_cls.substring(10);
+	    var dir = 'asc';
+	    if (th.down('.sort-direction-asc')) dir='desc';
+	    if (th.down('.sort-direction-desc')) dir='';
+	    var parameters = {form_name: this.form_name, sort: column_id, dir: dir};
+	    if (this.ajax_container && this.uri) {
+		document.body.style.cursor = "wait";
+		this.form.select('form.list-form-controls').each(function(f) { f.disable(); });
+		this.load_form_data(parameters);
+	    } else {
+		window.location.search = $H(parameters).toQueryString();
+	    }
+	    event.stop();
+	}
+    },
+    
     on_show_search_controls: function(event) {
 	var search_controls = $(this.form).down('div.query');
 	search_controls.show();

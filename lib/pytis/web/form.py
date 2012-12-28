@@ -1373,25 +1373,18 @@ class BrowseForm(LayoutForm):
     def _export_headings(self, context):
         g = context.generator()
         current_sorting_column, current_dir = self._sorting[0]
-        def label(field):
-            result = field.column_label
-            if not field.virtual:
-                if field.id == current_sorting_column:
-                    dir = current_dir
-                else:
-                    dir = None
-                if dir in (None, pytis.data.DESCENDANT):
-                    new_dir = pytis.data.ASCENDENT
-                else:
-                    new_dir = pytis.data.DESCENDANT
-                uri = self._link_ctrl_uri(g, sort=field.id, dir=self._SORTING_DIRECTIONS[new_dir])
-                result = g.a(result, href=uri)
-                if dir:
-                    # Characters u'\u25be' and u'\u25b4' won't display in MSIE...
-                    sign = dir == pytis.data.ASCENDENT and '&darr;' or '&uarr;'
-                    result += ' '+ g.span(sign, cls='sorting-sign')
-            return result
-        return [g.th(label(f)) for f in self._column_fields]
+        def sorting_indicator(field):
+            sorting = find(field.id, self._sorting, key=lambda x: x[0])
+            if sorting:
+                return g.span('', cls='sort-indicator sort-direction-%s sort-position-%d' %
+                              (self._SORTING_DIRECTIONS[sorting[1]],
+                               self._sorting.index(sorting) + 1))
+            else:
+                return ''
+        return [g.th(f.column_label + sorting_indicator(f),
+                     cls='column-heading column-id-%s' % f.id
+                     + (not f.virtual and ' sortable-column' or ''))
+                 for f in self._column_fields]
 
     def _conditions(self, condition=None):
         conditions = [c for c in (self._condition, self._filter, self._query_condition, condition,
