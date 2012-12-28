@@ -310,19 +310,6 @@
 }
 
 
-.list-form-controls button.prev-page-button span {
-    background-image: url(/_resources/previous.png);
-    padding-left: 18px;
-}
-.list-form-controls button.next-page-button span {
-    background-image: url(/_resources/next.png);
-    padding-right: 20px;
-    background-position: right center;
-}
-.list-form-controls button.search-button span {
-    background-image: url(/_resources/search.png);
-    padding-left: 18px;
-}
 
 /* Border-less table:
 .pytis-form.browse-form.mapping table {
