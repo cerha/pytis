@@ -155,6 +155,7 @@ class Form(lcg.Content):
         result = g.div(self._export_form(context, form_id), cls=cls, id=form_id)
         if javascript:
             result += g.script(javascript)
+        context.resource('pytis-forms.css')
         return result
 
     def _export_form(self, context, form_id):
