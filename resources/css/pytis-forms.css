@@ -260,7 +260,7 @@
 .pytis-form.edit-form .group input.file,
 .pytis-form.edit-form .group input.text,
 .pytis-form.edit-form textarea,
-.pytis-form.edit-form select, #login, #password { 
+.pytis-form.edit-form select { 
     border: 1px solid #bbb;
 }
 .pytis-form textarea.fullsize {
