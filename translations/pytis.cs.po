@@ -1,5 +1,5 @@
 # Pytis translations
-# Copyright (C) 2006-2012 Brailcom, o.p.s.
+# Copyright (C) 2006-2013 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
 # Tomas Cerha <cerha@brailcom.org>, 2006.
 #
@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-01-03 21:05+0100\n"
-"PO-Revision-Date: 2012-11-06 17:16+0100\n"
+"PO-Revision-Date: 2013-01-03 21:08+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -191,9 +191,8 @@ msgid "All items"
 msgstr "Všechny položky"
 
 #: ../lib/pytis/web/form.py:1266
-#, fuzzy
 msgid "Popup the menu of actions for this record"
-msgstr "Zobrazit menu akcí pro tento řádek"
+msgstr "Zobrazit menu akcí pro tento záznam"
 
 #: ../lib/pytis/web/form.py:1351
 msgid "Sum"
@@ -225,7 +224,7 @@ msgstr[2] "Nalezeno %d záznamů odpovídajících hledanému výrazu."
 
 #: ../lib/pytis/web/form.py:1418
 msgid "Loading form data..."
-msgstr ""
+msgstr "Načítám data formuláře..."
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
@@ -609,7 +608,7 @@ msgstr "Jazyk"
 
 #: ../resources/scripts/pytis.js:99
 msgid "Failed loading form."
-msgstr ""
+msgstr "Načtení formuláře se nezdařilo."
 
 #~ msgid "ASCII"
 #~ msgstr "ASCII"
