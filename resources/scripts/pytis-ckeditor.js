@@ -53,8 +53,8 @@ pytis.HtmlField.plugin = function(editor) {
     }
 
     /* Create insertSpaceBefore and insertSpaceAfter menu items */
-    function insert_space(direction) {
-	var element = ck_get_ascendant(editor, 'div');
+    function insert_space(direction, element) {
+	var element = ck_get_ascendant(editor, 'div') || ck_get_ascendant(editor, 'table');
 	var paragraph = new CKEDITOR.dom.element('p');
 	if (direction == 'before')
 	    paragraph.insertBefore(element);
@@ -94,7 +94,7 @@ pytis.HtmlField.plugin = function(editor) {
 	editor.contextMenu.addListener(function(element) {
             if (element)
 		element = element.getAscendant('a', true) || element.getAscendant('div', true)
-		|| element.getAscendant('span', true);
+		|| element.getAscendant('span', true) || element.getAscendant('table', true);
             if (element && !element.data('cke-realelement')){
 		var result = {};
 		for (var i=0; i<types.length; i++){
@@ -102,7 +102,8 @@ pytis.HtmlField.plugin = function(editor) {
 			result['editPytis'+types[i]] = CKEDITOR.TRISTATE_OFF;
                     }
 		}
-		if ((element.getName() == 'div') && (element.isReadOnly())){
+		if (((element.getName() == 'div') && (element.isReadOnly()))
+		    || element.getName() == 'table'){
                     result['insertSpaceBefore'] = CKEDITOR.TRISTATE_OFF;
                     result['insertSpaceAfter'] = CKEDITOR.TRISTATE_OFF;
 		}
