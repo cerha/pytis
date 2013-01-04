@@ -451,6 +451,7 @@ class HtmlFieldExporter(MultilineFieldExporter):
             context.resource('flash.js')
             context.resource('ckeditor.css')
             context.resource('ASCIIMathML.js')
+            context.resource('ckeditor.css')
             toolbar = (
                 ('clipboard',   ('Cut', 'Copy', 'Paste', 'PasteText', #'PasteFromWord',
                                  '-', 'Undo', 'Redo')),
@@ -468,12 +469,12 @@ class HtmlFieldExporter(MultilineFieldExporter):
                 ('pytis',       ('PytisImage', 'PytisAudio', 'PytisVideo', 'PytisResource',
                                  'PytisExercise', 'PytisMathML')),
                 ('links',       ('Link', 'Unlink', 'Anchor')),
-                ('insert',      ('HorizontalRule', 'PageBreak', 'SpecialChar')), #'Table', 'Smiley',
+                ('insert',      ('Table','HorizontalRule', 'PageBreak', 'SpecialChar')), #'Smiley',
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
                           language=context.lang(),
                           removePlugins = 'forms,image',
-                          contentsCss = context.uri(context.resource('ckeditor.css')),
+                          contentsCss = context.uri(lcg.Stylesheet('ckeditor-content.css')),
                           entities=False,
                           entities_greek=False,
                           entities_latin=False,

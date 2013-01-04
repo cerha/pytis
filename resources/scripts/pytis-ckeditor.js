@@ -168,6 +168,22 @@ pytis.HtmlField.plugin = function(editor) {
         evt.data.html = evt.data.html.replace(new RegExp("<(?!\\s*\\/?(" + r_list + ")\\b)[^>]+>", 'gi'), '');
     });
 
+    /* Simplify table dialog */
+    CKEDITOR.on( 'dialogDefinition', function( ev )
+        {
+            var dialog_definition = ev.data.definition;
+            var dialog_name = ev.data.name;
+            if (dialog_name == 'table')
+            {
+                dialog_definition.removeContents('advanced');
+                var info_tab = dialog_definition.getContents('info');
+                var unwanted = ['txtBorder', 'cmbAlign', 'txtWidth', 'txtHeight', 'txtCellSpace', 'txtCellPad',
+                                'txtSummary'];
+                for (var i=0; i<unwanted.length; i++){
+                    info_tab.remove(unwanted[i]);
+                }
+            }
+        });
 }
 
 
