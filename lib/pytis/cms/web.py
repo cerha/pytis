@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -48,9 +48,22 @@ class Specification(wiking.Specification):
             return name
         else:
             return None
+
+
+class RestrictedPytisModule(wiking.PytisModule):
+    """wiking.PytisModule which passes authorization requests to Application.authorize()."""
+    
+    def _authorized(self, req, action, record=None, **kwargs):
+        roles = wiking.module('Application').authorized_roles(req, self, action=action, record=record)
+        if req.check_roles(roles):
+            return True
+        elif wiking.Roles.OWNER in roles:
+            return  self._check_owner(req, action, record=record)
+        else:
+            return False
     
 
-class Languages(wiking.PytisModule):
+class Languages(RestrictedPytisModule):
     class Spec(Specification, cms.Languages):
         pass
 
@@ -58,7 +71,7 @@ class Languages(wiking.PytisModule):
         return [str(r['lang'].value()) for r in self._data.get_rows()]
 
 
-class Menu(wiking.PytisModule):
+class Menu(RestrictedPytisModule):
 
     class Spec(Specification, cms.Menu):
         pass
@@ -298,7 +311,7 @@ class Menu(wiking.PytisModule):
             return None
 
 
-class UserRoles(wiking.PytisModule):
+class UserRoles(RestrictedPytisModule):
     class Spec(Specification, cms.UserRoles):
         pass
 
@@ -326,7 +339,7 @@ class UserRoles(wiking.PytisModule):
                 for row in self._data.get_rows(uid=uid)]
 
     
-class Rights(wiking.PytisModule):
+class Rights(RestrictedPytisModule):
     class Spec(Specification, cms.Rights):
         pass
 
@@ -337,7 +350,7 @@ class Rights(wiking.PytisModule):
                 for row in self._data.get_rows(menu_item_id=menu_item_id, action_name=action)]
 
 
-class Users(wiking.PytisModule):
+class Users(RestrictedPytisModule):
     class Spec(Specification, cms.Users):
         pass
 
@@ -362,7 +375,7 @@ class Users(wiking.PytisModule):
             return None
     
 
-class Session(wiking.PytisModule, wiking.Session):
+class Session(RestrictedPytisModule, wiking.Session):
     """Implement Wiking session management by storing session information in the database."""
     class Spec(Specification):
         table = 'cms_session'
@@ -403,7 +416,7 @@ class Session(wiking.PytisModule, wiking.Session):
                                       pd.EQ('session_key', pd.Value(pd.DateTime(), session_key))))
             
 
-class SessionLog(wiking.PytisModule):
+class SessionLog(RestrictedPytisModule):
     class Spec(wiking.Specification):
         table = 'cms_session_log_data'
         fields = [pp.Field(_id) for _id in
@@ -419,7 +432,7 @@ class SessionLog(wiking.PytisModule):
         self._data.insert(row)
 
 
-class AccessLog(wiking.PytisModule):
+class AccessLog(RestrictedPytisModule):
     class Spec(wiking.Specification):
         table = 'cms_access_log_data'
         fields = [pp.Field(_id) for _id in
@@ -485,22 +498,15 @@ class Application(wiking.CookieAuthentication, wiking.Application):
             encoded = binascii.b2a_hex(h.digest()).strip()
         return hash_value == encoded
     
-    def authorize(self, req, module, action=None, record=None, **kwargs):
+    def authorized_roles(self, req, module, action=None, record=None):
         try:
             roles = self._RIGHTS[module.name()]
         except KeyError:
-            roles = self._module('Menu').permitted_roles(req, module, action=action,
-                                                         record=record, **kwargs)
+            roles = self._module('Menu').permitted_roles(req, module, action=action, record=record)
         else:
             if action is not None and isinstance(roles, dict):
                 roles = roles.get(action, ())
-        if req.check_roles(roles):
-            return True
-        elif wiking.Roles.OWNER in roles and record is not None and req.user() is not None \
-                 and isinstance(module, wiking.PytisModule):
-            return module.check_owner(req.user(), record)
-        else:
-            return False
+        return roles
     
     def menu(self, req):
         return self._module('Menu').menu(req)
@@ -552,6 +558,9 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
         """
         return []
 
+    def _authorized(self, req):
+        return req.check_roles(wiking.module('Application').authorized_roles(req, self))
+    
     def _default_action(self, req):
         return 'view'
     
@@ -564,10 +573,10 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
         return result
 
 
-class EmbeddablePytisModule(wiking.PytisRssModule, EmbeddableModule):
+class EmbeddablePytisModule(RestrictedPytisModule, wiking.PytisRssModule, EmbeddableModule):
     """Base class for pytis modules which may be embedded into page content.
 
-    This class only modifies the generic class `wiking.PytisModule' to be usable within Pytis CMS
+    This class only modifies the generic class `RestrictedPytisModule' to be usable within Pytis CMS
     pages.  Documentation of the parent class should be used for Pytis CMS module development.  It
     applies completely except for the following specific customizations:
 
@@ -637,7 +646,7 @@ class SubstitutionProvider(wiking.Module):
         return {}
 
 
-class DataSubstitutionProvider(wiking.PytisModule, SubstitutionProvider):
+class DataSubstitutionProvider(RestrictedPytisModule, SubstitutionProvider):
     """Base class for modules providing variable substitution from a pytis data object.
 
     This class makes it possible to simply define substitution variables
@@ -706,7 +715,7 @@ class DataSubstitutionProvider(wiking.PytisModule, SubstitutionProvider):
                 return default
 
 
-class Themes(wiking.PytisModule):
+class Themes(RestrictedPytisModule):
     class Spec(Specification, cms.Themes):
         pass
 
@@ -734,7 +743,7 @@ class HttpAttachmentStorageBackend(wiking.Module, wiking.RequestHandler):
     address of the server side storage must be set in the environment variable
     'PYTIS_CMS_ATTACHMENTS_STORAGE' on the client side.
 
-    Override the method '_authorized()' to control authorization per directory.
+    Override the method '_authorize()' to control authorization per directory.
 
     """
     def __init__(self, *args, **kwargs):
