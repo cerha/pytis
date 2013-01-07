@@ -303,6 +303,8 @@
     background-position: center left;
     background-repeat: no-repeat;
     padding: 3px;
+    background-repeat: no-repeat;
+    background-attachment: center left;
 }
 .actions button[disabled] span, .list-form-controls button[disabled] span {
     opacity: 0.5;
