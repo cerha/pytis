@@ -1,0 +1,52 @@
+/* Styles for the edited contents (inside the editor iframe). */
+
+div.lcg-exercise {
+    background: #eee;
+    width: 100%;
+    border: 1px solid #ddd; 
+    padding: 2px;
+    margin: 3px 0;
+    font-family: sans-serif;
+}
+
+a:link { color: #03b; }
+a:visited { color: #03b; }
+a:link:hover, a:visited:hover { color: #d60; }
+a.lcg-audio { color: #03b; text-decoration: underline; }
+
+img { margin: .5em .8em; }
+img[align="left"] { margin: .25em 1em .25em 0; }
+img[align="right"] { margin: .25em 0 .25em 1em; }
+
+blockquote {
+    padding: .5em .8em .5em .8em;
+    background: #F0F8FF;
+}
+
+blockquote footer {
+    background: #00FFFF;
+}
+
+*.cke-explicit-language {
+    background: lightyellow;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, td, th {
+    border: 1px solid black !important;
+}
+
+th, td {
+    min-width: 3em;
+}
+
+th {
+    background: #eee;
+}
+
+td {
+    background: #fff;
+}

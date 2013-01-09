@@ -1,0 +1,76 @@
+/* Styles for CKEditor UI dialogs. */
+
+div.cke_dialog_body p.ckeditor-success {
+    color: green;
+}
+div.cke_dialog_body p.ckeditor-error {
+    color: red;
+}
+
+.cke_skin_kama td.cke_dialog_contents {
+    background: #eee;
+}
+
+.cke_skin_kama div.cke_dialog_ui_input_file,
+.cke_skin_kama div.cke_dialog_ui_input_file iframe {
+    height: 32px;
+    width: 400px;
+}
+.cke_skin_kama span.cke_dialog_ui_button {
+    margin: 5px 0;
+}
+div.cke_dialog_body .cke_dialog_ui_file label {
+    display: block;
+    width: 0px;
+    height: 0px;
+}
+
+div.cke_dialog_body .attachment-selector {
+    width: 350px;
+}
+
+div.cke_dialog_body .attachment-selector label {
+    display: block;
+    width: 0px;
+    height: 0px;
+}
+
+div.cke_dialog_body div.preview-container {
+    width: 200px;
+    height: 200px;
+    background: #eee;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+div.cke_dialog_body img#image-preview {
+    max-height: 100%;
+}
+div.cke_dialog_body #video-preview, div.cke_dialog_body #audio-preview {
+    width: 100%;
+    height: 100%;
+}
+
+div.cke_dialog_body #exercise-help {
+    width: 100%;
+    height: 450px;
+}
+
+div.cke_dialog_body #exercise-sound-file-preview, div.cke_dialog_body #exercise-audio-version-preview {
+    width: 100%;
+    height: 100%;
+}
+
+#math-preview-container {
+    width: 100%;
+    text-align: center;
+}
+
+#math-preview {
+    margin-top: 20px;
+    display: inline-block;
+}
+
+#math-preview math * {
+    font-size: 16pt !important;
+}
