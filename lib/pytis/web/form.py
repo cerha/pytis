@@ -1733,7 +1733,8 @@ class BrowseForm(LayoutForm):
                                              cls='query-field'),
                                      g.hidden('show_query_field', show_query_field and '1' or ''),
                                      # Translators: Search button label.
-                                     g.button(g.span(_(u"Search")), cls='search-button')),
+                                     g.button(g.span(_(u"Search")), cls='search-button'),
+                                     g.button(g.span(_(u"Cancel")), cls='cancel-search')),
                                     cls='query' + (show_filters and ' with-filter' or ''),
                                     style=not show_query_field and 'display:none' or None)
                 content.insert(0, query_field)

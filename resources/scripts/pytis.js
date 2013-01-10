@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009, 2010, 2011, 2012 Brailcom, o.p.s.
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -67,8 +67,8 @@ pytis.BrowseFormHandler = Class.create({
 	    else
 		this.load_form_data(parameters);
 	} else {
-	    this.bind_search_button(this.form.down('.list-form-controls', 0));
-	    this.bind_search_button(this.form.down('.list-form-controls', 1));
+	    this.bind_search_controls(this.form.down('.list-form-controls', 0));
+	    this.bind_search_controls(this.form.down('.list-form-controls', 1));
 	    this.bind_table_headings(this.form.down('table'));
 	}
     },
@@ -126,7 +126,7 @@ pytis.BrowseFormHandler = Class.create({
 		    event.stop();
 		}.bind(this));
 	    }.bind(this));
-	    this.bind_search_button(panel);
+	    this.bind_search_controls(panel);
 	}
     },
 
@@ -150,11 +150,15 @@ pytis.BrowseFormHandler = Class.create({
 	this.load_form_data(parameters);
     },
 
-    bind_search_button: function(panel) {
+    bind_search_controls: function(panel) {
 	if (panel) {
-	    var button = panel.down('.paging-controls button.search-button');
-	    if (button)
-		button.observe('click', this.on_show_search_controls.bind(this));
+	    var search_button = panel.down('.paging-controls button.search-button');
+	    if (search_button)
+		search_button.observe('click', this.on_show_search_controls.bind(this));
+	    var cancel_button = panel.down('div.query button.cancel-search');
+	    if (cancel_button)
+		cancel_button.observe('click', this.on_hide_search_controls.bind(this));
+	    console.log("**", search_button, cancel_button);
 	}
     },
 
@@ -190,6 +194,24 @@ pytis.BrowseFormHandler = Class.create({
 		var button = panel.down('.paging-controls button.search-button');
 		if (button)
 		    button.hide();
+	    }
+	}
+	event.stop();
+    },
+
+    on_hide_search_controls: function(event) {
+	var search_controls = $(this.form).down('div.query');
+	search_controls.hide();
+	search_controls.down('input[type=hidden]').value = '0';
+	for (var i=0; i<2; i++) {
+	    var panel = this.form.down('.list-form-controls', i);
+	    if (panel) {
+		var button = panel.down('.paging-controls button.search-button');
+		if (button) {
+		    button.show();
+		    if (i==0)
+			button.focus();
+		}
 	    }
 	}
 	event.stop();
