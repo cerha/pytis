@@ -158,7 +158,6 @@ pytis.BrowseFormHandler = Class.create({
 	    var cancel_button = panel.down('div.query button.cancel-search');
 	    if (cancel_button)
 		cancel_button.observe('click', this.on_hide_search_controls.bind(this));
-	    console.log("**", search_button, cancel_button);
 	}
     },
 
