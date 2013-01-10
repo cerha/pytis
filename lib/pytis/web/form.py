@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2012 Brailcom, o.p.s.
+# Copyright (C) 2006-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1496,7 +1496,7 @@ class BrowseForm(LayoutForm):
         data.close()
         if n == 0:
             if self._message(0):
-                # The message about search/filter results is already printed.
+                # The message about search/filter results is printed in _export_message().
                 result = None
             else:
                 # Translators: Used in empty list forms.  "Records" refers to
@@ -1515,7 +1515,8 @@ class BrowseForm(LayoutForm):
                             total=g.strong(str(count)))
             result = self._wrap_exported_rows(context, exported_rows, summary, count, page, pages)
         return [x for x in
-                (self._export_controls(context, form_id, count, page, pages),
+                (self._export_message(context, count),
+                 self._export_controls(context, form_id, count, page, pages),
                  result,
                  self._export_controls(context, form_id, count, page, pages, bottom=True))
                 if x]
@@ -1618,6 +1619,13 @@ class BrowseForm(LayoutForm):
             result.append(g.div(label +' '+ concat(links, separator=' ')))
         return (g.div(result, cls='index-search-controls'),)
 
+    def _export_message(self, context, count):
+        msg = self._message(count)
+        if msg:
+            return context.generator().div(msg, cls='results')
+        else:
+            return None
+
     def _export_controls(self, context, form_id, count, page, pages, bottom=False):
         g = context.generator()
         html_id = form_id + (bottom and '-top' or '-bottom')
@@ -1628,20 +1636,6 @@ class BrowseForm(LayoutForm):
                                                 if v is not None])
                         or self._filter_fields)
         show_query_field = self._show_query_field
-        if not bottom:
-            msg = self._message(count)
-            if msg:
-                content.append(g.div(msg, cls='results'))
-            query_id = 'filter-' + html_id
-            if self._allow_query_field:
-                content.append(g.div((g.label(_(u"Search expression") +': ', query_id),
-                                      g.field(self._query, name='query', id=query_id,
-                                              cls='query-field'),
-                                      g.hidden('show_query_field', show_query_field and '1' or ''),
-                                      # Translators: Search button label.
-                                      g.button(g.span(_(u"Search")), cls='search-button')),
-                                     cls='query' + (show_filters and ' with-filter' or ''),
-                                     style=not show_query_field and 'display:none' or None))
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
             submit_button = g.button(g.span(_("Change filters")), cls='apply-filters')
@@ -1732,6 +1726,17 @@ class BrowseForm(LayoutForm):
                 cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
                 content.append(g.div(controls, cls=cls))
         if content:
+            if not bottom and self._allow_query_field:
+                query_id = 'filter-' + html_id
+                query_field = g.div((g.label(_(u"Search expression") +': ', query_id),
+                                     g.field(self._query, name='query', id=query_id,
+                                             cls='query-field'),
+                                     g.hidden('show_query_field', show_query_field and '1' or ''),
+                                     # Translators: Search button label.
+                                     g.button(g.span(_(u"Search")), cls='search-button')),
+                                    cls='query' + (show_filters and ' with-filter' or ''),
+                                    style=not show_query_field and 'display:none' or None)
+                content.insert(0, query_field)
             if self._name is not None:
                 content.append(g.hidden('form_name', self._name))
             if self._user_sorting:
