@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -147,13 +147,21 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             else:
                 raise SQLException("Invalid result type", function_type)
         result_type_prefix = 'SETOF ' if function.multirow else ''
-        body = function.body().strip()
-        command = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n%s\n$$ LANGUAGE %s %s' %
-                   (function.schema, function.name, arguments, result_type_prefix, result_type, body,
-                    function._LANGUAGE, function.stability,))
+        query_prefix = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n' %
+                        (function.schema, function.name, arguments, result_type_prefix, result_type,))
+        query_suffix = ('\n$$ LANGUAGE %s %s' % (function._LANGUAGE, function.stability,))
         if function.security_definer:
-            command += ' SECURITY DEFINER'
-        self.connection.execute(command)
+            query_suffix += ' SECURITY DEFINER'
+        body = function.body()
+        if isinstance(body, basestring):
+            body = body.strip()
+            command = query_prefix + body + query_suffix
+            self.connection.execute(command)
+        else:
+            query = body
+            query.pytis_prefix = query_prefix
+            query.pytis_suffix = query_suffix
+            self.connection.execute(query)
         function.dispatch.after_create(function, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def visit_trigger(self, trigger, create_ok=False):
@@ -1927,6 +1935,8 @@ class SQLFunction(SQLFunctional):
     This class doesn't define anything new, see its superclass for information
     about function definition.
 
+    In addition to other classes, 'body()' may return 'SQLAlchemy.Select' instance.
+
     """
     _LANGUAGE = 'sql'
 
@@ -2164,6 +2174,8 @@ def _make_sql_command(sql, *multiparams, **params):
             output = unicode(compiled)
         if hasattr(sql, 'pytis_prefix'):
             output = sql.pytis_prefix + output
+        if hasattr(sql, 'pytis_suffix'):
+            output = output + sql.pytis_suffix
     return output
 def _dump_sql_command(sql, *multiparams, **params):
     output = _make_sql_command(sql, *multiparams, **params)

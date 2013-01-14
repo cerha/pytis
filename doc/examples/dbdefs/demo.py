@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -258,6 +258,16 @@ class FileFunc(sql.SQLFunction):
     arguments = (sql.Column('x', pytis.data.Integer()), sql.Column('y', pytis.data.Integer()),)
     result_type = pytis.data.Integer()
     stability = 'immutable'
+
+class SelectFunc(sql.SQLFunction):
+    name = 'foo_increment'
+    arguments = (sql.Column('inc', pytis.data.Integer()),)
+    result_type = pytis.data.Integer()
+    multirow = True
+    stability = 'stable'
+
+    def body(self):
+        return sqlalchemy.select([sql.c.Foo.n + sqlalchemy.literal_column('$1')], from_obj=[sql.t.Foo])
 
 class PyFunc(sql.SQLPyFunction):
     name = 'times'
