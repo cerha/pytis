@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -176,6 +176,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                       ('key_id', 'name', 'fresh',),
                                       config.dbconnection)
             rows = data.select_map(identity)
+            data.close()
             count = len(rows)
         except pytis.data.DBException:
             data = None
@@ -209,7 +210,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if crypto_password:
                     config.dbconnection.set_crypto_password(crypto_password)
         decrypted_names = set()
-        if crypto_password and data is not None:
+        if count > 0 and crypto_password and data is not None:
             crypto_password_value = pytis.data.sval(crypto_password)
             while True:
                 established_names = set()
