@@ -1,0 +1,31 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2011 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Agregační funkce =
+
+Agregační funkce lze použít pro seskupení vybraných řádků formuláře podle zadaného sloupce/ů za použití pěti funkcí: Součet, Průměr, Minimum a Maximum a Počet. Agregaci si lze také představit jako shluknutí několika řádků do jednoho. Sestavování je podobné kontingenčním tabulkám v Excelu.
+
+Obsah: @TOC@
+
+== Popis agregačních funkcí ==
+
+=== Součet === 
+
+Součet (nebo Suma) udává celkový součet hodnot daného sloupce v rámci seskupených záznamů.  Tato funkce nebere v úvahu záznamy, které neobsahují žádnou hodnotu a sčítat je možné pouze číselná data.
+
+ === Průměr === 
+
+Tato funkce vypočítá aritmetický průměr z vybraných hodnot zadaného sloupce (nebo-li součet hodnot dělený jejich počtem). Hotnotu můžeme počítat pouze z číselných dat stejně jako u funkce Součet.
+
+ === Minimum === 
+
+Touto funkcí lze určit nejmenší hodnotu ve sloupci ze seskupených záznamů.  Lze ji použít jak na číselné tak textové hodnoty. V případě textových hodnot se určuje dle prvního písmena abecedy, přičemž buňky, které neobsahují žádnou hodnotu, se ignorují.
+
+ === Maximum === 
+
+Oproti Minimu touto funkcí určujeme nejvyšší hodnotu zadaného sloupce. U textových dat vypíše poslední hodnotu v abecedě.
+
+ === Počet === 
+Pokud potřebujeme získat počet jedinečných výskytů hodnoty v určitém sloupci, lze pro to využít funkci Počet. Je možné ji použít na všechny typy dat.

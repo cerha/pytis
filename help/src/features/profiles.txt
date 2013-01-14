@@ -5,9 +5,7 @@
 
 = Profily formulářů =
 
-Panel nástrojů obsahuje ovládací prvek pro přepínání a správu tzv. „profilů“.
-Profil je souhrn parametrů zobrazení formuláře uložených pod určitým názvem.
-Nad týmiž daty v témže formuláři tak lze vytvářet různé náhledy.
+Profil je možné formulovat jako uživatelské nastavení zobrazení formulářů pro zúžení výběru, řazení, případně skrytí nebo zobrazení hodnot s možností následného uložení a další možností úprav. Uživatel Profily vytváří zejména k rychlému zobrazení výsledků, aniž by nastavení musel definovat vždy při otevření formuláře.
 
 Obsah: @TOC@
 
@@ -45,9 +43,17 @@ přejmenovávat.  Také je možné se vrátit k dříve uloženému nastavení, 
 zahodit veškeré uživatelské přizpůsobení profilu (u profilů definovaných ve
 specifikaci).
 
-Správu lze provádět skrze kontextové menu, které vyvoláme stiskem pravého
-tlačítka myši na ovládacím prvku v panelu nástrojů.  Všechny příkazy tohoto
-menu se vždy vztahují k právě vybranému profilu.
+Správu profilů provádíme kliknutím pravého tlačítka myši na horní roletové menu se seznamem profilů. Zde má uživatel na výběr možnosti „/Uložit/" nebo „/Uložit jako nový/", "smazat", přejmenovat a "použít automaticky při otevření formuláře".
+
+/Uložit /znamená přepsat stávající (momentálně nastavený) Profil právě nadefinovaným. Bohužel, pokud uživatel omylem klikne na tuto nabídku, ale záměrem bylo uložit zcela nový Profil, předchozí nastavení již nelze vrátit a původní uložený Profil je trvale přepsán. „/Vrátit poslední uložené nastavení/" je možné pouze tehdy, dokud aktuální nastavení Profilu ještě nebylo uloženo.
+
+Nabídka /Uložit jako nový/ umožní vytvoření a pojmenování nového Profilu pod vlastním názvem, který uživateli při příštím použití naznačí, jak daný formulářový výstup bude vypadat.
+
+Je možné editovat, ukládat a přepsat i Systémový Profil, pokud si jej uživatel přizpůsobí k obrazu svému. U tohoto Profilu má však vždy možnost /„Vrátit výchozí nastavení aplikace" /, tedy tohoto systémového Profilu.
+
+Kontextová nabídka „/Přejmenovat/" umožňuje změnit název *pouze* uživatelsky definovaného Profilu, nikoli systémového.
+
+Poslední možností úprav je nabídka „/Smazat/". Stejně jako u přejmenování systém dovoluje mazat pouze uživatelské Profily a to tak, že si uživatel nastaví Profil, který chce smazat a pravým tlačítkem myši tuto volbu zadá.
 
 
 == Indikace změny profilu ==

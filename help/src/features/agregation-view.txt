@@ -1,0 +1,121 @@
+# -*- coding: utf-8; mode: structured-text -*-
+# Copyright (c) 2011 Brailcom, o.p.s.
+# This is part of the Pytis User Manual.
+# See the file pytis.cs.txt for copying conditions.
+
+= Agregované náhledy =
+
+Agregovaný náhled je jiná forma pohledu na data, zjednodušeně řečeno si můžete definovat, podle kterého sloupce chcete data seskupit a následně sečíst, zprůměrovat či ukázat minimum/maximum a počet.
+
+Obsah: @TOC@
+
+== Volby parametrů pro agregování ==
+
+Pro zobrazení agregačního náhledu je třeba definovat jeden nebo více
+seskupovacích sloupců a jednu nebo více agregačních funkcí (součet, počet,
+minimum, maximum, průměr) nad jedním nebo více sloupci původního náhledu.
+Ve výsledném náhledu pak bude pro každou hodnotu seskupovacího sloupce
+(resp. pro každou kombinaci hodnot seskupovacích sloupců) jeden řádek
+a tento řádek bude obsahovat výsledky definovaných agregačních operací.
+
+== Vyvolání agregační náhledu ==
+
+Agregační náhled se vyvolá z toolbaru pomocí kliku na ikonu f(x) a výběru
+příkazu "Zobrazit agregovaný náhled".
+
+//
+
+# obrázek "zobrazit agregovaný náhled
+[/img/imgwiki/clanky/id531/obr3.png]
+
+//
+
+Uživateli je následně zobrazen dialog s přehledem všech sloupců daného náhledu
+a možnosti zaškrtnou, podle kterého sloupce (sloupců) se mají data seskupit a
+pro které sloupce se mají vypočítat požadované agregace.
+
+//
+
+# obrázek "výběru parametrů
+[/img/imgwiki/clanky/id531/obr4.png]
+
+//
+
+Po potvrzení by se měl objevit agregovaný náhled.  Samotný agregovaný náhled má
+podobu duálního formuláře, kde v horní části jsou vlastní agregovaná data a v
+dolní části se pak ukazuje formulář s původními daty filtrovaný podle hodnot
+seskupovacího sloupce (sloupců) v horním (agregovaném formuláři).
+
+//
+
+# obrázek agregovaného formuláře
+[/img/imgwiki/clanky/id531/obr5.png]
+
+//
+
+== Opuštění agregačního náhledu ==
+
+Agregační náhled je umístěn na zásobníku oken jako jakýkoli jiný náhled.  Je
+tedy možno přepnout se do jiného okna, aniž by byl náhled zavřen, a je možno se
+tak k němu následně vrátit. Pokud chceme náhled definitivně uzavřít, uzavřeme
+ho stejným způsobem jako jakýkoli jiný náhled (např. klávesou ESC).
+
+== Příklad použití ==
+
+*Požadavek:*
+
+/Zjistit průměrnou dobu strávenou jedním pracovníkem za první
+pololetí roku 2010 podle projektů a pracovišť/.
+
+*Řešení:*
+
+V náhledu na čistou pracovní dobu zaměstnanců zeditovat období na 1.1.2010
+až 30.6.2010.
+V okně pro výběr parametrů agregovaného náhledu vybrat seskupovací sloupce
+Projekt a Pracoviště a zaškrnout agregační funkci Průměr pro
+sloupce "Čas v budově h." a "Timesheet h.".
+
+//
+
+# výsledek agregace nad dvěma sloupci
+[/img/imgwiki/clanky/id531/obr6.png]
+
+//
+
+== Často kladené otázky ==
+
+=== Zohlední agregovaný náhled i filtr nad původními daty? ===
+
+Ano. V agregovaném náhledu se uplatní jen řádky, které vyhovovaly původnímu
+filtru.
+
+=== Je možno filtrovat i nad agregovaným náhledem? ===
+
+Ano. Při vyvolání filtračního dialogu nad agregovaným náhledem jsou již ve
+filtračním dialogu k dispozici pouze seskupovací a agregované sloupce
+a je možno podle nich sestavovat podmínky. To umožňuje rychle a snadno
+vyhodnocovat mnohé výstupní aspekty.
+
+=== Je možno aplikovat původní agregace i na agregované náhledy? ===
+
+Ano. Původní řešení agregací zobrazovaných pod titulky sloupečků funguje
+i nadále, takže nad již agregovaným náhledem je možno si i nadále
+zapnout pro všechny sloupce zobrazení minima, maxima, součtu nebo průměru.
+
+=== Jak je tomu s přístupovými právy agregovaných náhledů? ===
+
+Agregační náhled je možno vyvolat nad každým řádkovým formulářem, ke kterému má
+uživatel přístupová oprávnění. Samotný agregační náhled přebírá potom
+přístupová práva původního formuláře. Má-li tedy např. uživatel k nějakému
+náhledu práva exportu, bude mít právo exportu i nad agregovaným náhledem.
+
+=== Je nutno při každém vyvolání agregovaného náhledu znovu naklikat seskupovací sloupce a agregace? === 
+
+Ne. Systém si pamatuje posledně navolené argumenty agregovaného náhledu a při
+příštím vyvolání výběrového dialogu se objeví jako zaškrtnuté dříve vybrané položky.
+
+=== Je možno změnit filtrovací podmínku pro neagregovaná data nad již agregovaným náhledem? ===
+
+Ne. Chceme-li změnit zdrojová data pro agregovaný náhled, musíme agregovaný
+náhled ukončit, pak změnit filtr v původním náhledu a agregační náhled vyvolat
+znovu.

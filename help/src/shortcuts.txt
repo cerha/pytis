@@ -54,6 +54,15 @@ Pro přístup do menu jsou definovány tyto zkratky:
 
 V otevřeném menu se lze dále pokybovat šipkami.  Více také viz [help:pytis/menu].
 
+== Příkazy při práci se stromem ==
+
+Následující příkazy fungují pouze v případě kdy se nacházíte ve stromově řazeném náhledu.
+
+| + 		| Otevřít/Zavřít strom | 
+| Ctrl-+ 	|  Otevřít/Zavřít podstrom | 
+| Shift-+ 	|  Otevřít celý strom | 
+| Shift-- 	|  Zavřít celý strom | 
+| Ctrl-Shift-+ |  Zvolit úroveň otevření stromu | 
 
 == Příkazy v rámci formuláře ==
 

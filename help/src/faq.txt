@@ -17,10 +17,6 @@ několika rad:
    zkušený uživatel by měl využívat především klávesnice.  Více informací
    naleznete v kapitole [help:pytis/shortcuts].
 
- * Používejte takzvaný in-line režim vkládání a editace dat.  Vhodný je zejména
-   při práci s méně obsáhlými náhledy (např. číselníky).  Více viz
-   [help:pytis/inline].  Editační formulář používejte střídmě.
-
  * Maximum informací lze nejrychleji vytěžit z řádkových formulářů.  Seznamte
    se s následujícími funkcemi: [help:pytis/sorting], [help:pytis/grouping],
    [help:pytis/jumping], [help:pytis/searching],

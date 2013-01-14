@@ -1,0 +1,5 @@
+= Duální řádkový formulář s více záložkami =
+ 
+Duální řádkový formulář s více záložkami je specificky typ [help:pytis/DualForm duálního formuláře], který nabízí v dolním 
+okně zobrazení více formulářů. Uživatel vybírá konkrétní náhled klikem myší na záložku. V pravé části záložkové lišty má možnost kliknout na 
+šipku mířící dolů a rychle přepnout na libovolnou záložku ze seznamu.
