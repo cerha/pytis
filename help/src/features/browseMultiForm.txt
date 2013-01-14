@@ -1,3 +1,5 @@
+# -*- coding: utf-8; mode: structured-text -*-
+
 = Duální řádkový formulář s více záložkami =
  
 Duální řádkový formulář s více záložkami je specificky typ [help:pytis/DualForm duálního formuláře], který nabízí v dolním 

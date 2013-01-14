@@ -26,7 +26,7 @@ příkazu "Zobrazit agregovaný náhled".
 //
 
 # obrázek "zobrazit agregovaný náhled
-[/img/imgwiki/clanky/id531/obr3.png]
+[agregationView3.png]
 
 //
 
@@ -37,7 +37,7 @@ pro které sloupce se mají vypočítat požadované agregace.
 //
 
 # obrázek "výběru parametrů
-[/img/imgwiki/clanky/id531/obr4.png]
+[agregationView4.png]
 
 //
 
@@ -49,7 +49,7 @@ seskupovacího sloupce (sloupců) v horním (agregovaném formuláři).
 //
 
 # obrázek agregovaného formuláře
-[/img/imgwiki/clanky/id531/obr5.png]
+[agregationView5.png]
 
 //
 
@@ -78,7 +78,7 @@ sloupce "Čas v budově h." a "Timesheet h.".
 //
 
 # výsledek agregace nad dvěma sloupci
-[/img/imgwiki/clanky/id531/obr6.png]
+[agregationView6.png]
 
 //
 
