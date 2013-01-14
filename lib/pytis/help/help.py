@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -479,7 +479,7 @@ class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
         g = self._generator
         tree = lcg.FoldableTree(tooltip=_("Expand/collapse complete menu hierarchy"))
         tree.set_parent(context.node())
-        return g.div((g.h(g.a(_("Navigace"), hotkey="3"), 3),
+        return g.div((g.h(g.a(_("Navigace"), accesskey="3"), 3),
                       tree.export(context)),
                      cls='menu-panel')
 
