@@ -123,9 +123,6 @@
     margin: 0.8em 0;
     padding: .2em;
 }
-.list-form-controls .results {
-    font-weight: bold;
-}
 .list-form-controls .filter,
 .list-form-controls .paging-controls.one-page {
     text-align: right;
@@ -149,6 +146,9 @@
 
 .pytis-form.browse-form #found-record {
     background-color: #fc8 !important;
+}
+.pytis-form.browse-form .results {
+    font-weight: bold;
 }
 
 .pytis-form.list-view div.list-item {
