@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -482,7 +482,7 @@ class DBConnection:
         self._crypto_password = None
         db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
                                              ('key_name_', pytis.data.sval('pytis'),))
-        if self._crypto_password is None:
+        if self._crypto_password is None and db_key:
             self._crypto_password = rsa_encrypt(db_key, password)
 
     def crypto_password(self):
