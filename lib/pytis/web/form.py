@@ -257,14 +257,18 @@ class FieldForm(Form):
         return result
 
     def _interpolate(self, context, template, row):
+        def export_field(fid):
+            if row.visible(fid):
+                return self._export_field(context, self._fields[fid])
+            else:
+                return ''
         if isinstance(template, collections.Callable):
             template = template(row)
-        result = template.interpolate(lambda fid: self._export_field(context, self._fields[fid]))
         # Translation is called immediately to force immediate interpolation
         # (with the current row data).  Delayed translation (which invokes the
         # interpolation) would use invalid row data (the 'PresentedRow'
         # instance is reused and filled with table data row by row).
-        return context.localize(result)
+        return context.localize(template.interpolate(export_field))
     
 
 class LayoutForm(FieldForm):
@@ -342,41 +346,50 @@ class LayoutForm(FieldForm):
         for i, item in enumerate(group.items()):
             if isinstance(item, collections.Callable):
                 item = item(self._row)
-            if isinstance(item, basestring):
-                field = self._fields[item]
-                if omit_first_field_label and i == 0:
-                    label = None
-                else:
-                    label = self._export_field_label(context, field)
-                ctrl = self._export_field(context, field, editable=self._EDITABLE)
-                help = self._export_field_help(context, field)
-                if help is not None:
-                    ctrl += help
-                if field.spec.compact():
-                    if label:
-                        ctrl = g.div(label) + ctrl
-                    content.append(ctrl, needs_panel=True)
-                else:
-                    # Codebook field display is not numeric even though the underlying type is...
-                    right_aligned = (self._ALIGN_NUMERIC_FIELDS and not field.type.enumerator()
-                                     and isinstance(field.type, pytis.data.Number))
-                    content.append(ctrl, label=label, right_aligned=right_aligned,
-                                   needs_panel=True, fullsize=False)
+            if item is None:
+                pass
+            elif isinstance(item, basestring):
+                if self._row.visible(item):
+                    field = self._fields[item]
+                    if omit_first_field_label and i == 0:
+                        label = None
+                    else:
+                        label = self._export_field_label(context, field)
+                    ctrl = self._export_field(context, field, editable=self._EDITABLE)
+                    help = self._export_field_help(context, field)
+                    if help is not None:
+                        ctrl += help
+                    if field.spec.compact():
+                        if label:
+                            ctrl = g.div(label) + ctrl
+                        content.append(ctrl, needs_panel=True)
+                    else:
+                        # Codebook field display is not numeric even though the
+                        # underlying type is...
+                        right_aligned = (self._ALIGN_NUMERIC_FIELDS and not field.type.enumerator()
+                                         and isinstance(field.type, pytis.data.Number))
+                        content.append(ctrl, label=label, right_aligned=right_aligned,
+                                       needs_panel=True, fullsize=False)
             elif isinstance(item, GroupSpec):
                 subgroup_number += 1
                 subgroup_id = '%s-%d' % (id or 'group', subgroup_number)
                 label = None
                 if group.orientation() == Orientation.VERTICAL \
-                        and item.orientation() == Orientation.HORIZONTAL \
-                        and isinstance(item.items()[0], basestring):
-                    field = self._fields[item.items()[0]]
-                    # Nested horizontal group which starts with a labeled field will be aligned
-                    # within the current vertical group if possible.
-                    if not field.spec.compact():
-                        label = self._export_field_label(context, field)
-                content.append(self._export_group(context, item, inner=True, id=subgroup_id,
-                                                  omit_first_field_label=label is not None),
-                               label=label, fullsize=label is None)
+                        and item.orientation() == Orientation.HORIZONTAL:
+                    items = copy.copy(list(item.items()))
+                    while items and isinstance(items[0], basestring):
+                        fid = items.pop(0)
+                        if self._row.visible(fid):
+                            field = self._fields[fid]
+                            # Nested horizontal group which starts with a
+                            # labeled field will be aligned within the current
+                            # vertical group if possible.
+                            if not field.spec.compact():
+                                label = self._export_field_label(context, field)
+                exported_group = self._export_group(context, item, inner=True, id=subgroup_id,
+                                                    omit_first_field_label=label is not None)
+                if exported_group:
+                    content.append(exported_group, label=label, fullsize=label is None)
             elif isinstance(item, lcg.Content):
                 item.set_parent(self.parent())
                 content.append(item.export(context))
@@ -398,9 +411,12 @@ class LayoutForm(FieldForm):
             cells = [td(i, label, content_)
                      for i, (label, content_, fullsize, right_aligned)
                      in enumerate(content.content())]
-            result = [g.table([g.tr(cells)], cellspacing=0, cellpadding=0,
-                              cls='horizontal-group' + (not omit_first_field_label
-                                                        and ' expanded' or ''))]
+            if cells:
+                result = [g.table([g.tr(cells)], cellspacing=0, cellpadding=0,
+                                  cls='horizontal-group' + (not omit_first_field_label
+                                                            and ' expanded' or ''))]
+            else:
+                result = []
         else:
             def td(label, content_, fullsize, right_aligned, fullspan, normalspan):
                 if fullsize:
@@ -423,22 +439,28 @@ class LayoutForm(FieldForm):
                     fullspan = 2
                 rows = [g.tr(td(label, content_, fullsize, right_aligned, fullspan, normalspan))
                         for label, content_, fullsize, right_aligned in content.content()]
-                result = [g.table(rows, cls='vertical-group')]
+                if rows:
+                    result = [g.table(rows, cls='vertical-group')]
+                else:
+                    result = []
             else:
                 result = [item[1] for item in content.content()]
-        cls = 'group' + (id and ' ' + id or '')
-        if group.label():
-            result = g.fieldset(group.label()+':', result, cls=cls)
-        elif content.needs_panel():
-            # If there are any items which need a panel and there is no
-            # fieldset panel, add a panel styled div.
-            result = g.div(result, cls=cls)
-        elif not inner:
-            # This fieldset fixes MSIE display of top-level horizontal groups...
-            result = g.fieldset(None, result, cls='outer')
+        if result:
+            cls = 'group' + (id and ' ' + id or '')
+            if group.label():
+                result = g.fieldset(group.label()+':', result, cls=cls)
+            elif content.needs_panel():
+                # If there are any items which need a panel and there is no
+                # fieldset panel, add a panel styled div.
+                result = g.div(result, cls=cls)
+            elif not inner:
+                # This fieldset fixes MSIE display of top-level horizontal groups...
+                result = g.fieldset(None, result, cls='outer')
+            else:
+                result = concat(result, separator="\n")
+            return result
         else:
-            result = concat(result, separator="\n")
-        return result
+            return ''
 
     def _export_field_label(self, context, field):
         if field.label:
@@ -1109,7 +1131,8 @@ class BrowseForm(LayoutForm):
         else:
             self._tree_order_column = None
         self._columns = columns or view.columns()
-        self._column_fields = cfields = [self._fields[cid] for cid in self._columns]
+        self._column_fields = cfields = [self._fields[cid] for cid in self._columns
+                                         if self._row.visible(cid)]
         self._align = dict([(f.id, 'right') for f in cfields
                             if not f.type.enumerator() and isinstance(f.type, pd.Number)])
         self._custom_message = message
@@ -1268,7 +1291,7 @@ class BrowseForm(LayoutForm):
             return ctrl.export(context)
         else:
             return ''
-    
+
     def _export_cell(self, context, row, n, field):
         value = self._export_field(context, field)
         if field.id == self._column_fields[0].id:
@@ -1360,13 +1383,13 @@ class BrowseForm(LayoutForm):
     
     def _export_group_heading(self, context):
         group_heading = self._view.group_heading()
-        if group_heading is None:
-            return None
         if isinstance(group_heading, lcg.TranslatableText):
             heading = self._interpolate(context, group_heading, self._row)
-        else:
+        elif group_heading is not None and self._row.visible(group_heading):
             field = self._fields[group_heading]
             heading = self._export_field(context, field)
+        else:
+            return None
         g = context.generator()
         return g.tr(g.th(heading, colspan=len(self._column_fields)), cls='group-heading')
     
@@ -1849,7 +1872,7 @@ class ListView(BrowseForm):
         if isinstance(layout.title(), lcg.TranslatableText):
             title = self._interpolate(context, layout.title(), row)
         else:
-            title = self._row[layout.title()].export()
+            title = row[layout.title()].export()
         anchor = self._anchor
         if anchor:
             anchor = anchor % self._Interpolator(lambda key: row[key].export())
@@ -1861,7 +1884,7 @@ class ListView(BrowseForm):
         if self._row_actions and layout.popup_actions():
             heading += self._export_popup_ctrl(context, row, 'h3')
         parts = [g.h(heading, level=3)]
-        if layout.image():
+        if self._image and row.visible(self._image.id):
             img = self._export_field(context, self._image) 
             if img:
                 parts.append(g.span(img, cls='list-layout-image'))
@@ -1869,20 +1892,21 @@ class ListView(BrowseForm):
             meta = [(labeled and
                      g.span(field.label+":", cls='label id-'+ field.id)+" " or '') + \
                     self._export_field(context, field)
-                    for field, labeled in self._meta]
-            parts.append(g.div(concat(meta, separator=', '), cls='meta'))
+                    for field, labeled in self._meta if row.visible(field.id)]
+            if meta:
+                parts.append(g.div(concat(meta, separator=', '), cls='meta'))
         if layout.layout():
             parts.append(self._export_group(context, layout.layout()))
         for item in layout.content():
             if isinstance(item, collections.Callable):
-                content = item(self._row)
+                content = item(row)
                 if content is None:
                     continue
                 cls = 'dynamic-content'
-            elif self._row[item].value() is not None:
+            elif row.visible(item) and row[item].value() is not None:
                 field = self._fields[item]
                 if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
-                    text = self._row[item].export()
+                    text = row[item].export()
                     content = lcg.Container(parser.parse(text))
                 else:
                     content = lcg.HtmlContent(self._export_field(context, field))
@@ -1974,7 +1998,7 @@ class ItemizedView(BrowseForm):
         else:
             content = concat([self._export_field(context, field)
                               for field in self._column_fields
-                              if row[field.id].value() is not None],
+                              if row.visible(field.id) and row[field.id].value() is not None],
                              separator=self._separator)
         return g.li(content, id=row_id)
         

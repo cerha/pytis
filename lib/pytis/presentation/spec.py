@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2749,6 +2749,13 @@ class Field(object):
             other specification parameters may lead to another default value
             (for example if a'computer' is defined, the default value is
             'Editable.NEVER').
+          visible -- boolean value or a 'Computer' instance returning the
+            visibility (boolean result) dynamically.  Returning false will
+            exclude the field from all kinds of forms (table columns or or form
+            layout).  Note that for table columns the visibility is not
+            computed separately for each row.  The computer function is called
+            just once with an initialized PresentedRow instance without
+            particular row values.  Currently only implemented in web forms.
           compact -- true value results in the field label being displayed
             above the field, not on the left which is the default.  This way
             the field will span to the full width of the field group.
@@ -3009,11 +3016,11 @@ class Field(object):
                  
     def _init(self, id, label=None, column_label=None, descr=None, virtual=False, dbcolumn=None,
               type=None, type_=None, width=None, column_width=None, disable_column=False,
-              fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
-              computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
-              display_size=None, null_display=None, inline_display=None, inline_referer=None,
-              allow_codebook_insert=False, codebook_insert_spec=None, codebook_insert_prefill=None,
-              codebook_runtime_filter=None, runtime_filter=None,
+              fixed=False, height=None, editable=None, visible=True, compact=False, nocopy=False,
+              default=None, computer=None, line_separator=';', codebook=None, display=None,
+              prefer_display=None, display_size=None, null_display=None, inline_display=None,
+              inline_referer=None, allow_codebook_insert=False, codebook_insert_spec=None,
+              codebook_insert_prefill=None, codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
               style=None, link=(), filename=None, filename_extensions=(),
@@ -3177,6 +3184,8 @@ class Field(object):
         else:
             assert editable in public_attributes(Editable), editable
         self._editable = editable
+        assert isinstance(visible, (bool, Computer))
+        self._visible = visible
         self._line_separator = line_separator
         self._codebook = codebook
         self._display = display
@@ -3286,6 +3295,9 @@ class Field(object):
 
     def editable(self):
         return self._editable
+
+    def visible(self):
+        return self._visible
 
     def compact(self):
         return self._compact

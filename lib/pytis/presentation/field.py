@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002-2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,6 +52,12 @@ class PresentedRow(object):
     Invoked when the field editability changes due to its dependency on another field's
     value(s)."""
     
+    CALL_VISIBILITY_CHANGE = 'CALL_VISIBILITY_CHANGE'
+    """Callback called on field visibility change.
+
+    Invoked when the field visibility changes due to its dependency on another field's
+    value(s)."""
+    
     CALL_ENUMERATION_CHANGE = 'CALL_ENUMERATION_CHANGE'
     """Callback called on field enumeration change.
 
@@ -69,6 +75,7 @@ class PresentedRow(object):
             self.line_separator = f.line_separator()
             self.default = f.default()
             self.editable = f.editable()
+            self.visible = f.visible()
             self.codebook = codebook = f.codebook()
             if codebook:
                 try:
@@ -266,6 +273,7 @@ class PresentedRow(object):
         # něm závisí (obrácené mapování než ve specifikacích).
         self._dependent = {}
         self._editability_dependent = {}
+        self._visibility_dependent = {}
         self._runtime_filter_dependent = {}
         self._runtime_arguments_dependent = {}
         # Pro všechna počítaná políčka si pamatuji, zda potřebují přepočítat,
@@ -276,6 +284,8 @@ class PresentedRow(object):
         self._dirty = {}
         self._editability_dirty = {}
         self._editable = {}
+        self._visibility_dirty = {}
+        self._visible = {}
         self._runtime_filter_dirty = {}
         self._runtime_filter = {}
         self._runtime_arguments_dirty = {}
@@ -296,6 +306,9 @@ class PresentedRow(object):
             if isinstance(c.editable, Computer):
                 make_deps(c, self._editable, self._editability_dirty, self._editability_dependent,
                           c.editable)
+            if isinstance(c.visible, Computer):
+                make_deps(c, self._visible, self._visibility_dirty, self._visibility_dependent,
+                          c.visible)
             if c.runtime_filter is not None:
                 make_deps(c, self._runtime_filter, self._runtime_filter_dirty,
                           self._runtime_filter_dependent, c.runtime_filter)
@@ -406,6 +419,7 @@ class PresentedRow(object):
                 changed_enumerations.append(k)
         # TODO: Do we need to do that always?  Eg. on set_row in BrowseForm?
         self._recompute_editability(key)
+        self._recompute_visibility(key)
         for k in remove_duplicates(changed_enumerations):
             self._run_callback(self.CALL_ENUMERATION_CHANGE, k)
         if self._callbacks and key is not None and key in self._dependent:
@@ -439,6 +453,30 @@ class PresentedRow(object):
         func = self._coldict[key].editable.function()
         self._editable[key] = result = func(self)
         self._editability_dirty[key] = False
+        return result
+    
+    def _recompute_visibility(self, key=None):
+        if key is None:
+            keys = self._visible.keys()
+        elif key in self._visibility_dependent:
+            keys = self._visibility_dependent[key]
+        else:
+            return
+        if self._callbacks:
+            for k in keys:
+                old = self._visible[k]
+                new = self._compute_visibility(k)
+                if old != new:
+                    self._run_callback(self.CALL_VISIBILITY_CHANGE, k)
+        else:
+            for k in keys:
+                self._visibility_dirty[k] = True
+
+    def _compute_visibility(self, key):
+        # Vypočti editovatelnost políčka a vrať výsledek (jako boolean).
+        func = self._coldict[key].visible.function()
+        self._visible[key] = result = func(self)
+        self._visibility_dirty[key] = False
         return result
     
     def get(self, key, default=None, lazy=False, secure=False):
@@ -675,6 +713,21 @@ class PresentedRow(object):
         else:
             editable = self._coldict[key].editable
             result = (editable == Editable.ALWAYS or editable == Editable.ONCE and self._new)
+        return result
+    
+    def visible(self, key):
+        """Vrať pravdu, právě když je políčko dané 'key' editovatelné.
+
+        Význam argumentu 'key' je stejný jako v metodě '__getitem__'.
+
+        """
+        if key in self._visible:
+            if self._visibility_dirty[key]:
+                result = self._compute_visibility(key)
+            else:
+                result = self._visible[key]
+        else:
+            result = self._coldict[key].visible
         return result
     
     def type(self, key):
@@ -1079,6 +1132,7 @@ class PresentedRow(object):
         """
         for deps in (self._dependent,
                      self._editability_dependent,
+                     self._visibility_dependent,
                      self._runtime_filter_dependent,
                      self._runtime_arguments_dependent):
             if key in deps:
