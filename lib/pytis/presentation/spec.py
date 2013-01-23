@@ -2324,13 +2324,11 @@ class CodebookSpec(object):
           display_size -- width of the codebook display field in characters.
             It is possible to override this value by the argument of the same
             name within the field specification (for particular field).
-
           enable_autocompletion -- enable autocompletion (True by default).  If
             false, autocompletion will be disabled for all codebook fields
             refering to this codebook.  This may be practical for example for
             slow codebooks where autocompletion queries would slow down user
-            input within the codebook field.
-            
+            interaction within the codebook field.
           begin_search -- None or an identifier of a column, where incremental
             search would be automatically started when a codebook form is
             invoked (GUI only).
