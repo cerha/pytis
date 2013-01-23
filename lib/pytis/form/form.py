@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1813,6 +1813,13 @@ class RecordForm(LookupForm):
     def _cmd_new_record(self, copy=False, prefill=None):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
+        for field in self._view.fields():
+            fid = field.id()
+            if (field.codebook() and self.current_row()[fid].type().not_null() and
+                not has_access(self._name, column=fid)):
+                msg = _(u"Tento náhled obsahuje povinné políčko, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.")
+                run_dialog(Error, msg)
+                return False
         import copy as copy_
         if prefill is None:
             prefill = self._prefill and copy_.copy(self._prefill) or {}
