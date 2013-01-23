@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -357,6 +357,10 @@ class Type(object):
                 raise self._validation_error(self.VM_NULL_VALUE)
             else:
                 return True
+        for c in self._constraints:
+            cresult = c(value)
+            if cresult is not None:
+                raise ValidationError(cresult)
         if self._enumerator is not None:
             if isinstance(self._enumerator, DataEnumerator):
                 kwargs = dict(condition=condition, arguments=arguments)
@@ -366,10 +370,6 @@ class Type(object):
                 kwargs['transaction'] = transaction
             if not self._enumerator.check(value, **kwargs):
                 raise self._validation_error(self.VM_INVALID_VALUE)
-        for c in self._constraints:
-            cresult = c(value)
-            if cresult is not None:
-                raise ValidationError(cresult)
 
     def not_null(self):
         """Return true if values of this type may not be empty."""
