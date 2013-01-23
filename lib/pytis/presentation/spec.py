@@ -2303,25 +2303,37 @@ class CodebookSpec(object):
                  display_size=20, enable_autocompletion=True, begin_search=None):
         """Arguments:
         
-          display -- defines the method of retrieving the user visible value of the codebook item
-            (see below for more information about user visible values).  None (the default value)
-            means to use the codebook code as the user visible value (no conversion).  A string
-            value refers to a column in the *data* object of the codebook.  The user visible value
-            is retrieved from given column.  You may also pass a function (callable object).  The
-            user visible value is then computed by invoking the function, passing it the code
-            (internal Python value of the codebook field) as an argument.  The returned value must
-            be a string.  If a function is passed and this function has just one argument named
-            'row', the function will receive the data row of the corresponding codebook data object
-            as an argument (instead of just the internal codebook value).
-          prefer_display -- If true, the user interface will show the display value instead of the
-            codebook internal value wherever possible.  For example the browse from will show the
-            display value instead of the code (the display is normally only shown in the status
-            line or tooltip).  See below for more details
-          display_size -- width of the codebook display field in characters.  It is possible to
-            override this value by the argument of the same name within the field specification
-            (for particular field).
-          begin_search -- None or an identifier of a column, where incremental search would be
-            automatically started when a codebook form is invoked (GUI only).
+          display -- defines the method of retrieving the user visible value of
+            the codebook item (see below for more information about user
+            visible values).  None (the default value) means to use the
+            codebook code as the user visible value (no conversion).  A string
+            value refers to a column in the *data* object of the codebook.  The
+            user visible value is retrieved from given column.  You may also
+            pass a function (callable object).  The user visible value is then
+            computed by invoking the function, passing it the code (internal
+            Python value of the codebook field) as an argument.  The returned
+            value must be a string.  If a function is passed and this function
+            has just one argument named 'row', the function will receive the
+            data row of the corresponding codebook data object as an argument
+            (instead of just the internal codebook value).
+          prefer_display -- If true, the user interface will show the display
+            value instead of the codebook internal value wherever possible.
+            For example the browse from will show the display value instead of
+            the code (the display is normally only shown in the status line or
+            tooltip).  See below for more details
+          display_size -- width of the codebook display field in characters.
+            It is possible to override this value by the argument of the same
+            name within the field specification (for particular field).
+
+          enable_autocompletion -- enable autocompletion (True by default).  If
+            false, autocompletion will be disabled for all codebook fields
+            refering to this codebook.  This may be practical for example for
+            slow codebooks where autocompletion queries would slow down user
+            input within the codebook field.
+            
+          begin_search -- None or an identifier of a column, where incremental
+            search would be automatically started when a codebook form is
+            invoked (GUI only).
 
         The user visible value of the codebook is used in several situations.  The codebook field
         ('SelectionType.CODEBOOK') will show it in a display next to the form control for entering
