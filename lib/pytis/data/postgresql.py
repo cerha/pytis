@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2881,6 +2881,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     def row(self, key, columns=None, transaction=None, arguments={}):
         #log(EVENT, 'Zjištění obsahu řádku:', key)
+        if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
+            return None
         # TODO: Temporary compatibility hack.  The current internal db code
         # uses multikeys, but user code does not anymore.  Before we rewrite
         # the internal parts to use single keys only, we should allow both
