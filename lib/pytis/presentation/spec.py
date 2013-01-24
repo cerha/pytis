@@ -4607,7 +4607,7 @@ class Specification(object):
         # applications, it should be removed from here too.
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
-                     'folding', 'initial_folding',):
+                     'folding', 'initial_folding', 'query_fields'):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if isinstance(value, collections.Callable):
