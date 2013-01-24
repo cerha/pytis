@@ -1156,23 +1156,41 @@ class QueryFields(object):
     """Query fields specification.
 
     The specification of query fields is expressed using this class.  The
-    constructor arguments correspond to ViewSpec constructor arguments and
-    define complete presentational and functional aspects of the query fields
-    form.
+    constructor arguments define complete presentational and functional aspects
+    of the query fields form.
 
-    The differences: The ViewSpec constructor argument 'title' is not present
-    in QueryFields.  The default 'layout' is a horizontal group containing all
-    fields (ViewSpec default layout is vertical).
 
     """
-    def __init__(self, fields, layout=None, **kwargs):
+    def __init__(self, fields, autoapply=False, layout=None, **kwargs):
+        """Arguments:
+
+        fields -- field specifications as in ViewSpec
+        autoapply -- if True, the query fields will be applied with their
+          default values automatically when the form is opened.  Otherwise, the
+          form is initially displayed empty and query field values must be
+          applied manually when the fields are filled.
+        layout -- form layout as in ViewSpac, with the difference, that a tuple
+          or list is converted to a horizontal group containing all fields
+          (ViewSpec default layout is vertical).
+        kwargs -- other ViewSpec construcotr arguments
+        
+        """
         assert fields and isinstance(fields, (tuple, list)), fields
         if __debug__:
             for f in fields:
                 assert isinstance(f, Field), f
         if layout is None:
             layout = HGroup(*[f.id() for f in fields])
+        self._autoapply = autoapply
         self._view_spec_kwargs = dict(fields=fields, layout=layout, **kwargs)
+
+    def fields(self):
+        """Return value of 'fields' passed to the constructor."""
+        return self._view_spec_kwargs['fields']
+
+    def autoapply(self):
+        """Return value of 'autoapply' passed to the constructor."""
+        return self._autoapply
 
     def view_spec_kwargs(self):
         """Return constructor arguments for ViewSpec instance creation."""

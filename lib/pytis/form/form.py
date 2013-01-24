@@ -952,6 +952,9 @@ class LookupForm(InnerForm):
             if self._view.query_fields():
                 row = self._query_fields_row()
                 if row is None:
+                    # If None is returned, we use UNKNOWN_ARGUMENTS to make an
+                    # empty dummy sellect without calling the underlying
+                    # database function.
                     arguments = self._data.UNKNOWN_ARGUMENTS
                 else:
                     arguments = provider(previous_arguments, row)

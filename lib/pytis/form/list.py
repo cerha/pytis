@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -398,13 +398,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # The first argument provider call is made during form
             # initialization before the initial select when the form user
             # interface is not created yet.  Thus query fields are not yet
-            # available as well and we return UNKNOWN_ARGUMENTS without
-            # calling argument provider at all.  UNKNOWN_ARGUMENTS will
-            # result in an empty dummy sellect without calling the
-            # underlying database function.  The form will appear initially
-            # empty and the user will need to submit query fields to see
-            # any data.
-            return None
+            # available as well.
+            query_fields = self._view.query_fields()
+            if query_fields.autoapply():
+                # If autoapply is on, we will construct the row from default
+                # field values.
+                def value(f):
+                    t = f.type() or pytis.data.String()
+                    v = f.default()
+                    if isinstance(v, collections.Callable):
+                        v = v()
+                    return pytis.data.Value(t, v)
+                return pytis.data.Row([(f.id(), value(f)) for f in query_fields.fields()])
+            else:
+                # If autoapply is off, we return None, which avoids calling
+                # argument provider at all.  The form will appear initially
+                # empty and the user will need to submit query fields to see
+                # any data.
+                return None
         else:
             # Append query field values as the second argument provider
             # argument.
