@@ -1820,6 +1820,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # current user filter and the hardcoded condition from
         # specification.
         condition = self._current_condition()
+        arguments = self._current_arguments()
         spec_condition = self._data.condition()
         if spec_condition:
             if condition:
@@ -1831,7 +1832,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                  group_by_columns=group_by_columns,
                  grouping_functions=grouping_functions,
                  aggregation_columns=aggregation_columns,
-                 aggregation_condition=condition)
+                 aggregation_condition=condition,
+                 aggregation_arguments=arguments,
+                 )
         
     def _cmd_delete_aggregated_view(self, aggregated_view_id):
         manager = aggregated_views_manager()
@@ -3445,6 +3448,7 @@ class AggregationForm(BrowseForm):
         self._af_group_by_columns = tuple(kwargs.pop('group_by_columns'))
         self._af_aggregation_columns = kwargs.pop('aggregation_columns')
         self._af_aggregation_condition = kwargs.pop('aggregation_condition', None)
+        self._af_aggregation_arguments = kwargs.pop('aggregation_arguments', None)
         self._af_grouping_functions = tuple(kwargs.pop('grouping_functions'))
         super(AggregationForm, self)._full_init(*args, **kwargs)
     
@@ -3475,6 +3479,9 @@ class AggregationForm(BrowseForm):
         self._data_kwargs['condition'] = self._af_aggregation_condition
         return ViewSpec(view.title(), fields)
 
+    def _current_arguments(self):
+        return self._af_aggregation_arguments
+        
     def _profile_spec_name(self):
         # We need to have unique names for different column configurations
         # because profiles for one configuration may not be valid in the other.
@@ -3532,3 +3539,6 @@ class AggregationForm(BrowseForm):
                 condition = pytis.data.EQ(op_function, value)
             conditions.append(condition)
         return pytis.data.AND(*conditions)
+
+    def side_form_arguments(self):
+        return self._af_aggregation_arguments

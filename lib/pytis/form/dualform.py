@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -445,6 +445,10 @@ class AggregationDualForm(PostponedSelectionDualForm):
         def _default_columns(self):
             return tuple([c for c in super(AggregationDualForm._SideForm, self)._default_columns()
                           if c not in self._main_form.group_by_columns()])
+        def _create_query_fields_panel(self):
+            return None
+        def _current_arguments(self):
+            return self._main_form.side_form_arguments()
 
     def _create_view_spec(self):
         return None
