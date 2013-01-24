@@ -1238,12 +1238,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         table_names = remove_duplicates(table_names)
         if self._arguments is not None:
             assert len(table_names) == 1, "Only single tables supported for table functions"
-            table_names[0] = (table_names[0] +
-                              ('(%s)' % string.join (['%%(__arg_%d)s' % (i+1,)
-                                                      for i in range(len(self._arguments))],
-                                                     ', ')))
-        table_list = string.join(table_names, ', ')
-        if len(table_names) <= 1:
+            table_expressions = [table_names[0] +
+                                 ('(%s)' % string.join (['%%(__arg_%d)s' % (i+1,)
+                                                         for i in range(len(self._arguments))],
+                                                        ', '))]
+        else:
+            table_expressions = table_names
+
+        table_list = string.join(table_expressions, ', ')
+        if len(table_expressions) <= 1:
             relation = 'true'
         else:
             rels = ['%s=%s' % (self._pdbb_btabcol(b),
@@ -1255,7 +1258,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._arguments is None:
             main_table_from = main_table
         else:
-            main_table_from = table_names[0]
+            main_table_from = table_expressions[0]
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
         assert len (keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
         first_key_column = keytabcols[0]
