@@ -1628,7 +1628,7 @@ class ViewSpec(object):
         if query_fields and isinstance(query_fields, (tuple, list)):
             query_fields = QueryFields(query_fields)
         else:
-            assert query_fields is None or isinstance(query_fields, QueryFields), queryfields
+            assert query_fields is None or isinstance(query_fields, QueryFields), query_fields
         self._title = title
         self._singular = singular
         self._columns = columns
