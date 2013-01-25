@@ -1244,7 +1244,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                                         ', '))]
         else:
             table_expressions = table_names
-
         table_list = string.join(table_expressions, ', ')
         if len(table_expressions) <= 1:
             relation = 'true'
@@ -2942,7 +2941,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_make_row_template_limited = \
                 self._pg_limited_make_row_template(columns)
         else:
-            self._pg_make_row_template_limited = None        
+            self._pg_make_row_template_limited = None
         try:
             row_count_info = self._pg_select(condition, sort, columns, transaction=transaction,
                                              arguments=arguments, async_count=async_count,

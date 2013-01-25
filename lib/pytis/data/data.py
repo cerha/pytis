@@ -1846,7 +1846,10 @@ class DataFactory(object):
     _get_data_object = staticmethod(_get_data_object)
 
     def access_rights(self):
-        return self._kwargs.get('access_rights', None)
+        return self._kwargs.get('access_rights')
+
+    def connection_name(self):
+        return self._kwargs.get('connection_name')
 
     # "Podrobné" porovnávání data factories je příliš náročné na CPU.
 #     def __cmp__(self, other):

@@ -216,7 +216,10 @@ class PresentedRow(object):
                     default = col.default
                     if self._new and default is not None:
                         if isinstance(default, collections.Callable):
-                            default = default()
+                            try:
+                                default = default(transaction=self._transaction)
+                            except TypeError:
+                                default = default()
                         value = pytis.data.Value(col.type, default)
                     else:
                         value = col.type.default_value()

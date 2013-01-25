@@ -2617,7 +2617,8 @@ class PopupEditForm(PopupForm, EditForm):
         self._initial_select_row = None
 
     def _default_transaction(self):
-        return pytis.data.DBTransactionDefault(config.dbconnection)
+        connection_name = resolver().get(self._name, 'data_spec').connection_name()
+        return pytis.data.DBTransactionDefault(config.dbconnection, connection_name=connection_name)
         
     def _init_attributes(self, inserted_data=None, multi_insert=True, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
@@ -2803,7 +2804,7 @@ class PopupEditForm(PopupForm, EditForm):
 
     def set_row(self, row):        
         if self._transaction is None:
-             self._transaction = pytis.data.DBTransactionDefault(config.dbconnection) 
+             self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
         super(PopupEditForm, self).set_row(row)
 
 
