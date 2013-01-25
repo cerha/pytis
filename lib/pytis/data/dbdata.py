@@ -448,7 +448,11 @@ class DBConnection:
         if name == self._name:
             return self
         else:
-            options = dict(self._alternatives[name], alternatives=self._alternatives, _name=name)
+            connection_options = self._alternatives[name]
+            for key, attr in (('user', '_user',), ('password', '_password',),):
+                if key not in connection_options:
+                    connection_options[key] = getattr(self, attr)
+            options = dict(connection_options, alternatives=self._alternatives, _name=name)
             return self.__class__(**options)
 
     def modified(self, **kwargs):
