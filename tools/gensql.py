@@ -3,7 +3,7 @@
 #
 # Nástroj pro zpracování specifikací databází
 # 
-# Copyright (C) 2002, 2003, 2005, 2009, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2522,7 +2522,8 @@ class _GsqlViewNG(Select):
                                     if not u_value:
                                         no_update_columns.append(cc_alias)
                                     elif u_value != 'new.%s' % (cc_alias,):
-                                        special_update_columns.append((t_name, cc_alias, u_value,))
+                                        cc_orig_name = cc.name.split('.')[-1]
+                                        special_update_columns.append((t_name, cc_orig_name, u_value,))
                                 break
                 order_string = string.join([self._convert_name(o.lower()) for o in real_order_relations], ', ')
                 if order_string:
@@ -3100,7 +3101,8 @@ class _GsqlView(_GsqlSpec):
                 if not u_value:
                     no_update_columns.append(cc_alias)
                 elif u_value != 'new.%s' % (cc_alias,):
-                    special_update_columns.append((self._convert_name(self._tables[0]), cc_alias, u_value.replace('\n', ' '),))
+                    cc_orig_name = cc.name.split('.')[-1]
+                    special_update_columns.append((self._convert_name(self._tables[0]), cc_orig_name, u_value.replace('\n', ' '),))
             if no_update_columns:
                 column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
                 items.append('    no_%s_columns = (%s)' % (kind, column_string,))
