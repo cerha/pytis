@@ -243,10 +243,17 @@ class MenuChecker(object):
             bindings = self._resolver.get(main, 'binding_spec')
         except pytis.util.ResolverError as e:
             return errors + [str(e)]
-        try:
-            bindings[side]
-        except KeyError:
-            errors.append("Binding item for %s not found." % (side,))
+        if isinstance(bindings, dict):
+            try:
+                bindings[side]
+            except KeyError:
+                errors.append("Binding item for %s not found." % (side,))
+        else:
+            for b in bindings:
+                if b.name() == side:
+                    return errors
+            else:
+                errors.append("Binding item for %s not found." % (side,))
         return errors
         
     def check_codebook_rights(self, spec_name, field=None, new=False, no_spec_error=False):
@@ -421,7 +428,7 @@ class MenuChecker(object):
                     break
                 if name.find('::') != -1:
                     main, side = name.split('::')
-                    results = self.check_bindings(main, side) + check_spec(main, no_spec_error=True) + check_spec(side, no_spec_error=True)
+                    results = check_spec(main, no_spec_error=True) + check_spec(side, no_spec_error=True)
                 else:
                     results = check_spec(name, no_spec_error=True)
                 for error in results:
