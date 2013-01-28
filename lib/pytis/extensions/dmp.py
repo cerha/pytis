@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2012 Brailcom, o.p.s.
+# Copyright (C) 2009-2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -1947,8 +1947,9 @@ class DMPImport(DMPObject):
                 menu_item = menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
                                           title=title, action=fullname, position=position)
                 messages += menu.store_data(fake, transaction=transaction, specifications=[fullname])
-            messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction,
-                                                       keep_old=True)
+            if action.kind() == 'form':
+                messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction,
+                                                           keep_old=True)
             self._dmp_rights.retrieve_data(transaction=transaction)
             shortname = action.shortname()
             for a in self._dmp_rights.items():
