@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006, 2007, 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2009, 2010, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -249,11 +249,17 @@ class MenuChecker(object):
             errors.append("Binding item for %s not found." % (side,))
         return errors
         
-    def check_codebook_rights(self, spec_name, field=None, new=False):
+    def check_codebook_rights(self, spec_name, field=None, new=False, no_spec_error=False):
         errors = []
         try:
             if field is None:
-                view_spec = self._resolver.get(spec_name, 'view_spec')
+                try:
+                    view_spec = self._resolver.get(spec_name, 'view_spec')
+                except:
+                    if no_spec_error:
+                        return []
+                    else:
+                        raise
                 fields = view_spec.fields()
             else:
                 fields = [field]
@@ -396,6 +402,39 @@ class MenuChecker(object):
                 reporter.error(e)
         reporter.end()
 
+    def access_check(self):
+        errors = []
+        specnames = self._specification_names(errors)
+        self._output_specs = {}
+        width = max([len(s) for s in specnames]) + len('Poslední chyba v: ') + 6
+        def check_specs(update, specnames):
+            check_spec = self.check_codebook_rights
+            total = len(specnames)
+            last_error = ''
+            step = 1 # aktualizujeme jen po každých 'step' procentech...
+            for n, name in enumerate(specnames):
+                newmsg = "\n".join(("Kontroluji přístupová práva...",
+                                    "Specifikace: " + name,
+                                    "Poslední chyba v: " + last_error))
+                status = int(float(n)/total*100/step)
+                if not update(status*step, newmsg=newmsg):
+                    break
+                if name.find('::') != -1:
+                    main, side = name.split('::')
+                    results = self.check_bindings(main, side) + check_spec(main, no_spec_error=True) + check_spec(side, no_spec_error=True)
+                else:
+                    results = check_spec(name, no_spec_error=True)
+                for error in results:
+                    errors.append("Specifikace %s: %s" % (name, error))
+                    last_error = "%s\n%s...)" % (name, error[:width-4])
+        pytis.form.run_dialog(pytis.form.ProgressDialog, check_specs, args=(specnames,),
+                              message='Kontroluji přístupová práva...'.ljust(width) + '\n\n\n\n',
+                              elapsed_time=True, can_abort=True)
+        if errors:
+            errors = remove_duplicates(errors)
+            pytis.form.run_dialog(pytis.form.Message, "Chyby v přístupových právech",
+                                  report="\n".join(errors))        
+
 class AppChecker(MenuChecker):
     
     def _find_specification_names(self, errors):
@@ -428,6 +467,13 @@ def check_menus_defs():
 
 cmd_check_menus_defs = (pytis.form.Application.COMMAND_HANDLED_ACTION,
                         dict(handler=check_menus_defs))
+
+def check_access_rights():
+    """Zkontroluje práva všech specifikací uvedených v menu aplikace."""
+    MenuChecker().access_check()
+
+cmd_check_access_rights = (pytis.form.Application.COMMAND_HANDLED_ACTION,
+                           dict(handler=check_access_rights))
 
 def cache_spec(*args, **kwargs):
     resolver = pytis.util.resolver()
