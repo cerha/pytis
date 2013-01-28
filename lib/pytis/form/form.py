@@ -1820,7 +1820,7 @@ class RecordForm(LookupForm):
             fid = field.id()
             codebook = field.codebook()
             if codebook and not has_access(codebook):
-                if self.current_row()[fid].type().not_null() :
+                if self._row[fid].type().not_null() :
                     msg = _(u"Tento náhled obsahuje povinné políčko, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.")
                     run_dialog(Error, msg)
                     return False
