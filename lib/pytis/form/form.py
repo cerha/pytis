@@ -1820,12 +1820,13 @@ class RecordForm(LookupForm):
             fid = field.id()
             codebook = field.codebook()
             if codebook and not has_access(codebook):
+                field_name = field.label()
                 if self._row[fid].type().not_null() :
-                    msg = _(u"Tento náhled obsahuje povinné políčko, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.")
+                    msg = _(u"Tento náhled obsahuje povinné políčko %s, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.") % (field_name,)
                     run_dialog(Error, msg)
                     return False
                 else:
-                    msg = _(u"Tento náhled obsahuje políčko, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.")
+                    msg = _(u"Tento náhled obsahuje políčko %s, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.") % (field_name,)
                     run_dialog(Warning, msg)
         import copy as copy_
         if prefill is None:
