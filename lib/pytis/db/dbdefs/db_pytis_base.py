@@ -9,6 +9,9 @@ import dbdefs as db
 default_access_rights = sql.SQLFlexibleValue('db.app_default_access_rights',
                                                environment='GSQL_DEFAULT_ACCESS_RIGHTS',
                                                default=(('all', 'pytis',),))
+pytis_schemas = sql.SQLFlexibleValue('db.app_pytis_schemas',
+                                       environment='GSQL_PYTIS_SCHEMAS',
+                                       default=(('public',),))
 cms_rights = sql.SQLFlexibleValue('db.app_cms_rights',
                                     environment='GSQL_CMS_RIGHTS',
                                     default=(('all', 'pytis',),))

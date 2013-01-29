@@ -7,6 +7,7 @@ import dbdefs as db
 
 class FUserCfg(sql.SQLRaw):
     name = 'f_user_cfg'
+    schemas = db.pytis_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -46,6 +47,7 @@ class EPytisFormLog(sql.SQLTable):
     t_show is the time when the form got actually ready for operation after its start.
     """
     name = 'e_pytis_form_log'
+    schemas = db.pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('form', pytis.data.String(not_null=True), index=True),
@@ -61,6 +63,7 @@ class EPytisFormLog(sql.SQLTable):
     access_rights = db.default_access_rights.value(globals())
 
 class PytisLogForm(sql.SQLFunction):
+    schemas = db.pytis_schemas.value(globals())
     name = 'pytis_log_form'
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
@@ -80,6 +83,7 @@ insert into e_pytis_form_log (form, class, info, login, t_start, t_show) values(
 
 class EvPytisFormSummary(sql.SQLView):
     name = 'ev_pytis_form_summary'
+    schemas = db.pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -97,6 +101,7 @@ class EvPytisFormSummary(sql.SQLView):
 
 class EvPytisFormShortSummary(sql.SQLView):
     name = 'ev_pytis_form_short_summary'
+    schemas = db.pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -114,6 +119,7 @@ class EvPytisFormShortSummary(sql.SQLView):
 
 class EvPytisFormUsers(sql.SQLView):
     name = 'ev_pytis_form_users'
+    schemas = db.pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -129,6 +135,7 @@ class EvPytisFormUsers(sql.SQLView):
 
 class EvPytisFormUsersNoinfo(sql.SQLView):
     name = 'ev_pytis_form_users_noinfo'
+    schemas = db.pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -146,6 +153,7 @@ class EvPytisFormUsersNoinfo(sql.SQLView):
 
 class EvPytisFormUserList(sql.SQLView):
     name = 'ev_pytis_form_user_list'
+    schemas = db.pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')

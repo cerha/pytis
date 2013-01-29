@@ -566,12 +566,14 @@ class _GsqlSpec(object):
 
     def _convert_schemas(self, items):
         schemas = None
-        if (_GsqlConfig.application == 'pytis' and
-            (self._name.startswith('cms_') or
-             (isinstance(self, _GsqlRaw) and
-              (self._sql.startswith('create or replace rule session_delete as on delete to cms_session') or
-               self._sql.startswith('CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order'))))):
-            schemas = 'db.cms_schemas.value(globals())'
+        if _GsqlConfig.application == 'pytis':
+            if (self._name.startswith('cms_') or
+                (isinstance(self, _GsqlRaw) and
+                 (self._sql.startswith('create or replace rule session_delete as on delete to cms_session') or
+                  self._sql.startswith('CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order')))):
+                schemas = 'db.cms_schemas.value(globals())'
+            elif self._schemas == ('xxx',):
+                schemas = 'db.pytis_schemas.value(globals())'                
         elif self._schemas:
             for name, s_tuple in _GsqlConfig.convert_schemas:
                 if s_tuple == self._schemas:
@@ -3992,6 +3994,7 @@ from db_pytis_base import *
             else:
                 init_preamble += """
 app_default_access_rights = (('all', '%s',),)
+app_pytis_schemas = %s
 app_cms_rights = (('all', '%s',),)
 app_cms_rights_rw = (('all', '%s',),)
 app_cms_users_table = '%s'
@@ -4003,7 +4006,8 @@ import os
 import sys
 _file, _pathname, _description = imp.find_module('pytis')
 sys.path.append(os.path.join(_pathname, 'db', 'dbdefs'))
-""" % (application, application, application, _GsqlConfig.convert_cms_users_table,
+""" % (application, repr(_GsqlConfig.convert_pytis_schemas),
+       application, application, _GsqlConfig.convert_cms_users_table,
        repr(_GsqlConfig.convert_cms_schemas), application, application, application,)
                 init_preamble += """
 sql.clear()
@@ -4017,6 +4021,9 @@ for m in list(sys.modules.keys()):
 default_access_rights = sql.SQLFlexibleValue('db.app_default_access_rights',
                                                environment='GSQL_DEFAULT_ACCESS_RIGHTS',
                                                default=(('all', '%s',),))
+pytis_schemas = sql.SQLFlexibleValue('db.app_pytis_schemas',
+                                       environment='GSQL_PYTIS_SCHEMAS',
+                                       default=(('public',),))
 cms_rights = sql.SQLFlexibleValue('db.app_cms_rights',
                                     environment='GSQL_CMS_RIGHTS',
                                     default=(('all', '%s',),))
@@ -4377,6 +4384,7 @@ class _GsqlConfig:
     directory = None
     application = None
     convert_schemas = ()
+    convert_pytis_schemas = (('public',),)
     convert_cms_schemas = (('public',),)
     convert_cms_users_table = 'e_system_user'
     

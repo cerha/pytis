@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -20,6 +20,7 @@
 
 # This file serves just for gensql -> gensqlalchemy conversions.
 import pytis.data
+Gpytis_schemas = ('xxx',)
 def include_file(filename):
     file_, pathname, description = imp.find_module(filename)
     include(pathname, globals())

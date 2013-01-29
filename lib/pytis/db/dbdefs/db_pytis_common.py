@@ -215,6 +215,7 @@ class OnlyDigits(sql.SQLFunction):
 
 class FDateYear(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
+    schemas = db.pytis_schemas.value(globals())
     name = 'f_date_year'
     arguments = (sql.Column('', pytis.data.Date()),)
     result_type = pytis.data.Integer()
@@ -228,6 +229,7 @@ class FDateYear(sql.SQLFunction):
 
 class FDateHalfyear(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
+    schemas = db.pytis_schemas.value(globals())
     name = 'f_date_halfyear'
     arguments = (sql.Column('', pytis.data.Date()),)
     result_type = pytis.data.Integer()
@@ -241,6 +243,7 @@ class FDateHalfyear(sql.SQLFunction):
 
 class FDateQuarter(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
+    schemas = db.pytis_schemas.value(globals())
     name = 'f_date_quarter'
     arguments = (sql.Column('', pytis.data.Date()),)
     result_type = pytis.data.Integer()
@@ -254,6 +257,7 @@ class FDateQuarter(sql.SQLFunction):
 
 class FDateMonth(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
+    schemas = db.pytis_schemas.value(globals())
     name = 'f_date_month'
     arguments = (sql.Column('', pytis.data.Date()),)
     result_type = pytis.data.Integer()

@@ -8,6 +8,7 @@ import dbdefs as db
 class EPytisActionLog(sql.SQLTable):
     """Pytis user actions log."""
     name = 'e_pytis_action_log'
+    schemas = db.pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True)),
@@ -21,4 +22,3 @@ class EPytisActionLog(sql.SQLTable):
     with_oids = True
     depends_on = ()
     access_rights = db.default_access_rights.value(globals())
-
