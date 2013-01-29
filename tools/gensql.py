@@ -454,7 +454,7 @@ class _GsqlSpec(object):
         elif isinstance(ctype, (pytis.data.DateTime, pytis.data.Time,)) and not isinstance(ctype, pytis.data.Date):
             if not ctype.utc():
                 arguments.append('utc=False')
-        if ctype.not_null() or 'not null' in constraints or 'unique not null' in constraints:
+        if (ctype.not_null() and not isinstance(ctype, pytis.data.Boolean)) or 'not null' in constraints or 'unique not null' in constraints:
             if not isinstance(ctype, pytis.data.Serial):
                 arguments.append('not_null=True')
         else:
