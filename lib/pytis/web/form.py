@@ -57,6 +57,41 @@ class BadRequest(Exception):
     
 
 class Form(lcg.Content):
+    """Pytis HTML form as an LCG Content element.
+
+    The form instance behaves as any other LCG Content element.  The HTML
+    rendering is done in the export phase.
+    
+    URI provider interface
+
+    URI provider makes Pytis web forms independent on the application's URI
+    scheme.  It is a function which returns concrete URIs for different
+    situations (determined by function arguments).
+
+    The function 'uri_provider' must accept three positional arguments:
+    
+      record -- the 'pytis.presentation.PresentedRow' instance
+      kind -- one of 'UriType' constants.  It is used for distinction of
+        the purpose, for which the uri is used (eg. for a field link, image
+        src, action link etc.).
+      target -- the target for which the URI is requested.  This is the
+        'Action' instance for 'UriType.ACTION'.  For other kinds this is
+        either a field identifier (basestring) or None when requesting an
+        URI for the whole record.
+
+    The return value may be:
+      - None when there should be no link,
+      - string URI if the field links to that URI,
+      - a 'pytis.web.Link' instance if it is necessary to specify also
+        some extended link attributes, such as title (tooltip text) or
+        target (such as _blank).
+      - For array fields (when 'cid' belongs to a field of type
+        'pytis.data.Array'), the return value must be a function of one
+        argument -- the internal python value of the field's inner type.
+        The function will return an URI or Link instance as above for
+        given array value.
+        
+    """
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
     def __init__(self, view, req, row, handler='#', prefill=None, hidden=(), name=None,
@@ -71,9 +106,8 @@ class Form(lcg.Content):
             form's 'action' attribute.
           prefill -- form prefill data as a dictionary of string values.
           uri_provider -- callable object (function) returning URIs for form
-            fields.  This makes Pytis web forms independent on the
-            application's URI scheme.  The function must have the interface
-            described below.
+            fields.  The function must have the interface
+            described in the class docstring.
           hidden -- hardcoded hidden form fields as a sequence of pairs (name,
             value).
           name -- form name as a string or None.  This name will be sent as a
@@ -87,30 +121,6 @@ class Form(lcg.Content):
             global actions (see 'pytis.presentation.ActionContext').  The
             default value (None) means to use the actions as defined in the
             specification.
-
-         URI provider interface
-
-         The function 'uri_provider' must accept three positional arguments:
-           record -- the 'pytis.presentation.PresentedRow' instance
-           kind -- one of 'UriType' constants.  It is used for distinction of
-             the purpose, for which the uri us used (eg. for a field link, image
-             src, action link etc.).
-           target -- the target for which the URI is requested.  This is the
-             'Action' instance for 'UriType.ACTION'.  For other kinds this is
-             either a field identifier (basestring) or None when requesting an
-             URI for the whole record.
-
-         The return value may be:
-           - None when there should be no link,
-           - string URI if the field links to that URI,
-           - a 'pytis.web.Link' instance if it is necessary to specify also
-             some extended link attributes, such as title (tooltip text) or
-             target (such as _blank).
-           - For array fields (when 'cid' belongs to a field of type
-             'pytis.data.Array'), the return value must be a function of one
-             argument -- the internal python value of the field's inner type.
-             The function will return an URI or Link instance as above for
-             given array value.
             
         """
         super(Form, self).__init__(**kwargs)
