@@ -3042,7 +3042,6 @@ class _GsqlView(_GsqlSpec):
                 selector = 'sql.gO'
                 pos = t.rfind(' ')
                 if pos > 0:
-                    name_alias = t.split(' ')
                     name = t[:pos].rstrip()
                     alias = t[pos+1:]
                     if re.match('^([a-zA-Z_][a-zA-Z_0-9]*)\.([a-zA-Z_][a-zA-Z_0-9]*)$', name):
@@ -3979,7 +3978,6 @@ import pytis.data
 '''
         init_preamble = local_preamble
         local_preamble += 'import dbdefs as db\n\n'
-        global_preamble = ''
         if application:
             if _GsqlConfig.convert_schemas:
                 init_preamble += '\n'
