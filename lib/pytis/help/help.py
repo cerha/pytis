@@ -432,9 +432,10 @@ class HelpGenerator(object):
                                              children.get(row['position'].value(), ())])
         data = pytis.data.dbtable('ev_pytis_user_help',
                                   ('help_id', 'fullname', 'spec_name', 'page_id', 'position', 
-                                   'title', 'description', 'menu_help', 'content'),
+                                   'title', 'description', 'menu_help', 'content', 'language',),
                                   config.dbconnection)
-        data.select(sort=(('position', pytis.data.ASCENDENT),))
+        data.select(condition=pytis.data.EQ('language', pytis.data.sval(config.language)),
+                    sort=(('position', pytis.data.ASCENDENT),))
         children = {}
         while True:
             row = data.fetchone()

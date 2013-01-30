@@ -598,6 +598,27 @@ for each statement execute procedure e_pytis_menu_trigger_rights();
         name='e_pytis_menu_triggers_rights',
         depends=('e_pytis_menu_trigger_rights',))
 
+_std_table_nolog('c_pytis_menu_languages',
+                 (P('language', TString),
+                  C('description', TString, constraints=('not null',)),
+                  ),
+                 "Codebook of available menu languages.",
+                 init_values=(("'cs'", "'čeština'",),),
+                 grant=db_rights,
+                 depends=())
+           
+_std_table_nolog('e_pytis_menu_translations',
+                 (C('menuid', TInteger, references='e_pytis_menu on update cascade on delete cascade',
+                    index=True),
+                  C('language', TString, constraints=('not null',),
+                    references='c_pytis_menu_languages on update cascade on delete cascade'),
+                  C('t_title', TString, constraints=('not null',)),
+                  C('dirty', TBoolean, constraints=('not null',)),
+                  ),
+                 "Translations of menu titles.",
+                 grant=db_rights,
+                 depends=('e_pytis_menu',))
+
 viewng('ev_pytis_menu',
        (SelectRelation('e_pytis_menu', alias='main', exclude_columns=('fullname',)),
         SelectRelation('c_pytis_menu_actions', alias='actions',
@@ -612,8 +633,28 @@ viewng('ev_pytis_menu',
        update_order=('e_pytis_menu',),
        delete_order=('e_pytis_menu',),
        grant=db_rights,
-       depends=('e_pytis_menu', 'c_pytis_menu_actions',)
-       )
+       depends=('e_pytis_menu', 'c_pytis_menu_actions',))
+
+viewng('ev_pytis_translated_menu',
+       (SelectRelation('ev_pytis_menu', alias='menu', key_column='menuid'),
+        SelectRelation('c_pytis_menu_languages', alias='languages', exclude_columns=('description',),
+                       jointype=JoinType.CROSS),
+        SelectRelation('e_pytis_menu_translations', alias='translations',
+                       exclude_columns=('menuid', 'language', 'dirty',),
+                       jointype=JoinType.LEFT_OUTER,
+                       condition="menu.menuid=translations.menuid and languages.language=translations.language"),
+        ),
+       include_columns=(V(None, 't_xtitle', "coalesce(t_title, xtitle)"),
+                        V(None, 'dirty', "coalesce(dirty, title is not null)"),
+                        ),
+       insert_order=('ev_pytis_menu',),
+       insert=("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null)",),
+       update_order=('ev_pytis_menu',),
+       update=("delete from e_pytis_menu_translations where menuid=old.menuid and language=old.language",
+               "insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null or old.title!=new.title)",),
+       delete_order=('ev_pytis_menu',),
+       grant=db_rights,
+       depends=('ev_pytis_menu', 'c_pytis_menu_languages', 'e_pytis_menu_translations',))
 
 viewng('ev_pytis_menu_structure',
        (SelectRelation('a_pytis_actions_structure', alias='structure',
@@ -1545,28 +1586,29 @@ sqltype('typ_preview_user_menu',
          C('help', TString),
          C('hotkey', TString),
          C('locked', TBoolean),
+         C('language', TString),
          ))
 function('pytis_view_user_menu', (), RT('typ_preview_user_menu', setof=True),
          body="""
-select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked
-from ev_pytis_menu as menu
+select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked, menu.language
+from ev_pytis_translated_menu as menu
 left outer join pytis_compute_summary_rights(NULL, pytis_user(), ''f'', ''t'', ''t'') as rights on (menu.shortname = rights.shortname)
 where pytis_multiform_spec(menu.fullname) and rights.rights like ''%show%''
 union
-select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked
-from ev_pytis_menu as menu
+select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked, menu.language
+from ev_pytis_translated_menu as menu
 left outer join pytis_compute_summary_rights(NULL, pytis_user(), ''f'', ''f'', ''t'') as rights on (menu.shortname = rights.shortname)
 where not pytis_multiform_spec(menu.fullname) and rights.rights like ''%show%''
 union
-select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked
-from ev_pytis_menu as menu
+select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked, menu.language
+from ev_pytis_translated_menu as menu
 where name is null and title is null;
 """,
          grant=db_rights,
-         depends=('typ_preview_user_menu', 'e_pytis_menu', 'pytis_compute_summary_rights', 'pytis_multiform_spec', 'pytis_user',))
+         depends=('typ_preview_user_menu', 'ev_pytis_translated_menu', 'pytis_compute_summary_rights', 'pytis_multiform_spec', 'pytis_user',))
 
 sqltype('typ_preview_rights',
         (C('shortname', TString),

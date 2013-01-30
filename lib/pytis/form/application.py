@@ -432,9 +432,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                            (('menuid', I,),
                                             ('name', S,), ('title', S,), ('fullname', S,),
                                             ('position', pytis.data.LTree(),),
-                                            ('help', S,), ('hotkey', S,),),
+                                            ('help', S,), ('hotkey', S,), ('language', S,),),
                                            connection_data, arguments=())
-            menu_rows = menu_data.select_map(identity, sort=(('position', pytis.data.ASCENDENT,),))
+            menu_rows = menu_data.select_map(identity,
+                                             condition=pytis.data.EQ('language',
+                                                                     pytis.data.sval(config.language)),
+                                             sort=(('position', pytis.data.ASCENDENT,),))
         except pytis.data.DBException:
             return None
         if not menu_rows:

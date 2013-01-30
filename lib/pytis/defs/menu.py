@@ -27,6 +27,7 @@ import pytis.presentation
 import pytis.util
 from pytis.presentation import Editable
 from pytis.extensions import Field, nextval
+import config
 
 _ = pytis.util.translations('pytis-defs')
 
@@ -239,13 +240,17 @@ def _xaction_computer(row, fullname):
     return result
 class ApplicationMenu(pytis.presentation.Specification):
     public = True
-    table = 'ev_pytis_menu'
+    table = 'ev_pytis_translated_menu'
     title = _(u"Menu")
     fields = (
         Field('menuid', _(u"Id"), default=nextval('e_pytis_menu_menuid_seq')),
         Field('name', _(u"Id obsahující role")),
-        Field('title', _(u"Titulek položky menu"), type=_Title()),
-        Field('xtitle', _(u"Titulek položky menu"), type=_Title()),
+        Field('title', _(u"Základní titulek položky menu"), type=_Title()),
+        Field('xtitle', _(u"Odvozený titulek položky menu"), type=_Title()),
+        Field('t_title', _(u"Přeložený titulek položky menu"), type=_Title(),
+              editable=pytis.presentation.computer(lambda row, title: title is not None)),
+        Field('t_xtitle', _(u"Titulek položky menu"), type=_Title()),
+        Field('language', _(u"Jazyk"), default=config.language),
         Field('position', _(u"Pozice v menu"), fixed=True, codebook='menu.ApplicationMenuPositions'),
         Field('next_position', _(u"Následující pozice v menu"), default='0'),
         Field('position_nsub', _(u"Počet poduzlů")),
@@ -255,12 +260,15 @@ class ApplicationMenu(pytis.presentation.Specification):
               computer=pytis.presentation.computer(_xaction_computer),
               descr=_(u"Akce aplikace vyvolaná položkou menu")),
         Field('locked', _(u"Zákaz editace"), fixed=True, editable=pytis.presentation.Editable.NEVER),
+        Field('dirty', _(u"Neaktuální překlad"), fixed=True, editable=pytis.presentation.Editable.NEVER),
         )
-    columns = ('xtitle', 'xaction', 'locked',)
-    layout = ('title', 'position',)
+    columns = ('t_xtitle', 'xaction', 'locked',)
+    layout = ('title', 't_title', 'position',)
     cb = pytis.presentation.CodebookSpec(display='title')
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
     folding = pytis.form.FoldableForm.Folding(level=2)
+    def condition(self):
+        return pytis.data.EQ('language', pytis.data.sval(config.language))
     def on_edit_record(self, row):
         if row['locked'].value():
             pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto položku menu nelze editovat"))

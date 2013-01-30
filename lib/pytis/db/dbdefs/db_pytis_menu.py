@@ -559,6 +559,36 @@ for each statement execute procedure e_pytis_menu_check_trigger();
 """
     depends_on = (EPytisMenu, EPytisDisabledDmpTriggers,)
 
+class CPytisMenuLanguages(sql.SQLTable):
+    """Codebook of available menu languages."""
+    name = 'c_pytis_menu_languages'
+    fields = (
+              sql.PrimaryColumn('language', pytis.data.String(not_null=False)),
+              sql.Column('description', pytis.data.String(not_null=True)),
+             )
+    inherits = (db.XChanges,)
+    init_columns = ('language', 'description')
+    init_values = (
+                   ('cs', 'čeština',),
+                  )
+    with_oids = True
+    depends_on = ()
+    access_rights = db.default_access_rights.value(globals())
+
+class EPytisMenuTranslations(sql.SQLTable):
+    """Translations of menu titles."""
+    name = 'e_pytis_menu_translations'
+    fields = (
+              sql.Column('menuid', pytis.data.Integer(not_null=False), references=sql.gA('e_pytis_menu', onupdate='CASCADE', ondelete='CASCADE'), index=True),
+              sql.Column('language', pytis.data.String(not_null=True), references=sql.gA('c_pytis_menu_languages', onupdate='CASCADE', ondelete='CASCADE')),
+              sql.Column('t_title', pytis.data.String(not_null=True)),
+              sql.Column('dirty', pytis.data.Boolean(not_null=True)),
+             )
+    inherits = (db.XChanges,)
+    with_oids = True
+    depends_on = (EPytisMenu,)
+    access_rights = db.default_access_rights.value(globals())
+
 class EvPytisMenu(sql.SQLView):
     name = 'ev_pytis_menu'
     @classmethod
@@ -579,6 +609,34 @@ class EvPytisMenu(sql.SQLView):
     no_update_columns = ('position_nsub', 'xtitle',)
     delete_order = (EPytisMenu,)
     depends_on = (EPytisMenu, CPytisMenuActions,)
+    access_rights = db.default_access_rights.value(globals())
+
+class EvPytisTranslatedMenu(sql.SQLView):
+    name = 'ev_pytis_translated_menu'
+    @classmethod
+    def query(cls):
+        menu = sql.t.EvPytisMenu.alias('menu')
+        languages = sql.t.CPytisMenuLanguages.alias('languages')
+        translations = sql.t.EPytisMenuTranslations.alias('translations')
+        return sqlalchemy.select(
+            cls._exclude(menu) +
+            cls._exclude(languages, 'description') +
+            cls._exclude(translations, 'menuid', 'language', 'dirty') +
+            [sql.gL("coalesce(t_title, xtitle)").label('t_xtitle'),
+             sql.gL("coalesce(dirty, title is not null)").label('dirty')],
+            from_obj=[menu.join(languages, sqlalchemy.sql.true()).outerjoin(translations, sql.gR('menu.menuid=translations.menuid and languages.language=translations.language'))]
+            )
+
+    insert_order = (EvPytisMenu,)
+    no_insert_columns = ('t_xtitle', 'dirty',)
+    def on_insert_also(self):
+        return ("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null)",)
+    update_order = (EvPytisMenu,)
+    no_update_columns = ('t_xtitle', 'dirty',)
+    def on_update_also(self):
+        return ("delete from e_pytis_menu_translations where menuid=old.menuid and language=old.language", "insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null or old.title!=new.title)",)
+    delete_order = (EvPytisMenu,)
+    depends_on = (EvPytisMenu, CPytisMenuLanguages, EPytisMenuTranslations,)
     access_rights = db.default_access_rights.value(globals())
 
 class PytisFirstPosition(db.Base_PyFunction):
@@ -1870,6 +1928,7 @@ class TypPreviewUserMenu(sql.SQLType):
               sql.Column('help', pytis.data.String(not_null=False)),
               sql.Column('hotkey', pytis.data.String(not_null=False)),
               sql.Column('locked', pytis.data.Boolean(not_null=False)),
+              sql.Column('language', pytis.data.String(not_null=False)),
              )
     depends_on = ()
     access_rights = ()
@@ -1880,26 +1939,26 @@ class PytisViewUserMenu(sql.SQLFunction):
     result_type = TypPreviewUserMenu
     multirow = True
     stability = 'VOLATILE'
-    depends_on = (TypPreviewUserMenu, EPytisMenu, PytisComputeSummaryRights, PytisMultiformSpec, PytisUser,)
+    depends_on = (TypPreviewUserMenu, EvPytisTranslatedMenu, PytisComputeSummaryRights, PytisMultiformSpec, PytisUser,)
     access_rights = db.default_access_rights.value(globals())
 
     def body(self):
         return """
-select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked
-from ev_pytis_menu as menu
+select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked, menu.language
+from ev_pytis_translated_menu as menu
 left outer join pytis_compute_summary_rights(NULL, pytis_user(), 'f', 't', 't') as rights on (menu.shortname = rights.shortname)
 where pytis_multiform_spec(menu.fullname) and rights.rights like '%show%'
 union
-select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked
-from ev_pytis_menu as menu
+select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked, menu.language
+from ev_pytis_translated_menu as menu
 left outer join pytis_compute_summary_rights(NULL, pytis_user(), 'f', 'f', 't') as rights on (menu.shortname = rights.shortname)
 where not pytis_multiform_spec(menu.fullname) and rights.rights like '%show%'
 union
-select menu.menuid, menu.name, menu.title, menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked
-from ev_pytis_menu as menu
+select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
+       menu.help, menu.hotkey, menu.locked, menu.language
+from ev_pytis_translated_menu as menu
 where name is null and title is null;
 """
 
