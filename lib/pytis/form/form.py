@@ -1818,6 +1818,8 @@ class RecordForm(LookupForm):
             return False
         for field in self._view.fields():
             fid = field.id()
+            if field is None:
+                continue
             codebook = field.codebook()
             if codebook and not has_access(codebook) and field.computer() is None:
                 field_name = field.label()
