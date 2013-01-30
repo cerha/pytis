@@ -522,6 +522,9 @@ def e_pytis_menu_trigger():
                 plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" % (self._old['fullname'],))
                 plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" % (self._old['fullname'],))
             self._update_positions(new=self._new, old=self._old)
+            if self._old['title'] != self._new['title']:
+                plpy.execute("update e_pytis_menu_translations set dirty=true where menuid=%s" %
+                             (self._new['menuid'],))
             plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
         def _do_after_delete(self):
             if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='import'"):
@@ -635,6 +638,14 @@ viewng('ev_pytis_menu',
        grant=db_rights,
        depends=('e_pytis_menu', 'c_pytis_menu_actions',))
 
+sql_raw("""
+create or replace function update_e_pytis_menu_translations(int, text, text, text, text) returns int as $$
+  update e_pytis_menu_translations set language=$2, t_title=$3, dirty=(dirty and $3=$4) where menuid=$1 and language=$2;
+  insert into e_pytis_menu_translations (menuid, language, t_title, dirty) (select $1, $2, $3, false where (select count(*)=0 from e_pytis_menu_translations where menuid=$1 and language=$2)) returning menuid;
+$$ language sql;
+""",
+        name='update_e_pytis_menu_translations',
+        depends=('e_pytis_menu_translations',))
 viewng('ev_pytis_translated_menu',
        (SelectRelation('ev_pytis_menu', alias='menu', key_column='menuid'),
         SelectRelation('c_pytis_menu_languages', alias='languages', exclude_columns=('description',),
@@ -650,8 +661,7 @@ viewng('ev_pytis_translated_menu',
        insert_order=('ev_pytis_menu',),
        insert=("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null)",),
        update_order=('ev_pytis_menu',),
-       update=("delete from e_pytis_menu_translations where menuid=old.menuid and language=old.language",
-               "insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null or old.title!=new.title)",),
+       update=("select update_e_pytis_menu_translations(new.menuid, new.language, new.t_title, old.t_title, new.title)",),
        delete_order=('ev_pytis_menu',),
        grant=db_rights,
        depends=('ev_pytis_menu', 'c_pytis_menu_languages', 'e_pytis_menu_translations',))
