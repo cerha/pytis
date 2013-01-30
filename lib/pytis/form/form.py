@@ -2624,7 +2624,10 @@ class PopupEditForm(PopupForm, EditForm):
         self._initial_select_row = None
 
     def _default_transaction(self):
-        connection_name = resolver().get(self._name, 'data_spec').connection_name()
+        try:
+            connection_name = resolver().get(self._name, 'data_spec').connection_name()
+        except ResolverError:
+            connection_name = None
         return pytis.data.DBTransactionDefault(config.dbconnection, connection_name=connection_name)
         
     def _init_attributes(self, inserted_data=None, multi_insert=True, **kwargs):

@@ -1762,7 +1762,10 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
     if dual:
         return has_access(main, perm=perm) and has_access(side, perm=perm)
     else:
-        rights = resolver().get(name, 'data_spec').access_rights()
+        try:
+            rights = resolver().get(name, 'data_spec').access_rights()
+        except ResolverError:
+            rights = None
         if rights:
             groups = pytis.data.default_access_groups(_access_dbconnection)
             if not rights.permitted(perm, groups, column=column):
