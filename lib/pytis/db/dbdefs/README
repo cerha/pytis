@@ -4,5 +4,5 @@ Update of the specifications:
 
   $ cd <TOP-LEVEL-PYTIS-DIRECTORY>
   $ cd db
-  $ rm ../lib/pytis/db/dbdefs/*
+  $ rm ../lib/pytis/db/dbdefs/[_d]*
   $ gensql --convert --application=pytis gensql.py ../lib/pytis/db/dbdefs
