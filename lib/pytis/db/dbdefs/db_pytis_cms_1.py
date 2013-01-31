@@ -73,8 +73,8 @@ class CmsAccessLogData(sql.SQLTable):
     depends_on = ()
     access_rights = db.cms_rights_rw.value(globals())
 
-class X177(sql.SQLRaw):
-    name = '@177'
+class X180(sql.SQLRaw):
+    name = '@180'
     schemas = db.cms_schemas.value(globals())
     @classmethod
     def sql(class_):

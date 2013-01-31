@@ -22,3 +22,4 @@ class EPytisActionLog(sql.SQLTable):
     with_oids = True
     depends_on = ()
     access_rights = db.default_access_rights.value(globals())
+
