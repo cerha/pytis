@@ -1694,7 +1694,11 @@ class ViewSpec(object):
         return self._singular
 
     def fields(self):
-        """Vrať tuple specifikací všech políček v layoutu."""
+        """Vrať tuple specifikací všech políček v layoutu.
+
+        (A navíc to vrací i políčka, která v layoutu nejsou.)
+        
+        """
         return self._fields
         
     def field(self, id):
