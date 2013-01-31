@@ -32,7 +32,7 @@ import time
 
 import pytis.data
 import pytis.output
-from pytis.presentation import PresentedRow
+from pytis.presentation import PresentedRow, Computer, Editable
 from pytis.form import *
 import wx
 
@@ -1816,12 +1816,22 @@ class RecordForm(LookupForm):
     def _cmd_new_record(self, copy=False, prefill=None):
         if not self.check_permission(pytis.data.Permission.INSERT, quiet=False):
             return False
+        layout_field_ids = self._view.layout().order()
         for field in self._view.fields():
-            fid = field.id()
             if field is None:
+                continue
+            fid = field.id()
+            if fid not in layout_field_ids:
                 continue
             codebook = field.codebook()
             if codebook and not has_access(codebook) and field.computer() is None:
+                editable = field.editable()
+                if isinstance(editable, Computer):
+                    read_only = not editable.function()(self._row)
+                else:
+                    read_only = (editable == Editable.NEVER)
+                if read_only:
+                    continue
                 field_name = field.label()
                 if self._row[fid].type().not_null() :
                     msg = _(u"Tento náhled obsahuje povinné políčko %s, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.") % (field_name,)
