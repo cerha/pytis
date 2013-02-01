@@ -49,10 +49,13 @@ pytis.BrowseFormHandler = Class.create({
 	   uri ... URI of the AJAX request to retrieve form data
 	 */
 	this.form = $(form_id);
+	this.form.instance = this;
 	this.form_name = form_name;
 	this.uri = uri;
 	this.ajax_container = this.form.down('.ajax-container');
+	this.on_load_callbacks = [];
 	if (this.ajax_container && uri) {
+	    this.async_load = true;
 	    var parameters = {};
 	    var query = window.location.search.replace(/;/g, '&').parseQuery();
 	    if (query['form_name'] == form_name)
@@ -67,6 +70,7 @@ pytis.BrowseFormHandler = Class.create({
 	    else
 		this.load_form_data(parameters);
 	} else {
+	    this.async_load = false;
 	    this.bind_search_controls(this.form.down('.list-form-controls', 0));
 	    this.bind_search_controls(this.form.down('.list-form-controls', 1));
 	    this.bind_table_headings(this.form.down('table'));
@@ -85,6 +89,10 @@ pytis.BrowseFormHandler = Class.create({
 		    this.bind_controls(container.down('.list-form-controls', 0));
 		    this.bind_controls(container.down('.list-form-controls', 1));
 		    this.bind_table_headings(container.down('table'));
+		    for (var i=0; i<this.on_load_callbacks.length; i++) {
+			var callback = this.on_load_callbacks[i];
+			callback(this.form);
+		    }
 		    document.body.style.cursor = "default";
 		    if (container.down('#found-record')) window.location.hash = '#found-record';
 		}
@@ -171,7 +179,7 @@ pytis.BrowseFormHandler = Class.create({
 	    if (th.down('.sort-direction-asc')) dir='desc';
 	    if (th.down('.sort-direction-desc')) dir='';
 	    var parameters = {form_name: this.form_name, sort: column_id, dir: dir};
-	    if (this.ajax_container && this.uri) {
+	    if (this.async_load) {
 		document.body.style.cursor = "wait";
 		this.form.select('form.list-form-controls').each(function(f) { f.disable(); });
 		this.load_form_data(parameters);
@@ -214,6 +222,22 @@ pytis.BrowseFormHandler = Class.create({
 	    }
 	}
 	event.stop();
+    },
+
+    on_load: function (callback) {
+	/* Call given callback function when the form is fully loaded.
+
+	   The callback will be called immediately if the form is loaded
+	   synchronously or after the asynchronous load in the other case.
+
+	   The callback function will receive the form's top level DOM element
+	   as an argument.
+
+	 */
+	if (this.async_load)
+	    this.on_load_callbacks[this.on_load_callbacks.length] = callback;
+	else
+	    callback(this.form);
     }
 
 });
