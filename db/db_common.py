@@ -735,6 +735,7 @@ table('t_changes',
        C('key_column', TString, constraints=('not null',)),
        C('key_value', TString, constraints=('not null',)),
        ),
+      schemas=('public',),
       doc="Log of data changes.",
       grant=Gall_pytis,
       depends=())
@@ -743,9 +744,23 @@ table('t_changes_detail',
          references='t_changes on update cascade on delete cascade'),
        C('detail', TString, constraints=('not null',)),
        ),
+      schemas=('public',),
       doc="Detail information about database changes.",
       grant=Gall_pytis,
       depends=('t_changes',))
+
+viewng('v_changes',
+       (SelectRelation('t_changes', alias='changes'),
+        SelectRelation('t_changes_detail', alias='detail', exclude_columns=('id',),
+                       jointype=JoinType.LEFT_OUTER,
+                       condition="changes.id=detail.id"),
+        ),
+       insert_order=(),
+       update_order=(),
+       delete_order=(),
+       schemas=('public',),
+       grant=Gall_pytis,
+       depends=('t_changes', 't_changes_detail',))
 
 sql_raw("""
 create or replace function log_trigger() returns trigger as $$
@@ -768,11 +783,11 @@ begin
   end if;
   for c in select regexp_split_to_table(key_column_, ', *') loop
     cc := quote_ident(c);
-    execute 'select $1.'||cc||'::text' into strict v using current_record;
+    execute concat('select $1.', cc, '::text') into strict v using current_record;
     if key_value_ is null then
       key_value_ := v;
     else
-      key_value_ := key_value_ || ',' || v;
+      key_value_ := concat(key_value_, ',', v);
     end if;
   end loop;
   insert into t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
@@ -785,29 +800,27 @@ begin
   loop
     cc := quote_ident(c);
     if tg_op = 'UPDATE' then
-      execute 'select coalesce($1.'||cc||'::text, '''') != coalesce($2.'||cc||'::text, '''')' into strict changed using old, new;
+      execute concat('select coalesce($1.', cc, '::text, '''') != coalesce($2.', cc, '::text, '''')') into strict changed using old, new;
       if changed then
         if detail_ != '' then
-          detail_ := detail_ || '
-';
+          detail_ := concat(detail_, '\n');
         end if;
-        execute 'select
-                 (case when $1.'||cc||' is not null and $3 = ''bytea'' then ''BINARY'' when $1.'||cc||' is null then ''NULL'' else $1.'||cc||'::text end) ||
+        execute concat('select
+                       (case when $1.', cc, ' is not null and $3 = ''bytea'' then ''BINARY'' when $1.', cc, ' is null then ''NULL'' else $1.', cc, '::text end) ||
                  '' -> '' ||
-                 (case when $2.'||cc||' is not null and $3 = ''bytea'' then ''BINARY'' when $2.'||cc||' is null then ''NULL'' else $2.'||cc||'::text end)'
+                       (case when $2.', cc, ' is not null and $3 = ''bytea'' then ''BINARY'' when $2.', cc, ' is null then ''NULL'' else $2.', cc, '::text end)')
                 into strict v using old, new, t;
-        detail_ := detail_ || c || ': ' || v;
+        detail_ := concat(detail_, c, ': ', v);
       end if;
     else
-      execute 'select $1.'||cc||' is not null' into strict changed using current_record;
+      execute concat('select $1.', cc, ' is not null') into strict changed using current_record;
       if changed then
         if detail_ != '' then
-          detail_ := detail_ || '
-  ';
+          detail_ := concat(detail_, '\n');
         end if;
-        execute 'select (case when $1.'||cc||' is not null and $2 = ''bytea'' then ''BINARY'' else $1.'||cc||'::text end)'
+        execute concat('select (case when $1.', cc, ' is not null and $2 = ''bytea'' then ''BINARY'' else $1.', cc, '::text end)')
                 into strict v using current_record, t;
-        detail_ := detail_ || c || ': ' || v;
+        detail_ := concat(detail_, c, ': ', v);
       end if;
     end if;
   end loop;
@@ -815,7 +828,60 @@ begin
   return null;
 end;
 $$ language plpgsql security definer;
+
+create or replace function f_rotate_log() returns void as $$
+declare
+  time_from timestamp;
+  time_to timestamp;
+  date_from text;
+  date_to text;
+  tablename text;
+  dtablename text;
+  n int;
+begin
+  lock public.t_changes in exclusive mode;
+  lock public.t_changes_detail in exclusive mode;
+  select min(timestamp) into strict time_from from public.t_changes;
+  select max(timestamp) into strict time_to from public.t_changes;
+  if time_from is null then
+    raise exception 'Log table is empty';
+  end if;
+  date_from := to_char(time_from, 'YYMMDD');
+  date_to := to_char(time_to, 'YYMMDD');
+  tablename := concat('t_changes_', date_from, '_', date_to);
+  dtablename := concat('t_changes_detail_', date_from, '_', date_to);
+  select count(*) into strict n
+         from pg_class join pg_namespace on relnamespace = pg_namespace.oid
+         where relname = tablename and nspname = 'public';
+  if n > 0 then
+    raise exception 'Table % already exists', tablename;
+  end if;
+  execute concat('create table public.', tablename, ' as select * from public.t_changes');
+  execute concat('create table public.', dtablename, ' as select * from public.t_changes_detail');
+  truncate public.t_changes, public.t_changes_detail;
+  execute concat('create unique index ', tablename, '__id__index on public.', tablename, ' (id)');
+  execute concat('create unique index ', dtablename, '__id__index on public.', dtablename, ' (id)');
+end;
+$$ language plpgsql;
+
+create or replace function f_view_log(date_from date, date_to date) returns setof v_changes as $$
+declare
+  date_to_1 date := date_to + '1 day'::interval;
+  tablename text;
+begin
+  return query select * from v_changes where date_from <= timestamp and timestamp < date_to_1;
+  for tablename in select relname from pg_class join pg_namespace on relnamespace = pg_namespace.oid
+                          where nspname = 'public' and
+                                relname ~ '^t_changes_......_......$' and
+                                substring(relname from 11 for 6) <= to_char(date_to, 'YYMMDD') and
+                                substring(relname from 18 for 6) >= to_char(date_from, 'YYMMDD')
+  loop
+    return query execute concat('select t.*, detail from public.', tablename, ' t join public.t_changes_detail_', substring(tablename from 11), ' using(id) where $1 <= timestamp and timestamp < $2') using date_from, date_to_1;
+  end loop;
+end;
+$$ language plpgsql stable;
 """,
+        schemas=('public',),
         name='log_trigger',
         depends=('t_changes', 't_changes_detail',))
 

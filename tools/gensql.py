@@ -613,7 +613,8 @@ class _GsqlSpec(object):
             ignored_objects = ('profiles', 'kurzy_cnb', 'new', 'public', 'abra_mirror', 'generate_series',
                                'dblink', 'date_trunc', 'diff', 'avg', 'case', 'current_date',
                                'insert', 'update', 'delete', 'view', 'function', 'table', 'regexp_matches',
-                               'bv_users_cfg', 'solv_users_cfg', 'dat_vypisu', 'nulovy_cenik',)
+                               'bv_users_cfg', 'solv_users_cfg', 'dat_vypisu', 'nulovy_cenik',
+                               'relnamespace',)
             if (len(identifier) < 3 or
                 identifier.lower() in ignored_objects or
                 identifier.startswith('temp_') or
