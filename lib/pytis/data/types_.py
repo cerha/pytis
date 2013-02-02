@@ -71,7 +71,7 @@ class UnsupportedPrimitiveValueConversion(Exception):
     """Exception raised for unsupported conversion by 'Type.primitive_value()'."""
     def __init__(self, type):
         msg = 'Object of type %s can not be converted to a primitive value.' % type
-        super(self, UnsupportedPrimitiveValueConversion).__init__(msg)
+        super(UnsupportedPrimitiveValueConversion, self).__init__(msg)
     
 class Type(object):
     """Abstraktní třída sloužící jako společný základ všech typů.
