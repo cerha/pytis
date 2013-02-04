@@ -2,7 +2,7 @@
 
 # Formulář s tiskovým preview a tiskem
 # 
-# Copyright (C) 2002-2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ v konfliktu s klíčovým slovem Pythonu.
 
 """
 
-import cStringIO
 import os
 import thread
 
@@ -173,7 +172,7 @@ class PostscriptViewer(wx.ScrolledWindow):
 
     def _init_gs(self, stream):
         self._gs_old = self._gs
-        self._gs = gs = _Ghostscript(stream, self._zoom)
+        self._gs = _Ghostscript(stream, self._zoom)
         
     def _wait_for_gs(self):
         if __debug__: log(DEBUG, 'Čekání na dokončení běhu Ghostscriptu')
@@ -337,41 +336,7 @@ class PrintFormExternal(PrintForm, PopupForm):
         return file_name
         
     def _run_viewer(self, file_name):
-        import subprocess
-        viewer = config.postscript_viewer
-        remote = (config.rpc_remote_view and pytis.windows.windows_available())
-        try:
-            if remote:
-                suffix = (os.path.splitext(file_name)[1] or '.pdf')
-                try:
-                    remote_file = pytis.windows.make_temporary_file(suffix=suffix)
-                except:
-                    remote = False
-            if remote:
-                try:
-                    f = open(file_name)
-                    while True:
-                        data = f.read(10000000)
-                        if not data:
-                            break
-                        remote_file.write(data)
-                    f.close()
-                finally:
-                    remote_file.close()
-                pytis.windows.launch_file(remote_file.name())
-            elif viewer:
-                call_args = viewer.split()
-                subprocess.call(call_args + [file_name])
-            else:
-                import mailcap
-                match = mailcap.findmatch(mailcap.getcaps(), 'application/pdf')[1]
-                if match:
-                    command = match['view'] % (file_name,)
-                    os.system(command)
-                else:
-                    run_dialog(Error, _("Nenalezen žádný PDF prohlížeč."))
-        finally:
-            os.remove(file_name)
+        run_viewer(file_name)
         
     def show(self):
         pass
@@ -381,3 +346,51 @@ class PrintFormExternal(PrintForm, PopupForm):
         if file_name is None:
             return
         thread.start_new_thread(self._run_viewer, (file_name,))
+
+
+def run_viewer(file_name):
+    """Run PDF viewer on given file.
+
+    Run it on a remote station if requested in configuration and the remote
+    station is available.
+
+    Arguments:
+
+      file_name -- name of the file to run the viewer on; string
+
+    """
+    import subprocess
+    viewer = config.postscript_viewer
+    remote = (config.rpc_remote_view and pytis.windows.windows_available())
+    try:
+        if remote:
+            suffix = (os.path.splitext(file_name)[1] or '.pdf')
+            try:
+                remote_file = pytis.windows.make_temporary_file(suffix=suffix)
+            except:
+                remote = False
+        if remote:
+            try:
+                f = open(file_name)
+                while True:
+                    data = f.read(10000000)
+                    if not data:
+                        break
+                    remote_file.write(data)
+                f.close()
+            finally:
+                remote_file.close()
+            pytis.windows.launch_file(remote_file.name())
+        elif viewer:
+            call_args = viewer.split()
+            subprocess.call(call_args + [file_name])
+        else:
+            import mailcap
+            match = mailcap.findmatch(mailcap.getcaps(), 'application/pdf')[1]
+            if match:
+                command = match['view'] % (file_name,)
+                os.system(command)
+            else:
+                run_dialog(Error, _("Nenalezen žádný PDF prohlížeč."))
+    finally:
+        os.remove(file_name)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2005-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ from pytis.extensions import *
 from pytis.presentation import *
 
 import collections
+import tempfile
 import config
 import pytis.util
 
@@ -278,15 +279,17 @@ cmd_run_any_form = \
 
 
 def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
-    """Tiskni specifikaci pomocí příkazu config.printing_command nebo ulož do output_file.
+    """Print specification to an output file or show it in a PDF viewer.
 
-    Argumenty:
+    Arguments:
 
-      spec -- název specifikace pro PrintResolver
-      print_spec -- název tiskové specifikace pro pytis.output.Formatter
-      row -- řádek s daty pro PrintResolver
-
-      Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
+      resolver -- resolver for standard specification resolving
+      spec -- name of the specification for print resolver
+      print_spec -- name of the print specification for 'pytis.output.Formatter'
+      row -- row data for print resolver
+      output_file -- name of the file to write output PDF data to, string; if
+        'None' then show the output in an external PDF viewer
+      kwargs -- passed to the print resolver for use in the print procedure
         
     """
     import pytis.output
@@ -328,7 +331,11 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     if output_file:
         formatter.printout(output_file)
     else:
-        formatter.printdirect()
+        fd, fname = tempfile.mkstemp(suffix='.pdf')
+        handle = os.fdopen(fd, 'wb')
+        formatter.printout(handle)
+        pytis.form.run_viewer(fname)
+        
 
 def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
                charset='UTF-8', **kwargs):
