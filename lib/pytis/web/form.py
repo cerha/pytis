@@ -526,7 +526,12 @@ class _SubmittableForm(Form):
 
     def _export_submit(self, context):
         g = context.generator()
-        hidden = self._hidden + [('form_name', self._name)]
+        hidden = [('form_name', self._name)]
+        for name, value in self._hidden:
+            if isinstance(value, (tuple, list)):
+                hidden.extend([(name, v) for v in value])
+            else:
+                hidden.append((name, value))
         invoked_from = self._req.param('__invoked_from')
         if invoked_from is not None:
             hidden.append(('__invoked_from', invoked_from))
