@@ -2037,6 +2037,8 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
     checked rows.
     
     """
+    _HTTP_METHOD = 'POST'
+    
     def __init__(self, view, req, row, check_columns=None, limits=(), limit=None, **kwargs):
         """Arguments:
 
@@ -2048,13 +2050,14 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
 
         """
         super(CheckRowsForm, self).__init__(view, req, row, limits=limits, limit=limit, **kwargs)
-        assert isinstance(check_columns, (list, tuple)), check_columns
-        if __debug__:
-            for cid in check_columns:
-                assert cid in self._row, cid
+        assert check_columns is None or isinstance(check_columns, (list, tuple)), check_columns
         if check_columns is None:
             check_columns = tuple([field.id for field in self._column_fields
                                    if isinstance(field.type, pd.Boolean)])
+        else:
+            if __debug__:
+                for cid in check_columns:
+                    assert cid in self._row, cid
         self._check_columns = check_columns
 
     def _export_cell(self, context, row, n, field):
