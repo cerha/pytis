@@ -40,6 +40,11 @@ pytis.BrowseFormHandler = Class.create({
     displayed.  Special handling is applied to forms which are placed inside
     notebook tabs (of lcg.Notebook widget).  Such forms are not loaded
     immediately, but in a callback after the tab is activated.
+
+    The instance of this class can be accessed by other JavaScript code through
+    the form's DOM element.  It is automatically attached to the form's top
+    level element as it's 'instance' attribute, so in Prototype.js, you can
+    access it as '$(form_id).instance'.
       
      */
     initialize: function(form_id, form_name, uri) {
