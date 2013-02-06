@@ -147,12 +147,28 @@ class Form(lcg.Content):
     def _export_javascript(self, context, form_id):
         return None
 
+    def form_id(self):
+        """Return the HTML id of the form used in the last export.
+
+        Knowing the HTML id can be usefull for example in JavaScript code
+        accessing the form's DOM elements or its JavaScript instance.
+
+        The form can be theoretically exported several times but usually
+        there's just one export alltogether.  In any case, the HTML id is
+        generated when the export starts, so calling this method before
+        exporting the form will raise an AttributeError exception.
+
+        """
+
+        
+        return self._form_id
+
     def export(self, context):
         g = context.generator()
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
             cls += ' ' + camel_case_to_lower(self._name, '-')
-        form_id = context.unique_id()
+        self._form_id = form_id = context.unique_id()
         javascript = self._export_javascript(context, form_id)
         if javascript:
             # Javascript dependencies must be allocated before the form is
