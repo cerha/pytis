@@ -239,15 +239,15 @@ class FieldForm(Form):
         super(FieldForm, self).__init__(*args, **kwargs)
         self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
         
-    def _field(self, id):
-        return Field(self._row, self._view.field(id), self._row.type(id), self, self._uri_provider)
+    def _field(self, id, multirow=False):
+        return Field.create(self._row, self._view.field(id), self, self._uri_provider, multirow=multirow)
         
     def _export_field(self, context, field, editable=False):
         if editable:
-            result = field.exporter.editor(context, prefill=self._prefill.get(field.id),
+            result = field.editor(context, prefill=self._prefill.get(field.id),
                                            error=dict(self._errors).get(field.id))
         else:
-            formatted = field.exporter.format(context)
+            formatted = field.format(context)
             if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
                 if field.spec.printable():
                     uri = self._uri_provider(self._row, UriType.PRINT, field.id)
@@ -599,32 +599,29 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             multipart = any([f for f in order if isinstance(self._row.type(f), pytis.data.Binary)])
         self._enctype = (multipart and 'multipart/form-data' or None)
 
-    def _has_not_null_indicator(self, field):
-        type = field.type
-        return type.not_null() and not isinstance(type, pytis.data.Boolean) and \
-               (self._row.new() or not isinstance(type, (pytis.data.Password, pytis.data.Binary)))
-    
     def _export_field_label(self, context, field):
         g = context.generator()
         if not field.label:
             return None
-        if self._has_not_null_indicator(field):
+        if field.not_null():
             sign = g.sup("*", cls="not-null")
         else:
             sign = ''
         cls='field-label id-'+field.id
         if not self._row.editable(field.id):
             cls += ' disabled'
-        return g.span(g.label(field.label, field.unique_id) + sign + ":", cls=cls)
+        return g.span(g.label(field.label, field.html_id()) + sign + ":", cls=cls)
             
     def _export_field_help(self, context, field):
         descr = field.spec.descr()
         if descr:
             g = context.generator()
-            id = field.unique_id + '-help'
+            field_id = field.html_id()
+            help_id = field_id + '-help'
             # Set through a script to avoid invalid HTML ('aria-describedby' in not valid HTML).
-            script = "document.getElementById('%s').setAttribute('aria-describedby', '%s');"
-            return g.div(descr, id=id, cls="help") + g.script(script % (field.unique_id, id))
+            return (g.div(descr, id=help_id, cls="help") +
+                    g.script("$('%s').setAttribute('aria-describedby', '%s');" %
+                             (field_id, help_id)))
         else:
             return None
 
@@ -648,25 +645,23 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     def _export_javascript(self, context, form_id):
         g = context.generator()
         layout_fields = self._layout.order()
-        field_handlers = []
+        js_fields = []
         state = {}
         for fid in layout_fields:
             field = self._fields[fid]
             active = self._row.depends(fid, layout_fields)
-            required = self._has_not_null_indicator(field)
             if field.spec.runtime_filter() or field.spec.runtime_arguments():
                 # NOTE: The format here must be same as in EditForm.ajax_response()!
                 state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
                                             self._row.runtime_arguments(fid))
-            handler = field.exporter.handler(context, form_id, active, required)
-            field_handlers.append(handler)
+            js_fields.append(field.javascript(context, form_id, active))
         return "new pytis.FormHandler('%s', [%s], %s)" % \
-            (form_id, ', '.join(field_handlers), g.js_value(state))
+            (form_id, ', '.join(js_fields), g.js_value(state))
         
     
     def _export_footer(self, context):
         for f in self._fields.values():
-            if f.label and self._has_not_null_indicator(f) and f.id in self._layout.order():
+            if f.label and f.not_null() and f.id in self._layout.order():
                 g = context.generator()
                 return [g.div(g.span("*", cls="not-null") +") "+\
                                   _(u"Fields marked by an asterisk are mandatory."),
@@ -1230,8 +1225,7 @@ class BrowseForm(LayoutForm):
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
             row = PresentedRow(fields, data, pytis.data.Row(values), resolver=self._row.resolver())
             condition = pytis.data.AND(*conditions)
-            filter_fields = [Field(row, f, row.type(f.id()), self, self._uri_provider)
-                             for f in fields]
+            filter_fields = [Field.create(row, f, self, self._uri_provider) for f in fields]
         else:
             row = None
             condition = None
@@ -1308,8 +1302,8 @@ class BrowseForm(LayoutForm):
         else:
             return ''
 
-    def _export_cell(self, context, row, n, field):
-        value = self._export_field(context, field)
+    def _export_cell(self, context, row, n, field, editable=False):
+        value = self._export_field(context, field, editable=editable)
         if field.id == self._column_fields[0].id:
             g = context.generator()
             tree_level = self._tree_level()
@@ -1690,7 +1684,7 @@ class BrowseForm(LayoutForm):
             filter_content = []
             for field in self._filter_fields:
                 filter_content.extend((
-                        g.label(field.label+':', field.unique_id),
+                        g.label(field.label+':', field.html_id()),
                         self._export_field(context, field, editable=True)))
             for filter_set in self._filter_sets:
                 filter_set_id = filter_set.id()
@@ -2065,10 +2059,50 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
                     assert cid in self._row, cid
         self._check_columns = check_columns
 
-    def _export_cell(self, context, row, n, field):
+    def _export_cell(self, context, row, n, field, editable=False):
         if field.id in self._check_columns:
             return context.generator().checkbox(name=field.id, value=self._row.format(self._key),
                                                 checked=self._row[field.id].value())
         else:
-            return super(CheckRowsForm, self)._export_cell(context, row, n, field)
+            return super(CheckRowsForm, self)._export_cell(context, row, n, field, editable=editable)
+        
 
+class EditableBrowseForm(BrowseForm):
+    """Web BrowseForm with editable fields in certain columns.
+
+    The form is rendered as an ordinary table, but columns given by constructor argument editable_columns
+
+    are rendered as editable fields in each row.  The form has no submit
+    controls -- it must be used inside another submittable form.
+
+    Editable fields use row key in field identifier to allow processing the
+    form values on submit.  So for example, The value of column 'count' for the
+    row with exported key value '654' will be submitted as parameter
+    'count-654'.
+    
+    """
+    
+    def __init__(self, view, req, row, editable_columns=None, limits=(), limit=None, **kwargs):
+        """Arguments:
+
+          check_columns -- a sequence of column identifiers whoose fields will be editable.
+
+          See the parent classes for definition of the remaining arguments.
+
+        """
+        assert isinstance(editable_columns, (list, tuple)), editable_columns
+        self._editable_columns = editable_columns
+        super(EditableBrowseForm, self).__init__(view, req, row, limits=limits, limit=limit, **kwargs)
+        if __debug__:
+            for cid in editable_columns:
+                assert cid in self._row, cid
+
+    def _export_cell(self, context, row, n, field, editable=False):
+        if field.id in self._editable_columns:
+            editable = True
+        return super(EditableBrowseForm, self)._export_cell(context, row, n, field, editable=editable)
+
+    def _field(self, id, multirow=False):
+        if id in self._editable_columns:
+            multirow = True
+        return super(EditableBrowseForm, self)._field(id, multirow=multirow)

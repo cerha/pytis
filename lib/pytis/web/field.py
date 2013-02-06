@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006-2012 Brailcom, o.p.s.
+# Copyright (C) 2006-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -140,82 +140,108 @@ localizable_datetime = localizable_export
 
     
 class Field(object):
-    """Internal form field representation (all attributes are read-only)."""
-    def __init__(self, row, spec, type, form, uri_provider):
+    """Field value exporter for both read-only and editable field representations.
+
+    An instance of this class represents a pytis form field an all kinds of
+    pytis web forms.  It defines public methods and attributes to query field
+    properties and methods 'format()' and 'editor()' which render the final
+    HTML representation of the field ('format()' renders the read-only
+    representation and 'editor()' the editable field).  All public attributes
+    must be treated as read-only!
+
+    Subclasses of this class define specific kinds of fields with different
+    user interface and behavior.  A new instance is created by the static
+    method 'create()', which automatically decides which particular subclass
+    must be used for given field according to specification.
+    
+    """
+    _HANDLER = 'pytis.Field'
+    _URL_MATCHER = re.compile(r'(https?://.+?)(?=[\),.:;?!\]]?\.*(\s|&nbsp;|&lt;|&gt;|<br/?>|$))')
+
+    @staticmethod
+    def create(row, spec, form, uri_provider, multirow=False):
+        """Create a new instance of the corresponding Field subclass.
+
+        Arguments:
+
+          row -- 'pytis.presentation.PresentedRow' instance
+          spec -- 'pytis.presentation.Field' specification instance of the field to create
+          form -- 'pytis.web.Form' instance of the field's parent form
+          uri_provider -- URI provider function as described in 'UriType' class
+          multirow -- boolean flag; True if the field appears in a multiline
+            edit form, where the HTML field name and identifier must contain
+            the row identification (will be suffixed by the exported row key
+            value separated by a dash from the name and id of the field
+            itself).  If False, no suffix is used.
+        
+        """
+        data_type = row.type(spec.id())
+        if isinstance(data_type, pytis.data.Password):
+            cls = PasswordField
+        elif isinstance(data_type, pytis.data.Color):
+            cls = ColorField
+        elif isinstance(data_type, pytis.data.Binary):
+            cls = BinaryField
+        elif isinstance(data_type, pytis.data.Date):
+            cls = DateField
+        elif isinstance(data_type, pytis.data.DateTime):
+            cls = DateTimeField
+        elif isinstance(data_type, pytis.data.Array):
+            inner_type = data_type.inner_type()
+            if inner_type.enumerator():
+                cls = ChecklistField
+            else:
+                raise Exception("Unsupported array field.")
+        elif data_type.enumerator():
+            selection_type = spec.selection_type()
+            if selection_type == SelectionType.RADIO:
+                cls = RadioField
+            elif selection_type is None and isinstance(data_type, pytis.data.Boolean):
+                cls = BooleanField
+            elif selection_type in (SelectionType.CHOICE, None):
+                cls = ChoiceField
+            else:
+                cls = CodebookField
+        elif spec.filename():
+            cls = FileField
+        elif spec.text_format() == TextFormat.LCG:
+            cls = StructuredTextField
+        elif spec.text_format() == TextFormat.HTML:
+            cls = HtmlField
+        elif spec.height() > 1:
+            cls = MultilineField
+        elif isinstance(data_type, pytis.data.String):
+            cls = StringField
+        elif isinstance(data_type, pytis.data.Number):
+            cls = NumericField
+        else:
+            cls = TextField
+        return cls(row, spec, form, uri_provider, multirow=multirow)
+
+    def __init__(self, row, spec, form, uri_provider, multirow=False):
+        """Don't use directly - use 'Field.create()'."""
+        fid = spec.id()
+        t = row.type(fid)
+        self._html_id = "f%x" % positive_id(self)
+        self._row = row
+        self._showform = isinstance(form, ShowForm)
+        self._uri_provider = uri_provider
+        self._format_cache = {}
+        self._format_cache_context = None
+        self._multirow = multirow
+        self._key = row.data().key()[0].id()
+        self._not_null = t.not_null() and not isinstance(t, pytis.data.Boolean) and \
+            (row.new() or not isinstance(t, (pytis.data.Password, pytis.data.Binary)))
+        # All public attributes must be treated as read-only!
+        self.id = fid
+        self.type = t
         self.spec = spec
-        self.type = type
-        self.unique_id = "f%x" % positive_id(self)
         # Duplicate selected specification options for simplified access
-        self.id = spec.id()
         self.style = spec.style()
         self.label = spec.label()
         self.column_label = spec.column_label()
         self.label = spec.label()
         self.virtual = spec.virtual()
-        # Initialize the exporter just once here to do most of the
-        # decision-making and type checking during initialization.  This speeds
-        # up the actual formatting, which is typically performed many times.
-        if isinstance(type, pytis.data.Password):
-            exporter = PasswordFieldExporter
-        elif isinstance(type, pytis.data.Color):
-            exporter = ColorFieldExporter
-        elif isinstance(type, pytis.data.Binary):
-            exporter = BinaryFieldExporter
-        elif isinstance(type, pytis.data.Date):
-            exporter = DateFieldExporter
-        elif isinstance(type, pytis.data.DateTime):
-            exporter = DateTimeFieldExporter
-        elif isinstance(type, pytis.data.Array):
-            inner_type = type.inner_type()
-            if inner_type.enumerator():
-                exporter = ChecklistFieldExporter
-            else:
-                raise Exception("Unsupported array field.")
-        elif type.enumerator():
-            selection_type = spec.selection_type()
-            if selection_type == SelectionType.RADIO:
-                exporter = RadioFieldExporter
-            elif selection_type is None and isinstance(type, pytis.data.Boolean):
-                exporter = BooleanFieldExporter
-            elif selection_type in (SelectionType.CHOICE, None):
-                exporter = ChoiceFieldExporter
-            else:
-                exporter = CodebookFieldExporter
-        elif spec.filename():
-            exporter = FileFieldExporter
-        elif spec.text_format() == TextFormat.LCG:
-            exporter = StructuredTextFieldExporter
-        elif spec.text_format() == TextFormat.HTML:
-            exporter = HtmlFieldExporter
-        elif spec.height() > 1:
-            exporter = MultilineFieldExporter
-        elif isinstance(type, pytis.data.String):
-            exporter = StringFieldExporter
-        elif isinstance(type, pytis.data.Number):
-            exporter = NumericFieldExporter
-        else:
-            exporter = TextFieldExporter
-        self.exporter = exporter(row, self, form, uri_provider)
-
-
-class FieldExporter(object):
-    """Field value exporter for both read-only and editable field representations.
-
-    Specific exporter classes are defined below for particular field types.
-    The public methods 'format()' and 'editor()' implement the export for
-    read-only and editable representation respectively (see below).
-    
-    """
-    _HANDLER = 'pytis.Field'
-    _URL_MATCHER = re.compile(r'(https?://.+?)(?=[\),.:;?!\]]?\.*(\s|&nbsp;|&lt;|&gt;|<br/?>|$))')
-    
-    def __init__(self, row, field, form, uri_provider):
-        self._row = row
-        self._field = field
-        self._showform = isinstance(form, ShowForm)
-        self._uri_provider = uri_provider
-        self._format_cache = {}
-        self._format_cache_context = None
 
     def _format(self, context):
         """Return the formatted field value as a (localizable) string.
@@ -228,16 +254,15 @@ class FieldExporter(object):
         '_display()' result will be added outside the link.
 
         """
-        field = self._field
         value = self._exported_value()
         if value and not isinstance(value, lcg.Localizable):
             g = context.generator()
-            escaped = g.escape(self._row.format(field.id))
+            escaped = g.escape(self._row.format(self.id))
             lines = escaped.splitlines()
-            if self._showform and len(lines) > field.spec.height()+2:
-                width = field.spec.width()
-                value = g.textarea(field.id, value=escaped, readonly=True,
-                                   rows=min(field.spec.height(), 8), cols=width,
+            if self._showform and len(lines) > self.spec.height()+2:
+                width = self.spec.width()
+                value = g.textarea(self.id, value=escaped, readonly=True,
+                                   rows=min(self.spec.height(), 8), cols=width,
                                    cls=width >= 80 and 'fullsize' or None)
             else:
                 # Preserve linebreaks and indentation in multiline text.
@@ -282,7 +307,7 @@ class FieldExporter(object):
 
     def _value(self):
         """Return the field value as a 'pytis.data.Value' instance."""
-        return self._row[self._field.id]
+        return self._row[self.id]
     
     def _editor_kwargs(self, context, prefill, error):
         """Return editor field keyword arguemnts as a dictionary.
@@ -293,10 +318,12 @@ class FieldExporter(object):
         type requires it).
 
         """
-        field = self._field
-        return dict(id=field.unique_id,
-                    name=field.id,
-                    disabled=not self._row.editable(field.id) or None,
+        name = self.id
+        if self._multirow:
+            name += '-' + self._row[self._key].export()
+        return dict(id=self.html_id(),
+                    name=name,
+                    disabled=not self._row.editable(self.id) or None,
                     cls=error and 'invalid' or None)
 
     def _editor(self, context, **kwargs):
@@ -309,12 +336,22 @@ class FieldExporter(object):
         """
         return None
 
+    def html_id(self):
+        """Return the unique HTML identifier of the field."""
+        html_id = self._html_id
+        if self._multirow:
+            html_id += '-' + self._row[self._key].export()
+        return html_id
+
+    def not_null(self):
+        """Return True if the field is NOT NULL (the value is required)."""
+        return self._not_null
+        
     def format(self, context):
         """Return the exported read-only field representation."""
         if self._format_cache_context is not context:
             self._format_cache = {}
             self._format_cache_context = context
-        fid = self._field.id
         field_value = self._value().value()
         try:
             value_info = self._format_cache.get(field_value)
@@ -331,13 +368,13 @@ class FieldExporter(object):
             value, info = value_info
         if value and self._uri_provider:
             g = context.generator()
-            src = self._uri_provider(self._row, UriType.IMAGE, fid)
+            src = self._uri_provider(self._row, UriType.IMAGE, self.id)
             if src:
                 if info is not None:
                     value += ' ('+ info +')'
                     info = None
                 value = g.img(src, alt=value) #, cls=cls)
-            link = self._uri_provider(self._row, UriType.LINK, fid)
+            link = self._uri_provider(self._row, UriType.LINK, self.id)
             if link:
                 if isinstance(link, collections.Callable):
                     pass # Ignore array item links here
@@ -354,63 +391,63 @@ class FieldExporter(object):
         kwargs = self._editor_kwargs(context, prefill, error)
         return self._editor(context, **kwargs)
 
-    def handler(self, context, form_id, active, required):
-        """Return javascript code for creation of a field handler instance."""
+    def javascript(self, context, form_id, active):
+        """Return JavaScript code for creation of field handler instance."""
         g = context.generator()
-        return g.js_call("new %s" % self._HANDLER, form_id, self._field.unique_id,
-                         self._field.id, active, required)
+        return g.js_call("new %s" % self._HANDLER, form_id, self.html_id(),
+                         self.id, active, self.not_null())
 
 
-class TextFieldExporter(FieldExporter):
+class TextField(Field):
 
     def _maxlen(self):
         return None
     
     def _editor_kwargs(self, context, prefill, error):
-        kwargs = super(TextFieldExporter, self)._editor_kwargs(context, prefill, error)
+        kwargs = super(TextField, self)._editor_kwargs(context, prefill, error)
         value = prefill or self._exported_value()
         maxlen = self._maxlen()
-        size = self._field.spec.width(maxlen)
+        size = self.spec.width(maxlen)
         return dict(kwargs, value=value, size=size, maxlength=maxlen)
 
     def _editor(self, context, **kwargs):
         return context.generator().field(**kwargs)
 
     
-class NumericFieldExporter(TextFieldExporter):
+class NumericField(TextField):
     pass
 
     
-class StringFieldExporter(TextFieldExporter):
+class StringField(TextField):
     
     def _maxlen(self):
-        return self._field.type.maxlen()
+        return self.type.maxlen()
     
 
-class PasswordFieldExporter(StringFieldExporter):
+class PasswordField(StringField):
     _HANDLER = 'pytis.PasswordField'
     
     def _format(self, context):
         if self._showform:
             return None
         else:
-            return super(PasswordFieldExporter, self)._format(context)
+            return super(PasswordField, self)._format(context)
 
     def _editor(self, context, **kwargs):
         g = context.generator()
         result = g.field(password=True, **kwargs)
-        if self._field.type.verify():
+        if self.type.verify():
             kwargs['id'] += '-verify-pasword'
             result += g.br() + g.field(password=True, **kwargs)
         return result
 
 
-class MultilineFieldExporter(FieldExporter):
+class MultilineField(Field):
 
     def _editor_kwargs(self, context, prefill, error):
-        kwargs = super(MultilineFieldExporter, self)._editor_kwargs(context, prefill, error)
+        kwargs = super(MultilineField, self)._editor_kwargs(context, prefill, error)
         value = prefill or self._value().export()
-        width, height = self._field.spec.width(), self._field.spec.height()
+        width, height = self.spec.width(), self.spec.height()
         cls = kwargs.get('cls')
         if width >= 80:
             cls = (cls and cls+' ' or '') + 'fullsize'
@@ -420,11 +457,11 @@ class MultilineFieldExporter(FieldExporter):
         return context.generator().textarea(**kwargs)
 
     
-class StructuredTextFieldExporter(MultilineFieldExporter):
+class StructuredTextField(MultilineField):
 
     def __init__(self, *args, **kwargs):
         self._parser = lcg.Parser()
-        super(StructuredTextFieldExporter, self).__init__(*args, **kwargs)
+        super(StructuredTextField, self).__init__(*args, **kwargs)
 
     def _format(self, context):
         blocks = self._parser.parse(context.localize(self._value().export()))
@@ -436,14 +473,14 @@ class StructuredTextFieldExporter(MultilineFieldExporter):
         return context.generator().div(content.export(context))
 
 
-class HtmlFieldExporter(MultilineFieldExporter):
+class HtmlField(MultilineField):
     _HANDLER = 'pytis.HtmlField'
 
     def _format(self, context):
         return context.localize(self._value().export())
     
     def _editor(self, context, **kwargs):
-        content = super(HtmlFieldExporter, self)._editor(context, **kwargs)
+        content = super(HtmlField, self)._editor(context, **kwargs)
         if context.resource('ckeditor/ckeditor.js'):
             g = context.generator()
             context.resource('pytis-ckeditor.js')
@@ -480,14 +517,15 @@ class HtmlFieldExporter(MultilineFieldExporter):
                           entities_latin=False,
                           entities_processNumerical=False,
                           )
-            if self._row.attachment_storage(self._field.id) is not None:
+            html_id = self.html_id()
+            if self._row.attachment_storage(self.id) is not None:
                 config['extraPlugins'] = 'pytis-attachments'
-                config['pytisFieldId'] = self._field.unique_id
-            content += g.script(g.js_call('CKEDITOR.replace', self._field.unique_id, config))
+                config['pytisFieldId'] = html_id
+            content += g.script(g.js_call('CKEDITOR.replace', html_id, config))
         return content
 
     
-class DateTimeFieldExporter(TextFieldExporter):
+class DateTimeField(TextField):
     _HANDLER = 'pytis.DateTimeField'
     
     def _editor_date_format(self, locale_data):
@@ -498,7 +536,7 @@ class DateTimeFieldExporter(TextFieldExporter):
         return 18
     
     def _editor(self, context, **kwargs):
-        result = super(DateTimeFieldExporter, self)._editor(context, **kwargs)
+        result = super(DateTimeField, self)._editor(context, **kwargs)
         g = context.generator()
         result += g.script_write(g.button('...', id='%s-button' % kwargs['id'], type='button',
                                           cls='selection-invocation calendar-invocation',
@@ -529,7 +567,7 @@ class DateTimeFieldExporter(TextFieldExporter):
         return result
 
     
-class DateFieldExporter(DateTimeFieldExporter):
+class DateField(DateTimeField):
     def _editor_date_format(self, locale_data):
         return locale_data.date_format
 
@@ -538,7 +576,7 @@ class DateFieldExporter(DateTimeFieldExporter):
         return 10
 
 
-class ColorFieldExporter(StringFieldExporter):
+class ColorField(StringField):
 
     def _format(self, context):
         g = context.generator()
@@ -547,19 +585,18 @@ class ColorFieldExporter(StringFieldExporter):
                g.span('&nbsp;', cls="color-display", style="background-color: %s;" %color)
 
 
-class BooleanFieldExporter(FieldExporter):
+class BooleanField(Field):
     _HANDLER = 'pytis.CheckboxField'
 
     def _format(self, context):
         # Translators: Boolean value display.  Should be Yes/No in the meaning True/False.
-        fid = self._field.id
-        return self._row.display(fid) or self._row[fid].value() and _(u"Yes") or _(u"No")
+        return self._row.display(self.id) or self._row[self.id].value() and _(u"Yes") or _(u"No")
 
     def _editor(self, context, **kwargs):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
 
 
-class BinaryFieldExporter(FieldExporter):
+class BinaryField(Field):
     _HANDLER = 'pytis.FileUploadField'
 
     def _format(self, context):
@@ -567,7 +604,7 @@ class BinaryFieldExporter(FieldExporter):
         if buf:
             if buf.filename():
                 return buf.filename()
-            filename = self._row.filename(self._field.id)
+            filename = self._row.filename(self.id)
             if filename:
                 return filename
             elif isinstance(type, pd.Image):
@@ -590,13 +627,13 @@ class BinaryFieldExporter(FieldExporter):
         return context.generator().upload(**kwargs)
 
     
-class EnumerationFieldExporter(FieldExporter):
+class EnumerationField(Field):
     
     def _format(self, context):
-        fid = self._field.id
+        fid = self.id
         if self._row.prefer_display(fid):
             return self._row.display(fid)
-        if isinstance(self._field.type, pd.Boolean):
+        if isinstance(self.type, pd.Boolean):
             # Boolean fields may by also rendered as radio, etc. when
             # selection_type is defined.
             value = self._row[fid].value() and _(u"Yes") or _(u"No")
@@ -616,22 +653,22 @@ class EnumerationFieldExporter(FieldExporter):
         # as ABBR within the value (see _format).  This is quite a hack and
         # should probably be handled in the same way for all field types on the
         # level of the form.
-        if self._showform and not self._row.prefer_display(self._field.id):
-            return self._row.display(self._field.id) or None
+        if self._showform and not self._row.prefer_display(self.id):
+            return self._row.display(self.id) or None
         else:
             return None
 
     def _enumeration(self, context):
         g = context.generator()
-        type = self._field.type
+        type = self.type
         if isinstance(type, pytis.data.Array):
             type = type.inner_type()
         return [(val, type.export(val),
                  g.escape(display).replace(' ', '&nbsp;').replace("\n", "<br/>"))
-                for val, display in self._row.enumerate(self._field.id)]
+                for val, display in self._row.enumerate(self.id)]
 
 
-class RadioFieldExporter(EnumerationFieldExporter):
+class RadioField(EnumerationField):
     _HANDLER = 'pytis.RadioField'
     
     def _editor(self, context, id=None, **kwargs):
@@ -640,7 +677,7 @@ class RadioFieldExporter(EnumerationFieldExporter):
         radios = []
         choices = self._enumeration(context)
         if not value.type().not_null():
-            null_display = self._field.spec.null_display()
+            null_display = self.spec.null_display()
             if null_display:
                 choices.insert(0, (None, '', null_display))
         for i, (val, strval, display) in enumerate(choices):
@@ -651,32 +688,32 @@ class RadioFieldExporter(EnumerationFieldExporter):
         return g.div(radios, id=id, cls='radio-group')
 
 
-class ChoiceFieldExporter(EnumerationFieldExporter):
+class ChoiceField(EnumerationField):
     _HANDLER = 'pytis.ChoiceField'
     
     def _editor(self, context, **kwargs):
         enumeration = self._enumeration(context)
-        options = [(self._field.spec.null_display() or "&nbsp;", "")] + \
+        options = [(self.spec.null_display() or "&nbsp;", "")] + \
                   [(display, strval) for val, strval, display in enumeration]
         value = self._value().value()
         if value in [val for val, strval, display in enumeration]:
-            selected = self._field.type.export(value)
+            selected = self.type.export(value)
         else:
             selected = None
         return context.generator().select(options=options, selected=selected, **kwargs)
     
-class ChecklistFieldExporter(EnumerationFieldExporter):
+class ChecklistField(EnumerationField):
     _HANDLER = 'pytis.ChecklistField'
     
     def _format(self, context):
-        return self._editor(context, id=self._field.unique_id, readonly=True)
+        return self._editor(context, id=self.html_id(), readonly=True)
         
     def _editor(self, context, id=None, name=None, disabled=None, readonly=False, cls=None):
         g = context.generator()
         values = [v.value() for v in self._value().value() or ()]
         # URI provider must return a function of the array value for array fields.
         if self._uri_provider:
-            uri_provider = self._uri_provider(self._row, UriType.LINK, self._field.id)
+            uri_provider = self._uri_provider(self._row, UriType.LINK, self.id)
         else:
             uri_provider = None
         def checkbox(i, value, strval, display):
@@ -709,11 +746,11 @@ class ChecklistFieldExporter(EnumerationFieldExporter):
         return None
 
 
-class CodebookFieldExporter(EnumerationFieldExporter, TextFieldExporter):
+class CodebookField(EnumerationField, TextField):
     pass
     
 
-class FileFieldExporter(TextFieldExporter):
+class FileField(TextField):
     """Special case of string fields with 'filename' specification.
 
     The contents of such string fields is considered to be a file and the user
@@ -722,7 +759,7 @@ class FileFieldExporter(TextFieldExporter):
     """
     def _format(self, context):
         if self._value().value() is not None:
-            value = self._row.filename(self._field.id)
+            value = self._row.filename(self.id)
         else:
             value = ''
         return value
