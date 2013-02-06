@@ -790,9 +790,6 @@ begin
       key_value_ := concat(key_value_, ',', v);
     end if;
   end loop;
-  insert into t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
-         values (now(), session_user, tg_table_schema, tg_table_name, tg_op, key_column_, key_value_)
-         returning id into strict id_;
   for c, t in select a.attname, t.typname
               from pg_class r, pg_namespace nsp, pg_attribute a, pg_type t
               where r.relname = tg_table_name and r.relnamespace = nsp.oid and nsp.nspname = tg_table_schema and
@@ -824,7 +821,12 @@ begin
       end if;
     end if;
   end loop;
-  insert into t_changes_detail (id, detail) values (id_, detail_);
+  if tg_op != 'UPDATE' or detail_ != '' then
+    insert into t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
+           values (now(), session_user, tg_table_schema, tg_table_name, tg_op, key_column_, key_value_)
+           returning id into strict id_;
+    insert into t_changes_detail (id, detail) values (id_, detail_);
+  end if;
   return null;
 end;
 $$ language plpgsql security definer;
