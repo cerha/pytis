@@ -558,8 +558,8 @@ class EmbeddableModule(wiking.Module, wiking.ActionHandler):
         """
         return []
 
-    def _authorized(self, req):
-        return req.check_roles(wiking.module('Application').authorized_roles(req, self))
+    def _authorized(self, req, action=None):
+        return req.check_roles(wiking.module('Application').authorized_roles(req, self, action=action))
     
     def _default_action(self, req):
         return 'view'
