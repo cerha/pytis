@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ class ApplicationConfigManager(UserSetttingsManager):
         return self._load(transaction=transaction) or ()
            
     def save(self, config, transaction=None):
-        """Return previously stored configuration options as a tuple of (name, value) pairs."""
+        """Store configuration options as a tuple of (name, value) pairs."""
         assert isinstance(config, (tuple, list))
         self._save(dict(pickle=self._pickle(tuple(config))), transaction=transaction)
 
