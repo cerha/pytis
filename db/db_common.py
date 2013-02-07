@@ -866,7 +866,7 @@ begin
 end;
 $$ language plpgsql;
 
-create or replace function f_view_log(date_from date, date_to date, username_ text, tablename_ text, key_value_ text, detail_ text) returns setof v_changes as $$
+create or replace function f_view_log(date_from date, date_to date, username_ text, tablename_ text, key_value_ text, detail_ text, search_path_ text) returns setof v_changes as $$
 declare
   date_to_1 date := date_to + '1 day'::interval;
   tablename text;
@@ -876,7 +876,8 @@ begin
                             v.username = coalesce(username_, v.username) and
                             v.tablename = coalesce(tablename_, v.tablename) and
                             v.key_value::text = coalesce(key_value_, v.key_value) and
-                            v.detail like coalesce(detail_, '%');
+                            v.detail like coalesce(detail_, '%') and
+                            (search_path_ is null or schemaname in (select * from regexp_split_to_table(coalesce(search_path_, ''), ' *, *')));
   for tablename in select relname from pg_class join pg_namespace on relnamespace = pg_namespace.oid
                           where nspname = 'public' and
                                 relname ~ '^t_changes_......_......$' and
@@ -891,8 +892,9 @@ begin
                                    't.username = coalesce($3, t.username) and ',
                                    't.tablename = coalesce($4, t.tablename) and ',
                                    't.key_value::text = coalesce($5, t.key_value) and ',
-                                   'd.detail like coalesce($6, ''%'')')
-              using date_from, date_to_1, username_, tablename_, key_value_, detail_;
+                                   'coalesce(d.detail, '''') like ''%''||coalesce($6, ''%'')||''%'' and ',
+                                   '($7 is null or schemaname in (select * from regexp_split_to_table(coalesce($7, ''''), '' *, *'')))')
+              using date_from, date_to_1, username_, tablename_, key_value_, detail_, search_path_;
   end loop;
 end;
 $$ language plpgsql stable;
