@@ -876,7 +876,7 @@ begin
                             v.username = coalesce(username_, v.username) and
                             v.tablename = coalesce(tablename_, v.tablename) and
                             v.key_value::text = coalesce(key_value_, v.key_value) and
-                            v.detail like coalesce(detail_, '%') and
+                            v.detail like '%'||coalesce(detail_, '%')||'%' and
                             (search_path_ is null or schemaname in (select * from regexp_split_to_table(coalesce(search_path_, ''), ' *, *')));
   for tablename in select relname from pg_class join pg_namespace on relnamespace = pg_namespace.oid
                           where nspname = 'public' and
