@@ -141,6 +141,21 @@ pytis.HtmlField.plugin = function(editor) {
         icon: icon
     });
 
+    /* Add support for reindent */
+    editor.addCommand('reindent',
+                      {
+                          exec : function(editor)
+                          {
+			      var sel = editor.getSelection();
+			      var text = sel.getSelectedText();
+			      if (text) {
+				  var p = new CKEDITOR.dom.element('p');
+				  p.setText(text.replace(/-\s*[\n\r]+/gm, '')); // remove word breaks
+                                  editor.insertElement(p);
+			      }
+                          }
+                      });
+    editor.keystrokeHandler.keystrokes[CKEDITOR.CTRL + 32 /*space*/ ] = 'reindent';
 
     /* Add support for marking languages */
     /* TODO: List of languages for this document should eventually be editable in and taken from CMS */
