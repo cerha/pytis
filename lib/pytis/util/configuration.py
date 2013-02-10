@@ -680,7 +680,7 @@ class Configuration(object):
 
     class _Option_rpc_remote_view(BooleanOption):
         _DESCR = _("Flag určující, zda prohlížet tiskové soubory na klientské stanici.")
-        _DEFAULT = False
+        _DEFAULT = True
         
     # Ostatní konfigurační volby
 
