@@ -17,9 +17,11 @@ if not db_rights:
 
 _std_table_nolog('e_pytis_config',
       (P('id', TSerial),
-       C('username', TUser, constraints=('UNIQUE', 'NOT NULL',)),
-       C('pickle', TString, constraints=('NOT NULL',)),
+       C('username', TUser, constraints=('NOT NULL',)),
+       C('option', TString, constraints=('NOT NULL',)),
+       C('value', TString, constraints=('NOT NULL',)),
        ),
+      sql='UNIQUE (username, option)',
       grant=db_rights,
       schemas=db_schemas,
       doc="""Pytis application configuration storage."""

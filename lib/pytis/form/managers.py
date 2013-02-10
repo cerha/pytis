@@ -101,10 +101,13 @@ class UserSetttingsManager(object):
     def _pickle(self, value):
         return base64.b64encode(pickle.dumps(value))
 
+    def _unpickle(self, value):
+        return pickle.loads(base64.b64decode(value))
+    
     def _load(self, transaction=None, pickled_column='pickle', **key):
         row = self._row(transaction=transaction, **key)
         if row:
-            return pickle.loads(base64.b64decode(row[pickled_column].value()))
+            return self._unpickle(row[pickled_column].value())
         else:
             return None
     
@@ -136,17 +139,37 @@ class ApplicationConfigManager(UserSetttingsManager):
 
     """
     _TABLE = 'e_pytis_config'
-    _COLUMNS = ('id', 'username', 'pickle')
+    _COLUMNS = ('id', 'username', 'option', 'value')
 
     def load(self, transaction=None):
         """Return previously stored configuration options as a tuple of (name, value) pairs."""
-        return self._load(transaction=transaction) or ()
-           
+        rows = self._rows()
+        return [(r['option'].value(), self._unpickle(r['value'].value()))
+                for r in rows]
+    
     def save(self, config, transaction=None):
         """Store configuration options as a tuple of (name, value) pairs."""
         assert isinstance(config, (tuple, list))
-        self._save(dict(pickle=self._pickle(tuple(config))), transaction=transaction)
-
+        db_options = dict(self.load())
+        inserts = []
+        updates = []
+        for option, value in config:
+            if option in db_options.keys():
+                if value != db_options[option]:
+                    db_value = self._pickle(value)
+                    row = pytis.data.Row(data=(('value', pytis.data.sval(db_value)),))
+                    condition = self._condition(option=option)
+                    self._data.update_many(condition, row, transaction=transaction)
+            else:
+                db_value = self._pickle(value)
+                row = pytis.data.Row(data=(('username', pytis.data.sval(self._username)),
+                                           ('option', pytis.data.sval(option)),
+                                           ('value', pytis.data.sval(db_value)),
+                                           ))
+                result, success = self._data.insert(row, transaction=transaction)
+                if not success:
+                    raise pd.DBException(result)
+                                            
             
 class FormSettingsManager(UserSetttingsManager):
     """Accessor of database storage of form settings other than profiles.
