@@ -22,7 +22,7 @@ import datetime
 import config
 import pytis.data as pd
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, \
-    Profile, QueryFields, computer
+    Profile, QueryFields, computer, HGroup, VGroup
 from pytis.form import BrowseForm, run_form
 
 class FormActionLog(Specification):
@@ -99,7 +99,11 @@ class ChangesLogUser(ChangesLog):
     public = True
     
     def query_fields(self):
-        return QueryFields(self.arguments)
+        return QueryFields(self.arguments,
+                           layout=HGroup(VGroup('date_from', 'date_to'),
+                                         VGroup('username_', 'search_path_'),
+                                         VGroup('tablename_', 'key_value_'),
+                                         'detail_',))
     
     def argument_provider(self, value_dict, query_fields):
         if query_fields:
