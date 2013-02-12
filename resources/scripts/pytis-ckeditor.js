@@ -1265,7 +1265,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
 	    return '<math xmlns="http://www.w3.org/1998/Math/MathML" ' + production_args + '>'
 		+ '<semantics>'
 		+ inner_mathml
-	        + '<annotation encoding="ASCII">' + annotation + '</annotation>'
+	        + '<annotation encoding="ASCII">' + annotation.escapeHTML() + '</annotation>'
 		+ '</semantics>'
 		+ '</math>';
 	} else {
@@ -1305,7 +1305,7 @@ pytis.HtmlField.mathml_dialog = function(editor) {
     ck_element(dialog, 'source-ascii').setup = function(element) {
 	annotation = ck_get_dom_subelement(element, ['math', 'semantics', 'annotation']);
 	if (annotation){
-	    this.setValue(annotation.$.textContent);
+	    this.setValue(annotation.$.textContent.unescapeHTML());
 	}
     }
 
