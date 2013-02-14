@@ -726,14 +726,14 @@ function('_log_update_trigger', (), 'trigger',
 
 table('t_changes',
       (P('id', TSerial),
-       C('timestamp', TDateTime, constraints=('not null',)),
-       C('username', TString, constraints=('not null',)),
+       C('timestamp', TDateTime, constraints=('not null',), index=True),
+       C('username', TString, constraints=('not null',), index=True),
        C('schemaname', TString, constraints=('not null',)),
-       C('tablename', TString, constraints=('not null',)),
+       C('tablename', TString, constraints=('not null',), index=True),
        C('operation', TString, constraints=('not null',),
          doc="One of: INSERT, UPDATE, DELETE"),
        C('key_column', TString, constraints=('not null',)),
-       C('key_value', TString, constraints=('not null',)),
+       C('key_value', TString, constraints=('not null',), index=True),
        ),
       schemas=('public',),
       doc="Log of data changes.",
@@ -868,6 +868,10 @@ begin
     execute concat('create table public.', dtablename, ' as select * from public.t_changes_detail where id<=', n_id);
     delete from public.t_changes where id<=n_id;
     execute concat('create unique index ', tablename, '__id__index on public.', tablename, ' (id)');
+    execute concat('create unique index ', tablename, '__timestamp__index on public.', tablename, ' (timestamp)');
+    execute concat('create unique index ', tablename, '__username__index on public.', tablename, ' (username)');
+    execute concat('create unique index ', tablename, '__tablename__index on public.', tablename, ' (tablename)');
+    execute concat('create unique index ', tablename, '__key_value__index on public.', tablename, ' (key_value)');
     execute concat('create unique index ', dtablename, '__id__index on public.', dtablename, ' (id)');
   end loop;
 end;
