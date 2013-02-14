@@ -875,9 +875,16 @@ $$ language plpgsql;
 
 create or replace function f_view_log(date_from date, date_to date, username_ text, tablename_ text, key_value_ text, detail_ text, search_path_ text) returns setof v_changes as $$
 declare
-  date_to_1 date := date_to + '1 day'::interval;
+  date_to_1 date;
   tablename text;
 begin
+  if date_from > '2099-12-31'::date then
+    date_from := '2099-12-31'::date;
+  end if;
+  if date_to > '2099-12-31'::date then
+    date_to := '2099-12-31'::date;
+  end if;
+  date_to_1 := date_to + '1 day'::interval;
   return query select * from v_changes v
                       where date_from <= v.timestamp and v.timestamp < date_to_1 and
                             v.username = coalesce(username_, v.username) and
