@@ -672,8 +672,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
                                             self._row.runtime_arguments(fid))
             js_fields.append(field.javascript(context, form_id, active))
-        return "new pytis.FormHandler('%s', [%s], %s)" % \
-            (form_id, ', '.join(js_fields), g.js_value(state))
+        return g.js_call('new pytis.FormHandler', form_id, js_fields, state)
         
     
     def _export_footer(self, context):
