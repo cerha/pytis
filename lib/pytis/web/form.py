@@ -413,6 +413,7 @@ class LayoutForm(FieldForm):
                             # vertical group if possible.
                             if not field.spec.compact():
                                 label = self._export_field_label(context, field)
+                                break
                 exported_group = self._export_group(context, item, inner=True, id=subgroup_id,
                                                     omit_first_field_label=label is not None)
                 if exported_group:
