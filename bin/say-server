@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ import pytis.windows
 import config
 
 def say(user_name, target_ip, request, *arguments):
-    if request in('upgrade', 'run_python',):
+    if request in('upgrade', 'upgrade_module', 'run_python',):
         if len(arguments) != 1:
             usage(1)
         file_name = arguments[0]
