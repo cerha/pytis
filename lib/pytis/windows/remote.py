@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -58,10 +58,12 @@ def nx_ip():
 def windows_available():
     """Return true, iff Windows client is available."""
     if not config.rpc_communication_enabled or nx_ip() is None:
+        log(DEBUG, "RPC unavailable")
         return False
     try:
         return _request('echo', 'hello') == 'hello'
-    except:
+    except Exception, e:
+        log(DEBUG, "RPC exception:", e)
         return False
 
 _connection = None
