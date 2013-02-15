@@ -497,7 +497,7 @@ class _GsqlSpec(object):
                 else:
                     c_references = None
             if c_references:
-                components = c_references.split(' ')
+                components = re.split('[ \n]+', c_references, flags=re.M)
                 referenced_table = components.pop(0)
                 if referenced_table == 'cms_users_table':
                     referenced_table = 'db.cms_users_table.value(globals())'
@@ -2528,10 +2528,15 @@ class _GsqlViewNG(Select):
                                         cc_orig_name = cc.name.split('.')[-1]
                                         special_update_columns.append((t_name, cc_orig_name, u_value,))
                                 break
+                prefix = ''
+                for o in real_order_relations:
+                    if o.find('.') >= 0:
+                        prefix = '#XXX:'
+                        break
                 order_string = string.join([self._convert_name(o.lower()) for o in real_order_relations], ', ')
                 if order_string:
                     order_string += ','
-                items.append('    %s_order = (%s)' % (kind, order_string,))
+                items.append('%s    %s_order = (%s)' % (prefix, kind, order_string,))
                 if no_update_columns:
                     column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
                     items.append('    no_%s_columns = (%s)' % (kind, column_string,))
@@ -3030,12 +3035,29 @@ class _GsqlView(_GsqlSpec):
                 where = gen_where(self._join)
         items.append('    @classmethod\n    def query(cls):')
         if is_union:
-            tables = [string.join(t, ',\n    ') for t in self._tables_from]
+            def transform_table(table):
+                t = table.split(' ')
+                if len(t) == 1:
+                    accessor = "sql.t.%s" % (self._convert_name(t[0], short=True),)
+                    alias = t[0]
+                elif len(t) == 2:
+                    accessor = "sql.t.%s.alias('%s')" % (self._convert_name(t[0], short=True), t[1],)
+                    alias = t[-1]
+                elif len(t) == 3 and t[1].lower() == 'as':
+                    accessor = "sql.t.%s.alias('%s')" % (self._convert_name(t[0], short=True), t[2],)
+                    alias = t[2]
+                else:
+                    raise Exception("Can't decode table name", table)
+                alias = self._convert_local_name(alias)
+                items.append('        %s = %s' % (alias, accessor,))
+                return alias
+            tables_from = [[transform_table(t) for t in tt] for tt in self._tables_from]
+            tables = [string.join(t, ', ') for t in tables_from]
             selections = []
             for t, c, w in zip(tables, columns, where):
                 selections.append('sqlalchemy.select(\n    [\n%s],\n    from_obj=[%s],\n    whereclause=%s)' %
                                   (c, t, repr(w),))
-            condition = string.join(selections, 'union_all(')
+            condition = string.join(selections, '.union_all(')
             condition += ')' * (len(selections) - 1)
         else:
             tables = self._tables_from
@@ -3085,10 +3107,15 @@ class _GsqlView(_GsqlSpec):
                 items.append('    def on_%s(self):' % (kind,))
                 items.append ('        return ("%s",)' % (quote(command),))
             else:
+                prefix = ''
+                for t in self._tables:
+                    if t.find('.') >= 0:
+                        prefix = '#XXX:'
+                        break
                 order_string = string.join([self._convert_name(o) for o in self._tables], ', ')
                 if order_string:
                     order_string += ','
-                items.append('    %s_order = (%s)' % (kind, order_string,))
+                items.append('%s    %s_order = (%s)' % (prefix, kind, order_string,))
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
@@ -3688,6 +3715,22 @@ class _GviewsqlRaw(_GsqlSpec):
 
     def db_update(self, connection):
         return _gsql_warning('Raw command not considered: %s' % self.name())
+
+    def convert(self):
+        items = ['class %s(sql.SQLRaw):' % (self._convert_name(new=True),)]
+        doc = self._convert_doc()
+        if doc:
+            items.append(self._convert_indent(doc, 4))
+        items.append('    name = %s' % (repr(self._name),))
+        self._convert_schemas(items)
+        sql_string = self._output()
+        items.append('    @classmethod')
+        items.append('    def sql(class_):')
+        items.append('        return """%s"""' % (sql_string.replace('\\', '\\\\'),))
+        items.append(self._convert_depends())
+        result = string.join(items, '\n') + '\n'
+        self._convert_add_raw_dependencies(sql_string)
+        return result
 
 
 class _GsqlDefs(UserDict.UserDict):
