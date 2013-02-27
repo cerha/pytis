@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ def config_menu_items(hotkeys={}):
                    command=pytis.form.Application.COMMAND_RUN_FORM,
                    args=dict(form_class=ConfigForm, name=name),
                    hotkey=hotkeys.get(name),
-                   help=(_('Otevřít konfigurační formulář "%s"') % \
+                   help=(_(u'Otevřít konfigurační formulář "%s"') % \
                          layout.caption()),
                    icon='config-'+name)
              for name, layout in _LAYOUT]

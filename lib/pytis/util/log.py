@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -175,6 +175,8 @@ class Logger(object):
         return message
 
     def _formatted_data(self, prefix, fmessage, data):
+        def escape(text):
+            return re.sub(r'[^\x01-\x7F]', '?', text)
         if data is not None:
             printable = deepstr(data)
             datalines = map(lambda l, prefix=prefix: u'%s%s' % (prefix, l),
@@ -184,21 +186,26 @@ class Logger(object):
                 if fmessage and fmessage[-1] == ':':
                     import config
                     if config.log_one_line_preferred:
-                        return u'*%s%s %s' % (prefix, fmessage, printable)
+                        try:
+                            formatted = u'*%s%s %s' % (prefix, fmessage, printable)
+                        except UnicodeDecodeError:
+                            formatted = u'*%s%s %s' % (prefix, escape(fmessage), escape(printable))
+                        return formatted
                 data_string = u'=%s%s' % (prefix, printable)
             else:
                 datalines[0] = u'<%s' % datalines[0]
                 datalines[n-1] = u'>%s' % datalines[n-1]
                 datalines[1:n-1] = map(lambda l: u' %s' % l, datalines[1:n-1])
                 data_string = string.join(datalines, '\n')
-            formatted = u'@%s%s\n%s' % (prefix, fmessage, data_string)
+            try:
+                formatted = u'@%s%s\n%s' % (prefix, fmessage, data_string)
+            except UnicodeDecodeError:
+                formatted = u'@%s%s\n%s' % (prefix, escape(fmessage), escape(data_string))
         else:
             try:
                 formatted = u'*%s%s' % (prefix, fmessage)
             except UnicodeDecodeError:
-                def escape(text):
-                    return re.sub(r'[^\x01-\x7F]', '?', text)
-                formatted = u'*%s%s' % (prefix, escape(fmessage))                
+                formatted = u'*%s%s' % (prefix, escape(fmessage))
         return formatted
 
     def _formatted(self, kind, message, data):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,8 +30,14 @@ i třídy, které tyto specifikace následně zpracovávají.
 import collections
 import copy
 import string
-import gtk, gtk.gdk
-import webkit
+try:
+    import gtk, gtk.gdk
+except ImportError:
+    gtk = None
+try:
+    import webkit
+except ImportError:
+    webkit = None
 import lcg
 
 from pytis.form import *
@@ -1664,9 +1670,9 @@ class ProfileSelector(wx.combo.ComboCtrl):
                     ctrl.SetValue(current_profile.title())
             if LookupForm.COMMAND_UPDATE_PROFILE.enabled():
                 # Indicate changed profile by color (update is enabled for changed profiles).
-                color = wx.Color(200, 0, 0)
+                color = wx.Colour(200, 0, 0)
             else:
-                color = wx.Color(0, 0, 0)
+                color = wx.Colour(0, 0, 0)
             ctrl.SetForegroundColour(color)
         elif top_window() is None and ctrl.GetValue() != '':
             ctrl.SetValue('')
@@ -1866,7 +1872,7 @@ class Browser(wx.Panel, CommandHandler):
             # wxWidgets.
             self.GetParent().Show()
             handle = self.GetHandle()
-            gtk_window = gtk.gdk.window_lookup(handle)
+            gtk_window = None if gtk is None else gtk.gdk.window_lookup(handle)
             # The GTK window lookup will return None when called *before* the
             # window is actually shown on the screen (because of some wx/GTK
             # magic).  In this case we must wait and try again in next idle

@@ -689,7 +689,11 @@ class PopupForm:
         return frame
     
     def _popup_frame_style(self):
-        return wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE
+        try:
+            modal = wx.DIALOG_MODAL
+        except:
+            modal = wx.wxDIALOG_MODAL
+        return modal|wx.DEFAULT_DIALOG_STYLE
     
     def _on_frame_close(self, event):
         if self:

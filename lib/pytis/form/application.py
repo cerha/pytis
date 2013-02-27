@@ -85,8 +85,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def OnInit(self):
         import pytis.extensions
         from pytis.util import identity
-        clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
-        clipboard.connect("owner-change", self._on_clipboard_copy)
+        if gtk is not None:
+            clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
+            clipboard.connect("owner-change", self._on_clipboard_copy)
         init_colors()
         # Create the main application window.
         title = config.application_name

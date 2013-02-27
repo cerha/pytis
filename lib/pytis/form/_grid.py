@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -526,7 +526,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return (color2wx(fg), color2wx(bg), font)
 
     def _init_group_bg_downgrade(self):
-        c = wx.NamedColor(config.grouping_background_downgrade)
+        c = wx.NamedColour(config.grouping_background_downgrade)
         self._group_bg_downgrade = (255-c.Red(), 255-c.Green(), 255-c.Blue())
         
     def update(self, *args, **kwargs):

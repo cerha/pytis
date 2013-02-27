@@ -69,19 +69,19 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_FORM
     args = dict(form_class=form_class, name=name, **kwargs)
     descr = {
-        pytis.form.BrowseForm:          "řádkový formulář",
-        pytis.form.PopupEditForm:       "editační formulář",
-        pytis.form.Form:                "duální řádkový formulář",
-        pytis.form.CodebookForm:        "číselníkový formulář",
-        pytis.form.DescriptiveDualForm: "duální náhledový formulář",
-        }.get(form_class, "formulář")
-    help = _('Otevřít %s "%s"') % (descr, title.replace('&', ''))
+        pytis.form.BrowseForm:          u"řádkový formulář",
+        pytis.form.PopupEditForm:       u"editační formulář",
+        pytis.form.Form:                u"duální řádkový formulář",
+        pytis.form.CodebookForm:        u"číselníkový formulář",
+        pytis.form.DescriptiveDualForm: u"duální náhledový formulář",
+        }.get(form_class, u"formulář")
+    help = _(u'Otevřít %s "%s"') % (descr, title.replace('&', ''))
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
 def new_record_mitem(title, name, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_NEW_RECORD
     args = dict(kwargs, name=name)
-    help = _('Otevřít vstupní formulář "%s"') % title
+    help = _(u'Otevřít vstupní formulář "%s"') % title
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
 def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enabled=None, **kwargs):

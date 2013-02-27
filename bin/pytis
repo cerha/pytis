@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,10 @@ import gettext
 import imp
 import os
 import sys
-import gobject
+try:
+    import gobject
+except ImportError:
+    gobject = None
 
 # Ošklivý hack kvůli ošetření výchozího kódování protože site.py metodu `setdefaultencoding()' z
 # modulu `sys' vymaže.
@@ -131,8 +134,9 @@ def gg():
 
 
 def run_application():
-    # Init gobject threads as we use gtk widgets at some places (such as a webkit browser widget).
-    gobject.threads_init()
+    if gobject is not None:
+        # Init gobject threads as we use gtk widgets at some places (such as a webkit browser widget).
+        gobject.threads_init()
     gc.enable() # pro jistotu
     import locale
     import pytis.form # musí být až za zpracováním voleb
