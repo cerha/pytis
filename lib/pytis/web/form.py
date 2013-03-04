@@ -665,13 +665,14 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         js_fields = []
         state = {}
         for fid in layout_fields:
-            field = self._fields[fid]
-            active = self._row.depends(fid, layout_fields)
-            if field.spec.runtime_filter() or field.spec.runtime_arguments():
-                # NOTE: The format here must be same as in EditForm.ajax_response()!
-                state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
+            if self._row.visible(fid):
+                field = self._fields[fid]
+                active = self._row.depends(fid, layout_fields)
+                if field.spec.runtime_filter() or field.spec.runtime_arguments():
+                    # NOTE: The format here must be same as in EditForm.ajax_response()!
+                    state[fid] = 'f=%s;a=%s' % (self._row.runtime_filter(fid),
                                             self._row.runtime_arguments(fid))
-            js_fields.append(field.javascript(context, form_id, active))
+                js_fields.append(field.javascript(context, form_id, active))
         return g.js_call('new pytis.FormHandler', form_id, js_fields, state)
         
     
