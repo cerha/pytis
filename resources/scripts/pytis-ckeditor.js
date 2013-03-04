@@ -407,7 +407,9 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                    var dialog = CKEDITOR.dialog.getCurrent();
                                    var fields = attachment_properties;
                                    for (var i = 0; i < fields.length; i++) {
-                                       dialog.setValueOf('main', fields[i], attachment[fields[i]]);
+                                       var pytis_field_name = fields[i];
+                                       if (pytis_field_name == 'description') pytis_field_name='descr';  /* Hack to overcome pytis attributes naming inconsistency */
+                                       dialog.setValueOf('main', fields[i], attachment[pytis_field_name]);
                                    }
                                    this.updatePreview(attachment);
                                }
