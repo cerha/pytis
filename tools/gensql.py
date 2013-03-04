@@ -357,7 +357,11 @@ class _GsqlSpec(object):
         return converted
 
     def _convert_id_name(self, name):
-        return name.replace('(', '__').replace(')', '__').replace(', ', '__')
+        converted = name.replace('(', '__').replace(')', '__').replace(', ', '__')
+        pos = converted.find(' ')
+        if pos >= 0:
+            converted = converted[:pos]
+        return converted
 
     def _convert_doc(self):
         doc = self._doc
@@ -1896,6 +1900,7 @@ class Select(_GsqlSpec):
                 if not r.alias:
                     column_spec.append('XXX:selnone:%s' % (r.relation,))
             elif '*' not in exclude:
+                subspec = []
                 for c in self._relation_columns[r.relation]:
                     if isinstance(c, basestring):
                         continue
@@ -1904,7 +1909,10 @@ class Select(_GsqlSpec):
                     if c.name.lower() in exclude:
                         continue
                     if isinstance(c, ViewColumn) and c.sql:
-                        column_spec.append('XXX:sql:%s' % (c,))
+                        if r.alias and c.alias:
+                            subspec.append('%s.c.%s' % (r.alias, c.alias,))
+                        else:
+                            subspec.append('XXX:sql:%s' % (c,))
                     cname = c.name
                     plain_name = cname
                     pos = plain_name.rfind('.')
@@ -1913,6 +1921,8 @@ class Select(_GsqlSpec):
                     if isinstance(c, ViewColumn) and c.alias:
                         if c.alias != plain_name:
                             aliases.append((plain_name, c.alias,))
+                if subspec:
+                    column_spec.append("[%s]" % (string.join(subspec, ', '),))
             if exclude or aliases:
                 if '*' in exclude:
                     continue
@@ -2197,7 +2207,7 @@ class Select(_GsqlSpec):
                 split_columns.append(indentation + c)
                 if c.lstrip().startswith('['):
                     in_list += 1
-                if c.rstrip().endswith(']'):
+                if c.rstrip(' +').endswith(']'):
                     in_list -= 1
             columns = string.join(split_columns, '\n')
             whereclause = ',\n        whereclause=%s' % (where_condition,) if where_condition else ''
@@ -3136,7 +3146,7 @@ class _GsqlView(_GsqlSpec):
                 column_string = string.join(["'%s'" % (c,) for c in no_update_columns], ', ') + ','
                 items.append('    no_%s_columns = (%s)' % (kind, column_string,))
             if special_update_columns:
-                column_string = string.join(["(%s, '%s', '%s')" % c for c in special_update_columns], ', ') + ','
+                column_string = string.join(['(%s, "%s", "%s")' % c for c in special_update_columns], ', ') + ','
                 items.append('    special_%s_columns = (%s)' % (kind, column_string,))
         add_rule('insert', self._insert)
         add_rule('update', self._update)
