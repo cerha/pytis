@@ -386,6 +386,8 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                       {type: 'select',
                        size: 14,
                        id: 'identifier',
+                       required: true,
+                       validate : CKEDITOR.dialog.validate.notEmpty( pytis._( "You must choose an object to include")),
                        label: attachment_name,
                        className: 'attachment-selector',
                        items: [],
