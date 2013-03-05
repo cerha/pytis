@@ -566,13 +566,13 @@ class TChanges(sql.SQLTable):
     name = 't_changes'
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
-              sql.Column('timestamp', pytis.data.DateTime(not_null=True)),
-              sql.Column('username', pytis.data.String(not_null=True)),
+              sql.Column('timestamp', pytis.data.DateTime(not_null=True), index=True),
+              sql.Column('username', pytis.data.String(not_null=True), index=True),
               sql.Column('schemaname', pytis.data.String(not_null=True)),
-              sql.Column('tablename', pytis.data.String(not_null=True)),
+              sql.Column('tablename', pytis.data.String(not_null=True), index=True),
               sql.Column('operation', pytis.data.String(not_null=True), doc="One of: INSERT, UPDATE, DELETE"),
               sql.Column('key_column', pytis.data.String(not_null=True)),
-              sql.Column('key_value', pytis.data.String(not_null=True)),
+              sql.Column('key_value', pytis.data.String(not_null=True), index=True),
              )
     with_oids = True
     depends_on = ()
@@ -639,9 +639,6 @@ begin
       key_value_ := concat(key_value_, ',', v);
     end if;
   end loop;
-  insert into t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
-         values (now(), session_user, tg_table_schema, tg_table_name, tg_op, key_column_, key_value_)
-         returning id into strict id_;
   for c, t in select a.attname, t.typname
               from pg_class r, pg_namespace nsp, pg_attribute a, pg_type t
               where r.relname = tg_table_name and r.relnamespace = nsp.oid and nsp.nspname = tg_table_schema and
@@ -675,13 +672,21 @@ begin
       end if;
     end if;
   end loop;
-  insert into t_changes_detail (id, detail) values (id_, detail_);
+  if tg_op != 'UPDATE' or detail_ != '' then
+    insert into t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
+           values (now(), session_user, tg_table_schema, tg_table_name, tg_op, key_column_, key_value_)
+           returning id into strict id_;
+    insert into t_changes_detail (id, detail) values (id_, detail_);
+  end if;
   return null;
 end;
 $$ language plpgsql security definer;
 
 create or replace function f_rotate_log() returns void as $$
 declare
+  n_records int := 1000000;
+  table_lock bigint := 201302131505;
+  n_id int;
   time_from timestamp;
   time_to timestamp;
   date_from text;
@@ -690,44 +695,75 @@ declare
   dtablename text;
   n int;
 begin
-  lock public.t_changes in exclusive mode;
-  lock public.t_changes_detail in exclusive mode;
-  select min(timestamp) into strict time_from from public.t_changes;
-  select max(timestamp) into strict time_to from public.t_changes;
-  if time_from is null then
-    raise exception 'Log table is empty';
-  end if;
-  date_from := to_char(time_from, 'YYMMDD');
-  date_to := to_char(time_to, 'YYMMDD');
-  tablename := concat('t_changes_', date_from, '_', date_to);
-  dtablename := concat('t_changes_detail_', date_from, '_', date_to);
-  select count(*) into strict n
-         from pg_class join pg_namespace on relnamespace = pg_namespace.oid
-         where relname = tablename and nspname = 'public';
-  if n > 0 then
-    raise exception 'Table % already exists', tablename;
-  end if;
-  execute concat('create table public.', tablename, ' as select * from public.t_changes');
-  execute concat('create table public.', dtablename, ' as select * from public.t_changes_detail');
-  truncate public.t_changes, public.t_changes_detail;
-  execute concat('create unique index ', tablename, '__id__index on public.', tablename, ' (id)');
-  execute concat('create unique index ', dtablename, '__id__index on public.', dtablename, ' (id)');
+  perform pg_advisory_xact_lock(table_lock);
+  loop
+    if (select count(*) < n_records from t_changes) then
+      exit;
+    end if;
+    select id into strict n_id from public.t_changes order by id offset n_records-1 limit 1;
+    select min(timestamp) into strict time_from from public.t_changes;
+    select max(timestamp) into strict time_to from public.t_changes where id<=n_id;
+    date_from := to_char(time_from, 'YYMMDD');
+    date_to := to_char(time_to, 'YYMMDD');
+    tablename := concat('t_changes_', date_from, '_', date_to);
+    dtablename := concat('t_changes_detail_', date_from, '_', date_to);
+    loop
+      if (select count(*)=0 from pg_class join pg_namespace on relnamespace = pg_namespace.oid
+                             where relname = tablename and nspname = 'public') then
+        exit;
+      end if;
+      tablename := concat(tablename, 'x');
+      dtablename := concat(dtablename, 'x');
+    end loop;
+    execute concat('create table public.', tablename, ' as select * from public.t_changes where id<=', n_id);
+    execute concat('create table public.', dtablename, ' as select * from public.t_changes_detail where id<=', n_id);
+    delete from public.t_changes where id<=n_id;
+    execute concat('create unique index ', tablename, '__id__index on public.', tablename, ' (id)');
+    execute concat('create unique index ', tablename, '__timestamp__index on public.', tablename, ' (timestamp)');
+    execute concat('create unique index ', tablename, '__username__index on public.', tablename, ' (username)');
+    execute concat('create unique index ', tablename, '__tablename__index on public.', tablename, ' (tablename)');
+    execute concat('create unique index ', tablename, '__key_value__index on public.', tablename, ' (key_value)');
+    execute concat('create unique index ', dtablename, '__id__index on public.', dtablename, ' (id)');
+  end loop;
 end;
 $$ language plpgsql;
 
-create or replace function f_view_log(date_from date, date_to date) returns setof v_changes as $$
+create or replace function f_view_log(date_from date, date_to date, username_ text, tablename_ text, key_value_ text, detail_ text, search_path_ text) returns setof v_changes as $$
 declare
-  date_to_1 date := date_to + '1 day'::interval;
+  date_to_1 date;
   tablename text;
 begin
-  return query select * from v_changes where date_from <= timestamp and timestamp < date_to_1;
+  if date_from > '2099-12-31'::date then
+    date_from := '2099-12-31'::date;
+  end if;
+  if date_to > '2099-12-31'::date then
+    date_to := '2099-12-31'::date;
+  end if;
+  date_to_1 := date_to + '1 day'::interval;
+  return query select * from v_changes v
+                      where date_from <= v.timestamp and v.timestamp < date_to_1 and
+                            v.username = coalesce(username_, v.username) and
+                            v.tablename = coalesce(tablename_, v.tablename) and
+                            v.key_value::text = coalesce(key_value_, v.key_value) and
+                            v.detail like '%'||coalesce(detail_, '%')||'%' and
+                            (search_path_ is null or schemaname in (select * from regexp_split_to_table(coalesce(search_path_, ''), ' *, *')));
   for tablename in select relname from pg_class join pg_namespace on relnamespace = pg_namespace.oid
                           where nspname = 'public' and
-                                relname ~ '^t_changes_......_......$' and
+                                relname ~ '^t_changes_......_......x*$' and
                                 substring(relname from 11 for 6) <= to_char(date_to, 'YYMMDD') and
                                 substring(relname from 18 for 6) >= to_char(date_from, 'YYMMDD')
   loop
-    return query execute concat('select t.*, detail from public.', tablename, ' t join public.t_changes_detail_', substring(tablename from 11), ' using(id) where $1 <= timestamp and timestamp < $2') using date_from, date_to_1;
+    return query
+      execute concat('select t.*, detail ',
+                             'from public.', tablename, ' t join ',
+                             'public.t_changes_detail_', substring(tablename from 11), ' d using(id) ',
+                             'where $1 <= t.timestamp and t.timestamp < $2 and ',
+                                   't.username = coalesce($3, t.username) and ',
+                                   't.tablename = coalesce($4, t.tablename) and ',
+                                   't.key_value::text = coalesce($5, t.key_value) and ',
+                                   'coalesce(d.detail, '''') like ''%''||coalesce($6, ''%'')||''%'' and ',
+                                   '($7 is null or schemaname in (select * from regexp_split_to_table(coalesce($7, ''''), '' *, *'')))')
+              using date_from, date_to_1, username_, tablename_, key_value_, detail_, search_path_;
   end loop;
 end;
 $$ language plpgsql stable;
