@@ -106,9 +106,11 @@ pytis.HtmlField.plugin = function(editor) {
 		    || element.getName() == 'table'){
                     result['insertSpaceBefore'] = CKEDITOR.TRISTATE_OFF;
                     result['insertSpaceAfter'] = CKEDITOR.TRISTATE_OFF;
-		}
-		return result;
-	    }
+                }
+                if (element.hasClass('lcg-image'))
+                    result['figureCaption'] = CKEDITOR.TRISTATE_OFF;
+                return result;
+            }
 	});
     }
 
@@ -156,6 +158,31 @@ pytis.HtmlField.plugin = function(editor) {
                           }
                       });
     editor.keystrokeHandler.keystrokes[CKEDITOR.CTRL + 32 /*space*/ ] = 'reindent';
+
+    /* Add support for figure captions */
+    editor.addCommand('figure-caption',
+                      {
+                          exec : function(editor)
+                          {
+                              var object = ck_get_ascendant(editor, 'a');
+                              if (object){
+                                  var figure = new CKEDITOR.dom.element('figure');
+                                  var caption = CKEDITOR.dom.element.createFromHtml("<figcaption>text...</figcaption>");
+                                  figure.append(object);
+                                  figure.append(caption);
+                                  editor.insertElement(figure);
+                                  /* Move caret to caption element */
+                                  var range = new CKEDITOR.dom.range(editor.document);
+                                  range.moveToElementEditablePosition(caption, true);
+                                  editor.getSelection().selectRanges([range]);
+                              }
+                          }
+                      });
+    editor.addMenuItem('figureCaption', {
+        label: pytis._("Add figure caption"),
+        command: 'figure-caption',
+        group: 'PytisGroup',
+    });
 
     /* Add support for marking languages */
     /* TODO: List of languages for this document should eventually be editable in and taken from CMS */
@@ -547,7 +574,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                  },
                  {type: 'text',
                   id: 'description',
-                  label: pytis._('Description'),
+                  label: pytis._('Accessible description'),
                   commit: function(element) {
                       element.setAttribute('alt', this.getValue());
                   },
@@ -664,23 +691,33 @@ pytis.HtmlField.image_dialog = function(editor) {
          setup: function(element) {
              // Read alignment of the image
              var img = element.getFirst();
+             var figure = element.getAscendant('figure');
              if (img) {
-		 var align = img.getAttribute('align');
-		 if (align)
+                 if (figure) var align = figure.getAttribute('data-lcg-align');
+                 else var align = img.getAttribute('align');
+                 if (align)
                      this.setValue(align);
-		 else
+                 else
                      this.setValue('inline');
-	     }
+             }
          },
          commit: function(element) {
              // Set image alignment
              var img = element.getFirst();
+	     var figure = element.getAscendant('figure');
              if (img) {
 		 var align = this.getValue()
-		 if (align == 'inline')
-		     img.removeAttribute('align');
-		 else
-		     img.setAttribute('align', align);
+                 if (align == 'inline'){
+                     img.removeAttribute('align');
+                     if (figure) figure.removeAttribute('data-lcg-align');
+                 }else{
+                     if (figure){
+                         img.removeAttribute('align');
+                         figure.setAttribute('data-lcg-align', align);
+                     }else{
+                         img.setAttribute('align', align);
+                     }
+                 }
 	     }
          }
 	 // TODO: When 'full' is selected, don't allow 'enlarge' in 'link-type' selection.

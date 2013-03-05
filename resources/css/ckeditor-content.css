@@ -15,8 +15,40 @@ a:link:hover, a:visited:hover { color: #d60; }
 a.lcg-audio { color: #03b; text-decoration: underline; }
 
 img { margin: .5em .8em; }
-img[align="left"] { margin: .25em 1em .25em 0; }
-img[align="right"] { margin: .25em 0 .25em 1em; }
+
+figure {
+  border: thin silver solid;
+  margin: 0.5em;
+  padding: 0.5em;
+  width: auto;
+  display: table-cell;
+}
+
+figure a, figure img {
+    display: table-cell;
+    margin: auto;
+}
+
+figcaption{
+    display: table-caption;
+    caption-side: bottom;
+    text-align: center;
+    font-style: italic;
+    font-size: smaller;
+    text-indent: 0;
+    min-width: 16em;
+}
+
+img[align="left"] figure[data-lcg-align="right"]  { margin: .25em 1em .25em 0; }
+img[align="right"] figure[data-lcg-align="left"] { margin: .25em 0 .25em 1em; }
+
+figure[data-lcg-align="left"] {
+    float: left;
+}
+
+figure[data-lcg-align="right"] {
+    float: right;
+}
 
 blockquote {
     padding: .5em .8em .5em .8em;
@@ -54,3 +86,4 @@ td {
 span.lcg-mathml {
     background: #d1ffbd;
 }
+
