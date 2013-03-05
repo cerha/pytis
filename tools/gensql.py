@@ -4028,6 +4028,8 @@ database dumps if you want to be sure about your schema.
         application = _GsqlConfig.application
         coding_header = '# -*- coding: utf-8\n'
         local_preamble = '''
+from __future__ import unicode_literals
+
 import sqlalchemy
 import pytis.extensions.gensqlalchemy as sql
 import pytis.data

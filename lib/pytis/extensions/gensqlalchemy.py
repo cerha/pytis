@@ -64,6 +64,9 @@ see all the most important constructs there.
 
 """
 
+from __future__ import unicode_literals
+
+import codecs
 import collections
 import copy
 import imp
@@ -1255,8 +1258,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                 # Let's just print warning until converted specifications are fixed
                 raise SQLException("Table key column not found in the view", table_c)
             else:
-                print ('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s' %
-                       (self.name, tabular.name,))
+                _gsql_output('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s' %
+                             (self.name, tabular.name,))
         return sqlalchemy.and_(*conditions)
 
     def _rule_tables(self, order):
@@ -2035,7 +2038,7 @@ class SQLPyFunction(SQLFunctional):
         else:
             def reindent(line):
                 return line[-indentation:]
-        lines = [l.rstrip() for l in lines]
+        lines = [unicode(l.rstrip(), 'utf-8') for l in lines]
         return [reindent(l) for l in lines if l.strip()]
 
 class SQLEventHandler(SQLFunctional):
@@ -2179,7 +2182,7 @@ def _make_sql_command(sql, *multiparams, **params):
     return output
 def _dump_sql_command(sql, *multiparams, **params):
     output = _make_sql_command(sql, *multiparams, **params)
-    print output + ';'
+    _gsql_output(output + ';')
 
 def include(file_name, globals_=None):
     """Include specification file into current specification.
@@ -2196,7 +2199,16 @@ def include(file_name, globals_=None):
     file_, pathname, description = imp.find_module(file_name)
     execfile(pathname, globals_)
 
+_output = None
+def _gsql_output(output):
+    _output.write(output)
+    _output.write('\n')
+
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only):
+    global _output
+    _output = sys.stdout
+    if _output.encoding is None:
+        _output = codecs.getwriter('UTF-8')(_output)
     global _full_init
     _full_init = not (names_only or (no_deps and regexp))
     try:
@@ -2243,7 +2255,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
         name = obj.pytis_name()
         if isinstance(obj, SQLSchematicObject):
             name = '%s.%s' % (obj.schema, name,)
-        print kind, name
+        _gsql_output('%s %s' % (kind, name,))
     # Load the objects
     loader()
     # Preprocessing in case of speed optimized limited output

@@ -1,5 +1,7 @@
 # -*- coding: utf-8
 
+from __future__ import unicode_literals
+
 import sqlalchemy
 import pytis.extensions.gensqlalchemy as sql
 import pytis.data
