@@ -150,8 +150,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             else:
                 raise SQLException("Invalid result type", function_type)
         result_type_prefix = 'SETOF ' if function.multirow else ''
+        name = function.function_name or function.name
         query_prefix = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n' %
-                        (function.schema, function.name, arguments, result_type_prefix, result_type,))
+                        (function.schema, name, arguments, result_type_prefix, result_type,))
         query_suffix = ('\n$$ LANGUAGE %s %s' % (function._LANGUAGE, function.stability,))
         if function.security_definer:
             query_suffix += ' SECURITY DEFINER'
@@ -1835,6 +1836,10 @@ class SQLFunctional(_SQLTabular):
       sql_directory -- name of the directory where SQL files with function body
         definitions are stored; the name is relative to the processed module
         file name
+      function_name -- actual name of the database function; string.  It is
+        useful only with overloaded functions when the Python object names must
+        be different (as required by SQLAlchemy) while the database object
+        names should be the same.  If 'None' then it defaults to 'name'.
 
     Function body can be defined in two ways:
 
@@ -1860,6 +1865,7 @@ class SQLFunctional(_SQLTabular):
     security_definer = False
     stability = 'volatile'
     sql_directory = 'sql'
+    function_name = None
 
     _LANGUAGE = None
 
@@ -1911,7 +1917,8 @@ class SQLFunctional(_SQLTabular):
             by SQLAlchemy
         
         """
-        name = '"%s"."%s"' % (self.schema, self.name,)
+        function_name = self.function_name or self.name
+        name = '"%s"."%s"' % (self.schema, function_name,)
         # We can't use the standard SQLAlchemy function call here
         # (i.e. getattr(sqlalchemy.sql.expression.func, name)(*arguments))
         # since this puts argument symbols instead of argument values into the

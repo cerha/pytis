@@ -259,6 +259,13 @@ class FileFunc(sql.SQLFunction):
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
+class FileFuncOverloaded(sql.SQLFunction):
+    function_name = 'minus'
+    name = 'minus_float'
+    arguments = (sql.Column('x', pytis.data.Float()), sql.Column('y', pytis.data.Float()),)
+    result_type = pytis.data.Integer()
+    stability = 'immutable'
+
 class SelectFunc(sql.SQLFunction):
     name = 'foo_increment'
     arguments = (sql.Column('inc', pytis.data.Integer()),)
