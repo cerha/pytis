@@ -1,6 +1,6 @@
 ;;; gensqlalchemy.el --- support for working with pytis database specifications
 
-;; Copyright (C) 2012 Brailcom, o.p.s.
+;; Copyright (C) 2012, 2013 Brailcom, o.p.s.
 
 ;; COPYRIGHT NOTICE
 
@@ -104,6 +104,7 @@ If called With a prefix argument then show also dependent objects."
                          '("--no-deps"))
                        (list (format "--limit=^%s$" spec-name)
                              gensqlalchemy-specification-directory))))
+    (save-some-buffers)
     (unless replace
       (with-current-buffer output-buffer
         (unless (string= "" (buffer-substring-no-properties (point-min) (point-max)))
