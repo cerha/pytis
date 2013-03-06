@@ -563,6 +563,9 @@ class DescriptiveDualForm(BrowseShowDualForm):
 
     """
     class _SideForm(ShowForm):
+        def __init__(self, *args, **kwargs):
+            self._main_form = kwargs.pop('main_form', None)
+            super(DescriptiveDualForm._SideForm, self).__init__(*args, **kwargs)
         def _filter_menu(self):
             return None
         def _apply_profile(self, profile, **kwargs):
@@ -576,7 +579,9 @@ class DescriptiveDualForm(BrowseShowDualForm):
         def _select_columns(self):
             return [c.id() for c in self._data.columns() 
                     if not isinstance(c.type(), pytis.data.Big)]
-    
+        def _query_fields_row(self):
+            return self._main_form._query_fields_row()
+
     def _init_attributes(self, orientation=Orientation.HORIZONTAL, **kwargs):
         self._in_mainform_selection = False
         self._orientation = orientation
@@ -589,7 +594,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
         return None
 
     def _create_side_form(self, parent):
-        return self._SideForm(parent, self._resolver, self._name)
+        return self._SideForm(parent, self._resolver, self._name, main_form=self._main_form)
 
     def _set_side_form_callbacks(self):
         self._side_form.set_callback(ShowForm.CALL_SELECTION, self._on_side_selection)

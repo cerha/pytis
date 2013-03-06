@@ -399,17 +399,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # initialization before the initial select when the form user
             # interface is not created yet.  Thus query fields are not yet
             # available as well.
-            query_fields = self._view.query_fields()
-            if query_fields.autoapply():
+            if self._view.query_fields().autoapply() or self._query_field_values:
                 # If autoapply is on, we will construct the row from default
                 # field values.
-                def value(f):
-                    t = f.type() or pytis.data.String()
-                    v = f.default()
-                    if isinstance(v, collections.Callable):
-                        v = v()
-                    return pytis.data.Value(t, v)
-                return pytis.data.Row([(f.id(), value(f)) for f in query_fields.fields()])
+                return super(ListForm, self)._query_fields_row()
             else:
                 # If autoapply is off, we return None, which avoids calling
                 # argument provider at all.  The form will appear initially
@@ -425,7 +418,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         query_fields = self._view.query_fields()
         if query_fields:
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
-            form = QueryFieldsForm(panel, resolver(), None, **query_fields.view_spec_kwargs())
+            form = QueryFieldsForm(panel, resolver(), None, prefill=self._query_field_values, 
+                                   **query_fields.view_spec_kwargs())
             sizer = wx.BoxSizer()
             sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
             sizer.Add((0, 0), 1)
@@ -998,11 +992,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             f = BrowsableShowForm
         kwargs = self._new_form_kwargs()
-        if not self._view.query_fields():
-            # DescriptiveDualForm and BrowsableShowForm currently don't work
-            # with query fields.  If this is solved, the condition here can be
-            # removed.
-            run_form(f, self._name, select_row=self._current_key(), **kwargs)
+        if self._view.query_fields():
+            row = self._query_fields_row()
+            kwargs['query_field_values'] = [(k, row[k].value()) for k in row.keys()]
+        run_form(f, self._name, select_row=self._current_key(), **kwargs)
 
     def _scroll_x_offset(self):
         g = self._grid

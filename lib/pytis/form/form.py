@@ -792,7 +792,8 @@ class LookupForm(InnerForm):
 
     """
     def _init_attributes(self, filter=None, sorting=None, columns=None, grouping=None,
-                         profile_id=None, condition=None, arguments=None, **kwargs):
+                         profile_id=None, condition=None, arguments=None,
+                         query_field_values=None, **kwargs):
         """Process constructor keyword arguments and initialize the attributes.
 
         Arguments:
@@ -826,6 +827,12 @@ class LookupForm(InnerForm):
             function argument identifiers as keys and 'pytis.data.Value'
             instances as values.  Useful only when the table is actually a row
             returning function, otherwise ignored.
+          query_field_values -- sequence of name/value pairs or a dictionary
+            containing initial values to be used for query fields (as inner
+            Python values, not pytis.data.Value instances).  Only makes sense
+            if the form specification defines `query_fields'.  Query fields,
+            which don't have their initial values defined by this argument,
+            will use their default value from the query field specification.
           kwargs -- arguments passed to the parent class
 
         If one of 'filter', 'sorting', 'columns' or 'grouping' is set, an
@@ -893,6 +900,7 @@ class LookupForm(InnerForm):
         self._lf_condition = condition
         self._lf_search_condition = None
         self._arguments = arguments
+        self._query_field_values = query_field_values and dict(query_field_values) or None
         if not self._update_arguments():
             raise Form.InitError()
         self._lf_select_count_ = None
@@ -946,8 +954,22 @@ class LookupForm(InnerForm):
         return self._arguments
 
     def _query_fields_row(self):
-        # This form doesn't support query fields, but see list.py for an overloaded version.
-        return None
+        # This class doesn't support query fields UI.  If the specification
+        # defines query fields, their values may be passed to the form
+        # constructor as 'query_field_values' argument, otherwise the default
+        # field value is used.  See list.py for an overloaded version, which
+        # supports query fields UI.
+        values = self._query_field_values or {}
+        def value(f):
+            t = f.type() or pytis.data.String()
+            try:
+                v = values[f.id()]
+            except KeyError:
+                v = f.default()
+                if isinstance(v, collections.Callable):
+                    v = v()
+            return pytis.data.Value(t, v)
+        return pytis.data.Row([(f.id(), value(f)) for f in self._view.query_fields().fields()])
 
     def _update_arguments(self):
         provider = self._view.argument_provider()
