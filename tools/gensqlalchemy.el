@@ -33,6 +33,7 @@ Currently the mode just defines some key bindings."
               ("\C-c\C-q\C-q" . gensqlalchemy-eval)
               ("\C-c\C-qa" . gensqlalchemy-add)
               ("\C-c\C-qd" . gensqlalchemy-definition)
+              ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
               ("\C-c\C-qs" . gensqlalchemy-show-sql-buffer)
               ("\C-c\C-qt" . gensqlalchemy-test)
               ))
@@ -62,15 +63,30 @@ Currently the mode just defines some key bindings."
       (setq name gensqlalchemy-specification-directory))
     (format "*%s:%s*" name ext)))
 
+(defmacro with-gensqlachemy-specification (&rest body)
+  (let (($spec-regexp (gensym))
+        ($point (gensym)))
+    `(save-excursion
+       (let ((,$spec-regexp "^class +\\([a-zA-Z_0-9]+\\) *("))
+         (goto-char (line-beginning-position))
+         (unless (or (looking-at ,$spec-regexp)
+                     (re-search-backward ,$spec-regexp nil t)
+                     (re-search-forward ,$spec-regexp nil t))
+           (error "No specification found around point"))
+         (goto-char (line-beginning-position))
+         (let ((specification-name (match-string-no-properties 1))
+               (,$point (point)))
+           (forward-char)
+           (unless (re-search-forward ,$spec-regexp nil t)
+             (goto-char (point-max)))
+           (save-restriction
+             (narrow-to-region ,$point (point))
+             (goto-char ,$point)
+             ,@body))))))
+
 (defun gensqlalchemy-specification ()
-  (save-excursion
-    (let ((spec-regexp "^class +\\([a-zA-Z_0-9]+\\) *("))
-      (goto-char (line-beginning-position))
-      (unless (or (looking-at spec-regexp)
-                  (re-search-backward spec-regexp nil t)
-                  (re-search-forward spec-regexp nil t))
-        (error "No specification found around point"))
-      (match-string-no-properties 1))))
+  (with-gensqlachemy-specification
+    specification-name))
   
 (defun gensqlalchemy-prepare-output-buffer (base-buffer erase)
   (let ((directory (gensqlalchemy-specification-directory base-buffer t)))
@@ -111,7 +127,7 @@ If called With a prefix argument then show also dependent objects."
           (goto-char (point-max))
           (insert "\n"))))
     (apply 'gensqlalchemy-run-gsql output-buffer args)))
-
+  
 (defun gensqlalchemy-show-sql-buffer ()
   "Show the buffer with converted SQL output."
   (interactive)
@@ -166,6 +182,15 @@ The commands are wrapped in a transaction which is aborted at the end."
     (if output-buffer
         (pop-to-buffer output-buffer)
       (message "Definition not found"))))
+
+(defun gensqlalchemy-sql-function-file ()
+  "Visit SQL file associated with current function."
+  (interactive)
+  (let ((name (with-gensqlachemy-specification
+               (unless (re-search-forward "^    name = ['\"]\\(.*\\)['\"]" nil t)
+                 (error "Function name not found"))
+               (match-string 1))))
+    (find-file-other-window (concat "sql/" (match-string 1) ".sql"))))
 
 ;;; Announce
 
