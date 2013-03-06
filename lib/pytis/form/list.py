@@ -425,7 +425,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             sizer.Add((0, 0), 1)
             sizer.Add(wx_button(panel, label=_(u"Aplikovat"),
                                 tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
-                                command=Application.COMMAND_REFRESH()), 0, wx.ALL|wx.ALIGN_BOTTOM, 4)
+                                callback=self._on_apply_query_fields),
+                      0, wx.ALL|wx.ALIGN_BOTTOM, 4)
             sizer.Add(wx_button(panel, label=_(u"Přesunout nahoru"),
                                 tooltip=_(u"Přesunout  panel dotazu"),
                                 icon='move-up', noborder=True,
@@ -436,6 +437,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             form = None
         self._query_fields_form = form
         return panel
+
+    def _on_apply_query_fields(self, event):
+        self.refresh(interactive=True)
+        self._grid.SetFocus()
 
     def _on_move_query_fields_button(self, event):
         button = event.GetEventObject()
