@@ -1937,7 +1937,7 @@ class SQLFunctional(_SQLTabular):
         """
         module_path = os.path.dirname(sys.modules[self.__module__].__file__)
         sql_file = os.path.join(module_path, self.sql_directory, self.name + '.sql')
-        return open(sql_file).read()
+        return codecs.open(sql_file, encoding='UTF-8').read()
 
 class SQLFunction(SQLFunctional):
     """SQL function definition.
