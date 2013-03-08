@@ -1631,6 +1631,7 @@ class SQLView(_SQLTabular):
     __visit_name__ = 'view'
 
     def __new__(cls, metadata, search_path):
+        _set_current_search_path(search_path)
         columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.query().columns])
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
