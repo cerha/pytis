@@ -3129,7 +3129,7 @@ class _GsqlView(_GsqlSpec):
                 command_string = string.join(['"%s"' % (quote(c),) for c in command], ', ')
                 if command_string:
                     items.append('    def on_%s_also(self):' % (kind,))
-                    items.append ('        return %s' % (command_string,))
+                    items.append ('        return (%s,)' % (command_string,))
             def update_value(c):
                 return c.insert if kind == 'insert' else c.update
             no_update_columns = []
