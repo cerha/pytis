@@ -1650,7 +1650,12 @@ class SQLView(_SQLTabular):
         while objects:
             o = objects.pop()
             if isinstance(o, sqlalchemy.sql.Alias):
-                objects += o.get_children()
+                # Some aliases, e.g. sqlalchemy.alias with sqlalchemy.literal inside,
+                # can't get children, so prevent crashing on that.
+                try:
+                    objects += o.get_children()
+                except:
+                    pass
             elif isinstance(o, sqlalchemy.Table):
                 self.add_is_dependent_on(o)
                 seen.append(o)

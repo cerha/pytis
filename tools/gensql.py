@@ -2003,6 +2003,7 @@ class Select(_GsqlSpec):
     def _convert_simple_relations(self, definitions, level):
         def convert_relation(i, rel, prev_result):
             jtype = rel.jointype
+            noalias = False
             if isinstance(rel.relation, Select):
                 raise Exception("Program error")
             elif (isinstance(rel, SelectRelation) and
@@ -2017,9 +2018,16 @@ class Select(_GsqlSpec):
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
-                d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
-                     (self._convert_local_name(self._convert_id_name(relation)),
-                      rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
+                funcsig = rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                local_name = self._convert_local_name(self._convert_id_name(relation))
+                if rel.relation.startswith('dblink'):
+                    expr = ('sqlalchemy.alias(sqlalchemy.literal("%s"), \'%s\')' %
+                            (funcsig, (rel.alias or local_name),))
+                else:
+                    expr = ('sqlalchemy.select(["*"], from_obj=["%s"]).alias(\'%s\')' %
+                            (funcsig, (rel.alias or local_name),))
+                d = ('%s = %s' % (local_name, expr,))
+                noalias = True
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
@@ -2043,7 +2051,7 @@ class Select(_GsqlSpec):
                     rschema = None
                     d = "%s = sql.t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation, short=True),)
                 self._add_conversion_dependency(dependency, rschema)
-            if rel.alias:
+            if rel.alias and not noalias:
                 if d is None:
                     d = '%s = %s' % (self._convert_local_name(self._convert_id_name(rel.alias.lower())), relation,)
                     relation = rel.alias.lower()
@@ -2077,15 +2085,23 @@ class Select(_GsqlSpec):
     def _convert_complex_relations(self, definitions, level):
         def convert_relation(rel, last_relation):
             jtype = rel.jointype
+            noalias = False
             if isinstance(rel.relation, Select):
                 relation = rel.relation._convert_select(definitions, level)
                 d = None
             elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
-                d = ('%s = sqlalchemy.select(["*"], from_obj=["%s"])' %
-                     (self._convert_local_name(self._convert_id_name(relation)),
-                      rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),))
+                funcsig = rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                local_name = self._convert_local_name(self._convert_id_name(relation))
+                if rel.relation.startswith('dblink'):
+                    expr = ('sqlalchemy.alias(sqlalchemy.literal("%s"), \'%s\')' %
+                            (funcsig, (rel.alias or local_name),))
+                else:
+                    expr = ('sqlalchemy.select(["*"], from_obj=["%s"]).alias(\'%s\')' %
+                            (funcsig, (rel.alias or local_name),))
+                d = ('%s = %s' % (local_name, expr,))
+                noalias = True
             elif (isinstance(rel, SelectRelation) and
                   rel.schema is not None):
                 relation = self._convert_relation_name(rel)
@@ -2109,7 +2125,7 @@ class Select(_GsqlSpec):
                     rschema = None
                     d = "%s = sql.t.%s" % (self._convert_local_name(relation), self._convert_name(rrelation, short=True),)
                 self._add_conversion_dependency(dependency, rschema)
-            if rel.alias:
+            if rel.alias and not noalias:
                 if d is None:
                     d = '%s = %s' % (self._convert_local_name(self._convert_id_name(rel.alias)),
                                      relation,)
