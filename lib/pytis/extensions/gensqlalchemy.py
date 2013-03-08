@@ -965,10 +965,14 @@ class SQLObject(object):
       access-rights -- definition of access rights to the object; sequence of
         pairs (RIGHT, ROLE)
       owner -- database owner of the object; string
+      external -- iff true then do not create the object as it's just a
+        declaration of a database object defined outside our specifications,
+        to be used by objects of our specifications
 
     """
     access_rights = ()
     owner = None
+    external = False
     _DB_OBJECT = None
 
     @classmethod
@@ -2243,6 +2247,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
                     result = False
             else:
                 result = False
+        if cls.external:
+            return False
         if regexp is None:
             return result
         if matcher.search(cls.__name__):
