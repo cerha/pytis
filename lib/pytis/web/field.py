@@ -498,7 +498,7 @@ class HtmlField(MultilineField):
                 ('tools',       ('Source', 'Maximize', 'ShowBlocks','-', 'About')),
                 ('/', None),
                 ('styles',      ('Format', 'Language')), #'Font','FontSize')),
-                ('paragraph',   ('NumberedList','BulletedList','-',
+                ('paragraph',   ('NumberedList','BulletedList','DefinitionList','-',
                                  'Outdent','Indent','-', 'Blockquote', 'BlockquoteFooter', '-',
                                  'JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
                                  # '-', 'BidiLtr','BidiRtl'

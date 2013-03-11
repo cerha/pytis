@@ -83,7 +83,21 @@ td {
     background: #fff;
 }
 
+dl {
+    border: 1px solid black;
+    padding: 10px;
+    background:  #8fff9f;
+}
+
+dt {
+    font-weight: bold;
+    padding: 5px;
+}
+
+dd {
+    font-style: italic;
+}
+
 span.lcg-mathml {
     background: #d1ffbd;
 }
-

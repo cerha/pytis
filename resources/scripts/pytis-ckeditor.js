@@ -184,6 +184,29 @@ pytis.HtmlField.plugin = function(editor) {
         group: 'PytisGroup',
     });
 
+    /* Add support for definition lists */
+    editor.addCommand('definition-list',
+                      {
+                          exec : function(editor)
+                          {
+                              var dl = new CKEDITOR.dom.element('dl');
+                              var dt = CKEDITOR.dom.element.createFromHtml('<dt>&nbsp;</dt>');
+                              var dd = CKEDITOR.dom.element.createFromHtml('<dd>&nbsp;</dd>');
+                              dl.append(dt);
+                              dl.append(dd);
+                              editor.insertElement(dl);
+                              /* Move caret to definition term element */
+                              var range = new CKEDITOR.dom.range(editor.document);
+                              range.moveToElementEditablePosition(dt, true);
+                              editor.getSelection().selectRanges([range]);
+                          }
+                      });
+    editor.ui.addButton('DefinitionList', {
+        label: pytis._("Definition list"),
+        command: 'definition-list',
+        icon: pytis.HtmlField.base_uri + '/editor-definition-list.png'
+    });
+
     /* Add support for marking languages */
     /* TODO: List of languages for this document should eventually be editable in and taken from CMS */
     var languages = [["default", pytis._("Default")],
