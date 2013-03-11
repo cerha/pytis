@@ -778,7 +778,7 @@ pytis.HtmlField.image_dialog = function(editor) {
                   var link_type = this.getValue();
                   element.data('lcg-link-type', link_type);
                   if (link_type == 'enlarge') {
-                      ck_set_protected_attribute(element, 'href', '');
+                      ck_set_protected_attribute(element, 'href', '#');
                   }
               },
               onChange: function(element) {

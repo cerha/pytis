@@ -476,6 +476,30 @@ class StructuredTextField(MultilineField):
 class HtmlField(MultilineField):
     _HANDLER = 'pytis.HtmlField'
 
+    class AcfRule(object):
+        """A single ACF rule for CKEditor"""
+        def __init__(self, elements, attributes=(), styles=(), classes=()):
+            self.elements = elements
+            self.attributes = attributes
+            self.styles = styles
+            self.classes = classes
+        def __str__(self):
+            res = " ".join(self.elements)
+            if (self.attributes):
+                res += " [" + ",".join(map(str, self.attributes)) + "]"
+            if (self.styles):
+                res += " {" + ", ".join(self.styles) + "}"
+            if (self.classes):
+                res += " (" + ", ".join(self.classes) + ")"
+            return res;
+        
+    class AcfRequiredAttribute(object):
+        """Required attribute in ACF rule for CKEditor"""
+        def __init__(self, attribute):
+            self.attribute = attribute
+        def __str__(self):
+            return '!' + self.attribute
+
     def _format(self, context):
         return context.localize(self._value().export())
     
@@ -508,6 +532,54 @@ class HtmlField(MultilineField):
                 ('links',       ('Link', 'Unlink', 'Anchor', 'PytisIndexItem')),
                 ('insert',      ('Table','HorizontalRule', 'PageBreak', 'SpecialChar')), #'Smiley',
                 )
+
+            Rule = self.AcfRule
+            R = self.AcfRequiredAttribute
+            acf_rules = (
+                # Text content
+                # Links
+                Rule(['a'], ['href', 'name']),
+                Rule(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'], ['align']),
+                Rule(['p'], ['align']),
+                Rule(['pre']),
+                # Breaks and dividers
+                Rule(['br']),
+                Rule(['div'], styles=['page-break-after']),
+                Rule(['hr']),
+                # Tables and lists
+                Rule(['table', 'tr', 'td', 'th'], ['align']),
+                Rule(['ul', 'ol', 'dl', 'li', 'dt', 'dd']),
+                # Quotations and footers
+                Rule(['blockquote', 'footer']),
+                # Inline markup
+                Rule(['strong', 'em', 'strike', 'sub', 'sup']),
+                # Pytis resources
+                Rule(['a'], [R('href'), R('data-lcg-link-type')], classes=['lcg-image']),
+                Rule(['img'], [R('src'), R('data-lcg-resource'), 'align', 'alt', 'title']),
+                Rule(['a'], [R('href'), R('data-lcg-resource')], classes=['lcg-audio']),
+                Rule(['a'], [R('href'), R('data-lcg-resource')], classes=['lcg-video']),
+                Rule(['a'], [R('href'), R('data-lcg-resource')], classes=['lcg-resource']),
+                # Exercises
+                Rule(['div'], classes=['lcg-exercise'], attributes=['data-type', 'contenteditable'], styles=['display']),
+                Rule(['pre'], classes=['lcg-exercise-instructions', 'lcg-exercise-example', 'lcg-exercise-src',
+                                       'lcg-exercise-transcript', 'lcg-exercise-reading', 'lcg-exercise-explanation']),
+                Rule(['a'], classes=['lcg-exercise-sound-file', 'lcg-exercise-audio-version']),
+                # Mathematics
+                Rule(['span'], ['contenteditable'], styles=['display'], classes=['lcg-mathml']),
+                Rule(['math'], ['contenteditable', 'xmlns'], styles=['display']),
+                Rule(['maction', 'maligngroup', 'malignmark', 'menclose', 'merror', 'mfenced',
+                      'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mlongdiv', 'mmultiscripts', 'mn', 'mo',
+                      'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mscarries', 'mscarry',
+                      'msgroup', 'msline', 'mspace', 'msqrt', 'msrow', 'mstack', 'mstyle', 'msub',
+                      'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover',
+                      'semantics', 'annotation'], ['*']),
+                # Language marking
+                Rule(['*'], ['lang'], classes=['cke-explicit-language']),
+                Rule(['span'], [R('lang')], classes=['cke-explicit-language']),
+                # Figures and captions
+                Rule(['figure'], ['data-lcg-align']),
+                Rule(['figcaption']),
+                );
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
                           language=context.lang(),
                           removePlugins = 'forms,image',
@@ -516,6 +588,7 @@ class HtmlField(MultilineField):
                           entities_greek=False,
                           entities_latin=False,
                           entities_processNumerical=False,
+                          allowedContent="; ".join(map(str, acf_rules)),
                           )
             html_id = self.html_id()
             if self._row.attachment_storage(self.id) is not None:
