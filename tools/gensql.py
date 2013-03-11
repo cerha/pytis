@@ -2090,6 +2090,15 @@ class Select(_GsqlSpec):
                 relation = rel.relation._convert_select(definitions, level)
                 d = None
             elif (isinstance(rel, SelectRelation) and
+                  rel.relation[0] == '(' and
+                  (rel.relation.lower().find('from') >= 0 or
+                   rel.relation.lower().find('values') >= 0)):  # apparently a subselect
+                relation = self._convert_relation_name(rel)
+                d = ('%s = sqlalchemy.select(["*"], from_obj=["%s AS %s"])' %
+                     (self._convert_local_name(self._convert_id_name(relation)),
+                      rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n'),
+                      rel.alias,))
+            elif (isinstance(rel, SelectRelation) and
                   rel.relation.find('(') >= 0):  # apparently a function call
                 relation = self._convert_relation_name(rel)
                 funcsig = rel.relation.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
@@ -3138,7 +3147,21 @@ class _GsqlView(_GsqlSpec):
                     if t.find('.') >= 0:
                         prefix = '#XXX:'
                         break
-                order_string = string.join([self._convert_name(o) for o in self._tables], ', ')
+                if kind == 'delete' or self._complexp:
+                    order_tables = self._tables
+                else:
+                    order_tables = []
+                    for t in self._tables:
+                        table_alias = assoc(t, self._table_alias or ())
+                        table_alias = table_alias and table_alias[1] or t
+                        for c in self._columns:
+                            if getattr(c, kind):
+                                tname = self._column_table(c)
+                                cname = self._column_column(c)
+                                if tname == table_alias and cname != 'oid':
+                                    order_tables.append(t)
+                                    break
+                order_string = string.join([self._convert_name(o) for o in order_tables], ', ')
                 if order_string:
                     order_string += ','
                 items.append('%s    %s_order = (%s)' % (prefix, kind, order_string,))
@@ -3657,7 +3680,7 @@ class _GsqlRaw(_GsqlSpec):
         self._convert_schemas(items)
         items.append('    @classmethod')
         items.append('    def sql(class_):')
-        items.append('        return """%s"""' % (self._sql.replace('\\', '\\\\'),))
+        items.append('        return """%s"""' % (self._sql.replace("\\'", "'").replace('\\', '\\\\'),))
         items.append(self._convert_depends())
         result = string.join(items, '\n') + '\n'
         self._convert_add_raw_dependencies(self._sql)

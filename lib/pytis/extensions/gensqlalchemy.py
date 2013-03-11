@@ -1265,6 +1265,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             else:
                 _gsql_output('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s' %
                              (self.name, tabular.name,))
+                conditions.append(sqlalchemy.sql.false())
         return sqlalchemy.and_(*conditions)
 
     def _rule_tables(self, order):
