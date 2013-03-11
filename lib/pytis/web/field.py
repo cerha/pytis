@@ -547,12 +547,14 @@ class HtmlField(MultilineField):
                 Rule(['div'], styles=['page-break-after']),
                 Rule(['hr']),
                 # Tables and lists
-                Rule(['table', 'tr', 'td', 'th'], ['align']),
+                Rule(['table', 'tr', 'td'], ['align']),
+                Rule(['thead', 'tfoot', 'caption']),
+                Rule(['th'], ['scope']),
                 Rule(['ul', 'ol', 'dl', 'li', 'dt', 'dd']),
                 # Quotations and footers
                 Rule(['blockquote', 'footer']),
                 # Inline markup
-                Rule(['strong', 'em', 'strike', 'sub', 'sup']),
+                Rule(['strong', 'em', 'u', 'strike', 'sub', 'sup']),
                 # Pytis resources
                 Rule(['a'], [R('href'), R('data-lcg-link-type')], classes=['lcg-image']),
                 Rule(['img'], [R('src'), R('data-lcg-resource'), 'align', 'alt', 'title']),
