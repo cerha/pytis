@@ -234,7 +234,7 @@ pytis.HtmlField.plugin = function(editor) {
         for (var i=1; i<whitelist.length; i++){
             r_list += "|" + whitelist[i];
         }
-        evt.data.html = evt.data.html.replace(new RegExp("<(?!\\s*\\/?(" + r_list + ")\\b)[^>]+>", 'gi'), '');
+        evt.data.dataValue = evt.data.dataValue.replace(new RegExp("<(?!\\s*\\/?(" + r_list + ")\\b)[^>]+>", 'gi'), '');
     });
 
     /* Simplify table dialog */
