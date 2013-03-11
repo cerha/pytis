@@ -153,6 +153,10 @@ class ApplicationConfigManager(UserSetttingsManager):
         db_options = dict(self.load())
         inserts = []
         updates = []
+        deletes = set(db_options.keys()) - set(dict(config).keys())
+        for option in deletes:
+            condition = self._condition(option=option)
+            self._data.delete_many(condition, transaction=transaction)
         for option, value in config:
             if option in db_options.keys():
                 if value != db_options[option]:
