@@ -198,12 +198,15 @@ pytis.HtmlField.plugin = function(editor) {
 
     /* Remove all but whitelisted tags on paste */
     editor.on('paste', function(evt) {
-        var whitelist = ['div', 'span', 'strike', 'li', 'dt', 'dd',
-                         'p', 'br', 'blockquote', 'strong', 'em', 'u',
-                         'sub', 'sup', 'h1', 'h2', 'h3', 'h4',
-                         'h5', 'h6', 'h7', 'h8', 'h9', 'pre',
-                         'ul', 'ol', 'dl', 'a', 'table', 'tr', 'td',
-                         'th', 'hr', 'math', 'img'];
+        var whitelist = ['div', 'span', 'strike', 'li', 'dt', 'dd', 'p', 'br', 'blockquote', 'strong', 'em', 'u',
+                         'sub', 'sup', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'pre',
+                         'ul', 'ol', 'dl', 'a', 'table', 'tr', 'td', 'th', 'hr', 'img', 'math', 'maction',
+                         'maligngroup', 'malignmark', 'menclose', 'merror', 'mfenced', 'mfrac', 'mglyph', 'mi',
+                         'mlabeledtr', 'mlongdiv', 'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom',
+                         'mroot', 'mrow', 'ms', 'mscarries', 'mscarry', 'msgroup', 'msline', 'mspace', 'msqrt',
+                         'msrow', 'mstack', 'mstyle', 'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr',
+                         'munder', 'munderover', 'semantics', 'annotation'];
+
         var r_list = whitelist[0];
         for (var i=1; i<whitelist.length; i++){
             r_list += "|" + whitelist[i];
