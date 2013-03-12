@@ -703,6 +703,7 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
     objects = []
     init_functions = {}
     init_function_list = []
+    init_functions_called = {}
 
     def __init__(cls, clsname, bases, clsdict):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
@@ -732,6 +733,13 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
     def clear(cls):
         _PytisSchematicMetaclass.init_functions = {}
         _PytisSchematicMetaclass.init_function_list = []
+        _PytisSchematicMetaclass.init_functions_called = {}
+
+    @classmethod
+    def call_init_function(cls, func):
+        if func not in _PytisSchematicMetaclass.init_functions_called:
+            func()
+            _PytisSchematicMetaclass.init_functions_called[func] = True
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
@@ -753,7 +761,7 @@ def object_by_name(name, allow_external=True):
                 raise
         else:
             del _PytisSchematicMetaclass.init_functions[basename]
-            init_function()
+            _PytisSchematicMetaclass.call_init_function(init_function)
             try:
                 o = _metadata.tables[name]
             except KeyError:
@@ -2285,7 +2293,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
                 if names_only:
                     output_name(o)
                 else:
-                    f()
+                    _PytisSchematicMetaclass.call_init_function(f)
         if names_only:
             return
     # Process all available objects
