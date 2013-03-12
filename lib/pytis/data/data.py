@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -749,14 +749,13 @@ class Data(object_2_5):
         return None, False
 
     def update_many(self, condition, row, transaction=None):
-        """Nahraď řádky identifikované 'condition' daty 'row'.
+        """Update rows given by 'condition' by data of given 'row'.
 
-        Argumenty:
+        Arguments:
         
-          key -- instance nebo seznam instancí třídy 'types._Value', musí
-            odpovídat všem sloupcům klíče tabulky; určuje řádek, který má být
-            smazán
-          row -- instance třídy 'Row'
+          condition -- condition which limits the rows to be updated;
+            'Operator' instance
+          row -- 'Row' instance
           transaction -- transaction object encapsulating the database
             operation environment or 'None' (meaning default environment)
 
