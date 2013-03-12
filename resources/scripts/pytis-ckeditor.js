@@ -24,7 +24,7 @@ pytis.HtmlField.base_uri = pytis.HtmlField.scripts[pytis.HtmlField.scripts.lengt
 
 pytis.HtmlField.plugin = function(editor) {
     // Construct dialog and add toolbar button
-    var types = ['Image', 'Audio', 'Video', 'Resource', 'Exercise', 'MathML'];
+    var types = ['Image', 'Audio', 'Video', 'Resource', 'Exercise', 'MathML', 'IndexItem'];
     editor.addMenuGroup('PytisGroup');
     for (var i=0; i<types.length; i++){
         var type = types[i];
@@ -1492,3 +1492,86 @@ function ck_language_combo(editor, languages) {
         }
     }
 }
+
+pytis.HtmlField.indexitem_dialog = function(editor) {
+    /* CKEditor dialog for editing index items.
+     *
+     * Arguments:
+     *  editor ... the editor instance
+     *
+     * Return value:
+     *  Returns a dictionary description of the dialog for the CKEDITOR.dialog.add factory.
+     */
+
+    var dialog = {
+        minWidth: 450,
+        minHeight: 200,
+        title: pytis._("Index item"),
+        contents: [
+            {id: 'main',
+             label: pytis._("Index item"),
+             elements: [
+                 {type : 'vbox',
+                  children :
+                  [
+                      {type: 'select',
+                       id: 'index',
+                       label: pytis._('Index'),
+                       required: true,
+                       validate : CKEDITOR.dialog.validate.notEmpty(pytis._("You must choose an index")),
+                       /* TODO: This needs to be editable and taken from CMS */
+                       items: [[pytis._("Term"), 'term'],
+                               [pytis._("Name"), 'name'],
+                               [pytis._("Place"), 'place'],
+                              ]
+                      },
+                      {type: 'text',
+                       id: 'item',
+                       label: pytis._('Item'),
+                       required: true,
+                       validate : CKEDITOR.dialog.validate.notEmpty(pytis._("Index item cannot be empty.")),
+                      },
+                  ]
+                 },
+             ],}],
+        onShow: function() {
+            // Check if editing an existing element or inserting a new one
+            var element = editor.getSelection().getStartElement();
+            if (element)
+                element = element.getAscendant('span', true);
+            if (!element || element.getName() != 'span' || element.data('cke-realelement') || !element.hasClass('lcg-indexitem')) {
+                var sel = editor.getSelection();
+                element = new CKEDITOR.dom.element('span');
+                element.addClass('lcg-indexitem');
+                element.setText(sel.getNative());
+                this.insertMode = true;
+            }else
+                this.insertMode = false;
+            this.element = element;
+            this.setupContent(this.element);
+        },
+        onOk: function(element) {
+            if (this.insertMode){
+                editor.insertElement(this.element);
+            }
+            this.commitContent(this.element);
+        },
+    };
+    ck_element(dialog, 'index').setup = function(element){
+        this.setValue(element.data('index'));
+    }
+    ck_element(dialog, 'index').commit = function(element){
+        element.data('index', this.getValue());
+    }
+    ck_element(dialog, 'item').setup = function(element){
+        if (element.data('item')){
+            this.setValue(element.data('item'));
+        }else{
+            this.setValue(element.getText());
+        }
+    }
+    ck_element(dialog, 'item').commit = function(element){
+        element.data('item', this.getValue());
+    }
+    return dialog;
+};

@@ -505,7 +505,7 @@ class HtmlField(MultilineField):
                                  )),
                 ('pytis',       ('PytisImage', 'PytisAudio', 'PytisVideo', 'PytisResource',
                                  'PytisExercise', 'PytisMathML')),
-                ('links',       ('Link', 'Unlink', 'Anchor')),
+                ('links',       ('Link', 'Unlink', 'Anchor', 'PytisIndexItem')),
                 ('insert',      ('Table','HorizontalRule', 'PageBreak', 'SpecialChar')), #'Smiley',
                 )
             config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
