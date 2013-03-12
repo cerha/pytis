@@ -1,0 +1,7 @@
+*.pyc
+*.pyo
+*.mo
+*~
+/TAGS
+/translations/*.pot
+/translations/*.d
