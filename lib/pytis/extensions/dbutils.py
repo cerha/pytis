@@ -44,7 +44,7 @@ def data_object(spec):
 data_create = data_object
 
 
-def dbselect(spec, condition=None, sort=(), transaction=None):
+def dbselect(spec, condition=None, sort=(), transaction=None, arguments={}):
     """Vrať řádky dané db tabulky jako sekvenci.
 
     Argumenty:
@@ -58,7 +58,8 @@ def dbselect(spec, condition=None, sort=(), transaction=None):
     
     """
     data = data_object(spec)
-    data.select(condition=condition, sort=sort, transaction=transaction)
+    data.select(condition=condition, sort=sort, transaction=transaction,
+                arguments=arguments)
     result = []
     while True:
         row = data.fetchone()
