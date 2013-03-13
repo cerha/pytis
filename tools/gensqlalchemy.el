@@ -33,7 +33,7 @@
   "gsql binary.")
 
 (defvar gensqlalchemy-specification-directory "dbdefs")
-(defvar gensqlalchemy-common-directories '("lib"))
+(defvar gensqlalchemy-common-directories '("lib" "db"))
 
 (define-minor-mode gensqlalchemy-mode
   "Toggle gensqlalchemy mode.
