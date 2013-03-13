@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -37,6 +37,8 @@ def parse_options():
                       help="limit output to functions")
     parser.add_option("--names", action="store_true", dest="names_only",
                       help="print only kinds and names of the database objects")
+    parser.add_option("--pretty", action="store", type="int", dest="pretty",
+                      help="more visually pleasant and possibly less correct output")
     options, args = parser.parse_args(args=sys.argv[1:])
     if len(args) != 1:
         parser.print_help()
@@ -47,7 +49,7 @@ def run():
     options, module = parse_options()
     pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp, no_deps=options.no_deps,
                                                views=options.views, functions=options.functions,
-                                               names_only=options.names_only)
+                                               names_only=options.names_only, pretty=options.pretty)
 
 if __name__ == '__main__':
     run()

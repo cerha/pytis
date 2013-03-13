@@ -107,7 +107,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def visit_view(self, view, create_ok=False):
         self._set_search_path(view.search_path())
-        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS ' % (view.schema, view.name,)
+        command = 'CREATE OR REPLACE VIEW "%s"."%s" AS\n' % (view.schema, view.name,)
         query = view.query()
         query.pytis_prefix = command
         self.connection.execute(query)
@@ -123,7 +123,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         def ctype(c):
             return c.type.compile(_engine.dialect)
         column_string = string.join(['%s %s' % (c.name, ctype(c),) for c in sqlalchemy_columns], ', ')
-        command = 'CREATE TYPE %s AS (%s)' % (type_name, column_string,)
+        command = 'CREATE TYPE %s AS\n(%s)' % (type_name, column_string,)
         self.connection.execute(command)
 
     def visit_function(self, function, create_ok=False, result_type=None):
@@ -176,7 +176,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             table = object_by_path(trigger.table.name, trigger.search_path())
             row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
             trigger_call = trigger(*trigger.arguments).value
-            command = (('CREATE TRIGGER "%s__%s" %s %s ON %s '
+            command = (('CREATE TRIGGER "%s__%s" %s %s ON %s\n'
                         'FOR EACH %s EXECUTE PROCEDURE %s') %
                        (trigger.name, trigger.position, trigger.position, events, table,
                         row_or_statement, trigger_call,))
@@ -255,7 +255,7 @@ def visit_rule(element, compiler, **kw):
         sql = 'NOTHING'
     table = element.table
     rule_name = '%s__%s_%s' % (table.name, element.action.lower(), element.kind.lower(),)
-    return ('CREATE OR REPLACE RULE "%s" AS ON %s TO "%s"."%s" DO %s %s' %
+    return ('CREATE OR REPLACE RULE "%s" AS ON %s TO "%s"."%s"\nDO %s %s' %
             (rule_name, element.action, table.schema, table.name, element.kind, sql,))
 
 class FullOuterJoin(sqlalchemy.sql.Join):
@@ -2208,7 +2208,10 @@ def _make_sql_command(sql, *multiparams, **params):
     return output
 def _dump_sql_command(sql, *multiparams, **params):
     output = _make_sql_command(sql, *multiparams, **params)
-    _gsql_output(output + ';')
+    output_string = output + ';'
+    if _pretty:
+        output_string += '\n'
+    _gsql_output(output_string)
 
 def include(file_name, globals_=None):
     """Include specification file into current specification.
@@ -2230,13 +2233,16 @@ def _gsql_output(output):
     _output.write(output)
     _output.write('\n')
 
-def _gsql_process(loader, regexp, no_deps, views, functions, names_only):
+_pretty = 0
+def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty):
     global _output
     _output = sys.stdout
     if _output.encoding is None:
         _output = codecs.getwriter('UTF-8')(_output)
     global _full_init
     _full_init = not (names_only or (no_deps and regexp))
+    global _pretty
+    _pretty = pretty
     try:
         _gsql_process_1(loader, regexp, no_deps, views, functions, names_only)
     finally:
@@ -2331,7 +2337,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
             _engine.execute(fdef)
     
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
-              names_only=False):
+              names_only=False, pretty=0):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -2356,10 +2362,10 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     """
     def loader(file_name=file_name):
         execfile(file_name, copy.copy(globals()))
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only)
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty)
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
-                names_only=False):
+                names_only=False, pretty=0):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -2384,7 +2390,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     """
     def loader(module_name=module_name):
         imp.load_module(module_name, *imp.find_module(module_name))
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only)
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty)
 
 def clear():
     "Clear all loaded specifications."

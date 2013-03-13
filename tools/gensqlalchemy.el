@@ -34,6 +34,7 @@
 
 (defvar gensqlalchemy-specification-directory "dbdefs")
 (defvar gensqlalchemy-common-directories '("lib" "db"))
+(defvar gensqlalchemy-pretty-output-level 1)
 
 (define-minor-mode gensqlalchemy-mode
   "Toggle gensqlalchemy mode.
@@ -125,7 +126,8 @@ If called with a prefix argument then show dependent objects as well."
 (defun gensqlalchemy-display (replace dependencies)
   (let* ((spec-name (gensqlalchemy-specification))
          (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) replace))
-         (args (append (unless dependencies
+         (args (append (list (format "--pretty=%d" gensqlalchemy-pretty-output-level))
+                       (unless dependencies
                          '("--no-deps"))
                        (list (format "--limit=^%s$" spec-name)
                              gensqlalchemy-specification-directory))))
