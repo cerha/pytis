@@ -17,6 +17,15 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;; To enable the mode automatically in database specifications, you may want to
+;; add the following to your Python mode hook function:
+;;
+;;   (when (and (buffer-file-name)
+;;              (string-match "/db/dbdefs/" (buffer-file-name)))
+;;     (gensqlalchemy-mode 1))
+
+
 (require 'cl)
 (require 'sql)
 
@@ -103,13 +112,13 @@ Currently the mode just defines some key bindings."
 
 (defun gensqlalchemy-eval (&optional dependencies)
   "Convert current specification to SQL and display the result.
-If called With a prefix argument then show also dependent objects."
+If called with a prefix argument then show dependent objects as well."
   (interactive "P")
   (gensqlalchemy-display t dependencies))
 
 (defun gensqlalchemy-add (&optional dependencies)
   "Convert current specification to SQL and add it to the displayed SQL.
-If called With a prefix argument then show also dependent objects."
+If called with a prefix argument then show dependent objects as well."
   (interactive "P")
   (gensqlalchemy-display nil dependencies))
 
