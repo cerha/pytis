@@ -182,11 +182,13 @@ The commands are wrapped in a transaction which is aborted at the end."
       (while (looking-at "^\\([-a-zA-Z]+\\) \\(.*\\)$")
         (push (cons (match-string 1) (match-string 2)) objects)
         (goto-char (line-beginning-position 2))))
-    (with-current-buffer (gensqlalchemy-buffer-name "sql")
+    (with-current-buffer (get-buffer-create (gensqlalchemy-buffer-name "sql"))
       (mapc #'(lambda (spec)
                 (destructuring-bind (kind . name) spec
                   (let ((command (cdr (assoc kind gensqlalchemy-psql-def-commands))))
                     (when command
+                      (unless sql-buffer
+                        (sql-set-sqli-buffer))
                       (setq output-buffer sql-buffer)
                       (sql-send-string (format "%s %s" command name))))))
             objects))
