@@ -27,14 +27,25 @@
 
 
 (require 'cl)
+(require 'python)
 (require 'sql)
 
+(defgroup gensqlalchemy nil
+  "Emacs support for gensqlalchemy editing."
+  :group 'python)
+
 (defcustom gensqlalchemy-gsql "gsql"
-  "gsql binary.")
+  "gsql binary."
+  :group 'gensqlalchemy
+  :type 'string)
+
+(defcustom gensqlalchemy-pretty-output-level 1
+  "Value for `--pretty' gsql command line option."
+  :group 'gensqlalchemy
+  :type 'integer)
 
 (defvar gensqlalchemy-specification-directory "dbdefs")
 (defvar gensqlalchemy-common-directories '("lib" "db"))
-(defvar gensqlalchemy-pretty-output-level 1)
 
 (define-minor-mode gensqlalchemy-mode
   "Toggle gensqlalchemy mode.

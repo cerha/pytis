@@ -2211,6 +2211,8 @@ def _dump_sql_command(sql, *multiparams, **params):
     output_string = output + ';'
     if _pretty:
         output_string += '\n'
+    if _pretty > 1:
+        output_string = re.sub(' (UNION|EXCEPT|INTERSECT)( ALL|) ', '\n\\1\\2\n', output_string)
     _gsql_output(output_string)
 
 def include(file_name, globals_=None):
