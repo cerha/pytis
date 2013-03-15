@@ -1394,7 +1394,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             vsx, vsy = g.GetViewStart()
             lines = lines * linesPer
             scrollTo = vsy - pxy / lines
-        g.Scroll(-1, scrollTo)    
+            g.Scroll(-1, scrollTo)
 
     def _show_position(self):
         row = self._current_cell()[0]
