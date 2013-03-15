@@ -89,6 +89,16 @@ OUTER JOIN vyhnout, je-li to rozumně možné.  RIGHT OUTER JOIN nelze použít
 vůbec, místo toho je nutné příslušný SELECT přeformulovat s pomocí LEFT OUTER
 JOIN.
 
+Pokud se v SQL výrazech, ať už jde o položky seznamu sloupců nebo podmínky,
+používají konstanty, je potřeba tyto důsledně obalovat funkcí
+sqlalchemy.literal_column, nejlépe i s uvedením příslušného typu v druhém
+argumentu.  Typickým příznakem nedodržení tohoto pravidla je výskyt elementů
+`%(param_*)' ve vygenerovaném SQL kódu.
+
+Je také třeba dávat pozor na to, aby SELECTy používané na místě tabulky ve FROM
+měly definované aliasy (pomocí volání metody `alias').  SQLAlchemy je samo
+nedoplní a PostgreSQL takový SELECT bez příslušného AS nepřijme.
+
 V převedených specifikacích se hojně používají pomocné funkce začínající
 písmenem `g'.  Ty ošetřují raw SQL kód z původních definic gensql.  V nových
 definicích se tyto funkce již používat nemají.  Příklady převodu těchto
