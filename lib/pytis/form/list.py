@@ -1858,9 +1858,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 return
             cond = self._current_condition()
             arguments = self._current_arguments()
-            distinct = self._data.distinct(cid, condition=cond, arguments=arguments)
-            if len(distinct) > 60:
-                message(_(u"Příliš mnoho položek pro autofilter."), beep_=True)
+            limit = 60
+            distinct = self._autofilter_values(cid, limit, condition=cond, arguments=arguments)
+            if len(distinct) > limit:
+                message(_(u"Příliš mnoho položek pro autofiltr."), beep_=True)
                 return
             items = [MItem(v.export(), command=ListForm.COMMAND_FILTER_BY_VALUE,
                            args=dict(column_id=cid, value=v))
@@ -1868,6 +1869,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         finally:
             busy_cursor(False)
         self._popup_menu(items, position=position)
+
+    def _autofilter_values(self, cid, limit, **kwargs):
+        return self._data.distinct(cid, **kwargs)
 
     def _can_autofilter(self, col=None, position=None):
         if col is None:
@@ -3487,6 +3491,22 @@ class AggregationForm(BrowseForm):
     
     def _can_aggregated_view(self, aggregated_view_id):
         return False
+        
+    def _autofilter_values(self, cid, limit, **kwargs):
+        # 'self._data.distinct()' doesn't work in aggregation forms, so we have
+        # to perform the distinct operation manually here.
+        seen = set()
+        distinct = []
+        def process(row):
+            if len(distinct) > limit:
+                return
+            v = row[cid]
+            value = v.value()
+            if value not in seen:
+                distinct.append(v)
+                seen.add(value)
+        self._data.select_map(process, **kwargs)
+        return distinct
 
     def _aggregation_column_id(self, column_id, op):
         return '_'+ column_id +'_'+ str(op)
