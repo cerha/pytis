@@ -1558,20 +1558,20 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
         },
     };
     ck_element(dialog, 'index').setup = function(element){
-        this.setValue(element.data('index'));
+        this.setValue(element.data('lcg-index'));
     }
     ck_element(dialog, 'index').commit = function(element){
-        element.data('index', this.getValue());
+        element.data('lcg-index', this.getValue());
     }
     ck_element(dialog, 'item').setup = function(element){
-        if (element.data('item')){
-            this.setValue(element.data('item'));
+        if (element.data('lcg-item')){
+            this.setValue(element.data('lcg-item'));
         }else{
             this.setValue(element.getText());
         }
     }
     ck_element(dialog, 'item').commit = function(element){
-        element.data('item', this.getValue());
+        element.data('lcg-item', this.getValue());
     }
     return dialog;
 };
