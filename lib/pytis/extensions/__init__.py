@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005-2012 Brailcom, o.p.s.
+# Copyright (C) 2005-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ from deftypes import _TreeOrder
 from spec import *
 from defs import *
 from dmp import dmp_add_member, dmp_add_action, dmp_change_rights, dmp_commit, dmp_import, dmp_ls, dmp_reset_rights, dmp_update_form, dmp_delete_menu, dmp_delete_fullname, dmp_delete_shortname, dmp_convert_system_rights, dmp_copy_rights, dmp_rename_specification, DMPConfiguration
+import dbdefs
 
 for file in (dbconfig, dbutils, misc, types, spec, defs):
     file.__dict__.update(globals())
