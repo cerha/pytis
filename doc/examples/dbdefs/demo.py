@@ -79,12 +79,14 @@ class Bar(sql.SQLTable):
 
 class BarTrigger(sql.SQLPlFunction, sql.SQLTrigger):
     name = 'bar_trigger'
+    schemas = ((Private, 'public',),)
     table = Bar
     events = ('insert',)
     def body(self):
         return """
 begin
   insert into foo (n, foo) values (new.foo_id, new.description);
+  return null;
 end;
 """
 
@@ -205,7 +207,7 @@ class EditableView(sql.SQLView):
     name = 'editable_view'
     schemas = ((Private, 'public',),)
     update_order = (Foo, Bar,)
-    special_update_columns = ((Foo, 'n', 'length(new.description)',),)
+    special_update_columns = ((Foo, 'n', 'length(new.d1)',),)
     @classmethod
     def query(class_):
         return sqlalchemy.select([sql.c.Foo.id, sql.c.Foo.description.label('d1'), sql.c.Foo.n,
@@ -275,6 +277,8 @@ class SelectFunc(sql.SQLFunction):
 
     def body(self):
         return sqlalchemy.select([sql.c.Foo.n + sqlalchemy.literal_column('$1')], from_obj=[sql.t.Foo])
+
+    depends_on = (Foo,)
 
 class PyFunc(sql.SQLPyFunction):
     name = 'times'

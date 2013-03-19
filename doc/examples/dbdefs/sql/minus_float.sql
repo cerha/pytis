@@ -1,1 +1,1 @@
-select round($1 - $2)
+select round($1 - $2)::int
