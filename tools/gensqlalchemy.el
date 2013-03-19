@@ -216,6 +216,17 @@ The commands are wrapped in a transaction which is aborted at the end."
                (match-string 1))))
     (find-file-other-window (concat "sql/" (match-string 1) ".sql"))))
 
+(defun gensqlalchemy-show-error ()
+  "Try to show specification error from the last traceback in current buffer."
+  (interactive)
+  (let ((regexp "^  File \"\\(.*/dbdefs/.*\\.py\\)\", line \\([0-9]+\\), in "))
+    (when (or (re-search-backward regexp nil t)
+              (re-search-forward regexp nil t))
+      (let ((file (match-string-no-properties 1))
+            (line (match-string-no-properties 2)))
+        (find-file-other-window file)
+        (goto-line (car (read-from-string line)))))))
+
 ;;; Announce
 
 (provide 'gensqlalchemy)
