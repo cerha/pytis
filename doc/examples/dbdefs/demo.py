@@ -73,9 +73,12 @@ class Bar(sql.SQLTable):
     def on_delete(self):
         return ()
     def on_insert_also(self):
-        return (sql.object_by_class(Foo2).insert().values(n=sqlalchemy.literal_column('new.id'),
-                                                          foo=sqlalchemy.literal_column('new.description')),
-                "select 42",)
+        Foo2 = sql.t.Foo2
+        return (Foo2.insert().values(n=sqlalchemy.literal_column('new.id'),
+                                     foo=sqlalchemy.literal_column('new.description')),
+                sql.InsertFromSelect(Foo2, sqlalchemy.select([sqlalchemy.literal_column('1').label('n')])),
+                "select 42",
+                )
 
 class BarTrigger(sql.SQLPlFunction, sql.SQLTrigger):
     name = 'bar_trigger'

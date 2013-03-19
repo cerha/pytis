@@ -272,6 +272,21 @@ def visit_full_outer_join(join, compiler, asfrom=False, **kwargs):
         join.onclause._compiler_dispatch(compiler, **kwargs)
     )
 
+# Based on an example from SQLAlchemy manual:
+class InsertFromSelect(sqlalchemy.sql.expression.Executable,
+                       sqlalchemy.sql.expression.ClauseElement):
+    def __init__(self, table, select):
+        self.table = table
+        self.select = select
+@compiles(InsertFromSelect)
+def visit_insert_from_select(element, compiler, **kwargs):
+    column_list = ['"%s"' % (c.name,) for c in element.select.c]
+    return "INSERT INTO %s (%s) (%s)" % (
+        compiler.process(element.table, asfrom=True),
+        string.join(column_list, ', '),
+        compiler.process(element.select)
+    )
+
 class _SQLExternal(sqlalchemy.sql.expression.FromClause):
 
     def __init__(self, name):
