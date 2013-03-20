@@ -95,7 +95,18 @@ def itype(expr):
 
     """
     return sqlalchemy.cast(expr, sqlalchemy.Integer())
-    
+
+def ftype(expr, precision, scale, asdecimal=False):
+    """Return SQLAlchemy expression casted to numeric.
+
+    Arguments:
+
+      expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
+
+    """
+    return sqlalchemy.cast(expr, sqlalchemy.Numeric(precision=precision, scale=scale,
+                                                    asdecimal=asdecimal))
+
 def ittype(expr):
     """Return SQLAlchemy expression casted to interval.
 
