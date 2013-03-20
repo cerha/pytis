@@ -297,6 +297,8 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
         def __init__(self, name):
             self.name = name
         def __getattr__(self, name, *args, **kwargs):
+            if name.startswith('_'):
+                raise AttributeError(name)
             column = '%s.%s' % (self.name, name,)
             return sqlalchemy.literal_column(column)
 
@@ -920,7 +922,11 @@ class ReferenceLookup(object):
             specification = object_by_specification_name(self._specification, search_path)
             if specification is None:
                 return None
-            return specification.c[self._column]
+            if isinstance(specification, _SQLExternal):
+                c = specification.c
+            else:
+                c = specification.c[self._column]
+            return c
     class ColumnLookup(object):
         def __init__(self, specification):
             self._specification = specification
