@@ -1335,9 +1335,11 @@ class BrowseForm(LayoutForm):
     def _style(self, style):
         def color(c):
             if type(c) is tuple:
-                return '#%02x%02x%02x' % c
+                return '#%02x%02x%02x !important' % c
+            elif c:
+                return c + ' !important'
             else:
-                return c
+                return None
         styles = [name +': '+ f(attr()) for attr, name, f in (
             (style.foreground, 'color',            color),
             (style.background, 'background-color', color),
