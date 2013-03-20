@@ -753,8 +753,8 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
     @classmethod
     def call_init_function(cls, func):
         if func not in _PytisSchematicMetaclass.init_functions_called:
-            func()
             _PytisSchematicMetaclass.init_functions_called[func] = True
+            func()
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
