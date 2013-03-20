@@ -2305,8 +2305,13 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
         kind = obj.pytis_kind()
         name = obj.pytis_name()
         if isinstance(obj, SQLSchematicObject):
-            name = '%s.%s' % (obj.schema, name,)
-        _gsql_output('%s %s' % (kind, name,))
+            schematic_names = ['%s.%s' % (obj.schema, name,)]
+        elif issubclass(obj, SQLSchematicObject):
+            schematic_names = ['%s.%s' % (s[0], name,) for s in _expand_schemas(obj.schemas)]
+        else:
+            schematic_names = [name]
+        for n in schematic_names:
+            _gsql_output('%s %s' % (kind, n,))
     # Load the objects
     loader()
     # Preprocessing in case of speed optimized limited output
