@@ -2370,6 +2370,7 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
       functions -- iff true, output just functions; boolean
       names_only -- iff true, output only kinds and names of the database
         objects; boolean
+      pretty -- pretty output level; non-negative integer
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -2398,6 +2399,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
       functions -- iff true, output just functions; boolean
       names_only -- iff true, output only kinds and names of the database
         objects; boolean
+      pretty -- pretty output level; non-negative integer
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
