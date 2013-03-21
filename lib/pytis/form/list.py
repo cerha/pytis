@@ -2025,8 +2025,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         filename = None
         remote = False
         if pytis.windows.windows_available():
-            nx_ip  = pytis.windows.nx_ip()
-            log(EVENT, 'Windows service on %s available' % nx_ip)
+            client_ip  = pytis.windows.client_ip()
+            log(EVENT, 'Windows service on %s available' % client_ip)
             try:
                 filename = pytis.windows.make_temporary_file(suffix='.'+fileformat.lower())
             except:

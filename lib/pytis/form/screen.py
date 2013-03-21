@@ -153,7 +153,7 @@ def paste_from_clipboard(ctrl):
     
     """
     assert isinstance(ctrl, wx.TextCtrl)
-    if pytis.windows.windows_available():
+    if pytis.windows.windows_available() and not pytis.windows.x2go():
         nx_ip  = pytis.windows.nx_ip()
         log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
         text = pytis.windows.get_clipboard_text()
@@ -2299,8 +2299,8 @@ def open_data_as_file(data, suffix):
         except:
             pass
     if remote_file:
-        nxip = pytis.windows.nx_ip()
-        log(OPERATIONAL, "Launching file on Windows at %s:" % nxip, remote_file.name())
+        client_ip = pytis.windows.client_ip()
+        log(OPERATIONAL, "Launching file on Windows at %s:" % client_ip, remote_file.name())
         try:
             remote_file.write(data)
         finally:

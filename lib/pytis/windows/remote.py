@@ -29,6 +29,7 @@ _ipv4_regexp = r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
 _ipv6_regexp = r'.*:.*:.*'
 _ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
 _nx_ip = UNDEFINED
+_x2go_ip = UNDEFINED
 def nx_ip():
     """Return IP address of the nx client, as a string.
 
@@ -55,9 +56,39 @@ def nx_ip():
                     break
     return _nx_ip
 
+def x2go_ip():
+    """Return IP address of the x2go client, as a string.
+
+    If pytis is not run from an x2go client, return 'None'.
+    
+    """
+    global _x2go_ip
+    if _x2go_ip is not UNDEFINED:
+        return _x2go_ip
+    _x2go_agent_pid = os.getenv('X2GO_AGENT_PID')
+    if _x2go_agent_pid is not None:
+        p = subprocess.Popen('x2golistsessions', stdout=subprocess.PIPE, shell=True)
+        output, __ = p.communicate()
+        for line in output.splitlines():
+            items = line.split('|')
+            if items[0] == _x2go_agent_pid:
+                maybe_ip = items[7]
+                if _ip_matcher.match(maybe_ip):
+                    _x2go_ip = maybe_ip
+                    break
+    return _x2go_ip
+
+def client_ip():
+    """Return IP address of the x2go client or nx client, as a string.
+
+    If pytis is not run from an x2go or nx client, return 'None'.
+    
+    """
+    return x2go_ip() or nx_ip()
+
 def windows_available():
     """Return true, iff Windows client is available."""
-    if not config.rpc_communication_enabled or nx_ip() is None:
+    if not config.rpc_communication_enabled or client_ip() is None:
         log(DEBUG, "RPC unavailable")
         return False
     try:
@@ -69,7 +100,7 @@ def windows_available():
 _connection = None
 def _request(request, *args, **kwargs):
     global _connection
-    target_ip = nx_ip()
+    target_ip = client_ip()
     user_name = pwd.getpwuid(os.getuid())[0]
     try:
         _connection.root.request

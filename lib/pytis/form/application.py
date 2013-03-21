@@ -749,8 +749,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Beware, the `event' here is not a wx event, but a GTK event!
         if pytis.windows.windows_available():
             text = clipboard.wait_for_text()
-            nx_ip  = pytis.windows.nx_ip()
-            log(EVENT, 'Copy text to windows clipboard on %s' % (nx_ip,))
+            client_ip  = pytis.windows.client_ip()
+            log(EVENT, 'Copy text to windows clipboard on %s' % (client_ip,))
             if isinstance(text, str):
                 text = unicode(text)
             pytis.windows.set_clipboard_text(text)
