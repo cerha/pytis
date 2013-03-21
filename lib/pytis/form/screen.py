@@ -153,7 +153,7 @@ def paste_from_clipboard(ctrl):
     
     """
     assert isinstance(ctrl, wx.TextCtrl)
-    if pytis.windows.windows_available() and not pytis.windows.x2go():
+    if pytis.windows.windows_available() and not pytis.windows.x2go_ip():
         nx_ip  = pytis.windows.nx_ip()
         log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
         text = pytis.windows.get_clipboard_text()

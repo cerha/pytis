@@ -29,7 +29,7 @@ _ipv4_regexp = r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
 _ipv6_regexp = r'.*:.*:.*'
 _ip_matcher = re.compile('%s|%s' % (_ipv4_regexp, _ipv6_regexp,))
 _nx_ip = UNDEFINED
-_x2go_ip = UNDEFINED
+_x2go_ip = None
 def nx_ip():
     """Return IP address of the nx client, as a string.
 
@@ -63,7 +63,7 @@ def x2go_ip():
     
     """
     global _x2go_ip
-    if _x2go_ip is not UNDEFINED:
+    if _x2go_ip is not None:
         return _x2go_ip
     _x2go_agent_pid = os.getenv('X2GO_AGENT_PID')
     if _x2go_agent_pid is not None:
