@@ -60,15 +60,15 @@
 (define-minor-mode gensqlalchemy-mode
   "Toggle gensqlalchemy mode.
 Currently the mode just defines some key bindings."
-  nil " GQ" '(("\C-c\C-qe" . gensqlalchemy-eval)
-              ("\C-c\C-q\C-q" . gensqlalchemy-eval)
-              ("\C-c\C-qa" . gensqlalchemy-add)
-              ("\C-c\C-q=" . gensqlalchemy-compare)
-              ("\C-c\C-qd" . gensqlalchemy-show-definition)
-              ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
-              ("\C-c\C-qs" . gensqlalchemy-show-sql-buffer)
-              ("\C-c\C-qt" . gensqlalchemy-test)
-              ))
+  nil " gsql" '(("\C-c\C-qe" . gensqlalchemy-eval)
+                ("\C-c\C-q\C-q" . gensqlalchemy-eval)
+                ("\C-c\C-qa" . gensqlalchemy-add)
+                ("\C-c\C-qd" . gensqlalchemy-show-definition)
+                ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
+                ("\C-c\C-qs" . gensqlalchemy-show-sql-buffer)
+                ("\C-c\C-qt" . gensqlalchemy-test)
+                ("\C-c\C-q=" . gensqlalchemy-compare)
+                ))
 
 (defun gensqlalchemy-sql-mode ()
   (unless (eq major-mode 'sql-mode)
