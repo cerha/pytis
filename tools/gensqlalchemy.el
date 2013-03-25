@@ -253,6 +253,7 @@ If called with a prefix argument then show dependent objects as well."
       (when send-buffer
         (with-gensqlalchemy-sql-buffer send-buffer
           (gensqlalchemy-send-buffer)))
+      (sql-send-string "set search_path to public;")
       (with-gensqlalchemy-log-file file-name
         (mapc #'(lambda (spec)
                   (destructuring-bind (kind name) spec
