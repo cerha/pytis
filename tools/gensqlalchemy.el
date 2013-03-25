@@ -264,11 +264,15 @@ If called with a prefix argument then show dependent objects as well."
               objects)))
     output-buffer))
         
-(defun gensqlalchemy-show-definition ()
-  "Show database definition of the current specification."
-  (interactive)
-  (let ((file (gensqlalchemy-temp-file "def")))
-    (gensqlalchemy-wait-for-outputs (gensqlalchemy-definition file))
+(defun gensqlalchemy-show-definition (&optional arg)
+  "Show database definition of the current specification.
+With an optional prefix argument show new definition of the specification."
+  (interactive "P")
+  (let ((file (gensqlalchemy-temp-file "def"))
+        (buffer (and arg (save-window-excursion
+                           (gensqlalchemy-display t nil gensqlalchemy-temp-schema))))
+        (schema (and arg gensqlalchemy-temp-schema)))
+    (gensqlalchemy-wait-for-outputs (gensqlalchemy-definition file buffer schema))
     (if (gensqlalchemy-empty-file file)
         (message "Definition not found")
       (let ((buffer (get-buffer-create (gensqlalchemy-buffer-name "def"))))
@@ -286,7 +290,7 @@ The commands are wrapped in a transaction which is aborted at the end."
 (defun gensqlalchemy-compare (&optional arg)
   "Compare current specification with the definition in the database.
 With an optional prefix argument show the differences in Ediff."
-  (interactive "*P")
+  (interactive "P")
   (let ((buffer (save-excursion (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
         (old-def-file (gensqlalchemy-temp-file "olddef"))
         (new-def-file (gensqlalchemy-temp-file "newdef")))
