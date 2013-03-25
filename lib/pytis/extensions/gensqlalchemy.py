@@ -566,7 +566,10 @@ def _is_specification_name(name):
             not name.startswith('_') and
             not name.startswith('Base_'))
 
-def _expand_schemas(schemas):
+_enforced_schema = None
+_enforced_schema_objects = None
+def _expand_schemas(cls):
+    schemas = cls.schemas
     if isinstance(schemas, SQLFlexibleValue):
         schemas = schemas.value()
     expanded_schemas = []
@@ -585,7 +588,11 @@ def _expand_schemas(schemas):
             else:
                 raise SQLException("Invalid schema reference", s)
             expanded_path.append(s)
-        expanded_schemas.append(expanded_path)
+        if _enforced_schema and cls in _enforced_schema_objects:
+            expanded_schemas.append([_enforced_schema] + expanded_path)
+            break
+        else:
+            expanded_schemas.append(expanded_path)
     return expanded_schemas
 
 class SQLFlexibleValue(object):
@@ -725,10 +732,12 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
     def __init__(cls, clsname, bases, clsdict):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
         if cls._is_specification(clsname):
-            schemas = _expand_schemas(cls.schemas)
+            schemas = _expand_schemas(cls)
             for search_path in schemas:
                 _set_current_search_path(search_path)
-                def init_function(cls=cls, search_path=search_path):
+                def init_function(cls=cls, search_path=search_path, may_alter_schema=False):
+                    if may_alter_schema and _enforced_schema:
+                        search_path = [_enforced_schema] + search_path
                     if issubclass(cls, SQLSequence):
                         # hack
                         o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
@@ -753,10 +762,10 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
         _PytisSchematicMetaclass.init_functions_called = {}
 
     @classmethod
-    def call_init_function(cls, func):
+    def call_init_function(cls, func, **kwargs):
         if func not in _PytisSchematicMetaclass.init_functions_called:
             _PytisSchematicMetaclass.init_functions_called[func] = True
-            func()
+            func(**kwargs)
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
@@ -1027,7 +1036,7 @@ class SQLObject(object):
                 assert issubclass(o, SQLObject), ("Invalid dependency", o,)
                 # General dependency must include all schema instances
                 name = o.pytis_name()
-                for search_path in _expand_schemas(o.schemas):
+                for search_path in _expand_schemas(o):
                     schema = search_path[0]
                     o = object_by_name('%s.%s' % (schema, name,))
                     self.add_is_dependent_on(o)
@@ -1507,7 +1516,7 @@ class SQLTable(_SQLTabular):
 
     def _table_name(self, table):
         name = table.name
-        schemas = _expand_schemas(table.schemas)
+        schemas = _expand_schemas(table)
         table_schemas = [s[0] for s in schemas]
         for schema in self.search_path():
             if schema in table_schemas:
@@ -2257,7 +2266,7 @@ def _gsql_output(output):
     _output.write('\n')
 
 _pretty = 0
-def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty):
+def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema):
     global _output
     _output = sys.stdout
     if _output.encoding is None:
@@ -2266,6 +2275,9 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty)
     _full_init = not (names_only or (no_deps and regexp))
     global _pretty
     _pretty = pretty
+    global _enforced_schema, _enforced_schema_objects
+    _enforced_schema = schema
+    _enforced_schema_objects = set()
     try:
         _gsql_process_1(loader, regexp, no_deps, views, functions, names_only)
     finally:
@@ -2310,16 +2322,23 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
     def output_name(obj):
         kind = obj.pytis_kind()
         name = obj.pytis_name()
-        if isinstance(obj, SQLSchematicObject):
+        if _enforced_schema:
+            schematic_names = ['%s.%s' % (_enforced_schema, name,)]
+        elif isinstance(obj, SQLSchematicObject):
             schematic_names = ['%s.%s' % (obj.schema, name,)]
         elif issubclass(obj, SQLSchematicObject):
-            schematic_names = ['%s.%s' % (s[0], name,) for s in _expand_schemas(obj.schemas)]
+            schematic_names = ['%s.%s' % (s[0], name,) for s in _expand_schemas(obj)]
         else:
             schematic_names = [name]
         for n in schematic_names:
             _gsql_output('%s %s' % (kind, n,))
     # Load the objects
     loader()
+    # Mark objects with changed schemas
+    if _enforced_schema and not names_only:
+        for o, f in _PytisSchematicMetaclass.init_function_list:
+            if matching(o):
+                _enforced_schema_objects.add(o)
     # Preprocessing in case of speed optimized limited output
     if not _full_init:
         for o, f in _PytisSchematicMetaclass.init_function_list:
@@ -2327,7 +2346,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
                 if names_only:
                     output_name(o)
                 else:
-                    _PytisSchematicMetaclass.call_init_function(f)
+                    _PytisSchematicMetaclass.call_init_function(f, may_alter_schema=True)
         if names_only:
             return
     # Process all available objects
@@ -2365,7 +2384,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
             _engine.execute(fdef)
     
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
-              names_only=False, pretty=0):
+              names_only=False, pretty=0, schema=None):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -2382,6 +2401,7 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
       names_only -- iff true, output only kinds and names of the database
         objects; boolean
       pretty -- pretty output level; non-negative integer
+      schema -- if not 'None' then create all objects in that schema; string
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -2391,10 +2411,10 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     """
     def loader(file_name=file_name):
         execfile(file_name, copy.copy(globals()))
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty)
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema)
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
-                names_only=False, pretty=0):
+                names_only=False, pretty=0, schema=None):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -2411,6 +2431,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
       names_only -- iff true, output only kinds and names of the database
         objects; boolean
       pretty -- pretty output level; non-negative integer
+      schema -- if not 'None' then create all objects in that schema; string
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -2420,7 +2441,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     """
     def loader(module_name=module_name):
         imp.load_module(module_name, *imp.find_module(module_name))
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty)
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema)
 
 def clear():
     "Clear all loaded specifications."

@@ -44,6 +44,16 @@
   :group 'gensqlalchemy
   :type 'integer)
 
+(defcustom gensqlalchemy-temp-schema (format "%s_temp" user-login-name)
+  "Schema to use for SQL code testing."
+  :group 'gensqlalchemy
+  :type 'string)
+
+(defcustom gensqlalchemy-temp-directory (concat temporary-file-directory "gensqlalchemy-el/")
+  "Directory to use for storing miscellaneous temporary files."
+  :group 'gensqlalchemy
+  :type 'directory)
+
 (defvar gensqlalchemy-specification-directory "dbdefs")
 (defvar gensqlalchemy-common-directories '("lib" "db"))
 
@@ -53,7 +63,8 @@ Currently the mode just defines some key bindings."
   nil " GQ" '(("\C-c\C-qe" . gensqlalchemy-eval)
               ("\C-c\C-q\C-q" . gensqlalchemy-eval)
               ("\C-c\C-qa" . gensqlalchemy-add)
-              ("\C-c\C-qd" . gensqlalchemy-definition)
+              ("\C-c\C-q=" . gensqlalchemy-compare)
+              ("\C-c\C-qd" . gensqlalchemy-show-definition)
               ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
               ("\C-c\C-qs" . gensqlalchemy-show-sql-buffer)
               ("\C-c\C-qt" . gensqlalchemy-test)
@@ -108,6 +119,12 @@ Currently the mode just defines some key bindings."
 (defun gensqlalchemy-specification ()
   (with-gensqlachemy-specification
     specification-name))
+
+(defun gensqlalchemy-temp-file (file-name)
+  (concat gensqlalchemy-temp-directory file-name))
+
+(defun gensqlalchemy-empty-file (file-name)
+  (= (or (nth 7 (file-attributes file-name)) 0) 0))
   
 (defun gensqlalchemy-prepare-output-buffer (base-buffer erase)
   (let ((directory (gensqlalchemy-specification-directory base-buffer t)))
@@ -126,20 +143,22 @@ Currently the mode just defines some key bindings."
   "Convert current specification to SQL and display the result.
 If called with a prefix argument then show dependent objects as well."
   (interactive "P")
-  (gensqlalchemy-display t dependencies))
+  (gensqlalchemy-display t dependencies nil))
 
 (defun gensqlalchemy-add (&optional dependencies)
   "Convert current specification to SQL and add it to the displayed SQL.
 If called with a prefix argument then show dependent objects as well."
   (interactive "P")
-  (gensqlalchemy-display nil dependencies))
+  (gensqlalchemy-display nil dependencies nil))
 
-(defun gensqlalchemy-display (replace dependencies)
+(defun gensqlalchemy-display (replace dependencies schema)
   (let* ((spec-name (gensqlalchemy-specification))
          (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) replace))
          (args (append (list (format "--pretty=%d" gensqlalchemy-pretty-output-level))
                        (unless dependencies
                          '("--no-deps"))
+                       (when schema
+                         (list (concat "--schema=" schema)))
                        (list (format "--limit=^%s$" spec-name)
                              gensqlalchemy-specification-directory))))
     (save-some-buffers)
@@ -148,7 +167,10 @@ If called with a prefix argument then show dependent objects as well."
         (unless (string= "" (buffer-substring-no-properties (point-min) (point-max)))
           (goto-char (point-max))
           (insert "\n"))))
-    (apply 'gensqlalchemy-run-gsql output-buffer args)))
+    (when schema
+      (insert (format "create schema %s;\n" gensqlalchemy-temp-schema)))
+    (apply 'gensqlalchemy-run-gsql output-buffer args)
+    output-buffer))
   
 (defun gensqlalchemy-show-sql-buffer ()
   "Show the buffer with converted SQL output."
@@ -157,18 +179,44 @@ If called with a prefix argument then show dependent objects as well."
     (when buffer
       (pop-to-buffer buffer))))
 
-(defun gensqlalchemy-test ()
-  "Try to run SQL commands from SQL output buffer.
-The commands are wrapped in a transaction which is aborted at the end."
-  (interactive)
-  (let ((buffer (if (eq major-mode 'sql)
-                    (current-buffer)
-                  (get-buffer (gensqlalchemy-buffer-name "sql")))))
-    (when buffer
-      (with-current-buffer buffer
-        (sql-send-string "begin;")
-        (sql-send-buffer)
-        (sql-send-string "rollback;")))))
+(defmacro with-gensqlalchemy-sql-buffer (buffer &rest body)
+  (let (($buffer buffer))
+    `(with-current-buffer ,$buffer
+       (unless sql-buffer
+         (sql-set-sqli-buffer))
+       ,@body)))
+
+(defmacro with-gensqlalchemy-rollback (&rest body)
+  (let (($buffer (gensym)))
+    `(let ((,$buffer (if (eq major-mode 'sql-mode)
+                         (current-buffer)
+                       (get-buffer (gensqlalchemy-buffer-name "sql")))))
+       (when ,$buffer
+         (with-gensqlalchemy-sql-buffer ,$buffer
+           (sql-send-string "begin;")
+           (unwind-protect (progn ,@body)
+             (with-current-buffer ,$buffer
+               (sql-send-string "rollback;"))))))))
+
+(defmacro with-gensqlalchemy-log-file (file-name &rest body)
+  `(progn
+     (unless (file-exists-p gensqlalchemy-temp-directory)
+       (make-directory gensqlalchemy-temp-directory))
+     (sql-send-string (concat "\\o " ,file-name))
+     ,@body
+     (sql-send-string "\\o")))
+
+(defun gensqlalchemy-wait-for-outputs (sql-buffer)
+  (let ((terminator "gensqlalchemy-el-terminator")
+        (n 100))
+    (with-current-buffer sql-buffer
+      (let ((point (point-max)))
+        (goto-char point)
+        (sql-send-string (format "select '%s';" terminator))
+        (while (and (> n 0) (not (re-search-forward terminator nil t)))
+          (decf n)
+          (sit-for 0.1)
+          (goto-char point))))))
 
 (defvar gensqlalchemy-psql-def-commands
   '(("FUNCTION" . "\\df+")
@@ -177,35 +225,69 @@ The commands are wrapped in a transaction which is aborted at the end."
     ("TABLE" . "\\d+")
     ("TYPE" . "\\dT+")
     ("VIEW" . "\\d+")))
-(defun gensqlalchemy-definition ()
-  "Show database definition of the current specification."
-  (interactive)
+(defun gensqlalchemy-definition (file-name &optional send-buffer schema)
   (let ((objects '())
         (spec-name (gensqlalchemy-specification))
         (directory (gensqlalchemy-specification-directory nil t))
         (output-buffer nil))
     (with-temp-buffer
       (setq default-directory directory)
-      (gensqlalchemy-run-gsql (current-buffer)
-                              "--names" "--no-deps" (format "--limit=^%s$" spec-name)
-                              gensqlalchemy-specification-directory)
+      (apply 'gensqlalchemy-run-gsql
+             (current-buffer)
+             (append (list "--names" "--no-deps" (format "--limit=^%s$" spec-name))
+                     (when schema
+                       (list (concat "--schema=" schema)))
+                     (list gensqlalchemy-specification-directory)))
       (goto-char (point-min))
       (while (looking-at "^\\([-a-zA-Z]+\\) \\(.*\\)$")
-        (push (cons (match-string 1) (match-string 2)) objects)
+        (push (list (match-string 1) (match-string 2)) objects)
         (goto-char (line-beginning-position 2))))
-    (with-current-buffer (get-buffer-create (gensqlalchemy-buffer-name "sql"))
-      (mapc #'(lambda (spec)
-                (destructuring-bind (kind . name) spec
-                  (let ((command (cdr (assoc kind gensqlalchemy-psql-def-commands))))
-                    (when command
-                      (unless sql-buffer
-                        (sql-set-sqli-buffer))
-                      (setq output-buffer sql-buffer)
-                      (sql-send-string (format "%s %s" command name))))))
-            objects))
-    (if output-buffer
-        (pop-to-buffer output-buffer)
-      (message "Definition not found"))))
+    (with-gensqlalchemy-rollback
+      (when send-buffer
+        (with-gensqlalchemy-sql-buffer send-buffer
+          (sql-send-buffer)))
+      (with-gensqlalchemy-log-file file-name
+        (mapc #'(lambda (spec)
+                  (destructuring-bind (kind name) spec
+                    (let ((command (cdr (assoc kind gensqlalchemy-psql-def-commands))))
+                      (when command
+                        (setq output-buffer sql-buffer)
+                        (sql-send-string (format "%s %s" command name))))))
+              objects)))
+    output-buffer))
+        
+(defun gensqlalchemy-show-definition ()
+  "Show database definition of the current specification."
+  (interactive)
+  (let ((file (gensqlalchemy-temp-file "def")))
+    (gensqlalchemy-wait-for-outputs (gensqlalchemy-definition file))
+    (if (gensqlalchemy-empty-file file)
+        (message "Definition not found")
+      (let ((buffer (get-buffer-create (gensqlalchemy-buffer-name "def"))))
+        (pop-to-buffer buffer)
+        (erase-buffer)
+        (insert-file-contents file)))))
+
+(defun gensqlalchemy-test ()
+  "Try to run SQL commands from SQL output buffer.
+The commands are wrapped in a transaction which is aborted at the end."
+  (interactive)
+  (with-gensqlalchemy-rollback
+    (sql-send-buffer)))
+
+(defun gensqlalchemy-compare (&optional arg)
+  "Compare current specification with the definition in the database.
+With an optional prefix argument show the differences in Ediff."
+  (interactive "*P")
+  (let ((buffer (save-excursion (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
+        (old-def-file (gensqlalchemy-temp-file "olddef"))
+        (new-def-file (gensqlalchemy-temp-file "newdef")))
+    (gensqlalchemy-definition old-def-file)
+    (gensqlalchemy-definition new-def-file buffer gensqlalchemy-temp-schema)
+    (gensqlalchemy-wait-for-outputs (with-current-buffer buffer sql-buffer))
+    (if arg
+        (ediff-files old-def-file new-def-file)
+      (diff old-def-file new-def-file "-u"))))
 
 (defun gensqlalchemy-sql-function-file ()
   "Visit SQL file associated with current function."

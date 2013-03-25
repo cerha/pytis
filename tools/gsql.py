@@ -35,6 +35,8 @@ def parse_options():
                       help="limit output to views")
     parser.add_option("--functions", action="store_true", dest="functions",
                       help="limit output to functions")
+    parser.add_option("--schema", action="store", type="string", dest="schema",
+                      help="create all objects in that schema")
     parser.add_option("--names", action="store_true", dest="names_only",
                       help="print only kinds and names of the database objects")
     parser.add_option("--pretty", action="store", type="int", dest="pretty",
@@ -49,7 +51,8 @@ def run():
     options, module = parse_options()
     pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp, no_deps=options.no_deps,
                                                views=options.views, functions=options.functions,
-                                               names_only=options.names_only, pretty=options.pretty)
+                                               names_only=options.names_only, pretty=options.pretty,
+                                               schema=options.schema)
 
 if __name__ == '__main__':
     run()
