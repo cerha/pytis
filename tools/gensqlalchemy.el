@@ -139,6 +139,13 @@ Currently the mode just defines some key bindings."
 (defun gensqlalchemy-run-gsql (output-buffer &rest args)
   (apply 'call-process gensqlalchemy-gsql nil output-buffer t args))
 
+(defun gensqlalchemy-send-buffer ()
+  "Send the buffer contents to the SQL process via file.
+This is useful for longer inputs where the input may break in comint."
+  (let ((file (gensqlalchemy-temp-file "input")))
+    (write-region (point-min) (point-max) file)
+    (sql-send-string (concat "\\i " file))))
+
 (defun gensqlalchemy-eval (&optional dependencies)
   "Convert current specification to SQL and display the result.
 If called with a prefix argument then show dependent objects as well."
@@ -245,7 +252,7 @@ If called with a prefix argument then show dependent objects as well."
     (with-gensqlalchemy-rollback
       (when send-buffer
         (with-gensqlalchemy-sql-buffer send-buffer
-          (sql-send-buffer)))
+          (gensqlalchemy-send-buffer)))
       (with-gensqlalchemy-log-file file-name
         (mapc #'(lambda (spec)
                   (destructuring-bind (kind name) spec
@@ -273,7 +280,7 @@ If called with a prefix argument then show dependent objects as well."
 The commands are wrapped in a transaction which is aborted at the end."
   (interactive)
   (with-gensqlalchemy-rollback
-    (sql-send-buffer)))
+    (gensqlalchemy-send-buffer)))
 
 (defun gensqlalchemy-compare (&optional arg)
   "Compare current specification with the definition in the database.
