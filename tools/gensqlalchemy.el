@@ -27,6 +27,7 @@
 
 
 (require 'cl)
+(require 'compile)
 (require 'python)
 (require 'sql)
 
@@ -65,6 +66,7 @@ Currently the mode just defines some key bindings."
                 ("\C-c\C-qa" . gensqlalchemy-add)
                 ("\C-c\C-qd" . gensqlalchemy-show-definition)
                 ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
+                ("\C-c\C-qi" . gensqlalchemy-info)
                 ("\C-c\C-qs" . gensqlalchemy-show-sql-buffer)
                 ("\C-c\C-qt" . gensqlalchemy-test)
                 ("\C-c\C-q=" . gensqlalchemy-compare)
@@ -300,6 +302,24 @@ With an optional prefix argument show the differences in Ediff."
     (if arg
         (ediff-files old-def-file new-def-file)
       (diff old-def-file new-def-file "-u"))))
+
+(defun gensqlalchemy-info ()
+  "Show info about current specification.
+Currently it prints basic information about this object and all dependent
+objects."
+  (interactive)
+  (let ((spec-name (gensqlalchemy-specification))
+        (default-directory (gensqlalchemy-specification-directory nil t)))
+    (compilation-start (format "%s --names --source --limit='^%s$' %s"
+                               gensqlalchemy-gsql spec-name gensqlalchemy-specification-directory))))
+
+        (directory (gensqlalchemy-specification-directory nil t)))
+    (pop-to-buffer (get-buffer-create (gensqlalchemy-buffer-name "info"))) 
+    (setq default-directory directory)
+    (erase-buffer)
+    (gensqlalchemy-run-gsql (current-buffer)
+                            "--names" "--source" (format "--limit=^%s$" spec-name)
+                            gensqlalchemy-specification-directory)))
 
 (defun gensqlalchemy-sql-function-file ()
   "Visit SQL file associated with current function."
