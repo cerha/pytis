@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-25 16:13+0100\n"
-"PO-Revision-Date: 2013-03-25 16:25+0100\n"
+"POT-Creation-Date: 2013-03-25 16:55+0100\n"
+"PO-Revision-Date: 2013-03-25 16:56+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -633,16 +633,16 @@ msgid "You must choose an index"
 msgstr "Musíte zvolit rejstřík"
 
 #: ../resources/scripts/pytis-ckeditor.js:1523
-msgid "Term"
-msgstr "Termín"
+msgid "Index of Terms"
+msgstr "Rejstřík pojmů"
 
 #: ../resources/scripts/pytis-ckeditor.js:1524
-msgid "Name"
-msgstr "Jméno"
+msgid "Name Index"
+msgstr "Jmenný rejstřík"
 
 #: ../resources/scripts/pytis-ckeditor.js:1525
-msgid "Place"
-msgstr "Místo"
+msgid "Index of Places"
+msgstr "Rejstřík míst"
 
 #: ../resources/scripts/pytis-ckeditor.js:1530
 msgid "Item"
@@ -655,6 +655,15 @@ msgstr "Rejstříková položka nemůže být prázdná."
 #: ../resources/scripts/pytis.js:112
 msgid "Failed loading form."
 msgstr "Načtení formuláře se nezdařilo."
+
+#~ msgid "Term"
+#~ msgstr "Heslo"
+
+#~ msgid "Name"
+#~ msgstr "Jméno"
+
+#~ msgid "Place"
+#~ msgstr "Místo"
 
 #~ msgid "ASCII"
 #~ msgstr "ASCII"

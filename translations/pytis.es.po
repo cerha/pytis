@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-25 16:13+0100\n"
+"POT-Creation-Date: 2013-03-25 16:55+0100\n"
 "PO-Revision-Date: 2011-12-29 12:20+0100\n"
 "Last-Translator: Hynek Hanke <hanke@volny.cz>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
@@ -638,15 +638,15 @@ msgid "You must choose an index"
 msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:1523
-msgid "Term"
+msgid "Index of Terms"
 msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:1524
-msgid "Name"
+msgid "Name Index"
 msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:1525
-msgid "Place"
+msgid "Index of Places"
 msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:1530
