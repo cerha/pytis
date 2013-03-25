@@ -233,7 +233,9 @@ class SimplifiedEditableView(sql.SQLView):
     insert_order = (Foo, Bar,)
     update_order = (Foo, Bar,)
     delete_order = (Foo, Bar,)
-    join_columns = ((sql.c.Foo.id, sql.c.Bar.id,),)
+    @property
+    def join_columns(self):
+        return ((sql.c.Foo.id, sql.c.Bar.id,),)
     @classmethod
     def query(class_):
         return sqlalchemy.select([sql.c.Foo.id, sql.c.Foo.description.label('d1'),

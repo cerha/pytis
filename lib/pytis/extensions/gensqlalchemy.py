@@ -849,6 +849,8 @@ def object_by_class(class_, search_path=None):
     assert issubclass(class_, SQLObject)
     if search_path is None:
         search_path = _current_search_path
+    if _enforced_schema:
+        search_path = [_enforced_schema] + search_path
     table_name = class_.pytis_name()
     return object_by_path(table_name, search_path)    
 
@@ -1038,7 +1040,14 @@ class SQLObject(object):
                 name = o.pytis_name()
                 for search_path in _expand_schemas(o):
                     schema = search_path[0]
-                    o = object_by_name('%s.%s' % (schema, name,))
+                    if _enforced_schema:
+                        try:
+                            o = object_by_name('%s.%s' % (_enforced_schema, name,),
+                                               allow_external=False)
+                        except:
+                            o = object_by_name('%s.%s' % (schema, name,))
+                    else:
+                        o = object_by_name('%s.%s' % (schema, name,))
                     self.add_is_dependent_on(o)
 
     def _create_access_rights(self):
@@ -1072,7 +1081,10 @@ class SQLSchematicObject(SQLObject):
         super(SQLSchematicObject, self).__init__(*args, **kwargs)
 
     def search_path(self):
-        return self._search_path
+        search_path = self._search_path
+        if _enforced_schema:
+            search_path = [_enforced_schema] + search_path
+        return search_path
 
 ## gensql abbreviations -- do not use in new code!
 
