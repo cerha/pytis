@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2012 Brailcom, o.p.s.
+ * Copyright (C) 2012, 2013 Brailcom, o.p.s.
  * Author: Hynek Hanke
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1520,9 +1520,9 @@ pytis.HtmlField.indexitem_dialog = function(editor) {
                        required: true,
                        validate : CKEDITOR.dialog.validate.notEmpty(pytis._("You must choose an index")),
                        /* TODO: This needs to be editable and taken from CMS */
-                       items: [[pytis._("Term"), 'term'],
-                               [pytis._("Name"), 'name'],
-                               [pytis._("Place"), 'place'],
+                       items: [[pytis._("Index of Terms"), 'term'],
+                               [pytis._("Name Index"), 'name'],
+                               [pytis._("Index of Places"), 'place'],
                               ]
                       },
                       {type: 'text',
