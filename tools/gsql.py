@@ -41,6 +41,8 @@ def parse_options():
                       help="print only kinds and names of the database objects")
     parser.add_option("--pretty", action="store", type="int", dest="pretty",
                       help="more visually pleasant and possibly less correct output")
+    parser.add_option("--source", action="store_true", dest="source",
+                      help="print source info")
     options, args = parser.parse_args(args=sys.argv[1:])
     if len(args) != 1:
         parser.print_help()
@@ -52,7 +54,7 @@ def run():
     pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp, no_deps=options.no_deps,
                                                views=options.views, functions=options.functions,
                                                names_only=options.names_only, pretty=options.pretty,
-                                               schema=options.schema)
+                                               schema=options.schema, source=options.source)
 
 if __name__ == '__main__':
     run()

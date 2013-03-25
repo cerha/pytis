@@ -681,6 +681,7 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
     _class_mapping = {}
     
     def __init__(cls, clsname, bases, clsdict):
+        cls._gsql_file, cls._gsql_line = inspect.stack()[2][1:3]
         if cls._is_specification(clsname):
             name = cls.pytis_name()
             if (name in _PytisBaseMetaclass._name_mapping and 
@@ -2278,7 +2279,7 @@ def _gsql_output(output):
     _output.write('\n')
 
 _pretty = 0
-def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema):
+def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source):
     global _output
     _output = sys.stdout
     if _output.encoding is None:
@@ -2291,11 +2292,11 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     _enforced_schema = schema
     _enforced_schema_objects = set()
     try:
-        _gsql_process_1(loader, regexp, no_deps, views, functions, names_only)
+        _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source)
     finally:
         _full_init = False
 
-def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
+def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source):
     if regexp is not None:
         matcher = re.compile(regexp)
     matched = set()
@@ -2342,8 +2343,17 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
             schematic_names = ['%s.%s' % (s[0], name,) for s in _expand_schemas(obj)]
         else:
             schematic_names = [name]
+        if isinstance(obj, SQLObject):
+            class_name = obj.__class__.__name__
+        elif issubclass(obj, SQLObject):
+            class_name = obj.__name__
+        else:
+            class_name = ''
         for n in schematic_names:
-            _gsql_output('%s %s' % (kind, n,))
+            output = '%s %s' % (kind, n,)
+            if source:
+                output = '%s:%s: %s %s' % (obj._gsql_file, obj._gsql_line, class_name, output,)
+            _gsql_output(output)
     # Load the objects
     loader()
     # Mark objects with changed schemas
@@ -2396,7 +2406,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only):
             _engine.execute(fdef)
     
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
-              names_only=False, pretty=0, schema=None):
+              names_only=False, pretty=0, schema=None, source=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -2414,6 +2424,7 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
         objects; boolean
       pretty -- pretty output level; non-negative integer
       schema -- if not 'None' then create all objects in that schema; string
+      source -- iff true, print source files and lines
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -2423,10 +2434,10 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     """
     def loader(file_name=file_name):
         execfile(file_name, copy.copy(globals()))
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema)
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source)
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
-                names_only=False, pretty=0, schema=None):
+                names_only=False, pretty=0, schema=None, source=False):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -2444,6 +2455,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
         objects; boolean
       pretty -- pretty output level; non-negative integer
       schema -- if not 'None' then create all objects in that schema; string
+      source -- iff true, print source files and lines
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -2453,7 +2465,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     """
     def loader(module_name=module_name):
         imp.load_module(module_name, *imp.find_module(module_name))
-    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema)
+    _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source)
 
 def clear():
     "Clear all loaded specifications."
