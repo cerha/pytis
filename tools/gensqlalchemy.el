@@ -237,29 +237,32 @@ If called with a prefix argument then show dependent objects as well."
           (sit-for 0.1)
           (goto-char point))))))
 
-(defvar gensqlalchemy-psql-def-commands
-  '(("FUNCTION" . "\\df+")
-    ("SCHEMA" . "\\dn+")
-    ("SEQUENCE" . "\\ds+")
-    ("TABLE" . "\\d+")
-    ("TYPE" . "\\dT+")
-    ("VIEW" . "\\d+")))
-(defun gensqlalchemy-definition (file-name &optional send-buffer schema)
-  (let ((objects '())
-        (spec-name (gensqlalchemy-specification))
-        (directory (gensqlalchemy-specification-directory nil t))
-        (output-buffer nil))
+(defun gensqlalchemy-current-objects (&optional schema)
+  (let ((spec-name (gensqlalchemy-specification))
+        (objects '()))
     (with-temp-buffer
-      (setq default-directory directory)
+      (setq default-directory (gensqlalchemy-specification-directory nil t))
       (apply 'gensqlalchemy-run-gsql
              (append (list "--names" "--no-deps" (format "--limit=^%s$" spec-name))
                      (when schema
                        (list (concat "--schema=" schema)))
                      (list gensqlalchemy-specification-directory)))
       (goto-char (point-min))
-      (while (looking-at "^\\([-a-zA-Z]+\\) \\(.*\\)$")
-        (push (list (match-string 1) (match-string 2)) objects)
+      (while (looking-at "^\\([-a-zA-Z]+\\) \\([^(]*\\)\\((.*)\\)?$")
+        (push (list (match-string 1) (match-string 2) (match-string 3)) objects)
         (goto-char (line-beginning-position 2))))
+    objects))
+
+(defvar gensqlalchemy-psql-def-commands
+  '(("FUNCTION" . "\\sf+")
+    ("SCHEMA" . "\\dn+")
+    ("SEQUENCE" . "\\ds+")
+    ("TABLE" . "\\d+")
+    ("TYPE" . "\\dT+")
+    ("VIEW" . "\\d+")))
+(defun gensqlalchemy-definition (file-name &optional send-buffer schema)
+  (let ((objects (gensqlalchemy-current-objects schema))
+        (output-buffer nil))
     (with-gensqlalchemy-rollback
       (when send-buffer
         (with-gensqlalchemy-sql-buffer send-buffer
@@ -267,10 +270,12 @@ If called with a prefix argument then show dependent objects as well."
       (sql-send-string "set search_path to public;")
       (with-gensqlalchemy-log-file file-name
         (mapc #'(lambda (spec)
-                  (destructuring-bind (kind name) spec
+                  (destructuring-bind (kind name args) spec
                     (let ((command (cdr (assoc kind gensqlalchemy-psql-def-commands))))
                       (when command
                         (setq output-buffer sql-buffer)
+                        (when args
+                          (setq name (concat name (replace-regexp-in-string "[^(),]+::" "" args))))
                         (sql-send-string (format "%s %s" command name))))))
               objects)))
     output-buffer))

@@ -150,7 +150,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             else:
                 raise SQLException("Invalid result type", function_type)
         result_type_prefix = 'SETOF ' if function.multirow else ''
-        name = function.function_name or function.name
+        name = function.pytis_name(real=True)
         query_prefix = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n' %
                         (function.schema, name, arguments, result_type_prefix, result_type,))
         query_suffix = ('\n$$ LANGUAGE %s %s' % (function._LANGUAGE, function.stability,))
@@ -1021,7 +1021,7 @@ class SQLObject(object):
         return class_._DB_OBJECT
     
     @classmethod
-    def pytis_name(class_):
+    def pytis_name(class_, real=False):
         return class_.name
 
     def _is_true_specification(self):
@@ -1970,6 +1970,12 @@ class SQLFunctional(_SQLTabular):
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
+    @classmethod
+    def pytis_name(class_, real=False):
+        if real and class_.function_name:
+            return class_.function_name
+        return super(SQLFunctional, class_).pytis_name(real=real)
+
     def __call__(self, *arguments):
         """Return 'sqlalchemy.ClauseElement' corresponding to function call.
 
@@ -1979,7 +1985,7 @@ class SQLFunctional(_SQLTabular):
             by SQLAlchemy
         
         """
-        function_name = self.function_name or self.name
+        function_name = self.pytis_name(real=True)
         name = '"%s"."%s"' % (self.schema, function_name,)
         # We can't use the standard SQLAlchemy function call here
         # (i.e. getattr(sqlalchemy.sql.expression.func, name)(*arguments))
@@ -2334,11 +2340,20 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         return False
     def output_name(obj):
         kind = obj.pytis_kind()
-        name = obj.pytis_name()
+        name = obj.pytis_name(real=True)
+        if kind == 'FUNCTION':
+            def colstr(c):
+                if isinstance(c, basestring):
+                    return c
+                return '%s::%s' % (c.id(), c.type().sqlalchemy_type(),)
+            arguments = string.join([colstr(c) for c in obj.arguments], ',')
+            name = '%s(%s)' % (name, arguments,)
         if _enforced_schema:
             schematic_names = ['%s.%s' % (_enforced_schema, name,)]
         elif isinstance(obj, SQLSchematicObject):
             schematic_names = ['%s.%s' % (obj.schema, name,)]
+        elif isinstance(obj, SQLObject):
+            schematic_names = [name]            
         elif issubclass(obj, SQLSchematicObject):
             schematic_names = ['%s.%s' % (s[0], name,) for s in _expand_schemas(obj)]
         else:
