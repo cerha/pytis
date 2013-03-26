@@ -129,17 +129,17 @@ Currently the mode just defines some key bindings."
   (= (or (nth 7 (file-attributes file-name)) 0) 0))
   
 (defun gensqlalchemy-prepare-output-buffer (base-buffer erase)
-  (let ((directory (gensqlalchemy-specification-directory base-buffer t)))
-    (let ((output-buffer (pop-to-buffer (gensqlalchemy-buffer-name "sql" base-buffer))))
-      (with-current-buffer output-buffer
-        (when erase
-          (erase-buffer))
-        (gensqlalchemy-sql-mode)
-        (setq default-directory directory))
-      output-buffer)))
+  (let ((directory (gensqlalchemy-specification-directory base-buffer t))
+        (buffer (gensqlalchemy-buffer-name "sql" base-buffer)))
+    (with-current-buffer (get-buffer-create buffer)
+      (when erase
+        (erase-buffer))
+      (gensqlalchemy-sql-mode)
+      (setq default-directory directory))
+    buffer))
 
-(defun gensqlalchemy-run-gsql (output-buffer &rest args)
-  (apply 'call-process gensqlalchemy-gsql nil output-buffer t args))
+(defun gensqlalchemy-run-gsql (&rest args)
+  (apply 'call-process gensqlalchemy-gsql nil t nil args))
 
 (defun gensqlalchemy-send-buffer ()
   "Send the buffer contents to the SQL process via file.
@@ -152,17 +152,21 @@ This is useful for longer inputs where the input may break in comint."
   "Convert current specification to SQL and display the result.
 If called with a prefix argument then show dependent objects as well."
   (interactive "P")
-  (gensqlalchemy-display t dependencies nil))
+  (let ((buffer (gensqlalchemy-display t dependencies nil)))
+    (when buffer
+      (pop-to-buffer buffer))))
 
 (defun gensqlalchemy-add (&optional dependencies)
   "Convert current specification to SQL and add it to the displayed SQL.
 If called with a prefix argument then show dependent objects as well."
   (interactive "P")
-  (gensqlalchemy-display nil dependencies nil))
+  (let ((buffer (gensqlalchemy-display nil dependencies nil)))
+    (when buffer
+      (pop-to-buffer buffer))))
 
-(defun gensqlalchemy-display (replace dependencies schema)
+(defun gensqlalchemy-display (erase dependencies schema)
   (let* ((spec-name (gensqlalchemy-specification))
-         (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) replace))
+         (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) erase))
          (args (append (list (format "--pretty=%d" gensqlalchemy-pretty-output-level))
                        (unless dependencies
                          '("--no-deps"))
@@ -171,15 +175,21 @@ If called with a prefix argument then show dependent objects as well."
                        (list (format "--limit=^%s$" spec-name)
                              gensqlalchemy-specification-directory))))
     (save-some-buffers)
-    (unless replace
-      (with-current-buffer output-buffer
-        (unless (string= "" (buffer-substring-no-properties (point-min) (point-max)))
-          (goto-char (point-max))
-          (insert "\n"))))
-    (when schema
-      (insert (format "create schema %s;\n" gensqlalchemy-temp-schema)))
-    (apply 'gensqlalchemy-run-gsql output-buffer args)
-    output-buffer))
+    (with-current-buffer output-buffer
+      (unless (or erase
+                  (string= "" (buffer-substring-no-properties (point-min) (point-max))))
+        (goto-char (point-max))
+        (insert "\n"))
+      (when schema
+        (insert (format "create schema %s;\n" gensqlalchemy-temp-schema)))
+      (apply 'gensqlalchemy-run-gsql args)
+      (if (search-backward "Traceback (most recent call last):" nil t)
+          (progn
+            (pop-to-buffer output-buffer)
+            (goto-char (point-max))
+            (gensqlalchemy-show-error)
+            nil)
+        output-buffer))))
   
 (defun gensqlalchemy-show-sql-buffer ()
   "Show the buffer with converted SQL output."
@@ -242,7 +252,6 @@ If called with a prefix argument then show dependent objects as well."
     (with-temp-buffer
       (setq default-directory directory)
       (apply 'gensqlalchemy-run-gsql
-             (current-buffer)
              (append (list "--names" "--no-deps" (format "--limit=^%s$" spec-name))
                      (when schema
                        (list (concat "--schema=" schema)))
@@ -271,16 +280,16 @@ If called with a prefix argument then show dependent objects as well."
 With an optional prefix argument show new definition of the specification."
   (interactive "P")
   (let ((file (gensqlalchemy-temp-file "def"))
-        (buffer (and arg (save-window-excursion
-                           (gensqlalchemy-display t nil gensqlalchemy-temp-schema))))
+        (buffer (and arg (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
         (schema (and arg gensqlalchemy-temp-schema)))
-    (gensqlalchemy-wait-for-outputs (gensqlalchemy-definition file buffer schema))
-    (if (gensqlalchemy-empty-file file)
-        (message "Definition not found")
-      (let ((buffer (get-buffer-create (gensqlalchemy-buffer-name "def"))))
-        (pop-to-buffer buffer)
-        (erase-buffer)
-        (insert-file-contents file)))))
+    (unless (and arg (not buffer))
+      (gensqlalchemy-wait-for-outputs (gensqlalchemy-definition file buffer schema))
+      (if (gensqlalchemy-empty-file file)
+          (message "Definition not found")
+        (let ((buffer (get-buffer-create (gensqlalchemy-buffer-name "def"))))
+          (pop-to-buffer buffer)
+          (erase-buffer)
+          (insert-file-contents file))))))
 
 (defun gensqlalchemy-test ()
   "Try to run SQL commands from SQL output buffer.
@@ -293,15 +302,16 @@ The commands are wrapped in a transaction which is aborted at the end."
   "Compare current specification with the definition in the database.
 With an optional prefix argument show the differences in Ediff."
   (interactive "P")
-  (let ((buffer (save-excursion (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
+  (let ((buffer (gensqlalchemy-display t nil gensqlalchemy-temp-schema))
         (old-def-file (gensqlalchemy-temp-file "olddef"))
         (new-def-file (gensqlalchemy-temp-file "newdef")))
-    (gensqlalchemy-definition old-def-file)
-    (gensqlalchemy-definition new-def-file buffer gensqlalchemy-temp-schema)
-    (gensqlalchemy-wait-for-outputs (with-current-buffer buffer sql-buffer))
-    (if arg
-        (ediff-files old-def-file new-def-file)
-      (diff old-def-file new-def-file "-u"))))
+    (when buffer
+      (gensqlalchemy-definition old-def-file)
+      (gensqlalchemy-definition new-def-file buffer gensqlalchemy-temp-schema)
+      (gensqlalchemy-wait-for-outputs (with-current-buffer buffer sql-buffer))
+      (if arg
+          (ediff-files old-def-file new-def-file)
+        (diff old-def-file new-def-file "-u")))))
 
 (defun gensqlalchemy-info ()
   "Show info about current specification.
@@ -325,11 +335,13 @@ objects."
 (defun gensqlalchemy-show-error ()
   "Try to show specification error from the last traceback in current buffer."
   (interactive)
-  (let ((regexp "^  File \"\\(.*/dbdefs/.*\\.py\\)\", line \\([0-9]+\\), in "))
+  (let ((regexp "^  File \"\\(.*/dbdefs/.*\\.py\\)\", line \\([0-9]+\\), in .*$"))
     (when (or (re-search-backward regexp nil t)
               (re-search-forward regexp nil t))
       (let ((file (match-string-no-properties 1))
-            (line (match-string-no-properties 2)))
+            (line (match-string-no-properties 2))
+            (overlay (make-overlay (match-beginning 0) (match-end 0))))
+        (overlay-put overlay 'face 'highlight)
         (find-file-other-window file)
         (goto-char 1)
         (forward-line (1- (car (read-from-string line))))))))
