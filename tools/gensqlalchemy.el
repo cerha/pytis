@@ -55,6 +55,11 @@
   :group 'gensqlalchemy
   :type 'directory)
 
+(defcustom gensqlalchemy-default-line-limit 1000
+  "Default LIMIT value in SELECT commands performed by SQLAlchemy."
+  :group 'gensqlalchemy
+  :type 'integer)
+
 (defvar gensqlalchemy-specification-directory "dbdefs")
 (defvar gensqlalchemy-common-directories '("lib" "db"))
 
@@ -67,6 +72,7 @@ Currently the mode just defines some key bindings."
                 ("\C-c\C-qd" . gensqlalchemy-show-definition)
                 ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
                 ("\C-c\C-qi" . gensqlalchemy-info)
+                ("\C-c\C-qo" . gensqlalchemy-compare-outputs)
                 ("\C-c\C-qs" . gensqlalchemy-show-sql-buffer)
                 ("\C-c\C-qt" . gensqlalchemy-test)
                 ("\C-c\C-q=" . gensqlalchemy-compare)
@@ -248,7 +254,7 @@ If called with a prefix argument then show dependent objects as well."
                        (list (concat "--schema=" schema)))
                      (list gensqlalchemy-specification-directory)))
       (goto-char (point-min))
-      (while (looking-at "^\\([-a-zA-Z]+\\) \\([^(]*\\)\\((.*)\\)?$")
+      (while (looking-at "^\\([-a-zA-Z]+\\) \\([^(\n]*\\)\\((.*)\\)?$")
         (push (list (match-string 1) (match-string 2) (match-string 3)) objects)
         (goto-char (line-beginning-position 2))))
     objects))
@@ -279,7 +285,7 @@ If called with a prefix argument then show dependent objects as well."
                         (sql-send-string (format "%s %s" command name))))))
               objects)))
     output-buffer))
-        
+
 (defun gensqlalchemy-show-definition (&optional arg)
   "Show database definition of the current specification.
 With an optional prefix argument show new definition of the specification."
@@ -318,6 +324,57 @@ With an optional prefix argument show the differences in Ediff."
           (ediff-files old-def-file new-def-file)
         (diff old-def-file new-def-file "-u")))))
 
+(defvar gensqlalchemy-last-function-arguments nil)
+(defun gensqlalchemy-select (object file n use-last-arguments order-by)
+  (destructuring-bind (kind name args) object
+    (unless (member kind '("TABLE" "VIEW" "FUNCTION"))
+      (error "Unable to run SELECT on %s" kind))
+    (let ((command (concat "SELECT * FROM " name)))
+      (when args
+        (unless use-last-arguments
+          (setq gensqlalchemy-last-function-arguments
+                (read-string (format "Function arguments %s: " args)
+                             gensqlalchemy-last-function-arguments)))
+        (setq command (concat command "(" gensqlalchemy-last-function-arguments ")")))
+      (unless (string= order-by "")
+        (setq command (concat command " ORDER BY " order-by)))
+      (when n
+        (setq command (concat command " LIMIT " (number-to-string n))))
+      (setq command (concat command ";"))
+      (with-gensqlalchemy-log-file file
+        (sql-send-string command)))))
+
+(defvar gensqlalchemy-last-order-by "")
+(defun gensqlalchemy-compare-outputs (&optional n)
+  "Compare SELECT outputs of the original and new definition.
+By default compare at most `gensqlalchemy-default-line-limit' lines of output.
+With a numeric prefix argument compare that many lines of output.
+With a universal prefix argument compare complete outputs."
+  (interactive "P")
+  (cond
+   ((null n)
+    (setq n gensqlalchemy-default-line-limit))
+   ((consp n)
+    (setq n nil)))
+  (when (and (numberp n) (< n 0))
+    (setq n 0))
+  (let ((old-object (car (gensqlalchemy-current-objects)))
+        (new-object (car (gensqlalchemy-current-objects gensqlalchemy-temp-schema)))
+        (old-data-file (gensqlalchemy-temp-file "olddata"))
+        (new-data-file (gensqlalchemy-temp-file "newdata"))
+        (new-buffer (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
+    (when new-buffer
+      (setq gensqlalchemy-last-order-by
+            (read-string "Order by: " gensqlalchemy-last-order-by))
+      (with-gensqlalchemy-rollback
+        (gensqlalchemy-select old-object old-data-file n nil gensqlalchemy-last-order-by))
+      (with-gensqlalchemy-rollback
+        (with-gensqlalchemy-sql-buffer new-buffer
+          (gensqlalchemy-send-buffer))
+        (gensqlalchemy-select new-object new-data-file n t gensqlalchemy-last-order-by))
+      (gensqlalchemy-wait-for-outputs (with-current-buffer new-buffer sql-buffer))
+      (diff old-data-file new-data-file))))
+    
 (defun gensqlalchemy-info ()
   "Show info about current specification.
 Currently it prints basic information about this object and all dependent
