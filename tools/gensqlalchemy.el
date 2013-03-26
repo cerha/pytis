@@ -331,7 +331,8 @@ objects."
       (let ((file (match-string-no-properties 1))
             (line (match-string-no-properties 2)))
         (find-file-other-window file)
-        (goto-line (car (read-from-string line)))))))
+        (goto-char 1)
+        (forward-line (1- (car (read-from-string line))))))))
 
 ;;; Announce
 
