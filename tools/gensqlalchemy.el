@@ -313,14 +313,6 @@ objects."
     (compilation-start (format "%s --names --source --limit='^%s$' %s"
                                gensqlalchemy-gsql spec-name gensqlalchemy-specification-directory))))
 
-        (directory (gensqlalchemy-specification-directory nil t)))
-    (pop-to-buffer (get-buffer-create (gensqlalchemy-buffer-name "info"))) 
-    (setq default-directory directory)
-    (erase-buffer)
-    (gensqlalchemy-run-gsql (current-buffer)
-                            "--names" "--source" (format "--limit=^%s$" spec-name)
-                            gensqlalchemy-specification-directory)))
-
 (defun gensqlalchemy-sql-function-file ()
   "Visit SQL file associated with current function."
   (interactive)
