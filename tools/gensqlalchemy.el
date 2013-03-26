@@ -18,12 +18,72 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+;; This file defines gensqlalchemy-mode which is a minor mode for working with
+;; gensqlalchemy database specifications.  Although it is a common minor mode,
+;; it makes sense only in Python major modes.
+
 ;; To enable the mode automatically in database specifications, you may want to
-;; add the following to your Python mode hook function:
+;; add the following lines to your Python mode hook function:
 ;;
 ;;   (when (and (buffer-file-name)
 ;;              (string-match "/db/dbdefs/" (buffer-file-name)))
 ;;     (gensqlalchemy-mode 1))
+;;
+;; Or you can enable it manually with `M-x gensqlalchemy-mode'.
+
+;; The mode binds its commands to key sequences starting with prefix `C-c C-q'.
+;; You can type `C-c C-q C-h' to get overview of the available key bindings.
+
+;; The most basic command is `C-c C-q C-q' (`gensqlalchemy-eval') which creates
+;; and displays the SQL code of the current specification object.  Its variant
+;; `C-c C-q a' (`gensqlalchemy-add') adds the definition to already created SQL
+;; code, this way you can compose an SQL update file for several objects.  With
+;; a prefix argument the commands generate SQL code also for objects depending
+;; on the current definition.  You can display the current SQL code anytime
+;; using `C-c C-q s' (`gensqlalchemy-show-sql-buffer').
+
+;; gensqlalchemy.el uses standard Emacs sql-mode means for communication with
+;; the database.  To be able to work with a database, you must first create a
+;; corresponding SQL buffer using standard Emacs commands such as
+;; `M-x sql-postgres'.  gensqlalchemy then asks for that buffer name when it
+;; needs to communicate with the database.
+
+;; Once a database connection is available, you can test the generated SQL code
+;; with `C-c C-q t' (`gensqlalchemy-test').  The code is executed in a separate
+;; transaction and rollbacked afterwards.  gensqlalchemy.el actually never
+;; changes the database itself, everything is executed in discarded
+;; transactions.  Nevertheless you should always be careful and not to use
+;; gensqlalchemy.el interactions on production databases.
+
+;; You can view current object definition in the database using `C-c C-q d'
+;; (`gensqlalchemy-show-definition').  With a prefix argument new definition of
+;; the object is inserted into the database into a separate schema and then
+;; displayed; it's some form of pretty formatting the SQL code and accompanying
+;; it with additional information.  You can compare the original and new
+;; definitions anytime using `C-c C-q =' (`gensqlalchemy-compare').  When you
+;; want to view the changes in Ediff, use a prefix argument.  Note that the new
+;; definition is put into a separate schema again.  You can also compare SELECT
+;; outputs of new views and functions using `C-c C-q o'
+;; (`gensqlalchemy-compare-outputs').
+
+;; You can list all objects dependent on the current specification using
+;; `C-c C-q i' (`gensqlalchemy-info').  The list includes source locations you
+;; can visit by pressing RET or clicking on them.
+
+;; Whenever you meet an error during gsql SQL conversion, you can use
+;; `M-x gensqlalchemy-show-buffer' command to display the corresponding source
+;; in specifications.  Some gensqlalchemy.el functions can do that for you
+;; automatically when such an error occurs on their invocation.
+
+;; When editing specifications of SQL or PL/pgSQL database functions stored in
+;; external .sql files, you can directly jump to the given file with the
+;; command `C-c C-q f' (`gensqlalchemy-sql-function-file').  After editing and
+;; saving it you can kill the buffer and window with `C-x 4 0'.
+
+;; The mode comes with reasonable default settings, but you may want to
+;; customize them using `M-x customize-group RET gensqlalchemy RET'.  The most
+;; important option is `gensqlalchemy-gsql' which needs to be set if gsql
+;; utility is not present in standard PATH.
 
 
 (require 'cl)
