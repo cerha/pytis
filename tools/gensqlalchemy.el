@@ -143,15 +143,21 @@ Currently the mode just defines some key bindings."
     (sql-mode)
     (sql-set-product 'postgres)))
 
-(defun gensqlalchemy-specification-directory (buffer &optional require)
+(defun gensqlalchemy-specification-directory (&optional buffer require)
   (let ((directory (with-current-buffer (or buffer (current-buffer))
-                     (directory-file-name default-directory))))
+                     default-directory)))
     (while (and (not (string= directory "/"))
-                (not (string= (file-name-nondirectory directory) gensqlalchemy-specification-directory)))
-      (setq directory (directory-file-name (file-name-directory directory))))
+                (not (string= (file-name-nondirectory (directory-file-name directory))
+                              gensqlalchemy-specification-directory)))
+      (setq directory (file-name-directory (directory-file-name directory))))
     (when (and require (string= directory "/"))
       (error "Specification directory not found"))
-    (file-name-directory directory)))
+    directory))
+
+(defun gensqlalchemy-process-directory (&optional buffer require)
+  (file-name-directory
+   (directory-file-name
+    (gensqlalchemy-specification-directory buffer require))))
   
 (defun gensqlalchemy-buffer-name (ext &optional buffer)
   (let ((directory (directory-file-name (gensqlalchemy-specification-directory buffer)))
@@ -195,7 +201,7 @@ Currently the mode just defines some key bindings."
   (= (or (nth 7 (file-attributes file-name)) 0) 0))
   
 (defun gensqlalchemy-prepare-output-buffer (base-buffer erase)
-  (let ((directory (gensqlalchemy-specification-directory base-buffer t))
+  (let ((directory (gensqlalchemy-process-directory base-buffer t))
         (buffer (gensqlalchemy-buffer-name "sql" base-buffer)))
     (with-current-buffer (get-buffer-create buffer)
       (when erase
@@ -307,7 +313,7 @@ If called with a prefix argument then show dependent objects as well."
   (let ((spec-name (gensqlalchemy-specification))
         (objects '()))
     (with-temp-buffer
-      (setq default-directory (gensqlalchemy-specification-directory nil t))
+      (setq default-directory (gensqlalchemy-process-directory nil t))
       (apply 'gensqlalchemy-run-gsql
              (append (list "--names" "--no-deps" (format "--limit=^%s$" spec-name))
                      (when schema
@@ -441,7 +447,7 @@ Currently it prints basic information about this object and all dependent
 objects."
   (interactive)
   (let ((spec-name (gensqlalchemy-specification))
-        (default-directory (gensqlalchemy-specification-directory nil t)))
+        (default-directory (gensqlalchemy-process-directory nil t)))
     (compilation-start (format "%s --names --source --limit='^%s$' %s"
                                gensqlalchemy-gsql spec-name gensqlalchemy-specification-directory))))
 
