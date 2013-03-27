@@ -40,7 +40,7 @@
 ;; code, this way you can compose an SQL update file for several objects.  With
 ;; a prefix argument the commands generate SQL code also for objects depending
 ;; on the current definition.  You can display the current SQL code anytime
-;; using `C-c C-q s' (`gensqlalchemy-show-sql-buffer').
+;; using `C-c C-q z' (`gensqlalchemy-show-sql-buffer').
 
 ;; gensqlalchemy.el uses standard Emacs sql-mode means for communication with
 ;; the database.  To be able to work with a database, you must first create a
@@ -55,7 +55,7 @@
 ;; transactions.  Nevertheless you should always be careful and not to use
 ;; gensqlalchemy.el interactions on production databases.
 
-;; You can view current object definition in the database using `C-c C-q d'
+;; You can view current object definition in the database using `C-c C-q s'
 ;; (`gensqlalchemy-show-definition').  With a prefix argument new definition of
 ;; the object is inserted into the database into a separate schema and then
 ;; displayed; it's some form of pretty formatting the SQL code and accompanying
@@ -88,6 +88,7 @@
 
 (require 'cl)
 (require 'compile)
+(require 'etags)
 (require 'python)
 (require 'sql)
 
@@ -129,12 +130,13 @@ Currently the mode just defines some key bindings."
   nil " gsql" '(("\C-c\C-qe" . gensqlalchemy-eval)
                 ("\C-c\C-q\C-q" . gensqlalchemy-eval)
                 ("\C-c\C-qa" . gensqlalchemy-add)
-                ("\C-c\C-qd" . gensqlalchemy-show-definition)
+                ("\C-c\C-qd" . gensqlalchemy-dependencies)
                 ("\C-c\C-qf" . gensqlalchemy-sql-function-file)
                 ("\C-c\C-qi" . gensqlalchemy-info)
                 ("\C-c\C-qo" . gensqlalchemy-compare-outputs)
-                ("\C-c\C-qs" . gensqlalchemy-show-sql-buffer)
                 ("\C-c\C-qt" . gensqlalchemy-test)
+                ("\C-c\C-qs" . gensqlalchemy-show-definition)
+                ("\C-c\C-qz" . gensqlalchemy-show-sql-buffer)
                 ("\C-c\C-q=" . gensqlalchemy-compare)
                 ))
 
@@ -459,6 +461,92 @@ objects."
                  (error "Function name not found"))
                (match-string 1))))
     (find-file-other-window (concat "sql/" (match-string 1) ".sql"))))
+
+(defun gensqlalchemy-find-object (name)
+  (let ((dir (gensqlalchemy-specification-directory))
+        (class-regexp (concat "^class +" (regexp-quote name) "\\>")))
+    (flet ((spec-buffer-p (buffer)
+             (let ((file (or (buffer-file-name buffer) "")))
+               (or (string-prefix-p dir file)
+                   (string-match "/pytis/db/dbdefs/" file))))
+           (look-for-tag (name next-p)
+             (let ((buffer (ignore-errors (find-tag-noselect name next-p))))
+               (when buffer
+                 (with-current-buffer buffer
+                   (when (looking-at (concat "class +" (regexp-quote name) "\\>"))
+                     buffer))))))
+      (save-excursion
+        (if (progn
+              (goto-char (point-min))
+              (re-search-forward class-regexp nil t))
+            (list name (file-name-nondirectory (buffer-file-name)) (line-beginning-position))
+          (let ((buffer (look-for-tag name nil))
+                (pytis-buffer-p nil))
+            (while (and buffer (not (spec-buffer-p buffer)))
+              (setq buffer (look-for-tag name t)))
+            (if buffer
+                (with-current-buffer buffer
+                  (list name (file-name-nondirectory (buffer-file-name buffer)) (point)))
+              (with-current-buffer (find-file-noselect (concat dir "__init__.py"))
+                (goto-char (point-min))
+                (let ((result nil))
+                  (while (and (not result)
+                              (re-search-forward "^from +\\([a-zA-Z0-9_]+\\) +import " nil t))
+                    (let ((file (concat dir (match-string-no-properties 1) ".py")))
+                      (when (file-readable-p file)
+                        (with-temp-buffer
+                          (insert-file-contents file)
+                          (goto-char (point-min))
+                          (when (re-search-forward class-regexp nil t)
+                            (setq result (list name file (line-beginning-position))))))))
+                  (unless result
+                    (error "Object %s not found" name))
+                  result)))))))))
+  
+(defun gensqlalchemy-dependencies ()
+  "Show information about dependencies of the current specification.
+Currently __init__.py file is shown with the point at the first imported file
+where the specification may be put without breaking dependencies."
+  (interactive)
+  (let ((beg nil)
+        (end nil)
+        (hard-objects '())
+        (soft-objects '())
+        (hard-dependencies '())
+        (current-file (file-name-nondirectory (or (buffer-file-name) "")))
+        (dir (gensqlalchemy-specification-directory)))
+    (save-some-buffers)
+    (save-excursion
+      (save-restriction
+        (while (not beg)
+          (if (re-search-backward "^class " nil t)
+              (setq beg (and (not (eq (get-text-property (point) 'face) 'font-lock-string-face))
+                             (point)))
+            (setq beg (point-min))))
+        (goto-char (1+ beg))
+        (while (not end)
+          (if (re-search-forward "^class " nil t)
+              (setq end (and (not (eq (get-text-property (point) 'face) 'font-lock-string-face))
+                             (line-beginning-position)))
+            (setq end (point-max))))
+        (narrow-to-region beg end)
+        (goto-char (point-min))
+        (while (re-search-forward "\\<\\(sql\\.[ct]\\|db\\)\\.\\([a-zA-Z0-9_]+\\)" nil t)
+          (let ((object (match-string-no-properties 2))
+                (point (point)))
+            (re-search-backward "^\\(class\\|    [a-zA-Z_]\\)")
+            (push object (if (looking-at "    def ") soft-objects hard-objects))
+            (goto-char point))))
+      (setq soft-objects (set-difference soft-objects hard-objects :test #'string=)) ; unused now
+      (setq hard-dependencies (mapcar #'gensqlalchemy-find-object (sort hard-objects #'string<))))
+    (let ((files (mapcar #'file-name-nondirectory
+                         (remove-if #'(lambda (file) (not (string-prefix-p dir file)))
+                                    (mapcar #'second hard-dependencies)))))
+      (find-file-other-window (concat dir "__init__.py"))
+      (goto-char (point-min))
+      (while (and files (re-search-forward "^from +\\([a-zA-Z0-9_]+\\) +import " nil t))
+        (setq files (remove (concat (match-string-no-properties 1) ".py") files)))
+      (goto-char (line-beginning-position 2)))))
 
 (defun gensqlalchemy-show-error ()
   "Try to show specification error from the last traceback in current buffer."
