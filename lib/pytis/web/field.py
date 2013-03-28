@@ -519,8 +519,22 @@ class HtmlField(MultilineField):
                           )
             html_id = self.html_id()
             if self._row.attachment_storage(self.id) is not None:
+                from lcg import exercises
                 config['extraPlugins'] = 'pytis-attachments'
                 config['pytisFieldId'] = html_id
+                config['lcgExerciseTypes'] = [(context.localize(cls.name()), cls.__name__)
+                                              for cls in (exercises.HiddenAnswers,
+                                                          exercises.TrueFalseStatements,
+                                                          exercises.MultipleChoiceQuestions,
+                                                          exercises.GapFilling,
+                                                          exercises.Cloze,
+                                                          exercises.ExposedCloze,
+                                                          exercises.NumberedCloze,
+                                                          exercises.NumberedExposedCloze,
+                                                          exercises.Selections,
+                                                          exercises.Transformation,
+                                                          exercises.Substitution,
+                                                          )]
             content += g.script(g.js_call('CKEDITOR.replace', html_id, config))
         return content
 
