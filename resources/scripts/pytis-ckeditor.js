@@ -891,9 +891,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     var sub_elements = [['instructions', 'pre'],
 			['example', 'pre'],
 			['src', 'pre'],
-			['sound-file', 'a'],
-			['audio-version', 'a'],
-			['transcript', 'pre'],
+			['media', 'a'],
 			['reading', 'pre'],
 			['explanation', 'pre'],
 		       ];
@@ -950,7 +948,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 		  [
 		      {type: 'select',
 		       items: [[pytis._("No sound"), ''],],
-		       id: 'sound-file',
+		       id: 'media',
 		       className: 'attachment-selector',
                        size: 14,
 		       label: pytis._('Sound file'),
@@ -959,38 +957,14 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 		       },
 		      },
 		      {type: 'html',
-		       id: 'sound-file-preview',
-		       html: '<div class="preview-container"><div id="exercise-sound-file-preview"></div></div>'
+		       id: 'media-preview',
+		       html: '<div class="preview-container"><div id="exercise-media-preview"></div></div>'
 		      }
 		  ]},
 		 {type : 'hbox',
 		  children :
 		  [
-		      {type: 'select',
-		       items: [[pytis._("No audio version"), ''],],
-		       id: 'audio-version',
-		       className: 'attachment-selector',
-                       size: 14,
-		       label: pytis._('Audio version'),
-                       updateAttachmentList: function(element, keep_value) {
-			   ck_dialog_update_attachment_list(editor, this, 'Audio', keep_value);
-		       },
-		      },
-		      {type: 'html',
-		       id: 'audio-version-preview',
-		       html: '<div class="preview-container"><div id="exercise-audio-version-preview"></div></div>'
-		      }
 		  ]},
-	     ]
-	    },
-            {id: 'transcript',
-             label: pytis._("Transcript"),
-             elements: [
-		 {type: 'textarea',
-		  id: 'transcript',
-		  label: pytis._('Transcript'),
-		  rows: 20,
-		 },
 	     ]
 	    },
             {id: 'reading',
@@ -1109,14 +1083,6 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 	put_content('reading', element, this);
     }
 
-    ck_element(dialog, 'transcript').setup = function(element){
-	get_content('transcript', element, this);
-    }
-
-    ck_element(dialog, 'transcript').commit = function(element){
-	put_content('transcript', element, this);
-    }
-
     ck_element(dialog, 'explanation').setup = function(element){
 	get_content('explanation', element, this);
     }
@@ -1143,36 +1109,20 @@ pytis.HtmlField.exercise_dialog = function(editor) {
         subel.setAttribute('href', '');
     }
 
-    ck_element(dialog, 'audio-version').setup = function(element){
+    ck_element(dialog, 'media').setup = function(element){
 	this.updateAttachmentList(false);
-	get_resource('audio-version', element, this);
+	get_resource('media', element, this);
     }
 
-    ck_element(dialog, 'audio-version').onChange = function(element){
+    ck_element(dialog, 'media').onChange = function(element){
         var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
 	this.attachment = pytis_field.get_attachment(this.getValue());
 	if (this.attachment)
-	    ck_dialog_update_media_preview(this.attachment, 'exercise-audio-version-preview');
+	    ck_dialog_update_media_preview(this.attachment, 'exercise-media-preview');
     }
 
-    ck_element(dialog, 'audio-version').commit = function(element){
-	put_resource('audio-version', element, this);
-    }
-
-    ck_element(dialog, 'sound-file').setup = function(element){
-	this.updateAttachmentList(false);
-	get_resource('sound-file', element, this);
-    }
-
-    ck_element(dialog, 'sound-file').onChange = function(element){
-        var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
-	this.attachment = pytis_field.get_attachment(this.getValue());
-	if (this.attachment)
-	    ck_dialog_update_media_preview(this.attachment, 'exercise-sound-file-preview');
-    }
-
-    ck_element(dialog, 'sound-file').commit = function(element){
-	put_resource('sound-file', element, this);
+    ck_element(dialog, 'media').commit = function(element){
+	put_resource('media', element, this);
     }
 
     ck_element(dialog, 'help').setup = function(element){
