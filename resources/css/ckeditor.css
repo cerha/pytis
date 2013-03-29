@@ -7,16 +7,16 @@ div.cke_dialog_body p.ckeditor-error {
     color: red;
 }
 
-.cke_skin_kama td.cke_dialog_contents {
+div.cke_dialog_body td.cke_dialog_contents {
     background: #eee;
 }
 
-.cke_skin_kama div.cke_dialog_ui_input_file,
-.cke_skin_kama div.cke_dialog_ui_input_file iframe {
+div.cke_dialog_body div.cke_dialog_ui_input_file,
+div.cke_dialog_body div.cke_dialog_ui_input_file iframe {
     height: 32px;
     width: 400px;
 }
-.cke_skin_kama span.cke_dialog_ui_button {
+div.cke_dialog_body span.cke_dialog_ui_button {
     margin: 5px 0;
 }
 div.cke_dialog_body .cke_dialog_ui_file label {
