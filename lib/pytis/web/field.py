@@ -469,7 +469,6 @@ class StructuredTextField(MultilineField):
             content = lcg.Container(blocks[0].content())
         else:
             content = lcg.Container(blocks)
-        content.set_parent(context.node())
         return context.generator().div(content.export(context))
 
 

@@ -479,7 +479,6 @@ class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
     def _menu(self, context):
         g = self._generator
         tree = lcg.FoldableTree(tooltip=_("Expand/collapse complete menu hierarchy"))
-        tree.set_parent(context.node())
         return g.div((g.h(g.a(_("Navigace"), accesskey="3"), 3),
                       tree.export(context)),
                      cls='menu-panel')

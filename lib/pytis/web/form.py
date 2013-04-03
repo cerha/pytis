@@ -419,7 +419,6 @@ class LayoutForm(FieldForm):
                 if exported_group:
                     content.append(exported_group, label=label, fullsize=label is None)
             elif isinstance(item, lcg.Content):
-                item.set_parent(self.parent())
                 content.append(item.export(context))
             elif isinstance(item, Text):
                 text = g.div(g.escape(item.text()).replace("\n", g.br()))
@@ -1942,7 +1941,6 @@ class ListView(BrowseForm):
                 cls = 'content id-'+ item
             else:
                 continue
-            content.set_parent(self.parent())
             # Hack: Add a fake container to force the heading level start at 4.
             container = lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
