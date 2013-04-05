@@ -909,8 +909,6 @@ pytis.HtmlField.exercise_dialog = function(editor) {
      *  Returns a dictionary description of the dialog for the CKEDITOR.dialog.add factory.
      */
 
-    var help_url = "/_doc/eurochance/exercises?framed=1";
-
     var sub_elements = [['instructions', 'pre'],
 			['example', 'pre'],
 			['src', 'pre'],
@@ -919,9 +917,15 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 			['explanation', 'pre'],
 		       ];
 
+    var exercise_types = [];
+    for (var i=0; i<editor.config.lcgExerciseTypes.length; i++) {
+	var item = editor.config.lcgExerciseTypes[i];
+	exercise_types[exercise_types.length] = [item[1], item[0]];
+    }
+
     var dialog = {
-        minWidth: 950,
-        minHeight: 500,
+        minWidth: 800,
+        minHeight: 440,
         title: pytis._("Exercise"),
         contents: [
             {id: 'main',
@@ -936,7 +940,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 			   {type: 'select',
 			    id: 'type',
 			    label: pytis._('Type of exercise'),
-			    items: editor.config.lcgExerciseTypes,
+			    items: exercise_types,
 			   },
 			   {type: 'textarea',
 			    id: 'instructions',
@@ -954,12 +958,12 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 			    id: 'src',
 			    rows: 15,
 			    cols: 60,
-			    label: pytis._('Exercise body'),
+			    label: pytis._('Exercise Definition'),
 			   },
 		       ]},
 		      {type : 'html',
 		       id : 'help',
-		       html: '<iframe id="exercise-help" src=""></iframe>'
+		       html: '<div id="exercise-help"></div>'
 		      }
 		  ]},
 	     ]},
@@ -1053,13 +1057,21 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 	},
     };
 
-    function get_content(id, element, field){
+    function get_content(id, element, field) {
 	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
     	field.setValue(subel.getHtml());
     }
-    function put_content(id, element, field){
+    function put_content(id, element, field) {
 	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
     	subel.setHtml(field.getValue());
+    }
+    function exercise_help(exercise_type) {
+	for (var i=0; i<editor.config.lcgExerciseTypes.length; i++) {
+	    var item = editor.config.lcgExerciseTypes[i];
+	    if (item[0] == exercise_type)
+		return item[2];
+	}
+	return ''
     }
 
     ck_element(dialog, 'type').setup = function(element){
@@ -1072,7 +1084,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     }
 
     ck_element(dialog, 'type').onChange = function(element){
-	$('exercise-help').src = help_url + '#' + this.getValue();
+	$('exercise-help').update(exercise_help(this.getValue()));
     }
 
     ck_element(dialog, 'instructions').setup = function(element){
@@ -1149,7 +1161,7 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     }
 
     ck_element(dialog, 'help').setup = function(element){
-	$('exercise-help').src = help_url + '#' + 'exercise-header';
+	$('exercise-help').update('');
     }
 
     return dialog;
@@ -1377,7 +1389,7 @@ function ck_language_combo(editor, languages) {
                 /* Find the direct child of common ancestor which holds the anchor element. */
                 var parents = node.getParents();
                 var parent = null;
-                for (i=parents.length-1; i>=0; i--){
+                for (var i=parents.length-1; i>=0; i--){
                     if (parents[i].$ == ancestor.$)
                         return parent;
                     parent = parents[i];

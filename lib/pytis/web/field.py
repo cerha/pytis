@@ -596,18 +596,17 @@ class HtmlField(MultilineField):
                 from lcg import exercises
                 config['extraPlugins'] = 'pytis-attachments'
                 config['pytisFieldId'] = html_id
-                config['lcgExerciseTypes'] = [(context.localize(cls.name()), cls.__name__)
+                config['lcgExerciseTypes'] = [(cls.__name__,
+                                               context.localize(cls.name()),
+                                               context.localize(cls.authoring().export(context)))
                                               for cls in (exercises.HiddenAnswers,
                                                           exercises.TrueFalseStatements,
                                                           exercises.MultipleChoiceQuestions,
                                                           exercises.GapFilling,
+                                                          exercises.Selections,
                                                           exercises.Cloze,
                                                           exercises.ExposedCloze,
-                                                          exercises.NumberedCloze,
-                                                          exercises.NumberedExposedCloze,
-                                                          exercises.Selections,
-                                                          exercises.Transformation,
-                                                          exercises.Substitution,
+                                                          exercises.WrittenAnswers,
                                                           )]
             content += g.script(g.js_call('CKEDITOR.replace', html_id, config))
         return content
