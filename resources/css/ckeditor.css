@@ -52,7 +52,7 @@ div.cke_dialog_body #video-preview, div.cke_dialog_body #audio-preview {
 }
 
 div.cke_dialog_body #exercise-help {
-    max-width: 400px;
+    max-width: 430px;
     max-height: 485px;
     overflow-x: auto;
     white-space: normal;

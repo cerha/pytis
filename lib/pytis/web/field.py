@@ -561,10 +561,7 @@ class HtmlField(MultilineField):
                 Rule(['a'], [R('href'), R('data-lcg-resource')], classes=['lcg-video']),
                 Rule(['a'], [R('href'), R('data-lcg-resource')], classes=['lcg-resource']),
                 # Exercises
-                Rule(['div'], classes=['lcg-exercise'], attributes=['data-type', 'contenteditable'], styles=['display']),
-                Rule(['pre'], classes=['lcg-exercise-instructions', 'lcg-exercise-example', 'lcg-exercise-src',
-                                       'lcg-exercise-transcript', 'lcg-exercise-reading', 'lcg-exercise-explanation']),
-                Rule(['a'], classes=['lcg-exercise-sound-file', 'lcg-exercise-audio-version']),
+                Rule(['pre'], classes=['lcg-exercise'], attributes=['data-type', 'contenteditable'], styles=['display']),
                 # Mathematics
                 Rule(['span'], ['contenteditable'], styles=['display'], classes=['lcg-mathml']),
                 Rule(['math'], ['contenteditable', 'xmlns'], styles=['display']),

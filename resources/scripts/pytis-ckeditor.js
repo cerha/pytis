@@ -270,7 +270,6 @@ function ck_element (dialog, id) {
      * Return value:
      *  Returns the element or nul if none is found
      */
-
     function ck_get_element_from_list (elements, id) {
         for (var i = 0; i < elements.length; i++) {
             if (elements[i].id == id){
@@ -909,14 +908,6 @@ pytis.HtmlField.exercise_dialog = function(editor) {
      *  Returns a dictionary description of the dialog for the CKEDITOR.dialog.add factory.
      */
 
-    var sub_elements = [['instructions', 'pre'],
-			['example', 'pre'],
-			['src', 'pre'],
-			['media', 'a'],
-			['reading', 'pre'],
-			['explanation', 'pre'],
-		       ];
-
     var exercise_types = [];
     for (var i=0; i<editor.config.lcgExerciseTypes.length; i++) {
 	var item = editor.config.lcgExerciseTypes[i];
@@ -924,40 +915,25 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     }
 
     var dialog = {
-        minWidth: 800,
+        minWidth: 860,
         minHeight: 440,
         title: pytis._("Exercise"),
         contents: [
-            {id: 'main',
-             label: pytis._("Exercise"),
-             elements: [
-		 {type : 'hbox',
-		  children :
-		  [
-		      {type : 'vbox',
-		       children :
-		       [
+	    {id: 'main',
+	     elements: [
+		 {type: 'hbox',
+		  children: [
+		      {type: 'vbox',
+		       children: [
 			   {type: 'select',
 			    id: 'type',
-			    label: pytis._('Type of exercise'),
+			    label: pytis._('Exercise Type'),
 			    items: exercise_types,
 			   },
 			   {type: 'textarea',
-			    id: 'instructions',
-			    label: pytis._('Instructions'),
-			    rows: 3,
-			    cols: 60,
-			   },
-			   {type: 'textarea',
-			    id: 'example',
-			    rows: 3,
-			    cols: 60,
-			    label: pytis._('Example')
-			   },
-			   {type: 'textarea',
 			    id: 'src',
-			    rows: 15,
-			    cols: 60,
+			    rows: 28,
+			    cols: 70,
 			    label: pytis._('Exercise Definition'),
 			   },
 		       ]},
@@ -967,83 +943,21 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 		      }
 		  ]},
 	     ]},
-            {id: 'audio',
-             label: pytis._("Audio"),
-             elements: [
-		 {type : 'hbox',
-		  children :
-		  [
-		      {type: 'select',
-		       items: [[pytis._("No sound"), ''],],
-		       id: 'media',
-		       className: 'attachment-selector',
-                       size: 14,
-		       label: pytis._('Sound file'),
-                       updateAttachmentList: function(element, keep_value) {
-			   ck_dialog_update_attachment_list(editor, this, 'Audio', keep_value);
-		       },
-		      },
-		      {type: 'html',
-		       id: 'media-preview',
-		       html: '<div class="preview-container"><div id="exercise-media-preview"></div></div>'
-		      }
-		  ]},
-		 {type : 'hbox',
-		  children :
-		  [
-		  ]},
-	     ]
-	    },
-            {id: 'reading',
-             label: pytis._("Reading"),
-             elements: [
-		 {type: 'textarea',
-		  id: 'reading',
-		  label: pytis._('Reading'),
-		  rows: 20,
-		 },
-	     ]
-	    },
-            {id: 'explanation',
-             label: pytis._("Explanation"),
-             elements: [
-		 {type: 'textarea',
-		  id: 'explanation',
-		  label: pytis._('Explanation'),
-		  rows: 20,
-		 },
-	     ]
-	    },
 	],
 	onShow: function() {
-	    function insert_subelement(element, name, id){
-		    var sub_element = editor.document.createElement(name);
-		    sub_element.addClass('lcg-exercise-' + id);
-		    element.append(sub_element);
-	    }
             // Check if editing an existing element or inserting a new one
             var element = editor.getSelection().getStartElement();
             if (element)
-		element = element.getAscendant('div', true);
-            if (!element || element.getName() != 'div' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
-		// Create a new exercise structure
-		element = editor.document.createElement('div',
+		element = element.getAscendant('pre', true);
+            if (!element || element.getName() != 'pre' || element.data('cke-realelement') || !element.hasClass('lcg-exercise')) {
+		// Create a new exercise element
+		element = editor.document.createElement('pre',
 							{'attributes': {'contenteditable': 'false'},
 							 'styles': {'display': 'inline-block'}});
 		element.addClass('lcg-exercise');
 		element.setAttribute('contenteditable', 'false');
-		for (var i = 0; i < sub_elements.length; i++){
-		    insert_subelement(element, sub_elements[i][1], sub_elements[i][0]);
-		}
 		this.insertMode = true;
-            }
-            else{
-		// We have encountered an existing exercise structure, check it for completeness
-		for (var i = 0; i < sub_elements.length; i++){
-		    if (!ck_get_dom_subelement(element, ['.lcg-exercise-'+sub_elements[i][0]])){
-			insert_subelement(element, sub_elements[i][1], sub_elements[i][0]);
-		    }
-		}
+            } else {
 		this.insertMode = false;
 	    }
             this.element = element;
@@ -1057,23 +971,6 @@ pytis.HtmlField.exercise_dialog = function(editor) {
 	},
     };
 
-    function get_content(id, element, field) {
-	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
-    	field.setValue(subel.getHtml());
-    }
-    function put_content(id, element, field) {
-	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
-    	subel.setHtml(field.getValue());
-    }
-    function exercise_help(exercise_type) {
-	for (var i=0; i<editor.config.lcgExerciseTypes.length; i++) {
-	    var item = editor.config.lcgExerciseTypes[i];
-	    if (item[0] == exercise_type)
-		return item[2];
-	}
-	return ''
-    }
-
     ck_element(dialog, 'type').setup = function(element){
 	// Using HTML 5 data attributes to store exercise type
 	this.setValue(element.data('type'));
@@ -1084,80 +981,22 @@ pytis.HtmlField.exercise_dialog = function(editor) {
     }
 
     ck_element(dialog, 'type').onChange = function(element){
-	$('exercise-help').update(exercise_help(this.getValue()));
-    }
-
-    ck_element(dialog, 'instructions').setup = function(element){
-	get_content('instructions', element, this);
-    }
-    ck_element(dialog, 'instructions').commit = function(element){
-	put_content('instructions', element, this);
-    }
-
-    ck_element(dialog, 'example').setup = function(element){
-	get_content('example', element, this);
-    }
-
-    ck_element(dialog, 'example').commit = function(element){
-	put_content('example', element, this);
+	for (var i=0; i<editor.config.lcgExerciseTypes.length; i++) {
+	    var item = editor.config.lcgExerciseTypes[i];
+	    if (item[0] == this.getValue()) {
+		$('exercise-help').update(item[2]);
+		return;
+	    }
+	}
+	$('exercise-help').update('');
     }
 
     ck_element(dialog, 'src').setup = function(element){
-	get_content('src', element, this);
+    	this.setValue(element.getHtml());
     }
 
     ck_element(dialog, 'src').commit = function(element){
-	put_content('src', element, this);
-    }
-
-    ck_element(dialog, 'reading').setup = function(element){
-	get_content('reading', element, this);
-    }
-
-    ck_element(dialog, 'reading').commit = function(element){
-	put_content('reading', element, this);
-    }
-
-    ck_element(dialog, 'explanation').setup = function(element){
-	get_content('explanation', element, this);
-    }
-
-    ck_element(dialog, 'explanation').commit = function(element){
-	put_content('explanation', element, this);
-    }
-
-    function get_resource(id, element, field){
-        var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
-        var filename = subel.data('lcg-resource');
-        if (filename)
-            field.setValue(filename);
-    }
-    function put_resource(id, element, field){
-	var subel = ck_get_dom_subelement(element, ['.lcg-exercise-'+id])
-	if (field.attachment){
-            subel.data('lcg-resource', field.attachment.filename);
-            subel.setText(field.attachment.filename);
-	}else{
-            subel.data('lcg-resource', '');
-            subel.setText('');
-	}
-        subel.setAttribute('href', '');
-    }
-
-    ck_element(dialog, 'media').setup = function(element){
-	this.updateAttachmentList(false);
-	get_resource('media', element, this);
-    }
-
-    ck_element(dialog, 'media').onChange = function(element){
-        var pytis_field = $(editor.config.pytisFieldId)._pytis_field_instance;
-	this.attachment = pytis_field.get_attachment(this.getValue());
-	if (this.attachment)
-	    ck_dialog_update_media_preview(this.attachment, 'exercise-media-preview');
-    }
-
-    ck_element(dialog, 'media').commit = function(element){
-	put_resource('media', element, this);
+    	element.setHtml(this.getValue());
     }
 
     ck_element(dialog, 'help').setup = function(element){
