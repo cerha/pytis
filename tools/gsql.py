@@ -43,6 +43,10 @@ def parse_options():
                       help="more visually pleasant and possibly less correct output")
     parser.add_option("--source", action="store_true", dest="source",
                       help="print source info")
+    parser.add_option("--config", action="store", type="string", dest="config_file",
+                      help="pytis configuration file for database access (on upgrade)")
+    parser.add_option("--upgrade", action="store_true", dest="upgrade",
+                      help="output SQL commands for upgrade (experimental)")
     options, args = parser.parse_args(args=sys.argv[1:])
     if len(args) != 1:
         parser.print_help()
@@ -54,7 +58,9 @@ def run():
     pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp, no_deps=options.no_deps,
                                                views=options.views, functions=options.functions,
                                                names_only=options.names_only, pretty=options.pretty,
-                                               schema=options.schema, source=options.source)
+                                               schema=options.schema, source=options.source,
+                                               config_file=options.config_file,
+                                               upgrade=options.upgrade)
 
 if __name__ == '__main__':
     run()
