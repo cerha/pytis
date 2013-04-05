@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-25 16:55+0100\n"
+"POT-Creation-Date: 2013-04-05 09:03+0200\n"
 "PO-Revision-Date: 2011-12-29 12:19+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: French <wiking@lists.freebsoft.org>\n"
@@ -118,31 +118,31 @@ msgstr "La taille minimale de pixels %(minsize)s est dépassée"
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Format non pris en charge %(format)s ; formats valides : %(formats)s"
 
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:517
-#: ../lib/pytis/web/form.py:530
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:516
+#: ../lib/pytis/web/form.py:529
 msgid "Submit"
 msgstr "Envoyer"
 
-#: ../lib/pytis/web/field.py:551
+#: ../lib/pytis/web/field.py:638
 msgid "today"
 msgstr "aujourd'hui"
 
 #. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../lib/pytis/web/field.py:593 ../lib/pytis/web/field.py:639
+#: ../lib/pytis/web/field.py:680 ../lib/pytis/web/field.py:726
 msgid "Yes"
 msgstr "Oui"
 
-#: ../lib/pytis/web/field.py:593 ../lib/pytis/web/field.py:639
+#: ../lib/pytis/web/field.py:680 ../lib/pytis/web/field.py:726
 msgid "No"
 msgstr "Non"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:613
+#: ../lib/pytis/web/field.py:700
 msgid "image"
 msgstr "image"
 
-#: ../lib/pytis/web/field.py:615
+#: ../lib/pytis/web/field.py:702
 msgid "file"
 msgstr "fichier"
 
@@ -154,35 +154,35 @@ msgstr ""
 msgid "Export the contents of this field into PDF"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:517
+#: ../lib/pytis/web/form.py:516
 msgid "Undo all changes"
 msgstr "Annuler les modifications"
 
-#: ../lib/pytis/web/form.py:556
+#: ../lib/pytis/web/form.py:555
 msgid "Submit the form"
 msgstr "Envoyer le formulaire"
 
-#: ../lib/pytis/web/form.py:559
+#: ../lib/pytis/web/form.py:558
 msgid "Reset"
 msgstr "Effacer"
 
-#: ../lib/pytis/web/form.py:684
+#: ../lib/pytis/web/form.py:683
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Les champs marqués d'un astérisque sont obligatoires."
 
 #. Label of filter selection box.
 #. Filtering limits the displayed form records by
 #. certain criterias.
-#: ../lib/pytis/web/form.py:831 ../lib/pytis/web/form.py:1719
+#: ../lib/pytis/web/form.py:830 ../lib/pytis/web/form.py:1718
 msgid "Filter"
 msgstr "Filtre"
 
-#: ../lib/pytis/web/form.py:833
+#: ../lib/pytis/web/form.py:832
 #, fuzzy
 msgid "Apply Filter"
 msgstr "Filtre"
 
-#: ../lib/pytis/web/form.py:1060
+#: ../lib/pytis/web/form.py:1059
 #, fuzzy
 msgid "Profile"
 msgstr "fichier"
@@ -190,27 +190,27 @@ msgstr "fichier"
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1268
+#: ../lib/pytis/web/form.py:1267
 msgid "All items"
 msgstr "Tous les éléments"
 
-#: ../lib/pytis/web/form.py:1316
+#: ../lib/pytis/web/form.py:1315
 msgid "Popup the menu of actions for this record"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1403
+#: ../lib/pytis/web/form.py:1402
 msgid "Sum"
 msgstr "Somme"
 
-#: ../lib/pytis/web/form.py:1404
+#: ../lib/pytis/web/form.py:1403
 msgid "Average"
 msgstr "Moyenne"
 
-#: ../lib/pytis/web/form.py:1405
+#: ../lib/pytis/web/form.py:1404
 msgid "Minimum"
 msgstr "Minimum"
 
-#: ../lib/pytis/web/form.py:1406
+#: ../lib/pytis/web/form.py:1405
 msgid "Maximum"
 msgstr "Maximum"
 
@@ -218,31 +218,31 @@ msgstr "Maximum"
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1460
+#: ../lib/pytis/web/form.py:1459
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
 msgstr[0] "%d résultat correspond à votre recherche."
 msgstr[1] "%d résultats correspondent à votre recherche."
 
-#: ../lib/pytis/web/form.py:1470
+#: ../lib/pytis/web/form.py:1469
 msgid "Loading form data..."
 msgstr ""
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1556
+#: ../lib/pytis/web/form.py:1555
 msgid "No records."
 msgstr "Aucun résultat."
 
-#: ../lib/pytis/web/form.py:1559
+#: ../lib/pytis/web/form.py:1558
 msgid "Total records:"
 msgstr "Nombre total de résultats :"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1567
+#: ../lib/pytis/web/form.py:1566
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Résultats affichés %(first)s-%(last)s sur un total de %(total)s"
@@ -262,19 +262,19 @@ msgstr "Résultats affichés %(first)s-%(last)s sur un total de %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1664
+#: ../lib/pytis/web/form.py:1663
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s sur \"%(prefix)s\":"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1669
+#: ../lib/pytis/web/form.py:1668
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Passer au premier résultat commençant par \"%s\""
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1693
+#: ../lib/pytis/web/form.py:1692
 msgid "Change filters"
 msgstr ""
 
@@ -282,56 +282,56 @@ msgstr ""
 #. keyboard combination to use for selection
 #. without unexpected invocation of the
 #. option.
-#: ../lib/pytis/web/form.py:1724 ../lib/pytis/web/form.py:1754
-#: ../lib/pytis/web/form.py:1772
+#: ../lib/pytis/web/form.py:1723 ../lib/pytis/web/form.py:1753
+#: ../lib/pytis/web/form.py:1771
 msgid "(Use ALT+arrow down to select)"
 msgstr "(Utiliser la touche ALT + flèche vers le bas pour sélectionner)"
 
 #. Search button label.
-#: ../lib/pytis/web/form.py:1745 ../lib/pytis/web/form.py:1788
+#: ../lib/pytis/web/form.py:1744 ../lib/pytis/web/form.py:1787
 msgid "Search"
 msgstr "Rechercher"
 
 #. Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse
 #. forward/backwards.
-#: ../lib/pytis/web/form.py:1751 ../lib/pytis/web/form.py:1753
+#: ../lib/pytis/web/form.py:1750 ../lib/pytis/web/form.py:1752
 msgid "Page"
 msgstr "Page"
 
-#: ../lib/pytis/web/form.py:1759
+#: ../lib/pytis/web/form.py:1758
 msgid "Previous"
 msgstr "Précédent"
 
-#: ../lib/pytis/web/form.py:1760
+#: ../lib/pytis/web/form.py:1759
 msgid "Go to previous page"
 msgstr "Page précédente"
 
-#: ../lib/pytis/web/form.py:1762
+#: ../lib/pytis/web/form.py:1761
 msgid "Next"
 msgstr "Suivant"
 
-#: ../lib/pytis/web/form.py:1763
+#: ../lib/pytis/web/form.py:1762
 msgid "Go to next page"
 msgstr "Page suivante"
 
-#: ../lib/pytis/web/form.py:1769 ../lib/pytis/web/form.py:1771
+#: ../lib/pytis/web/form.py:1768 ../lib/pytis/web/form.py:1770
 msgid "Records per page"
 msgstr "Résultats par page"
 
-#: ../lib/pytis/web/form.py:1776
+#: ../lib/pytis/web/form.py:1775
 msgid "Go"
 msgstr "Aller"
 
-#: ../lib/pytis/web/form.py:1783
+#: ../lib/pytis/web/form.py:1782
 msgid "Search expression"
 msgstr "Rechercher l'expression"
 
-#: ../lib/pytis/web/form.py:1789
+#: ../lib/pytis/web/form.py:1788
 msgid "Cancel"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1826
+#: ../lib/pytis/web/form.py:1825
 msgid "filtered by: "
 msgstr ""
 
@@ -359,306 +359,255 @@ msgstr ""
 msgid "Add figure caption"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:189
+#: ../resources/scripts/pytis-ckeditor.js:205
+msgid "Definition list"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:212
 msgid "Default"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:190
+#: ../resources/scripts/pytis-ckeditor.js:213
 msgid "Czech"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:191
+#: ../resources/scripts/pytis-ckeditor.js:214
 msgid "English"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:192
+#: ../resources/scripts/pytis-ckeditor.js:215
 msgid "German"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:193
+#: ../resources/scripts/pytis-ckeditor.js:216
 msgid "Spanish"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:194
+#: ../resources/scripts/pytis-ckeditor.js:217
 msgid "French"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:195
+#: ../resources/scripts/pytis-ckeditor.js:218
 msgid "Russian"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:196
+#: ../resources/scripts/pytis-ckeditor.js:219
 msgid "Latin"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:420
+#: ../resources/scripts/pytis-ckeditor.js:443
 msgid "You must choose an object to include"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:533
+#: ../resources/scripts/pytis-ckeditor.js:556
 msgid "Upload successful"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:546
+#: ../resources/scripts/pytis-ckeditor.js:569
 msgid "Upload new file"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:558
+#: ../resources/scripts/pytis-ckeditor.js:581
 msgid "Select a file to be uploaded."
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:567
+#: ../resources/scripts/pytis-ckeditor.js:590
 msgid "Title"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:580
+#: ../resources/scripts/pytis-ckeditor.js:603
 msgid "Accessible description"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:628
+#: ../resources/scripts/pytis-ckeditor.js:651
 #, fuzzy
 msgid "Image"
 msgstr "image"
 
-#: ../resources/scripts/pytis-ckeditor.js:682
+#: ../resources/scripts/pytis-ckeditor.js:705
 msgid "Display as"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:683
+#: ../resources/scripts/pytis-ckeditor.js:706
 msgid "Full size"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:684
+#: ../resources/scripts/pytis-ckeditor.js:707
 msgid "Small preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:685
+#: ../resources/scripts/pytis-ckeditor.js:708
 msgid "Medium preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:686
+#: ../resources/scripts/pytis-ckeditor.js:709
 msgid "Large preview"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:690
+#: ../resources/scripts/pytis-ckeditor.js:713
 msgid "Text wrapping"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:691
+#: ../resources/scripts/pytis-ckeditor.js:714
 msgid "No wrapping"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:692
+#: ../resources/scripts/pytis-ckeditor.js:715
 msgid "Wrap right"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:693
+#: ../resources/scripts/pytis-ckeditor.js:716
 msgid "Wrap left"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:734
+#: ../resources/scripts/pytis-ckeditor.js:757
 msgid "Behavior"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:735
+#: ../resources/scripts/pytis-ckeditor.js:758
 msgid "Enlarge on click"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:737
+#: ../resources/scripts/pytis-ckeditor.js:760
 msgid "Link"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:738
+#: ../resources/scripts/pytis-ckeditor.js:761
 msgid "Link to anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:780
+#: ../resources/scripts/pytis-ckeditor.js:803
 msgid "Select the anchor"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:810
+#: ../resources/scripts/pytis-ckeditor.js:833
 msgid "Link target (URL)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:831
-#: ../resources/scripts/pytis-ckeditor.js:958
+#: ../resources/scripts/pytis-ckeditor.js:854
+#: ../resources/scripts/pytis-ckeditor.js:971
 msgid "Audio"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:848
+#: ../resources/scripts/pytis-ckeditor.js:871
 msgid "Video"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:865
+#: ../resources/scripts/pytis-ckeditor.js:888
 msgid "Attachment"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:904
-#: ../resources/scripts/pytis-ckeditor.js:907
+#: ../resources/scripts/pytis-ckeditor.js:929
+#: ../resources/scripts/pytis-ckeditor.js:932
 msgid "Exercise"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:917
+#: ../resources/scripts/pytis-ckeditor.js:942
 msgid "Type of exercise"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:918
-msgid "True-False Statements"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:919
-msgid "Multiple Choice Questions"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:920
-msgid "Gap Filling"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:921
-msgid "Cloze"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:922
-msgid "Exposed Cloze"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:923
-msgid "NumberedCloze"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:924
-msgid "NumberedExposedCloze"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:925
-#, fuzzy
-msgid "Selections"
-msgstr "Actions"
-
-#: ../resources/scripts/pytis-ckeditor.js:926
-msgid "SentenceCompletion"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:927
-msgid "Transformation"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:928
-msgid "Substitution"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:929
-#, fuzzy
-msgid "Dictation"
-msgstr "Actions"
-
-#: ../resources/scripts/pytis-ckeditor.js:934
+#: ../resources/scripts/pytis-ckeditor.js:947
 #, fuzzy
 msgid "Instructions"
 msgstr "Actions"
 
-#: ../resources/scripts/pytis-ckeditor.js:942
+#: ../resources/scripts/pytis-ckeditor.js:955
 msgid "Example"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:948
-msgid "Exercise body"
+#: ../resources/scripts/pytis-ckeditor.js:961
+msgid "Exercise Definition"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:964
+#: ../resources/scripts/pytis-ckeditor.js:977
 msgid "No sound"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:968
+#: ../resources/scripts/pytis-ckeditor.js:981
 msgid "Sound file"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:982
-msgid "No audio version"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:986
-msgid "Audio version"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:999
-#: ../resources/scripts/pytis-ckeditor.js:1003
-msgid "Transcript"
-msgstr ""
-
-#: ../resources/scripts/pytis-ckeditor.js:1009
-#: ../resources/scripts/pytis-ckeditor.js:1013
+#: ../resources/scripts/pytis-ckeditor.js:998
+#: ../resources/scripts/pytis-ckeditor.js:1002
 msgid "Reading"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1019
-#: ../resources/scripts/pytis-ckeditor.js:1023
+#: ../resources/scripts/pytis-ckeditor.js:1008
+#: ../resources/scripts/pytis-ckeditor.js:1012
 msgid "Explanation"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1199
+#: ../resources/scripts/pytis-ckeditor.js:1172
 msgid "MathML"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1218
+#: ../resources/scripts/pytis-ckeditor.js:1191
 msgid "Guide on "
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1230
+#: ../resources/scripts/pytis-ckeditor.js:1203
 msgid ""
 "To copy text into external editor, use Ctrl+A Ctrl+X. To paste text from "
 "external editor, use Ctrl+V. (Press CMD instead of Ctrl on Mac.)"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1235
+#: ../resources/scripts/pytis-ckeditor.js:1208
 msgid "Switch ASCII / MathML editing"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1374
+#: ../resources/scripts/pytis-ckeditor.js:1347
 msgid "Editing MathML will destroy your ASCII formula. Continue?"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1389
-#: ../resources/scripts/pytis-ckeditor.js:1390
+#: ../resources/scripts/pytis-ckeditor.js:1362
+#: ../resources/scripts/pytis-ckeditor.js:1363
 msgid "Language"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1509
-#: ../resources/scripts/pytis-ckeditor.js:1512
+#: ../resources/scripts/pytis-ckeditor.js:1482
+#: ../resources/scripts/pytis-ckeditor.js:1485
 msgid "Index item"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1519
+#: ../resources/scripts/pytis-ckeditor.js:1492
 msgid "Index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1521
+#: ../resources/scripts/pytis-ckeditor.js:1494
 msgid "You must choose an index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1523
+#: ../resources/scripts/pytis-ckeditor.js:1496
 msgid "Index of Terms"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1524
+#: ../resources/scripts/pytis-ckeditor.js:1497
 msgid "Name Index"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1525
+#: ../resources/scripts/pytis-ckeditor.js:1498
 msgid "Index of Places"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1530
+#: ../resources/scripts/pytis-ckeditor.js:1503
 msgid "Item"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:1532
+#: ../resources/scripts/pytis-ckeditor.js:1505
 msgid "Index item cannot be empty."
 msgstr ""
 
 #: ../resources/scripts/pytis.js:112
 msgid "Failed loading form."
 msgstr ""
+
+#, fuzzy
+#~ msgid "Selections"
+#~ msgstr "Actions"
+
+#, fuzzy
+#~ msgid "Dictation"
+#~ msgstr "Actions"
 
 #~ msgid "Apply"
 #~ msgstr "Appliquer"
