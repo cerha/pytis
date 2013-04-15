@@ -122,7 +122,7 @@
   :type 'integer)
 
 (defvar gensqlalchemy-specification-directory "dbdefs")
-(defvar gensqlalchemy-common-directories '("lib" "db"))
+(defvar gensqlalchemy-common-directories '("lib" "db" "dbdefs"))
 
 (define-minor-mode gensqlalchemy-mode
   "Toggle gensqlalchemy mode.
