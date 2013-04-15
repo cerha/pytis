@@ -1936,6 +1936,7 @@ class SQLFunctional(_SQLTabular):
     RECORD = 'RECORD'
 
     def __new__(cls, metadata, search_path):
+        _set_current_search_path(search_path)
         result_type = cls.result_type
         if result_type is None:
             columns = ()
