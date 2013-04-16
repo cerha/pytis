@@ -1026,6 +1026,7 @@ class BrowseForm(LayoutForm):
         else:
             uri_provider_ = None
         super(BrowseForm, self).__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
+        data = self._row.data()
         def param(name, func=None, default=None):
             # Consider request params only if they belong to the current form.
             if req.param('form_name') == self._name and req.has_param(name):
@@ -1076,7 +1077,7 @@ class BrowseForm(LayoutForm):
         # Determine the current sorting.
         self._user_sorting = None
         sorting_column, direction = param('sort', str), param('dir', str)
-        if sorting_column and direction and self._row.data().find_column(sorting_column):
+        if sorting_column and direction and data.find_column(sorting_column):
             direction = dict([(b, a) for a, b in self._SORTING_DIRECTIONS.items()]).get(direction)
             if direction:
                 self._user_sorting = (sorting_column, direction)
@@ -1122,7 +1123,7 @@ class BrowseForm(LayoutForm):
         if search is None:
             search_string = param('search', str)
             if search_string:
-                type = self._row.data().find_column(self._key).type()
+                type = data.find_column(self._key).type()
                 value, error = type.validate(search_string)
                 if not error:
                     search = pytis.data.EQ(self._key, value)
@@ -1171,6 +1172,10 @@ class BrowseForm(LayoutForm):
         except:
             self._lang = None
         self._init_filter_fields(req, filter_fields or ())
+        if data.arguments():
+            assert arguments or self._filter_fields_arguments
+        else:
+            assert not arguments and not self._filter_fields_arguments
         self._immediate_filters = immediate_filters
         self._top_actions = top_actions
         self._bottom_actions = bottom_actions
