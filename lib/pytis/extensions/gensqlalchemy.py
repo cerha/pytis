@@ -66,6 +66,7 @@ see all the most important constructs there.
 
 from __future__ import unicode_literals
 
+import alembic.ddl.base
 import codecs
 import collections
 import copy
@@ -1592,6 +1593,11 @@ class SQLTable(_SQLTabular):
     index_columns = ()
     triggers = ()
 
+    _PYTIS_TYPE_MAPPING = {'VARCHAR': 'TEXT',
+                           'BIGSERIAL': 'BIGINT',
+                           'SERIAL': 'INTEGER',
+                           }
+    
     def __new__(cls, metadata, search_path):
         table_name = cls.pytis_name()
         key = []
@@ -1696,21 +1702,37 @@ class SQLTable(_SQLTabular):
 
     def _pytis_upgrade(self, metadata):
         db_table = self._pytis_db_table(metadata)
+        table_name = db_table.name
         for c in db_table.c:
             if c.name not in self.c:
-                command = ('ALTER TABLE "%s"."%s" DROP COLUMN "%s"' %
-                           (self.schema, self.pytis_name(real=True), c.name,))
-                _engine.execute(sqlalchemy.text(command))
+                _engine.execute(alembic.ddl.base.DropColumn(table_name, c, self.schema))
         for c in self.c:
+            if c.pytis_orig_table != self.name:
+                continue
             if c.name not in db_table.c:
-                # TODO
-                command = ('ALTER TABLE "%s"."%s" ADD COLUMN %s' %
-                           (self.schema, self.pytis_name(real=True), c,))
-                _engine.execute(sqlalchemy.text(command))
+                _engine.execute(alembic.ddl.base.AddColumn(table_name, c, self.schema))
             elif c != db_table.c[c.name]:
-                # TODO
-                command = ('-- ALTER TABLE "%s"."%s" ALTER COLUMN "%s"' %
-                           (self.schema, self.pytis_name(real=True), c.name,))
+                orig_c = db_table.c[c.name]
+                if orig_c.type != c.type and not isinstance(orig_c.type, sqlalchemy.types.NullType):
+                    new_type = str(c.type)
+                    new_type = self._PYTIS_TYPE_MAPPING.get(new_type, new_type)
+                    orig_type = str(orig_c.type)
+                    if orig_type != new_type:
+                        ddl = alembic.ddl.base.ColumnType(table_name, c.name, c.type,
+                                                          schema=self.schema,
+                                                          existing_type=orig_c.type)
+                        _engine.execute(ddl)
+                if orig_c.server_default != c.server_default:
+                    ddl = alembic.ddl.base.ColumnDefault(table_name, c.name, c.server_default,
+                                                         schema=self.schema,
+                                                         existing_server_default=orig_c.server_default)
+                    _engine.execute(ddl)
+                if (not orig_c.primary_key and not c.primary_key and
+                    orig_c.nullable != c.nullable):
+                    ddl = alembic.ddl.base.ColumnNullable(table_name, c.name, c.nullable,
+                                                          schema=self.schema,
+                                                          existing_nullable=orig_c.nullable)
+                    _engine.execute(ddl)
             
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
