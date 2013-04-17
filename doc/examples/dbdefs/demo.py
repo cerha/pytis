@@ -359,6 +359,14 @@ class TableFunction(sql.SQLPyFunction):
                 result.append([i, j, i * j])
         return result
 
+class TableFunctionView(sql.SQLView):
+    name = 'function_view'
+    @classmethod
+    def query(class_):
+        f = sql.t.TableFunction(4)
+        return sqlalchemy.select(['*'], from_obj=[f])
+    depends_on = (TableFunction,)
+
 class MultilinePyArguments(sql.SQLPyFunction):
     name = 'multilineargs'
     arguments = tuple([sql.Column(n, pytis.data.Integer()) for n in 'abcdefghi'])

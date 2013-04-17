@@ -175,7 +175,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             events = string.join(trigger.events, ' OR ')
             table = object_by_path(trigger.table.name, trigger.search_path())
             row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
-            trigger_call = trigger(*trigger.arguments).value
+            trigger_call = trigger(*trigger.arguments)
             command = (('CREATE TRIGGER "%s__%s" %s %s ON %s\n'
                         'FOR EACH %s EXECUTE PROCEDURE %s') %
                        (trigger.name, trigger.position, trigger.position, events, table,
@@ -1992,9 +1992,9 @@ class SQLFunctional(_SQLTabular):
         # (i.e. getattr(sqlalchemy.sql.expression.func, name)(*arguments))
         # since this puts argument symbols instead of argument values into the
         # argument list.
-        argument_list = [_sql_value_escape(a) for a in arguments]
+        argument_list = [unicode(_sql_value_escape(a)) for a in arguments]
         expression = u'%s(%s)' % (name, string.join(argument_list, ', '),)
-        return sqlalchemy.literal(expression)
+        return sqlalchemy.sql.expression.TextClause(expression)
 
     def body(self):
         """Return function body as basestring.
