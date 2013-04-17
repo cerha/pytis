@@ -243,7 +243,7 @@ class SimplifiedEditableView(sql.SQLView):
                                  from_obj=[sql.t.Foo.join(sql.t.Bar)])
 
 class BogusView(sql.SQLView):
-    "One should avoid using outer joins when possible."
+    "One should avoid using full outer joins when possible."
     name = 'bogus_view'
     schemas = ((Private, 'public',),)
     @classmethod
