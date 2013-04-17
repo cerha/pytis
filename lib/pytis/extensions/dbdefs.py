@@ -35,6 +35,7 @@ false = sqlalchemy.sql.false()
 between = sqlalchemy.sql.between
 select = sqlalchemy.select
 exists = sqlalchemy.exists
+distinct = sqlalchemy.distinct
 
 def dval(date):
     """Return literal date value.
@@ -56,6 +57,17 @@ def ival(number):
     """
     return sqlalchemy.literal_column(str(number), type_=sqlalchemy.Integer())
 
+def fval(number):
+    """Return literal float value.
+
+    Arguments:
+
+      number -- float value
+
+    """
+    return sqlalchemy.literal_column(str(number), type_=sqlalchemy.Float())
+
+    
 def itval(interval):
     """Return literal interval value.
 
