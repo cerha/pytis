@@ -117,7 +117,7 @@ def ittype(expr):
     """
     return sqlalchemy.cast(expr, sqlalchemy.Interval())
     
-def stype(expr):
+def stype(expr, **kwargs):
     """Return SQLAlchemy expression casted to string.
 
     Arguments:
@@ -125,7 +125,7 @@ def stype(expr):
       expr -- 'sqlalchemy.sql.expression.ClauseElement' instance
 
     """
-    return sqlalchemy.cast(expr, sqlalchemy.String())
+    return sqlalchemy.cast(expr, sqlalchemy.String(**kwargs))
 
 def if_(condition, then_, else_):
     """Return simple conditional expression.
