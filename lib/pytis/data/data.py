@@ -1318,22 +1318,22 @@ def ANY_OF(column, *args):
     assert all([isinstance(a, Value) for a in args]), args
     return OR(*[EQ(column, value) for value in args])
 
-def IN(column_id, data, table_column_id, table_condition):
-    """Podmínkový operátor příslušnosti.
+def IN(column_id, data, table_column_id, table_condition, table_arguments=None):
+    """Operator testing presence in a subquery.
 
-    Argumenty:
+    Arguments:
 
-      column_id -- jméno sloupce (string), který má být prvkem množiny
-      data -- instance třídy 'Data' odpovídající tabulce, ze které má být
-        proveden výběr množiny
-      table_column_id -- jméno sloupce (string) 'table', ze kterého má být
-        proveden výběr množiny
-      table_condition -- podmínka omezující výběr z 'table'
+      column_id -- column id (string), the value of which is tested for
+        presence in the subquery
+      data -- 'Data' instance, to perform the subquery on
+      table_column_id -- column id (string) in 'data' returning the subquery values
+      table_condition -- condition limiting the selection from 'data'
+      table_arguments -- arguments passed to 'data' (if 'data' is on a table function).
 
-    Tento operátor je primitivní.
+    This operator is primitive.
 
     """
-    return Operator('IN', column_id, data, table_column_id, table_condition)
+    return Operator('IN', column_id, data, table_column_id, table_condition, table_arguments)
 
 _ft_query_id = None
 def FT(column_id, query):

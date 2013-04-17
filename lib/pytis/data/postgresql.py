@@ -1663,12 +1663,21 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 sqlop = (' %s ' % (op_name == 'AND' and 'and' or 'or'))
                 expression = sqlop.join(exps)
         elif op_name == 'IN':
-            assert len(op_args) == 4, ('Invalid number or arguments', op_args)
-            col, data, table_col, cond = op_args
+            assert len(op_args) == 5, ('Invalid number or arguments', op_args)
+            col, data, table_col, cond, arguments = op_args
             table = data._key_binding[0].table()
             if data._condition is not None:
                 cond = pytis.data.AND(data._condition, cond)
             condition = data._pdbb_condition2sql(cond)
+            if arguments:
+                args = []
+                for i, b in enumerate(data._arguments):
+                    type_ = b.type()
+                    if not isinstance(type_, Type):
+                        type_ = type_()
+                    arg_value = arguments.get(b.id(), type_.default_value())
+                    args.append(self._pg_value(arg_value))
+                table += '(' + ', '.join(args) + ')'
             expression = '%s in (select %s from %s where %s)' % \
                          (col, table_col, table, condition)
         elif op_name == 'FT':

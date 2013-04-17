@@ -2692,8 +2692,54 @@ class ThreadTest(_DBBaseTest):
             time.sleep(1)
 #tests.add(ThreadTest)
 
-class OperatorTest(unittest.TestCase):
-    def test_it(self):
+class OperatorTest(_DBBaseTest):
+    def setUp(self):
+        _DBBaseTest.setUp(self)
+        try:
+            self._sql_command("create table a (a text, b int)")
+            self._sql_command("create type t as (m int, n int)")
+            self._sql_command("create or replace function f(x int) returns setof t as $$\n"
+                              "begin\n"
+                              "return query select unnest(ARRAY[x, x+1, x+2]), unnest(ARRAY[(x^2)::int, ((x+1)^2)::int, ((x+2)^2)::int]);\n"
+                              "end;\n"
+                              "$$ language plpgsql stable")
+            self._sql_command("insert into a values ('A', 1)")
+            self._sql_command("insert into a values ('B', 2)")
+            self._sql_command("insert into a values ('C', 3)")
+            self._sql_command("insert into a values ('D', 4)")
+        except:
+            self.tearDown()
+            raise
+    def tearDown(self):
+        try:
+            self._sql_command("drop table a")
+            self._sql_command("drop type t cascade")
+        except:
+            pass
+        _DBBaseTest.tearDown(self)
+    def test_in(self):
+        a = pytis.data.dbtable('a', ('a', 'b'),
+                               pytis.data.DBConnection(**_connection_data))
+        f = pytis.data.dbtable('f', (('m', pytis.data.Integer()), ('n', pytis.data.Integer())),
+                               pytis.data.DBConnection(**_connection_data),
+                               arguments=(pytis.data.DBColumnBinding('x', '', 'x', type_=pytis.data.Integer()),))
+        for condition, values in (
+            (None, ['A', 'B', 'C', 'D']),
+            (pytis.data.GT('b', pytis.data.ival(2)), ['C', 'D']),
+            (pytis.data.LE('b', pytis.data.ival(2)), ['A', 'B']),
+            (pytis.data.IN('b', f, 'n', None, table_arguments={'x': pytis.data.ival(1)}), ['A', 'D']),
+            (pytis.data.IN('b', f, 'n', None, table_arguments={'x': pytis.data.ival(2)}), ['D']),
+            ):
+            result = []
+            a.select(condition=condition)
+            while 1:
+                row = a.fetchone()
+                if not row:
+                    break
+                result.append(row['a'].value())
+            a.close()
+            assert result == values, '%s: expected %r, got %r' % (condition, values, result)
+    def test_equality(self):
         a = pytis.data.EQ('a', sval('a'))
         b = pytis.data.EQ('b', sval('a'))
         c = pytis.data.EQ('a', pytis.data.Value(pytis.data.String(maxlen=5), 'a'))

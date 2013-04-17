@@ -2,7 +2,7 @@
 
 # Access rights
 # 
-# Copyright (C) 2002-2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -302,7 +302,7 @@ class RestrictedData(Data):
                 result+= self._check_access_condition_columns(a)
             return result
         elif condition.name == 'IN':
-            column, data, table_column, table_condition = condition.args()
+            column, data, table_column, table_condition, table_arguments = condition.args()
             # Toto nefunguje pro vzdálený přístup, ale nelze svítit...
             data._check_access_columns(table_column)
             data._check_access_condition(table_condition)
