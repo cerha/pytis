@@ -66,7 +66,10 @@ see all the most important constructs there.
 
 from __future__ import unicode_literals
 
-import alembic.ddl.base
+try:
+    import alembic.ddl.base
+except ImportError:
+    alembic = None
 import codecs
 import collections
 import copy
@@ -2632,6 +2635,9 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
                   config_file, upgrade):
     global _output
     if upgrade:
+        if alembic is None:
+            sys.stderr.write("Error: `alembic' package missing, can't perform upgrade.\n")
+            return
         _output = cStringIO.StringIO()
     else:
         _output = sys.stdout
