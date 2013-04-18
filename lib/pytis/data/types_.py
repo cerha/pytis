@@ -2206,22 +2206,8 @@ class LTree(Type):
         return WMValue(self, object), None
     
     def sqlalchemy_type(self):
-        class LTreeType(sqlalchemy.types.UserDefinedType):
-
-            def get_col_spec(self):
-                return 'ltree'
-     
-            def bind_processor(self, dialect):
-                def process(value):
-                    return value
-                return process
-     
-            def result_processor(self, dialect, coltype):
-                def process(value):
-                    return value
-                return process
-
-        return LTreeType()
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.LTreeType()
 
 
 class Array(Limited):

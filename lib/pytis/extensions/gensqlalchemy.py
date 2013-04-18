@@ -309,6 +309,8 @@ def _get_columns(dialect, connection, relation_name, schema):
         AND a.attnum > 0 AND NOT a.attisdropped
         ORDER BY a.attnum
     """
+    if 'ltree' not in dialect.ischema_names:
+        dialect.ischema_names['ltree'] = LTreeType
     s = sqlalchemy.text(SQL_COLS,
                  bindparams=[sqlalchemy.bindparam('relation_name', type_=sqlalchemy.Unicode),
                              sqlalchemy.bindparam('schema', type_=sqlalchemy.Unicode)],
@@ -384,6 +386,21 @@ def compile_string(element, compiler, **kwargs):
         return 'TEXT'
     else:
         return 'VARCHAR(%d)' % (element.length,)
+
+class LTreeType(sqlalchemy.types.UserDefinedType):
+
+    def get_col_spec(self):
+        return 'ltree'
+
+    def bind_processor(self, dialect):
+        def process(value):
+            return value
+        return process
+
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            return value
+        return process
 
 @compiles(sqlalchemy.schema.CreateTable, 'postgresql')
 def visit_create_table(element, compiler, **kwargs):
