@@ -1294,6 +1294,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                                       for c in equivalent_column_instances]
                 for c in self._original_columns():
                     tc = c.element if isinstance(c, sqlalchemy.sql.expression._Label) else c
+                    if not isinstance(tc, sqlalchemy.Column):
+                        continue
                     table, name = tc.table, tc.name
                     if isinstance(table, sqlalchemy.sql.expression.Alias):
                         table = table.element
