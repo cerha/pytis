@@ -1902,7 +1902,11 @@ class _SQLReplaceable(SQLObject):
 
     def _pytis_definition(self, connection):
         return None
-        
+
+    def _pytis_set_definition_schema(self, connection):
+        query = ("set search_path to public")
+        connection.execute(sqlalchemy.text(query))
+
     def pytis_changed(self, metadata, strict=True):        
         if super(_SQLReplaceable, self).pytis_changed(metadata, strict=strict):
             return True
@@ -1995,6 +1999,7 @@ class SQLView(_SQLReplaceable, _SQLTabular):
                 self._pytis_view_dependencies)
 
     def _pytis_definition(self, connection):
+        self._pytis_set_definition_schema(connection)
         name = self.pytis_name(real=True)
         schema = self.schema
         query = ("select pg_get_ruledef(pg_rewrite.oid) from pg_rewrite join "
@@ -2277,6 +2282,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         
     def _pytis_definition(self, connection):
         # This can't distinguish between functions overloaded by argument types
+        self._pytis_set_definition_schema(connection)
         name = self.pytis_name(real=True)
         schema = self.schema
         nargs = len(self.arguments)
