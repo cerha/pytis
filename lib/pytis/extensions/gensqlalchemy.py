@@ -315,9 +315,9 @@ def _get_columns(dialect, connection, relation_name, schema):
     if 'ltree' not in dialect.ischema_names:
         dialect.ischema_names['ltree'] = LTreeType
     s = sqlalchemy.text(SQL_COLS,
-                 bindparams=[sqlalchemy.bindparam('relation_name', type_=sqlalchemy.Unicode),
-                             sqlalchemy.bindparam('schema', type_=sqlalchemy.Unicode)],
-                 typemap={'attname': sqlalchemy.Unicode, 'default': sqlalchemy.Unicode})
+                        bindparams=[sqlalchemy.bindparam('relation_name', type_=sqlalchemy.String),
+                                    sqlalchemy.bindparam('schema', type_=sqlalchemy.String)],
+                        typemap={'attname': sqlalchemy.Unicode, 'default': sqlalchemy.Unicode})
     c = connection.execute(s, relation_name=relation_name, schema=schema)
     rows = c.fetchall()
     domains = dialect._load_domains(connection)
@@ -1082,7 +1082,8 @@ class SQLObject(object):
         return class_.name
 
     def pytis_exists(self, metadata):
-        sys.stderr.write("Can't check existence of an object of type %s.\n" % (self.pytis_kind(),))
+        sys.stderr.write("Warning: Can't check existence of an object of type %s: %s.\n" %
+                         (self.pytis_kind(), self.name,))
         return True        
 
     def pytis_changed(self, metadata, strict=True):
@@ -1095,7 +1096,8 @@ class SQLObject(object):
         self.drop(_engine)
 
     def _pytis_upgrade(self, metadata):
-        sys.stderr.write("Can't upgrade an object of type %s.\n" % (self.pytis_kind(),))
+        sys.stderr.write("Warning: Can't upgrade an object of type %s: %s.\n" %
+                         (self.pytis_kind(), self.name,))
         
     def pytis_upgrade(self, metadata, strict=True):
         if not self.pytis_exists(metadata):
@@ -1332,6 +1334,51 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         connection = metadata.pytis_engine.connect()
         return metadata.pytis_engine.dialect.has_table(connection, name, schema=self.schema)
 
+    _PYTIS_TYPE_MAPPING = {'VARCHAR': 'TEXT',
+                           'BIGSERIAL': 'BIGINT',
+                           'SERIAL': 'INTEGER',
+                           }
+
+    def _pytis_ctype_changed(self, column_1, column_2):
+        if (column_1.type != column_2.type and
+            not isinstance(column_2.type, sqlalchemy.types.NullType)):
+            new_type = str(column_2.type)
+            new_type = self._PYTIS_TYPE_MAPPING.get(new_type, new_type)
+            orig_type = str(column_1.type)
+            return orig_type != new_type
+        else:
+            return False
+        
+    def _pytis_defaults_changed(self, column_1, column_2):
+        default_1 = column_1.server_default
+        default_2 = column_2.server_default
+        if ((default_1 is None and default_2 is not None) or
+            (default_1 is not None and default_2 is None)):
+            return True
+        if default_1 is None and default_2 is None:
+            return False
+        lower = (isinstance(column_1.type, sqlalchemy.Boolean) and
+                 isinstance(column_2.type, sqlalchemy.Boolean))
+        def textify(default):
+            for_update = ' FOR UPDATE' if default.for_update else ''
+            if not isinstance(default, basestring):
+                default = default.arg
+            if not isinstance(default, basestring):
+                default = default.text
+            if lower:
+                default = default.lower()
+            default += for_update
+            return default
+        return textify(default_1) != textify(default_2)
+
+    def _pytis_distinct_columns(self, db_column, spec_column):
+        if (db_column.name != spec_column.name or
+            self._pytis_ctype_changed(db_column, spec_column) or
+            (not spec_column.primary_key and
+             (db_column.nullable != spec_column.nullable or
+              self._pytis_defaults_changed(db_column, spec_column)))):
+            return True
+        
     def _pytis_columns_changed(self, metadata):
         name = self.pytis_name(real=True)
         schema = self.schema
@@ -1340,8 +1387,12 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         columns = _get_columns(dialect, connection, name, schema)
         if len(columns) != len(self.c):
             return True
-        for c1, c2 in zip(columns, self.c):
-            if c1 != c2:
+        for c1_kwargs, c2 in zip(columns, self.c):
+            for orig, real in (('type', 'type_'), ('default', 'server_default'),):
+                c1_kwargs[real] = c1_kwargs[orig]
+                del c1_kwargs[orig]
+            c1 = sqlalchemy.Column(**c1_kwargs)
+            if self._pytis_distinct_columns(c1, c2):
                 return True
         return False
         
@@ -1612,11 +1663,6 @@ class SQLTable(_SQLTabular):
     with_oids = False
     index_columns = ()
     triggers = ()
-
-    _PYTIS_TYPE_MAPPING = {'VARCHAR': 'TEXT',
-                           'BIGSERIAL': 'BIGINT',
-                           'SERIAL': 'INTEGER',
-                           }
     
     def __new__(cls, metadata, search_path):
         table_name = cls.pytis_name()
@@ -1711,6 +1757,11 @@ class SQLTable(_SQLTabular):
             db_table = sqlalchemy.Table(name, metadata, schema=schema)
             metadata.pytis_inspector.reflecttable(db_table, None)
         return db_table
+
+    def _pytis_distinct_columns(self, db_column, spec_column):
+        if spec_column.pytis_orig_table != self.name:
+            return False
+        return super(SQLTable, self)._pytis_distinct_columns(db_column, spec_column)
         
     def pytis_changed(self, metadata, strict=True):
         if super(SQLTable, self).pytis_changed(metadata, strict=strict):
@@ -1733,16 +1784,12 @@ class SQLTable(_SQLTabular):
                 _engine.execute(alembic.ddl.base.AddColumn(table_name, c, self.schema))
             elif c != db_table.c[c.name]:
                 orig_c = db_table.c[c.name]
-                if orig_c.type != c.type and not isinstance(orig_c.type, sqlalchemy.types.NullType):
-                    new_type = str(c.type)
-                    new_type = self._PYTIS_TYPE_MAPPING.get(new_type, new_type)
-                    orig_type = str(orig_c.type)
-                    if orig_type != new_type:
-                        ddl = alembic.ddl.base.ColumnType(table_name, c.name, c.type,
-                                                          schema=self.schema,
-                                                          existing_type=orig_c.type)
-                        _engine.execute(ddl)
-                if orig_c.server_default != c.server_default:
+                if self._pytis_ctype_changed(orig_c, c):
+                    ddl = alembic.ddl.base.ColumnType(table_name, c.name, c.type,
+                                                      schema=self.schema,
+                                                      existing_type=orig_c.type)
+                    _engine.execute(ddl)
+                if not c.primary_key and self._pytis_defaults_changed(orig_c, c):
                     ddl = alembic.ddl.base.ColumnDefault(table_name, c.name, c.server_default,
                                                          schema=self.schema,
                                                          existing_server_default=orig_c.server_default)
@@ -1867,7 +1914,10 @@ class _SQLReplaceable(SQLObject):
             return True
         transaction = connection.begin()
         try:
+            connection._run_visitor(_PytisSchemaGenerator, self, checkfirst=False)
             new_definition = self._pytis_definition(connection)
+        except:
+            new_definition = None
         finally:
             transaction.rollback()
         return definition != new_definition
@@ -1953,8 +2003,8 @@ class SQLView(_SQLReplaceable, _SQLTabular):
                  "where rulename = '_RETURN' and relname = :name and nspname = :schema")
         result = connection.execute(
             sqlalchemy.text(query,
-                            bindparams=[sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.Unicode),
-                                        sqlalchemy.bindparam('name', name, type_=sqlalchemy.Unicode)]))
+                            bindparams=[sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.String),
+                                        sqlalchemy.bindparam('name', name, type_=sqlalchemy.String)]))
         row = result.fetchone()
         result.close()
         if row is None:
@@ -2222,6 +2272,9 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         connection = metadata.pytis_engine.connect()
         return self._pytis_definition(connection) != ''
 
+    def _pytis_columns_changed(self, metadata):
+        return False
+        
     def _pytis_definition(self, connection):
         # This can't distinguish between functions overloaded by argument types
         name = self.pytis_name(real=True)
@@ -2232,14 +2285,19 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                  "where nspname = :schema and proname = :name and pronargs = :nargs")
         result = connection.execute(
             sqlalchemy.text(query,
-                            bindparams=[sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.Unicode),
-                                        sqlalchemy.bindparam('name', name, type_=sqlalchemy.Unicode),
+                            bindparams=[sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.String),
+                                        sqlalchemy.bindparam('name', name, type_=sqlalchemy.String),
                                         sqlalchemy.bindparam('nargs', nargs, type_=sqlalchemy.Integer)]))
         definition = ''
         for row in result:
             definition += row[0]
         result.close()
         return definition
+        
+    def pytis_changed(self, metadata, strict=True):
+        if strict:
+            return self._pytis_columns_changed(metadata)
+        return False
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
@@ -2458,9 +2516,9 @@ class SQLTrigger(SQLEventHandler):
             result = connection.execute(
                 sqlalchemy.text(
                     query,
-                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True), type_=sqlalchemy.Unicode),
-                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True), type_=sqlalchemy.Unicode),
-                                sqlalchemy.bindparam('schema', self.table.schema, type_=sqlalchemy.Unicode)]))
+                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True), type_=sqlalchemy.String),
+                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True), type_=sqlalchemy.String),
+                                sqlalchemy.bindparam('schema', self.table.schema, type_=sqlalchemy.String)]))
             n = result.fetchone()[0]
             result.close()
             return n > 0
@@ -2786,20 +2844,21 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                 table.pytis_upgrade(upgrade_metadata)
             else:
                 table.pytis_create()
-    for ffk in _forward_foreign_keys:
-        if matching(ffk.table) and not names_only:
-            target = ffk.reference.get(ffk.search_path)
-            if target is None:
-                raise Exception('Invalid foreign reference',
-                                (ffk.table.name, ffk.reference._name, ffk.reference._column,))
-            kwargs = ffk.kwargs
-            kwargs['name'] += target.name.replace('.', '__')
-            f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
-                                                table=ffk.table, **kwargs)
-            fdef = sqlalchemy.schema.AddConstraint(f)
-            _engine.execute(fdef)
+    if upgrade_metadata is None:
+        for ffk in _forward_foreign_keys:
+            if matching(ffk.table) and not names_only:
+                target = ffk.reference.get(ffk.search_path)
+                if target is None:
+                    raise Exception('Invalid foreign reference',
+                                    (ffk.table.name, ffk.reference._name, ffk.reference._column,))
+                kwargs = ffk.kwargs
+                kwargs['name'] += target.name.replace('.', '__')
+                f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
+                                                    table=ffk.table, **kwargs)
+                fdef = sqlalchemy.schema.AddConstraint(f)
+                _engine.execute(fdef)
     # Emit DROP commands
-    if upgrade_metadata and not names_only:
+    if upgrade_metadata is not None and not names_only:
         global _output
         str_output = _output.getvalue()
         _output = sys.stdout
