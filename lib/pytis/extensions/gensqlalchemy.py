@@ -181,9 +181,9 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             table = object_by_path(trigger.table.name, trigger.search_path())
             row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
             trigger_call = trigger(*trigger.arguments)
-            command = (('CREATE TRIGGER "%s__%s" %s %s ON %s\n'
+            command = (('CREATE TRIGGER "%s" %s %s ON %s\n'
                         'FOR EACH %s EXECUTE PROCEDURE %s') %
-                       (trigger.name, trigger.position, trigger.position, events, table,
+                       (trigger.pytis_name(real=True), trigger.position, events, table,
                         row_or_statement, trigger_call,))
             self.connection.execute(command)
         trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
@@ -590,6 +590,13 @@ class PrimaryColumn(Column):
 
 
 ## Utilities
+    
+def _error(message, error=True):
+    prefix = (u'Error' if error else u'Warning')
+    sys.stderr.write(u'%s: %s\n' % (prefix, message,))
+
+def _warn(message):
+    _error(message, error=False)
 
 _full_init = False
 _current_search_path = None
@@ -1082,8 +1089,8 @@ class SQLObject(object):
         return class_.name
 
     def pytis_exists(self, metadata):
-        sys.stderr.write("Warning: Can't check existence of an object of type %s: %s.\n" %
-                         (self.pytis_kind(), self.name,))
+        _warn(u"Can't check existence of an object of type %s: %s." %
+              (self.pytis_kind(), self.name,))
         return True        
 
     def pytis_changed(self, metadata, strict=True):
@@ -1096,8 +1103,7 @@ class SQLObject(object):
         self.drop(_engine)
 
     def _pytis_upgrade(self, metadata):
-        sys.stderr.write("Warning: Can't upgrade an object of type %s: %s.\n" %
-                         (self.pytis_kind(), self.name,))
+        _warn("Can't upgrade an object of type %s: %s." % (self.pytis_kind(), self.name,))
         
     def pytis_upgrade(self, metadata, strict=True):
         if not self.pytis_exists(metadata):
@@ -1123,8 +1129,8 @@ class SQLObject(object):
     def _add_dependencies(self):
         for o in self.depends_on:
             if o is None:
-                sys.stderr.write("Unresolved dependency in %s: %s\n" %
-                                 (self.__class__.__name__, self.depends_on,))
+                _warn("Unresolved dependency in %s: %s" %
+                      (self.__class__.__name__, self.depends_on,))
                 continue
             if isinstance(o, SQLObject):
                 self.add_is_dependent_on(o)
@@ -1386,7 +1392,13 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         dialect = metadata.pytis_engine.dialect
         columns = _get_columns(dialect, connection, name, schema)
         if len(columns) != len(self.c):
-            return True
+            def_columns = [c for c in self.c]
+            if len(def_columns) != 1:
+                return True
+            def_name = def_columns[0].name
+            if def_name == '*' or def_name.endswith('.*'):
+                _warn("Can't compare star columns in `%s'." % (self.name,))
+                return False
         for c1_kwargs, c2 in zip(columns, self.c):
             for orig, real in (('type', 'type_'), ('default', 'server_default'),):
                 c1_kwargs[real] = c1_kwargs[orig]
@@ -2498,7 +2510,13 @@ class SQLTrigger(SQLEventHandler):
     call_arguments = ()
 
     __visit_name__ = 'trigger'
-    
+
+    @classmethod
+    def pytis_name(class_, real=False):
+        if real:
+            return '%s__%s' % (class_.name, class_.position,)
+        return super(SQLTrigger, class_).pytis_name()
+
     def _add_dependencies(self):
         super(SQLTrigger, self)._add_dependencies()
         search_path = (self.schema,)
@@ -2515,16 +2533,14 @@ class SQLTrigger(SQLEventHandler):
         else:
             query = ("select count(*) from "
                      "pg_trigger join "
-                     "pg_class on tgrelid = pg_class.oid join "
-                     "pg_namespace on relnamespace = pg_namespace.oid "
-                     "where tgname = :tgname and relname = :name and nspname = :schema")
+                     "pg_class on tgrelid = pg_class.oid "
+                     "where tgname = :tgname and relname = :name")
             connection = metadata.pytis_engine.connect()
             result = connection.execute(
                 sqlalchemy.text(
                     query,
                     bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True), type_=sqlalchemy.String),
-                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True), type_=sqlalchemy.String),
-                                sqlalchemy.bindparam('schema', self.table.schema, type_=sqlalchemy.String)]))
+                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True), type_=sqlalchemy.String)]))
             n = result.fetchone()[0]
             result.close()
             return n > 0
@@ -2700,7 +2716,7 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     global _output
     if upgrade:
         if alembic is None:
-            sys.stderr.write("Error: `alembic' package missing, can't perform upgrade.\n")
+            _error("`alembic' package missing, can't perform upgrade.")
             return
         _output = cStringIO.StringIO()
     else:
@@ -2896,8 +2912,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                                 changed.add(oo)
                                 queue.append(oo)
         except sqlalchemy.exc.CircularDependencyError, e:
-            sys.stderr.write("Can't emit DROP commands due to circular dependencies.\n")
-            sys.stderr.write(e.args[0] + '\n')
+            _warn("Can't emit DROP commands due to circular dependencies.\n%s" % (e.args[0],))
         drop.reverse()
         for o in drop:
             _gsql_output('DROP %s "%s"."%s"' % tuple(string.split(o, '.')))
