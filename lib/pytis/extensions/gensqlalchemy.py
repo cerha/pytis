@@ -1073,11 +1073,17 @@ class SQLObject(object):
       external -- iff true then do not create the object as it's just a
         declaration of a database object defined outside our specifications,
         to be used by objects of our specifications
+      db_name -- actual name of the database object; string.  It is useful only
+        with overloaded functions or *different* objects in different schemas
+        when the Python object names must be different (as required by
+        SQLAlchemy) while the database object names should be the same.  If
+        'None' then it defaults to 'name'.
 
     """
     access_rights = ()
     owner = None
     external = False
+    db_name = None
     _DB_OBJECT = None
 
     @classmethod
@@ -1086,6 +1092,8 @@ class SQLObject(object):
     
     @classmethod
     def pytis_name(class_, real=False):
+        if real and class_.db_name:
+            return class_.db_name
         return class_.name
 
     def pytis_exists(self, metadata):
@@ -2214,10 +2222,6 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
       sql_directory -- name of the directory where SQL files with function body
         definitions are stored; the name is relative to the processed module
         file name
-      function_name -- actual name of the database function; string.  It is
-        useful only with overloaded functions when the Python object names must
-        be different (as required by SQLAlchemy) while the database object
-        names should be the same.  If 'None' then it defaults to 'name'.
 
     Function body can be defined in two ways:
 
@@ -2243,7 +2247,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     security_definer = False
     stability = 'volatile'
     sql_directory = 'sql'
-    function_name = None
+    function_name = None        # obsolete
 
     _LANGUAGE = None
 
@@ -2323,6 +2327,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     @classmethod
     def pytis_name(class_, real=False):
         if real and class_.function_name:
+            _warn("function_name attribute is obsolete in `%s', use db_name instead" %
+                  (class_.name,))
             return class_.function_name
         return super(SQLFunctional, class_).pytis_name(real=real)
 

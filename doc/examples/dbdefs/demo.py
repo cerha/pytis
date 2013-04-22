@@ -267,7 +267,7 @@ class FileFunc(sql.SQLFunction):
     stability = 'immutable'
 
 class FileFuncOverloaded(sql.SQLFunction):
-    function_name = 'minus'
+    db_name = 'minus'
     name = 'minus_float'
     arguments = (sql.Column('x', pytis.data.Float()), sql.Column('y', pytis.data.Float()),)
     result_type = pytis.data.Integer()
