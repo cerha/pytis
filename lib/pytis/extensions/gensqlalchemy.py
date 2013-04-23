@@ -2739,11 +2739,6 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     if upgrade:
         upgrade_metadata = sqlalchemy.MetaData()
         import config
-        if config_file is not None:
-            for o in config.options():
-                o.reset()
-            config.config_file = config_file
-            config.read_configuration_file(config_file)
         connection_data = dict(user=config.dbuser,
                                password=(':'+config.dbpass if config.dbpass else ''),
                                host=(config.dbhost or ''),

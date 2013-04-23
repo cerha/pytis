@@ -261,6 +261,22 @@ If called with a prefix argument then show dependent objects as well."
                              gensqlalchemy-specification-directory))))
     (save-some-buffers)
     (with-current-buffer output-buffer
+      (when upgrade
+        (with-gensqlalchemy-sql-buffer output-buffer
+          (with-current-buffer sql-buffer
+            (dolist (item `(("--database" ,sql-database)
+                            ("--host" ,sql-server)
+                            ("--port" ,sql-port)
+                            ("--user" ,sql-user)))
+              (destructuring-bind (option value) item
+                (unless (or (equal value "") (equal value 0))
+                  (push (format "%s=%s" option value) args))))
+            (when (and (string= (or sql-password) "")
+                       (save-excursion
+                         (goto-char (point-min))
+                         (looking-at "^Password\\>")))
+              (set (make-local-variable 'sql-password) (read-passwd "Database password: ")))
+            (setenv "PGPASSWORD" sql-password))))
       (unless (or erase
                   (string= "" (buffer-substring-no-properties (point-min) (point-max))))
         (goto-char (point-max))
