@@ -343,6 +343,8 @@ class _SQLExternal(sqlalchemy.sql.expression.FromClause):
                 raise AttributeError(name)
             column = '%s.%s' % (self.name, name,)
             return sqlalchemy.literal_column(column)
+        def quote(self):
+            return True
 
     def _pytis_column(self):
         return self._PytisColumn(self.name)
