@@ -1945,8 +1945,46 @@ class _SQLReplaceable(SQLObject):
         finally:
             transaction.rollback()
         return definition != new_definition
+
+class _SQLQuery(SQLObject):
+
+    def _add_dependencies(self):
+        super(_SQLQuery, self)._add_dependencies()
+        self._pytis_add_dynamic_dependencies()
+
+    def _pytis_add_dynamic_dependencies(self):
+        objects = self._pytis_query_objects()
+        seen = []
+        # We may add some objects multiple times here but that doesn't matter.
+        # Trying to prune the list in trivial ways makes gsql many times slower
+        # because there may be many comparisons here.
+        while objects:
+            o = objects.pop()
+            if isinstance(o, sqlalchemy.sql.Alias):
+                # Some aliases, e.g. sqlalchemy.alias with sqlalchemy.literal inside,
+                # can't get children, so prevent crashing on that.
+                try:
+                    objects += o.get_children()
+                except:
+                    pass
+            elif isinstance(o, sqlalchemy.Table):
+                self.add_is_dependent_on(o)
+                seen.append(o)
+            elif isinstance(o, sqlalchemy.sql.ClauseElement):
+                objects += o.get_children()
+                seen.append(o)
+            elif not isinstance(o, (RawCondition, basestring,)):
+                raise SQLException("Unknown condition element", o)
+        self._pytis_query_dependencies = seen
+
+    def _pytis_query_objects(self):
+        return []
+
+    def pytis_dependencies(self):
+        return (list(super(_SQLQuery, self).pytis_dependencies()) +
+                self._pytis_query_dependencies)
     
-class SQLView(_SQLReplaceable, _SQLTabular):
+class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     """View specification.
 
     Views are similar to tables in that they have columns.  But unlike tables
@@ -1988,36 +2026,6 @@ class SQLView(_SQLReplaceable, _SQLTabular):
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
-    def _add_dependencies(self):
-        super(SQLView, self)._add_dependencies()
-        objects = [self.query()]
-        seen = []
-        # We may add some objects multiple times here but that doesn't matter.
-        # Trying to prune the list in trivial ways makes gsql many times slower
-        # because there may be many comparisons here.
-        while objects:
-            o = objects.pop()
-            if isinstance(o, sqlalchemy.sql.Alias):
-                # Some aliases, e.g. sqlalchemy.alias with sqlalchemy.literal inside,
-                # can't get children, so prevent crashing on that.
-                try:
-                    objects += o.get_children()
-                except:
-                    pass
-            elif isinstance(o, sqlalchemy.Table):
-                self.add_is_dependent_on(o)
-                seen.append(o)
-            elif isinstance(o, sqlalchemy.sql.ClauseElement):
-                objects += o.get_children()
-                seen.append(o)
-            elif not isinstance(o, RawCondition):
-                raise SQLException("Unknown condition element", o)
-        self._pytis_view_dependencies = seen
-
-    def pytis_dependencies(self):
-        return (list(super(SQLView, self).pytis_dependencies()) +
-                self._pytis_view_dependencies)
-
     def _pytis_definition(self, connection):
         self._pytis_set_definition_schema(connection)
         name = self.pytis_name(real=True)
@@ -2035,6 +2043,9 @@ class SQLView(_SQLReplaceable, _SQLTabular):
         if row is None:
             raise Exception("Object not identified: %s.%s" % (schema, name,))
         return row[0]
+
+    def _pytis_query_objects(self):
+        return [self.query()]
         
     def _equivalent_rule_columns(self, column):
         equivalents = []
@@ -2363,7 +2374,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         sql_file = os.path.join(module_path, self.sql_directory, self.name + '.sql')
         return codecs.open(sql_file, encoding='UTF-8').read()
 
-class SQLFunction(SQLFunctional):
+class SQLFunction(_SQLQuery, SQLFunctional):
     """SQL function definition.
 
     This class doesn't define anything new, see its superclass for information
@@ -2373,7 +2384,10 @@ class SQLFunction(SQLFunctional):
 
     """
     _LANGUAGE = 'sql'
-
+    
+    def _pytis_query_objects(self):
+        return [self.body()]
+        
 class SQLPlFunction(SQLFunctional):
     """PL/pgSQL function definition.
 
