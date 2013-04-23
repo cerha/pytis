@@ -834,6 +834,13 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
             _PytisSchematicMetaclass.init_functions_called[func] = True
             func(**kwargs)
 
+    @classmethod
+    def run_init_functions(cls):
+        function_list = _PytisSchematicMetaclass.init_function_list
+        while function_list:
+            f = function_list.pop()
+            cls.call_init_function(f)
+
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
         if (cls._is_specification(clsname) and
@@ -2746,7 +2753,12 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         if _output.encoding is None:
             _output = codecs.getwriter('UTF-8')(_output)
     global _full_init
-    _full_init = (not ((names_only and no_deps) or (no_deps and regexp)) or upgrade)
+    if False:
+        # We always disable full init now so that all classes and objects are
+        # available in _SQLQuery (to get columns and dynamic dependencies) even
+        # without explicit dependencies.
+        _full_init = (not ((names_only and no_deps) or (no_deps and regexp)) or upgrade)
+    _full_init = False
     global _pretty
     _pretty = pretty
     global _enforced_schema, _enforced_schema_objects
