@@ -2745,11 +2745,11 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
             config.config_file = config_file
             config.read_configuration_file(config_file)
         connection_data = dict(user=config.dbuser,
-                               password=(config.dbpass or ''),
+                               password=(':'+config.dbpass if config.dbpass else ''),
                                host=(config.dbhost or ''),
-                               port=(config.dbport or ''),
+                               port=(':'+config.dbport if config.dbport else ''),
                                dbname=config.dbname)
-        connection_string = 'postgresql://%(user)s:%(password)s@%(host)s@%(port)s/%(dbname)s' % connection_data
+        connection_string = 'postgresql://%(user)s%(password)s@%(host)s%(port)s/%(dbname)s' % connection_data
         upgrade_metadata.pytis_engine = sqlalchemy.create_engine(connection_string)
         upgrade_metadata.pytis_inspector = sqlalchemy.inspect(upgrade_metadata.pytis_engine)
         upgrade_metadata.pytis_changed = set()
