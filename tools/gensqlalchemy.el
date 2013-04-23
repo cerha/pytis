@@ -121,6 +121,11 @@
   :group 'gensqlalchemy
   :type 'integer)
 
+(defcustom gensqlalchemy-ignored-definition-schemas '("public")
+  "List of schema names to discard in definition comparison."
+  :group 'gensqlalchemy
+  :type '(list string))
+
 (defvar gensqlalchemy-specification-directory "dbdefs")
 (defvar gensqlalchemy-common-directories '("lib" "db" "dbdefs"))
 
@@ -334,24 +339,42 @@ If called with a prefix argument then show dependent objects as well."
     ("TABLE" . "\\d+")
     ("TYPE" . "\\dT+")
     ("VIEW" . "\\d+")))
-(defun gensqlalchemy-definition (file-name &optional send-buffer schema)
+(defun gensqlalchemy-definition (file-name &optional send-buffer schema simplify)
   (let ((objects (gensqlalchemy-current-objects schema))
-        (output-buffer nil))
+        (output-buffer nil)
+        (paths gensqlalchemy-ignored-definition-schemas)
+        path-schema)
     (with-gensqlalchemy-rollback
       (when send-buffer
         (with-gensqlalchemy-sql-buffer send-buffer
           (gensqlalchemy-send-buffer)))
-      (sql-send-string "set search_path to public;")
       (with-gensqlalchemy-log-file file-name
         (mapc #'(lambda (spec)
                   (destructuring-bind (kind name args) spec
-                    (let ((command (cdr (assoc kind gensqlalchemy-psql-def-commands))))
+                    (let ((path-schema nil)
+                          (command (cdr (assoc kind gensqlalchemy-psql-def-commands))))
                       (when command
+                        (if (string-match "^\\([^.]+\\)\\." name)
+                            (setq path-schema (match-string 1 name)
+                                  name (substring name (1+ (match-end 1))))
+                          (setq path-schema (or schema "public")))
+                        (add-to-list 'paths path-schema)
+                        (sql-send-string (format "set search_path to \"%s\";" path-schema))
                         (setq output-buffer sql-buffer)
                         (when args
                           (setq name (concat name (replace-regexp-in-string "[^(),]+::" "" args))))
                         (sql-send-string (format "%s %s" command name))))))
               objects)))
+    (gensqlalchemy-wait-for-outputs output-buffer)
+    (when simplify
+      (save-excursion
+        (find-file file-name)
+        (goto-char (point-min))
+        (while (re-search-forward (format "\\<\\(%s\\)\\." (mapconcat #'identity paths "\\|"))
+                                  nil t)
+          (replace-match ""))
+        (save-buffer)
+        (kill-buffer)))
     output-buffer))
 
 (defun gensqlalchemy-show-definition (&optional arg)
@@ -362,7 +385,7 @@ With an optional prefix argument show new definition of the specification."
         (buffer (and arg (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
         (schema (and arg gensqlalchemy-temp-schema)))
     (unless (and arg (not buffer))
-      (gensqlalchemy-wait-for-outputs (gensqlalchemy-definition file buffer schema))
+      (gensqlalchemy-definition file buffer schema)
       (if (gensqlalchemy-empty-file file)
           (message "Definition not found")
         (let ((buffer (get-buffer-create (gensqlalchemy-buffer-name "def"))))
@@ -385,9 +408,8 @@ With an optional prefix argument show the differences in Ediff."
         (old-def-file (gensqlalchemy-temp-file "olddef"))
         (new-def-file (gensqlalchemy-temp-file "newdef")))
     (when buffer
-      (gensqlalchemy-definition old-def-file)
-      (gensqlalchemy-definition new-def-file buffer gensqlalchemy-temp-schema)
-      (gensqlalchemy-wait-for-outputs (with-current-buffer buffer sql-buffer))
+      (gensqlalchemy-definition old-def-file nil nil t)
+      (gensqlalchemy-definition new-def-file buffer gensqlalchemy-temp-schema t)
       (if arg
           (ediff-files old-def-file new-def-file)
         (diff old-def-file new-def-file "-u")))))
