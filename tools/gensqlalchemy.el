@@ -66,6 +66,9 @@
 ;; outputs of new views and functions using `C-c C-q o'
 ;; (`gensqlalchemy-compare-outputs').
 
+;; `C-c C-q u' (`gensqlalchemy-upgrade') generates an upgrade SQL script for
+;; the current object, including dependent objects.
+
 ;; You can list all objects dependent on the current specification using
 ;; `C-c C-q i' (`gensqlalchemy-info').  The list includes source locations you
 ;; can visit by pressing RET or clicking on them.
@@ -141,6 +144,7 @@ Currently the mode just defines some key bindings."
                 ("\C-c\C-qo" . gensqlalchemy-compare-outputs)
                 ("\C-c\C-qt" . gensqlalchemy-test)
                 ("\C-c\C-qs" . gensqlalchemy-show-definition)
+                ("\C-c\C-qu" . gensqlalchemy-upgrade)
                 ("\C-c\C-qz" . gensqlalchemy-show-sql-buffer)
                 ("\C-c\C-q=" . gensqlalchemy-compare)
                 ))
@@ -231,7 +235,7 @@ This is useful for longer inputs where the input may break in comint."
   "Convert current specification to SQL and display the result.
 If called with a prefix argument then show dependent objects as well."
   (interactive "P")
-  (let ((buffer (gensqlalchemy-display t dependencies nil)))
+  (let ((buffer (gensqlalchemy-display t dependencies nil nil)))
     (when buffer
       (pop-to-buffer buffer))))
 
@@ -239,14 +243,16 @@ If called with a prefix argument then show dependent objects as well."
   "Convert current specification to SQL and add it to the displayed SQL.
 If called with a prefix argument then show dependent objects as well."
   (interactive "P")
-  (let ((buffer (gensqlalchemy-display nil dependencies nil)))
+  (let ((buffer (gensqlalchemy-display nil dependencies nil nil)))
     (when buffer
       (pop-to-buffer buffer))))
 
-(defun gensqlalchemy-display (erase dependencies schema)
+(defun gensqlalchemy-display (erase dependencies schema upgrade)
   (let* ((spec-name (gensqlalchemy-specification))
          (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) erase))
          (args (append (list (format "--pretty=%d" gensqlalchemy-pretty-output-level))
+                       (when upgrade
+                         '("--upgrade"))
                        (unless dependencies
                          '("--no-deps"))
                        (when schema
@@ -382,7 +388,7 @@ If called with a prefix argument then show dependent objects as well."
 With an optional prefix argument show new definition of the specification."
   (interactive "P")
   (let ((file (gensqlalchemy-temp-file "def"))
-        (buffer (and arg (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
+        (buffer (and arg (gensqlalchemy-display t nil gensqlalchemy-temp-schema nil)))
         (schema (and arg gensqlalchemy-temp-schema)))
     (unless (and arg (not buffer))
       (gensqlalchemy-definition file buffer schema)
@@ -404,7 +410,7 @@ The commands are wrapped in a transaction which is aborted at the end."
   "Compare current specification with the definition in the database.
 With an optional prefix argument show the differences in Ediff."
   (interactive "P")
-  (let ((buffer (gensqlalchemy-display t nil gensqlalchemy-temp-schema))
+  (let ((buffer (gensqlalchemy-display t nil gensqlalchemy-temp-schema nil))
         (old-def-file (gensqlalchemy-temp-file "olddef"))
         (new-def-file (gensqlalchemy-temp-file "newdef")))
     (when buffer
@@ -452,7 +458,7 @@ With a universal prefix argument compare complete outputs."
         (new-object (car (gensqlalchemy-current-objects gensqlalchemy-temp-schema)))
         (old-data-file (gensqlalchemy-temp-file "olddata"))
         (new-data-file (gensqlalchemy-temp-file "newdata"))
-        (new-buffer (gensqlalchemy-display t nil gensqlalchemy-temp-schema)))
+        (new-buffer (gensqlalchemy-display t nil gensqlalchemy-temp-schema nil)))
     (when new-buffer
       (setq gensqlalchemy-last-order-by
             (read-string "Order by: " gensqlalchemy-last-order-by))
@@ -464,7 +470,15 @@ With a universal prefix argument compare complete outputs."
         (gensqlalchemy-select new-object new-data-file n t gensqlalchemy-last-order-by))
       (gensqlalchemy-wait-for-outputs (with-current-buffer new-buffer sql-buffer))
       (diff old-data-file new-data-file))))
-    
+
+(defun gensqlalchemy-upgrade ()
+  "Generate an upgrade SQL script for the current object."
+  (interactive)
+  (save-some-buffers)
+  (let ((buffer (gensqlalchemy-display t t nil t)))
+    (when buffer
+      (pop-to-buffer buffer))))
+
 (defun gensqlalchemy-info ()
   "Show info about current specification.
 Currently it prints basic information about this object and all dependent
