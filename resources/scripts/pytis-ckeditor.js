@@ -494,7 +494,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                   [
                       {type: 'file',
                        id: 'upload',
-                       label: editor.lang.image.btnUpload,
+                       label: pytis._("Upload"),
 		       size: '30',
                        setup: function(element) {
                            // Register onload hook to respond to upload actions
