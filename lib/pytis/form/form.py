@@ -38,6 +38,8 @@ from pytis.presentation import PresentedRow, Computer, Editable
 from pytis.form import *
 import wx
 
+_ = pytis.util.translations('pytis-wx')
+
 class FormProfile(object):
     """Temporary hack to avoid application crashing on unpickling old form profiles."""
     def __init__(self, *args, **kwargs):

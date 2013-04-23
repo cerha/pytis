@@ -2,7 +2,7 @@
 
 # Zpracování událostí
 # 
-# Copyright (C) 2002-2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,6 +49,8 @@ import thread
 
 from pytis.form import *
 import wx
+
+_ = pytis.util.translations('pytis-wx')
 
 class UserBreakException(Exception):
     """Výjimka vyvolávaná při přerušení zpracování události.

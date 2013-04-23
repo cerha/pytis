@@ -29,11 +29,13 @@ from pytis.util import translate as _
 import collections, os.path, string, sys, thread, time, wx, wx.html
 
 import config
-import pytis.data, pytis.form
+import pytis.data, pytis.form, pytis.util
 
 from managers import ApplicationConfigManager, FormSettingsManager, \
     FormProfileManager, AggregatedViewsManager
 from pytis.form import *
+
+_ = pytis.util.translations('pytis-wx')
 
 _application = None
 
@@ -73,7 +75,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     _menubar_forms = {}
     _log_login = True
 
-    _WINDOW_MENU_TITLE = _(u"Okn&a")
+    _WINDOW_MENU_TITLE = _(u"&Windows")
 
     _STATE_RECENT_FORMS = 'recent_forms'
     _STATE_STARTUP_FORMS = 'saved_startup_forms' # Avoid name conflict with config.startup_forms!
@@ -191,25 +193,25 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 condition = pytis.data.EQ('fresh', pytis.data.bval(False))
                 established_names = data.select_map(identity, condition=condition)
                 while True:
-                    message = _("Zadejte své přihlašovací heslo, pro správu šifrovacích klíčů")
+                    message = _(u"Zadejte své přihlašovací heslo, pro správu šifrovacích klíčů")
                     crypto_password = password_dialog(message=message)
                     if not crypto_password:
                         break
                     if not established_names:
-                        message = _("Zadejte své přihlašovací heslo ještě jednou pro ověření")
+                        message = _(u"Zadejte své přihlašovací heslo ještě jednou pro ověření")
                         crypto_password_repeated = password_dialog(message=message)
                         if crypto_password == crypto_password_repeated:
                             crypto_password = rsa_encrypt(db_key, crypto_password)
                             break
                         else:
-                            run_dialog(pytis.form.Error, _("Zadaná hesla nejsou shodná"))
+                            run_dialog(pytis.form.Error, _(u"Zadaná hesla nejsou shodná"))
                     else:
                         crypto_password = rsa_encrypt(db_key, crypto_password)
                         if pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
                                                        ('password_', pytis.data.sval(crypto_password),)):
                             break
                         else:
-                            run_dialog(pytis.form.Error, _("Chybné heslo"))
+                            run_dialog(pytis.form.Error, _(u"Chybné heslo"))
                 if crypto_password:
                     config.dbconnection.set_crypto_password(crypto_password)
         decrypted_names = set()
@@ -238,10 +240,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     bad = True
                 else:
                     break                
-                message = _("Zadejte heslo pro odemčení šifrovacího klíče oblasti %s.") % name
+                message = _(u"Zadejte heslo pro odemčení šifrovacího klíče oblasti %s.") % name
                 if bad:
-                    message = message + _("\n(Patrně se jedná o vaše staré přihlašovací heslo.)")
-                password = password_dialog(_("Heslo pro šifrovací klíč"), message=message)
+                    message += "\n(" + _(u"Patrně se jedná o vaše staré přihlašovací heslo.") + ")"
+                password = password_dialog(_(u"Heslo pro šifrovací klíč"), message=message)
                 if not password:
                     break
                 password = rsa_encrypt(db_key, password)
@@ -323,7 +325,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             log(OPERATIONAL, "Ignoring saved startup form:", pair)
         def run_startup_forms(update, startup_forms):
             i, total = 0, len(startup_forms)
-            msg = _(u"Otevírám formulář: %s (%d/%d)")
+            msg = _(u"Opening form: %s (%d/%d)")
             for cls, name in startup_forms:
                 update(int(float(i)/total*100), newmsg=msg % (name, i+1, total))
                 try:
@@ -411,17 +413,17 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 items.append(MSeparator())
             for uicmd in group:
                 items.append(mitem(uicmd))
-        menus.append(Menu(_(u"Příkazy"), items))
+        menus.append(Menu(_(u"Commands"), items))
 
     def _create_help_menu(self, menus):
-        if [m for m in menus if m.title() == _(u"Nápověda")]:
+        if [m for m in menus if m.title() == _(u"Help")]:
             log(OPERATIONAL, "Menu nápovědy nalezeno - nevytvářím vlastní.")
             return
         items = [mitem(UICommands.PYTIS_HELP)]
         items.extend((MSeparator(),
                       mitem(UICommands.HELP),
                       mitem(UICommands.DESCRIBE)))
-        menus.append(Menu(_(u"Nápověda"), items))
+        menus.append(Menu(_(u"Help"), items))
 
     def _dynamic_menu(self, connection_data):
         # Check for menu presence, if not available, return None
@@ -514,14 +516,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
         menus_prototype = self._spec('menu', ())
         menus = self._build_menu(menus_prototype, config.dbconnection)
         menus.append(Menu(self._WINDOW_MENU_TITLE, (
-                    MItem(_(u"Předchozí okno"), command=Application.COMMAND_RAISE_PREV_FORM,
-                          help=_(u"Přepnout na předchozí okno v pořadí seznamu oken.")),
-                    MItem(_(u"Následující okno"), command=Application.COMMAND_RAISE_NEXT_FORM,
-                          help=_(u"Přepnout na následující okno v pořadí seznamu oken.")),
-                    MItem(_(u"Posledně aktivní okno"), command=Application.COMMAND_RAISE_RECENT_FORM,
-                          help=_(u"Umožňuje cyklicky přepínat mezi dvěma posledně aktivními okny.")),
-                    MItem(_(u"Uzavřít aktuální okno"), command=Form.COMMAND_LEAVE_FORM,
-                          help=_(u"Uzavřít okno aktuálního formuláře.")),
+                    MItem(_(u"Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
+                          help=_(u"Switch to the previous window in the window list order.")),
+                    MItem(_(u"Next window"), command=Application.COMMAND_RAISE_NEXT_FORM,
+                          help=_(u"Switch to the next window in the window list order.")),
+                    MItem(_(u"Most recently active window"), command=Application.COMMAND_RAISE_RECENT_FORM,
+                          help=_(u"Allows switching two most recently active windows cyclically.")),
+                    MItem(_(u"Close active window"), command=Form.COMMAND_LEAVE_FORM,
+                          help=_(u"Closes the window of the active form.")),
                     MSeparator(),
                     ), allow_autoindex=False))
         self._create_command_menu(menus)
@@ -953,7 +955,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 top.refresh()
         else:
             if view.arguments() is not None:
-                message(_("Do tohoto formuláře nelze vkládat."), beep_=True)
+                message(_(u"Do tohoto formuláře nelze vkládat."), beep_=True)
                 return None
             result = run_form(PopupInsertForm, name, prefill=prefill, inserted_data=inserted_data,
                               multi_insert=multi_insert, transaction=transaction,
@@ -1367,7 +1369,7 @@ def delete_record(view, data, transaction, record,
             raise ProgramError("Invalid 'on_delete_record' return value.", result)
     else:
         if data.arguments() is not None:
-            message(_("V tomto formuláři nelze mazat."), beep_=True)
+            message(_(u"V tomto formuláři nelze mazat."), beep_=True)
             return False
         op, arg = data.delete, key
     if ask and not run_dialog(Question, question):
@@ -1439,10 +1441,10 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
             login_result = run_form(InputForm, title=_(u"Přihlášení pro přístup do databáze"),
-                                    fields=(Field('login', _("Uživatelské jméno"),
+                                    fields=(Field('login', _(u"Uživatelské jméno"),
                                                   width=24, not_null=True,
                                                   default=config.dbuser),
-                                            Field('password', _("Heslo"),
+                                            Field('password', _(u"Heslo"),
                                                   type=pytis.data.Password(verify=False),
                                                   width=24, not_null=True),),
                                     focus_field='password')
@@ -1854,7 +1856,7 @@ def password_dialog(title=_(u"Zadejte heslo"), message=None):
     else:
         layout = ('password',)
     result = run_form(InputForm, title=title,
-                      fields=(Field('password', _("Heslo"),
+                      fields=(Field('password', _(u"Heslo"),
                                     type=pytis.data.Password, verify=False,
                                     width=40, not_null=True),),
                       layout=layout)

@@ -33,6 +33,7 @@ import pytis.data
 from pytis.presentation import *
 from pytis.util import *
 
+_ = translations('pytis-data')
 
 class PresentedRow(object):
     """A record of presented data.

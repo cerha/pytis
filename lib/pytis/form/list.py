@@ -50,6 +50,8 @@ import pytis.windows
 import _grid
 
 import config
+
+_ = pytis.util.translations('pytis-wx')
     
 ### Formuláře
 

@@ -1,0 +1,361 @@
+# Pytis translations.
+# Copyright (C) 2008-2011 Brailcom, o.p.s.
+# This file is distributed under the same license as the Pytis package.
+# Hynek Hanke <hanke@brailcom.org>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: pytis 0.1\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-04-22 11:43+0200\n"
+"PO-Revision-Date: 2011-12-29 12:20+0100\n"
+"Last-Translator: Hynek Hanke <hanke@volny.cz>\n"
+"Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n!=1;\n"
+
+#: ../lib/pytis/data/access.py:434
+msgid "Access denied"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:70
+msgid "Can't connect to database"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:137
+msgid "Database interface error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:153 ../lib/pytis/data/dbapi.py:245
+msgid "Database connection error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:165 ../lib/pytis/data/pgsql.py:83
+#: ../lib/pytis/data/pgsql.py:90
+msgid "Database operational error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:169 ../lib/pytis/data/pgsql.py:95
+msgid "Database integrity violation"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:292
+msgid "Příliš mnoho databázových spojení"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:696
+msgid "Databázová chyba"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:765
+msgid "Chybné uživatelské jméno nebo heslo"
+msgstr ""
+
+#: ../lib/pytis/data/pgsql.py:56
+msgid "Nelze se připojit k databázi"
+msgstr ""
+
+#: ../lib/pytis/data/pgsql.py:65
+msgid "Query arguments unsupported by the pgsql backend"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:228 ../lib/pytis/data/postgresql.py:326
+msgid "Volána neimplementovaná metoda"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:314
+msgid "Unimplemented method"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:436
+msgid "Data obsahují znaky, které nelze reprezentovat v kódování databáze"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:3484
+msgid "Chybná hodnota čítače z databáze"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:136
+msgid "Empty value"
+msgstr "Valor vacío"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:138
+#, fuzzy
+msgid "Invalid value"
+msgstr "Número no válido"
+
+#: ../lib/pytis/data/types_.py:350
+#, python-format
+msgid "Hvězdičkové výrazy nejsou podporovány pro hodnoty typu '%s'."
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:469
+#, python-format
+msgid "Minimal value is %(minimum)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:472
+#, python-format
+msgid "Maximal value is %(maximum)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:550
+#, python-format
+msgid "Minimal size %(minlen)s not satisfied"
+msgstr "El tamaňo mínimo %(minlen)s no satisfecho"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:553
+#, python-format
+msgid "Maximal length %(maxlen)s characters exceeded"
+msgstr "Supera la longitud máxima de %(maxlen)s caracteres"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:617
+msgid "Not an integer"
+msgstr "No es un número entero"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:695
+msgid "Invalid number"
+msgstr "Número no válido"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:840
+#, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr "No satisface la longitud mínima de %(minlen)s caracteres"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:842 ../lib/pytis/data/types_.py:1873
+#, python-format
+msgid "Maximal size %(maxlen)s exceeded"
+msgstr "Tamaño máximo %(maxlen)s superado"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:910
+msgid "Enter the password twice to eliminate typos"
+msgstr "Pone la contraseña dos veces para evitar errores"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:913
+msgid "Passwords don't match"
+msgstr "Las contraseñas no coinciden"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:916
+#, fuzzy
+msgid "Invalid MD5 hash"
+msgstr "Valor no válido"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:919
+msgid "Please use mix of letters and non-letters in your password"
+msgstr "Por favor, usar una mezcla de letras y números en su contraseña"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1006 ../lib/pytis/data/types_.py:1040
+#: ../lib/pytis/data/types_.py:1076 ../lib/pytis/data/types_.py:1681
+msgid "Invalid format"
+msgstr "Formato no válido"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1026
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr "Formato del color ('#RGB' o '#RRGGBB') no válido"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1042
+#, python-format
+msgid "Invalid inet address mask: %(mask)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1044
+#, python-format
+msgid "Invalid inet address value %(addr)s"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1197
+msgid "Invalid date or time format"
+msgstr "Formato de fecha y/o hora no válido"
+
+#: ../lib/pytis/data/types_.py:1198
+msgid "Invalid date or time"
+msgstr "Fecha y/o hora no válida"
+
+#: ../lib/pytis/data/types_.py:1199
+msgid "Date outside the allowed range"
+msgstr "La fecha está fuera del rango permitido"
+
+#: ../lib/pytis/data/types_.py:1838
+msgid "Neplatná vstupní hodnota typu boolean."
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1919
+#, python-format
+msgid "Not a buffer object: %r"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2042
+#, python-format
+msgid "Maximal pixel size %(maxsize)s exceeded"
+msgstr "Tamaño máximo del %(maxsize)s pixeles superado"
+
+#: ../lib/pytis/data/types_.py:2044
+#, python-format
+msgid "Minimal pixel size %(minsize)s exceeded"
+msgstr "Tamaño mínimo de %(minsize)s pixeles superado"
+
+#: ../lib/pytis/data/types_.py:2046
+#, fuzzy, python-format
+msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+msgstr "Formato %(format)s no permitido; formatos válidos: %(formats)s"
+
+#: ../lib/pytis/data/types_.py:2062
+msgid "Neplatný grafický formát"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2178
+#, fuzzy
+msgid "Invalid hierarchical value format"
+msgstr "Formato de fecha y/o hora no válido"
+
+#: ../lib/pytis/data/types_.py:2180
+msgid "One of hierarchical value items is too long"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2182
+msgid "One of hierarchical value items contains invalid characters"
+msgstr ""
+
+#~ msgid "String exceeds max length %(maxlen)s characters"
+#~ msgstr "Texto supera la longitud máxima de %(maxlen)s caracteres"
+
+#~ msgid "Submit"
+#~ msgstr "Confirmar"
+
+#~ msgid "Yes"
+#~ msgstr "Sí"
+
+#~ msgid "No"
+#~ msgstr "No"
+
+#~ msgid "image"
+#~ msgstr "imágen"
+
+#~ msgid "file"
+#~ msgstr "archivo"
+
+#~ msgid "Undo all changes"
+#~ msgstr "Descartar todas las modificaciones"
+
+#~ msgid "Submit the form"
+#~ msgstr "Envia el formulario"
+
+#~ msgid "Reset"
+#~ msgstr "Reset"
+
+#~ msgid "Fields marked by an asterisk are mandatory."
+#~ msgstr "Campos marcados con asterisco son obligatorios."
+
+#~ msgid "Filter"
+#~ msgstr "Filtro"
+
+#, fuzzy
+#~ msgid "Apply Filter"
+#~ msgstr "Filtro"
+
+#, fuzzy
+#~ msgid "Profile"
+#~ msgstr "archivo"
+
+#~ msgid "All items"
+#~ msgstr "Todos los registros"
+
+#, fuzzy
+#~ msgid "Sum"
+#~ msgstr "Confirmar"
+
+#, fuzzy
+#~ msgid "Found %d record matching the search expression."
+#~ msgid_plural "Found %d records matching the search expression."
+#~ msgstr[0] ""
+#~ "Encontrado %d registro de coincidencia con la expresión de búsqueda."
+#~ msgstr[1] ""
+#~ "Encontrado %d registros de coincidencia con la expresión de búsqueda."
+
+#~ msgid "No records."
+#~ msgstr "Ningún registro."
+
+#~ msgid "Total records:"
+#~ msgstr "Registros en total:"
+
+#~ msgid "Displayed records %(first)s-%(last)s of total %(total)s"
+#~ msgstr "Mostrados %(first)s-%(last)s registros de %(total)s en total"
+
+#~ msgid "%(label)s on \"%(prefix)s\":"
+#~ msgstr "%(label)s sobre \"%(prefix)s\":"
+
+#~ msgid "Skip to the first record beginning with \"%s\""
+#~ msgstr "Ir al primer registro que empieza con \"%s\""
+
+#~ msgid "(Use ALT+arrow down to select)"
+#~ msgstr "(Usa ALT+flecha abajo para elegir)"
+
+#~ msgid "Search"
+#~ msgstr "Buscar"
+
+#~ msgid "Page"
+#~ msgstr "Página"
+
+#~ msgid "Previous"
+#~ msgstr "Anterior"
+
+#~ msgid "Go to previous page"
+#~ msgstr "Ir a la página anterior"
+
+#~ msgid "Next"
+#~ msgstr "Siguiente"
+
+#~ msgid "Go to next page"
+#~ msgstr "Ir a la página siguiente"
+
+#~ msgid "Records per page"
+#~ msgstr "Registros por página"
+
+#~ msgid "Go"
+#~ msgstr "Ir"
+
+#~ msgid "Search expression"
+#~ msgstr "Parámetro de búsqueda"
+
+#, fuzzy
+#~ msgid "Image"
+#~ msgstr "imágen"
+
+#, fuzzy
+#~ msgid "Instructions"
+#~ msgstr "Acciones"
+
+#, fuzzy
+#~ msgid "Selections"
+#~ msgstr "Acciones"
+
+#, fuzzy
+#~ msgid "Dictation"
+#~ msgstr "Acciones"
+
+#~ msgid "Apply"
+#~ msgstr "Aplicar"
+
+#, fuzzy
+#~ msgid "Apply filters"
+#~ msgstr "Filtro"

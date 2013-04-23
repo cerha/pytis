@@ -1,0 +1,246 @@
+# Pytis translations
+# Copyright (C) 2006-2013 Brailcom, o.p.s.
+# This file is distributed under the same license as the Pytis package.
+# Tomas Cerha <cerha@brailcom.org>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pytis 0.1\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-04-22 11:43+0200\n"
+"PO-Revision-Date: 2013-04-23 10:43+0200\n"
+"Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
+"Language-Team: Czech <wiking@lists.freebsoft.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
+
+#: ../lib/pytis/data/access.py:434
+msgid "Access denied"
+msgstr "Neoprávněný přístup"
+
+#: ../lib/pytis/data/dbapi.py:70
+msgid "Can't connect to database"
+msgstr "Nemohu se připojit do databáze"
+
+#: ../lib/pytis/data/dbapi.py:137
+#, fuzzy
+msgid "Database interface error"
+msgstr "Operační chyba databáze"
+
+#: ../lib/pytis/data/dbapi.py:153 ../lib/pytis/data/dbapi.py:245
+#, fuzzy
+msgid "Database connection error"
+msgstr "Operační chyba databáze"
+
+#: ../lib/pytis/data/dbapi.py:165 ../lib/pytis/data/pgsql.py:83
+#: ../lib/pytis/data/pgsql.py:90
+msgid "Database operational error"
+msgstr "Operační chyba databáze"
+
+#: ../lib/pytis/data/dbapi.py:169 ../lib/pytis/data/pgsql.py:95
+msgid "Database integrity violation"
+msgstr "Porušení integrity dat v databázi"
+
+#: ../lib/pytis/data/dbdata.py:292
+msgid "Příliš mnoho databázových spojení"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:696
+msgid "Databázová chyba"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:765
+msgid "Chybné uživatelské jméno nebo heslo"
+msgstr ""
+
+#: ../lib/pytis/data/pgsql.py:56
+msgid "Nelze se připojit k databázi"
+msgstr ""
+
+#: ../lib/pytis/data/pgsql.py:65
+msgid "Query arguments unsupported by the pgsql backend"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:228 ../lib/pytis/data/postgresql.py:326
+msgid "Volána neimplementovaná metoda"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:314
+msgid "Unimplemented method"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:436
+msgid "Data obsahují znaky, které nelze reprezentovat v kódování databáze"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:3484
+msgid "Chybná hodnota čítače z databáze"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:136
+msgid "Empty value"
+msgstr "Prázdná hodnota"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:138
+#, fuzzy
+msgid "Invalid value"
+msgstr "Není to povolené číslo"
+
+#: ../lib/pytis/data/types_.py:350
+#, python-format
+msgid "Hvězdičkové výrazy nejsou podporovány pro hodnoty typu '%s'."
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:469
+#, python-format
+msgid "Minimal value is %(minimum)s"
+msgstr "Minimální hodnota je %(minimum)s"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:472
+#, python-format
+msgid "Maximal value is %(maximum)s"
+msgstr "Maximální hodnota je %(maximum)s"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:550
+#, python-format
+msgid "Minimal size %(minlen)s not satisfied"
+msgstr "Nedodržena minimální velikost %(minlen)s"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:553
+#, python-format
+msgid "Maximal length %(maxlen)s characters exceeded"
+msgstr "Řetězec přesahuje maximální délku %(maxlen)s znaků"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:617
+msgid "Not an integer"
+msgstr "Není to celé číslo"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:695
+msgid "Invalid number"
+msgstr "Není to povolené číslo"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:840
+#, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr "Nedodržena minimální délka %(minlen)s znaků"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:842 ../lib/pytis/data/types_.py:1873
+#, python-format
+msgid "Maximal size %(maxlen)s exceeded"
+msgstr "Maximální velikost %(maxlen)s překročena"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:910
+msgid "Enter the password twice to eliminate typos"
+msgstr "Zadejte heslo dvakrát pro eliminování překlepů"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:913
+msgid "Passwords don't match"
+msgstr "Kontrolní zadání hesla neodpovídá"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:916
+#, fuzzy
+msgid "Invalid MD5 hash"
+msgstr "Neplatná hodnota"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:919
+msgid "Please use mix of letters and non-letters in your password"
+msgstr "Použijte ve svém hesle kombinaci písmenných a nepísmenných znaků"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1006 ../lib/pytis/data/types_.py:1040
+#: ../lib/pytis/data/types_.py:1076 ../lib/pytis/data/types_.py:1681
+msgid "Invalid format"
+msgstr "Neplatný formát"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1026
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr "Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')"
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1042
+#, python-format
+msgid "Invalid inet address mask: %(mask)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1044
+#, python-format
+msgid "Invalid inet address value %(addr)s"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1197
+msgid "Invalid date or time format"
+msgstr "Chybný formát data nebo času"
+
+#: ../lib/pytis/data/types_.py:1198
+msgid "Invalid date or time"
+msgstr "Chybné datum nebo čas"
+
+#: ../lib/pytis/data/types_.py:1199
+msgid "Date outside the allowed range"
+msgstr "Datum mimo povolený rozsah"
+
+#: ../lib/pytis/data/types_.py:1838
+msgid "Neplatná vstupní hodnota typu boolean."
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1919
+#, python-format
+msgid "Not a buffer object: %r"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2042
+#, python-format
+msgid "Maximal pixel size %(maxsize)s exceeded"
+msgstr "Maximální rozměr %(maxsize)s pixelů překročen"
+
+#: ../lib/pytis/data/types_.py:2044
+#, python-format
+msgid "Minimal pixel size %(minsize)s exceeded"
+msgstr "Minimální rozměr %(minsize)s pixelů nedodržen"
+
+#: ../lib/pytis/data/types_.py:2046
+#, fuzzy, python-format
+msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
+
+#: ../lib/pytis/data/types_.py:2062
+msgid "Neplatný grafický formát"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2178
+#, fuzzy
+msgid "Invalid hierarchical value format"
+msgstr "Chybný formát data nebo času"
+
+#: ../lib/pytis/data/types_.py:2180
+msgid "One of hierarchical value items is too long"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2182
+msgid "One of hierarchical value items contains invalid characters"
+msgstr ""
+
+#~ msgid "String exceeds max length %(maxlen)s characters"
+#~ msgstr "Řetězec přesahuje maximální délku %(maxlen)s znaků"
+
+#~ msgid "Minimal length %(minlen)s not satisfied"
+#~ msgstr "Nedodržena minimální délka %(minlen)s"

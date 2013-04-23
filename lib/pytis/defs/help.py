@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -27,6 +27,7 @@ from pytis.extensions import nextval
 class _TreeOrderLTree(pp.PrettyFoldable, pd.String):
     pass
 
+_ = pytis.util.translations('pytis-defs')
 
 class HelpParents(Specification):
     # Codebook of parent items for Help (to prevent recursion).

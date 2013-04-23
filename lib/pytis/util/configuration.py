@@ -2,7 +2,7 @@
 
 # Prostředky pro definici a zpracování konfigurace běhu aplikace
 # 
-# Copyright (C) 2002-2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,8 +35,11 @@ import string
 import sys
 import time
 
+import util
+# The translation domain is pytis-wx because it is only needed with wx applications.
+_ = util.translations('pytis-wx')
+
 from pytis.util import *
-import pytis.data
 
 
 class _OrderedDefinitionClass(type):
@@ -82,10 +85,11 @@ class Configuration(object):
         """Podrobnější dokumentace významu volby a přípustných hodnot."""
         
         _DEFAULT = None
-        """Výchozí hodnota konfigurační volby.
+        """Default value of the configuration option.
 
-        Více viz. dokumentace metody `default()'."""
+        See `default()' documentation for more information.
 
+        """
         _DEFAULT_STRING = None
         """Výchozí hodnota konfigurační volby pro dump.
 
@@ -110,17 +114,12 @@ class Configuration(object):
         Více viz. dokumentace metody `visible()'."""
 
         _TYPE = None
-        """Datový typ volby jako instance třídy 'pytis.data.Type' nebo None.
+        """Data type of the option value as 'pytis.data.Type' instance or None.
 
-        Hodnota 'None' určuje blíže nespecifikovaný typ.  Takové volby umožňují
-        předávat libovolný Pythonový objekt.
-
-        Namísto přímého nastavování této konstanty je doporučováno použít
-        předdefinovaných tříd 'StringOption', 'NumericOption' nebo
-        'BooleanOption' (viz níže).
+        See `_type()' documentation for more information.
 
         """
-        
+
         def __init__(self, configuration):
             """Inicializuj instanci volby.
 
@@ -133,6 +132,7 @@ class Configuration(object):
             self._configuration = configuration
             self._value = self._undefined = object()
             self._changed = False
+            self._type_ = self._type()
             assert self._DESCR is not None, \
                    "Option '%s' doesn't define the description string." % \
                    self.name()
@@ -166,6 +166,20 @@ class Configuration(object):
                 value = self.default()
             return value
 
+        def _type(self):
+            """Return data type of the option value as 'pytis.data.Type' instance or None.
+
+            'None' stands for unspecified type, allowing the value to be any
+            Python object.  Otherwise the option values will need to be valid
+            inner values of given type.
+            
+            Instead of overriding this method directly, it is recommended to
+            use predefined classes 'StringOption', 'NumericOption' and
+            'BooleanOption'.
+
+            """
+            return self._TYPE
+        
         def name(self):
             return self.__class__.__name__[8:]
         
@@ -226,6 +240,7 @@ class Configuration(object):
             if self._LONG_OPTION is not None:
                 return self._LONG_OPTION
             elif self._CMDLINE:
+                import pytis.data
                 name = self.name().replace('_','-')
                 if isinstance(self.type(), pytis.data.Boolean):
                     return name
@@ -251,15 +266,15 @@ class Configuration(object):
             return self._ENVIRONMENT
 
         def default(self):
-            """Vrať výchozí hodnotu konfigurační volby.
+            """Return the default value of the configuration option.
             
-            Hodnota vrácená touto metodou je použita, pokud nebylo možno
-            výchozí hodnotu volby zjistit jinak.
+            The value returned by this method is used if the option value is
+            not set explicitly.
 
-            Specifikaci lze upravit předefinováním konstanty `_DEFAULT' v
-            odvozené třídů, nebo ve složitějších případech předefinováním této
-            metody.
-            
+            Option specification may define the default value by overriding the
+            constant `_DEFAULT' in simple cases or by overriding this
+            method if needed.
+
             """
             return self._DEFAULT
         
@@ -286,7 +301,8 @@ class Configuration(object):
                 return pprint.PrettyPrinter().pformat(self.default())
 
         def type(self):
-            return self._TYPE
+            """Return data type of the option value as 'pytis.data.Type' instance or None."""
+            return self._type_
         
         def visible(self):
             """Vrať příznak viditelnosti volby.
@@ -315,20 +331,28 @@ class Configuration(object):
 
     class StringOption(Option):
         """Třída pro volby řetězcového typu."""
-        _TYPE = pytis.data.String()        
+        def _type(self):
+            import pytis.data
+            return pytis.data.String()
 
     class BooleanOption(Option):
         """Třída pro volby typu boolean."""
-        _TYPE = pytis.data.Boolean()        
+        def _type(self):
+            import pytis.data
+            return pytis.data.Boolean()
 
     class ColorOption(Option):
         """Třída pro volby typu barva."""
-        _TYPE = pytis.data.Color()
         _DOC = "Barva je reprezentována řetězcem '#RRGGBB'."
+        def _type(self):
+            import pytis.data
+            return pytis.data.Color()
 
     class NumericOption(Option):
         """Třída pro volby celočíselného typu."""
-        _TYPE = pytis.data.Integer()        
+        def _type(self):
+            import pytis.data
+            return pytis.data.Integer()
 
     class FileOption(StringOption):
         def _compute_init_value(self, *args, **kwargs):
@@ -563,6 +587,7 @@ class Configuration(object):
                 schemas = [s.strip() for s in schemas_string.split(',')]
             else:
                 schemas = None
+            import pytis.data
             return pytis.data.DBConnection(alternatives=dict(alternatives),
                                            schemas=schemas,
                                            **options)
@@ -661,27 +686,27 @@ class Configuration(object):
     # Komunikace s klientskými stanicemi
     
     class _Option_rpc_local_port(NumericOption):
-        _DESCR = _("Lokální komunikační port pro naslouchání pytisovým aplikacím.")
+        _DESCR = _(u"Lokální komunikační port pro naslouchání pytisovým aplikacím.")
         _DEFAULT = 17984
         
     class _Option_rpc_remote_port(NumericOption):
-        _DESCR = _("Vzdálený komunikační port na klientských stanicích.")
+        _DESCR = _(u"Vzdálený komunikační port na klientských stanicích.")
         _DEFAULT = 17984
         
     class _Option_rpc_key_file(FileOption):
-        _DESCR = _("Soubor s klíčem certifikátu pro komunikaci s klientskými stanicemi.")
+        _DESCR = _(u"Soubor s klíčem certifikátu pro komunikaci s klientskými stanicemi.")
         _DEFAULT = 'linux.key'
         
     class _Option_rpc_certificate_file(FileOption):
-        _DESCR = _("Soubor s certifikátem pro komunikaci s klientskými stanicemi.")
+        _DESCR = _(u"Soubor s certifikátem pro komunikaci s klientskými stanicemi.")
         _DEFAULT = 'linux.crt'
 
     class _Option_rpc_communication_enabled(BooleanOption):
-        _DESCR = _("Zapnutí/vypnutí komunikace s windowsovými klientskými stanicemi.")
+        _DESCR = _(u"Zapnutí/vypnutí komunikace s windowsovými klientskými stanicemi.")
         _DEFAULT = True
 
     class _Option_rpc_remote_view(BooleanOption):
-        _DESCR = _("Flag určující, zda prohlížet tiskové soubory na klientské stanici.")
+        _DESCR = _(u"Flag určující, zda prohlížet tiskové soubory na klientské stanici.")
         _DEFAULT = True
         
     # Ostatní konfigurační volby
@@ -698,19 +723,25 @@ class Configuration(object):
         _DESCR = _(u"Formát společně uvedeného data a času.")
         _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' " +
                  u"konstruktoru třídy 'pytis.data.DateTime'.")
-        _DEFAULT = pytis.data.DateTime.DEFAULT_FORMAT
+        def default(self):
+            import pytis.data
+            return pytis.data.DateTime.DEFAULT_FORMAT
 
     class _Option_date_format(StringOption):
         _DESCR = _(u"Formát data.")
         _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' " +
                  u"konstruktoru třídy 'pytis.data.Date'.")
-        _DEFAULT = pytis.data.Date.DEFAULT_FORMAT
+        def default(self):
+            import pytis.data
+            return pytis.data.Date.DEFAULT_FORMAT
 
     class _Option_time_format(StringOption):
         _DESCR = _(u"Formát času.")
         _DOC = _(u"Řetězec ve tvaru vyžadovaném parametrem `format' " +
                  u"konstruktoru třídy 'pytis.data.Time'.")
-        _DEFAULT = pytis.data.Time.DEFAULT_FORMAT
+        def default(self):
+            import pytis.data
+            return pytis.data.Time.DEFAULT_FORMAT
 
     class _Option_lc_numeric(StringOption):
         _DESCR = _(u"Numeric locale.")
@@ -836,8 +867,10 @@ class Configuration(object):
 
     class _Option_row_highlight_width(NumericOption):
         _DESCR = _(u"Šířka rámečku zvýraznění aktivního řádku tabulkového formuláře v px.")
-        _TYPE = pytis.data.Integer(minimum=0, maximum=10)
         _DEFAULT = 3
+        def _type(self):
+            import pytis.data
+            return pytis.data.Integer(minimum=0, maximum=10)
 
     class _Option_grid_line_color(ColorOption):
         _DESCR = _(u"Barva mřížky tabulkového formuláře.")

@@ -38,7 +38,9 @@ defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
 from pytis.util import translate as _
 
 import sys, os, lcg, pytis.data as pd, pytis.form, pytis.util, config
-from pytis.util import log, OPERATIONAL
+from pytis.util import log, OPERATIONAL, translations
+
+_ = translations('pytis-wx')
 
 class HelpUpdater(object):
     """Create/update initial help texts in the database according to specifications.

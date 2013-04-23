@@ -47,6 +47,9 @@ import cStringIO
 import thread
 import time
 
+import pytis.util
+_ = pytis.util.translations('pytis-data')
+
 try:
     import sqlalchemy
 except Exception as e:
@@ -131,8 +134,10 @@ class Type(object):
 
     VM_NULL_VALUE = 'VM_NULL_VALUE'
     VM_INVALID_VALUE =  'VM_INVALID_VALUE'
-    _VM_NULL_VALUE_MSG = _(u"Prázdná hodnota")
-    _VM_INVALID_VALUE_MSG = _(u"Nesprávná hodnota")
+    # Translators: User input validation error message.
+    _VM_NULL_VALUE_MSG = _(u"Empty value")
+    # Translators: User input validation error message.
+    _VM_INVALID_VALUE_MSG = _(u"Invalid value")
     
     _SPECIAL_VALUES = ()
     
@@ -462,9 +467,11 @@ class Number(Type):
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     
     VM_MINIMUM = 'VM_MINIMUM'
-    _VM_MINIMUM_MSG = _(u"Minimální hodnota je %(minimum)s")
+    # Translators: User input validation error message.
+    _VM_MINIMUM_MSG = _(u"Minimal value is %(minimum)s")
     VM_MAXIMUM = 'VM_MAXIMUM'
-    _VM_MAXIMUM_MSG = _(u"Maximální hodnota je %(maximum)s")
+    # Translators: User input validation error message.
+    _VM_MAXIMUM_MSG = _(u"Maximal value is %(maximum)s")
 
     def __init__(self, minimum=None, maximum=None, **kwargs):
         """Initialize the instance.
@@ -541,9 +548,11 @@ class Limited(Type):
     """
 
     VM_MINLEN = 'VM_MINLEN'
-    _VM_MINLEN_MSG = _(u"Nedodržena minimální délka %(minlen)s")
+    # Translators: User input validation error message.
+    _VM_MINLEN_MSG = _(u"Minimal size %(minlen)s not satisfied")
     VM_MAXLEN = 'VM_MAXLEN'
-    _VM_MAXLEN_MSG = _(u"Překročena maximální délka %(maxlen)s")
+    # Translators: User input validation error message.
+    _VM_MAXLEN_MSG = _(u"Maximal length %(maxlen)s characters exceeded")
 
     def __init__(self, minlen=None, maxlen=None, **kwargs):
         """Initialize the instance.
@@ -606,7 +615,8 @@ class Integer(Number):
     """Libovolný integer."""
 
     VM_NONINTEGER = 'VM_NONINTEGER'
-    _VM_NONINTEGER_MSG = _(u"Není to celé číslo")
+    # Translators: User input validation error message.
+    _VM_NONINTEGER_MSG = _(u"Not an integer")
     
     def _validate(self, string):
         """Pokus se převést 'string' na plain nebo long integer.
@@ -683,7 +693,8 @@ class Float(Number):
     """Konstanta pro typ zaokrouhlení ve 'validate'."""
 
     VM_INVALID_NUMBER = 'VM_INVALID_NUMBER'
-    _VM_INVALID_NUMBER_MSG = _(u"Není to povolené číslo")
+    # Translators: User input validation error message.
+    _VM_INVALID_NUMBER_MSG = _(u"Invalid number")
     
     def __init__(self, precision=None, digits=None, **kwargs):
         """Definuj typ reálného čísla.
@@ -827,7 +838,10 @@ class String(Limited):
 
     """    
 
-    _VM_MAXLEN_MSG = _(u"Řetězec přesahuje maximální délku %(maxlen)s")
+    # Translators: User input validation error message.
+    _VM_MINLEN_MSG = _(u"Minimal length %(minlen)s characters not satisfied")
+    # Translators: User input validation error message.
+    _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
     
     def _validate(self, string):
@@ -894,12 +908,16 @@ class Password(String):
 
     """
     VM_PASSWORD = 'VM_PASSWORD'
-    _VM_PASSWORD_MSG = _(u"Zadejte heslo dvakrát pro vyloučení překlepů")
+    # Translators: User input validation error message.
+    _VM_PASSWORD_MSG = _(u"Enter the password twice to eliminate typos")
     VM_PASSWORD_VERIFY = 'VM_PASSWORD_VERIFY'
-    _VM_PASSWORD_VERIFY_MSG = _(u"Kontrolní zadání hesla neodpovídá")
+    # Translators: User input validation error message.
+    _VM_PASSWORD_VERIFY_MSG = _(u"Passwords don't match")
     VM_INVALID_MD5 = 'VM_INVALID_MD5'
+    # Translators: User input validation error message.
     _VM_INVALID_MD5_MSG = _(u"Invalid MD5 hash")
     VM_MIX_CHARACTERS = 'VM_MIX_CHARACTERS'
+    # Translators: User input validation error message.
     _VM_MIX_CHARACTERS_MSG = _(u"Please use mix of letters and non-letters in your password")
     
     def __init__(self, md5=False, verify=True, strength=None, **kwargs):
@@ -986,7 +1004,8 @@ class Password(String):
 class RegexString(String):
 
     VM_FORMAT = 'VM_FORMAT'
-    _VM_FORMAT_MSG = _(u"Neplatný formát.")
+    # Translators: User input validation error message.
+    _VM_FORMAT_MSG = _(u"Invalid format")
     _REGEX = None
     
     def __init__(self, regex=None, **kwargs):
@@ -1005,7 +1024,8 @@ class RegexString(String):
 class Color(RegexString):
     """Barva reprezentovaná řetězcem '#RRGGBB'."""
 
-    _VM_FORMAT_MSG = _(u"Formát barvy neodpovídá ('#RGB' nebo '#RRGGBB')")
+    # Translators: User input validation error message.
+    _VM_FORMAT_MSG = _(u"Invalid color format ('#RGB' or '#RRGGBB')")
     _REGEX = re.compile('^\#[0-9a-fA-F]{3,3}([0-9a-fA-F]{3,3})?$')
 
     def sqlalchemy_type(self):
@@ -1018,9 +1038,12 @@ class Inet(String):
     VM_INET_FORMAT = 'VM_INET_FORMAT'
     VM_INET_MASK = 'VM_INET_MASK'
     VM_INET_ADDR = 'VM_INET_ADDR'
-    _VM_INET_FORMAT_MSG = _(u"Chybný formát Inet adresy.")
-    _VM_INET_MASK_MSG = _(u"Chybná maska Inet adresy: %(mask)s")
-    _VM_INET_ADDR_MSG = _(u"Chybná hodnota Inet adresy %(addr)s")
+    # Translators: User input validation error message.
+    _VM_INET_FORMAT_MSG = _(u"Invalid format")
+    # Translators: User input validation error message.
+    _VM_INET_MASK_MSG = _(u"Invalid inet address mask: %(mask)s")
+    # Translators: User input validation error message.
+    _VM_INET_ADDR_MSG = _(u"Invalid inet address value %(addr)s")
     
     _INET4_FORMAT = re.compile('(\d{1,3}(\.\d{1,3}){0,3}([/]\d{1,2}){0,1})$')
 
@@ -1051,7 +1074,8 @@ class Macaddr(String):
     """MAC adresa."""
 
     VM_MACADDR_FORMAT = 'VM_MACADDR_FORMAT'
-    _VM_MACADDR_FORMAT_MSG = _(u"Chybný formát MAC adresy.")
+    # Translators: User input validation error message.
+    _VM_MACADDR_FORMAT_MSG = _(u"Invalid format")
     
     _MACADDR_FORMAT = re.compile('([0-9a-fA-F]{2}[-:]{0,1}){5}[0-9a-fA-F]{2}$')
     
@@ -1172,9 +1196,9 @@ class _CommonDateTime(Type):
     VM_DT_FORMAT = 'VM_DT_FORMAT'
     VM_DT_VALUE = 'VM_DT_VALUE'
     VM_DT_AGE = 'VM_DT_AGE'
-    _VM_DT_FORMAT_MSG = _(u"Chybný formát data nebo času")
-    _VM_DT_VALUE_MSG = _(u"Chybné datum nebo čas")
-    _VM_DT_AGE_MSG = _(u"Datum mimo povolený rozsah")
+    _VM_DT_FORMAT_MSG = _(u"Invalid date or time format")
+    _VM_DT_VALUE_MSG = _(u"Invalid date or time")
+    _VM_DT_AGE_MSG = _(u"Date outside the allowed range")
     
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
@@ -1655,8 +1679,8 @@ class Time(_CommonDateTime):
 class TimeInterval(Type):
     """Amount of time between two moments."""
 
-    VM_TI_FORMAT =  'VM_TI_INVALID_FORMAT'
-    _VM_TI_FORMAT_MSG = _(u"Chybný formát")
+    VM_TI_FORMAT = 'VM_TI_INVALID_FORMAT'
+    _VM_TI_FORMAT_MSG = _(u"Invalid format")
 
     _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
 
@@ -1848,7 +1872,7 @@ class Binary(Limited):
     """
     
     _VALIDATION_CACHE_LIMIT = 0
-    _VM_MAXLEN_MSG = _(u"Překročena maximální velikost %(maxlen)s")
+    _VM_MAXLEN_MSG = _(u"Maximal size %(maxlen)s exceeded")
     
     class Buffer(object):
         """Wrapper of a buffer for internal representation of binary values.
@@ -2017,11 +2041,11 @@ class Image(Binary, Big):
     """
     
     VM_MAXSIZE = 'VM_MAXSIZE'
-    _VM_MAXSIZE_MSG = _(u"Překročena maximální velikost %(maxsize)s pixelů")
+    _VM_MAXSIZE_MSG = _(u"Maximal pixel size %(maxsize)s exceeded")
     VM_MINSIZE = 'VM_MINSIZE'
-    _VM_MINSIZE_MSG = _(u"Nedodržena minimální velikost %(minsize)s pixelů")
+    _VM_MINSIZE_MSG = _(u"Minimal pixel size %(minsize)s exceeded")
     VM_FORMAT = 'VM_FORMAT'
-    _VM_FORMAT_MSG = _(u"Nepovolený formát %(format)s; povoleno: %(formats)s")
+    _VM_FORMAT_MSG = _(u"Unsupported format %(format)s; valid formats: %(formats)s")
     
     class Buffer(Binary.Buffer):
         """A bufer for internal representation of bitmap image data.
@@ -2153,11 +2177,11 @@ class LTree(Type):
 
     """
     VM_TREE_FORMAT = 'VM_TREE_FORMAT'
-    _VM_TREE_FORMAT_MSG = _(u"Chybný formát hierarchické hodnoty")
+    _VM_TREE_FORMAT_MSG = _(u"Invalid hierarchical value format")
     VM_LONG_ITEM = 'VM_LONG_ITEM'
-    _VM_LONG_ITEM_MSG = _(u"Některá z hierarchických položek je příliš dlouhá")
+    _VM_LONG_ITEM_MSG = _(u"One of hierarchical value items is too long")
     VM_INVALID_ITEM = 'VM_INVALID_ITEM'
-    _VM_INVALID_ITEM_MSG = _(u"Některá z hierarchických položek obsahuje nepovolené znaky")
+    _VM_INVALID_ITEM_MSG = _(u"One of hierarchical value items contains invalid characters")
 
     _REGEX = re.compile('^\w+$', re.UNICODE) 
 

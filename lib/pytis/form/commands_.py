@@ -2,7 +2,7 @@
 
 # Definice uživatelských příkazů
 # 
-# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,6 +42,9 @@ definujeme na jediném místě v tomto modulu.
 from pytis.util import translate as _
 
 from pytis.form import *
+
+_ = pytis.util.translations('pytis-wx')
+
     
 Command(Application, 'EXIT',
         "Ukončení aplikace")

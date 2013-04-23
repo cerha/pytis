@@ -2,7 +2,7 @@
 
 # Prvky uživatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ from pytis.form import *
 from pytis.presentation import *
 import wx
 
+_ = pytis.util.translations('pytis-wx')
 
 class SFSColumn(object):
     """Column specification for dialog selectors."""

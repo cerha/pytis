@@ -46,6 +46,7 @@ import types
 import pytis.util
 from pytis.data import *
 
+_ = pytis.util.translations('pytis-data')
 
 FORWARD = 'FORWARD'
 """Konstanta pro dopředný posun v 'Data.fetchone'."""

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -29,6 +29,8 @@ import pytis.presentation
 import pytis.util
 from pytis.presentation import Editable
 from pytis.extensions import Field, nextval
+
+_ = pytis.util.translations('pytis-defs')
 
 ### Roles
 

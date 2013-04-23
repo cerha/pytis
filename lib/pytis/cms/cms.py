@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2009, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@ import pytis.data as pd, pytis.util as pu, pytis.presentation as pp
 from pytis.presentation import Field, HGroup, VGroup, Binding, Action, CodebookSpec, \
      Computer, CbComputer, computer
 import config
+
+_ = pu.translations('pytis-cms')
 
 ASC = pd.ASCENDENT
 DESC = pd.DESCENDANT

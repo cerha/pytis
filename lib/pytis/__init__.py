@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2006, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2006, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,12 @@
 __version__ = "1.2.1"
 
 import util
+import data
+
 config = util.Configuration()
 import sys
 sys.modules['config'] = config
-import data
+del sys
 
 # dbdefs has to be imported in a very special way.  It can't be direct
 # pytis.dbdefs module because such a module can't be imported and used on top

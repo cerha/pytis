@@ -36,6 +36,8 @@ from pytis.util import translate as _
 from pytis.data import *
 from pytis.util import *
 
+_ = translations('pytis-data')
+
 
 class Permission:
     """Enumerator of permission constants.

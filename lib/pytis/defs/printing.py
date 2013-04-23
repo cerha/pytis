@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -19,14 +19,15 @@
 
 from __future__ import unicode_literals
 
-from pytis.util import translate as _
-
+import pytis.util
 import pytis.data
 import pytis.extensions
 import pytis.form
 import pytis.presentation
 
 from pytis.extensions import Field, nextval
+
+_ = pytis.util.translations('pytis-defs')
 
 class GlobalOutputTemplates(pytis.presentation.Specification):
     public = True

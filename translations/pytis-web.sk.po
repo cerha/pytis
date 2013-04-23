@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-05 17:55+0200\n"
+"POT-Creation-Date: 2013-04-23 19:20+0200\n"
 "PO-Revision-Date: 2011-12-29 14:58+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: Slovak <wiking@lists.freebsoft.org>\n"
@@ -16,108 +16,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
-#. All the messages below are validation errors.
-#: ../lib/pytis/web/__init__.py:40
-msgid "Empty value"
-msgstr "Prázdna hodnota"
-
-#: ../lib/pytis/web/__init__.py:41
-msgid "Invalid value"
-msgstr "Neplatná hodnota"
-
-#: ../lib/pytis/web/__init__.py:42
-#, python-format
-msgid "Minimal value is %(minimum)s"
-msgstr ""
-
-#: ../lib/pytis/web/__init__.py:43
-#, python-format
-msgid "Maximal value is %(maximum)s"
-msgstr ""
-
-#: ../lib/pytis/web/__init__.py:44 ../lib/pytis/web/__init__.py:48
-#, fuzzy, python-format
-msgid "Minimal length %(minlen)s characters not satisfied"
-msgstr "Nedodržaná minimálna dĺžka %(minlen)s"
-
-#: ../lib/pytis/web/__init__.py:45
-#, fuzzy, python-format
-msgid "Maximal length %(maxlen)s characters exceeded"
-msgstr "Reťazec presahuje maximálnu dĺžku %(maxlen)s"
-
-#: ../lib/pytis/web/__init__.py:46
-msgid "Not an integer"
-msgstr "Nie je to celé číslo"
-
-#: ../lib/pytis/web/__init__.py:47
-msgid "Invalid number"
-msgstr "Niepovolené číslo"
-
-#: ../lib/pytis/web/__init__.py:49
-#, fuzzy, python-format
-msgid "String exceeds max length %(maxlen)s characters"
-msgstr "Raťazec presahuje maximálnu dĺžku %(maxlen)s"
-
-#: ../lib/pytis/web/__init__.py:50
-msgid "Enter the password twice to eliminate typos"
-msgstr "Zadajte heslo dvakrát pre eliminovanie preklepov"
-
-#: ../lib/pytis/web/__init__.py:51
-msgid "Passwords don't match"
-msgstr "Kontrolné zadanie hesla nezodpovedá"
-
-#: ../lib/pytis/web/__init__.py:52
-msgid "Please use mix of letters and non-letters in your password"
-msgstr ""
-
-#: ../lib/pytis/web/__init__.py:53
-msgid "Invalid format"
-msgstr "Neplatný formát"
-
-#: ../lib/pytis/web/__init__.py:54
-msgid "Invalid color format ('#RGB' or '#RRGGBB')"
-msgstr "Formát farby nezodpovedá  ('#RGB' nebo '#RRGGBB')"
-
-#: ../lib/pytis/web/__init__.py:55
-msgid "Invalid date or time format"
-msgstr "Chybný formát dátumu alebo času"
-
-#: ../lib/pytis/web/__init__.py:56
-msgid "Invalid date or time"
-msgstr "Chybný dátum alebo čas"
-
-#: ../lib/pytis/web/__init__.py:57
-msgid "Date outside the allowed range"
-msgstr "Dátum mimo povolený rozsah"
-
-#: ../lib/pytis/web/__init__.py:58
-#, python-format
-msgid "Minimal size %(minlen)s not satisfied"
-msgstr "Nedodržaná minimálna veľkosť %(minlen)s"
-
-#: ../lib/pytis/web/__init__.py:59
-#, python-format
-msgid "Maximal size %(maxlen)s exceeded"
-msgstr "Maximálna veľkosť %(maxlen)s prekročená"
-
-#: ../lib/pytis/web/__init__.py:60
-#, python-format
-msgid "Maximal pixel size %(maxsize)s exceeded"
-msgstr "Maximálny rozmer %(maxsize)s pixelov prekročený"
-
-#: ../lib/pytis/web/__init__.py:61
-#, python-format
-msgid "Minimal pixel size %(minsize)s exceeded"
-msgstr "Minimálny rozmer %(minsize)s pixelov nedodržaný"
-
-#. This is the last validation error message.
-#: ../lib/pytis/web/__init__.py:63
-#, python-format
-msgid "Unsupported format %(format)s; valid formats: %(formats)s"
-msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
-
-#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:516
-#: ../lib/pytis/web/form.py:529
+#: ../lib/pytis/web/dialog.py:51 ../lib/pytis/web/form.py:517
+#: ../lib/pytis/web/form.py:530
 msgid "Submit"
 msgstr "Odoslať"
 
@@ -144,44 +44,44 @@ msgstr "obrázok"
 msgid "file"
 msgstr "súbor"
 
-#: ../lib/pytis/web/form.py:274 ../lib/pytis/web/form.py:276
+#: ../lib/pytis/web/form.py:275 ../lib/pytis/web/form.py:277
 msgid "Print"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:278
+#: ../lib/pytis/web/form.py:279
 msgid "Export the contents of this field into PDF"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:516
+#: ../lib/pytis/web/form.py:517
 msgid "Undo all changes"
 msgstr "Zrušiť všetky urobené zmeny"
 
-#: ../lib/pytis/web/form.py:555
+#: ../lib/pytis/web/form.py:556
 msgid "Submit the form"
 msgstr "Odoslať formulár"
 
-#: ../lib/pytis/web/form.py:558
+#: ../lib/pytis/web/form.py:559
 msgid "Reset"
 msgstr "Vrátiť pôvodné hodnoty"
 
-#: ../lib/pytis/web/form.py:683
+#: ../lib/pytis/web/form.py:684
 msgid "Fields marked by an asterisk are mandatory."
 msgstr "Políčka označené hviezdičkou sú povinné."
 
 #. Label of filter selection box.
 #. Filtering limits the displayed form records by
 #. certain criterias.
-#: ../lib/pytis/web/form.py:830 ../lib/pytis/web/form.py:1718
+#: ../lib/pytis/web/form.py:831 ../lib/pytis/web/form.py:1724
 #, fuzzy
 msgid "Filter"
 msgstr "súbor"
 
-#: ../lib/pytis/web/form.py:832
+#: ../lib/pytis/web/form.py:833
 #, fuzzy
 msgid "Apply Filter"
 msgstr "súbor"
 
-#: ../lib/pytis/web/form.py:1059
+#: ../lib/pytis/web/form.py:1061
 #, fuzzy
 msgid "Profile"
 msgstr "súbor"
@@ -189,28 +89,28 @@ msgstr "súbor"
 #. Label used in filter selection box for the
 #. option which disables filtering and thus results in all
 #. records to be displayed.
-#: ../lib/pytis/web/form.py:1267
+#: ../lib/pytis/web/form.py:1273
 msgid "All items"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1315
+#: ../lib/pytis/web/form.py:1321
 msgid "Popup the menu of actions for this record"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1402
+#: ../lib/pytis/web/form.py:1408
 #, fuzzy
 msgid "Sum"
 msgstr "Odoslať"
 
-#: ../lib/pytis/web/form.py:1403
+#: ../lib/pytis/web/form.py:1409
 msgid "Average"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1404
+#: ../lib/pytis/web/form.py:1410
 msgid "Minimum"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1405
+#: ../lib/pytis/web/form.py:1411
 msgid "Maximum"
 msgstr ""
 
@@ -218,31 +118,31 @@ msgstr ""
 #. the number and this number also denotes the plural form used.
 #. Please supply translations for all plural forms relevant for the
 #. target language.
-#: ../lib/pytis/web/form.py:1459
+#: ../lib/pytis/web/form.py:1465
 #, python-format
 msgid "Found %d record matching the search expression."
 msgid_plural "Found %d records matching the search expression."
 msgstr[0] ""
 msgstr[1] ""
 
-#: ../lib/pytis/web/form.py:1469
+#: ../lib/pytis/web/form.py:1475
 msgid "Loading form data..."
 msgstr ""
 
 #. Used in empty list forms.  "Records" refers to
 #. database records in the most generic senese possible.
-#: ../lib/pytis/web/form.py:1555
+#: ../lib/pytis/web/form.py:1561
 msgid "No records."
 msgstr "Žiadne záznamy."
 
-#: ../lib/pytis/web/form.py:1558
+#: ../lib/pytis/web/form.py:1564
 msgid "Total records:"
 msgstr "Počet záznamov celkom:"
 
 #. The variables '%(first)s', '%(last)s' and
 #. '%(total)s' are replaced by the numbers corresponding to the
 #. current listing range.
-#: ../lib/pytis/web/form.py:1566
+#: ../lib/pytis/web/form.py:1572
 #, python-format
 msgid "Displayed records %(first)s-%(last)s of total %(total)s"
 msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
@@ -262,19 +162,19 @@ msgstr "Zobrazené záznamy %(first)s-%(last)s z celkom %(total)s"
 #. "beginning with".  Also take care to use the correct
 #. quotation marks for the target language (written as the
 #. corresponding unicode characters).
-#: ../lib/pytis/web/form.py:1663
+#: ../lib/pytis/web/form.py:1669
 #, python-format
 msgid "%(label)s on \"%(prefix)s\":"
 msgstr "%(label)s na \"%(prefix)s\":"
 
 #. Index search controls link tooltip.
-#: ../lib/pytis/web/form.py:1668
+#: ../lib/pytis/web/form.py:1674
 #, python-format
 msgid "Skip to the first record beginning with \"%s\""
 msgstr "Preskočit na prvý riadok začínajúci na „%s“"
 
 #. Button for manual filter invocation.
-#: ../lib/pytis/web/form.py:1692
+#: ../lib/pytis/web/form.py:1698
 msgid "Change filters"
 msgstr ""
 
@@ -282,56 +182,56 @@ msgstr ""
 #. keyboard combination to use for selection
 #. without unexpected invocation of the
 #. option.
-#: ../lib/pytis/web/form.py:1723 ../lib/pytis/web/form.py:1753
-#: ../lib/pytis/web/form.py:1771
+#: ../lib/pytis/web/form.py:1729 ../lib/pytis/web/form.py:1759
+#: ../lib/pytis/web/form.py:1777
 msgid "(Use ALT+arrow down to select)"
 msgstr "(použite ALT+šipka dole pre výber)"
 
 #. Search button label.
-#: ../lib/pytis/web/form.py:1744 ../lib/pytis/web/form.py:1787
+#: ../lib/pytis/web/form.py:1750 ../lib/pytis/web/form.py:1793
 msgid "Search"
 msgstr ""
 
 #. Paging controls allow navigation in long lists which are split into
 #. several pages.  The user can select a specific page or browse
 #. forward/backwards.
-#: ../lib/pytis/web/form.py:1750 ../lib/pytis/web/form.py:1752
+#: ../lib/pytis/web/form.py:1756 ../lib/pytis/web/form.py:1758
 msgid "Page"
 msgstr "Strana"
 
-#: ../lib/pytis/web/form.py:1758
+#: ../lib/pytis/web/form.py:1764
 msgid "Previous"
 msgstr "predchádzajúci"
 
-#: ../lib/pytis/web/form.py:1759
+#: ../lib/pytis/web/form.py:1765
 msgid "Go to previous page"
 msgstr "Prejsť na predchádzajúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1761
+#: ../lib/pytis/web/form.py:1767
 msgid "Next"
 msgstr "ďalší"
 
-#: ../lib/pytis/web/form.py:1762
+#: ../lib/pytis/web/form.py:1768
 msgid "Go to next page"
 msgstr "Prejsť na nasledujúcu stránku výpisu"
 
-#: ../lib/pytis/web/form.py:1768 ../lib/pytis/web/form.py:1770
+#: ../lib/pytis/web/form.py:1774 ../lib/pytis/web/form.py:1776
 msgid "Records per page"
 msgstr "Počet záznamov na stránku"
 
-#: ../lib/pytis/web/form.py:1775
+#: ../lib/pytis/web/form.py:1781
 msgid "Go"
 msgstr "Choď"
 
-#: ../lib/pytis/web/form.py:1782
+#: ../lib/pytis/web/form.py:1788
 msgid "Search expression"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1788
+#: ../lib/pytis/web/form.py:1794
 msgid "Cancel"
 msgstr ""
 
-#: ../lib/pytis/web/form.py:1825
+#: ../lib/pytis/web/form.py:1831
 msgid "filtered by: "
 msgstr ""
 
@@ -397,6 +297,10 @@ msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:442
 msgid "You must choose an object to include"
+msgstr ""
+
+#: ../resources/scripts/pytis-ckeditor.js:497
+msgid "Upload"
 msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:555
@@ -571,6 +475,66 @@ msgstr ""
 #: ../resources/scripts/pytis.js:112
 msgid "Failed loading form."
 msgstr ""
+
+#~ msgid "Empty value"
+#~ msgstr "Prázdna hodnota"
+
+#~ msgid "Invalid value"
+#~ msgstr "Neplatná hodnota"
+
+#, fuzzy
+#~ msgid "Minimal length %(minlen)s characters not satisfied"
+#~ msgstr "Nedodržaná minimálna dĺžka %(minlen)s"
+
+#, fuzzy
+#~ msgid "Maximal length %(maxlen)s characters exceeded"
+#~ msgstr "Reťazec presahuje maximálnu dĺžku %(maxlen)s"
+
+#~ msgid "Not an integer"
+#~ msgstr "Nie je to celé číslo"
+
+#~ msgid "Invalid number"
+#~ msgstr "Niepovolené číslo"
+
+#, fuzzy
+#~ msgid "String exceeds max length %(maxlen)s characters"
+#~ msgstr "Raťazec presahuje maximálnu dĺžku %(maxlen)s"
+
+#~ msgid "Enter the password twice to eliminate typos"
+#~ msgstr "Zadajte heslo dvakrát pre eliminovanie preklepov"
+
+#~ msgid "Passwords don't match"
+#~ msgstr "Kontrolné zadanie hesla nezodpovedá"
+
+#~ msgid "Invalid format"
+#~ msgstr "Neplatný formát"
+
+#~ msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+#~ msgstr "Formát farby nezodpovedá  ('#RGB' nebo '#RRGGBB')"
+
+#~ msgid "Invalid date or time format"
+#~ msgstr "Chybný formát dátumu alebo času"
+
+#~ msgid "Invalid date or time"
+#~ msgstr "Chybný dátum alebo čas"
+
+#~ msgid "Date outside the allowed range"
+#~ msgstr "Dátum mimo povolený rozsah"
+
+#~ msgid "Minimal size %(minlen)s not satisfied"
+#~ msgstr "Nedodržaná minimálna veľkosť %(minlen)s"
+
+#~ msgid "Maximal size %(maxlen)s exceeded"
+#~ msgstr "Maximálna veľkosť %(maxlen)s prekročená"
+
+#~ msgid "Maximal pixel size %(maxsize)s exceeded"
+#~ msgstr "Maximálny rozmer %(maxsize)s pixelov prekročený"
+
+#~ msgid "Minimal pixel size %(minsize)s exceeded"
+#~ msgstr "Minimálny rozmer %(minsize)s pixelov nedodržaný"
+
+#~ msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+#~ msgstr "Nepodporovaný formát %(format)s; platné formáty: %(formats)s"
 
 #, fuzzy
 #~ msgid "Instructions"

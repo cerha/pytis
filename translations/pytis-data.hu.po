@@ -1,0 +1,246 @@
+# Pytis translations 
+# Copyright (C) 2008-2011 Brailcom, o.p.s. 
+# This file is distributed under the same license as the Pytis package. 
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.1\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-04-22 11:43+0200\n"
+"PO-Revision-Date: 2011-12-29 14:56+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../lib/pytis/data/access.py:434
+msgid "Access denied"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:70
+msgid "Can't connect to database"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:137
+msgid "Database interface error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:153 ../lib/pytis/data/dbapi.py:245
+msgid "Database connection error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:165 ../lib/pytis/data/pgsql.py:83
+#: ../lib/pytis/data/pgsql.py:90
+msgid "Database operational error"
+msgstr ""
+
+#: ../lib/pytis/data/dbapi.py:169 ../lib/pytis/data/pgsql.py:95
+msgid "Database integrity violation"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:292
+msgid "Příliš mnoho databázových spojení"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:696
+msgid "Databázová chyba"
+msgstr ""
+
+#: ../lib/pytis/data/dbdata.py:765
+msgid "Chybné uživatelské jméno nebo heslo"
+msgstr ""
+
+#: ../lib/pytis/data/pgsql.py:56
+msgid "Nelze se připojit k databázi"
+msgstr ""
+
+#: ../lib/pytis/data/pgsql.py:65
+msgid "Query arguments unsupported by the pgsql backend"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:228 ../lib/pytis/data/postgresql.py:326
+msgid "Volána neimplementovaná metoda"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:314
+msgid "Unimplemented method"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:436
+msgid "Data obsahují znaky, které nelze reprezentovat v kódování databáze"
+msgstr ""
+
+#: ../lib/pytis/data/postgresql.py:3484
+msgid "Chybná hodnota čítače z databáze"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:136
+msgid "Empty value"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:138
+msgid "Invalid value"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:350
+#, python-format
+msgid "Hvězdičkové výrazy nejsou podporovány pro hodnoty typu '%s'."
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:469
+#, python-format
+msgid "Minimal value is %(minimum)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:472
+#, python-format
+msgid "Maximal value is %(maximum)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:550
+#, python-format
+msgid "Minimal size %(minlen)s not satisfied"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:553
+#, python-format
+msgid "Maximal length %(maxlen)s characters exceeded"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:617
+msgid "Not an integer"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:695
+msgid "Invalid number"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:840
+#, python-format
+msgid "Minimal length %(minlen)s characters not satisfied"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:842 ../lib/pytis/data/types_.py:1873
+#, python-format
+msgid "Maximal size %(maxlen)s exceeded"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:910
+msgid "Enter the password twice to eliminate typos"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:913
+msgid "Passwords don't match"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:916
+msgid "Invalid MD5 hash"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:919
+msgid "Please use mix of letters and non-letters in your password"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1006 ../lib/pytis/data/types_.py:1040
+#: ../lib/pytis/data/types_.py:1076 ../lib/pytis/data/types_.py:1681
+msgid "Invalid format"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1026
+msgid "Invalid color format ('#RGB' or '#RRGGBB')"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1042
+#, python-format
+msgid "Invalid inet address mask: %(mask)s"
+msgstr ""
+
+#. User input validation error message.
+#: ../lib/pytis/data/types_.py:1044
+#, python-format
+msgid "Invalid inet address value %(addr)s"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1197
+msgid "Invalid date or time format"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1198
+msgid "Invalid date or time"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1199
+msgid "Date outside the allowed range"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1838
+msgid "Neplatná vstupní hodnota typu boolean."
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:1919
+#, python-format
+msgid "Not a buffer object: %r"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2042
+#, python-format
+msgid "Maximal pixel size %(maxsize)s exceeded"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2044
+#, python-format
+msgid "Minimal pixel size %(minsize)s exceeded"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2046
+#, python-format
+msgid "Unsupported format %(format)s; valid formats: %(formats)s"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2062
+msgid "Neplatný grafický formát"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2178
+msgid "Invalid hierarchical value format"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2180
+msgid "One of hierarchical value items is too long"
+msgstr ""
+
+#: ../lib/pytis/data/types_.py:2182
+msgid "One of hierarchical value items contains invalid characters"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Instructions"
+#~ msgstr "Műveletek"
+
+#, fuzzy
+#~ msgid "Selections"
+#~ msgstr "Műveletek"
+
+#, fuzzy
+#~ msgid "Dictation"
+#~ msgstr "Műveletek"

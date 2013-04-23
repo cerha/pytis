@@ -40,7 +40,9 @@ import weakref
 from dbdata import *
 from evaction import *
 from pytis.data import *
-import pytis.data
+import pytis.data, pytis.util
+
+_ = pytis.util.translations('pytis-data')
 
 
 # Modifikace tabulek se oznamuje zasláním notifikace `__modif_table', kde `table'

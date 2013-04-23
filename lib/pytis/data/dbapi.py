@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ from pytis.util import *
 from dbdata import *
 from postgresql import *
 
+_ = translations('pytis-data')
 
 class _DBAPIAccessor(PostgreSQLAccessor):
 

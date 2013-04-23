@@ -43,6 +43,7 @@ import pytis.util
 import pytis.windows
 import config
 
+_ = pytis.util.translations('pytis-wx')
 
 class PostscriptException(Exception):
     """Výjimka vyvolávaná při jakékoliv chybě interpretace PS dat."""
@@ -314,8 +315,8 @@ class PrintForm(Form):
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             log(OPERATIONAL, 'Print exception caught', tbstring)
-            run_dialog(Error, _("Chybné použití identifikátoru `data' v tiskové sestavě.\n"
-                                "Možná jste místo něj chtěli použít `current_row'?"))
+            run_dialog(Error, _(u"Chybné použití identifikátoru `data' v tiskové sestavě.\n"
+                                u"Možná jste místo něj chtěli použít `current_row'?"))
         except UserBreakException:
             pass
         return result
@@ -393,6 +394,6 @@ def run_viewer(file_name):
                 command = match['view'] % (file_name,)
                 os.system(command)
             else:
-                run_dialog(Error, _("Nenalezen žádný PDF prohlížeč."))
+                run_dialog(Error, _(u"Nenalezen žádný PDF prohlížeč."))
     finally:
         os.remove(file_name)

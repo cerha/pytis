@@ -1128,13 +1128,10 @@ class LayoutSpec(object):
             found = find_fields(group)
             for id in order:
                 assert is_anystring(id)
-                assert id in found, \
-                       (_(u"Invalid field id in 'order' specification:"), id)
+                assert id in found, ("Invalid field id in 'order' specification:", id)
             for id in found:
-                assert id in order, \
-                       (_(u"Field id missing in 'order' specification:"), id)
-            assert len(found) == len(order), \
-                   _(u"Duplicate field id in 'order' spcification.")
+                assert id in order, ("Field id missing in 'order' specification:", id)
+            assert len(found) == len(order), ("Duplicate field id in 'order' spcification:", order)
         self._order = tuple(order)
 
     def caption(self):
@@ -1531,9 +1528,7 @@ class ViewSpec(object):
                     if isinstance(c, Computer):
                         for dep in c.depends():
                             assert dep in self._field_dict, \
-                                   _(u"Unknown field id '%s' in dependencies "
-                                     "for '%s' specification of '%s'.") % \
-                                     (dep, s, f.id())
+                                "Unknown field '%s' in dependencies for '%s' specification of '%s'." % (dep, s, f.id())
             if referer is not None:
                 assert referer in [f.id() for f in fields], referer
         # Initialize `columns' specification parameter
@@ -1545,11 +1540,10 @@ class ViewSpec(object):
                 assert is_sequence(columns)
                 for c in columns:
                     assert isinstance(c, basestring) and c in self._field_dict,\
-                           (_(u"Unknown column id in 'columns' specification of %s: %r") %
-                            (spec_name, c,))
+                        "Unknown column id in 'columns' specification of %s: %r" % (spec_name, c,)
                     f = self._field_dict[c]
                     assert not f.disable_column(), \
-                           _(u"Disabled column in columns of %s: %s") % (spec_name, c,)
+                        "Disabled column in columns of %s: %s" % (spec_name, c,)
         # Initialize other specification parameters
         if sorting is not None:
             assert is_sequence(sorting)
@@ -3156,8 +3150,7 @@ class Field(object):
             # Temporary: The following test replaces the commented out assertion above.  The
             # assertion would break older applications, so we just log for now.
             if enumerator_kwargs and isinstance(enumerator, pytis.data.Enumerator):
-                log_(u"'enumerator' defined as Enumerator instance and '%s' passed.",
-                     enumerator_kwargs.keys()[0])
+                log_(u"'enumerator' defined as Enumerator instance and '%s' passed.", enumerator_kwargs.keys()[0])
             for lnk in links:
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
             for k in kwargs.keys():
@@ -4344,7 +4337,7 @@ class DbAttachmentStorage(AttachmentStorage):
                     return str(e)
             return None
         else:
-            return _("Attachment '%s' not found!", filename)
+            return "Attachment '%s' not found!" % filename
  
     def retrieve(self, filename, transaction=None):
         row = self._get_row(filename, transaction=transaction)

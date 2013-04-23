@@ -31,9 +31,6 @@ Tento modul je výjimečný ve dvou směrech:
    
      from util import *
 
-2. Definuje symbol '_' jako exportovanou proměnnou.  To je z podobných důvodů
-   jako výše a s ohledem na běžně používané konvence gettextu.
-
 """
 
 import functools
@@ -51,6 +48,10 @@ import thread
 import types as pytypes
 
 import __builtin__
+# Define the default gettext function for backwards compatibility.  Some
+# modules (usually applications) may not yet define the _ function explicitly
+# (using the function translations() defined below) and we want to avoid errors
+# in such code for now.  In future, this should be removed.
 if '_' not in __builtin__.__dict__:
     __builtin__.__dict__['_'] = lambda x: x
 
@@ -1857,6 +1858,8 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
     diff = difflib.HtmlDiff(wrapcolumn=wrapcolumn)
     result = diff.make_file(text1.splitlines(), text2.splitlines(), name1, name2,
                             context=context, numlines=numlines)
+
+    _ = translations('pytis-wx')
     for src, dst, context in (
         # Localize some strings and hack the style sheet.
         ('Colors', _(u"Barvy"), '<th> %s </th>'),
@@ -1869,4 +1872,33 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
         ):
         result = result.replace(context % src, context % dst)
     return re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '', result)
+
+def translations(domain, origin='en'):
+    """Create 'lcg.TranslatedTextFactory' for the current locale.
+
+    Used to define the '_' symbol in modules which define translatable user
+    interface strings.
+    
+    The class 'lcg.TranslatedTextFactory' produces instances of strings, which
+    are translated to the current locale, but may be also translated later into
+    any of the other supported locales when used properly.  This is necessary
+    for those parts of pytis, which define translatable strings which may be
+    used both in web and desktop applications (desktop applications expect
+    strings translated to the current locale, web applications need to
+    translate the strings later when a particular client is served).
+
+    """
+    import lcg
+    for env in ('LANGUAGE', 'LC_ALL', 'LC_MESSAGES', 'LANG'):
+        locale = os.getenv(env)
+        if locale:
+            if locale != 'C':
+                lang = locale.split('_')[0]
+            else:
+                lang = origin
+            break
+    else:
+        lang = origin
+    path = os.path.join(os.path.normpath(os.path.dirname(__file__) + '/../../..'), 'translations')
+    return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=(path,))
 

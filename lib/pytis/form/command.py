@@ -2,7 +2,7 @@
 
 # Definice uživatelských příkazů
 # 
-# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ modulu 'commands_'.
 from pytis.util import translate as _
 
 from pytis.form import *
+
+_ = pytis.util.translations('pytis-wx')
 
 class CommandHandler:
     """Mix-in class for objects capable of handling user commands.

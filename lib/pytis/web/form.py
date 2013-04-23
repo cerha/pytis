@@ -40,8 +40,9 @@ import string
 
 from pytis.web import *
 from pytis.presentation import ActionContext
+import pytis.util
 
-_ = lcg.TranslatableTextFactory('pytis')
+_ = pytis.util.translations('pytis-web')
 
 class Type(pd.Type):
     def _validation_error(self, id, **kwargs):

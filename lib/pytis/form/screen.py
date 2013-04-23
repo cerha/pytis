@@ -59,6 +59,7 @@ if config.http_proxy is not None:
     session = libwebkit.webkit_get_default_session()
     libgobject.g_object_set(session, "proxy-uri", proxy_uri, None)
 
+_ = pytis.util.translations('pytis-wx')
 
 _WX_COLORS = {}
 _WX_COLOR_DB = {}

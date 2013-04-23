@@ -29,6 +29,8 @@ from pytis.util import translate as _
 from pytis.form import *
 import wx
 
+_ = pytis.util.translations('pytis-wx')
+
 class DualForm(Form, Refreshable):
     """Formulář složený ze dvou spolupracujících formulářů.
 
@@ -1009,7 +1011,7 @@ class MultiSideForm(MultiForm):
 
     def _displayed_forms_menu(self):
         return Menu(_(u"Zobrazené formuláře"),
-                    [CheckItem(b.title(), help=_(""),
+                    [CheckItem(b.title(), help='',
                                command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
                                                                     _command_handler=self),
                                state=lambda b=b: b.id() in [f.binding().id() for f in self._forms])

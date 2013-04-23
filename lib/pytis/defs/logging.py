@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -22,10 +22,12 @@ from pytis.util import translate as _
 import datetime
 
 import config
-import pytis.data as pd
+import pytis.data as pd, pytis.util
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, \
     Profile, QueryFields, computer, HGroup, VGroup
 from pytis.form import BrowseForm, run_form
+
+_ = pytis.util.translations('pytis-defs')
 
 class FormActionLog(Specification):
     # This specification is used for insertion of log record by pytis

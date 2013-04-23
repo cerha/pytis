@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@ import imp
 import sys
 
 from pytis.util import *
-import pytis.presentation
 
 def resolver():
     """Deprecated: Use config.resolver instead."""
@@ -228,7 +227,7 @@ class Resolver(object):
         """
         return self._method_result_cache[(name, tuple(kwargs.items()), method_name)]
 
-    def walk(self, cls=pytis.presentation.Specification):
+    def walk(self, cls=None):
         """Return all 'cls' subclasses defined in current search path.
 
         Returns a list of pairs (name, class), where name is the string name of
@@ -241,6 +240,9 @@ class Resolver(object):
         This method only works when the search path is non-empty.
 
         """
+        if cls is None:
+            import pytis.presentation
+            cls = pytis.presentation.Specification
         searched_modules = []
         classes = []
         names = {}

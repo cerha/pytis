@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -25,6 +25,8 @@ import pytis.form
 import pytis.presentation
 from pytis.presentation import Binding, Field, Specification
 import pytis.util
+
+_ = pytis.util.translations('pytis-defs')
 
 class FormShortStatistics(Specification):
     public = True
