@@ -1022,7 +1022,7 @@ class ReferenceLookup(object):
             if specification is None:
                 return None
             if isinstance(specification, _SQLExternal):
-                c = specification.c
+                return None
             else:
                 c = specification.c[self._column]
             return c
