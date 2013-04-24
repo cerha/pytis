@@ -211,7 +211,8 @@ def visit_object_comment(element, compiler, **kw):
     else:
         extra = ''
     return ("COMMENT ON %s \"%s\".\"%s\"%s IS '%s'" %
-            (element.kind, o.schema, o.name, extra, element.comment.replace("'", "''"),))
+            (element.kind, o.schema, o.pytis_name(real=True), extra,
+             element.comment.replace("'", "''"),))
 
 class _ColumnComment(sqlalchemy.schema.DDLElement):
     def __init__(self, table, field):
