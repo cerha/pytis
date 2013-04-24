@@ -72,6 +72,7 @@ except ImportError:
     alembic = None
 import codecs
 import collections
+from contextlib import contextmanager
 import copy
 import cStringIO
 import imp
@@ -83,6 +84,7 @@ import sqlalchemy
 from sqlalchemy.ext.compiler import compiles
 import sys
 import types
+
 import pytis.data
 
 
@@ -104,24 +106,25 @@ def _function_arguments(function):
 class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def _set_search_path(self, search_path):
-        _set_current_search_path(search_path)
         path_list = [_sql_id_escape(s) for s in search_path]
         path = string.join(path_list, ',')
         command = 'SET SEARCH_PATH TO %s' % (path,)
         self.connection.execute(command)
+        return search_path
 
     def visit_view(self, view, create_ok=False):
-        self._set_search_path(view.search_path())
         command = 'CREATE OR REPLACE VIEW "%s"."%s" AS\n' % (view.schema, view.name,)
-        query = view.query()
-        query.pytis_prefix = command
-        self.connection.execute(query)
-        view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
+        with _local_search_path(self._set_search_path(view.search_path())):
+            query = view.query()
+            query.pytis_prefix = command
+            self.connection.execute(query)
+            view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def visit_type(self, type_, create_ok=False):
-        self._set_search_path(type_.search_path())
-        self.make_type(type_.name, type_.fields)
-        type_.dispatch.after_create(type_, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
+        with _local_search_path(self._set_search_path(type_.search_path())):
+            self.make_type(type_.name, type_.fields)
+            type_.dispatch.after_create(type_, self.connection, checkfirst=self.checkfirst,
+                                        _ddl_runner=self)
 
     def make_type(self, type_name, columns):
         sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
@@ -133,60 +136,63 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def visit_function(self, function, create_ok=False, result_type=None):
         search_path = function.search_path()
-        self._set_search_path(search_path)
-        arguments = _function_arguments(function)
-        if result_type is None:
-            function_type = function.result_type
-            if function_type is None:
-                result_type = 'void'
-            elif function_type == SQLFunctional.RECORD:
-                result_type = 'RECORD'
-            elif function_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
-                result_type = 'trigger'
-            elif isinstance(function_type, (tuple, list,)):
-                result_type = 't_' + function.pytis_name()
-                self.make_type(result_type, function_type)
-            elif isinstance(function_type, Column):
-                result_type = function_type.sqlalchemy_column(search_path, None, None, None).type.compile(_engine.dialect)
-            elif isinstance(function_type, pytis.data.Type):
-                result_type = function_type.sqlalchemy_type().compile(_engine.dialect)
-            elif issubclass(function_type, (SQLTable, SQLType,)):
-                result_type = object_by_class(function_type, search_path).pytis_name()
+        with _local_search_path(self._set_search_path(search_path)):
+            arguments = _function_arguments(function)
+            if result_type is None:
+                function_type = function.result_type
+                if function_type is None:
+                    result_type = 'void'
+                elif function_type == SQLFunctional.RECORD:
+                    result_type = 'RECORD'
+                elif function_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
+                    result_type = 'trigger'
+                elif isinstance(function_type, (tuple, list,)):
+                    result_type = 't_' + function.pytis_name()
+                    self.make_type(result_type, function_type)
+                elif isinstance(function_type, Column):
+                    result_type = function_type.sqlalchemy_column(search_path, None, None, None).type.compile(_engine.dialect)
+                elif isinstance(function_type, pytis.data.Type):
+                    result_type = function_type.sqlalchemy_type().compile(_engine.dialect)
+                elif issubclass(function_type, (SQLTable, SQLType,)):
+                    result_type = object_by_class(function_type, search_path).pytis_name()
+                else:
+                    raise SQLException("Invalid result type", function_type)
+            result_type_prefix = 'SETOF ' if function.multirow else ''
+            name = function.pytis_name(real=True)
+            query_prefix = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n' %
+                            (function.schema, name, arguments, result_type_prefix, result_type,))
+            query_suffix = ('\n$$ LANGUAGE %s %s' % (function._LANGUAGE, function.stability,))
+            if function.security_definer:
+                query_suffix += ' SECURITY DEFINER'
+            body = function.body()
+            if isinstance(body, basestring):
+                body = body.strip()
+                command = query_prefix + body + query_suffix
+                self.connection.execute(command)
             else:
-                raise SQLException("Invalid result type", function_type)
-        result_type_prefix = 'SETOF ' if function.multirow else ''
-        name = function.pytis_name(real=True)
-        query_prefix = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n' %
-                        (function.schema, name, arguments, result_type_prefix, result_type,))
-        query_suffix = ('\n$$ LANGUAGE %s %s' % (function._LANGUAGE, function.stability,))
-        if function.security_definer:
-            query_suffix += ' SECURITY DEFINER'
-        body = function.body()
-        if isinstance(body, basestring):
-            body = body.strip()
-            command = query_prefix + body + query_suffix
-            self.connection.execute(command)
-        else:
-            query = body
-            query.pytis_prefix = query_prefix
-            query.pytis_suffix = query_suffix
-            self.connection.execute(query)
-        function.dispatch.after_create(function, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
+                query = body
+                query.pytis_prefix = query_prefix
+                query.pytis_suffix = query_suffix
+                self.connection.execute(query)
+            function.dispatch.after_create(function, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
 
     def visit_trigger(self, trigger, create_ok=False):
-        if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
-            self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
-        if trigger.table and trigger.events:
-            events = string.join(trigger.events, ' OR ')
-            table = object_by_path(trigger.table.name, trigger.search_path())
-            row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
-            trigger_call = trigger(*trigger.arguments)
-            command = (('CREATE TRIGGER "%s" %s %s ON %s\n'
-                        'FOR EACH %s EXECUTE PROCEDURE %s') %
-                       (trigger.pytis_name(real=True), trigger.position, events, table,
-                        row_or_statement, trigger_call,))
-            self.connection.execute(command)
-        trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
+        for search_path in _expand_schemas(trigger):
+            with _local_search_path(search_path):
+                if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
+                    self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
+                if trigger.table is not None and trigger.events:
+                    events = string.join(trigger.events, ' OR ')
+                    table = object_by_path(trigger.table.name, trigger.search_path())
+                    row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
+                    trigger_call = trigger(*trigger.arguments)
+                    command = (('CREATE TRIGGER "%s" %s %s ON %s\n'
+                                'FOR EACH %s EXECUTE PROCEDURE %s') %
+                               (trigger.pytis_name(real=True), trigger.position, events, table,
+                                row_or_statement, trigger_call,))
+                    self.connection.execute(command)
+                trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst,
+                                              _ddl_runner=self)
 
     def visit_raw(self, raw, create_ok=False):
         self._set_search_path(raw.search_path())
@@ -601,11 +607,16 @@ def _warn(message):
     _error(message, error=False)
 
 _full_init = False
-_current_search_path = None
 
-def _set_current_search_path(search_path):
+_current_search_path = None
+@contextmanager
+def _local_search_path(search_path):
+    assert isinstance(search_path, (tuple, list,)), search_path
     global _current_search_path
+    orig_search_path = _current_search_path
     _current_search_path = search_path
+    yield
+    _current_search_path = orig_search_path
     
 def _sql_id_escape(identifier):
     return '"%s"' % (identifier.replace('"', '""'),)
@@ -801,16 +812,16 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
         if cls._is_specification(clsname):
             schemas = _expand_schemas(cls)
             for search_path in schemas:
-                _set_current_search_path(search_path)
                 def init_function(cls=cls, search_path=search_path, may_alter_schema=False):
-                    if may_alter_schema and _enforced_schema:
-                        search_path = [_enforced_schema] + search_path
-                    if issubclass(cls, SQLSequence):
-                        # hack
-                        o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
-                                start=cls.start, increment=cls.increment)
-                    else:
-                        o = cls(_metadata, search_path)
+                    with _local_search_path(search_path):
+                        if may_alter_schema and _enforced_schema:
+                            search_path = [_enforced_schema] + search_path
+                        if issubclass(cls, SQLSequence):
+                            # hack
+                            o = cls(cls.pytis_name(), metadata=_metadata, schema=search_path[0],
+                                    start=cls.start, increment=cls.increment)
+                        else:
+                            o = cls(_metadata, search_path)
                     _PytisSchematicMetaclass.objects.append(o)
                 if _full_init:
                     init_function()
@@ -1904,21 +1915,21 @@ class SQLTable(_SQLTabular):
                     sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
 
     def create(self, bind=None, checkfirst=False):
-        self._set_search_path(bind)
         self._pytis_create_p = True
-        try:
-            super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
-        finally:
-            self._pytis_create_p = False
-        self._insert_values(bind)
+        with _local_search_path(self._set_search_path(bind)):
+            try:
+                super(SQLTable, self).create(bind=bind, checkfirst=checkfirst)
+            finally:
+                self._pytis_create_p = False
+            self._insert_values(bind)
 
     def _set_search_path(self, bind):
         search_path = self.search_path()
-        _set_current_search_path(search_path)
         path_list = [_sql_id_escape(s) for s in search_path]
         path = string.join(path_list, ',')
         command = 'SET SEARCH_PATH TO %s' % (path,)
         bind.execute(command)
+        return search_path
         
     def _insert_values(self, bind):
         if self.init_values:
@@ -2030,10 +2041,10 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     __visit_name__ = 'view'
 
     def __new__(cls, metadata, search_path):
-        _set_current_search_path(search_path)
-        columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.query().columns])
-        args = (cls.name, metadata,) + columns
-        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        with _local_search_path(search_path):
+            columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.query().columns])
+            args = (cls.name, metadata,) + columns
+            return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
     def _pytis_definition(self, connection):
         self._pytis_set_definition_schema(connection)
@@ -2276,29 +2287,29 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     RECORD = 'RECORD'
 
     def __new__(cls, metadata, search_path):
-        _set_current_search_path(search_path)
-        result_type = cls.result_type
-        if result_type is None:
-            columns = ()
-        elif result_type == cls.RECORD:
-            columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
-                             for c in cls.arguments if c.out()])
-        elif isinstance(result_type, (tuple, list,)):
-            columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
-                             for c in result_type])
-        elif isinstance(result_type, Column):
-            columns = (result_type.sqlalchemy_column(search_path, None, None, None),)
-        elif isinstance(result_type, pytis.data.Type):
-            columns = (sqlalchemy.Column('result', result_type.sqlalchemy_type()),)
-        elif result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
-            columns = ()
-        elif issubclass(result_type, _SQLTabular):
-            columns = tuple([sqlalchemy.Column(c.name, c.type)
-                             for c in object_by_class(result_type, search_path).c])
-        else:
-            raise SQLException("Invalid result type", result_type)
-        args = (cls.name, metadata,) + columns
-        return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+        with _local_search_path(search_path):
+            result_type = cls.result_type
+            if result_type is None:
+                columns = ()
+            elif result_type == cls.RECORD:
+                columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
+                                 for c in cls.arguments if c.out()])
+            elif isinstance(result_type, (tuple, list,)):
+                columns = tuple([c.sqlalchemy_column(search_path, None, None, None)
+                                 for c in result_type])
+            elif isinstance(result_type, Column):
+                columns = (result_type.sqlalchemy_column(search_path, None, None, None),)
+            elif isinstance(result_type, pytis.data.Type):
+                columns = (sqlalchemy.Column('result', result_type.sqlalchemy_type()),)
+            elif result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
+                columns = ()
+            elif issubclass(result_type, _SQLTabular):
+                columns = tuple([sqlalchemy.Column(c.name, c.type)
+                                 for c in object_by_class(result_type, search_path).c])
+            else:
+                raise SQLException("Invalid result type", result_type)
+            args = (cls.name, metadata,) + columns
+            return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()
