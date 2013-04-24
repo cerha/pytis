@@ -233,8 +233,8 @@ class SimplifiedEditableView(sql.SQLView):
     insert_order = (Foo, Bar,)
     update_order = (Foo, Bar,)
     delete_order = (Foo, Bar,)
-    @property
-    def join_columns(self):
+    @classmethod
+    def join_columns(class_):
         return ((sql.c.Foo.id, sql.c.Bar.id,),)
     @classmethod
     def query(class_):

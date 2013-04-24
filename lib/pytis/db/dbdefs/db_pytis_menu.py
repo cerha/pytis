@@ -1476,8 +1476,9 @@ class EvPytisMenuStructure(sql.SQLView):
              sql.gL("coalesce(menu.title, '('||actions.action_title||')')").label('title')],
             from_obj=[structure.outerjoin(menu, sql.gR('structure.menuid = menu.menuid')).outerjoin(atypes, sql.gR('structure.type = atypes.type')).outerjoin(actions, sql.gR('structure.fullname = actions.fullname'))]
             )
-
-    join_columns = ((sql.c.APytisActionsStructure.fullname, sql.c.CPytisMenuActions.fullname),)
+    @classmethod
+    def join_columns(class_):
+        return ((sql.c.APytisActionsStructure.fullname, sql.c.CPytisMenuActions.fullname),)
     insert_order = ()
     update_order = (CPytisMenuActions,)
     no_update_columns = ('position_nsub', 'title',)

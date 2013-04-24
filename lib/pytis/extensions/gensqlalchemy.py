@@ -2015,14 +2015,13 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     which returns the expression defining the view.  The method must return an
     'sqlalchemy.ClauseElement' instance (as all the SQLAlchemy expressions do).
 
-    Additional properties defined by this class:
-
-      join_columns -- tuple of tuples of equivalent columns
-        ('sqlalchemy.Column' instances).  If the view is made by joining some
-        relations, duplicate join columns are excluded from the view and there
-        are modification rules defined for the view then it is necessary to
-        enumerate all equivalent relation columns in 'join_column' tuples in
-        order to make gensqlalchemy generate complete and correct rules.
+    Special specification element is 'join_columns()' class method returning
+    tuple of tuples of equivalent columns ('sqlalchemy.Column' instances).  If
+    the view is made by joining some relations, duplicate join columns are
+    excluded from the view and there are modification rules defined for the
+    view then it is necessary to enumerate all equivalent relation columns in
+    'join_columns()' tuples in order to make gensqlalchemy generate complete
+    and correct rules.
 
     The expression in 'query()' method is typically constructed using means
     provided by SQLAlchemy.  The class defines a few additional utility class
@@ -2033,7 +2032,10 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     """
     _DB_OBJECT = 'VIEW'
 
-    join_columns = ()
+    @classmethod
+    def join_columns(class_):
+        return ()
+        
     @classmethod
     def query(class_):
         return None
@@ -2071,7 +2073,7 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
         equivalents = []
         if column is not None:
             equivalents = [column]
-        for equivalent_columns in self.join_columns:
+        for equivalent_columns in self.join_columns():
             if column in equivalent_columns:
                 for c in equivalent_columns:
                     if c is not column:
@@ -2081,7 +2083,7 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     def _hidden_rule_columns(self, tabular):
         hidden_columns = []
         original_columns = self._original_columns()
-        for equivalent_columns in self.join_columns:
+        for equivalent_columns in self.join_columns():
             alias = None
             for c in equivalent_columns:
                 if c in original_columns:
