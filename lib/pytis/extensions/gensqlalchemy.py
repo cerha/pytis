@@ -575,13 +575,15 @@ class Column(pytis.data.ColumnSpec):
         default = self._default
         if isinstance(default, (bool, float, int,)):
             default = sqlalchemy.text(repr(default))
+        autoincrement = isinstance(alchemy_type, (SERIAL, BIGSERIAL))
         column = sqlalchemy.Column(self.id(), alchemy_type, *args,
                                    server_default=default,
                                    doc=self._doc, index=index,
                                    nullable=(not self.type().not_null()),
                                    primary_key=(self._primary_key and not inherited),
                                    unique=self._unique,
-                                   info=dict(inherited=inherited))
+                                   info=dict(inherited=inherited),
+                                   autoincrement=autoincrement)
         column.pytis_orig_table = orig_table_name
         return column
 
