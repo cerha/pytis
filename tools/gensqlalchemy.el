@@ -614,6 +614,23 @@ where the specification may be put without breaking dependencies."
         (goto-char 1)
         (forward-line (1- (car (read-from-string line))))))))
 
+(defun gensqlalchemy-class->name (class-name)
+  "Return default database name corresponding to CLASS-NAME.
+This is useful in snippets."
+  (let ((case-fold-search nil)
+        (start 0)
+        (end 1)
+        (length (length class-name))
+        (components '()))
+    (while (< end length)
+      (when (get-char-code-property (aref class-name end) 'lowercase) ; upper case letter
+        (push (substring class-name start end) components)
+        (setq start end))
+      (incf end))
+    (unless (= start length)
+      (push (substring class-name start length) components))
+    (mapconcat #'downcase (nreverse components) "_")))
+
 ;;; Announce
 
 (provide 'gensqlalchemy)

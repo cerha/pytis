@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: SQLView
+# key: view
+# group: gensqlalchemy
+# --
+class $1(${2:sql.SQLView}):
+    """$3"""
+    name = '${1:$(gensqlalchemy-class->name text)}'
+    @classmethod
+    def query(cls):
+        

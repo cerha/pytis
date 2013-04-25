@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: sub_method
+# key: subfunc
+# group: gensqlalchemy
+# --
+@staticmethod
+    def sub_$1($2):
+        

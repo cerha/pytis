@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: select
+# key: sel
+# group: gensqlalchemy
+# --
+select([$1]${2:, from_obj=[$3]}${4:, whereclause=$5})
