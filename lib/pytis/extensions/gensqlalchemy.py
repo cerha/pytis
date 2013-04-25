@@ -179,7 +179,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
 
     def visit_trigger(self, trigger, create_ok=False):
         for search_path in _expand_schemas(trigger):
-            with _local_search_path(search_path):
+            with _local_search_path(self._set_search_path(search_path)):
                 if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
                     trigger._DB_OBJECT = 'FUNCTION' # hack for comments
                     try:
