@@ -174,13 +174,18 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                 query.pytis_prefix = query_prefix
                 query.pytis_suffix = query_suffix
                 self.connection.execute(query)
-            function.dispatch.after_create(function, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
+            function.dispatch.after_create(function, self.connection, checkfirst=self.checkfirst,
+                                           _ddl_runner=self)
 
     def visit_trigger(self, trigger, create_ok=False):
         for search_path in _expand_schemas(trigger):
             with _local_search_path(search_path):
                 if isinstance(trigger, (SQLPlFunction, SQLPyFunction,)):
-                    self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
+                    trigger._DB_OBJECT = 'FUNCTION' # hack for comments
+                    try:
+                        self.visit_function(trigger, create_ok=create_ok, result_type='trigger')
+                    finally:
+                        trigger._DB_OBJECT = 'TRIGGER'
                 if trigger.table is not None and trigger.events:
                     events = string.join(trigger.events, ' OR ')
                     table = object_by_path(trigger.table.name, trigger.search_path())
@@ -206,14 +211,20 @@ class _ObjectComment(sqlalchemy.schema.DDLElement):
 @compiles(_ObjectComment)
 def visit_object_comment(element, compiler, **kw):
     o = element.object
-    if isinstance(o, SQLFunctional):
+    kind = element.kind
+    schema = '\"%s\".' % (o.schema,)
+    if o._DB_OBJECT == 'TRIGGER':
+        extra = ' ON \"%s\"' % (o.table.pytis_name(real=True),)
+        schema = ''
+    elif isinstance(o, SQLFunctional):
         extra = '(%s)' % (_function_arguments(o),)
+        kind = o._DB_OBJECT
     else:
         extra = ''
-    return ("COMMENT ON %s \"%s\".\"%s\"%s IS '%s'" %
-            (element.kind, o.schema, o.pytis_name(real=True), extra,
+    return ("COMMENT ON %s %s\"%s\"%s IS '%s'" %
+            (kind, schema, o.pytis_name(real=True), extra,
              element.comment.replace("'", "''"),))
-
+        
 class _ColumnComment(sqlalchemy.schema.DDLElement):
     def __init__(self, table, field):
         self.table = table
@@ -1454,7 +1465,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _create_comments(self):
         doc = self.__doc__
         if doc:
-            sqlalchemy.event.listen(self, 'after_create', _ObjectComment(self, self._DB_OBJECT, doc))
+            sqlalchemy.event.listen(self, 'after_create',
+                                    _ObjectComment(self, self._DB_OBJECT, doc))
 
     def _register_access_rights(self):
         for o in self._access_right_objects:
@@ -1896,6 +1908,7 @@ class SQLTable(_SQLTabular):
                 t = (t,)
             trigger = t[0]
             class T(trigger):
+                __doc__ = trigger.__doc__
                 name = '%s__%s' % (self.name, trigger.name,)
                 if self.schema:
                     name = '%s__%s' % (self.schema, name,)
@@ -2548,6 +2561,7 @@ class SQLTrigger(SQLEventHandler):
     
     """
     __metaclass__ = _PytisTriggerMetaclass
+    _DB_OBJECT = 'TRIGGER'
     
     events = ('insert', 'update', 'delete',)
     position = 'after'
@@ -2600,6 +2614,10 @@ class SQLTrigger(SQLEventHandler):
         if type(self.body) == types.MethodType:
             return super(SQLTrigger, self).__call__(*arguments)
         return object_by_class(self.body)(*arguments)
+
+    def _create_comments(self):
+        if self.table is not None:
+            super(SQLTrigger, self)._create_comments()
 
 class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     """Raw SQL definition.

@@ -81,6 +81,7 @@ class Bar(sql.SQLTable):
                 )
 
 class BarTrigger(sql.SQLPlFunction, sql.SQLTrigger):
+    "Trigger directly defining its function."
     name = 'bar_trigger'
     schemas = ((Private, 'public',),)
     table = Bar
@@ -121,6 +122,7 @@ class LogFunction(sql.SQLPyFunction, sql.SQLTrigger):
                      (TD['args'][0], TD['event'],))
 
 class LogTrigger(sql.SQLTrigger):
+    "Tables with this trigger automatically log changes."
     name = 'log_trigger'
     events = ('insert', 'update', 'delete',)
     body = LogFunction
