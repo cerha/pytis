@@ -188,8 +188,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                     trigger_call = trigger(*trigger.arguments)
                     command = (('CREATE TRIGGER "%s" %s %s ON %s\n'
                                 'FOR EACH %s EXECUTE PROCEDURE %s') %
-                               (trigger.pytis_name(real=True), trigger.position, events, table,
-                                row_or_statement, trigger_call,))
+                               (trigger.pytis_name(real=True), trigger.position, events,
+                                table.pytis_name(real=True), row_or_statement, trigger_call,))
                     self.connection.execute(command)
                 trigger.dispatch.after_create(trigger, self.connection, checkfirst=self.checkfirst,
                                               _ddl_runner=self)
