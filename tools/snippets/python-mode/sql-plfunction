@@ -6,6 +6,6 @@
 class $1(${2:sql.SQLPlFunction}):
     """$3"""
     name = '${1:$(gensqlalchemy-class->name text)}'
-    arguments = ($0)
-    result_type = ${4:$$(yas/choose-value '("pytis.data.LTree" "pytis.data.TimeInterval" "pytis.data.Time" "pytis.data.Date" "pytis.data.DateTime" "pytis.data.Float" "pytis.data.Serial" "pytis.data.Integer" "pytis.data.Boolean" "pytis.data.String"))}()
+    arguments = ($4)
+    result_type = ${5:$$(yas/choose-value '("pytis.data.LTree" "pytis.data.TimeInterval" "pytis.data.Time" "pytis.data.Date" "pytis.data.DateTime" "pytis.data.Float" "pytis.data.Serial" "pytis.data.Integer" "pytis.data.Boolean" "pytis.data.String"))}()
     
