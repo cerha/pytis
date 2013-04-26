@@ -1,6 +1,6 @@
 ;;; dump-compare.el --- compare PostgreSQL dumps
 
-;; Copyright (C) 2012 Brailcom, o.p.s.
+;; Copyright (C) 2012, 2013 Brailcom, o.p.s.
 
 ;; COPYRIGHT NOTICE
 ;;
@@ -59,6 +59,13 @@
           (forward-char)
           (insert ","))
         (sort-lines nil beg (line-beginning-position 2)))
+      (setq string (buffer-substring (point-min) (point-max)))))
+  (when (string-match "^COPY " string)
+    (with-temp-buffer
+      (insert string)
+      (goto-char (point-min))
+      (while (re-search-forward "\t\\([0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\} [0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}\\)\t" nil t)
+        (replace-match "0000-00-00 00:00:00" nil nil nil 1))
       (setq string (buffer-substring (point-min) (point-max)))))
   string)
 
