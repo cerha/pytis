@@ -73,8 +73,6 @@ def _install_gettext():
         gettext.install('ebas')
     except IOError as e:
         util.log(util.OPERATIONAL, 'Nelze otevřít jazykový soubor', e.args)
-        import __builtin__
-        __builtin__.__dict__['_'] = util.identity    
 
 def go():
     import pytis.util as util             # až po konfiguraci
