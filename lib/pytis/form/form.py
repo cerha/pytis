@@ -2940,7 +2940,7 @@ class InputForm(_VirtualEditForm, PopupEditForm):
 class QueryFieldsForm(_VirtualEditForm):
     """Virtual form to be used internally for query fields (see list.py)."""
 
-    CALL_QUERY_FIELD_CHANGED = 'CALL_QUERY_FIELD_CHANGED'
+    CALL_QUERY_FIELDS_CHANGED = 'CALL_QUERY_FIELDS_CHANGED'
 
     def _full_init(self, *args, **kwargs):
         fields = tuple(kwargs['fields'])
@@ -2952,7 +2952,7 @@ class QueryFieldsForm(_VirtualEditForm):
             )
         _VirtualEditForm._full_init(self, *args, **kwargs)
         self._row.register_callback(self._row.CALL_CHANGE, '__changed', 
-                                    lambda: self._run_callback(self.CALL_QUERY_FIELD_CHANGED))
+                                    lambda: self._run_callback(self.CALL_QUERY_FIELDS_CHANGED))
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
         # will appear.
