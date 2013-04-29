@@ -222,9 +222,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if self._ALLOW_TOOLBAR:
             sizer.Add(self._create_toolbar(), 0, wx.EXPAND|wx.FIXED_MINSIZE)
         sizer.Add(self._create_grid(), 1, wx.EXPAND|wx.FIXED_MINSIZE)
-        query_fields_panel = self._create_query_fields_panel()
-        if query_fields_panel:
-            sizer.Add(query_fields_panel, 0, wx.EXPAND)
+        self._create_query_fields_panel(sizer)
+
 
     def _create_grid(self):
         # Create the grid and table.  Initialize the data select.
@@ -414,7 +413,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # argument.
             return form.row()
         
-    def _create_query_fields_panel(self):
+    def _create_query_fields_panel(self, sizer):
         query_fields = self._view.query_fields()
         if query_fields:
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
@@ -434,19 +433,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           tooltip=_(u"Přesunout panel dotazu na horní/dolní okraj formuláře"),
                           icon='move-up', noborder=True, size=(16, 16),
                           callback=self._on_move_query_fields))
-            sizer = wx.BoxSizer()
-            sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
-            sizer.Add((0, 0), 1)
-            sizer.Add(apply_button, 0, wx.ALL|wx.ALIGN_BOTTOM, 4)
+            panel_sizer = wx.BoxSizer()
+            panel_sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
+            panel_sizer.Add((0, 0), 1)
+            panel_sizer.Add(apply_button, 0, wx.ALL|wx.ALIGN_BOTTOM, 4)
             for button in panel_buttons:
-                sizer.Add(button)
-            panel.SetSizer(sizer)
+                panel_sizer.Add(button)
+            panel.SetSizer(panel_sizer)
+            position = self._get_saved_setting('query-fields-position', 'down')
+            if position == 'up':
+                sizer.Insert(sizer.GetItemIndex(self._grid), panel, 0, wx.EXPAND)
+            else:
+                sizer.Add(panel, 0, wx.EXPAND)
+            self._update_query_fields_panel_button_bitmaps(panel)
             form.set_callback(form.CALL_QUERY_FIELDS_CHANGED, self._on_query_fields_changed)
         else:
             panel = None
             form = None
         self._query_fields_form = form
-        return panel
 
     def _on_query_fields_changed(self):
         self._query_fields_apply_button.Enable(True)
@@ -474,13 +478,16 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _on_move_query_fields(self, event):
         panel = event.GetEventObject().GetParent()
         sizer = self._top_level_sizer
-        grid_position = sizer.GetItemIndex(self._grid)
+        target_position = sizer.GetItemIndex(self._grid)
         sizer.Detach(panel)
-        sizer.Insert(grid_position, panel, 0, wx.EXPAND)
+        sizer.Insert(target_position, panel, 0, wx.EXPAND)
         sizer.Layout()
         self._update_query_fields_panel_button_bitmaps(panel)
+        position = sizer.GetItemIndex(panel) < sizer.GetItemIndex(self._grid) and 'up' or 'down'
+        self._set_saved_setting('query-fields-position', position)
 
     def _on_minimize_query_fields(self, event):
+        # Minimize/Deminimize the panel.
         panel = event.GetEventObject().GetParent()
         for child in panel.GetChildren():
             if child not in self._query_fields_panel_buttons:
