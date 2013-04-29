@@ -492,7 +492,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             form = self._query_fields_form
             row = form.row()
             values = ['%s: %s' % (form.field(key).spec().label(), row.format(key))
-                      for key in row.keys()]
+                      for key in row.keys() if key != '__changed']
             panel.SetToolTipString(', '.join(values))
         self._update_query_fields_panel_button_bitmaps(panel)
 
