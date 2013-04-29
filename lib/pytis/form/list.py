@@ -492,7 +492,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         panel = event.GetEventObject().GetParent()
         self._toggle_query_fields_minimization(panel, self._query_fields_form)
         self._update_query_fields_panel_button_bitmaps(panel)
-        self._set_saved_setting('query-fields-minimized', not panel.GetChildren()[0].IsShown())
+        self._set_saved_setting('query-fields-minimized', not self._query_fields_form.IsShown())
 
     def _toggle_query_fields_minimization(self, panel, form):
         # Minimize/Deminimize the panel.
