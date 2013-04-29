@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -201,15 +201,6 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     _DEFAULT_WIDTH = 13
     _DEFAULT_HEIGHT = 1
     _DEFAULT_BACKGROUND_COLOR = None
-
-    CALL_FIELD_CHANGE = 'CALL_FIELD_CHANGE'
-    """Callback volaný při každé změně hodnoty. Argumentem je instance políčka.
-
-    Callback je volán pouze při interaktivní (uživatelem vyvolané) změně
-    hodnoty a při inicializaci hodnoty políčka.  Ostatní programové nastavování
-    hodnoty callback nevyvolává.
-    
-    """
 
     _focused_field = None
     _last_focused_field = None
