@@ -4,7 +4,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -427,10 +427,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                 tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
                                 callback=self._on_apply_query_fields),
                       0, wx.ALL|wx.ALIGN_BOTTOM, 4)
-            sizer.Add(wx_button(panel, label=_(u"Přesunout nahoru"),
-                                tooltip=_(u"Přesunout  panel dotazu"),
-                                icon='move-up', noborder=True,
-                                callback=self._on_move_query_fields_button))
+            self._query_field_panel_buttons = buttons = (
+                wx_button(panel, label=_(u"Minimalizovat"),
+                          tooltip=_(u"Minimalizovat/maximalizovat panel dotazu"),
+                          icon='minimize-down', noborder=True, size=(16, 16),
+                          callback=self._on_minimize_query_fields),
+                wx_button(panel, label=_(u"Přesunout nahoru"),
+                          tooltip=_(u"Přesunout panel dotazu na horní/dolní okraj formuláře"),
+                          icon='move-up', noborder=True, size=(16, 16),
+                          callback=self._on_move_query_fields))
+            for button in buttons:
+                sizer.Add(button)
             panel.SetSizer(sizer)
         else:
             panel = None
@@ -442,20 +449,45 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self.refresh(interactive=True)
         self._grid.SetFocus()
 
-    def _on_move_query_fields_button(self, event):
-        button = event.GetEventObject()
-        panel = button.GetParent()
+    def _update_query_fields_panel_button_bitmaps(self, panel):
         sizer = self._top_level_sizer
-        panel_position, grid_position = sizer.GetItemIndex(panel), sizer.GetItemIndex(self._grid)
-        if panel_position > grid_position:
-            icon = 'move-down'
-        else:
-            icon = 'move-up'
-        bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
-        button.SetBitmapLabel(bitmap)
+        grid_position, panel_position = sizer.GetItemIndex(self._grid), sizer.GetItemIndex(panel)
+        
+        for button in self._query_field_panel_buttons:
+            if button is self._query_field_panel_buttons[0]:
+                if panel.GetChildren()[0].IsShown():
+                    icon = panel_position > grid_position and 'minimize-down' or 'minimize-up'
+                else:
+                    icon = panel_position > grid_position and 'maximize-up' or 'maximize-down'
+            else:
+                icon = panel_position > grid_position and 'move-up' or 'move-down'
+            bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
+            button.SetBitmapLabel(bitmap)
+
+    def _on_move_query_fields(self, event):
+        panel = event.GetEventObject().GetParent()
+        sizer = self._top_level_sizer
+        grid_position = sizer.GetItemIndex(self._grid)
         sizer.Detach(panel)
         sizer.Insert(grid_position, panel, 0, wx.EXPAND)
         sizer.Layout()
+        self._update_query_fields_panel_button_bitmaps(panel)
+
+    def _on_minimize_query_fields(self, event):
+        panel = event.GetEventObject().GetParent()
+        for child in panel.GetChildren():
+            if child not in self._query_field_panel_buttons:
+                child.Show(not child.IsShown())
+        self._top_level_sizer.Layout()
+        if panel.GetChildren()[0].IsShown():
+            panel.SetToolTipString("")
+        else:
+            form = self._query_fields_form
+            row = form.row()
+            values = ['%s: %s' % (form.field(key).spec().label(), row.format(key))
+                      for key in row.keys()]
+            panel.SetToolTipString(', '.join(values))
+        self._update_query_fields_panel_button_bitmaps(panel)
 
     def _context_menu(self):
         """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
