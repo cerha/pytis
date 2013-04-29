@@ -29,6 +29,8 @@ v konfliktu s klíčovým slovem Pythonu.
 
 """
 
+from pytis.util import translate as _
+
 import os
 import thread
 

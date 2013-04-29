@@ -19,6 +19,8 @@
 # ATTENTION: This should be updated on each code change.
 _VERSION = '2012-11-30 17:08'
 
+from pytis.util import translate as _
+
 import os
 import rpyc
 import sys

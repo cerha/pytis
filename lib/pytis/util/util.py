@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ if '_' not in __builtin__.__dict__:
     __builtin__.__dict__['_'] = lambda x: x
 
 
-### Třídy
+### Classes
 
 class ProgramError(Exception):
     """Výjimka signalizující programovou chybu.
@@ -699,7 +699,7 @@ class object_2_5(object):
         object.__init__(self)
 
 
-### Funkce
+### Functions
 
 def identity(x):
     """Vrať 'x'."""
@@ -1546,8 +1546,22 @@ def rsa_encrypt(key, text):
     else:
         return text
 
+def translate(text):
+    """Return translation object for given text.
+
+    This function is suitable for use as '_' to mark translatable texts.
+
+    Arguments:
+
+      text -- text to translate; basestring
+    
+    For now the function just returns 'text'.
+
+    """
+    return text
+    
 
-# Různé
+### Miscellaneous
 
 
 UNDEFINED = object()
@@ -1559,7 +1573,7 @@ nutno provádět jejich definici a zkoumání prostřednictvím **kwargs.
 """
 
 
-# Funkce pro ladění
+### Debugging functions
 
 
 def debugger():

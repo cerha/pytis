@@ -19,6 +19,8 @@
 
 from __future__ import unicode_literals
 
+from pytis.util import translate as _
+
 import pytis.data
 import pytis.extensions
 import pytis.form

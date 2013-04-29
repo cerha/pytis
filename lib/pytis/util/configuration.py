@@ -25,6 +25,8 @@ v této třídě poví více.
 
 """
 
+from pytis.util import translate as _
+
 import getopt
 import imp
 import os

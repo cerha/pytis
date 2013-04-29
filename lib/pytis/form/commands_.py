@@ -39,6 +39,8 @@ definujeme na jediném místě v tomto modulu.
 
 """
 
+from pytis.util import translate as _
+
 from pytis.form import *
     
 Command(Application, 'EXIT',

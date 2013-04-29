@@ -22,6 +22,8 @@
 
 """
 
+from pytis.util import translate as _
+
 from pytis.output import *
 import pytis.presentation
 

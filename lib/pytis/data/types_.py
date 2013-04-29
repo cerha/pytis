@@ -37,6 +37,8 @@ instancemi samostatné třídy 'Value'.
 
 """
 
+from pytis.util import translate as _
+
 import datetime
 import math
 import re

@@ -18,6 +18,8 @@
 
 """Nástroje pro generování HTML na základě dat z pytisu."""
 
+from pytis.util import translate as _
+
 import pytis.data
 from pytis.util import *
 import HyperText

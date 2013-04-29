@@ -70,6 +70,8 @@ try:
     import alembic.ddl.base
 except ImportError:
     alembic = None
+from pytis.util import translate as _
+
 import codecs
 import collections
 from contextlib import contextmanager

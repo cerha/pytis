@@ -33,6 +33,8 @@ http://www.freebsoft.org/lcg.
 
 """
 
+from pytis.util import translate as _
+
 import collections
 import string
 

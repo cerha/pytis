@@ -2,6 +2,8 @@
 
 """Gensql definitions for dynamic application menus and access rights."""
 
+from pytis.util import translate as _
+
 db_rights = globals().get('Gall_pytis', None)
 if not db_rights:
     raise ProgramError('No rights specified! Please define Gall_pytis')

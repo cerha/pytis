@@ -18,6 +18,8 @@
 
 "Implementace datového rozhraní pro PostgreSQL prostřednictvím pyPgSQL."
 
+from pytis.util import translate as _
+
 import select
 
 from pyPgSQL import libpq

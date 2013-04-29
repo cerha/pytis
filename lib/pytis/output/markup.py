@@ -31,6 +31,8 @@ elementy ke spojení dohromady.
 
 """
 
+from pytis.util import translate as _
+
 import re
 
 import lcg

@@ -45,6 +45,8 @@ Tento modul je doporučeno importovat následujícím způsobem:
 
 """
 
+from pytis.util import translate as _
+
 import getpass
 import gettext
 import inspect

@@ -23,6 +23,8 @@ not its concrete representation (input widget).
 
 """
 
+from pytis.util import translate as _
+
 import collections
 import copy
 

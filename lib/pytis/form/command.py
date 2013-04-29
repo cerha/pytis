@@ -26,6 +26,8 @@ modulu 'commands_'.
 
 """
 
+from pytis.util import translate as _
+
 from pytis.form import *
 
 class CommandHandler:

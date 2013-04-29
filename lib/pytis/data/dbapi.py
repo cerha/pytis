@@ -27,6 +27,8 @@ Database API implementation.
 
 """
 
+from pytis.util import translate as _
+
 import select
 import time
 import types as pytypes

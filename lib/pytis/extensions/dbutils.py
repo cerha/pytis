@@ -18,6 +18,8 @@
 
 """Pomůcky pro operace s datovými objekty a daty obecně.""" 
 
+from pytis.util import translate as _
+
 from pytis.extensions import *
 from pytis.util import nextval
 

@@ -25,6 +25,8 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 
 """
 
+from pytis.util import translate as _
+
 import collections
 import copy
 import datetime

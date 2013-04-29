@@ -54,6 +54,8 @@ tabulky.
 # ovšem nutno definovat nějaký mechanismus ošetřování chyb.
 
 
+from pytis.util import translate as _
+
 import gc
 import thread
 import weakref

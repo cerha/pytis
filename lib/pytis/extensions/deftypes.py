@@ -17,6 +17,8 @@
 
 """Definice odvozených datových typů.""" 
 
+from pytis.util import translate as _
+
 from pytis.extensions import *
 
        

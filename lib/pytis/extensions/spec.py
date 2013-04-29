@@ -25,6 +25,8 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 
 """ 
 
+from pytis.util import translate as _
+
 from pytis.extensions import *
 from pytis.presentation import *
 

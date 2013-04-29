@@ -25,6 +25,8 @@ zcela samostatné třídy využívané výhradně pro sestavování tiskových v
 
 """
 
+from pytis.util import translate as _
+
 from pytis.output import *
 
 

@@ -27,6 +27,8 @@ behaves according to them can be found in the 'web' submodule of this module.
 
 """
 
+from pytis.util import translate as _
+
 import collections, socket, os
 import lcg
 import pytis.data as pd, pytis.util as pu, pytis.presentation as pp

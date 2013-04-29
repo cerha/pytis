@@ -20,6 +20,8 @@
 """Parsing of the PostgreSQL pg_rewrite.ev_action.structure."""
 
 
+from pytis.util import translate as _
+
 import string
 
 

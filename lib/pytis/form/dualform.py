@@ -24,6 +24,8 @@ způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 
 """
 
+from pytis.util import translate as _
+
 from pytis.form import *
 import wx
 

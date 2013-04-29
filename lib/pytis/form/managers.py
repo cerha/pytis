@@ -43,6 +43,8 @@ way.
 
 """
 
+from pytis.util import translate as _
+
 import base64
 import cPickle as pickle
 

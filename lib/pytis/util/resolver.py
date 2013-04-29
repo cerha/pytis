@@ -26,6 +26,8 @@ actual use.
 
 """
 
+from pytis.util import translate as _
+
 import imp
 import sys
 

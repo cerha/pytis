@@ -28,6 +28,8 @@ konfiguračních voleb obsažených v tomto layoutu.
 
 """
 
+from pytis.util import translate as _
+
 from pytis.form import *
 
 _LAYOUT = (

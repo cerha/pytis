@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from pytis.util import translate as _
+
 import pytis.data
 
 # Konstanty pro datové typy

@@ -29,6 +29,8 @@ se vyskytující dialogové operace.
 
 """
 
+from pytis.util import translate as _
+
 import collections
 import types
 import pytis.data

@@ -29,6 +29,8 @@ pythonového kódu ve specifikacích aplikace.
 
 """ 
 
+from pytis.util import translate as _
+
 from pytis.extensions import *
 
 import thread, pytis.data

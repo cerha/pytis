@@ -22,6 +22,8 @@ This module implements web-based dialogs.
 
 """
 
+from pytis.util import translate as _
+
 from pytis.web import *
 
 _ = lcg.TranslatableTextFactory('pytis')

@@ -26,6 +26,8 @@ souborech '_test.py'.
 # není pro běh systému zapotřebí.
 
 
+from pytis.util import translate as _
+
 import string
 import sys
 import types

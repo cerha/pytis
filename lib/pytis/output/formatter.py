@@ -44,6 +44,8 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 
 """
 
+from pytis.util import translate as _
+
 import copy
 import config
 import re

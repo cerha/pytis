@@ -24,6 +24,8 @@ Modul nabízí třídy umožňující provádět různé typy cachování.
 
 """
 
+from pytis.util import translate as _
+
 import collections
 import UserDict
 

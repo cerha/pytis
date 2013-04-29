@@ -22,6 +22,8 @@
 # (číslováno od 0).  Jedná-li se o obsah řádku, nazývá se příslušná proměnná
 # obvykle `the_row'.  Matoucí jméno `row' bylo převzato z wxWindows.
 
+from pytis.util import translate as _
+
 import collections
 import copy
 import time

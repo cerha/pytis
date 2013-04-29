@@ -18,6 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from pytis.util import translate as _
+
 import copy
 import inspect
 import os

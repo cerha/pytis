@@ -78,6 +78,8 @@ script.
 
 """
 
+from pytis.util import translate as _
+
 import copy
 import re
 import string

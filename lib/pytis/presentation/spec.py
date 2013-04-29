@@ -29,6 +29,8 @@ považovány za immutable, tudíž mohou být libovolně sdíleny.
 
 """
 
+from pytis.util import translate as _
+
 import collections
 import re
 import BaseHTTPServer

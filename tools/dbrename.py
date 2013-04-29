@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pytis.util import translate as _
+
+from pytis.util import translate as _
+
 import imp
 import re
 import sys

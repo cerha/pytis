@@ -24,6 +24,8 @@ uživatelského rozhraní, neřeší obecně start a zastavení aplikace.
 
 """
 
+from pytis.util import translate as _
+
 import collections, os.path, string, sys, thread, time, wx, wx.html
 
 import config

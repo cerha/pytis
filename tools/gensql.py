@@ -50,6 +50,8 @@ kontroly.
 
 """
 
+from pytis.util import translate as _
+
 import copy
 import functools
 import getopt

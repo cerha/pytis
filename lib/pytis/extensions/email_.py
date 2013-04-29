@@ -21,6 +21,8 @@
 Do tohoto modulu patří pomocné funkce a třídy pro práci s email zprávami.
 """
 
+from pytis.util import translate as _
+
 import sys
 import os
 import mimetypes

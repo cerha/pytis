@@ -24,6 +24,8 @@ hodit.
 
 """
 
+from pytis.util import translate as _
+
 from pytis.extensions import *
 
 import re
