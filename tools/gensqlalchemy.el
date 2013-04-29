@@ -604,8 +604,9 @@ where the specification may be put without breaking dependencies."
   "Try to show specification error from the last traceback in current buffer."
   (interactive)
   (let ((regexp "^  File \"\\(.*/dbdefs/.*\\.py\\)\", line \\([0-9]+\\), in .*$"))
-    (when (or (re-search-backward regexp nil t)
-              (re-search-forward regexp nil t))
+    (when (save-excursion
+            (or (re-search-backward regexp nil t)
+                (re-search-forward regexp nil t)))
       (let ((file (match-string-no-properties 1))
             (line (match-string-no-properties 2))
             (overlay (make-overlay (match-beginning 0) (match-end 0))))
