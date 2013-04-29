@@ -2606,9 +2606,42 @@ class SQLTrigger(SQLEventHandler):
             
     def pytis_changed(self, metadata, strict=True):
         if self.table is None:
-            return super(SQLTrigger, self).pytis_changed(metadata, strict=True)
+            return super(SQLTrigger, self).pytis_changed(metadata, strict=strict)
         else:
-            return strict
+            query = ("select pg_catalog.pg_get_triggerdef(pg_trigger.oid) from "
+                     "pg_trigger join "
+                     "pg_class on tgrelid = pg_class.oid "
+                     "where tgname = :tgname and relname = :name")
+            connection = metadata.pytis_engine.connect()
+            result = connection.execute(
+                sqlalchemy.text(
+                    query,
+                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True), type_=sqlalchemy.String),
+                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True), type_=sqlalchemy.String)]))
+            definition = result.fetchone()[0]
+            if result.fetchone() is not None:
+                _warn("Multiple definitions of trigger `%s'" % (self.name,))
+            result.close()
+            match = re.match("CREATE TRIGGER [^ ]+ (BEFORE|AFTER) (.*) ON [^ ]+ FOR EACH (ROW|STATEMENT) EXECUTE PROCEDURE .*[(](.*)[)]", definition)
+            if match is None:
+                _warn("Can't match trigger definition: %s" % (self.name,))
+                return True
+            if match.group(1).lower() != self.position:
+                return True
+            if match.group(3) == 'ROW' and not self.each_row:
+                return True
+            db_events = [e.lower() for e in match.group(2).split(' OR ')]
+            db_events.sort()
+            events = list(self.events)
+            events.sort()
+            if db_events != events:
+                return True
+            arguments = repr(self.arguments)[1:-1]
+            if arguments and arguments[-1] == ',':
+                arguments = arguments[:-1]
+            if arguments != match.group(4):
+                return True
+            return False
 
     def __call__(self, *arguments):
         if type(self.body) == types.MethodType:
