@@ -420,14 +420,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
             form = QueryFieldsForm(panel, resolver(), None, prefill=self._query_field_values, 
                                    **query_fields.view_spec_kwargs())
-            sizer = wx.BoxSizer()
-            sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
-            sizer.Add((0, 0), 1)
-            sizer.Add(wx_button(panel, label=_(u"Aplikovat"),
-                                tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
-                                callback=self._on_apply_query_fields),
-                      0, wx.ALL|wx.ALIGN_BOTTOM, 4)
-            self._query_field_panel_buttons = buttons = (
+            self._query_field_apply_button = apply_button = \
+                wx_button(panel, label=_(u"Aplikovat"),
+                          tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
+                          enabled=not query_fields.autoapply(),
+                          callback=self._on_apply_query_fields)
+            self._query_field_panel_buttons = panel_buttons = (
                 wx_button(panel, label=_(u"Minimalizovat"),
                           tooltip=_(u"Minimalizovat/maximalizovat panel dotazu"),
                           icon='minimize-down', noborder=True, size=(16, 16),
@@ -436,16 +434,25 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           tooltip=_(u"Přesunout panel dotazu na horní/dolní okraj formuláře"),
                           icon='move-up', noborder=True, size=(16, 16),
                           callback=self._on_move_query_fields))
-            for button in buttons:
+            sizer = wx.BoxSizer()
+            sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
+            sizer.Add((0, 0), 1)
+            sizer.Add(apply_button, 0, wx.ALL|wx.ALIGN_BOTTOM, 4)
+            for button in panel_buttons:
                 sizer.Add(button)
             panel.SetSizer(sizer)
+            form.set_callback(form.CALL_QUERY_FIELD_CHANGED, self._on_query_fields_changed)
         else:
             panel = None
             form = None
         self._query_fields_form = form
         return panel
 
+    def _on_query_fields_changed(self):
+        self._query_field_apply_button.Enable(True)
+
     def _on_apply_query_fields(self, event):
+        event.GetEventObject().Enable(False)
         self.refresh(interactive=True)
         self._grid.SetFocus()
 

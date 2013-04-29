@@ -4,7 +4,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -2940,8 +2940,19 @@ class InputForm(_VirtualEditForm, PopupEditForm):
 class QueryFieldsForm(_VirtualEditForm):
     """Virtual form to be used internally for query fields (see list.py)."""
 
+    CALL_QUERY_FIELD_CHANGED = 'CALL_QUERY_FIELD_CHANGED'
+
     def _full_init(self, *args, **kwargs):
+        fields = tuple(kwargs['fields'])
+        kwargs['fields'] = fields + (
+            # Add hidden virtual field just for tracking chenges of other fields.
+            Field('__changed', type=pytis.data.Boolean(), default=False, virtual=True,
+                  computer=pytis.presentation.Computer(lambda r: True,
+                                                       depends=[f.id() for f in fields])),
+            )
         _VirtualEditForm._full_init(self, *args, **kwargs)
+        self._row.register_callback(self._row.CALL_CHANGE, '__changed', 
+                                    lambda: self._run_callback(self.CALL_QUERY_FIELD_CHANGED))
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
         # will appear.
