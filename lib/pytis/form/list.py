@@ -445,6 +445,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 sizer.Insert(sizer.GetItemIndex(self._grid), panel, 0, wx.EXPAND)
             else:
                 sizer.Add(panel, 0, wx.EXPAND)
+            if self._get_saved_setting('query-fields-minimized', False):
+                self._toggle_query_fields_minimization(panel, form)
             self._update_query_fields_panel_button_bitmaps(panel)
             form.set_callback(form.CALL_QUERY_FIELDS_CHANGED, self._on_query_fields_changed)
         else:
@@ -487,8 +489,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._set_saved_setting('query-fields-position', position)
 
     def _on_minimize_query_fields(self, event):
-        # Minimize/Deminimize the panel.
         panel = event.GetEventObject().GetParent()
+        self._toggle_query_fields_minimization(panel, self._query_fields_form)
+        self._update_query_fields_panel_button_bitmaps(panel)
+        self._set_saved_setting('query-fields-minimized', not panel.GetChildren()[0].IsShown())
+
+    def _toggle_query_fields_minimization(self, panel, form):
+        # Minimize/Deminimize the panel.
         for child in panel.GetChildren():
             if child not in self._query_fields_panel_buttons:
                 child.Show(not child.IsShown())
@@ -496,12 +503,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if panel.GetChildren()[0].IsShown():
             panel.SetToolTipString("")
         else:
-            form = self._query_fields_form
             row = form.row()
             values = ['%s: %s' % (form.field(key).spec().label(), row.format(key))
                       for key in row.keys() if key != '__changed']
             panel.SetToolTipString(', '.join(values))
-        self._update_query_fields_panel_button_bitmaps(panel)
 
     def _context_menu(self):
         """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
