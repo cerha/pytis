@@ -3473,7 +3473,7 @@ class SideBrowseForm(BrowseForm):
                 profile_id = None
             else:
                 profile_id = self._current_profile.id()
-            return pytis.form.IN(bcol, self.name(), sbcol, profile_id)
+            return pytis.form.IN(bcol, self.name(), sbcol, profile_id, self._arguments)
 
     def _default_columns(self):
         columns = super(SideBrowseForm, self)._default_columns()

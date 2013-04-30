@@ -2110,28 +2110,27 @@ class IN(pytis.data.Operator):
 
     """
 
-    def __init__(self, column_id, spec_name, table_column_id, profile_id):
+    def __init__(self, column_id, spec_name, table_column_id, profile_id, arguments=None):
         """Arguments:
 
           column_id -- string identifier of the column which should belong to
             the set; existence of its value is checked in the other table; same
             as 'column_id' argument of 'pytis.data.IN'.
-            
           spec_name -- string name of the specification defining the set; data
             object of this specification will be created and passed to
             'pytis.data.IN' as 'data'.
-          
           table_column_id -- string identifier of the column in 'spec_name' used to
             search for the value of 'column_id'; same as 'table_column_id'
             argument of 'pytis.data.IN'.
-
           profile_id -- string identifier of an existing profile within
             'spec_name'.  It can be either one of profiles defined by the
             specification or a user defined profile saved through the profile
             manager by the current user.  The profile's filter determines the
             'condition' passed to 'pytis.data.IN'.  Can be also None if no
             condition shall be applied.
-
+          arguments -- arguments passed to the data object (if it is a table
+            function); dictionary or 'None'
+        
         """
         self._column_id = column_id
         self._spec_name = spec_name
@@ -2158,7 +2157,10 @@ class IN(pytis.data.Operator):
         self._profile_name = profile_name
         self._spec_title = view_spec.title()
         self._table_column_label = view_spec.field(table_column_id).label()
-        pytis.data.Operator.__init__(self, 'IN', column_id, data_object, table_column_id, condition)
+        if arguments is None:
+            arguments = {}
+        pytis.data.Operator.__init__(self, 'IN', column_id, data_object, table_column_id,
+                                     condition, arguments)
 
     def column_id(self):
         return self._column_id
