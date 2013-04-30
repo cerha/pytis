@@ -201,7 +201,8 @@ def cb2colvalue(value, column=None, transaction=None):
 
 
 def run_cb(spec, begin_search=None, condition=None, sort=(),
-           columns=None, select_row=0, multirow=False, transaction=None):
+           columns=None, select_row=0, multirow=False,
+           filter=None, transaction=None):
     """Vyvolá číselník určený specifikací.
 
     Argumenty:
@@ -230,6 +231,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
                                condition=condition,
                                sorting=sort,
                                select_row=select_row,
+                               filter=filter,
                                transaction=transaction)
 
 
