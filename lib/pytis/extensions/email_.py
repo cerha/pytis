@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,13 +21,12 @@
 Do tohoto modulu patří pomocné funkce a třídy pro práci s email zprávami.
 """
 
-from pytis.util import translate as _
-
 import sys
 import os
 import mimetypes
 import email
 import types
+import pytis.util
 from email import Encoders
 from email.Message import Message
 from email.MIMEAudio import MIMEAudio
@@ -36,6 +35,8 @@ from email.MIMEImage import MIMEImage
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.Header import Header
+
+_ = pytis.util.translations('pytis-wx')
 
 class SimpleEmail(object):
     """Třída pro vytvoření a odeslaní jednoduchého mailu."""

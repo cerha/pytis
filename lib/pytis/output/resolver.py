@@ -2,7 +2,7 @@
 
 # Resolver pro specifikace výstupu
 # 
-# Copyright (C) 2002, 2005, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,10 @@ zcela samostatné třídy využívané výhradně pro sestavování tiskových v
 
 """
 
-from pytis.util import translate as _
-
+import pytis.util
 from pytis.output import *
+
+_ = pytis.util.translations('pytis-wx')
 
 
 class ResolverModuleError(ResolverError):

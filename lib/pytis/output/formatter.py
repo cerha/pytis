@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 # 
-# Copyright (C) 2002-2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,17 +44,16 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 
 """
 
-from pytis.util import translate as _
-
 import copy
 import config
 import re
 import StringIO
-
-import pytis.data
-from pytis.output import *
-import pytis.presentation
 import lcg
+
+import pytis.data, pytis.presentation, pytis.util
+from pytis.output import *
+
+_ = pytis.util.translations('pytis-wx')
 
 PAGE_WIDTH = 'pwidth'
 """Šířka stránky, instance třídy 'Unit'."""

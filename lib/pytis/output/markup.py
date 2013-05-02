@@ -31,14 +31,14 @@ elementy ke spojení dohromady.
 
 """
 
-from pytis.util import translate as _
-
 import re
 
 import lcg
 from lcg import Unit, UMm, UPoint, UFont, USpace
 from pytis.output import *
 import pytis.util
+
+_ = pytis.util.translations('pytis-wx')
 
 
 def _something_to_lcg(something):

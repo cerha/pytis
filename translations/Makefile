@@ -30,8 +30,8 @@ pytis-data.pot: $(shell find ../lib/pytis/data -name "*.py")
 pytis-web.pot: $(shell find ../lib/pytis/web -name "*.py") $(shell find ../resources/scripts -name "*.js")
 	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/web/ ../resources/scripts/ -o pytis-web.pot
 
-pytis-wx.pot: $(shell find ../lib/pytis/form -name "*.py") $(shell find ../lib/pytis/util -name "*.py") $(shell find ../lib/pytis/output -name "*.py") $(shell find ../lib/pytis/help -name "*.py")
-	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/form ../lib/pytis/util ../lib/pytis/output ../lib/pytis/help -o pytis-wx.pot
+pytis-wx.pot: $(shell find ../lib/pytis/form -name "*.py") $(shell find ../lib/pytis/util -name "*.py") $(shell find ../lib/pytis/extensions -name "*.py")  $(shell find ../lib/pytis/output -name "*.py") $(shell find ../lib/pytis/help -name "*.py")  $(shell find ../lib/pytis/windows -name "*.py")
+	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/form ../lib/pytis/util ../lib/pytis/extensions ../lib/pytis/output ../lib/pytis/help ../lib/pytis/windows -o pytis-wx.pot
 
 pytis-defs.pot: $(shell find ../lib/pytis/defs -name "*.py")
 	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/defs -o pytis-defs.pot

@@ -25,8 +25,6 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 
 """ 
 
-from pytis.util import translate as _
-
 from pytis.extensions import *
 from pytis.presentation import *
 
@@ -34,6 +32,9 @@ import collections
 import tempfile
 import config
 import pytis.util
+
+_ = pytis.util.translations('pytis-wx')
+
 
 # Zkratky na často používané identifikátory.
     

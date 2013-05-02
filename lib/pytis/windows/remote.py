@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pytis.util import translate as _
-
 import os
 import pwd
 import re
@@ -26,6 +24,9 @@ import subprocess
 
 from pytis.util import *
 import config
+
+_ = translations('pytis-wx')
+
 
 _ipv4_regexp = r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
 _ipv6_regexp = r'.*:.*:.*'

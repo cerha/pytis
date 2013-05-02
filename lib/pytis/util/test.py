@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2011 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2004, 2005, 2006, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,15 +25,14 @@ souborech '_test.py'.
 # Tento modul je vyčleněn z util.py, aby je nečinil závislým na PyUnit, které
 # není pro běh systému zapotřebí.
 
-
-from pytis.util import translate as _
-
 import string
 import sys
 import types
 import unittest
 
 from pytis.util import *
+
+_ = translations('pytis-wx')
 
 
 class TestSuite(unittest.TestSuite):

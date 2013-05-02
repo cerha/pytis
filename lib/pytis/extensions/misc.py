@@ -24,12 +24,15 @@ hodit.
 
 """
 
-from pytis.util import translate as _
-
-from pytis.extensions import *
 
 import re
 import types
+
+import pytis.util
+from pytis.extensions import *
+
+_ = pytis.util.translations('pytis-wx')
+
 
 def smssend(tel, message, server='192.168.1.55'):
     import os, os.path, commands
