@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-22 11:43+0200\n"
+"POT-Creation-Date: 2013-05-02 18:57+0200\n"
 "PO-Revision-Date: 2011-12-29 12:20+0100\n"
 "Last-Translator: Hynek Hanke <hanke@volny.cz>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
@@ -73,7 +73,7 @@ msgstr ""
 msgid "Data obsahují znaky, které nelze reprezentovat v kódování databáze"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3484
+#: ../lib/pytis/data/postgresql.py:3493
 msgid "Chybná hodnota čítače z databáze"
 msgstr ""
 
