@@ -2,6 +2,10 @@
 
 """Gensql definitions for dynamic application menus and access rights."""
 
+# TODO: The _ function should not be needed here.  The database should either
+# not contain localized strings defined by the application.  Only user defined
+# strings may be stored in database, but in this case, the database must allow
+# also definition of their translations in all supported languages.
 from pytis.util import translate as _
 
 db_rights = globals().get('Gall_pytis', None)
