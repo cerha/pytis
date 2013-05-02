@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -192,8 +192,9 @@ def set_default_printer():
         import cups
         import cupshelpers
     except ImportError as e:
-        pytis.form.run_dialog(pytis.form.Error, _("Nastavení výchozí tiskárny nemůže být provedeno.\n"
-                                                  "Kontaktujte správce systému."))
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nastavení výchozí tiskárny nemůže být provedeno.\n"
+                                "Kontaktujte správce systému."))
         return None
     connection = cups.Connection()
     user_default = UserDefaultPrinter()
@@ -202,7 +203,7 @@ def set_default_printer():
         default_printer = connection.getDefault()
     printers = cupshelpers.getPrinters(connection)
     printer_names = printers.keys()
-    fields = (Field('printer', _(""), 
+    fields = (Field('printer', "", 
                     width=40, not_null=True,
                     type=pytis.data.String,
                     enumerator=pytis.data.FixedEnumerator(printer_names),

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """Pomůcky pro operace s datovými objekty a daty obecně.""" 
-
-from pytis.util import translate as _
 
 from pytis.extensions import *
 from pytis.util import nextval
@@ -87,7 +85,7 @@ def dbinsert(spec, row, transaction=None):
     
     """
     assert isinstance(row, pytis.data.Row) or is_sequence(row), \
-           _(u"Argument must be a sequence or Row instance.", row)
+        ("Argument must be a sequence or Row instance.", row)
     if is_sequence(row):
         for item in row:
             if not is_sequence(item) or len(item) != 2:                
