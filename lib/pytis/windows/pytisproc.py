@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 
 # ATTENTION: This should be updated on each code change.
 _VERSION = '2012-11-30 17:08'
-
-from pytis.util import translate as _
 
 import os
 import rpyc

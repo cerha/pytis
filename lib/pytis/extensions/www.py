@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005, 2006, 2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2005, 2006, 2009, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """Nástroje pro generování HTML na základě dat z pytisu."""
-
-from pytis.util import translate as _
 
 import pytis.data
 from pytis.util import *

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007, 2008, 2011 Brailcom, o.p.s.
+# Copyright (C) 2007, 2008, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,8 +21,6 @@
 This module implements web-based dialogs.
 
 """
-
-from pytis.util import translate as _
 
 from pytis.web import *
 

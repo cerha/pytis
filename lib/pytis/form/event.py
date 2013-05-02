@@ -40,8 +40,6 @@ Aby modul plnil svůj účel, je nutno zajistit následující:
 
 """
 
-from pytis.util import translate as _
-
 import collections
 import os
 import sys

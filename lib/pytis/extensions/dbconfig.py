@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2010, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,8 +28,6 @@ definované třídy a funkce zjednodušují práci s těmito hodnotami v rámci
 pythonového kódu ve specifikacích aplikace.
 
 """ 
-
-from pytis.util import translate as _
 
 from pytis.extensions import *
 

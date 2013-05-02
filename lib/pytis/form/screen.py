@@ -27,8 +27,6 @@ i třídy, které tyto specifikace následně zpracovávají.
 
 """
 
-from pytis.util import translate as _
-
 import collections
 import copy
 import string

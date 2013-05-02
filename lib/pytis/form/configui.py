@@ -28,8 +28,6 @@ konfiguračních voleb obsažených v tomto layoutu.
 
 """
 
-from pytis.util import translate as _
-
 from pytis.form import *
 
 _ = pytis.util.translations('pytis-wx')

@@ -31,8 +31,6 @@ Access rights violation is signalized exclusively using the
 
 """
 
-from pytis.util import translate as _
-
 from pytis.data import *
 from pytis.util import *
 

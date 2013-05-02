@@ -26,8 +26,6 @@ The actual class representing each field is determined by its specification and 
 
 """
 
-from pytis.util import translate as _
-
 import collections
 import pytis.data
 from pytis.form import *

@@ -20,8 +20,6 @@ from __future__ import unicode_literals
 
 """Funkce pro načítání, caching, kontrolu a reporty z defsů.""" 
 
-from pytis.util import translate as _
-
 import pytis.data
 import pytis.output
 import pytis.util

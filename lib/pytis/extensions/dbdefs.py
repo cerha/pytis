@@ -19,8 +19,6 @@
 
 "Miscellaneous utilities for gensqlalchemy specifications."
 
-from pytis.util import translate as _
-
 import sqlalchemy
 
 # Simple shorthands

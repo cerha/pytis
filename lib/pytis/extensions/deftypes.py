@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2001, 2002, 2003, 2005, 2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2003, 2005, 2009, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """Definice odvozených datových typů.""" 
-
-from pytis.util import translate as _
 
 from pytis.extensions import *
 

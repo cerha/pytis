@@ -26,8 +26,6 @@ jednotlivých tříd.
 
 """
 
-from pytis.util import translate as _
-
 import copy
 import collections
 import time

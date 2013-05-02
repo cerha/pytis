@@ -36,8 +36,6 @@ implementaci.
 
 """
 
-from pytis.util import translate as _
-
 import functools
 import copy
 import string

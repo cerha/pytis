@@ -27,8 +27,6 @@ konkrétní použití.
 
 """
 
-from pytis.util import translate as _
-
 import functools
 import pytis.data
 from pytis.form import *

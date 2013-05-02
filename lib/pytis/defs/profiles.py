@@ -17,13 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-<<<<<<< HEAD
-from pytis.util import translate as _
-
-import pytis.data as pd
-=======
 import pytis.data as pd, pytis.util
->>>>>>> Make internationalization infrastructure work for wx applications
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, HGroup, Profile, \
     computer
 

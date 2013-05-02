@@ -2,8 +2,6 @@
 
 from __future__ import unicode_literals
 
-from pytis.util import translate as _
-
 import sqlalchemy
 import pytis.extensions.gensqlalchemy as sql
 import pytis.data
