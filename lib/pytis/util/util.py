@@ -47,14 +47,6 @@ import sys
 import thread
 import types as pytypes
 
-import __builtin__
-# Define the default gettext function for backwards compatibility.  Some
-# modules (usually applications) may not yet define the _ function explicitly
-# (using the function translations() defined below) and we want to avoid errors
-# in such code for now.  In future, this should be removed.
-if '_' not in __builtin__.__dict__:
-    __builtin__.__dict__['_'] = lambda x: x
-
 
 ### Classes
 
