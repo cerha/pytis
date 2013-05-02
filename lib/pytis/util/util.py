@@ -1539,20 +1539,6 @@ def rsa_encrypt(key, text):
     else:
         return text
 
-def translate(text):
-    """Return translation object for given text.
-
-    This function is suitable for use as '_' to mark translatable texts.
-
-    Arguments:
-
-      text -- text to translate; basestring
-    
-    For now the function just returns 'text'.
-
-    """
-    return text
-    
 
 ### Miscellaneous
 
@@ -1894,3 +1880,21 @@ def translations(domain, origin='en'):
     path = os.path.join(os.path.normpath(os.path.dirname(__file__) + '/../../..'), 'translations')
     return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=(path,))
 
+def translate(text):
+    """Return translation object for given text.
+
+    This function is suitable for use as '_' to mark translatable texts.  It is
+    now used in applications to quickly define the '_' function explicitly
+    after it was removed from builtins in Pytis.  To really translate the
+    texts, use the 'translations()' function defined above and set up creation
+    of message catalogs.
+
+    Arguments:
+
+      text -- text to translate; basestring
+    
+    The function just returns 'text'.  
+
+    """
+    return text
+    
