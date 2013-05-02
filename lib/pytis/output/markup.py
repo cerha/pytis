@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 # 
-# Copyright (C) 2002-2012 Brailcom, o.p.s.
+# Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -760,7 +760,8 @@ class Image(_Mark):
 
     def _lcg(self):
         import config
-        image = lcg.Image(os.path.join(config.print_spec_dir, self._file_name))
+        file_name = os.path.join(config.print_spec_dir, self._file_name)
+        image = lcg.Image(file_name, src_file=file_name)
         return lcg.InlineImage(image)
 
 class StructuredText(_Mark):
