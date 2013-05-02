@@ -421,6 +421,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             panel = wx.Panel(self, -1, style=wx.SUNKEN_BORDER)
             form = QueryFieldsForm(panel, resolver(), None, prefill=self._query_field_values, 
                                    **query_fields.view_spec_kwargs())
+            self._query_fields_form = form
             self._query_fields_apply_button = apply_button = \
                 wx_button(panel, label=_(u"Aplikovat"),
                           tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
@@ -429,32 +430,31 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._query_fields_panel_buttons = panel_buttons = (
                 wx_button(panel, label=_(u"Minimalizovat"),
                           tooltip=_(u"Minimalizovat/maximalizovat panel dotazu"),
-                          icon='minimize-down', noborder=True, size=(16, 16),
+                          icon='minimize-down', noborder=True,
                           callback=self._on_minimize_query_fields),
                 wx_button(panel, label=_(u"Přesunout nahoru"),
                           tooltip=_(u"Přesunout panel dotazu na horní/dolní okraj formuláře"),
-                          icon='move-up', noborder=True, size=(16, 16),
+                          icon='move-up', noborder=True,
                           callback=self._on_move_query_fields))
             panel_sizer = wx.BoxSizer()
             panel_sizer.Add(form, 0, wx.EXPAND|wx.FIXED_MINSIZE)
             panel_sizer.Add((0, 0), 1)
-            panel_sizer.Add(apply_button, 0, wx.ALL|wx.ALIGN_BOTTOM, 4)
+            panel_sizer.Add(apply_button, 0, wx.ALL|wx.ALIGN_BOTTOM|wx.FIXED_MINSIZE, 4)
             for button in panel_buttons:
-                panel_sizer.Add(button)
+                panel_sizer.Add(button, 0, wx.FIXED_MINSIZE, 1)
             panel.SetSizer(panel_sizer)
+            panel.SetAutoLayout(1)
             position = self._get_saved_setting('query-fields-position', 'down')
             if position == 'up':
                 sizer.Insert(sizer.GetItemIndex(self._grid), panel, 0, wx.EXPAND)
             else:
                 sizer.Add(panel, 0, wx.EXPAND)
             if self._get_saved_setting('query-fields-minimized', False):
-                self._toggle_query_fields_minimization(panel, form)
-            self._update_query_fields_panel_button_bitmaps(panel)
+                self._toggle_query_fields_minimization()
+            self._update_query_fields_panel_button_bitmaps()
             form.set_callback(form.CALL_QUERY_FIELDS_CHANGED, self._on_query_fields_changed)
         else:
-            panel = None
-            form = None
-        self._query_fields_form = form
+            self._query_fields_form = None
 
     def _on_query_fields_changed(self):
         self._query_fields_apply_button.Enable(True)
@@ -464,51 +464,56 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self.refresh(interactive=True)
         self._grid.SetFocus()
 
-    def _update_query_fields_panel_button_bitmaps(self, panel):
+    def _update_query_fields_panel_button_bitmaps(self):
         sizer = self._top_level_sizer
-        grid_position, panel_position = sizer.GetItemIndex(self._grid), sizer.GetItemIndex(panel)
-        
+        grid_position = sizer.GetItemIndex(self._grid)
+        panel_position = sizer.GetItemIndex(self._query_fields_form.GetParent())
         for button in self._query_fields_panel_buttons:
             if button is self._query_fields_panel_buttons[0]:
-                if panel.GetChildren()[0].IsShown():
-                    icon = panel_position > grid_position and 'minimize-down' or 'minimize-up'
-                else:
+                if self._query_fields_minimized():
                     icon = panel_position > grid_position and 'maximize-up' or 'maximize-down'
+                else:
+                    icon = panel_position > grid_position and 'minimize-down' or 'minimize-up'
             else:
                 icon = panel_position > grid_position and 'move-up' or 'move-down'
             bitmap = get_icon(icon, type=wx.ART_TOOLBAR)
             button.SetBitmapLabel(bitmap)
 
     def _on_move_query_fields(self, event):
-        panel = event.GetEventObject().GetParent()
         sizer = self._top_level_sizer
         target_position = sizer.GetItemIndex(self._grid)
+        panel = event.GetEventObject().GetParent()
         sizer.Detach(panel)
         sizer.Insert(target_position, panel, 0, wx.EXPAND)
         sizer.Layout()
-        self._update_query_fields_panel_button_bitmaps(panel)
+        self._update_query_fields_panel_button_bitmaps()
         position = sizer.GetItemIndex(panel) < sizer.GetItemIndex(self._grid) and 'up' or 'down'
         self._set_saved_setting('query-fields-position', position)
 
     def _on_minimize_query_fields(self, event):
-        panel = event.GetEventObject().GetParent()
-        self._toggle_query_fields_minimization(panel, self._query_fields_form)
-        self._update_query_fields_panel_button_bitmaps(panel)
-        self._set_saved_setting('query-fields-minimized', not self._query_fields_form.IsShown())
+        self._toggle_query_fields_minimization()
+        self._update_query_fields_panel_button_bitmaps()
+        self._set_saved_setting('query-fields-minimized', self._query_fields_minimized())
 
-    def _toggle_query_fields_minimization(self, panel, form):
+    def _query_fields_minimized(self):
+        return not self._query_fields_form.IsShown()
+
+    def _toggle_query_fields_minimization(self):
         # Minimize/Deminimize the panel.
+        form = self._query_fields_form
+        panel = form.GetParent()
         for child in panel.GetChildren():
             if child not in self._query_fields_panel_buttons:
                 child.Show(not child.IsShown())
         self._top_level_sizer.Layout()
-        if panel.GetChildren()[0].IsShown():
-            panel.SetToolTipString("")
-        else:
+        if self._query_fields_minimized():
             row = form.row()
             values = ['%s: %s' % (form.field(key).spec().label(), row.format(key))
                       for key in row.keys() if key != '__changed']
             panel.SetToolTipString(', '.join(values))
+        elif panel.GetToolTip():
+            panel.SetToolTipString(' ')
+            panel.GetToolTip().Enable(False) # Doesn't seem to work, thus the line above...
 
     def _context_menu(self):
         """Vrať specifikaci \"kontextového\" popup menu vybrané buňky seznamu.
