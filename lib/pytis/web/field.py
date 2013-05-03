@@ -354,18 +354,14 @@ class Field(object):
             self._format_cache_context = context
         field_value = self._value().value()
         try:
-            value_info = self._format_cache.get(field_value)
-        except TypeError:               # catch unhashable keys
-            value_info = None
-        if value_info is None:
+            value, info = self._format_cache[field_value]
+        except (TypeError, KeyError): # catch unhashable keys
             value = self._format(context)
             info = self._display(context)
             try:
                 self._format_cache[field_value] = (value, info,)
-            except TypeError:           # catch unhashable keys
+            except TypeError: # catch unhashable keys
                 pass
-        else:
-            value, info = value_info
         if value and self._uri_provider:
             g = context.generator()
             src = self._uri_provider(self._row, UriType.IMAGE, self.id)
