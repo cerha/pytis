@@ -59,14 +59,13 @@ except Exception as e:
     sqlalchemy = Dummy()
 else:
     import sqlalchemy.dialects.postgresql
-    
 
 from pytis.data import *
 
 
 class _MType(type):
 
-    def __call__ (self, *args, **kwargs):
+    def __call__(self, *args, **kwargs):
         return self.make(*args, **kwargs)
 
 
@@ -96,8 +95,8 @@ class Type(object):
             self._init_args_to_type = {}
 
         def _key(self, class_, args, kwargs):
-            return (class_.__module__, class_.__name__) + \
-                   args + tuple(kwargs.items())
+            return ((class_.__module__, class_.__name__) +
+                    args + tuple(kwargs.items()))
 
         def id_of_initargs(self, class_, args, kwargs):
             table = self._init_args_to_id
@@ -107,11 +106,11 @@ class Type(object):
             else:
                 result = table[key] = self._id_counter.next()
                 self._id_to_init_args[result] = \
-                  class_.__module__, class_.__name__, args, kwargs
+                    class_.__module__, class_.__name__, args, kwargs
             return result
 
         def get(self, id):
-            if type(id) != type(0):
+            if not isinstance(id, int):
                 raise Exception('Invalid id type', id)
             return self._id_to_init_args.get(id)
 
@@ -131,7 +130,7 @@ class Type(object):
     _type_table = _TypeTable()
 
     VM_NULL_VALUE = 'VM_NULL_VALUE'
-    VM_INVALID_VALUE =  'VM_INVALID_VALUE'
+    VM_INVALID_VALUE = 'VM_INVALID_VALUE'
     # Translators: User input validation error message.
     _VM_NULL_VALUE_MSG = _(u"Empty value")
     # Translators: User input validation error message.
@@ -190,13 +189,13 @@ class Type(object):
         assert isinstance(unique, types.BooleanType)
         assert enumerator is None or isinstance(enumerator, Enumerator)
         assert isinstance(constraints, (types.ListType, types.TupleType))
-        assert validation_messages is None or \
-               isinstance(validation_messages, types.DictType)
+        assert (validation_messages is None or
+               isinstance(validation_messages, types.DictType))
         self._not_null = not_null
         self._unique = unique
         self._enumerator = enumerator
         self._constraints = xtuple(constraints)
-        vm = [(getattr(self, attr), getattr(self, '_'+attr+'_MSG'))
+        vm = [(getattr(self, attr), getattr(self, '_' + attr + '_MSG'))
               for attr in dir(self) if attr.startswith('VM_')]
         self._validation_messages = dict(vm)
         if validation_messages is not None:
@@ -249,7 +248,7 @@ class Type(object):
         return self._id
     
     def __setstate__(self, state):
-        if type(state) != type(0):
+        if not isinstance(state, int):
             raise InvalidAccessError('Invalid type identifier', state)
         self._id = state
 
@@ -518,7 +517,6 @@ class Number(Type):
                 raise self._validation_error(self.VM_MINIMUM, minimum=self._minimum)
             if self._maximum is not None and value > self._maximum:
                 raise self._validation_error(self.VM_MAXIMUM, maximum=self._maximum)
-
     
 
 class Big(Type):
@@ -527,7 +525,7 @@ class Big(Type):
     Instances of this type are sometimes handled in Pytis in a special way,
     e.g. they are not printed to the terminal log.
     
-    """    
+    """
 
 class Large(Big):
     """Mixin class denoting types with really large values.
@@ -708,8 +706,7 @@ class Float(Number):
              
         """
         super(Float, self).__init__(**kwargs)
-        assert precision is None or precision >= 0, \
-               ('Invalid precision', precision)
+        assert precision is None or precision >= 0, ('Invalid precision', precision)
         if precision is None:
             format = '%f'
         else:
@@ -726,10 +723,10 @@ class Float(Number):
         """Return number of digits given in the constructor, integer."""
         return self._digits
     
-    def _validate(self, string, precision=None, rounding=None, locale_format=True):
-        """Pokus se převést 'string' na float.
+    def _validate(self, string_, precision=None, rounding=None, locale_format=True):
+        """Pokus se převést 'string_' na float.
 
-        Pokud je 'string' možno převést na float, je správný a vrácená instance
+        Pokud je 'string_' možno převést na float, je správný a vrácená instance
         třídy 'Value' obsahuje odpovídající hodnotu jako plain integer.  Pokud
         'string' převést možno není, 'string' není správný a je vrácena chyba.
 
@@ -746,19 +743,18 @@ class Float(Number):
             dolů (pozor na záporná čísla, platí to pro ně také přesně takto!)
         
         """
-        assert isinstance(string, basestring), ('Not a string', string)
-        assert precision is None or \
-               type(precision) == type(0) and precision >=0, \
+        assert isinstance(string_, basestring), ('Not a string', string_)
+        assert (precision is None or isinstance(precision, int) and precision >= 0), \
                ('Invalid precision', precision)
         try:
             if locale_format:
                 import locale
-                if isinstance(string, unicode):
+                if isinstance(string_, unicode):
                     encoding = locale.getpreferredencoding()
-                    string = string.encode(encoding)
-                value = locale.atof(string)
+                    string_ = string_.encode(encoding)
+                value = locale.atof(string_)
             else:
-                value = float(string)
+                value = float(string_)
         except:
             # Dokumentace Pythonu 1.5.2 neříká, že by `float' mohlo metat metat
             # nějakou výjimkou, ale evidentně by mělo, pokud `string' nelze
@@ -834,7 +830,7 @@ class String(Limited):
     Lze také specifikovat, že řetězec může mít pouze omezenou délku, blíže viz
     metody '__init__' a 'maxlen'.
 
-    """    
+    """
 
     # Translators: User input validation error message.
     _VM_MINLEN_MSG = _(u"Minimal length %(minlen)s characters not satisfied")
@@ -1055,7 +1051,7 @@ class Inet(String):
                 raise self._validation_error(self.VM_INET_MASK, mask=mask)
         else:
             addr, mask = string, '32'
-        numbers = addr.split('.')        
+        numbers = addr.split('.')
         for n in numbers:
             if n and int(n) > 255:
                 raise self._validation_error(self.VM_INET_ADDR, addr=addr)
@@ -1080,9 +1076,8 @@ class Macaddr(String):
     def _validate(self, string, *args, **kwargs):
         if not self._MACADDR_FORMAT.match(string):
             raise self._validation_error(self.VM_MACADDR_FORMAT)
-        macaddr = string.replace(':','').replace('-','')
-        value = ':'.join( [macaddr[x:x+2]
-                            for x in range(0,len(macaddr),2)] )
+        macaddr = string.replace(':', '').replace('-', '')
+        value = ':'.join([macaddr[x:x+2] for x in range(0, len(macaddr), 2)])
         return Value(self, unicode(value)), None
     
     def sqlalchemy_type(self):
@@ -1455,16 +1450,16 @@ class DateTime(_CommonDateTime):
         # Dalke who posted this code to
         # http://code.activestate.com/recipes/306860-proleptic-gregorian-dates-and-strftime-before-1900/
         def findall(text, substr):
-             # Also finds overlaps
-             sites = []
-             i = 0
-             while 1:
-                 j = text.find(substr, i)
-                 if j == -1:
-                     break
-                 sites.append(j)
-                 i=j+1
-             return sites
+            # Also finds overlaps
+            sites = []
+            i = 0
+            while 1:
+                j = text.find(substr, i)
+                if j == -1:
+                    break
+                sites.append(j)
+                i = j + 1
+            return sites
         # Every 28 years the calendar repeats, except through century leap
         # years where it's 6 years.  But only if you're using the Gregorian
         # calendar.  ;)
@@ -1474,15 +1469,15 @@ class DateTime(_CommonDateTime):
         if year > 1900:
             return value.strftime(format)
         delta = 2000 - year
-        off = 6*(delta // 100 + delta // 400)
+        off = 6 * (delta // 100 + delta // 400)
         year = year + off
         # Move to around the year 2000
-        year = year + ((2000 - year)//28)*28
+        year = year + ((2000 - year) // 28) * 28
         timetuple = value.timetuple()
         s1 = time.strftime(format, (year,) + timetuple[1:])
         sites1 = findall(s1, str(year))
-        s2 = time.strftime(format, (year+28,) + timetuple[1:])
-        sites2 = findall(s2, str(year+28))
+        s2 = time.strftime(format, (year + 28,) + timetuple[1:])
+        sites2 = findall(s2, str(year + 28))
         sites = []
         for site in sites1:
             if site in sites2:
@@ -1658,7 +1653,7 @@ class Time(_CommonDateTime):
             local = kwargs.get('local')
             if local is not None:
                 if local and self._utc or not local and not self._utc:
-                    raise Exception("Can't mix UTC and local time zones in Time type")        
+                    raise Exception("Can't mix UTC and local time zones in Time type")
         if self._utc:
             kwargs['local'] = False
         else:
@@ -1667,7 +1662,7 @@ class Time(_CommonDateTime):
 
     @classmethod
     def _datetime(class_, tz):
-        dt = datetime.datetime.now(tz)        
+        dt = datetime.datetime.now(tz)
         return dt.astimezone(tz).timetz()
     
     def sqlalchemy_type(self):
@@ -1680,7 +1675,8 @@ class TimeInterval(Type):
     VM_TI_FORMAT = 'VM_TI_INVALID_FORMAT'
     _VM_TI_FORMAT_MSG = _(u"Invalid format")
 
-    _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
+    _MATCHER = re.compile('((?P<days>[0-9]+) days?,? )?'
+                          '(?P<hours>[0-9]+):(?P<minutes>[0-9]+):(?P<seconds>[0-9]+)$')
 
     DEFAULT_FORMAT = '%H:%M:%S'
     SHORT_FORMAT = '%H:%M'
@@ -1709,7 +1705,7 @@ class TimeInterval(Type):
         re_minutes = '(?P<minutes>[0-9]+)'
         re_seconds = '(?P<seconds>[0-9]+)'
         matcher_string = format.replace('%H', re_hours).replace('%M', re_minutes).replace('%S', re_seconds)
-        return re.compile(matcher_string)        
+        return re.compile(matcher_string)
     
     def _validate(self, string_, format=None, **kwargs):
         assert isinstance(string_, basestring)
@@ -1724,7 +1720,9 @@ class TimeInterval(Type):
             return None, self._validation_error(self.VM_TI_FORMAT)
         groups = match.groupdict()
         days = int(groups.get('days') or '0')
-        seconds = int(groups.get('hours') or '0') * 3600 + int(groups.get('minutes') or '0') * 60 + int(groups.get('seconds') or '0')
+        seconds = (int(groups.get('hours') or '0') * 3600 +
+                   int(groups.get('minutes') or '0') * 60 +
+                   int(groups.get('seconds') or '0'))
         days += seconds / 86400
         seconds = seconds % 86400
         interval = datetime.timedelta(days, seconds)
@@ -1998,7 +1996,6 @@ class Binary(Limited):
             self._filename = filename
             self._mime_type = mime_type
             
-                
     def __init__(self, enumerator=None, **kwargs):
         assert enumerator is None, ("Enumerators can not be used with binary data types")
         super(Binary, self).__init__(**kwargs)
@@ -2087,9 +2084,9 @@ class Image(Binary, Big):
         """
         if __debug__:
             for size in minsize, maxsize:
-                assert isinstance(size, (tuple, list)) and len(size) == 2 and \
-                       size[0] is None or isinstance(size[0], int) and \
-                       size[1] is None or isinstance(size[1], int), size
+                assert (isinstance(size, (tuple, list)) and len(size) == 2 and
+                        size[0] is None or isinstance(size[0], int) and
+                        size[1] is None or isinstance(size[1], int)), size
             if formats is not None:
                 assert isinstance(formats, (tuple, list)), formats
                 for f in formats:
@@ -2136,7 +2133,7 @@ class Image(Binary, Big):
         super(Image, self)._check_constraints(value, **kwargs)
         if value is not None:
             image = value.image()
-            for min,max,size in zip(self._minsize, self._maxsize, image.size):
+            for min, max, size in zip(self._minsize, self._maxsize, image.size):
                 if min is not None and size < min:
                     raise self._validation_error(self.VM_MINSIZE,
                                                minsize='%sx%s' % self._minsize)
@@ -2157,7 +2154,6 @@ class Image(Binary, Big):
         
         """
         raise UnsupportedPrimitiveValueConversion(self)
-
     
 
 class LTree(Type):
@@ -2181,7 +2177,7 @@ class LTree(Type):
     VM_INVALID_ITEM = 'VM_INVALID_ITEM'
     _VM_INVALID_ITEM_MSG = _(u"One of hierarchical value items contains invalid characters")
 
-    _REGEX = re.compile('^\w+$', re.UNICODE) 
+    _REGEX = re.compile('^\w+$', re.UNICODE)
 
     _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ''),)
 
@@ -2416,19 +2412,19 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         """
         super(DataEnumerator, self).__init__()
         assert isinstance(data_factory, DataFactory), data_factory
-        assert value_column is None or \
-               isinstance(value_column, basestring)
-        assert validity_column is None or \
-               isinstance(validity_column, basestring)
-        assert validity_condition is None or \
-               isinstance(validity_condition, pytis.data.Operator) \
-               and validity_column is None
+        assert (value_column is None or
+                isinstance(value_column, basestring))
+        assert (validity_column is None or
+                isinstance(validity_column, basestring))
+        assert (validity_condition is None or
+                isinstance(validity_condition, pytis.data.Operator) and
+                validity_column is None)
         self._data_factory = data_factory
         self._data_lock = thread.allocate_lock()
         self._value_column_ = value_column
         self._validity_column = validity_column
         if validity_column is not None:
-            validity_condition = EQ(validity_column, Value(Boolean(), True))            
+            validity_condition = EQ(validity_column, Value(Boolean(), True))
         self._validity_condition = validity_condition
         self._change_callbacks = []
         self._connection_data = connection_data
@@ -2513,8 +2509,8 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         def lfunction():
             result = []
             try:
-                count = self._data.select(condition=the_condition, transaction=transaction, sort=sort,
-                                          arguments=arguments)
+                count = self._data.select(condition=the_condition, transaction=transaction,
+                                          sort=sort, arguments=arguments)
                 if max is not None and count > max:
                     return None
                 while True:
@@ -2569,7 +2565,8 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         Returns a 'pytis.data.Row' instance from the underlying data object.
 
         """
-        return self._retrieve(value, transaction=transaction, condition=condition, arguments=arguments)
+        return self._retrieve(value, transaction=transaction, condition=condition,
+                              arguments=arguments)
     
     def rows(self, transaction=None, condition=None, arguments=None, sort=()):
         """Return sequence of rows of the underlying data object.
@@ -2672,7 +2669,7 @@ class _Value(object):
     
     def __unicode__(self):
         type = self.type()
-        value = unicode (self.value())
+        value = unicode(self.value())
         if isinstance(type, Big) and len(value) > 40:
             value = '%s...<<big value>>...' % (value[:10],)
         return '<%s: type=%s, value=%s>' % (self.__class__.__name__,
@@ -2831,7 +2828,6 @@ class Value(_Value):
     
 class WMValue(_Value):
     """Reprezentace specifikace pro wildcard match daného typu."""
-
 
 
 # Shorthand functions for values
