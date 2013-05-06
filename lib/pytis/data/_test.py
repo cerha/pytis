@@ -746,7 +746,7 @@ class DBConnection(unittest.TestCase):
         c = self._connection
         c1 = c.select('remote')
         assert c1.user() == 'login2'
-        assert c1.password() is None
+        assert c1.password() == 'heslo'
         assert c1.host() == 'remotehost'
         assert c1.port() is None
         assert c1.database() == 'db2'
