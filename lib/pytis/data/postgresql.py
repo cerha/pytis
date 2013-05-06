@@ -57,8 +57,9 @@ _ = pytis.util.translations('pytis-data')
 # je jméno modifikované tabulky.
 
 
-def pg_escape(string_):
-    return string_.replace("'", "''").replace('\\', '\\\\')
+def pg_escape(string_, standard=False):
+    result = string_.replace("'", "''")
+    return result
 
 
 def pg_encoding(enc):

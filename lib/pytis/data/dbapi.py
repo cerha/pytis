@@ -71,6 +71,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
         connection_instance = class_._postgresql_Connection(connection, connection_data)
         class_._postgresql_reset_connection_info(connection_instance)
+        cursor = connection.cursor()
+        cursor.execute("show standard_conforming_strings")
+        result = cursor.fetchone()[0]
+        connection_instance.set_connection_info('standard_strings', (result == 'on'))
+        cursor.close()
         return connection_instance
 
     @classmethod
@@ -84,7 +89,11 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     
     def _postgresql_query(self, connection, query, outside_transaction, query_args=(), _retry=True):
         result = None
-        def do_query(raw_connection):
+        def do_query(connection, query):
+            raw_connection = connection.connection()
+            standard_strings = connection.connection_info('standard_strings')
+            if not standard_strings:
+                query = query.replace('\\', '\\\\')
             cursor = raw_connection.cursor()
             # The hasattr test is a hack enforced by the fact that constructor
             # calls of pytis.data classes are in very strange state now.
@@ -93,6 +102,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     def escape(arg):
                         if isinstance(arg, basestring):
                             result = "'%s'" % (arg.replace("'", "''"),)
+                            if not standard_strings:
+                                result = result.replace('\\', '\\\\')
                         else:
                             result = arg
                         return result
@@ -121,14 +132,14 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 cdata = connection.connection_data()
                 new_connection = self._postgresql_new_connection(cdata)
                 try:
-                    result = do_query(new_connection.connection())
+                    result = do_query(new_connection, query)
                 except Exception as e:
                     raise DBSystemException(message, e, e.args, query)
             else:
                 raise DBSystemException(message, exception, exception.args, query)
             return result, new_connection
         try:
-            result = do_query(connection.connection())
+            result = do_query(connection, query)
         except dbapi.InterfaceError as e:
             if e.args and e.args[0].find('connection already closed') != -1:
                 # We believe this shouldn't happen as a program error and it
