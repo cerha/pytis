@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001, 2002, 2005, 2006, 2007 Brailcom, o.p.s.
+# Copyright (C) 2001, 2002, 2005, 2006, 2007, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,8 +35,11 @@ from pytis.util import *
 from types_ import *
 from data import *
 from access import *
-from dbdata import DBConnection, DBData, DBBinding, DBColumnBinding, DBException, DBSystemException, DBUserException, DBLoginException
-from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, DBTransactionDefault, default_access_groups
+from dbdata import DBConnection, DBData, DBBinding, DBColumnBinding, DBException, \
+    DBSystemException, DBUserException, DBLoginException, DBInsertException, \
+    DBLockException, DBRetryException, DBConnectionPool
+from defaults import DBDataDefault, DBCounterDefault, DBFunctionDefault, \
+    DBTransactionDefault, default_access_groups
 from deprecated import Oid
 
 # TODO: The following import serves for backward compatibility of applications

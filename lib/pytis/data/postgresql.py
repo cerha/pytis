@@ -30,16 +30,25 @@ import copy
 import datetime
 import re
 import string
+import sys
 import thread
 import threading
 import time
 import weakref
 
-from dbdata import *
-from evaction import *
-from pytis.data import *
 import pytis.data
+from pytis.data import DBException, DBInsertException, DBLockException, DBRetryException, \
+    DBSystemException, DBUserException, DBConnection, DBConnectionPool, DBData, \
+    ColumnSpec, DBColumnBinding, Row, Function, dbtable, reversed_sorting, \
+    Array, Binary, Boolean, Date, DateTime, Float, FullTextIndex, Inet, Integer, LTree, \
+    Macaddr, Number, Serial, String, Time, TimeInterval, \
+    Type, Value, Operator, AND, OR, EQ, NE, GT, LT, FORWARD, BACKWARD, ASCENDENT, DESCENDANT
 import pytis.util
+from pytis.util import ACTION, Counter, DEBUG, ecase, EVENT, is_anystring, is_sequence, \
+    log, object_2_5, OPERATIONAL, ProgramError, remove_duplicates, UNDEFINED, \
+    with_lock, xtuple
+import evaction
+
 
 _ = pytis.util.translations('pytis-data')
 
@@ -549,7 +558,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                 if (n > 0):
                     try:
                         roles_data = dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
-                    except pytis.data.DBException:
+                    except DBException:
                         pass
                     else:
                         def process(row):
@@ -641,7 +650,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
                     # navěsit, co je nám libo.
                     for n in remove_duplicates(notiflist):
                         self._notif_register(n)
-                except pytis.data.DBException:
+                except DBException:
                     time.sleep(error_pause)
                     error_pause = error_pause * 2
                     continue
@@ -1029,8 +1038,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         except:
             if noerror:
                 return None
-            raise pytis.data.DBException("Unknown column '%s' in table '%s'" % (column, table),
-                                         None, table, column)
+            raise DBException("Unknown column '%s' in table '%s'" % (column, table),
+                              None, table, column)
         try:
             default = lookup_column(table_data.default())[0]
         except:
@@ -1077,7 +1086,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         try:
             type_class_ = TYPE_MAPPING[type_]
         except KeyError:
-            raise pytis.data.DBException('Unhandled database type', None, type_)
+            raise DBException('Unhandled database type', None, type_)
         if ctype is None or type(ctype) == type(pytis.data.Type):
             if type_kwargs is None:
                 type_kwargs = {}
@@ -1338,7 +1347,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                      "where nspname='%s' and relname='%s'") % (schema, main_table,),
                     outside_transaction=True)
                 ev_action_string = qresult[0][0]
-                ev_action = pg_parse_ev_action(ev_action_string)
+                ev_action = evaction.pg_parse_ev_action(ev_action_string)
                 ev_rtable = ev_action[0]['rtable']
                 lock_candidates = [table['eref']['aliasname']
                                    for table in ev_rtable if table['inFromCl']]
@@ -2957,11 +2966,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                arguments={}, async_count=False, stop_check=None):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
-        if (reuse and not self._pg_changed and self._pg_number_of_rows and
-            condition == self._pg_last_select_condition and
-            sort == self._pg_last_select_sorting and
-            transaction is self._pg_last_select_transaction and
-            not async_count):
+        if ((reuse and not self._pg_changed and self._pg_number_of_rows and
+             condition == self._pg_last_select_condition and
+             sort == self._pg_last_select_sorting and
+             transaction is self._pg_last_select_transaction and
+             not async_count)):
             use_cache = True
         else:
             use_cache = False
@@ -3002,8 +3011,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             self._pg_is_in_select = False
             raise cls, e, tb
-        if (use_cache and
-            (not isinstance(row_count_info, int) or row_count_info != self._pg_number_of_rows)):
+        if ((use_cache and
+             (not isinstance(row_count_info, int) or row_count_info != self._pg_number_of_rows))):
             use_cache = False
         if use_cache:
             self._pg_buffer.goto(-1)
@@ -3293,8 +3302,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         try:
             # Jestliže je definováno ordering, které je součástí klíče, bude
             # nově vložený řádek nutně unikátní.
-            if ((not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) and
-                self._pg_already_present(row, transaction=transaction)):
+            if (((not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) and
+                 self._pg_already_present(row, transaction=transaction))):
                 msg = 'Row with this key already exists'
                 result = msg, False
                 log(ACTION, msg)
