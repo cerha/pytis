@@ -746,9 +746,9 @@ class DBConnection(unittest.TestCase):
         c = self._connection
         c1 = c.select('remote')
         assert c1.user() == 'login2'
-        assert c1.password() == None
+        assert c1.password() is None
         assert c1.host() == 'remotehost'
-        assert c1.port() == None
+        assert c1.port() is None
         assert c1.database() == 'db2'
         c2 = c1.select(None)
         assert c.user() == c2.user(), (c.user(), c2.user())
@@ -890,6 +890,8 @@ class _DBTest(_DBBaseTest):
                   "create table viewtest2 (x int)",
                   "insert into viewtest2 values (1)",
                   "insert into viewtest2 values (2)",
+                  "create table rangetable (x int, r int4range)",
+                  "insert into rangetable values (1, '[10, 20)')",
                   "create view viewtest1 as select *, x||'%s%s'::text as foo from viewtest2 where true",
                   "create rule viewtest1_update as on update to viewtest1 do instead update viewtest2 set x=new.x;",
                   "create view viewtest3 as select * from viewtest1",
@@ -923,8 +925,8 @@ class _DBTest(_DBBaseTest):
                 self._sql_command('drop view %s' % (t,))
             except:
                 pass            
-        for t in ('bin', 'dateformats', 'fulltext', 'dist', 'xcosi', 'denik', 'cosnova', 'cstat',
-                  'viewtest2', 'viewtest0', 'viewtest6',):
+        for t in ('bin', 'rangetable', 'dateformats', 'fulltext', 'dist', 'xcosi', 'denik',
+                  'cosnova', 'cstat', 'viewtest2', 'viewtest0', 'viewtest6',):
             try:
                 self._sql_command('drop table %s' % (t,))
             except:
@@ -1057,6 +1059,13 @@ class DBDataDefault(_DBTest):
              B('datetime', 'dateformats', 'datetime', type_=pytis.data.ISODateTime()),),
             key,
             conn)
+        # ranges
+        key = B('x', 'rangetable', 'x')
+        ranges = pytis.data.DBDataDefault(
+            (key,
+             B('r', 'rangetable', 'r', type_=pytis.data.IntegerRange()),),
+            key,
+            conn)
         # views
         key = B('x', 'viewtest1', 'x')
         view = pytis.data.DBDataDefault((key,), key, conn)
@@ -1088,6 +1097,7 @@ class DBDataDefault(_DBTest):
         self.fulltext = fulltext
         self.fulltext1 = fulltext1
         self.dateformats = dateformats
+        self.ranges = ranges
         self.view = view
         self.view3 = view3
         self.view4 = view4
@@ -1580,6 +1590,28 @@ class DBDataDefault(_DBTest):
         delta = datetime.datetime.now(pytis.data.DateTime.UTC_TZINFO) - value
         assert delta >= datetime.timedelta(), value
         assert delta < datetime.timedelta(seconds=3600), value
+    def test_ranges(self):
+        data = self.ranges
+        row = data.row(pytis.data.ival(1))
+        assert row is not None
+        value = row[1].value()
+        assert value[0] == 10 and value[1] == 20, value
+        new_value, err = pytis.data.IntegerRange().validate(('20', '30',))
+        assert err is None, err
+        data.insert(pytis.data.Row((('x', pytis.data.ival(2),), ('r', new_value,),)))
+        n = data.select(pytis.data.EQ('r', new_value))
+        assert n == 1, n
+        value = data.fetchone()['r']
+        data.close()
+        assert value == new_value, value
+        new_value, err = pytis.data.IntegerRange().validate(('', '',))
+        assert err is None, err
+        assert new_value.value() is None, new_value.value()
+        data.insert(pytis.data.Row((('x', pytis.data.ival(3),), ('r', new_value,),)))
+        row = data.row(pytis.data.ival(3))
+        assert row is not None
+        value = row[1].value()
+        assert value is None, value
     def test_backslash(self):
         data = self.dstat
         backslash = 'back\\012slash'

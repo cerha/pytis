@@ -29,6 +29,8 @@ se vyskytující dialogové operace.
 
 """
 
+from __future__ import unicode_literals
+
 import collections
 import types
 import pytis.data

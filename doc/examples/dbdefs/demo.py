@@ -52,7 +52,9 @@ class Foo(sql.SQLTable):
 class Foo2(Foo):
     name = 'foofoo'
     inherits = (Foo,)
-    fields = (sql.Column('bar', pytis.data.String()),)
+    fields = (sql.Column('bar', pytis.data.String()),
+              sql.Column('r', pytis.data.IntegerRange()),
+              )
     check = ('n > 0',)
     init_columns = ()
     init_values = ()

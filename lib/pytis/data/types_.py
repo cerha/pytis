@@ -606,7 +606,55 @@ class Limited(Type):
                 raise self._validation_error(self.VM_MAXLEN,
                                              maxlen=self._format_length(self._maxlen))
 
+
+class Range(Type):
+    """Representation of range types.
+
+    Those types are available in PostgreSQL >= 9.2.
+
+    This class should be inherited to corresponding base types to make new
+    range types.  Validation accepts pairs of strings which are validated by
+    calling the superclass.  Export returns values which contain pairs of the
+    corresponding base class values.  NULL values are represented by single
+    'None' values in export and by a pair of empty strings on validation.
+
+    The first value is a the first value of the range.  the second value is the
+    first value *after* the range.
+
+    """
+    _SPECIAL_VALUES = Type._SPECIAL_VALUES + ((None, ('', '',),),)
     
+    def _validate(self, obj, **kwargs):
+        o1, o2 = obj
+        v1, e1 = super(Range, self)._validate(o1, **kwargs)
+        if e1 is not None:
+            return v1, e1
+        v2, e2 = super(Range, self)._validate(o2, **kwargs)
+        if e2 is not None:
+            return v2, e2
+        if v1 is None and v2 is None:
+            value = None
+        else:
+            assert v1 is not None and v2 is not None, obj
+            value = (v1.value(), v2.value(),)
+        return Value(self, value), None
+        
+    def _export(self, value, **kwargs):
+        if not value:
+            v1 = v2 = value
+        else:
+            v1, v2 = value
+        return super(Range, self)._export(v1, **kwargs), super(Range, self)._export(v2, **kwargs)
+
+    def base_type(self):
+        """Return instance of the underlying types of the range type.
+
+        This is the type of the two values of the range pair.
+        
+        """
+        raise Exception("Not implemented")
+
+
 class Integer(Number):
     """Libovolný integer."""
 
@@ -649,6 +697,13 @@ class Integer(Number):
     def sqlalchemy_type(self):
         return sqlalchemy.Integer()
 
+class IntegerRange(Range, Integer):
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.INT4RANGE()
+    def base_type(self):
+        return pytis.data.Integer()
+
 class SmallInteger(Integer):
     def sqlalchemy_type(self):
         return sqlalchemy.SmallInteger()
@@ -656,8 +711,15 @@ class SmallInteger(Integer):
 class LargeInteger(Integer):
     def sqlalchemy_type(self):
         return sqlalchemy.BigInteger()
+        
+class LargeIntegerRange(Range, Integer):
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.INT8RANGE()
+    def base_type(self):
+        return pytis.data.LargeInteger()
 
-
+        
 class Serial(Integer):
     """Integer s automaticky generovanými hodnotami.
 
@@ -1393,8 +1455,8 @@ class DateTime(_CommonDateTime):
             value, error = super(DateTime, self)._validate(string_, format=format, **kwargs)
         if value is not None:
             dt = value.value()
-            if ((self._mindate and dt < self._mindate) or
-                (self._maxdate and dt > self._maxdate)):
+            if (((self._mindate and dt < self._mindate) or
+                 (self._maxdate and dt > self._maxdate))):
                 value, error = None, self._validation_error(self.VM_DT_AGE)
         return value, error
 
@@ -1525,6 +1587,17 @@ class DateTime(_CommonDateTime):
     def sqlalchemy_type(self):
         return sqlalchemy.dialects.postgresql.TIMESTAMP(timezone=(not self._utc), precision=0)
 
+class DateTimeRange(Range, Integer):
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        if utc:
+            sql_class = pytis.extensions.gensqlalchemy.TSRANGE
+        else:
+            sql_class = pytis.extensions.gensqlalchemy.TSTZRANGE
+        return sql_class()
+    def base_type(self):
+        return pytis.data.DateTime(utc=self._utc)
+
 class ISODateTime(DateTime):
     """Datetime represented by the ISO datetime format in the database.
     """
@@ -1595,6 +1668,13 @@ class Date(DateTime):
 
     def sqlalchemy_type(self):
         return sqlalchemy.Date()
+
+class DateRange(Range, Integer):
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.DATERANGE()
+    def base_type(self):
+        return pytis.data.Date()
 
 class Time(_CommonDateTime):
     """Time of day without the date part.

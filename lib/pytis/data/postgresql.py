@@ -1066,7 +1066,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'bigint': Integer,
                         'int2': Integer,
                         'int4': Integer,
-                        'int8': Integer,
+                        'int4range': pytis.data.IntegerRange,
+                        'int8': pytis.data.LargeInteger,
+                        'int8range': pytis.data.LargeIntegerRange,
                         'numeric': Float,
                         'float4': Float,
                         'float8': Float,
@@ -1075,6 +1077,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'timestamp': DateTime,
                         'timestamptz': DateTime,
                         'interval': TimeInterval,
+                        'tsrange': pytis.data.DateTimeRange,
+                        'tstzrange': pytis.data.DateTimeRange,
+                        'daterange': pytis.data.DateRange,
                         'tsvector': FullTextIndex,
                         'varchar': String,
                         'ltree': LTree,
@@ -2843,6 +2848,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             elif typid == 3:            # time interval
                 value, err = type_.validate(dbvalue, strict=False, format=type_.SQL_FORMAT)
                 assert err is None, (dbvalue, type_, err)
+            elif isinstance(type_, pytis.data.Range):
+                if not dbvalue:
+                    value, err = type_.validate(('', '',), strict=False)
+                else:
+                    values = dbvalue[1:-1].split(',')
+                    value, err = type_.validate((values[0], values[1],), strict=False)
             else:
                 value, err = type_.validate(dbvalue, strict=False)
                 assert err is None, (dbvalue, type_, err)
@@ -2882,6 +2893,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             result = "'%s'" % (v.strftime('%H:%M:%S'),)
         elif isinstance(v, datetime.timedelta):
             result = "'%s days %s seconds'" % (v.days, v.seconds,)
+        elif isinstance(t, pytis.data.Range):
+            t1 = t.base_type()
+            result = "'[%s, %s)'" % (self._pg_value(pytis.data.Value(t1, v[0])),
+                                     self._pg_value(pytis.data.Value(t1, v[1])),)
         elif isinstance(t, Float):
             result = t.export(v, locale_format=False)
         elif isinstance(t, Array):
