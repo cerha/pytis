@@ -1625,7 +1625,8 @@ class DBDataDefault(_DBTest):
         row = pytis.data.Row(row_data)
         result, success = data.insert(row)
         assert success
-        assert result[1].value() == backslash, ('invalid inserted value', result[1].value(), backslash,)
+        assert result[1].value() == backslash, ('invalid inserted value', result[1].value(),
+                                                backslash,)
         assert data.delete(row[0]) == 1, 'row not deleted'
     def test_lock(self):
         us = pytis.data.String().validate('us')[0]

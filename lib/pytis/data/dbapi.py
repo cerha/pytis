@@ -29,7 +29,6 @@ Database API implementation.
 
 import select
 import time
-import types as pytypes
 
 import psycopg2 as dbapi
 import psycopg2.extensions
@@ -55,7 +54,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                                  ):
             # Note: 'port' argument is not defined in DB API.
             value = accessor(connection_data)
-            if value != None:
+            if value is not None:
                 kwargs[option] = value
         # Open the connection
         try:
@@ -64,8 +63,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             # Does this error detection work for dbapi as well?
             if e.args:
                 msg = e.args[0].lower()
-                if msg.find('password') != -1 or \
-                       msg.find('authentication failed') != -1:
+                if ((msg.find('password') != -1 or
+                     msg.find('authentication failed') != -1)):
                     raise DBLoginException()
             raise DBSystemException(_(u"Can't connect to database"), e)
         connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
@@ -163,8 +162,10 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 elif e.args[0].find('server closed the connection unexpectedly') != -1:
                     result, connection = retry(_(u"Database connection error"), e)
                 else:
-                    log(OPERATIONAL, "Transaction commands:", connection.connection_info('transaction_commands'))
-                    data = '%s [search_path=%s]' % (query, connection.connection_info('search_path'),)
+                    log(OPERATIONAL, "Transaction commands:",
+                        connection.connection_info('transaction_commands'))
+                    data = '%s [search_path=%s]' % (query,
+                                                    connection.connection_info('search_path'),)
                     raise DBUserException(None, e, e.args, data)
             else:
                 raise DBUserException(None, e, e.args, query)
@@ -285,7 +286,8 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection_data = self._pg_connection_data()
                 connection = self._postgresql_new_connection(connection_data)
                 self._pgnotif_connection = connection
-                connection.connection().set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+                connection.connection().set_isolation_level(
+                    psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
                 self._registered_notifications = []
             
         def _notif_do_registration(self, notification):
@@ -293,7 +295,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 self._registered_notifications.append(notification)
             connection = self._pgnotif_connection
             query = 'listen "%s"' % (notification,)
-            # TODO: Allow reconnection with re-registrations            
+            # TODO: Allow reconnection with re-registrations
             def lfunction():
                 return self._postgresql_query(connection, query, True)
             _result, self._pgnotif_connection = \
@@ -366,7 +368,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBAPIData):
     Je utvořena pouhým složením existujících tříd a nezavádí žádnou další novou
     funkcionalitu kromě konstruktoru.
 
-    """    
+    """
     def __init__(self, bindings, key, connection_data=None, ordering=None,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
                  dbconnection_spec=None, sql_logger=None, **kwargs):
