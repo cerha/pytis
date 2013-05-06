@@ -38,7 +38,8 @@ import weakref
 from dbdata import *
 from evaction import *
 from pytis.data import *
-import pytis.data, pytis.util
+import pytis.data
+import pytis.util
 
 _ = pytis.util.translations('pytis-data')
 
@@ -326,13 +327,13 @@ class PostgreSQLAccessor(object_2_5):
         raise ProgramError(_(u"Volána neimplementovaná metoda"))
 
     def _postgresql_begin_transaction(self):
-        self._pg_query ('begin')
+        self._pg_query('begin')
                 
     def _postgresql_commit_transaction(self):
-        self._pg_query ('commit')
+        self._pg_query('commit')
         
     def _postgresql_rollback_transaction(self):
-        self._pg_query ('rollback')
+        self._pg_query('rollback')
 
 
 class PostgreSQLConnector(PostgreSQLAccessor):
@@ -392,7 +393,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         return self._pg_connections_
     
     def _pg_get_connection(self, outside_transaction=False):
-        connections = self._pg_connections()        
+        connections = self._pg_connections()
         if outside_transaction or not connections:
             pool = self._pg_connection_pool()
             connection = pool.get(self._pg_connection_data())
@@ -433,7 +434,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             try:
                 query.encode(self._pg_encoding)
             except UnicodeEncodeError:
-                raise DBUserException(_(u"Data obsahují znaky, které nelze reprezentovat v kódování databáze"))
+                raise DBUserException(_(u"Data obsahují znaky, které nelze reprezentovat "
+                                        u"v kódování databáze"))
         if isinstance(query, unicode):
             query = query.encode('utf-8')
         assert transaction is None or not outside_transaction, \
@@ -458,7 +460,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             finally:
                 # Vrať DB spojení zpět
                 if connection and transaction is None and outside_transaction:
-                    self._pg_return_connection(connection)                  
+                    self._pg_return_connection(connection)
             if backup and self._pdbb_logging_command:
                 assert not outside_transaction, \
                     ('Backed up SQL command outside transaction', query)
@@ -488,7 +490,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
     _access_groups_data_objects = {}
     _logical_access_groups = UNDEFINED
 
-    def __init__ (self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(PostgreSQLUserGroups, self).__init__(*args, **kwargs)
         key = self._pgg_connection_key(self._pg_connection_data())
         PostgreSQLUserGroups._access_groups_data_objects[key] = self
@@ -509,7 +511,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         return (connection_data.user(), connection_data.password(),
                 connection_data.host(), connection_data.port(),
                 connection_data.database(),)
-        
+
     def _pgg_retrieve_access_groups(self, data):
         if __debug__:
             log(DEBUG, "Retrieving list of user groups")
@@ -543,7 +545,8 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
                              connection_name=self._connection_name)
             roles_data = None
             try:
-                if tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles'))) > 0:
+                n = tables.select(condition=EQ('relname', Value(String(), 'ev_pytis_user_roles')))
+                if (n > 0):
                     try:
                         roles_data = dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
                     except pytis.data.DBException:
@@ -574,7 +577,7 @@ class PostgreSQLUserGroups(PostgreSQLConnector):
         import pytis.data
         return pytis.data.default_access_groups(connection_data)
     class_access_groups = staticmethod(class_access_groups)
-    
+
 
 class PostgreSQLNotifier(PostgreSQLConnector):
     """Class with notification about table contents changes.
@@ -604,7 +607,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
         def _notif_do_registration(self, notification):
             self._pg_query('listen "%s"' % notification)
-            
+
         def _notif_register(self, notification):
             # Zamykáme zde kvůli možnosti současného vyvolání této metody
             # z `register' i naslouchacího threadu.
@@ -681,7 +684,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
 
           connection_data -- údaje o spojení, stejné jako ve třídě 'PostgreSQLConnector'
           kwargs -- k předání předkovi
-        
+
         """
         self._pg_notifications = []
         super(PostgreSQLNotifier, self).__init__(connection_data=connection_data,
@@ -695,7 +698,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
         import config
         if config.dblisten:
             self._pg_add_notifications()
-            
+
     def _call_on_change_callbacks(self):
         self._pg_changed = True
         super(PostgreSQLNotifier, self)._call_on_change_callbacks()
@@ -703,7 +706,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
     def _pg_notifier_key(self, connection_data):
         d = connection_data
         return (d.host(), d.port(), d.database())
-                
+
     def _pg_add_notifications(self):
         notifications = self._pg_notifications
         if not notifications:
@@ -713,7 +716,7 @@ class PostgreSQLNotifier(PostgreSQLConnector):
             notifier = PostgreSQLNotifier.NOTIFIERS[spec]
         except KeyError:
             notifier = PostgreSQLNotifier.NOTIFIERS[spec] = \
-              self._PgNotifier(spec, connection_name=self._connection_name)
+                self._PgNotifier(spec, connection_name=self._connection_name)
         for n in notifications:
             notifier.register_notification(self, n)
 
@@ -741,7 +744,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     pomocí rules na serveru, než pomocí tohoto aplikačního rozhraní.  Je pouze
     zapotřebí, aby databázový stroj tuto funkcionalitu podporoval a aby tato
     podpora fungovala.
- 
+
     **Pozor**: Metody modifikující tabulku se nestarají o obecné udržení
     integrity dat, tj. ohlídání vlastností klíčů nebo referenční integrity je
     ponecháno na databázovém stroji.  Předpokládá se, že v případě porušení
@@ -750,7 +753,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     řádek *pouze z tabulky primárního klíče* napojení; předpokládá se, že data
     v ostatních tabulkách budou smazána automaticky databázovým strojem v rámci
     pravidel zachování referenční integrity.
-    
+
     """
     _PDBB_CURSOR_NAME = 'selection'
 
@@ -789,7 +792,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         def lfunction():
             return class_._pdbb_selection_counter.next()
         return with_lock(class_._pdbb_selection_counter_lock, lfunction)
-        
+
     def __init__(self, bindings=None, ordering=None, operations=None, column_groups=None,
                  **kwargs):
         """
@@ -828,7 +831,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         base non-aggregated columns of the table thus allowing you to filter
         the underlying data rows before aggregations get applied.
 
-        """        
+        """
         self._pdbb_table_schemas = {}
         self._pdbb_function_schemas = {}
         super(PostgreSQLStandardBindingHandler, self).__init__(
@@ -843,7 +846,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     c = (c, None, None)
                 self._pdbb_column_groups.append(c)
         self._pdbb_create_sql_commands()
-        
+
     def _pdbb_tabcol(self, table_name, column_name, column_id):
         """Vrať zadaný sloupec zformátovaný pro SQL."""
         if table_name:
@@ -862,12 +865,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if operations is not None:
             for aggregate, id_, name in operations:
                 if name == binding.id():
-                    result = '%s(%s) as %s' % (self._pg_aggregate_name(aggregate), binding.column(), name,)
+                    result = '%s(%s) as %s' % (self._pg_aggregate_name(aggregate),
+                                               binding.column(), name,)
                     break
         if column_groups is not None:
             for g in column_groups:
                 name = g[0]
-                if name == binding.id():                
+                if name == binding.id():
                     function_name = g[2]
                     if function_name is not None:
                         call = self._pdbb_column_group_call(g)
@@ -893,25 +897,29 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         raise Exception("Unknown type in crypto column binding", binding)
                     # At least when called from Wiking, btype may be a type class
                     # (and not a Type instance).  Hmm.
-                    if isinstance(btype, String) or isinstance(btype, type) and issubclass(btype, String):
+                    if ((isinstance(btype, String) or
+                         isinstance(btype, type) and issubclass(btype, String))):
                         decryption_function = 'pytis_decrypt_text'
-                    elif isinstance(btype, Float) or isinstance(btype, type) and issubclass(btype, Float):
+                    elif (isinstance(btype, Float) or
+                          isinstance(btype, type) and issubclass(btype, Float)):
                         decryption_function = 'pytis_decrypt_float'
-                    elif isinstance(btype, Integer) or isinstance(btype, type) and issubclass(btype, Integer):
+                    elif (isinstance(btype, Integer) or
+                          isinstance(btype, type) and issubclass(btype, Integer)):
                         decryption_function = 'pytis_decrypt_int'
-                    elif isinstance(btype, Binary) or isinstance(btype, type) and issubclass(btype, Binary):
+                    elif (isinstance(btype, Binary) or
+                          isinstance(btype, type) and issubclass(btype, Binary)):
                         decryption_function = 'pytis_decrypt_binary'
                     else:
                         raise Exception("Encryption support not available for the type", btype)
                     result = "%s(%s, '%s')" % (decryption_function, result, crypto_name,)
         return result
-        
+
     def _pdbb_coalesce(self, ctype, value):
         """Vrať string 'value' zabezpečený pro typ sloupce 'ctype' v SQL."""
         if ctype is None or isinstance(ctype, String) or value == 'NULL':
             cast = ''
         elif isinstance(ctype, Float):
-            cast = '::numeric'                
+            cast = '::numeric'
         elif isinstance(ctype, Number):
             cast = ''
         elif isinstance(ctype, Time):
@@ -941,7 +949,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                   "where %(table)s.%(label)snamespace = pg_namespace.oid and "
                                   "%(table)s.%(label)sname='%(name)s' and "
                                   "pg_namespace.nspname='%(namespace)s'") %
-                                 dict(table=object_table, label=object_label, name=obj, namespace=s))
+                                 dict(table=object_table, label=object_label, name=obj,
+                                      namespace=s))
                         if self._pg_query(query, outside_transaction=True):
                             schema_dict[obj] = s
                             break
@@ -949,13 +958,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         schema_dict[obj] = 'public'
             items.insert(0, schema_dict[obj])
         return items
-    
+
     def _pdbb_split_table_name(self, table):
         return self._pdbb_split_object_name(table, self._pdbb_table_schemas, 'pg_class', 'rel')
-        
+
     def _pdbb_split_function_name(self, table):
         return self._pdbb_split_object_name(table, self._pdbb_function_schemas, 'pg_proc', 'pro')
-        
+
     def _pdbb_unique_table_id(self, table):
         connection_data = self._pg_connection_data()
         return table, connection_data.host(), connection_data.port(), connection_data.database()
@@ -971,7 +980,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              "pg_namespace.nspname = '%s' and "
              "pg_class.relname = '%s' and "
              "pg_attribute.atttypid = pg_type.oid and "
-             "pg_attribute.attnum > 0") % \
+             "pg_attribute.attnum > 0") %
             (schema, table_name,),
             outside_transaction=True)
         d1 = self._pg_query(
@@ -983,13 +992,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
              "pg_class.oid = pg_attribute.attrelid and "
              "pg_class.relname = '%s' and "
              "pg_attribute.attnum = pg_attrdef.adnum and "
-             "pg_attribute.attnum > 0") % \
+             "pg_attribute.attnum > 0") %
             (schema, table_name,),
             outside_transaction=True)
         d2 = self._pg_query(
             ("select attname, conkey "
              "from pg_constraint, pg_namespace, pg_class, pg_attribute "
-             "where conrelid = pg_class.oid and attrelid = pg_class.oid and relnamespace = pg_namespace.oid and attnum = any (conkey) and "
+             "where conrelid = pg_class.oid and attrelid = pg_class.oid and "
+             "relnamespace = pg_namespace.oid and attnum = any (conkey) and "
              "nspname = '%s' and relname = '%s' and (contype = 'p' or contype = 'u') and "
              "pg_attribute.attnum > 0") %
             (schema, table_name,),
@@ -998,7 +1008,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         table_key = self._pdbb_unique_table_id(table)
         PostgreSQLStandardBindingHandler._pdbb_table_column_data[table_key] = table_data
         return table_data
-        
+
     def _pdbb_get_table_type(self, table, column, ctype=None, type_kwargs=None, noerror=False):
         table_key = self._pdbb_unique_table_id(table)
         table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table_key)
@@ -1034,7 +1044,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         serial = (default[:len('nextval')] == 'nextval')
         return self._pdbb_get_type(type_, size_string, not_null, serial,
                                    ctype=ctype, unique=unique, type_kwargs=type_kwargs)
-    
+
     def _pdbb_get_type(self, type_, size_string, not_null, serial,
                        ctype=None, unique=False, type_kwargs=None):
         # Zde lze doplnit další používané standardní typy z PostgreSQL
@@ -1105,7 +1115,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     pass
                 else:
                     assert isinstance(ctype, type_class_), \
-                           ("User type doesn't match DB type", ctype, type_class_)
+                        ("User type doesn't match DB type", ctype, type_class_)
             result = ctype
         return result
 
@@ -1116,7 +1126,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if not b.id():              # skrytý sloupec
                 continue
             if self._arguments is None:
-                t = self._pdbb_get_table_type(b.table(), b.column(), b.type(), type_kwargs=b.kwargs())
+                t = self._pdbb_get_table_type(b.table(), b.column(), b.type(),
+                                              type_kwargs=b.kwargs())
             else:
                 t = b.type()
                 assert t is not None, ("Column types must be specified for table functions",
@@ -1126,27 +1137,28 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
-                assert not isinstance(t, Binary), ("Binary types may not be "+
-                                                   "used as keys")
+                assert not isinstance(t, Binary), "Binary types may not be used as keys"
                 key.append(colspec)
         assert key, DBUserException('data key column not found')
         # Hotovo
         return columns, tuple(key)
 
-    def _pdbb_sql_column_list_from_names(self, column_names, full_text_handler=None, operations=None,
-                                         column_groups=None):
+    def _pdbb_sql_column_list_from_names(self, column_names, full_text_handler=None,
+                                         operations=None, column_groups=None):
         bindings = [self._db_column_binding(name) for name in column_names]
         if column_groups:
             column_groups = [g for g in column_groups if g[0] in column_names]
         return self._pdbb_sql_column_list(bindings, full_text_handler, operations=operations,
                                           column_groups=column_groups)
-        
-    def _pdbb_sql_column_list(self, bindings, full_text_handler=None, operations=None, column_groups=None):
-        column_names = [self._pdbb_btabcol(b, full_text_handler=full_text_handler, operations=operations,
+
+    def _pdbb_sql_column_list(self, bindings, full_text_handler=None, operations=None,
+                              column_groups=None):
+        column_names = [self._pdbb_btabcol(b, full_text_handler=full_text_handler,
+                                           operations=operations,
                                            column_groups=column_groups)
                         for b in bindings if b is not None and b.id()]
         return string.join(column_names, ', ')
-    
+
     def _pdbb_full_text_handler(self, binding):
         indexed_columns = binding.type().columns()
         if indexed_columns:
@@ -1160,7 +1172,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             result = "''"
         return result
-    
+
     def _pdbb_column_group_call(self, group):
         args = []
         for a in group[3:]:
@@ -1171,13 +1183,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 raise ProgramError("Invalid group function argument", group, a)
         return '%s(%s)' % (group[2], string.join(args, ', '),)
-        
+
     def _pdbb_create_sql_commands(self):
         """Vytvoř šablony SQL příkazů používané ve veřejných metodách."""
         bindings = self._bindings
         for b in bindings:
-            assert isinstance(b, DBColumnBinding), \
-                   ('Unsupported binding specification', b)
+            assert isinstance(b, DBColumnBinding), ('Unsupported binding specification', b)
         # Připrav parametry
         operations = (self._pdbb_operations or [])
         aggregate_columns = [o[2] for o in operations]
@@ -1199,7 +1210,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 for b in bindings:
                     if id_ == b.id():
                         assert name not in [b_.id() for b_ in bindings], \
-                               ('Duplicate column name', name,)
+                            ('Duplicate column name', name,)
                         if aggregate == self.AGG_COUNT:
                             type_ = Integer()
                         elif aggregate == self.AGG_AVG:
@@ -1241,9 +1252,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._arguments is not None:
             assert len(table_names) == 1, "Only single tables supported for table functions"
             table_expressions = [table_names[0] +
-                                 ('(%s)' % string.join (['%%(__arg_%d)s' % (i+1,)
-                                                         for i in range(len(self._arguments))],
-                                                        ', '))]
+                                 ('(%s)' % string.join(['%%(__arg_%d)s' % (i + 1,)
+                                                        for i in range(len(self._arguments))],
+                                                       ', '))]
         else:
             table_expressions = table_names
         table_list = string.join(table_expressions, ', ')
@@ -1261,7 +1272,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             main_table_from = table_expressions[0]
         keytabcols = [self._pdbb_btabcol(b) for b in self._key_binding]
-        assert len (keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
+        assert len(keytabcols) == 1, ('Multicolumn keys no longer supported', keytabcols)
         first_key_column = keytabcols[0]
         key_cond = '%s=%%(key)s' % (first_key_column,)
         if self._distinct_on:
@@ -1296,8 +1307,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             filter_condition = filter_condition.replace('%', '%%')
         def make_lock_command():
             qresult = self._pg_query(
-                "select relkind from pg_class join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) where nspname='%s' and relname='%s'" %
-                (schema, main_table_name,),
+                (("select relkind from pg_class join pg_namespace "
+                  "on (pg_class.relnamespace = pg_namespace.oid) "
+                  "where nspname='%s' and relname='%s'") %
+                 (schema, main_table_name,)),
                 outside_transaction=True)
             if qresult[0][0] == 'r':
                 return ''
@@ -1350,7 +1363,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         return None
                     table = colspec['resorigtbl']
                     column = colspec['resorigcol']
-                    qresult = self._pg_query(("select relname, attname from pg_class join pg_attribute on (attrelid=pg_class.oid) "+
+                    qresult = self._pg_query(("select relname, attname from pg_class join "
+                                              "pg_attribute on (attrelid=pg_class.oid) "
                                               "where pg_class.oid=%s and pg_attribute.attnum=%s")
                                              % (table, column,),
                                              outside_transaction=True)
@@ -1374,7 +1388,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if matches:
                         match = matches[-1]
                     else:
-                        match = None 
+                        match = None
                     if match:
                         beg, end = match.span()
                         n = 0
@@ -1386,7 +1400,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         if n > 0:
                             match = None
                     if match:
-                        lock_query = lock_query[:beg] + ' where ' + limit_clause + ' and ' + lock_query[end:]
+                        lock_query = (lock_query[:beg] + ' where ' + limit_clause + ' and ' +
+                                      lock_query[end:])
                     else:
                         lock_query = lock_query + ' where ' + limit_clause
                     result = ("%s for update of %s nowait" % (lock_query, lock_tables_string,))
@@ -1401,10 +1416,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         cursor_name = '%s_%%(selection)s' % (self._PDBB_CURSOR_NAME,)
         # Vytvoř šablony příkazů
         self._pdbb_command_row = \
-          self._SQLCommandTemplate(
-            ('select %%(columns)s from %s where %s%s %s order by %s %%(supplement)s' %
-             (table_list, relation_and_condition, filter_condition, groupby, ordering,)),
-            {'columns': column_list, 'supplement': '', 'condition': 'true'})            
+            self._SQLCommandTemplate(
+                ('select %%(columns)s from %s where %s%s %s order by %s %%(supplement)s' %
+                 (table_list, relation_and_condition, filter_condition, groupby, ordering,)),
+                {'columns': column_list, 'supplement': '', 'condition': 'true'})
         if distinct_on or self._pdbb_operations is not None:
             if groupby:
                 count_column = groupby_columns[0]
@@ -1413,11 +1428,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if self._pdbb_operations:
                 self._pdbb_command_count = \
                     "select count(*) from (select%s * from (select %s from %s%%(fulltext_queries)s where (%s)%s %s) as %s where %%(condition)s) as __count" % \
-                    (distinct_on, column_list, table_list, relation, filter_condition, groupby, table_names[0],)
+                    (distinct_on, column_list, table_list, relation, filter_condition, groupby,
+                     table_names[0],)
             else:
                 self._pdbb_command_count = \
-                    "select count(*) from (select%s %s from %s%%(fulltext_queries)s where %%(condition)s and (%s) %s%s) as %s" % \
-                    (distinct_on, count_column, table_list, relation, filter_condition, groupby, table_names[0],)
+                    (("select count(*) from (select%s %s from %s%%(fulltext_queries)s "
+                      "where %%(condition)s and (%s) %s%s) as %s") %
+                     (distinct_on, count_column, table_list, relation, filter_condition, groupby,
+                      table_names[0],))
         else:
             if self._arguments is None:
                 count_column = first_key_column
@@ -1427,8 +1445,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 'select count(%s) from %s%%(fulltext_queries)s where %%(condition)s and (%s)%s' % \
                 (count_column, table_list, relation, filter_condition,)
         self._pdbb_command_distinct = \
-          'select distinct %%(expression)s from %s where %%(condition)s and (%s)%s order by %%(sorting)s' % \
-          (table_list, relation, filter_condition,)
+            (("select distinct %%(expression)s from %s where %%(condition)s and (%s)%s "
+              "order by %%(sorting)s") %
+             (table_list, relation, filter_condition,))
         self._pdbb_command_fetch_last = \
             self._SQLCommandTemplate('fetch last from %s' % (cursor_name,))
         self._pdbb_command_move_to_start = \
@@ -1436,89 +1455,93 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         if self._pdbb_operations:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                (('declare %s scroll cursor for select *, '+
-                  'row_number() over () as _number '+
-                  'from (select%s %%(columns)s from %s where (%s)%s %s order by %s%%(ordering)s %s) as %s '+
-                  '%%(fulltext_queries)s where %%(condition)s') %
-                 (cursor_name, distinct_on, table_list, relation, filter_condition,
-                  groupby, distinct_on_ordering, ordering, table_names[0],)),
-                {'columns': column_list})
+                    (('declare %s scroll cursor for select *, '
+                      'row_number() over () as _number '
+                      'from (select%s %%(columns)s from %s '
+                      'where (%s)%s %s order by %s%%(ordering)s %s) as %s '
+                      '%%(fulltext_queries)s where %%(condition)s') %
+                     (cursor_name, distinct_on, table_list, relation, filter_condition,
+                      groupby, distinct_on_ordering, ordering, table_names[0],)),
+                    {'columns': column_list})
         elif distinct_on:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                (("declare %s scroll cursor for select %%(columns)s, "
-                  "row_number() over (order by %%(ordering)s %s) as _number "
-                  "from (select%s * from %s%%(fulltext_queries)s "
-                  "where %%(condition)s and (%s)%s) "
-                  "as %s %s order by %%(ordering)s %s") %
-                 (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
-                  table_names[0], groupby, ordering,)),
-                {'columns': column_list})
+                    (("declare %s scroll cursor for select %%(columns)s, "
+                      "row_number() over (order by %%(ordering)s %s) as _number "
+                      "from (select%s * from %s%%(fulltext_queries)s "
+                      "where %%(condition)s and (%s)%s) "
+                      "as %s %s order by %%(ordering)s %s") %
+                     (cursor_name, ordering, distinct_on, table_list, relation, filter_condition,
+                      table_names[0], groupby, ordering,)),
+                    {'columns': column_list})
         else:
             self._pdbb_command_select = \
                 self._SQLCommandTemplate(
-                (("declare %s scroll cursor for select %%(columns)s, "
-                  "row_number() over (order by %s%%(ordering)s %s) as _number "
-                  "from %s%%(fulltext_queries)s "
-                  "where %%(condition)s and (%s)%s %s order by %s%%(ordering)s %s") %
-                 (cursor_name, distinct_on_ordering, ordering, table_list, relation, filter_condition, groupby,
-                  distinct_on_ordering, ordering,)),
-                {'columns': column_list})
+                    (("declare %s scroll cursor for select %%(columns)s, "
+                      "row_number() over (order by %s%%(ordering)s %s) as _number "
+                      "from %s%%(fulltext_queries)s "
+                      "where %%(condition)s and (%s)%s %s order by %s%%(ordering)s %s") %
+                     (cursor_name, distinct_on_ordering, ordering, table_list, relation,
+                      filter_condition, groupby, distinct_on_ordering, ordering,)),
+                    {'columns': column_list})
         self._pdbb_command_dummy_select = \
-            self._SQLCommandTemplate("declare %s scroll cursor for select 1 where false" % (cursor_name,))
+            self._SQLCommandTemplate("declare %s scroll cursor for select 1 where false" %
+                                     (cursor_name,))
         self._pdbb_command_close_select = \
             self._SQLCommandTemplate('close %s' % (cursor_name,))
         agg_table_list = table_list.replace('%', '%%')
         if self._pdbb_operations:
             self._pdbb_command_select_agg = \
-              ('select%s %%s from (select %s from %s where true%s %s) as %s where %%s and (%s)' %
-               (distinct_on, column_list, agg_table_list, filter_condition, groupby, table_names[0], relation,))
+                ('select%s %%s from (select %s from %s where true%s %s) as %s where %%s and (%s)' %
+                 (distinct_on, column_list, agg_table_list, filter_condition, groupby,
+                  table_names[0], relation,))
         else:
             self._pdbb_command_select_agg = \
-              ('select%s %%s from %s where %%s and (%s)%s' %
-               (distinct_on, agg_table_list, relation, filter_condition,))
+                ('select%s %%s from %s where %%s and (%s)%s' %
+                 (distinct_on, agg_table_list, relation, filter_condition,))
         self._pdbb_command_fetch_forward = \
-          self._SQLCommandTemplate('fetch forward %%(number)d from %s' % (cursor_name,))
+            self._SQLCommandTemplate('fetch forward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_fetch_backward = \
-          self._SQLCommandTemplate('fetch backward %%(number)d from %s' % (cursor_name,))
+            self._SQLCommandTemplate('fetch backward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_move_forward = \
-          self._SQLCommandTemplate('move forward %%(number)d from %s' % (cursor_name,))
+            self._SQLCommandTemplate('move forward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_move_backward = \
-          self._SQLCommandTemplate('move backward %%(number)d from %s' % (cursor_name,))
+            self._SQLCommandTemplate('move backward %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_move_absolute = \
-          self._SQLCommandTemplate('move absolute %%(number)d from %s' % (cursor_name,))
+            self._SQLCommandTemplate('move absolute %%(number)d from %s' % (cursor_name,))
         self._pdbb_command_search_first = \
-          self._SQLCommandTemplate(
-            (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
-              '%s order by %%(ordering)s %s limit 1') %
-             (main_table_from, relation, filter_condition, groupby, ordering,)),
-            {'columns': column_list})
+            self._SQLCommandTemplate(
+                (('select %%(columns)s from %s where (%s)%s and %%(condition)s '
+                  '%s order by %%(ordering)s %s limit 1') %
+                 (main_table_from, relation, filter_condition, groupby, ordering,)),
+                {'columns': column_list})
         self._pdbb_command_search_last = \
-          self._SQLCommandTemplate(
-            (('select %%(columns)s from %s where (%s)%s and %%(condition)s '+
-              '%s order by %%(ordering)s %s limit 1') %
-             (main_table_from, relation, filter_condition, groupby, rordering,)),
-            {'columns': column_list})
+            self._SQLCommandTemplate(
+                (('select %%(columns)s from %s where (%s)%s and %%(condition)s '
+                  '%s order by %%(ordering)s %s limit 1') %
+                 (main_table_from, relation, filter_condition, groupby, rordering,)),
+                {'columns': column_list})
         if self._pdbb_operations:
             self._pdbb_command_search_distance = \
                 'select count(*) from (select%s * from (select %s from %s where (%s)%s %s) as %s where %%(condition)s) as __count' % \
-                (distinct_on, column_list, table_list, relation, filter_condition, groupby, table_names[0],)
+                (distinct_on, column_list, table_list, relation, filter_condition, groupby,
+                 table_names[0],)
         elif distinct_on:
             self._pdbb_command_search_distance = \
-                'select count(*) from (select%s * from %s where (%s)%s and %%(condition)s) as %s' % \
-                (distinct_on, main_table_from, relation, filter_condition, table_names[0])
+                ('select count(*) from (select%s * from %s where (%s)%s and %%(condition)s) as %s' %
+                 (distinct_on, main_table_from, relation, filter_condition, table_names[0]))
         else:
             self._pdbb_command_search_distance = \
                 'select count(%s) from %s where (%s)%s and %%(condition)s' % \
                 (first_key_column, main_table_from, relation, filter_condition,)
         self._pdbb_command_insert = \
-          ('insert into %s (%%s) values (%%s) returning %s' %
-           (main_table, first_key_column,))
+            ('insert into %s (%%s) values (%%s) returning %s' %
+             (main_table, first_key_column,))
         self._pdbb_command_insert_alternative = \
-          ('insert into %s (%%s) values (%%s)' % (main_table,))
+            ('insert into %s (%%s) values (%%s)' % (main_table,))
         self._pdbb_command_insert_get_last = \
-          ('select %s from %s order by %s desc limit 1' %
-           (first_key_column, main_table, first_key_column,))
+            ('select %s from %s order by %s desc limit 1' %
+             (first_key_column, main_table, first_key_column,))
         if self._ordering:
             ordering = []
             for o in self._ordering:
@@ -1536,11 +1559,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 eqstring = xeqstring = ''
             self._pdbb_command_insert_shift = \
-              ('update %s set %s=%s+1 where %s>=%%s %s' % \
-               (main_table, ocol, ocol, ocol, xeqstring))
+                ('update %s set %s=%s+1 where %s>=%%s %s' %
+                 (main_table, ocol, ocol, ocol, xeqstring))
             self._pdbb_command_insert_newpos = \
-              ('select max(%s) from %s where %s' % \
-               (ocol, main_table, eqstring))
+                ('select max(%s) from %s where %s' % (ocol, main_table, eqstring))
         update_from_tables = [t for t in table_names if t != main_table]
         if update_from_tables:
             update_from_clause = (' from ' +
@@ -1548,32 +1570,32 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             update_from_clause = ''
         self._pdbb_command_update = \
-          'update %s set %%s%s where (%s) and (%%s)' % \
-          (main_table, update_from_clause, relation)
+            'update %s set %%s%s where (%s) and (%%s)' % \
+            (main_table, update_from_clause, relation)
         self._pdbb_command_broken_update_preselect = \
-          'select count (%s) from %s where (%s) and (%%s)' % \
-          (first_key_column, main_table, relation)
+            'select count (%s) from %s where (%s) and (%%s)' % \
+            (first_key_column, main_table, relation)
         self._pdbb_command_test_broken_update = \
-          (("select 'yes' from pg_class, pg_namespace, pg_rewrite "
-            "where pg_rewrite.ev_type = '2' and "
-            "pg_rewrite.is_instead = 't' and "
-            "pg_class.oid = pg_rewrite.ev_class and "
-            "pg_class.relnamespace = pg_namespace.oid and "
-            "pg_namespace.nspname = '%s' and "
-            "pg_class.relname = '%s'")
-           % (schema, main_table_name,))
+            (("select 'yes' from pg_class, pg_namespace, pg_rewrite "
+              "where pg_rewrite.ev_type = '2' and "
+              "pg_rewrite.is_instead = 't' and "
+              "pg_class.oid = pg_rewrite.ev_class and "
+              "pg_class.relnamespace = pg_namespace.oid and "
+              "pg_namespace.nspname = '%s' and "
+              "pg_class.relname = '%s'")
+             % (schema, main_table_name,))
         self._pdbb_command_delete = \
-          'delete from %s where %%s' % main_table
+            'delete from %s where %%s' % main_table
         self._pdbb_command_isolation = 'set transaction isolation level %s%s'
         self._pdbb_command_notify = \
-          'notify "__modif_%s"' % (main_table.lower(),)
+            'notify "__modif_%s"' % (main_table.lower(),)
         self._pg_notifications = map(lambda t: '__modif_%s' % (t.lower(),), table_names)
 
     def _pdbb_condition2sql(self, condition):
-        if condition == None:
+        if condition is None:
             return 'true'
         op_name, op_args, op_kwargs = \
-                 condition.name(), condition.args(), condition.kwargs()
+            condition.name(), condition.args(), condition.kwargs()
         def function_call(op_args):
             assert len(op_args) >= 1, ('Invalid number of arguments', op_args)
             function, args = op_args[0], op_args[1:]
@@ -1605,8 +1627,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             else:
                 assert isinstance(arg2, Value), ('Invalid value type', arg2)
                 assert (not isinstance(t1, Binary) or
-                        (rel in ('=','!=') and arg2.value() is None)), \
-                        "Binary data can only be compared with NULL values"
+                        (rel in ('=', '!=') and arg2.value() is None)), \
+                    "Binary data can only be compared with NULL values"
                 val = self._pg_value(arg2)
                 a2 = self._pdbb_coalesce(t1, val)
                 t2 = arg2.type()
@@ -1636,13 +1658,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             for old, new in (('*', '%'), ('?', '_')):
                 i = -1
                 while True:
-                    i = string.find(spec, old, i+1)
+                    i = string.find(spec, old, i + 1)
                     if i < 0:
                         break
                     j = i - 1
                     while j >= 0 and spec[j] == '\\':
                         j = j - 1
-                    if (i-j) % 2 == 1:
+                    if (i - j) % 2 == 1:
                         spec = spec[:i] + new + spec[i+1:]
             spec = Value(String(), spec)
             rel = (op_name == 'NW' and 'NOT ' or '') + 'LIKE'
@@ -1656,11 +1678,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if not op_args:
                 expression = (op_name == 'AND' and 'true' or 'false')
             else:
-                assert \
-                  not filter(lambda a: \
-                             a and not isinstance(a, Operator),
-                             op_args), \
-                             ('Invalid suboperator', op_args)
+                assert not filter(lambda a: a and not isinstance(a, Operator),
+                                  op_args), \
+                    ('Invalid suboperator', op_args)
                 exps = map(self._pdbb_condition2sql, op_args)
                 sqlop = (' %s ' % (op_name == 'AND' and 'and' or 'or'))
                 expression = sqlop.join(exps)
@@ -1730,12 +1750,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pdbb_fulltext_query_name(self, column_name):
         return '_pytis_ftq__%s' % (column_name,)
-        
+
     # Metody související s exportovanými metodami DB operací
-    
+
     def _pdbb_table_row_lists(self, row):
-        table_bindings = filter(lambda b, t=self._key_binding[0].table(): \
-                                b.table() == t,
+        table_bindings = filter(lambda b, t=self._key_binding[0].table(): b.table() == t,
                                 self._bindings)
         columns = []
         values = []
@@ -1781,19 +1800,20 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 if not isinstance(type_, Type):
                     type_ = type_()
                 arg_value = arguments.get(b.id(), type_.default_value())
-                args['__arg_%d' % (i+1,)] = self._pg_value(arg_value)
-    
-    def _pg_row (self, key_value, columns, transaction=None, supplement='',
-                 arguments={}):
+                args['__arg_%d' % (i + 1,)] = self._pg_value(arg_value)
+
+    def _pg_row(self, key_value, columns, transaction=None, supplement='',
+                arguments={}):
         """Retrieve and return raw data corresponding to 'key_value'."""
         args = {'key': key_value, 'supplement': supplement}
         if columns:
-            args['columns'] = self._pdbb_sql_column_list_from_names(columns, operations=self._pdbb_operations,
-                                                                    column_groups=self._pdbb_column_groups)
+            args['columns'] = self._pdbb_sql_column_list_from_names(
+                columns, operations=self._pdbb_operations,
+                column_groups=self._pdbb_column_groups)
         self._pg_make_arguments(args, arguments)
         query = self._pdbb_command_row.format(args)
         return self._pg_query(query, transaction=transaction)
-    
+
     def _pg_search(self, row, condition, direction, transaction=None, arguments={}):
         sorting = self._pg_last_select_sorting
         if direction == FORWARD:
@@ -1814,17 +1834,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             sdirection = ecase(direction,
                                (FORWARD, ASCENDENT),
                                (BACKWARD, DESCENDANT))
-            sorting = tuple(sorting) + \
-                      tuple(map(lambda c: (c.id(), sdirection),
-                                self.key()))
+            sorting = (tuple(sorting) +
+                       tuple(map(lambda c: (c.id(), sdirection), self.key())))
             processed = []
             conditions = []
             for cid, dir in sorting:
                 if cid in processed:
                     continue
                 conds = [EQ(c, row[c]) for c in processed]
-                if (forwards and dir == ASCENDENT) or \
-                       (not forwards and dir == DESCENDANT):
+                if (forwards and dir == ASCENDENT) or (not forwards and dir == DESCENDANT):
                     relop = GT
                 else:
                     relop = LT
@@ -1851,7 +1869,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         # Najdi první řádek splňující požadovanou podmínku
         search_cond = AND(common_cond, condition)
         cond_string = self._pdbb_condition2sql(search_cond)
-        if direction == FORWARD:            
+        if direction == FORWARD:
             sql_command = self._pdbb_command_search_first
         elif direction == BACKWARD:
             sql_command = self._pdbb_command_search_last
@@ -1916,7 +1934,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     while True:
                         if self._pg_dead():
                             self._pg_initial_count = self._pg_current_count
-                            args = dict(selection=selection, number=self._pg_position()+1)
+                            args = dict(selection=selection, number=self._pg_position() + 1)
                             query = data._pdbb_command_move_absolute.format(args)
                             if not transaction or transaction.open():
                                 # The transaction can still become dead before
@@ -1925,7 +1943,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                                 data._pg_query(query, transaction=transaction)
                             return
                         if data._pg_query_counter > query_counter:
-                            step = max(step/8, min_step)
+                            step = max(step / 8, min_step)
                         test_count += step
                         args = dict(selection=selection, number=step)
                         query = data._pdbb_command_move_forward.format(args)
@@ -1935,7 +1953,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         if self._pg_current_count < test_count:
                             break
                         if step < max_step:
-                            step = min(2*step, max_step)
+                            step = min(2 * step, max_step)
                         # Give other (perhaps more urgent) threads on the same
                         # data object opportunity to call database queries.
                         if not self._pg_urgent:
@@ -1956,7 +1974,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     if timeout is not None:
                         stop_time = time.time() + timeout
                     while (not self._pg_finished and
-                           (min_value is not None or timeout is None or time.time() <= stop_time) and
+                           (min_value is not None or
+                            timeout is None or time.time() <= stop_time) and
                            (min_value is None or self._pg_current_count < min_value)):
                         stop_check(start_time)
                         t = self._PG_STOP_CHECK_TIMEOUT
@@ -1979,7 +1998,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 self._pg_terminate = True
                 self._pg_terminate_event.wait()
                 data = self._pg_data
-                args = dict(selection=self._pg_selection, number=self._pg_position()+1)
+                args = dict(selection=self._pg_selection, number=self._pg_position() + 1)
                 query = data._pdbb_command_move_absolute.format(args)
                 data._pg_query(query, transaction=self._pg_transaction)
             def pg_restart(self):
@@ -2004,14 +2023,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         def __add__(self, correction):
             self._thread.pg_correct(correction)
             return self
-            
+
     def _pg_start_row_counting_thread(self, transaction, selection):
         t = self._PgRowCounting(self, transaction, selection, self._pg_buffer.dbpointer)
         t.start()
         return t
-        
-    def _pg_select (self, condition, sort, columns, arguments={}, transaction=None, async_count=False,
-                    stop_check=None):
+
+    def _pg_select(self, condition, sort, columns, arguments={}, transaction=None,
+                   async_count=False, stop_check=None):
         """Initiate select and return the number of its lines or 'None'.
 
         Arguments:
@@ -2033,7 +2052,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             actually called during any long taking operation.  If it gets, it's
             up to the function what to do, it can e.g. raise some exception to
             stop the operation.
-          
+
         """
         cond_string = self._pdbb_condition2sql(condition)
         sort_string = self._pdbb_sort2sql(sort)
@@ -2066,10 +2085,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             connections[-1] = new_connection
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
-                self._pdbb_sql_column_list_from_names(columns,
-                                                      full_text_handler=self._pdbb_full_text_handler,
-                                                      operations=self._pdbb_operations,
-                                                      column_groups=self._pdbb_column_groups)
+                self._pdbb_sql_column_list_from_names(
+                    columns,
+                    full_text_handler=self._pdbb_full_text_handler,
+                    operations=self._pdbb_operations,
+                    column_groups=self._pdbb_column_groups)
         else:
             self._pdbb_select_column_list = None
         args['selection'] = self._pdbb_selection_number = \
@@ -2085,7 +2105,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             result, finished = counting_thread.count()
             assert finished
         else:
-            data = self._pg_query(self._pdbb_command_fetch_last.format(args), transaction=transaction)
+            data = self._pg_query(self._pdbb_command_fetch_last.format(args),
+                                  transaction=transaction)
             self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction)
             if data:
                 result = int(data[0][-1])
@@ -2094,8 +2115,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         self._pdbb_select_rows = result
         return result
 
-    def _pg_distinct (self, column, prefix, condition, sort, transaction=None,
-                      arguments={}):
+    def _pg_distinct(self, column, prefix, condition, sort, transaction=None,
+                     arguments={}):
         cond_string = self._pdbb_condition2sql(condition)
         colspec = self.find_column(column)
         if prefix:
@@ -2115,7 +2136,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         result = [self._pg_make_row_from_raw_data([r], tmpl)[column]
                   for r in data]
         return result
-        
+
     def _pg_select_aggregate(self, operation, colids, condition, transaction=None, arguments={}):
         if __debug__:
             if operation != self.AGG_COUNT:
@@ -2175,7 +2196,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     self.AGG_MAX: 'max',
                     self.AGG_COUNT: 'count',
                     self.AGG_SUM: 'sum',
-                    self.AGG_AVG: 'avg',}
+                    self.AGG_AVG: 'avg',
+                    }
         try:
             return FMAPPING[operation]
         except KeyError:
@@ -2194,8 +2216,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pg_make_arguments(args, arguments)
             query = query % args
         return self._pg_query(query, transaction=transaction)
-    
-    def _pg_fetchmany (self, count, direction, transaction=None):
+
+    def _pg_fetchmany(self, count, direction, transaction=None):
         """Vrať 'count' řádků selectu jako raw data."""
         args = {'number': count, 'selection': self._pdbb_selection_number}
         if direction == FORWARD:
@@ -2223,7 +2245,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             raise ProgramError('Invalid direction', direction)
         return None
-        
+
     def _pg_insert(self, row, after=None, before=None, transaction=None):
         """Vlož 'row' a vrať jej jako nová raw data nebo vrať 'None'."""
         ordering = self._ordering
@@ -2319,7 +2341,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             result = self.row(key, transaction=transaction)
         return result
-    
+
     def _pg_update(self, condition, row, transaction=None):
         """Updatuj řádky identifikované 'condition'.
 
@@ -2365,7 +2387,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                      self._pg_query(self._pdbb_command_test_broken_update,
                                     transaction=transaction)
         if broken:
-            d = self._pg_query(self._pdbb_command_broken_update_preselect % \
+            d = self._pg_query(self._pdbb_command_broken_update_preselect %
                                cond_string, transaction=transaction)
             result = extract_result(d)
         d = self._pg_query(self._pdbb_command_update % (settings, cond_string,),
@@ -2378,7 +2400,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         else:
             raise DBSystemException('Unexpected UPDATE value', None, result)
 
-    def _pg_delete (self, condition, transaction=None):
+    def _pg_delete(self, condition, transaction=None):
         """Smaž řádek identifikovaný podmínkou 'condition'.
 
         Vrací: Počet smazaných řádků.
@@ -2406,7 +2428,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
     Tato třída překládá požadavky do SQL, není však implementačně závislá na
     konkrétním použitém postgresovém modulu pro Python.
-    
+
     """
     # TODO: Tato třída je mamut a měla by být rozdělena na několik menších částí
 
@@ -2418,7 +2440,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         # Dříve to býval buffer, nyní se přeměňuje na "buffer-cache".
 
         def __init__(self):
-            if __debug__: log(DEBUG, 'Nový buffer')
+            if __debug__:
+                log(DEBUG, 'Nový buffer')
             self.reset()
 
         def _number_of_rows(self, row_count_info, min_value=None):
@@ -2427,7 +2450,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 number, finished = row_count_info.count(min_value=min_value)
             return number
-            
+
         def reset(self):
             """Kompletně resetuj buffer."""
             if __debug__:
@@ -2475,7 +2498,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 raise ProgramError('Invalid direction', direction)
             if pointer < 0 or pointer >= len(buffer):
-                if __debug__: log(DEBUG, 'Buffer miss:', pointer)
+                if __debug__:
+                    log(DEBUG, 'Buffer miss:', pointer)
                 pos = self._dbposition + pointer
                 # Interní ukazovátko po obyčejném minutí neupdatujeme, protože
                 # přijde fill a pokus o znovuvytažení hodnoty, s novým updatem
@@ -2484,12 +2508,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 # správnou pozici, tj. mimo rozsah dat.
                 if pos < 0:
                     self._pointer = -1 - self._dbposition
-                elif pos >= self._number_of_rows(row_count_info, pos+1):
+                elif pos >= self._number_of_rows(row_count_info, pos + 1):
                     self._pointer = self._number_of_rows(row_count_info) - self._dbposition
                 return None
             self._pointer = pointer
             result = buffer[pointer]
-            if __debug__: log(DEBUG, 'Buffer hit:', pointer) #, str(result))
+            if __debug__:
+                log(DEBUG, 'Buffer hit:', pointer) #, str(result))
             return result
 
         def correction(self, direction, row_count_info):
@@ -2497,12 +2522,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
             Kladná návratová hodnota odpovídá posunu vpřed, záporná posunu
             zpět.
-            
+
             Databázové ukazovátko je updatováno jako kdyby SKIP byl proveden.
 
             """
-            if __debug__: log(DEBUG, 'Žádost o korekci:',
-                (self._dbpointer, self._dbposition, self._pointer, direction))
+            if __debug__:
+                log(DEBUG, 'Žádost o korekci:',
+                    (self._dbpointer, self._dbposition, self._pointer, direction))
             pointer = self._pointer
             buflen = len(self._buffer)
             pos = self._dbposition + pointer
@@ -2530,7 +2556,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 # Jsme uvnitř bufferu, žádný DB skip se nekoná.
                 correction = 0
-            if __debug__: log(DEBUG, 'Určená korekce:', correction)
+            if __debug__:
+                log(DEBUG, 'Určená korekce:', correction)
             return correction
 
         def goto(self, position):
@@ -2544,7 +2571,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             """
             self._pointer = position - self._dbposition
             self._dbpointer = position
-            
+
         def skip(self, count, direction, row_count_info):
             """Proveď skip.
 
@@ -2555,7 +2582,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
               row_count_info -- informace o počtu řádků v aktuálním selectu
 
             Vrací: Počet skutečně přeskočených řádků ve směru 'direction'.
-            
+
             """
             pointer = self._pointer
             if direction == FORWARD:
@@ -2574,14 +2601,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 result = -result
             self._pointer = pointer
             return result
-        
+
         def fill(self, rows, direction, extra_move=False):
             """Naplň se daty 'rows' a updatuj ukazovátka."""
             # extra_move je tu kvůli tomu, že pokud dojde ve fetchmany
             # k překročení hranic dat ještě před získáním požadovaného počtu
             # řádků, musí být dbpointer přesunut ještě o jednu pozici dál (mimo
             # data).
-            if __debug__: log(DEBUG, 'Plním buffer:', direction)            
+            if __debug__:
+                log(DEBUG, 'Plním buffer:', direction)
             n = len(rows)
             buffer = self._buffer
             buflen = len(buffer)
@@ -2662,7 +2690,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         """Inicializuj databázovou tabulku dle uvedených specifikací.
 
         Argumenty:
-        
+
           bindings -- stejné jako v předkovi
           key -- binding klíčového sloupce datové tabulky, musí být jeden
             z prvků 'bindings' nebo sekvence prvků z 'bindings'
@@ -2670,7 +2698,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             parametry připojení, nebo funkce bez argumentů vracející takovou
             instanci 'DBConnection'
           kwargs -- předá se předkovi
-        
+
         """
         if __debug__:
             log(DEBUG, 'Vytvářím databázovou tabulku')
@@ -2692,8 +2720,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         else:
             filtered_columns = self._columns
         self._pg_make_row_template = \
-          self._pg_create_make_row_template(filtered_columns,
-                                            column_groups=getattr(self, '_pdbb_column_groups'))
+            self._pg_create_make_row_template(filtered_columns,
+                                              column_groups=getattr(self, '_pdbb_column_groups'))
         self._pg_make_row_template_limited = None
         # NASTAVENÍ CACHE
         # Protože pro různé parametry (rychlost linky mezi serverem a klientem,
@@ -2715,11 +2743,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 log(DEBUG, 'Podezřele velká hloubka spojení:', len(connections))
         connection = self._pg_get_connection(outside_transaction=True)
         connections.append(connection)
-        
+
     def _pg_deallocate_connection(self):
         self._pg_return_connection(self._pg_connections().pop())
 
-    def _pg_begin_transaction (self, isolation=None, read_only=False):
+    def _pg_begin_transaction(self, isolation=None, read_only=False):
         if self._pg_is_in_select:
             self.close()
         limit = 10
@@ -2738,14 +2766,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 limit -= 1
                 if limit <= 0:
                     raise
-        
-    def _pg_commit_transaction (self):
+
+    def _pg_commit_transaction(self):
         self._postgresql_commit_transaction()
         self._pg_deallocate_connection()
         if self._pg_is_in_select is True:
             self._pg_is_in_select = False
-        
-    def _pg_rollback_transaction (self):
+
+    def _pg_rollback_transaction(self):
         self._postgresql_rollback_transaction()
         self._pg_deallocate_connection()
         if self._pg_is_in_select is True:
@@ -2779,7 +2807,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             else:
                 raise ProgramError("Column not found in template", c)
         return template
-    
+
     def _pg_make_row_from_raw_data(self, data_, template=None):
         if not data_:
             return None
@@ -2824,7 +2852,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             except KeyError:
                 return False
         return self.row(key, transaction=transaction)
-    
+
     def _pg_value(self, value):
         v = value.value()
         t = value.type()
@@ -2837,7 +2865,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         # datetime strftime works only for years >= 1900, so we have to use
         # "manual" export
         elif isinstance(v, datetime.datetime):
-            result = "'%d-%02d-%02d %02d:%02d:%02d'" % (v.year, v.month, v.day, v.hour, v.minute, v.second,)
+            result = ("'%d-%02d-%02d %02d:%02d:%02d'" %
+                      (v.year, v.month, v.day, v.hour, v.minute, v.second,))
         elif isinstance(v, datetime.date):
             result = "'%d-%02d-%02d'" % (v.year, v.month, v.day,)
         elif isinstance(v, datetime.time):
@@ -2856,13 +2885,15 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def _pg_key_condition(self, key):
-        if __debug__: log(DEBUG, 'Vytvářím podmínku z klíče:', key)
+        if __debug__:
+            log(DEBUG, 'Vytvářím podmínku z klíče:', key)
         key = xtuple(key)
         keycols = map(lambda b: b.id(), self._key_binding)
         assert len(keycols) == len(key), ('Invalid key length', key, keycols)
         ands = map(EQ, keycols, key)
         condition = AND(*ands)
-        if __debug__: log(DEBUG, 'Podmínka z klíče vytvořena:', condition)
+        if __debug__:
+            log(DEBUG, 'Podmínka z klíče vytvořena:', condition)
         return condition
 
     def _pg_restore_select(self):
@@ -2921,7 +2952,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         result = self._pg_make_row_from_raw_data(data, template=template)
         #log(EVENT, 'Vrácený obsah řádku', result)
         return result
-        
+
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
                arguments={}, async_count=False, stop_check=None):
         if __debug__:
@@ -2934,11 +2965,11 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             use_cache = True
         else:
             use_cache = False
-        if self._pg_is_in_select: 
+        if self._pg_is_in_select:
             self.close()
         if transaction is None:
-            self._pg_begin_transaction (isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
-                                        read_only=False)
+            self._pg_begin_transaction(isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
+                                       read_only=False)
         self._pg_is_in_select = transaction or True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
@@ -2986,7 +3017,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return self._pg_select_aggregate(operation[0], (operation[1],),
                                          condition=condition, transaction=transaction,
                                          arguments=arguments)[0]
-    
+
     def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
                              columns=None, transaction=None, arguments={}):
         if columns is None:
@@ -3017,13 +3048,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return result
         aggregates = [aggregate_value(cid) for cid in columns]
         return select_result, Row(aggregates)
-        
+
     def distinct(self, column, prefix=None, condition=None, sort=ASCENDENT, transaction=None,
                  arguments={}):
         """Vrať sekvenci všech nestejných hodnot daného sloupce.
 
         Argumenty:
-        
+
           column -- column identifier
           prefix -- length of a string prefix to work on (integer).  If not 'None', only given
             initial substring of column's value is considered by the query.  Only applicable for
@@ -3052,7 +3083,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if __debug__:
             log(DEBUG, 'Vytažení řádku ze selectu ve směru:', direction)
         assert direction in(FORWARD, BACKWARD), \
-               ('Invalid direction', direction)
+            ('Invalid direction', direction)
         if not self._pg_is_in_select:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
@@ -3105,9 +3136,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 std_size = self._pg_fetch_size
             current_row_number = buffer.current()[1]
             last_row_number = min(current_row_number + 1,
-                                  self._pg_number_of_rows_(current_row_number+1))
+                                  self._pg_number_of_rows_(current_row_number + 1))
             if direction == FORWARD:
-                size = min(self._pg_number_of_rows_(last_row_number+std_size)-last_row_number, std_size)
+                size = min(self._pg_number_of_rows_(last_row_number + std_size) - last_row_number,
+                           std_size)
             else:
                 if current_row_number <= 0:
                     if current_row_number == 0:
@@ -3139,10 +3171,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_is_in_select = False
                 raise cls, e, tb
             if data_:
-                row_data = [self._pg_make_row_from_raw_data(
-                        [d], template=self._pg_make_row_template_limited)
+                r = self._pg_make_row_from_raw_data
+                row_data = [r([d], template=self._pg_make_row_template_limited)
                             for d in data_]
-                buffer.fill(row_data, FORWARD, len(row_data)!=size)
+                buffer.fill(row_data, FORWARD, len(row_data) != size)
                 if xskip:
                     buffer.skip(xskip, FORWARD, self._pg_number_of_rows)
                 result = buffer.fetch(direction, self._pdbb_select_rows)
@@ -3150,9 +3182,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 result = None
             start_counting()
         self._pg_last_fetch_row = result
-        if __debug__: log(DEBUG, 'Vrácený řádek', str(result))
+        if __debug__:
+            log(DEBUG, 'Vrácený řádek', str(result))
         return result
-    
+
     def last_row_number(self):
         if not self._pg_is_in_select:
             if not self._pg_restore_select():
@@ -3166,26 +3199,26 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return self._pdbb_condition2sql(self._pg_last_select_condition)
 
     def skip(self, count, direction=FORWARD):
-        if __debug__: log(DEBUG, 'Přeskočení řádků:', (direction, count))
-        assert type(count) == type(0) and count >= 0, \
-               ('Invalid count', count)
-        assert direction in (FORWARD, BACKWARD), \
-               ('Invalid direction', direction)
+        if __debug__:
+            log(DEBUG, 'Přeskočení řádků:', (direction, count))
+        assert isinstance(count, int) and count >= 0, ('Invalid count', count)
+        assert direction in (FORWARD, BACKWARD), ('Invalid direction', direction)
         result = self._pg_buffer.skip(count, direction,
                                       self._pg_number_of_rows)
         if count > 0:
             self._pg_last_fetch_row = None
-        if __debug__: log(DEBUG, 'Přeskočeno řádků:', result)
+        if __debug__:
+            log(DEBUG, 'Přeskočeno řádků:', result)
         return result
 
     def rewind(self):
         if not self._pg_is_in_select:
             if not self._pg_restore_select():
-                raise ProgramError('Not within select')                
+                raise ProgramError('Not within select')
         __, pos = self._pg_buffer.current()
         if pos >= 0:
-            self.skip(pos+1, BACKWARD)
-        
+            self.skip(pos + 1, BACKWARD)
+
     def search(self, condition, direction=FORWARD, transaction=None, arguments={}):
         """Vyhledej ve směru 'direction' první řádek od 'row' dle 'condition'.
 
@@ -3193,19 +3226,20 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         takový řádek neexistuje.
 
         """
-        if __debug__: log(DEBUG, 'Hledání řádku:', (condition, direction))
+        if __debug__:
+            log(DEBUG, 'Hledání řádku:', (condition, direction))
         assert direction in (FORWARD, BACKWARD), \
-               ('Invalid direction', direction)
+            ('Invalid direction', direction)
         if not self._pg_is_in_select:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return 0
         row, pos = self._pg_buffer.current()
-        if not row and pos >= 0 and pos < self._pg_number_of_rows_(pos+1):
+        if not row and pos >= 0 and pos < self._pg_number_of_rows_(pos + 1):
             self.skip(1, BACKWARD)
             row = self.fetchone()
-        if not row and (pos < 0 and direction == BACKWARD or \
+        if not row and (pos < 0 and direction == BACKWARD or
                         pos >= 0 and direction == FORWARD):
             result = 0
         else:
@@ -3226,7 +3260,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     pass
                 self._pg_is_in_select = False
                 raise cls, e, tb
-        if __debug__: log(DEBUG, 'Výsledek hledání:', result)
+        if __debug__:
+            log(DEBUG, 'Výsledek hledání:', result)
         return result
 
     def close(self):
@@ -3254,12 +3289,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         assert after is None or before is None, 'Both after and before specified'
         log(ACTION, 'Insert row:', (row, after, before))
         if transaction is None:
-            self._pg_begin_transaction ()
+            self._pg_begin_transaction()
         try:
             # Jestliže je definováno ordering, které je součástí klíče, bude
             # nově vložený řádek nutně unikátní.
-            if (not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) \
-                   and self._pg_already_present(row, transaction=transaction):
+            if ((not self._ordering or (self._ordering[0] not in [c.id() for c in self.key()])) and
+                self._pg_already_present(row, transaction=transaction)):
                 msg = 'Row with this key already exists'
                 result = msg, False
                 log(ACTION, msg)
@@ -3274,7 +3309,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     log(ACTION, msg, (after, before))
                     result = msg, False
                 else:
-                    r = self._pg_insert (row, after=after, before=before, transaction=transaction)
+                    r = self._pg_insert(row, after=after, before=before, transaction=transaction)
                     result = r, True
         except:
             cls, e, tb = sys.exc_info()
@@ -3292,13 +3327,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if result[1]:
             log(ACTION, 'Row inserted:', result)
         return result
-    
+
     def update(self, key, row, transaction=None):
         key = xtuple(key)
         log(ACTION, 'Update row:', key)
         log(ACTION, 'New data:', str(row))
         if transaction is None:
-            self._pg_begin_transaction ()
+            self._pg_begin_transaction()
         try:
             origrow = self.row(key, transaction=transaction)
             if origrow:
@@ -3344,19 +3379,19 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             raise cls, e, tb
         if transaction is None:
-            self._pg_commit_transaction ()
+            self._pg_commit_transaction()
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
         if result[1]:
             log(ACTION, 'Row updated:', result)
         return result
-    
+
     def update_many(self, condition, row, transaction=None):
         log(ACTION, 'Update rows:', condition)
         log(ACTION, 'New data:', str(row))
         if transaction is None:
-            self._pg_begin_transaction ()
+            self._pg_begin_transaction()
         try:
             ordering = self._ordering
             if ordering:
@@ -3365,7 +3400,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     if k not in ordering:
                         new_row_items.append((k, v))
                 row = Row(new_row_items)
-            result = self._pg_update (condition, row, transaction=transaction)
+            result = self._pg_update(condition, row, transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -3375,7 +3410,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             raise cls, e, tb
         if transaction is None:
-            self._pg_commit_transaction ()
+            self._pg_commit_transaction()
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
@@ -3386,10 +3421,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def delete(self, key, transaction=None):
         log(ACTION, 'Delete row:', key)
         if transaction is None:
-            self._pg_begin_transaction ()
+            self._pg_begin_transaction()
         try:
-            result = self._pg_delete (self._pg_key_condition(key),
-                                      transaction=transaction)
+            result = self._pg_delete(self._pg_key_condition(key),
+                                     transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -3399,19 +3434,19 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             raise cls, e, tb
         if transaction is None:
-            self._pg_commit_transaction ()
+            self._pg_commit_transaction()
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
         log(ACTION, 'Row deleted:', result)
         return result
-    
+
     def delete_many(self, condition, transaction=None):
         log(ACTION, 'Delete rows:', condition)
         if transaction is None:
-            self._pg_begin_transaction ()
+            self._pg_begin_transaction()
         try:
-            result = self._pg_delete (condition, transaction=transaction)
+            result = self._pg_delete(condition, transaction=transaction)
         except:
             cls, e, tb = sys.exc_info()
             try:
@@ -3421,7 +3456,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 pass
             raise cls, e, tb
         if transaction is None:
-            self._pg_commit_transaction ()
+            self._pg_commit_transaction()
             self._pg_send_notifications()
         else:
             transaction._trans_notify(self)
@@ -3441,7 +3476,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
         The lock is automatically released when the transaction is closed
         (whether by commit or rollback).
-        
+
         """
         if is_sequence(key):
             key = key[0]
@@ -3468,7 +3503,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
 
 class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
     """Čítač uložený v PostgreSQL."""
-    
+
     def __init__(self, name, connection_data, **kwargs):
         """Initialize the instance.
 
@@ -3484,7 +3519,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         PostgreSQLConnector.__init__(self, connection_data, **kwargs)
         self._name = name
         self._query = "select nextval('%s')" % name
-        
+
     def next(self, transaction=None):
         result = self._pg_query(self._query, transaction=transaction)
         try:
@@ -3497,7 +3532,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
 class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                            PostgreSQLStandardBindingHandler):
     """PostgreSQL implementation of the 'Function' class."""
-    
+
     def __init__(self, name, connection_data, result_columns=None, **kwargs):
         """
         Arguments:
@@ -3526,7 +3561,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
             return '%%s' if arg == 17 else '%s'
         arguments = string.join([arg_spec(a) for a in arg_types], ', ')
         self._pdbb_function_call = 'select * from %s(%s)' % (name, arguments)
-        
+
     def _db_bindings_to_column_spec(self, __bindings):
         if self._pdbb_result_columns is not None:
             return self._pdbb_result_columns, ()
@@ -3562,7 +3597,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                                     '%s.%s' % (type_ns, type_,))
                 return instances
             r_type_instances = type_instances(r_type)
-            columns = [ColumnSpec('column%d' % (i+1,), r_type_instances[i])
+            columns = [ColumnSpec('column%d' % (i + 1,), r_type_instances[i])
                        for i in range(len(r_type_instances))]
         finally:
             self._pg_commit_transaction()
@@ -3570,7 +3605,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
 
     def _pdbb_create_sql_commands(self):
         self._pg_notifications = []
-    
+
     def call(self, row, transaction=None):
         log(EVENT, 'Function call:', self._name)
         arguments = []
@@ -3587,7 +3622,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                               outside_transaction=outside_transaction,
                               query_args=tuple(query_args))
         if transaction is None:
-            self._pg_query ('commit', outside_transaction=outside_transaction)
+            self._pg_query('commit', outside_transaction=outside_transaction)
         result = [self._pg_make_row_from_raw_data([r]) for r in data]
         log(EVENT, 'Function call result:', (self._name, result))
         return result
@@ -3606,7 +3641,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     You can also use partial rollbacks by setting transaction points with the
     'set_point' method and calling the 'cut' method to rollback to a previously
     set transaction point.
-    
+
     """
 
     REPEATABLE_READ = 'repeatable read'
@@ -3629,10 +3664,10 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         self._trans_notifications = []
         self._pg_begin_transaction(isolation=isolation)
         self._open = True
-        
+
     def _db_bindings_to_column_spec(self, __bindings):
         return (), ()
-    
+
     def _pdbb_create_sql_commands(self):
         self._pdbb_command_isolation = 'set transaction isolation level %s%s'
 
@@ -3661,7 +3696,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
           point -- string containing only lowercase English letters defining
             the transaction point
-            
+
         """
         assert re.match('^[a-z]+$', point)
         self._pg_query('savepoint %s' % (point,), transaction=self)
@@ -3673,7 +3708,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
           point -- string containing only lowercase English letters defining
             the transaction point to which the rollback should be performed
-            
+
         """
         assert re.match('^[a-z]+$', point)
         self._pg_query('rollback to %s' % (point,), transaction=self)
