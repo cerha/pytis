@@ -20,7 +20,6 @@
 import sqlalchemy
 import pytis.extensions.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
 
 class Private(sql.SQLSchema):
     name = 'private'
@@ -64,7 +63,8 @@ class Bar(sql.SQLTable):
     name = 'bar'
     schemas = ((Private, 'public',),)
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
-              sql.Column('foo_id', pytis.data.Integer(), references=sql.a(sql.r.Foo.id, onupdate='CASCADE')),
+              sql.Column('foo_id', pytis.data.Integer(),
+                         references=sql.a(sql.r.Foo.id, onupdate='CASCADE')),
               sql.Column('description', pytis.data.String()),
               )
     init_columns = ('foo_id', 'description',)
@@ -176,14 +176,17 @@ class Baz(sql.SQLView):
     def query(class_):
         return sqlalchemy.union(sqlalchemy.select([sql.c.Foo.id, sql.c.Bar.description],
                                                   from_obj=[sql.t.Foo.join(sql.t.Bar)]),
-                                sqlalchemy.select([sql.c.Foo2.id, sqlalchemy.literal_column("'xxx'", sqlalchemy.String)]))
+                                sqlalchemy.select([sql.c.Foo2.id,
+                                                   sqlalchemy.literal_column("'xxx'",
+                                                                             sqlalchemy.String)]))
 
 class Baz2(sql.SQLView):
     name = 'baz2'
     schemas = ((Private, 'public',),)
     @classmethod
     def query(class_):
-        return sqlalchemy.select([sql.c.Baz.id], from_obj=[sql.t.Baz], whereclause=(sql.c.Baz.id > 0))
+        return sqlalchemy.select([sql.c.Baz.id], from_obj=[sql.t.Baz],
+                                 whereclause=(sql.c.Baz.id > 0))
 
 class AliasView(sql.SQLView):
     name = 'aliased'
@@ -191,7 +194,7 @@ class AliasView(sql.SQLView):
     def query(class_):
         foo1 = sql.t.Foo.alias('foo1')
         foo2 = sql.t.Foo.alias('foo2')
-        return sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n<foo2.c.n)])
+        return sqlalchemy.select([foo1], from_obj=[foo1.join(foo2, foo1.c.n < foo2.c.n)])
 
 class FromSelect(sql.SQLView):
     name = 'from_select'
@@ -251,7 +254,8 @@ class BogusView(sql.SQLView):
     @classmethod
     def query(class_):
         foo, bar = sql.t.Foo, sql.t.Bar
-        return sqlalchemy.select([foo], from_obj=[sql.FullOuterJoin(foo, bar, foo.c.id==bar.c.id)])
+        return sqlalchemy.select([foo], from_obj=[sql.FullOuterJoin(foo, bar,
+                                                                    foo.c.id == bar.c.id)])
 
 class Func(sql.SQLFunction):
     name = 'plus'
@@ -283,7 +287,8 @@ class SelectFunc(sql.SQLFunction):
     stability = 'stable'
 
     def body(self):
-        return sqlalchemy.select([sql.c.Foo.n + sqlalchemy.literal_column('$1')], from_obj=[sql.t.Foo])
+        return sqlalchemy.select([sql.c.Foo.n + sqlalchemy.literal_column('$1')],
+                                 from_obj=[sql.t.Foo])
 
     depends_on = (Foo,)
 
@@ -344,12 +349,14 @@ class TableSelectFunction(sql.SQLPyFunction):
 
     @staticmethod
     def tableselect(foo):
-        return plpy.execute("select * from private.bar where foo_id >= %s" % (foo,)) 
+        return plpy.execute("select * from private.bar where foo_id >= %s" % (foo,))
     
 class TableFunction(sql.SQLPyFunction):
     name = 'pseudotable'
     arguments = (sql.Column('n', pytis.data.Integer()),)
-    result_type = (sql.Column('x', pytis.data.Integer()), sql.Column('y', pytis.data.Integer()), sql.Column('z', pytis.data.Integer()),)
+    result_type = (sql.Column('x', pytis.data.Integer()),
+                   sql.Column('y', pytis.data.Integer()),
+                   sql.Column('z', pytis.data.Integer()),)
     multirow = True
     stability = 'immutable'
 
