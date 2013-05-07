@@ -119,7 +119,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
             query = view.query()
             query.pytis_prefix = command
             self.connection.execute(query)
-            view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst, _ddl_runner=self)
+            view.dispatch.after_create(view, self.connection, checkfirst=self.checkfirst,
+                                       _ddl_runner=self)
 
     def visit_type(self, type_, create_ok=False):
         with _local_search_path(self._set_search_path(type_.search_path())):
@@ -131,7 +132,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         sqlalchemy_columns = [c.sqlalchemy_column(None, None, None, None) for c in columns]
         def ctype(c):
             return c.type.compile(_engine.dialect)
-        column_string = string.join(['%s %s' % (c.name, ctype(c),) for c in sqlalchemy_columns], ', ')
+        column_string = string.join(['%s %s' % (c.name, ctype(c),) for c in sqlalchemy_columns],
+                                    ', ')
         command = 'CREATE TYPE %s AS\n(%s)' % (type_name, column_string,)
         self.connection.execute(command)
 
@@ -151,7 +153,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                     result_type = 't_' + function.pytis_name()
                     self.make_type(result_type, function_type)
                 elif isinstance(function_type, Column):
-                    result_type = function_type.sqlalchemy_column(search_path, None, None, None).type.compile(_engine.dialect)
+                    c = function_type.sqlalchemy_column(search_path, None, None, None)
+                    result_type = c.type.compile(_engine.dialect)
                 elif isinstance(function_type, pytis.data.Type):
                     result_type = function_type.sqlalchemy_type().compile(_engine.dialect)
                 elif issubclass(function_type, (SQLTable, SQLType,)):
@@ -289,10 +292,10 @@ class FullOuterJoin(sqlalchemy.sql.Join):
 @compiles(FullOuterJoin)
 def visit_full_outer_join(join, compiler, asfrom=False, **kwargs):
     return (
-        join.left._compiler_dispatch(compiler, asfrom=True, **kwargs) + 
-        " FULL OUTER JOIN " + 
-        join.right._compiler_dispatch(compiler, asfrom=True, **kwargs) + 
-        " ON " + 
+        join.left._compiler_dispatch(compiler, asfrom=True, **kwargs) +
+        " FULL OUTER JOIN " +
+        join.right._compiler_dispatch(compiler, asfrom=True, **kwargs) +
+        " ON " +
         join.onclause._compiler_dispatch(compiler, **kwargs)
     )
 
@@ -733,7 +736,7 @@ class SQLFlexibleValue(object):
     The rules for retrieving the value are defined in constructor.  The current
     value can be retrieved using 'value()' method.
 
-    """   
+    """
     def __init__(self, name, default=None, environment=None):
         """
         Arguments:
@@ -812,9 +815,10 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         cls._gsql_file, cls._gsql_line = inspect.stack()[2][1:3]
         if cls._is_specification(clsname):
             name = cls.pytis_name()
-            if (name in _PytisBaseMetaclass._name_mapping and 
-                _PytisBaseMetaclass._name_mapping[name] is not cls):
-                raise SQLException("Duplicate object name", (cls, _PytisBaseMetaclass._name_mapping[name],))
+            if ((name in _PytisBaseMetaclass._name_mapping and
+                 _PytisBaseMetaclass._name_mapping[name] is not cls)):
+                raise SQLException("Duplicate object name",
+                                   (cls, _PytisBaseMetaclass._name_mapping[name],))
             _PytisBaseMetaclass._name_mapping[name] = cls
             _PytisBaseMetaclass._class_mapping[cls.__name__] = cls
             cls.name = name
@@ -905,9 +909,9 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
 
 class _PytisTriggerMetaclass(_PytisSchematicMetaclass):
     def __init__(cls, clsname, bases, clsdict):
-        if (cls._is_specification(clsname) and
-            cls.schemas is None and
-            cls.table is not None):
+        if ((cls._is_specification(clsname) and
+             cls.schemas is None and
+             cls.table is not None)):
             cls.schemas = cls.table.schemas
         _PytisSchematicMetaclass.__init__(cls, clsname, bases, clsdict)
     
@@ -988,12 +992,12 @@ def object_by_class(class_, search_path=None):
     if _enforced_schema:
         search_path = [_enforced_schema] + search_path
     table_name = class_.pytis_name()
-    return object_by_path(table_name, search_path)    
+    return object_by_path(table_name, search_path)
 
 def object_by_specification_name(specification_name, search_path=None):
     class_ = _PytisBaseMetaclass.specification_by_class_name(specification_name)
     if class_ is None:
-        return None 
+        return None
     return object_by_class(class_, search_path or _current_search_path)
 
 def specification_by_name(name):
@@ -1170,7 +1174,7 @@ class SQLObject(object):
     def pytis_exists(self, metadata):
         _warn(u"Can't check existence of an object of type %s: %s." %
               (self.pytis_kind(), self.name,))
-        return True        
+        return True
 
     def pytis_changed(self, metadata, strict=True):
         return strict
@@ -1425,8 +1429,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                            }
 
     def _pytis_ctype_changed(self, column_1, column_2):
-        if (column_1.type != column_2.type and
-            not isinstance(column_2.type, sqlalchemy.types.NullType)):
+        if ((column_1.type != column_2.type and
+             not isinstance(column_2.type, sqlalchemy.types.NullType))):
             new_type = str(column_2.type)
             new_type = self._PYTIS_TYPE_MAPPING.get(new_type, new_type)
             orig_type = str(column_1.type)
@@ -1437,8 +1441,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _pytis_defaults_changed(self, column_1, column_2):
         default_1 = column_1.server_default
         default_2 = column_2.server_default
-        if ((default_1 is None and default_2 is not None) or
-            (default_1 is not None and default_2 is None)):
+        if (((default_1 is None and default_2 is not None) or
+             (default_1 is not None and default_2 is None))):
             return True
         if default_1 is None and default_2 is None:
             return False
@@ -1602,8 +1606,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                 # Let's just print warning until converted specifications are fixed
                 raise SQLException("Table key column not found in the view", table_c)
             else:
-                _gsql_output('-- WARNING: Missing table key column, incorrect rule for view will be output: %s %s' %
-                             (self.name, tabular.name,))
+                _gsql_output(("-- WARNING: Missing table key column, incorrect rule for view "
+                              "will be output: %s %s") % (self.name, tabular.name,))
                 conditions.append(sqlalchemy.sql.false())
         return sqlalchemy.and_(*conditions)
 
@@ -1779,15 +1783,16 @@ class SQLTable(_SQLTabular):
                                                            check_constraints=check_constraints)
                                        for c in i.fields if c.id() not in field_names])
         foreign_constraints = []
-        columns = columns + tuple([c.sqlalchemy_column (search_path, table_name, key_name, table_name,
-                                                        foreign_constraints=foreign_constraints,
-                                                        check_constraints=check_constraints)
+        columns = columns + tuple([c.sqlalchemy_column(search_path, table_name, key_name,
+                                                       table_name,
+                                                       foreign_constraints=foreign_constraints,
+                                                       check_constraints=check_constraints)
                                    for c in cls.fields])
         args = (table_name, metadata,) + columns + tuple(check_constraints)
         for check in cls.check:
             args += (sqlalchemy.CheckConstraint(check),)
         for unique in cls.unique:
-            args += (sqlalchemy.UniqueConstraint (*unique),)
+            args += (sqlalchemy.UniqueConstraint(*unique),)
         for foreign_key in cls.foreign_keys:
             columns, refcolumns = foreign_key.args()
             refcolumns = [c.get() if isinstance(c, ReferenceLookup.Reference) else c
@@ -1812,7 +1817,8 @@ class SQLTable(_SQLTabular):
     def columns(self):
         columns = super(SQLTable, self).columns
         if self._pytis_create_p:
-            columns = sqlalchemy.sql.ColumnCollection(*[c for c in columns if not c.info['inherited']])
+            columns = sqlalchemy.sql.ColumnCollection(*[c for c in columns
+                                                        if not c.info['inherited']])
         return columns
 
     def _table_name(self, table):
@@ -1886,8 +1892,8 @@ class SQLTable(_SQLTabular):
                                                          schema=self.schema,
                                                          existing_server_default=orig_c.server_default)
                     _engine.execute(ddl)
-                if (not orig_c.primary_key and not c.primary_key and
-                    orig_c.nullable != c.nullable):
+                if ((not orig_c.primary_key and not c.primary_key and
+                     orig_c.nullable != c.nullable)):
                     ddl = alembic.ddl.base.ColumnNullable(table_name, c.name, c.nullable,
                                                           schema=self.schema,
                                                           existing_nullable=orig_c.nullable)
@@ -2000,7 +2006,7 @@ class _SQLReplaceable(SQLObject):
         query = ("set search_path to public")
         connection.execute(sqlalchemy.text(query))
 
-    def pytis_changed(self, metadata, strict=True):        
+    def pytis_changed(self, metadata, strict=True):
         if super(_SQLReplaceable, self).pytis_changed(metadata, strict=strict):
             return True
         if not strict:
@@ -2111,8 +2117,10 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                  "where rulename = '_RETURN' and relname = :name and nspname = :schema")
         result = connection.execute(
             sqlalchemy.text(query,
-                            bindparams=[sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.String),
-                                        sqlalchemy.bindparam('name', name, type_=sqlalchemy.String)]))
+                            bindparams=[sqlalchemy.bindparam('schema', schema,
+                                                             type_=sqlalchemy.String),
+                                        sqlalchemy.bindparam('name', name,
+                                                             type_=sqlalchemy.String)]))
         row = result.fetchone()
         result.close()
         if row is None:
@@ -2369,9 +2377,9 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()
         result_type = self.result_type
-        if (result_type not in (None, G_CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
-            not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)) and
-            result_type != SQLFunctional.RECORD):
+        if ((result_type not in (None, G_CONVERT_THIS_FUNCTION_TO_TRIGGER,) and
+             not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)) and
+             result_type != SQLFunctional.RECORD)):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
 
     def pytis_exists(self, metadata):
@@ -2393,9 +2401,12 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                  "where nspname = :schema and proname = :name and pronargs = :nargs")
         result = connection.execute(
             sqlalchemy.text(query,
-                            bindparams=[sqlalchemy.bindparam('schema', schema, type_=sqlalchemy.String),
-                                        sqlalchemy.bindparam('name', name, type_=sqlalchemy.String),
-                                        sqlalchemy.bindparam('nargs', nargs, type_=sqlalchemy.Integer)]))
+                            bindparams=[sqlalchemy.bindparam('schema', schema,
+                                                             type_=sqlalchemy.String),
+                                        sqlalchemy.bindparam('name', name,
+                                                             type_=sqlalchemy.String),
+                                        sqlalchemy.bindparam('nargs', nargs,
+                                                             type_=sqlalchemy.Integer)]))
         definition = ''
         for row in result:
             definition += row[0]
@@ -2554,7 +2565,7 @@ class SQLPyFunction(SQLFunctional):
                 return line
         elif indentation > 0:
             def reindent(line):
-                return ' '*indentation + line
+                return ' ' * indentation + line
         else:
             def reindent(line):
                 return line[-indentation:]
@@ -2635,8 +2646,10 @@ class SQLTrigger(SQLEventHandler):
             result = connection.execute(
                 sqlalchemy.text(
                     query,
-                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True), type_=sqlalchemy.String),
-                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True), type_=sqlalchemy.String)]))
+                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
+                                                     type_=sqlalchemy.String),
+                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
+                                                     type_=sqlalchemy.String)]))
             n = result.fetchone()[0]
             result.close()
             return n > 0
@@ -2653,13 +2666,17 @@ class SQLTrigger(SQLEventHandler):
             result = connection.execute(
                 sqlalchemy.text(
                     query,
-                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True), type_=sqlalchemy.String),
-                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True), type_=sqlalchemy.String)]))
+                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
+                                                     type_=sqlalchemy.String),
+                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
+                                                     type_=sqlalchemy.String)]))
             definition = result.fetchone()[0]
             if result.fetchone() is not None:
                 _warn("Multiple definitions of trigger `%s'" % (self.name,))
             result.close()
-            match = re.match("CREATE TRIGGER [^ ]+ (BEFORE|AFTER) (.*) ON [^ ]+ FOR EACH (ROW|STATEMENT) EXECUTE PROCEDURE .*[(](.*)[)]", definition)
+            match = re.match(("CREATE TRIGGER [^ ]+ (BEFORE|AFTER) (.*) ON [^ ]+ "
+                              "FOR EACH (ROW|STATEMENT) EXECUTE PROCEDURE .*[(](.*)[)]"),
+                             definition)
             if match is None:
                 _warn("Can't match trigger definition: %s" % (self.name,))
                 return True
@@ -2751,22 +2768,26 @@ def _db_dependencies(metadata):
     pg_proc = load(("select pg_proc.oid, nspname, proname "
                     "from pg_proc join pg_namespace on pronamespace=pg_namespace.oid"), 'FUNCTION')
     pg_trigger = load(("select pg_trigger.oid, nspname, tgname "
-                       "from pg_trigger join pg_class on tgrelid = pg_class.oid join pg_namespace on relnamespace=pg_namespace.oid"), 'TRIGGER')
-    pg_rewrite = load (("select pg_rewrite.oid, nspname, relname "
-                        "from pg_rewrite join pg_class on ev_class = pg_class.oid join pg_namespace on relnamespace=pg_namespace.oid"), 'VIEW')
+                       "from pg_trigger join pg_class on tgrelid = pg_class.oid join "
+                       "pg_namespace on relnamespace=pg_namespace.oid"), 'TRIGGER')
+    pg_rewrite = load(("select pg_rewrite.oid, nspname, relname "
+                       "from pg_rewrite join pg_class on ev_class = pg_class.oid join "
+                       "pg_namespace on relnamespace=pg_namespace.oid"), 'VIEW')
     loc = locals()
     dependencies = []
     query = ("select distinct objid, c.relname, refobjid, refc.relname "
              "from pg_depend join "
              "pg_class c on (classid=c.oid) join pg_namespace n on (c.relnamespace=n.oid) join "
-             "pg_class refc on (refclassid=refc.oid) join pg_namespace refn on (refc.relnamespace=refn.oid) "
+             "pg_class refc on (refclassid=refc.oid) join "
+             "pg_namespace refn on (refc.relnamespace=refn.oid) "
              "where n.nspname='pg_catalog' and refn.nspname='pg_catalog' and "
              "c.relname in ('pg_class', 'pg_proc', 'pg_type', 'pg_namespace', 'pg_trigger', 'pg_rewrite') and "
              "refc.relname in ('pg_class', 'pg_proc', 'pg_type', 'pg_namespace', 'pg_trigger', 'pg_rewrite') and "
              "deptype = 'n'")
     result = connection.execute(query)
     # Let's reduce the set and break unimportant circular dependencies:
-    regexp = re.compile("[A-Z]+\.(pg_catalog|information_schema)\.|FUNCTION.public.(ltree|ltxtq|lquery)_")
+    regexp = re.compile("[A-Z]+\.(pg_catalog|information_schema)\.|"
+                        "FUNCTION.public.(ltree|ltxtq|lquery)_")
     for oid, relname, refoid, refrelname in result:
         base = loc[refrelname][refoid]
         dependent = loc[relname][oid]
@@ -2801,7 +2822,8 @@ def _make_sql_command(sql, *multiparams, **params):
                     if k not in sql_parameters:
                         column = sql.table.columns[k]
                         parameters[k] = ("nextval('%s.%s_%s_seq')" %
-                                         (column.table.schema, column.pytis_orig_table, column.name,))
+                                         (column.table.schema, column.pytis_orig_table,
+                                          column.name,))
             for k, v in sql_parameters.items():
                 parameters[k] = _sql_value_escape(v)
             output = unicode(compiled) % parameters
@@ -2876,7 +2898,8 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
                                host=(config.dbhost or ''),
                                port=(':'+config.dbport if config.dbport else ''),
                                dbname=config.dbname)
-        connection_string = 'postgresql://%(user)s%(password)s@%(host)s%(port)s/%(dbname)s' % connection_data
+        connection_string = ('postgresql://%(user)s%(password)s@%(host)s%(port)s/%(dbname)s' %
+                             connection_data)
         upgrade_metadata.pytis_engine = sqlalchemy.create_engine(connection_string)
         upgrade_metadata.pytis_inspector = sqlalchemy.inspect(upgrade_metadata.pytis_engine)
         upgrade_metadata.pytis_changed = set()
@@ -2888,7 +2911,8 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     finally:
         _full_init = False
 
-def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source, upgrade_metadata):
+def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
+                    upgrade_metadata):
     if regexp is not None:
         matcher = re.compile(regexp)
     matched = set()
@@ -2939,7 +2963,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         elif isinstance(obj, SQLSchematicObject):
             schematic_names = ['%s.%s' % (obj.schema, name,)]
         elif isinstance(obj, SQLObject):
-            schematic_names = [name]            
+            schematic_names = [name]
         elif issubclass(obj, SQLSchematicObject):
             schematic_names = ['%s.%s' % (s[0], name,) for s in _expand_schemas(obj)]
         else:
