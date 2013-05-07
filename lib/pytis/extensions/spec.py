@@ -23,7 +23,7 @@ většinou o funkce, které se hodí v různých konkrétních situacích, kde v
 nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstrukce
 často opakuje, je možné ji parametrizovaně vytvořit automaticky.
 
-""" 
+"""
 
 from pytis.extensions import *
 from pytis.presentation import *
@@ -72,12 +72,12 @@ def run_form_mitem(title, name, form_class, hotkey=None, **kwargs):
     cmd = pytis.form.Application.COMMAND_RUN_FORM
     args = dict(form_class=form_class, name=name, **kwargs)
     descr = {
-        pytis.form.BrowseForm:          u"řádkový formulář",
-        pytis.form.PopupEditForm:       u"editační formulář",
-        pytis.form.Form:                u"duální řádkový formulář",
-        pytis.form.CodebookForm:        u"číselníkový formulář",
+        pytis.form.BrowseForm: u"řádkový formulář",
+        pytis.form.PopupEditForm: u"editační formulář",
+        pytis.form.Form: u"duální řádkový formulář",
+        pytis.form.CodebookForm: u"číselníkový formulář",
         pytis.form.DescriptiveDualForm: u"duální náhledový formulář",
-        }.get(form_class, u"formulář")
+    }.get(form_class, u"formulář")
     help = _(u'Otevřít %s "%s"') % (descr, title.replace('&', ''))
     return pytis.form.MItem(title, command=cmd, args=args, hotkey=hotkey, help=help)
 
@@ -198,8 +198,6 @@ def cb2colvalue(value, column=None, transaction=None):
         else:
             return pytis.data.Value(value.type(), None)
 
-        
-
 
 def run_cb(spec, begin_search=None, condition=None, sort=(),
            columns=None, select_row=0, multirow=False,
@@ -225,7 +223,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
     """
     if multirow:
         class_ = pytis.form.SelectRowsForm
-    else:    
+    else:
         class_ = pytis.form.CodebookForm
     return pytis.form.run_form(class_, spec, columns=columns,
                                begin_search=begin_search,
@@ -267,7 +265,7 @@ def run_any_form():
         ("BrowseDualForm", pytis.form.BrowseDualForm),
         ("MultiBrowseDualForm", pytis.form.MultiBrowseDualForm),
         ("CodebookForm", pytis.form.CodebookForm),
-        )
+    )
     row = pytis.form.run_form(
         pytis.form.InputForm,
         title=_("Spustit formulář"),
@@ -280,7 +278,7 @@ def run_any_form():
         form_type = dict(form_types)[row['type'].value()]
         pytis.form.run_form(form_type, row['name'].value())
 cmd_run_any_form = \
-           pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
+    pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
 def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
@@ -321,8 +319,8 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
             return result
         
     log(EVENT, 'Vyvolání tiskového formuláře')
-    P = _PrintResolver    
-    parameters = {(spec+'/'+pytis.output.P_ROW): row}
+    P = _PrintResolver
+    parameters = {(spec + '/' + pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
     parameters.update(kwargs)
     print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
@@ -423,7 +421,6 @@ class ReusableSpec:
             return self._bindings
         else:
             return filter(lambda b: b.id() in args, self._bindings)
-
 
     def fields_complement(self, *args):
         """Vrať seznam specifikací sloupců, které nejsou vyjmenovány.

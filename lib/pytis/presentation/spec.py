@@ -75,37 +75,37 @@ class TextFormat(object):
 
 class BorderStyle(object):
     """Výčtová třída definující konstanty pro styl orámování."""
-    ALL    = 'ALL'
+    ALL = 'ALL'
     """Mezera je kolem dokola."""
-    TOP    = 'TOP'
+    TOP = 'TOP'
     """Mezera je jen nahoře."""
     BOTTOM = 'BOTTOM'
     """Mezera je jen dole."""
-    LEFT   = 'LEFT'
+    LEFT = 'LEFT'
     """Mezera je jen vpravo."""
-    RIGHT  = 'RIGHT'
+    RIGHT = 'RIGHT'
     """Mezera je jen vlevo."""
 
     
 class Color(object):
     """Independent definition of generic named colors to be used within 'Style' specifications."""
-    WHITE  = (255, 255, 255)
-    BLACK  = (  0,   0,   0)
-    RED    = (255,   0,   0)
-    RED20  = (255, 200, 200)
-    GREEN  = (  0, 255,   0)
-    BLUE   = (  0,   0, 255)
-    YELLOW = (255, 255, 160)
-    GRAY   = ( 50,  50,  50)
-    GRAY90 = ( 25,  25,  25)
-    GRAY80 = ( 50,  50,  50)
-    GRAY70 = ( 75,  75,  75)
-    GRAY60 = (100, 100, 100)
-    GRAY50 = (125, 125, 125)
-    GRAY40 = (150, 150, 150)
-    GRAY30 = (175, 175, 175)
-    GRAY20 = (200, 200, 200)
-    GRAY10 = (225, 225, 225)
+    WHITE          = (255, 255, 255)
+    BLACK          = (  0,   0,   0)
+    RED            = (255,   0,   0)
+    RED20          = (255, 200, 200)
+    GREEN          = (  0, 255,   0)
+    BLUE           = (  0,   0, 255)
+    YELLOW         = (255, 255, 160)
+    GRAY           = ( 50,  50,  50)
+    GRAY90         = ( 25,  25,  25)
+    GRAY80         = ( 50,  50,  50)
+    GRAY70         = ( 75,  75,  75)
+    GRAY60         = (100, 100, 100)
+    GRAY50         = (125, 125, 125)
+    GRAY40         = (150, 150, 150)
+    GRAY30         = (175, 175, 175)
+    GRAY20         = (200, 200, 200)
+    GRAY10         = (225, 225, 225)
     BLANCHETALMOND = (255, 235, 205)
     LIGHTYELLOW    = (255, 255, 224)
     PEACHPUFF2     = (238, 203, 173)
@@ -133,7 +133,7 @@ class Style(object):
             (RGB), or a hexadecimal string representation (such as '#ff0000')
           background -- background color in the same format as the foreground color
           bold -- flag indicating bold text
-          slanted -- flag indicating slanted (italics) text 
+          slanted -- flag indicating slanted (italics) text
           overstrike -- flag indicating that the text should be stroked through
           underline -- flag indicating that the text should be underlined
           name -- style name (string) refering to a common style definition in a stylesheet
@@ -169,7 +169,7 @@ class Style(object):
         return self._name
 
     def __str__(self):
-        items = [k[1:]+'='+repr(v) for k,v in self.__dict__.items()
+        items = [k[1:] + '=' + repr(v) for k, v in self.__dict__.items()
                  if k.startswith('_') and v is not None]
         return "<%s %s>" % (self.__class__.__name__, ', '.join(items))
 
@@ -750,7 +750,6 @@ class AggregatedView(object):
     
     def aggregation_columns(self):
         return self._aggregation_columns
-
     
 
 class Profiles(list):
@@ -933,7 +932,7 @@ class GroupSpec(object):
         """
         assert is_sequence(items), items
         assert label is None or isinstance(label, basestring)
-        assert type(gap) == type(0)
+        assert isinstance(gap, int), gap
         assert gap >= 0
         assert orientation in public_attributes(Orientation)
         assert border_style in public_attributes(BorderStyle)
@@ -954,7 +953,8 @@ class GroupSpec(object):
                 items[i] = GroupSpec(item, orientation=Orientation.VERTICAL)
             else:
                 # No need for recursion, since the check is performed for each group on its level.
-                assert isinstance(item, allowed_item_types) or isinstance(item, collections.Callable), item
+                assert (isinstance(item, allowed_item_types) or
+                        isinstance(item, collections.Callable)), item
         self._items = tuple(items)
         self._label = label
         self._orientation = orientation
@@ -1478,7 +1478,8 @@ class ViewSpec(object):
         self._fields = tuple(fields)
         self._spec_name = spec_name
         for action in self._linearize_actions(actions):
-            rights = Specification.data_access_rights('action/%s/%s' % (action.id(), self._spec_name,))
+            rights = Specification.data_access_rights('action/%s/%s' %
+                                                      (action.id(), self._spec_name,))
             if rights is None:
                 groups = None
             else:
@@ -1504,15 +1505,15 @@ class ViewSpec(object):
                         recourse_group(item)
                     elif isinstance(item, Button):
                         assert item.action() is None or item.action() in action_names, \
-                               ("Unknown button action in layout of %s: %s" %
-                                (spec_name, item.action(),))
+                            ("Unknown button action in layout of %s: %s" %
+                             (spec_name, item.action(),))
                     elif isinstance(item, Text):
                         pass
                     elif isinstance(item, collections.Callable):
                         pass
                     else:
                         assert item in self._field_dict, \
-                               ("Unknown field in layout of %s: %r" % (spec_name, item,))
+                            ("Unknown field in layout of %s: %r" % (spec_name, item,))
                         if self._field_dict[item].width() == 0:
                             log(OPERATIONAL,
                                 "Zero width field in layout:", item)
@@ -1520,13 +1521,14 @@ class ViewSpec(object):
             for f in fields:
                 assert isinstance(f, Field)
                 assert not isinstance(f.computer(), CbComputer) \
-                       or f.computer().field() in self._field_dict.keys()
+                    or f.computer().field() in self._field_dict.keys()
                 for (s, c) in (('computer', f.computer()),
                                ('editable', f.editable())):
                     if isinstance(c, Computer):
                         for dep in c.depends():
                             assert dep in self._field_dict, \
-                                "Unknown field '%s' in dependencies for '%s' specification of '%s'." % (dep, s, f.id())
+                                (("Unknown field '%s' in dependencies for '%s' specification of "
+                                  "'%s'.") % (dep, s, f.id()))
             if referer is not None:
                 assert referer in [f.id() for f in fields], referer
         # Initialize `columns' specification parameter
@@ -1612,10 +1614,12 @@ class ViewSpec(object):
         assert on_edit_record is None or isinstance(on_edit_record, collections.Callable)
         assert on_delete_record is None or isinstance(on_delete_record, collections.Callable)
         assert redirect is None or isinstance(redirect, collections.Callable)
-        assert focus_field is None or isinstance(focus_field, collections.Callable) or \
-               isinstance(focus_field, basestring)
-        assert row_style is None or isinstance(row_style, Style) or \
-               isinstance(row_style, collections.Callable)
+        assert (focus_field is None or
+                isinstance(focus_field, collections.Callable) or
+                isinstance(focus_field, basestring)), focus_field
+        assert (row_style is None or
+                isinstance(row_style, Style) or
+                isinstance(row_style, collections.Callable)), row_style
         assert description is None or isinstance(description, basestring)
         assert help is None or isinstance(help, basestring)
         assert argument_provider is None or isinstance(argument_provider, collections.Callable)
@@ -1840,14 +1844,14 @@ class BindingSpec(object):
     """
     
     def __init__(self, title=None, binding_column=None, side_binding_column=None,
-                 hide_binding_column=True, append_condition=None, condition=None, description=None, 
+                 hide_binding_column=True, append_condition=None, condition=None, description=None,
                  help=None, sash_ratio=0.5, orientation=Orientation.HORIZONTAL):
         """Inicialize the specification.
 
         Arguments:
 
           title -- The title of the dual form as a string.  If omitted, the title will be
-            provided automatically as a concatenation of the titles of both involved forms. 
+            provided automatically as a concatenation of the titles of both involved forms.
                         
           binding_column -- the identifier of the binding column (string).  The binding column
             determines filtering of the side form depending on the current main form row.  If
@@ -1897,7 +1901,7 @@ class BindingSpec(object):
             condition = append_condition
         assert condition is None or isinstance(condition, collections.Callable), condition
         assert condition is not None or binding_column is not None, \
-               "You must specify at least one of 'condition', 'binding_column'."
+            "You must specify at least one of 'condition', 'binding_column'."
         assert description is None or isinstance(description, basestring), description
         assert help is None or isinstance(help, basestring), help
         assert orientation in public_attributes(Orientation), orientation
@@ -2145,7 +2149,7 @@ class TextFilter(object):
     ALPHA = 'ALPHA'
     """Non-alpha characters are filtered out."""
     FLOAT = 'FLOAT'
-    """Non-alpha characters exclude '.' are filtered out."""    
+    """Non-alpha characters exclude '.' are filtered out."""
     ALPHANUMERIC = 'ALPHANUMERIC'
     """Non-alphanumeric characters are filtered out."""
     NUMERIC = 'NUMERIC'
@@ -2185,7 +2189,6 @@ class Computer(object):
             jako řetězců.
 
         """
-        import re
         assert isinstance(function, collections.Callable)
         self._function = function
         if depends is None:
@@ -2202,7 +2205,7 @@ class Computer(object):
 
     def depends(self):
         """Vrať seznam id sloupců, ne kterých počítaná hodnota závisí."""
-        return self._depends    
+        return self._depends
 
 
 def computer(function):
@@ -3031,7 +3034,7 @@ class Field(object):
         pomocí specifikátoru 'editable'.
 
         """
-        for key, value in (('id', id), ('label', label) ,('column_label', column_label)):
+        for key, value in (('id', id), ('label', label), ('column_label', column_label)):
             if value is not None:
                 kwargs[key] = value
         if inherit:
@@ -3077,7 +3080,8 @@ class Field(object):
         assert computer is None or isinstance(computer, Computer), computer
         assert codebook is None or isinstance(codebook, basestring), codebook
         assert display is None or isinstance(display, (basestring, collections.Callable)), display
-        assert completer is None or isinstance(completer, (basestring, tuple, pytis.data.Enumerator)), completer
+        assert (completer is None or
+                isinstance(completer, (basestring, tuple, pytis.data.Enumerator))), completer
         assert prefer_display is None or isinstance(prefer_display, bool), prefer_display
         assert display_size is None or isinstance(display_size, int), display_size
         assert null_display is None or isinstance(null_display, basestring), null_display
@@ -3095,20 +3099,25 @@ class Field(object):
             assert runtime_filter is None
             runtime_filter = codebook_runtime_filter
         assert runtime_filter is None or isinstance(runtime_filter, Computer), runtime_filter
-        assert runtime_arguments is None or isinstance(runtime_arguments, Computer), runtime_arguments
-        assert selection_type is None or selection_type in public_attributes(SelectionType), selection_type
+        assert (runtime_arguments is None or
+                isinstance(runtime_arguments, Computer)), runtime_arguments
+        assert (selection_type is None or
+                selection_type in public_attributes(SelectionType)), selection_type
         assert orientation in public_attributes(Orientation), orientation
         assert post_process is None or isinstance(post_process, collections.Callable) \
             or post_process in public_attributes(PostProcess), post_process
         assert filter is None or filter in public_attributes(TextFilter), filter
-        assert filter not in ('INCLUDE_LIST', 'EXCLUDE_LIST') or is_sequence(filter_list), filter_list
+        assert (filter not in ('INCLUDE_LIST', 'EXCLUDE_LIST') or
+                is_sequence(filter_list)), filter_list
         assert style is None or isinstance(style, (Style, collections.Callable)), \
             err("Invalid 'style' specification: %s", style)
-        assert filename is None or isinstance(filename, (basestring, collections.Callable)), filename
+        assert (filename is None or
+                isinstance(filename, (basestring, collections.Callable))), filename
         assert isinstance(filename_extensions, (list, tuple)), filename_extensions
         assert text_format in public_attr_values(TextFormat), text_format
         assert attachment_storage is None or \
-            isinstance(attachment_storage, (AttachmentStorage, collections.Callable)), attachment_storage
+            isinstance(attachment_storage, (AttachmentStorage, collections.Callable)), \
+            attachment_storage
         assert isinstance(printable, bool), printable
         assert crypto_name is None or isinstance(crypto_name, basestring), crypto_name
         assert encrypt_empty is None or isinstance(encrypt_empty, bool), encrypt_empty
@@ -3134,7 +3143,8 @@ class Field(object):
             if null_display is None:
                 null_display = e.null_display
         else:
-            assert isinstance(enumerator, (basestring, pytis.data.DataFactory, pytis.data.Enumerator)), enumerator
+            assert isinstance(enumerator, (basestring, pytis.data.DataFactory,
+                                           pytis.data.Enumerator)), enumerator
         enumerator_kwargs = dict([(k, v) for k, v
                                   in dict(value_column=value_column,
                                           validity_column=validity_column,
@@ -3148,16 +3158,18 @@ class Field(object):
             # Temporary: The following test replaces the commented out assertion above.  The
             # assertion would break older applications, so we just log for now.
             if enumerator_kwargs and isinstance(enumerator, pytis.data.Enumerator):
-                log_(u"'enumerator' defined as Enumerator instance and '%s' passed.", enumerator_kwargs.keys()[0])
+                log_(u"'enumerator' defined as Enumerator instance and '%s' passed.",
+                     enumerator_kwargs.keys()[0])
             for lnk in links:
                 assert isinstance(lnk, Link), err("Invalid object in links: %r", lnk)
             for k in kwargs.keys():
-                assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen', 'minimum', 'maximum',
+                assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
+                             'minimum', 'maximum',
                              'encrypted',
                              'precision', 'format', 'mindate', 'maxdate', 'utc',
-                             'validation_messages', 'inner_type',
-                             'minsize', 'maxsize', 'formats', 'strength', 'md5', 'verify', 'text',), \
-                             err("Invalid argument: %r", k)
+                             'validation_messages', 'inner_type', 'minsize', 'maxsize',
+                             'formats', 'strength', 'md5', 'verify', 'text',), \
+                    err("Invalid argument: %r", k)
             if isinstance(type, pytis.data.Type):
                 for arg, value in (('codebook', codebook),
                                    ('enumerator', enumerator),
@@ -3559,7 +3571,8 @@ class AttachmentStorage(object):
                 kwargs = dict(size=size)
             else:
                 kwargs = {}
-        return cls(filename, title=title, descr=descr, uri=uri, src_file=src_file, info=info, **kwargs)
+        return cls(filename, title=title, descr=descr, uri=uri, src_file=src_file, info=info,
+                   **kwargs)
 
     def _resource_cls(self, filename):
         import lcg
@@ -3785,7 +3798,6 @@ class AttachmentStorage(object):
                     return thumbnail
         return None
         
-
     
 class FileAttachmentStorage(AttachmentStorage):
     """Simple AttachmentStorage API implementation storing files in a filesystem.
@@ -3833,13 +3845,13 @@ class FileAttachmentStorage(AttachmentStorage):
         if not base_uri.endswith(':'):
             # Example: base_uri = 'resource:' in webkit browser in wx forms.
             base_uri += '/'
-        return base_uri+filename
+        return base_uri + filename
     
     def _image_uri(self, filename):
-        return self._base_uri+'/resized/'+filename
+        return self._base_uri + '/resized/' + filename
     
     def _thumbnail_uri(self, filename):
-        return self._base_uri+'/thumbnails/'+filename
+        return self._base_uri + '/thumbnails/' + filename
     
     def _resource_src_file(self, filename):
         return os.path.join(self._directory, filename)
@@ -3851,7 +3863,8 @@ class FileAttachmentStorage(AttachmentStorage):
         return os.path.join(self._directory, 'thumbnails', filename)
     
     def insert(self, filename, data, values, transaction=None):
-        import lcg, PIL.Image
+        import lcg
+        import PIL.Image
         path = self._resource_src_file(filename)
         try:
             if not os.path.exists(self._directory):
@@ -3977,7 +3990,8 @@ class HttpAttachmentStorage(AttachmentStorage):
             access should be allowed by the server side.
             
         """
-        import random, string
+        import random
+        import string
         import config
         assert isinstance(uri, basestring) \
             and (uri.startswith('http://') or uri.startswith('https://'))
@@ -4010,7 +4024,7 @@ class HttpAttachmentStorage(AttachmentStorage):
             transaction.commit()
         
     def _connect(self, uri, body=None, headers={}):
-        import urllib2, httplib
+        import urllib2
         headers['User-Agent'] = 'Pytis/%s (HttpAttachmentStorage)' % pytis.__version__
         headers['X-Pytis-Attachment-Storage-Username'] = self._username
         headers['X-Pytis-Attachment-Storage-Key'] = self._key
@@ -4023,13 +4037,13 @@ class HttpAttachmentStorage(AttachmentStorage):
             raise self.StorageError(str(e))
             
     def _resource_uri(self, filename):
-        return self._uri+'/'+filename
+        return self._uri + '/' + filename
     
     def _image_uri(self, filename):
-        return self._uri+'/resized/'+filename
+        return self._uri + '/resized/' + filename
     
     def _thumbnail_uri(self, filename):
-        return self._uri+'/thumbnails/'+filename
+        return self._uri + '/thumbnails/' + filename
 
     def _json_data(self, uri):
         import json
@@ -4068,7 +4082,7 @@ class HttpAttachmentStorage(AttachmentStorage):
     
     def resource(self, filename, transaction=None):
         try:
-            info = self._json_data(self._uri+'/'+filename+'?action=info')
+            info = self._json_data(self._uri + '/' + filename + '?action=info')
         except self.StorageError:
             return None
         return self._resource(filename, **self._resource_kwargs(info))
@@ -4079,14 +4093,14 @@ class HttpAttachmentStorage(AttachmentStorage):
 
     def retrieve(self, filename, transaction=None):
         try:
-            return self._connect(self._uri+'/'+filename+'?action=retrieve')
+            return self._connect(self._uri + '/' + filename + '?action=retrieve')
         except self.StorageError:
             return None
    
     def insert(self, filename, data, values, transaction=None):
-        import mimetools, mimetypes, json
+        import mimetools
+        import json
         boundary = mimetools.choose_boundary()
-        content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
         body = ['--' + boundary,
                 'MIME-Version: 1.0',
                 'Content-Disposition: file; name="data"; filename="%s"' % filename.encode('utf-8'),
@@ -4101,9 +4115,10 @@ class HttpAttachmentStorage(AttachmentStorage):
                         headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
         
     def update(self, filename, values, transaction=None):
-        import urllib, json
+        import urllib
+        import json
         data = urllib.urlencode(dict(action='update', values=json.dumps(values)))
-        self._post_data(self._uri+'/'+filename, data)
+        self._post_data(self._uri + '/' + filename, data)
         
     
 class DbAttachmentStorage(AttachmentStorage):
@@ -4162,8 +4177,7 @@ class DbAttachmentStorage(AttachmentStorage):
                     self.end_headers()
                     self.wfile.write(data)
                     return
-            self.send_error(404,'Not Found: %s' % self.path)
-                
+            self.send_error(404, 'Not Found: %s' % self.path)
                 
     def __init__(self, table, ref_column, ref_value, base_uri):
         """Arguments:
@@ -4242,7 +4256,7 @@ class DbAttachmentStorage(AttachmentStorage):
             thumbnail_size = None
         return self._resource(row['file_name'].value(),
                               info=dict(byte_size=row['byte_size'].export(),
-                                        # Pass storage reference to make the storage 
+                                        # Pass storage reference to make the storage
                                         # live as long as necessary (see __del__).
                                         storage=self),
                               size=(row['width'].value(), row['height'].value()),
@@ -4250,16 +4264,17 @@ class DbAttachmentStorage(AttachmentStorage):
                               thumbnail_size=thumbnail_size)
 
     def _resource_uri(self, filename):
-        return self._base_uri+'/'+filename
+        return self._base_uri + '/' + filename
     
     def _image_uri(self, filename):
-        return self._base_uri+'/resized/'+filename
+        return self._base_uri + '/resized/' + filename
     
     def _thumbnail_uri(self, filename):
-        return self._base_uri+'/thumbnails/'+filename
+        return self._base_uri + '/thumbnails/' + filename
 
     def _image(self, filedata):
-        import PIL.Image, cStringIO
+        import PIL.Image
+        import cStringIO
         try:
             image = PIL.Image.open(cStringIO.StringIO(filedata))
         except IOError:
@@ -4280,8 +4295,8 @@ class DbAttachmentStorage(AttachmentStorage):
             else:
                 buffer_value, width, height = None, None, None
             row_values[column] = buffer_value
-            row_values[column+'_width'] = width
-            row_values[column+'_height'] = height
+            row_values[column + '_width'] = width
+            row_values[column + '_height'] = height
         return row_values
     
     def resource(self, filename, transaction=None):
@@ -4372,7 +4387,6 @@ class DbAttachmentStorage(AttachmentStorage):
         return None
     
 
-        
 class Specification(object):
     """Souhrnná specifikační třída sestavující specifikace automaticky.
 
@@ -4536,7 +4550,6 @@ class Specification(object):
         start with something else than underscore.
 
         """
-        import config
         # Read in and check roles
         try:
             roles_data = pytis.data.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
@@ -4553,7 +4566,8 @@ class Specification(object):
                                          (('shortname', S,), ('rights', S,), ('columns', S,),),
                                          connection_data, arguments=())
         def process(row):
-            shortname, rights_string, columns_string = row[0].value(), row[1].value(), row[2].value()
+            shortname, rights_string, columns_string = \
+                row[0].value(), row[1].value(), row[2].value()
             if columns_string:
                 columns = string.split(columns_string, ' ')
             else:
@@ -4579,16 +4593,20 @@ class Specification(object):
                     shortname_rights[c] = rights
         rights_data.select_map(process)
         # Transform access rights specifications to AccessRights instances
-        def process(column, permissions):            
+        def process(column, permissions):
             return (column, (None,) + tuple(permissions),)
         for shortname, rights in access_rights.items():
-            access_rights_spec = [process(column, permissions) for column, permissions in rights.items()]
+            access_rights_spec = [process(column, permissions)
+                                  for column, permissions in rights.items()]
             access_rights[shortname] = pytis.data.AccessRights(*access_rights_spec)
         # Forbid actions without any rights for the current user
-        actions_data = pytis.data.dbtable('e_pytis_action_rights', ('shortname', 'system', 'status',),
+        actions_data = pytis.data.dbtable('e_pytis_action_rights',
+                                          ('shortname', 'system', 'status',),
                                           connection_data)
-        condition = pytis.data.AND(pytis.data.EQ('system', pytis.data.Value(pytis.data.Boolean(), True)),
-                                   pytis.data.LE('status', pytis.data.Value(pytis.data.Integer(), 0)))
+        condition = pytis.data.AND(pytis.data.EQ('system',
+                                                 pytis.data.Value(pytis.data.Boolean(), True)),
+                                   pytis.data.LE('status',
+                                                 pytis.data.Value(pytis.data.Integer(), 0)))
         for value in actions_data.distinct('shortname', condition=condition):
             shortname = value.value()
             if shortname not in access_rights:
@@ -4610,20 +4628,20 @@ class Specification(object):
                 if isinstance(value, collections.Callable):
                     setattr(self, attr, value())
         assert self.fields, 'No fields defined for %s.' % str(self)
-        assert isinstance(self.fields, (list, tuple))
+        assert isinstance(self.fields, (list, tuple)), fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):
-            if not attr.startswith('_') and not attr.endswith('_spec') and \
-                   attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
-                                'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
-                                'data_access_rights', 'crypto_names',
-                                'oid', # for backward compatibility 
-                                ):
+            if ((not attr.startswith('_') and not attr.endswith('_spec') and
+                 attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
+                              'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
+                              'data_access_rights', 'crypto_names',
+                              'oid', # for backward compatibility
+                              ))):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
         if isinstance(self.bindings, (tuple, list)):
             # Only pass new style bindings to ViewSpec, old style bindings are accessed through the
-            # 'binding_spec' resolver function. 
+            # 'binding_spec' resolver function.
             self._view_spec_kwargs['bindings'] = self.bindings
         else:
             assert isinstance(self.bindings, dict)
@@ -4743,7 +4761,8 @@ class Specification(object):
             spec = self._view_spec
         except AttributeError:
             kwargs = self._view_spec_kwargs
-            spec = self._view_spec = self._create_view_spec(spec_name=self._action_spec_name(), **kwargs)
+            spec = self._view_spec = self._create_view_spec(spec_name=self._action_spec_name(),
+                                                            **kwargs)
         return spec
         
     def data_spec(self):
