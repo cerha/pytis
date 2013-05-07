@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-05-02 18:57+0200\n"
-"PO-Revision-Date: 2013-05-02 18:59+0200\n"
+"PO-Revision-Date: 2013-05-07 10:35+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -21,16 +21,16 @@ msgid "&Windows"
 msgstr "Okn&a"
 
 #: ../lib/pytis/form/application.py:194
-msgid "Zadejte své přihlašovací heslo, pro správu šifrovacích klíčů"
-msgstr ""
+msgid "Enter your login password for encryption keys management"
+msgstr "Zadejte své přihlašovací heslo, pro správu šifrovacích klíčů"
 
 #: ../lib/pytis/form/application.py:199
-msgid "Zadejte své přihlašovací heslo ještě jednou pro ověření"
-msgstr ""
+msgid "Enter your login password once more for verification"
+msgstr "Zadejte své přihlašovací heslo ještě jednou pro ověření"
 
 #: ../lib/pytis/form/application.py:205
-msgid "Zadaná hesla nejsou shodná"
-msgstr ""
+msgid "The passwords don't match"
+msgstr "Zadaná hesla nejsou shodná"
 
 #: ../lib/pytis/form/application.py:212
 msgid "Chybné heslo"
@@ -38,20 +38,20 @@ msgstr "Invalid password"
 
 #: ../lib/pytis/form/application.py:241
 #, python-format
-msgid "Zadejte heslo pro odemčení šifrovacího klíče oblasti %s."
-msgstr ""
+msgid "Enter the password to unlock the encryption area %s."
+msgstr "Zadejte heslo pro odemčení šifrovacího klíče oblasti %s."
 
 #: ../lib/pytis/form/application.py:243
-msgid "Patrně se jedná o vaše staré přihlašovací heslo."
-msgstr ""
+msgid "This is probably your old login password."
+msgstr "Patrně se jedná o vaše staré přihlašovací heslo."
 
 #: ../lib/pytis/form/application.py:244
-msgid "Heslo pro šifrovací klíč"
-msgstr ""
+msgid "Encryption key password"
+msgstr "Heslo pro šifrovací klíč"
 
 #: ../lib/pytis/form/application.py:308
-msgid "Neplatná formulářová třída v 'startup_forms':"
-msgstr ""
+msgid "Invalid form class in 'startup_forms':"
+msgstr "Neplatná formulářová třída v 'startup_forms':"
 
 #: ../lib/pytis/form/application.py:326
 #, python-format
@@ -59,12 +59,12 @@ msgid "Opening form: %s (%d/%d)"
 msgstr "Otevírám formulář: %s (%d/%d)"
 
 #: ../lib/pytis/form/application.py:343
-msgid "Automatické otevření uložených formulářů"
-msgstr ""
+msgid "Opening saved forms"
+msgstr "Automatické otevření uložených formulářů"
 
 #: ../lib/pytis/form/application.py:344
 msgid "Otevírám formulář"
-msgstr ""
+msgstr "Opening form"
 
 #: ../lib/pytis/form/application.py:414
 msgid "Commands"
@@ -104,60 +104,60 @@ msgstr "Zavřít aktivní okno"
 
 #: ../lib/pytis/form/application.py:524
 msgid "Closes the window of the active form."
-msgstr ""
+msgstr "Zavře okno aktivního formuláře."
 
 #: ../lib/pytis/form/application.py:549
-#, python-format
-msgid "Vyzvednout okno formuláře \"%s\" (%s/%s)"
-msgstr ""
+#, python-format, fuzzy
+msgid "Bring form window to the top (%s)"
+msgstr "Vyzvednout okno formuláře (%s)"
 
 #: ../lib/pytis/form/application.py:588
 #, python-format
-msgid "Otevřít formulář \"%s\" (%s/%s)"
-msgstr ""
+msgid "Open the form (%s)"
+msgstr "Otevřít formulář (%s)"
 
 #: ../lib/pytis/form/application.py:593
-msgid "Vyčistit"
-msgstr ""
+msgid "Clear"
+msgstr "Vyčistit"
 
 #: ../lib/pytis/form/application.py:594
-msgid "Vymazat menu posledně otevřených formulářů"
-msgstr ""
+msgid "Clear the menu of recent forms"
+msgstr "Vymazat menu posledně otevřených formulářů"
 
 #: ../lib/pytis/form/application.py:668 ../lib/pytis/form/inputfield.py:2624
 #: ../lib/pytis/form/inputfield.py:2649
-msgid "Název"
-msgstr ""
+msgid "Title"
+msgstr "Název"
 
 #: ../lib/pytis/form/application.py:668
-msgid "Typ"
-msgstr ""
+msgid "Type"
+msgstr "Typ"
 
 #: ../lib/pytis/form/application.py:769 ../lib/pytis/form/event.py:62
 msgid "Stop"
-msgstr ""
+msgstr "Stop"
 
 #: ../lib/pytis/form/application.py:850
-msgid "Spouštím formulář..."
-msgstr ""
+msgid "Opening form..."
+msgstr "Spouštím formulář..."
 
 #: ../lib/pytis/form/application.py:864
 #, python-format
-msgid "Formulář \"%s\" nalezen na zásobníku oken."
-msgstr ""
+msgid "Form \"%s\" found between opened windows."
+msgstr "Formulář \"%s\" nalezen na zásobníku oken."
 
 #: ../lib/pytis/form/application.py:888
 #, python-format
-msgid "Formulář se nepodařilo vytvořit: %s"
-msgstr ""
+msgid "Form creation failed: %s"
+msgstr "Formulář se nepodařilo vytvořit: %s"
 
 #: ../lib/pytis/form/application.py:956
-msgid "Do tohoto formuláře nelze vkládat."
-msgstr ""
+msgid "This form doesn't allow insertion."
+msgstr "Do tohoto formuláře nelze vkládat."
 
 #: ../lib/pytis/form/application.py:974
-msgid "Spouštím proceduru..."
-msgstr ""
+msgid "Running procedure..."
+msgstr "Spouštím proceduru..."
 
 #: ../lib/pytis/form/application.py:983
 msgid "Specifikace procedur 'proc_spec' musí vracet slovník!"
@@ -169,122 +169,122 @@ msgid "Specifikace procedur neobsahuje definici '%s'"
 msgstr ""
 
 #: ../lib/pytis/form/application.py:1198
-msgid "Posledně otevřené formuláře"
-msgstr ""
+msgid "Recently opened forms"
+msgstr "Posledně otevřené formuláře"
 
 #: ../lib/pytis/form/application.py:1287
-msgid "Spuštění formuláře zamítnuto."
-msgstr ""
+msgid "Opening form refused."
+msgstr "Spuštění formuláře zamítnuto."
 
 #: ../lib/pytis/form/application.py:1345 ../lib/pytis/form/application.py:1481
-msgid "Opravdu chcete záznam zcela vymazat?"
-msgstr ""
+msgid "Are you sure to delete the record permanently?"
+msgstr "Opravdu chcete záznam zcela vymazat?"
 
 #: ../lib/pytis/form/application.py:1370
-msgid "V tomto formuláři nelze mazat."
-msgstr ""
+msgid "This form doesn't allow deletion."
+msgstr "V tomto formuláři nelze mazat."
 
 #: ../lib/pytis/form/application.py:1434
-msgid "Přístup odmítnut"
-msgstr ""
+msgid "Access denied"
+msgstr "Přístup odmítnut"
 
 #: ../lib/pytis/form/application.py:1441
-msgid "Přihlášení pro přístup do databáze"
-msgstr ""
+msgid "Log in for database access"
+msgstr "Přihlášení pro přístup do databáze"
 
 #: ../lib/pytis/form/application.py:1442
-msgid "Uživatelské jméno"
-msgstr ""
+msgid "Login"
+msgstr "Uživatelské jméno"
 
 #: ../lib/pytis/form/application.py:1445 ../lib/pytis/form/application.py:1857
-msgid "Heslo"
-msgstr ""
+msgid "Password"
+msgstr "Heslo"
 
 #: ../lib/pytis/form/application.py:1464 ../lib/pytis/form/application.py:1469
-msgid "Databázová chyba"
-msgstr ""
+msgid "Database error"
+msgstr "Databázová chyba"
 
 #: ../lib/pytis/form/application.py:1468
-msgid "Zkusit znovu?"
-msgstr ""
+msgid "Try again?"
+msgstr "Zkusit znovu?"
 
 #: ../lib/pytis/form/application.py:1851
-msgid "Zadejte heslo"
-msgstr ""
+msgid "Enter your password"
+msgstr "Zadejte heslo"
 
 #: ../lib/pytis/form/command.py:303
 #, python-format
-msgid "Vyvolání příkazu zamítnuto: %s"
-msgstr ""
+msgid "Command invocation refused: %s"
+msgstr "Vyvolání příkazu zamítnuto: %s"
 
 #: ../lib/pytis/form/commands_.py:506
-msgid "Nápověda systému Pytis"
-msgstr ""
+msgid "Pytis Help"
+msgstr "Nápověda systému Pytis"
 
 #: ../lib/pytis/form/commands_.py:507
-msgid "Zobrazit uživatelskou příručku popisující ovládání aplikace"
-msgstr ""
+msgid "Open the user's manual describing work with the application in general"
+msgstr "Zobrazit uživatelskou příručku popisující ovládání aplikace"
 
 #: ../lib/pytis/form/commands_.py:511
-msgid "Nápověda k aktuálnímu formuláři"
-msgstr ""
+msgid "Help for the current form"
+msgstr "Nápověda k aktuálnímu formuláři"
 
 #: ../lib/pytis/form/commands_.py:512
 msgid ""
-"Zobrazit podrobnou nápovědu k aktuálnímu formuláři v prohlížeči nápovědy"
-msgstr ""
+"Open the detailed description of the current form in the help browser"
+msgstr "Zobrazit podrobnou nápovědu k aktuálnímu formuláři v prohlížeči nápovědy"
 
 #: ../lib/pytis/form/commands_.py:515
-msgid "Popis aktuálního formuláře"
-msgstr ""
+msgid "Current form description"
+msgstr "Popis aktuálního formuláře"
 
 #: ../lib/pytis/form/commands_.py:516
-msgid "Zobrazit popis aktuálního formuláře v samostatném okně"
-msgstr ""
+msgid "Display a breif description of the current form"
+msgstr "Zobrazit stručný popis aktuálního formuláře"
 
 #: ../lib/pytis/form/commands_.py:519
-msgid "Zobrazit menu agregačních funkcí"
-msgstr ""
+msgid "Show aggregation functions menu"
+msgstr "Zobrazit menu agregačních funkcí"
 
 #: ../lib/pytis/form/commands_.py:520
-msgid "Zobrazit menu agregačních funkcí pro aktivní formulář"
-msgstr ""
+msgid "Show the menu of aggregation functions for the current form"
+msgstr "Zobrazit menu agregačních funkcí pro aktivní formulář"
 
 #: ../lib/pytis/form/commands_.py:523
-msgid "Zobrazit tiskové menu"
-msgstr ""
+msgid "Show print menu"
+msgstr "Zobrazit tiskové menu"
 
 #: ../lib/pytis/form/commands_.py:524
-msgid "Zobrazit menu tiskových sestav pro aktivní formulář"
-msgstr ""
+msgid "Show the menu of print reports for the current form"
+msgstr "Zobrazit menu tiskových sestav pro aktivní formulář"
 
 #: ../lib/pytis/form/commands_.py:527 ../lib/pytis/form/form.py:1101
-msgid "Skok na záznam"
-msgstr ""
+msgid "Jump to record"
+msgstr "Skok na záznam"
 
 #: ../lib/pytis/form/commands_.py:528
-msgid "Skok na záznam podle čísla řádku."
-msgstr ""
+msgid "Jump to record by row number"
+msgstr "Skok na záznam podle čísla řádku"
 
 #: ../lib/pytis/form/commands_.py:531
-msgid "Hledat"
-msgstr ""
+msgid "Search"
+msgstr "Hledat"
 
 #: ../lib/pytis/form/commands_.py:532
 msgid "Vyhledávat záznam podle zadaných podmínek."
 msgstr ""
 
 #: ../lib/pytis/form/commands_.py:535
-msgid "Hledat další"
-msgstr ""
+msgid "Search next"
+msgstr "Hledat další"
 
 #: ../lib/pytis/form/commands_.py:536
 msgid "Vyhledat další záznam odpovídající zadaným podmínkám."
 msgstr ""
 
 #: ../lib/pytis/form/commands_.py:539
-msgid "Hledat předchozí"
-msgstr ""
+msgid "Search previous"
+msgstr "Hledat předchozí"
 
 #: ../lib/pytis/form/commands_.py:540
 msgid "Vyhledat předchozí záznam odpovídající zadaným podmínkám."
