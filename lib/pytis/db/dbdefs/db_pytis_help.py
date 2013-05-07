@@ -127,7 +127,7 @@ class EvPytisHelp(sql.SQLView):
                 whereclause='nlevel(position) >= 2'
                 )
         def select_2():
-            generate_series__0__0__ = sqlalchemy.select(["*"], from_obj=["generate_series(0, 0)"])
+            series = sqlalchemy.select(["*"], from_obj=["generate_series(0, 0)"]).alias('series')
             return sqlalchemy.select(
                 sql.reorder_columns([sql.gL("'menu/'").label('help_id'),
                 sql.gL("null").label('menuid'),
@@ -146,7 +146,7 @@ class EvPytisHelp(sql.SQLView):
                 sql.gL("(select count(*) from e_pytis_menu)").label('position_nsub'),
                 sql.gL("false").label('changed'),
                 sql.gL("false").label('removed')], ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help', 'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord', 'content', 'position', 'position_nsub', 'changed', 'removed']),
-                from_obj=[generate_series__0__0__]
+                from_obj=[series]
                 )
         set_1 = sqlalchemy.union(select_1(), select_2())
         def select_3():

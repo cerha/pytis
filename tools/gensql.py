@@ -2503,7 +2503,7 @@ class _GsqlViewNG(Select):
         if condition is not None:
             items[-1] += '        return %s' % (condition,)
         if self._name == 'ev_pytis_menu_structure':
-            items.append('    join_columns = ((sql.c.APytisActionsStructure.fullname, sql.c.CPytisMenuActions.fullname),)')
+            items.append('    @classmethod\n    def join_columns(class_):\n        return ((sql.c.APytisActionsStructure.fullname, sql.c.CPytisMenuActions.fullname),)')
         def quote(command):
             if '\n' in command:
                 command = '""%s""' % (command,)
