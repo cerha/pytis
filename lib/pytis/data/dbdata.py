@@ -125,10 +125,10 @@ class DBData(Data):
             assert not filter(lambda b: not isinstance(b, DBBinding),
                               arguments), \
                    ('Invalid "argument" type', arguments)
-        if __debug__: log(DEBUG, 'Bindings databázové instance', self._bindings)
+        if __debug__: log(DEBUG, 'Database instance bindings:', self._bindings)
         columns, key = self._db_bindings_to_column_spec(self._bindings)
-        if __debug__: log(DEBUG, 'Sloupce databázové instance:', columns)
-        if __debug__: log(DEBUG, 'Klíč databázové instance:', key)
+        if __debug__: log(DEBUG, 'Database instance columns:', columns)
+        if __debug__: log(DEBUG, 'Database instance key:', key)
         self._distinct_on = distinct_on
         assert is_sequence(crypto_names), crypto_names
         if __debug__:
@@ -209,7 +209,7 @@ class DBData(Data):
         opět uvolnit zdroje, je nutno tuto metodu zavolat znovu.
 
         """
-        if __debug__: log(DEBUG, 'Uspání')
+        if __debug__: log(DEBUG, 'Sleep')
         self.close()
 
     def arguments(self):
@@ -229,7 +229,7 @@ class DBData(Data):
 class DBConnectionPool:
 
     def __init__(self, connection_creator, connection_closer):
-        if __debug__: log(DEBUG, 'Vytvářím nový pool')
+        if __debug__: log(DEBUG, 'Creating a new pool')
         self._lock = thread.allocate_lock()
         self._pool = {}
         self._connection_creator = connection_creator
@@ -278,7 +278,7 @@ class DBConnectionPool:
                     broken_connections_present = True
                 else:
                     c = c_candidate
-                    if __debug__: log(DEBUG, 'Spojení k dispozici', connections)
+                    if __debug__: log(DEBUG, 'Available connections:', connections)
                     break
             if c is None or broken_connections_present:
                 gc.collect()
@@ -286,17 +286,17 @@ class DBConnectionPool:
                 if (config.connection_limit is not None and
                     len(allocated_connections) >= config.connection_limit):
                     if __debug__:
-                        log(EVENT, "Přehled evidovaných spojení:")
+                        log(EVENT, "Connections summary:")
                         for c in allocated_connections.keys():
-                            log(EVENT, "Spojení:", c.connection_info('last_access'))
-                    raise DBSystemException(_(u"Příliš mnoho databázových spojení"))
+                            log(EVENT, "Connection:", c.connection_info('last_access'))
+                    raise DBSystemException(_(u"Too many database connections"))
                 else:
                     c = self._connection_creator(connection_spec)
-                    if __debug__: log(DEBUG, 'Vytvořeno nové spojení:', c)
+                    if __debug__: log(DEBUG, 'New connection created:', c)
                     allocated_connections[c] = True
             return c
         c = with_lock(self._lock, lfunction)
-        if __debug__: log(DEBUG, 'Předávám spojení:', c)
+        if __debug__: log(DEBUG, 'Passing connection:', c)
         return c
 
     def put_back(self, connection_spec, connection):
@@ -312,7 +312,7 @@ class DBConnectionPool:
                 len(connections) < config.max_pool_connections):
                 connections.append(connection)
         with_lock(self._lock, lfunction)
-        if __debug__: log(DEBUG, 'Do poolu vráceno spojení:', connection)
+        if __debug__: log(DEBUG, 'Connection returned to pool:', connection)
 
     def flush(self, close):
         def lfunction():

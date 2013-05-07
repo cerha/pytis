@@ -314,7 +314,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                 connection_ = self._pgnotif_connection
                 connection = connection_.connection()
                 if __debug__:
-                    log(DEBUG, 'Hlídám vstup', connection)
+                    log(DEBUG, 'Listening for notifications:', connection)
                 def lfunction():
                     cursor = connection.cursor()
                     try:
@@ -327,10 +327,10 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                     select.select([fileno], [], [], None)
                 except Exception as e:
                     if __debug__:
-                        log(DEBUG, 'Chyba na socketu', e.args)
+                        log(DEBUG, 'Socket error', e.args)
                     break
                 if __debug__:
-                    log(DEBUG, 'Přišel vstup')
+                    log(DEBUG, 'Input received')
                 def lfunction():
                     notifications = []
                     try:
@@ -346,7 +346,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                         notifies = connection.notifies
                         if notifies:
                             if __debug__:
-                                log(DEBUG, 'Zaregistrována změna dat')
+                                log(DEBUG, 'Data change registered')
                             notifications = []
                             while notifies:
                                 notifications.append(notifies.pop()[1])
@@ -355,7 +355,7 @@ class DBAPIData(_DBAPIAccessor, DBDataPostgreSQL):
                                             self._pg_query_lock,),
                                            lfunction)
                 if __debug__:
-                    log(DEBUG, 'Načteny notifikace:', notifications)
+                    log(DEBUG, 'Notifications received:', notifications)
                 self._notif_invoke_callbacks(notifications)
 
 

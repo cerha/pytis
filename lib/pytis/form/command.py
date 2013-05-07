@@ -233,8 +233,7 @@ class Command(object):
         'LookupForm.COMMAND_SORT'.
 
         """
-        assert issubclass(handler, CommandHandler), \
-               "Not a CommandHandler subclass: %s" % handler
+        assert issubclass(handler, CommandHandler), handler
         assert isinstance(name, basestring) and name == name.upper(), (name, type(name))
         assert doc is None or isinstance(doc, basestring)
         self._handler = handler
@@ -297,7 +296,7 @@ class Command(object):
                 kind = EVENT
             else:
                 kind = DEBUG
-            log(kind, 'Vyvolán příkaz:', (self, kwargs))
+            log(kind, 'Invoking command:', (self, kwargs))
             return self._handler.invoke_command(self, **kwargs)
         else:
             message(_(u"Command invocation refused: %s") % self.id(), beep_=True)
