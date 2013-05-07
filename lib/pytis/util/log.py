@@ -46,7 +46,6 @@ Tento modul je doporučeno importovat následujícím způsobem:
 """
 
 import getpass
-import gettext
 import inspect
 import os
 import socket
@@ -88,10 +87,6 @@ class Logger(object):
         """Inicializuj logger."""
         import config
         globals()['config'] = locals()['config']
-        try:
-            self._translator = gettext.translation('pytis', languages=('en',))
-        except IOError:
-            self._translator = None
         self._host = socket.gethostname()
         self._database = config.dbname
         self._module_filter = config.log_module_filter
@@ -152,13 +147,6 @@ class Logger(object):
                         or not some(lambda c: issubclass(self._class_, c), self._class_filter)):
                 return False
         return True
-
-    def _translated(self, message):
-        translator = self._translator
-        if translator:
-            return self._translator.gettext(message)
-        else:
-            return message
 
     def _prefix(self, kind, message, data):
         datetime = time.strftime('%Y-%m-%d %H:%M:%S',
@@ -229,14 +217,13 @@ class Logger(object):
             stejný řádek jako 'message'
           data -- libovolná data; tento argument není nutno klíčovat
 
-        """        
+        """
         assert kind in (OPERATIONAL, ACTION, EVENT, DEBUG), \
-               ('invalid logging kind', kind)
+            ('invalid logging kind', kind)
         assert is_anystring(message)
         self._retrieve_info()
         if not self._is_accepted(kind, message, data):
             return
-        message = self._translated(message)
         formatted = self._formatted(kind, message, data)
         self._send(kind, formatted)
 
