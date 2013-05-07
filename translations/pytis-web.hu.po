@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-23 19:20+0200\n"
+"POT-Creation-Date: 2013-05-07 12:13+0200\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -21,26 +21,26 @@ msgstr ""
 msgid "Submit"
 msgstr ""
 
-#: ../lib/pytis/web/field.py:637
+#: ../lib/pytis/web/field.py:633
 msgid "today"
 msgstr ""
 
 #. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../lib/pytis/web/field.py:679 ../lib/pytis/web/field.py:725
+#: ../lib/pytis/web/field.py:675 ../lib/pytis/web/field.py:721
 msgid "Yes"
 msgstr ""
 
-#: ../lib/pytis/web/field.py:679 ../lib/pytis/web/field.py:725
+#: ../lib/pytis/web/field.py:675 ../lib/pytis/web/field.py:721
 msgid "No"
 msgstr ""
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:699
+#: ../lib/pytis/web/field.py:695
 msgid "image"
 msgstr ""
 
-#: ../lib/pytis/web/field.py:701
+#: ../lib/pytis/web/field.py:697
 msgid "file"
 msgstr ""
 
