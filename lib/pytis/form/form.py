@@ -981,7 +981,7 @@ class LookupForm(InnerForm):
                 row = self._query_fields_row()
                 if row is None:
                     # If None is returned, we use UNKNOWN_ARGUMENTS to make an
-                    # empty dummy sellect without calling the underlying
+                    # empty dummy select without calling the underlying
                     # database function.
                     arguments = self._data.UNKNOWN_ARGUMENTS
                 else:

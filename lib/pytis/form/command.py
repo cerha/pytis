@@ -300,7 +300,7 @@ class Command(object):
             log(kind, 'Vyvolán příkaz:', (self, kwargs))
             return self._handler.invoke_command(self, **kwargs)
         else:
-            message(_(u"Vyvolání příkazu zamítnuto: %s") % self.id(), beep_=True)
+            message(_(u"Command invocation refused: %s") % self.id(), beep_=True)
             return False
     
     def __cmp__(self, other):

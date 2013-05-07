@@ -503,40 +503,40 @@ COMMAND_ICONS = (
 class UICommands(object):
     PYTIS_HELP = UICommand(
         Application.COMMAND_HELP(topic='pytis'),
-        _(u"Nápověda systému Pytis"),
-        _(u"Zobrazit uživatelskou příručku popisující ovládání aplikace")
+        _(u"Pytis Help"),
+        _(u"Open the user's manual describing work with the application in general")
         )
     HELP = UICommand(
         Form.COMMAND_HELP(),
-        _(u"Nápověda k aktuálnímu formuláři"),
-        _(u"Zobrazit podrobnou nápovědu k aktuálnímu formuláři v prohlížeči nápovědy"))
+        _(u"Help for the current form"),
+        _(u"Open the detailed description of the current form in the help browser"))
     DESCRIBE = UICommand(
         InnerForm.COMMAND_DESCRIBE(),
-        _(u"Popis aktuálního formuláře"),
-        _(u"Zobrazit popis aktuálního formuláře v samostatném okně"))
+        _(u"Current form description"),
+        _(u"Display a breif description of the current form"))
     AGGREGATION_MENU = UICommand(
         InnerForm.COMMAND_AGGREGATION_MENU(),
-        _(u"Zobrazit menu agregačních funkcí"),
-        _(u"Zobrazit menu agregačních funkcí pro aktivní formulář"))
+        _(u"Show aggregation functions menu"),
+        _(u"Show the menu of aggregation functions for the current form"))
     PRINT_MENU = UICommand(
         InnerForm.COMMAND_PRINT_MENU(),
-        _(u"Zobrazit tiskové menu"),
-        _(u"Zobrazit menu tiskových sestav pro aktivní formulář"))
+        _(u"Show print menu"),
+        _(u"Show the menu of print reports for the current form"))
     JUMP = UICommand(
         LookupForm.COMMAND_JUMP(),
-        _(u"Skok na záznam"),
-        _(u"Skok na záznam podle čísla řádku."))
+        _(u"Jump to record"),
+        _(u"Jump to record by row number"))
     SEARCH = UICommand(
         LookupForm.COMMAND_SEARCH(),
-        _(u"Hledat"),
+        _(u"Search"),
         _(u"Vyhledávat záznam podle zadaných podmínek."))
     SEARCH_NEXT = UICommand(
         LookupForm.COMMAND_SEARCH(next=True),
-        _(u"Hledat další"),
+        _(u"Search next"),
         _(u"Vyhledat další záznam odpovídající zadaným podmínkám."))
     SEARCH_PREVIOUS = UICommand(
         LookupForm.COMMAND_SEARCH(next=True, back=True),
-        _(u"Hledat předchozí"),
+        _(u"Search previous"),
         _(u"Vyhledat předchozí záznam odpovídající zadaným podmínkám."))
     INCREMENTAL_SEARCH = UICommand(
         ListForm.COMMAND_INCREMENTAL_SEARCH(),

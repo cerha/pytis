@@ -2621,7 +2621,7 @@ class StructuredTextField(TextField):
             Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX),
-            Field('title', _(u"Název"), width=50,
+            Field('title', _(u"Title"), width=50,
                   descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
                           u"prázdné, pokud chcete zobrazit přímo název souboru.")),
             Field('tooltip', _(u"Tooltip"), width=50,
@@ -2646,7 +2646,7 @@ class StructuredTextField(TextField):
                   descr=_(u"Zadejte absolutní URL ve tvaru např. "
                           u"http://www.mojefirma.com nebo\n"
                           u"lokální adresu jako např. identifikátor jiné stránky v CMS.")),
-            Field('title', _(u"Název"), width=50,
+            Field('title', _(u"Title"), width=50,
                   descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
                           u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
                           u"předchozím políčku.")),

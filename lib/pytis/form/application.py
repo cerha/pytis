@@ -191,18 +191,18 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 condition = pytis.data.EQ('fresh', pytis.data.bval(False))
                 established_names = data.select_map(identity, condition=condition)
                 while True:
-                    message = _(u"Zadejte své přihlašovací heslo, pro správu šifrovacích klíčů")
+                    message = _(u"Enter your login password for encryption keys management")
                     crypto_password = password_dialog(message=message)
                     if not crypto_password:
                         break
                     if not established_names:
-                        message = _(u"Zadejte své přihlašovací heslo ještě jednou pro ověření")
+                        message = _(u"Enter your login password once more for verification")
                         crypto_password_repeated = password_dialog(message=message)
                         if crypto_password == crypto_password_repeated:
                             crypto_password = rsa_encrypt(db_key, crypto_password)
                             break
                         else:
-                            run_dialog(pytis.form.Error, _(u"Zadaná hesla nejsou shodná"))
+                            run_dialog(pytis.form.Error, _(u"The passwords don't match"))
                     else:
                         crypto_password = rsa_encrypt(db_key, crypto_password)
                         if pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
@@ -238,10 +238,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     bad = True
                 else:
                     break                
-                message = _(u"Zadejte heslo pro odemčení šifrovacího klíče oblasti %s.") % name
+                message = _(u"Enter the password to unlock the encryption area %s.") % name
                 if bad:
-                    message += "\n(" + _(u"Patrně se jedná o vaše staré přihlašovací heslo.") + ")"
-                password = password_dialog(_(u"Heslo pro šifrovací klíč"), message=message)
+                    message += "\n(" + _(u"This is probably your old login password.") + ")"
+                password = password_dialog(_(u"Encryption key password"), message=message)
                 if not password:
                     break
                 password = rsa_encrypt(db_key, password)
@@ -305,7 +305,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         if not issubclass(cls, Form):
                             raise AttributeError
                     except AttributeError:
-                        self.run_dialog(Error, _(u"Neplatná formulářová třída v 'startup_forms':") +
+                        self.run_dialog(Error, _(u"Invalid form class in 'startup_forms':") +
                                         ' '+ cls_name)
                         continue
                 else:
@@ -340,8 +340,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 i += 1
         if len(startup_forms) > 1:
             run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
-                       title=_(u"Automatické otevření uložených formulářů"),
-                       message=_(u"Otevírám formulář")+' '*40) #, can_abort=True)
+                       title=_(u"Opening saved forms"),
+                       message=_(u"Opening form")+' '*40) #, can_abort=True)
             # In wx2.8, keyboard navigation doesn't work now.  The following
             # lines raise the previous form and then back the top form, which
             # fixes the problem.  Running a Message dialog instead also helps,
@@ -546,8 +546,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _update_window_menu(self):
         def wmitem(i, form):
             return CheckItem(acceskey_prefix(i) + self._form_menu_item_title(form),
-                             help=_('Vyzvednout okno formuláře "%s" (%s/%s)') %\
-                             (form.title(),form.__class__.__name__,form.name()),
+                             help=_("Bring form window to the top (%s)",
+                                    form.__class__.__name__ +'/'+ form.name()),
                              command=Application.COMMAND_RAISE_FORM,
                              state=lambda : top_window() is form,
                              args={'form': form})
@@ -585,13 +585,13 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 
     def _recent_forms_menu_items(self):
         items = [MItem(acceskey_prefix(i) + title,
-                       help=_('Otevřít formulář "%s" (%s/%s)') %
-                            (title, args['form_class'].__name__, args['name']),
+                       help=_("Open the form (%s)",
+                              args['form_class'].__name__ +'/'+ args['name']),
                        command=Application.COMMAND_RUN_FORM, args=args)
                  for i, (title, args) in enumerate(self._recent_forms)]
         items.append(MSeparator())
-        items.append(MItem(_(u"Vyčistit"),
-                           help=_(u"Vymazat menu posledně otevřených formulářů"),
+        items.append(MItem(_(u"Clear"),
+                           help=_(u"Clear the menu of recent forms"),
                            command=Application.COMMAND_CLEAR_RECENT_FORMS))
         return items
         
@@ -665,7 +665,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if forms:
                 items = [(checked, title, cls.descr()) for cls, name, title, checked in forms]
                 save_state = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
-                exit, result = self.run_dialog(ExitDialog, save_columns=(_(u"Název"), _(u"Typ")),
+                exit, result = self.run_dialog(ExitDialog, save_columns=(_(u"Title"), _(u"Type")),
                                                save_items=items, save_state=save_state)
                 if not exit:
                     return False
@@ -847,7 +847,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if name is None:
                     return None
             log(ACTION, 'Vytvářím nový formulář:', (form_class, name, kwargs))
-            message(_(u"Spouštím formulář..."), root=True)
+            message(_(u"Opening form..."), root=True)
             assert issubclass(form_class, Form)
             assert name is None or isinstance(name, basestring) # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
@@ -861,7 +861,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if form is not None:
                 busy_cursor(False)
                 self._raise_form(form)
-                message(_('Formulář "%s" nalezen na zásobníku oken.') % form.title())
+                message(_('Form "%s" found between opened windows.') % form.title())
                 if 'select_row' in kwargs and kwargs['select_row'] is not None:
                     form.select_row(kwargs['select_row'])
                 if 'filter' in kwargs and kwargs['filter'] is not None:
@@ -885,10 +885,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 form = None
             if form is None:
                 busy_cursor(False)
-                self.run_dialog(Error, _(u"Formulář se nepodařilo vytvořit: %s") % name)
+                self.run_dialog(Error, _(u"Form creation failed: %s") % name)
             else:
                 if isinstance(form, PopupForm):
-                    log(EVENT, "Zobrazuji modální formulář:", form)
+                    log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
                     message('', root=True)
                     form.show()
@@ -896,8 +896,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     try:
                         form_str = str(form) # Dead form doesn't speak...
                         result = form.run()
-                        log(EVENT, "Modální formulář byl uzavřen:", form_str)
-                        log(EVENT, "Návratová hodnota:", result)
+                        log(EVENT, "Modal form closed:", form_str)
+                        log(EVENT, "Return value:", result)
                     finally:
                         self._modals.pop()
                         busy_cursor(False)
@@ -909,7 +909,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     else:
                         self._panel.SetFocus()
                 else:
-                    log(EVENT, "Zobrazuji nemodální formulář:", form)
+                    log(EVENT, "Opening non-modal form:", form)
                     old = self._windows.active()
                     if old is not None:
                         old.hide()
@@ -953,7 +953,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 top.refresh()
         else:
             if view.arguments() is not None:
-                message(_(u"Do tohoto formuláře nelze vkládat."), beep_=True)
+                message(_(u"This form doesn't allow insertion."), beep_=True)
                 return None
             result = run_form(PopupInsertForm, name, prefill=prefill, inserted_data=inserted_data,
                               multi_insert=multi_insert, transaction=transaction,
@@ -971,18 +971,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Dokumentace viz funkce run_procedure().
         result = None
         try:
-            message(_(u"Spouštím proceduru..."), root=True, timeout=2)
-            log(ACTION, 'Spouštím proceduru:',
+            message(_(u"Running procedure..."), root=True, timeout=2)
+            log(ACTION, 'Running procedure:',
                 (spec_name, proc_name, args, kwargs))
             # Kvůli wx.SafeYield() se ztrácí focus, takže
             # si ho uložíme a pak zase obnovíme.
             focused = wx_focused_window()
             wx_yield_()
             spec = resolver().get(spec_name, 'proc_spec')
-            assert is_dictionary(spec), \
-                   _(u"Specifikace procedur 'proc_spec' musí vracet slovník!")
-            assert proc_name in spec, \
-                  _(u"Specifikace procedur neobsahuje definici '%s'") % proc_name
+            assert is_dictionary(spec), spec
+            assert proc_name in spec, (proc_name, spec)
             proc = spec[proc_name]
             if block_refresh_:
                 result = block_refresh(proc, *args, **kwargs)
@@ -1194,14 +1192,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._panel.SetFocus()
 
     def recent_forms_menu(self):
-        """Vrať menu posledně otevřených formulářů jako instanci 'Menu'."""
-        menu = Menu(_(u"Posledně otevřené formuláře"),
+        """Return the menu of recently opened forms as 'Menu' instance."""
+        menu = Menu(_(u"Recently opened forms"),
                     self._recent_forms_menu_items(), allow_autoindex=False)
         self._recent_forms_menu = menu
         return menu
 
     def wx_frame(self):
-        """Vrať instancí 'wx.Frame' hlavního okna aplikace."""
+        """Return the main application frame as 'wx.Frame' instance."""
         return self._frame
 
     def login_hook(self, success):
@@ -1284,7 +1282,7 @@ def run_form(form_class, name=None, **kwargs):
     cmd = Application.COMMAND_RUN_FORM
     kwargs = dict(form_class=form_class, name=name, **kwargs)
     if not cmd.enabled(**kwargs):
-        message(_(u"Spuštění formuláře zamítnuto."), beep_=True)
+        message(_(u"Opening form refused."), beep_=True)
         return False
     return cmd.invoke(**kwargs)
 
@@ -1342,7 +1340,7 @@ def new_record(name, prefill=None, inserted_data=None, multi_insert=True,
     return Application.COMMAND_NEW_RECORD.invoke(**locals())
 
 def delete_record(view, data, transaction, record,
-                  question=_(u"Opravdu chcete záznam zcela vymazat?")):
+                  question=_(u"Are you sure to delete the record permanently?")):
     # This is here only to prevent duplication of code in form.py and inputfield.py.
     # It Shound not be used as a public API method.
     ask = True
@@ -1367,7 +1365,7 @@ def delete_record(view, data, transaction, record,
             raise ProgramError("Invalid 'on_delete_record' return value.", result)
     else:
         if data.arguments() is not None:
-            message(_(u"V tomto formuláři nelze mazat."), beep_=True)
+            message(_(u"This form doesn't allow deletion."), beep_=True)
             return False
         op, arg = data.delete, key
     if ask and not run_dialog(Question, question):
@@ -1431,18 +1429,18 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 _application.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException as e:
-            run_dialog(Error, _(u"Přístup odmítnut"))
+            run_dialog(Error, _(u"Access denied"))
             return FAILURE
         except pytis.data.DBLoginException as e:
             import config
             if config.dbconnection.password() is not None and _application:
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
-            login_result = run_form(InputForm, title=_(u"Přihlášení pro přístup do databáze"),
-                                    fields=(Field('login', _(u"Uživatelské jméno"),
+            login_result = run_form(InputForm, title=_(u"Log in for database access"),
+                                    fields=(Field('login', _(u"Login"),
                                                   width=24, not_null=True,
                                                   default=config.dbuser),
-                                            Field('password', _(u"Heslo"),
+                                            Field('password', _(u"Password"),
                                                   type=pytis.data.Password(verify=False),
                                                   width=24, not_null=True),),
                                     focus_field='password')
@@ -1461,12 +1459,12 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if quiet:
                 return FAILURE
             if in_transaction:
-                run_dialog(Message, message, title=_(u"Databázová chyba"),
+                run_dialog(Message, message, title=_(u"Database error"),
                            icon=Message.ICON_ERROR)
                 return FAILURE
             else:
-                message += '\n' + _(u"Zkusit znovu?")
-                if not run_dialog(Question, message, title=_(u"Databázová chyba"),
+                message += '\n' + _(u"Try again?")
+                if not run_dialog(Question, message, title=_(u"Database error"),
                                   icon=Question.ICON_ERROR):
                     return FAILURE
 
@@ -1476,13 +1474,13 @@ def delete_record_question(msg=None):
     Vrať pravdu, právě když uživatel odpoví kladně.
     
     """
-    log(EVENT, u'Dialog mazání řádku')
+    log(EVENT, 'Record deletion dialog')
     if msg == None:
-        msg = _(u"Opravdu chcete záznam zcela vymazat?")        
+        msg = _(u"Are you sure to delete the record permanently?")        
     if not run_dialog(Question, msg):
-        log(EVENT, u'Mazání řádku uživatelem zamítnuto')
+        log(EVENT, 'Record deletion refused by user')
         return False
-    log(EVENT, u'Mazání řádku uživatelem potvrzeno')
+    log(EVENT, u'Record deletion confirmed by user')
     return True
 
 # Funkce, které jsou obrazem veřejných metod aktuální aplikace.
@@ -1848,13 +1846,13 @@ def block_yield(block=False):
     _yield_blocked = block
 
 
-def password_dialog(title=_(u"Zadejte heslo"), message=None):
+def password_dialog(title=_(u"Enter your password"), message=None):
     if message:
         layout = (pytis.form.Text(message), 'password')
     else:
         layout = ('password',)
     result = run_form(InputForm, title=title,
-                      fields=(Field('password', _(u"Heslo"),
+                      fields=(Field('password', _(u"Password"),
                                     type=pytis.data.Password, verify=False,
                                     width=40, not_null=True),),
                       layout=layout)
