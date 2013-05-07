@@ -347,7 +347,7 @@ class Type(object):
         nepodporují, vrací dvojici (None, ERROR).
 
         """
-        msg = _(u"Hvězdičkové výrazy nejsou podporovány pro hodnoty typu '%s'.")
+        msg = _(u"Wildcard matching not supported for values of type '%s'.")
         return None, ValidationError(msg % self.__class__.__name__)
 
     def _validation_error(self, id, **kwargs):
@@ -1924,7 +1924,7 @@ class Boolean(Type):
             elif object in ('f', '0'):
                 return Value(self, False), None
         # Valid values are found in _SPECIAL_VALUES before _validate is called.
-        return None, ValidationError(_(u"Neplatná vstupní hodnota typu boolean."))
+        return None, ValidationError(_(u"Invalid boolean type input value"))
     
     def default_value(self):
         return Value(self, False)
@@ -2147,7 +2147,7 @@ class Image(Binary, Big):
             try:
                 image = PIL.Image.open(f)
             except IOError:
-                raise ValidationError(_(u"Neplatný grafický formát"))
+                raise ValidationError(_(u"Invalid graphics format"))
             self._image = image
     
         def image(self):

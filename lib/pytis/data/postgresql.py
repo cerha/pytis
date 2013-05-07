@@ -236,7 +236,7 @@ class PostgreSQLAccessor(object_2_5):
         Tato metoda musí být předefinována v podtřídě.
 
         """
-        raise ProgramError(_(u"Volána neimplementovaná metoda"))
+        raise ProgramError(_(u"Method not implemented"))
 
     @classmethod
     def _postgresql_close_connection(class_, connection):
@@ -322,7 +322,7 @@ class PostgreSQLAccessor(object_2_5):
         This method is required to be redefined in a subclass.
 
         """
-        raise ProgramError(_(u"Unimplemented method"))
+        raise ProgramError(_(u"Method not implemented"))
 
     def _postgresql_transform_query_result(self, result):
         """Vrať instanci 'PostgreSQLResult' odpovídající výsledku 'result'.
@@ -334,7 +334,7 @@ class PostgreSQLAccessor(object_2_5):
         Tato metoda musí být předefinována v podtřídě.
         
         """
-        raise ProgramError(_(u"Volána neimplementovaná metoda"))
+        raise ProgramError(_(u"Method not implemented"))
 
     def _postgresql_begin_transaction(self):
         self._pg_query('begin')
@@ -444,8 +444,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             try:
                 query.encode(self._pg_encoding)
             except UnicodeEncodeError:
-                raise DBUserException(_(u"Data obsahují znaky, které nelze reprezentovat "
-                                        u"v kódování databáze"))
+                raise DBUserException(_("Characters present in data "
+                                        "not representable in database encoding"))
         if isinstance(query, unicode):
             query = query.encode('utf-8')
         assert transaction is None or not outside_transaction, \
@@ -3550,7 +3550,7 @@ class DBPostgreSQLCounter(PostgreSQLConnector, Counter):
         try:
             number = int(result[0][0])
         except Exception as e:
-            raise pytis.data.DBException(_(u"Chybná hodnota čítače z databáze"), e)
+            raise pytis.data.DBException(_(u"Invalid database counter value"), e)
         return number
 
 

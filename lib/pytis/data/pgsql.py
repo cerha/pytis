@@ -53,7 +53,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                 if msg.find('password') != -1 or \
                        msg.find('authentication failed') != -1:
                     raise DBLoginException()
-            raise DBException(_(u"Nelze se připojit k databázi"), e)
+            raise DBException(_(u"Unable to connect to the database"), e)
         return class_._postgresql_Connection(connection, connection_data)
 
     @classmethod

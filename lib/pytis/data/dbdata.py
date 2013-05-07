@@ -693,7 +693,7 @@ class DBException(Exception):
 
         """
         if message == None:
-            message = _(u"Databázová chyba")
+            message = _(u"Database error")
         super_(DBException).__init__(self, message, exception, *args)
         log(OPERATIONAL, 'Database exception', (message,) + args)
         if exception:
@@ -762,7 +762,7 @@ class DBLoginException(DBException):
     def __init__(self):
         """Inicializuj databázovou výjimku s patřičnými argumenty."""
         super_(DBLoginException).__init__\
-          (self, _(u"Chybné uživatelské jméno nebo heslo"))
+          (self, _(u"Invalid user name or password"))
 
 
 class DBLockException(DBException):
