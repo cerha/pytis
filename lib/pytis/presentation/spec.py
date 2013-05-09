@@ -30,14 +30,19 @@ považovány za immutable, tudíž mohou být libovolně sdíleny.
 """
 
 import collections
+import os
 import re
+import string
 import BaseHTTPServer
 import weakref
 
 import pytis.data
+from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, is_sequence, \
+    public_attributes, public_attr_values, split_camel_case, xtuple, \
+    log, OPERATIONAL, \
+    ProgramError
+import pytis.presentation
 
-from pytis.util import *
-from pytis.presentation import *
 
 class TextFormat(object):
     """Constants for definition of text format.
@@ -1123,13 +1128,8 @@ class LayoutSpec(object):
         if order is None:
             order = group.order()
         elif __debug__:
-            found = find_fields(group)
             for id in order:
                 assert is_anystring(id)
-                assert id in found, ("Invalid field id in 'order' specification:", id)
-            for id in found:
-                assert id in order, ("Field id missing in 'order' specification:", id)
-            assert len(found) == len(order), ("Duplicate field id in 'order' spcification:", order)
         self._order = tuple(order)
 
     def caption(self):
@@ -3560,7 +3560,7 @@ class AttachmentStorage(object):
             uri = self._image_uri(filename)
             src_file = self._image_src_file(filename)
             kwargs = dict(size=size,
-                          thumbnail=lcg.Image('t/'+filename, title=title, descr=descr,
+                          thumbnail=lcg.Image('t/' + filename, title=title, descr=descr,
                                               size=thumbnail_size,
                                               uri=self._thumbnail_uri(filename),
                                               src_file=self._thumbnail_src_file(filename)))
@@ -3991,7 +3991,6 @@ class HttpAttachmentStorage(AttachmentStorage):
             
         """
         import random
-        import string
         import config
         assert isinstance(uri, basestring) \
             and (uri.startswith('http://') or uri.startswith('https://'))
@@ -4191,6 +4190,7 @@ class DbAttachmentStorage(AttachmentStorage):
             instance URIs.
 
         """
+        import config
         self._data = pytis.data.dbtable(table,
                                         ('file_id', ref_column, 'file_name', 'byte_size',
                                          'width', 'height', 'resized_width', 'resized_height',
@@ -4628,7 +4628,7 @@ class Specification(object):
                 if isinstance(value, collections.Callable):
                     setattr(self, attr, value())
         assert self.fields, 'No fields defined for %s.' % str(self)
-        assert isinstance(self.fields, (list, tuple)), fields
+        assert isinstance(self.fields, (list, tuple)), self.fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):
