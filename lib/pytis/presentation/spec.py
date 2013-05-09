@@ -3069,6 +3069,7 @@ class Field(object):
             assert type is None
             type = type_
         assert label is None or isinstance(label, basestring), label
+        assert column_label is None or isinstance(column_label, basestring), column_label
         assert descr is None or isinstance(descr, basestring), descr
         assert type is None or isinstance(type, pytis.data.Type) \
             or issubclass(type, pytis.data.Type), type
@@ -4426,15 +4427,15 @@ class Specification(object):
     """
     
     table = None
-    """Název datové tabulky jako řetězec.
+    """Database specification of the data table, view or function.
 
-    Pokud název není určen, bude odvozen automaticky z názvu specifikační
-    třídy.  Kapitálky jsou převedeny na slova oddělená podtržítkem, takže
-    např. pro specifikační třídu 'UcetniOsnova' bude název tabulky
-    'ucetni_osnova'.  Z hlediska přehlednosti je doporučováno volit toto jmenné
-    schéma a vyhnout se tak explicitnímu určování názvů tabulek.
+    It must be a subclass of 'pytis.sqlalchemy.SQLObject'.
 
-    """
+    For backward compatibility the value of this attribute may also be a
+    string, the name of the database object.  In such a case there is no
+    database specification available and all the fields must be defined
+    explicitly and database introspection is used to define some of their
+    attributes."""
 
     key = None
     """Data object key column identifier as a string or their sequence.
@@ -4444,9 +4445,17 @@ class Specification(object):
     'fields' is used."""
 
     fields = ()
-    """Specification of all fields as a sequence of 'Field' instances.
+    """Field specification as a sequence of 'Field' instances.
+
+    Default fields are created from the underlying database specification given
+    in 'table' attribute.  You can specify here additional (virtual) fields and
+    add or override attributes of fields made from database specifications.
+    All the fields and attributes are merged together, with fields specified
+    here taking precedence.
     
-    May be also defined as a method of the same name."""
+    May be also defined as a method of the same name.
+
+    """
 
     arguments = None
     """Specification of all table arguments as a sequence of 'Field' instances.
@@ -4627,7 +4636,6 @@ class Specification(object):
                 value = getattr(self, attr)
                 if isinstance(value, collections.Callable):
                     setattr(self, attr, value())
-        assert self.fields, 'No fields defined for %s.' % str(self)
         assert isinstance(self.fields, (list, tuple)), self.fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
@@ -4652,12 +4660,68 @@ class Specification(object):
                 continue
             if isinstance(value, collections.Callable):
                 self._view_spec_kwargs[arg] = value()
+        table = self.table
+        fields = self.fields
+        if isinstance(fields, collections.Callable):
+            fields = fields()
+        if table is not None and not isinstance(table, basestring):
+            fields = self._init_from_db_fields(table, fields)
+        self._view_spec_kwargs['fields'] = fields
+        self._fields = fields
         #if self.__class__.__doc__:
             #parts = re.split('\n\s*\n', self.__class__.__doc__, maxsplit=2)
             #if 'description' not in self._view_spec_kwargs:
             #    self._view_spec_kwargs['description'] = parts[0]
             #if 'help' not in self._view_spec_kwargs and len(parts) > 1:
             #    self._view_spec_kwargs['help'] = parts[1]
+
+    def _init_from_db_fields(self, table, fields):
+        xfields = []
+        xfields_map = {}
+        i = 0
+        for c in table.fields:
+            descr = None
+            if c.label():
+                descr = c.doc()
+            editable = Editable.ALWAYS
+            type_ = c.type()
+            if isinstance(type_, pytis.data.Serial):
+                editable = Editable.NEVER
+            codebook = None
+            ref = c.references()
+            if ref is not None:
+                if isinstance(ref, pytis.extensions.gensqlalchemy.Arguments):
+                    args = ref.args()
+                    assert len(args) > 0, ("Invalid reference", c,)
+                    ref = args[0]
+                # Find the corresponding specification, if already
+                # available, and make the corresponding codebook.
+                # Otherwise some kind of forward reference is probably
+                # needed.
+            default = c.default()
+            if default is None and isinstance(type_, pytis.data.Serial):
+                default = pytis.util.nextval('%s_%s_seq' % (table.pytis_name(real=True),
+                                                            c.id(),))
+            f = Field(c.id(), c.label(), type_=type_, descr=descr, default=default,
+                      editable=editable, codebook=codebook)
+            xfields.append(f)
+            xfields_map[c.id()] = i
+            i += 1
+        for f in fields:
+            n = xfields_map.get(f.id())
+            if f.virtual():
+                if n is not None:
+                    raise Exception("Virtual field collides with a database column", f.id())
+                xfields.append(f)
+            else:
+                if n is None:
+                    raise Exception("Field not present in the database specification", f.id())
+                db_field = xfields[n]
+                if not issubclass(f.__class__, db_field.__class__):
+                    raise Exception("Field type incompatible with database specification",
+                                    f.id())
+                xfields[n] = db_field.clone(f)
+        return xfields
 
     def _action_spec_name(self):
         spec_name = self.__class__.__name__
@@ -4674,9 +4738,14 @@ class Specification(object):
     def _create_data_spec(self):
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
-            table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
-            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), crypto_name=f.crypto_name(),
-                          encrypt_empty=f.encrypt_empty(), **f.type_kwargs())
+            table = self.table
+            if table is None:
+                table = camel_case_to_lower(self.__class__.__name__, '_')
+            elif not isinstance(table, basestring):
+                table = table.pytis_name(real=True)
+            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(),
+                          crypto_name=f.crypto_name(), encrypt_empty=f.encrypt_empty(),
+                          **f.type_kwargs())
                         for f in self.fields if not f.virtual()]
             bindings.extend([B(f.inline_display(), table, f.inline_display())
                              for f in self.fields if f.inline_display()

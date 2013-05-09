@@ -513,7 +513,7 @@ class Column(pytis.data.ColumnSpec):
     methods.
     
     """
-    def __init__(self, name, type, doc=None, unique=False, check=None,
+    def __init__(self, name, type, label=None, doc=None, unique=False, check=None,
                  default=None, references=None, primary_key=False, index=False, out=False):
         """
         Arguments:
@@ -524,6 +524,9 @@ class Column(pytis.data.ColumnSpec):
             arguments, however even in such cases it is recommended to use a
             proper column name as a form of documentation.
           type -- column type; instance of 'pytis.data.Type' subclass
+          label -- default label to use in user interfaces; basestring or
+            'None'.  This is a presentation attribute and is ignored in
+            database schemas.
           doc -- documentation of the column; basestring or 'None'
           unique -- if true then the column is marked as unique (if it makes
             sense at the given place); boolean
@@ -557,12 +560,14 @@ class Column(pytis.data.ColumnSpec):
           
         """
         pytis.data.ColumnSpec.__init__(self, name, type)
+        assert label is None or isinstance(label, basestring), label
         assert doc is None or isinstance(doc, basestring), doc
         assert isinstance(unique, bool), unique
         assert check is None or isinstance(check, basestring), check
         assert isinstance(primary_key, bool), primary_key
         assert isinstance(index, (bool, dict,)), index
         assert isinstance(out, bool), out
+        self._label = label
         self._doc = doc
         self._unique = unique
         self._check = check
@@ -572,8 +577,17 @@ class Column(pytis.data.ColumnSpec):
         self._index = index
         self._out = out
 
+    def label(self):
+        return self._label
+
     def doc(self):
         return self._doc
+
+    def default(self):
+        return self._default
+
+    def references(self):
+        return self._references
 
     def index(self):
         return self._index
@@ -974,6 +988,8 @@ class _Reference(object):
             column = column.name
         reference = table.c[column]
         return reference
+    def specification_name(self):
+        return self._name
 def object_by_reference(name):
     name = name.strip()
     pos = name.find('(')
@@ -1078,6 +1094,8 @@ class ReferenceLookup(object):
             else:
                 c = specification.c[self._column]
             return c
+        def specification_name(self):
+            return self._specification
     class ColumnLookup(object):
         def __init__(self, specification):
             self._specification = specification
