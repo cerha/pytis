@@ -2822,8 +2822,10 @@ def _db_dependencies(metadata):
              "pg_class refc on (refclassid=refc.oid) join "
              "pg_namespace refn on (refc.relnamespace=refn.oid) "
              "where n.nspname='pg_catalog' and refn.nspname='pg_catalog' and "
-             "c.relname in ('pg_class', 'pg_proc', 'pg_type', 'pg_namespace', 'pg_trigger', 'pg_rewrite') and "
-             "refc.relname in ('pg_class', 'pg_proc', 'pg_type', 'pg_namespace', 'pg_trigger', 'pg_rewrite') and "
+             "c.relname in "
+             "('pg_class', 'pg_proc', 'pg_type', 'pg_namespace', 'pg_trigger', 'pg_rewrite') and "
+             "refc.relname in "
+             "('pg_class', 'pg_proc', 'pg_type', 'pg_namespace', 'pg_trigger', 'pg_rewrite') and "
              "deptype = 'n'")
     result = connection.execute(query)
     # Let's reduce the set and break unimportant circular dependencies:
