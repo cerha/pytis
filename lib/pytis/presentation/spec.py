@@ -30,6 +30,7 @@ považovány za immutable, tudíž mohou být libovolně sdíleny.
 """
 
 import collections
+import copy
 import os
 import re
 import string
@@ -4388,6 +4389,21 @@ class DbAttachmentStorage(AttachmentStorage):
         return None
     
 
+class _SpecificationMetaclass(type):
+    
+    def __init__(cls, clsname, bases, clsdict):
+        type.__init__(cls, clsname, bases, clsdict)
+        cls._pytis_map_db_name_to_spec(clsdict)
+
+    def _pytis_map_db_name_to_spec(cls, clsdict):
+        db_table = clsdict.get('table')
+        if db_table is None:
+            return
+        if ((not isinstance(db_table, type) or
+             not issubclass(db_table, pytis.extensions.gensqlalchemy.SQLObject))):
+            return
+        Specification.add_specification_by_db_spec_name(db_table.__name__, cls)
+        
 class Specification(object):
     """Souhrnná specifikační třída sestavující specifikace automaticky.
 
@@ -4545,6 +4561,8 @@ class Specification(object):
 
     """
 
+    __metaclass__ = _SpecificationMetaclass
+    _specifications_by_db_spec_name = {}
     _access_rights = None
 
     @staticmethod
@@ -4644,6 +4662,7 @@ class Specification(object):
                  attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                               'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
                               'data_access_rights', 'crypto_names',
+                              'add_specification_by_db_spec_name',
                               'oid', # for backward compatibility
                               ))):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
@@ -4679,7 +4698,7 @@ class Specification(object):
         xfields = []
         xfields_map = {}
         i = 0
-        for c in table.fields:
+        for c in table.specification_fields():
             descr = None
             if c.label():
                 descr = c.doc()
@@ -4694,16 +4713,24 @@ class Specification(object):
                     args = ref.args()
                     assert len(args) > 0, ("Invalid reference", c,)
                     ref = args[0]
-                # Find the corresponding specification, if already
-                # available, and make the corresponding codebook.
-                # Otherwise some kind of forward reference is probably
-                # needed.
+                try:
+                    ref = ref.id  # make Reference from ColumnLookup if needed
+                except:
+                    pass
+                db_spec_name = ref.specification_name()
+                codebook = self._codebook_by_db_spec_name(db_spec_name)
             default = c.default()
             if default is None and isinstance(type_, pytis.data.Serial):
                 default = pytis.util.nextval('%s_%s_seq' % (table.pytis_name(real=True),
                                                             c.id(),))
-            f = Field(c.id(), c.label(), type_=type_, descr=descr, default=default,
-                      editable=editable, codebook=codebook)
+            # Setting the field type is a gross hack necessary due to our
+            # codebook handlings.
+            f = Field(c.id(), c.label(), type=None, descr=descr, default=default,
+                      editable=editable, codebook=codebook, not_null=c.type().not_null())
+            args, kwargs = type_.init_args()
+            kwargs = copy.copy(kwargs)
+            kwargs.update(f.type_kwargs())
+            f._type = type_.__class__(*args, **kwargs)
             xfields.append(f)
             xfields_map[c.id()] = i
             i += 1
@@ -4746,9 +4773,9 @@ class Specification(object):
             bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(),
                           crypto_name=f.crypto_name(), encrypt_empty=f.encrypt_empty(),
                           **f.type_kwargs())
-                        for f in self.fields if not f.virtual()]
+                        for f in self._fields if not f.virtual()]
             bindings.extend([B(f.inline_display(), table, f.inline_display())
-                             for f in self.fields if f.inline_display()
+                             for f in self._fields if f.inline_display()
                              and f.inline_display() not in [b.id() for b in bindings]])
             if self.key:
                 keyid = self.key
@@ -4773,7 +4800,7 @@ class Specification(object):
                     t = t(**kwargs)
                 return t
             columns = [pytis.data.ColumnSpec(f.id(), type_(f))
-                       for f in self.fields if not f.virtual()]
+                       for f in self._fields if not f.virtual()]
             args = (columns,)
             arguments = None
         access_rights = self.data_access_rights('form/' + self._action_spec_name())
@@ -4889,3 +4916,17 @@ class Specification(object):
                 perm = pytis.data.Permission.ALL
                 access_rights = pytis.data.AccessRights((None, (None, perm)))
         return access_rights
+
+    @classmethod
+    def _codebook_by_db_spec_name(class_, db_spec_name):
+        spec = class_._specifications_by_db_spec_name.get(db_spec_name)
+        if spec is None:
+            return None
+        module = string.join(string.split(spec.__module__, '.')[1:], '.')
+        return '%s.%s' % (module, spec.__name__,)
+
+    @classmethod
+    def add_specification_by_db_spec_name(class_, db_spec_name, specification):
+        if db_spec_name in class_._specifications_by_db_spec_name:
+            raise Exception("Duplicate specification name", db_spec_name)
+        class_._specifications_by_db_spec_name[db_spec_name] = specification

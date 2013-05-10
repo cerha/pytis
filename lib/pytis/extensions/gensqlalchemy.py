@@ -2015,6 +2015,10 @@ class SQLTable(_SQLTabular):
                 insert = self.insert().values(**values)
                 bind.execute(insert)
 
+    @classmethod
+    def specification_fields(class_):
+        return class_.fields
+
 class _SQLReplaceable(SQLObject):
 
     def _pytis_definition(self, connection):
@@ -2298,6 +2302,10 @@ class SQLType(_SQLTabular):
         args = (cls.name, metadata,) + columns
         return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 
+    @classmethod
+    def specification_fields(class_):
+        return class_.fields
+
     def pytis_exists(self, metadata):
         name = self.pytis_name(real=True)
         connection = metadata.pytis_engine.connect()
@@ -2369,6 +2377,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
 
     def __new__(cls, metadata, search_path):
         with _local_search_path(search_path):
+            # It would be nice to utilize specification_fields here.
             result_type = cls.result_type
             if result_type is None:
                 columns = ()
@@ -2391,6 +2400,27 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                 raise SQLException("Invalid result type", result_type)
             args = (cls.name, metadata,) + columns
             return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
+
+    @classmethod
+    def specification_fields(class_):
+        result_type = class_.result_type
+        if result_type is None:
+            columns = ()
+        elif result_type == class_.RECORD:
+            columns = tuple([c for c in class_.arguments if c.out()])
+        elif isinstance(result_type, (tuple, list,)):
+            columns = tuple(result_type)
+        elif isinstance(result_type, Column):
+            columns = (result_type,)
+        elif isinstance(result_type, pytis.data.Type):
+            columns = (Column('result', result_type.sqlalchemy_type()),)
+        elif result_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
+            columns = ()
+        elif issubclass(result_type, _SQLTabular):
+            columns = result_type.specification_fields()
+        else:
+            raise SQLException("Invalid result type", result_type)
+        return columns
 
     def _add_dependencies(self):
         super(SQLFunctional, self)._add_dependencies()

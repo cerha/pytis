@@ -124,6 +124,7 @@ class Type(object):
                 assert isinstance(result, class_)
                 result.__init__(*args, **kwargs)
                 result._id = self.id_of_initargs(class_, args, kwargs)
+                result._init_args = (args, kwargs,)
             assert result is not None
             return result
 
@@ -386,6 +387,14 @@ class Type(object):
     def enumerator(self):
         """Return the 'Enumerator' instance bound to this type or None."""
         return self._enumerator
+
+    def init_args(self):
+        """Return pair (ARGS, KWARGS) containing constructor arguments.
+
+        This is useful when you need to create a modified type instance.
+        
+        """
+        return self._init_args
             
     def export(self, value, *args, **kwargs):
         """Vrať stringovou reprezentaci 'value' schopnou validace.
