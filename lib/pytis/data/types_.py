@@ -728,7 +728,12 @@ class LargeIntegerRange(Range, Integer):
     def base_type(self):
         return pytis.data.LargeInteger()
 
-        
+class Oid(Integer):
+    def sqlalchemy_type(self):
+        import pytis.extensions.gensqlalchemy
+        return pytis.extensions.gensqlalchemy.OID()
+
+
 class Serial(Integer):
     """Integer s automaticky generovanými hodnotami.
 
@@ -944,9 +949,6 @@ class Name(String):
     
     """
     
-    def __init__(self, **kwargs):
-        super(Name, self).__init__(**kwargs)
-
     def sqlalchemy_type(self):
         import pytis.extensions.gensqlalchemy
         return pytis.extensions.gensqlalchemy.NAME()

@@ -336,6 +336,8 @@ def _get_columns(dialect, connection, relation_name, schema):
     """
     if 'ltree' not in dialect.ischema_names:
         dialect.ischema_names['ltree'] = LTreeType
+    if 'oid' not in dialect.ischema_names:
+        dialect.ischema_names['oid'] = OID
     s = sqlalchemy.text(SQL_COLS,
                         bindparams=[sqlalchemy.bindparam('relation_name', type_=sqlalchemy.String),
                                     sqlalchemy.bindparam('schema', type_=sqlalchemy.String)],
@@ -406,6 +408,12 @@ class BIGSERIAL(sqlalchemy.BigInteger):
 @compiles(BIGSERIAL)
 def compile_bigserial(element, compiler, **kwargs):
     return 'BIGSERIAL'
+
+class OID(sqlalchemy.Integer):
+    pass
+@compiles(OID)
+def compile_oid(element, compiler, **kwargs):
+    return 'oid'
 
 @compiles(sqlalchemy.String, 'postgresql')
 def compile_string(element, compiler, **kwargs):
