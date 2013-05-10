@@ -674,8 +674,6 @@ def _error(message, error=True):
 def _warn(message):
     _error(message, error=False)
 
-_full_init = False
-
 _current_search_path = None
 @contextmanager
 def _local_search_path(search_path):
@@ -892,15 +890,16 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
                         else:
                             o = cls(_metadata, search_path)
                     _PytisSchematicMetaclass.objects.append(o)
-                if _full_init:
-                    init_function()
-                else:
-                    # Instance construction takes a lot of time.  In some
-                    # situations we may be interested just in classes or only
-                    # in some instances.  In such a case instance creation is
-                    # delayed using the init_function mechanism.
-                    _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_function
-                    _PytisSchematicMetaclass.init_function_list.append((cls, init_function,))
+                # Instance construction takes a lot of time.  In some
+                # situations we may be interested just in classes or only in
+                # some instances.  In such a case instance creation is delayed
+                # using the init_function mechanism.
+                # Additionally it is necessary to make all objects available
+                # before their instances are created so that all classes and
+                # objects are available in _SQLQuery (to get columns and
+                # dynamic dependencies) even without explicit dependencies.
+                _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_function
+                _PytisSchematicMetaclass.init_function_list.append((cls, init_function,))
 
     @classmethod
     def clear(cls):
@@ -1212,13 +1211,7 @@ class SQLObject(object):
         elif self.pytis_changed(metadata, strict=strict):
             self._pytis_upgrade(metadata)
         else:
-            changed = metadata.pytis_changed
-            for o in self.pytis_dependencies():
-                if o in changed:
-                    self._pytis_upgrade(metadata)
-                    break
-            else:
-                return
+            return
         metadata.pytis_changed.add(self)
 
     def pytis_dependencies(self):
@@ -2926,13 +2919,6 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         _output = sys.stdout
         if _output.encoding is None:
             _output = codecs.getwriter('UTF-8')(_output)
-    global _full_init
-    if False:
-        # We always disable full init now so that all classes and objects are
-        # available in _SQLQuery (to get columns and dynamic dependencies) even
-        # without explicit dependencies.
-        _full_init = (not ((names_only and no_deps) or (no_deps and regexp)) or upgrade)
-    _full_init = False
     global _pretty
     _pretty = pretty
     global _enforced_schema, _enforced_schema_objects
@@ -2953,11 +2939,8 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         upgrade_metadata.pytis_changed = set()
     else:
         upgrade_metadata = None
-    try:
-        _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
-                        upgrade_metadata)
-    finally:
-        _full_init = False
+    _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
+                    upgrade_metadata)
 
 def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
                     upgrade_metadata):
@@ -3036,17 +3019,26 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         for o, f in _PytisSchematicMetaclass.init_function_list:
             if matching(o):
                 _enforced_schema_objects.add(o)
-    # Preprocessing in case of speed optimized limited output
-    if not _full_init:
-        for o, f in _PytisSchematicMetaclass.init_function_list:
-            if matching(o):
-                if names_only:
-                    output_name(o)
-                else:
-                    _PytisSchematicMetaclass.call_init_function(f, may_alter_schema=True)
-        if names_only:
-            return
+    # Preprocessing
+    full_init = (not ((no_deps and names_only) or (no_deps and regexp)) or
+                 upgrade_metadata is not None)
+    for o, f in _PytisSchematicMetaclass.init_function_list:
+        if matching(o):
+            if names_only:
+                output_name(o)
+            else:
+                _PytisSchematicMetaclass.call_init_function(f, may_alter_schema=True)
+        elif full_init:
+            _PytisSchematicMetaclass.call_init_function(f, may_alter_schema=True)
+    if not full_init and names_only:
+        return
     # Process all available objects
+    def obj_identifier(o):
+        identifier = '%s.%s.%s' % (o._DB_OBJECT, o.schema, o.pytis_name(real=True),)
+        if isinstance(o, SQLFunctional) and not isinstance(o, SQLTrigger):
+            identifier += '(' + _function_arguments(o) + ')'
+        return identifier
+    id2obj = {}
     for o in _PytisSimpleMetaclass.objects:
         if matching(o):
             if names_only:
@@ -3064,6 +3056,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             else:
                 sequence.pytis_create()
     for table in _metadata.sorted_tables:
+        id2obj[obj_identifier(table)] = table
         if matching(table):
             if names_only:
                 output_name(table)
@@ -3100,10 +3093,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             dep_dict[i1] = dep_dict.get(i1, []) + [i2]
         changed = set()
         for o in upgrade_metadata.pytis_changed:
-            identifier = '%s.%s.%s' % (o._DB_OBJECT, o.schema, o.pytis_name(real=True),)
-            if isinstance(o, SQLFunctional) and not isinstance(o, SQLTrigger):
-                identifier += '(' + _function_arguments(o) + ')'
-            changed.add(identifier)
+            changed.add(obj_identifier(o))
         drop = []
         try:
             for o in sqlalchemy.util.topological.sort(dependencies, list(all_items)):
@@ -3123,6 +3113,15 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             _gsql_output('DROP %s "%s"."%s"' % tuple(string.split(o, '.')))
         # Emit update commands
         sys.stdout.write(str_output)
+        # Recreate all dropped objects
+        drop.reverse()
+        for name in drop:
+            o = id2obj.get(name)
+            if o is None:
+                _error("Can't recreate object `%s'" % (name,))
+            else:
+                o.pytis_create()
+            
     
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
               names_only=False, pretty=0, schema=None, source=False, config_file=None,
