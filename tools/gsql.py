@@ -61,7 +61,8 @@ def parse_options():
 
 def update_config(options):
     import config
-    if options.config_file is not None:
+    config_file = options.config_file
+    if config_file is not None:
         for o in config.options():
             o.reset()
         config.config_file = config_file
@@ -84,7 +85,8 @@ def update_config(options):
 def run():
     options, module = parse_options()
     update_config(options)
-    pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp, no_deps=options.no_deps,
+    pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp,
+                                               no_deps=options.no_deps,
                                                views=options.views, functions=options.functions,
                                                names_only=options.names_only, pretty=options.pretty,
                                                schema=options.schema, source=options.source,
