@@ -848,7 +848,7 @@ class BrowseForm(LayoutForm):
                  columns=None, sorting=None, grouping=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
                  search=None, query=None, allow_query_search=None, filter=None, message=None, 
-                 filter_sets=None, profiles=None, filter_fields=None, immediate_filters=True,
+                 filter_sets=None, profiles=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  **kwargs):
         """Arguments:
@@ -950,14 +950,8 @@ class BrowseForm(LayoutForm):
             in the form) may be used to return a custom message as a string
             (possibly LCG Translatable object).  An example of a custom message
             might be 'Found 15 articles in category Python'.
-          filter_sets -- a sequence of filter sets as
-            'pytis.presentation.FilterSet' instances.  Filter sets are used to
-            present multiple filter selectors which can be combined into one
-            final filtering condition.  Filter sets can be also combined with
-            profiles.  In this case filter set selectors will appear prior to
-            the profile selector.  If None, the default filter sets from the
-            specification are used.  If not None, the filter sets defined by
-            the specification are ignored.
+          filter_sets -- Deprecated. Filter sets can be implemented using query
+            fields.
           profiles -- specification of form profiles as a 'Profiles' instance
             or a sequence of 'Profile' instances.  These profiles will be
             available in the user interface for user's selection.  If None, the
@@ -965,36 +959,10 @@ class BrowseForm(LayoutForm):
             None, the profiles from specification are ignored.  This argument
             is mostly useful to construct the list of profiles dynamically
             (specification profiles are static).
-          filter_fields -- specification of editable filter fields as a
-            sequence of tuples of three items (field_specification, operator,
-            field_id), where 'field_specification' is a
-            'pytis.Presentation.Field' instance defining a unique filter field
-            id, label, default value and other possible presentational
-            properties.  'operator' is a conditional operator function (a
-            function of two arguments - field id and 'pytis.data.Value'
-            instance returning a 'pytis.data.Operator' instance).  'field_id'
-            will be used as the first argument to the 'operator'.  It must also
-            refer to one of existing form fields.  The filter field will
-            inherit all attributes of the form field given by 'field_id', but
-            attributes defined by 'field_specification' override the form
-            field's attributes.  An input field will be created for each of the
-            named filter fields and the form filter will automatically include
-            also the conditions given by the operators using the current field
-            values.  Operators of all filter fields are applied in conjunction
-            and also in conjunction with any other form filters/conditions.
-            The field values are automatically stored in browser cookies, so
-            the filters should be persistent.  If 'operator' is None, the field
-            will be used as a table function argument instead of a condition.
-            In this case 'field_id' must be present on data object's
-            'arguments' (defined by 'Specification' attribute 'arguments').
-            The field value will be added to 'arguments' passed to the data
-            object's 'select()' call.  Such arguments are combined with the
-            'arguments' passed to the form constructor (the values from filter
-            fields override the values in 'arguments').
           immediate_filters -- when True, filters and profiles apply
             immediately after their selection in the corresponding selector;
             when False, there is a separate button for filter application.
-            When 'filter_fields' are present, filters must always be applied
+            When 'query_fields' are present, filters must always be applied
             using a button, so this argument is ignored in this case.
           top_actions -- boolean flag to control the presence of the
             global action buttons above the form.
@@ -1041,8 +1009,6 @@ class BrowseForm(LayoutForm):
                     return value
             else:
                 return default
-        self._condition = condition
-        self._arguments = arguments
         # Process filter sets and profiles first.
         if filter_sets is None:
             filter_sets = self._view.filter_sets()
@@ -1172,94 +1138,107 @@ class BrowseForm(LayoutForm):
             self._lang = str(req.preferred_language())
         except:
             self._lang = None
-        self._init_filter_fields(req, filter_fields or ())
-        if data.arguments():
-            assert arguments or self._filter_fields_arguments
+        self._init_query_fields(req)
+        if self._query_fields_row:
+            provider_args = (self._query_fields_row,)
         else:
-            assert not arguments and not self._filter_fields_arguments
+            provider_args = ()
+        condition_provider = self._view.condition_provider()
+        if condition_provider:
+            provider_condition = condition_provider(*provider_args)
+            if provider_condition:
+                if condition:
+                    condition = pd.AND(condition, provider_condition)
+                else:
+                    condition = provider_condition
+        argument_provider = self._view.argument_provider()
+        if argument_provider:
+            provider_arguments = argument_provider(*provider_args)
+            if provider_arguments:
+                if arguments:
+                    arguments.update(provider_arguments)
+                else:
+                    arguments = provider_arguments
+        if data.arguments():
+            assert arguments, "No arguments passed to a table function"
+        else:
+            assert not arguments, "Arguments passed to a non-table function"
+        self._condition = condition
+        self._arguments = arguments
         self._immediate_filters = immediate_filters
         self._top_actions = top_actions
         self._bottom_actions = bottom_actions
         self._row_actions = row_actions
         self._async_load = async_load
 
-    def _init_filter_fields(self, req, filter_fields_spec):
-        columns = []
-        fields = []
-        conditions = []
-        arguments = []
-        values = []
-        errors = []
-        for fspec, operator, field_id in filter_fields_spec:
-            if operator is None:
-                binding = find(field_id, self._row.data().arguments(), key=lambda b: b.id())
-                ftype = binding.type()
-            else:
-                fspec = self._view.field(field_id).clone(fspec)
-                ftype = self._row.type(field_id)
-            filter_id = fspec.id()    
-            cookie = 'pytis-filter-%s-%s' % (self._name, filter_id)
-            if req.has_param(filter_id):
-                # TODO: This validation will only work for simple fields.  It
-                # is neceddary to move the method
-                # wiking.PytisModule._validate() into pytis forms to make it
-                # work in all cases.  Now it is only hacked for the Datetime
-                # fields (by copying the relevant part of the above mentioned
-                # method).
-                if isinstance(ftype, pd.DateTime):
-                    locale_data = lcg.Localizer(self._lang).locale_data()
-                    if isinstance(ftype, pd.Date):
-                        format = locale_data.date_format
-                    elif isinstance(ftype, pd.Time):
-                        format = locale_data.exact_time_format
-                    elif hasattr(ftype, 'exact') and not ftype.exact(): # for wiking.DateTime
-                        format = locale_data.date_format +' '+ locale_data.time_format
+    def _init_query_fields(self, req):
+        if self._view.query_fields():
+            columns = []
+            rowdata = []
+            errors = []
+            fields_specs = self._view.query_fields().fields()
+            for fspec in fields_specs:
+                #fspec = self._view.field(field_id).clone(fspec)
+                #ftype = self._row.type(field_id)
+                ftype = fspec.type() or pytis.data.String
+                if type(ftype) == type(pytis.data.Type):
+                    ftype = ftype(**fspec.type_kwargs())
+                field_id = fspec.id()    
+                cookie = 'pytis-query-field-%s-%s' % (self._name, field_id)
+                lcg.log(":::", field_id, req.param('list-form-controls-submitted'), req.has_param(field_id), req.param(field_id))
+                if req.param('list-form-controls-submitted'):
+                    # TODO: This validation will only work for simple fields.
+                    # It is necessary to move the method
+                    # wiking.PytisModule._validate() into pytis forms to make
+                    # it work in all cases.  Now it is only hacked for the
+                    # Datetime fields (by copying the relevant part of the
+                    # above mentioned method).
+                    if isinstance(ftype, pd.DateTime):
+                        locale_data = lcg.Localizer(self._lang).locale_data()
+                        if isinstance(ftype, pd.Date):
+                            format = locale_data.date_format
+                        elif isinstance(ftype, pd.Time):
+                            format = locale_data.exact_time_format
+                        elif hasattr(ftype, 'exact') and not ftype.exact(): # for wiking.DateTime
+                            format = locale_data.date_format +' '+ locale_data.time_format
+                        else:
+                            format = locale_data.date_format +' '+ locale_data.exact_time_format
+                        kwargs = dict(format=format)
                     else:
-                        format = locale_data.date_format +' '+ locale_data.exact_time_format
-                    kwargs = dict(format=format)
+                        kwargs = {}
+                    value, error = ftype.validate(req.param(field_id), **kwargs)
+                    if error:
+                        errors.append((field_id, error.message()))
+                        value = pytis.data.Value(ftype, None)
+                    else:
+                        req.set_cookie(cookie, value.export())
                 else:
-                    kwargs = {}
-                value, error = ftype.validate(req.param(filter_id), **kwargs)
-                if error:
-                    errors.append((filter_id, error.message()))
-                    value = pytis.data.Value(ftype, None)
-                else:
-                    req.set_cookie(cookie, value.export())
-            else:
-                saved_value = req.cookie(cookie)
-                if saved_value:
-                    value, error = ftype.validate(saved_value)
-                else:
-                    value = None
-                if value is None:
-                    default = fspec.default()
-                    if callable(default):
-                        default = default()
-                    value = pytis.data.Value(ftype, default)
-            columns.append(pytis.data.ColumnSpec(filter_id, ftype))
-            values.append((filter_id, value))
-            if operator is None:
-                arguments.append((field_id, value))
-            else:
-                conditions.append(operator(field_id, value))
-            fields.append(fspec)
-        if fields:
+                    saved_value = req.cookie(cookie)
+                    if saved_value:
+                        value, error = ftype.validate(saved_value)
+                    else:
+                        value = None
+                    if value is None:
+                        default = fspec.default()
+                        if callable(default):
+                            default = default()
+                        value = pytis.data.Value(ftype, default)
+                columns.append(pytis.data.ColumnSpec(field_id, ftype))
+                rowdata.append((field_id, value))
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
-            row = PresentedRow(fields, data, pytis.data.Row(values), resolver=self._row.resolver())
-            condition = pytis.data.AND(*conditions)
-            filter_fields = [Field.create(row, f, self, self._uri_provider) for f in fields]
+            row = PresentedRow(fields_specs, data, pytis.data.Row(rowdata), 
+                               resolver=self._row.resolver())
+            query_fields = [Field.create(row, f, self, self._uri_provider) for f in fields_specs]
         else:
+            errors = []
             row = None
-            condition = None
-            filter_fields = []
+            query_fields = []
         # TODO: self._errors doesn't really belong here -- it belongs to
         # Editform, but it is used within _export_field() so we need to
         # initialize it here or (better) fix _export_field().
-        self._filter_fields_errors = self._errors = errors
-        self._filter_fields = filter_fields
-        self._filter_fields_condition = condition
-        self._filter_fields_arguments = arguments
-        self._filter_fields_row = row
+        self._query_fields_errors = self._errors = errors
+        self._query_fields = query_fields
+        self._query_fields_row = row
 
     def _init_filter_sets(self, filter_sets, req, param):
         for i, filter_set in enumerate(filter_sets):
@@ -1444,8 +1423,7 @@ class BrowseForm(LayoutForm):
                  for f in self._column_fields]
 
     def _conditions(self, condition=None):
-        conditions = [c for c in (self._condition, self._filter, self._query_condition, condition,
-                                  self._filter_fields_condition)
+        conditions = [c for c in (self._condition, self._filter, self._query_condition, condition)
                       if c is not None]
         if len(conditions) == 0:
             return None
@@ -1496,12 +1474,9 @@ class BrowseForm(LayoutForm):
         row = self._row
         limit = self._limit
         exported_rows = []
-        if self._arguments or self._filter_fields_arguments:
-            arguments = self._arguments or {}
-            arguments.update(dict(self._filter_fields_arguments))
-        else:
-            arguments = None
-        count = data.select(condition=self._conditions(), sort=self._sorting, arguments=arguments)
+        count = data.select(condition=self._conditions(),
+                            arguments=self._arguments,
+                            sort=self._sorting)
         found = False
         offset = self._offset
         if self._search:
@@ -1691,22 +1666,22 @@ class BrowseForm(LayoutForm):
         show_filters = (self._filter_sets and (count or
                                                [v for v in self._filter_ids.values()
                                                 if v is not None])
-                        or self._filter_fields)
+                        or self._query_fields)
         show_query_field = self._show_query_field
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
             submit_button = g.button(g.span(_("Change filters")), cls='apply-filters')
-            if self._immediate_filters and not self._filter_fields:
+            if self._immediate_filters and not self._query_fields:
                 onchange = 'this.form.submit(); return true'
                 # Leave the submit button in place for non-Javascript browsers.
                 submit_button = g.noscript(submit_button)
             else:
                 onchange = None
-            for fid, msg in self._filter_fields_errors:
-                f = find(fid, self._filter_fields, key=lambda f: f.id)
+            for fid, msg in self._query_fields_errors:
+                f = find(fid, self._query_fields, key=lambda f: f.id)
                 content.append(g.div(g.strong(f.label) + ": " + msg, cls='errors'))
             filter_content = []
-            for field in self._filter_fields:
+            for field in self._query_fields:
                 filter_content.extend((
                         g.label(field.label+':', field.html_id()),
                         self._export_field(context, field, editable=True)))
@@ -1801,6 +1776,7 @@ class BrowseForm(LayoutForm):
                 sorting_column, direction = self._user_sorting
                 content.extend((g.hidden('sort', sorting_column),
                                 g.hidden('dir', self._SORTING_DIRECTIONS[direction])))
+            content.append(g.hidden('list-form-controls-submitted', '1'))
             return g.form(content, action=g.uri(self._handler), method='GET',
                           cls='list-form-controls')
         else:
@@ -1833,15 +1809,15 @@ class BrowseForm(LayoutForm):
             info = None
         return info
 
-    def filter_field_values(self):
-        """Return the current filter field values as a list of pairs (filter_id, value).
+    def query_field_values(self):
+        """Return the current filter field values as a list of pairs (field_id, value).
 
-        Filter id is the id from the 'filter_fields' specification passed to
-        the constructor.  Values are 'pytis.data.Value' instances.  All fields
-        present in the 'filter_fields' specification are returned.
+        Filter id is the id from the 'query_fields' specification.  Values are
+        'pytis.data.Value' instances.  All fields present in the 'query_fields'
+        specification are returned.
 
         """
-        row = self._filter_fields_row
+        row = self._query_fields_row
         return [(key, row[key]) for key in row.keys()]
 
 

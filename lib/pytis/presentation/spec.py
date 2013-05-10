@@ -1408,6 +1408,16 @@ class ViewSpec(object):
             arguments, when the table is actually a row returning function.
             Otherwise it must be 'None'.
 
+          query_fields -- 'QueryFields' instance defining fields of a "query
+            panel" or None when query fields are not used.  If defined, an
+            additional panel containing these fields is attached to the list
+            form.  The user can interactively enter values into these fields
+            and refresh the form.  These values are automatically passed to the
+            'argument_provider' and 'condition_provider' functions so the form
+            data may reflect these interactively entered values.  If a sequence of
+            field specifications is passed, it is automatically converted to a
+            'QueryFields' instance with given fields.
+
           argument_provider -- function returning a dictionary of database
             function argument names (strings) as keys and 'pytis.data.Value'
             instances as corresponding database function argument values.  If
@@ -1423,18 +1433,18 @@ class ViewSpec(object):
             'argument_provider' makes sense only for database table functions,
             it should be 'None' for standard tables and views.
             
-          query_fields -- 'QueryFields' instance defining fields of a "query
-            panel" or None when query fields are not used.  If defined, an
-            additional panel containing these fields is attached to the list
-            form.  The user can interactively enter values into these fields
-            and refresh the form.  These values are automatically passed to the
-            argument provider function as the second argument (PresentedRow
-            instance containing all defined fields), so the table function
-            arguments may be generated based on these interactively entered
-            values.  If a sequence of field specifications is passed, it is
-            automatically converted to a 'QueryFields' instance with given
-            fields.
-
+          condition_provider -- function returning a form filtering condition
+            as a 'pytis.data.Operator' instance.  If used (not None), the
+            returned condition is applied in addition to any other conditions,
+            such as the static condition defined by 'condition' or conditions
+            implied by form profiles, filtering, etc.  The function is
+            typically used together with 'query_fields' to transform query
+            field values into a form filtering condition.  When 'query_fields'
+            are defined, the function receives one argument - a 'PresentedRow'
+            instance containing the current query field values from the user
+            interface.  When no query fields are defined, the function receives
+            no argument.
+            
           referer -- id of the referer column as a string (one of the id's
             defined by 'fields') or None.  If None, the id of the data key
             column is used.  The exported value of the referer column is used
@@ -1465,6 +1475,7 @@ class ViewSpec(object):
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
               initial_folding=None, folding=None, arguments=None, argument_provider=None,
+              condition_provider=None,
               query_fields=None, referer=None, spec_name='', public=None):
         assert isinstance(title, basestring)
         if singular is None:
@@ -1624,6 +1635,7 @@ class ViewSpec(object):
         assert description is None or isinstance(description, basestring)
         assert help is None or isinstance(help, basestring)
         assert argument_provider is None or isinstance(argument_provider, collections.Callable)
+        assert condition_provider is None or isinstance(condition_provider, collections.Callable)
         if query_fields and isinstance(query_fields, (tuple, list)):
             query_fields = QueryFields(query_fields)
         else:
@@ -1656,6 +1668,7 @@ class ViewSpec(object):
         self._folding = folding or initial_folding # initial_folding is deprecated!
         self._arguments = arguments
         self._argument_provider = argument_provider
+        self._condition_provider = condition_provider
         self._query_fields = query_fields
         self._referer = referer
         
@@ -1813,6 +1826,10 @@ class ViewSpec(object):
     def argument_provider(self):
         """Return 'None' or a function generating database table function arguments."""
         return self._argument_provider
+
+    def condition_provider(self):
+        """Return 'None' or a function generating database table function arguments."""
+        return self._condition_provider
 
     def query_fields(self):
         """Return a 'QueryFields' instance or None if no query fields are defined."""
