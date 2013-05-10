@@ -2905,7 +2905,10 @@ def include(file_name, globals_=None):
 
 _output = None
 def _gsql_output(output):
-    _output.write(output)
+    try:
+        _output.write(output)
+    except UnicodeEncodeError:
+        _output.write(output.encode('utf-8'))
     _output.write('\n')
 
 _pretty = 0
