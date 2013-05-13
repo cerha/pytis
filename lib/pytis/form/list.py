@@ -1551,7 +1551,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if __debug__:
             log(DEBUG, 'Refresh request:', (when, reset))
         if interactive:
-            self._update_arguments()
+            self._apply_providers()
         if when is self.DOIT_IFNEEDED:
             if self._reshuffle_request == self._last_reshuffle_request or \
                    self._reshuffle_request > time.time():

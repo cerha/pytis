@@ -901,9 +901,10 @@ class LookupForm(InnerForm):
         # data object.
         self._lf_condition = condition
         self._lf_search_condition = None
+        self._lf_provider_condition = None
         self._arguments = arguments
         self._query_field_values = query_field_values and dict(query_field_values) or None
-        if not self._update_arguments():
+        if not self._apply_providers():
             raise Form.InitError()
         self._lf_select_count_ = None
         self._init_select(async_count=True)
@@ -943,7 +944,7 @@ class LookupForm(InnerForm):
         return sorting
 
     def _current_condition(self, filter=None, display=False):
-        conditions = (self._lf_condition, filter or self._lf_filter)
+        conditions = (self._lf_condition, filter or self._lf_filter, self._lf_provider_condition)
         conditions = [c for c in conditions if c is not None]
         if len(conditions) == 0:
             return None
@@ -973,25 +974,36 @@ class LookupForm(InnerForm):
             return pytis.data.Value(t, v)
         return pytis.data.Row([(f.id(), value(f)) for f in self._view.query_fields().fields()])
 
-    def _update_arguments(self):
-        provider = self._view.argument_provider()
-        if provider is not None:
+    def _apply_providers(self):
+        condition_provider = self._view.condition_provider()
+        argument_provider = self._view.argument_provider()
+        if condition_provider or argument_provider:
             if self._view.query_fields():
-                row = self._query_fields_row()
-                if row is None:
-                    # If None is returned, we use UNKNOWN_ARGUMENTS to make an
-                    # empty dummy select without calling the underlying
-                    # database function.
-                    arguments = self._data.UNKNOWN_ARGUMENTS
-                else:
-                    arguments = provider(row,)
+                provider_arguments = (self._query_fields_row(),)
             else:
-                arguments = provider()
-            if arguments is None:
-                return False
-            self._arguments = arguments
+                provider_arguments = ()
+            if provider_arguments == (None,):
+                # If _query_fields_row() is returs None, it means that the
+                # query fields are not initialized yet and autoapply is off.
+                # This happens during form initialization.  In this case we
+                # want to display an empty form without calling the provider
+                # functions at all.
+                if condition_provider:
+                    self._lf_provider_condition = pytis.data.OR()
+                if argument_provider:
+                    # UNKNOWN_ARGUMENTS result in an empty dummy select without
+                    # calling the underlying database function.
+                    self._arguments = self._data.UNKNOWN_ARGUMENTS
+            else:
+                if condition_provider:
+                    self._lf_provider_condition = condition_provider(*provider_arguments)
+                if argument_provider:
+                    arguments = argument_provider(*provider_arguments)
+                    if arguments is None:
+                        return False
+                    self._arguments = arguments
         return True
-
+                
     def _load_profiles(self):
         return profile_manager().load_profiles(self._profile_spec_name(), self._form_name(),
                                                self._view, self._data, self._default_profile)
@@ -2442,7 +2454,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 
     def _refresh(self, when=None, interactive=False):
         if interactive:
-            self._update_arguments()
+            self._apply_providers()
         self.Refresh()
 
     def _commit_data(self, op, args):
