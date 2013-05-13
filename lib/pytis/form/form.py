@@ -976,7 +976,6 @@ class LookupForm(InnerForm):
     def _update_arguments(self):
         provider = self._view.argument_provider()
         if provider is not None:
-            previous_arguments = self._arguments or {}
             if self._view.query_fields():
                 row = self._query_fields_row()
                 if row is None:
@@ -985,9 +984,9 @@ class LookupForm(InnerForm):
                     # database function.
                     arguments = self._data.UNKNOWN_ARGUMENTS
                 else:
-                    arguments = provider(previous_arguments, row)
+                    arguments = provider(row,)
             else:
-                arguments = provider(previous_arguments)
+                arguments = provider()
             if arguments is None:
                 return False
             self._arguments = arguments

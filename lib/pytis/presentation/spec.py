@@ -1414,24 +1414,21 @@ class ViewSpec(object):
             form.  The user can interactively enter values into these fields
             and refresh the form.  These values are automatically passed to the
             'argument_provider' and 'condition_provider' functions so the form
-            data may reflect these interactively entered values.  If a sequence of
-            field specifications is passed, it is automatically converted to a
-            'QueryFields' instance with given fields.
+            data may reflect these interactively entered values from the user
+            interface.  If a sequence of field specifications is passed, it is
+            automatically converted to a 'QueryFields' instance with given
+            fields.
 
           argument_provider -- function returning a dictionary of database
             function argument names (strings) as keys and 'pytis.data.Value'
             instances as corresponding database function argument values.  If
             it is 'None', no arguments are provided.  If it returns 'None', the
-            select should be cancelled.  The function has one or two arguments
-            depending on query_fields specification.  The first argument is
-            always the current dictionary of arguments.  It is useful e.g. when
-            updating previously supplied arguments.  The second argument is
-            only supplied when 'query_fields' are defined (see below).  It is a
-            PresentedRow instance containing values of all query fields defined
-            by 'query_fields'.  This allows table function arguments to use
-            interactively entered values from the user interface.  Defining
-            'argument_provider' makes sense only for database table functions,
-            it should be 'None' for standard tables and views.
+            select should be cancelled.  When 'query_fields' are defined, the
+            function receives one argument - a 'PresentedRow' instance with the
+            current query field values from the user interface.  If no query
+            fields are defined, the function is called without any arguments.
+            Defining 'argument_provider' makes sense only for database table
+            functions.  It should be 'None' for standard tables and views.
             
           condition_provider -- function returning a form filtering condition
             as a 'pytis.data.Operator' instance.  If used (not None), the
