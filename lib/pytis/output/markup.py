@@ -255,7 +255,7 @@ class List(_Container):
 
     def _lcg(self):
         if self.arg_mark == self.BULLET_MARK:
-            order = lcg.ItemizedList.UNORDERED
+            order = None
         elif self.arg_mark == self.NUMBER_MARK:
             order = lcg.ItemizedList.NUMERIC
         else:
