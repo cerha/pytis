@@ -358,7 +358,11 @@ class Field(object):
     def not_null(self):
         """Return True if the field is NOT NULL (the value is required)."""
         return self._not_null
-        
+
+    def label_in_front(self):
+        """Return True if the label is in front of the field."""
+        return True
+
     def format(self, context):
         """Return the exported read-only field representation."""
         if self._format_cache_context is not context:
@@ -711,6 +715,9 @@ class BooleanField(Field):
             string_value = 'F'
         return super(BooleanField, self)._validate(string_value, locale_data, **kwargs)
 
+    def label_in_front(self):
+        return False
+        
 
 class BinaryField(Field):
     _HANDLER = 'pytis.FileUploadField'

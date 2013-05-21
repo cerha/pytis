@@ -1646,9 +1646,12 @@ class BrowseForm(LayoutForm):
                 content.append(g.div(g.strong(f.label) + ": " + msg, cls='errors'))
             filter_content = []
             for field in self._query_fields:
-                filter_content.extend((
-                        g.label(field.label+':', field.html_id()),
-                        self._export_field(context, field, editable=True)))
+                exported_field = self._export_field(context, field, editable=True)
+                exported_label = g.label(field.label, field.html_id())
+                if field.label_in_front():
+                    filter_content.extend((exported_label+':', exported_field))
+                else:
+                    filter_content.extend((exported_field, exported_label))
             for filter_set in self._filter_sets:
                 filter_set_id = filter_set.id()
                 filter_name = 'filter_%s' % (filter_set_id,)
