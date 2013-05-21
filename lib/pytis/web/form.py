@@ -493,7 +493,16 @@ class LayoutForm(FieldForm):
     def _export_field_label(self, context, field):
         if field.label:
             g = context.generator()
-            return g.span(g.label(field.label, None)+":", cls='field-label id-'+field.id)
+            cls = 'field-label id-'+field.id
+            html_id = None
+            sign = ''
+            if self._EDITABLE:
+                html_id = field.html_id()
+                if field.not_null():
+                    sign = g.sup("*", cls="not-null")
+                if not self._row.editable(field.id):
+                    cls += ' disabled'
+            return g.span(g.label(field.label, html_id) + sign +':', cls=cls)
         else:
             return None
     
@@ -616,19 +625,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             multipart = any([f for f in order if isinstance(self._row.type(f), pytis.data.Binary)])
         self._enctype = (multipart and 'multipart/form-data' or None)
 
-    def _export_field_label(self, context, field):
-        g = context.generator()
-        if not field.label:
-            return None
-        if field.not_null():
-            sign = g.sup("*", cls="not-null")
-        else:
-            sign = ''
-        cls='field-label id-'+field.id
-        if not self._row.editable(field.id):
-            cls += ' disabled'
-        return g.span(g.label(field.label, field.html_id()) + sign + ":", cls=cls)
-            
     def _export_field_help(self, context, field):
         descr = field.spec.descr()
         if descr:
