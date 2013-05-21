@@ -197,7 +197,7 @@ class Field(object):
             if selection_type == SelectionType.RADIO:
                 cls = RadioField
             elif selection_type is None and isinstance(data_type, pytis.data.Boolean):
-                cls = BooleanField
+                cls = CheckboxField
             elif selection_type in (SelectionType.CHOICE, None):
                 cls = ChoiceField
             else:
@@ -700,7 +700,7 @@ class ColorField(StringField):
                g.span('&nbsp;', cls="color-display", style="background-color: %s;" %color)
 
 
-class BooleanField(Field):
+class CheckboxField(Field):
     _HANDLER = 'pytis.CheckboxField'
 
     def _format(self, context):
@@ -713,7 +713,7 @@ class BooleanField(Field):
     def _validate(self, string_value, locale_data, **kwargs):
         if string_value is None:
             string_value = 'F'
-        return super(BooleanField, self)._validate(string_value, locale_data, **kwargs)
+        return super(CheckboxField, self)._validate(string_value, locale_data, **kwargs)
 
     def label_in_front(self):
         return False
