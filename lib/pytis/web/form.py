@@ -1185,7 +1185,6 @@ class BrowseForm(LayoutForm):
                     ftype = ftype(**fspec.type_kwargs())
                 field_id = fspec.id()    
                 cookie = 'pytis-query-field-%s-%s' % (self._name, field_id)
-                lcg.log(":::", field_id, req.param('list-form-controls-submitted'), req.has_param(field_id), req.param(field_id))
                 if req.param('list-form-controls-submitted'):
                     # TODO: This validation will only work for simple fields.
                     # It is necessary to move the method
