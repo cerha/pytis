@@ -336,6 +336,18 @@ class Field(object):
         """
         return None
 
+    def _validate(self, string_value, locale_data, **kwargs):
+        return self._row.validate(self.id, string_value, **kwargs)
+
+    def validate(self, string_value, locale_data):
+        # TODO: This validation is currently only used for query fields and
+        # only works for some field kinds.  It is necessary to move all the
+        # logic of the method wiking.PytisModule._validate() into pytis fields
+        # to make it work in all cases.  Now it is only hacked for Datetime and
+        # Boolean fields (by copying the relevant part of the above mentioned
+        # method).
+        return self._validate(string_value, locale_data)
+
     def html_id(self):
         """Return the unique HTML identifier of the field."""
         html_id = self._html_id
@@ -610,9 +622,13 @@ class HtmlField(MultilineField):
 class DateTimeField(TextField):
     _HANDLER = 'pytis.DateTimeField'
     
-    def _editor_date_format(self, locale_data):
-        return locale_data.date_format + ' ' + locale_data.exact_time_format
-    
+    def _datetime_format(self, locale_data):
+        if hasattr(self.type, 'exact') and not self.type.exact(): # for wiking.DateTime
+            time_format = locale_data.time_format
+        else:
+            time_format = locale_data.exact_time_format
+        return locale_data.date_format +' '+ time_format
+
     def _maxlen(self):
         # TODO: Respect date format!
         return 18
@@ -629,7 +645,7 @@ class DateTimeField(TextField):
         locale_data = context.locale_data()
         js_values = dict(
             id = kwargs['id'],
-            format = self._editor_date_format(locale_data),
+            format = self._datetime_format(locale_data),
             today = context.localize(_(u"today")),
             day_names = g.js_value([context.localize(lcg.week_day_name(i, abbrev=True))
                                     for i in (6,0,1,2,3,4,5)]),
@@ -648,14 +664,27 @@ class DateTimeField(TextField):
            """ % js_values)
         return result
 
+    def _validate(self, string_value, locale_data, **kwargs):
+        # TODO: Take locale data from somewhere as in _editor() above?
+        return super(DateTimeField, self)._validate(string_value, locale_data, 
+                                                    format=self._datetime_format(locale_data),
+                                                    **kwargs)
+
     
 class DateField(DateTimeField):
-    def _editor_date_format(self, locale_data):
+
+    def _datetime_format(self, locale_data):
         return locale_data.date_format
 
     def _maxlen(self):
         # TODO: Respect date format!
         return 10
+
+
+class TimeField(DateTimeField):
+
+    def _datetime_format(self, locale_data):
+        return locale_data.exact_time_format
 
 
 class ColorField(StringField):
@@ -676,6 +705,11 @@ class BooleanField(Field):
 
     def _editor(self, context, **kwargs):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
+
+    def _validate(self, string_value, locale_data, **kwargs):
+        if string_value is None:
+            string_value = 'F'
+        return super(BooleanField, self)._validate(string_value, locale_data, **kwargs)
 
 
 class BinaryField(Field):

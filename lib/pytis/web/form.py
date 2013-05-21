@@ -1172,66 +1172,35 @@ class BrowseForm(LayoutForm):
         self._async_load = async_load
 
     def _init_query_fields(self, req):
+        errors = []
+        query_fields = []
         if self._view.query_fields():
-            columns = []
-            rowdata = []
-            errors = []
             fields_specs = self._view.query_fields().fields()
+            columns = []
             for fspec in fields_specs:
-                #fspec = self._view.field(field_id).clone(fspec)
-                #ftype = self._row.type(field_id)
                 ftype = fspec.type() or pytis.data.String
                 if type(ftype) == type(pytis.data.Type):
                     ftype = ftype(**fspec.type_kwargs())
-                field_id = fspec.id()    
-                cookie = 'pytis-query-field-%s-%s' % (self._name, field_id)
+                columns.append(pytis.data.ColumnSpec(fspec.id(), ftype))
+            data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
+            row = PresentedRow(fields_specs, data, None, resolver=self._row.resolver())
+            locale_data = lcg.Localizer(self._lang).locale_data()
+            for f in fields_specs:
+                field = Field.create(row, f, self, self._uri_provider)
+                cookie = 'pytis-query-field-%s-%s' % (self._name, field.id)
                 if req.param('list-form-controls-submitted'):
-                    # TODO: This validation will only work for simple fields.
-                    # It is necessary to move the method
-                    # wiking.PytisModule._validate() into pytis forms to make
-                    # it work in all cases.  Now it is only hacked for the
-                    # Datetime fields (by copying the relevant part of the
-                    # above mentioned method).
-                    if isinstance(ftype, pd.DateTime):
-                        locale_data = lcg.Localizer(self._lang).locale_data()
-                        if isinstance(ftype, pd.Date):
-                            format = locale_data.date_format
-                        elif isinstance(ftype, pd.Time):
-                            format = locale_data.exact_time_format
-                        elif hasattr(ftype, 'exact') and not ftype.exact(): # for wiking.DateTime
-                            format = locale_data.date_format +' '+ locale_data.time_format
-                        else:
-                            format = locale_data.date_format +' '+ locale_data.exact_time_format
-                        kwargs = dict(format=format)
-                    else:
-                        kwargs = {}
-                    value, error = ftype.validate(req.param(field_id), **kwargs)
+                    error = field.validate(req.param(field.id), locale_data)
                     if error:
-                        errors.append((field_id, error.message()))
-                        value = pytis.data.Value(ftype, None)
+                        errors.append((field.id, error.message()))
                     else:
-                        req.set_cookie(cookie, value.export())
+                        req.set_cookie(cookie, row[field.id].export())
                 else:
                     saved_value = req.cookie(cookie)
                     if saved_value:
-                        value, error = ftype.validate(saved_value)
-                    else:
-                        value = None
-                    if value is None:
-                        default = fspec.default()
-                        if callable(default):
-                            default = default()
-                        value = pytis.data.Value(ftype, default)
-                columns.append(pytis.data.ColumnSpec(field_id, ftype))
-                rowdata.append((field_id, value))
-            data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
-            row = PresentedRow(fields_specs, data, pytis.data.Row(rowdata), 
-                               resolver=self._row.resolver())
-            query_fields = [Field.create(row, f, self, self._uri_provider) for f in fields_specs]
+                        row.validate(field.id, saved_value)
+                query_fields.append(field)
         else:
-            errors = []
             row = None
-            query_fields = []
         # TODO: self._errors doesn't really belong here -- it belongs to
         # Editform, but it is used within _export_field() so we need to
         # initialize it here or (better) fix _export_field().
