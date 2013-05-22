@@ -4685,6 +4685,8 @@ class Specification(object):
             fields = fields()
         if table is not None and not isinstance(table, basestring):
             fields = self._init_from_db_fields(table, fields)
+            if issubclass(table, pytis.extensions.gensqlalchemy.SQLFunctional):
+                self.arguments = [Field(a.id(), type=a.type()) for a in table.arguments]
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
         #if self.__class__.__doc__:
