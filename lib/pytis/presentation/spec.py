@@ -4732,7 +4732,7 @@ class Specification(object):
             args, kwargs = type_.init_args()
             kwargs = copy.copy(kwargs)
             kwargs.update(f.type_kwargs())
-            f._type = type_.__class__(*args, **kwargs)
+            f._type = f._kwargs['type'] = type_.__class__(*args, **kwargs)
             xfields.append(f)
             xfields_map[c.id()] = i
             i += 1
