@@ -859,7 +859,7 @@ class Float(Number):
     def _export(self, value, locale_format=True):
         if locale_format:
             import locale
-            encoding = locale.getpreferredencoding()
+            encoding = locale.getpreferredencoding() or 'UTF-8'
             return locale.format(self._format_string, value, 1).decode(encoding)
         else:
             return unicode(self._format_string % value)
