@@ -762,8 +762,8 @@ viewng('v_changes',
        grant=Gall_pytis,
        depends=('t_changes', 't_changes_detail',))
 
-sql_raw("""
-create or replace function log_trigger() returns trigger as $$
+function('log_trigger', (), 'trigger',
+"""
 declare
   id_ int;
   current_record record;
@@ -829,8 +829,10 @@ begin
   end if;
   return null;
 end;
-$$ language plpgsql security definer;
+""",
+         security_definer=True, language='plpgsql')
 
+sql_raw("""
 create or replace function f_rotate_log() returns void as $$
 declare
   n_records int := 1000000;
@@ -918,7 +920,7 @@ end;
 $$ language plpgsql stable;
 """,
         schemas=('public',),
-        name='log_trigger',
+        name='log_trigger_support',
         depends=('t_changes', 't_changes_detail',))
 
 # Slouží ke změně políčka zmeneno z děděné tabulky _changes

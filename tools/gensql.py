@@ -68,7 +68,7 @@ imp.reload(sys)
 sys.setdefaultencoding('utf-8')
 
 gensql_file = 'gensql'
-_CONV_PREPROCESSED_NAMES = ('_log_update_trigger', '_inserts', '_updates', '_deletes',)
+_CONV_PREPROCESSED_NAMES = ('_log_update_trigger', '_inserts', '_updates', '_deletes', 'log_trigger',)
 
 
 exit_code = 0
@@ -3203,7 +3203,7 @@ class _GsqlFunction(_GsqlSpec):
     
     def __init__(self, name, arguments, output_type, body=None, security_definer=False,
                  optimizer_attributes='VOLATILE',
-                 use_functions=(), schemas=None, **kwargs):
+                 use_functions=(), schemas=None, language=None, **kwargs):
         """Inicializuj instanci.
 
         Argumenty:
@@ -3242,6 +3242,7 @@ class _GsqlFunction(_GsqlSpec):
             body = name
         self._body = body
         self._security_definer = security_definer
+        self._language = language
         self._optimizer_attributes = optimizer_attributes.strip().upper()
         self._set_schemas(schemas)
         if self._doc is None and not isinstance(body, basestring):
@@ -3266,7 +3267,7 @@ class _GsqlFunction(_GsqlSpec):
                 raise GensqlError(
                     "Non-empty use-function list for a non-Python function",
                     self._name)
-            result = "'%s' LANGUAGE SQL" % body
+            result = "'%s' LANGUAGE '%s'" % (body, self._language or 'SQL',)
         else:
             def get_source(f):
                 try:
@@ -3418,6 +3419,8 @@ class _GsqlFunction(_GsqlSpec):
                     superclass = 'Base_PyFunction'
                 else:
                     superclass = 'db.Base_PyFunction'
+        elif self._language == 'plpgsql':
+            superclass = 'sql.SQLPlFunction'
         else:
             superclass = 'sql.SQLFunction'
         items = ['class %s(%s):' % (self._convert_name(new=True), superclass,)]
@@ -4244,7 +4247,7 @@ class Base_PyTriggerFunction(Base_PyFunction):
 class Base_LogTrigger(sql.SQLTrigger):
     name = \'log\'
     events = (\'insert\', \'update\', \'delete\',)
-    body = XLogUpdateTrigger
+    body = LogTrigger
 
 class Base_LogSQLTable(sql.SQLTable):
     @property
