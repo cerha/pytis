@@ -3123,7 +3123,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             _warn("Can't emit DROP commands due to circular dependencies.\n%s" % (e.args[0],))
         drop.reverse()
         for o in drop:
-            _gsql_output('DROP %s "%s"."%s"' % tuple(string.split(o, '.')))
+            _gsql_output('DROP %s "%s"."%s";' % tuple(string.split(o, '.')))
         # Emit update commands
         sys.stdout.write(str_output)
         # Recreate all dropped objects
