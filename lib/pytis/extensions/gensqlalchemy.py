@@ -2840,8 +2840,12 @@ def _db_dependencies(metadata):
     regexp = re.compile("[A-Z]+\.(pg_catalog|information_schema)\.|"
                         "FUNCTION.public.(ltree|ltxtq|lquery)_")
     for oid, relname, refoid, refrelname in result:
-        base = loc[refrelname][refoid]
-        dependent = loc[relname][oid]
+        try:
+            base = loc[refrelname][refoid]
+            dependent = loc[relname][oid]
+        except KeyError:
+            # Some objects may be no longer present in the database
+            continue
         if regexp.match(base) is None and regexp.match(dependent) is None:
             dependencies.append((base, dependent,))
     result.close()
