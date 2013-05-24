@@ -3047,7 +3047,10 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         return
     # Process all available objects
     def obj_identifier(o):
-        identifier = '%s.%s.%s' % (o._DB_OBJECT, o.schema, o.pytis_name(real=True),)
+        if isinstance(o, SQLSchematicObject):
+            identifier = '%s.%s.%s' % (o._DB_OBJECT, o.schema, o.pytis_name(real=True),)
+        else:
+            identifier = '%s.%s' % (o._DB_OBJECT, o.pytis_name(real=True),)
         if isinstance(o, SQLFunctional) and not isinstance(o, SQLTrigger):
             identifier += '(' + _function_arguments(o) + ')'
         return identifier
