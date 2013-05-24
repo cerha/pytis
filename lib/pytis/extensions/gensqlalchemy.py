@@ -3139,7 +3139,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             o = id2obj.get(name)
             if o is None:
                 _error("Can't recreate object `%s'" % (name,))
-            else:
+            elif o not in upgrade_metadata.pytis_changed:
                 o.pytis_create()
             
     
