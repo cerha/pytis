@@ -1185,6 +1185,7 @@ class SQLObject(object):
     external = False
     db_name = None
     _DB_OBJECT = None
+    _pytis_direct_dependencies = None
 
     @classmethod
     def pytis_kind(class_):
@@ -1979,6 +1980,9 @@ class SQLTable(_SQLTabular):
                 table = self.__class__
                 arguments = t[1:]
             sqlalchemy.event.listen(self, 'after_create', lambda *args, **kwargs: T)
+            if T._pytis_direct_dependencies is None:
+                T._pytis_direct_dependencies = []
+            T._pytis_direct_dependencies.append(self.__class__)
     
     def _register_access_rights(self):
         super(SQLTable, self)._register_access_rights()
@@ -2983,9 +2987,10 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             return False
         if regexp is None:
             return result
-        if matcher.search(cls.__name__):
-            matched.add(o)
-            return result
+        for c in ([cls] + (cls._pytis_direct_dependencies or [])):
+            if matcher.search(c.__name__):
+                matched.add(o)
+                return result
         if no_deps:
             return False
         if issubclass(cls, SQLTable):
