@@ -334,10 +334,19 @@ def _get_columns(dialect, connection, relation_name, schema):
         AND a.attnum > 0 AND NOT a.attisdropped
         ORDER BY a.attnum
     """
-    if 'ltree' not in dialect.ischema_names:
-        dialect.ischema_names['ltree'] = LTreeType
-    if 'oid' not in dialect.ischema_names:
-        dialect.ischema_names['oid'] = OID
+    if getattr(dialect, '_pytis_extra_types_initialized', False) is False:
+        for name, class_ in (('ltree', LTreeType),
+                             ('oid', OID),
+                             ('int4range', INT4RANGE),
+                             ('int8range', INT8RANGE),
+                             ('numrange', NUMRANGE),
+                             ('tsrange', TSRANGE),
+                             ('tstzrange', TSTZRANGE),
+                             ('daterange', DATERANGE),
+                             ):
+            if name not in dialect.ischema_names:
+                dialect.ischema_names[name] = class_
+        dialect._pytis_extra_types_initialized = True
     s = sqlalchemy.text(SQL_COLS,
                         bindparams=[sqlalchemy.bindparam('relation_name', type_=sqlalchemy.String),
                                     sqlalchemy.bindparam('schema', type_=sqlalchemy.String)],
