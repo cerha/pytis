@@ -104,7 +104,7 @@ def _function_arguments(function):
         return '%s%s%s' % (in_out, name, a_column.type.compile(_engine.dialect),)
     return string.join([arg(c) for c in function.arguments], ', ')
 
-class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
+class _PytisSchemaHandler(object):
 
     def _set_search_path(self, search_path):
         path_list = [_sql_id_escape(s) for s in search_path]
@@ -112,6 +112,8 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         command = 'SET SEARCH_PATH TO %s' % (path,)
         self.connection.execute(command)
         return search_path
+    
+class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHandler):
 
     def visit_view(self, view, create_ok=False):
         command = 'CREATE OR REPLACE VIEW "%s"."%s" AS\n' % (view.schema, view.name,)
@@ -195,7 +197,7 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
                     table = object_by_path(trigger.table.name, trigger.search_path())
                     row_or_statement = 'ROW' if trigger.each_row else 'STATEMENT'
                     trigger_call = trigger(*trigger.arguments)
-                    command = (('CREATE TRIGGER "%s" %s %s ON %s\n'
+                    command = (('CREATE TRIGGER "%s" %s %s ON "%s"\n'
                                 'FOR EACH %s EXECUTE PROCEDURE %s') %
                                (trigger.pytis_name(real=True), trigger.position, events,
                                 table.pytis_name(real=True), row_or_statement, trigger_call,))
@@ -207,6 +209,31 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator):
         self._set_search_path(raw.search_path())
         self.connection.execute(raw.sql())
 
+class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHandler):
+
+    def visit_view(self, view, create_ok=False):
+        command = 'DROP VIEW "%s"."%s"' % (view.schema, view.name,)
+        self.connection.execute(command)
+
+    def visit_type(self, type_, create_ok=False):
+        command = 'DROP TYPE "%s"."%s"' % (type_.schema, type_.name,)
+        self.connection.execute(command)
+
+    def visit_function(self, function, create_ok=False, result_type=None):
+        name = function.pytis_name(real=True)
+        arguments = _function_arguments(function)
+        command = 'DROP FUNCTION "%s"."%s" (%s)' % (function.schema, name, arguments,)
+        self.connection.execute(command)
+
+    def visit_trigger(self, trigger, checkfirst=False):
+        for search_path in _expand_schemas(trigger):
+            with _local_search_path(self._set_search_path(search_path)):
+                table = trigger.table
+                if table is not None:
+                    self.connection.execute('DROP TRIGGER "%s" ON "%s"' %
+                                            (trigger.pytis_name(real=True),
+                                             table.pytis_name(real=True),))
+        
 class _ObjectComment(sqlalchemy.schema.DDLElement):
     def __init__(self, obj, kind, comment):
         self.object = obj
@@ -2290,6 +2317,9 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+            
+    def drop(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
 
 @compiles(SQLView)
 def visit_view(element, compiler, **kw):
@@ -2329,6 +2359,9 @@ class SQLType(_SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+            
+    def drop(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
     
 class SQLFunctional(_SQLReplaceable, _SQLTabular):
     """Base class of function definitions.
@@ -2484,6 +2517,9 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
+            
+    def drop(self, bind=None, checkfirst=False):
+        bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
 
     @classmethod
     def pytis_name(class_, real=False):
@@ -2812,28 +2848,29 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
 
 def _db_dependencies(metadata):
     connection = metadata.pytis_engine.connect()
-    def load(query, otype):
+    def row_identifier(row):
+        schema, name = row
+        return '"%s"."%s"' % (schema, name,)
+    def load(query, otype, row_identifier=row_identifier):
         dictionary = {}
-        for oid, schema, name in connection.execute(sqlalchemy.text(query)):
-            identifier = '%s.%s.%s' % (otype, schema, name,)
-            if otype == 'FUNCTION':
-                query = "SELECT pg_catalog.pg_get_function_identity_arguments(%s)" % (oid,)
-                result = connection.execute(sqlalchemy.text(query))
-                arguments = result.fetchone()[0]
-                result.close()
-                identifier += '(' + arguments + ')'
-            dictionary[oid] = identifier
+        for row in connection.execute(sqlalchemy.text(query)):
+            oid = row[0]
+            dictionary[oid] = otype + ' ' + row_identifier(tuple(row[1:]))
         return dictionary
     pg_class = load(("select pg_class.oid, nspname, relname "
                      "from pg_class join pg_namespace on relnamespace=pg_namespace.oid"), 'TABLE')
-    pg_namespace = load("select oid, null, nspname from pg_namespace", 'SCHEMA')
+    pg_namespace = load("select oid, nspname from pg_namespace", 'SCHEMA',
+                        lambda row: '"%s"' % (row[0],))
     pg_type = load(("select pg_type.oid, nspname, typname "
                     "from pg_type join pg_namespace on typnamespace=pg_namespace.oid"), 'TYPE')
-    pg_proc = load(("select pg_proc.oid, nspname, proname "
-                    "from pg_proc join pg_namespace on pronamespace=pg_namespace.oid"), 'FUNCTION')
-    pg_trigger = load(("select pg_trigger.oid, nspname, tgname "
+    pg_proc = load(("select pg_proc.oid, nspname, proname, '' "
+                    #"pg_catalog.pg_get_function_identity_arguments(pg_proc.oid) "
+                    "from pg_proc join pg_namespace on pronamespace=pg_namespace.oid"), 'FUNCTION',
+                   lambda row: '"%s"."%s"(%s)' % row)
+    pg_trigger = load(("select pg_trigger.oid, tgname, nspname, relname "
                        "from pg_trigger join pg_class on tgrelid = pg_class.oid join "
-                       "pg_namespace on relnamespace=pg_namespace.oid"), 'TRIGGER')
+                       "pg_namespace on relnamespace=pg_namespace.oid"), 'TRIGGER',
+                      lambda row: '"%s" ON "%s"."%s"' % row)
     pg_rewrite = load(("select pg_rewrite.oid, nspname, relname "
                        "from pg_rewrite join pg_class on ev_class = pg_class.oid join "
                        "pg_namespace on relnamespace=pg_namespace.oid "
@@ -2853,8 +2890,8 @@ def _db_dependencies(metadata):
              "deptype = 'n'")
     result = connection.execute(query)
     # Let's reduce the set and break unimportant circular dependencies:
-    regexp = re.compile("[A-Z]+\.(pg_catalog|information_schema)\.|"
-                        "FUNCTION.public.(ltree|ltxtq|lquery)_")
+    regexp = re.compile('[A-Z]+ "(pg_catalog|information_schema)"\.|'
+                        'FUNCTION "public"\."(ltree|ltxtq|lquery)_')
     for oid, relname, refoid, refrelname in result:
         try:
             base = loc[refrelname][refoid]
@@ -3068,12 +3105,16 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         return
     # Process all available objects
     def obj_identifier(o):
-        if isinstance(o, SQLSchematicObject):
-            identifier = '%s.%s.%s' % (o._DB_OBJECT, o.schema, o.pytis_name(real=True),)
+        if isinstance(o, SQLTrigger) and o.table is not None:
+            t = o.table
+            identifier = '%s "%s" ON "%s"."%s"' % (o._DB_OBJECT, o.pytis_name(real=True),
+                                                   t.schema, t.pytis_name(real=True),)
+        elif isinstance(o, SQLSchematicObject):
+            identifier = '%s "%s"."%s"' % (o._DB_OBJECT, o.schema, o.pytis_name(real=True),)
+            if isinstance(o, SQLFunctional):
+                identifier += '(' + _function_arguments(o) + ')'
         else:
-            identifier = '%s.%s' % (o._DB_OBJECT, o.pytis_name(real=True),)
-        if isinstance(o, SQLFunctional) and not isinstance(o, SQLTrigger):
-            identifier += '(' + _function_arguments(o) + ')'
+            identifier = '%s "%s"' % (o._DB_OBJECT, o.pytis_name(real=True),)
         return identifier
     id2obj = {}
     for o in _PytisSimpleMetaclass.objects:
@@ -3135,7 +3176,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         try:
             for o in sqlalchemy.util.topological.sort(dependencies, list(all_items)):
                 if o in changed:
-                    if not o.startswith('TABLE.'):
+                    if not o.startswith('TABLE '):
                         drop.append(o)
                     queue = [o]
                     while queue:
@@ -3146,8 +3187,10 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         except sqlalchemy.exc.CircularDependencyError, e:
             _warn("Can't emit DROP commands due to circular dependencies.\n%s" % (e.args[0],))
         drop.reverse()
-        for o in drop:
-            _gsql_output('DROP %s "%s"."%s";' % tuple(string.split(o, '.')))
+        for name in drop:
+            o = id2obj.get(name)
+            if o is not None:
+                o.pytis_drop()
         # Emit update commands
         sys.stdout.write(str_output)
         # Recreate all dropped objects
