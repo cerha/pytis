@@ -1618,7 +1618,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                 else:
                     continue
                 name = _sql_plain_name(c.name)
-                conditions.append(table_c == sqlalchemy.literal_column('old.'+name))
+                conditions.append(table_c == sqlalchemy.literal_column('old.' + name))
                 break
         if not conditions:
             if False:
@@ -2680,7 +2680,7 @@ class SQLTrigger(SQLEventHandler):
             t = object_by_class(self.table, search_path=search_path)
             assert t is not None, ("Trigger table not found", self)
             self.add_is_dependent_on(t)
-        if type(self.body) != types.MethodType:
+        if isinstance(self.body, types.MethodType):
             self.add_is_dependent_on(object_by_class(self.body, search_path=search_path))
 
     def pytis_exists(self, metadata):
@@ -2747,7 +2747,7 @@ class SQLTrigger(SQLEventHandler):
             return False
 
     def __call__(self, *arguments):
-        if type(self.body) == types.MethodType:
+        if isinstance(self.body, types.MethodType):
             return super(SQLTrigger, self).__call__(*arguments)
         return object_by_class(self.body)(*arguments)
 
@@ -2945,9 +2945,9 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         upgrade_metadata = sqlalchemy.MetaData()
         import config
         connection_data = dict(user=config.dbuser,
-                               password=(':'+config.dbpass if config.dbpass else ''),
+                               password=(':' + config.dbpass if config.dbpass else ''),
                                host=(config.dbhost or ''),
-                               port=(':'+config.dbport if config.dbport else ''),
+                               port=(':' + config.dbport if config.dbport else ''),
                                dbname=config.dbname)
         connection_string = ('postgresql://%(user)s%(password)s@%(host)s%(port)s/%(dbname)s' %
                              connection_data)
