@@ -1116,6 +1116,8 @@ class ReferenceLookup(object):
         def __init__(self, specification):
             self._specification = specification
         def __getattr__(self, column):
+            if column == '__clause_element__':
+                raise AttributeError(column)
             return ReferenceLookup.Reference(self._specification, column)
     def __getattr__(self, specification):
         return self.ColumnLookup(specification)
