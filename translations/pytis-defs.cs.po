@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-23 10:59+0200\n"
+"POT-Creation-Date: 2013-05-24 15:12+0200\n"
 "PO-Revision-Date: 2013-04-23 10:43+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -23,7 +23,7 @@ msgstr ""
 
 #: ../lib/pytis/defs/help.py:38 ../lib/pytis/defs/help.py:60
 #: ../lib/pytis/defs/help.py:158 ../lib/pytis/defs/menu.py:85
-#: ../lib/pytis/defs/profiles.py:32
+#: ../lib/pytis/defs/profiles.py:34
 msgid "Název"
 msgstr ""
 
@@ -32,12 +32,12 @@ msgstr ""
 msgid "Nápověda"
 msgstr ""
 
-#: ../lib/pytis/defs/help.py:55 ../lib/pytis/defs/profiles.py:34
+#: ../lib/pytis/defs/help.py:55 ../lib/pytis/defs/profiles.py:36
 msgid "Fullname"
 msgstr ""
 
-#: ../lib/pytis/defs/help.py:56 ../lib/pytis/defs/logging.py:42
-#: ../lib/pytis/defs/profiles.py:36 ../lib/pytis/defs/profiles.py:67
+#: ../lib/pytis/defs/help.py:56 ../lib/pytis/defs/logging.py:44
+#: ../lib/pytis/defs/profiles.py:38 ../lib/pytis/defs/profiles.py:69
 msgid "Název specifikace"
 msgstr ""
 
@@ -49,7 +49,7 @@ msgid "Popis"
 msgstr ""
 
 #: ../lib/pytis/defs/help.py:64 ../lib/pytis/defs/help.py:115
-#: ../lib/pytis/defs/profiles.py:43 ../lib/pytis/defs/profiles.py:70
+#: ../lib/pytis/defs/profiles.py:45 ../lib/pytis/defs/profiles.py:72
 msgid "Obsah"
 msgstr ""
 
@@ -99,7 +99,7 @@ msgstr ""
 msgid "Profily"
 msgstr ""
 
-#: ../lib/pytis/defs/help.py:118 ../lib/pytis/defs/logging.py:46
+#: ../lib/pytis/defs/help.py:118 ../lib/pytis/defs/logging.py:48
 #: ../lib/pytis/defs/menu.py:205 ../lib/pytis/defs/menu.py:219
 #: ../lib/pytis/defs/menu.py:294 ../lib/pytis/defs/menu.py:433
 #: ../lib/pytis/defs/menu.py:595 ../lib/pytis/defs/menu.py:690
@@ -120,81 +120,81 @@ msgid "Tato položka nemá editovatelnou nápovědu."
 msgstr ""
 
 #: ../lib/pytis/defs/help.py:155 ../lib/pytis/defs/menu.py:40
-#: ../lib/pytis/defs/menu.py:542 ../lib/pytis/defs/profiles.py:31
-#: ../lib/pytis/defs/profiles.py:65
+#: ../lib/pytis/defs/menu.py:542 ../lib/pytis/defs/profiles.py:33
+#: ../lib/pytis/defs/profiles.py:67
 msgid "Identifikátor"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:36
+#: ../lib/pytis/defs/logging.py:38
 msgid "Log uživatelských akcí"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:39
+#: ../lib/pytis/defs/logging.py:41
 msgid "Čas"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:40 ../lib/pytis/defs/logging.py:78
-#: ../lib/pytis/defs/logging.py:89 ../lib/pytis/defs/printing.py:77
-#: ../lib/pytis/defs/profiles.py:33 ../lib/pytis/defs/profiles.py:66
+#: ../lib/pytis/defs/logging.py:42 ../lib/pytis/defs/logging.py:80
+#: ../lib/pytis/defs/logging.py:91 ../lib/pytis/defs/printing.py:77
+#: ../lib/pytis/defs/profiles.py:35 ../lib/pytis/defs/profiles.py:68
 msgid "Uživatel"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:44 ../lib/pytis/defs/profiles.py:38
+#: ../lib/pytis/defs/logging.py:46 ../lib/pytis/defs/profiles.py:40
 #: ../lib/pytis/defs/statistics.py:35 ../lib/pytis/defs/statistics.py:52
 #: ../lib/pytis/defs/statistics.py:72 ../lib/pytis/defs/statistics.py:98
 #: ../lib/pytis/defs/statistics.py:113
 msgid "Třída formuláře"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:47
+#: ../lib/pytis/defs/logging.py:49
 msgid "Informace"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:64
+#: ../lib/pytis/defs/logging.py:66
 msgid "Přehled změn"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:74
+#: ../lib/pytis/defs/logging.py:76
 msgid "Od"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:76
+#: ../lib/pytis/defs/logging.py:78
 msgid "Do"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:79 ../lib/pytis/defs/logging.py:91
+#: ../lib/pytis/defs/logging.py:81 ../lib/pytis/defs/logging.py:93
 msgid "Tabulka"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:80 ../lib/pytis/defs/logging.py:94
+#: ../lib/pytis/defs/logging.py:82 ../lib/pytis/defs/logging.py:96
 msgid "Klíč"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:81
+#: ../lib/pytis/defs/logging.py:83
 msgid "Řádek obsahuje"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:82 ../lib/pytis/defs/logging.py:90
+#: ../lib/pytis/defs/logging.py:84 ../lib/pytis/defs/logging.py:92
 msgid "Schema"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:87
+#: ../lib/pytis/defs/logging.py:89
 msgid "ID"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:88
+#: ../lib/pytis/defs/logging.py:90
 msgid "Datum a čas"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:92
+#: ../lib/pytis/defs/logging.py:94
 msgid "Operace"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:93
+#: ../lib/pytis/defs/logging.py:95
 msgid "ID klíč"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:95
+#: ../lib/pytis/defs/logging.py:97
 msgid "Řádek"
 msgstr ""
 
@@ -723,39 +723,39 @@ msgstr ""
 msgid "Tisková sestava se vyskytuje ve více exemplářích: "
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:29
+#: ../lib/pytis/defs/profiles.py:31
 msgid "Profily formulářů"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:40
+#: ../lib/pytis/defs/profiles.py:42
 msgid "Id profilu"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:44
+#: ../lib/pytis/defs/profiles.py:46
 msgid "Chyby"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:45
+#: ../lib/pytis/defs/profiles.py:47
 msgid "Neplatný"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:52
+#: ../lib/pytis/defs/profiles.py:54
 msgid "Neplatné profily"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:54
+#: ../lib/pytis/defs/profiles.py:56
 msgid "Uživatelské profily"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:56
+#: ../lib/pytis/defs/profiles.py:58
 msgid "Systémové profily"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:63
+#: ../lib/pytis/defs/profiles.py:65
 msgid "Nastavení formulářů"
 msgstr ""
 
-#: ../lib/pytis/defs/profiles.py:68
+#: ../lib/pytis/defs/profiles.py:70
 msgid "Typ formuláře"
 msgstr ""
 
