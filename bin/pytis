@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -43,36 +43,26 @@ _profile = 0 # FALSE
 
 
 def _usage(optexception=None):
-    _USAGE = _("""
-Použití: pytis [OPTION ...]
+    _USAGE = """
+Usage: pytis [OPTION ...]
 
-Volby:
+Options:
 
-  --config FILE       konfigurační soubor aplikace
-  --dbuser USER       přihlašuj se do databáze jako USER
-  --defdir DIR        hledej definiční soubory v adresáři DIR
-  --server HOST       name server, ke kterému se má program připojovat
+  --config FILE       application configuration file
+  --dbuser USER       connect to the database as USER
 
-  --help              vypiš tuto nápovědu a skonči
-  --debug             zapni debugovací logování
-  --debug-on-error    při odchycení neočekávané výjimky spusť debugger
-  --debug-memory      vypisuj informace o paměti
-  --profile           spusť program v profileru a zapiš výsledky do `%s'
+  --help              display this help and exit
+  --debug             turn on debugging logging
+  --debug-on-error    run debugger on unhandled exception
+  --debug-memory      display memory info
+  --profile           run in profiler and write results to `%s'
 
-""" % (_PROFILE))
+""" % (_PROFILE)
     if optexception:
         sys.stderr.write(optexception.msg)
         sys.stderr.write('\n')
     sys.stderr.write(_USAGE)
     sys.exit(_EXIT_USAGE)
-
-def _install_gettext():
-    import pytis.util as util             # až po konfiguraci
-    import config
-    try:
-        gettext.install('ebas')
-    except IOError as e:
-        util.log(util.OPERATIONAL, 'Nelze otevřít jazykový soubor', e.args)
 
 def go():
     import pytis.util as util             # až po konfiguraci
@@ -82,12 +72,11 @@ def go():
     except getopt.GetoptError as e:
         _usage(e)
     if not util.in_x():
-        sys.stderr.write(_("Nedostupné prostředí X Window\n"))
+        sys.stderr.write("X11 not available.\n")
         return
     import config
     if config.help:
         _usage()
-    _install_gettext()
     if config.debug_memory:
         gc.set_debug(gc.DEBUG_COLLECTABLE | gc.DEBUG_UNCOLLECTABLE |
                      gc.DEBUG_INSTANCES | gc.DEBUG_OBJECTS)

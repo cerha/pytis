@@ -65,7 +65,7 @@ class DualForm(Form, Refreshable):
     Tyto konkrétní konfigurace jsou realizovány potomky této třídy.
 
     """
-    DESCR = _(u"duální formulář")
+    DESCR = _("dual form")
 
     def _full_init(self, *args, **kwargs):
         """Inicializuj duální formulář.
@@ -531,7 +531,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
     záznamu, tak o souhrnné informace (např. výsledky agregací nad daty horního formuláře atd.).
 
     """
-    DESCR = _(u"duální náhled")
+    DESCR = _("dual view")
     
     def _create_main_form(self, parent, **kwargs):
         return BrowseForm(parent, self._resolver, self._name, guardian=self, **kwargs)
@@ -759,7 +759,7 @@ class MultiForm(Form, Refreshable):
                     if old_form and old_form is not form and old_form.initialized():
                         old_form._release_data()
             elif event:
-                message(_(u"Formulář není dostupný"), beep_=True)
+                message(_("Form disabled"), beep_=True)
                 event.Veto()
                 old_selection = event.GetOldSelection()
                 if old_selection != -1:
@@ -1008,7 +1008,7 @@ class MultiSideForm(MultiForm):
         return [(binding.title(), self._create_subform(parent, binding)) for binding in bindings]
 
     def _displayed_forms_menu(self):
-        return Menu(_(u"Zobrazené formuláře"),
+        return Menu(_("Available forms"),
                     [CheckItem(b.title(), help='',
                                command=self.COMMAND_TOGGLE_SIDEFORM(binding=b,
                                                                     _command_handler=self),
@@ -1018,13 +1018,12 @@ class MultiSideForm(MultiForm):
 
     def _on_tab_mouse_right(self, event):
         selection = event.GetSelection()
-        menu = (MItem(_(u"Zavřít tento formulář"), help=_(u"Zavřít tento formulář"),
+        menu = (MItem(_("Close this form"), help=_("Close this form"),
                       command=self.COMMAND_TOGGLE_SIDEFORM(binding=self._forms[selection].binding(),
                                                            _command_handler=self)),
-                MItem(_(u"Filtrovat hlavní formulář podle tohoto vedlejšího formuláře"),
-                      help=_("Zobrazit pouze ty řádky hlavního formuláře, pro které tento "
-                             "vedlejší formulář obsahuje v aktuálním profilu nenulový "
-                             "počet řádků."),
+                MItem(_("Filter the main form by this side form"),
+                      help=_("Show only those rows of the main form, which have "
+                             "at least one row in this side form."),
                       command=self.COMMAND_FILTER_BY_SIDEFORM(index=selection,
                                                               _command_handler=self)),
                 self._displayed_forms_menu(),
@@ -1096,8 +1095,8 @@ class MultiSideForm(MultiForm):
     def _cmd_filter_by_sideform(self, index):
         form = self._forms[index]
         if form.COMMAND_UPDATE_PROFILE.enabled():
-            msg = _("Filtrování nemůže být provedeno, pokud aktuální profil není uložen!")
-            bsave, bquit = _("Uložit"), _("Zrušit")
+            msg = _("Can't filter when the current profile is not saved!")
+            bsave, bquit = _("Save"), _("Cancel")
             if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit), default=bsave) != bsave:
                 return
             form.COMMAND_UPDATE_PROFILE.invoke()
@@ -1119,7 +1118,7 @@ class MultiSideForm(MultiForm):
                 self._init_subform(form)
                 self._set_notebook_selection(i)
                 return True
-        message(_(u"Požadovaný vedlejší formulář není dostupný"), beep_=True)
+        message(_("The requested side form is not available."), beep_=True)
         return False
     
 
@@ -1132,7 +1131,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         given argument after the form is created.
 
     """
-    DESCR = _(u"vícenásobný duální formulář")
+    DESCR = _("tabbed dual form")
     class MainForm(BrowseForm):
         def bindings(self):
             return self._view.bindings()

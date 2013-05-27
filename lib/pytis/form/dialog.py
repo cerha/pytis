@@ -85,13 +85,13 @@ class GenericDialog(Dialog):
     _HELP_TOPIC = 'dialog'
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
 
-    BUTTON_OK = _(u"Ok")
+    BUTTON_OK = _("Ok")
     "Nápis pro potvrzovací tlačítko."
-    BUTTON_CANCEL = _(u"Zrušit")
+    BUTTON_CANCEL = _("Cancel")
     "Nápis pro opouštěcí tlačítko."
-    BUTTON_YES = _(u"Ano")
+    BUTTON_YES = _("Yes")
     "Nápis pro tlačítko souhlasu."
-    BUTTON_NO = _(u"Ne")
+    BUTTON_NO = _("No")
     "Nápis pro tlačítko nesouhlasu."
     
     def __init__(self, parent, title, buttons, default=None, report=None,
@@ -350,7 +350,7 @@ class Message(GenericDialog):
 
     _icons = (ICON_INFO, ICON_QUESTION, ICON_WARNING, ICON_ERROR, ICON_TIP, ICON_QUIT)
     
-    def __init__(self, parent, message, icon=ICON_INFO, title=_(u"Zpráva"),
+    def __init__(self, parent, message, icon=ICON_INFO, title=_("Message"),
                  buttons=(GenericDialog.BUTTON_OK,), default=GenericDialog.BUTTON_OK, **kwargs):
         """Inicializuj dialog.
 
@@ -386,7 +386,7 @@ class Message(GenericDialog):
 class Warning(Message):
     """Dialog pro zobrazení varovné zprávy."""
 
-    def __init__(self, parent, message, title=_(u"Varování"), **kwargs):
+    def __init__(self, parent, message, title=_("Warning"), **kwargs):
         """Inicializuj dialog.
 
         Argumenty:
@@ -410,7 +410,7 @@ class Warning(Message):
 class Error(Message):
     """Dialog pro zobrazení chybové zprávy."""
 
-    def __init__(self, parent, message, title=_(u"Chyba"), **kwargs):
+    def __init__(self, parent, message, title=_("Error"), **kwargs):
         """Inicializuj dialog.
         
         Argumenty:
@@ -434,7 +434,7 @@ class Error(Message):
 class MultiQuestion(Message):
     """Dialog vyžadující odpověď na otázku výběrem z tlačítek."""
     def __init__(self, parent, message, buttons, default=None,
-                 title=_(u"Otázka"), icon=Message.ICON_QUESTION, **kwargs):
+                 title=_("Question"), icon=Message.ICON_QUESTION, **kwargs):
         super_(MultiQuestion).__init__(self, parent, message, title=title, buttons=buttons,
                                        default=default, icon=icon, **kwargs)
     
@@ -447,7 +447,7 @@ class Question(MultiQuestion):
 
     """
     def __init__(self, parent, message, default=True,
-                 title=_(u"Otázka"), icon=Message.ICON_QUESTION,
+                 title=_("Question"), icon=Message.ICON_QUESTION,
                  **kwargs):
         """Inicializuj dialog.
         
@@ -496,7 +496,7 @@ class InputDialog(Message):
 
     
     def __init__(self, parent, message=None, value=None, prompt=None,
-                 title=_(u"Zadejte hodnotu"), passwd=False,
+                 title=_("Enter value"), passwd=False,
                  input_width=None, input_height=1, allow_empty=True, **kwargs):
         """Inicializuj dialog.
 
@@ -618,7 +618,7 @@ class InputNumeric(InputDialog):
     """
   
     def __init__(self, parent, message=None, value=None, prompt=None,
-                 title=_(u"Zadejte hodnotu"), integer_width=10,
+                 title=_("Enter value"), integer_width=10,
                  allow_empty=False, decimal_width=0,
                  min_value=None, max_value=None, allow_negative=True,
                  select_on_entry=False, signed_colour="Red"
@@ -717,8 +717,8 @@ class OperationDialog(Message):
     
     """
     def __init__(self, parent, function, args=(), kwargs={},
-                 title=_(u"Provádí se operace"),
-                 message=_(u"Čekejte prosím...")):
+                 title=_("Operation in progress"),
+                 message=_("Please wait...")):
         """Inicializuj dialog.
 
         Argumenty:
@@ -770,7 +770,7 @@ class ProgressDialog(OperationDialog):
 
     """
     def __init__(self, parent, function, args=(), kwargs={},
-                 title=_(u"Provádí se operace"), message=_(u"Čekejte prosím..."),
+                 title=_("Operation in progress"), message=_("Please wait..."),
                  elapsed_time=False, estimated_time=False,
                  remaining_time=False, can_abort=False):
         """Inicializuj dialog.
@@ -879,7 +879,7 @@ class Calendar(GenericDialog):
     """
     _COMMIT_BUTTON = GenericDialog.BUTTON_OK
 
-    def __init__(self, parent, date, title=_(u"Kalendář"),
+    def __init__(self, parent, date, title=_("Calendar"),
                  enable_year=True, enable_month=True, monday_first=True):
         """Inicializuj dialog.
 
@@ -956,7 +956,7 @@ class ColorSelector(GenericDialog):
     
     """
 
-    def __init__(self, parent, color=None, title=_(u"Výběr barvy")):
+    def __init__(self, parent, color=None, title=_("Color selection")):
         """Inicializuj dialog.
 
         Argumenty:
@@ -1002,9 +1002,9 @@ class BugReport(GenericDialog):
     # Existuje sice wxPython.pytis.ErrorDialogs, ale to vypadá jako těžký a
     # nepříliš funkční hack.
 
-    _IGNORE_LABEL = _(u"Ignorovat")
-    _REPORT_LABEL = _(u"Poslat oznámení o chybě")
-    _EXIT_LABEL = _(u"Ukončit aplikaci")
+    _IGNORE_LABEL = _("Ignore")
+    _REPORT_LABEL = _("Send error report")
+    _EXIT_LABEL = _("Exit application")
     _COMMIT_BUTTON = _EXIT_LABEL
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
@@ -1018,7 +1018,7 @@ class BugReport(GenericDialog):
             'sys.exc_info()'
 
         """
-        super_(BugReport).__init__(self, parent, _(u"Neočekávaná chyba"),
+        super_(BugReport).__init__(self, parent, _("Unhandled exception"),
                                    buttons=(self._IGNORE_LABEL,
                                             self._REPORT_LABEL,
                                             self._EXIT_LABEL),
@@ -1027,7 +1027,7 @@ class BugReport(GenericDialog):
 
     def _create_content(self, sizer):
         dialog = self._dialog
-        label = wx.StaticText(dialog, -1, _(u"Nevyšlo to"))
+        label = wx.StaticText(dialog, -1, _("Oops"))
         font = wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, encoding=wx.FONTENCODING_DEFAULT)
         label.SetFont(font)
         icon = self._create_icon(Message.ICON_ERROR)
@@ -1256,7 +1256,7 @@ class AggregationSetupDialog(GenericDialog):
     
     def __init__(self, parent, aggregation_functions, grouping_functions, columns,
                  name, group_by_columns, aggregation_columns, aggregation_valid,
-                 title=_(u"Parametry agregačního náhledu")):
+                 title=_("Aggregated view parameters")):
         """Arguments:
              aggregation_functions -- specification of available aggregation
                functions as a sequence of pairs (operation, label), where
@@ -1293,11 +1293,10 @@ class AggregationSetupDialog(GenericDialog):
     def _create_content(self, sizer):
         super(AggregationSetupDialog, self)._create_content(sizer)
         self._name_control = wx_text_ctrl(self._dialog, value=self._name, length=50,
-                                          tooltip=_("Zadejte název pod kterým se má náhled uložit, "
-                                                    "nebo ponechte prázdné, pokud náhled nechcete "
-                                                    "ukládat."))
+                                          tooltip=_("Enter the name for saving the view, or "
+                                                    "leave empty, if you prefer not to save it."))
         box = wx.BoxSizer(wx.HORIZONTAL)
-        box.Add(wx.StaticText(self._dialog, -1, _("Název:")), wx.ALL, 3)
+        box.Add(wx.StaticText(self._dialog, -1, _("Title")+':'), wx.ALL, 3)
         box.Add(self._name_control)
         sizer.Add(box, 0, wx.EXPAND|wx.ALL, 5)
         panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
@@ -1306,7 +1305,7 @@ class AggregationSetupDialog(GenericDialog):
                                              len(self._aggregation_functions)+2, 2, 6)
         self._grouping_controls = []
         self._aggregation_controls = []
-        for label in ['', _(u"Seskupování")] + [x[1] for x in self._aggregation_functions]:
+        for label in ['', _("Group by")] + [x[1] for x in self._aggregation_functions]:
             grid.Add(wx.StaticText(panel, -1, label))
         for (column_id, column_label, column_type) in self._columns:
             grid.Add(wx.StaticText(panel, -1, column_label))
@@ -1317,7 +1316,7 @@ class AggregationSetupDialog(GenericDialog):
             if functions:
                 fsizer = wx.BoxSizer(wx.VERTICAL)
                 fsizer.Add(checkbox)
-                cp = wx.CollapsiblePane(panel, label=_(u"Funkce"), style=wx.CP_DEFAULT_STYLE)
+                cp = wx.CollapsiblePane(panel, label=_("Function"), style=wx.CP_DEFAULT_STYLE)
                 panel.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self._on_collapsiblepane_changed, cp)
                 pane = cp.GetPane()
                 cpsizer = wx.BoxSizer(wx.VERTICAL)
@@ -1369,7 +1368,7 @@ class AggregationSetupDialog(GenericDialog):
             self._aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
                                          if checkbox.IsChecked()]
             if not self._group_by_columns:
-                run_dialog(Warning, _(u"Musíte zvolit alespoň jeden sloupec pro seskupování"))
+                run_dialog(Warning, _("You need to select at least one grouping column."))
                 return
         return super(AggregationSetupDialog, self)._on_button(event)
 
@@ -1395,9 +1394,9 @@ class ExitDialog(Question):
     """
     _STYLE = GenericDialog._STYLE | wx.RESIZE_BORDER
     
-    def __init__(self, parent, title=_(u"Ukončit aplikaci"),
-                 message=_(u"Opravdu chcete ukončit aplikaci?"), icon=Message.ICON_QUIT,
-                 save_label=_(u"Zapamatovat označené formuláře pro příští spuštění"),
+    def __init__(self, parent, title=_("Exit application"),
+                 message=_("Really quit the application?"), icon=Message.ICON_QUIT,
+                 save_label=_("Automatically open the checked forms on next startup"),
                  save_state=True, save_columns=(), save_items=()):
         """Arguments:
 
@@ -1454,7 +1453,7 @@ class FileDialog(Dialog):
     _last_directory = {}
 
     def __init__(self, parent, title=None, dir=None, file=None, mode=OPEN,
-                 wildcards=(_(u"Všechny soubory")+" (*.*)|*.*",),
+                 wildcards=(_("All files")+" (*.*)|*.*",),
                  multi=False, overwrite_prompt=True):
         """Inicializuj dialog.
 
@@ -1483,8 +1482,8 @@ class FileDialog(Dialog):
         super_(FileDialog).__init__(self, parent)
         assert mode in (FileDialog.OPEN, FileDialog.SAVE)
         if title is None:
-            title = {FileDialog.OPEN: _(u"Otevřít soubor"),
-                     FileDialog.SAVE: _(u"Uložit soubor")}[mode]
+            title = {FileDialog.OPEN: _("Open file"),
+                     FileDialog.SAVE: _("Save file")}[mode]
         assert dir is None or isinstance(dir, basestring)
         assert file is None or isinstance(file, basestring)
         self._title = unicode(title)
@@ -1538,7 +1537,7 @@ class DirDialog(Dialog):
 
     _last_directory = None
 
-    def __init__(self, parent, title=_("Výběr adresáře"), path=None):
+    def __init__(self, parent, title=_("Directory selection"), path=None):
         """Arguments:
 
           parent -- wx parent; 'wx.Frame' or 'wx.Dialog' instance

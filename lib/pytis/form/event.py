@@ -59,7 +59,7 @@ class UserBreakException(Exception):
     """
     def __init__(self, *args):
         super(UserBreakException, self).__init__(*args)
-        message(_(u"Stop"), beep_=True)
+        message(_("Stop"), beep_=True)
 
 
 _current_event = None
@@ -93,8 +93,8 @@ def top_level_exception():
     elif text:
         to = config.bug_report_address
         if not to:
-            run_dialog(Message, _(u"Není známa cílová adresa. Je nutno nastavit konfigurační volbu "
-                                  u"`bug_report_address'."))
+            run_dialog(Message, _("Destination address not known. The configuration option "
+                                  "`bug_report_address' must be set."))
         else:
             tb = einfo[2]
             while tb.tb_next is not None:
@@ -111,11 +111,10 @@ def top_level_exception():
                 else:    
                     address = '%s@%s' % (username, domain)
                 while True:
-                    address = run_dialog(InputDialog, prompt=_(u"Vaše e-mailová adresa: "),
+                    address = run_dialog(InputDialog, prompt=_("Your e-mail address")+': ',
                                          value=address, input_width=30,
-                                         message=_(u"Pokud svou adresu nastavíte ve formuláři " +
-                                                   u"Nastavení uživatelského rozhraní, nebudete " +
-                                                   u"již příště dotazováni."))
+                                         message=_('Set your address in form "%s" to avoid being '
+                                                   'asked next time.') % _("User interface settings"))
                     if address is None or address and address.strip() != '':
                         break
             if address:
@@ -145,9 +144,9 @@ def top_level_exception():
                         except:
                             pass
                 except Exception as e:
-                    run_dialog(Error, _(u"Oznámení se nezdařilo odeslat:\n") + unicode(e))
+                    run_dialog(Error, _("Failed sending error report:") + "\n" + unicode(e))
                 else:
-                    run_dialog(Message, _(u"Oznámení o chybě odesláno"))
+                    run_dialog(Message, _("Error report sent."))
     if config.debug_on_error:
         import pdb
         pdb.post_mortem(sys.exc_info()[2])

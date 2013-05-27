@@ -33,9 +33,9 @@ from pytis.form import *
 _ = pytis.util.translations('pytis-wx')
 
 _LAYOUT = (
-    ('ui', LayoutSpec(_(u"Nastavení uživatelského rozhraní"), VGroup(
-    LVGroup(_(u"Barvy"),
-            LVGroup(_(u"Zvýraznění aktivního řádku"),
+    ('ui', LayoutSpec(_("User interface settings"), VGroup(
+    LVGroup(_("Colors"),
+            LVGroup(_("Current table row highlight"),
                     'row_highlight_color',
                     'row_highlight_edited_color',
                     'row_highlight_unfocused_color',
@@ -48,7 +48,7 @@ _LAYOUT = (
             'field_denied_color',
             'field_invalid_color',
             ),
-    LVGroup(_(u"Chování"),
+    LVGroup(_("Behavior"),
             'stretch_tables',
             'show_tooltips',
             'auto_menu_accel',
@@ -57,34 +57,35 @@ _LAYOUT = (
             'rpc_communication_enabled',
             'rpc_remote_view',
             ),
-    LVGroup(_(u"Ostatní"),
+    LVGroup(_("Other"),
             'sender_address'),
     ))),
-    ('export', LayoutSpec(_(u"Nastavení exportu"),
+    ('export', LayoutSpec(_("Export settings"),
                           VGroup('export_directory','export_encoding')),
      ))
 
 _LABELS = {
-    'row_highlight_color':   _(u"Výchozí"),
-    'row_highlight_edited_color': _(u"Během inline editace řádku"),
-    'row_highlight_unfocused_color': _(u"V neaktivním formuláři"),
-    'row_highlight_width':   _(u"Šířka orámování"),
-    'cell_highlight_color':  _(u"Zvýraznění aktivní buňky"),
-    'grid_line_color':       _(u"Mřížka tabulky"),
-    'grouping_background_downgrade': _(u"Ztmavení řádků při seskupování"),
-    'field_disabled_color':  _(u"Neaktivní vstupní políčko"),
-    'field_denied_color':    _(u"Zakázané vstupní políčko"),
-    'field_invalid_color':   _(u"Nevalidní vstupní políčko"),
-    'show_splash':           _(u"Zobrazovat úvodní dialog"),
-    'show_tooltips':         _(u"Zobrazovat bublinovou nápovědu"),
-    'auto_menu_accel':       _(u"Automaticky číslovat menu akceleračními klávesami"),
-    'stretch_tables':        _(u"Rozpínat tabulky na šířku okna"),
-    'cache_spec_onstart':    _(u"Načítat specifikace při startu"),
-    'sender_address':        _(u"E-mailová adresa"),
-    'export_directory':      _(u"Výchozí adresář"),
-    'export_encoding':       _(u"Kódování exportovaných dat"),
-    'rpc_communication_enabled': _(u"Povolení komunikace s windowsovými stanicemi."),
-    'rpc_remote_view':       _(u"Zobrazovat PDF soubory na windows stanici."),
+    'row_highlight_color':   _("Default"),
+    'row_highlight_edited_color': _("During inline editation"),
+    'row_highlight_unfocused_color': _("Inactive form"),
+    'row_highlight_width':   _("Border width"),
+    'cell_highlight_color':  _("Current cell highlight"),
+    'grid_line_color':       _("Table grid"),
+    'grouping_background_downgrade': _("Grouping background change"),
+
+    'field_disabled_color':  _("Inactive input field"),
+    'field_denied_color':    _("Disabled input field"),
+    'field_invalid_color':   _("Invalid input field"),
+    'show_splash':           _("Show start-up dialog"),
+    'show_tooltips':         _("Show tooltips"),
+    'auto_menu_accel':       _("Automatically numbered menus with accellerator keys"),
+    'stretch_tables':        _("Automatically stretch tables to full window width"),
+    'cache_spec_onstart':    _("Cache specification files on startup"),
+    'sender_address':        _("E-mail address"),
+    'export_directory':      _("Default directory"),
+    'export_encoding':       _("Character encoding"),
+    'rpc_communication_enabled': _("Windows workstation support"),
+    'rpc_remote_view':       _("Open PDF documents on Windows workstation"),
 }
 
 _FIELDSPEC_KWARGS = {
@@ -107,8 +108,7 @@ def config_menu_items(hotkeys={}):
                    command=pytis.form.Application.COMMAND_RUN_FORM,
                    args=dict(form_class=ConfigForm, name=name),
                    hotkey=hotkeys.get(name),
-                   help=(_(u'Otevřít konfigurační formulář "%s"') % \
-                         layout.caption()),
+                   help=(_('Open configuration form "%s"') % layout.caption()),
                    icon='config-'+name)
              for name, layout in _LAYOUT]
     return tuple(items)
@@ -170,7 +170,7 @@ class ConfigForm(PopupEditForm):
     hodnotami.
 
     """
-    DESCR = _(u"konfigurační formulář")
+    DESCR = _("configuration form")
     
     def __init__(self, *args, **kwargs):
         super(ConfigForm, self).__init__(*args, **dict(kwargs, mode=self.MODE_EDIT, select_row=0))
@@ -189,7 +189,7 @@ class ConfigForm(PopupEditForm):
         fields = [Field(option, _LABELS.get(option, option), descr=descr(option),
                         **_FIELDSPEC_KWARGS.get(option, {}))
                   for option in self._layout().order()]
-        return ViewSpec(_(u"Nastavení uživatelského rozhraní"),
+        return ViewSpec(_("User interface settings"),
                         fields, layout=self._layout(), **self._spec_kwargs)
 
     def _create_data_object(self):
@@ -202,7 +202,7 @@ class ConfigForm(PopupEditForm):
     
     def _buttons(self):
         button = dict(id=wx.ID_APPLY,
-                      tooltip=_(u"Uplatnit změny bez uzavření formuláře"),
+                      tooltip=_("Apply changes without closing the form"),
                       command=self.COMMAND_COMMIT_RECORD(close=False))
         buttons = super(ConfigForm, self)._buttons()
         return (buttons[0], button) + buttons[1:]

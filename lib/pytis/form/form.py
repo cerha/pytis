@@ -496,7 +496,7 @@ class InnerForm(Form):
         # Default print currently disabled, since on a huge table it may extensively consume
         # resources and no one is using it anyway...
         #if not print_spec:
-        #    print_spec = ((_("Výchozí"), os.path.join('output', name)),)
+        #    print_spec = ((_("Default"), os.path.join('output', name)),)
         db_print_spec = []
         condition = pytis.data.EQ('module', pytis.data.Value(pytis.data.String(), name))
         i = 1
@@ -513,7 +513,7 @@ class InnerForm(Form):
                 if action_has_access('print/%s' % (p.dmp_name(),), perm=pytis.data.Permission.PRINT)]
         if has_access(self.name(), perm=pytis.data.Permission.PRINT):
             menu.append(MSeparator())
-            menu.append(pytis.extensions.new_record_mitem(_("Nová sestava"), printing_form,
+            menu.append(pytis.extensions.new_record_mitem(_("New report"), printing_form,
                                                           prefill=dict(module=pytis.data.sval(name))))
             if db_print_spec:
                 mitem = pytis.extensions.run_form_mitem
@@ -525,8 +525,8 @@ class InnerForm(Form):
                 delete_submenu = [mitem(label, printing_form, 'delete_template',
                                         module=module, specification=label)
                                   for module, label in db_print_spec]
-                menu += [Menu(_("Editace sestav"), edit_submenu),
-                         Menu(_("Mazání sestav"), delete_submenu)]
+                menu += [Menu(_("Edit report"), edit_submenu),
+                         Menu(_("Delete report"), delete_submenu)]
         return menu
 
     def _get_print_menu(self):
@@ -560,7 +560,7 @@ class InnerForm(Form):
         title = self._view.title()
         description = self._spec_description()
         text = "= "+ title +" =\n\n" + description
-        InfoWindow(_(u"Popis náhledu %s") % title, text=text, format=TextFormat.LCG)
+        InfoWindow(title, text=text, format=TextFormat.LCG)
         
     def _can_describe(self):
         return self._spec_description() is not None
@@ -850,13 +850,13 @@ class LookupForm(InnerForm):
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
-        self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"))
+        self._default_profile = Profile('__default_profile__', _(u"Default profile"))
         self._profiles = self._load_profiles()
         if filter or sorting or columns or grouping:
             assert profile_id is None
             # When profile parameters were passed to the constructor, create an
             # additional profile according to these paramaters.
-            self._initial_profile = Profile('__constructor_profile__', _(u"Počáteční profil"),
+            self._initial_profile = Profile('__constructor_profile__', _(u"Initial profile"),
                                             filter=filter, sorting=sorting, columns=columns,
                                             grouping=grouping)
             self._profiles.insert(0, self._initial_profile)
@@ -1081,9 +1081,9 @@ class LookupForm(InnerForm):
         data = self._data
         skip = data.search(condition, direction=direction, transaction=self._transaction)
         if skip == 0:
-            log(EVENT, 'Záznam nenalezen')
+            log(EVENT, 'Record not found')
             if report_failure:
-                message(_(u"Záznam nenalezen"), beep_=True)
+                message(_(u"Record not found"), beep_=True)
             result = None
         else:
             if initial_shift:
@@ -1092,7 +1092,7 @@ class LookupForm(InnerForm):
                 else:
                     skip = skip + (row_number - start_row_number)
             result = skip
-            log(EVENT, 'Záznam nalezen:', skip)
+            log(EVENT, 'Record found:', skip)
             self._search_skip(result, direction)
         return result
 
@@ -1108,8 +1108,8 @@ class LookupForm(InnerForm):
     def _cmd_jump(self):
         max_value = self._lf_count()
         if max_value > 0:
-            prompt = _(u"Záznam číslo (1-%s):") % (max_value,)
-            result = run_dialog(InputNumeric, message=_(u"Skok na záznam"), prompt=prompt,
+            prompt = _(u"Record number (1-%s):") % (max_value,)
+            result = run_dialog(InputNumeric, message=_(u"Jump to record"), prompt=prompt,
                                 min_value=1, max_value=max_value)
             row = result.value()
             if row is not None:
@@ -1229,14 +1229,14 @@ class LookupForm(InnerForm):
     def _cmd_apply_profile(self, index):
         profile = self._profiles[index]
         if profile.errors():
-            keep, remove = (_(u"Ponechat"), _(u"Odstranit"))
+            keep, remove = (_(u"Keep"), _(u"Remove"))
             msg = _(u"Uživatelský profil \"%s\" je neplatný.\n"
                     u"Pravděpodobně došlo ke změně definice náhledu a uložený\n"
                     u"profil nyní nelze použít. Profil můžete buďto odstranit,\n"
                     u"nebo ponechat a požádat správce aplikace o jeho obnovení."
                     ) % profile.title()
             errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
-            answer = run_dialog(MultiQuestion, title=_(u"Neplatný profil"), message=msg,
+            answer = run_dialog(MultiQuestion, title=_("Invalid profile"), message=msg,
                                 icon=Question.ICON_ERROR, buttons=(keep, remove),
                                 report=errors, default=keep)
             if answer == remove:

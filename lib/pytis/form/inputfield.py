@@ -1656,7 +1656,7 @@ class ListField(GenericCodebookField):
                 if not enumerator.permitted(id):
                     exported_value = value.type().secret_export()
                 elif isinstance(value.type(), pytis.data.Boolean):
-                    exported_value = value.value() and _(u"Ano") or _(u"Ne")
+                    exported_value = value.value() and _(u"Yes") or _(u"No")
                 else:
                     exported_value = value.export().replace("\n", ";")
                 list.SetStringItem(i, j, exported_value)

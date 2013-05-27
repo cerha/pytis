@@ -503,111 +503,111 @@ COMMAND_ICONS = (
 class UICommands(object):
     PYTIS_HELP = UICommand(
         Application.COMMAND_HELP(topic='pytis'),
-        _(u"Pytis Help"),
-        _(u"Open the user's manual describing work with the application in general")
+        _("Pytis Help"),
+        _("Open the user's manual describing work with the application in general")
         )
     HELP = UICommand(
         Form.COMMAND_HELP(),
-        _(u"Help for the current form"),
-        _(u"Open the detailed description of the current form in the help browser"))
+        _("Help for the current form"),
+        _("Open the detailed description of the current form in the help browser"))
     DESCRIBE = UICommand(
         InnerForm.COMMAND_DESCRIBE(),
-        _(u"Current form description"),
-        _(u"Display a breif description of the current form"))
+        _("Current form description"),
+        _("Display a breif description of the current form"))
     AGGREGATION_MENU = UICommand(
         InnerForm.COMMAND_AGGREGATION_MENU(),
-        _(u"Show aggregation functions menu"),
-        _(u"Show the menu of aggregation functions for the current form"))
+        _("Show aggregation functions menu"),
+        _("Show the menu of aggregation functions for the current form"))
     PRINT_MENU = UICommand(
         InnerForm.COMMAND_PRINT_MENU(),
-        _(u"Show print menu"),
-        _(u"Show the menu of print reports for the current form"))
+        _("Show print menu"),
+        _("Show the menu of print reports for the current form"))
     JUMP = UICommand(
         LookupForm.COMMAND_JUMP(),
-        _(u"Jump to record"),
-        _(u"Jump to record by row number"))
+        _("Jump to record"),
+        _("Jump to record by row number"))
     SEARCH = UICommand(
         LookupForm.COMMAND_SEARCH(),
-        _(u"Search"),
-        _(u"Vyhledávat záznam podle zadaných podmínek."))
+        _("Search"),
+        _("Search a record matching given conditions."))
     SEARCH_NEXT = UICommand(
         LookupForm.COMMAND_SEARCH(next=True),
-        _(u"Search next"),
-        _(u"Vyhledat další záznam odpovídající zadaným podmínkám."))
+        _("Search next"),
+        _("Search next record matching given conditions."))
     SEARCH_PREVIOUS = UICommand(
         LookupForm.COMMAND_SEARCH(next=True, back=True),
-        _(u"Search previous"),
-        _(u"Vyhledat předchozí záznam odpovídající zadaným podmínkám."))
+        _("Search previous"),
+        _("Search previous record matching given conditions."))
     INCREMENTAL_SEARCH = UICommand(
         ListForm.COMMAND_INCREMENTAL_SEARCH(),
-        _(u"Inkrementální hledání"),
-        _(u"Postupně vyhledávat záznam podle hodnoty políčka."))
+        _("Search incrementally"),
+        _("Progressively search record by typing column value."))
     SORT = UICommand(
         LookupForm.COMMAND_SORT(),
-        _(u"Řazení"),
-        _(u"Určit podmínky řazení záznamů."))
+        _("Sort"),
+        _("Define the terms of sorting records."))
     PROFILE_MENU = UICommand(
         LookupForm.COMMAND_PROFILE_MENU(),
-        _(u"Výběr aktivního profilu"),
-        _(u"Zobrazuje aktivní profil a umožňuje výběr z ostatních předdefinovaných profilů."),
+        _("Profile selection"),
+        _("Shows the current profile and allows selection from predefined profiles."),
         ctrl=(ProfileSelector, dict(size=(270, 25))))
     FILTER = UICommand(
         LookupForm.COMMAND_FILTER(),
-        _(u"Filtrování"),
-        _(u"Filtrovat záznamy podle zadaných podmínek."))
+        _("Filter"),
+        _("Filter records matching given conditions."))
     UNFILTER = UICommand(
         LookupForm.COMMAND_UNFILTER(),
-        _(u"Zruš filtr"),
-        _(u"Zrušit filtrování záznamů."))
+        _("Unfilter"),
+        _("Cancel current filtering condition."))
     EDIT_RECORD = UICommand(
         RecordForm.COMMAND_EDIT_RECORD(),
-        _(u"Upravit záznam"),
-        _(u"Upravit hodnoty záznamu v samostatném formuláři."))
+        _("Edit record"),
+        _("Open a form to edit the current record."))
     NEW_RECORD = UICommand(
         RecordForm.COMMAND_NEW_RECORD(),
-        _(u"Nový záznam"),
-        _(u"Vložit nový záznam v samostatném formuláři."))
+        _("New record"),
+        _("Open a form to create a new record."))
     NEW_RECORD_COPY = UICommand(
         RecordForm.COMMAND_NEW_RECORD(copy=True),
-        _(u"Nový záznam - kopie"),
-        _(u"Vložit nový záznam zkopírováním hodnot aktuálního záznamu."))
+        _("New record - copy"),
+        _("Create a new record by copying the values of the current record."))
     DELETE_RECORD = UICommand(
         RecordForm.COMMAND_DELETE_RECORD(),
-        _(u"Smazat záznam"),
-        _(u"Smazat aktuální záznam."))
+        _("Delete record"),
+        _("Delete the current record."))
     INSERT_LINE = UICommand(
         ListForm.COMMAND_INSERT_LINE(),
-        _(u"Vložit řádek pod"),
-        _(u"Vložit nový záznam v režimu inline editace."))
+        _("Insert row below"),
+        _("Insert a new record below the current row in inline mode."))
     INSERT_LINE_BEFORE = UICommand(
         ListForm.COMMAND_INSERT_LINE(before=True),
-        _(u"Vložit řádek nad"),
-        _(u"Vložit nový záznam v režimu inline editace."))
+        _("Insert row above"),
+        _("Insert a new record above the current row in inline mode."))
     INSERT_LINE_COPY = UICommand(
         ListForm.COMMAND_INSERT_LINE(copy=True),
-        _(u"Kopírovat řádek pod"),
-        _(u"Vložit nový záznam v režimu inline editace jako kopii současného."))
+        _("Copy row below"),
+        _("Insert a new record as a copy below the current row in inline mode."))
     INSERT_LINE_COPY_BEFORE = UICommand(
         ListForm.COMMAND_INSERT_LINE(copy=True, before=True),
-        _(u"Kopírovat řádek nad"),
-        _(u"Vložit nový záznam v režimu inline editace jako kopii současného."))
+        _("Copy row above"),
+        _("Insert a new record as a copy above the current row in inline mode."))
     EXPORT_FILE = UICommand(
         ListForm.COMMAND_EXPORT_FILE(),
-        _(u"Export do souboru"),
-        _(u"Exportovat data do souboru."))
+        _("Export to file"),
+        _("Export form data into a file."))
     IMPORT_INTERACTIVE = UICommand(
         RecordForm.COMMAND_IMPORT_INTERACTIVE(),
-        _(u"Import z textového souboru"),
-        _(u"Importovat data z textového souboru ve formátu CSV."))
+        _("Import from file"),
+        _("Import data from a text file in CSV format."))
     OTHER_FORM = UICommand(
         DualForm.COMMAND_OTHER_FORM(),
-        _(u"Přepnout aktivní formulář duálního formuláře"),
-        _(u"Přechod mezi horním a dolním formulářem duálního formuláře"),
+        _("Switch the active form"),
+        _("Switch between the top and the bottom form of a dual form."),
         ctrl=DualFormSwitcher)
     LEAVE_FORM = UICommand(
         Form.COMMAND_LEAVE_FORM(),
-        _(u"Uzavřít formulář"),
-        _(u"Uzavřít aktuální formulář"))
+        _("Close form"),
+        _("Close the current form window."))
 
 
 TOOLBAR_COMMANDS = ((
