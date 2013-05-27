@@ -2836,7 +2836,8 @@ def _db_dependencies(metadata):
                        "pg_namespace on relnamespace=pg_namespace.oid"), 'TRIGGER')
     pg_rewrite = load(("select pg_rewrite.oid, nspname, relname "
                        "from pg_rewrite join pg_class on ev_class = pg_class.oid join "
-                       "pg_namespace on relnamespace=pg_namespace.oid"), 'VIEW')
+                       "pg_namespace on relnamespace=pg_namespace.oid "
+                       "where ev_type = '1'"), 'VIEW')
     loc = locals()
     dependencies = []
     query = ("select distinct objid, c.relname, refobjid, refc.relname "
