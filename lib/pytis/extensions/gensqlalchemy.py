@@ -2684,7 +2684,7 @@ class SQLTrigger(SQLEventHandler):
             t = object_by_class(self.table, search_path=search_path)
             assert t is not None, ("Trigger table not found", self)
             self.add_is_dependent_on(t)
-        if isinstance(self.body, types.MethodType):
+        if not isinstance(self.body, types.MethodType):
             self.add_is_dependent_on(object_by_class(self.body, search_path=search_path))
 
     def pytis_exists(self, metadata):
