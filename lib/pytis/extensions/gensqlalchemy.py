@@ -1944,6 +1944,22 @@ class SQLTable(_SQLTabular):
         for c in db_table.c:
             if c.name not in self.c:
                 _engine.execute(alembic.ddl.base.DropColumn(table_name, c, self.schema))
+        db_indexes = dict([(i.name, i,) for i in db_table.indexes])
+        for i in self.indexes:
+            try:
+                del db_indexes[i.name]
+            except KeyError:
+                i.create(_engine)
+        index_names = set([i.name for i in self.indexes])
+        db_index_columns = {}
+        for i in db_indexes.values():
+            if i.unique:
+                continue
+            if len(i.columns) == 1:
+                for c in i.columns:
+                    db_index_columns[c.name] = i
+            else:
+                i.drop(_engine)
         for c in self.c:
             if c.pytis_orig_table != self.name:
                 continue
@@ -1967,6 +1983,26 @@ class SQLTable(_SQLTabular):
                                                           schema=self.schema,
                                                           existing_nullable=orig_c.nullable)
                     _engine.execute(ddl)
+                if not c.primary_key and not c.unique:
+                    index = c.index
+                    if index:
+                        try:
+                            del db_index_columns[c.name]
+                        except KeyError:
+                            if isinstance(index, dict):
+                                method = ''
+                                kwargs = index
+                                if 'method' in index:
+                                    method = index[method] + '_'
+                                name = '%s_%s_%sidx' % (self.pytis_name(real=True), c.name, method,)
+                            else:
+                                kwargs = {}
+                                name = 'ix_%s_%s_%s' % (self.schema, self.pytis_name(real=True),
+                                                        c.name,)
+                            if name not in index_names:
+                                sqlalchemy.Index(name, c, **kwargs).create(_engine)
+        for i in db_index_columns.values():
+            i.drop(_engine)
             
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
