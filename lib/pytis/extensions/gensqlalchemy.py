@@ -1934,9 +1934,9 @@ class SQLTable(_SQLTabular):
         if super(SQLTable, self).pytis_changed(metadata, strict=strict):
             return True
         db_table = self._pytis_db_table(metadata)
-        return (self.constraints == db_table.constraints and
-                self.foreign_keys == db_table.foreign_keys and
-                self.indexes == db_table.indexes)
+        return (self.constraints != db_table.constraints or
+                self.foreign_keys != db_table.foreign_keys or
+                self.indexes != db_table.indexes)
 
     def _pytis_upgrade(self, metadata):
         db_table = self._pytis_db_table(metadata)
