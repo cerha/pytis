@@ -727,6 +727,14 @@ def _local_search_path(search_path):
     _current_search_path = search_path
     yield
     _current_search_path = orig_search_path
+
+@contextmanager
+def _metadata_connection(metadata):
+    connection = metadata.pytis_engine.connect()
+    try:
+        yield connection
+    finally:
+        connection.close()
     
 def _sql_id_escape(identifier):
     return '"%s"' % (identifier.replace('"', '""'),)
@@ -1407,8 +1415,8 @@ class SQLSequence(sqlalchemy.Sequence, SQLSchematicObject):
 
     def pytis_exists(self, metadata):
         name = self.pytis_name(real=True)
-        connection = metadata.pytis_engine.connect()
-        return metadata.pytis_engine.dialect.has_sequence(connection, name, schema=self.schema)
+        with _metadata_connection(metadata) as connection:
+            return metadata.pytis_engine.dialect.has_sequence(connection, name, schema=self.schema)
 
     def pytis_changed(self, metadata, strict=True):
         return False
@@ -1478,8 +1486,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
 
     def pytis_exists(self, metadata):
         name = self.pytis_name(real=True)
-        connection = metadata.pytis_engine.connect()
-        return metadata.pytis_engine.dialect.has_table(connection, name, schema=self.schema)
+        with _metadata_connection(metadata) as connection:
+            return metadata.pytis_engine.dialect.has_table(connection, name, schema=self.schema)
 
     _PYTIS_TYPE_MAPPING = {'VARCHAR': 'TEXT',
                            'BIGSERIAL': 'BIGINT',
@@ -1529,9 +1537,9 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _pytis_columns_changed(self, metadata):
         name = self.pytis_name(real=True)
         schema = self.schema
-        connection = metadata.pytis_engine.connect()
         dialect = metadata.pytis_engine.dialect
-        columns = _get_columns(dialect, connection, name, schema)
+        with _metadata_connection(metadata) as connection:
+            columns = _get_columns(dialect, connection, name, schema)
         if len(columns) != len(self.c):
             def_columns = [c for c in self.c]
             if len(def_columns) != 1:
@@ -2076,18 +2084,18 @@ class _SQLReplaceable(SQLObject):
             return True
         if not strict:
             return False
-        connection = metadata.pytis_engine.connect()
-        definition = self._pytis_definition(connection)
-        if definition is None:
-            return True
-        transaction = connection.begin()
-        try:
-            connection._run_visitor(_PytisSchemaGenerator, self, checkfirst=False)
-            new_definition = self._pytis_definition(connection)
-        except:
-            new_definition = None
-        finally:
-            transaction.rollback()
+        with _metadata_connection(metadata) as connection:
+            definition = self._pytis_definition(connection)
+            if definition is None:
+                return True
+            transaction = connection.begin()
+            try:
+                connection._run_visitor(_PytisSchemaGenerator, self, checkfirst=False)
+                new_definition = self._pytis_definition(connection)
+            except:
+                new_definition = None
+            finally:
+                transaction.rollback()
         return definition != new_definition
 
 class _SQLQuery(SQLObject):
@@ -2354,8 +2362,8 @@ class SQLType(_SQLTabular):
 
     def pytis_exists(self, metadata):
         name = self.pytis_name(real=True)
-        connection = metadata.pytis_engine.connect()
-        return metadata.pytis_engine.dialect.has_type(connection, name, schema=self.schema)
+        with _metadata_connection(metadata) as connection:
+            return metadata.pytis_engine.dialect.has_type(connection, name, schema=self.schema)
 
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
@@ -2481,8 +2489,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
 
     def pytis_exists(self, metadata):
         # This can't distinguish between functions overloaded by argument types
-        connection = metadata.pytis_engine.connect()
-        return self._pytis_definition(connection) != ''
+        with _metadata_connection(metadata) as connection:
+            return self._pytis_definition(connection) != ''
 
     def _pytis_columns_changed(self, metadata):
         return False
@@ -2742,16 +2750,16 @@ class SQLTrigger(SQLEventHandler):
                      "pg_trigger join "
                      "pg_class on tgrelid = pg_class.oid "
                      "where tgname = :tgname and relname = :name")
-            connection = metadata.pytis_engine.connect()
-            result = connection.execute(
-                sqlalchemy.text(
-                    query,
-                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
-                                                     type_=sqlalchemy.String),
-                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
-                                                     type_=sqlalchemy.String)]))
-            n = result.fetchone()[0]
-            result.close()
+            with _metadata_connection(metadata) as connection:
+                result = connection.execute(
+                    sqlalchemy.text(
+                        query,
+                        bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
+                                                         type_=sqlalchemy.String),
+                                    sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
+                                                         type_=sqlalchemy.String)]))
+                n = result.fetchone()[0]
+                result.close()
             return n > 0
             
     def pytis_changed(self, metadata, strict=True):
@@ -2762,18 +2770,18 @@ class SQLTrigger(SQLEventHandler):
                      "pg_trigger join "
                      "pg_class on tgrelid = pg_class.oid "
                      "where tgname = :tgname and relname = :name")
-            connection = metadata.pytis_engine.connect()
-            result = connection.execute(
-                sqlalchemy.text(
-                    query,
-                    bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
-                                                     type_=sqlalchemy.String),
-                                sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
-                                                     type_=sqlalchemy.String)]))
-            definition = result.fetchone()[0]
-            if result.fetchone() is not None:
-                _warn("Multiple definitions of trigger `%s'" % (self.name,))
-            result.close()
+            with _metadata_connection(metadata) as connection:
+                result = connection.execute(
+                    sqlalchemy.text(
+                        query,
+                        bindparams=[sqlalchemy.bindparam('tgname', self.pytis_name(real=True),
+                                                         type_=sqlalchemy.String),
+                                    sqlalchemy.bindparam('name', self.table.pytis_name(real=True),
+                                                         type_=sqlalchemy.String)]))
+                definition = result.fetchone()[0]
+                if result.fetchone() is not None:
+                    _warn("Multiple definitions of trigger `%s'" % (self.name,))
+                result.close()
             match = re.match(("CREATE TRIGGER [^ ]+ (BEFORE|AFTER) (.*) ON [^ ]+ "
                               "FOR EACH (ROW|STATEMENT) EXECUTE PROCEDURE .*[(](.*)[)]"),
                              definition)
@@ -2902,6 +2910,7 @@ def _db_dependencies(metadata):
         if regexp.match(base) is None and regexp.match(dependent) is None:
             dependencies.append((base, dependent,))
     result.close()
+    connection.close()
     return dependencies
 
 _engine = None
