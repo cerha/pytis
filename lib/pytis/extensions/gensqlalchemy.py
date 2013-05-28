@@ -2763,9 +2763,9 @@ class SQLTrigger(SQLEventHandler):
             return n > 0
             
     def pytis_changed(self, metadata, strict=True):
-        if self.table is None:
-            return super(SQLTrigger, self).pytis_changed(metadata, strict=strict)
-        else:
+        if super(SQLTrigger, self).pytis_changed(metadata, strict=strict):
+            return True
+        if self.table is not None:
             query = ("select pg_catalog.pg_get_triggerdef(pg_trigger.oid) from "
                      "pg_trigger join "
                      "pg_class on tgrelid = pg_class.oid "
