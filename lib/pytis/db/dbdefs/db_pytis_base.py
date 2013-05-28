@@ -266,7 +266,7 @@ declare
   v text;
   key_column_ text := tg_argv[0];
   key_value_ text := null;
-  detail_ text := ';
+  detail_ text := '';
   changed bool;
 begin
   if tg_op = 'DELETE' then
@@ -290,33 +290,33 @@ begin
   loop
     cc := quote_ident(c);
     if tg_op = 'UPDATE' then
-      execute concat('select coalesce($1.', cc, '::text, '') != coalesce($2.', cc, '::text, '')') into strict changed using old, new;
+      execute concat('select coalesce($1.', cc, '::text, '''') != coalesce($2.', cc, '::text, '''')') into strict changed using old, new;
       if changed then
-        if detail_ != ' then
+        if detail_ != '' then
           detail_ := concat(detail_, '
 ');
         end if;
         execute concat('select
-                       (case when $1.', cc, ' is not null and $3 = 'bytea' then 'BINARY' when $1.', cc, ' is null then 'NULL' else $1.', cc, '::text end) ||
-                 ' -> ' ||
-                       (case when $2.', cc, ' is not null and $3 = 'bytea' then 'BINARY' when $2.', cc, ' is null then 'NULL' else $2.', cc, '::text end)')
+                       (case when $1.', cc, ' is not null and $3 = ''bytea'' then ''BINARY'' when $1.', cc, ' is null then ''NULL'' else $1.', cc, '::text end) ||
+                 '' -> '' ||
+                       (case when $2.', cc, ' is not null and $3 = ''bytea'' then ''BINARY'' when $2.', cc, ' is null then ''NULL'' else $2.', cc, '::text end)')
                 into strict v using old, new, t;
         detail_ := concat(detail_, c, ': ', v);
       end if;
     else
       execute concat('select $1.', cc, ' is not null') into strict changed using current_record;
       if changed then
-        if detail_ != ' then
+        if detail_ != '' then
           detail_ := concat(detail_, '
 ');
         end if;
-        execute concat('select (case when $1.', cc, ' is not null and $2 = 'bytea' then 'BINARY' else $1.', cc, '::text end)')
+        execute concat('select (case when $1.', cc, ' is not null and $2 = ''bytea'' then ''BINARY'' else $1.', cc, '::text end)')
                 into strict v using current_record, t;
         detail_ := concat(detail_, c, ': ', v);
       end if;
     end if;
   end loop;
-  if tg_op != 'UPDATE' or detail_ != ' then
+  if tg_op != 'UPDATE' or detail_ != '' then
     insert into t_changes (timestamp, username, schemaname, tablename, operation, key_column, key_value)
            values (now(), session_user, tg_table_schema, tg_table_name, tg_op, key_column_, key_value_)
            returning id into strict id_;
