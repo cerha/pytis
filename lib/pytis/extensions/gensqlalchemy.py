@@ -1519,7 +1519,10 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             if not isinstance(default, basestring):
                 default = default.arg
             if not isinstance(default, basestring):
-                default = default.text
+                try:
+                    default = default.text
+                except AttributeError:
+                    default = str(default)
             if lower:
                 default = default.lower()
             default += for_update
