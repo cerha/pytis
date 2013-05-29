@@ -1913,13 +1913,43 @@ class SQLTable(_SQLTabular):
         if spec_column.pytis_orig_table != self.name:
             return False
         return super(SQLTable, self)._pytis_distinct_columns(db_column, spec_column)
+
+    def _pytis_simplified_constraints(self, constraints):
+        simplified = {}
+        def simplify(constraint):
+            if isinstance(constraint, sqlalchemy.PrimaryKeyConstraint):
+                return
+            if isinstance(constraint, sqlalchemy.ForeignKeyConstraint):
+                columns = [c.name if isinstance(c, sqlalchemy.Column) else c
+                           for c in constraint.columns]
+                columns.sort()
+                targets = []
+                for e in constraint.elements:
+                    name = e.target_fullname
+                    # Strip schema as it may not be present in the introspected table
+                    components = name.split('.')
+                    name = string.join(components[-2:], '.')
+                    targets.append(name)
+                targets.sort()
+                # We should add (constraint.onupdate, constraint.ondelete,),
+                # but SQLAlchemy introspections apparently don't detect cascades,
+                # so it would generate a lot of unnecessary updates.
+                s = (tuple(columns), tuple(targets),)
+            else:
+                # Let's ignore other constraints for now
+                return
+            simplified[s] = constraint
+        for c in constraints:
+            simplify(c)
+        return simplified
         
     def pytis_changed(self, metadata, strict=True):
         if super(SQLTable, self).pytis_changed(metadata, strict=strict):
             return True
         db_table = self._pytis_db_table(metadata)
-        return (self.constraints != db_table.constraints or
-                self.foreign_keys != db_table.foreign_keys or
+        constraints = self._pytis_simplified_constraints(self.constraints)
+        db_constraints = self._pytis_simplified_constraints(db_table.constraints)
+        return (constraints.keys() != db_constraints.keys() or
                 self.indexes != db_table.indexes)
 
     def _pytis_upgrade(self, metadata):
@@ -1994,6 +2024,19 @@ class SQLTable(_SQLTabular):
                                 changed = True
         for i in db_index_columns.values():
             i.drop(_engine)
+            changed = True
+        constraints = self._pytis_simplified_constraints(self.constraints)
+        db_constraints = self._pytis_simplified_constraints(db_table.constraints)
+        for k in constraints.keys():
+            try:
+                del db_constraints[k]
+            except KeyError:
+                fdef = sqlalchemy.schema.AddConstraint(constraints[k])
+                _engine.execute(fdef)
+                changed = True
+        for c in db_constraints.values():
+            fdef = sqlalchemy.schema.DropConstraint(c)
+            _engine.execute(fdef)
             changed = True
         return changed
             
