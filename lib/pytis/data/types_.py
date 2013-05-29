@@ -764,8 +764,8 @@ class Serial(Integer):
     v řádku při vkládání nového záznamu.
 
     """
-    def __init__(self, not_null=True, **kwargs):
-        super(Serial, self).__init__(not_null=not_null, **kwargs)
+    def _init(self, not_null=True, **kwargs):
+        super(Serial, self)._init(not_null=not_null, **kwargs)
 
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
@@ -918,8 +918,8 @@ class Monetary(Float):
     formatting.
     
     """
-    def __init__(self, **kwargs):
-        Float.__init__(self, precision=2, **kwargs)
+    def _init(self, precision=2, **kwargs):
+        Float._init(self, precision=precision, **kwargs)
 
 
 class String(Limited):
