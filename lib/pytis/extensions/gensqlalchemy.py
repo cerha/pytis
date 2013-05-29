@@ -142,34 +142,10 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
     def visit_function(self, function, create_ok=False, result_type=None):
         search_path = function.search_path()
         with _local_search_path(self._set_search_path(search_path)):
-            arguments = _function_arguments(function)
-            if result_type is None:
-                function_type = function.result_type
-                if function_type is None:
-                    result_type = 'void'
-                elif function_type == SQLFunctional.RECORD:
-                    result_type = 'RECORD'
-                elif function_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
-                    result_type = 'trigger'
-                elif isinstance(function_type, (tuple, list,)):
-                    result_type = 't_' + function.pytis_name()
-                    self.make_type(result_type, function_type)
-                elif isinstance(function_type, Column):
-                    c = function_type.sqlalchemy_column(search_path, None, None, None)
-                    result_type = c.type.compile(_engine.dialect)
-                elif isinstance(function_type, pytis.data.Type):
-                    result_type = function_type.sqlalchemy_type().compile(_engine.dialect)
-                elif issubclass(function_type, (SQLTable, SQLType,)):
-                    result_type = object_by_class(function_type, search_path).pytis_name()
-                else:
-                    raise SQLException("Invalid result type", function_type)
-            result_type_prefix = 'SETOF ' if function.multirow else ''
-            name = function.pytis_name(real=True)
-            query_prefix = ('CREATE OR REPLACE FUNCTION "%s"."%s" (%s) RETURNS %s%s AS $$\n' %
-                            (function.schema, name, arguments, result_type_prefix, result_type,))
-            query_suffix = ('\n$$ LANGUAGE %s %s' % (function._LANGUAGE, function.stability,))
-            if function.security_definer:
-                query_suffix += ' SECURITY DEFINER'
+            if isinstance(function.result_type, (tuple, list,)):
+                self.make_type('t_' + function.pytis_name(), function.result_type)
+            query_prefix, query_suffix = \
+                function._pytis_header_footer(result_type=result_type, search_path=search_path)
             body = function.body()
             if isinstance(body, basestring):
                 body = body.strip()
@@ -2561,19 +2537,24 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         if self._pytis_columns_changed(metadata):
             return True
         if isinstance(self.body, types.MethodType):
+            # We don't handle (i.e. we signal change on unchanged functions)
+            # the following cases:
+            # - overloaded functions
+            # - some schema related situations
             with _local_search_path(self.search_path()):
                 body = self.body()
             if not isinstance(body, basestring):
                 body = unicode(body)
+            marker = '$function$'
+            header, footer = self._pytis_header_footer(search_path=self.search_path(),
+                                                       marker=marker)
+            body = header.replace('"', '').lower() + body.strip() + footer
             with _metadata_connection(metadata) as connection:
                 db_body = self._pytis_definition(connection)
-            marker = '$function$\n'
             pos = db_body.find(marker)
             if pos >= 0:
-                db_body = db_body[pos + len(marker):]
-                pos = db_body.find(marker)
-                if pos >= 0:
-                    db_body = db_body[:pos]
+                db_body = (db_body[:pos].replace('\n', ' ').replace('  ', ' ').lower() +
+                           db_body[pos:])
             return body.strip() != db_body.strip()
         return False
 
@@ -2622,6 +2603,41 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         sql_file = os.path.join(module_path, self.sql_directory, self.name + '.sql')
         return codecs.open(sql_file, encoding='UTF-8').read()
 
+    def _pytis_header_footer(self, result_type=None, search_path=None, marker='$$'):
+        arguments = _function_arguments(self)
+        if result_type is None:
+            function_type = self.result_type
+            if function_type is None:
+                if isinstance(self, SQLTrigger):
+                    result_type = 'trigger'
+                else:
+                    result_type = 'void'
+            elif function_type == SQLFunctional.RECORD:
+                result_type = 'RECORD'
+            elif function_type is G_CONVERT_THIS_FUNCTION_TO_TRIGGER:
+                result_type = 'trigger'
+            elif isinstance(function_type, (tuple, list,)):
+                result_type = 't_' + self.pytis_name()
+            elif isinstance(function_type, Column):
+                c = function_type.sqlalchemy_column(search_path, None, None, None)
+                result_type = c.type.compile(_engine.dialect)
+            elif isinstance(function_type, pytis.data.Type):
+                result_type = function_type.sqlalchemy_type().compile(_engine.dialect)
+            elif issubclass(function_type, (SQLTable, SQLType,)):
+                result_type = object_by_class(function_type, search_path).pytis_name()
+            else:
+                raise SQLException("Invalid result type", function_type)
+        result_type_prefix = 'SETOF ' if self.multirow else ''
+        name = self.pytis_name(real=True)
+        security = ' SECURITY DEFINER' if self.security_definer else ''
+        stability = ' ' + self.stability if self.stability != 'volatile' else ''
+        query_prefix = (('CREATE OR REPLACE FUNCTION "%s"."%s"(%s) RETURNS %s%s '
+                         'LANGUAGE %s%s%s AS %s\n') %
+                        (self.schema, name, arguments, result_type_prefix, result_type,
+                         self._LANGUAGE, stability, security, marker,))
+        query_suffix = '\n%s' % (marker,)
+        return query_prefix, query_suffix
+        
 class SQLFunction(_SQLQuery, SQLFunctional):
     """SQL function definition.
 
