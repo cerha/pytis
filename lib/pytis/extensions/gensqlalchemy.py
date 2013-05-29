@@ -1235,15 +1235,22 @@ class SQLObject(object):
 
     def _pytis_upgrade(self, metadata):
         _warn("Can't upgrade an object of type %s: %s." % (self.pytis_kind(), self.name,))
+        return True
         
     def pytis_upgrade(self, metadata, strict=True):
         if not self.pytis_exists(metadata):
             self.pytis_create()
+            changed = True
         elif self.pytis_changed(metadata, strict=strict):
-            self._pytis_upgrade(metadata)
+            if not self._pytis_upgrade(metadata):
+                _gsql_output(("-- %s `%s' apparently changed, "
+                              "but automated upgrade is not provided.") %
+                             (self._DB_OBJECT, self.pytis_name(),))
+            changed = True
         else:
-            return
-        metadata.pytis_changed.add(self)
+            changed = False
+        if changed:
+            metadata.pytis_changed.add(self)
 
     def pytis_dependencies(self):
         return ()
@@ -1544,6 +1551,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _pytis_upgrade(self, metadata):
         self.pytis_drop()
         self.pytis_create()
+        return True
         
     def pytis_dependencies(self):
         return self._extra_dependencies
@@ -1915,6 +1923,7 @@ class SQLTable(_SQLTabular):
                 self.indexes != db_table.indexes)
 
     def _pytis_upgrade(self, metadata):
+        changed = False
         db_table = self._pytis_db_table(metadata)
         table_name = db_table.name
         for c in db_table.c:
@@ -1936,11 +1945,13 @@ class SQLTable(_SQLTabular):
                     db_index_columns[c.name] = i
             else:
                 i.drop(_engine)
+                changed = True
         for c in self.c:
             if c.pytis_orig_table != self.name:
                 continue
             if c.name not in db_table.c:
                 _engine.execute(alembic.ddl.base.AddColumn(table_name, c, self.schema))
+                changed = True
             elif c != db_table.c[c.name]:
                 orig_c = db_table.c[c.name]
                 if self._pytis_ctype_changed(orig_c, c):
@@ -1948,17 +1959,20 @@ class SQLTable(_SQLTabular):
                                                       schema=self.schema,
                                                       existing_type=orig_c.type)
                     _engine.execute(ddl)
+                    changed = True
                 if not c.primary_key and self._pytis_defaults_changed(orig_c, c):
                     ddl = alembic.ddl.base.ColumnDefault(table_name, c.name, c.server_default,
                                                          schema=self.schema,
                                                          existing_server_default=orig_c.server_default)
                     _engine.execute(ddl)
+                    changed = True
                 if ((not orig_c.primary_key and not c.primary_key and
                      orig_c.nullable != c.nullable)):
                     ddl = alembic.ddl.base.ColumnNullable(table_name, c.name, c.nullable,
                                                           schema=self.schema,
                                                           existing_nullable=orig_c.nullable)
                     _engine.execute(ddl)
+                    changed = True
                 if not c.primary_key and not c.unique:
                     index = c.index
                     if index:
@@ -1977,8 +1991,11 @@ class SQLTable(_SQLTabular):
                                                         c.name,)
                             if name not in index_names:
                                 sqlalchemy.Index(name, c, **kwargs).create(_engine)
+                                changed = True
         for i in db_index_columns.values():
             i.drop(_engine)
+            changed = True
+        return changed
             
     def _alter_table(self, alteration):
         command = 'ALTER TABLE "%s"."%s" %s' % (self.schema, self.name, alteration,)
