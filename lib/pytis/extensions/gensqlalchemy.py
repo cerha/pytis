@@ -2558,8 +2558,23 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         return definition
         
     def pytis_changed(self, metadata, strict=True):
-        if strict:
-            return self._pytis_columns_changed(metadata)
+        if self._pytis_columns_changed(metadata):
+            return True
+        if isinstance(self.body, types.MethodType):
+            with _local_search_path(self.search_path()):
+                body = self.body()
+            if not isinstance(body, basestring):
+                body = unicode(body)
+            with _metadata_connection(metadata) as connection:
+                db_body = self._pytis_definition(connection)
+            marker = '$function$\n'
+            pos = db_body.find(marker)
+            if pos >= 0:
+                db_body = db_body[pos + len(marker):]
+                pos = db_body.find(marker)
+                if pos >= 0:
+                    db_body = db_body[:pos]
+            return body.strip() != db_body.strip()
         return False
 
     def create(self, bind=None, checkfirst=False):
