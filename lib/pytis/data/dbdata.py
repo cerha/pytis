@@ -53,15 +53,17 @@ tabulky.
 # bezpodmínečně nutno tyto situace řádně ošetřovat a prošetřovat.  Nejprve je
 # ovšem nutno definovat nějaký mechanismus ošetřování chyb.
 
-
+import copy
 import gc
 import thread
 import weakref
 
-from pytis.data import *
-import pytis.util
+from pytis.data import ColumnSpec, Data, Type
+from pytis.util import compare_attr, flatten, hash_attr, is_sequence, log, rsa_encrypt, \
+    super_, translations, with_lock, \
+    DEBUG, EVENT, OPERATIONAL
 
-_ = pytis.util.translations('pytis-data')
+_ = translations('pytis-data')
 
 ### Obecné třídy
 
@@ -116,7 +118,7 @@ class DBData(Data):
         self._bindings = tuple(bindings)
         assert not filter(lambda b: not isinstance(b, DBBinding),
                           bindings), \
-               ('Invalid binding type', bindings)
+            ('Invalid binding type', bindings)
         assert arguments is None or is_sequence(arguments), ('Invalid binding type', arguments)
         if arguments is None:
             self._arguments = None
@@ -124,11 +126,14 @@ class DBData(Data):
             self._arguments = tuple(arguments)
             assert not filter(lambda b: not isinstance(b, DBBinding),
                               arguments), \
-                   ('Invalid "argument" type', arguments)
-        if __debug__: log(DEBUG, 'Database instance bindings:', self._bindings)
+                ('Invalid "argument" type', arguments)
+        if __debug__:
+            log(DEBUG, 'Database instance bindings:', self._bindings)
         columns, key = self._db_bindings_to_column_spec(self._bindings)
-        if __debug__: log(DEBUG, 'Database instance columns:', columns)
-        if __debug__: log(DEBUG, 'Database instance key:', key)
+        if __debug__:
+            log(DEBUG, 'Database instance columns:', columns)
+        if __debug__:
+            log(DEBUG, 'Database instance key:', key)
         self._distinct_on = distinct_on
         assert is_sequence(crypto_names), crypto_names
         if __debug__:
@@ -209,7 +214,8 @@ class DBData(Data):
         opět uvolnit zdroje, je nutno tuto metodu zavolat znovu.
 
         """
-        if __debug__: log(DEBUG, 'Sleep')
+        if __debug__:
+            log(DEBUG, 'Sleep')
         self.close()
 
     def arguments(self):
@@ -229,7 +235,8 @@ class DBData(Data):
 class DBConnectionPool:
 
     def __init__(self, connection_creator, connection_closer):
-        if __debug__: log(DEBUG, 'Creating a new pool')
+        if __debug__:
+            log(DEBUG, 'Creating a new pool')
         self._lock = thread.allocate_lock()
         self._pool = {}
         self._connection_creator = connection_creator
@@ -271,20 +278,21 @@ class DBConnectionPool:
                 allocated_connections = self._allocated_connections[spec_id] \
                     = weakref.WeakKeyDictionary()
             c = None
-            broken_connections_present = False            
+            broken_connections_present = False
             while connections:
                 c_candidate = connections.pop()
                 if c_candidate.connection_info('broken'):
                     broken_connections_present = True
                 else:
                     c = c_candidate
-                    if __debug__: log(DEBUG, 'Available connections:', connections)
+                    if __debug__:
+                        log(DEBUG, 'Available connections:', connections)
                     break
             if c is None or broken_connections_present:
                 gc.collect()
             if c is None:
-                if (config.connection_limit is not None and
-                    len(allocated_connections) >= config.connection_limit):
+                if ((config.connection_limit is not None and
+                     len(allocated_connections) >= config.connection_limit)):
                     if __debug__:
                         log(EVENT, "Connections summary:")
                         for c in allocated_connections.keys():
@@ -292,11 +300,13 @@ class DBConnectionPool:
                     raise DBSystemException(_(u"Too many database connections"))
                 else:
                     c = self._connection_creator(connection_spec)
-                    if __debug__: log(DEBUG, 'New connection created:', c)
+                    if __debug__:
+                        log(DEBUG, 'New connection created:', c)
                     allocated_connections[c] = True
             return c
         c = with_lock(self._lock, lfunction)
-        if __debug__: log(DEBUG, 'Passing connection:', c)
+        if __debug__:
+            log(DEBUG, 'Passing connection:', c)
         return c
 
     def put_back(self, connection_spec, connection):
@@ -308,11 +318,12 @@ class DBConnectionPool:
             except KeyError:
                 pool[spec_id] = connections = []
             import config
-            if (config.max_pool_connections is None or
-                len(connections) < config.max_pool_connections):
+            if ((config.max_pool_connections is None or
+                 len(connections) < config.max_pool_connections)):
                 connections.append(connection)
         with_lock(self._lock, lfunction)
-        if __debug__: log(DEBUG, 'Connection returned to pool:', connection)
+        if __debug__:
+            log(DEBUG, 'Connection returned to pool:', connection)
 
     def flush(self, close):
         def lfunction():
@@ -392,9 +403,9 @@ class DBConnection:
         self._name = _name
 
     def _options(self, exclude=()):
-        return dict([(option, self.__dict__['_'+option])
+        return dict([(option, self.__dict__['_' + option])
                      for option in self._OPTIONS
-                     if option not in exclude and self.__dict__['_'+option] is not None])
+                     if option not in exclude and self.__dict__['_' + option] is not None])
     
     def __str__(self):
         options = ["%s='%s'" % item for item in self._options(exclude=('password',)).items()]
@@ -434,10 +445,10 @@ class DBConnection:
         rovnají odpovídající si parametry zadané jejich konstruktorům.
 
         """
-        return compare_attr(self, other, ['_'+option for option in self._OPTIONS])
+        return compare_attr(self, other, ['_' + option for option in self._OPTIONS])
 
     def __hash__(self):
-        return hash_attr(self, ['_'+option for option in self._OPTIONS])
+        return hash_attr(self, ['_' + option for option in self._OPTIONS])
 
     def select(self, name):
         """Return the specification instance activated for given connection name.
@@ -608,7 +619,7 @@ class DBColumnBinding(DBBinding):
                         try:
                             del kwargs_copy[a]
                         except KeyError:
-                            pass                        
+                            pass
                 assert kwargs_copy == {}, (type_, kwargs)
         self._table = table
         self._column = column
@@ -662,7 +673,6 @@ class DBColumnBinding(DBBinding):
     def __hash__(self):
         return hash_attr(self, ('_table', '_column', '_related_to', '_type', '_is_hidden'))
 
-
 
 ### Databázové výjimky
 
@@ -692,7 +702,7 @@ class DBException(Exception):
             'exception' předány konstruktoru nadtřídy
 
         """
-        if message == None:
+        if message is None:
             message = _(u"Database error")
         super_(DBException).__init__(self, message, exception, *args)
         log(OPERATIONAL, 'Database exception', (message,) + args)
@@ -761,8 +771,7 @@ class DBLoginException(DBException):
     """
     def __init__(self):
         """Inicializuj databázovou výjimku s patřičnými argumenty."""
-        super_(DBLoginException).__init__\
-          (self, _(u"Invalid user name or password"))
+        super_(DBLoginException).__init__(self, _(u"Invalid user name or password"))
 
 
 class DBLockException(DBException):
