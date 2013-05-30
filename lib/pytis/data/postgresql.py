@@ -1114,8 +1114,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         default_type_kwargs = {}
         if not_null in (1, 'T'):
             default_type_kwargs['not_null'] = True
-        if type_class_ != Boolean:
-            default_type_kwargs['unique'] = unique
+        if unique and type_class_ != Boolean:
+            default_type_kwargs['unique'] = True
         if type_class_ == String:
             if type_ != 'text':
                 try:
