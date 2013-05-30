@@ -919,7 +919,7 @@ class Monetary(Float):
     
     """
     def _init(self, precision=2, **kwargs):
-        Float._init(self, precision=precision, **kwargs)
+        super(Monetary, self)._init(precision=precision, **kwargs)
 
 
 class String(Limited):
