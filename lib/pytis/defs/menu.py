@@ -244,10 +244,10 @@ class ApplicationShortActions(pytis.presentation.Specification):
 ### Menus
 
 class _Title(pytis.presentation.PrettyFoldable, pytis.data.String):
-    def __init__(self, **kwargs):
-        super(_Title, self).__init__(tree_column_id='position',
-                                     subcount_column_id='position_nsub',
-                                     **kwargs)
+    def _init(self, **kwargs):
+        super(_Title, self)._init(tree_column_id='position',
+                                  subcount_column_id='position_nsub',
+                                  **kwargs)
 
 def _xaction_computer(row, fullname):
     if fullname is None or fullname.startswith('menu/'):
@@ -728,10 +728,10 @@ class ApplicationMenuRights(_ApplicationMenuRightsBase):
         return {'commit_changes': commit_changes}
     
 class _RightsTree(pytis.presentation.PrettyFoldable, pytis.data.String):
-    def __init__(self, **kwargs):
-        super(_RightsTree, self).__init__(tree_column_id='tree',
-                                          subcount_column_id='subcount',
-                                          **kwargs)
+    def _init(self, **kwargs):
+        super(_RightsTree, self)._init(tree_column_id='tree',
+                                       subcount_column_id='subcount',
+                                       **kwargs)
 
 class ApplicationMenuRightsFoldable(_ApplicationMenuRightsBase):
     public = True

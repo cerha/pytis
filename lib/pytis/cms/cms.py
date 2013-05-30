@@ -50,10 +50,10 @@ def nextval(seq):
 
 
 class _TreeOrder(pp.PrettyFoldable, pd.String):
-    def __init__(self, **kwargs):
-        super(_TreeOrder, self).__init__(tree_column_id='tree_order',
-                                         subcount_column_id='tree_order_nsub',
-                                         **kwargs)
+    def _init(self, **kwargs):
+        super(_TreeOrder, self)._init(tree_column_id='tree_order',
+                                      subcount_column_id='tree_order_nsub',
+                                      **kwargs)
 
 
 class Specification(pp.Specification):

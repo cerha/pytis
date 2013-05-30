@@ -21,8 +21,8 @@ from pytis.extensions import *
 
        
 class Price(pytis.data.Float):
-    def __init__(self, not_null=True, precision=2, **kwargs):
-        super(Price, self).__init__(precision=precision, not_null=not_null, **kwargs)
+    def _init(self, not_null=True, precision=2, **kwargs):
+        super(Price, self)._init(precision=precision, not_null=not_null, **kwargs)
     def default_value(self):
         value, error = self.validate('0')
         if error is not None:
@@ -30,9 +30,9 @@ class Price(pytis.data.Float):
         return value
         
 class StringNotNull(pytis.data.String):
-    def __init__(self, **kwargs):
+    def _init(self, **kwargs):
         kwargs['not_null'] = True
-        super(StringNotNull, self).__init__(**kwargs)
+        super(StringNotNull, self)._init(**kwargs)
 
 class _TreeOrder(pytis.presentation.PrettyTreeOrder, pytis.data.String):
       pass
