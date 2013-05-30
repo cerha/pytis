@@ -54,16 +54,13 @@ class PrettyTreeOrder(PrettyType):
     The other column of 'TreeOrder' type must have unique non-NULL values
     (typically it should be a primary key).
     
+    Extra constructor arguments:
+
+      tree_column_id -- id of the column defining tree ordering; string
+
     """
-    def __init__(self, tree_column_id, **kwargs):
-        """
-        Arguments:
-
-          tree_column_id -- id of the column defining tree ordering; string
-          kwargs -- arguments to be forwarded to the superclass constructor
-
-        """
-        super(PrettyTreeOrder, self).__init__(**kwargs)
+    def _init(self, tree_column_id, **kwargs):
+        super(PrettyTreeOrder, self)._init(**kwargs)
         self._tree_column_id = tree_column_id
 
     def _indentation(self, level, row, form):
@@ -89,6 +86,15 @@ class PrettyTreeOrder(PrettyType):
 
 class PrettyFoldable(PrettyTreeOrder):
     """Similar as 'PrettyTreeOrder' but with an additional folding indicator.
+
+    Extra constructor arguments:
+
+      tree_column_id -- id of the column defining tree ordering; string
+      subcount_column_id -- id of the column providing number of subnodes
+        of the given tree ordering column; string.  This is used to display
+        proper folding indicators.  When 'None', no such column is used.
+      kwargs -- arguments to be forwarded to the superclass constructor
+
     """
     FOLDED_MARK = u'⊞'
     "Folding indicator for a foldable node in a folded state."
@@ -97,18 +103,8 @@ class PrettyFoldable(PrettyTreeOrder):
     NON_FOLDABLE_MARK = u'⊙'
     "Folding indicator for an unfoldable node."
     
-    def __init__(self, tree_column_id, subcount_column_id=None, **kwargs):
-        """
-        Arguments:
-        
-          tree_column_id -- id of the column defining tree ordering; string
-          subcount_column_id -- id of the column providing number of subnodes
-            of the given tree ordering column; string.  This is used to display
-            proper folding indicators.  When 'None', no such column is used.
-          kwargs -- arguments to be forwarded to the superclass constructor
-          
-        """
-        super(PrettyFoldable, self).__init__(tree_column_id, **kwargs)
+    def _init(self, tree_column_id, subcount_column_id=None, **kwargs):
+        super(PrettyFoldable, self)._init(tree_column_id, **kwargs)
         self._tree_column_nsub_id = subcount_column_id
         
     def _indentation(self, level, row, form):
