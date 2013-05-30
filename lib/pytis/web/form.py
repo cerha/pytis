@@ -42,15 +42,6 @@ import pytis.util
 
 _ = pytis.util.translations('pytis-web')
 
-class Type(pd.Type):
-    def _validation_error(self, id, **kwargs):
-        message = self._validation_messages[id]
-        if kwargs:
-            message = _(message, **kwargs)
-        return pd.ValidationError(message)
-    # Needed to postpone variable interpolation to translation time.
-    pd.Type._validation_error = _validation_error
-
     
 class BadRequest(Exception):
     """Exception raised by 'EditForm.ajax_response()' on invalid request parameters."""
