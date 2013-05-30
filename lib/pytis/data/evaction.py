@@ -25,10 +25,10 @@ import string
 
 class EvparseException(Exception):
 
-    def __init__ (self, kind, text):
+    def __init__(self, kind, text):
         if len(text) > 14:
             text = text[:10] + '...'
-        Exception.__init__(self, 'ev_action_parse_error on '+kind, text)
+        Exception.__init__(self, 'ev_action_parse_error on ' + kind, text)
 
 def pg_parse_ev_action(text):
     value, text = _evparse(text)
@@ -46,7 +46,7 @@ def _evparse(text):
         elif char == '<':
             return _evparse_empty(text[1:])
         elif char == ' ':
-            return _evparse(text[1:]) 
+            return _evparse(text[1:])
         elif char == ':':
             return _evparse_identifier(text[1:], skip_whitespace=False)
         elif char == '"':
@@ -74,7 +74,7 @@ def _evparse_list(text):
         finished, text = parse(text)
         if finished:
             break
-    return list, text    
+    return list, text
 
 def _evparse_structure(text):
     name, text = _evparse_identifier(text)
