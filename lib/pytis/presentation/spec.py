@@ -3188,8 +3188,11 @@ class Field(object):
                              'inner_type', 'minsize', 'maxsize', 'formats', 
                              'strength', 'md5', 'verify', 'text',), \
                              err("Invalid argument: %r", k)
-            if kwargs:
-                log_("Passing data type arguemnts to Field is deprecated: %r", tuple(kwargs.keys()))
+            # Temporary: We won't even log the old way of passing type
+            # arguments in the first step.  We will uncomment it when we decide
+            # to start modifying the applications.
+            #if kwargs:
+            #    log_("Passing data type arguemnts to Field is deprecated: %r", tuple(kwargs.keys()))
         self._id = id
         self._dbcolumn = dbcolumn or id
         if label is None:
