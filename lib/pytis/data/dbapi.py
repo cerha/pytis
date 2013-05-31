@@ -33,9 +33,13 @@ import time
 import psycopg2 as dbapi
 import psycopg2.extensions
 
-from pytis.util import *
-from dbdata import *
-from postgresql import *
+from pytis.util import log, translations, with_lock, with_locks, DEBUG, OPERATIONAL
+from pytis.data import AccessRights, Permission, RestrictedData
+from dbdata import DBConnection, DBException, DBInsertException, DBLockException, \
+    DBLoginException, DBRetryException, DBSystemException, DBUserException
+from postgresql import DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction, \
+    DBPostgreSQLTransaction, \
+    PostgreSQLAccessor, PostgreSQLResult, PostgreSQLNotifier, PostgreSQLUserGroups
 
 _ = translations('pytis-data')
 
