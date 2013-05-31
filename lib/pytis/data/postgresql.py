@@ -1108,15 +1108,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                         'oid': pytis.data.Oid, # for backward compatibility
                         }
         try:
-            type_class_ = TYPE_MAPPING[type_]
+            db_type_cls = TYPE_MAPPING[type_]
         except KeyError:
             raise pytis.data.DBException('Unhandled database type', None, type_)
-        default_type_kwargs = {}
+        db_type_kwargs = {}
         if not_null in (1, 'T'):
-            default_type_kwargs['not_null'] = True
-        if unique and type_class_ != Boolean:
-            default_type_kwargs['unique'] = True
-        if type_class_ == String:
+            db_type_kwargs['not_null'] = True
+        if unique and db_type_cls != Boolean:
+            db_type_kwargs['unique'] = True
+        if db_type_cls == String:
             if type_ != 'text':
                 try:
                     size = int(size_string) - 4
@@ -1124,22 +1124,22 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     size = None
                 if size < 0:
                     size = None
-                default_type_kwargs['maxlen'] = size
-        elif type_class_ == Float:
+                db_type_kwargs['maxlen'] = size
+        elif db_type_cls == Float:
             spec = int(size_string)
             precision = (spec & 0xFFFF) - 4
             if precision >= 0 and precision <= 100:
-                default_type_kwargs['precision'] = precision
-        elif type_class_ == Integer and serial:
-            type_class_ = Serial
-        result = type_class_(**default_type_kwargs)
+                db_type_kwargs['precision'] = precision
+        elif db_type_cls == Integer and serial:
+            db_type_cls = Serial
+        result = db_type_cls(**db_type_kwargs)
         if ctype:
             if type(ctype) == type(pytis.data.Type):
                 ctype = ctype()
-            assert (type_class_ == Binary # maybe a crypto column
-                    or isinstance(ctype, TimeInterval) and type_class_ == Time # temporary hack
-                    or isinstance(ctype, type_class_)), \
-                    ("User type doesn't match DB type", ctype, type_class_)
+            assert (db_type_cls == Binary # maybe a crypto column
+                    or isinstance(ctype, TimeInterval) and db_type_cls == Time # temporary hack
+                    or isinstance(ctype, db_type_cls)), \
+                    ("User type doesn't match DB type", ctype, db_type_cls)
             result = result.clone(ctype)
         if type_kwargs:
             result = result.clone(result.__class__(**type_kwargs))
