@@ -1312,6 +1312,10 @@ class SQLSchematicObject(SQLObject):
         self._search_path = None
         super(SQLSchematicObject, self).__init__(*args, **kwargs)
 
+    @classmethod
+    def object_schemas(class_):
+        return [s[0] for s in _expand_schemas(class_)]
+
     def search_path(self):
         search_path = self._search_path
         if _enforced_schema:

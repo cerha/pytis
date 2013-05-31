@@ -4779,18 +4779,22 @@ class Specification(object):
         return spec_name
 
     def _create_data_spec(self):
+        db_spec = None
         if issubclass(self.data_cls, pytis.data.DBData):
             B = pytis.data.DBColumnBinding
             table = self.table
             if table is None:
-                table = camel_case_to_lower(self.__class__.__name__, '_')
-            elif not isinstance(table, basestring):
-                table = table.pytis_name(real=True)
-            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(),
+                table_name = camel_case_to_lower(self.__class__.__name__, '_')
+            elif isinstance(table, basestring):
+                table_name = table
+            else:
+                db_spec = table
+                table_name = table.pytis_name(real=True)
+            bindings = [B(f.id(), table_name, f.dbcolumn(), type_=f.type(),
                           crypto_name=f.crypto_name(), encrypt_empty=f.encrypt_empty(),
                           **f.type_kwargs())
                         for f in self._fields if not f.virtual()]
-            bindings.extend([B(f.inline_display(), table, f.inline_display())
+            bindings.extend([B(f.inline_display(), table_name, f.inline_display())
                              for f in self._fields if f.inline_display()
                              and f.inline_display() not in [b.id() for b in bindings]])
             if self.key:
@@ -4806,7 +4810,8 @@ class Specification(object):
             if self.arguments is None:
                 arguments = None
             else:
-                arguments = [B(f.id(), table, f.dbcolumn(), type_=f.type(), **f.type_kwargs())
+                arguments = [B(f.id(), table_name, f.dbcolumn(), type_=f.type(),
+                               **f.type_kwargs())
                              for f in self.arguments]
         else:
             def type_(f):
@@ -4827,7 +4832,8 @@ class Specification(object):
                 access_rights = pytis.data.AccessRights((None, (None, perm)))
         kwargs = dict(access_rights=access_rights, connection_name=self.connection,
                       condition=self.condition, distinct_on=self.distinct_on,
-                      arguments=arguments, crypto_names=self.crypto_names)
+                      arguments=arguments, crypto_names=self.crypto_names,
+                      db_spec=db_spec)
         return pytis.data.DataFactory(self.data_cls, *args, **kwargs)
 
     def _create_view_spec(self, title=None, **kwargs):

@@ -804,7 +804,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return with_lock(class_._pdbb_selection_counter_lock, lfunction)
 
     def __init__(self, bindings=None, ordering=None, operations=None, column_groups=None,
-                 **kwargs):
+                 db_spec=None, **kwargs):
         """
         Arguments:
 
@@ -824,6 +824,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             Each of FUNCTION_ARGS can be either a string denoting another table
             column name or a 'Value' instance denoting particular value of the
             argument.
+          db_spec -- corresponding database specification as '_SQLTabular'
+            instance or 'None'; if not 'None' then database introspection can
+            be omitted for this object
 
         If 'column_groups' is not 'None' it defines the set of grouped columns
         as in the GROUP BY part of an SQL select statement.  If 'operations' is
@@ -842,6 +845,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         the underlying data rows before aggregations get applied.
 
         """
+        self._pdbb_db_spec = db_spec
         self._pdbb_table_schemas = {}
         self._pdbb_function_schemas = {}
         super(PostgreSQLStandardBindingHandler, self).__init__(
@@ -948,24 +952,34 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         items = obj.split('.')
         if len(items) < 2:
             if schema_dict.get(obj) is None:
-                schemas = self._pg_connection_data().schemas()
-                if not schemas:
-                    schemas = ['public', 'pg_catalog']
-                if len(schemas) == 1:
-                    schema_dict[obj] = schemas[0]
-                else:
-                    for s in schemas:
-                        query = (("select %(table)s.%(label)sname from %(table)s, pg_namespace "
-                                  "where %(table)s.%(label)snamespace = pg_namespace.oid and "
-                                  "%(table)s.%(label)sname='%(name)s' and "
-                                  "pg_namespace.nspname='%(namespace)s'") %
-                                 dict(table=object_table, label=object_label, name=obj,
-                                      namespace=s))
-                        if self._pg_query(query, outside_transaction=True):
-                            schema_dict[obj] = s
-                            break
+                table_schema = None
+                if table_schema is None:
+                    schemas = self._pg_connection_data().schemas()
+                    if not schemas:
+                        schemas = ['public', 'pg_catalog']
+                    if len(schemas) == 1:
+                        table_schema = schemas[0]
+                    elif self._pdbb_db_spec is not None:
+                        for s in self._pdbb_db_spec.object_schemas():
+                            if s in schemas:
+                                table_schema = s
+                                break
+                        else:
+                            table_schema = 'public'
                     else:
-                        schema_dict[obj] = 'public'
+                        for s in schemas:
+                            query = (("select %(table)s.%(label)sname from %(table)s, pg_namespace "
+                                      "where %(table)s.%(label)snamespace = pg_namespace.oid and "
+                                      "%(table)s.%(label)sname='%(name)s' and "
+                                      "pg_namespace.nspname='%(namespace)s'") %
+                                     dict(table=object_table, label=object_label, name=obj,
+                                          namespace=s))
+                            if self._pg_query(query, outside_transaction=True):
+                                table_schema = s
+                                break
+                        else:
+                            table_schema = 'public'
+                schema_dict[obj] = table_schema
             items.insert(0, schema_dict[obj])
         return items
 
@@ -1020,6 +1034,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return table_data
 
     def _pdbb_get_table_type(self, table, column, ctype=None, type_kwargs=None, noerror=False):
+        if self._pdbb_db_spec is not None:
+            for b in self._bindings:
+                if b.id() == column:
+                    return b.type()
         table_key = self._pdbb_unique_table_id(table)
         table_data = PostgreSQLStandardBindingHandler._pdbb_table_column_data.get(table_key)
         if table_data is None:
@@ -1137,10 +1155,13 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
     def _db_bindings_to_column_spec(self, bindings):
         key = []
         columns = []
+        direct_types = self._pdbb_db_spec is not None
         for b in bindings:
             if not b.id():              # skrytý sloupec
                 continue
-            if self._arguments is None:
+            if direct_types:
+                t = b.type()
+            elif self._arguments is None:
                 t = self._pdbb_get_table_type(b.table(), b.column(), b.type(),
                                               type_kwargs=b.kwargs())
             else:
@@ -1201,6 +1222,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
 
     def _pdbb_create_sql_commands(self):
         """Vytvoř šablony SQL příkazů používané ve veřejných metodách."""
+        from pytis.extensions.gensqlalchemy import SQLTable
         bindings = self._bindings
         for b in bindings:
             assert isinstance(b, DBColumnBinding), ('Unsupported binding specification', b)
@@ -1321,109 +1343,111 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             filter_condition = ' and (%s)' % (self._pdbb_condition2sql(self._condition),)
             filter_condition = filter_condition.replace('%', '%%')
         def make_lock_command():
-            qresult = self._pg_query(
-                (("select relkind from pg_class join pg_namespace "
-                  "on (pg_class.relnamespace = pg_namespace.oid) "
-                  "where nspname='%s' and relname='%s'") %
-                 (schema, main_table_name,)),
-                outside_transaction=True)
-            if qresult[0][0] == 'r':
+            if issubclass(self._pdbb_db_spec, SQLTable):
                 return ''
-            else:
+            if self._pdbb_db_spec is None:
                 qresult = self._pg_query(
-                    ("select definition from pg_views where schemaname = '%s' and viewname = '%s'" %
+                    (("select relkind from pg_class join pg_namespace "
+                      "on (pg_class.relnamespace = pg_namespace.oid) "
+                      "where nspname='%s' and relname='%s'") %
                      (schema, main_table_name,)),
                     outside_transaction=True)
-                assert len(qresult) == 1, (schema, main_table_name,)
-                lock_query = qresult[0][0]
-                if lock_query[-1] == ';':
-                    lock_query = lock_query[:-1]
-                # There are some issues with locking views:
-                # - There is a PostgreSQL bug preventing locking views which are
-                #   built on top of other views.
-                # - It's not possible to lock views using LEFT OUTER JOIN (this is
-                #   a PostgreSQL feature).
-                # Both the problems can be solved by using FOR UPDATE OF version of
-                # the locking clause.  But first we need to know what may be put
-                # after OF without causing a database error.
-                qresult = self._pg_query(
-                    ("select ev_action from "
-                     "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "
-                     "join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) "
-                     "where nspname='%s' and relname='%s'") % (schema, main_table,),
-                    outside_transaction=True)
-                ev_action_string = qresult[0][0]
-                ev_action = evaction.pg_parse_ev_action(ev_action_string)
-                ev_rtable = ev_action[0]['rtable']
-                lock_candidates = [table['eref']['aliasname']
-                                   for table in ev_rtable if table['inFromCl']]
-                def check_candidate(candidate_table):
-                    try:
-                        self._pg_query("%s for update of %s nowait limit 1" %
-                                       (lock_query, candidate_table,),
-                                       outside_transaction=True)
-                        return True
-                    except DBLockException:
-                        return True
-                    except DBUserException:
-                        return False
-                lock_tables = [c for c in lock_candidates if check_candidate(c)]
-                lock_query = lock_query.replace('%', '%%')
-                def find_real_key():
-                    keyname = first_key_column.split('.')[-1]
-                    for colspec in ev_action[0]['targetList']:
-                        if colspec['resname'] == keyname:
-                            break
-                    else:
-                        return None
-                    table = colspec['resorigtbl']
-                    column = colspec['resorigcol']
-                    qresult = self._pg_query(("select relname, attname from pg_class join "
-                                              "pg_attribute on (attrelid=pg_class.oid) "
-                                              "where pg_class.oid=%s and pg_attribute.attnum=%s")
-                                             % (table, column,),
-                                             outside_transaction=True)
-                    if qresult:
-                        relname, attname = qresult[0]
-                        if relname not in lock_tables:
-                            return None
-                    else:
-                        return None
-                    return relname, attname
-                if lock_tables:
-                    real_key = find_real_key()
+                if qresult[0][0] == 'r':
+                    return ''
+            qresult = self._pg_query(
+                ("select definition from pg_views where schemaname = '%s' and viewname = '%s'" %
+                 (schema, main_table_name,)),
+                outside_transaction=True)
+            assert len(qresult) == 1, (schema, main_table_name,)
+            lock_query = qresult[0][0]
+            if lock_query[-1] == ';':
+                lock_query = lock_query[:-1]
+            # There are some issues with locking views:
+            # - There is a PostgreSQL bug preventing locking views which are
+            #   built on top of other views.
+            # - It's not possible to lock views using LEFT OUTER JOIN (this is
+            #   a PostgreSQL feature).
+            # Both the problems can be solved by using FOR UPDATE OF version of
+            # the locking clause.  But first we need to know what may be put
+            # after OF without causing a database error.
+            qresult = self._pg_query(
+                ("select ev_action from "
+                 "pg_rewrite join pg_class on (pg_rewrite.ev_class = pg_class.oid) "
+                 "join pg_namespace on (pg_class.relnamespace = pg_namespace.oid) "
+                 "where nspname='%s' and relname='%s'") % (schema, main_table,),
+                outside_transaction=True)
+            ev_action_string = qresult[0][0]
+            ev_action = evaction.pg_parse_ev_action(ev_action_string)
+            ev_rtable = ev_action[0]['rtable']
+            lock_candidates = [table['eref']['aliasname']
+                               for table in ev_rtable if table['inFromCl']]
+            def check_candidate(candidate_table):
+                try:
+                    self._pg_query("%s for update of %s nowait limit 1" %
+                                   (lock_query, candidate_table,),
+                                   outside_transaction=True)
+                    return True
+                except DBLockException:
+                    return True
+                except DBUserException:
+                    return False
+            lock_tables = [c for c in lock_candidates if check_candidate(c)]
+            lock_query = lock_query.replace('%', '%%')
+            def find_real_key():
+                keyname = first_key_column.split('.')[-1]
+                for colspec in ev_action[0]['targetList']:
+                    if colspec['resname'] == keyname:
+                        break
                 else:
-                    real_key = None
-                if real_key:
-                    key_table_name, key_column_name = real_key
-                    lock_tables_string = string.join(lock_tables, ', ')
-                    limit_clause = '(%s.%s=%%(key)s)' % (key_table_name, key_column_name,)
-                    # Stupid and incorrect, but how to make it better?
-                    matches = [m for m in re.finditer(' where ', lock_query, re.I)]
-                    if matches:
-                        match = matches[-1]
-                    else:
+                    return None
+                table = colspec['resorigtbl']
+                column = colspec['resorigcol']
+                qresult = self._pg_query(("select relname, attname from pg_class join "
+                                          "pg_attribute on (attrelid=pg_class.oid) "
+                                          "where pg_class.oid=%s and pg_attribute.attnum=%s")
+                                         % (table, column,),
+                                         outside_transaction=True)
+                if qresult:
+                    relname, attname = qresult[0]
+                    if relname not in lock_tables:
+                        return None
+                else:
+                    return None
+                return relname, attname
+            if lock_tables:
+                real_key = find_real_key()
+            else:
+                real_key = None
+            if real_key:
+                key_table_name, key_column_name = real_key
+                lock_tables_string = string.join(lock_tables, ', ')
+                limit_clause = '(%s.%s=%%(key)s)' % (key_table_name, key_column_name,)
+                # Stupid and incorrect, but how to make it better?
+                matches = [m for m in re.finditer(' where ', lock_query, re.I)]
+                if matches:
+                    match = matches[-1]
+                else:
+                    match = None
+                if match:
+                    beg, end = match.span()
+                    n = 0
+                    for char in lock_query[end:]:
+                        if char == '(':
+                            n = n - 1
+                        elif char == ')':
+                            n = n + 1
+                    if n > 0:
                         match = None
-                    if match:
-                        beg, end = match.span()
-                        n = 0
-                        for char in lock_query[end:]:
-                            if char == '(':
-                                n = n - 1
-                            elif char == ')':
-                                n = n + 1
-                        if n > 0:
-                            match = None
-                    if match:
-                        lock_query = (lock_query[:beg] + ' where ' + limit_clause + ' and ' +
-                                      lock_query[end:])
-                    else:
-                        lock_query = lock_query + ' where ' + limit_clause
-                    result = ("%s for update of %s nowait" % (lock_query, lock_tables_string,))
+                if match:
+                    lock_query = (lock_query[:beg] + ' where ' + limit_clause + ' and ' +
+                                  lock_query[end:])
                 else:
-                    log(EVENT, "Unlockable view, won't be locked:", main_table)
-                    result = '%s limit 1' % (lock_query,)
-                return result
+                    lock_query = lock_query + ' where ' + limit_clause
+                result = ("%s for update of %s nowait" % (lock_query, lock_tables_string,))
+            else:
+                log(EVENT, "Unlockable view, won't be locked:", main_table)
+                result = '%s limit 1' % (lock_query,)
+            return result
         self._pdbb_command_lock = self._SQLCommandTemplate(make_lock_command)
         # We make all cursors names unique to avoid conflicts with codebooks
         # when using cross-class transactions and additionally to avoid
@@ -1442,9 +1466,12 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 count_column = first_key_column
             if self._pdbb_operations:
                 self._pdbb_command_count = \
-                    "select count(*) from (select%s * from (select %s from %s%%(fulltext_queries)s where (%s)%s %s) as %s where %%(condition)s) as __count" % \
-                    (distinct_on, column_list, table_list, relation, filter_condition, groupby,
-                     table_names[0],)
+                    (("select count(*) from "
+                      "(select%s * from "
+                      " (select %s from %s%%(fulltext_queries)s where (%s)%s %s) as %s "
+                      "  where %%(condition)s) as __count") %
+                     (distinct_on, column_list, table_list, relation, filter_condition, groupby,
+                      table_names[0],))
             else:
                 self._pdbb_command_count = \
                     (("select count(*) from (select%s %s from %s%%(fulltext_queries)s "
@@ -3590,42 +3617,45 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
     def _db_bindings_to_column_spec(self, __bindings):
         if self._pdbb_result_columns is not None:
             return self._pdbb_result_columns, ()
-        schema, name = self._pdbb_split_function_name(self._name)
-        type_query = ("select proretset, prorettype, proargtypes from pg_proc, pg_namespace "
-                      "where pg_proc.pronamespace = pg_namespace.oid and "
-                      "pg_namespace.nspname = '%s' and proname = '%s'") % (schema, name,)
-        self._pg_begin_transaction()
-        try:
-            data = self._pg_query(type_query)
-            assert data, ('No such function', self._name)
-            assert len(data) == 1, ('Overloaded functions not supported',
-                                    self._name)
-            r_set, r_type, arg_types = data[0]
-            def type_instances(tnum):
-                query = ("select typname, nspname, typlen, typtype "
-                         "from pg_type join pg_namespace on typnamespace = pg_namespace.oid "
-                         "where pg_type.oid = '%s'") % (tnum,)
-                data = self._pg_query(query)
-                type_, type_ns, size_string, t_type = data[0]
-                if t_type == 'b':
-                    instances = [self._pdbb_get_type(type_, size_string, False, False)]
-                elif t_type == 'c':
-                    table = '%s.%s' % (type_ns, type_,)
-                    table_data = self._pdbb_get_table_column_data(table)
-                    instances = [self._pdbb_get_table_type(table, i)
-                                 for i in range(len(table_data.basic()))]
-                elif type_ == 'void':
-                    instances = []
-                else:
-                    raise Exception(("Unsupported function return type, "
-                                     "use explicit column specification:"),
-                                    '%s.%s' % (type_ns, type_,))
-                return instances
-            r_type_instances = type_instances(r_type)
-            columns = [ColumnSpec('column%d' % (i + 1,), r_type_instances[i])
-                       for i in range(len(r_type_instances))]
-        finally:
-            self._pg_commit_transaction()
+        if self._pdbb_db_spec is not None:
+            columns = [ColumnSpec(b.id(), b.type()) for b in self._bindings]
+        else:
+            schema, name = self._pdbb_split_function_name(self._name)
+            type_query = ("select proretset, prorettype, proargtypes from pg_proc, pg_namespace "
+                          "where pg_proc.pronamespace = pg_namespace.oid and "
+                          "pg_namespace.nspname = '%s' and proname = '%s'") % (schema, name,)
+            self._pg_begin_transaction()
+            try:
+                data = self._pg_query(type_query)
+                assert data, ('No such function', self._name)
+                assert len(data) == 1, ('Overloaded functions not supported',
+                                        self._name)
+                r_set, r_type, arg_types = data[0]
+                def type_instances(tnum):
+                    query = ("select typname, nspname, typlen, typtype "
+                             "from pg_type join pg_namespace on typnamespace = pg_namespace.oid "
+                             "where pg_type.oid = '%s'") % (tnum,)
+                    data = self._pg_query(query)
+                    type_, type_ns, size_string, t_type = data[0]
+                    if t_type == 'b':
+                        instances = [self._pdbb_get_type(type_, size_string, False, False)]
+                    elif t_type == 'c':
+                        table = '%s.%s' % (type_ns, type_,)
+                        table_data = self._pdbb_get_table_column_data(table)
+                        instances = [self._pdbb_get_table_type(table, i)
+                                     for i in range(len(table_data.basic()))]
+                    elif type_ == 'void':
+                        instances = []
+                    else:
+                        raise Exception(("Unsupported function return type, "
+                                         "use explicit column specification:"),
+                                        '%s.%s' % (type_ns, type_,))
+                    return instances
+                r_type_instances = type_instances(r_type)
+                columns = [ColumnSpec('column%d' % (i + 1,), r_type_instances[i])
+                           for i in range(len(r_type_instances))]
+            finally:
+                self._pg_commit_transaction()
         return columns, ()
 
     def _pdbb_create_sql_commands(self):
