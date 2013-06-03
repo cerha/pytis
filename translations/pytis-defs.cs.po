@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-24 15:12+0200\n"
+"POT-Creation-Date: 2013-06-03 12:31+0200\n"
 "PO-Revision-Date: 2013-04-23 10:43+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -18,12 +18,17 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
 
 #: ../lib/pytis/defs/help.py:33 ../lib/pytis/defs/help.py:71
+#: ../lib/pytis/cms/cms.py:274
 msgid "Nadřízená položka"
 msgstr ""
 
 #: ../lib/pytis/defs/help.py:38 ../lib/pytis/defs/help.py:60
 #: ../lib/pytis/defs/help.py:158 ../lib/pytis/defs/menu.py:85
-#: ../lib/pytis/defs/profiles.py:34
+#: ../lib/pytis/defs/profiles.py:34 ../lib/pytis/cms/cms.py:76
+#: ../lib/pytis/cms/cms.py:100 ../lib/pytis/cms/cms.py:228
+#: ../lib/pytis/cms/cms.py:257 ../lib/pytis/cms/cms.py:258
+#: ../lib/pytis/cms/cms.py:405 ../lib/pytis/cms/cms.py:466
+#: ../lib/pytis/cms/cms.py:594
 msgid "Název"
 msgstr ""
 
@@ -44,12 +49,16 @@ msgstr ""
 #: ../lib/pytis/defs/help.py:63 ../lib/pytis/defs/help.py:156
 #: ../lib/pytis/defs/menu.py:41 ../lib/pytis/defs/menu.py:169
 #: ../lib/pytis/defs/menu.py:171 ../lib/pytis/defs/menu.py:206
-#: ../lib/pytis/defs/menu.py:544
+#: ../lib/pytis/defs/menu.py:544 ../lib/pytis/cms/cms.py:101
+#: ../lib/pytis/cms/cms.py:185 ../lib/pytis/cms/cms.py:264
+#: ../lib/pytis/cms/cms.py:407 ../lib/pytis/cms/cms.py:446
+#: ../lib/pytis/cms/cms.py:467 ../lib/pytis/cms/cms.py:497
 msgid "Popis"
 msgstr ""
 
 #: ../lib/pytis/defs/help.py:64 ../lib/pytis/defs/help.py:115
 #: ../lib/pytis/defs/profiles.py:45 ../lib/pytis/defs/profiles.py:72
+#: ../lib/pytis/cms/cms.py:266 ../lib/pytis/cms/cms.py:356
 msgid "Obsah"
 msgstr ""
 
@@ -65,13 +74,13 @@ msgstr ""
 msgid "Podrobná nápověda náhledu"
 msgstr ""
 
-#: ../lib/pytis/defs/help.py:75
+#: ../lib/pytis/defs/help.py:75 ../lib/pytis/cms/cms.py:277
 msgid ""
 "Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
 "prázdné pro stránky na nejvyšší úrovni menu."
 msgstr ""
 
-#: ../lib/pytis/defs/help.py:77
+#: ../lib/pytis/defs/help.py:77 ../lib/pytis/cms/cms.py:282
 msgid "Pořadí"
 msgstr ""
 
@@ -104,6 +113,8 @@ msgstr ""
 #: ../lib/pytis/defs/menu.py:294 ../lib/pytis/defs/menu.py:433
 #: ../lib/pytis/defs/menu.py:595 ../lib/pytis/defs/menu.py:690
 #: ../lib/pytis/defs/menu.py:768 ../lib/pytis/defs/statistics.py:110
+#: ../lib/pytis/cms/cms.py:185 ../lib/pytis/cms/cms.py:494
+#: ../lib/pytis/cms/cms.py:496 ../lib/pytis/cms/cms.py:575
 msgid "Akce"
 msgstr ""
 
@@ -112,6 +123,7 @@ msgid "Vedlejší formuláře"
 msgstr ""
 
 #: ../lib/pytis/defs/help.py:126 ../lib/pytis/defs/help.py:194
+#: ../lib/pytis/cms/cms.py:542
 msgid "Aktivní"
 msgstr ""
 
@@ -121,7 +133,8 @@ msgstr ""
 
 #: ../lib/pytis/defs/help.py:155 ../lib/pytis/defs/menu.py:40
 #: ../lib/pytis/defs/menu.py:542 ../lib/pytis/defs/profiles.py:33
-#: ../lib/pytis/defs/profiles.py:67
+#: ../lib/pytis/defs/profiles.py:67 ../lib/pytis/cms/cms.py:229
+#: ../lib/pytis/cms/cms.py:249
 msgid "Identifikátor"
 msgstr ""
 
@@ -136,6 +149,7 @@ msgstr ""
 #: ../lib/pytis/defs/logging.py:42 ../lib/pytis/defs/logging.py:80
 #: ../lib/pytis/defs/logging.py:91 ../lib/pytis/defs/printing.py:77
 #: ../lib/pytis/defs/profiles.py:35 ../lib/pytis/defs/profiles.py:68
+#: ../lib/pytis/cms/cms.py:573
 msgid "Uživatel"
 msgstr ""
 
@@ -182,7 +196,7 @@ msgstr ""
 msgid "ID"
 msgstr ""
 
-#: ../lib/pytis/defs/logging.py:90
+#: ../lib/pytis/defs/logging.py:90 ../lib/pytis/cms/cms.py:571
 msgid "Datum a čas"
 msgstr ""
 
@@ -218,6 +232,8 @@ msgstr ""
 #: ../lib/pytis/defs/menu.py:79 ../lib/pytis/defs/menu.py:591
 #: ../lib/pytis/defs/menu.py:686 ../lib/pytis/defs/menu.py:764
 #: ../lib/pytis/defs/menu.py:802 ../lib/pytis/defs/menu.py:870
+#: ../lib/pytis/cms/cms.py:429 ../lib/pytis/cms/cms.py:440
+#: ../lib/pytis/cms/cms.py:490 ../lib/pytis/cms/cms.py:491
 msgid "Role"
 msgstr ""
 
@@ -343,6 +359,7 @@ msgstr ""
 #: ../lib/pytis/defs/menu.py:243 ../lib/pytis/defs/menu.py:289
 #: ../lib/pytis/defs/menu.py:424 ../lib/pytis/defs/menu.py:453
 #: ../lib/pytis/defs/menu.py:810 ../lib/pytis/defs/menu.py:876
+#: ../lib/pytis/cms/cms.py:239
 msgid "Menu"
 msgstr ""
 
@@ -430,6 +447,7 @@ msgstr ""
 
 #: ../lib/pytis/defs/menu.py:338 ../lib/pytis/defs/statistics.py:41
 #: ../lib/pytis/defs/statistics.py:59 ../lib/pytis/defs/statistics.py:82
+#: ../lib/pytis/cms/cms.py:378
 msgid "Uživatelé"
 msgstr ""
 
@@ -804,6 +822,7 @@ msgstr ""
 
 #: ../lib/pytis/defs/statistics.py:70 ../lib/pytis/defs/statistics.py:84
 #: ../lib/pytis/defs/statistics.py:96 ../lib/pytis/defs/statistics.py:111
+#: ../lib/pytis/cms/cms.py:537
 msgid "Login"
 msgstr ""
 
@@ -817,4 +836,523 @@ msgstr ""
 
 #: ../lib/pytis/defs/statistics.py:124
 msgid "Tato databáze neobsahuje uživatelskou konfiguraci"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:69
+msgid "Jazyky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:70
+msgid "Správa jazyků dostupných v CMS."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:74
+msgid "Kód"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:93
+msgid "Moduly"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:94
+msgid "Správa rozšiřujících modulů použitelných ve stránkách."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:126
+msgid "Dostupné akce tohoto modul"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:129
+msgid "Přenačíst dostupné akce"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:136
+msgid ""
+"Modul je používán v existujících stránkách.\n"
+"Pokud jej chcete vymazat, zrušte nejprve všechny navázané stránky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:159
+msgid "Neuvedeno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:180
+msgid "Nalezené akce"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:181
+msgid "Zaškrtněte akce, které chcete zpřístupnit webovým uživatelům:"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:202
+msgid "Zobrazení záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:203
+msgid "Výpis všech záznamů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:204
+msgid "Export tabulky do CSV formát"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:205
+msgid "Zobrazení RSS kanálů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:206
+msgid "Vložení nového záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:207
+msgid "Editace stávajícího záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:208
+msgid "Smazání záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:209
+msgid "Export tisknutelných políček do PDF"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:221
+msgid "Men"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:230 ../lib/pytis/cms/cms.py:269
+#: ../lib/pytis/cms/cms.py:273 ../lib/pytis/cms/cms.py:465
+#: ../lib/pytis/cms/cms.py:574
+msgid "Modul"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:240
+msgid "Správa položek hlavního menu, jejich hierarchie a obsahu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:251
+msgid ""
+"Identifikátor bude vystupovat jako vnější adresa stránky.  Může být použit v "
+"odkazech na tuto stránku v rámci textu jiných stránek. Platný identifikátor "
+"může obsahovat pouze písmena bez diakritiky, číslice, pomlčky a podtržítka a "
+"musí začínat písmenem."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:255
+msgid "Jazyk"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:259
+msgid "Název položky menu - krátký a výstižný."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:260
+msgid "Nadpis"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:261
+msgid ""
+"Hlavní nadpis při zobrazení stránky.  Pokud ponecháte nevyplněné, použije se "
+"název položky.  Ten je ale někdy kvůli použití v menu příliš krátký, takže "
+"zde je možné určit jeho delší variantu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:265
+msgid "Stručný popis stránky (zobrazen v menu jako tooltip)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:268
+msgid "Text stránky formátovaný jako LCG strukturovaný text (wiki)"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:271
+msgid ""
+"Vyberte rozšiřující modul zobrazený uvnitř stránky.  Ponechte prázdné pro "
+"prostou textovou stránku."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:279
+msgid "Zveřejněno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:280
+msgid ""
+"Umožňuje řídit dostupnost dané položky nezávisle pro kažou jazykovou verzi."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:283
+msgid ""
+"Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné "
+"úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zařazena na "
+"konec."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:314
+msgid "Položka nemůže být nadřízená sama sobě."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:322
+msgid ""
+"Nelze přiřadit podřízenou položku jako nadřízenou (cyklus v hierarchii)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:327
+msgid "Stejné pořadové číslo už má jiná položka na této úrovni menu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:335
+msgid ""
+"Položka má podřízené položky.\n"
+"Pokud ji chcete vymazat, vymažte nejprve všechny podpoložky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:346
+msgid "Globální vlastnosti (společné pro všechny jazyky)"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:348
+msgid "Text stránky (pro aktuální jazykovou verzi)"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:352 ../lib/pytis/cms/cms.py:483
+msgid "Přístupová práva"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:368
+#, python-format
+msgid "Chyba přísutu k úložišti příloh: %s"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:379
+msgid "Správa uživatelských účtů, které je poté možno zařazovat do rolí."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:382 ../lib/pytis/cms/cms.py:442
+msgid "UID"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:383 ../lib/pytis/cms/cms.py:443
+msgid "Přihlašovací jméno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:384 ../lib/pytis/cms/cms.py:444
+msgid "Celé jméno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:385
+msgid "Heslo"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:393 ../lib/pytis/cms/cms.py:400
+msgid "Uživatelské role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:394
+msgid "Historie přihlášení"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:401
+msgid ""
+"Správa dostupných uživatelských rolí, které je možné přiřazovat uživatelům."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:406
+msgid "Systémová role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:413
+msgid "Uživatelé zařazení do této role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:419
+msgid "Systémové role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:420
+msgid "Systémové role jsou uživatelům přiřazeny automaticky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:430
+msgid ""
+"Role dostupné pro přiřazování práv akcím (obsahuje systémové i uživatelsky "
+"definované role)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:435
+msgid "Přiřazení uživatelských rolí"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:436
+msgid "Správa přiřazení uživatelských rolí jednotlivým uživatelům."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:445
+msgid "Název role"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:452
+msgid "Správa přiřazení uživatelů jednotlivým uživatelským rolím."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:458
+msgid "Dostupné akce"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:459
+msgid "Výčet podporovaných akcí pro jednotlivé moduly."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:475
+msgid "Akce společné pro všechny položky men"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:476
+msgid "Výčet podporovaných akcí společných pro všechny položky menu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:484
+msgid "Přiřazení práv k akcím modulů pro jednotlivé uživatelské role."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:516
+msgid "IP adresa"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:517
+msgid "Hostname"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:519
+msgid "User agent"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:520
+msgid "Referer"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:525
+msgid "Neznámý"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:529
+msgid "Log přihlášení"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:530
+msgid "Záznam informací o přihlášení uživatelů k webu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:538
+msgid "Jméno"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:539
+msgid "Úspěch"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:540
+msgid "Začátek"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:541
+msgid "Trvání"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:565
+msgid "Log přístupů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:566
+msgid ""
+"Záznam informací o přístupu uživatelů k jednotlivým stránkám/modulům webu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:572
+msgid "Cesta"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:589
+msgid "Barevné Motivy"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:590
+msgid "Správa barevných motivů."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:595 ../lib/pytis/cms/cms.py:612
+#: ../lib/pytis/cms/cms.py:625 ../lib/pytis/cms/cms.py:637
+#: ../lib/pytis/cms/cms.py:645 ../lib/pytis/cms/cms.py:648
+#: ../lib/pytis/cms/cms.py:651
+msgid "Text"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:597 ../lib/pytis/cms/cms.py:618
+#: ../lib/pytis/cms/cms.py:631 ../lib/pytis/cms/cms.py:640
+#: ../lib/pytis/cms/cms.py:646 ../lib/pytis/cms/cms.py:649
+#: ../lib/pytis/cms/cms.py:652
+msgid "Pozadí"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:599
+msgid "Zvýrazněné pozadí"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:600
+msgid ""
+"Zvýraznění pomocí barvy pozadí může být použito na různých místech, např. "
+"pro odlišení aktuální položky menu, aktuálního jazyka, nalezeného záznamu ve "
+"formuláři apod."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:603
+msgid "Odkaz"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:604
+msgid "Barva textu nenavštíveného odkazu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:605
+msgid "Navštívený odkaz"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:606
+msgid ""
+"Barva textu navštíveného odkazu.  Pokud ponecháte prázdné, bude použita "
+"stejná barva jako u nenavštíveného odkazu."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:608
+msgid "Aktivní odkaz"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:609
+msgid ""
+"Obarvení odkazu při při pohybu myší nad ním.  Pokud ponecháte prázdné, "
+"nebude odkaz na pohyb myši reagovat."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:611 ../lib/pytis/cms/cms.py:634
+#: ../lib/pytis/cms/cms.py:642 ../lib/pytis/cms/cms.py:647
+#: ../lib/pytis/cms/cms.py:650
+msgid "Orámování"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:613
+msgid ""
+"Barvy nadpisů jsou používány pro zvýrazenění názvů kapitol, panelů a jiných "
+"elementů majících povahu nadpisu či záhlaví.  V závislosti na použitých "
+"stylech mohou některé typy nadpisů používat odlišnou barvu pozadí, jiné "
+"mohou být pouze podtrženy (viz dále).  Barva textu je však společná pro oba "
+"typy nadpisů."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:619
+msgid ""
+"Barva pozadí pro nadpisy, které používají zvýraznění barvou pozadí.Typicky "
+"jsou to záhlaví částí stránky (menu, panely apod.) a nadpisy vyšších úrovní."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:622
+msgid "Podtržení"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:623
+msgid ""
+"Barva podtržení pro nadpisy, které používají zvýraznění podtržením.Typicky "
+"jsou to nadpisy nižších úrovní."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:626
+msgid ""
+"Rámy jsou obecně využívány pro odlišení samostatných prvků stránky, jako "
+"jsou například formuláře, nástrojové lišty, rejstříky apod. Rámy v tomto "
+"smyslu nemají nic splečného s HTML rámy (frame).  Pokud barvu textu "
+"nevyplníte, bude použita standardní barva textu (často u rámů budete chtít "
+"nastavit pouze barvu pozadí a orámování)."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:632
+msgid ""
+"Barva pozadí rámů pro jejich vizuální odlišení od ostatního obsahu stránky."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:635
+msgid ""
+"Barva orámování okrajů plochy rámu na přechodu mezi barvou pozadí rámu a "
+"jeho podkladem."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:638
+msgid ""
+"Na podkladových plochách se většinou text přímo nevyskytuje, ale některé "
+"styly to mohou předepisovat."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:641
+msgid "Podkladové plochy tvoří okolí hlavního obsahu stránky a panelů."
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:643
+msgid ""
+"Určuje barvu rámečku na přechodu mezi podkladovou plochou a obsahovými "
+"částmi stránky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:653
+msgid ""
+"Odlišení informačního řádku v detailních výpisech, jako např. informace o "
+"datu a autorovi v seznamu článků"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:655
+msgid "Standardní pozadí buňky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:656
+msgid "Stínované pozadí buňky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:657
+msgid "Nápověda formuláře"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:658
+msgid "Neaktivní záložka"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:662
+msgid "Standardní barvy stránky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:665
+msgid "Tabulky"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:667
+msgid "Různé"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:670
+msgid "Barvy nadpisů"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:672
+msgid "Rámy"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:674
+msgid "Meta data záznam"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:676
+msgid "Barvy podkladových ploch"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:679
+msgid "Chybové zprávy"
+msgstr ""
+
+#: ../lib/pytis/cms/cms.py:681
+msgid "Informační zprávy"
 msgstr ""
