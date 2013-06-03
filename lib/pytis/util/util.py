@@ -1877,8 +1877,13 @@ def translations(domain, origin='en'):
             break
     else:
         lang = origin
-    path = os.path.join(os.path.normpath(os.path.dirname(__file__) + '/../../..'), 'translations')
-    return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=(path,))
+    path_env = os.getenv('PYTIS_TRANSLATION_PATH')
+    if path_env:
+        path = path_env.split(':')
+    else:
+        base_dir = os.path.normpath(os.path.dirname(__file__) + '/../../..')
+        path = (os.path.join(base_dir, 'translations'),)
+    return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=path)
 
 def translate(text):
     """Return translation object for given text.
