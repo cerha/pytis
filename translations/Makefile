@@ -33,8 +33,8 @@ pytis-web.pot: $(shell find ../lib/pytis/web -name "*.py") $(shell find ../resou
 pytis-wx.pot: $(shell find ../lib/pytis/form -name "*.py") $(shell find ../lib/pytis/util -name "*.py") $(shell find ../lib/pytis/extensions -name "*.py")  $(shell find ../lib/pytis/output -name "*.py") $(shell find ../lib/pytis/help -name "*.py")  $(shell find ../lib/pytis/windows -name "*.py")
 	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/form ../lib/pytis/util ../lib/pytis/extensions ../lib/pytis/output ../lib/pytis/help ../lib/pytis/windows -o pytis-wx.pot
 
-pytis-defs.pot: $(shell find ../lib/pytis/defs -name "*.py")
-	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/defs -o pytis-defs.pot
+pytis-defs.pot: $(shell find ../lib/pytis/defs -name "*.py") $(shell find ../lib/pytis/cms -name "*.py")
+	pybabel extract -F babel.cfg --add-comments=Translators: -s ../lib/pytis/defs ../lib/pytis/cms -o pytis-defs.pot
 
 $(shell ls pytis-data.*.po): pytis-data.%.po: pytis-data.pot
 	msgmerge -q --backup=none --update $@ $< && touch $@

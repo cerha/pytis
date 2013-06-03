@@ -34,7 +34,7 @@ from pytis.presentation import Field, HGroup, VGroup, Binding, Action, CodebookS
      Computer, CbComputer, computer
 import config
 
-_ = pu.translations('pytis-cms')
+_ = pu.translations('pytis-defs')
 
 ASC = pd.ASCENDENT
 DESC = pd.DESCENDANT
