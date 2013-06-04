@@ -109,9 +109,11 @@ pytis.BrowseFormHandler = Class.create({
 		}
 	    }.bind(this),
 	    onFailure: function(transport) {
-		this.ajax_container.update(pytis._("Failed loading form."));
 		document.body.style.cursor = "default";
-	    }
+		this.ajax_container.update('<div class="form-load-error">' +
+					   pytis._("Failed loading form.") + 
+					   '</div>');
+	    }.bind(this)
 	});
     },
 

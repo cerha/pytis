@@ -61,6 +61,12 @@
     background-position: 8px center;
     background-repeat: no-repeat;
 }
+.pytis-form .form-load-error {
+    padding: 6px 0 6px 36px;
+    background-image: url(error.png); /* Beware: Relying on Wiking's resources... */
+    background-position: 8px center;
+    background-repeat: no-repeat;
+}
 
 .pytis-form.browse-form table {
     border-collapse: collapse;
