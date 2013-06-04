@@ -4941,14 +4941,21 @@ class Specification(object):
 
     @classmethod
     def _codebook_by_db_spec_name(class_, db_spec_name):
-        spec = class_._specifications_by_db_spec_name.get(db_spec_name)
-        if spec is None:
+        specification_list = class_._specifications_by_db_spec_name.get(db_spec_name)
+        if specification_list is None:
             return None
-        module = string.join(string.split(spec.__module__, '.')[1:], '.')
-        return '%s.%s' % (module, spec.__name__,)
+        specification_list = [s for s in specification_list if s.cb is not None]
+        if not specification_list:
+            return None
+        if len(specification_list) > 1:
+            log(OPERATIONAL, "Multiple codebook candidates, no codebook assigned: ",
+                (db_spec_name, specification_list,))
+            return None
+        specification = specification_list[0]
+        module = string.join(string.split(specification.__module__, '.')[1:], '.')
+        return '%s.%s' % (module, specification.__name__,)
 
     @classmethod
     def add_specification_by_db_spec_name(class_, db_spec_name, specification):
-        if db_spec_name in class_._specifications_by_db_spec_name:
-            raise Exception("Duplicate specification name", db_spec_name)
-        class_._specifications_by_db_spec_name[db_spec_name] = specification
+        mapping = class_._specifications_by_db_spec_name
+        mapping[db_spec_name] = mapping.get(db_spec_name, []) + [specification]
