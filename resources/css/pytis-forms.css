@@ -67,6 +67,12 @@
     background-position: 8px center;
     background-repeat: no-repeat;
 }
+.pytis-form .form-load-traceback {
+    padding: 4px;
+    margin-left: 6px;
+    background-color: #eee;
+    border: 1px solid #ddd;
+}
 
 .pytis-form.browse-form table {
     border-collapse: collapse;

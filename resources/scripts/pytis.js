@@ -110,9 +110,22 @@ pytis.BrowseFormHandler = Class.create({
 	    }.bind(this),
 	    onFailure: function(transport) {
 		document.body.style.cursor = "default";
-		this.ajax_container.update('<div class="form-load-error">' +
-					   pytis._("Failed loading form.") + 
-					   '</div>');
+		var msg = (pytis._("Failed loading form:") +' '+ 
+			   transport.status +' '+ transport.statusText);
+		var tb_start = transport.responseText.search('here is the original traceback:');
+		if (tb_start != -1) {
+		    var tb_len = transport.responseText.slice(tb_start).search('-->');
+		    var traceback = ('<pre class="form-load-traceback" style="display: none">' +
+				     transport.responseText.slice(tb_start+32, tb_start+tb_len-3) +
+				     '</pre>');
+		    msg += (' (<a href="#" onclick="' +
+			    'this.parentNode.parentNode.down(\'.form-load-traceback\').toggle();' +
+			    '">' + pytis._("show details") + '</a>)');
+		} else {
+		    var traceback = '';
+		}
+		this.ajax_container.update('<div class="form-load-error">' + msg + '</div>' +
+					   traceback);
 	    }.bind(this)
 	});
     },
