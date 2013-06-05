@@ -670,6 +670,7 @@ class Column(pytis.data.ColumnSpec):
                                    info=dict(inherited=inherited),
                                    autoincrement=autoincrement)
         column.pytis_orig_table = orig_table_name
+        column.type.pytis_orig_type = self.type()
         return column
 
 class PrimaryColumn(Column):
@@ -1316,6 +1317,10 @@ class SQLSchematicObject(SQLObject):
     def object_schemas(class_):
         return [s[0] for s in _expand_schemas(class_)]
 
+    @classmethod
+    def default_search_path(class_):
+        return _expand_schemas(class_)[0]
+
     def search_path(self):
         search_path = self._search_path
         if _enforced_schema:
@@ -1329,6 +1334,18 @@ def gA(table, **kwargs):
 gL = sqlalchemy.sql.literal_column
 gO = object_by_path
 gR = RawCondition
+
+def _alchemy2pytis_type(atype):
+    if hasattr(atype, 'pytis_orig_type'):
+        return atype.pytis_orig_type
+    if isinstance(atype, sqlalchemy.Integer):
+        return pytis.data.Integer()
+    elif isinstance(atype, sqlalchemy.String):
+        return pytis.data.String()
+    elif isinstance(atype, sqlalchemy.types.NullType):
+        return None
+    import pdb; pdb.set_trace()
+    raise Exception("Unrecognized SQLAlchemy type", atype)
     
 
 ## Database objects
@@ -2407,6 +2424,15 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
             
     def drop(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaDropper, self, checkfirst=checkfirst)
+        
+    @classmethod
+    def specification_fields(class_):
+        with _local_search_path(class_.default_search_path()):
+            query = class_.query()
+        def make_column(c):
+            return Column(c.name, _alchemy2pytis_type(c.type))
+        fields = [make_column(c) for c in query.c]
+        return fields
 
 @compiles(SQLView)
 def visit_view(element, compiler, **kw):

@@ -4764,6 +4764,9 @@ class Specification(object):
                     raise Exception("Field type incompatible with database specification",
                                     f.id())
                 xfields[n] = db_field.clone(f)
+        if __debug__:
+            for f in xfields:
+                assert f.type() is not None, ("Field type not specified", self, f.id(),)
         return xfields
 
     def _action_spec_name(self):
