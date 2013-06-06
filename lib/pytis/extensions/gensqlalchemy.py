@@ -628,7 +628,8 @@ class Column(pytis.data.ColumnSpec):
                 references = Arguments(references)
             r_args = references.args()
             kwargs = copy.copy(references.kwargs())
-            if isinstance(r_args[0], (ReferenceLookup.Reference, _Reference)):
+            if isinstance(r_args[0], (ReferenceLookup.Reference, ReferenceLookup.ColumnLookup,
+                                      _Reference,)):
                 dereference = r_args[0].get()
                 if dereference is None:
                     kwargs['use_alter'] = True
@@ -1115,22 +1116,28 @@ class ReferenceLookup(object):
             self._column = column
         def get(self, search_path=None):
             specification = object_by_specification_name(self._specification, search_path)
-            if specification is None:
+            if specification is None or isinstance(specification, _SQLExternal):
                 return None
-            if isinstance(specification, _SQLExternal):
-                return None
-            else:
-                c = specification.c[self._column]
-            return c
+            return specification.c[self._column]
         def specification_name(self):
             return self._specification
     class ColumnLookup(object):
         def __init__(self, specification):
-            self._specification = specification
+            self._name = specification
+            self._column = None
+        def get(self, search_path=None):
+            specification = object_by_specification_name(self._name, search_path=search_path)
+            if specification is None or isinstance(specification, _SQLExternal):
+                return None
+            for c in specification.c:
+                if c.primary_key:
+                    self._column = c.name
+                    return c
+            return None
         def __getattr__(self, column):
             if column == '__clause_element__':
                 raise AttributeError(column)
-            return ReferenceLookup.Reference(self._specification, column)
+            return ReferenceLookup.Reference(self._name, column)
     def __getattr__(self, specification):
         return self.ColumnLookup(specification)
 r = ReferenceLookup()
