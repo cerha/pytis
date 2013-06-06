@@ -31,7 +31,8 @@ import collections
 import copy
 import string
 try:
-    import gtk, gtk.gdk
+    import gtk
+    import gtk.gdk
 except ImportError:
     gtk = None
 try:
@@ -41,7 +42,8 @@ except ImportError:
 import lcg
 
 from pytis.form import *
-import wx, wx.combo
+import wx
+import wx.combo
 import pytis.presentation
 
 import config
@@ -116,8 +118,7 @@ def modal(window):
     nebo 'Dialog'.
 
     """
-    return window and \
-           (isinstance(window, Dialog) or isinstance(window, PopupForm))
+    return window and (isinstance(window, Dialog) or isinstance(window, PopupForm))
 
 def copy_to_clipboard(text):
     """Copy given text into system clipboard.
@@ -155,7 +156,7 @@ def paste_from_clipboard(ctrl):
     """
     assert isinstance(ctrl, wx.TextCtrl)
     if pytis.windows.windows_available() and not pytis.windows.x2go_ip():
-        nx_ip  = pytis.windows.nx_ip()
+        nx_ip = pytis.windows.nx_ip()
         log(EVENT, 'Paste text from windows clipboard on %s' % (nx_ip,))
         text = pytis.windows.get_clipboard_text()
     else:
@@ -342,63 +343,63 @@ class WxKey:
 
     def __init__(self):
         # Musí to být až tady, kvůli (ne)importům wx na serveru
-        table = (('Insert',    wx.WXK_INSERT),
-                 ('Delete',    wx.WXK_DELETE),
+        table = (('Insert', wx.WXK_INSERT),
+                 ('Delete', wx.WXK_DELETE),
                  ('Backspace', wx.WXK_BACK),
-                 ('Home',      wx.WXK_HOME),
-                 ('End',       wx.WXK_END),
-                 ('Prior',     wx.WXK_PRIOR),
-                 ('Next',      wx.WXK_NEXT),
-                 ('Up',        wx.WXK_UP),
-                 ('Down',      wx.WXK_DOWN),
-                 ('Left',      wx.WXK_LEFT),
-                 ('Right',     wx.WXK_RIGHT),
-                 ('Escape',    wx.WXK_ESCAPE),
-                 ('Tab',       wx.WXK_TAB),
-                 ('Enter',     wx.WXK_RETURN),
-                 ('Enter',     wx.WXK_NUMPAD_ENTER),
-                 ('Home',      wx.WXK_NUMPAD_HOME),
-                 ('Left',      wx.WXK_NUMPAD_LEFT),
-                 ('Up',        wx.WXK_NUMPAD_UP),
-                 ('Right',     wx.WXK_NUMPAD_RIGHT),
-                 ('Down',      wx.WXK_NUMPAD_DOWN),
-                 ('Prior',     wx.WXK_NUMPAD_PAGEUP),
-                 ('Next',      wx.WXK_NUMPAD_PAGEDOWN),
-                 ('End',       wx.WXK_NUMPAD_END),
-                 ('Home',      wx.WXK_NUMPAD_BEGIN),
-                 ('Insert',    wx.WXK_NUMPAD_INSERT),
-                 ('=',   wx.WXK_NUMPAD_EQUAL),
-                 ('*',   wx.WXK_NUMPAD_MULTIPLY),
-                 ('+',   wx.WXK_NUMPAD_ADD),
-                 ('-',   wx.WXK_NUMPAD_SUBTRACT),
-                 ('.',   wx.WXK_NUMPAD_DECIMAL),
-                 ('/',   wx.WXK_NUMPAD_DIVIDE),
-                 ('0',   wx.WXK_NUMPAD0),
-                 ('1',   wx.WXK_NUMPAD1),
-                 ('2',   wx.WXK_NUMPAD2),
-                 ('3',   wx.WXK_NUMPAD3),
-                 ('4',   wx.WXK_NUMPAD4),
-                 ('5',   wx.WXK_NUMPAD5),
-                 ('6',   wx.WXK_NUMPAD6),
-                 ('7',   wx.WXK_NUMPAD7),
-                 ('8',   wx.WXK_NUMPAD8),
-                 ('9',   wx.WXK_NUMPAD9),
-                 ('F1',  wx.WXK_F1),
-                 ('F2',  wx.WXK_F2),
-                 ('F3',  wx.WXK_F3),
-                 ('F4',  wx.WXK_F4),
-                 ('F5',  wx.WXK_F5),
-                 ('F6',  wx.WXK_F6),
-                 ('F7',  wx.WXK_F7),
-                 ('F8',  wx.WXK_F8),
-                 ('F9',  wx.WXK_F9),
+                 ('Home', wx.WXK_HOME),
+                 ('End', wx.WXK_END),
+                 ('Prior', wx.WXK_PRIOR),
+                 ('Next', wx.WXK_NEXT),
+                 ('Up', wx.WXK_UP),
+                 ('Down', wx.WXK_DOWN),
+                 ('Left', wx.WXK_LEFT),
+                 ('Right', wx.WXK_RIGHT),
+                 ('Escape', wx.WXK_ESCAPE),
+                 ('Tab', wx.WXK_TAB),
+                 ('Enter', wx.WXK_RETURN),
+                 ('Enter', wx.WXK_NUMPAD_ENTER),
+                 ('Home', wx.WXK_NUMPAD_HOME),
+                 ('Left', wx.WXK_NUMPAD_LEFT),
+                 ('Up', wx.WXK_NUMPAD_UP),
+                 ('Right', wx.WXK_NUMPAD_RIGHT),
+                 ('Down', wx.WXK_NUMPAD_DOWN),
+                 ('Prior', wx.WXK_NUMPAD_PAGEUP),
+                 ('Next', wx.WXK_NUMPAD_PAGEDOWN),
+                 ('End', wx.WXK_NUMPAD_END),
+                 ('Home', wx.WXK_NUMPAD_BEGIN),
+                 ('Insert', wx.WXK_NUMPAD_INSERT),
+                 ('=', wx.WXK_NUMPAD_EQUAL),
+                 ('*', wx.WXK_NUMPAD_MULTIPLY),
+                 ('+', wx.WXK_NUMPAD_ADD),
+                 ('-', wx.WXK_NUMPAD_SUBTRACT),
+                 ('.', wx.WXK_NUMPAD_DECIMAL),
+                 ('/', wx.WXK_NUMPAD_DIVIDE),
+                 ('0', wx.WXK_NUMPAD0),
+                 ('1', wx.WXK_NUMPAD1),
+                 ('2', wx.WXK_NUMPAD2),
+                 ('3', wx.WXK_NUMPAD3),
+                 ('4', wx.WXK_NUMPAD4),
+                 ('5', wx.WXK_NUMPAD5),
+                 ('6', wx.WXK_NUMPAD6),
+                 ('7', wx.WXK_NUMPAD7),
+                 ('8', wx.WXK_NUMPAD8),
+                 ('9', wx.WXK_NUMPAD9),
+                 ('F1', wx.WXK_F1),
+                 ('F2', wx.WXK_F2),
+                 ('F3', wx.WXK_F3),
+                 ('F4', wx.WXK_F4),
+                 ('F5', wx.WXK_F5),
+                 ('F6', wx.WXK_F6),
+                 ('F7', wx.WXK_F7),
+                 ('F8', wx.WXK_F8),
+                 ('F9', wx.WXK_F9),
                  ('F10', wx.WXK_F10),
                  ('F11', wx.WXK_F11),
                  ('F12', wx.WXK_F12),
                  )
         if self._TRANS_TABLE is None:
             self.__class__._TRANS_TABLE = dict(table)
-            self.__class__._RTRANS_TABLE = dict([(v,k) for k,v in table])
+            self.__class__._RTRANS_TABLE = dict([(v, k) for k, v in table])
         self._cache = {}
         
     def _key2wx(self, key):
@@ -496,9 +497,9 @@ class WxColor(wx.Colour):
     def __cmp__(self, other):
         """Vrať shodu, právě když 'self' a 'other' mají shodné RGB složky."""
         try:
-            result = cmp(self.Red(), other.Red()) or \
-                     cmp(self.Green(), other.Green()) or \
-                     cmp(self.Blue(), other.Blue())
+            result = (cmp(self.Red(), other.Red()) or
+                      cmp(self.Green(), other.Green()) or
+                      cmp(self.Blue(), other.Blue()))
         except AttributeError:
             # Je-li `other' barvou, může být ve wxWindows ledacos, proto nelze
             # zařadit nějaký rozumný test na třídu instance.
@@ -556,18 +557,16 @@ class Keymap:
             keydef = []
         if rest and not isinstance(keydef, Keymap):
             if keydef:
-                log(OPERATIONAL, "Key '%s' is already used as non-prefix key."%\
-                    prefix)
+                log(OPERATIONAL, "Key '%s' is already used as non-prefix key." % (prefix,))
                 return
             keydef = Keymap(None)
         self._keymap[prefix] = keydef
-        if type(keydef) == type([]):
+        if isinstance(keydef, list):
             keydef[0:0] = [(command, args)]
         elif rest:
             keydef._define_key(rest, command, args)
         else:
-            log(OPERATIONAL, "Key '%s' is already used as a prefix key." % \
-                prefix)
+            log(OPERATIONAL, "Key '%s' is already used as a prefix key." % (prefix,))
 
     def define_key(self, key, command, args={}):
         """Přiřaď klávese 'key' příkaz 'command' s argumenty '**kwargs'.
@@ -700,7 +699,7 @@ class KeyHandler:
             key_guardian = self.guardian()
             while not isinstance(key_guardian, KeyHandler):
                 key_guardian = key_guardian.guardian()
-        except Exception as e:
+        except Exception:
             key_guardian = None
         self._key_guardian = key_guardian
 
@@ -734,10 +733,12 @@ class KeyHandler:
         else:
             guardian = self._key_guardian
             if guardian is None:
-                if __debug__: log(DEBUG, 'Žádný další poručník')
+                if __debug__:
+                    log(DEBUG, 'Žádný další poručník')
                 return False
             else:
-                if __debug__: log(DEBUG, 'Předání poručníkovi:', guardian)
+                if __debug__:
+                    log(DEBUG, 'Předání poručníkovi:', guardian)
                 return guardian._maybe_invoke_command(key_commands)
 
     def _get_keymap(self):
@@ -782,12 +783,14 @@ class KeyHandler:
         Vrací: Pravdu, právě když událost byla úspěšně převedena na příkaz.
 
         """
-        if __debug__: log(DEBUG, 'Stisk klávesy:', event)
+        if __debug__:
+            log(DEBUG, 'Stisk klávesy:', event)
         wk = self._wx_key
         if not wk.is_true_key(event):
             return
         message(None)
-        if __debug__: log(DEBUG, 'Událost zpracovává:', str(self))
+        if __debug__:
+            log(DEBUG, 'Událost zpracovává:', str(self))
         guardian = self._key_guardian
         if self._commands is None:
             self._init_commands()
@@ -799,11 +802,11 @@ class KeyHandler:
         key = wk.event_key(event)
         keydef = self._current_keymap.lookup_key(key)
         if isinstance(keydef, Keymap):
-            if __debug__: log(DEBUG, 'Prefixová klávesa', keydef)
+            if __debug__:
+                log(DEBUG, 'Prefixová klávesa', keydef)
             self._prefix_key_sequence.append(key)
-            message('Prefixová klávesa: %s (%s)' % \
-                    (' '.join(self._prefix_key_sequence),
-                     ', '.join(keydef.keys())))
+            message('Prefixová klávesa: %s (%s)' % (' '.join(self._prefix_key_sequence),
+                                                    ', '.join(keydef.keys()),))
             self._current_keymap = keydef
             return True
         else:
@@ -815,12 +818,15 @@ class KeyHandler:
                 if result:
                     return result
             if guardian:
-                if __debug__: log(DEBUG, 'Klávesa předána výše')
+                if __debug__:
+                    log(DEBUG, 'Klávesa předána výše')
                 return guardian.on_key_down(event, dont_skip)
             if dont_skip:
-                if __debug__: log(DEBUG, 'Klávesa ignorována')
+                if __debug__:
+                    log(DEBUG, 'Klávesa ignorována')
             else:
-                if __debug__: log(DEBUG, 'Klávesová událost přeskočena')
+                if __debug__:
+                    log(DEBUG, 'Klávesová událost přeskočena')
                 event.Skip()
         return False
 
@@ -859,7 +865,8 @@ class CallbackHandler:
             
         """
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
-        assert function is None or isinstance(function, collections.Callable), ('Invalid callback function', function)
+        assert function is None or isinstance(function, collections.Callable), \
+            ('Invalid callback function', function,)
         self._callbacks[kind] = function
         if __debug__:
             log(DEBUG, 'Callback registered:', (kind, function))
@@ -894,7 +901,6 @@ class CallbackHandler:
             return True
             
 
-
 #=============================#
 # Specializované prvky        #
 #=============================#
@@ -952,7 +958,7 @@ class Menu(_TitledMenuObject):
     Z vytvořené instance této třídy lze potom vytvořit instanci wxMenu pomocí
     metody 'create()'.
 
-    """ 
+    """
     def __init__(self, title, items, allow_autoindex=True):
         """Initialize menu specification.
 
@@ -1008,8 +1014,8 @@ class Menu(_TitledMenuObject):
             if isinstance(i, MItem):
                 hotkey, command, args = i.hotkey(), i.command(), i.args()
                 if hotkey == (None,) and keymap is not None:
-                    real_args = dict([(k,v) for k,v in args.items()
-                                      if k!= '_command_handler'])
+                    real_args = dict([(k, v) for k, v in args.items()
+                                      if k != '_command_handler'])
                     hotkey = xtuple(keymap.lookup_command(command, real_args))
                 elif keymap is not None:
                     keymap.define_key(hotkey, command, args)
@@ -1052,7 +1058,7 @@ class Menu(_TitledMenuObject):
                     max_label_width = max(width + max_hotkey_width, max_label_width)
                 elif isinstance(item, Menu):
                     menu.AppendMenu(wx.NewId(), wx_title, item.create(parent, keymap))
-                    max_label_width = max(width+20, max_label_width)
+                    max_label_width = max(width + 20, max_label_width)
                 else:
                     raise ProgramError('Invalid menu item type', item)
         # Append hotkey description string to the item labels.
@@ -1062,7 +1068,7 @@ class Menu(_TitledMenuObject):
             fill_width = max_label_width - width - max_hotkey_width
             n = round(float(fill_width) / float(space_width))
             fill = "%%%ds" % n % ''
-            wxitem.SetText(wx_title + fill + hotkey_str[i]) 
+            wxitem.SetText(wx_title + fill + hotkey_str[i])
         return menu
 
     def wx_menu(self):
@@ -1121,7 +1127,7 @@ class MItem(_TitledMenuObject):
         if is_sequence(command):
             command_spec = command[0]
         else:
-            command_spec = command            
+            command_spec = command
         if isinstance(command, basestring):
             command = resolver().get('app_commands', command)
         if is_sequence(command):
@@ -1148,7 +1154,6 @@ class MItem(_TitledMenuObject):
 
     def _make_action_id(self, command_spec):
         def modulify(obj, name):
-            module = obj.__module__
             module_name = str(obj.__module__)
             if module_name == 'pytis.form.list':
                 # Well, not a very good idea to name a Python file `list'
@@ -1170,10 +1175,12 @@ class MItem(_TitledMenuObject):
             form_name = args.pop('name', None)
             extra = []
             if 'binding' in args:
-                extra.append('binding=%s' % (args['binding'],)); del args['binding']
+                extra.append('binding=%s' % (args['binding'],))
+                del args['binding']
             if not args:
                 class_name = modulify(form_class, form_class.__name__)
-                return ('form/%s/%s/%s/%s' % (class_name, form_name, string.join(extra, '&'), command_proc,))
+                return ('form/%s/%s/%s/%s' %
+                        (class_name, form_name, string.join(extra, '&'), command_proc,))
         elif command == 'NEW_RECORD' and args:
             form_name = args.pop('name', '')
             if form_name is not None and not args:
@@ -1360,7 +1367,7 @@ class MenuBar(wx.MenuBar):
                 self._check_duplicate_keys(m)
         for menu in menus:
             self.Append(menu.create(self._parent, keymap), menu.title(raw=True))
-        parent.SetMenuBar(self)        
+        parent.SetMenuBar(self)
         
     def _check_duplicate_keys(self, menu):
         if isinstance(menu, Menu):
@@ -1447,7 +1454,7 @@ class StatusBar(wx.StatusBar):
             if width is None:
                 width = -1
             elif width > 0:
-                width = dlg2px(self, width*4)
+                width = dlg2px(self, width * 4)
             widths.append(width)
         if widths and widths[-1] > 0:
             # Wx hack: Extend the last field to fit also the dragging triangle.
@@ -1596,11 +1603,12 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         current = form.current_profile()
         first_user_profile = None
         for i, profile in enumerate(profiles):
-            if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX) and first_user_profile is None:
+            if ((profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX) and
+                 first_user_profile is None)):
                 first_user_profile = i
             title = profile.title()
             if profile.errors():
-                title += ' '+ _(u"(neplatný)")
+                title += ' ' + _(u"(neplatný)")
             self.InsertStringItem(i, title)
             self.SetItemData(i, i)
             if profile is current:
@@ -1612,9 +1620,9 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
                 self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
                 self.SetItemData(i, -1)
         self.SetColumnWidth(0, minWidth)
-        self.SetSize((1,1)) # Needed for GetViewRect to work consistently. 
+        self.SetSize((1, 1)) # Needed for GetViewRect to work consistently.
         width, height = self.GetViewRect()[2:] # Returned sizes are 16 px greater than the reality.
-        return wx.Size(max(width-16, minWidth), min(height-16, maxHeight))
+        return wx.Size(max(width - 16, minWidth), min(height - 16, maxHeight))
 
     def SetStringValue(self, value):
         # Called just prior to displaying the popup, but after GetAdjustedSize.
@@ -1662,7 +1670,6 @@ class ProfileSelector(wx.combo.ComboCtrl):
         enabled = LookupForm.COMMAND_PROFILE_MENU.enabled()
         event.Enable(enabled)
         ctrl = self.GetTextCtrl()
-        popup = self._popup
         if enabled:
             if not ctrl.IsEditable():
                 form = current_form()
@@ -1685,25 +1692,26 @@ class ProfileSelector(wx.combo.ComboCtrl):
                   help=_(u"Aktualizovat uložený profil podle současného nastavení formuláře")),
             MItem(_(u"Uložit jako nový"),
                   Application.COMMAND_HANDLED_ACTION(
-                    # Name must be edited first and 'cmd' will be invoked after confirmation.
-                    handler=self._edit_profile_title,
-                    enabled=self._edit_profile_title_enabled,
-                    cmd=LookupForm.COMMAND_SAVE_NEW_PROFILE,
-                    clear=True),
+                      # Name must be edited first and 'cmd' will be invoked after confirmation.
+                      handler=self._edit_profile_title,
+                      enabled=self._edit_profile_title_enabled,
+                      cmd=LookupForm.COMMAND_SAVE_NEW_PROFILE,
+                      clear=True),
                   help=_(u"Vytvořit nový profil podle současného nastavení formuláře")),
             MItem(_(u"Přejmenovat"),
                   Application.COMMAND_HANDLED_ACTION(
-                    # Name must be edited first and 'cmd' will be invoked after confirmation.
-                    handler=self._edit_profile_title,
-                    enabled=self._edit_profile_title_enabled,
-                    cmd=LookupForm.COMMAND_RENAME_PROFILE),
+                      # Name must be edited first and 'cmd' will be invoked after confirmation.
+                      handler=self._edit_profile_title,
+                      enabled=self._edit_profile_title_enabled,
+                      cmd=LookupForm.COMMAND_RENAME_PROFILE),
                   help=_(u"Upravit a uložit název aktuálního profilu")),
-            MItem(_(u"Smazat"), 
+            MItem(_(u"Smazat"),
                   LookupForm.COMMAND_DELETE_PROFILE(),
                   help=_(u"Smazat zvolený uložený profil")),
-            MItem(_(u"Použít automaticky při otevření formuláře"), 
+            MItem(_(u"Použít automaticky při otevření formuláře"),
                   LookupForm.COMMAND_SET_INITIAL_PROFILE(),
-                  help=_(u"Automaticky přepnout na současný profil při příštím otevření formuláře.")),
+                  help=_(u"Automaticky přepnout na současný profil při příštím otevření "
+                         u"formuláře.")),
             MSeparator(),
             MItem(_(u"Vrátit poslední uložené nastavení"),
                   LookupForm.COMMAND_RELOAD_PROFILE,
@@ -1712,13 +1720,13 @@ class ProfileSelector(wx.combo.ComboCtrl):
             MItem(_(u"Vrátit výchozí nastavení aplikace"),
                   command=LookupForm.COMMAND_RESET_PROFILE,
                   help=_(u"Zahodit všechny uložené uživatelské změny nastavení formuláře.")),
-            )
+        )
         popup_menu(self, menu)
 
     def _edit_profile_title(self, cmd, clear=False):
         ctrl = self.GetTextCtrl()
         def perform():
-            title=self.GetValue()
+            title = self.GetValue()
             ctrl.SetEditable(False)
             cmd.invoke(title=title)
         ctrl.SetEditable(True)
@@ -2088,7 +2096,7 @@ class HelpBrowserFrame(wx.Frame):
         sizer.Add(browser.toolbar(self), proportion=0, flag=wx.EXPAND)
         sizer.Add(browser, proportion=1, flag=wx.EXPAND)
         self.SetSizer(sizer)
-        self.SetSize((800,600))
+        self.SetSize((800, 600))
         self.SendSizeEvent()
 
     def load_uri(self, uri):
@@ -2200,7 +2208,7 @@ def char2px(window, x, y):
     
     """
 
-    return dlg2px(window, 4*x, 8*y)
+    return dlg2px(window, 4 * x, 8 * y)
 
 def dlg2px(window, x, y=None):
     """Přepočítej znakový rozměr na pixely.
@@ -2224,12 +2232,12 @@ def dlg2px(window, x, y=None):
       rozměr.  Pokud je volán pouze s x-ovým rozměrem, vrátí rovnou integer.
     
     """
-    if y == None:
+    if y is None:
         y = 0
         single = True
     else:
         single = False
-    dlgsize = (x,y)
+    dlgsize = (x, y)
     pxsize = wx.DLG_SZE(window, dlgsize)
     if single:
         return pxsize.GetWidth()
@@ -2239,10 +2247,10 @@ def dlg2px(window, x, y=None):
 def acceskey_prefix(i):
     pad = {'f': '  ', 'i': '  ', 'j': '  ', 'l': '  ', 'm': '', 't': '  ', 'r': '  ', 'w': ''}
     if i < 26:
-        index = chr(i+97)
+        index = chr(i + 97)
     else:
-        index = str(i-25)
-    return '&'+ index +'. '+ pad.get(index, ' ')
+        index = str(i - 25)
+    return '&' + index + '. ' + pad.get(index, ' ')
 
 
 def orientation2wx(orientation):
@@ -2262,7 +2270,7 @@ def border_style2wx(style):
         spec.BorderStyle.BOTTOM: wx.BOTTOM,
         spec.BorderStyle.LEFT: wx.LEFT,
         spec.BorderStyle.RIGHT: wx.RIGHT,
-        }        
+    }
     try:
         return mapping[style]
     except KeyError:
@@ -2310,7 +2318,8 @@ def open_data_as_file(data, suffix):
             remote_file.close()
         pytis.windows.launch_file(remote_file.name())
     else:
-        import mailcap, mimetypes
+        import mailcap
+        import mimetypes
         path = os.tempnam() + suffix
         mime_type = mimetypes.guess_type(path)[0]
         if mime_type:
@@ -2348,7 +2357,7 @@ def popup_menu(parent, items, keymap=None, position=None):
     menu.Destroy()
 
 
-def get_icon(icon_id, type=wx.ART_MENU, size=(16,16)):
+def get_icon(icon_id, type=wx.ART_MENU, size=(16, 16)):
     """Get icon by id and return the corresponding 'wx.Bitmap' instance.
 
     Arguments:
@@ -2457,7 +2466,7 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         if tooltip:
             hotkey = global_keymap().lookup_command(cmd, args)
             if hotkey:
-                tooltip += ' ('+ hotkey_string(hotkey) +')'
+                tooltip += ' (' + hotkey_string(hotkey) + ')'
         # TODO: This causes the whole application to freeze when a dialog is closed.
         #if update:
         #    wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
@@ -2478,7 +2487,7 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
       parent -- wx parent window
       choices -- a sequence of available choices; the items may be directly strings or you can pass
         a sequence of (LABEL, VALUE) pairs, where VALUE is an arbitrary object.  VALUE will be used
-        as choice data and may be later retrieved using the control's 'GetClientData()' method.  
+        as choice data and may be later retrieved using the control's 'GetClientData()' method.
       selected -- the initially selected item; one of the 'choices' items.  If (LABEL, VALUE) pairs
         were used as 'choices', 'selected' refers to VALUE, otherwise directly to the choice
         string.
@@ -2551,7 +2560,7 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
         ctrl.SetValue(value)
     if length:
         assert width is None
-        width = dlg2px(ctrl, 4*length)
+        width = dlg2px(ctrl, 4 * length)
         if _spin:
             width += 20 # Add some space for spin buttons...
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
@@ -2612,7 +2621,7 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
         ctrl.SetValue(content)
         size = char2px(ctrl, width, height)
         # Slightly enlarge the size to avoid scrollbars when not necessary (for small sizes).
-        ctrl.SetBestFittingSize((size[0]+30, size[1]+2))
+        ctrl.SetBestFittingSize((size[0] + 30, size[1] + 2))
         return ctrl
     else:
         browser = Browser(parent)
@@ -2643,4 +2652,3 @@ def wx_text_view(parent, content, format=TextFormat.PLAIN, width=None, height=No
             height = 30
         browser.SetSize(char2px(parent, width, height))
     return browser
-
