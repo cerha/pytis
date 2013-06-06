@@ -1343,7 +1343,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             filter_condition = ' and (%s)' % (self._pdbb_condition2sql(self._condition),)
             filter_condition = filter_condition.replace('%', '%%')
         def make_lock_command():
-            if issubclass(self._pdbb_db_spec, SQLTable):
+            if self._pdbb_db_spec is not None and issubclass(self._pdbb_db_spec, SQLTable):
                 return ''
             if self._pdbb_db_spec is None:
                 qresult = self._pg_query(
