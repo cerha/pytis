@@ -1170,7 +1170,7 @@ class BrowseForm(LayoutForm):
                     ftype = ftype(**fspec.type_kwargs())
                 columns.append(pytis.data.ColumnSpec(fspec.id(), ftype))
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
-            row = PresentedRow(fields_specs, data, None, resolver=self._row.resolver())
+            row = PresentedRow(fields_specs, data, None, resolver=self._row.resolver(), new=True)
             locale_data = lcg.Localizer(self._lang).locale_data()
             for f in fields_specs:
                 field = Field.create(row, f, self, self._uri_provider)
