@@ -2459,10 +2459,25 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
         button = wx.BitmapButton(parent, id, bitmap, size=size, style=style)
     else:
         button = wx.Button(parent, id, label=label or '', size=size, style=style)
+    button._pytis_in_button_handler = False
     if command:
         assert callback is None
         cmd, args = command
-        callback = lambda e: cmd.invoke(**args)
+        def callback(e, args=args, button=button):
+            if button._pytis_in_button_handler:
+                # The handler may get invoked recursively and break things,
+                # e.g. prevent a PopupEditForm from closing.
+                # The recursive invocation may happen at least in wx 2.9 on OS X:
+                # Button press or form key action to close a form invokes this
+                # callback, form closing generates a close event and that event
+                # (for unknown reasons) generates this button event again.
+                e.Skip()
+            else:
+                button._pytis_in_button_handler = True
+                try:
+                    cmd.invoke(**args)
+                finally:
+                    button._pytis_in_button_handler = False
         if tooltip:
             hotkey = global_keymap().lookup_command(cmd, args)
             if hotkey:
