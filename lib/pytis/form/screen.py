@@ -2475,7 +2475,11 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
             else:
                 button._pytis_in_button_handler = True
                 try:
-                    cmd.invoke(**args)
+                    if cmd.invoke(**args):
+                        if wx.VERSION >= (2, 9):
+                            # I don't know whether it behaves well in 2.8,
+                            # so let's be on the safe side.
+                            e.Skip()
                 finally:
                     button._pytis_in_button_handler = False
         if tooltip:
