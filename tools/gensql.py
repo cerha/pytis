@@ -2262,6 +2262,7 @@ class _GsqlViewNG(Select):
     def __init__(self, name, relations, schemas=None,
                  insert=(), update=(), delete=(),
                  insert_order=None, update_order=None, delete_order=None,
+                 primary_column=None,
                  **kwargs):
         """Inicializuj instanci.
         Argumenty:
@@ -2317,6 +2318,7 @@ class _GsqlViewNG(Select):
         self._insert_order = insert_order
         self._update_order = update_order
         self._delete_order = delete_order
+        self._primary_column = primary_column
         self._columns = []
 
     def _format_rule(self, kind, table_keys):
@@ -2482,6 +2484,8 @@ class _GsqlViewNG(Select):
             items.append(self._convert_indent(doc, 4))
         items.append('    name = %s' % (repr(self._name.lower()),))
         self._convert_schemas(items)
+        if self._primary_column is not None:
+            items.append('    primary_column = %s' % (repr(self._primary_column),))
         definitions = []
         condition = self._convert_select(definitions, 0)
         if definitions and definitions[-1].startswith(condition + ' = '):

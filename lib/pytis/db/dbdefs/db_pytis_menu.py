@@ -505,6 +505,9 @@ class EPytisMenuTrigger(db.Base_PyTriggerFunction):
                     plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" % (self._old['fullname'],))
                     plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" % (self._old['fullname'],))
                 self._update_positions(new=self._new, old=self._old)
+                if self._old['title'] != self._new['title']:
+                    plpy.execute("update e_pytis_menu_translations set dirty=true where menuid=%s" %
+                                 (self._new['menuid'],))
                 plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
             def _do_after_delete(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='import'"):
@@ -591,6 +594,7 @@ class EPytisMenuTranslations(sql.SQLTable):
 
 class EvPytisMenu(sql.SQLView):
     name = 'ev_pytis_menu'
+    primary_column = 'menuid'
     @classmethod
     def query(cls):
         main = sql.t.EPytisMenu.alias('main')
@@ -611,8 +615,21 @@ class EvPytisMenu(sql.SQLView):
     depends_on = (EPytisMenu, CPytisMenuActions,)
     access_rights = db.default_access_rights.value(globals())
 
+class UpdateEPytisMenuTranslations(sql.SQLRaw):
+    name = 'update_e_pytis_menu_translations'
+    @classmethod
+    def sql(class_):
+        return """
+create or replace function update_e_pytis_menu_translations(int, text, text, text, text) returns int as $$
+  update e_pytis_menu_translations set language=$2, t_title=$3, dirty=(dirty and $3=$4) where menuid=$1 and language=$2;
+  insert into e_pytis_menu_translations (menuid, language, t_title, dirty) (select $1, $2, $3, false where (select count(*)=0 from e_pytis_menu_translations where menuid=$1 and language=$2)) returning menuid;
+$$ language sql;
+"""
+    depends_on = (EPytisMenuTranslations,)
+
 class EvPytisTranslatedMenu(sql.SQLView):
     name = 'ev_pytis_translated_menu'
+    special_insert_columns=((EvPytisMenu, 'menuid', "substring(new.id from '/(.*)$')::int",),)
     @classmethod
     def query(cls):
         menu = sql.t.EvPytisMenu.alias('menu')
@@ -623,20 +640,21 @@ class EvPytisTranslatedMenu(sql.SQLView):
             cls._exclude(languages, 'description') +
             cls._exclude(translations, 'menuid', 'language', 'dirty') +
             [sql.gL("coalesce(t_title, xtitle)").label('t_xtitle'),
-             sql.gL("coalesce(dirty, title is not null)").label('dirty')],
+             sql.gL("coalesce(dirty, title is not null)").label('dirty'),
+             sql.gL("languages.language||'/'||menu.menuid").label('id')],
             from_obj=[menu.join(languages, sqlalchemy.sql.true()).outerjoin(translations, sql.gR('menu.menuid=translations.menuid and languages.language=translations.language'))]
             )
 
     insert_order = (EvPytisMenu,)
-    no_insert_columns = ('t_xtitle', 'dirty',)
+    no_insert_columns = ('t_xtitle', 'dirty', 'id',)
     def on_insert_also(self):
-        return ("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null)",)
+        return ("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (substring(new.id from '/(.*)$')::int, substring(new.id from '^(.*)/'), coalesce(new.t_title, new.title), new.t_title is null)",)
     update_order = (EvPytisMenu,)
-    no_update_columns = ('t_xtitle', 'dirty',)
+    no_update_columns = ('t_xtitle', 'dirty', 'id',)
     def on_update_also(self):
-        return ("delete from e_pytis_menu_translations where menuid=old.menuid and language=old.language", "insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null or old.title!=new.title)",)
+        return ("select update_e_pytis_menu_translations(substring(new.id from '/(.*)$')::int, new.language, new.t_title, old.t_title, new.title) where new.language=substring(new.id from '^(.*)/') and new.t_title is not null",)
     delete_order = (EvPytisMenu,)
-    depends_on = (EvPytisMenu, CPytisMenuLanguages, EPytisMenuTranslations,)
+    depends_on = (EvPytisMenu, CPytisMenuLanguages, EPytisMenuTranslations, UpdateEPytisMenuTranslations,)
     access_rights = db.default_access_rights.value(globals())
 
 class PytisFirstPosition(db.Base_PyFunction):

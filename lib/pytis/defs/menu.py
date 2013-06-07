@@ -260,7 +260,9 @@ class ApplicationMenu(pytis.presentation.Specification):
     table = 'ev_pytis_translated_menu'
     title = _(u"Menu")
     fields = (
-        Field('menuid', _(u"Id"), default=nextval('e_pytis_menu_menuid_seq')),
+        Field('id', _(u"Id"), type=pytis.data.String(),
+              default=(lambda: config.language + '/' + str(nextval('e_pytis_menu_menuid_seq')()))),
+        Field('menuid', _(u"MenuId")),
         Field('name', _(u"Id obsahující role")),
         Field('title', _(u"Základní titulek položky menu"), type=_Title()),
         Field('xtitle', _(u"Odvozený titulek položky menu"), type=_Title()),
@@ -294,7 +296,7 @@ class ApplicationMenu(pytis.presentation.Specification):
             pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto položku menu nelze editovat"))
             return None
         return pytis.form.run_form(pytis.form.PopupEditForm,
-                                   'menu.' + self.__class__.__name__, select_row=row['menuid'])
+                                   'menu.' + self.__class__.__name__, select_row=row['id'])
     def on_delete_record(self, row):
         if row['locked'].value():
             pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto položku menu nelze smazat"))

@@ -635,6 +635,7 @@ viewng('ev_pytis_menu',
        insert_order=('e_pytis_menu',),
        update_order=('e_pytis_menu',),
        delete_order=('e_pytis_menu',),
+       primary_column='menuid',
        grant=db_rights,
        depends=('e_pytis_menu', 'c_pytis_menu_actions',))
 
@@ -657,14 +658,16 @@ viewng('ev_pytis_translated_menu',
         ),
        include_columns=(V(None, 't_xtitle', "coalesce(t_title, xtitle)"),
                         V(None, 'dirty', "coalesce(dirty, title is not null)"),
+                        V(None, 'id', "languages.language||'/'||menu.menuid"),
                         ),
        insert_order=('ev_pytis_menu',),
-       insert=("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (new.menuid, new.language, new.t_title, new.t_title is null)",),
+       insert=("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (substring(new.id from '/(.*)$')::int, substring(new.id from '^(.*)/'), coalesce(new.t_title, new.title), new.t_title is null)",),
        update_order=('ev_pytis_menu',),
-       update=("select update_e_pytis_menu_translations(new.menuid, new.language, new.t_title, old.t_title, new.title)",),
+       update=("select update_e_pytis_menu_translations(substring(new.id from '/(.*)$')::int, new.language, new.t_title, old.t_title, new.title) where new.language=substring(new.id from '^(.*)/') and new.t_title is not null",),
        delete_order=('ev_pytis_menu',),
        grant=db_rights,
-       depends=('ev_pytis_menu', 'c_pytis_menu_languages', 'e_pytis_menu_translations',))
+       depends=('ev_pytis_menu', 'c_pytis_menu_languages', 'e_pytis_menu_translations',
+                'update_e_pytis_menu_translations',))
 
 viewng('ev_pytis_menu_structure',
        (SelectRelation('a_pytis_actions_structure', alias='structure',
