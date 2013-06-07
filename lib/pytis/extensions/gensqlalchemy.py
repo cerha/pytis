@@ -3118,12 +3118,13 @@ def _make_sql_command(sql, *multiparams, **params):
                         if column.default is not None:
                             parameters[k] = _sql_value_escape(column.default.arg)
                 # Perhaps also default key value
-                for k in sql.table.pytis_key:
-                    if k not in sql_parameters:
-                        column = sql.table.columns[k]
-                        parameters[k] = ("nextval('%s.%s_%s_seq')" %
-                                         (column.table.schema, column.pytis_orig_table,
-                                          column.name,))
+                if isinstance(sql.table, SQLTable):
+                    for k in sql.table.pytis_key:
+                        if k not in sql_parameters:
+                            column = sql.table.columns[k]
+                            parameters[k] = ("nextval('%s.%s_%s_seq')" %
+                                             (column.table.schema, column.pytis_orig_table,
+                                              column.name,))
             for k, v in sql_parameters.items():
                 parameters[k] = _sql_value_escape(v)
             output = unicode(compiled) % parameters
