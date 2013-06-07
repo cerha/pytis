@@ -1351,7 +1351,6 @@ def _alchemy2pytis_type(atype):
         return pytis.data.String()
     elif isinstance(atype, sqlalchemy.types.NullType):
         return None
-    import pdb; pdb.set_trace()
     raise Exception("Unrecognized SQLAlchemy type", atype)
     
 
