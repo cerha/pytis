@@ -132,12 +132,12 @@ class Counter:
 
 
 _emergency_encoder = codecs.getencoder('utf-8')
-def safe_encoding_write(stream, string):
+def safe_encoding_write(stream, string_):
     try:
-        stream.write(string)
+        stream.write(string_)
     except UnicodeEncodeError:
-        string, __ = _emergency_encoder(string, 'replace')
-        stream.write(string)
+        string_, __ = _emergency_encoder(string_, 'replace')
+        stream.write(string_)
 
 
 class Pipe:
@@ -205,7 +205,7 @@ class Pipe:
 
         """
         if self._closed:
-            raise ValueError, "I/O operation on closed file"
+            raise ValueError("I/O operation on closed file")
         if self._encoder is not None:
             string_ = self._encoder(string_, 'replace')[0]
         def lfunction():
@@ -331,7 +331,7 @@ class Popen:
                     os.close(r_from_child)
                 os.dup2(r_to_child, 0)
                 os.dup2(w_from_child, 1)
-                if type(command) == type(''):
+                if isinstance(command, basestring):
                     command = ['/bin/sh', '-c', command]
                 for i in range(3, 256):
                     try:
@@ -510,10 +510,8 @@ class XStack(Stack):
     def remove(self, item):
         """Remove the given 'item' from the stack.
 
-        If 'item' is currently the active element, 
-
-        Pokud byl vyjmutý prvek aktivním prvkem, je aktivován následující prvek
-        (pokud neexistuje, tak předcházející).
+        If 'item' is currently the active element, the following element is
+        activated (or the preceding one when no such element exists).
         
         """
         if item is self.top():
@@ -549,12 +547,11 @@ class XStack(Stack):
         if item is not None:
             if item in self._mru:
                 self._mru.remove(item)
-            self._mru.insert(0, item)            
+            self._mru.insert(0, item)
         
     def active(self):
         """Vrať právě aktivní prvek"""
-        assert self._active in self._list or \
-               self._active is None and self.empty()
+        assert self._active in self._list or (self._active is None and self.empty())
         return self._active
 
     def next(self):
@@ -568,7 +565,7 @@ class XStack(Stack):
         if len(self._list) <= 1:
             return None
         i = self._list.index(self._active)
-        return self._list[(i+1) % len(self._list)]
+        return self._list[(i + 1) % len(self._list)]
 
     def prev(self):
         """Return element just above the currently active element.
@@ -620,7 +617,7 @@ class Structure (object):
     """
     _attributes = ()
 
-    def __init__ (self, _template=None, **kwargs):
+    def __init__(self, _template=None, **kwargs):
         self._init(kwargs, template=_template)
 
     def _init(self, kwargs, nodefault=False, template=None):
@@ -630,7 +627,7 @@ class Structure (object):
             if name in kwargs:
                 value = kwargs[name]
                 assert isinstance(value, member.type()) or value == member.default(), \
-                       ("Invalid attribute type", name, value, member.type())
+                    ("Invalid attribute type", name, value, member.type())
                 if __debug__:
                     del kwargs[name]
             else:
@@ -643,20 +640,20 @@ class Structure (object):
                 if value is UNDEFINED and not nodefault:
                     value = member.default()
             if value is not UNDEFINED:
-                setattr (self, name, lambda value=value: value)
+                setattr(self, name, lambda value=value: value)
             if member.mutable():
-                setattr(self, 'set_'+name,
+                setattr(self, 'set_' + name,
                         lambda value, name=name: self._replace_value(name, value))
         assert not kwargs, ("Extra initialization arguments", kwargs.keys())
 
     def _replace_value(self, name, value):
         setattr(self, name, lambda value=value: value)
 
-    def __str__ (self):
+    def __str__(self):
         result = '<%s:' % (self.__class__.__name__,)
         for member in self._attributes:
             name = member.name()
-            result = result + (' %s=%s;' % (name, str (getattr (self, name)()),))
+            result = result + (' %s=%s;' % (name, str(getattr(self, name)()),))
         result = result + '>'
         return result
 
@@ -991,8 +988,7 @@ def sameclass(o1, o2, strict=False):
         if strict:
             return False
         else:
-            return c1.__name__ == c2.__name__ and \
-                   c1.__module__ == c2.__module__
+            return c1.__name__ == c2.__name__ and c1.__module__ == c2.__module__
 
 
 _public_attributes = {}
@@ -1153,7 +1149,6 @@ def less_equal(o1, o2):
     return o1 <= o2
 
 
-
 def compare_attr(self, other, attributes):
     """Vrať celkový výsledek porovnání atributů objektů 'self' a 'other'.
 
@@ -1283,7 +1278,7 @@ def with_lock(lock, function):
                 _active_locks = {}
             locks = _active_locks.get(thread_id, [])
             if lock in locks:
-                raise Exception ('Deadlock detected')
+                raise Exception('Deadlock detected')
             locks.append(lock)
             _active_locks[thread_id] = locks
         finally:
@@ -1486,7 +1481,7 @@ def format_byte_size(size):
     size = float(size)
     units = ('B', 'kB', 'MB', 'GB')
     i = 0
-    while size >= 1024 and i < len(units)-1:
+    while size >= 1024 and i < len(units) - 1:
         size /= 1024
         i += 1
     return '%.4g ' % size + units[i]
@@ -1532,7 +1527,8 @@ def rsa_encrypt(key, text):
 
     """
     if key:
-        import Crypto.PublicKey.RSA, base64
+        import Crypto.PublicKey.RSA
+        import base64
         rsa = Crypto.PublicKey.RSA.importKey(key)
         encrypted = rsa.encrypt(str(text), None)[0]
         return base64.encodestring(encrypted)
@@ -1601,9 +1597,9 @@ def ipython():
     except ImportError:
         sys.stderr.write('IPython not available\n')
         return
-    args = ['-pi1','In2<\\#>: ','-pi2','   .\\D.: ',
-            '-po','Out<\\#>: ','-nosep']
-    ipshell = IPShellEmbed (
+    args = ['-pi1', 'In2<\\#>: ', '-pi2', '   .\\D.: ',
+            '-po', 'Out<\\#>: ', '-nosep']
+    ipshell = IPShellEmbed(
         args,
         banner='---\nEntering IPython, hit Ctrl-d to continue the program.',
         exit_msg='Leaving IPython.\n---')
@@ -1630,7 +1626,7 @@ def deepstr(obj):
         transformed = '"%s"' % (obj.replace('"', '\\"'),)
     else:
         transformed = obj
-    try:            
+    try:
         result = unicode(transformed)
     except UnicodeEncodeError:
         result = transformed.encode('unicode_escape')
@@ -1666,12 +1662,17 @@ def exception_info(einfo=None):
     # Inicializace
     etype, evalue, etb = einfo or sys.exc_info()
     context = 5
-    import os, types, time, traceback, linecache, inspect
+    import os
+    import types
+    import time
+    import traceback
+    import linecache
+    import inspect
     # Sestavení hlavičky
     if type(etype) is types.ClassType:
         etype = etype.__name__
     date = time.ctime(time.time())
-    head =  '%s, %s\n' % (str(etype), date)
+    head = '%s, %s\n' % (str(etype), date)
     indent = ' ' * 5
     # Frames
     frames = []
@@ -1691,12 +1692,12 @@ def exception_info(einfo=None):
                 return linecache.getline(file, lnum[0])
             finally:
                 lnum[0] = lnum[0] + 1
-        vars = cgitb.scanvars(reader, frame, locals)        
+        vars = cgitb.scanvars(reader, frame, locals)
         rows = ['%s %s\n' % (file, call)]
         if index is not None:
             i = lnum - index
             for line in lines:
-                num = ' ' * (5-len(str(i))) + str(i) + ' '
+                num = ' ' * (5 - len(str(i))) + str(i) + ' '
                 line = '%s%s' % (num, line)
                 if i in highlight:
                     rows.append('=> ' + line)
@@ -1725,10 +1726,10 @@ def exception_info(einfo=None):
         for name in dir(evalue):
             value = deepstr(getattr(evalue, name))
             exception.append('\n%s%s =\n%s' % (indent, name, value))
-    return head + '\n' + \
-           string.join(traceback.format_exception(etype, evalue, etb)) + \
-           '\n' + string.join(frames) + \
-           '\n' + string.join(exception)
+    return (head + '\n' +
+            string.join(traceback.format_exception(etype, evalue, etb)) +
+            '\n' + string.join(frames) +
+            '\n' + string.join(exception))
 
 
 def stack_info(depth=None):
@@ -1745,7 +1746,7 @@ def stack_info(depth=None):
     if depth is not None:
         stack = stack[:depth]
     stack.reverse()
-    return "\n".join(['  File "%s", line %d, in %s' % frame[1:4] + \
+    return "\n".join(['  File "%s", line %d, in %s' % frame[1:4] +
                       (frame[5] and ':\n    %s' % frame[5] or '')
                       for frame in stack])
 
@@ -1782,7 +1783,8 @@ def parse_lcg_text(text, resource_path=(), resources=()):
     The content is returned as an 'lcg.ContentNode' instance.
     
     """
-    import lcg, os
+    import lcg
+    import os
     if not resource_path:
         lcg_dir = os.path.dirname(os.path.dirname(os.path.dirname(lcg.__file__)))
         resource_path = (os.path.join(lcg_dir, 'resources'),)
@@ -1845,9 +1847,10 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
         ('&nbsp;Added&nbsp;', _(u"Přidáno"), '<td class="diff_add">%s</td>'),
         ('Changed', _(u"Změněno"), '<td class="diff_chg">%s</td>'),
         ('Deleted', _(u"Smazáno"), '<td class="diff_sub">%s</td>'),
-        ('font-family:Courier', 'font-size:0.9em;cell-padding:2px', 'table.diff {%s; border:medium;}'),
+        ('font-family:Courier', 'font-size:0.9em;cell-padding:2px',
+         'table.diff {%s; border:medium;}'),
         ('background-color:#c0c0c0', 'display:none', '.diff_next {%s}'),
-        ):
+    ):
         result = result.replace(context % src, context % dst)
     return re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '', result)
 
@@ -1898,8 +1901,7 @@ def translate(text):
 
       text -- text to translate; basestring
     
-    The function just returns 'text'.  
+    The function just returns 'text'.
 
     """
     return text
-    
