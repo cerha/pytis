@@ -1655,7 +1655,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
     def _rule_condition(self, tabular):
         conditions = []
         for table_c in [c for c in tabular.primary_key.columns] + [c for c in tabular.columns]:
-            if (table_c.primary_key or (table_c.unique and not table_c.nullable)):
+            if table_c.primary_key or (table_c.unique and not table_c.nullable):
                 # Try to find `tabular' primary key or one of its equivalents in my
                 # columns, perhaps aliased.  If primary key is not found, look
                 # at primary like (i.e. UNIQUE NOT NULL) columns.
@@ -2018,9 +2018,10 @@ class SQLTable(_SQLTabular):
                     _engine.execute(ddl)
                     changed = True
                 if not c.primary_key and self._pytis_defaults_changed(orig_c, c):
+                    server_default = orig_c.server_default
                     ddl = alembic.ddl.base.ColumnDefault(table_name, c.name, c.server_default,
                                                          schema=self.schema,
-                                                         existing_server_default=orig_c.server_default)
+                                                         existing_server_default=server_default)
                     _engine.execute(ddl)
                     changed = True
                 if ((not orig_c.primary_key and not c.primary_key and
@@ -2263,6 +2264,14 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     'SQLView._exclude()', 'SQLView._alias()', 'SQLView._reorder()'.  See their
     documentation strings for more information.
 
+    Properties:
+
+      primary_column -- name (label) of the "key" column; basestring.  It can
+        be left 'None' in most cases.  It must be defined only when the view is
+        a part of another view which defines update or delete rules modifying
+        the view.  The primary column is the view column uniquely identifying
+        the view rows.
+
     """
     _DB_OBJECT = 'VIEW'
 
@@ -2276,9 +2285,17 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
 
     __visit_name__ = 'view'
 
+    primary_column = None
+
     def __new__(cls, metadata, search_path):
         with _local_search_path(search_path):
             columns = tuple([sqlalchemy.Column(c.name, c.type) for c in cls.query().columns])
+            primary = cls.primary_column
+            if primary is not None:
+                for c in columns:
+                    if c.name == primary:
+                        c.primary_key = True
+                        break
             args = (cls.name, metadata,) + columns
             return sqlalchemy.Table.__new__(cls, *args, schema=search_path[0])
 

@@ -76,9 +76,10 @@ class Bar(sql.SQLTable):
         return ()
     def on_insert_also(self):
         Foo2 = sql.t.Foo2
+        n_column = sqlalchemy.literal_column('1').label('n')
         return (Foo2.insert().values(n=sqlalchemy.literal_column('new.id'),
                                      foo=sqlalchemy.literal_column('new.description')),
-                sql.InsertFromSelect(Foo2, sqlalchemy.select([sqlalchemy.literal_column('1').label('n')])),
+                sql.InsertFromSelect(Foo2, sqlalchemy.select([n_column])),
                 "select 42",
                 )
 
@@ -237,6 +238,7 @@ class SimplifiedEditableView(sql.SQLView):
     """
     name = 'simplified_editable_view'
     schemas = ((Private, 'public',),)
+    primary_column = 'id'
     insert_order = (Foo, Bar,)
     update_order = (Foo, Bar,)
     delete_order = (Foo, Bar,)
@@ -248,6 +250,21 @@ class SimplifiedEditableView(sql.SQLView):
         return sqlalchemy.select([sql.c.Foo.id, sql.c.Foo.description.label('d1'),
                                   sql.c.Bar.description.label('d2')],
                                  from_obj=[sql.t.Foo.join(sql.t.Bar)])
+
+class ViewOverView(sql.SQLView):
+    """This view defines modification rules on SimplifiedEditableView.
+    
+    For this reason SimplifiedEditableView must define primary_column.
+    
+    """
+    name = 'view_over_view'
+    schemas = ((Private, 'public',),)
+    insert_order = (SimplifiedEditableView,)
+    update_order = (SimplifiedEditableView,)
+    delete_order = (SimplifiedEditableView,)
+    @classmethod
+    def query(class_):
+        return sqlalchemy.select([sql.t.SimplifiedEditableView])
 
 class BogusView(sql.SQLView):
     "One should avoid using full outer joins when possible."
