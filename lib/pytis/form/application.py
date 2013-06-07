@@ -427,6 +427,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Check for menu presence, if not available, return None
         I = pytis.data.Integer()
         S = pytis.data.String()
+        language = pytis.util.current_language()
         try:
             menu_data = pytis.data.dbtable('pytis_view_user_menu',
                                            (('menuid', I,),
@@ -436,7 +437,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                                            connection_data, arguments=())
             menu_rows = menu_data.select_map(identity,
                                              condition=pytis.data.EQ('language',
-                                                                     pytis.data.sval(config.language)),
+                                                                     pytis.data.sval(language)),
                                              sort=(('position', pytis.data.ASCENDENT,),))
         except pytis.data.DBException:
             return None

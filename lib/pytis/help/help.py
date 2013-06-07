@@ -36,7 +36,7 @@ defined in 'pytis.defs.help.Help' (and can be used as 'help.Help' when
 """ 
 
 import sys, os, lcg, pytis.data as pd, pytis.form, pytis.util, config
-from pytis.util import log, OPERATIONAL, translations
+from pytis.util import current_language, log, OPERATIONAL, translations
 
 _ = translations('pytis-wx')
 
@@ -434,7 +434,7 @@ class HelpGenerator(object):
                                   ('help_id', 'fullname', 'spec_name', 'page_id', 'position', 
                                    'title', 'description', 'menu_help', 'content', 'language',),
                                   config.dbconnection)
-        data.select(condition=pytis.data.EQ('language', pytis.data.sval(config.language)),
+        data.select(condition=pytis.data.EQ('language', pytis.data.sval(current_language())),
                     sort=(('position', pytis.data.ASCENDENT),))
         children = {}
         while True:

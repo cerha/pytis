@@ -1854,6 +1854,50 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
         result = result.replace(context % src, context % dst)
     return re.sub('<td> <table border="" summary="Links">(.|[\r\n])*</table></td>', '', result)
 
+_current_language = None
+def current_language():
+    """Return current language code as string.
+
+    If current language is not set, set it to the current environment language.
+
+    """
+    if _current_language is None:
+        set_current_language(environment_language())
+    return _current_language
+
+def set_current_language(language):
+    """Set current language to 'language'.
+
+    Arguments:
+
+      language -- language code (without any variant), string
+
+    """
+    global _current_language
+    _current_language = language
+    
+def environment_language(default=None):
+    """Return code of the language of the current locale environment.
+
+    Arguments:
+
+      default -- default language code; string or 'None'
+
+    Just the basic code, without any variant, is returned.
+    
+    """
+    for env in ('LANGUAGE', 'LC_ALL', 'LC_MESSAGES', 'LANG'):
+        locale = os.getenv(env)
+        if locale:
+            if locale != 'C':
+                lang = locale.split('_')[0]
+            else:
+                lang = default
+            break
+    else:
+        lang = default
+    return lang
+
 def translations(domain, origin='en'):
     """Create 'lcg.TranslatedTextFactory' for the current locale.
 
@@ -1870,16 +1914,7 @@ def translations(domain, origin='en'):
 
     """
     import lcg
-    for env in ('LANGUAGE', 'LC_ALL', 'LC_MESSAGES', 'LANG'):
-        locale = os.getenv(env)
-        if locale:
-            if locale != 'C':
-                lang = locale.split('_')[0]
-            else:
-                lang = origin
-            break
-    else:
-        lang = origin
+    lang = environment_language(default=origin)
     path_env = os.getenv('PYTIS_TRANSLATION_PATH')
     if path_env:
         path = path_env.split(':')

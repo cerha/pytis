@@ -814,10 +814,6 @@ class Configuration(object):
         
     # Volby přizpůsobení uživatelského rozhraní
 
-    class _Option_language(StringOption):
-        _DESCR = _(u"Jazyk uživatelského rozhraní")
-        _DEFAULT = 'cs'
-
     class _Option_show_tooltips(BooleanOption):
         _DESCR = _(u"Zobrazovat bublinovou nápovědu.")
         _DEFAULT = True

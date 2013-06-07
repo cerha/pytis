@@ -261,7 +261,8 @@ class ApplicationMenu(pytis.presentation.Specification):
     title = _(u"Menu")
     fields = (
         Field('id', _(u"Id"), type=pytis.data.String(),
-              default=(lambda: config.language + '/' + str(nextval('e_pytis_menu_menuid_seq')()))),
+              default=(lambda: pytis.util.current_language() + '/' +
+                       str(nextval('e_pytis_menu_menuid_seq')()))),
         Field('menuid', _(u"MenuId")),
         Field('name', _(u"Id obsahující role")),
         Field('title', _(u"Základní titulek položky menu"), type=_Title()),
@@ -269,7 +270,7 @@ class ApplicationMenu(pytis.presentation.Specification):
         Field('t_title', _(u"Přeložený titulek položky menu"), type=_Title(),
               editable=pytis.presentation.computer(lambda row, title: title is not None)),
         Field('t_xtitle', _(u"Titulek položky menu"), type=_Title()),
-        Field('language', _(u"Jazyk"), default=config.language),
+        Field('language', _(u"Jazyk"), default=pytis.util.current_language),
         Field('position', _(u"Pozice v menu"), fixed=True,
               codebook='menu.ApplicationMenuPositions'),
         Field('next_position', _(u"Následující pozice v menu"), default='0'),
@@ -290,7 +291,7 @@ class ApplicationMenu(pytis.presentation.Specification):
     access_rights = pytis.data.AccessRights((None, (['admin_menu'], pytis.data.Permission.ALL)),)
     folding = pytis.form.FoldableForm.Folding(level=2)
     def condition(self):
-        return pytis.data.EQ('language', pytis.data.sval(config.language))
+        return pytis.data.EQ('language', pytis.data.sval(pytis.util.current_language()))
     def on_edit_record(self, row):
         if row['locked'].value():
             pytis.form.run_dialog(pytis.form.Warning, _(u"Tuto položku menu nelze editovat"))
