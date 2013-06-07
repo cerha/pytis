@@ -8,7 +8,7 @@ je `dbdefs'.  Generování SQL ze specifikačních souborů se provádí nástro
 pytis/tools/gsql.py.
 
 Každý databázový objekt je definován jako pythonová třída, která je potomkem
-některé ze tříd SQL* ze souboru pytis/lib/pytis/extensions/gensqlalchemy.py.
+některé ze tříd SQL* ze souboru pytis/lib/pytis/data/gensqlalchemy.py.
 Druh databázového objektu je dán poděděnou SQL* třídou.  K dispozici jsou tyto
 bázové specifikační třídy: SQLSchema, SQLSequence, SQLTable, SQLView, SQLType,
 SQLFunction, SQLPlFunction, SQLPyFunction, SQLTrigger.
@@ -73,7 +73,7 @@ zadanému regulárnímu výrazu a objekty na nich závislé (kromě závislých
 tabulek).
 
 Dokumentace konkrétních databázových objektů a jejich vlastností je v jejich
-dokumentačních řetězcích v souboru pytis/lib/pytis/extensions/gensqlalchemy.py.
+dokumentačních řetězcích v souboru pytis/lib/pytis/data/gensqlalchemy.py.
 
 
 * Poznámky

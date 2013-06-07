@@ -4077,8 +4077,8 @@ database dumps if you want to be sure about your schema.
 from __future__ import unicode_literals
 
 import sqlalchemy
-import pytis.extensions.gensqlalchemy as sql
 import pytis.data
+import pytis.data.gensqlalchemy as sql
 '''
         init_preamble = local_preamble
         local_preamble += 'import dbdefs as db\n\n'

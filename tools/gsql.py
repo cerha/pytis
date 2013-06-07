@@ -22,7 +22,7 @@ import optparse
 import os
 import sys
 
-import pytis.extensions.gensqlalchemy
+import pytis.data.gensqlalchemy
 
 USAGE = """usage: %prog [ OPTIONS ] SPECIFICATION-MODULE"""
 
@@ -85,12 +85,12 @@ def update_config(options):
 def run():
     options, module = parse_options()
     update_config(options)
-    pytis.extensions.gensqlalchemy.gsql_module(module, regexp=options.regexp,
-                                               no_deps=options.no_deps,
-                                               views=options.views, functions=options.functions,
-                                               names_only=options.names_only, pretty=options.pretty,
-                                               schema=options.schema, source=options.source,
-                                               upgrade=options.upgrade)
+    pytis.data.gensqlalchemy.gsql_module(module, regexp=options.regexp,
+                                         no_deps=options.no_deps,
+                                         views=options.views, functions=options.functions,
+                                         names_only=options.names_only, pretty=options.pretty,
+                                         schema=options.schema, source=options.source,
+                                         upgrade=options.upgrade)
 
 if __name__ == '__main__':
     run()

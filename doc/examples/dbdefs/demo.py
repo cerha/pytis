@@ -18,8 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sqlalchemy
-import pytis.extensions.gensqlalchemy as sql
 import pytis.data
+import pytis.data.gensqlalchemy as sql
 
 class Private(sql.SQLSchema):
     name = 'private'

@@ -3,8 +3,8 @@
 from __future__ import unicode_literals
 
 import sqlalchemy
-import pytis.extensions.gensqlalchemy as sql
 import pytis.data
+import pytis.data.gensqlalchemy as sql
 
 from db_pytis_base import *
 

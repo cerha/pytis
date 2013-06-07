@@ -4414,7 +4414,7 @@ class _SpecificationMetaclass(type):
         if db_table is None:
             return
         if ((not isinstance(db_table, type) or
-             not issubclass(db_table, pytis.extensions.gensqlalchemy.SQLObject))):
+             not issubclass(db_table, pytis.data.gensqlalchemy.SQLObject))):
             return
         Specification.add_specification_by_db_spec_name(db_table.__name__, cls)
         
@@ -4699,7 +4699,7 @@ class Specification(object):
             fields = fields()
         if table is not None and not isinstance(table, basestring):
             fields = self._init_from_db_fields(table, fields)
-            if issubclass(table, pytis.extensions.gensqlalchemy.SQLFunctional):
+            if issubclass(table, pytis.data.gensqlalchemy.SQLFunctional):
                 self.arguments = [Field(a.id(), type=a.type()) for a in table.arguments]
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
@@ -4725,7 +4725,7 @@ class Specification(object):
             codebook = None
             ref = c.references()
             if ref is not None:
-                if isinstance(ref, pytis.extensions.gensqlalchemy.Arguments):
+                if isinstance(ref, pytis.data.gensqlalchemy.Arguments):
                     args = ref.args()
                     assert len(args) > 0, ("Invalid reference", c,)
                     ref = args[0]

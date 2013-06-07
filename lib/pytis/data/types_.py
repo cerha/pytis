@@ -708,8 +708,8 @@ class Integer(Number):
 
 class IntegerRange(Range, Integer):
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.INT4RANGE()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.INT4RANGE()
     def base_type(self):
         return pytis.data.Integer()
 
@@ -723,15 +723,15 @@ class LargeInteger(Integer):
         
 class LargeIntegerRange(Range, Integer):
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.INT8RANGE()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.INT8RANGE()
     def base_type(self):
         return pytis.data.LargeInteger()
 
 class Oid(Integer):
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.OID()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.OID()
 
 
 class Serial(Integer):
@@ -747,13 +747,13 @@ class Serial(Integer):
         super(Serial, self).__init__(not_null=not_null, **kwargs)
 
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.SERIAL()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.SERIAL()
 
 class LargeSerial(Integer):
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.BIGSERIAL()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.BIGSERIAL()
 
 
 class Float(Number):
@@ -950,8 +950,8 @@ class Name(String):
     """
     
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.NAME()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.NAME()
 
     
 class Password(String):
@@ -1600,11 +1600,11 @@ class DateTime(_CommonDateTime):
 
 class DateTimeRange(Range, Integer):
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
+        import pytis.data.gensqlalchemy
         if utc:
-            sql_class = pytis.extensions.gensqlalchemy.TSRANGE
+            sql_class = pytis.data.gensqlalchemy.TSRANGE
         else:
-            sql_class = pytis.extensions.gensqlalchemy.TSTZRANGE
+            sql_class = pytis.data.gensqlalchemy.TSTZRANGE
         return sql_class()
     def base_type(self):
         return pytis.data.DateTime(utc=self._utc)
@@ -1682,8 +1682,8 @@ class Date(DateTime):
 
 class DateRange(Range, Integer):
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.DATERANGE()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.DATERANGE()
     def base_type(self):
         return pytis.data.Date()
 
@@ -2317,8 +2317,8 @@ class LTree(Type):
         return WMValue(self, object), None
     
     def sqlalchemy_type(self):
-        import pytis.extensions.gensqlalchemy
-        return pytis.extensions.gensqlalchemy.LTreeType()
+        import pytis.data.gensqlalchemy
+        return pytis.data.gensqlalchemy.LTreeType()
 
 
 class Array(Limited):
