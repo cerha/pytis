@@ -827,7 +827,8 @@ class Float(Number):
                 import locale
                 if isinstance(string_, unicode):
                     encoding = locale.getpreferredencoding()
-                    string_ = string_.encode(encoding)
+                    if encoding:
+                        string_ = string_.encode(encoding)
                 value = locale.atof(string_)
             else:
                 value = float(string_)
