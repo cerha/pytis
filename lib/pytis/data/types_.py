@@ -1462,7 +1462,7 @@ class DateTime(_CommonDateTime):
 
     def _validate(self, string_, format=None, **kwargs):
         if format is True:
-            value, error = self._validate_iso(string_)
+            value, error = self._validate_iso(string_, **kwargs)
         else:
             value, error = super(DateTime, self)._validate(string_, format=format, **kwargs)
         if value is not None:
@@ -1472,15 +1472,22 @@ class DateTime(_CommonDateTime):
                 value, error = None, self._validation_error(self.VM_DT_AGE)
         return value, error
 
-    def _validate_iso(self, string_):
+    def _validate_iso(self, string_, local=None, **kwargs):
         common_string, shift_string = string_[:-6], string_[-6:]
         match = self._ISO_TZ_MATCHER.match(shift_string)
         if match is None:
-            return None, self._validation_error(self.VM_DT_FORMAT)
-        groups = match.groupdict()
-        shift = int(groups['hours']) * 3600 + int(groups['minutes']) * 60
-        if groups['sign'] == '-':
-            shift = -shift
+            common_string = string_
+            if local or (local is None and not self._utc):
+                tzinfo = self.LOCAL_TZINFO
+            else:
+                tzinfo = self.UTC_TZINFO
+            shift = 0
+        else:
+            groups = match.groupdict()
+            shift = int(groups['hours']) * 3600 + int(groups['minutes']) * 60
+            if groups['sign'] == '-':
+                shift = -shift
+            tzinfo = self.UTC_TZINFO
         if common_string.find('.') >= 0:
             format_ = '%Y-%m-%d %H:%M:%S.%f'
         else:
@@ -1491,7 +1498,7 @@ class DateTime(_CommonDateTime):
             return None, self._validation_error(self.VM_DT_FORMAT)
         value = value - datetime.timedelta(seconds=shift)
         value = datetime.datetime(value.year, value.month, value.day, value.hour, value.minute,
-                                  value.second, value.microsecond, self.UTC_TZINFO)
+                                  value.second, value.microsecond, tzinfo)
         return Value(self, value), None
 
     def _export(self, value, local=None, format=None):

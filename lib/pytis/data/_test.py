@@ -311,7 +311,13 @@ class ISODateTime(_TypeCheck):
         self._test_validity(None, '2012-01-23 11:14:39+01:00',
                             datetime.datetime(2012,1,23,10,14,39,0,tzinfo=tzinfo),
                             kwargs=vkwargs, ekwargs=vkwargs)
-        self._test_validity(None, '2999-12-31 0:0:0', None,
+        self._test_validity(None, '2999-12-31 00:00:00.124',
+                            datetime.datetime(2999,12,31,0,0,0,124000,tzinfo=tzinfo),
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '2999-12-31 0:0:0',
+                            datetime.datetime(2999,12,31,0,0,0,0,tzinfo=tzinfo),
+                            kwargs=vkwargs, ekwargs=vkwargs)
+        self._test_validity(None, '2999-12-31 25:0:0', None,
                             kwargs=vkwargs, ekwargs=vkwargs)
     def test_export(self):
         tzinfo = pytis.data.DateTime.UTC_TZINFO

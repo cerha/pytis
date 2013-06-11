@@ -2871,8 +2871,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 value = Value(type_, v)
             elif typid == 2:            # time
                 local = not type_.utc()
-                value, err = type_.validate(dbvalue, strict=False,
-                                            format=type_.SQL_FORMAT, local=local)
+                format_ = type_.SQL_FORMAT
+                if format_ == '%Y-%m-%d %H:%M:%S':
+                    format_ = True
+                value, err = type_.validate(dbvalue, strict=False, format=format_, local=local)
                 assert err is None, (dbvalue, type_, err)
             elif typid == 3:            # time interval
                 value, err = type_.validate(dbvalue, strict=False, format=type_.SQL_FORMAT)
