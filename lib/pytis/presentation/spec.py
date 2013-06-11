@@ -1474,6 +1474,9 @@ class ViewSpec(object):
               initial_folding=None, folding=None, arguments=None, argument_provider=None,
               condition_provider=None,
               query_fields=None, referer=None, spec_name='', public=None):
+        def err(msg, *args):
+            """Return assertion error message."""
+            return spec_name + ": " + msg % args
         assert isinstance(title, basestring)
         if singular is None:
             if isinstance(layout, LayoutSpec):
@@ -1514,15 +1517,13 @@ class ViewSpec(object):
                         recourse_group(item)
                     elif isinstance(item, Button):
                         assert item.action() is None or item.action() in action_names, \
-                            ("Unknown button action in layout of %s: %s" %
-                             (spec_name, item.action(),))
+                            err("Unknown button action in layout: %s", item.action())
                     elif isinstance(item, Text):
                         pass
                     elif isinstance(item, collections.Callable):
                         pass
                     else:
-                        assert item in self._field_dict, \
-                            ("Unknown field in layout of %s: %r" % (spec_name, item,))
+                        assert item in self._field_dict, err("Unknown field in layout: %r" % item,)
                         if self._field_dict[item].width() == 0:
                             log(OPERATIONAL,
                                 "Zero width field in layout:", item)
@@ -1536,8 +1537,8 @@ class ViewSpec(object):
                     if isinstance(c, Computer):
                         for dep in c.depends():
                             assert dep in self._field_dict, \
-                                (("Unknown field '%s' in dependencies for '%s' specification of "
-                                  "'%s'.") % (dep, s, f.id()))
+                                err("Unknown field '%s' in dependencies for '%s' "
+                                    "specification of '%s'.", dep, s, f.id())
             if referer is not None:
                 assert referer in [f.id() for f in fields], referer
         # Initialize `columns' specification parameter
@@ -1548,11 +1549,11 @@ class ViewSpec(object):
             if __debug__:
                 assert is_sequence(columns)
                 for c in columns:
-                    assert isinstance(c, basestring) and c in self._field_dict,\
-                        "Unknown column id in 'columns' specification of %s: %r" % (spec_name, c,)
+                    assert isinstance(c, basestring) and c in self._field_dict, \
+                        err("Unknown column id in columns: %r", c)
                     f = self._field_dict[c]
                     assert not f.disable_column(), \
-                        "Disabled column in columns of %s: %s" % (spec_name, c,)
+                        err("Disabled column in columns: %s", c)
         # Initialize other specification parameters
         if sorting is not None:
             assert is_sequence(sorting)
@@ -1610,7 +1611,7 @@ class ViewSpec(object):
                 assert isinstance(b, Binding), b
                 if b.id() is not None:
                     assert b.id() not in binding_identifiers, \
-                           "Duplicate binding id of %s: %s" % (spec_name, b.id(),)
+                        err("Duplicate binding id: %s", b.id())
                     binding_identifiers.append(b.id())
             for agg in aggregations:
                 assert agg in [getattr(pytis.data.Data, attr)
