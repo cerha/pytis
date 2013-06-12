@@ -1882,6 +1882,10 @@ class SQLTable(_SQLTabular):
         obj.pytis_key = key
         for f in foreign_constraints:
             _forward_foreign_keys.append(_ForwardForeignKey(*(f[:5] + (obj,))))
+        for c in cls.inherits:
+            if c.with_oids != cls.with_oids:
+                raise SQLException("Can't change oids from inherited table",
+                                   (cls.pytis_name(), c.pytis_name(),))
         return obj
 
     def _init(self, *args, **kwargs):
