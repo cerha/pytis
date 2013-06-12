@@ -385,8 +385,11 @@ class FormProfileManager(UserSetttingsManager):
             if sequence is not None:
                 for x in sequence:
                     col = getcol(x)
-                    if view_spec.field(col) is None:
+                    f = view_spec.field(col) 
+                    if f is None:
                         errors.append((param, "Unknown column '%s'" % col))
+                    elif param == 'columns' and f.disable_column():
+                        errors.append((param, "Disabled column '%s'" % col))
         return tuple(errors)
 
     def _in_transaction(self, transaction, operation, *args, **kwargs):
