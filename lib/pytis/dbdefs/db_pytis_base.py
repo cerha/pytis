@@ -5,27 +5,25 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
 
-
-default_access_rights = sql.SQLFlexibleValue('db.app_default_access_rights',
+default_access_rights = sql.SQLFlexibleValue('app_default_access_rights',
                                                environment='GSQL_DEFAULT_ACCESS_RIGHTS',
                                                default=(('all', 'pytis',),))
-pytis_schemas = sql.SQLFlexibleValue('db.app_pytis_schemas',
+pytis_schemas = sql.SQLFlexibleValue('app_pytis_schemas',
                                        environment='GSQL_PYTIS_SCHEMAS',
                                        default=(('public',),))
-cms_rights = sql.SQLFlexibleValue('db.app_cms_rights',
+cms_rights = sql.SQLFlexibleValue('app_cms_rights',
                                     environment='GSQL_CMS_RIGHTS',
                                     default=(('all', 'pytis',),))
-cms_rights_rw = sql.SQLFlexibleValue('db.app_cms_rights_rw',
+cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
                                        environment='GSQL_CMS_RIGHTS_RW',
                                        default=(('all', 'pytis',),))
-cms_users_table = sql.SQLFlexibleValue('db.app_cms_users_table',
+cms_users_table = sql.SQLFlexibleValue('app_cms_users_table',
                                          default='cms_users_table')
-cms_schemas = sql.SQLFlexibleValue('db.app_cms_schemas',
+cms_schemas = sql.SQLFlexibleValue('app_cms_schemas',
                                      environment='GSQL_CMS_SCHEMAS',
                                      default=(('public',),))
-http_attachment_storage_rights = sql.SQLFlexibleValue('db.app_http_attachment_storage_rights',
+http_attachment_storage_rights = sql.SQLFlexibleValue('app_http_attachment_storage_rights',
                                                         environment='GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS',
                                                         default=(('insert', 'pytis'), ('delete', 'pytis'), ('select', 'pytiswebuser'),))
 

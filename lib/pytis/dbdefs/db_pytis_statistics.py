@@ -5,11 +5,11 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import XChanges, default_access_rights, pytis_schemas
 
 class FUserCfg(sql.SQLRaw):
     name = 'f_user_cfg'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """
@@ -49,7 +49,7 @@ class EPytisFormLog(sql.SQLTable):
     t_show is the time when the form got actually ready for operation after its start.
     """
     name = 'e_pytis_form_log'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('form', pytis.data.String(not_null=True), index=True),
@@ -59,13 +59,13 @@ class EPytisFormLog(sql.SQLTable):
               sql.Column('t_start', pytis.data.DateTime(not_null=True), index=True),
               sql.Column('t_show', pytis.data.DateTime(not_null=True)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class PytisLogForm(sql.SQLFunction):
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     name = 'pytis_log_form'
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),
@@ -76,7 +76,7 @@ class PytisLogForm(sql.SQLFunction):
     multirow = False
     stability = 'VOLATILE'
     depends_on = (EPytisFormLog,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
     def body(self):
         return """
@@ -85,7 +85,7 @@ insert into e_pytis_form_log (form, class, info, login, t_start, t_show) values(
 
 class EvPytisFormSummary(sql.SQLView):
     name = 'ev_pytis_form_summary'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -99,11 +99,11 @@ class EvPytisFormSummary(sql.SQLView):
             ).group_by('form', 'class', 'info')
 
     depends_on = (EPytisFormLog,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisFormShortSummary(sql.SQLView):
     name = 'ev_pytis_form_short_summary'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -117,11 +117,11 @@ class EvPytisFormShortSummary(sql.SQLView):
             ).group_by('form', 'class')
 
     depends_on = (EPytisFormLog,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisFormUsers(sql.SQLView):
     name = 'ev_pytis_form_users'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -133,11 +133,11 @@ class EvPytisFormUsers(sql.SQLView):
             ).group_by('form', 'class', 'info', 'login')
 
     depends_on = (EPytisFormLog,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisFormUsersNoinfo(sql.SQLView):
     name = 'ev_pytis_form_users_noinfo'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -151,11 +151,11 @@ class EvPytisFormUsersNoinfo(sql.SQLView):
             ).group_by('form', 'class', 'login')
 
     depends_on = (EPytisFormLog, FUserCfg,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisFormUserList(sql.SQLView):
     name = 'ev_pytis_form_user_list'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         log = sql.t.EPytisFormLog.alias('log')
@@ -165,5 +165,5 @@ class EvPytisFormUserList(sql.SQLView):
             ).group_by('login')
 
     depends_on = (EPytisFormLog,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 

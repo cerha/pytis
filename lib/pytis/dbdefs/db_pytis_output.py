@@ -5,9 +5,9 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import Base_LogSQLTable, XChanges, default_access_rights
 
-class EPytisOutputTemplates(db.Base_LogSQLTable):
+class EPytisOutputTemplates(Base_LogSQLTable):
     """Storage of print output templates handled by a DatabaseResolver."""
     name = 'e_pytis_output_templates'
     fields = (
@@ -22,10 +22,10 @@ class EPytisOutputTemplates(db.Base_LogSQLTable):
               sql.Column('style', pytis.data.String(not_null=False)),
               sql.Column('username', pytis.data.String(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisGlobalOutputTemplates(sql.SQLView):
     name = 'ev_pytis_global_output_templates'
@@ -42,7 +42,7 @@ class EvPytisGlobalOutputTemplates(sql.SQLView):
     update_order = (EPytisOutputTemplates,)
     delete_order = (EPytisOutputTemplates,)
     depends_on = (EPytisOutputTemplates,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisUserOutputTemplates(sql.SQLView):
     name = 'ev_pytis_user_output_templates'
@@ -66,5 +66,5 @@ class EvPytisUserOutputTemplates(sql.SQLView):
     def on_delete(self):
         return ("delete from e_pytis_output_templates where id=old.id and username=current_user",)
     depends_on = (EPytisOutputTemplates,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 

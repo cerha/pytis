@@ -5,11 +5,11 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import CmsRoles, CmsSession, CmsSessionLogData, CmsUserRoleAssignment, CmsUsers, cms_rights, cms_schemas
 
 class CmsUserRoles(sql.SQLView):
     name = 'cms_user_roles'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     @classmethod
     def query(cls):
         a_ = sql.t.CmsUserRoleAssignment.alias('a')
@@ -29,13 +29,13 @@ class CmsUserRoles(sql.SQLView):
         return ("UPDATE cms_user_role_assignment SET uid = new.uid, role_id = new.role_id WHERE user_role_id=old.user_role_id",)
     def on_delete(self):
         return ("DELETE FROM cms_user_role_assignment WHERE user_role_id = old.user_role_id",)
-    depends_on = (db.CmsUserRoleAssignment, db.CmsUsers, db.CmsRoles,)
-    access_rights = db.cms_rights.value(globals())
+    depends_on = (CmsUserRoleAssignment, CmsUsers, CmsRoles,)
+    access_rights = cms_rights.value(globals())
 
 class CmsSessionLog(sql.SQLView):
     """Log of web user logins (user visible information)."""
     name = 'cms_session_log'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     @classmethod
     def query(cls):
         l = sql.t.CmsSessionLogData.alias('l')
@@ -57,9 +57,9 @@ class CmsSessionLog(sql.SQLView):
                RETURNING log_id, session_id, uid, login, success, 
                          start_time, ip_address, user_agent, referer,
                          NULL::text, NULL::interval, NULL::boolean""",)
-    update_order = (db.CmsSessionLogData,)
+    update_order = (CmsSessionLogData,)
     no_update_columns = ('duration', 'active',)
-    delete_order = (db.CmsSessionLogData,)
-    depends_on = (db.CmsSession, db.CmsSessionLogData, db.CmsUsers,)
-    access_rights = db.cms_rights.value(globals())
+    delete_order = (CmsSessionLogData,)
+    depends_on = (CmsSession, CmsSessionLogData, CmsUsers,)
+    access_rights = cms_rights.value(globals())
 

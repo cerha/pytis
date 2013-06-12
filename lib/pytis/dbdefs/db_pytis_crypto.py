@@ -5,21 +5,21 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, PytisBasicCryptoFunctions, XChanges, default_access_rights
 
-class CPytisCryptoNames(db.Base_LogSQLTable):
+class CPytisCryptoNames(Base_LogSQLTable):
     """Codebook of encryption areas defined in the application."""
     name = 'c_pytis_crypto_names'
     fields = (
               sql.PrimaryColumn('name', pytis.data.String(not_null=False)),
               sql.Column('description', pytis.data.String(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
-class EPytisCryptoKeys(db.Base_LogSQLTable):
+class EPytisCryptoKeys(Base_LogSQLTable):
     """Table of encryption keys of users for defined encryption areas."""
     name = 'e_pytis_crypto_keys'
     fields = (
@@ -29,11 +29,11 @@ class EPytisCryptoKeys(db.Base_LogSQLTable):
               sql.Column('key', pytis.data.Binary(not_null=True)),
               sql.Column('fresh', pytis.data.Boolean(not_null=True), doc="Flag indicating the key is encrypted by a non-login password. ", default=False),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('name', 'username',),)
     depends_on = (CPytisCryptoNames,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisUserCryptoKeys(sql.SQLView):
     name = 'ev_pytis_user_crypto_keys'
@@ -47,7 +47,7 @@ class EvPytisUserCryptoKeys(sql.SQLView):
             )
 
     depends_on = (EPytisCryptoKeys,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class PytisCryptoKeyFunctions(sql.SQLRaw):
     name = 'pytis_crypto_key_functions'
@@ -142,7 +142,7 @@ begin
 end;
 $$ language plpgsql;
 """
-    depends_on = (EPytisCryptoKeys, db.PytisBasicCryptoFunctions,)
+    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions,)
 
 class PytisCryptoTUserContact(sql.SQLType):
     name = 'pytis_crypto_t_user_contact'
@@ -178,7 +178,7 @@ class PytisCryptoTKeyPair(sql.SQLType):
     depends_on = ()
     access_rights = ()
 
-class PytisCryptoGenerateKey(db.Base_PyFunction):
+class PytisCryptoGenerateKey(Base_PyFunction):
     name = 'pytis_crypto_generate_key'
     arguments = (sql.Column('', pytis.data.Integer()),)
     result_type = PytisCryptoTKeyPair
@@ -198,7 +198,7 @@ class PytisCryptoGenerateKey(db.Base_PyFunction):
 
 
 
-class PytisCryptoDecryptUsingKey(db.Base_PyFunction):
+class PytisCryptoDecryptUsingKey(Base_PyFunction):
     name = 'pytis_crypto_decrypt_using_key'
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
@@ -217,7 +217,7 @@ class PytisCryptoDecryptUsingKey(db.Base_PyFunction):
 
 
 
-class PytisCryptoEncryptUsingKey(db.Base_PyFunction):
+class PytisCryptoEncryptUsingKey(Base_PyFunction):
     name = 'pytis_crypto_encrypt_using_key'
     arguments = (sql.Column('', pytis.data.String()),
                  sql.Column('', pytis.data.String()),)
@@ -253,7 +253,7 @@ exception
 end;
 $$ language plpgsql stable security definer;
 """
-    depends_on = (EPytisCryptoKeys, db.PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
+    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
 
 class PytisCryptoDecryptDbPassword(sql.SQLRaw):
     name = 'pytis_crypto_decrypt_db_password'
@@ -271,7 +271,7 @@ exception
 end;
 $$ language plpgsql stable;
 """
-    depends_on = (EPytisCryptoKeys, db.PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
+    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,)
 
 class PytisCryptoCreateDbKey(sql.SQLRaw):
     name = 'pytis_crypto_create_db_key'
@@ -283,7 +283,7 @@ create or replace function pytis_crypto_create_db_key (key_name_ text, bits int)
   insert into pytis_crypto_db_keys (select $1, * from pytis_crypto_generate_key($2));
 $$ language sql;
 """
-    depends_on = (EPytisCryptoKeys, db.PytisBasicCryptoFunctions, PytisCryptoDbKeys, PytisCryptoGenerateKey,)
+    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys, PytisCryptoGenerateKey,)
 
 class PytisCryptoUnlockPasswords(sql.SQLRaw):
     name = 'pytis_crypto_unlock_passwords'
@@ -309,7 +309,7 @@ begin
 end;
 $$ language plpgsql;
 """
-    depends_on = (EPytisCryptoKeys, db.PytisBasicCryptoFunctions, PytisCryptoDbKeys, PytisCryptoDecryptDbPassword,)
+    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys, PytisCryptoDecryptDbPassword,)
 
 class PytisCryptoUnlockCurrentUserPasswords(sql.SQLRaw):
     name = 'pytis_crypto_unlock_current_user_passwords'
@@ -322,5 +322,5 @@ $$ language sql;
 
 -- create function pytis_crypto_user_contact (username text) returns pytis_crypto_t_user_contact as ...
 """
-    depends_on = (EPytisCryptoKeys, db.PytisBasicCryptoFunctions, PytisCryptoDbKeys, PytisCryptoUnlockPasswords,)
+    depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys, PytisCryptoUnlockPasswords,)
 

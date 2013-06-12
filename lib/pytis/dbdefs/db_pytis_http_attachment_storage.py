@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import http_attachment_storage_rights
 
 class EPytisHttpAttachmentStorageKeys(sql.SQLTable):
     """Store HttpAttachmentStorage access keys."""
@@ -21,5 +21,5 @@ class EPytisHttpAttachmentStorageKeys(sql.SQLTable):
     with_oids = True
     unique = (('username', 'uri',),)
     depends_on = ()
-    access_rights = db.http_attachment_storage_rights.value(globals())
+    access_rights = http_attachment_storage_rights.value(globals())
 

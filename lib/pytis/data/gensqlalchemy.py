@@ -778,6 +778,8 @@ class SQLFlexibleValue(object):
     value can be retrieved using 'value()' method.
 
     """
+    _values = {}
+    
     def __init__(self, name, default=None, environment=None):
         """
         Arguments:
@@ -825,6 +827,8 @@ class SQLFlexibleValue(object):
         if name is None:
             name = self._name
         value = globals() if globals_ is None else globals_
+        value = copy.copy(value)
+        value.update(self._values)
         for name_part in name.split('.'):
             if isinstance(value, dict):
                 value = value.get(name_part)
@@ -834,6 +838,20 @@ class SQLFlexibleValue(object):
                 value = self._default
                 break
         return value
+
+    @classmethod
+    def set_value(class_, name, value):
+        """Set flexible value 'name' to 'value'.
+
+        The set value takes priority over other value sources.
+
+        Arguments:
+
+          name -- name of the flexible value; string
+          value -- value bound to the name
+        
+        """
+        class_._values[name] = value
 
 _default_schemas = SQLFlexibleValue('default_schemas', environment='GSQL_DEFAULT_SCHEMAS',
                                     default=(('public',),))
@@ -3465,7 +3483,13 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
 
     """
     def loader(module_name=module_name):
-        imp.load_module(module_name, *imp.find_module(module_name))
+        components = module_name.split('.')
+        if len(components) > 1:
+            local_path = os.path.join(*components[:-1])
+            path = [os.path.join(p, local_path) for p in sys.path]
+        else:
+            path = sys.path
+        imp.load_module(module_name, *imp.find_module(components[-1], path))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
                   config_file, upgrade)
 

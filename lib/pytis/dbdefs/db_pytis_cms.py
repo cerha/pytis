@@ -5,36 +5,36 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import cms_rights, cms_schemas
 
 class CmsLanguages(sql.SQLTable):
     """Codebook of languages available in the CMS."""
     name = 'cms_languages'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('lang_id', pytis.data.Serial()),
               sql.Column('lang', pytis.data.String(minlen=2, maxlen=2, not_null=True), unique=True),
              )
     with_oids = True
     depends_on = ()
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsModules(sql.SQLTable):
     """Codebook of extension modules available in the CMS."""
     name = 'cms_modules'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('mod_id', pytis.data.Serial()),
               sql.Column('modname', pytis.data.String(maxlen=64, not_null=True), unique=True),
              )
     with_oids = True
     depends_on = ()
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsMenuStructure(sql.SQLTable):
     """Language independent menu structure."""
     name = 'cms_menu_structure'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('menu_item_id', pytis.data.Serial()),
               sql.Column('identifier', pytis.data.String(maxlen=32, not_null=True), unique=True),
@@ -45,11 +45,11 @@ class CmsMenuStructure(sql.SQLTable):
              )
     with_oids = True
     depends_on = (CmsModules,)
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsMenuStructureUniqueTreeOrder(sql.SQLRaw):
     name = 'cms_menu_structure_unique_tree_order'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     @classmethod
     def sql(class_):
         return """CREATE UNIQUE INDEX cms_menu_structure_unique_tree_order ON cms_menu_structure (ord, coalesce(parent, 0));"""
@@ -57,7 +57,7 @@ class CmsMenuStructureUniqueTreeOrder(sql.SQLRaw):
 
 class CmsMenuStructureTreeOrder(sql.SQLFunction):
     """Generate a sortable string representing the hierarchical position of given menu item."""
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     name = 'cms_menu_structure_tree_order'
     arguments = (sql.Column('', pytis.data.Integer()),)
     result_type = pytis.data.LTree()
@@ -76,7 +76,7 @@ class CmsMenuStructureTreeOrder(sql.SQLFunction):
 class CmsMenuTexts(sql.SQLTable):
     """Language dependent texts and properties for menu items."""
     name = 'cms_menu_texts'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.Column('menu_item_id', pytis.data.Integer(not_null=True), references=sql.gA('cms_menu_structure', ondelete='CASCADE')),
               sql.Column('lang', pytis.data.String(minlen=2, maxlen=2, not_null=True), references=sql.gA('cms_languages(lang)', ondelete='CASCADE')),
@@ -88,12 +88,12 @@ class CmsMenuTexts(sql.SQLTable):
              )
     with_oids = True
     depends_on = (CmsMenuStructure, CmsLanguages,)
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsMenu(sql.SQLView):
     """Complete menu structure with texts for each language defined in cms_languages."""
     name = 'cms_menu'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     @classmethod
     def query(cls):
         s = sql.t.CmsMenuStructure.alias('s')
@@ -154,12 +154,12 @@ class CmsMenu(sql.SQLView):
     def on_delete(self):
         return ("(DELETE FROM cms_menu_structure WHERE menu_item_id = old.menu_item_id;)",)
     depends_on = (CmsMenuStructure, CmsLanguages, CmsMenuTexts, CmsModules,)
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsRoles(sql.SQLTable):
     """CMS roles."""
     name = 'cms_roles'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('role_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True)),
@@ -168,12 +168,12 @@ class CmsRoles(sql.SQLTable):
              )
     with_oids = True
     depends_on = ()
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsActions(sql.SQLTable):
     """Enumeration of valid actions (including both module independent actions and per module actions).  Module independent actions have NULL in the mod_id column."""
     name = 'cms_actions'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('action_id', pytis.data.Serial()),
               sql.Column('mod_id', pytis.data.Integer(not_null=False), references=sql.gA('cms_modules', ondelete='CASCADE')),
@@ -183,12 +183,12 @@ class CmsActions(sql.SQLTable):
     with_oids = True
     unique = (('mod_id', 'name',),)
     depends_on = (CmsModules,)
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsRightsAssignment(sql.SQLTable):
     """Underlying binding table between menu items, roles and module actions."""
     name = 'cms_rights_assignment'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('rights_assignment_id', pytis.data.Serial()),
               sql.Column('menu_item_id', pytis.data.Integer(not_null=True), references=sql.gA('cms_menu_structure', ondelete='CASCADE')),
@@ -198,12 +198,12 @@ class CmsRightsAssignment(sql.SQLTable):
     with_oids = True
     unique = (('menu_item_id', 'role_id', 'action_id',),)
     depends_on = (CmsMenuStructure, CmsRoles, CmsActions,)
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsRights(sql.SQLView):
     """User editable access rights assignment."""
     name = 'cms_rights'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     @classmethod
     def query(cls):
         x = sql.t.CmsRightsAssignment.alias('x')
@@ -225,12 +225,12 @@ class CmsRights(sql.SQLView):
     update_order = (CmsRightsAssignment,)
     delete_order = (CmsRightsAssignment,)
     depends_on = (CmsRightsAssignment, CmsMenuStructure, CmsRoles, CmsActions,)
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 
 class CmsThemes(sql.SQLTable):
     """Definition of available color themes."""
     name = 'cms_themes'
-    schemas = db.cms_schemas.value(globals())
+    schemas = cms_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('theme_id', pytis.data.Serial()),
               sql.Column('name', pytis.data.String(not_null=True), unique=True),
@@ -265,5 +265,5 @@ class CmsThemes(sql.SQLTable):
              )
     with_oids = True
     depends_on = ()
-    access_rights = db.cms_rights.value(globals())
+    access_rights = cms_rights.value(globals())
 

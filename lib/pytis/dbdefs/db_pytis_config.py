@@ -5,28 +5,28 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import XChanges, default_access_rights, pytis_schemas
 
 class EPytisConfig(sql.SQLTable):
     """Pytis application configuration storage."""
     name = 'e_pytis_config'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
               sql.Column('option', pytis.data.String(not_null=True)),
               sql.Column('value', pytis.data.String(not_null=True)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('username', 'option',),)
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EPytisFormSettings(sql.SQLTable):
     """Storage of pytis profile independent form settings."""
     name = 'e_pytis_form_settings'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
@@ -35,16 +35,16 @@ class EPytisFormSettings(sql.SQLTable):
               sql.Column('pickle', pytis.data.String(not_null=True)),
               sql.Column('dump', pytis.data.String(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('username', 'spec_name', 'form_name',),)
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EPytisFormProfileBase(sql.SQLTable):
     """Pytis form configuration storage."""
     name = 'e_pytis_form_profile_base'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
@@ -55,16 +55,16 @@ class EPytisFormProfileBase(sql.SQLTable):
               sql.Column('dump', pytis.data.String(not_null=False)),
               sql.Column('errors', pytis.data.String(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('username', 'spec_name', 'profile_id',),)
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EPytisFormProfileParams(sql.SQLTable):
     """Pytis form profile form type specific parameters."""
     name = 'e_pytis_form_profile_params'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
@@ -75,16 +75,16 @@ class EPytisFormProfileParams(sql.SQLTable):
               sql.Column('dump', pytis.data.String(not_null=False)),
               sql.Column('errors', pytis.data.String(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('username', 'spec_name', 'form_name', 'profile_id',),)
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisFormProfiles(sql.SQLView):
     """Pytis profiles."""
     name = 'ev_pytis_form_profiles'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     @classmethod
     def query(cls):
         profile = sql.t.EPytisFormProfileBase.alias('profile')
@@ -104,11 +104,11 @@ class EvPytisFormProfiles(sql.SQLView):
     def on_delete(self):
         return ("(delete from e_pytis_form_profile_base where id = split_part(old.id, '.', 1)::int;delete from e_pytis_form_profile_params where id = split_part(old.id, '.', 2)::int;)",)
     depends_on = (EPytisFormProfileBase, EPytisFormProfileParams,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class CopyUserProfile(sql.SQLFunction):
     """Zkopíruje profil z ev_pytis_form_profiles jinému uživateli."""
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     name = 'copy_user_profile'
     arguments = (sql.Column('profile_id', pytis.data.String()),
                  sql.Column('username', pytis.data.String()),)
@@ -142,7 +142,7 @@ select profiles.id || '.' || params.id from profiles, params
 class EPytisAggregatedViews(sql.SQLTable):
     """Pytis aggregated views storage."""
     name = 'e_pytis_aggregated_views'
-    schemas = db.pytis_schemas.value(globals())
+    schemas = pytis_schemas.value(globals())
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('username', pytis.data.Name(not_null=True)),
@@ -151,9 +151,9 @@ class EPytisAggregatedViews(sql.SQLTable):
               sql.Column('title', pytis.data.String(not_null=True)),
               sql.Column('pickle', pytis.data.String(not_null=True)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('username', 'spec_name', 'aggregated_view_id',),)
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 

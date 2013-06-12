@@ -5,9 +5,9 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
+from pytis.dbdefs import Base_LogSQLTable, EPytisMenu, PytisViewUserMenu, XChanges, default_access_rights
 
-class EPytisHelpPages(db.Base_LogSQLTable):
+class EPytisHelpPages(Base_LogSQLTable):
     """Structure of static help pages."""
     name = 'e_pytis_help_pages'
     fields = (
@@ -19,10 +19,10 @@ class EPytisHelpPages(db.Base_LogSQLTable):
               sql.Column('description', pytis.data.String(not_null=False)),
               sql.Column('content', pytis.data.String(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EPytisHelpPagesUniquePosition(sql.SQLRaw):
     name = 'e_pytis_help_pages_unique_position'
@@ -48,7 +48,7 @@ class FPytisHelpPagePosition(sql.SQLFunction):
                   end || to_char(coalesce(ord, 999999), 'FM000000')::text as result
            from e_pytis_help_pages where page_id=$1"""
 
-class EPytisHelpSpec(db.Base_LogSQLTable):
+class EPytisHelpSpec(Base_LogSQLTable):
     """Help texts for specifications."""
     name = 'e_pytis_help_spec'
     fields = (
@@ -58,12 +58,12 @@ class EPytisHelpSpec(db.Base_LogSQLTable):
               sql.Column('changed', pytis.data.Boolean(not_null=True), doc="True when the content was edited by hand.", default=False),
               sql.Column('removed', pytis.data.Boolean(not_null=True), doc="False when the specification still exists.", default=False),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
-class EPytisHelpSpecItems(db.Base_LogSQLTable):
+class EPytisHelpSpecItems(Base_LogSQLTable):
     """Help texts for specification items, such as fields, bindings, actions."""
     name = 'e_pytis_help_spec_items'
     fields = (
@@ -75,13 +75,13 @@ class EPytisHelpSpecItems(db.Base_LogSQLTable):
               sql.Column('changed', pytis.data.Boolean(not_null=True), doc="True when the content was edited by hand.", default=False),
               sql.Column('removed', pytis.data.Boolean(not_null=True), doc="False when the item still exists in specification.", default=False),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('spec_name', 'kind', 'identifier',),)
     depends_on = ()
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
-class EPytisHelpMenu(db.Base_LogSQLTable):
+class EPytisHelpMenu(Base_LogSQLTable):
     """Texts for help pages."""
     name = 'e_pytis_help_menu'
     fields = (
@@ -90,10 +90,10 @@ class EPytisHelpMenu(db.Base_LogSQLTable):
               sql.Column('changed', pytis.data.Boolean(not_null=True), doc="True when the content was edited by hand.", default=False),
               sql.Column('removed', pytis.data.Boolean(not_null=True), doc="False when the item still exists in menu.", default=False),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
-    depends_on = (db.EPytisMenu,)
-    access_rights = db.default_access_rights.value(globals())
+    depends_on = (EPytisMenu,)
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisHelp(sql.SQLView):
     """Complete help structure including texts and DMP menu structure."""
@@ -206,7 +206,7 @@ class EvPytisHelp(sql.SQLView):
     def on_delete(self):
         return ("delete from e_pytis_help_pages where page_id = old.page_id;",)
     depends_on = (EPytisHelpPages, EPytisHelpMenu,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
 class EvPytisUserHelp(sql.SQLView):
     """Help menu structure limited to the current user according to DMP rights."""
@@ -228,10 +228,10 @@ class EvPytisUserHelp(sql.SQLView):
                 whereclause='h.menuid is null'
                 )
         return sqlalchemy.union(select_1(), select_2())
-    depends_on = (EvPytisHelp, db.PytisViewUserMenu,)
-    access_rights = db.default_access_rights.value(globals())
+    depends_on = (EvPytisHelp, PytisViewUserMenu,)
+    access_rights = default_access_rights.value(globals())
 
-class EPytisHelpSpecAttachments(db.Base_LogSQLTable):
+class EPytisHelpSpecAttachments(Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""
     name = 'e_pytis_help_spec_attachments'
     fields = (
@@ -249,13 +249,13 @@ class EPytisHelpSpecAttachments(db.Base_LogSQLTable):
               sql.Column('resized', pytis.data.Binary(not_null=False)),
               sql.Column('thumbnail', pytis.data.Binary(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('spec_name', 'file_name',),)
     depends_on = (EPytisHelpSpec,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 
-class EPytisHelpPagesAttachments(db.Base_LogSQLTable):
+class EPytisHelpPagesAttachments(Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""
     name = 'e_pytis_help_pages_attachments'
     fields = (
@@ -273,9 +273,9 @@ class EPytisHelpPagesAttachments(db.Base_LogSQLTable):
               sql.Column('resized', pytis.data.Binary(not_null=False)),
               sql.Column('thumbnail', pytis.data.Binary(not_null=False)),
              )
-    inherits = (db.XChanges,)
+    inherits = (XChanges,)
     with_oids = True
     unique = (('page_id', 'file_name',),)
     depends_on = (EPytisHelpPages,)
-    access_rights = db.default_access_rights.value(globals())
+    access_rights = default_access_rights.value(globals())
 

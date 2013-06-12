@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-import dbdefs as db
 
 class PytisBasicCryptoFunctions(sql.SQLRaw):
     name = 'pytis_basic_crypto_functions'
