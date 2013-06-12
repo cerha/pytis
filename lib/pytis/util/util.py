@@ -1898,6 +1898,55 @@ def environment_language(default=None):
         lang = default
     return lang
 
+def translation_status():
+    """Return the current status of translations in all available translation files.
+
+    Returns a list of dictionaries, where each dictionary contains the
+    following information:
+
+       filename -- translation file name as a string (such as 'pytis-wx.en.po'),
+       percent_translated -- percent of translated entries as integer
+       count_untranslated -- number of untranslated entries as integer
+       count_fuzzy -- number of fuzzy entriues as integer
+
+    The list contains an entry for every PO file found within the current
+    translation path (see 'translation_path()').  Note, that the actual
+    translations visible within the application may not exactly correspond to
+    returned information, because they are retrieved from MO files (compiled PO
+    files) but the returned information is read from the PO files directly.
+
+    """
+    import polib, os, glob
+    info = []
+    for directory in translation_path():
+        for path in glob.glob(os.path.join(directory, '*.*.po')):
+            po = polib.pofile(path)
+            info.append(dict(filename=os.path.split(path)[1],
+                             percent_translated=po.percent_translated(),
+                             count_untranslated=len(po.untranslated_entries()),
+                             count_fuzzy=len(po.fuzzy_entries()),
+                             ))
+    return info
+
+def translation_path():
+    """Return the current translation path as a list of strings.
+
+    Individual strings are names of directories containing translations.  The
+    list is currently created from the environment variable
+    PYTIS_TRANSLATION_PATH (which contains the directory names separated by
+    colons).  When PYTIS_TRANSLATION_PATH is not set, the path contains the
+    default path relative to the source files as they are organized within the
+    source directory.
+
+    """
+    path_env = os.getenv('PYTIS_TRANSLATION_PATH')
+    if path_env:
+        path = path_env.split(':')
+    else:
+        base_dir = os.path.normpath(os.path.dirname(__file__) + '/../../..')
+        path = (os.path.join(base_dir, 'translations'),)
+    return path
+
 def translations(domain, origin='en'):
     """Create 'lcg.TranslatedTextFactory' for the current locale.
 
@@ -1915,12 +1964,7 @@ def translations(domain, origin='en'):
     """
     import lcg
     lang = environment_language(default=origin)
-    path_env = os.getenv('PYTIS_TRANSLATION_PATH')
-    if path_env:
-        path = path_env.split(':')
-    else:
-        base_dir = os.path.normpath(os.path.dirname(__file__) + '/../../..')
-        path = (os.path.join(base_dir, 'translations'),)
+    path = translation_path()
     return lcg.TranslatedTextFactory(domain, origin=origin, lang=lang, translation_path=path)
 
 def translate(text):
