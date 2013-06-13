@@ -309,7 +309,7 @@ class VInserts(sql.SQLView):
     name = 'v_inserts'
     @classmethod
     def query(cls):
-        _inserts = sql.gO('_inserts')
+        _inserts = sql.t.XInserts
         return sqlalchemy.select(
             [sql.gL("vytvoreno::date").label('datum'),
              sql.gL("vytvoreno::time").label('cas'),
@@ -330,7 +330,7 @@ class VInsertsUser(sql.SQLView):
     name = 'v_inserts_user'
     @classmethod
     def query(cls):
-        _inserts = sql.gO('_inserts')
+        _inserts = sql.t.XInserts
         return sqlalchemy.select(
             [sql.gL("vytvoreno::date").label('datum'),
              sql.gL("vytvoreno::time").label('cas'),
@@ -351,7 +351,7 @@ class VUpdates(sql.SQLView):
     name = 'v_updates'
     @classmethod
     def query(cls):
-        _updates = sql.gO('_updates')
+        _updates = sql.t.XUpdates
         return sqlalchemy.select(
             [sql.gL("zmeneno::date").label('datum'),
              sql.gL("zmeneno::time").label('cas'),
@@ -373,7 +373,7 @@ class VUpdatesUser(sql.SQLView):
     name = 'v_updates_user'
     @classmethod
     def query(cls):
-        _updates = sql.gO('_updates')
+        _updates = sql.t.XUpdates
         return sqlalchemy.select(
             [sql.gL("zmeneno::date").label('datum'),
              sql.gL("zmeneno::time").label('cas'),
@@ -395,7 +395,7 @@ class VDeletes(sql.SQLView):
     name = 'v_deletes'
     @classmethod
     def query(cls):
-        _deletes = sql.gO('_deletes')
+        _deletes = sql.t.XDeletes
         return sqlalchemy.select(
             [sql.gL("smazano::date").label('datum'),
              sql.gL("smazano::time").label('cas'),
@@ -416,7 +416,7 @@ class VDeletesUser(sql.SQLView):
     name = 'v_deletes_user'
     @classmethod
     def query(cls):
-        _deletes = sql.gO('_deletes')
+        _deletes = sql.t.XDeletes
         return sqlalchemy.select(
             [sql.gL("smazano::date").label('datum'),
              sql.gL("smazano::time").label('cas'),
@@ -566,6 +566,7 @@ class UpdateStatistic(Base_PyFunction):
 class TChanges(sql.SQLTable):
     """Log of data changes."""
     name = 't_changes'
+    schemas = (('public',),)
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True), index=True),
@@ -583,8 +584,9 @@ class TChanges(sql.SQLTable):
 class TChangesDetail(sql.SQLTable):
     """Detail information about database changes."""
     name = 't_changes_detail'
+    schemas = (('public',),)
     fields = (
-              sql.Column('id', pytis.data.Integer(not_null=True), references=sql.gA('t_changes', onupdate='CASCADE', ondelete='CASCADE'), index=True),
+              sql.Column('id', pytis.data.Integer(not_null=True), references=sql.a(sql.r.TChanges.id, onupdate='CASCADE', ondelete='CASCADE'), index=True),
               sql.Column('detail', pytis.data.String(not_null=True)),
              )
     with_oids = True
@@ -593,6 +595,7 @@ class TChangesDetail(sql.SQLTable):
 
 class VChanges(sql.SQLView):
     name = 'v_changes'
+    schemas = (('public',),)
     @classmethod
     def query(cls):
         changes = sql.t.TChanges.alias('changes')
@@ -600,7 +603,7 @@ class VChanges(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(changes) +
             cls._exclude(detail, 'id'),
-            from_obj=[changes.outerjoin(detail, sql.gR('changes.id=detail.id'))]
+            from_obj=[changes.outerjoin(detail, changes.c.id == detail.c.id)]
             )
 
     insert_order = ()
@@ -844,6 +847,3 @@ class EasterDate(Base_PyFunction):
         d = l + 28 - 31 * int(m / 4)
         datum = """%s-%s-%s""" % (rok, m, d)
         return datum
-
-
-

@@ -12,7 +12,7 @@ class EPytisHelpPages(Base_LogSQLTable):
     name = 'e_pytis_help_pages'
     fields = (
               sql.PrimaryColumn('page_id', pytis.data.Serial()),
-              sql.Column('parent', pytis.data.Integer(not_null=False), references=sql.gA('e_pytis_help_pages')),
+              sql.Column('parent', pytis.data.Integer(not_null=False), references=sql.r.EPytisHelpPages.page_id),
               sql.Column('ord', pytis.data.Integer(not_null=True)),
               sql.Column('position', pytis.data.LTree(not_null=True), unique=True),
               sql.Column('title', pytis.data.String(not_null=True)),
@@ -68,7 +68,7 @@ class EPytisHelpSpecItems(Base_LogSQLTable):
     name = 'e_pytis_help_spec_items'
     fields = (
               sql.PrimaryColumn('item_id', pytis.data.Serial()),
-              sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.gA('e_pytis_help_spec', onupdate='CASCADE', ondelete='CASCADE')),
+              sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.a(sql.r.EPytisHelpSpec.spec_name, onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('kind', pytis.data.String(not_null=True), check="kind in ('field', 'profile', 'binding', 'action', 'proc')"),
               sql.Column('identifier', pytis.data.String(not_null=True)),
               sql.Column('content', pytis.data.String(not_null=False)),
@@ -85,7 +85,7 @@ class EPytisHelpMenu(Base_LogSQLTable):
     """Texts for help pages."""
     name = 'e_pytis_help_menu'
     fields = (
-              sql.PrimaryColumn('fullname', pytis.data.String(not_null=False), references=sql.gA('c_pytis_menu_actions', onupdate='CASCADE', ondelete='CASCADE')),
+              sql.PrimaryColumn('fullname', pytis.data.String(not_null=False), references=sql.a(sql.r.CPytisMenuActions.fullname, onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('content', pytis.data.String(not_null=False)),
               sql.Column('changed', pytis.data.Boolean(not_null=True), doc="True when the content was edited by hand.", default=False),
               sql.Column('removed', pytis.data.Boolean(not_null=True), doc="False when the item still exists in menu.", default=False),
@@ -123,7 +123,7 @@ class EvPytisHelp(sql.SQLView):
                 sql.gL("(select count(*)-1 from e_pytis_menu where position <@ m.position)").label('position_nsub'),
                 sql.gL("coalesce(mh.changed, false) or coalesce(sh.changed, false)").label('changed'),
                 sql.gL("coalesce(mh.removed, false) or coalesce(sh.removed, false)").label('removed')], ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help', 'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord', 'content', 'position', 'position_nsub', 'changed', 'removed']),
-                from_obj=[m.join(a_, sql.gR('a.fullname = m.fullname')).outerjoin(mh, sql.gR('mh.fullname = a.fullname')).outerjoin(sh, sql.gR('sh.spec_name = a.spec_name'))],
+                from_obj=[m.join(a_, a_.c.fullname == m.c.fullname).outerjoin(mh, mh.c.fullname == a_.c.fullname).outerjoin(sh, sh.c.spec_name == a_.c.spec_name)],
                 whereclause='nlevel(position) >= 2'
                 )
         def select_2():
@@ -236,7 +236,7 @@ class EPytisHelpSpecAttachments(Base_LogSQLTable):
     name = 'e_pytis_help_spec_attachments'
     fields = (
               sql.PrimaryColumn('file_id', pytis.data.Serial()),
-              sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.gA('e_pytis_help_spec(spec_name)', onupdate='CASCADE', ondelete='CASCADE')),
+              sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.a(sql.r.EPytisHelpSpec.spec_name, onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('file_name', pytis.data.String(not_null=True)),
               sql.Column('byte_size', pytis.data.Integer(not_null=True)),
               sql.Column('width', pytis.data.Integer(not_null=False)),
@@ -260,7 +260,7 @@ class EPytisHelpPagesAttachments(Base_LogSQLTable):
     name = 'e_pytis_help_pages_attachments'
     fields = (
               sql.PrimaryColumn('file_id', pytis.data.Serial()),
-              sql.Column('page_id', pytis.data.Integer(not_null=True), references=sql.gA('e_pytis_help_pages(page_id)', ondelete='CASCADE')),
+              sql.Column('page_id', pytis.data.Integer(not_null=True), references=sql.a(sql.r.EPytisHelpPages.page_id, ondelete='CASCADE')),
               sql.Column('file_name', pytis.data.String(not_null=True)),
               sql.Column('byte_size', pytis.data.Integer(not_null=True)),
               sql.Column('width', pytis.data.Integer(not_null=False)),

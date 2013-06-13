@@ -54,7 +54,7 @@ class EPytisRoles(Base_LogSQLTable):
     fields = (
               sql.PrimaryColumn('name', pytis.data.Name()),
               sql.Column('description', pytis.data.String(maxlen=64, not_null=False)),
-              sql.Column('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=True), default='appl', references=sql.gA('c_pytis_role_purposes')),
+              sql.Column('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=True), default='appl', references=sql.r.CPytisRolePurposes.purposeid),
               sql.Column('deleted', pytis.data.Date(not_null=False)),
              )
     inherits = (XChanges,)
@@ -79,7 +79,7 @@ class EvPytisValidRoles(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(main) +
             cls._exclude(codebook, 'purposeid'),
-            from_obj=[main.join(codebook, sql.gR('main.purposeid = codebook.purposeid'))],
+            from_obj=[main.join(codebook, main.c.purposeid == codebook.c.purposeid)],
             whereclause='main.deleted is null or main.deleted > now()'
             )
 
@@ -98,7 +98,7 @@ class EvPytisRoles(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(t1) +
             cls._exclude(t2, 'purposeid'),
-            from_obj=[t1.join(t2, sql.gR('t1.purposeid = t2.purposeid'))]
+            from_obj=[t1.join(t2, t1.c.purposeid == t2.c.purposeid)]
             )
 
     insert_order = (EPytisRoles,)
@@ -114,8 +114,8 @@ class EPytisRoleMembers(Base_LogSQLTable):
     name = 'e_pytis_role_members'
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
-              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', onupdate='CASCADE')),
-              sql.Column('member', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', onupdate='CASCADE')),
+              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
+              sql.Column('member', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
              )
     inherits = (XChanges,)
     init_columns = ('id', 'roleid', 'member')
@@ -138,7 +138,7 @@ class EvPytisValidRoleMembers(sql.SQLView):
             cls._exclude(main) +
             cls._exclude(roles1) +
             cls._alias(roles2.c, mname=roles2.c.name, mdescription=roles2.c.description, mpurposeid=roles2.c.purposeid, mpurpose=roles2.c.purpose, mdeleted=roles2.c.deleted),
-            from_obj=[main.join(roles1, sql.gR('roles1.name = main.roleid')).join(roles2, sql.gR('roles2.name = main.member'))]
+            from_obj=[main.join(roles1, roles1.c.name == main.c.roleid).join(roles2, roles2.c.name == main.c.member)]
             )
 
     insert_order = (EPytisRoleMembers,)
@@ -153,8 +153,8 @@ class APytisValidRoleMembers(sql.SQLTable):
     """
     name = 'a_pytis_valid_role_members'
     fields = (
-              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', ondelete='CASCADE', onupdate='CASCADE')),
-              sql.Column('member', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', ondelete='CASCADE', onupdate='CASCADE')),
+              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE', ondelete='CASCADE')),
+              sql.Column('member', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE', ondelete='CASCADE')),
              )
     inherits = (XChanges,)
     with_oids = True
@@ -366,7 +366,7 @@ class EPytisMenu(Base_LogSQLTable):
               sql.Column('title', pytis.data.String(maxlen=64, not_null=False), doc="User title of the item. If NULL then it is a separator."),
               sql.Column('position', pytis.data.LTree(not_null=False), doc="Unique identifier of menu item placement within menu. The top-menu item position is ''. Each submenu has exactly one label more than its parent. ", unique=True, index={'method': 'gist'}),
               sql.Column('next_position', pytis.data.LTree(not_null=False), doc="Free position just after this menu item.", unique=True, default='dummy'),
-              sql.Column('fullname', pytis.data.String(not_null=False), doc="Application action assigned to the menu item.Menu items bound to submenus should have this value NULL; if they do not, the assigned action is ignored.", references=sql.gA('c_pytis_menu_actions', onupdate='CASCADE')),
+              sql.Column('fullname', pytis.data.String(not_null=False), doc="Application action assigned to the menu item.Menu items bound to submenus should have this value NULL; if they do not, the assigned action is ignored.", references=sql.a(sql.r.CPytisMenuActions.fullname, onupdate='CASCADE')),
               sql.Column('help', pytis.data.String(not_null=False), doc="Arbitrary single-line help string."),
               sql.Column('hotkey', pytis.data.String(not_null=False), doc="Sequence of command keys, separated by single spaces.The space key is represented by SPC string."),
               sql.Column('locked', pytis.data.Boolean(not_null=False), doc="Iff true, this item may not be edited."),
@@ -604,7 +604,7 @@ class EvPytisMenu(sql.SQLView):
             cls._exclude(actions, 'description', 'spec_name', 'parent_action') +
             [sql.gL("(select count(*)-1 from e_pytis_menu where position <@ main.position)").label('position_nsub'),
              sql.gL("coalesce(main.title, '――――')").label('xtitle')],
-            from_obj=[main.outerjoin(actions, sql.gR('main.fullname = actions.fullname'))]
+            from_obj=[main.outerjoin(actions, main.c.fullname == actions.c.fullname)]
             )
 
     insert_order = (EPytisMenu,)
@@ -721,7 +721,7 @@ class EvPytisMenuPositions(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(positions) +
             cls._exclude(menu, 'name', 'fullname', 'position', 'hotkey', 'help', 'locked'),
-            from_obj=[positions.outerjoin(menu, sql.gR('positions.position = menu.position'))]
+            from_obj=[positions.outerjoin(menu, positions.c.position == menu.c.position)]
             )
 
     insert_order = ()
@@ -779,8 +779,8 @@ class EPytisActionRights(Base_LogSQLTable):
     fields = (
               sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
               sql.Column('shortname', pytis.data.String(not_null=True)),
-              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.gA('e_pytis_roles', onupdate='CASCADE')),
-              sql.Column('rightid', pytis.data.String(maxlen=8, not_null=True), references=sql.gA('c_pytis_access_rights', onupdate='CASCADE')),
+              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
+              sql.Column('rightid', pytis.data.String(maxlen=8, not_null=True), references=sql.a(sql.r.CPytisAccessRights.rightid, onupdate='CASCADE')),
               sql.Column('colname', pytis.data.Name()),
               sql.Column('system', pytis.data.Boolean(not_null=True), doc="Iff true, this is a system (noneditable) permission.", default=False),
               sql.Column('granted', pytis.data.Boolean(not_null=True), doc="If true the right is granted, otherwise it is denied; system rights are always granted.", default=True),
@@ -1108,7 +1108,7 @@ class EvPytisActionRights(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(rights) +
             cls._exclude(purposes, 'purposeid'),
-            from_obj=[rights.outerjoin(roles, sql.gR('rights.roleid = roles.name')).outerjoin(purposes, sql.gR('roles.purposeid = purposes.purposeid'))],
+            from_obj=[rights.outerjoin(roles, rights.c.roleid == roles.c.name).outerjoin(purposes, roles.c.purposeid == purposes.c.purposeid)],
             whereclause='rights.status>=0'
             )
 
@@ -1527,7 +1527,7 @@ class APytisActionsStructure(sql.SQLTable):
               sql.Column('shortname', pytis.data.String(not_null=True)),
               sql.Column('menuid', pytis.data.Integer(not_null=False)),
               sql.Column('position', pytis.data.LTree(not_null=True), index={'method': 'gist'}),
-              sql.Column('type', pytis.data.String(minlen=4, maxlen=4, not_null=True), references=sql.gA('c_pytis_action_types')),
+              sql.Column('type', pytis.data.String(minlen=4, maxlen=4, not_null=True), references=sql.r.CPytisActionTypes.type),
               sql.Column('summaryid', pytis.data.String(not_null=False)),
              )
     inherits = (XChanges,)
@@ -1550,11 +1550,11 @@ class EvPytisMenuStructure(sql.SQLView):
             cls._exclude(actions, 'fullname', 'shortname', 'action_title', 'spec_name', 'parent_action') +
             [sql.gL("(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)").label('position_nsub'),
              sql.gL("coalesce(menu.title, '('||actions.action_title||')')").label('title')],
-            from_obj=[structure.outerjoin(menu, sql.gR('structure.menuid = menu.menuid')).outerjoin(atypes, sql.gR('structure.type = atypes.type')).outerjoin(actions, sql.gR('structure.fullname = actions.fullname'))]
+            from_obj=[structure.outerjoin(menu, structure.c.menuid == menu.c.menuid).outerjoin(atypes, structure.c.type == atypes.c.type).outerjoin(actions, structure.c.fullname == actions.c.fullname)]
             )
 
     @classmethod
-    def join_columns(class_):
+    def join_columns(cls):
         return ((sql.c.APytisActionsStructure.fullname, sql.c.CPytisMenuActions.fullname),)
     insert_order = ()
     update_order = (CPytisMenuActions,)
@@ -2201,4 +2201,3 @@ update e_pytis_action_rights set shortname=pytis_change_shortname(shortname, $1,
 update a_pytis_actions_structure set fullname=pytis_change_fullname(fullname, $1, $2), shortname=pytis_change_shortname(shortname, $1, $2) where shortname != pytis_change_shortname(shortname, $1, $2) or fullname != pytis_change_fullname(fullname, $1, $2);
 delete from e_pytis_disabled_dmp_triggers where id='genmenu';
 """
-

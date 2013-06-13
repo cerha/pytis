@@ -24,7 +24,7 @@ class EPytisCryptoKeys(Base_LogSQLTable):
     name = 'e_pytis_crypto_keys'
     fields = (
               sql.PrimaryColumn('key_id', pytis.data.Serial()),
-              sql.Column('name', pytis.data.String(not_null=True), references=sql.gA('c_pytis_crypto_names', onupdate='CASCADE')),
+              sql.Column('name', pytis.data.String(not_null=True), references=sql.a(sql.r.CPytisCryptoNames.name, onupdate='CASCADE')),
               sql.Column('username', pytis.data.String(not_null=True), doc="Arbitrary user identifier."),
               sql.Column('key', pytis.data.Binary(not_null=True)),
               sql.Column('fresh', pytis.data.Boolean(not_null=True), doc="Flag indicating the key is encrypted by a non-login password. ", default=False),
