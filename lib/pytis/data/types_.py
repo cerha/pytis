@@ -191,9 +191,17 @@ class Type(object):
         return Type._type_table
     
     def __init__(self, **kwargs):
-        """Inicialize the instance.
+        """Initialize the instance.
 
-        See the class docstring for description of available arguments.
+        See the class docstring for description of available arguments.  Don't
+        override the constructor in derived classes, unless you really know
+        what you are doing.  Normally you want to override the '_init()' method
+        in derived classes to define specific type constructor arguemnts or
+        default values of inherited arguments.
+
+        The purpose of overriding '_init()' instead of '__init__()' is to be
+        able to save the dictionary of explicitly passed constructor arguments
+        here.  This allows type cloning (see 'clone()').
         
         """
         self._constructor_kwargs = kwargs
@@ -202,6 +210,15 @@ class Type(object):
                  
     def _init(self, not_null=False, enumerator=None, constraints=(),
               validation_messages=None, unique=False):
+        """Initialize the instance.
+        
+        Defines constructor arguments and their default values.  You typically
+        want to override this method in derived classes to define type specific
+        constructor arguemnts or default values of inherited arguments as you
+        would normally do by overriding '__init__()', which has a special
+        purpose in this class.
+
+        """
         assert isinstance(not_null, types.BooleanType)
         assert isinstance(unique, types.BooleanType)
         assert enumerator is None or isinstance(enumerator, Enumerator)
@@ -266,11 +283,14 @@ class Type(object):
         self._id = state
 
     def clone(self, other):
-        """Clone this type by another type and return the cloned instance.
+        """Clone this instance by another instance and return a merged instance.
 
-        The cloned instance will inherit all attributes of this type and the
-        other type passed as argument, where the attributes of the later type
-        take precedence.
+        The returned instance will inherit all attributes of the cloned type
+        instance as well as the cloning instance (the one passed as the
+        argument), where the attributes of the cloning instance take
+        precedence.  The cloning instance must be the same class or a subclass
+        of the cloned instance.  The returned instance is of the cloning
+        instance's class.
 
         """
         assert isinstance(other, self.__class__), other
