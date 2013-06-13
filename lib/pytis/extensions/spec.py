@@ -293,7 +293,10 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
       output_file -- name of the file to write output PDF data to, string; if
         'None' then show the output in an external PDF viewer
       kwargs -- passed to the print resolver for use in the print procedure
-        
+
+    Return True if the document was printed or displayed; return False if the
+    action was aborted.
+
     """
     import pytis.output
     class _PrintResolver (pytis.output.OutputResolver):
@@ -330,7 +333,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     try:
         formatter = pytis.output.Formatter(resolvers, print_spec)
     except pytis.output.AbortOutput:
-        return
+        return False
     if output_file:
         formatter.printout(output_file)
     else:
@@ -338,6 +341,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
         handle = os.fdopen(fd, 'wb')
         formatter.printout(handle)
         pytis.form.run_viewer(fname)
+    return True
         
 
 def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filename=None,
