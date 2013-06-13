@@ -339,8 +339,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     else:
         fd, fname = tempfile.mkstemp(suffix='.pdf')
         handle = os.fdopen(fd, 'wb')
-        formatter.printout(handle)
-        pytis.form.run_viewer(fname)
+        formatter.printout(handle, hook=(lambda: pytis.form.run_viewer(fname)))
     return True
         
 
