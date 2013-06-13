@@ -191,6 +191,14 @@ class Baz2(sql.SQLView):
         return sqlalchemy.select([sql.c.Baz.id], from_obj=[sql.t.Baz],
                                  whereclause=(sql.c.Baz.id > 0))
 
+class Baz2Dup(sql.SQLView):
+    name = 'baz2'
+    schemas = (('public', Private,),)
+    @classmethod
+    def query(class_):
+        return sqlalchemy.select([sql.c.Baz.id], from_obj=[sql.t.Baz],
+                                 whereclause=(sql.c.Baz.id <= 0))
+
 class AliasView(sql.SQLView):
     name = 'aliased'
     @classmethod

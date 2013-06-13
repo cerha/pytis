@@ -874,11 +874,16 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         cls._gsql_file, cls._gsql_line = inspect.stack()[2][1:3]
         if cls._is_specification(clsname):
             name = cls.pytis_name()
-            if ((name in _PytisBaseMetaclass._name_mapping and
-                 _PytisBaseMetaclass._name_mapping[name] is not cls)):
-                raise SQLException("Duplicate object name",
-                                   (cls, _PytisBaseMetaclass._name_mapping[name],))
-            _PytisBaseMetaclass._name_mapping[name] = cls
+            name_specs = _PytisBaseMetaclass._name_mapping.get(name)
+            if name_specs is None:
+                name_specs = _PytisBaseMetaclass._name_mapping[name] = set([cls])
+            elif cls not in name_specs:
+                cls_schemas = set(cls.object_schemas())
+                for spec in name_specs:
+                    if set(spec.object_schemas()).intersection(cls_schemas):
+                        raise SQLException("Duplicate object name",
+                                           (cls, _PytisBaseMetaclass._name_mapping[name],))
+                name_specs.add(cls)
             _PytisBaseMetaclass._class_mapping[cls.__name__] = cls
             cls.name = name
         sqlalchemy.sql.visitors.VisitableType.__init__(cls, clsname, bases, clsdict)
@@ -887,17 +892,13 @@ class _PytisBaseMetaclass(sqlalchemy.sql.visitors.VisitableType):
         return _is_specification_name(clsname)
 
     @classmethod
-    def specification_by_name(cls, name):
-        return cls._name_mapping.get(name)
-
-    @classmethod
     def specification_by_class_name(cls, name):
         return cls._class_mapping.get(name)
 
     @classmethod
     def specifications(cls):
         "Return all registered specifications."
-        return _PytisBaseMetaclass._name_mapping.values()
+        return set.union(*_PytisBaseMetaclass._name_mapping.values())
 
     @classmethod
     def clear(cls):
@@ -1061,9 +1062,6 @@ def object_by_specification_name(specification_name, search_path=None):
     if class_ is None:
         return None
     return object_by_class(class_, search_path or _current_search_path)
-
-def specification_by_name(name):
-    return _PytisBaseMetaclass.specification_by_name(name)
 
 class RawCondition(object):
     def __init__(self, condition):
