@@ -306,6 +306,19 @@ class PresentedRow(unittest.TestCase):
         
 tests.add(PresentedRow)
 
+
+class PrettyTypes(unittest.TestCase):
+    class CustomFoldable(pp.PrettyFoldable, pd.String):
+        def _init(self, **kwargs):
+            super(PrettyTypes.CustomFoldable, self)._init(tree_column_id='tree_order', subcount_column_id='tree_nsub', **kwargs)
+    def test_instance(self):
+        t = PrettyTypes.CustomFoldable(maxlen=5)
+        assert t.maxlen() == 5
+        assert t.tree_column_id() == 'tree_order'
+
+tests.add(PrettyTypes)
+
+
 def get_tests():
     return tests
 
