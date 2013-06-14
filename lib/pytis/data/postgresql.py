@@ -1139,7 +1139,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             assert (db_type_cls == Binary # maybe a crypto column
                     or isinstance(ctype, TimeInterval) and db_type_cls == Time # temporary hack
                     or isinstance(ctype, db_type_cls)), \
-                    ("User type doesn't match DB type", ctype, db_type_cls)
+                ("User type doesn't match DB type", ctype, db_type_cls)
             result = result.clone(ctype)
         if type_kwargs:
             result = result.clone(result.__class__(**type_kwargs))
@@ -1559,7 +1559,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 {'columns': column_list})
         if self._pdbb_operations:
             self._pdbb_command_search_distance = \
-                'select count(*) from (select%s * from (select %s from %s where (%s)%s %s) as %s where %%(condition)s) as __count' % \
+                ('select count(*) from '
+                 '(select%s * from '
+                 '(select %s from %s where (%s)%s %s) as %s where %%(condition)s) as __count') % \
                 (distinct_on, column_list, table_list, relation, filter_condition, groupby,
                  table_names[0],)
         elif distinct_on:
