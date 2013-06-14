@@ -1025,10 +1025,8 @@ class LookupForm(InnerForm):
         if super(LookupForm, self)._on_idle(event):
             return True
         if not self._initial_profile_applied:
-            try:
-                self._apply_initial_profile()
-            finally:
-                self._initial_profile_applied = True
+            self._initial_profile_applied = True
+            self._apply_initial_profile()
         return False
 
     def _init_data_select(self, data, async_count=False):
