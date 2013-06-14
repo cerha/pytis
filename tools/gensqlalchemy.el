@@ -88,6 +88,14 @@
 ;; important option is `gensqlalchemy-gsql' which needs to be set if gsql
 ;; utility is not present in standard PATH.
 
+;; In order to make gsql work PYTHONPATH must be set properly.  You can either
+;; set PYTHONPATH directly before starting Emacs or you can set
+;; `gensqlalchemy-pythonpath' variable.  You can do so per each application by
+;; setting it in .dir-locals.el in APPLICATION directory, e.g.
+;;
+;;   ((python-mode
+;;     (gensqlalchemy-pythonpath . "/PATH/TO/APPLICATION/lib:/PATH/TO/pytis/lib:/PATH/TO/lcg/lib"))
+;;    ("lib/APPLICATION/dbdefs" . ((python-mode . ((gensqlalchemy-mode 1))))))
 
 (require 'cl)
 (require 'compile)
@@ -129,8 +137,13 @@
   :group 'gensqlalchemy
   :type '(list string))
 
+(defcustom gensqlalchemy-pythonpath nil
+  "PYTHONPATH value to use when invoking gsql."
+  :group 'gensqlalchemy
+  :type 'string)
+
 (defvar gensqlalchemy-specification-directory "dbdefs")
-(defvar gensqlalchemy-common-directories '("lib" "db" "dbdefs"))
+(defvar gensqlalchemy-common-directories '("lib" "dbdefs"))
 
 (define-minor-mode gensqlalchemy-mode
   "Toggle gensqlalchemy mode.
@@ -166,9 +179,7 @@ Currently the mode just defines some key bindings."
     directory))
 
 (defun gensqlalchemy-process-directory (&optional buffer require)
-  (file-name-directory
-   (directory-file-name
-    (gensqlalchemy-specification-directory buffer require))))
+  (gensqlalchemy-specification-directory buffer require))
   
 (defun gensqlalchemy-buffer-name (ext &optional buffer)
   (let ((directory (directory-file-name (gensqlalchemy-specification-directory buffer)))
@@ -221,6 +232,26 @@ Currently the mode just defines some key bindings."
       (setq default-directory directory))
     buffer))
 
+(defun gensqlalchemy-module ()
+  (let ((paths (split-string (getenv "PYTHONPATH") ":" t))
+        (module nil))
+    (while (and paths (not module))
+      (let ((p (pop paths)))
+        (unless (char-equal (aref p (1- (length p))) ?/)
+          (setq p (concat p "/")))
+        (when (string-prefix-p p default-directory)
+          (setq module (replace-regexp-in-string
+                        "/" "."
+                        (substring default-directory (length p) -1))))))
+    module))
+
+(defmacro with-gensqlalchemy-pythonpath (&rest body)
+  `(let ((pythonpath (getenv "PYTHONPATH")))
+     (when gensqlalchemy-pythonpath
+       (setenv "PYTHONPATH" gensqlalchemy-pythonpath))
+     (unwind-protect (progn ,@body)
+       (setenv "PYTHONPATH" pythonpath))))
+
 (defun gensqlalchemy-run-gsql (&rest args)
   (apply 'call-process gensqlalchemy-gsql nil t nil args))
 
@@ -248,49 +279,50 @@ If called with a prefix argument then show dependent objects as well."
       (pop-to-buffer buffer))))
 
 (defun gensqlalchemy-display (erase dependencies schema upgrade)
-  (let* ((spec-name (gensqlalchemy-specification))
-         (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) erase))
-         (args (append (list (format "--pretty=%d" gensqlalchemy-pretty-output-level))
-                       (when upgrade
-                         '("--upgrade"))
-                       (unless dependencies
-                         '("--no-deps"))
-                       (when schema
-                         (list (concat "--schema=" schema)))
-                       (list (format "--limit=^%s$" spec-name)
-                             gensqlalchemy-specification-directory))))
-    (save-some-buffers)
-    (with-current-buffer output-buffer
-      (when upgrade
-        (with-gensqlalchemy-sql-buffer output-buffer
-          (with-current-buffer sql-buffer
-            (dolist (item `(("--database" ,sql-database)
-                            ("--host" ,sql-server)
-                            ("--port" ,sql-port)
-                            ("--user" ,sql-user)))
-              (destructuring-bind (option value) item
-                (unless (or (equal value "") (equal value 0))
-                  (push (format "%s=%s" option value) args))))
-            (when (and (string= (or sql-password) "")
-                       (save-excursion
-                         (goto-char (point-min))
-                         (looking-at "^Password\\>")))
-              (set (make-local-variable 'sql-password) (read-passwd "Database password: ")))
-            (setenv "PGPASSWORD" sql-password))))
-      (unless (or erase
-                  (string= "" (buffer-substring-no-properties (point-min) (point-max))))
-        (goto-char (point-max))
-        (insert "\n"))
-      (when schema
-        (insert (format "create schema %s;\n" gensqlalchemy-temp-schema)))
-      (apply 'gensqlalchemy-run-gsql args)
-      (if (search-backward "Traceback (most recent call last):" nil t)
-          (progn
-            (pop-to-buffer output-buffer)
-            (goto-char (point-max))
-            (gensqlalchemy-show-error)
-            nil)
-        output-buffer))))
+  (with-gensqlalchemy-pythonpath
+    (let* ((spec-name (gensqlalchemy-specification))
+           (output-buffer (gensqlalchemy-prepare-output-buffer (current-buffer) erase))
+           (args (append (list (format "--pretty=%d" gensqlalchemy-pretty-output-level))
+                         (when upgrade
+                           '("--upgrade"))
+                         (unless dependencies
+                           '("--no-deps"))
+                         (when schema
+                           (list (concat "--schema=" schema)))
+                         (list (format "--limit=^%s$" spec-name)
+                               (gensqlalchemy-module)))))
+      (save-some-buffers)
+      (with-current-buffer output-buffer
+        (when upgrade
+          (with-gensqlalchemy-sql-buffer output-buffer
+            (with-current-buffer sql-buffer
+              (dolist (item `(("--database" ,sql-database)
+                              ("--host" ,sql-server)
+                              ("--port" ,sql-port)
+                              ("--user" ,sql-user)))
+                (destructuring-bind (option value) item
+                  (unless (or (equal value "") (equal value 0))
+                    (push (format "%s=%s" option value) args))))
+              (when (and (string= (or sql-password) "")
+                         (save-excursion
+                           (goto-char (point-min))
+                           (looking-at "^Password\\>")))
+                (set (make-local-variable 'sql-password) (read-passwd "Database password: ")))
+              (setenv "PGPASSWORD" sql-password))))
+        (unless (or erase
+                    (string= "" (buffer-substring-no-properties (point-min) (point-max))))
+          (goto-char (point-max))
+          (insert "\n"))
+        (when schema
+          (insert (format "create schema %s;\n" gensqlalchemy-temp-schema)))
+        (apply 'gensqlalchemy-run-gsql args)
+        (if (search-backward "Traceback (most recent call last):" nil t)
+            (progn
+              (pop-to-buffer output-buffer)
+              (goto-char (point-max))
+              (gensqlalchemy-show-error)
+              nil)
+          output-buffer)))))
   
 (defun gensqlalchemy-show-sql-buffer ()
   "Show the buffer with converted SQL output."
@@ -341,17 +373,18 @@ If called with a prefix argument then show dependent objects as well."
 (defun gensqlalchemy-current-objects (&optional schema)
   (let ((spec-name (gensqlalchemy-specification))
         (objects '()))
-    (with-temp-buffer
-      (setq default-directory (gensqlalchemy-process-directory nil t))
-      (apply 'gensqlalchemy-run-gsql
-             (append (list "--names" "--no-deps" (format "--limit=^%s$" spec-name))
-                     (when schema
-                       (list (concat "--schema=" schema)))
-                     (list gensqlalchemy-specification-directory)))
-      (goto-char (point-min))
-      (while (looking-at "^\\([-a-zA-Z]+\\) \\([^(\n]*\\)\\((.*)\\)?$")
-        (push (list (match-string 1) (match-string 2) (match-string 3)) objects)
-        (goto-char (line-beginning-position 2))))
+    (with-gensqlalchemy-pythonpath
+      (with-temp-buffer
+        (setq default-directory (gensqlalchemy-process-directory nil t))
+        (apply 'gensqlalchemy-run-gsql
+               (append (list "--names" "--no-deps" (format "--limit=^%s$" spec-name))
+                       (when schema
+                         (list (concat "--schema=" schema)))
+                       (list (gensqlalchemy-module))))
+        (goto-char (point-min))
+        (while (looking-at "^\\([-a-zA-Z]+\\) \\([^(\n]*\\)\\((.*)\\)?$")
+          (push (list (match-string 1) (match-string 2) (match-string 3)) objects)
+          (goto-char (line-beginning-position 2)))))
     objects))
 
 (defvar gensqlalchemy-psql-def-commands
@@ -370,6 +403,7 @@ If called with a prefix argument then show dependent objects as well."
       (when send-buffer
         (with-gensqlalchemy-sql-buffer send-buffer
           (gensqlalchemy-send-buffer)))
+      (setq foo (cons 1 objects))
       (with-gensqlalchemy-log-file file-name
         (mapc #'(lambda (spec)
                   (destructuring-bind (kind name args) spec
@@ -502,8 +536,10 @@ objects."
   (interactive)
   (let ((spec-name (gensqlalchemy-specification))
         (default-directory (gensqlalchemy-process-directory nil t)))
-    (compilation-start (format "%s --names --source --limit='^%s$' %s"
-                               gensqlalchemy-gsql spec-name gensqlalchemy-specification-directory))))
+    (with-gensqlalchemy-pythonpath
+      (compilation-start (format "PYTHONPATH='%s' %s --names --source --limit='^%s$' %s"
+                                 (getenv "PYTHONPATH")
+                                 gensqlalchemy-gsql spec-name (gensqlalchemy-module))))))
 
 (defun gensqlalchemy-sql-function-file ()
   "Visit SQL file associated with current function."
@@ -562,6 +598,7 @@ where the specification may be put without breaking dependencies."
   (interactive)
   (let ((beg nil)
         (end nil)
+        (object-regexp nil)
         (hard-objects '())
         (soft-objects '())
         (hard-dependencies '())
@@ -581,10 +618,24 @@ where the specification may be put without breaking dependencies."
               (setq end (and (not (eq (get-text-property (point) 'face) 'font-lock-string-face))
                              (line-beginning-position)))
             (setq end (point-max))))
+        (goto-char (point-min))
+        (let ((import-string (format "from %s import " (with-gensqlalchemy-pythonpath
+                                                         (gensqlalchemy-module))))
+              (imported-objects ""))
+          (while (search-forward import-string nil t)
+            (setq imported-objects
+                  (concat imported-objects "\\|"
+                          (mapconcat #'identity
+                                     (split-string
+                                      (buffer-substring-no-properties (point) (line-end-position))
+                                      " *[ ,] *" t)
+                                     "\\|"))))
+          (setq object-regexp (format "\\<\\(\\(sql\\.[ct]\\.\\([a-zA-Z0-9_]+\\)\\)%s\\)\\>"
+                                      imported-objects)))
         (narrow-to-region beg end)
         (goto-char (point-min))
-        (while (re-search-forward "\\<\\(sql\\.[ct]\\|db\\)\\.\\([a-zA-Z0-9_]+\\)" nil t)
-          (let ((object (match-string-no-properties 2))
+        (while (re-search-forward object-regexp nil t)
+          (let ((object (or (match-string-no-properties 3) (match-string-no-properties 1)))
                 (point (point)))
             (re-search-backward "^\\(class\\|    [a-zA-Z_]\\)")
             (push object (if (looking-at "    def ") soft-objects hard-objects))
