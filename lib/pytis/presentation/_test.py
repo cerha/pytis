@@ -19,7 +19,7 @@
 
 import unittest
 
-import pytis
+import pytis.data as pd, pytis.presentation as pp
 from pytis.form import * 
 
 tests = pytis.util.test.TestSuite()
@@ -28,15 +28,15 @@ tests = pytis.util.test.TestSuite()
 # field.py #
 ############
 
-class PresentedRow_(unittest.TestCase):
+class PresentedRow(unittest.TestCase):
     def setUp(self):
-        key = pytis.data.ColumnSpec('a', pytis.data.Integer())
+        key = pd.ColumnSpec('a', pd.Integer())
         self._columns = (
             key,
-            pytis.data.ColumnSpec('b', pytis.data.Integer()),
-            pytis.data.ColumnSpec('c', pytis.data.Integer()),
-            pytis.data.ColumnSpec('d', pytis.data.Integer()))
-        self._data = pytis.data.Data(self._columns, key)
+            pd.ColumnSpec('b', pd.Integer()),
+            pd.ColumnSpec('c', pd.Integer()),
+            pd.ColumnSpec('d', pd.Integer()))
+        self._data = pd.Data(self._columns, key)
         def twice(row):
             # Just try if it is possible to access the original row.
             row.original_row()['c'].value()
@@ -52,51 +52,51 @@ class PresentedRow_(unittest.TestCase):
             return sum is not None and sum + 1 or None
         def gt5(row):
             return row['sum'].value() > 5
-        self._fields = (Field('a'),
-                        Field('b'),
-                        Field('c', default=lambda : 5),
-                        Field('d', 
-                              computer=Computer(twice, depends=('c',)),
-                              editable=Computer(gt5, depends=('sum',))),
-                        Field('e', type=pytis.data.Integer(), virtual=True,
-                              default=88),
-                        Field('sum', type=pytis.data.Integer(), virtual=True, 
-                              computer=Computer(sum, depends=('b','c'))),
-                        Field('inc', type=pytis.data.Integer(), virtual=True,
-                              computer=Computer(inc, depends=('sum',))))
+        self._fields = (pp.Field('a'),
+                        pp.Field('b'),
+                        pp.Field('c', default=lambda : 5),
+                        pp.Field('d', 
+                                 computer=pp.Computer(twice, depends=('c',)),
+                                 editable=pp.Computer(gt5, depends=('sum',))),
+                        pp.Field('e', type=pd.Integer(), virtual=True,
+                                 default=88),
+                        pp.Field('sum', type=pd.Integer(), virtual=True, 
+                                 computer=pp.Computer(sum, depends=('b','c'))),
+                        pp.Field('inc', type=pd.Integer(), virtual=True,
+                                 computer=pp.Computer(inc, depends=('sum',))))
         
     def _check_values(self, row, pairs):
         for k, v in pairs:
             assert row[k].value() == v, (k, v, row[k].value())
     def _value(self, key, value):
         col = find(key, self._columns, key=lambda c: c.id())
-        return pytis.data.Value(col.type(), value)
+        return pd.Value(col.type(), value)
     def _data_row(self, **values):
-        return pytis.data.Row([(c.id(), pytis.data.Value(c.type(), values.get(c.id())))
+        return pd.Row([(c.id(), pd.Value(c.type(), values.get(c.id())))
                                for c in self._columns])
     def test_init(self):
-        row = PresentedRow(self._fields, self._data, None, new=True)
+        row = pp.PresentedRow(self._fields, self._data, None, new=True)
         self._check_values(row, (('a', None),
                                  ('b', None),
                                  ('c', 5),
                                  ('d', 10),
                                  ('e', 88),
                                  ('sum', 0)))
-        row = PresentedRow(self._fields, self._data, None, new=False)
+        row = pp.PresentedRow(self._fields, self._data, None, new=False)
         self._check_values(row, (('a', None),
                                  ('b', None),
                                  ('c', None),
                                  ('d', None),
                                  ('sum', None)))
         data_row = self._data_row(a='xx', b=100, c=77, d=18)
-        row = PresentedRow(self._fields, self._data, data_row, new=True)
+        row = pp.PresentedRow(self._fields, self._data, data_row, new=True)
         self._check_values(row, (('a', 'xx'),
                                  ('b', 100),
                                  ('c', 77),
                                  ('d', 18),
                                  ('e', 88),
                                  ('sum', 177)))
-        row = PresentedRow(self._fields, self._data, data_row, new=False)
+        row = pp.PresentedRow(self._fields, self._data, data_row, new=False)
         self._check_values(row, (('a', 'xx'),
                                  ('b', 100),
                                  ('c', 77),
@@ -111,7 +111,7 @@ class PresentedRow_(unittest.TestCase):
                                  ('sum', 188)))
         # TODO: dodělat
     def test_prefill(self):
-        row = PresentedRow(self._fields, self._data, None, new=True,
+        row = pp.PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'a': 'xx', 'b': 3, 'd': 77})
         self._check_values(row, (('a', 'xx'),
                                  ('b', 3),
@@ -119,14 +119,14 @@ class PresentedRow_(unittest.TestCase):
                                  ('d', 77),
                                  ('e', 88)))
     def test_prefill_default(self):
-        row = PresentedRow(self._fields, self._data, None, new=True,
+        row = pp.PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 22, 'c': 33, 'd': 44, 'e': 55})
         self._check_values(row, (('b', 22),
                                  ('c', 33),
                                  ('d', 44),
                                  ('e', 55)))
     def test_computer(self):
-        row = PresentedRow(self._fields, self._data, None, new=True,
+        row = pp.PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 3})
         assert row.get('sum', lazy=True).value() == None
         assert row['sum'].value() == 8
@@ -135,14 +135,14 @@ class PresentedRow_(unittest.TestCase):
         row['c'] = self._value('c', 100)
         self._check_values(row, (('d', 200), ('sum', 103), ('inc', 104)))
     def test_prefill_computer(self):
-        row = PresentedRow(self._fields, self._data, None, new=True,
+        row = pp.PresentedRow(self._fields, self._data, None, new=True,
                            prefill={'b': 2, 'c': 2, 'sum': 88})
         self._check_values(row, (('b', 2),
                                  ('c', 2),
                                  ('sum', 88),
                                  ('inc', 89)))
     def test_validation(self):
-        row = PresentedRow(self._fields, self._data, None)
+        row = pp.PresentedRow(self._fields, self._data, None)
         assert row.validate('a', '2') is None
         assert row.validate('b', '2.3') is not None
         assert row.validate('c', '8') is None
@@ -160,7 +160,7 @@ class PresentedRow_(unittest.TestCase):
                                  ('sum', 20)))
         assert row.invalid_string('b') is None
     def test_set_row(self):
-        row = PresentedRow(self._fields, self._data, None, new=True)
+        row = pp.PresentedRow(self._fields, self._data, None, new=True)
         self._check_values(row, (('a', None),
                                  ('b', None),
                                  ('c', 5),
@@ -178,7 +178,7 @@ class PresentedRow_(unittest.TestCase):
                                  ('c', 5),
                                  ('sum', 0),
                                  ('inc', 1)))
-        row = PresentedRow(self._fields, self._data, None, new=False)
+        row = pp.PresentedRow(self._fields, self._data, None, new=False)
         self._check_values(row, (('a', None),
                                  ('b', None),
                                  ('c', None),
@@ -199,14 +199,14 @@ class PresentedRow_(unittest.TestCase):
 
         
     def test_editable(self):
-        row = PresentedRow(self._fields, self._data, None,
+        row = pp.PresentedRow(self._fields, self._data, None,
                            prefill={'b': 2, 'c': 1})
         assert row.editable('a')
         assert not row.editable('d')
         row['b'] = self._value('b', 5)
         assert row.editable('d')
     def test_callback(self):
-        row = PresentedRow(self._fields, self._data, None, new=True, prefill={'b': 3})
+        row = pp.PresentedRow(self._fields, self._data, None, new=True, prefill={'b': 3})
         changed = []
         def callback(id):
             def cb():
@@ -228,7 +228,7 @@ class PresentedRow_(unittest.TestCase):
         
     def test_editability_callbacks(self):
         enabled = [None] # we need a mutable object...
-        row = PresentedRow(self._fields, self._data, None, prefill={'a': 6})
+        row = pp.PresentedRow(self._fields, self._data, None, prefill={'a': 6})
         def callback():
             enabled[0] = row.editable('d')
         row.register_callback(row.CALL_EDITABILITY_CHANGE, 'd', callback)
@@ -244,17 +244,17 @@ class PresentedRow_(unittest.TestCase):
         row['c'] = self._value('c', 2)
         assert enabled[0] is False
     def test_has_key(self):
-        row = PresentedRow(self._fields, self._data, None)
+        row = pp.PresentedRow(self._fields, self._data, None)
         assert 'a' in row
         assert 'inc' in row
         assert 'blabla' not in row
     def test_changed(self):
-        row = PresentedRow(self._fields, self._data, None)
+        row = pp.PresentedRow(self._fields, self._data, None)
         assert not row.changed()
         row['b'] = self._value('b', 333)
         assert row.changed()
     def test_field_changed(self):
-        row = PresentedRow(self._fields, self._data, None, prefill={'b': 3, 'c': 8})
+        row = pp.PresentedRow(self._fields, self._data, None, prefill={'b': 3, 'c': 8})
         assert not row.field_changed('a')
         assert not row.field_changed('b')
         assert not row.field_changed('c')
@@ -263,35 +263,35 @@ class PresentedRow_(unittest.TestCase):
         assert row.field_changed('b')
         assert not row.field_changed('c')
     def test_keys(self):
-        row = PresentedRow(self._fields, self._data, None)
+        row = pp.PresentedRow(self._fields, self._data, None)
         assert row.keys().sort() == map(lambda f: f.id(), self._fields).sort()
     def test_display(self):
-        C = pytis.data.ColumnSpec
-        S = pytis.data.String
-        V = pytis.data.Value
-        rows = [pytis.data.Row((('x', V(S(), x)), ('y', V(S(), y))))
+        C = pd.ColumnSpec
+        S = pd.String
+        V = pd.Value
+        rows = [pd.Row((('x', V(S(), x)), ('y', V(S(), y))))
                 for x,y in (('1','FIRST'), ('2','SECOND'), ('3','THIRD'))]
-        edata = pytis.data.DataFactory(pytis.data.MemData, (C('x', S()), C('y', S())), data=rows)
-        enum = pytis.data.DataEnumerator(edata)
-        key = C('a', pytis.data.Integer())
+        edata = pd.DataFactory(pd.MemData, (C('x', S()), C('y', S())), data=rows)
+        enum = pd.DataEnumerator(edata)
+        key = C('a', pd.Integer())
         columns = (key,
                    C('b', S(enumerator=enum)),
                    C('c', S(enumerator=enum)),
                    C('d', S(enumerator=enum)))
-        data = pytis.data.Data(columns, key)
+        data = pd.Data(columns, key)
         fields = (Field('a'),
                   Field('b', display='y'),
                   Field('c', display=lambda x: '-'+x+'-'),
                   Field('d', display=lambda row: row['y'].value().lower()),
                   )
-        row = PresentedRow(fields, data, None,
+        row = pp.PresentedRow(fields, data, None,
                            prefill={'b': '2', 'c': '3', 'd': '1'})
         assert row.display('a') == '', row.display('a')
         assert row.display('b') == 'SECOND', row.display('b')
         assert row.display('c') == '-3-', row.display('c')
         assert row.display('d') == 'first', row.display('d')
     def test_depends(self):
-        row = PresentedRow(self._fields, self._data, None)
+        row = pp.PresentedRow(self._fields, self._data, None)
         any = ('a','b','c','d','e','sum','inc')
         assert not row.depends('a', any)
         assert not row.depends('b', ('a','b','c'))
@@ -304,7 +304,7 @@ class PresentedRow_(unittest.TestCase):
         assert not row.depends('sum', ('a','b','c','e','sum'))
         assert not row.depends('inc', any)
         
-tests.add(PresentedRow_)
+tests.add(PresentedRow)
 
 def get_tests():
     return tests
