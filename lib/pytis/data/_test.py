@@ -197,9 +197,9 @@ class String(_TypeCheck):
         self._test_validity(t, 'abcd', 'abcd')
     def test_validation_unlimited(self):
         v = self._test_null_validation()
-        assert v.type().maxlen() == None, 'wrong maxlen value'
+        assert v.type().maxlen() is None, 'wrong maxlen value'
         self._test_validity(None, 'abcdefghi', 'abcdefghi')
-        t = pytis.data.String(None)
+        t = pytis.data.String(maxlen=None)
         assert self._test_validity(t, 'abcdefghi', 'abcdefghi')
     def test_cmp(self):
         MAXLEN = 1
