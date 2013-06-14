@@ -214,7 +214,7 @@ class Type(object):
         
         Defines constructor arguments and their default values.  You typically
         want to override this method in derived classes to define type specific
-        constructor arguemnts or default values of inherited arguments as you
+        constructor arguments or default values of inherited arguments as you
         would normally do by overriding '__init__()', which has a special
         purpose in this class.
 

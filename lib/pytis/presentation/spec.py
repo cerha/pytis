@@ -4712,6 +4712,13 @@ class Specification(object):
         xfields = []
         xfields_map = {}
         i = 0
+        def set_field_type(field, type_):
+            # Setting the field type is a gross hack necessary due to our
+            # codebook handlings.
+            args, kwargs = type_.init_args()
+            kwargs = copy.copy(kwargs)
+            kwargs.update(field.type_kwargs())
+            field._type = field._kwargs['type'] = type_.__class__(*args, **kwargs)
         for c in table.specification_fields():
             descr = None
             if c.label():
@@ -4737,14 +4744,9 @@ class Specification(object):
             if default is None and isinstance(type_, pytis.data.Serial):
                 default = pytis.util.nextval('%s_%s_seq' % (table.pytis_name(real=True),
                                                             c.id(),))
-            # Setting the field type is a gross hack necessary due to our
-            # codebook handlings.
             f = Field(c.id(), c.label(), type=None, descr=descr, default=default,
                       editable=editable, codebook=codebook, not_null=c.type().not_null())
-            args, kwargs = type_.init_args()
-            kwargs = copy.copy(kwargs)
-            kwargs.update(f.type_kwargs())
-            f._type = f._kwargs['type'] = type_.__class__(*args, **kwargs)
+            set_field_type(f, type_)
             xfields.append(f)
             xfields_map[c.id()] = i
             i += 1
@@ -4761,7 +4763,9 @@ class Specification(object):
                 if not issubclass(f.__class__, db_field.__class__):
                     raise Exception("Field type incompatible with database specification",
                                     f.id())
-                xfields[n] = db_field.clone(f)
+                xfields[n] = result_field = db_field.clone(f)
+                if f.codebook() is not None:
+                    set_field_type(result_field, result_field.type())
         if __debug__:
             for f in xfields:
                 assert f.type() is not None, ("Field type not specified", self, f.id(),)
