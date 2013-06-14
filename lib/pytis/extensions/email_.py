@@ -49,7 +49,7 @@ class SimpleEmail(object):
     ERR_HELO = _(u"Error by sending helo")
     
     def __init__(self, to, from_, subject, content, html=False,
-                 bcc=None,  smtp='localhost', charset='iso-8859-2'):
+                 bcc=None, replyto=None, smtp='localhost', charset='iso-8859-2'):
         """Inicializuj instanci.
 
         Argumenty:
@@ -60,6 +60,7 @@ class SimpleEmail(object):
             nebo unicode řetězec nebo řetězec v kódování iso-8859-2)
           content -- obsah zprávy
           bcc -- adresa příjemce pro bcc nebo sekvence adres
+          replyto -- adresa odesilatele pro zaslání odpovědi
           smtp -- adresa odesílacího serveru
         """  
         assert isinstance(to, (basestring, tuple, list))
@@ -69,6 +70,7 @@ class SimpleEmail(object):
         self.to = to
         self.from_ = from_
         self.bcc = bcc
+        self.replyto = replyto
         self.subject = subject
         self.content = content
         self.smtp = smtp
@@ -133,9 +135,13 @@ class SimpleEmail(object):
         subject = get_header(self.subject)
         date = email.Utils.formatdate(localtime=1)
         self.msg['From'] = from_
-        self.msg['To'] = to        
+        self.msg['To'] = to
         self.msg['Subject'] = subject
         self.msg['Date'] = date
+        if self.replyto:
+            self.msg['Reply-to'] = get_header(self.replyto)
+            #replyto = get_header(self.replyto)
+            #self.msg.add_header('reply-to', replyto)
 
     def get_content_text(self, data, html=False, charset=None):
         if not charset:
@@ -191,7 +197,7 @@ class SimpleEmail(object):
             server.quit()
         except:
             pass
-        return success              
+        return success
 
 class GPGEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní jednoduchého kryptovaného mailu."""
@@ -321,8 +327,8 @@ class GPGEmail(SimpleEmail):
 class ComplexEmail(SimpleEmail):
     """Třída pro vytvoření a odeslaní mailu s přílohami."""
 
-    def __init__(self, to, from_, subject, content=None, html=False, bcc=None,  smtp='localhost',
-                 charset='iso-8859-2'):
+    def __init__(self, to, from_, subject, content=None, html=False, bcc=None,
+                 replyto=None, smtp='localhost', charset='iso-8859-2'):
         """Inicializuj instanci.
 
         Argumenty:
@@ -333,10 +339,11 @@ class ComplexEmail(SimpleEmail):
           content -- obsah zprávy
           html -- indikace, zda je obsah content v html podobě
           bcc -- adresa příjemce pro bcc nebo sekvence adres
+          replyto -- adresa odesilatele pro zaslání odpovědi
           smtp -- adresa odesílacího serveru
         """  
         super(ComplexEmail, self).__init__(to, from_, subject, content, html=html,
-                                           bcc=bcc, smtp=smtp, charset=charset)
+                                           bcc=bcc, replyto=replyto, smtp=smtp, charset=charset)
         self.parts = []        
 
     def _create_message(self):
