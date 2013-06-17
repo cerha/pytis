@@ -1140,7 +1140,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     or isinstance(ctype, TimeInterval) and db_type_cls == Time # temporary hack
                     or isinstance(ctype, db_type_cls)), \
                 ("User type doesn't match DB type", ctype, db_type_cls)
-            result = result.clone(ctype)
+            if db_type_cls == Binary and not isinstance(ctype, Binary):
+                result = ctype
+            else:
+                result = result.clone(ctype)
         if type_kwargs:
             result = result.clone(result.__class__(**type_kwargs))
         return result
