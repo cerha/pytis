@@ -262,7 +262,7 @@ class GPGEmail(SimpleEmail):
         "Encrypt the content."
         gpg = self._setup_gpg()
         if not gpg:
-            raise ProgramError(self._error_msg)
+            raise pytis.util.ProgramError(self._error_msg)
         if isinstance(self.to, basestring):
             to = (self.to,)
         elif isinstance(self.to, unicode):
@@ -289,7 +289,7 @@ class GPGEmail(SimpleEmail):
         except:
             pass
         if not success:
-            raise ProgramError(self.ERR_GPG_OUTPUT)
+            raise pytis.util.ProgramError(self.ERR_GPG_OUTPUT)
         else:
             return output    
 
