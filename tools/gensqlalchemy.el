@@ -234,15 +234,19 @@ Currently the mode just defines some key bindings."
 
 (defun gensqlalchemy-module ()
   (let ((paths (split-string (getenv "PYTHONPATH") ":" t))
-        (module nil))
+        (module nil)
+        (directory (expand-file-name default-directory)))
     (while (and paths (not module))
       (let ((p (pop paths)))
         (unless (char-equal (aref p (1- (length p))) ?/)
           (setq p (concat p "/")))
-        (when (string-prefix-p p default-directory)
+        (when (string-prefix-p p directory)
           (setq module (replace-regexp-in-string
                         "/" "."
-                        (substring default-directory (length p) -1))))))
+                        (substring directory (length p) -1))))))
+    (unless module
+      (error "Specification module for directory %s not found in PYTHONPATH \"%s\""
+              directory (or (getenv "PYTHONPATH") "")))
     module))
 
 (defmacro with-gensqlalchemy-pythonpath (&rest body)
