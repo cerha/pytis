@@ -1485,7 +1485,7 @@ class ViewSpec(object):
                 singular = title
         else:
             assert isinstance(singular, basestring)
-        assert is_sequence(fields)
+        assert isinstance(fields, (tuple, list,)), fields
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
         self._spec_name = spec_name
@@ -3185,14 +3185,14 @@ class Field(object):
                 assert k in ('not_null', 'unique', 'constraints', 'minlen', 'maxlen',
                              'minimum', 'maximum', 'encrypted', 'precision', 'format',
                              'mindate', 'maxdate', 'utc', 'validation_messages',
-                             'inner_type', 'minsize', 'maxsize', 'formats', 
+                             'inner_type', 'minsize', 'maxsize', 'formats',
                              'strength', 'md5', 'verify', 'text',), \
-                             err("Invalid argument: %r", k)
+                    err("Invalid argument: %r", k)
             # Temporary: We won't even log the old way of passing type
             # arguments in the first step.  We will uncomment it when we decide
             # to start modifying the applications.
             #if kwargs:
-            #    log_("Passing data type arguemnts to Field is deprecated: %r", tuple(kwargs.keys()))
+            #    log_("Passing data type arguments to Field is deprecated: %r", tuple(kwargs.keys()))
         self._id = id
         self._dbcolumn = dbcolumn or id
         if label is None:
@@ -3287,7 +3287,12 @@ class Field(object):
         """
         assert isinstance(field, Field), field
         kwargs = dict(self._kwargs, **field._kwargs)
-        return Field(**kwargs)
+        new_field = Field(**kwargs)
+        if kwargs.get('codebook') is not None:
+            type_ = kwargs.get('type') or field.type()
+            if type_ is not None:
+                new_field.set_type(type_)
+        return new_field
 
     def id(self):
         return self._id
@@ -3482,6 +3487,14 @@ class Field(object):
             if type(inner_type) == type(pytis.data.Type):
                 kwargs = {'inner_type': inner_type(**kwargs)}
         return kwargs
+
+    def set_type(self, type_):
+        # Setting the field type is a gross hack necessary due to our
+        # codebook handlings.
+        args, kwargs = type_.init_args()
+        kwargs = copy.copy(kwargs)
+        kwargs.update(self.type_kwargs())
+        self._type = self._kwargs['type'] = type_.__class__(*args, **kwargs)
 
 
 # Backwards compatibility alias
@@ -4577,6 +4590,33 @@ class Specification(object):
     _specifications_by_db_spec_name = {}
     _access_rights = None
 
+    class _Fields(list):
+        def get(self, id_):
+            for f in self:
+                if f.id() == id_:
+                    return f
+            raise KeyError(id_)
+        def set(self, id_, field):
+            for i in range(len(self)):
+                if self[i].id() == id_:
+                    self[i] = field
+                    return field
+            raise KeyError(id_)
+        def override(self, field_ids, **properties):
+            if isinstance(field_ids, basestring):
+                field_ids = (field_ids,)
+            elif isinstance(field_ids, list):
+                field_ids = set([f.id() for f in self]) - set(field_ids)
+            for id_ in field_ids:
+                property_field = Field(id_, **properties)
+                self.set(id_, self.get(id_).clone(property_field))
+        def set_property(self, property_, **settings):
+            for id_, value in settings.items():
+                self.override(id_, **{property_: value})
+        def exclude(self, field_ids):
+            for id_ in field_ids:
+                self.remove(self.get(id_))
+
     @staticmethod
     def _init_access_rights(connection_data):
         """Read access rights of data specifications from the database.
@@ -4657,7 +4697,7 @@ class Specification(object):
         # TODO: the `resolver' argument is not normally passed now.  It is here
         # just for backwards compatibility for specifications which override
         # the constructor for some reason (mostly because they define
-        # additional kwargs).  Once the resolver arguemnt is removed from
+        # additional kwargs).  Once the resolver argument is removed from
         # applications, it should be removed from here too.
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
@@ -4666,7 +4706,7 @@ class Specification(object):
                 value = getattr(self, attr)
                 if isinstance(value, collections.Callable):
                     setattr(self, attr, value())
-        assert isinstance(self.fields, (list, tuple)), self.fields
+        assert isinstance(self.fields, (list, tuple,)), self.fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
         self._view_spec_kwargs = {'help': self.__class__.__doc__}
         for attr in dir(self):
@@ -4699,6 +4739,9 @@ class Specification(object):
             fields = self._init_from_db_fields(table, fields)
             if issubclass(table, pytis.data.gensqlalchemy.SQLFunctional):
                 self.arguments = [Field(a.id(), type=a.type()) for a in table.arguments]
+        if not isinstance(fields, self._Fields):
+            fields = self._Fields(fields)
+        self._customize_fields(fields)
         self._view_spec_kwargs['fields'] = fields
         self._fields = fields
         #if self.__class__.__doc__:
@@ -4712,13 +4755,6 @@ class Specification(object):
         xfields = []
         xfields_map = {}
         i = 0
-        def set_field_type(field, type_):
-            # Setting the field type is a gross hack necessary due to our
-            # codebook handlings.
-            args, kwargs = type_.init_args()
-            kwargs = copy.copy(kwargs)
-            kwargs.update(field.type_kwargs())
-            field._type = field._kwargs['type'] = type_.__class__(*args, **kwargs)
         for c in table.specification_fields():
             descr = None
             if c.label():
@@ -4746,7 +4782,7 @@ class Specification(object):
                                                             c.id(),))
             f = Field(c.id(), c.label(), type=None, descr=descr, default=default,
                       editable=editable, codebook=codebook, not_null=c.type().not_null())
-            set_field_type(f, type_)
+            f.set_type(type_)
             xfields.append(f)
             xfields_map[c.id()] = i
             i += 1
@@ -4765,7 +4801,7 @@ class Specification(object):
                                     f.id())
                 xfields[n] = result_field = db_field.clone(f)
                 if f.codebook() is not None:
-                    set_field_type(result_field, result_field.type())
+                    result_field.set_type(result_field.type())
         if __debug__:
             for f in xfields:
                 assert f.type() is not None, ("Field type not specified", self, f.id(),)
@@ -4846,6 +4882,15 @@ class Specification(object):
             title = ' '.join(split_camel_case(self.__class__.__name__))
         return ViewSpec(title, **kwargs)
 
+    def _db_fields(self):
+        table = self.table
+        if table is None or isinstance(table, basestring):
+            return ()
+        return self._init_from_db_fields(table, ())
+
+    def _customize_fields(self, fields):
+        pass
+
     def _inherited_fields(self, cls, override=(), exclude=()):
         """Helper method for simplification of field inheritance.
         
@@ -4867,16 +4912,26 @@ class Specification(object):
 
         """
         fields = super(cls, self).fields
-        if isinstance(fields, collections.Callable):
+        if fields is None or fields == ():
+            fields = self._db_fields()
+        elif isinstance(fields, collections.Callable):
             fields = fields()
-        if override:
-            inherited = dict([(field.id(), field) for field in fields])
-            overriden = dict([(field.id(), inherited[field.id()].clone(field))
-                              for field in override])
-        else:
-            overriden = {}
-        return tuple([overriden.get(field.id(), field)
-                      for field in fields if field.id() not in exclude])
+        if not isinstance(fields, self._Fields):
+            fields = self._Fields(fields)
+        for o in override:
+            if isinstance(o, Field):
+                fid = o.id()
+                fields.set(fid, fields.get(fid).clone(o))
+            elif isinstance(o, dict):
+                fields.override(**o)
+            else:
+                raise ProgramError("Invalid override", o)
+        if exclude:
+            fields.exclude(exclude)
+        return fields
+
+    def _spec_fields(self, **kwargs):
+        return self._inherited_fields(self.__class__, **kwargs)
     
     def view_spec(self):
         """Vrať prezentační specifikaci jako instanci 'ViewSpec'."""
