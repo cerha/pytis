@@ -2806,23 +2806,39 @@ class SQLPyFunction(SQLFunctional):
     Therefore there are some limits on the name of the function, e.g. it is not
     a good idea to name a PL/Python function 'body'.
 
-    You can define utility Python functions for use in the PL/Python function.
-    The utility functions are also defined as static methods of the
-    specification class.  The methods must be named sub_NAME, where NAME is the
-    name of the utility function, and must have the same arguments.  Functions
-    defined this way are available for use in the PL/Python function.  You can
-    also define utility inner classes in a similar way, they must be named
-    Sub_NAME.
+    You can define utility Python functions, methods and attributes for use in
+    the PL/Python function.  The utility objects are defined in 'Util' inner
+    class, see its documentation for more information.  Objects defined this
+    way are available for use in the PL/Python function.
     
     Utility functions and classes are typically defined in a common base class
-    inherited by specifications of PL/Python functions.
-    
+    inherited by specifications of PL/Python functions or in a common
+    'SQLPyFunction.Util' subclass inherited by 'Util' inner classes in
+    specifications.
+
     """
     _LANGUAGE = 'plpythonu'
 
     _SUBROUTINE_MATCHER = re.compile('( *)(@staticmethod\r?\n?|class )', re.MULTILINE)
+
+    class Util(object):
+        """Inner class for utility definitions to be used in the function.
+
+        All static methods, classes, and attributes containing primitive type
+        values or class instances providing proper 'repr' output defined in
+        this class are available to the PL/Python function with the exception
+        of objects whose names start with underscore.
+
+        You can refer from the PL/Python function to the objects defined in
+        this class by their fully qualified names.  For example, if you define
+        auxiliary function 'bar' in 'Foo' PL/Python function specification, you
+        can call the function using the name 'Foo.Util.bar' in the function
+        code.
+
+        """
     
     def body(self):
+        # The method itself
         main_method_name = self.name
         arguments = inspect.getargspec(getattr(self, main_method_name)).args
         arglist = string.join(arguments, ', ')
@@ -2836,32 +2852,57 @@ class SQLPyFunction(SQLFunctional):
             while lines and not lines[0].rstrip().endswith('):'):
                 lines.pop(0)
             lines.pop(0)
-        main_lines = self._method_source_lines(main_method_name, 0)
+        main_lines = self._method_source_lines(main_method_name, getattr(self, main_method_name), 0)
         strip_header(main_lines)
-        prefix = 'sub_'
-        for name in dir(self):
-            if name.startswith(prefix):
-                function_lines = self._method_source_lines(name, 4) # hard-wired forev^h^h now
-                function_lines = function_lines[1:]
+        # Auxiliary objects
+        def output_method(name, method, indentation, prefix=None):
+            function_lines = self._method_source_lines(name, method, indentation)
+            function_lines = function_lines[1:]
+            if prefix:
                 first_line = function_lines[0]
                 i = first_line.find(prefix)
                 j = i + len(prefix)
                 function_lines[0] = first_line[:i] + first_line[j:]
-                lines += function_lines
-        prefix = 'Sub_'
-        for name in dir(self):
-            if name.startswith(prefix):
-                class_lines = self._method_source_lines(name, 4) # hard-wired forev^h^h now
+            else:
+                function_lines.insert(0, ' ' * indentation + '@staticmethod')
+            lines.extend(function_lines)
+        def output_class(name, class_, indentation, prefix=None):
+            class_lines = self._method_source_lines(name, class_, indentation)
+            if prefix:
                 first_line = class_lines[0]
                 i = first_line.find(prefix)
                 j = i + len(prefix)
                 class_lines[0] = first_line[:i] + first_line[j:]
-                lines += class_lines
+            lines.extend(class_lines)
+        def output_attribute(name, value, indentation):
+            line = '%s%s = %s' % (' ' * indentation, name, repr(value),)
+            lines.append(line)
+        names = [n for n in dir(self.Util) if n[0] != '_']
+        if names:
+            lines.append('    class %s:\n        class Util:' % (self.__class__.__name__,))
+            for n in names:
+                obj = getattr(self.Util, n)
+                obj_type = type(obj)
+                if obj_type == types.FunctionType:
+                    output_method(n, obj, 12)
+                elif obj_type == types.TypeType:
+                    output_class(n, obj, 12)
+                else:
+                    output_attribute(n, obj, 12)
+        # Backward compatibility
+        prefix = 'sub_'
+        for name in dir(self):
+            if name.startswith(prefix):
+                output_method(name, getattr(self, name), 4, prefix=prefix)
+        prefix = 'Sub_'
+        for name in dir(self):
+            if name.startswith(prefix):
+                output_class(name, getattr(self, name), 4, prefix=prefix)
+        # Final result
         lines += main_lines
         return string.join(lines, '\n')
 
-    def _method_source_lines(self, name, indentation):
-        method = getattr(self, name)
+    def _method_source_lines(self, name, method, indentation):
         try:
             lines = inspect.getsourcelines(method)[0]
         except Exception as e:

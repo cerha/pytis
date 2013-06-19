@@ -325,18 +325,22 @@ class PyFunc(sql.SQLPyFunction):
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
+    class Util(sql.SQLPyFunction.Util):
+
+        INCREMENT = 1
+
+        @staticmethod
+        def pythonic(x, y):
+            return x * y
+
+        class Computer(object):
+            def compute(self, value):
+                return value + PyFunc.Util.INCREMENT
+
     @staticmethod
     def times(x, y):
-        computer = Computer()
-        return computer.compute(pythonic(x, y))
-
-    @staticmethod
-    def sub_pythonic(x, y):
-        return x * y
-
-    class Sub_Computer(object):
-        def compute(self, value):
-            return value + 1
+        computer = PyFunc.Util.Computer()
+        return computer.compute(PyFunc.Util.pythonic(x, y))
 
 class PyFuncSingleArg(sql.SQLPyFunction):
     name = 'single_argument'
