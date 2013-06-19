@@ -4591,12 +4591,37 @@ class Specification(object):
     _access_rights = None
 
     class _Fields(list):
+        """Wrapper around field list.
+
+        It behaves as normal field list with additional methods for retrieving,
+        setting, removing and modifying the fields in the list.
+
+        """
         def get(self, id_):
+            """Return field with id 'id_' from the field list.
+
+            Arguments:
+
+              id_ -- id of the field; basestring
+
+            If no such field exists, raise 'KeyError'.
+            
+            """
             for f in self:
                 if f.id() == id_:
                     return f
             raise KeyError(id_)
         def set(self, id_, field):
+            """Replace field with id 'id_' by 'field' in the field list.
+
+            Arguments:
+
+              id_ -- id of the replaced field; basestring
+              field -- new field to be put at the given place; 'Field' instance
+
+            If no such field exists, raise 'KeyError'.
+            
+            """
             for i in range(len(self)):
                 if self[i].id() == id_:
                     self[i] = field
@@ -4607,18 +4632,76 @@ class Specification(object):
                 property_field = Field(id_, **properties)
                 self.set(id_, self.get(id_).clone(property_field))
         def modify(self, field_id, **properties):
+            """Modify properties of the field identified by 'field_id'.
+
+            Arguments:
+
+              field_id -- id of the field to modify; basestring
+              properties -- dictionary of property names (strings) as keys and
+                their values as values
+
+            If field_id is not found, raise 'KeyError'.
+            
+            """
             self._modify((field_id,), **properties)
         def modify_many(self, field_ids, **properties):
+            """Modify properties of the fields identified by 'field_ids'.
+
+            Arguments:
+
+              field_ids -- sequence of ids (basestrings) of the fields to
+                modify
+              properties -- dictionary of property names (strings) as keys and
+                their values as values
+
+            If any of the field_ids is not found, raise 'KeyError'.
+            
+            """
             self._modify(field_ids, **properties)
         def modify_except(self, field_ids, **properties):
+            """Modify properties of all fields except of those with 'field_ids'.
+
+            Arguments:
+
+              field_ids -- sequence of ids (basestrings) of the fields to
+                exclude from modification
+              properties -- dictionary of property names (strings) as keys and
+                their values as values
+
+            If you want to modify properties of all fields, use an empty
+            sequence as 'field_ids' argument.
+            
+            """
             field_ids_to_modify = set([f.id() for f in self]) - set(field_ids)
-            self._modify(field_ids_to_modify, **properties)    
+            self._modify(field_ids_to_modify, **properties)
         def set_property(self, property_, **settings):
+            """Set field 'property' of several fields to given values.
+
+            Arguments:
+
+              property_ -- name of the field property to set; basestring
+              settings -- dictionary with field ids (basestrings) as keys and
+                property values as values
+
+            If any of the field_ids is not found, raise 'KeyError'.
+            
+            """
             for id_, value in settings.items():
                 self._modify((id_,), **{property_: value})
         def exclude(self, field_ids):
-            for id_ in field_ids:
-                self.remove(self.get(id_))
+            """Remove fields with ids in 'field_ids' from the list.
+
+            Arguments:
+
+              field_ids -- sequence of field ids (basestrings) identifying the
+                fields to remove
+
+            If any of the field_ids is not found, raise 'KeyError'.
+
+            """
+            fields_to_remove = [self.get(id_) for id_ in field_ids]
+            for f in fields_to_remove:
+                self.remove(f)
 
     @staticmethod
     def _init_access_rights(connection_data):
