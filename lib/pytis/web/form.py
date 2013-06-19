@@ -1461,7 +1461,7 @@ class BrowseForm(LayoutForm):
             r = data.fetchone()
             if r is None:
                 break
-            row.set_row(r)
+            row.set_row(r, reset=True)
             if self._grouping:
                 group_values = [row[cid].value() for cid in self._grouping]
                 if group_values != last_group_values:
