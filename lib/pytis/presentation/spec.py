@@ -4602,17 +4602,20 @@ class Specification(object):
                     self[i] = field
                     return field
             raise KeyError(id_)
-        def override(self, field_ids, **properties):
-            if isinstance(field_ids, basestring):
-                field_ids = (field_ids,)
-            elif isinstance(field_ids, list):
-                field_ids = set([f.id() for f in self]) - set(field_ids)
+        def _modify(self, field_ids, **properties):
             for id_ in field_ids:
                 property_field = Field(id_, **properties)
                 self.set(id_, self.get(id_).clone(property_field))
+        def modify(self, field_id, **properties):
+            self._modify((field_id,), **properties)
+        def modify_many(self, field_ids, **properties):
+            self._modify(field_ids, **properties)
+        def modify_except(self, field_ids, **properties):
+            field_ids_to_modify = set([f.id() for f in self]) - set(field_ids)
+            self._modify(field_ids_to_modify, **properties)    
         def set_property(self, property_, **settings):
             for id_, value in settings.items():
-                self.override(id_, **{property_: value})
+                self._modify((id_,), **{property_: value})
         def exclude(self, field_ids):
             for id_ in field_ids:
                 self.remove(self.get(id_))
@@ -4919,13 +4922,8 @@ class Specification(object):
         if not isinstance(fields, self._Fields):
             fields = self._Fields(fields)
         for o in override:
-            if isinstance(o, Field):
-                fid = o.id()
-                fields.set(fid, fields.get(fid).clone(o))
-            elif isinstance(o, dict):
-                fields.override(**o)
-            else:
-                raise ProgramError("Invalid override", o)
+            fid = o.id()
+            fields.set(fid, fields.get(fid).clone(o))
         if exclude:
             fields.exclude(exclude)
         return fields
