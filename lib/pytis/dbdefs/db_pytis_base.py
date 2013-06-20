@@ -7,29 +7,31 @@ import pytis.data.gensqlalchemy as sql
 import pytis.data
 
 default_access_rights = sql.SQLFlexibleValue('app_default_access_rights',
-                                               environment='GSQL_DEFAULT_ACCESS_RIGHTS',
-                                               default=(('all', 'pytis',),))
+                                             environment='GSQL_DEFAULT_ACCESS_RIGHTS',
+                                             default=(('all', 'pytis',),))
 pytis_schemas = sql.SQLFlexibleValue('app_pytis_schemas',
-                                       environment='GSQL_PYTIS_SCHEMAS',
-                                       default=(('public',),))
-cms_rights = sql.SQLFlexibleValue('app_cms_rights',
-                                    environment='GSQL_CMS_RIGHTS',
-                                    default=(('all', 'pytis',),))
-cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
-                                       environment='GSQL_CMS_RIGHTS_RW',
-                                       default=(('all', 'pytis',),))
-cms_users_table = sql.SQLFlexibleValue('app_cms_users_table',
-                                         default='cms_users_table')
-cms_schemas = sql.SQLFlexibleValue('app_cms_schemas',
-                                     environment='GSQL_CMS_SCHEMAS',
+                                     environment='GSQL_PYTIS_SCHEMAS',
                                      default=(('public',),))
-http_attachment_storage_rights = sql.SQLFlexibleValue('app_http_attachment_storage_rights',
-                                                        environment='GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS',
-                                                        default=(('insert', 'pytis'), ('delete', 'pytis'), ('select', 'pytiswebuser'),))
+cms_rights = sql.SQLFlexibleValue('app_cms_rights',
+                                  environment='GSQL_CMS_RIGHTS',
+                                  default=(('all', 'pytis',),))
+cms_rights_rw = sql.SQLFlexibleValue('app_cms_rights_rw',
+                                     environment='GSQL_CMS_RIGHTS_RW',
+                                     default=(('all', 'pytis',),))
+cms_users_table = sql.SQLFlexibleValue('app_cms_users_table',
+                                       default='cms_users_table')
+cms_schemas = sql.SQLFlexibleValue('app_cms_schemas',
+                                   environment='GSQL_CMS_SCHEMAS',
+                                   default=(('public',),))
+http_attachment_storage_rights = \
+    sql.SQLFlexibleValue('app_http_attachment_storage_rights',
+                         environment='GSQL_HTTP_ATTACHMENT_STORAGE_RIGHTS',
+                         default=(('insert', 'pytis'), ('delete', 'pytis'),
+                                  ('select', 'pytiswebuser'),))
 
 
-TMoney    = 'numeric(15,2)'
-TKurz     = 'numeric(12,6)'
+TMoney = 'numeric(15,2)'
+TKurz = 'numeric(12,6)'
 
 class Base_PyFunction(sql.SQLPyFunction):
     @staticmethod
@@ -58,20 +60,20 @@ class Base_PyFunction(sql.SQLPyFunction):
             pg_value = "'%s'" % (pg_escape(val))
         return pg_value
     @staticmethod
-    def sub__html_table(columns_labels,rows):
+    def sub__html_table(columns_labels, rows):
         def st(val):
             if val is None or str(val).strip() == '':
                 return '&nbsp;'
-            return str(val).replace(' ','&nbsp;')
-        html_rows=[]
+            return str(val).replace(' ', '&nbsp;')
+        html_rows = []
         if len(columns_labels) == 0:
             return None
         html_rows.append('<table>\n<tr>')
-        [html_rows.append('<td><b>'+st(x[1])+'</b></td>') for x in columns_labels]
-        html_rows.append('</tr>')                         
+        [html_rows.append('<td><b>' + st(x[1]) + '</b></td>') for x in columns_labels]
+        html_rows.append('</tr>')
         for row in rows:
             html_rows.append('<tr>')
-            [html_rows.append('<td>'+st(row[x[0]])+'</td>')              for x in columns_labels]
+            [html_rows.append('<td>' + st(row[x[0]]) + '</td>') for x in columns_labels]
             html_rows.append('</tr>')
         html_rows.append('</table>')
         html_table = '\n'.join(html_rows)
@@ -86,20 +88,20 @@ class Base_PyTriggerFunction(Base_PyFunction):
             self._TD = TD
             self._event = TD["event"].lower()
             self._when = TD["when"].lower()
-            self._level = TD["level"].lower() 
+            self._level = TD["level"].lower()
             self._name = TD["name"].lower()
             self._table_name = TD["table_name"].lower()
             self._table_schema = TD["table_schema"].lower()
             self._table_oid = TD["relid"]
             self._args = TD["args"]
-            # 
+            #
             self._new = self._old = None
             if self._event in ('insert', 'update'):
                 self._new = TD["new"]
             if self._event in ('delete', 'update'):
                 self._old = TD["old"]
             #
-            self._return_code = self._RETURN_CODE_OK    
+            self._return_code = self._RETURN_CODE_OK
         def _do_after_insert(self):
             pass
         def _do_after_update(self):
@@ -111,20 +113,20 @@ class Base_PyTriggerFunction(Base_PyFunction):
         def _do_before_update(self):
             pass
         def _do_before_delete(self):
-            pass        
+            pass
         def do_trigger(self):
             if self._when == 'before':
                 if self._event == 'insert':
                     self._do_before_insert()
                 elif self._event == 'update':
-                    self._do_before_update()                    
+                    self._do_before_update()
                 elif self._event == 'delete':
                     self._do_before_delete()
             elif self._when == 'after':
                 if self._event == 'insert':
                     self._do_after_insert()
                 elif self._event == 'update':
-                    self._do_after_update()                    
+                    self._do_after_update()
                 elif self._event == 'delete':
                     self._do_after_delete()
             return self._return_code
@@ -135,12 +137,13 @@ class XInserts(sql.SQLTable):
     tabulek."""
     name = '_inserts'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
-              sql.Column('vytvoril', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
-              sql.Column('vytvoreno', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
-              sql.Column('tabulka', pytis.data.String(not_null=False)),
-              sql.Column('klic', pytis.data.String(not_null=False)),
-             )
+        sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
+        sql.Column('vytvoril', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
+        sql.Column('vytvoreno', pytis.data.DateTime(not_null=True),
+                   default=sqlalchemy.text('now()')),
+        sql.Column('tabulka', pytis.data.String(not_null=False)),
+        sql.Column('klic', pytis.data.String(not_null=False)),
+    )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -149,13 +152,14 @@ class XUpdates(sql.SQLTable):
     tabulek."""
     name = '_updates'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace změnového řádku"),
-              sql.Column('zmenil', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
-              sql.Column('zmeneno', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
-              sql.Column('tabulka', pytis.data.String(not_null=False)),
-              sql.Column('klic', pytis.data.String(not_null=False)),
-              sql.Column('zmeny', pytis.data.String(not_null=False)),
-             )
+        sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace změnového řádku"),
+        sql.Column('zmenil', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
+        sql.Column('zmeneno', pytis.data.DateTime(not_null=True),
+                   default=sqlalchemy.text('now()')),
+        sql.Column('tabulka', pytis.data.String(not_null=False)),
+        sql.Column('klic', pytis.data.String(not_null=False)),
+        sql.Column('zmeny', pytis.data.String(not_null=False)),
+    )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -164,12 +168,13 @@ class XDeletes(sql.SQLTable):
     tabulkách."""
     name = '_deletes'
     fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
-              sql.Column('smazal', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
-              sql.Column('smazano', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
-              sql.Column('tabulka', pytis.data.String(not_null=False)),
-              sql.Column('klic', pytis.data.String(not_null=False)),
-             )
+        sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
+        sql.Column('smazal', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
+        sql.Column('smazano', pytis.data.DateTime(not_null=True),
+                   default=sqlalchemy.text('now()')),
+        sql.Column('tabulka', pytis.data.String(not_null=False)),
+        sql.Column('klic', pytis.data.String(not_null=False)),
+    )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -186,7 +191,7 @@ class XLogUpdateTrigger(Base_PyFunction):
     @staticmethod
     def _log_update_trigger():
         def pg_escape(val):
-            return val.replace("'", "''").replace(chr(92),2*chr(92))
+            return val.replace("'", "''").replace(chr(92), 2 * chr(92))
         event = TD["event"]
         if event == "DELETE":
             newold = "old"
@@ -234,8 +239,8 @@ class XLogUpdateTrigger(Base_PyFunction):
                     zmena = """%s: %s -> %s""" % (k, pg_escape(str(TD["old"][k])),
                                                   pg_escape(str(TD["new"][k])))
                 zmeny.append(zmena)
-        if zmeny != []:        
-            zmenystr = """\n""".join(zmeny)        
+        if zmeny != []:
+            zmenystr = """\n""".join(zmeny)
             q = """insert into _updates (tabulka, klic, zmeny)
                    select '%s', '%s', '%s'
                 """ % (tabulka, klicestr, zmenystr)
@@ -334,4 +339,3 @@ class Base_LogSQLTable(sql.SQLTable):
     def triggers(self):
         keys = ','.join([f.id() for f in self.fields if f.primary_key()])
         return ((Base_LogTrigger, keys,),)
-
