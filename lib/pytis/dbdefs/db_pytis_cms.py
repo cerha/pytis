@@ -66,13 +66,6 @@ class CmsMenuStructureTreeOrder(sql.SQLFunction):
     depends_on = (CmsMenuStructure,)
     access_rights = ()
 
-    def body(self):
-        return """
-           select case when parent is null then text2ltree('')
-                       else cms_menu_structure_tree_order(parent)
-                  end || to_char(coalesce(ord, 999999), 'FM000000')::text as result
-           from cms_menu_structure where menu_item_id=$1"""
-
 class CmsMenuTexts(sql.SQLTable):
     """Language dependent texts and properties for menu items."""
     name = 'cms_menu_texts'

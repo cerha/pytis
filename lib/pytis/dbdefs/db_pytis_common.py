@@ -213,7 +213,7 @@ class OnlyDigits(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """select ($1 ~ '^[0-9]+$')"""
+        return "select ($1 ~ '^[0-9]+$')"
 
 class FDateYear(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
@@ -227,7 +227,7 @@ class FDateYear(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """select date_part('year', $1)::int"""
+        return "select date_part('year', $1)::int"
 
 class FDateHalfyear(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
@@ -241,7 +241,7 @@ class FDateHalfyear(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """select case when date_part('month', $1) < 7 then 1 else 2 end::int"""
+        return "select case when date_part('month', $1) < 7 then 1 else 2 end::int"
 
 class FDateQuarter(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
@@ -255,7 +255,7 @@ class FDateQuarter(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """select date_part('quarter', $1)::int"""
+        return "select date_part('quarter', $1)::int"
 
 class FDateMonth(sql.SQLFunction):
     """Pomocná funkce pro agregační matici pytisu."""
@@ -269,7 +269,7 @@ class FDateMonth(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """select date_part('month', $1)::int"""
+        return "select date_part('month', $1)::int"
 
 class XChanges(sql.SQLTable):
     """Sloupečky zaznamenávající uživatele a časy vytvoření a změn údajů.
@@ -301,7 +301,7 @@ class NewTempname(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """select '__t' || nextval('tempnames_seq')::text as jmeno"""
+        return "select '__t' || nextval('tempnames_seq')::text as jmeno"
 
 class VInserts(sql.SQLView):
     """Tabulka zaznamenávající přidávání záznamů standardních

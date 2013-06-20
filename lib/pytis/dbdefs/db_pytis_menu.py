@@ -259,15 +259,6 @@ class PytisCopyRole(sql.SQLFunction):
     depends_on = (EPytisRoles, EPytisRoleMembers,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-delete from e_pytis_role_members
-       where member=$2 and roleid in (select roleid from e_pytis_roles where purposeid='appl');
-insert into e_pytis_role_members (roleid, member)
-       select roleid, $2 as member from e_pytis_role_members left join e_pytis_roles on roleid=name
-              where member=$1 and purposeid='appl';
-"""
-
 class PytisUser(sql.SQLFunction):
     """Return current pytis user.
     By redefining this function, debugging of user behavior or sulogin may be possible."""
@@ -280,9 +271,7 @@ class PytisUser(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """
-select user;
-"""
+        return "select user"
 
 class CPytisActionTypes(sql.SQLTable):
     """List of defined action types."""
@@ -1217,14 +1206,6 @@ class PytisCopyRights(sql.SQLFunction):
     depends_on = (EPytisActionRights,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-update e_pytis_action_rights set status=-1 where shortname=$2;
-insert into e_pytis_action_rights (shortname, roleid, rightid, colname, system, granted)
-       select $2 as shortname, roleid, rightid, colname, system, granted from e_pytis_action_rights
-              where shortname=$1 and status>=0;
-"""
-
 class PytisColumnsInRights(sql.SQLFunction):
     """Return column names appearing in rights assigned to given shortname."""
     name = 'pytis_columns_in_rights'
@@ -1235,11 +1216,6 @@ class PytisColumnsInRights(sql.SQLFunction):
     depends_on = (EPytisActionRights,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-select distinct colname from e_pytis_action_rights where shortname=$1 and colname is not null;
-"""
-
 class PytisRemoveRedundant(sql.SQLFunction):
     """Remove redundant rights of the given action."""
     name = 'pytis_remove_redundant'
@@ -1249,11 +1225,6 @@ class PytisRemoveRedundant(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (EPytisActionRights, EvPytisActionRights,)
     access_rights = default_access_rights.value(globals())
-
-    def body(self):
-        return """
-delete from ev_pytis_action_rights where shortname=$1 and redundant='t';
-"""
 
 class PytisActionsLockId(sql.SQLFunction):
     """Id of the advisory lock for a_pytis_actions_structure."""
@@ -1266,9 +1237,7 @@ class PytisActionsLockId(sql.SQLFunction):
     access_rights = default_access_rights.value(globals())
 
     def body(self):
-        return """
-select 200910081415;
-"""
+        return "select 200910081415"
 
 class TypSummaryRights(sql.SQLType):
     name = 'typ_summary_rights'
@@ -1510,12 +1479,6 @@ class PytisUpdateSummaryRights(sql.SQLFunction):
     depends_on = (EPytisActionRights,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-delete from e_pytis_action_rights where status<0;
-update e_pytis_action_rights set status=0 where status>0;
-"""
-
 class APytisActionsStructure(sql.SQLTable):
     """Precomputed actions structure as presented to menu admin.
     Item positions and indentations are determined by positions.
@@ -1749,9 +1712,7 @@ class PytisMultiformSpec(sql.SQLFunction):
     access_rights = ()
 
     def body(self):
-        return """
-select $1 not like 'sub/%' and ($1 like '%::%' or $1 like '%.Multi%');
-"""
+        return "select $1 not like 'sub/%' and ($1 like '%::%' or $1 like '%.Multi%')"
 
 class TypPreviewSummaryRights(sql.SQLType):
     name = 'typ_preview_summary_rights'
@@ -1785,23 +1746,6 @@ class PytisViewSummaryRights(sql.SQLFunction):
     depends_on = (TypPreviewSummaryRights, PytisComputeSummaryRights, EPytisRoles, CPytisRolePurposes,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-select summary.shortname, summary.roleid, summary.rights, summary.columns,
-       purposes.purpose,
-       strpos(summary.rights, 'show')::bool as rights_show,
-       strpos(summary.rights, 'view')::bool as rights_view,
-       strpos(summary.rights, 'insert')::bool as rights_insert,
-       strpos(summary.rights, 'update')::bool as rights_update,
-       strpos(summary.rights, 'delete')::bool as rights_delete,
-       strpos(summary.rights, 'print')::bool as rights_print,
-       strpos(summary.rights, 'export')::bool as rights_export,
-       strpos(summary.rights, 'call')::bool as rights_call
-       from pytis_compute_summary_rights($1, $2, $3, $4, 'f') as summary
-            left outer join e_pytis_roles as roles on summary.roleid = roles.name
-            left outer join c_pytis_role_purposes as purposes on roles.purposeid = purposes.purposeid;
-"""
-
 class TypPreviewRoleMenu(sql.SQLType):
     name = 'typ_preview_role_menu'
     fields = (
@@ -1832,21 +1776,6 @@ class PytisViewRoleMenu(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (TypPreviewRoleMenu, PytisComputeSummaryRights, EPytisRoles, CPytisRolePurposes, EvPytisMenu,)
     access_rights = default_access_rights.value(globals())
-
-    def body(self):
-        return """
-select menu.menuid, menu.title, menu.position, menu.position_nsub, summary.roleid, summary.rights, 
-       strpos(summary.rights, 'show')::bool as rights_show,
-       strpos(summary.rights, 'view')::bool as rights_view,
-       strpos(summary.rights, 'insert')::bool as rights_insert,
-       strpos(summary.rights, 'update')::bool as rights_update,
-       strpos(summary.rights, 'delete')::bool as rights_delete,
-       strpos(summary.rights, 'print')::bool as rights_print,
-       strpos(summary.rights, 'export')::bool as rights_export,
-       strpos(summary.rights, 'call')::bool as rights_call
-       from ev_pytis_menu as menu inner join pytis_compute_summary_rights(NULL, $1, $2, 't', 't') as summary
-            on menu.shortname = summary.shortname;
-"""
 
 class TypPreviewExtendedRoleMenu(sql.SQLType):
     name = 'typ_preview_extended_role_menu'
@@ -1887,53 +1816,6 @@ class PytisViewExtendedRoleMenu(sql.SQLFunction):
     depends_on = (TypPreviewExtendedRoleMenu, APytisActionsStructure, EPytisMenu, EvPytisValidRoles, PytisComputeSummaryRights, CPytisActionTypes, PytisMultiformSpec, CPytisMenuActions,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-select structure.shortname, structure.position, structure.type,
-       menu.menuid, menu.next_position, menu.help, menu.hotkey, menu.locked,
-       atypes.description as actiontype,
-       (select count(*)-1 from a_pytis_actions_structure where position <@ structure.position) as position_nsub,
-       coalesce(menu.title, '('||actions.action_title||')') as title,
-       structure.fullname, summary.roleid,
-       summary.rights,
-       strpos(summary.rights, 'show')::bool as rights_show,
-       strpos(summary.rights, 'view')::bool as rights_view,
-       strpos(summary.rights, 'insert')::bool as rights_insert,
-       strpos(summary.rights, 'update')::bool as rights_update,
-       strpos(summary.rights, 'delete')::bool as rights_delete,
-       strpos(summary.rights, 'print')::bool as rights_print,
-       strpos(summary.rights, 'export')::bool as rights_export,
-       strpos(summary.rights, 'call')::bool as rights_call
-from a_pytis_actions_structure as structure
-     left outer join e_pytis_menu as menu on (structure.menuid = menu.menuid)
-     inner join pytis_compute_summary_rights(NULL, $1, $2, 't', 't') as summary on (structure.shortname = summary.shortname)
-     left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
-     left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname)
-     where pytis_multiform_spec(structure.fullname)
-union
-select structure.shortname, structure.position, structure.type,
-       menu.menuid, menu.next_position, menu.help, menu.hotkey, menu.locked,
-       atypes.description as actiontype,
-       (select count(*)-1 from a_pytis_actions_structure where position <@ structure.position) as position_nsub,
-       coalesce(menu.title, '('||actions.action_title||')') as title,
-       structure.fullname, summary.roleid,
-       summary.rights,
-       strpos(summary.rights, 'show')::bool as rights_show,
-       strpos(summary.rights, 'view')::bool as rights_view,
-       strpos(summary.rights, 'insert')::bool as rights_insert,
-       strpos(summary.rights, 'update')::bool as rights_update,
-       strpos(summary.rights, 'delete')::bool as rights_delete,
-       strpos(summary.rights, 'print')::bool as rights_print,
-       strpos(summary.rights, 'export')::bool as rights_export,
-       strpos(summary.rights, 'call')::bool as rights_call
-from a_pytis_actions_structure as structure
-     left outer join e_pytis_menu as menu on (structure.menuid = menu.menuid)
-     inner join pytis_compute_summary_rights(NULL, $1, $2, 'f', 't') as summary on (structure.shortname = summary.shortname)
-     left outer join c_pytis_action_types as atypes on (structure.type = atypes.type)
-     left outer join c_pytis_menu_actions as actions on (structure.fullname = actions.fullname)
-     where not pytis_multiform_spec(structure.fullname);
-"""
-
 class TypPreviewUserMenu(sql.SQLType):
     name = 'typ_preview_user_menu'
     fields = (
@@ -1960,26 +1842,6 @@ class PytisViewUserMenu(sql.SQLFunction):
     depends_on = (TypPreviewUserMenu, EvPytisTranslatedMenu, PytisComputeSummaryRights, PytisMultiformSpec, PytisUser,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked, menu.language
-from ev_pytis_translated_menu as menu
-left outer join pytis_compute_summary_rights(NULL, pytis_user(), 'f', 't', 't') as rights on (menu.shortname = rights.shortname)
-where pytis_multiform_spec(menu.fullname) and rights.rights like '%show%'
-union
-select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked, menu.language
-from ev_pytis_translated_menu as menu
-left outer join pytis_compute_summary_rights(NULL, pytis_user(), 'f', 'f', 't') as rights on (menu.shortname = rights.shortname)
-where not pytis_multiform_spec(menu.fullname) and rights.rights like '%show%'
-union
-select menu.menuid, menu.name, coalesce(menu.t_title, menu.title), menu.position, menu.next_position, menu.fullname,
-       menu.help, menu.hotkey, menu.locked, menu.language
-from ev_pytis_translated_menu as menu
-where name is null and title is null;
-"""
-
 class TypPreviewRights(sql.SQLType):
     name = 'typ_preview_rights'
     fields = (
@@ -1998,12 +1860,6 @@ class PytisViewUserRights(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (TypPreviewRights, PytisComputeSummaryRights, PytisUser,)
     access_rights = default_access_rights.value(globals())
-
-    def body(self):
-        return """
-select rights.shortname, rights.rights, rights.columns
-from pytis_compute_summary_rights(NULL, pytis_user(), 'f', 'f', 'f') as rights;
-"""
 
 class EvPytisUserRoles(sql.SQLView):
     name = 'ev_pytis_user_roles'
@@ -2063,21 +1919,6 @@ class PytisCheckCodebookRights(sql.SQLFunction):
     depends_on = (PytisComputeSummaryRights,)
     access_rights = default_access_rights.value(globals())
 
-    def body(self):
-        return """
-(
- select roleid from pytis_compute_summary_rights('form/'||$1, NULL, $4, 'f', 'f') where (rights like '%insert%' or rights like '%update%') and (' '||columns||' ') like '% $2 %'
- union
- (
-  select roleid from pytis_compute_summary_rights('form/'||$1, NULL, $4, 'f', 'f') where (rights like '%insert%' or rights like '%update%') and columns=''
-  except
-  select roleid from pytis_compute_summary_rights('form/'||$1, NULL, $4, 'f', 'f') where (' '||columns||' ') like '% $2 %'
- )
-)
-intersect
-select roleid from pytis_compute_summary_rights('form/'||$3, NULL, $4, 'f', 't') where rights not like '%view%';
-"""
-
 class TypChangedRights(sql.SQLType):
     name = 'typ_changed_rights'
     fields = (
@@ -2109,21 +1950,6 @@ class PytisChangedRights(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (TypChangedRights, PytisViewSummaryRights,)
     access_rights = default_access_rights.value(globals())
-
-    def body(self):
-        return """
-(
- select *, False as change from pytis_view_summary_rights($1, $2, 'f', $3)
- except
- select *, False as change from pytis_view_summary_rights($1, $2, 't', $3)
-)
-union
-(
- select *, True as change from pytis_view_summary_rights($1, $2, 't', $3)
- except
- select *, True as change from pytis_view_summary_rights($1, $2, 'f', $3)
-);
-"""
 
 class PytisChangeShortname(Base_PyFunction):
     name = 'pytis_change_shortname'
@@ -2191,13 +2017,3 @@ class PytisChangeSpecificationName(sql.SQLFunction):
     stability = 'VOLATILE'
     depends_on = (PytisChangeShortname, PytisChangeFullname, EPytisDisabledDmpTriggers, CPytisMenuActions, EPytisMenu, EPytisActionRights, APytisActionsStructure,)
     access_rights = ()
-
-    def body(self):
-        return """
-insert into e_pytis_disabled_dmp_triggers (id) values ('genmenu');
-update c_pytis_menu_actions set fullname=pytis_change_fullname(fullname, $1, $2), shortname=pytis_change_shortname(shortname, $1, $2) where shortname != pytis_change_shortname(shortname, $1, $2) or fullname != pytis_change_fullname(fullname, $1, $2);
-update e_pytis_menu set fullname=pytis_change_fullname(fullname, $1, $2) where fullname != pytis_change_fullname(fullname, $1, $2);
-update e_pytis_action_rights set shortname=pytis_change_shortname(shortname, $1, $2) where shortname != pytis_change_shortname(shortname, $1, $2);
-update a_pytis_actions_structure set fullname=pytis_change_fullname(fullname, $1, $2), shortname=pytis_change_shortname(shortname, $1, $2) where shortname != pytis_change_shortname(shortname, $1, $2) or fullname != pytis_change_fullname(fullname, $1, $2);
-delete from e_pytis_disabled_dmp_triggers where id='genmenu';
-"""

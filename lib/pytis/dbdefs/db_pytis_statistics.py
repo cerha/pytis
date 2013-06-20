@@ -80,7 +80,8 @@ class PytisLogForm(sql.SQLFunction):
 
     def body(self):
         return """
-insert into e_pytis_form_log (form, class, info, login, t_start, t_show) values($1, $2, $3, user, $4, $5) returning id;
+insert into e_pytis_form_log (form, class, info, login, t_start, t_show)
+       values($1, $2, $3, user, $4, $5) returning id;
 """
 
 class EvPytisFormSummary(sql.SQLView):
