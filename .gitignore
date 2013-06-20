@@ -5,3 +5,4 @@
 /TAGS
 /translations/*.pot
 /translations/*.d
+*_flymake.py
