@@ -38,6 +38,7 @@ import cgitb
 import codecs
 import copy
 import gc
+import imp
 import inspect
 import operator
 import os
@@ -704,6 +705,7 @@ def is_(x, y):
     """
     return x is y
 
+    
 def xor(x, y):
     """Vrať pravdivostní hodnotu exkluzivního OR výrazů 'x' a 'y'."""
     return (x and not y) or (not x and y)
@@ -1535,6 +1537,25 @@ def rsa_encrypt(key, text):
     else:
         return text
 
+def load_module(module_name):
+    """Load and return module named 'module_name'.
+
+    The module is loaded including its parent modules.
+
+    Arguments:
+
+      module_name -- the module name, it may contain dots; basestring
+
+    """
+    module = __import__(module_name)
+    components = module_name.split('.')[1:]
+    while components:
+        try:
+            module = getattr(module, components.pop(0))
+        except AttributeError:
+            raise ImportError(module_name)
+    return module
+
 
 ### Miscellaneous
 
@@ -1916,7 +1937,9 @@ def translation_status():
     files) but the returned information is read from the PO files directly.
 
     """
-    import polib, os, glob
+    import glob
+    import os
+    import polib
     info = []
     for directory in translation_path():
         for path in glob.glob(os.path.join(directory, '*.*.po')):

@@ -86,6 +86,7 @@ import sys
 import types
 
 import pytis.data
+import pytis.util
 
 
 ## SQLAlchemy extensions
@@ -3522,13 +3523,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
 
     """
     def loader(module_name=module_name):
-        components = module_name.split('.')
-        if len(components) > 1:
-            local_path = os.path.join(*components[:-1])
-            path = [os.path.join(p, local_path) for p in sys.path]
-        else:
-            path = sys.path
-        imp.load_module(module_name, *imp.find_module(components[-1], path))
+        pytis.util.load_module(module_name)
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
                   config_file, upgrade)
 

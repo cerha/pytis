@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2011 Brailcom, o.p.s.
+# Copyright (C) 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 import collections
 import getopt
+import imp
 import sys
 
 import pytis.util
@@ -26,15 +27,12 @@ import config
 
 def find_specification(spec_name):
     resolver = pytis.util.resolver()
-    pos = spec_name.rfind('.')
-    module_name = spec_name[:pos].replace('.', '/')
-    class_name = spec_name[pos+1:]
     try:
-        spec = resolver.get_object(module_name, class_name)
+        spec = resolver.specification(spec_name)
     except pytis.util.ResolverError:
         sys.stderr.write("Specification not found: %s\n" % (spec_name,))
         sys.exit(1)
-    return spec(resolver)
+    return spec
 
 def specification_info(spec):
     info = {}
@@ -49,7 +47,7 @@ def print_info(info):
     for name in field_names:
         sys.stdout.write('Field: %s\n' % (name,))
     def print_layout(layout, indent=0):
-        indentation_string = ' '*indent
+        indentation_string = ' ' * indent
         if isinstance(layout, pytis.presentation.GroupSpec):
             sys.stdout.write('%s%s\n' % (indentation_string, layout.__class__.__name__,))
             for item in layout.items():
@@ -78,7 +76,7 @@ def print_info(info):
             enabled = True
         return enabled
     def print_action(action, indent=0):
-        indentation_string = ' '*indent
+        indentation_string = ' ' * indent
         if isinstance(action, pytis.presentation.Action):
             if enabled_action(action):
                 sys.stdout.write('%sAction: %s\n' % (indentation_string, action.id(),))
@@ -109,10 +107,9 @@ def info(spec_name):
     print_info(info)
 
 def module_info(module_name):
-    resolver = pytis.util.resolver()
     try:
-        module = resolver.get_module(module_name)
-    except pytis.util.ResolverFileError:
+        module = pytis.util.load_module(module_name)
+    except ImportError:
         sys.stderr.write("Module not found: %s\n" % (module_name,))
         sys.exit(1)
     module_identifier = module_name.replace('/', '.')
