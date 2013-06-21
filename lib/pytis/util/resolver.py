@@ -26,10 +26,10 @@ actual use.
 
 """
 
-import imp
 import sys
 
-from pytis.util import *
+from pytis.util import SimpleCache, argument_names
+
 
 def resolver():
     """Deprecated: Use config.resolver instead."""
@@ -92,7 +92,7 @@ class Resolver(object):
         try:
             module = __import__(name)
         except ImportError as e:
-            for i in range(len(components)+1):
+            for i in range(len(components) + 1):
                 if str(e) == 'No module named %s' % '.'.join(components[i:]):
                     # Raise resolver error only if the import error actually
                     # related to importing the named module itself and not to some
@@ -118,7 +118,7 @@ class Resolver(object):
         # Wiking resolver (derived from pytis resolver).
         if '.' in name:
             module_name, spec_name = name.rsplit('.', 1)
-            allow_search = True not in [(module_name+'.').startswith(prefix+'.')
+            allow_search = True not in [(module_name + '.').startswith(prefix + '.')
                                         for prefix in self._search]
         else:
             module_name, spec_name = None, name
@@ -126,7 +126,7 @@ class Resolver(object):
         if self._search and allow_search:
             for prefix in self._search:
                 if module_name is not None:
-                    search_module_name = prefix +'.'+ module_name
+                    search_module_name = prefix + '.' + module_name
                 else:
                     search_module_name = prefix
                 try:
@@ -164,8 +164,9 @@ class Resolver(object):
             return specification
         import pytis.presentation
         if not _issubclass(specification, pytis.presentation.Specification):
-            raise ResolverError("Resolver error loading specification '%s': %s is not a "
-                                "pytis.presentation.Specification subclass." % (name, specification))
+            raise ResolverError(("Resolver error loading specification '%s': %s is not a "
+                                 "pytis.presentation.Specification subclass.") %
+                                (name, specification,))
         if argument_names(specification.__init__):
             # TODO: Remove this temporary hack for backwards compatibility.
             # Now it is necessary for example because some specifications in
@@ -209,8 +210,9 @@ class Resolver(object):
         if not isinstance(specification, pytis.presentation.Specification):
             # We need to avoid returning specification modules here (see
             # _get_specification for its possible return values).
-            raise ResolverError("Resolver error loading specification '%s': %s is not a "
-                                "pytis.presentation.Specification instance." % (name, specification))
+            raise ResolverError(("Resolver error loading specification '%s': %s is not a "
+                                 "pytis.presentation.Specification instance.") %
+                                (name, specification,))
         return specification
 
     def get(self, name, method_name, **kwargs):
@@ -251,7 +253,7 @@ class Resolver(object):
                 if _issubclass(value, cls) and value != cls \
                         and value not in classes and name not in names:
                     classes.append(value)
-                    names[module.__name__+'.'+name] = value
+                    names[module.__name__ + '.' + name] = value
                 elif type(value) == type(module) and value != module \
                         and value.__name__.startswith(module.__name__):
                     submodules.append(value)
@@ -264,8 +266,8 @@ class Resolver(object):
         for module_name in self._search:
             module = self._import_module(module_name)
             search(module)
-        name = dict([(cls, name) for name, cls in names.items()]) # Map classes to their names.
-        return [(name[cls], cls) for cls in classes]
+        name = dict([(class_, name) for name, class_ in names.items()])
+        return [(name[class_], class_) for class_ in classes]
 
     def clear(self):
         """Clear all resolver caches."""
@@ -276,9 +278,8 @@ class Resolver(object):
         """Reload all specification modules and clear all caches."""
         # TODO: It only whorks when search path is set!
         self.clear()
-        to_reload = []
         for name in sys.modules:
             for prefix in self._search:
-                if (name == prefix or name.startswith(prefix+'.')) \
-                        and sys.modules[name] is not None:
+                if (((name == prefix or name.startswith(prefix + '.')) and
+                     sys.modules[name] is not None)):
                     reload(sys.modules[name])
