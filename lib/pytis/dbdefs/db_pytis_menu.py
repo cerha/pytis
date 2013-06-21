@@ -191,15 +191,14 @@ class PytisUpdateTransitiveRoles(Base_PyFunction):
                 all_roles.append(r)
                 new_roles += membership.get(r, [])
             total_membership[role] = all_roles
-        def _pg_escape(val):
-            return str(val).replace("'", "''")
+        pg_escape = PytisUpdateTransitiveRoles.Util.pg_escape
         plpy.execute("delete from a_pytis_valid_role_members")
         for role, total_roles in total_membership.items():
             for total in total_roles:
-                plpy.execute("insert into a_pytis_valid_role_members (roleid, member) values ('%s', '%s')" %
-                             (_pg_escape(total), _pg_escape(role)))
+                plpy.execute(("insert into a_pytis_valid_role_members (roleid, member) "
+                              "values ('%s', '%s')") %
+                             (pg_escape(total), pg_escape(role)))
         return True
-
 
 
 class EPytisRolesTrigger(Base_PyTriggerFunction):
@@ -208,21 +207,21 @@ class EPytisRolesTrigger(Base_PyTriggerFunction):
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
     stability = 'VOLATILE'
-    depends_on = (EPytisRoles, EPytisDisabledDmpTriggers, APytisValidRoleMembers, PytisUpdateTransitiveRoles,)
+    depends_on = (EPytisRoles, EPytisDisabledDmpTriggers, APytisValidRoleMembers,
+                  PytisUpdateTransitiveRoles,)
     access_rights = ()
 
     @staticmethod
     def e_pytis_roles_trigger():
-        class Roles(BaseTriggerObject):
-            def _pg_escape(self, val):
-                return str(val).replace("'", "''")
+        class Roles(EPytisRolesTrigger.Util.BaseTriggerObject):
             def _update_roles(self):
                 plpy.execute("select pytis_update_transitive_roles()")
             def _do_after_insert(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                     return
-                role = self._pg_escape(self._new['name'])
-                plpy.execute("insert into a_pytis_valid_role_members(roleid, member) values ('%s', '%s')" %
+                role = EPytisRolesTrigger.Util.pg_escape(self._new['name'])
+                plpy.execute(("insert into a_pytis_valid_role_members(roleid, member) "
+                              "values ('%s', '%s')") %
                              (role, role,))
             def _do_after_update(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
@@ -376,18 +375,20 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
 
     @staticmethod
     def e_pytis_menu_trigger():
-        class Menu(BaseTriggerObject):
-            def _pg_escape(self, val):
-                return str(val).replace("'", "''")
+        class Menu(EPytisMenuTrigger.Util.BaseTriggerObject):
             ## BEFORE
             def _maybe_new_action(self, old=None):
                 if not self._new['name'] and self._new['title'] and (old is None or not old['title']):
                     # New non-terminal menu item
                     self._new['fullname'] = action = 'menu/' + str(self._new['menuid'])
                     if not plpy.execute("select * from c_pytis_menu_actions where fullname='%s'" %
-                                        (self._pg_escape(action),)):
-                        plpy.execute(("insert into c_pytis_menu_actions (fullname, shortname, description) "
-                                  "values ('%s', '%s', '%s')") % (action, action, self._pg_escape("Menu '%s'" % (self._new['title'])),))
+                                        (EPytisMenuTrigger.Util.pg_escape(action),)):
+                        plpy.execute(("insert into c_pytis_menu_actions "
+                                      "(fullname, shortname, description) "
+                                      "values ('%s', '%s', '%s')") %
+                                     (action, action,
+                                      EPytisMenuTrigger.Util.pg_escape("Menu '%s'" %
+                                                                       (self._new['title'])),))
                         self._return_code = self._RETURN_CODE_MODIFY
             def _check_parent(self, old_position=None):
                 # Prevent menu item movement to non-existent parents or to self
@@ -1007,9 +1008,7 @@ class EPytisRoleMembersTrigger(Base_PyTriggerFunction):
 
     @staticmethod
     def e_pytis_role_members_trigger():
-        class Roles(BaseTriggerObject):
-            def _pg_escape(self, val):
-                return str(val).replace("'", "''")
+        class Roles(EPytisRoleMembersTrigger.Util.BaseTriggerObject):
             def _update_roles(self):
                 plpy.execute("select pytis_update_transitive_roles()")
             def _update_redundancy(self):
@@ -1051,9 +1050,7 @@ class EPytisActionRightsTrigger(Base_PyTriggerFunction):
 
     @staticmethod
     def e_pytis_action_rights_trigger():
-        class Rights(BaseTriggerObject):
-            def _pg_escape(self, val):
-                return str(val).replace("'", "''")
+        class Rights(EPytisActionRightsTrigger.Util.BaseTriggerObject):
             def _update_redundancy(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                     return
@@ -1264,11 +1261,12 @@ class PytisComputeSummaryRights(Base_PyFunction):
     access_rights = ()
 
     @staticmethod
-    def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_arg, compress_arg):
+    def pytis_compute_summary_rights(shortname_arg, role_arg, new_arg, multirights_arg,
+                                     compress_arg):
         shortname_arg, role_arg, new_arg, multirights_arg, compress_arg = args
-        import copy, string
-        def _pg_escape(val):
-            return str(val).replace("'", "''")
+        import copy
+        import string
+        pg_escape = PytisComputeSummaryRights.Util.pg_escape
         # Retrieve roles
         roles = {}
         query = "select roleid, member from a_pytis_valid_role_members"
@@ -1292,12 +1290,13 @@ class PytisComputeSummaryRights(Base_PyFunction):
         else:
             condition = 'status <= 0'
         if shortname_arg:
-            s = _pg_escape(shortname_arg)
+            s = pg_escape(shortname_arg)
             q = (("select distinct shortname from c_pytis_menu_actions "
                   "where shortname='%s' or "
                   "substr(fullname, 8) in (select fullname from c_pytis_menu_actions where shortname='%s')")
                  % (s, s,))
-            related_shortnames_list = ["'%s'" % (_pg_escape(row['shortname']),) for row in plpy.execute(q)]
+            related_shortnames_list = ["'%s'" % (pg_escape(row['shortname']),)
+                                       for row in plpy.execute(q)]
             if not related_shortnames_list:
                 return []
             related_shortnames = string.join(related_shortnames_list, ', ')
@@ -1542,8 +1541,7 @@ class PytisUpdateActionsStructure(Base_PyFunction):
         plpy.execute("select pg_advisory_lock(%s)" % (lock_id,))
         try:
             import string
-            def _pg_escape(val):
-                return str(val).replace("'", "''")
+            pg_escape = PytisUpdateActionsStructure.Util.pg_escape
             plpy.execute("delete from a_pytis_actions_structure")
             subactions = {}
             for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%' order by fullname"):
@@ -1581,9 +1579,11 @@ class PytisUpdateActionsStructure(Base_PyFunction):
                     item_type = 'item'
                 if menuid is None:
                     menuid = 'NULL'
-                plpy.execute(("insert into a_pytis_actions_structure (fullname, shortname, menuid, position, type) "
+                plpy.execute(("insert into a_pytis_actions_structure "
+                              "(fullname, shortname, menuid, position, type) "
                               "values('%s', '%s', %s, '%s', '%s') ") %
-                             (_pg_escape(fullname), _pg_escape(shortname), menuid, position, item_type,))
+                             (pg_escape(fullname), pg_escape(shortname), menuid, position,
+                              item_type,))
                 actions[shortname] = True
             def add_formactions(shortname, position):
                 formaction_list = formactions.get(shortname[5:], ())
@@ -1632,9 +1632,7 @@ class CPytisMenuActionsTrigger(Base_PyTriggerFunction):
 
     @staticmethod
     def c_pytis_menu_actions_trigger():
-        class Menu(BaseTriggerObject):
-            def _pg_escape(self, val):
-                return str(val).replace("'", "''")
+        class Menu(CPytisMenuActionsTrigger.Util.BaseTriggerObject):
             def _update_all(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu'"):
                     return
@@ -1674,9 +1672,7 @@ class EPytisMenuTriggerRights(Base_PyTriggerFunction):
 
     @staticmethod
     def e_pytis_menu_trigger_rights():
-        class Menu(BaseTriggerObject):
-            def _pg_escape(self, val):
-                return str(val).replace("'", "''")
+        class Menu(EPytisMenuTriggerRights.Util.BaseTriggerObject):
             def _update_all(self):
                 if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
                     return
@@ -1689,7 +1685,6 @@ class EPytisMenuTriggerRights(Base_PyTriggerFunction):
                 self._update_all()
         menu = Menu(TD)
         return menu.do_trigger()
-
 
 
 class EPytisMenuTriggersRights(sql.SQLRaw):

@@ -19,7 +19,7 @@ class PartitioningTrigger(Base_PyTriggerFunction):
     @staticmethod
     def partitioning_trigger():
         """Updatuje datum a místo odeslání"""
-        class Part(BaseTriggerObject):
+        class Part(Partitioning_Trigger.Util.BaseTriggerObject):
             def _get_table_name(self):
                 max_id = int(self._args[0])
                 step = int(self._args[1])

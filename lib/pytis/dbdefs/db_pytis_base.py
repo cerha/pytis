@@ -30,106 +30,99 @@ http_attachment_storage_rights = \
                                   ('select', 'pytiswebuser'),))
 
 
-TMoney = 'numeric(15,2)'
-TKurz = 'numeric(12,6)'
-
 class Base_PyFunction(sql.SQLPyFunction):
-    @staticmethod
-    def sub_pg_escape(val):
-        return str(val).replace("'", "''")
-    @staticmethod
-    def sub_boolean(val):
-        if val is None:
-            return "NULL"
-        return val and "TRUE" or "FALSE"
-    @staticmethod
-    def sub_string(val):
-        return val is not None and "'%s'" % (pg_escape(val)) or "NULL"
-    @staticmethod
-    def sub_num(val):
-        return val is not None and "%s" % (val) or "NULL"
-    @staticmethod
-    def sub_pg_val(val):
-        if val is None:
-            pg_value = "NULL"
-        elif isinstance(val, (float, int)):
-            pg_value = "%s" % (val)
-        elif isinstance(val, bool):
-            pg_value = val and "TRUE" or "FALSE"
-        else:
-            pg_value = "'%s'" % (pg_escape(val))
-        return pg_value
-    @staticmethod
-    def sub__html_table(columns_labels, rows):
-        def st(val):
-            if val is None or str(val).strip() == '':
-                return '&nbsp;'
-            return str(val).replace(' ', '&nbsp;')
-        html_rows = []
-        if len(columns_labels) == 0:
-            return None
-        html_rows.append('<table>\n<tr>')
-        [html_rows.append('<td><b>' + st(x[1]) + '</b></td>') for x in columns_labels]
-        html_rows.append('</tr>')
-        for row in rows:
-            html_rows.append('<tr>')
-            [html_rows.append('<td>' + st(row[x[0]]) + '</td>') for x in columns_labels]
+
+    class Util(sql.SQLPyFunction.Util):
+        TMoney = 'numeric(15,2)'
+        TKurz = 'numeric(12,6)'
+        @staticmethod
+        def pg_escape(val):
+            return str(val).replace("'", "''").replace("\\", "\\\\")
+        @staticmethod
+        def pg_val(val):
+            if val is None:
+                pg_value = "NULL"
+            elif isinstance(val, (float, int)):
+                pg_value = "%s" % (val)
+            elif isinstance(val, bool):
+                pg_value = val and "TRUE" or "FALSE"
+            else:
+                pg_value = "'%s'" % (BasePyFunction.Util.pg_escape(val))
+            return pg_value
+        @staticmethod
+        def html_table(columns_labels, rows):
+            def st(val):
+                if val is None or str(val).strip() == '':
+                    return '&nbsp;'
+                return str(val).replace(' ', '&nbsp;')
+            html_rows = []
+            if len(columns_labels) == 0:
+                return None
+            html_rows.append('<table>\n<tr>')
+            [html_rows.append('<td><b>' + st(x[1]) + '</b></td>') for x in columns_labels]
             html_rows.append('</tr>')
-        html_rows.append('</table>')
-        html_table = '\n'.join(html_rows)
-        return html_table.replace("'", "''")
+            for row in rows:
+                html_rows.append('<tr>')
+                [html_rows.append('<td>' + st(row[x[0]]) + '</td>') for x in columns_labels]
+                html_rows.append('</tr>')
+            html_rows.append('</table>')
+            html_table = '\n'.join(html_rows)
+            return html_table.replace("'", "''")
 
 class Base_PyTriggerFunction(Base_PyFunction):
-    class Sub_BaseTriggerObject(object):
-        _RETURN_CODE_MODIFY = "MODIFY"
-        _RETURN_CODE_SKIP = "SKIP"
-        _RETURN_CODE_OK = None
-        def __init__(self, TD):
-            self._TD = TD
-            self._event = TD["event"].lower()
-            self._when = TD["when"].lower()
-            self._level = TD["level"].lower()
-            self._name = TD["name"].lower()
-            self._table_name = TD["table_name"].lower()
-            self._table_schema = TD["table_schema"].lower()
-            self._table_oid = TD["relid"]
-            self._args = TD["args"]
-            #
-            self._new = self._old = None
-            if self._event in ('insert', 'update'):
-                self._new = TD["new"]
-            if self._event in ('delete', 'update'):
-                self._old = TD["old"]
-            #
-            self._return_code = self._RETURN_CODE_OK
-        def _do_after_insert(self):
-            pass
-        def _do_after_update(self):
-            pass
-        def _do_after_delete(self):
-            pass
-        def _do_before_insert(self):
-            pass
-        def _do_before_update(self):
-            pass
-        def _do_before_delete(self):
-            pass
-        def do_trigger(self):
-            if self._when == 'before':
-                if self._event == 'insert':
-                    self._do_before_insert()
-                elif self._event == 'update':
-                    self._do_before_update()
-                elif self._event == 'delete':
-                    self._do_before_delete()
-            elif self._when == 'after':
-                if self._event == 'insert':
-                    self._do_after_insert()
-                elif self._event == 'update':
-                    self._do_after_update()
-                elif self._event == 'delete':
-                    self._do_after_delete()
-            return self._return_code
+    
+    class Util(Base_PyFunction.Util):
+        
+        class BaseTriggerObject(object):
+            _RETURN_CODE_MODIFY = "MODIFY"
+            _RETURN_CODE_SKIP = "SKIP"
+            _RETURN_CODE_OK = None
+            def __init__(self, TD):
+                self._TD = TD
+                self._event = TD["event"].lower()
+                self._when = TD["when"].lower()
+                self._level = TD["level"].lower()
+                self._name = TD["name"].lower()
+                self._table_name = TD["table_name"].lower()
+                self._table_schema = TD["table_schema"].lower()
+                self._table_oid = TD["relid"]
+                self._args = TD["args"]
+                #
+                self._new = self._old = None
+                if self._event in ('insert', 'update'):
+                    self._new = TD["new"]
+                if self._event in ('delete', 'update'):
+                    self._old = TD["old"]
+                #
+                self._return_code = self._RETURN_CODE_OK
+            def _do_after_insert(self):
+                pass
+            def _do_after_update(self):
+                pass
+            def _do_after_delete(self):
+                pass
+            def _do_before_insert(self):
+                pass
+            def _do_before_update(self):
+                pass
+            def _do_before_delete(self):
+                pass
+            def do_trigger(self):
+                if self._when == 'before':
+                    if self._event == 'insert':
+                        self._do_before_insert()
+                    elif self._event == 'update':
+                        self._do_before_update()
+                    elif self._event == 'delete':
+                        self._do_before_delete()
+                elif self._when == 'after':
+                    if self._event == 'insert':
+                        self._do_after_insert()
+                    elif self._event == 'update':
+                        self._do_after_update()
+                    elif self._event == 'delete':
+                        self._do_after_delete()
+                return self._return_code
 
 
 class XInserts(sql.SQLTable):
@@ -190,8 +183,7 @@ class XLogUpdateTrigger(Base_PyFunction):
 
     @staticmethod
     def _log_update_trigger():
-        def pg_escape(val):
-            return val.replace("'", "''").replace(chr(92), 2 * chr(92))
+        pg_escape = XLogUpdateTrigger.Util.pg_escape
         event = TD["event"]
         if event == "DELETE":
             newold = "old"
