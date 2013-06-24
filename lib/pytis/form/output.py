@@ -31,7 +31,7 @@ v konfliktu s klíčovým slovem Pythonu.
 
 import os
 import thread
-
+import tempfile
 
 from pytis.form import *
 import wx
@@ -303,13 +303,13 @@ def print_form():
 class PrintForm(Form):
     """Common ancestor of both internal and external print previewers."""
 
-    def _run_formatter_process(self, stream, on_background=False):
+    def _run_formatter_process(self, stream, on_background=False, hook=None, file_name=None):
         result = None
         try:
             if on_background:
                 result = thread.start_new_thread(self._run_formatter, (stream,))
             else:
-                result = self._run_formatter(stream)
+                result = self._run_formatter(stream, hook=hook, file_name=file_name)
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             log(OPERATIONAL, 'Print exception caught', tbstring)
@@ -325,14 +325,18 @@ class PrintFormExternal(PrintForm, PopupForm):
         super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
-    def _run_formatter(self, stream):
-        import tempfile
-        handle, file_name = tempfile.mkstemp()
-        f = os.fdopen(handle, 'w')
+    def _run_formatter(self, stream, hook=None, file_name=None):
+        create_file = file_name is None
+        if create_file:
+            handle, file_name = tempfile.mkstemp()
+            f = os.fdopen(handle, 'w')
+        else:
+            f = open(file_name, 'w')
         try:
-            self._formatter.printout(f)
+            self._formatter.printout(f, hook=hook)
         except:
-            os.remove(file_name)
+            if create_file:
+                os.remove(file_name)
             raise
         return file_name
         
@@ -343,10 +347,16 @@ class PrintFormExternal(PrintForm, PopupForm):
         pass
     
     def run(self, *args, **kwargs):
-        file_name = self._run_formatter_process(None)
-        if file_name is None:
-            return
-        thread.start_new_thread(self._run_viewer, (file_name,))
+        __handle, file_name = tempfile.mkstemp()
+        def previewer():
+            thread.start_new_thread(self._run_viewer, (file_name,))
+        try:
+            self._run_formatter_process(None, hook=previewer, file_name=file_name)
+        finally:
+            try:
+                os.remove(file_name)
+            except OSError:
+                pass
 
 
 def run_viewer(file_name):
