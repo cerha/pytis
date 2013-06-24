@@ -236,12 +236,13 @@ class DMPObject(object):
             if self._active:
                 for prefix in ('declare ', 'fetch ', 'move ', 'close ', 'select ',
                                'savepoint ', 'release ',):
-                    if message.startswith(prefix) and not message.startswith('select * from pytis_'):
+                    if ((message.startswith(prefix) and
+                         not message.startswith('select * from pytis_'))):
                         break
                 else:
                     self.append('SQL: %s' % (message,))
         def append(self, message):
-            self._messages.append(message)            
+            self._messages.append(message)
         def clear(self):
             self._messages = []
         def active(self):
@@ -555,8 +556,12 @@ class DMPMenu(DMPObject):
             return equal
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
-                      [('e_pytis_menu', ('menuid', 'name', 'title', 'position', 'next_position', 'fullname', 'help', 'hotkey', 'locked'),),
-                       ('ev_pytis_menu', ('menuid', 'name', 'title', 'position', 'next_position', 'help', 'hotkey', 'locked', 'fullname', 'shortname',),)])
+                      [('e_pytis_menu',
+                        ('menuid', 'name', 'title', 'position', 'next_position', 'fullname', 'help',
+                         'hotkey', 'locked'),),
+                       ('ev_pytis_menu',
+                        ('menuid', 'name', 'title', 'position', 'next_position', 'help', 'hotkey',
+                         'locked', 'fullname', 'shortname',),)])
 
     def __init__(self, *args, **kwargs):
         super(DMPMenu, self).__init__(*args, **kwargs)
@@ -569,7 +574,8 @@ class DMPMenu(DMPObject):
     def items(self):
         return self._menu
 
-    def add_item(self, kind, parent=None, title=None, action=None, position=None, hotkey=None, help=None):
+    def add_item(self, kind, parent=None, title=None, action=None, position=None, hotkey=None,
+                 help=None):
         id_ = self._counter.next()
         if title is not None:
             title = unicode(title)
@@ -597,30 +603,36 @@ class DMPMenu(DMPObject):
         return menu_item
 
     def _load_specifications(self):
-        self._top_item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=None, title=u"CELÉ MENU", position='2')
+        self._top_item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=None,
+                                       title=u"CELÉ MENU", position='2')
         messages = []
         try:
             menu = self._resolver().get('application', 'menu')
         except ResolverError:
-            add_message(messages, DMPMessage.WARNING_MESSAGE, "No application menu in specifications")
+            add_message(messages, DMPMessage.WARNING_MESSAGE,
+                        "No application menu in specifications")
             return messages
-        menu[0]._items = ((pytis.form.Menu(u"Správa menu a uživatelských rolí",
-                                           (pytis.extensions.run_form_mitem(u"Menu", 'menu.ApplicationMenu',
-                                                                            pytis.form.BrowseForm),
-                                            pytis.extensions.run_form_mitem(u"Práva menu", 'menu.ApplicationMenuM',
-                                                                            pytis.form.MultiBrowseDualForm),
-                                            pytis.extensions.run_form_mitem(u"Uživatelské role", 'menu.ApplicationRoles',
-                                                                            pytis.form.MultiBrowseDualForm),
-                                            pytis.extensions.run_procedure_mitem(u"Aplikace změn práv",
-                                                                                 'menu.ApplicationMenuRights', 'commit_changes'),
-                                            pytis.form.MItem(u"Přenačtení menu a práv",
-                                                             command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),
-                                            )),)
-                          + menu[0]._items)
+        menu[0]._items = (
+            (pytis.form.Menu(
+                u"Správa menu a uživatelských rolí",
+                (pytis.extensions.run_form_mitem(u"Menu", 'menu.ApplicationMenu',
+                                                 pytis.form.BrowseForm),
+                 pytis.extensions.run_form_mitem(u"Práva menu", 'menu.ApplicationMenuM',
+                                                 pytis.form.MultiBrowseDualForm),
+                 pytis.extensions.run_form_mitem(u"Uživatelské role", 'menu.ApplicationRoles',
+                                                 pytis.form.MultiBrowseDualForm),
+                 pytis.extensions.run_procedure_mitem(u"Aplikace změn práv",
+                                                      'menu.ApplicationMenuRights',
+                                                      'commit_changes'),
+                 pytis.form.MItem(u"Přenačtení menu a práv",
+                                  command=pytis.form.Application.COMMAND_RELOAD_RIGHTS),)),
+             )
+            + menu[0]._items)
         # Load menu
         def load(menu, parent):
             if isinstance(menu, pytis.form.Menu):
-                item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=parent, title=menu.title())
+                item = self.add_item(kind=self.MenuItem.MENU_ITEM, parent=parent,
+                                     title=menu.title())
                 load(menu.items(), item)
             elif isinstance(menu, pytis.form.MSeparator):
                 self.add_item(kind=self.MenuItem.SEPARATOR_ITEM, parent=parent)
@@ -628,11 +640,14 @@ class DMPMenu(DMPObject):
                 action_id = menu.action_id()
                 if action_id is None:
                     add_message(messages, DMPMessage.ERROR_MESSAGE,
-                                "Special menu item action, define command specification", (menu.title(),))
+                                "Special menu item action, define command specification",
+                                (menu.title(),))
                     return
-                hotkey_spec = string.join([(key or '').replace(' ', 'SPC') for key in menu.hotkey()], ' ')
-                self.add_item(self.MenuItem.ACTION_ITEM, parent, title=menu.title(), action=action_id,
-                              help=menu.help(), hotkey=hotkey_spec)
+                hotkey_spec = string.join([(key or '').replace(' ', 'SPC')
+                                           for key in menu.hotkey()],
+                                          ' ')
+                self.add_item(self.MenuItem.ACTION_ITEM, parent, title=menu.title(),
+                              action=action_id, help=menu.help(), hotkey=hotkey_spec)
             elif isinstance(menu, tuple):
                 for m in menu:
                     load(m, parent)
@@ -685,13 +700,13 @@ class DMPMenu(DMPObject):
                                  help=row['help'].value(),
                                  hotkey=str(row['hotkey'].value()),
                                  locked=row['locked'].value(),
-                              )
+                                 )
             items_by_position[position] = item
             pos = position.rfind('.')
             if pos >= 0:
                 parent_position = position[:pos]
                 children_by_position[parent_position] = \
-                  children_by_position.get(parent_position, []) + [item]
+                    children_by_position.get(parent_position, []) + [item]
             return item
         self._menu = data.select_map(process, transaction=transaction)
         # Assign parents and children, find top item, reset counter
@@ -730,7 +745,7 @@ class DMPMenu(DMPObject):
                                   ('title', S(item.title()),),
                                   ('fullname', S(fullname),),
                                   ('position', S(item.position()),),
-                                  ('next_position', S(item.position()+'4'),),
+                                  ('next_position', S(item.position() + '4'),),
                                   ('help', S(item.help()),),
                                   ('hotkey', S(item.hotkey()),),
                                   ('locked', B(item.locked()),),
@@ -762,7 +777,7 @@ class DMPMenu(DMPObject):
                     messages += self._logger.messages()
                     transaction_.rollback()
                 else:
-                    transaction_.commit()            
+                    transaction_.commit()
         else:
             add_message(messages, DMPMessage.ERROR_MESSAGE, "No such position", (position,))
         return messages
@@ -799,7 +814,9 @@ class DMPRights(DMPObject):
                        )
 
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
-                      [('e_pytis_action_rights', ('id', 'shortname', 'roleid', 'rightid', 'system', 'granted', 'colname', 'status', 'redundant',),)])
+                      [('e_pytis_action_rights',
+                        ('id', 'shortname', 'roleid', 'rightid', 'system', 'granted', 'colname',
+                         'status', 'redundant',),)])
 
     def _reset(self):
         self._rights = []
@@ -807,7 +824,8 @@ class DMPRights(DMPObject):
     def items(self):
         return self._rights
 
-    def add_item(self, shortname, roleid='*', rightid='*', colname=None, system=False, granted=True):
+    def add_item(self, shortname, roleid='*', rightid='*', colname=None, system=False,
+                 granted=True):
         item = self.Right(shortname=shortname, roleid=roleid, rightid=rightid, colname=colname,
                           system=system, granted=granted)
         self._rights.append(item)
@@ -817,8 +835,8 @@ class DMPRights(DMPObject):
         rights = self._rights
         for i in range(len(rights)):
             r = rights[i]
-            if (r.shortname() == shortname and r.roleid() == roleid and r.rightid() == rightid and
-                r.colname() == colname and r.system() == system):
+            if ((r.shortname() == shortname and r.roleid() == roleid and r.rightid() == rightid and
+                 r.colname() == colname and r.system() == system)):
                 del rights[i]
                 return True
         return False
@@ -868,7 +886,6 @@ class DMPRights(DMPObject):
                                                    rightid=p.lower(), colname=c,
                                                    system=True, granted=True)
                                 self._rights.append(right)
-        import config
         for spec_name in self._all_form_specification_names(messages):
             spec = self._specification(spec_name, messages)
             if spec is None:
@@ -899,7 +916,7 @@ class DMPRights(DMPObject):
                     print_access_groups = None
                 else:
                     print_access_groups = \
-                      access_rights.permitted_groups(pytis.data.Permission.PRINT, None)
+                        access_rights.permitted_groups(pytis.data.Permission.PRINT, None)
                 print_action_rights = ((None, (print_access_groups, pytis.data.Permission.PRINT)),)
                 add_rights(form_action_name, print_action_rights, all_columns)
         return messages
@@ -1386,7 +1403,8 @@ class DMPActions(DMPObject):
             return class_(None, None, fullname=fullname)
         
     _DB_TABLES = dict(DMPObject._DB_TABLES.items() +
-                      [('c_pytis_menu_actions', ('fullname', 'shortname', 'action_title', 'description',),)])
+                      [('c_pytis_menu_actions',
+                        ('fullname', 'shortname', 'action_title', 'description',),)])
 
     def _reset(self):
         self._actions = []
@@ -1464,7 +1482,7 @@ class DMPActions(DMPObject):
                 bindings = spec.view_spec().bindings()
                 bindings = (binding(form_name),) + tuple(bindings)
             else:
-                bindings = (binding(form_name[:pos]), binding(form_name[pos+2:]),)
+                bindings = (binding(form_name[:pos]), binding(form_name[pos + 2:]),)
             if pytis.util.is_sequence(bindings):
                 for i in range(len(bindings)):
                     b = bindings[i]
@@ -1514,7 +1532,7 @@ class DMPActions(DMPObject):
                                  special_shortname=str(row['shortname'].value()),
                                  title=row['action_title'].value(),
                                  description=row['description'].value())
-            self._add_action(action)    
+            self._add_action(action)
         data.select_map(process, transaction=transaction)
     
     def _store_data(self, transaction, specifications, subforms_only=False, original_actions=None):
@@ -1525,8 +1543,8 @@ class DMPActions(DMPObject):
                 continue
             if subforms_only and action.fullname().split('/')[0] != 'sub':
                 continue
-            if (original_actions is not None and
-                action.fullname() in original_actions._fullnames):
+            if ((original_actions is not None and
+                 action.fullname() in original_actions._fullnames)):
                 continue
             row = pytis.data.Row((('fullname', S(action.fullname()),),
                                   ('shortname', S(action.shortname()),),
@@ -1552,7 +1570,8 @@ class DMPActions(DMPObject):
             transaction.commit()
         return result
         
-    def update_forms(self, fake, specification, new_fullname=None, transaction=None, keep_old=False):
+    def update_forms(self, fake, specification, new_fullname=None, transaction=None,
+                     keep_old=False):
         """Check given form specifications and update the database.
 
         For given form specification name, load the specification and check
@@ -1589,12 +1608,13 @@ class DMPActions(DMPObject):
             transaction_ = transaction
         self._logger.clear()
         if not keep_old:
-            condition = pytis.data.OR(pytis.data.WM('fullname',
-                                                    self._s_('sub/*/form/?/%s' % (specification,)),
-                                                    ignore_case=False),
-                                      pytis.data.WM('fullname',
-                                                    self._s_('sub/*/form/*/%s/*/' % (specification,)),
-                                                    ignore_case=False))
+            condition = \
+                pytis.data.OR(pytis.data.WM('fullname',
+                                            self._s_('sub/*/form/?/%s' % (specification,)),
+                                            ignore_case=False),
+                              pytis.data.WM('fullname',
+                                            self._s_('sub/*/form/*/%s/*/' % (specification,)),
+                                            ignore_case=False))
             self._delete_data(transaction=transaction_, condition=condition)
         self._store_data(transaction=transaction_, specifications=[specification],
                          subforms_only=True)
@@ -1604,16 +1624,16 @@ class DMPActions(DMPObject):
             messages += self._logger.messages()
         self._logger.clear()
         for action in original_actions.items():
-            if (action.specifications_match([specification]) and
-                action.kind() in ('action', 'print',) and
-                action.fullname() not in self._fullnames):
+            if ((action.specifications_match([specification]) and
+                 action.kind() in ('action', 'print',) and
+                 action.fullname() not in self._fullnames)):
                 condition = pytis.data.EQ('fullname', self._s_(action.fullname()))
                 self._delete_data(transaction_, condition)
         if new_fullname:
             data = self._data('c_pytis_menu_actions')
             actions_to_rename = [a for a in self.items()
-                                 if a.specifications_match([specification]) and
-                                    a.fullname().split('/')[0] == 'form']
+                                 if (a.specifications_match([specification]) and
+                                     a.fullname().split('/')[0] == 'form')]
             if not actions_to_rename:
                 add_message(messages, DMPMessage.WARNING_MESSAGE, "No specification to rename")
             elif len(actions_to_rename) > 1:
@@ -1622,7 +1642,8 @@ class DMPActions(DMPObject):
                             [a.fullname() for a in actions_to_rename])
             else:
                 row = pytis.data.Row((('fullname', pytis.data.sval(new_fullname),),))
-                data.update(pytis.data.sval(actions_to_rename[0].fullname()), row, transaction=transaction_)
+                data.update(pytis.data.sval(actions_to_rename[0].fullname()), row,
+                            transaction=transaction_)
         if fake:
             messages += self._logger.messages()
         if transaction is None:
@@ -1640,7 +1661,7 @@ class DMPActions(DMPObject):
         row = data.fetchone()
         data.close()
         if row is None:
-            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such "+action_type, (name,))
+            add_message(messages, DMPMessage.ERROR_MESSAGE, "No such " + action_type, (name,))
         else:
             shortname = row['shortname'].value()
             menu = DMPMenu(self._configuration)
@@ -1649,12 +1670,14 @@ class DMPActions(DMPObject):
             self._disable_triggers(transaction=transaction)
             self._logger.clear()
             messages += menu.delete_data(fake, transaction=transaction, specifications=(shortname,))
-            messages += rights.delete_data(fake, transaction=transaction, specifications=(shortname,))
+            messages += rights.delete_data(fake, transaction=transaction,
+                                           specifications=(shortname,))
             components = name.split('/')
             if action_type == 'shortname' and len(components) == 2 and components[0] == 'form':
                 forms = components[1].split('::')
                 if len(forms) > 1:
-                    subconditions = [pytis.data.AND(pytis.data.EQ('shortname', self._s_('form/'+f)),
+                    subconditions = [pytis.data.AND(pytis.data.EQ('shortname',
+                                                                  self._s_('form/' + f)),
                                                     pytis.data.WM('fullname',
                                                                   self._s_('sub/*/form/*/%s/*' %
                                                                            (components[1],)),
@@ -1664,7 +1687,8 @@ class DMPActions(DMPObject):
                 else:
                     condition = pytis.data.OR(condition,
                                               pytis.data.WM('fullname',
-                                                            self._s_('action/*/%s' % (components[1],)),
+                                                            self._s_('action/*/%s' %
+                                                                     (components[1],)),
                                                             ignore_case=False))
             self._delete_data(transaction, condition)
             self._enable_triggers(transaction=transaction)
@@ -1685,8 +1709,8 @@ class DMPActions(DMPObject):
         for action in self.items():
             shortname = action.shortname()
             prefix = shortname.split('/')[0]
-            if (prefix not in ('menu', 'EXIT', 'RELOAD_RIGHTS', 'NEW_RECORD') and
-                shortname not in known_shortnames):
+            if ((prefix not in ('menu', 'EXIT', 'RELOAD_RIGHTS', 'NEW_RECORD') and
+                 shortname not in known_shortnames)):
                 add_message(messages, DMPMessage.WARNING_MESSAGE,
                             "Action without rights", (action.shortname(), action.fullname(),))
         return messages
@@ -1709,7 +1733,7 @@ class DMPActions(DMPObject):
             if r.shortname() not in known_shortnames:
                 add_message(messages, DMPMessage.WARNING_MESSAGE,
                             "Right without action", (r.shortname(),))
-        return messages        
+        return messages
 
     def _load_database_and_specifications(self, messages):
         # Load database actions
@@ -1725,10 +1749,10 @@ class DMPActions(DMPObject):
             if shortname.startswith('form/'):
                 known_names.add(shortname[5:])
             if fullname.startswith('sub/'):
-                parent_fullname = fullname[fullname.find('/', 4)+1:]
+                parent_fullname = fullname[fullname.find('/', 4) + 1:]
                 subforms[parent_fullname] = subforms.get(parent_fullname, []) + [action]
-            if (not fullname.startswith('form/') or
-                action.form_class() is None):
+            if ((not fullname.startswith('form/') or
+                 action.form_class() is None)):
                 continue
             form_name = action.form_name()
             form_actions[form_name] = form_actions.get(form_name, []) + [action]
@@ -1748,7 +1772,7 @@ class DMPActions(DMPObject):
         for action in spec_actions.items():
             fullname = action.fullname()
             if fullname.startswith('sub/'):
-                parent_fullname = fullname[fullname.find('/', 4)+1:]
+                parent_fullname = fullname[fullname.find('/', 4) + 1:]
                 spec_subforms[parent_fullname] = spec_subforms.get(parent_fullname, []) + [action]
         # Return actions
         return fullnames, subforms, spec_fullnames, spec_subforms
@@ -1756,7 +1780,7 @@ class DMPActions(DMPObject):
     def dmp_missing(self):
         messages = []
         fullnames, subforms, spec_fullnames, spec_subforms = \
-                   self._load_database_and_specifications(messages)
+            self._load_database_and_specifications(messages)
         for fullname in spec_fullnames:
             if fullname not in fullnames:
                 add_message(messages, DMPMessage.WARNING_MESSAGE,
@@ -1775,7 +1799,7 @@ class DMPActions(DMPObject):
     def dmp_extra(self):
         messages = []
         fullnames, subforms, spec_fullnames, spec_subforms = \
-                   self._load_database_and_specifications(messages)
+            self._load_database_and_specifications(messages)
         known_spec_fullnames = set(spec_fullnames)
         for action_list in spec_subforms.values():
             fullnames_set = set([a.fullname() for a in action_list])
@@ -1798,7 +1822,7 @@ class DMPActions(DMPObject):
                     spec_short = set([s.shortname() for s in spec_sub])
                     for shortname in (short - spec_short):
                         add_message(messages, DMPMessage.WARNING_MESSAGE,
-                                    "Extra form action", (fullname, shortname,))                    
+                                    "Extra form action", (fullname, shortname,))
             else:
                 add_message(messages, DMPMessage.WARNING_MESSAGE,
                             "Extra action", (fullname,))
@@ -1830,7 +1854,8 @@ class DMPImport(DMPObject):
         messages += self._dmp_rights.load_specifications()
         messages += self._dmp_roles.load_specifications(dmp_rights=self._dmp_rights)
         self._dmp_roles.load_system_roles()
-        messages += self._dmp_actions.load_specifications(dmp_menu=self._dmp_menu, dmp_rights=self._dmp_rights)
+        messages += self._dmp_actions.load_specifications(dmp_menu=self._dmp_menu,
+                                                          dmp_rights=self._dmp_rights)
         return messages
     
     def delete_data(self, fake, transaction=None):
@@ -1845,7 +1870,7 @@ class DMPImport(DMPObject):
         messages += self._dmp_actions.delete_data(fake=fake, transaction=transaction_)
         if transaction is None:
             if fake:
-                transaction_.rollback()        
+                transaction_.rollback()
             else:
                 transaction_.commit()
         return messages
@@ -1862,7 +1887,7 @@ class DMPImport(DMPObject):
         messages += self._dmp_menu.store_data(fake=fake, transaction=transaction_)
         if transaction is None:
             if fake:
-                transaction_.rollback()        
+                transaction_.rollback()
             else:
                 transaction_.commit()
         return messages
@@ -1928,11 +1953,13 @@ class DMPImport(DMPObject):
             if not re.match('[0-9.]+$', position):
                 previous_items = [m for m in menu.items() if m.title() == position]
                 if not previous_items:
-                    add_message(messages, DMPMessage.ERROR_MESSAGE, "No such menu item", (position,))
+                    add_message(messages, DMPMessage.ERROR_MESSAGE, "No such menu item",
+                                (position,))
                     position = None
                 elif len(previous_items) > 1:
                     add_message(messages, DMPMessage.ERROR_MESSAGE, "Multiple menu items",
-                                ('%s (%s)' % (position, ', '.join([m.position() for m in previous_items]),),))
+                                ('%s (%s)' % (position, ', '.join([m.position()
+                                                                   for m in previous_items]),),))
                     position = None
                 else:
                     position = previous_items[0].next_position()
@@ -1946,10 +1973,11 @@ class DMPImport(DMPObject):
                         return messages
                 menu_item = menu.add_item(kind=DMPMenu.MenuItem.ACTION_ITEM,
                                           title=title, action=fullname, position=position)
-                messages += menu.store_data(fake, transaction=transaction, specifications=[fullname])
+                messages += menu.store_data(fake, transaction=transaction,
+                                            specifications=[fullname])
             if action.kind() == 'form':
-                messages += self._dmp_actions.update_forms(fake, specification, transaction=transaction,
-                                                           keep_old=True)
+                messages += self._dmp_actions.update_forms(fake, specification,
+                                                           transaction=transaction, keep_old=True)
             self._dmp_rights.retrieve_data(transaction=transaction)
             shortname = action.shortname()
             for a in self._dmp_rights.items():
@@ -1957,13 +1985,14 @@ class DMPImport(DMPObject):
                     break
             else:
                 for m in ([] if position is True else menu.items()):
-                    if (m is not menu_item and
-                        DMPActions.Action(resolver, [], fullname=m.action()).shortname() == shortname):
+                    if ((m is not menu_item and
+                         DMPActions.Action(resolver, [],
+                                           fullname=m.action()).shortname() == shortname)):
                         break
                 else:
                     self._dmp_rights.add_item(shortname, granted=False)
                 components = shortname.split('/')
-                if len(components) > 1:        
+                if len(components) > 1:
                     messages += self._dmp_rights.store_data(fake, transaction=transaction,
                                                             specifications=[components[1]])
         self._enable_triggers(transaction=transaction)
@@ -2006,7 +2035,8 @@ def dmp_add_action(parameters, fake, fullname, position, title):
 def dmp_update_form(parameters, fake, specification, new_fullname):
     """Update form subforms and actions from specifications."""
     configuration = DMPConfiguration(**parameters)
-    return DMPActions(configuration).dmp_update_forms(fake, specification, new_fullname=new_fullname)
+    return DMPActions(configuration).dmp_update_forms(fake, specification,
+                                                      new_fullname=new_fullname)
 
 def dmp_rename_specification(parameters, fake, old_name, new_name):
     configuration = DMPConfiguration(**parameters)
