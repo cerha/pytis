@@ -22,6 +22,7 @@ import getopt
 import imp
 import re
 import sys
+import types
 
 import pytis.util
 import config
@@ -125,6 +126,10 @@ def module_info(module_name):
         if isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec.public:
             spec_name = module_identifier + '.' + spec.__name__
             names.append(spec_name)
+        elif isinstance(spec, types.ModuleType):
+            spec_name = spec.__name__
+            if spec_name.startswith(module_name + '.'):
+                module_info(spec_name)
     names.sort()
     for spec_name in names:
         info(spec_name)
