@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Prostředky pro definici a zpracování konfigurace běhu aplikace
-# 
+#
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -33,11 +33,9 @@ import string
 import sys
 import time
 
-import util
+from pytis.util import Resolver, translations
 # The translation domain is pytis-wx because it is only needed with wx applications.
-_ = util.translations('pytis-wx')
-
-from pytis.util import *
+_ = translations('pytis-wx')
 
 
 class _OrderedDefinitionClass(type):
@@ -132,8 +130,8 @@ class Configuration(object):
             self._changed = False
             self._type_ = self._type()
             assert self._DESCR is not None, \
-                   "Option '%s' doesn't define the description string." % \
-                   self.name()
+                "Option '%s' doesn't define the description string." % \
+                self.name()
 
         def _compute_init_value(self, configuration):
             value = self._undefined
@@ -216,7 +214,7 @@ class Configuration(object):
             jakou daná volba nabyla během inicializace (tj. při načítání voleb
             příkazové řádky a konfiguračního souboru).
             
-            """ 
+            """
             return self._changed
 
         def reset(self):
@@ -239,7 +237,7 @@ class Configuration(object):
                 return self._LONG_OPTION
             elif self._CMDLINE:
                 import pytis.data
-                name = self.name().replace('_','-')
+                name = self.name().replace('_', '-')
                 if isinstance(self.type(), pytis.data.Boolean):
                     return name
                 else:
@@ -354,8 +352,7 @@ class Configuration(object):
 
     class FileOption(StringOption):
         def _compute_init_value(self, *args, **kwargs):
-            value = super(Configuration.FileOption, self).\
-                    _compute_init_value(*args, **kwargs)
+            value = super(Configuration.FileOption, self)._compute_init_value(*args, **kwargs)
             if not os.path.isabs(value):
                 value = os.path.join(os.getcwd(), value)
             return value
@@ -393,13 +390,13 @@ class Configuration(object):
             config_file = self._configuration.config_file
             if config_file:
                 dir, file = os.path.split(config_file)
-                user_config_file = os.path.join(dir, '_'+file)
+                user_config_file = os.path.join(dir, '_' + file)
                 if os.path.exists(user_config_file):
                     result = user_config_file
                 else:
                     result = None
             else:
-                result = None 
+                result = None
             return result
         
     # Volby užitečné hlavně pro ladění
@@ -545,7 +542,7 @@ class Configuration(object):
 
     class _Option_dbschemas(StringOption, CommandlineOption):
         _DESCR = _(u"List of database schemas to use in the order of their preference.")
-        _DEFAULT = None        
+        _DEFAULT = None
     
     class _Option_dbconnections(HiddenOption):
         _DESCR = _(u"Alternative database connections")
@@ -923,7 +920,7 @@ class Configuration(object):
         PREFIX = '_Option_'
         options = {}
         for k, v in self.__class__.__dict__.items():
-            if starts_with(k, PREFIX):
+            if k.startswith(PREFIX):
                 name = k[len(PREFIX):]
                 options[name] = v(self)
         self.__dict__['_options'] = options
@@ -1070,7 +1067,7 @@ class Configuration(object):
         options = self._options
         clopt = self.command_line_options
         for o in dict.keys():
-            if o in options and dict[o] != None:
+            if o in options and dict[o] is not None:
                 opt = options[o]
                 if override_cmdline or opt.long_option() not in clopt:
                     opt.set_value(dict[o])
@@ -1092,7 +1089,7 @@ class Configuration(object):
                         stream.write('# %s\n' % string.strip(line))
                 value = option.default_string()
                 indent = ' ' * (len(option.name()) + 3)
-                stream.write('#%s = %s\n\n' % (option.name(), value.replace("\n", "\n#"+indent)))
+                stream.write('#%s = %s\n\n' % (option.name(), value.replace("\n", "\n#" + indent)))
 
     def options(self, sort=False):
         """Return a tuple of all configuration options as 'Configuration.Option' instances.
