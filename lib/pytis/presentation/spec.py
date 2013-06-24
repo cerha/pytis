@@ -3277,6 +3277,21 @@ class Field(object):
     def __str__(self):
         return "<Field for '%s'>" % self.id()
 
+    def __unicode__(self):
+        properties = self._kwargs
+        formatted = []
+        beg_names = ['id', 'label', 'type']
+        end_names = ['descr']
+        for name in (beg_names +
+                     [k for k in properties.keys() if k not in beg_names + end_names] +
+                     end_names):
+            value = properties.get(name)
+            if value is not None:
+                formatted_value = '"' + value + '"' if isinstance(value, basestring) else value
+                info_string = u'%s=%s' % (name, formatted_value,)
+                formatted.append(info_string)
+        return u"<Field: %s>" % (string.join(formatted, ', '),)
+
     def clone(self, field):
         """Clone this field by another field and return the cloned instance.
 

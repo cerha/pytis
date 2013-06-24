@@ -20,6 +20,7 @@
 import collections
 import getopt
 import imp
+import re
 import sys
 
 import pytis.util
@@ -42,10 +43,15 @@ def specification_info(spec):
     return info
 
 def print_info(info):
-    field_names = [f.id() for f in info['fields']]
-    field_names.sort()
-    for name in field_names:
-        sys.stdout.write('Field: %s\n' % (name,))
+    matcher = re.compile('^<Field: id="([^"]+)", (.*)>$')
+    for f in info['fields']:
+        formatted_field = unicode(f)
+        m = matcher.match(formatted_field)
+        if m is None:
+            field_info = formatted_field
+        else:
+            field_info = ' Field %s: %s' % m.groups()
+        sys.stdout.write(field_info + u'\n')
     def print_layout(layout, indent=0):
         indentation_string = ' ' * indent
         if isinstance(layout, pytis.presentation.GroupSpec):
