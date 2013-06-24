@@ -113,23 +113,25 @@ def info(spec_name):
     info = specification_info(spec)
     print_info(info)
 
-def module_info(module_name):
+def module_info(module_name, regexp=None):
     try:
         module = pytis.util.load_module(module_name)
     except ImportError:
         sys.stderr.write("Module not found: %s\n" % (module_name,))
         sys.exit(1)
+    matcher = re.compile(regexp or '.')
     module_identifier = module_name.replace('/', '.')
     names = []
     for spec_attr in [o for o in dir(module)]:
         spec = getattr(module, spec_attr)
         if isinstance(spec, type) and issubclass(spec, pytis.form.Specification) and spec.public:
             spec_name = module_identifier + '.' + spec.__name__
-            names.append(spec_name)
+            if matcher is not None and matcher.search(spec_name):
+                names.append(spec_name)
         elif isinstance(spec, types.ModuleType):
             spec_name = spec.__name__
             if spec_name.startswith(module_name + '.'):
-                module_info(spec_name)
+                module_info(spec_name, regexp)
     names.sort()
     for spec_name in names:
         info(spec_name)
@@ -138,7 +140,7 @@ def usage(optexception=None):
     if optexception:
         sys.stderr.write(optexception.msg)
         sys.stderr.write('\n')
-    sys.stderr.write('usage: %s [ --config=CONFIG-FILE ] MODULE-NAME\n' % (sys.argv[0],))
+    sys.stderr.write('usage: %s [ --config=CONFIG-FILE ] MODULE-NAME [ REGEXP ]\n' % (sys.argv[0],))
     sys.exit(1)
 
 def run():
@@ -146,9 +148,10 @@ def run():
         config.add_command_line_options(sys.argv)
     except getopt.GetoptError as e:
         usage(e)
-    if len(sys.argv) != 2:
+    n_args = len(sys.argv)
+    if n_args < 2 or n_args > 3:
         usage()
-    module_info(sys.argv[1])
+    module_info(*sys.argv[1:])
 
 if __name__ == '__main__':
     run()
