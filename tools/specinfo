@@ -28,7 +28,7 @@ import pytis.util
 import config
 
 def find_specification(spec_name):
-    resolver = pytis.util.resolver()
+    resolver = config.resolver
     try:
         spec = resolver.specification(spec_name)
     except pytis.util.ResolverError:
@@ -151,6 +151,9 @@ def run():
     n_args = len(sys.argv)
     if n_args < 2 or n_args > 3:
         usage()
+    # Set resolver search paths (they are not yet set in configuration when the
+    # resolver is initially initialized.
+    config.resolver = pytis.util.Resolver(search=config.search_modules)
     module_info(*sys.argv[1:])
 
 if __name__ == '__main__':
