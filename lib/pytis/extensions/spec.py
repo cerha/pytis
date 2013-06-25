@@ -338,7 +338,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
         formatter.printout(output_file)
     else:
         file_ = pytis.util.TemporaryFile()
-        formatter.printout(file_, hook=pytis.form.run_viewer, file_=file_)
+        formatter.printout(file_, hook=(lambda: pytis.form.run_viewer(file_)))
     return True
         
 
