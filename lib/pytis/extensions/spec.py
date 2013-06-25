@@ -25,13 +25,14 @@ nějaké konstrukce vyžaduje složitější zápis, ale protože se tato konstr
 
 """
 
-from pytis.extensions import *
-from pytis.presentation import *
-
 import collections
-import tempfile
+import os
+
 import config
 import pytis.util
+from pytis.presentation import Color, Editable, Field, FormType, PostProcess, Style, TextFilter, \
+    TextFormat
+import pytis.extensions
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -94,7 +95,7 @@ def run_procedure_mitem(title, name, proc_name, hotkey=None, groups=None, enable
         assert enabled is None or isinstance(enabled, collections.Callable)
         enabled_ = enabled
         def enabled(**kwargs_):
-            if not is_in_groups(groups):
+            if not pytis.data.is_in_groups(groups):
                 return False
             if enabled_ is not None:
                 return enabled_(**kwargs_)
@@ -245,7 +246,7 @@ def help_window(inputfile=None, format=TextFormat.PLAIN):
         if os.path.exists(p):
             path = p
         else:
-            log(OPERATIONAL, "Soubor nenalezen:", p)
+            pytis.util.log(pytis.util.OPERATIONAL, "Soubor nenalezen:", p)
     try:
         f = open(path, 'r')
     except IOError as e:
@@ -321,7 +322,7 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
                 result = self._Spec()
             return result
         
-    log(EVENT, 'Vyvolání tiskového formuláře')
+    pytis.util.log(pytis.util.EVENT, 'Vyvolání tiskového formuláře')
     P = _PrintResolver
     parameters = {(spec + '/' + pytis.output.P_ROW): row}
     parameters.update({P.P_NAME: spec})
@@ -373,7 +374,7 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
         if not filename:
             filename = os.path.basename(fname)
 
-        mail = ComplexEmail(to, from_, subject, msg, charset=charset)
+        mail = pytis.extensions.ComplexEmail(to, from_, subject, msg, charset=charset)
         mail.add_content_data(document, filename)
         result = mail.send()
         if not result:
@@ -392,7 +393,7 @@ class ReusableSpec:
         self._fields = self._fields()
 
     def __getitem__(self, id):
-        return find(id, self._fields, key=lambda f: f.id())
+        return pytis.util.find(id, self._fields, key=lambda f: f.id())
 
     def _bindings(self):
         pass
