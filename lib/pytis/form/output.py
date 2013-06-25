@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Formulář s tiskovým preview a tiskem
-# 
+#
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,10 +31,12 @@ v konfliktu s klíčovým slovem Pythonu.
 
 import os
 import thread
+import time
 
-from pytis.form import *
 import wx
+
 import lcg
+from pytis.form import Error, Form, PopupForm, UserBreakException, microsleep, wx_callback
 import pytis.output
 import pytis.util
 import pytis.windows
@@ -45,11 +47,11 @@ _ = pytis.util.translations('pytis-wx')
 class PostscriptException(Exception):
     """Výjimka vyvolávaná při jakékoliv chybě interpretace PS dat."""
     def __init__(self, *args):
-        log(EVENT, 'Chyba interpretace PostScriptu')
+        pytis.util.log(pytis.util.EVENT, 'Chyba interpretace PostScriptu')
         super(PostscriptException, self).__init__(*args)
 
 
-class _Ghostscript(Tmpdir):
+class _Ghostscript(pytis.util.Tmpdir):
     # Používáme vyrendrování PostScriptu do souborů po stránkách.  To sice
     # není optimální, je to však nejjednodušší, zejména s ohledem na potíže
     # s wxWindows.
@@ -72,43 +74,49 @@ class _Ghostscript(Tmpdir):
             pass
 
     def _start_gs(self, stream, zoom):
-        if __debug__: log(DEBUG, 'Start Ghostscriptu:', zoom)
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Start Ghostscriptu:', zoom)
         zoom = 100 * zoom
-        gs_command = ('gs -dNOPAUSE -dQUIET -dSAFER -sDEVICE=bmpgray -dTextAlphaBits=4 ' + \
-                      '-r%dx%d -sOutputFile=%s -') % \
-                      (zoom, zoom, self._file_pattern)
+        gs_command = (('gs -dNOPAUSE -dQUIET -dSAFER -sDEVICE=bmpgray -dTextAlphaBits=4 ' +
+                       '-r%dx%d -sOutputFile=%s -') %
+                      (zoom, zoom, self._file_pattern,))
         self._finished = False
-        process = self._process = Popen(gs_command, to_child=stream,
-                                        from_child=dev_null_stream('w'))
+        process = self._process = pytis.util.Popen(gs_command, to_child=stream,
+                                                   from_child=pytis.util.dev_null_stream('w'))
         self._stream = process.to_child()
-        if __debug__: log(DEBUG, 'Ghostscript nastartován:', zoom)
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Ghostscript nastartován:', zoom)
 
-    def page_image(self, number):        
-        if __debug__: log(DEBUG, 'Stránka od Ghostscriptu:', number)
+    def page_image(self, number):
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Stránka od Ghostscriptu:', number)
         try:
             file_name = self._file_pattern % number
-            next_file_name = self._file_pattern % (number+1)
+            next_file_name = self._file_pattern % (number + 1,)
             if not os.access(file_name, os.R_OK):
-                if __debug__: log(DEBUG, 'Stránka není k dispozici:', number)
+                if __debug__:
+                    pytis.util.log(pytis.util.DEBUG, 'Stránka není k dispozici:', number)
                 return None
-            if not self.finished() and \
-                   not os.access(next_file_name, os.R_OK):
+            if ((not self.finished() and
+                 not os.access(next_file_name, os.R_OK))):
                 if number == 1:
                     if __debug__:
-                        log(DEBUG, 'Čekám na vygenerování první stránky')
-                    while not self.finished() and \
-                          not os.access(next_file_name, os.R_OK):
+                        pytis.util.log(pytis.util.DEBUG, 'Čekám na vygenerování první stránky')
+                    while ((not self.finished() and
+                            not os.access(next_file_name, os.R_OK))):
                         pass
-                    if __debug__: log(DEBUG, 'Čekání ukončeno')
+                    if __debug__:
+                        pytis.util.log(pytis.util.DEBUG, 'Čekání ukončeno')
                     if not os.access(file_name, os.R_OK):
                         if __debug__:
-                            log(DEBUG, 'První stránka není k dispozici')
+                            pytis.util.log(pytis.util.DEBUG, 'První stránka není k dispozici')
                         return None
                 else:
                     if __debug__:
-                        log(DEBUG, 'Stránka není k dispozici:', number)
+                        pytis.util.log(pytis.util.DEBUG, 'Stránka není k dispozici:', number)
                     return None
-            if __debug__: log(DEBUG, 'Vracím stránku:', number)
+            if __debug__:
+                pytis.util.log(pytis.util.DEBUG, 'Vracím stránku:', number)
             return wx.Image(file_name)
         except:
             # wxImage nahazuje chybové okno bez ohledu na ošetření výjimky zde
@@ -156,7 +164,8 @@ class PostscriptViewer(wx.ScrolledWindow):
             zmenšení, větší hodnoty znamenají zvětšení
                     
         """
-        if __debug__: log(DEBUG, 'Startuji PostScriptovou prohlížečku:', zoom)
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Startuji PostScriptovou prohlížečku:', zoom)
         # Náhled nelze zoomovat "za běhu", protože jednou nastavené scrollbary
         # ve wxScrolledWindow nelze změnit, museli bychom si udělat
         # scrollování vlastní.
@@ -175,10 +184,12 @@ class PostscriptViewer(wx.ScrolledWindow):
         self._gs = _Ghostscript(stream, self._zoom)
         
     def _wait_for_gs(self):
-        if __debug__: log(DEBUG, 'Čekání na dokončení běhu Ghostscriptu')
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Čekání na dokončení běhu Ghostscriptu')
         while not self._gs.finished():
             time.sleep(1)
-        if __debug__: log(DEBUG, 'Běh Ghostscriptu je dokončen')
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Běh Ghostscriptu je dokončen')
 
     def current_page(self):
         """Vrať číslo aktuálně zobrazené stránky, počínaje od 1."""
@@ -209,55 +220,64 @@ class PostscriptViewer(wx.ScrolledWindow):
         Vrací: Číslo skutečně zobrazené stránky.
 
         """
-        if __debug__: log(DEBUG, 'Zobrazení stránky:', page_number)
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Zobrazení stránky:', page_number)
         while True:
             npages, final = self.number_of_pages(current=True)
             if final or npages >= 1:
-                if __debug__: log(DEBUG, 'Nějaké stránky už jsou na skladě')
+                if __debug__:
+                    pytis.util.log(pytis.util.DEBUG, 'Nějaké stránky už jsou na skladě')
                 break
-            if __debug__: log(DEBUG, 'mikrospánek')
+            if __debug__:
+                pytis.util.log(pytis.util.DEBUG, 'mikrospánek')
             microsleep()
         if npages < 1:
-            if __debug__: log(DEBUG, 'Výstup nemá žádnou stránku')
+            if __debug__:
+                pytis.util.log(pytis.util.DEBUG, 'Výstup nemá žádnou stránku')
             return 0
         gs = self._gs
         if page_number < 1:
-            if __debug__: log(DEBUG, 'Vynucené zobrazení první stránky')
+            if __debug__:
+                pytis.util.log(pytis.util.DEBUG, 'Vynucené zobrazení první stránky')
             page_number = 1
         elif page_number > npages:
             npages, final = self.number_of_pages()
             if page_number > npages:
-                if (not final and
-                    self._gs_old is not None and
-                    page_number <= self._gs_old.number_of_pages[0]):
+                if ((not final and
+                     self._gs_old is not None and
+                     page_number <= self._gs_old.number_of_pages[0])):
                     gs = self._gs_old
                 else:
                     page_number = npages
-            if __debug__: log(DEBUG, 'Vynucené zobrazení poslední stránky')
+            if __debug__:
+                pytis.util.log(pytis.util.DEBUG, 'Vynucené zobrazení poslední stránky')
         if page_number != self._current_page or self._restarted:
             if gs is self._gs:
                 self._restarted = False
             self._current_page = page_number
             image = self._gs.page_image(page_number)
             if image is None:
-                if __debug__: log(DEBUG, 'Stránka nenačtena')
+                if __debug__:
+                    pytis.util.log(pytis.util.DEBUG, 'Stránka nenačtena')
                 return 0
             self._current_page_bitmap = image.ConvertToBitmap()
             # Scrollbars
-            if __debug__: log(DEBUG, 'Nastavuji scrollbars')
+            if __debug__:
+                pytis.util.log(pytis.util.DEBUG, 'Nastavuji scrollbars')
             image = self._gs.page_image(1)
             hsteps = vsteps = 100
             if image is None:
                 width = height = 100
             else:
                 width, height = image.GetWidth(), image.GetHeight()
-            hs, vs = width/hsteps, height/vsteps
+            hs, vs = width / hsteps, height / vsteps
             if hs and vs:
                 # TODO: Bráníme se dělení nulou. Neměli bychom však přesto
                 # scrollbary v takovém případě nějak nastravit?
-                self.SetScrollbars(hs, vs, width/hs + 1, height/vs + 1)
+                self.SetScrollbars(hs, vs, width / hs + 1, height / vs + 1)
             self.Refresh()
-        if __debug__: log(DEBUG, 'Zobrazena stránka:', page_number)
+        if __debug__:
+            pytis.util.log(pytis.util.DEBUG, 'Zobrazena stránka:', page_number)
         return page_number
 
     def current_zoom(self):
@@ -311,7 +331,8 @@ class PrintForm(Form):
                 result = self._run_formatter(stream, hook=hook, file_=file_)
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
-            log(OPERATIONAL, 'Print exception caught', tbstring)
+            pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
+            from pytis.form import run_dialog
             run_dialog(Error, _(u"Chybné použití identifikátoru `data' v tiskové sestavě.\n"
                                 u"Možná jste místo něj chtěli použít `current_row'?"))
         except UserBreakException:
@@ -386,4 +407,5 @@ def run_viewer(file_):
             command = match['view'] % (file_name,)
             os.system(command)
         else:
+            from pytis.form import run_dialog
             run_dialog(Error, _(u"Nenalezen žádný PDF prohlížeč."))
