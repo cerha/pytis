@@ -337,9 +337,8 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     if output_file:
         formatter.printout(output_file)
     else:
-        fd, fname = tempfile.mkstemp(suffix='.pdf')
-        handle = os.fdopen(fd, 'wb')
-        formatter.printout(handle, hook=(lambda: pytis.form.run_viewer(fname)))
+        file_ = pytis.util.TemporaryFile()
+        formatter.printout(handle, hook=pytis.form.run_viewer, file_=file_)
     return True
         
 

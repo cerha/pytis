@@ -45,6 +45,7 @@ import os
 import re
 import string
 import sys
+import tempfile
 import thread
 import types as pytypes
 
@@ -411,7 +412,29 @@ class Tmpdir(object):
             os.rmdir(self._tmpdir)
         except:
             pass
-    
+
+
+class TemporaryFile(object):
+    """Just like 'tempfile.NamedTemporaryFile' but with different delete rules.
+
+    The file is by default not deleted as soon as it is closed but only after
+    instance of this class is destroyed.
+
+    """
+
+    def __init__(self, delete=False, **kwargs):
+        self._file = tempfile.NamedTemporaryFile(delete=delete, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._file, name)
+        
+    def __del__(self):
+        if not self._file.delete:
+            try:
+                os.remove(self._file.name)
+            except:
+                pass
+
 
 class Stack(object):
     """Obecný zásobník.

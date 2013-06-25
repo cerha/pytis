@@ -31,7 +31,6 @@ v konfliktu s klíčovým slovem Pythonu.
 
 import os
 import thread
-import tempfile
 
 from pytis.form import *
 import wx
@@ -303,13 +302,13 @@ def print_form():
 class PrintForm(Form):
     """Common ancestor of both internal and external print previewers."""
 
-    def _run_formatter_process(self, stream, on_background=False, hook=None, file_name=None):
+    def _run_formatter_process(self, stream, on_background=False, hook=None, file_=None):
         result = None
         try:
             if on_background:
                 result = thread.start_new_thread(self._run_formatter, (stream,))
             else:
-                result = self._run_formatter(stream, hook=hook, file_name=file_name)
+                result = self._run_formatter(stream, hook=hook, file_=file_)
         except lcg.SubstitutionIterator.NotStartedError:
             tbstring = pytis.util.format_traceback()
             log(OPERATIONAL, 'Print exception caught', tbstring)
@@ -325,41 +324,26 @@ class PrintFormExternal(PrintForm, PopupForm):
         super(PrintFormExternal, self).__init__(parent, resolver, name, guardian=guardian)
         self._formatter = formatter
 
-    def _run_formatter(self, stream, hook=None, file_name=None):
-        create_file = file_name is None
-        if create_file:
-            handle, file_name = tempfile.mkstemp()
-            f = os.fdopen(handle, 'w')
-        else:
-            f = open(file_name, 'w')
-        try:
-            self._formatter.printout(f, hook=hook)
-        except:
-            if create_file:
-                os.remove(file_name)
-            raise
-        return file_name
+    def _run_formatter(self, stream, hook=None, file_=None):
+        if file_ is None:
+            file_ = pytis.util.TemporaryFile()
+        self._formatter.printout(file_, hook=hook)
+        return file_
         
-    def _run_viewer(self, file_name):
-        run_viewer(file_name)
+    def _run_viewer(self, file_):
+        run_viewer(file_)
         
     def show(self):
         pass
     
     def run(self, *args, **kwargs):
-        __handle, file_name = tempfile.mkstemp()
+        file_ = pytis.util.TemporaryFile()
         def previewer():
-            thread.start_new_thread(self._run_viewer, (file_name,))
-        try:
-            self._run_formatter_process(None, hook=previewer, file_name=file_name)
-        finally:
-            try:
-                os.remove(file_name)
-            except OSError:
-                pass
+            thread.start_new_thread(self._run_viewer, (file_,))
+        self._run_formatter_process(None, hook=previewer, file_=file_)
 
 
-def run_viewer(file_name):
+def run_viewer(file_):
     """Run PDF viewer on given file.
 
     Run it on a remote station if requested in configuration and the remote
@@ -367,41 +351,39 @@ def run_viewer(file_name):
 
     Arguments:
 
-      file_name -- name of the file to run the viewer on; string
+      file_ -- tempfile.NamedTemporaryFile instance
 
     """
     import subprocess
+    file_name = file_.name
     viewer = config.postscript_viewer
     remote = (config.rpc_remote_view and pytis.windows.windows_available())
-    try:
-        if remote:
-            suffix = (os.path.splitext(file_name)[1] or '.pdf')
-            try:
-                remote_file = pytis.windows.make_temporary_file(suffix=suffix)
-            except:
-                remote = False
-        if remote:
-            try:
-                f = open(file_name)
-                while True:
-                    data = f.read(10000000)
-                    if not data:
-                        break
-                    remote_file.write(data)
-                f.close()
-            finally:
-                remote_file.close()
-            pytis.windows.launch_file(remote_file.name())
-        elif viewer:
-            call_args = viewer.split()
-            subprocess.call(call_args + [file_name])
+    if remote:
+        suffix = (os.path.splitext(file_name)[1] or '.pdf')
+        try:
+            remote_file = pytis.windows.make_temporary_file(suffix=suffix)
+        except:
+            remote = False
+    if remote:
+        try:
+            f = open(file_name)
+            while True:
+                data = f.read(10000000)
+                if not data:
+                    break
+                remote_file.write(data)
+            f.close()
+        finally:
+            remote_file.close()
+        pytis.windows.launch_file(remote_file.name())
+    elif viewer:
+        call_args = viewer.split()
+        subprocess.call(call_args + [file_name])
+    else:
+        import mailcap
+        match = mailcap.findmatch(mailcap.getcaps(), 'application/pdf')[1]
+        if match:
+            command = match['view'] % (file_name,)
+            os.system(command)
         else:
-            import mailcap
-            match = mailcap.findmatch(mailcap.getcaps(), 'application/pdf')[1]
-            if match:
-                command = match['view'] % (file_name,)
-                os.system(command)
-            else:
-                run_dialog(Error, _(u"Nenalezen žádný PDF prohlížeč."))
-    finally:
-        os.remove(file_name)
+            run_dialog(Error, _(u"Nenalezen žádný PDF prohlížeč."))
