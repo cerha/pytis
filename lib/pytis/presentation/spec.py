@@ -4717,6 +4717,8 @@ class Specification(object):
             fields_to_remove = [self.get(id_) for id_ in field_ids]
             for f in fields_to_remove:
                 self.remove(f)
+        def __add__(self, other):
+            return self.__class__(list(self) + list(other))
 
     @staticmethod
     def _init_access_rights(connection_data):
