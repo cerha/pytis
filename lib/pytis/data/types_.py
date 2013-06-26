@@ -37,6 +37,7 @@ instancemi samostatné třídy 'Value'.
 
 """
 
+import collections
 import datetime
 import math
 import re
@@ -60,7 +61,9 @@ except Exception as e:
 else:
     import sqlalchemy.dialects.postgresql
 
-from pytis.data import *
+from pytis.data import Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError, \
+    assoc, compare_objects, format_byte_size, identity, log, rassoc, sameclass, super_, \
+    with_lock, xtuple
 
 
 class _MType(type):
@@ -219,12 +222,11 @@ class Type(object):
         purpose in this class.
 
         """
-        assert isinstance(not_null, types.BooleanType)
-        assert isinstance(unique, types.BooleanType)
+        assert isinstance(not_null, bool)
+        assert isinstance(unique, bool)
         assert enumerator is None or isinstance(enumerator, Enumerator)
-        assert isinstance(constraints, (types.ListType, types.TupleType))
-        assert (validation_messages is None or
-               isinstance(validation_messages, types.DictType))
+        assert isinstance(constraints, (list, tuple,))
+        assert validation_messages is None or isinstance(validation_messages, dict)
         self._not_null = not_null
         self._unique = unique
         self._enumerator = enumerator
@@ -266,7 +268,7 @@ class Type(object):
     def __str__(self):
         name, module = self.__class__.__name__, self.__class__.__module__
         if module != 'pytis.data.types_':
-            name = module +'.'+ name
+            name = module + '.' + name
         args = [' %s=%r' % x for x in self._constructor_kwargs.items()]
         return "<%s%s>" % (name, ','.join(args))
 
@@ -822,8 +824,7 @@ class Float(Number):
     
     def _init(self, precision=None, digits=None, **kwargs):
         super(Float, self)._init(**kwargs)
-        assert precision is None or precision >= 0, \
-               ('Invalid precision', precision)
+        assert precision is None or precision >= 0, ('Invalid precision', precision,)
         if precision is None:
             format = '%f'
         else:
@@ -890,8 +891,7 @@ class Float(Number):
                         if rvalue > value:
                             rvalue = rvalue - math.pow(10, -precision)
                     else:
-                        raise ProgramError('Invalid rounding argument',
-                                           rounding)
+                        raise ProgramError('Invalid rounding argument', rounding)
                 value = rvalue
             result = Value(self, value), None
         else:
@@ -1230,7 +1230,7 @@ class FullTextIndex(String):
 
     """
     def _init(self, columns=(), **kwargs):
-        assert is_sequence(columns), ("Invalid argument type", columns,)
+        assert isinstance(columns, (list, tuple,)), ("Invalid argument type", columns,)
         super(FullTextIndex, self)._init(**kwargs)
         self._columns = columns
 
@@ -1643,7 +1643,7 @@ class DateTime(_CommonDateTime):
 class DateTimeRange(Range, Integer):
     def sqlalchemy_type(self):
         import pytis.data.gensqlalchemy
-        if utc:
+        if self._utc:
             sql_class = pytis.data.gensqlalchemy.TSRANGE
         else:
             sql_class = pytis.data.gensqlalchemy.TSTZRANGE
@@ -1833,7 +1833,8 @@ class TimeInterval(Type):
         re_hours = '(?P<hours>[0-9]+)'
         re_minutes = '(?P<minutes>[0-9]+)'
         re_seconds = '(?P<seconds>[0-9]+)'
-        matcher_string = format.replace('%H', re_hours).replace('%M', re_minutes).replace('%S', re_seconds)
+        matcher_string = (format.replace('%H', re_hours).
+                          replace('%M', re_minutes).replace('%S', re_seconds))
         return re.compile(matcher_string)
     
     def _validate(self, string_, format=None, **kwargs):
@@ -1869,7 +1870,8 @@ class TimeInterval(Type):
             format = self._format
             if format is None:
                 format = self.DEFAULT_FORMAT
-        format_string = sign + format.replace('%H', '%(hours)d').replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d')
+        format_string = sign + (format.replace('%H', '%(hours)d').
+                                replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d'))
         return format_string % dict(hours=seconds/3600, minutes=(seconds%3600)/60,
                                     seconds=seconds%60)
     
@@ -2535,6 +2537,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             
         """
         super(DataEnumerator, self).__init__()
+        from pytis.data import DataFactory
         assert isinstance(data_factory, DataFactory), data_factory
         assert (value_column is None or
                 isinstance(value_column, basestring))
@@ -2548,6 +2551,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         self._value_column_ = value_column
         self._validity_column = validity_column
         if validity_column is not None:
+            from pytis.data import EQ
             validity_condition = EQ(validity_column, Value(Boolean(), True))
         self._validity_condition = validity_condition
         self._change_callbacks = []
@@ -2587,6 +2591,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
     def _condition(self, condition=None):
         if self._validity_condition is not None:
             if condition is not None:
+                from pytis.data import AND
                 return AND(condition, self._validity_condition)
             else:
                 return self._validity_condition
@@ -2594,6 +2599,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             return condition
 
     def _retrieve(self, value, transaction=None, condition=None, arguments=None):
+        from pytis.data import AND, EQ
         if arguments is None:
             arguments = {}
         the_condition = EQ(self._value_column, Value(self._value_column_type, value))
