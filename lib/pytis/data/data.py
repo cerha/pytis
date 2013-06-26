@@ -1835,8 +1835,7 @@ class DataFactory(object):
         return result
     
     def __str__(self):
-        return '<DataFactory: class=%s, args=%s, kwargs=%s>' % \
-               (self._class_, deepstr(self._args).encode('unicode_escape'), self._kwargs)
+        return '<%s>' % (self.__class__.__name__,)
 
     def _get_data_object(key):
         class_, args, kwargs = key

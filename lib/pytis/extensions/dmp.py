@@ -152,11 +152,7 @@ class DMPConfiguration(object):
             
         """
         import config
-        if configuration_file is not None:
-            for o in config.options():
-                o.reset()
-            config.config_file = configuration_file
-            config.read_configuration_file(configuration_file)
+        pytis.util.set_configuration_file(configuration_file)
         arguments_options = (('schemas', 'dbschemas'),
                              ('database', 'dbname'),
                              ('host', 'dbhost'),

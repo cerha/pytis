@@ -269,7 +269,7 @@ class Type(object):
         name, module = self.__class__.__name__, self.__class__.__module__
         if module != 'pytis.data.types_':
             name = module + '.' + name
-        args = [' %s=%r' % x for x in self._constructor_kwargs.items()]
+        args = [' %s=%s' % x for x in self._constructor_kwargs.items()]
         return "<%s%s>" % (name, ','.join(args))
 
     def __hash__(self):
@@ -2621,6 +2621,9 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
                     pass
             return row
         return with_lock(self._data_lock, lfunction)
+
+    def __str__(self):
+        return '<%s %s %s>' % (self.__class__, self._data_factory, self._value_column,)
 
     # Enumerator interface
     

@@ -61,12 +61,7 @@ def parse_options():
 
 def update_config(options):
     import config
-    config_file = options.config_file
-    if config_file is not None:
-        for o in config.options():
-            o.reset()
-        config.config_file = config_file
-        config.read_configuration_file(config_file)
+    pytis.util.set_configuration_file(options.config_file)
     if options.host is not None:
         config.dbhost = options.host
     if options.port is not None:

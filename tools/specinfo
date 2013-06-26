@@ -18,22 +18,28 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import collections
-import getopt
-import imp
+import optparse
+import os
 import re
+import subprocess
 import sys
 import types
 
 import pytis.util
 import config
 
+output = sys.stdout
+
+def error(message):
+    sys.stderr.write(message + '\n')
+    sys.exit(1)
+
 def find_specification(spec_name):
     resolver = config.resolver
     try:
         spec = resolver.specification(spec_name)
     except pytis.util.ResolverError:
-        sys.stderr.write("Specification not found: %s\n" % (spec_name,))
-        sys.exit(1)
+        error("Specification not found: %s\n" % (spec_name,))
     return spec
 
 def specification_info(spec):
@@ -52,17 +58,17 @@ def print_info(info):
             field_info = formatted_field
         else:
             field_info = ' Field %s: %s' % m.groups()
-        sys.stdout.write(field_info + u'\n')
+        output.write(field_info + u'\n')
     def print_layout(layout, indent=0):
         indentation_string = ' ' * indent
         if isinstance(layout, pytis.presentation.GroupSpec):
-            sys.stdout.write('%s%s\n' % (indentation_string, layout.__class__.__name__,))
+            output.write('%s%s\n' % (indentation_string, layout.__class__.__name__,))
             for item in layout.items():
                 print_layout(item, indent=indent+1)
         elif isinstance(layout, basestring):
-            sys.stdout.write('%sLayout: %s\n' % (indentation_string, layout,))
+            output.write('%sLayout: %s\n' % (indentation_string, layout,))
         else:
-            sys.stdout.write('%sUnknown layout object: %s\n' % (indentation_string, layout,))
+            output.write('%sUnknown layout object: %s\n' % (indentation_string, layout,))
     layout = info['layout']
     if isinstance(layout, pytis.presentation.LayoutSpec):
         layout = layout.group()
@@ -86,19 +92,19 @@ def print_info(info):
         indentation_string = ' ' * indent
         if isinstance(action, pytis.presentation.Action):
             if enabled_action(action):
-                sys.stdout.write('%sAction: %s\n' % (indentation_string, action.id(),))
+                output.write('%sAction: %s\n' % (indentation_string, action.id(),))
         elif isinstance(action, pytis.presentation.ActionGroup):
             if enabled_action(action):
-                sys.stdout.write('%sAction Group\n' % (indentation_string,))
+                output.write('%sAction Group\n' % (indentation_string,))
                 for a in action.actions():
                     print_action(a, indent=indent+1)
         elif isinstance(action, (list, tuple,)):
             if enabled_action(action):
-                sys.stdout.write('%sAction Sequence\n' % (indentation_string,))
+                output.write('%sAction Sequence\n' % (indentation_string,))
                 for a in action:
                     print_action(a, indent=indent+1)
         else:
-            sys.stdout.write('%sUnknown action object: %s\n' % (indentation_string, action,))
+            output.write('%sUnknown action object: %s\n' % (indentation_string, action,))
     actions = info['actions']
     if False:
         actions = list(actions)
@@ -108,7 +114,7 @@ def print_info(info):
 
 def info(spec_name):
     pos = spec_name.rfind('.')
-    sys.stdout.write('*** %s\n' % (spec_name[pos+1:],))
+    output.write('*** %s\n' % (spec_name[pos+1:],))
     spec = find_specification(spec_name)
     info = specification_info(spec)
     print_info(info)
@@ -117,8 +123,7 @@ def module_info(module_name, regexp=None):
     try:
         module = pytis.util.load_module(module_name)
     except ImportError:
-        sys.stderr.write("Module not found: %s\n" % (module_name,))
-        sys.exit(1)
+        error("Module not found: %s\n" % (module_name,))
     matcher = re.compile(regexp or '.')
     module_identifier = module_name.replace('/', '.')
     names = []
@@ -136,25 +141,83 @@ def module_info(module_name, regexp=None):
     for spec_name in names:
         info(spec_name)
 
-def usage(optexception=None):
-    if optexception:
-        sys.stderr.write(optexception.msg)
-        sys.stderr.write('\n')
-    sys.stderr.write('usage: %s [ --config=CONFIG-FILE ] MODULE-NAME [ REGEXP ]\n' % (sys.argv[0],))
-    sys.exit(1)
+def module_diff(directory, branch, module_name, regexp=None):
+    global output
+    import git
+    if directory is None:
+        for p in (os.getenv('PYTHONPATH') or '').split(':'):
+            try:
+                repo = git.Repo(p)
+            except (git.InvalidGitRepositoryError, git.exc.NoSuchPathError):
+                continue
+            directory = repo.working_dir
+            break
+        else:
+            error("No git directory found in PYTHONPATH, use --directory")
+    else:
+        repo = git.Repo(directory)
+    temp_dir = pytis.util.TemporaryDirectory()
+    work_tree = temp_dir.name()
+    subprocess.call(['cp', '-a', repo.git_dir, work_tree])
+    git_dir = os.path.join(work_tree, '.git')
+    subprocess.call(['git', '--git-dir=%s' % (git_dir,), 'checkout', branch],
+                    stdout=open('/dev/null', 'wb'))
+    subprocess.call(['git', '--git-dir=%s' % (git_dir,), '--work-tree=%s' % (work_tree,),
+                     'reset', '--hard'],
+                    stdout=open('/dev/null', 'wb'))
+    orig_dir = repo.working_dir
+    if orig_dir[-1] != '/':
+        orig_dir += '/'
+    def info(file_):
+        global output
+        if os.fork():
+            os.wait()
+        else:
+            output = open(file_.name, 'wb')
+            module_info(module_name, regexp=regexp)
+            output.close()
+            sys.exit(0)
+    file_1 = pytis.util.TemporaryFile()
+    info(file_1)
+    sys_path = sys.path
+    def change_path(path):
+        if path.startswith(orig_dir):
+            path = work_tree + '/' + path[len(orig_dir):]
+        return path
+    file_2 = pytis.util.TemporaryFile()
+    try:
+        sys.path = [change_path(p) for p in sys_path]
+        info(file_2)
+    finally:
+        sys.path = sys_path
+    subprocess.call(['diff', '-u', file_1.name, file_2.name])
+    
+USAGE = """usage: %prog [ OPTIONS ] MODULE-NAME [ REGEXP ]"""
+
+def parse_options():
+    parser = optparse.OptionParser(usage=USAGE)
+    parser.add_option("--config", dest="config_file",
+                      help="pytis configuration file for database access (on upgrade)")
+    parser.add_option("--diff", dest="diff",
+                      help="show diff against given branch")
+    parser.add_option("--directory", dest="directory",
+                      help="application directory")
+    options, args = parser.parse_args(args=sys.argv[1:])
+    if len(args) < 1 or len(args) > 2:
+        parser.print_help()
+        sys.exit(1)
+    return options, args
 
 def run():
-    try:
-        config.add_command_line_options(sys.argv)
-    except getopt.GetoptError as e:
-        usage(e)
-    n_args = len(sys.argv)
-    if n_args < 2 or n_args > 3:
-        usage()
+    options, args = parse_options()
+    pytis.util.set_configuration_file(options.config_file)
     # Set resolver search paths (they are not yet set in configuration when the
     # resolver is initially initialized.
     config.resolver = pytis.util.Resolver(search=config.search_modules)
-    module_info(*sys.argv[1:])
+    if options.diff:
+        module_diff(options.directory, options.diff, *args)
+    else:
+        module_info(*args)
 
 if __name__ == '__main__':
     run()

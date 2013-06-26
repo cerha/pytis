@@ -38,7 +38,6 @@ import cgitb
 import codecs
 import copy
 import gc
-import imp
 import inspect
 import operator
 import os
@@ -396,40 +395,74 @@ class Tmpdir(object):
           prefix -- prefix jména adresáře, string
 
         """
-        self._tmpdir = mktempdir(prefix=prefix)
+        self._tmpdir = TemporaryDirectory(prefix=prefix)
         super(Tmpdir, self).__init__(*args, **kwargs)
 
+        
+class TemporaryDirectory(object):
+    """Create a temporary directory and delete it together with the instance.
+
+    The directory is deleted including all its contents on instance
+    destruction, but only in the process of the same pid as the one that
+    created the instance.
+
+    You can get the name of the directory using 'name()' method.
+
+    """
+    def __init__(self, prefix='tmppytis', *args, **kwargs):
+        """
+        Arguments:
+
+          prefix -- directory name prefix, basestring
+
+        """
+        self._directory = tempfile.mkdtemp(prefix=prefix)
+        self._pid = os.getpid()
+
+    def name(self):
+        "Return the name of the temporary directory, basestring."
+        return self._directory
+    
     def __del__(self):
         self._cleanup()
         
     def _cleanup(self):
-        for file_name in os.listdir(self._tmpdir):
+        if os.getpid() == self._pid:
+            for dirpath, dirnames, filenames in os.walk(self._directory, topdown=False):
+                for d in dirnames:
+                    try:
+                        os.rmdir(os.path.join(dirpath, d))
+                    except:
+                        pass
+                for f in filenames:
+                    try:
+                        os.remove(os.path.join(dirpath, f))
+                    except:
+                        pass
             try:
-                os.remove(os.path.join(self._tmpdir, file_name))
+                os.rmdir(self._directory)
             except:
                 pass
-        try:
-            os.rmdir(self._tmpdir)
-        except:
-            pass
 
 
 class TemporaryFile(object):
     """Just like 'tempfile.NamedTemporaryFile' but with different delete rules.
 
     The file is by default not deleted as soon as it is closed but only after
-    instance of this class is destroyed.
+    instance of this class is destroyed and only the process of the same pid
+    as the one that created the instance.
 
     """
 
     def __init__(self, delete=False, **kwargs):
-        self._file = tempfile.NamedTemporaryFile(delete=delete, **kwargs)
+        self._file = tempfile.NamedTemporaryFile(delete=delete, prefix='tmppytis', **kwargs)
+        self._pid = os.getpid()
 
     def __getattr__(self, name):
         return getattr(self._file, name)
         
     def __del__(self):
-        if not self._file.delete:
+        if not self._file.delete and os.getpid() == self._pid:
             try:
                 os.remove(self._file.name)
             except:
@@ -1590,6 +1623,13 @@ Typicky se používá jako implicitní hodnota volitelných argumentů, aby neby
 nutno provádět jejich definici a zkoumání prostřednictvím **kwargs.
 
 """
+
+# @generator
+# def with_temp_file():
+#     ...
+
+# def with_temp_dir():
+#     ...
 
 
 ### Debugging functions

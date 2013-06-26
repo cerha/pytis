@@ -34,8 +34,9 @@ import copy
 import os
 import re
 import string
-import BaseHTTPServer
+import types
 import weakref
+import BaseHTTPServer
 
 import pytis.data
 from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, is_sequence, \
@@ -2215,6 +2216,9 @@ class Computer(object):
     def __call__(self, *args, **kwargs):
         return self._function(*args, **kwargs)
 
+    def __str__(self):
+        return '<%s>' % (self.__class__.__name__,)
+
     def function(self):
         """Vrať funkci zadanou v konstruktoru."""
         return self._function
@@ -2510,6 +2514,9 @@ class Link(object):
         self._label = label
         self._enabled = enabled
         self._filter = filter
+
+    def __str__(self):
+        return '<Link %s %s>' % (self._name, self._column,)
                 
     def name(self):
         return self._name
@@ -3287,7 +3294,12 @@ class Field(object):
                      end_names):
             value = properties.get(name)
             if value is not None:
-                formatted_value = '"' + value + '"' if isinstance(value, basestring) else value
+                if isinstance(value, basestring):
+                    formatted_value = '"%s"' % (value,)
+                elif isinstance(value, types.FunctionType):
+                    formatted_value = '<function %s>' % (value.func_name,)
+                else:
+                    formatted_value = value
                 info_string = u'%s=%s' % (name, formatted_value,)
                 formatted.append(info_string)
         return u"<Field: %s>" % (string.join(formatted, ', '),)

@@ -1115,3 +1115,20 @@ class Configuration(object):
             return self._options[name]
         except KeyError:
             raise AttributeError(name)
+
+
+def set_configuration_file(configuration_file):
+    """Set configuration file and reset all configuration options.
+
+    Arguments:
+
+      configuration_file -- name of the configuration file, basestring, or
+        'None' (in which case nothing happens)
+
+    """
+    import config
+    if configuration_file is not None:
+        for o in config.options():
+            o.reset()
+        config.config_file = configuration_file
+        config.read_configuration_file(configuration_file)

@@ -67,7 +67,6 @@ class _Ghostscript(pytis.util.Tmpdir):
             self._stream.close()
         except IOError:
             pass
-        super(_Ghostscript, self).__del__()
         try:
             self._process.wait()
         except OSError:

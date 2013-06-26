@@ -276,7 +276,7 @@ class Resolver(object):
 
     def reload(self):
         """Reload all specification modules and clear all caches."""
-        # TODO: It only whorks when search path is set!
+        # TODO: It only works when search path is set!
         self.clear()
         for name in sys.modules:
             for prefix in self._search:
