@@ -49,15 +49,17 @@ def specification_info(spec):
     info['layout'] = spec.view_spec().layout()
     return info
 
+field_matcher = re.compile('^<Field: id="([^"]+)", (.*)>$')
+address_matcher = re.compile(' at 0x[0-9a-f]+>')
 def print_info(info):
-    matcher = re.compile('^<Field: id="([^"]+)", (.*)>$')
     for f in info['fields']:
         formatted_field = unicode(f)
-        m = matcher.match(formatted_field)
+        m = field_matcher.match(formatted_field)
         if m is None:
             field_info = formatted_field
         else:
             field_info = ' Field %s: %s' % m.groups()
+        field_info = address_matcher.sub('>', field_info)
         output.write(field_info + u'\n')
     def print_layout(layout, indent=0):
         indentation_string = ' ' * indent
@@ -211,6 +213,9 @@ def parse_options():
 def run():
     options, args = parse_options()
     pytis.util.set_configuration_file(options.config_file)
+    config.debug = False
+    config.log_exclude = [pytis.util.OPERATIONAL, pytis.util.ACTION, pytis.util.EVENT,
+                          pytis.util.DEBUG]
     # Set resolver search paths (they are not yet set in configuration when the
     # resolver is initially initialized.
     config.resolver = pytis.util.Resolver(search=config.search_modules)
