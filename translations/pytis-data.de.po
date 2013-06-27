@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-05-24 15:05+0200\n"
+"POT-Creation-Date: 2013-06-27 10:36+0200\n"
 "PO-Revision-Date: 2011-12-29 12:15+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -20,28 +20,28 @@ msgstr ""
 msgid "Access denied"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:69
+#: ../lib/pytis/data/dbapi.py:73
 msgid "Can't connect to database"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:147
+#: ../lib/pytis/data/dbapi.py:151
 msgid "Database interface error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:163 ../lib/pytis/data/dbapi.py:257
+#: ../lib/pytis/data/dbapi.py:167 ../lib/pytis/data/dbapi.py:261
 msgid "Database connection error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:177 ../lib/pytis/data/pgsql.py:83
+#: ../lib/pytis/data/dbapi.py:181 ../lib/pytis/data/pgsql.py:83
 #: ../lib/pytis/data/pgsql.py:90
 msgid "Database operational error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:181 ../lib/pytis/data/pgsql.py:95
+#: ../lib/pytis/data/dbapi.py:185 ../lib/pytis/data/pgsql.py:95
 msgid "Database integrity violation"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:292
+#: ../lib/pytis/data/dbdata.py:300
 msgid "Too many database connections"
 msgstr ""
 
@@ -49,7 +49,7 @@ msgstr ""
 msgid "Database error"
 msgstr ""
 
-#: ../lib/pytis/data/dbdata.py:765
+#: ../lib/pytis/data/dbdata.py:764
 #, fuzzy
 msgid "Invalid user name or password"
 msgstr "Falsches Format für Datum oder Zeit "
@@ -71,168 +71,168 @@ msgstr ""
 msgid "Characters present in data not representable in database encoding"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3553
+#: ../lib/pytis/data/postgresql.py:3581
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Falsches Datum oder Zeit "
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:136
+#: ../lib/pytis/data/types_.py:159
 msgid "Empty value"
 msgstr "Leerer Wert"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:138
+#: ../lib/pytis/data/types_.py:161
 #, fuzzy
 msgid "Invalid value"
 msgstr "Das ist eine ungültige Zahl."
 
-#: ../lib/pytis/data/types_.py:350
+#: ../lib/pytis/data/types_.py:394
 #, python-format
 msgid "Wildcard matching not supported for values of type '%s'."
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:477
+#: ../lib/pytis/data/types_.py:528
 #, python-format
 msgid "Minimal value is %(minimum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:480
+#: ../lib/pytis/data/types_.py:531
 #, python-format
 msgid "Maximal value is %(maximum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:557
+#: ../lib/pytis/data/types_.py:608
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr "Mindestgröße nicht eingehalten %(minlen)s"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:560
+#: ../lib/pytis/data/types_.py:611
 #, fuzzy, python-format
 msgid "Maximal length %(maxlen)s characters exceeded"
 msgstr "Die Sequenz überschreitet die max. Länge %(maxlen)s"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:672
+#: ../lib/pytis/data/types_.py:713
 msgid "Not an integer"
 msgstr "Das ist keine ganze Zahl. "
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:769
+#: ../lib/pytis/data/types_.py:821
 msgid "Invalid number"
 msgstr "Das ist eine ungültige Zahl."
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:912
+#: ../lib/pytis/data/types_.py:954
 #, fuzzy, python-format
 msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr "Mindestlänge nicht eingehalten %(minlen)s"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:914 ../lib/pytis/data/types_.py:1962
+#: ../lib/pytis/data/types_.py:956 ../lib/pytis/data/types_.py:2000
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr "max. Größe %(maxlen)s überschritten"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:979
+#: ../lib/pytis/data/types_.py:1044
 msgid "Enter the password twice to eliminate typos"
 msgstr "Geben Sie das Passwort doppelt ein, um Tippfehler zu eliminieren."
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:982
+#: ../lib/pytis/data/types_.py:1047
 msgid "Passwords don't match"
 msgstr "Die Kontrolleingabe des Passworts stimmt nicht überein."
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:985
+#: ../lib/pytis/data/types_.py:1050
 #, fuzzy
 msgid "Invalid MD5 hash"
 msgstr "Ungültiger Wert"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:988
+#: ../lib/pytis/data/types_.py:1053
 msgid "Please use mix of letters and non-letters in your password"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1075 ../lib/pytis/data/types_.py:1109
-#: ../lib/pytis/data/types_.py:1145 ../lib/pytis/data/types_.py:1767
+#: ../lib/pytis/data/types_.py:1115 ../lib/pytis/data/types_.py:1149
+#: ../lib/pytis/data/types_.py:1185 ../lib/pytis/data/types_.py:1813
 msgid "Invalid format"
 msgstr "Ungültiges Format"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1095
+#: ../lib/pytis/data/types_.py:1135
 msgid "Invalid color format ('#RGB' or '#RRGGBB')"
 msgstr "Farbformat stimmt nicht überein ('#RGB' oder '#RRGGBB')"
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1111
+#: ../lib/pytis/data/types_.py:1151
 #, python-format
 msgid "Invalid inet address mask: %(mask)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:1113
+#: ../lib/pytis/data/types_.py:1153
 #, python-format
 msgid "Invalid inet address value %(addr)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1265
+#: ../lib/pytis/data/types_.py:1311
 msgid "Invalid date or time format"
 msgstr "Falsches Format für Datum oder Zeit "
 
-#: ../lib/pytis/data/types_.py:1266
+#: ../lib/pytis/data/types_.py:1312
 msgid "Invalid date or time"
 msgstr "Falsches Datum oder Zeit "
 
-#: ../lib/pytis/data/types_.py:1267
+#: ../lib/pytis/data/types_.py:1313
 msgid "Date outside the allowed range"
 msgstr "Datum außerhalb des zulässigen Umfangs"
 
-#: ../lib/pytis/data/types_.py:1927
+#: ../lib/pytis/data/types_.py:1965
 msgid "Invalid boolean type input value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2008
+#: ../lib/pytis/data/types_.py:2046
 #, python-format
 msgid "Not a buffer object: %r"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2130
+#: ../lib/pytis/data/types_.py:2182
 #, fuzzy, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr "max. Größe %(maxlen)s überschritten"
 
-#: ../lib/pytis/data/types_.py:2132
+#: ../lib/pytis/data/types_.py:2184
 #, fuzzy, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr "Max. Pixelmaß %(maxsize)s überschritten"
 
-#: ../lib/pytis/data/types_.py:2134
+#: ../lib/pytis/data/types_.py:2186
 #, fuzzy, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr "Format entspricht nicht %(format)s; gültige Formate: %(formats)s"
 
-#: ../lib/pytis/data/types_.py:2150
+#: ../lib/pytis/data/types_.py:2202
 #, fuzzy
 msgid "Invalid graphics format"
 msgstr "Ungültiges Format"
 
-#: ../lib/pytis/data/types_.py:2265
+#: ../lib/pytis/data/types_.py:2307
 #, fuzzy
 msgid "Invalid hierarchical value format"
 msgstr "Falsches Format für Datum oder Zeit "
 
-#: ../lib/pytis/data/types_.py:2267
+#: ../lib/pytis/data/types_.py:2309
 msgid "One of hierarchical value items is too long"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2269
+#: ../lib/pytis/data/types_.py:2311
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
