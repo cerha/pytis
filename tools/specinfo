@@ -213,6 +213,7 @@ def parse_options():
 def run():
     options, args = parse_options()
     pytis.util.set_configuration_file(options.config_file)
+    config.dblisten = False
     config.debug = False
     config.log_exclude = [pytis.util.OPERATIONAL, pytis.util.ACTION, pytis.util.EVENT,
                           pytis.util.DEBUG]
