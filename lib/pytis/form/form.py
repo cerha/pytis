@@ -1228,10 +1228,10 @@ class LookupForm(InnerForm):
         profile = self._profiles[index]
         if profile.errors():
             keep, remove = (_(u"Keep"), _(u"Remove"))
-            msg = _(u"Uživatelský profil \"%s\" je neplatný.\n"
-                    u"Pravděpodobně došlo ke změně definice náhledu a uložený\n"
-                    u"profil nyní nelze použít. Profil můžete buďto odstranit,\n"
-                    u"nebo ponechat a požádat správce aplikace o jeho obnovení."
+            msg = _(u"User profile \"%s\" is invalid.\n"
+                    u"The form specification has probably changed and the saved\n"
+                    u"profile is incompatible now. You can either remove the profile,\n"
+                    u"or keep it and ask the administrator to update it."
                     ) % profile.title()
             errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
             answer = run_dialog(MultiQuestion, title=_("Invalid profile"), message=msg,
@@ -1257,14 +1257,14 @@ class LookupForm(InnerForm):
 
     def _cmd_save_new_profile(self, title):
         if title in [profile.title() for profile in self._profiles]:
-            message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
+            message(_(u"Profile of this name already exists."), beep_=True)
             return
         profile_id = profile_manager().new_user_profile_id(self._profiles)
         profile = self._create_profile(profile_id, title)
         self._profiles.append(profile)
         self._save_profile(profile)
         self._current_profile = profile
-        message(_(u"Profil uložen pod názvem '%s'.") % title)
+        message(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
     def _can_rename_profile(self, title):
@@ -1272,13 +1272,13 @@ class LookupForm(InnerForm):
 
     def _cmd_rename_profile(self, title):
         if title in [p.title() for p in self._profiles if p is not self._current_profile]:
-            message(_(u"Takto pojmenovaný profil již existuje."), beep_=True)
+            message(_("Profile of this name already exists."), beep_=True)
             return
         index = self._profiles.index(self._current_profile)
         profile = self._create_profile(self._current_profile.id(), title)
         self._current_profile = self._profiles[index] = profile
         self._save_profile(self._current_profile)
-        message(_(u"Profil uložen pod názvem '%s'.") % title)
+        message(_(u"Profile saved as '%s'.") % title)
         self.focus()
 
     def _can_update_profile(self):
@@ -1351,7 +1351,7 @@ class LookupForm(InnerForm):
 
     def _cmd_filter_by_value(self, column_id, value):
         if column_id not in [c.id() for c in self._lf_sfs_columns()]:
-            message(_(u"Podle tohoto sloupce nelze filtrovat."), beep_=True)
+            message(_(u"This column can not be used for filtering."), beep_=True)
         self.filter(pytis.data.EQ(column_id, value), append=True)
 
     def _cmd_sort(self, col=None, direction=None, primary=False):
@@ -1419,7 +1419,7 @@ class LookupForm(InnerForm):
         elif col is not None:
             if (not self._data.find_column(col) or
                 not self._data.permitted(col, pytis.data.Permission.VIEW)):
-                message(_(u"Podle tohoto sloupce nelze třídit"),
+                message(_(u"This column can not be used for sorting."),
                         beep_=True)
                 return None
             pos = self._sorting_position(col)
@@ -1460,7 +1460,7 @@ class LookupForm(InnerForm):
             self._apply_filter(self._lf_filter)
         if not self._is_user_defined_profile(self._current_profile) \
                 and condition != self._current_profile.filter():
-            title = _(u"Nepojmenovaný profil")
+            title = _(u"Unnamed profile")
             profile = find(title, self._profiles, key=lambda p: p.title())
             if profile:
                 profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile.id())
@@ -1722,7 +1722,7 @@ class RecordForm(LookupForm):
         success, locked = db_operation(self._data.lock_row, key, transaction=self._transaction)
         if success and locked != None:
             log(EVENT, 'Record is locked')
-            run_dialog(Message, _(u"Záznam je zamčen"))
+            run_dialog(Message, _(u"The record is locked."))
             return False
         else:
             return True
@@ -1871,11 +1871,11 @@ class RecordForm(LookupForm):
                     continue
                 field_name = field.label()
                 if self._row[fid].type().not_null() :
-                    msg = _(u"Tento náhled obsahuje povinné políčko %s, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.") % (field_name,)
+                    msg = _(u"This form contains the mandatory field %s, but you don't have access to its codebook values. Please contact the access rights administrator.") % (field_name,)
                     run_dialog(Error, msg)
                     return False
                 else:
-                    msg = _(u"Tento náhled obsahuje políčko %s, k jehož číselníkovým hodnotám nemáte přístup. Obraťte se na správce přístupových práv.") % (field_name,)
+                    msg = _(u"This form contains the field %s, but you don't have access to its codebook values. Please contact the access rights administrator.") % (field_name,)
                     run_dialog(Warning, msg)
         import copy as copy_
         if prefill is None:
@@ -1885,7 +1885,7 @@ class RecordForm(LookupForm):
         result = new_record(self._name, prefill=prefill)
         if result:
             if not self.select_row(result.row(), quiet=True):
-                msg = _(u"Vložený záznam se neobjevil v aktuálním náhledu.")
+                msg = _(u"The inserted record didn't appear in the current view.")
                 run_dialog(Warning, msg)
     
     def _can_edit_record(self):
@@ -1908,7 +1908,7 @@ class RecordForm(LookupForm):
             name = self._name
             redirect = self._view.redirect()
             if redirect is None and self._data.arguments() is not None:
-                message(_("Tento formulář je needitovatelný."), beep_=True)
+                message(_("This form is read-only."), beep_=True)
                 return
             if redirect is not None:
                 redirected_name = redirect(row)
@@ -1961,39 +1961,44 @@ class RecordForm(LookupForm):
 
     def _cmd_import_interactive(self):
         if not self._data.permitted(None, pytis.data.Permission.INSERT):
-            msg = _(u"Nemáte práva pro vkládání záznamů do této tabulky.")
+            msg = _(u"Insufficient permissions to insert records to this table.")
             message(msg, beep_=True)
             return False
-        msg = _(u"Nejprve vyberte soubor obsahující importovaná data. " +
-                u"Poté budete moci zkontrolovat a potvrdit každý záznam.\n\n" +
-                u"*Formát vstupního souboru:*\n\n" +
-                u"Každý řádek obsahuje seznam hodnot oddělených zvoleným " +
-                u"znakem, nebo skupinou znaků (vyplňte níže). " +
-                u"Tabelátor zapište jako ='\\t'=.\n\n" +
-                u"První řádek obsahuje identifikátory sloupců a určuje tedy " +
-                u"význam a pořadí hodnot v následujících (datových) řádcích.\n\n" +
-                u"Identifikátory jednotlivých sloupců jsou následující:\n\n" +
-                u"\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
+        msg = "\n\n".join((
+                _("Choose the file containing the imported data first. " +
+                  "You will be able to check and confirm each record separately "
+                  "in the next step."),
+                "*"+ _("Input file format:") +"*",
+                _("Each row contains a sequence of values separated by given " +
+                  "separator character (select above). Write tabelator as %s.", "='\\t'="),
+                _("The first row contains column identifiers, so it determines "
+                  "the meaning and the order of the values in the following "
+                  "data rows."),
+                _("Possible column identifiers for this form are:"),
+                "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
                            [self._view.field(id)
-                            for id in self._view.layout().order()]]))
+                            for id in self._view.layout().order()]])))
+        print "=============================================================="
+        print msg
+        print "=============================================================="
         separator = run_dialog(InputDialog, 
-                               title=_(u"Hromadné vkládání dat"),
+                               title=_(u"Batch import"),
                                report=msg, report_format=TextFormat.LCG,
-                               prompt="Oddělovač", value='|')
+                               prompt=_("Separator"), value='|')
         if not separator:
             if separator is not None:
-                message(_(u"Nebyl zadán oddělovač."), beep_=True)
+                message(_(u"No separator given."), beep_=True)
             return False
         separator = separator.replace('\\t', '\t')
         while 1:
             filename = run_dialog(FileDialog)
             if filename is None:
-                message(_(u"Nebyl zadán soubor. Proces ukončen."), beep_=True)
+                message(_(u"No file given. Process terminated."), beep_=True)
                 return False
             try:
                 fh = open(filename)
             except IOError as e:
-                msg = _(u"Nepodařilo se otevřít soubor '%s': %s")
+                msg = _(u"Unable to open file '%s': %s")
                 run_dialog(Error, msg % (filename, str(e)))
                 continue
             break
@@ -2001,7 +2006,7 @@ class RecordForm(LookupForm):
             columns = [str(id.strip()) for id in fh.readline().split(separator)]
             for id in columns:
                 if id not in self._row:
-                    run_dialog(Error, _(u"Neznámý sloupec: %s") % id)
+                    run_dialog(Error, _(u"Unknown column:")+' '+id)
                     return False
             types = [self._row.type(id) for id in columns]
             line_number = 1
@@ -2010,16 +2015,17 @@ class RecordForm(LookupForm):
                 line_number += 1
                 values = line.rstrip('\r\n').split(separator)
                 if len(values) != len(columns):
-                    msg = _(u"Chyba dat na řádku %d:\n" +
-                            u"Počet hodnot neodpovídá počtu sloupců.")
-                    run_dialog(Error, msg % line_number)
+                    msg = (_("Error at line %d:", line_number) +'\n'+
+                           _("The number of values doesn't match the number of columns."))
+                    run_dialog(Error, msg)
                     return False
                 row_data = []
                 for id, type, val in zip(columns, types, values):
                     value, error = type.validate(val, transaction=self._transaction)
                     if error:
-                        msg = _(u"Chyba dat na řádku %d, sloupec '%s':\n%s") % \
-                              (line_number, id, error.message())
+                        msg = (_("Error at line %d:", line_number) +'\n'+
+                               _("Invalid value of column '%s':", id) +'\n'+
+                               error.message())
                         run_dialog(Error, msg)
                         return False
                     assert value.type() == type, (value.type(), type)
@@ -2084,14 +2090,14 @@ class RecordForm(LookupForm):
 
     def _search_again_unfiltered(self):
         if self._lf_filter:
-            if run_dialog(Question, title=_(u"Záznam nenalezen"),
-                          message=_(u"Požadovaný záznam nebyl nalezen. "
-                                    u"Může to být tím, že formulář má zapnutý filtr.\n"
-                                    u"Chcete aktivovat výchozí profil a zkusit záznam "
-                                    u"vyhledat znovu?")):
+            if run_dialog(Question, title=_("Record not found"),
+                          message=_("The searched record was not found. "
+                                    "It may be caused by the active filter.\n"
+                                    "Do you want to activate the default profile and "
+                                    "try searching again?")):
                 return True
         else:
-            run_dialog(Warning, _(u"Záznam nenalezen"))
+            run_dialog(Warning, _("Record not found"))
         return False
     
     def current_row(self):
@@ -2567,9 +2573,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             else:
                 success = True
             if success:
-                msg = _(u"Uložení záznamu se nezdařilo")
+                msg = _("Record update failed")
             else:
-                msg = _(u"Transakce přerušena, nelze pokračovat")
+                msg = _("Transaction aborted, unable to continue")
             if type(result) == type(()) and \
                isinstance(result[0], basestring):
                 msg = "%s\n\n%s" % (result[0], msg)
@@ -2584,8 +2590,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         
     def _exit_check(self):
         if self.changed():
-            q = _(u"Data byla změněna a nebyla uložena!") + "\n" + \
-                _(u"Opravdu chcete uzavřít formulář?")
+            q = _(u"Unsaved changed in form data!") + "\n" + \
+                _(u"Do you really want to close the form?")
             if not run_dialog(Question, q):
                 return False
         return True
@@ -2649,7 +2655,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
 class PopupEditForm(PopupForm, EditForm):
     """Stejné jako 'EditForm', avšak v popup podobě."""
 
-    DESCR = _(u"editační formulář")
+    DESCR = _(u"edit form")
 
     def __init__(self, parent, *args, **kwargs):
         parent = self._popup_frame(parent)
@@ -2715,9 +2721,9 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _create_status_bar(self):
         # We use our own statusbar implementation
-        spec = (('message', None, _(u"Oznamovací oblast")),)
+        spec = (('message', None, _(u"Notification area")),)
         if self._inserted_data is not None:
-            spec += (('progress', 9, _(u"Ukazatel pozice hromadného vkládání")),)
+            spec += (('progress', 9, _(u"Batch insertion progress indicator")),)
         box = wx.BoxSizer()
         self._status_fields = dict(
             [(id, self._create_status_bar_field(box, width, descr))
@@ -2759,7 +2765,7 @@ class PopupEditForm(PopupForm, EditForm):
                     self._row[id] = pytis.data.Value(self._row.type(id), value.value())
             else:
                 self.set_status('progress', '')
-                run_dialog(Message, _(u"Všechny záznamy byly zpracovány."))
+                run_dialog(Message, _(u"All records processed."))
                 self._inserted_data = None
         self._set_focus_field()
 
@@ -2767,8 +2773,8 @@ class PopupEditForm(PopupForm, EditForm):
         i = self._inserted_data_pointer
         data = self._inserted_data
         if data is not None and i <= len(data):
-            msg = _(u"Ještě nebyly zpracovány všechny řádky vstupních dat.\n" +
-                    u"Chcete opravdu ukončit vkládání?")
+            msg = _("Not all input records processed yet.\n" +
+                    "Really quit batch insertion?")
             if not run_dialog(Question, msg, default=False):
                 return False
         return super(PopupEditForm, self)._exit_check()
@@ -2776,26 +2782,25 @@ class PopupEditForm(PopupForm, EditForm):
     def _on_skip_button(self, event):
         i = self._inserted_data_pointer
         if self._inserted_data is None:
-            message(_(u"Není další záznam"), beep_=True)
+            message(_("No next record"), beep_=True)
         else:
-            message(_(u"Záznam %d/%d přeskočen") % (i, len(self._inserted_data)))
+            message(_("Record %d/%d skipped") % (i, len(self._inserted_data)))
             self._load_next_row()
     
     def _buttons(self):
         buttons = (dict(id=wx.ID_OK,
-                        tooltip=_(u"Uložit záznam a uzavřít formulář"),
+                        tooltip=_("Save the record and close the form"),
                         command=self.COMMAND_COMMIT_RECORD()),
                    dict(id=wx.ID_CANCEL,
-                        tooltip=_(u"Uzavřít formulář bez uložení dat"),
+                        tooltip=_("Close the form without saving"),
                         command=self.COMMAND_LEAVE_FORM()))
         if self._mode == self.MODE_INSERT and self._multi_insert:
-            buttons += (dict(id=wx.ID_FORWARD, label=_(u"Další"), #icon=wx.ART_GO_FORWARD, 
-                             tooltip=_(u"Uložit záznam a reinicializovat formulář" +
-                                       u" pro vložení dalšího záznamu"),
+            buttons += (dict(id=wx.ID_FORWARD, label=_("Next"), #icon=wx.ART_GO_FORWARD, 
+                             tooltip=_("Save the current record and read next record into the form."),
                              command=self.COMMAND_COMMIT_RECORD(next=True)),)
         if self._inserted_data is not None:
-            buttons += (dict(label=_(u"Přeskočit"),
-                             tooltip=_(u"Přeskočit tento záznam bez uložení"),
+            buttons += (dict(label=_("Skip"),
+                             tooltip=_("Skip this record without saving"),
                              callback=self._on_skip_button),)
         return buttons
         
@@ -2827,7 +2832,7 @@ class PopupEditForm(PopupForm, EditForm):
     def _cmd_commit_record(self, close=True, next=False):
         result = super(PopupEditForm, self)._cmd_commit_record(close=close and not next)
         if result and next:
-            message(_(u"Záznam uložen"))
+            message(_("Record saved"))
             self._load_next_row()
         return result
         
@@ -3068,17 +3073,17 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
             value_before_edits = row.original_row()[self._editor_field_id].value()
             if current_db_value != value_before_edits:
                 diff = pytis.util.html_diff(value_before_edits, current_db_value,
-                                            _("Původní text"), _("Kolegova nová verze"))
-                msg = _(u"Někdo jiný změnil stejný text během doby, kdy jste prováděl(a) "
-                        u"tyto úpravy.  Níže vidíte výpis změn, které byly provedeny. "
-                        u"Nejbezpečnější je vaše změny zahodit a začít znovu upravovat\n"
-                        u"novou podobu textu.  Pokud byly vaše úpravy příliš rozsáhlé, "
-                        u"můžete se pokusit obě verze sloučit tím, že do Vašeho současného "
-                        u"textu aplikujete níže uvedené změny.")
-                revert, merge, ignore = (_(u"Zahodit moje změny"), _(u"Sloučit"),
-                                         _(u"Ignorovat kolegovy změny"))
-                answer = run_dialog(MultiQuestion, title=_(u"Konflikt editace"), message=msg,
-                                    report=diff, report_format=TextFormat.HTML,
+                                            _("Original text"), _("Concurrently changed version"))
+                msg = _("Someone else has changed the same text while you made your "
+                        "modifications. You can see the overview of the changes below.\n"
+                        "The safest resolution is to discard your changes and start "
+                        "over with the new version of the text. If your modifications\n"
+                        "were too extensive, you can try incorporating the below listed "
+                        "changes into your version.")
+                revert, merge, ignore = (_(u"Discard my changes"), _(u"Merge"),
+                                         _(u"Ignore the concurrent changes"))
+                answer = run_dialog(MultiQuestion, title=_(u"Conflicting modifications"),
+                                    message=msg, report=diff, report_format=TextFormat.HTML,
                                     buttons=(revert, ignore)) # TODO: Add merge button.
                 if answer == merge:
                     result = self._editor_field_id
@@ -3095,7 +3100,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
         
 class PopupInsertForm(PopupEditForm):
     
-    DESCR = _(u"vkládací formulář")
+    DESCR = _(u"insert form")
     
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
@@ -3110,7 +3115,7 @@ class ShowForm(EditForm):
 
     """
 
-    DESCR = _(u"náhledový formulář")
+    DESCR = _(u"view form")
 
     def _init_attributes(self, mode=EditForm.MODE_VIEW, select_row=0,**kwargs):
         super_(ShowForm)._init_attributes(self, mode=mode, select_row=select_row, **kwargs)
@@ -3139,11 +3144,11 @@ class BrowsableShowForm(ShowForm):
         if not back:
             row_number += 1
             if row_number == self._lf_count(min_value=row_number+1):
-                message(_(u"Poslední záznam"), beep_=True)
+                message(_("Last record"), beep_=True)
                 return
         else:
             if row_number == 0:
-                message(_(u"První záznam"), beep_=True)
+                message(_("First record"), beep_=True)
                 return
             row_number -= 1
         self._select_row(self._find_row_by_number(row_number))

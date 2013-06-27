@@ -53,7 +53,7 @@ class _TextValidator(wx.PyValidator):
         if self._filter is not None \
                and key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 \
                and not self._filter(chr(key)):
-            message(_(u"Nepovolený znak!"), beep_=True)
+            message(_("Invalid character!"), beep_=True)
             return True
         else: 
             event.Skip()
@@ -432,8 +432,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
     def _menu(self):
         # Return a tuple of popup menu items ('MItem' instances).
         return (UICommand(InputField.COMMAND_RESET(),
-                          _(u"Vrátit původní hodnotu"),
-                          _(u"Vrátit veškeré provedené změny.")),)
+                          _("Restore the original value"),
+                          _("Discard all changes.")),)
                         
     def _on_context_menu(self, event=None):
         def handler(uicmd):
@@ -675,9 +675,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         if error:
             if interactive:
                 log(EVENT, 'Invalid field:', self.id())
-                run_dialog(Error, title=_(u"Chyba validace"),
-                           message=_(u"Chyba validace políčka!\n\n%s: %s") % \
-                           (self.spec().label(), error.message()))
+                run_dialog(Error, title=_("Validation error"),
+                           message=(_("Error validating field value:") +"\n\n"+
+                                    "%s: %s" % (self.spec().label(), error.message())))
             else:
                 message(error.message(), beep_=True)
         return error is None
@@ -747,7 +747,7 @@ class TextField(InputField):
         if maxlen is not None:
             control.SetMaxLength(maxlen)
             wx_callback(wx.EVT_TEXT_MAXLEN, control, wxid,
-                        lambda e: message(_(u"Překročena maximální délka."), beep_=True))
+                        lambda e: message(_("Maximal length exceeded."), beep_=True))
         filter = self._filter()
         control.SetValidator(_TextValidator(control, filter=filter))
         wx_callback(wx.EVT_TEXT, control, wxid, self._on_change)
@@ -880,14 +880,14 @@ class TextField(InputField):
     def _menu(self):
         return super(TextField, self)._menu() + \
                (None,
-                UICommand(TextField.COMMAND_CUT(), _(u"Vyjmout"),
-                          _(u"Vyjmout označený text a uložit jej do schránky.")),
-                UICommand(TextField.COMMAND_COPY(), _(u"Kopírovat"),
-                          _(u"Zkopírovat označený text do schránky.")),
-                UICommand(TextField.COMMAND_PASTE(), _(u"Vložit"),
-                          _(u"Vložit text ze schránky do políčka.")),
-                UICommand(TextField.COMMAND_SELECT_ALL(), _(u"Vybrat vše"),
-                          _(u"Označit celou hodnotu.")))
+                UICommand(TextField.COMMAND_CUT(), _("Cut"),
+                          _("Cut the selected text to clipboard.")),
+                UICommand(TextField.COMMAND_COPY(), _("Copy"),
+                          _("Copy the selected text to clipboard.")),
+                UICommand(TexstField.COMMAND_PASTE(), _("Paste"),
+                          _("Paste text from clipboard.")),
+                UICommand(TextField.COMMAND_SELECT_ALL(), _("Select All"),
+                          _("Select entire field value.")))
 
     # Zpracování příkazů
     
@@ -1264,7 +1264,7 @@ class Invocable(object, CommandHandler):
     INVOKE_SELECTION command.
     
     """
-    _INVOKE_TITLE = _(u"Vybrat hodnotu")
+    _INVOKE_TITLE = _("Selection")
     _INVOKE_HELP = None
     _INVOKE_ICON = 'invoke-selection'
     
@@ -1328,8 +1328,8 @@ class DateField(Invocable, TextField, SpinnableField):
     """
 
     _DEFAULT_WIDTH = 10
-    _INVOKE_TITLE = _(u"Vybrat z kalendáře")
-    _INVOKE_HELP = _(u"Zobrazit kalendář pro výběr datumu.")
+    _INVOKE_TITLE = _("Calendar selection")
+    _INVOKE_HELP = _("Show the calendar for date selection.")
     _SPIN_STEP = datetime.timedelta(days=1)
     
     def _on_invoke_selection(self, alternate=False):
@@ -1381,8 +1381,8 @@ class ColorSelectionField(Invocable, TextField):
     """Vstupní pole pro výběr barvy."""
 
     _DEFAULT_WIDTH = 7
-    _INVOKE_TITLE = _(u"Vybrat barvu")
-    _INVOKE_HELP = _(u"Zobrazit dialog pro výběr barev.")
+    _INVOKE_TITLE = _("Color selection")
+    _INVOKE_HELP = _("Show the color selection dialog.")
     
     def _on_invoke_selection(self, alternate=False):
         color = run_dialog(ColorSelector, self._get_value())
@@ -1479,8 +1479,8 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     popisu vybrané (aktuální) hodnoty číselníku. 
 
     """
-    _INVOKE_TITLE = _(u"Vybrat z číselníku")
-    _INVOKE_HELP = _(u"Zobrazit číselník hodnot s možností výběru.")
+    _INVOKE_TITLE = _("Codebook selection")
+    _INVOKE_HELP = _("Show the selection of available codebook values.")
 
     def _init_attributes(self):
         self._insert_button = None
@@ -1510,7 +1510,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
                 sizer.Add(display, 0, wx.FIXED_MINSIZE)
         if spec.allow_codebook_insert():
             button = self._create_button(parent, '+', icon='new-record')
-            button.SetToolTipString(_(u"Vložit nový záznam do číselníku"))
+            button.SetToolTipString(_("Insert a new codebook value."))
             wx_callback(wx.EVT_BUTTON, button, button.GetId(), lambda e: self._codebook_insert())
             wx_callback(wx.EVT_NAVIGATION_KEY, button, self._skip_navigation_callback(button))
             sizer.Add(button, 0, wx.FIXED_MINSIZE)
@@ -1520,8 +1520,8 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _menu(self):
         return super(CodebookField, self)._menu() + \
                (UICommand(self.COMMAND_INVOKE_SELECTION(alternate=True),
-                          _(u"Vyhledávat v číselníku"),
-                          _(u"Zobrazit číselník se zapnutým inkrementálním vyhledáváním.")),)
+                          _("Search in codebook"),
+                          _("Show the codebook and start incremental search.")),)
 
     def _maxlen(self):
         try:
@@ -1656,7 +1656,7 @@ class ListField(GenericCodebookField):
                 if not enumerator.permitted(id):
                     exported_value = value.type().secret_export()
                 elif isinstance(value.type(), pytis.data.Boolean):
-                    exported_value = value.value() and _(u"Yes") or _(u"No")
+                    exported_value = value.value() and _("Yes") or _("No")
                 else:
                     exported_value = value.export().replace("\n", ";")
                 list.SetStringItem(i, j, exported_value)
@@ -1709,24 +1709,24 @@ class ListField(GenericCodebookField):
             return ''
 
     def _menu(self):
-        return (UICommand(self.COMMAND_SELECT(), _(u"Vybrat"),
-                          _(u"Zvolit tuto položku jako aktivní.")),
-                UICommand(self.COMMAND_SHOW_SELECTED(), _(u"Najít vybranou položku"),
-                          _(u"Nalistovat v seznamu vybranou položku.")),
+        return (UICommand(self.COMMAND_SELECT(), _("Select"),
+                          _("Select this item as active.")),
+                UICommand(self.COMMAND_SHOW_SELECTED(), _("Show selected item"),
+                          _("Locate the currently selected item.")),
                 None,
-                UICommand(self.COMMAND_INVOKE_CODEBOOK_FORM(), _(u"Zobrazit číselník"),
-                          _(u"Otevřít číselníkový formulář.")),
-                UICommand(self.COMMAND_EDIT_SELECTED(), _(u"Upravit vybraný záznam"),
-                          _(u"Otevřít vybraný záznam v editačním formuláři.")),
-                UICommand(self.COMMAND_DELETE_SELECTED(), _(u"Smazat vybraný záznam"),
-                          _(u"Vymazat vybraný záznam z číselníku.")),
-                UICommand(self.COMMAND_NEW_CODEBOOK_RECORD(), _(u"Vložit nový záznam do číselníku"),
-                          _(u"Otevřít formulář pro vložení nového záznamu do číselníku.")),
+                UICommand(self.COMMAND_INVOKE_CODEBOOK_FORM(), _("Show codebook"),
+                          _("Open the codebook form.")),
+                UICommand(self.COMMAND_EDIT_SELECTED(), _("Edit selected item"),
+                          _("Open the selected item in edit form.")),
+                UICommand(self.COMMAND_DELETE_SELECTED(), _("Remove selected item"),
+                          _("Remove the selected item from the codebook.")),
+                UICommand(self.COMMAND_NEW_CODEBOOK_RECORD(), _("Insert new item"),
+                          _("Open form for new codebook record insertion.")),
                 UICommand(Application.COMMAND_RUN_FORM(form_class=BrowseForm,
                                                        name=self._cb_name,
                                                        select_row=self._select_row_arg()),
-                          _(u"Zobrazit celou tabulku"),
-                          _(u"Otevřít náhled číselníku v samostatném řádkovém formuláři.")),
+                          _("Show the entire table"),
+                          _("Open the codebook in a standalone form.")),
                 )
 
     def _current_row(self):
@@ -1778,7 +1778,8 @@ class ListField(GenericCodebookField):
         data = create_data_object(self._cb_name)
         transaction = self._row.transaction()
         row = self._current_row()
-        question = _(u"Opravdu chcete položku %s zcela vymazat z číselníku?") % self._row[self._id].export()
+        question = _("Really remove the item %s from the codebook permanently?",
+                     self._row[self._id].export())
         delete_record(view, data, transaction, row, question=question)
         self._reload_enumeration()
         self.set_focus()
@@ -1797,8 +1798,8 @@ class ListField(GenericCodebookField):
 class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""
     
-    _INVOKE_TITLE = _(u"Vybrat soubor")
-    _INVOKE_HELP = _(u"Zobrazit dialog pro procházení systému souborů.")
+    _INVOKE_TITLE = _("File selection")
+    _INVOKE_HELP = _("Show a dialog to browse files in the file system.")
     _INVOKE_ICON = wx.ART_FILE_OPEN
 
     _last_load_dir = None
@@ -1881,14 +1882,14 @@ class FileField(Invocable, InputField):
         # want the Invocable menu items.
         return super(Invocable, self)._menu() + \
                (None,
-                UICommand(FileField.COMMAND_OPEN(), _(u"Otevřít"),
-                          _(u"Otevřít soubor v preferované aplikaci.")),
-                UICommand(FileField.COMMAND_LOAD(), _(u"Nastavit ze souboru"),
-                          _(u"Nahradit hodnotu políčka daty ze souboru. ")),
-                UICommand(FileField.COMMAND_SAVE(), _(u"Uložit do souboru"),
-                          _(u"Uložit objekt z databáze jako soubor.")),
-                UICommand(FileField.COMMAND_CLEAR(), _(u"Vynulovat"),
-                          _(u"Nastavit prázdnou hodnotu.")),
+                UICommand(FileField.COMMAND_OPEN(), _("Open"),
+                          _("Open the file in a preferred application.")),
+                UICommand(FileField.COMMAND_LOAD(), _("Load from file"),
+                          _("Set the field value from a file.")),
+                UICommand(FileField.COMMAND_SAVE(), _("Save to file"),
+                          _("Save the current field value as file.")),
+                UICommand(FileField.COMMAND_CLEAR(), _("Clear value"),
+                          _("Set the field to an ampty value.")),
                 )
 
     def _can_open(self):
@@ -1910,16 +1911,16 @@ class FileField(Invocable, InputField):
             except pytis.data.ValidationError as e:
                 message(e.message(), beep_=True)
             except IOError as e:
-                message(_(u"Chyba při čtení souboru:")+' '+str(e), beep_=True)
+                message(_("Error reading file:")+' '+str(e), beep_=True)
             else:
                 self._on_change()
-                message(_(u"Soubor načten."))
+                message(_("File loaded."))
         filename_extensions = self._spec.filename_extensions()
         if filename_extensions:
             template = ';'.join(['*.%s' % ext for ext in filename_extensions])
         else:
             template = None
-        msg = _(u"Vyberte soubor pro políčko '%s'") % self.spec().label()
+        msg = _("Select the file for field '%s'", self.spec().label())
         if pytis.windows.windows_available():
             import ntpath
             f = pytis.windows.open_selected_file(template=template)
@@ -1932,13 +1933,13 @@ class FileField(Invocable, InputField):
                 f.close()
         else:
             directory = FileField._last_load_dir or FileField._last_save_dir or ''
-            filters = _(u"Všechny soubory (*.*)|*.*")
+            filters = _("All files") +" (*.*)|*.*"
             if filename_extensions:
                 # Construct filename matchers to be case insensitive, such as '*.[jJ][pP][gG]'.
                 # This will only work on GTK!
                 matchers = ';'.join(['*.'+''.join(['[%s%s]' % (c.lower(), c.upper()) for c in ext])
                                      for ext in filename_extensions])
-                filters = _(u"Soubory požadovaného typu (%s)") % template +'|'+ matchers + '|'+ filters
+                filters = _("Files of allowed type (%s)") % template +'|'+ matchers + '|'+ filters
             dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN,
                                 defaultDir=directory, wildcard=filters)
             if dlg.ShowModal() != wx.ID_OK:
@@ -1956,7 +1957,7 @@ class FileField(Invocable, InputField):
         if pytis.windows.windows_available():
             f = pytis.windows.make_selected_file(filename=default_filename)
         else:
-            msg = _(u"Uložit hodnotu políčka '%s'") % self.spec().label()
+            msg = _("Save value of %s") % self.spec().label()
             dir = FileField._last_save_dir or FileField._last_load_dir or ''
             dlg = wx.FileDialog(self._ctrl.GetParent(), style=wx.SAVE, message=msg, defaultDir=dir,
                                 defaultFile=default_filename)
@@ -1970,9 +1971,9 @@ class FileField(Invocable, InputField):
             try:
                 f.write(self._buffer.buffer())
             except IOError as e:
-                message(_(u"Chyba při zápisu souboru:")+' '+str(e), beep_=True)
+                message(_("Error writing file to disk:")+' '+str(e), beep_=True)
             else:
-                message(_(u"Soubor byl uložen"))
+                message(_("File saved."))
             finally:
                 f.close()
         
@@ -2041,21 +2042,21 @@ class StructuredTextField(TextField):
                 return [r.filename() for r in self._storage.resources(transaction=transaction)
                         if isinstance(r, lcg.Image) ^ (not self._images)]
             except AttachmentStorage.StorageError as e:
-                run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
-                           message=_(u"Chyba přístupu k úložišti příloh:\n%s") % e)
+                run_dialog(Error, title=_("Error accessing attachment storrage"),
+                           message=_("Error accessing attachment storrage")+':\n'+ e)
                 return []
             
     class ImageAlignments(pytis.presentation.Enumeration):
-        enumeration = (('inline', _(u"Do řádku")),
-                       ('left', _(u"Vlevo")),
-                       ('right', _(u"Vpravo")))
+        enumeration = (('inline', _("Inline")),
+                       ('left', _("Left")),
+                       ('right', _("Right")))
     class ImageSizes(pytis.presentation.Enumeration):
         SMALL_THUMBNAIL_SIZE = 200
         LARGE_THUMBNAIL_SIZE = 350
-        enumeration = (('small-thumbnail', _(u"Malý náhled (%d px), kliknutím se zvětší" % SMALL_THUMBNAIL_SIZE)),
-                       ('large-thumbnail', _(u"Větší náhled (%d px), kliknutím se zvětší" % LARGE_THUMBNAIL_SIZE)),
-                       #('custom-thumbnail', _(u"Vlastní velikost náhledu")),
-                       ('full-size', _(u"V plné velikosti (vhodné pro snímek obrazovky apod.)")))
+        enumeration = (('small-thumbnail', _("Small preview (%d px), click to enlarge" % SMALL_THUMBNAIL_SIZE)),
+                       ('large-thumbnail', _("Larger preview (%d px), click to enlarge" % LARGE_THUMBNAIL_SIZE)),
+                       #('custom-thumbnail', _("Vlastní velikost náhledu")),
+                       ('full-size', _("Full size (appropriate for screenshot etc.)")))
         @classmethod
         def matching_size(cls, thumbnail):
             if thumbnail:
@@ -2172,8 +2173,8 @@ class StructuredTextField(TextField):
             # Add form commands only in a standalone editor, not in ordinary forms.
             commands += (
                 (UICommand(EditForm.COMMAND_COMMIT_RECORD(close=False),
-                           _(u"Uložit"),
-                           _(u"Uložit záznam bez uzavření formuláře.")),
+                           _("Save"),
+                           _("Save the record without closing the form.")),
                  ),
                 )
         if isinstance(self._guardian, ResizableInputForm):
@@ -2182,8 +2183,8 @@ class StructuredTextField(TextField):
             # save anything to the database.
             commands += (
                 (UICommand(EditForm.COMMAND_COMMIT_RECORD(),
-                           _(u"Potvrdit změny a opustit editaci"),
-                           _(u"Potvrdit změny a opustit editaci.")),
+                           _("Confirm and leave"),
+                           _("Confirm the changes and leave editation.")),
                  ),
                 )
         commands += (
@@ -2194,15 +2195,16 @@ class StructuredTextField(TextField):
             #           _(u"Znovu"),
             #           _(u"Provést znovu poslední akci vzatou zpět.")),
             # ),
+
             (UICommand(self.COMMAND_CUT(),
-                       _(u"Vyjmout"),
-                       _(u"Vyjmout označený text.")),
+                       _("Cut"),
+                       _("Cut the selected text to clipboard.")),
              UICommand(self.COMMAND_COPY(),
-                       _(u"Kopírovat"),
-                       _(u"Zkopírovat označený text do schránky.")),
+                       _("Copy"),
+                       _("Copy the selected text to clipboard.")),
              UICommand(self.COMMAND_PASTE(),
-                       _(u"Vložit"),
-                       _(u"Vložit text ze schránky na aktuální pozici kurzoru.")),
+                       _("Paste"),
+                       _("Paste text from clipboard.")),
              ),
             #(UICommand(self.COMMAND_SEARCH(),
             #           _(u"Hledat"),
@@ -2212,48 +2214,48 @@ class StructuredTextField(TextField):
             #           _(u"Vyhledat na nahradit řetězec v textu políčka.")),
             # ),
             (UICommand(self.COMMAND_HEADING(_command_handler=self),
-                       _(u"Úroveň nadpisu"),
-                       _(u"Vložit značky pro nadpis dané úrovně."),
+                       _("Heading level"),
+                       _("Insert markup for heading of given level."),
                        ctrl=TextHeadingSelector),
              ),
             (UICommand(self.COMMAND_STRONG(),
-                       _(u"Tučný text"),
-                       _(u"Vložit značku pro tučný text.")),
+                       _("Bold text"),
+                       _("Insert markup for bold text.")),
              UICommand(self.COMMAND_EMPHASIZED(),
-                       _(u"Skloněné písmo"),
-                       _(u"Vložit značku pro text zvýrazeněný skloněným písmem.")),
+                       _("Slanted"),
+                       _("Insert markup for text emphasized by slanted font.")),
              UICommand(self.COMMAND_UNDERLINED(),
-                       _(u"Podtržený text"),
-                       _(u"Vložit značku pro podtržený text.")),
+                       _("Underlined text"),
+                       _("Insert markup for underlined text.")),
              ),
             (UICommand(self.COMMAND_LINK(),
-                       _(u"Hypertextový odkaz"),
-                       _(u"Vložit hypertextový odkaz.")),
+                       _("Hypertext link"),
+                       _("Insert markup hypertext link.")),
              ) + (self._storage and (UICommand(self.COMMAND_IMAGE(),
-                                               _(u"Obrázek"),
-                                               _(u"Vložit obrázek.")),
+                                               _("Image"),
+                                               _("Insert image.")),
                                      UICommand(self.COMMAND_ATTACHMENT(),
-                                               _(u"Příloha"),
-                                               _(u"Vložit soubor.")),) or ()) +
+                                               _("Attachment"),
+                                               _("Attach file.")),) or ()) +
             (UICommand(self.COMMAND_ITEMIZE(style='bullet'),
-                       _(u"Odrážkový seznam"),
-                       _(u"Vytvořit položku odrážkového seznamu.")),
+                       _("Itemized list"),
+                       _("Create a bullet list item.")),
              UICommand(self.COMMAND_ITEMIZE(style='numbered'),
-                       _(u"Číslovaný seznam"),
-                       _(u"Vytvořit položku číslovaného seznamu.")),
+                       _("Numbered list"),
+                       _("Create a numbered list item.")),
              UICommand(self.COMMAND_VERBATIM(),
-                       _(u"Předformátovaný text"),
-                       _(u"Vložit předformátovaný text.")),
+                       _("Preformatted text"),
+                       _("Insert markup for preformatted text.")),
              UICommand(self.COMMAND_LINEBREAK(),
-                       _(u"Vynucený řádkový zlom"),
-                       _(u"Vložit vynucený řádkový zlom.")),
+                       _("Line break"),
+                       _("Insert markup for explicit line break.")),
              ),
             (UICommand(self.COMMAND_PREVIEW(),
-                       _(u"Zobrazit HTML náhled"),
-                       _(u"Zobrazit náhled zformátovaného textu jako HTML.")),
+                       _("Show HTML preview"),
+                       _("Show preview of the text formatted as HTML.")),
              UICommand(self.COMMAND_EXPORT_PDF(),
-                       _(u"Zobrazit PDF náhled"),
-                       _(u"Zobrazit náhled zformátovaného textu jako PDF.")),
+                       _("Show PDF preview"),
+                       _("Show preview of the text formatted as PDF.")),
              ),
             )
         return commands
@@ -2263,9 +2265,9 @@ class StructuredTextField(TextField):
         if not isinstance(self._guardian, (StructuredTextEditor, ResizableInputForm)):
             menu +=(None,
                     UICommand(self.COMMAND_OPEN_IN_EDITOR(),
-                              _(u"Editovat v samostatném okně"),
+                              _("Edit in a standalone window"),
                               ""),
-                    )
+                    ) 
         return menu
     
     def _create_ctrl(self, parent):
@@ -2352,10 +2354,10 @@ class StructuredTextField(TextField):
         try:
             return method(*args, **kwargs)
         except AttachmentStorage.InvalidImageFormat as e:
-            message(_(u"Neplatný grafický formát!"), beep_=True)
+            message(_("Invalid image format!"), beep_=True)
         except AttachmentStorage.StorageError as e:
-            run_dialog(Error, title=_(u"Chyba přístupu k úložišti příloh"),
-                       message=_(u"Chyba přístupu k úložišti příloh:\n%s") % e)
+            run_dialog(Error, title=_("Error accessing attachment storrage"),
+                       message=_("Error accessing attachment storrage") +":\n"+ e)
 
     def _cmd_search(self):
         pass
@@ -2386,7 +2388,7 @@ class StructuredTextField(TextField):
             resources = self._storage_op('resources', transaction=self._row.transaction()) or ()
         else:
             resources = ()
-        InfoWindow(_(u"Náhled"), text=text, format=TextFormat.LCG, resources=resources)
+        InfoWindow(_(u"Preview"), text=text, format=TextFormat.LCG, resources=resources)
 
     def _cmd_export_pdf(self):
         import tempfile
@@ -2551,10 +2553,11 @@ class StructuredTextField(TextField):
         if link.target() in enumerator.values(transaction=transaction):
             filename = link.target()
         else:
+
             # TODO: Warn the user?
             filename = None
         fields = (
-            Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
+            Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX),
             Field('preview', _(u"Náhled"), codebook='cms.Attachments', compact=True,
