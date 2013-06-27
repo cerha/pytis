@@ -45,6 +45,9 @@
       config-file)))
 
 (defun pytis-specinfo (arg)
+  "Show information about current presentation specification.
+With a prefix argument show information diff of all
+specifications against selected git branch."
   (interactive "P")
   (with-gensqlachemy-specification
     (with-gensqlalchemy-pythonpath
@@ -55,7 +58,8 @@
              (output-buffer (get-buffer-create (if arg "*specinfo-diff*" "*specinfo*")))
              (args (append (when config-file (list "--config" config-file))
                            (when diff (list "--diff" diff))
-                           (list module (concat submodule "." specification-name "$")))))
+                           (list module)
+                           (unless diff (list (concat submodule "." specification-name "$"))))))
         (pop-to-buffer output-buffer)
         (erase-buffer)
         (when (and (= (apply 'call-process pytis-specinfo nil t nil args) 0)
