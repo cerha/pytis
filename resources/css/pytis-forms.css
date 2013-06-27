@@ -33,7 +33,7 @@
 .pytis-form .horizontal-group th.spaced {
     padding-left: 0.6em;
 }
-.pytis-form .error {
+.pytis-form .error, .pytis-form .validation-error {
     color: #a21;
 }
 

@@ -318,11 +318,8 @@ class Field(object):
         type requires it).
 
         """
-        name = self.id
-        if self._multirow:
-            name += '-' + self._row[self._key].export()
         return dict(id=self.html_id(),
-                    name=name,
+                    name=self.name(),
                     disabled=not self._row.editable(self.id) or None,
                     cls=error and 'invalid' or None)
 
@@ -336,17 +333,15 @@ class Field(object):
         """
         return None
 
-    def _validate(self, string_value, locale_data, **kwargs):
+    def _validate(self, req, locale_data, **kwargs):
+        string_value = req.param(self.name())
         return self._row.validate(self.id, string_value, **kwargs)
 
-    def validate(self, string_value, locale_data):
-        # TODO: This validation is currently only used for query fields and
-        # only works for some field kinds.  It is necessary to move all the
-        # logic of the method wiking.PytisModule._validate() into pytis fields
-        # to make it work in all cases.  Now it is only hacked for Datetime and
-        # Boolean fields (by copying the relevant part of the above mentioned
-        # method).
-        return self._validate(string_value, locale_data)
+    def name(self):
+        name = self.id
+        if self._multirow:
+            name += '-' + self._row[self._key].export()
+        return name
 
     def html_id(self):
         """Return the unique HTML identifier of the field."""
@@ -362,6 +357,26 @@ class Field(object):
     def label_in_front(self):
         """Return True if the label is in front of the field."""
         return True
+
+    def validate(self, req, locale_data):
+        """Validate the submitted field value and return ValidationError or None.
+
+        Returns None if the field value in given request is valid.  Returns
+        ValidationError if validation fails.
+
+        The valid field value is propagated to the underlying PresentedRow
+        instance as a side effect.  If the submitted value is invalid, it is
+        also available later through 'PresentedRow.invalid_string()'.
+
+        """
+        # TODO: This validation is currently only used for query fields and
+        # EditableBrowseForm.validate().  It only works for some field kinds.
+        # It is necessary to move all the logic of the method
+        # wiking.PytisModule._validate() into pytis fields to make it work in
+        # all cases.  Now it is only made to work for certain filed types, such
+        # as DateTimeField and CheckboxField.  Also "ordinary" fields like
+        # StringField and NumericField should work fine.
+        return self._validate(req, locale_data)
 
     def format(self, context):
         """Return the exported read-only field representation."""
@@ -668,9 +683,9 @@ class DateTimeField(TextField):
            """ % js_values)
         return result
 
-    def _validate(self, string_value, locale_data, **kwargs):
+    def _validate(self, req, locale_data, **kwargs):
         # TODO: Take locale data from somewhere as in _editor() above?
-        return super(DateTimeField, self)._validate(string_value, locale_data, 
+        return super(DateTimeField, self)._validate(req, locale_data, 
                                                     format=self._datetime_format(locale_data),
                                                     **kwargs)
 
@@ -710,10 +725,12 @@ class CheckboxField(Field):
     def _editor(self, context, **kwargs):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
 
-    def _validate(self, string_value, locale_data, **kwargs):
-        if string_value is None:
+    def _validate(self, req, locale_data, **kwargs):
+        if req.has_param(self.name()):
+            string_value = req.param(self.name())
+        else:
             string_value = 'F'
-        return super(CheckboxField, self)._validate(string_value, locale_data, **kwargs)
+        return self._row.validate(self.id, string_value, **kwargs)
 
     def label_in_front(self):
         return False

@@ -606,10 +606,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         assert isinstance(errors, (tuple, list)), errors
         if __debug__:
             for e in errors:
-                assert isinstance(e, tuple), ('type error', e, errors)
-                assert len(e) == 2, ('type error', e, errors)
-                assert e[0] is None or isinstance(e[0], basestring), ('type error', e[0], errors)
-                assert isinstance(e[1], basestring), ('type error', e[1], errors)
+                assert isinstance(e, tuple) and len(e) == 2, e
+                assert e[0] is None or isinstance(e[0], basestring), e[0]
+                assert isinstance(e[1], basestring), e[1]
         self._errors = errors
         assert multipart in (None, True, False), multipart
         if multipart is None:
@@ -1176,7 +1175,7 @@ class BrowseForm(LayoutForm):
                 field = Field.create(row, f, self, self._uri_provider)
                 cookie = 'pytis-query-field-%s-%s' % (self._name, field.id)
                 if req.param('list-form-controls-submitted'):
-                    error = field.validate(req.param(field.id), locale_data)
+                    error = field.validate(req, locale_data)
                     if error:
                         errors.append((field.id, error.message()))
                     else:
@@ -1423,10 +1422,12 @@ class BrowseForm(LayoutForm):
         uri = self._uri_provider(None, UriType.LINK, None)
         return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri)
 
+    def _set_row(self, row):
+        self._row.set_row(row, reset=True)
+            
     def _export_table(self, context, form_id):
         g = context.generator()
         data = self._row.data()
-        row = self._row
         limit = self._limit
         exported_rows = []
         count = data.select(condition=self._conditions(),
@@ -1458,12 +1459,12 @@ class BrowseForm(LayoutForm):
         n = 0
         data.skip(first_record_offset)
         while True:
-            r = data.fetchone()
-            if r is None:
+            row = data.fetchone()
+            if row is None:
                 break
-            row.set_row(r, reset=True)
+            self._set_row(row)
             if self._grouping:
-                group_values = [row[cid].value() for cid in self._grouping]
+                group_values = [self._row[cid].value() for cid in self._grouping]
                 if group_values != last_group_values:
                     self._group = not self._group
                     last_group_values = group_values
@@ -1475,7 +1476,7 @@ class BrowseForm(LayoutForm):
                 row_id = 'found-record'
             else:
                 row_id = None
-            exported_rows.append(self._export_row(context, row, n, row_id))
+            exported_rows.append(self._export_row(context, self._row, n, row_id))
             self._last_group = self._group
             n += 1 
             if limit is not None and n >= limit:
@@ -2039,17 +2040,26 @@ class EditableBrowseForm(BrowseForm):
     
     """
     
-    def __init__(self, view, req, row, editable_columns=None, limits=(), limit=None, **kwargs):
+    def __init__(self, view, req, row, editable_columns=None, set_row_callback=None, **kwargs):
         """Arguments:
 
-          check_columns -- a sequence of column identifiers whoose fields will be editable.
+            editable_columns -- a sequence of column identifiers whoose fields
+              will be editable. 
+            set_row_callback -- callback function called on each form row
+              initialization.  Function of one argument - PresentedRow instance.
 
           See the parent classes for definition of the remaining arguments.
+          The arguments 'limits' and 'limit' are ignored.
 
         """
         assert isinstance(editable_columns, (list, tuple)), editable_columns
+        assert set_row_callback is None or isinstance(set_row_callback, collections.Callable), \
+            set_row_callback
         self._editable_columns = editable_columns
-        super(EditableBrowseForm, self).__init__(view, req, row, limits=limits, limit=limit, **kwargs)
+        self._set_row_callback = set_row_callback
+        kwargs['limits'] = ()
+        kwargs['limit'] = None
+        super(EditableBrowseForm, self).__init__(view, req, row, **kwargs)
         if __debug__:
             for cid in editable_columns:
                 assert cid in self._row, cid
@@ -2059,7 +2069,73 @@ class EditableBrowseForm(BrowseForm):
             editable = True
         return super(EditableBrowseForm, self)._export_cell(context, row, n, field, editable=editable)
 
+    def _set_row(self, row):
+        super(EditableBrowseForm, self)._set_row(row)
+        if self._set_row_callback:
+            self._set_row_callback(self._row)
+        if self._req.param('submit'):
+            # If we are displaying a submitted form (after validation failed in
+            # 'submit()'), We need to revalidate editable fields in each row
+            # and reset self._prefill and self._errors to be able to display
+            # the form with the invalid user values and validation error
+            # messages within the fields.  Note, that the 'prefill' and
+            # 'errors' form constructor parameters exist only for historical
+            # reasons and they should be eliminated in future, when form
+            # validation is completely moved from Wiking to Pytis forms. It
+            # doesn't work at all for multirow forms, so that is why it must be
+            # now done here specifically.
+            locale_data = lcg.Localizer(self._lang).locale_data()
+            self._prefill = {}
+            self._errors = []
+            for cid in self._editable_columns:
+                field = self._fields[cid]
+                key = (row[self._key],)
+                error = field.validate(self._req, locale_data)
+                if error:
+                    self._prefill[cid] = self._row.invalid_string(field.id)
+                    self._errors.append((cid, error.message()))
+
     def _field(self, id, multirow=False):
         if id in self._editable_columns:
             multirow = True
         return super(EditableBrowseForm, self)._field(id, multirow=multirow)
+
+    def _export_field(self, context, field, editable=False):
+        result = super(EditableBrowseForm, self)._export_field(context, field, editable=editable)
+        if editable:
+            error = dict(self._errors).get(field.id)
+            if error:
+                result += context.generator().div(error, cls='validation-error')
+        return result
+
+    def validate(self):
+        """Validate the submitted form and return data to be updated if no errors are found.
+
+        Returns None if validation of at least one field fails.  If all form
+        fields are valid, returns a sequence of pairs (key, row), where key is
+        a pytis row key and row is a pytis.data.Row instance with values to be
+        updated for given key.
+
+        """
+        req = self._req
+        data = self._row.data()
+        data.select(condition=self._conditions(),
+                    arguments=self._arguments,
+                    sort=self._sorting)
+        locale_data = lcg.Localizer(self._lang).locale_data()
+        result = []
+        while True:
+            row = data.fetchone()
+            if row is None:
+                break
+            self._set_row(row)
+            row_values = []
+            for cid in self._editable_columns:
+                field = self._fields[cid]
+                error = field.validate(req, locale_data)
+                if error:
+                    return None
+                row_values.append((field.id, self._row[field.id]))
+            result.append(((row[self._key],), pd.Row(row_values)))
+        return result
+
