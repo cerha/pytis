@@ -5038,7 +5038,7 @@ class Specification(object):
             fields.set(fid, fields.get(fid).clone(o))
         if exclude:
             fields.exclude(exclude)
-        return fields
+        return tuple(fields)
 
     def _spec_fields(self, **kwargs):
         return self._inherited_fields(self.__class__, **kwargs)
