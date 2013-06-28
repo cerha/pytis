@@ -18,12 +18,13 @@
 
 from __future__ import unicode_literals
 
-"""Funkce pro načítání, caching, kontrolu a reporty z defsů.""" 
+"""Funkce pro načítání, caching, kontrolu a reporty z defsů."""
 
 import pytis.data
 import pytis.output
+import pytis.presentation
 import pytis.util
-from pytis.extensions import *
+import config
 
 
 def get_form_defs(resolver, messages=None):
@@ -62,7 +63,7 @@ def get_menu_defs():
                 flatten_menus(head.items(), found, level=level+1)
             result = flatten_menus(tail, found, level=level)
         else:
-            result = found                
+            result = found
         return result
     try:
         data = pytis.data.dbtable('ev_pytis_menu', ('shortname', 'fullname',), config.dbconnection)
@@ -72,18 +73,18 @@ def get_menu_defs():
         resolver = pytis.util.resolver()
         specs = [item.args()['name']
                  for item in flatten_menus(resolver.get('application', 'menu'), [])
-                 if (isinstance(item, pytis.form.MItem) \
-                     and item.command() == pytis.form.Application.COMMAND_RUN_FORM \
+                 if (isinstance(item, pytis.form.MItem)
+                     and item.command() == pytis.form.Application.COMMAND_RUN_FORM
                      and not issubclass(item.args()['form_class'], pytis.form.ConfigForm))]
     else:
         specs = []
         def get_values(row):
             return row['shortname'].value(), row['fullname'].value()
         for shortname, fullname in data.select_map(get_values):
-            if (shortname and shortname[:5] == 'form/' and
-                fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm'):
+            if ((shortname and shortname[:5] == 'form/' and
+                 fullname.split('/')[1][-len('.ConfigForm'):] != '.ConfigForm')):
                 specs.append(shortname[5:])
-    return remove_duplicates(specs)
+    return pytis.util.remove_duplicates(specs)
 
 
 def _get_default_select(spec):
@@ -94,19 +95,20 @@ def _get_default_select(spec):
                              if view.field(k.id()) is not None])
         success, select_count = pytis.form.db_operation(data.select, sort=sorting, reuse=False)
         if not success:
-            log(EVENT, 'Selhání databázové operace')
+            pytis.util.log(pytis.util.EVENT, 'Selhání databázové operace')
             return None
         return select_count
     resolver = pytis.util.resolver()
     try:
-        view = resolver.get(spec, 'view_spec')                
+        view = resolver.get(spec, 'view_spec')
     except:
-        log(OPERATIONAL, "Nepodařilo se vytvořit view_spec")
+        pytis.util.log(pytis.util.OPERATIONAL, "Nepodařilo se vytvořit view_spec")
         return None
+    from pytis.extensions import data_object
     try:
         data = data_object(spec)
     except:
-        log(OPERATIONAL, "Nepodařilo se vytvořit datový objekt")
+        pytis.util.log(pytis.util.OPERATIONAL, "Nepodařilo se vytvořit datový objekt")
         return None
     data = data_object(spec)
     select_count = init_select(view, data)
@@ -125,7 +127,7 @@ def check_form():
     if spec:
         try:
             data_spec = resolver.get(spec, 'data_spec')
-            view_spec = resolver.get(spec, 'view_spec')                
+            view_spec = resolver.get(spec, 'view_spec')
         except pytis.util.ResolverError:
             msg = 'Specifikace nenalezena.'
             pytis.form.run_dialog(pytis.form.Warning, msg)
@@ -145,7 +147,7 @@ def check_form():
         # Actions - TODO: Bude třeba zohlednit vnořené seznamy a ActionGroup.
         #obsah += "\n\nAkce kontextového menu:\n\n"
         #actions = view_spec.actions()
-        #if actions:                
+        #if actions:
         #    obsah += "\n".join([a.title() for a in actions])
         #else:
         #    obsah += "Nejsou definovány"
@@ -190,7 +192,8 @@ class MenuChecker(object):
         data = pytis.data.dbtable('e_pytis_roles', ('name', 'purposeid',), connection_data)
         condition = pytis.data.NE('purposeid', pytis.data.Value(pytis.data.String(), 'user'))
         self._application_roles = [row[0].value()
-                                   for row in data.select_map(identity, condition=condition)]
+                                   for row in data.select_map(pytis.util.identity,
+                                                              condition=condition)]
         self._spec_name_prefix = spec_name_prefix
 
     def _specification_names(self, errors=None):
@@ -205,14 +208,12 @@ class MenuChecker(object):
         return names
 
     def _find_specification_names(self, errors):
-        return get_menu_defs()        
+        return get_menu_defs()
 
     def check_public(self, spec_name):
         errors = []
         pos = spec_name.rfind('.')
         if pos >= 0:
-            module_name = spec_name[:pos].replace('.', '/')
-            class_name = spec_name[pos+1:]
             try:
                 spec = self._resolver.specification(spec_name)
                 print_spec = self._resolver.get(spec_name, 'print_spec')
@@ -282,17 +283,19 @@ class MenuChecker(object):
                                  )
                     users = pytis.extensions.dbfunction('pytis_check_codebook_rights', *arguments)
                     if users:
-                        if is_sequence(users):
+                        if isinstance(users, (tuple, list,)):
                             users = [str(row[0].value()) for row in users]
                             users.sort()
                         else:
                             users = [users]
                         for u in users:
                             if u not in self._application_roles:
-                                errors.append(("Právo update nebo insert pro políčko %(field)s náhledu %(view)s "
+                                errors.append(("Právo update nebo insert pro políčko %(field)s "
+                                               "náhledu %(view)s "
                                                "je v rozporu s právem view číselníku %(codebook)s. "
                                                "Týká se to těchto rolí: %(roles)s.") %
-                                              dict(codebook=codebook, view=spec_name, field=f.id(), roles=users))
+                                              dict(codebook=codebook, view=spec_name, field=f.id(),
+                                                   roles=users))
                                 break
         except Exception as e:
             errors.append(str(e))
@@ -330,7 +333,8 @@ class MenuChecker(object):
         try:
             view_spec = resolver.get(spec_name, 'view_spec')
             fields = view_spec.fields()
-            success, data = pytis.form.db_operation(data_spec.create, dbconnection_spec=self._dbconn)
+            success, data = pytis.form.db_operation(data_spec.create,
+                                                    dbconnection_spec=self._dbconn)
             if not success:
                 return errors + ["Nepodařilo se vytvořit datový objekt."]
             data.select()
@@ -339,14 +343,14 @@ class MenuChecker(object):
             except AssertionError as e:
                 # Hack to avoid printing errors on non-existent image files
                 # referred from the database.
-                if (len(e.args) == 3 and
-                    isinstance(e.args[2], pytis.data.ValidationError) and
-                    e.args[2][0] == u'Neplatný grafický formát'):
+                if ((len(e.args) == 3 and
+                     isinstance(e.args[2], pytis.data.ValidationError) and
+                     e.args[2][0] == u'Neplatný grafický formát')):
                     row = None
                 else:
                     raise
             if row:
-                PresentedRow(fields, data, row)
+                pytis.presentation.PresentedRow(fields, data, row)
         except Exception as e:
             errors.append(str(e))
         return errors
@@ -373,8 +377,8 @@ class MenuChecker(object):
                 newmsg = "\n".join(("Kontroluji datové specifikace...",
                                     "Specifikace: " + name,
                                     "Poslední chyba v: " + last_error))
-                status = int(float(n)/total*100/step)
-                if not update(status*step, newmsg=newmsg):
+                status = int(float(n) / total * 100 / step)
+                if not update(status * step, newmsg=newmsg):
                     break
                 if name.find('::') != -1:
                     main, side = name.split('::')
@@ -388,7 +392,7 @@ class MenuChecker(object):
                               message='Kontroluji datové specifikace...'.ljust(width) + '\n\n\n\n',
                               elapsed_time=True, can_abort=True)
         if errors:
-            errors = remove_duplicates(errors)
+            errors = pytis.util.remove_duplicates(errors)
             pytis.form.run_dialog(pytis.form.Message, "Chyby ve specifikacích",
                                   report="\n".join(errors))
 
@@ -423,12 +427,13 @@ class MenuChecker(object):
                 newmsg = "\n".join(("Kontroluji přístupová práva...",
                                     "Specifikace: " + name,
                                     "Poslední chyba v: " + last_error))
-                status = int(float(n)/total*100/step)
-                if not update(status*step, newmsg=newmsg):
+                status = int(float(n) / total * 100 / step)
+                if not update(status * step, newmsg=newmsg):
                     break
                 if name.find('::') != -1:
                     main, side = name.split('::')
-                    results = check_spec(main, no_spec_error=True) + check_spec(side, no_spec_error=True)
+                    results = (check_spec(main, no_spec_error=True) +
+                               check_spec(side, no_spec_error=True))
                 else:
                     results = check_spec(name, no_spec_error=True)
                 for error in results:
@@ -438,16 +443,16 @@ class MenuChecker(object):
                               message='Kontroluji přístupová práva...'.ljust(width) + '\n\n\n\n',
                               elapsed_time=True, can_abort=True)
         if errors:
-            errors = remove_duplicates(errors)
+            errors = pytis.util.remove_duplicates(errors)
             pytis.form.run_dialog(pytis.form.Message, "Chyby v přístupových právech",
-                                  report="\n".join(errors))        
+                                  report="\n".join(errors))
 
 class AppChecker(MenuChecker):
     
     def _find_specification_names(self, errors):
         menu_specs = get_menu_defs()
         form_specs = get_form_defs(self._resolver, errors)
-        return remove_duplicates(menu_specs + form_specs)
+        return pytis.util.remove_duplicates(menu_specs + form_specs)
 
 class DevelChecker(MenuChecker):
     """This checker serves for application testing after global changes.
@@ -493,14 +498,14 @@ def cache_spec(*args, **kwargs):
                 except pytis.util.ResolverError:
                     pass
             
-        total = len(specs)        
+        total = len(specs)
         last_status = 0
         step = 5 # aktualizujeme jen po každých 'step' procentech...
         for n, name in enumerate(specs):
-            status = int(float(n)/total*100/step)
+            status = int(float(n) / total * 100 / step)
             if status != last_status:
-                last_status = status 
-                if not update(status*step):
+                last_status = status
+                if not update(status * step):
                     break
             for x in name.split('::'):
                 cache(x)

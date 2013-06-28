@@ -16,10 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Pomůcky pro operace s datovými objekty a daty obecně.""" 
+"""Pomůcky pro operace s datovými objekty a daty obecně."""
 
-from pytis.extensions import *
-from pytis.util import nextval
+import pytis.data
+import pytis.util
 
 import config
 
@@ -79,25 +79,25 @@ def dbinsert(spec, row, transaction=None):
         insert.
       row -- sekvence dvouprvkových sekvencí (id, value) nebo instance
         pytis.data.Row
-      transaction -- instance pytis.data.DBTransactionDefault  
+      transaction -- instance pytis.data.DBTransactionDefault
         
     Vrací počet vložených řádků.
     
     """
-    assert isinstance(row, pytis.data.Row) or is_sequence(row), \
+    assert isinstance(row, pytis.data.Row) or isinstance(row, (tuple, list,)), \
         ("Argument must be a sequence or Row instance.", row)
-    if is_sequence(row):
+    if isinstance(row, (tuple, list,)):
         for item in row:
-            if not is_sequence(item) or len(item) != 2:                
+            if not isinstance(item, (tuple, list,)) or len(item) != 2:
                 errmsg = 'Column definition must be (ID, VALUE) pair.'
-                raise ProgramError(errmsg)
+                raise pytis.util.ProgramError(errmsg)
             k, v = item
-            if not is_anystring(k):
-                errmsg =  'Invalid column id %s' % k
-                raise ProgramError(errmsg)
+            if not pytis.util.is_anystring(k):
+                errmsg = 'Invalid column id %s' % k
+                raise pytis.util.ProgramError(errmsg)
             if not isinstance(v, pytis.data.Value):
                 errmsg = 'Invalid column value %s' % v
-                raise ProgramError(errmsg)
+                raise pytis.util.ProgramError(errmsg)
         row = pytis.data.Row(row)
     data = data_object(spec)
     success, result = pytis.form.db_operation(data.insert, row, transaction=transaction)
@@ -113,12 +113,13 @@ def dbupdate(row, values=(), transaction=None):
       values -- sekvence dvouprvkových sekvencí ('id', value) ,
         kde 'id' je řetězcový identifikátor políčka a value je
         instance, kterou se bude políčko aktualizovat
-      transaction -- instance pytis.data.DBTransactionDefault  
+      transaction -- instance pytis.data.DBTransactionDefault
+    
     """
     data = row.data()
     updaterow = row.row()
     key = data.key()
-    if is_sequence(key):
+    if isinstance(key, (tuple, list,)):
         key = key[0]
     for col, val in values:
         updaterow[col] = val
@@ -138,19 +139,19 @@ def dbupdate_many(spec, condition=None, update_row=None,
         select; string'
       condition -- podmínka updatovaní.
       update_row -- řádek kterým se provede update,
-      transaction -- instance pytis.data.DBTransactionDefault        
+      transaction -- instance pytis.data.DBTransactionDefault
         
     Vrací počet updatovaných řádků.
     
     """
     if not isinstance(condition, pytis.data.Operator):
         errmsg = "Nebyla předána podmínka pro update_many."
-        raise ProgramError(errmsg)        
+        raise pytis.util.ProgramError(errmsg)
     if not isinstance(update_row, pytis.data.Row):
         errmsg = "Nebyl předán řádek pro update_many."
-        raise ProgramError(errmsg)
+        raise pytis.util.ProgramError(errmsg)
     data = data_object(spec)
-    return data.update_many(condition, update_row, transaction=transaction) 
+    return data.update_many(condition, update_row, transaction=transaction)
 
 
 def dbfunction(name, *args, **kwargs):
@@ -183,8 +184,8 @@ def dbfunction(name, *args, **kwargs):
     def conn_spec():
         return config.dbconnection
     success, function = pytis.form.db_operation(pytis.data.DBFunctionDefault, name, conn_spec)
-    success, result   = pytis.form.db_operation(function.call, pytis.data.Row(args),
-                                                transaction=transaction)
+    success, result = pytis.form.db_operation(function.call, pytis.data.Row(args),
+                                              transaction=transaction)
     if not success:
         return None
     if len(result) == 1 and len(result[0]) == 1:
@@ -207,7 +208,7 @@ def enum(name, **kwargs):
 # Pozor, stejná metoda metoda je definována i v pytis.data.access
 def is_in_groups(groups):
     if isinstance(groups, basestring):
-        groups = xtuple(groups)
+        groups = pytis.util.xtuple(groups)
     def conn_spec():
         return config.dbconnection
     dbgroups = pytis.data.default_access_groups(conn_spec)
@@ -215,4 +216,3 @@ def is_in_groups(groups):
         return False
     else:
         return True
-
