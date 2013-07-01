@@ -22,9 +22,13 @@ import select
 
 from pyPgSQL import libpq
 
-from pytis.util import *
-from dbdata import *
-from postgresql import *
+from pytis.util import DEBUG, log, translations, with_lock, with_locks
+from access import AccessRights, Permission, RestrictedData
+from dbdata import DBConnection, DBException, DBInsertException, DBLockException, \
+    DBLoginException, DBSystemException, DBUserException
+from postgresql import DBDataPostgreSQL, DBPostgreSQLCounter, DBPostgreSQLFunction, \
+    PostgreSQLNotifier, DBPostgreSQLTransaction, PostgreSQLAccessor, PostgreSQLResult, \
+    PostgreSQLUserGroups, pg_escape
 
 _ = translations('pytis-data')
 
@@ -40,7 +44,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                                  ('host', DBConnection.host),
                                  ('port', DBConnection.port)):
             value = accessor(connection_data)
-            if value != None:
+            if value is not None:
                 connection_string += " %s='%s'" % (option, pg_escape(str(value)))
         # Otevři spojení
         if __debug__:
@@ -50,8 +54,8 @@ class _PgsqlAccessor(PostgreSQLAccessor):
         except libpq.DatabaseError as e:
             if e.args:
                 msg = e.args[0].lower()
-                if msg.find('password') != -1 or \
-                       msg.find('authentication failed') != -1:
+                if ((msg.find('password') != -1 or
+                     msg.find('authentication failed') != -1)):
                     raise DBLoginException()
             raise DBException(_(u"Unable to connect to the database"), e)
         return class_._postgresql_Connection(connection, connection_data)
@@ -111,7 +115,7 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                 row_data = []
                 for col in range(result.nfields):
                     try:
-                        value = result.getvalue(row, col)                    
+                        value = result.getvalue(row, col)
                     except libpq.InterfaceError as e:
                         raise DBUserException(None, e)
                     if value is libpq.PG_True:
@@ -121,15 +125,13 @@ class _PgsqlAccessor(PostgreSQLAccessor):
                     elif value is None:
                         pass
                     elif (type(value) in (type(0), type(0L), type(0.0),
-                                          type(libpq.PgInt2(0))) \
-                          or hasattr(libpq,'PgInt8') \
+                                          type(libpq.PgInt2(0)))
+                          or hasattr(libpq, 'PgInt8')
                           and type(value) == type(libpq.PgInt8(0))):
-                        value = str(value)                        
+                        value = str(value)
                     else:
-                        assert is_string(value), \
-                               DBException\
-                               ('Unexpected pyPgSQL type received', None,
-                                value)
+                        assert isinstance(value, str), \
+                            DBException('Unexpected pyPgSQL type received', None, value)
                     row_data.append(value)
                 data.append(row_data)
         return PostgreSQLResult(data)
@@ -219,7 +221,7 @@ class DBDataDefaultClass(PostgreSQLUserGroups, RestrictedData, DBDataPyPgSQL):
     Je utvořena pouhým složením existujících tříd a nezavádí žádnou další novou
     funkcionalitu kromě konstruktoru.
 
-    """    
+    """
     def __init__(self, bindings, key, connection_data=None, ordering=None,
                  access_rights=AccessRights((None, (None, Permission.ALL))),
                  dbconnection_spec=None, **kwargs):

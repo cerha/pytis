@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2005, 2010 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2010, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +22,6 @@ Tento modul poskytuje všechny funkce potřebné pro jednoduché sestavení výs
 Konkrétně definuje jednoduché značkování textu a provádí jeho formátování.
 
 """
-
-from pytis.util import *
 
 from exception import *
 from resolver import *

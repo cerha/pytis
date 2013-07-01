@@ -61,7 +61,7 @@ except Exception as e:
 else:
     import sqlalchemy.dialects.postgresql
 
-from pytis.data import Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError, \
+from pytis.util import Counter, InvalidAccessError, LimitedCache, OPERATIONAL, ProgramError, \
     assoc, compare_objects, format_byte_size, identity, log, rassoc, sameclass, super_, \
     with_lock, xtuple
 

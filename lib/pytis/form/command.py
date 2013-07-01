@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Definice uživatelských příkazů
-# 
+#
 # Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@ modulu 'commands_'.
 
 """
 
-from pytis.form import *
+import pytis.util
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -52,7 +52,7 @@ class CommandHandler:
     """
 
     _command_running = False
-    _command_counter = Counter()
+    _command_counter = pytis.util.Counter()
 
     @classmethod
     def _get_command_handler_instance(cls):
@@ -67,7 +67,7 @@ class CommandHandler:
         commands or None if no such instance is active in the application.
         
         """
-        raise ProgramError("This method must be overriden in a derived class.")
+        raise pytis.util.ProgramError("This method must be overriden in a derived class.")
 
     @classmethod
     def _command_handler(cls, command, _command_handler=None, **kwargs):
@@ -97,8 +97,8 @@ class CommandHandler:
             return False
         if __debug__:
             name = 'COMMAND_' + command.name()
-            assert hasattr(handler,name) and getattr(handler,name) == command,\
-                   "Invalid command '%s' for %s" % (name, handler)
+            assert hasattr(handler, name) and getattr(handler, name) == command,\
+                "Invalid command '%s' for %s" % (name, handler)
         return handler.can_command(command, **kwargs)
 
     @classmethod
@@ -116,6 +116,7 @@ class CommandHandler:
         """
         handler, kwargs = cls._command_handler(command, **kwargs)
         CommandHandler._command_counter.next()
+        from pytis.form import UserBreakException, busy_cursor
         try:
             try:
                 CommandHandler._command_running = True
@@ -129,6 +130,7 @@ class CommandHandler:
         except SystemExit:
             raise
         except:
+            from pytis.form import top_level_exception
             top_level_exception()
 
     def on_command(self, command, **kwargs):
@@ -242,7 +244,7 @@ class Command(object):
         self._id = '.'.join((handler.__name__, name.lower().replace('_', '-')))
         self._log = log_
         assert not hasattr(handler, 'COMMAND_' + name), \
-               "Command '%s' already defined for %s" % (name, handler.__name__)
+            "Command '%s' already defined for %s" % (name, handler.__name__)
         setattr(handler, 'COMMAND_' + name, self)
         Command._commands[name] = self
 
@@ -293,17 +295,18 @@ class Command(object):
         """Vyvolej v aplikaci zpracování příkazu s danými argumenty."""
         if self.enabled(**kwargs):
             if self._log:
-                kind = EVENT
+                kind = pytis.util.EVENT
             else:
-                kind = DEBUG
-            log(kind, 'Invoking command:', (self, kwargs))
+                kind = pytis.util.DEBUG
+            pytis.util.log(kind, 'Invoking command:', (self, kwargs))
             return self._handler.invoke_command(self, **kwargs)
         else:
-            message(_(u"Command invocation refused: %s") % self.id(), beep_=True)
+            from pytis.form import message
+            message(_(u"Command invocation refused: %s") % (self.id(),), beep_=True)
             return False
     
     def __cmp__(self, other):
-        if sameclass(self, other):
+        if pytis.util.sameclass(self, other):
             if self._id == other._id:
                 return 0
             elif self._id < other._id:
@@ -311,7 +314,7 @@ class Command(object):
             else:
                 return 1
         else:
-            return compare_objects(self, other)
+            return pytis.util.compare_objects(self, other)
         
     def __str__(self):
         return '<Command: %s>' % self._id
@@ -409,16 +412,18 @@ class UICommand(object):
             assigned_icon = command_icon(cmd, args)
             if assigned_icon is None:
                 raise Exception("No icon assigned for command %s %s." % (cmd, args))
+            import wx
+            from pytis.form import get_icon
             icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
             tool = toolbar.AddTool(-1, icon,
                                    shortHelpString=self._title,
                                    longHelpString=self._descr)
             parent = toolbar.GetParent()
+            from pytis.form import wx_callback
             wx_callback(wx.EVT_TOOL, parent, tool.GetId(),
                         lambda e: cmd.invoke(**args))
             wx_callback(wx.EVT_UPDATE_UI, parent, tool.GetId(),
                         lambda e: e.Enable(cmd.enabled(**args)))
-
     
 
 _command_icons = None
@@ -438,6 +443,7 @@ def command_icon(command, args):
     """
     global _command_icons
     if _command_icons is None:
+        from commands_ import COMMAND_ICONS
         _command_icons = {}
         for item, icon in COMMAND_ICONS:
             if isinstance(item, tuple):

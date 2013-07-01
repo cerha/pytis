@@ -24,17 +24,21 @@
 
 import collections
 import copy
-import time
 import types
 
 import wx
 import wx.grid
 
-from pytis.form import *
 import pytis.data
 import pytis.output
 import pytis.presentation
 from pytis.presentation import PresentedRow
+from pytis.util import DEBUG, EVENT, ProgramError, log
+
+from application import db_operation
+from form import Form
+from inputfield import InputField
+from screen import color2wx, focused_window, get_icon
 
 import config
 
@@ -61,7 +65,7 @@ class DataTable(object):
     
     class _CurrentRow:
         def __init__(self, row, the_row):
-            assert type(row) == type(0)
+            assert isinstance(row, int)
             assert isinstance(the_row, PresentedRow)
             self.row = row
             self.the_row = the_row
@@ -72,7 +76,7 @@ class DataTable(object):
             DataTable._CurrentRow.__init__(self, row, record)
             self.orig_row = copy.copy(data_row)
         def update(self, colid, value):
-            self.the_row[colid] = value    
+            self.the_row[colid] = value
 
     class EditInfo:
         def __init__(self, row, the_row, orig_row):
@@ -89,7 +93,7 @@ class DataTable(object):
             return map(lambda __: None, range(size))
         def __getitem__(self, row):
             try:
-                index = row-self._start_row
+                index = row - self._start_row
                 if index >= 0:
                     return self._cache[index]
                 else:
@@ -99,7 +103,7 @@ class DataTable(object):
         def __setitem__(self, row, the_row):
             start = self._start_row
             try:
-                index = row-start
+                index = row - start
                 if index >= 0:
                     self._cache[index] = the_row
                 else:
@@ -107,7 +111,7 @@ class DataTable(object):
             except IndexError:
                 size = self._size
                 end = start + size
-                new_start = max(row - size/2, 0)
+                new_start = max(row - size / 2, 0)
                 new_end = new_start + size
                 if end <= new_start or new_end <= start:
                     cache = self._allocate(size)
@@ -121,7 +125,7 @@ class DataTable(object):
                     raise ProgramError(start, end, new_start, new_end)
                 assert len(cache) == self._size, len(cache)
                 self._start_row = new_start
-                cache[row-new_start] = the_row
+                cache[row - new_start] = the_row
                 self._cache = cache
             
     class _Column(object):
@@ -195,8 +199,7 @@ class DataTable(object):
         edited = self._edited_row
         if edited and row == edited.row:
             return edited.the_row
-        elif edited and autoadjust and edited.the_row.new() and \
-                 row > edited.row:
+        elif edited and autoadjust and edited.the_row.new() and row > edited.row:
             row_ = row - 1
         else:
             row_ = row
@@ -218,12 +221,12 @@ class DataTable(object):
             data.rewind()
             if row > 0:
                 # Tento fetch pouze zabezpečí přednačtení bufferu v dopředném
-                # směru od začátku dat.  To je potřeba, protože grid 
+                # směru od začátku dat.  To je potřeba, protože grid
                 # načítá řádky od konce a bez tohoto hacku by buffer obsahoval
                 # pouze zobrazené řádky.  Lépe by to však bylo ošetřit lepší
                 # strategií plnění bufferu v dbdata.py ...
                 fetch(0)
-                data.skip(row-1, direction=pytis.data.FORWARD)
+                data.skip(row - 1, direction=pytis.data.FORWARD)
             fetch(row)
         elif row != current.row:
             data = self._data
@@ -261,8 +264,8 @@ class DataTable(object):
                 cached = self._group_cache.keys()
                 lower = filter(lambda k: k < row, cached)
                 if len(lower) and (row < 100 or row - max(lower) < 80):
-                    prev_values = cached_values(row-1, grouping)
-                    prev_group = self._group(row-1)
+                    prev_values = cached_values(row - 1, grouping)
+                    prev_group = self._group(row - 1)
                     if values == prev_values:
                         result = prev_group
                     else:
@@ -272,8 +275,8 @@ class DataTable(object):
                     return result
                 higher = filter(lambda k: k > row, cached)
                 if len(higher) and min(higher) - row < 80:
-                    next_values = cached_values(row+1, grouping)
-                    next_group = self._group(row+1)
+                    next_values = cached_values(row + 1, grouping)
+                    next_group = self._group(row + 1)
                     if values == next_values:
                         result = next_group
                     else:
@@ -347,7 +350,8 @@ class DataTable(object):
         if inserted_row_number is None:
             self._edited_row = None
         else:
-            self._edited_row = self._init_edited_row(inserted_row_number, prefill=inserted_row_prefill, new=True)
+            self._edited_row = self._init_edited_row(inserted_row_number,
+                                                     prefill=inserted_row_prefill, new=True)
         
     def close(self):
         # Tato metoda je nutná kvůli jistému podivnému chování wxWindows,
@@ -378,7 +382,7 @@ class DataTable(object):
         #
         # The value returned is the formatted cell value by default or a
         # computed style, when the keyword argument style is true.
-        # This is a little tricky, but the reason is to cache everithing 
+        # This is a little tricky, but the reason is to cache everithing
         # once we read the row value, because we can not cache the rows
         # inside the 'row()' method.
         #
@@ -397,7 +401,8 @@ class DataTable(object):
             # Grouping column may not be in self._columns.
             for gcol in self._grouping:
                 if gcol not in value_dict:
-                    value_dict[gcol] = the_row.format(gcol, pretty=True, form=self._form, secure=True)
+                    value_dict[gcol] = the_row.format(gcol, pretty=True, form=self._form,
+                                                      secure=True)
             # If row_style is defined, lets compute it.
             if isinstance(self._row_style, collections.Callable):
                 protected_row = the_row.protected()
@@ -427,7 +432,8 @@ class DataTable(object):
         if row is None:
             self._edited_row = None
         else:
-            assert row >= 0 and row < self.number_of_rows(min_value=row), ('Invalid row number', row)
+            assert row >= 0 and row < self.number_of_rows(min_value=row), \
+                ('Invalid row number', row)
             self._edited_row = self._init_edited_row(row, data_row=self._get_row(row).row())
 
     def editing(self):
@@ -484,7 +490,7 @@ class DataTable(object):
         return self._column_count
             
 
-class ListTable(wx.grid.PyGridTableBase, DataTable):    
+class ListTable(wx.grid.PyGridTableBase, DataTable):
             
     def __init__(self, form, data, presented_row, columns, row_count,
                  sorting=(), grouping=(), prefill=None, row_style=None):
@@ -527,7 +533,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
 
     def _init_group_bg_downgrade(self):
         c = wx.NamedColour(config.grouping_background_downgrade)
-        self._group_bg_downgrade = (255-c.Red(), 255-c.Green(), 255-c.Blue())
+        self._group_bg_downgrade = (255 - c.Red(), 255 - c.Green(), 255 - c.Blue())
         
     def update(self, *args, **kwargs):
         super(ListTable, self).update(*args, **kwargs)
@@ -568,7 +574,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         # políčka editujeme výhradně přes naše editory.
         assert isinstance(value, pytis.data.Value), ('Value not a value', value)
         edited = self._edited_row
-        if edited == None:
+        if edited is None:
             # K této situaci dochází, když se kliknutím myši opouští
             # rozeditované políčko řádku, jemuž ještě nebyla změněna žádná
             # hodnota.  V takovém případě naše metody editaci nakrásno
@@ -594,7 +600,8 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return wx.grid.GRID_VALUE_STRING
     
     def GetAttr(self, row, col, kind):
-        if row >= self.number_of_rows(min_value=row+1) or col >= self.number_of_columns(): # může se stát...
+        if row >= self.number_of_rows(min_value=row+1) or col >= self.number_of_columns():
+            # it may happen
             return None
         column = self._columns[col]
         if column.id in self._secret_columns:
@@ -720,7 +727,8 @@ class InputFieldCellEditor(wx.grid.PyGridCellEditor):
         
     def IsAcceptedKey(self, event):
         # TODO/wx: Z neznámých důvodů není voláno.
-        if __debug__: log(DEBUG, 'Neuvěřitelné -- voláno IsAcceptedKey')
+        if __debug__:
+            log(DEBUG, 'Neuvěřitelné -- voláno IsAcceptedKey')
         return False
     
     def close(self):
@@ -748,11 +756,11 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
         super(CustomCellRenderer, self).__init__()
 
     def _draw_value(self, value, dc, rect, align):
-        label_rect = wx.Rect(rect.x+1, rect.y, rect.width-2, rect.height)
-        dc.DrawLabel(value, label_rect, wx.ALIGN_CENTER_VERTICAL|align)
+        label_rect = wx.Rect(rect.x + 1, rect.y, rect.width - 2, rect.height)
+        dc.DrawLabel(value, label_rect, wx.ALIGN_CENTER_VERTICAL | align)
         
     def Draw(self, grid, attr, dc, rect, row, col, isSelected):
-        """Customisation Point: Draw the data from grid in the rectangle with attributes using the dc"""
+        "Customisation: Draw the data from grid in the rectangle with attributes using the dc."
         dc.SetClippingRegion(rect.x, rect.y, rect.width, rect.height)
         try:
             if isSelected:
@@ -778,13 +786,13 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
                         dc.SetPen(wx.Pen(color, border_width, wx.SOLID))
                         r, mod = divmod(border_width, 2)
                         x, y, width, height = rect
-                        left, right, top, bottom = x, x+width, y+r, y+height-r-mod
+                        left, right, top, bottom = x, x + width, y + r, y + height - r - mod
                         dc.DrawLine(left, top, right, top)
                         dc.DrawLine(left, bottom, right, bottom)
                         if col == 0:
-                            dc.DrawLine(left+r+mod, top, left+r+mod, bottom)
-                        if col+1 == grid.GetNumberCols():
-                            dc.DrawLine(right-r-mod, top, right-r-mod, bottom)
+                            dc.DrawLine(left + r + mod, top, left + r + mod, bottom)
+                        if col + 1 == grid.GetNumberCols():
+                            dc.DrawLine(right - r - mod, top, right - r - mod, bottom)
                         
                 finally:
                     dc.SetPen(original_pen)
@@ -800,6 +808,6 @@ class CustomBooleanCellRenderer(CustomCellRenderer):
     def _draw_value(self, value, dc, rect, align):
         icon = get_icon(value == 'T' and 'checkbox-checked' or 'checkbox-unchecked')
         if icon:
-            dc.DrawImageLabel('', icon, rect, wx.ALIGN_CENTER_VERTICAL|align)
+            dc.DrawImageLabel('', icon, rect, wx.ALIGN_CENTER_VERTICAL | align)
         elif value == 'T':
-            dc.DrawLabel(value, rect, wx.ALIGN_CENTER_VERTICAL|align)
+            dc.DrawLabel(value, rect, wx.ALIGN_CENTER_VERTICAL | align)

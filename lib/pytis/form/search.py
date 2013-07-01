@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Prvky uživatelského rozhraní související s vyhledáváním
-# 
+#
 # Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -28,10 +28,14 @@ konkrétní použití.
 """
 
 import functools
-import pytis.data
-from pytis.form import *
-from pytis.presentation import *
+
 import wx
+
+import pytis.data
+from pytis.presentation import Field
+from pytis.util import find
+from dialog import Error, GenericDialog
+from screen import wx_button, wx_choice, wx_spin_ctrl, wx_text_ctrl
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -114,9 +118,9 @@ class SFSDialog(GenericDialog):
         panel = wx.Panel(self._dialog, -1)
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         label_ctrl = wx.StaticText(panel, -1, label)
-        sizer.Add(label_ctrl, border=12, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT)
+        sizer.Add(label_ctrl, border=12, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT)
         panel.SetSizer(sizer)
-        panel.SetMinSize((label_ctrl.GetSize().width+12, self._FIELD_HEIGHT))
+        panel.SetMinSize((label_ctrl.GetSize().width + 12, self._FIELD_HEIGHT))
         return panel
 
     def _create_content(self, sizer):
@@ -127,7 +131,7 @@ class SFSDialog(GenericDialog):
             for x in ctrls:
                 if x:
                     row.Add(x)
-            flags = wx.ALIGN_LEFT|wx.LEFT|wx.RIGHT
+            flags = wx.ALIGN_LEFT | wx.LEFT | wx.RIGHT
             if i == 0:
                 flags |= wx.TOP
             sizer.Add(row, 0, flags, 8)
@@ -189,7 +193,7 @@ class SortingDialog(SFSDialog):
         super(SortingDialog, self)._create_content(sizer)
         button = self._create_button(_(u"Přidat"), self._on_add,
                                      _(u"Přidat sloupec sekundárního řazení"))
-        sizer.Add(button, 0, wx.ALL|wx.CENTER, 5)
+        sizer.Add(button, 0, wx.ALL | wx.CENTER, 5)
 
     def _customize_result(self, button_wid):
         label = self._button_label(button_wid)
@@ -233,7 +237,7 @@ class SFDialog(SFSDialog):
                pytis.data.LT: '<',
                pytis.data.GT: '>',
                pytis.data.AND: _(u"AND"),
-               pytis.data.OR:  _(u"OR")}
+               pytis.data.OR: _(u"OR")}
     # WM and EQ have the same UI ctrl, so we ignore the difference.
     _RELATIONAL_OPERATORS_MAP = {'EQ': pytis.data.EQ,
                                  'NE': pytis.data.NE,
@@ -247,12 +251,12 @@ class SFDialog(SFSDialog):
                               'OR': pytis.data.OR}
     _TEXT_CTRL_SIZE = 18
     _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(),
-                           '* '+_(u"hodnota")+' *')
+                           '* ' + _(u"hodnota") + ' *')
     
     class SFConditionError(Exception):
         def __init__(self, i, ctrl, msg):
-            msg = _(u"Chyba v podmínce č. %d: %s") % (i+1, msg)
-            run_dialog(Error, msg)
+            msg = _(u"Chyba v podmínce č. %d: %s") % (i + 1, msg,)
+            pytis.form.run_dialog(Error, msg)
             #ctrl.SetFocus()
             #self.focus()
             super(SFDialog.SFConditionError, self).__init__(msg)
@@ -276,8 +280,8 @@ class SFDialog(SFSDialog):
 
     def _strop(self, operator, ):
         if operator.logical():
-            op = ' '+ operator.name() +' '
-            return '('+ op.join([self._strop(arg) for arg in operator.args()]) + ')'
+            op = ' ' + operator.name() + ' '
+            return '(' + op.join([self._strop(arg) for arg in operator.args()]) + ')'
         else:
             arg1, arg2 = operator.args()
             if isinstance(arg2, (pytis.data.Value, pytis.data.WMValue)):
@@ -287,37 +291,36 @@ class SFDialog(SFSDialog):
                 else:
                     arg2 = repr(arg2.value())
             op = self._LABELS[self._RELATIONAL_OPERATORS_MAP[operator.name()]]
-            return arg1 +' '+ op +' '+ arg2
+            return arg1 + ' ' + op + ' ' + arg2
 
     def _decompose_condition(self, operator, level=1):
         # Decompose nested conditions into a linear list of corresponding relational and logical
         # operators in infix notation.  Hierarchy is represented by the level of logical operators.
         if not isinstance(operator, pytis.data.Operator):
-            raise Exception("Invalid condition: "+ repr(operator))
+            raise Exception("Invalid condition: " + repr(operator))
         name, args = operator.name(), operator.args()
         if name in self._LOGICAL_OPERATORS_MAP:
             op = self._LOGICAL_OPERATORS_MAP[name]
-            conds = [self._decompose_condition(arg, level=level+1) for arg in args]
+            conds = [self._decompose_condition(arg, level=(level + 1)) for arg in args]
             return functools.reduce(lambda a, b: (a + ((op, level),)) + b, conds)
         elif name in self._RELATIONAL_OPERATORS_MAP:
             if len(args) != 2:
-                raise Exception("Wrong number of arguments: "+ str(args))
+                raise Exception("Wrong number of arguments: " + str(args))
             arg1, arg2 = args
             op = self._RELATIONAL_OPERATORS_MAP[name]
             col1 = self._find_column(arg1)
             if col1 is None:
-                raise Exception("Invalid column: "+ arg1)
+                raise Exception("Invalid column: " + arg1)
             if isinstance(arg2, basestring):
                 col2 = self._find_column(arg2)
                 if col2 is None:
-                    raise Exception("Invalid column: "+ arg2)
+                    raise Exception("Invalid column: " + arg2)
                 value = None
             elif isinstance(arg2, (pytis.data.WMValue, pytis.data.Value)):
                 col2 = None
-                value = isinstance(arg2, pytis.data.WMValue) \
-                        and arg2.value() or arg2.export()
+                value = isinstance(arg2, pytis.data.WMValue) and arg2.value() or arg2.export()
             else:
-                raise Exception("Invalid operand type: "+ repr(arg))
+                raise Exception("Invalid operand type: " + repr(arg))
             return (op, col1, col2, value),
         elif name == 'IN' and isinstance(operator, pytis.form.IN):
             return ((operator,),)
@@ -325,7 +328,7 @@ class SFDialog(SFSDialog):
                 and isinstance(operator.args()[0], pytis.form.IN):
             return ((operator,),)
         else:
-            raise Exception("Unsupported operator: "+ name)
+            raise Exception("Unsupported operator: " + name)
 
     def _create_controls(self):
         choice, spin, label, field, button = self._create_choice, self._create_spin_ctrl, \
@@ -380,7 +383,8 @@ class SFDialog(SFSDialog):
         try:
             operators = self._decompose_condition(self._condition or empty)
         except Exception as e:
-            run_dialog(Warning, _(u"Nepodařilo se rozložit podmínkový výraz:") +" "+ str(e))
+            pytis.form.run_dialog(Warning,
+                                  _(u"Nepodařilo se rozložit podmínkový výraz:") + " " + str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
             if len(items) == 1:
@@ -408,7 +412,7 @@ class SFDialog(SFSDialog):
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
             bsizer.Add(b, 0, wx.RIGHT, 10)
-        sizer.Add(bsizer, 0, wx.ALL|wx.CENTER, 5)
+        sizer.Add(bsizer, 0, wx.ALL | wx.CENTER, 5)
 
     def _selected_condition(self, omit=None):
         # Construct the operator from the current dialog ui controls.
@@ -462,7 +466,7 @@ class SFDialog(SFSDialog):
             operands = []
             for i in range(1, len(operators), 2):
                 op, weight = operators[i]
-                operand = operators[i-1]
+                operand = operators[i - 1]
                 if weight == level and op == operator:
                     operands.append(operand)
                 else:
@@ -485,7 +489,7 @@ class SFDialog(SFSDialog):
         for i in range(len(self._controls)):
             # Omit the relational operator and the logical operator above, or below for the first
             # operator.
-            if omit is None or i not in (omit, (omit == 0 and 1 or omit-1)):
+            if omit is None or i not in (omit, (omit == 0 and 1 or omit - 1)):
                 if i % 2 == 1:
                     op, weight = logical_operator(i)
                     if weight not in weights:
@@ -522,7 +526,7 @@ class SFDialog(SFSDialog):
         wcol1, wop, wcol2, wval = self._controls[i][:4]
         col = self._columns[wcol1.GetSelection()]
         v = self._row[col.id()].export()
-        if is_sequence(v):
+        if isinstance(v, (tuple, list,)):
             v = v[0]
         wval.SetValue(v)
 
@@ -569,7 +573,7 @@ class SearchDialog(SFDialog):
     _NEXT_BUTTON = _(u"Další")
     _PREVIOUS_BUTTON = _(u"Předchozí")
     _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFSDialog._BUTTONS
-    _COMMIT_BUTTON = _NEXT_BUTTON    
+    _COMMIT_BUTTON = _NEXT_BUTTON
     _TITLE = _(u"Hledání")
     _HELP_TOPIC = 'searching'
 
@@ -625,10 +629,10 @@ class FilterDialog(SFDialog):
                       pytis.data.Data.AGG_SUM,
                       pytis.data.Data.AGG_AVG)
     _AGG_LABELS = {pytis.data.Data.AGG_COUNT: _(u"Počet"),
-                   pytis.data.Data.AGG_MIN:   _(u"Minimum"),
-                   pytis.data.Data.AGG_MAX:   _(u"Maximum"),
-                   pytis.data.Data.AGG_SUM:   _(u"Součet"), 
-                   pytis.data.Data.AGG_AVG:   _(u"Průměr")}
+                   pytis.data.Data.AGG_MIN: _(u"Minimum"),
+                   pytis.data.Data.AGG_MAX: _(u"Maximum"),
+                   pytis.data.Data.AGG_SUM: _(u"Součet"),
+                   pytis.data.Data.AGG_AVG: _(u"Průměr")}
     _TITLE = _(u"Filtrování")
     _HELP_TOPIC = 'filtering'
 
@@ -672,7 +676,6 @@ class FilterDialog(SFDialog):
         pane.SetSizer(boxsizer)
         sizer.Add(cp, 0, wx.ALL, 5)
 
-
     def _on_compute_aggregate(self, event):
         try:
             condition = self._selected_condition()
@@ -685,7 +688,8 @@ class FilterDialog(SFDialog):
             if op != pytis.data.Data.AGG_COUNT and not isinstance(col.type(), pytis.data.Number):
                 # TODO: We should also support Date and maybe other types, but first it must be
                 # implemented in the data interface.
-                run_dialog(Error, _(u"Tato operaca není pro daný typ sloupce podporována."))
+                pytis.form.run_dialog(Error,
+                                      _(u"Tato operace není pro daný typ sloupce podporována."))
                 v = ''
             else:
                 result = self._compute_aggregate(op, col.id(), condition)

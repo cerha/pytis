@@ -27,14 +27,31 @@ The actual class representing each field is determined by its specification and 
 """
 
 import collections
-import pytis.data
-from pytis.form import *
-from pytis.presentation import computer
-import pytis.windows
-import wx.lib.colourselect
 from cStringIO import StringIO
 import datetime
-#from wxPython.pytis.maskededit import wxMaskedTextCtrl
+import os
+import re
+
+import wx.lib.colourselect
+
+import lcg
+import pytis.data
+import pytis.form
+from pytis.presentation import AttachmentStorage, CodebookSpec, Field, Orientation, \
+    PostProcess, PresentedRow, SelectionType, \
+    TextFilter, TextFormat, computer
+from pytis.util import EVENT, Popen, ProgramError, ResolverError, \
+    dev_null_stream, find, format_byte_size, log
+import pytis.windows
+from command import CommandHandler, UICommand
+from dialog import Calendar, ColorSelector, Error
+from event import wx_callback
+from screen import CallbackHandler, InfoWindow, KeyHandler, MSeparator, TextHeadingSelector, \
+    char2px, dlg2px, mitem, open_data_as_file, paste_from_clipboard, popup_menu, wx_button
+from application import Application, create_data_object, \
+    decrypted_names, delete_record, \
+    global_keymap, message, new_record, run_dialog, run_form
+import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -45,17 +62,17 @@ class _TextValidator(wx.PyValidator):
         self._filter = filter
         wx_callback(wx.EVT_CHAR, self, self._on_char)
 
-    def Clone(self): 
+    def Clone(self):
         return _TextValidator(self._control, self._filter)
     
     def _on_char(self, event):
         key = event.GetKeyCode()
-        if self._filter is not None \
-               and key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 \
-               and not self._filter(chr(key)):
+        if ((self._filter is not None and
+             key >= wx.WXK_SPACE and key != wx.WXK_DELETE and key <= 255 and
+             not self._filter(chr(key)))):
             message(_("Invalid character!"), beep_=True)
             return True
-        else: 
+        else:
             event.Skip()
             return True
 
@@ -67,14 +84,14 @@ class _Completer(wx.PopupWindow):
         super(_Completer, self).__init__(ctrl.GetParent())
         self._ctrl = ctrl
         self._last_insertion_point = 0
-        style = wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER| wx.SIMPLE_BORDER
+        style = wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_NO_HEADER | wx.SIMPLE_BORDER
         self._list = listctrl = wx.ListCtrl(self, pos=wx.Point(0, 0), style=style)
         self.update(ctrl.GetValue(), False)
         wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_close)
-        wx_callback(wx.EVT_LEFT_DOWN,  ctrl, self._on_toggle_down)
-        wx_callback(wx.EVT_LEFT_UP,    ctrl, self._on_toggle_up)
-        wx_callback(wx.EVT_LISTBOX,     listctrl, listctrl.GetId(), self._on_list_item_selected)
-        wx_callback(wx.EVT_LEFT_DOWN,   listctrl, self._on_list_click)
+        wx_callback(wx.EVT_LEFT_DOWN, ctrl, self._on_toggle_down)
+        wx_callback(wx.EVT_LEFT_UP, ctrl, self._on_toggle_up)
+        wx_callback(wx.EVT_LISTBOX, listctrl, listctrl.GetId(), self._on_list_item_selected)
+        wx_callback(wx.EVT_LEFT_DOWN, listctrl, self._on_list_click)
         wx_callback(wx.EVT_LEFT_DCLICK, listctrl, self._on_list_dclick)
 
     def _on_close(self, event):
@@ -104,8 +121,8 @@ class _Completer(wx.PopupWindow):
         self._set_value_from_selected()
 
     def _set_value_from_selected(self):
-         sel = self._list.GetFirstSelected()
-         if sel > -1:
+        sel = self._list.GetFirstSelected()
+        if sel > -1:
             text = self._list.GetItem(sel, 0).GetText()
             self._ctrl.SetValue(text)
             self._ctrl.SetInsertionPointEnd()
@@ -137,17 +154,17 @@ class _Completer(wx.PopupWindow):
         if code in (wx.WXK_DOWN, wx.WXK_UP):
             sel = listctrl.GetFirstSelected()
             if code == wx.WXK_DOWN and sel < (listctrl.GetItemCount() - 1):
-                listctrl.Select(sel+1)
-            elif code == wx.WXK_UP and sel > 0 :
-                listctrl.Select(sel-1)
+                listctrl.Select(sel + 1)
+            elif code == wx.WXK_UP and sel > 0:
+                listctrl.Select(sel - 1)
             listctrl.EnsureVisible(sel)
             self._show()
             return True
         if self.IsShown():
-            if code == wx.WXK_RETURN :
+            if code == wx.WXK_RETURN:
                 self._set_value_from_selected()
                 return True
-            if code == wx.WXK_ESCAPE :
+            if code == wx.WXK_ESCAPE:
                 self._show(False)
                 return True
         return False
@@ -159,7 +176,7 @@ class _Completer(wx.PopupWindow):
         listctrl.ClearAll()
         listctrl.InsertColumn(0, "")
         height_limit = None
-        listctrl.SetSize((17,17)) # Needed for GetViewRect to work consistently. 
+        listctrl.SetSize((17, 17)) # Needed for GetViewRect to work consistently.
         for i, choice in enumerate(completions):
             listctrl.InsertStringItem(i, "")
             listctrl.SetStringItem(i, 0, choice)
@@ -231,7 +248,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                 if codebook:
                     field = CodebookField
                 else:
-                    field = ChoiceField 
+                    field = ChoiceField
             else:
                 if selection_type is None:
                     if codebook is not None:
@@ -239,12 +256,12 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                     else:
                         selection_type = SelectionType.CHOICE
                 mapping = {
-                    SelectionType.CODEBOOK:  CodebookField,
-                    SelectionType.LIST:      ListField,
-                    SelectionType.CHOICE:    ChoiceField,
-                    SelectionType.LIST_BOX:  ListBoxField,
+                    SelectionType.CODEBOOK: CodebookField,
+                    SelectionType.LIST: ListField,
+                    SelectionType.CHOICE: ChoiceField,
+                    SelectionType.LIST_BOX: ListBoxField,
                     SelectionType.RADIO: RadioBoxField,
-                    }
+                }
                 field = mapping[selection_type]
         elif isinstance(type, pytis.data.Image):
             field = ImageField
@@ -284,7 +301,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         cls._focused_field = field #weakref.ref(field)
         if current is not None:
             cls._last_focused_field = current
-    _focus   = classmethod(_focus)
+    _focus = classmethod(_focus)
     
     def _last_focused(cls):
         field = cls._last_focused_field
@@ -320,7 +337,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
           
           guardian -- parent 'KeyHandler'.
           
-          readonly -- 
+          readonly --
 
         This method should not be overriden by derived classes.  All field specific initialization
         should be done in the methods '_create_widget()' and '_create_label'.
@@ -362,9 +379,9 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             self._label = self._create_label(parent)
             self._widget = self._create_widget(parent)
         KeyHandler.__init__(self, ctrl)
-        wx_callback(wx.EVT_IDLE,       ctrl, self._on_idle)
+        wx_callback(wx.EVT_IDLE, ctrl, self._on_idle)
         wx_callback(wx.EVT_KILL_FOCUS, ctrl, self._on_kill_focus)
-        wx_callback(wx.EVT_SET_FOCUS,  ctrl, self._on_set_focus)
+        wx_callback(wx.EVT_SET_FOCUS, ctrl, self._on_set_focus)
         wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
         if self._spec.descr() is not None:
             ctrl.SetToolTipString(self._spec.descr())
@@ -373,7 +390,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             self._register_skip_navigation_callback()
         if not inline:
             row.register_callback(row.CALL_CHANGE, id, self._change_callback)
-            row.register_callback(row.CALL_EDITABILITY_CHANGE, id, self._editability_change_callback)
+            row.register_callback(row.CALL_EDITABILITY_CHANGE, id,
+                                  self._editability_change_callback)
         value = self._row.invalid_string(id)
         if value is None:
             value = row.format(id, secure='')
@@ -394,7 +412,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             if widget not in self._unregistered_widgets:
                 e.Skip()
                 flag = e.GetDirection() and wx.NavigationKeyEvent.IsForward or 0
-                wx.CallAfter(lambda : widget.Navigate(flag))
+                wx.CallAfter(lambda: widget.Navigate(flag))
             else:
                 e.Skip()
         return cb
@@ -403,7 +421,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         # Return field label as 'wx.StaticText' instance.
         label = self.spec().label()
         if label:
-            label = label + ':'            
+            label = label + ':'
         return wx.StaticText(parent, -1, label, style=wx.ALIGN_RIGHT)
 
     def _create_ctrl(self, parent):
@@ -448,7 +466,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             position = None
         else:
             size = self._ctrl.GetSize()
-            position = (size.x/3, size.y/2)
+            position = (size.x / 3, size.y / 2)
         popup_menu(self._ctrl, menu, position=position, keymap=global_keymap())
 
     def _validate(self):
@@ -588,7 +606,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._row.field_changed(self.id())
 
     def _px_size(self, parent, width, height):
-        size = dlg2px(parent, 4*(width+1)+2, 8*height+4.5)
+        size = dlg2px(parent, 4 * (width + 1) + 2, 8 * height + 4.5)
         return (size.width, size.height)
     
     def _set_focus(self):
@@ -676,7 +694,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             if interactive:
                 log(EVENT, 'Invalid field:', self.id())
                 run_dialog(Error, title=_("Validation error"),
-                           message=(_("Error validating field value:") +"\n\n"+
+                           message=(_("Error validating field value:") + "\n\n" +
                                     "%s: %s" % (self.spec().label(), error.message())))
             else:
                 message(error.message(), beep_=True)
@@ -733,8 +751,8 @@ class TextField(InputField):
     SIGNS = ['-', '+']
     DECIMAL_POINTS = ['.', ',']
     FLOAT = map(str, range(10)) + SIGNS + DECIMAL_POINTS
-    ASCII   = map(chr, range(127))
-    LETTERS = map(chr, range(ord('a'),ord('z')+1) + range(ord('A'),ord('Z')+1))
+    ASCII = map(chr, range(127))
+    LETTERS = map(chr, range(ord('a'), ord('z') + 1) + range(ord('A'), ord('Z') + 1))
 
     def _create_ctrl(self, parent):
         if not self._inline:
@@ -816,7 +834,7 @@ class TextField(InputField):
         """
         try:
             return self._stored_post_process_func
-        except:            
+        except:
             pp_spec = self.spec().post_process()
             if isinstance(pp_spec, collections.Callable):
                 self._stored_post_process_func = pp_spec
@@ -825,7 +843,7 @@ class TextField(InputField):
                     None: None,
                     PostProcess.UPPER: lambda s: s.upper(),
                     PostProcess.LOWER: lambda s: s.lower(),
-                    }
+                }
                 assert pp_spec in mapping.keys()
                 self._stored_post_process_func = mapping[pp_spec]
             return self._stored_post_process_func
@@ -844,16 +862,15 @@ class TextField(InputField):
         if filter_spec is None:
             return None
         if filter_spec == TextFilter.EXCLUDE_LIST:
-            return lambda char, list=self.spec().filter_list(): \
-                                      char not in list
+            return lambda char, list=self.spec().filter_list(): char not in list
         mapping = {
             TextFilter.ASCII: self.ASCII,
             TextFilter.ALPHA: self.LETTERS,
-	    TextFilter.FLOAT: self.FLOAT,
+            TextFilter.FLOAT: self.FLOAT,
             TextFilter.ALPHANUMERIC: self.LETTERS + self.NUMBERS,
             TextFilter.NUMERIC: self.NUMBERS,
             TextFilter.INCLUDE_LIST: self.spec().filter_list(),
-            }
+        }
         assert filter_spec in mapping.keys()
         return lambda char, list=mapping[filter_spec]: char in list
 
@@ -879,15 +896,15 @@ class TextField(InputField):
 
     def _menu(self):
         return super(TextField, self)._menu() + \
-               (None,
-                UICommand(TextField.COMMAND_CUT(), _("Cut"),
-                          _("Cut the selected text to clipboard.")),
-                UICommand(TextField.COMMAND_COPY(), _("Copy"),
-                          _("Copy the selected text to clipboard.")),
-                UICommand(TexstField.COMMAND_PASTE(), _("Paste"),
-                          _("Paste text from clipboard.")),
-                UICommand(TextField.COMMAND_SELECT_ALL(), _("Select All"),
-                          _("Select entire field value.")))
+            (None,
+             UICommand(TextField.COMMAND_CUT(), _("Cut"),
+                       _("Cut the selected text to clipboard.")),
+             UICommand(TextField.COMMAND_COPY(), _("Copy"),
+                       _("Copy the selected text to clipboard.")),
+             UICommand(TextField.COMMAND_PASTE(), _("Paste"),
+                       _("Paste text from clipboard.")),
+             UICommand(TextField.COMMAND_SELECT_ALL(), _("Select All"),
+                       _("Select entire field value.")))
 
     # Zpracování příkazů
     
@@ -926,7 +943,7 @@ class StringField(TextField):
 
 
 class PasswordField(StringField):
-    _ORIGINAL_VALUE = u'\u2024'*8
+    _ORIGINAL_VALUE = u'\u2024' * 8
     
     def _ctrl_style(self):
         return super(PasswordField, self)._ctrl_style() | wx.TE_PASSWORD
@@ -936,7 +953,7 @@ class PasswordField(StringField):
         if self._type.verify():
             self._ctrl2 = self._create_ctrl(parent)
             sizer = wx.BoxSizer()
-            sizer.Add(result,  0, wx.FIXED_MINSIZE)
+            sizer.Add(result, 0, wx.FIXED_MINSIZE)
             sizer.Add(self._ctrl2, 0, wx.FIXED_MINSIZE)
             result = sizer
         else:
@@ -1028,11 +1045,11 @@ class NumericField(TextField, SpinnableField):
         result = super(NumericField, self)._create_widget(parent)
         if self._spec.slider():
             box = wx.BoxSizer()
-            self._slider = slider =wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
-                                             minValue=self._type.minimum() or 0,
-                                             maxValue=(self._type.maximum() is None
+            self._slider = slider = wx.Slider(parent, -1, style=wx.SL_HORIZONTAL,
+                                              minValue=self._type.minimum() or 0,
+                                              maxValue=(self._type.maximum() is None
                                                        and 100 or self._type.maximum()),
-                                             size=(200, 25))
+                                              size=(200, 25))
             wx_callback(wx.EVT_SCROLL, slider, self._on_slider)
             box.Add(result)
             box.Add(slider)
@@ -1080,7 +1097,7 @@ class CheckBoxField(Unlabeled, InputField):
         return self._ctrl.GetValue() and 'T' or 'F'
 
     def _set_value(self, value):
-        assert value in ('T','F',''), ('Invalid value', value)
+        assert value in ('T', 'F', ''), ('Invalid value', value)
         wxvalue = value == 'T' and True or False
         self._ctrl.SetValue(wxvalue)
         self._on_change() # call manually, since SetValue() doesn't emit an event.
@@ -1146,7 +1163,7 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
         enumeration = self._row.enumerate(self.id())
         self._radio_values = [self._type.export(value) for value, label_ in enumeration]
         control = wx.RadioBox(parent, -1, label, style=style, majorDimension=dimension,
-                              choices=[label for value, label in enumeration])
+                              choices=[label_ for value, label_ in enumeration])
         wx_callback(wx.EVT_RADIOBOX, control, control.GetId(), self._on_change)
         return control
     
@@ -1229,7 +1246,7 @@ class ListBoxField(EnumerationField):
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     
     def _create_ctrl(self, parent):
-        control = wx.ListBox(parent, style=wx.LB_SINGLE|wx.LB_NEEDED_SB)
+        control = wx.ListBox(parent, style=wx.LB_SINGLE | wx.LB_NEEDED_SB)
         self._append_items(control)
         self._update_size(control)
         wx_callback(wx.EVT_LISTBOX, control, control.GetId(), self._on_change)
@@ -1239,13 +1256,13 @@ class ListBoxField(EnumerationField):
         width = ctrl.GetBestSize().width
         min_char_width = self.spec().width(None)
         if min_char_width:
-            min_width = dlg2px(ctrl, 4*min_char_width)
+            min_width = dlg2px(ctrl, 4 * min_char_width)
             # When width is specified, it is used as minimal field width (used
             # when the list is empty or contains only short values) and also
             # the maximal field size is restricted to 3x the specified width to
             # avoid very wide field when values are too long.
-            width = min(max(width, min_width), 3*min_width)
-        height = char2px(ctrl, 1, float(10)/7).height * (self.height() or ctrl.GetCount())
+            width = min(max(width, min_width), 3 * min_width)
+        height = char2px(ctrl, 1, float(10) / 7).height * (self.height() or ctrl.GetCount())
         ctrl.SetMinSize((width, height))
     
     def _set_value(self, value):
@@ -1305,8 +1322,8 @@ class Invocable(object, CommandHandler):
     
     def _menu(self):
         return super(Invocable, self)._menu() + \
-               (None,
-                UICommand(self.COMMAND_INVOKE_SELECTION(), self._INVOKE_TITLE, self._INVOKE_HELP))
+            (None,
+             UICommand(self.COMMAND_INVOKE_SELECTION(), self._INVOKE_TITLE, self._INVOKE_HELP))
     
     def _on_invoke_selection(self, alternate=False):
         raise ProgramError("This method must be overriden!")
@@ -1338,7 +1355,7 @@ class DateField(Invocable, TextField, SpinnableField):
         else:
             d = None
         date = run_dialog(Calendar, d)
-        if date != None:
+        if date is not None:
             self._set_value(self._type.export(date))
 
 
@@ -1358,7 +1375,7 @@ class DateTimeField(DateField):
         else:
             dt = None
         date = run_dialog(Calendar, dt)
-        if date != None:
+        if date is not None:
             if dt:
                 kwargs = dict(hour=dt.hour, minute=dt.minute, second=dt.second)
             else:
@@ -1386,7 +1403,7 @@ class ColorSelectionField(Invocable, TextField):
     
     def _on_invoke_selection(self, alternate=False):
         color = run_dialog(ColorSelector, self._get_value())
-        if color != None:
+        if color is not None:
             self._set_value(color)
 
     def _create_button(self, parent, label, **kwargs):
@@ -1406,7 +1423,7 @@ class GenericCodebookField(GenericEnumerationField):
         cb_name = self._row.codebook(self._id)
         assert cb_name is not None
         try:
-            cb_spec = resolver().get(cb_name, 'cb_spec')
+            cb_spec = config.resolver.get(cb_name, 'cb_spec')
         except ResolverError:
             cb_spec = CodebookSpec()
         self._cb_name = cb_name
@@ -1434,9 +1451,9 @@ class GenericCodebookField(GenericEnumerationField):
         runtime_filter_condition = self._row.runtime_filter(self.id())
         if validity_condition and runtime_filter_condition:
             condition = pytis.data.AND(validity_condition, runtime_filter_condition)
-        else:    
+        else:
             condition = validity_condition or runtime_filter_condition
-        result = run_form(CodebookForm, self._cb_name, begin_search=begin_search,
+        result = run_form(pytis.form.CodebookForm, self._cb_name, begin_search=begin_search,
                           select_row=self._select_row_arg(), transaction=self._row.transaction(),
                           condition=condition, arguments=self._codebook_arguments())
         if result: # may be None or False!
@@ -1476,7 +1493,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     jednak přímo specifikací 'view_spec' tamtéž.
 
     K políčku může být volitelně přidružen displej, který slouží k zobrazení
-    popisu vybrané (aktuální) hodnoty číselníku. 
+    popisu vybrané (aktuální) hodnoty číselníku.
 
     """
     _INVOKE_TITLE = _("Codebook selection")
@@ -1519,9 +1536,9 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
 
     def _menu(self):
         return super(CodebookField, self)._menu() + \
-               (UICommand(self.COMMAND_INVOKE_SELECTION(alternate=True),
-                          _("Search in codebook"),
-                          _("Show the codebook and start incremental search.")),)
+            (UICommand(self.COMMAND_INVOKE_SELECTION(alternate=True),
+                       _("Search in codebook"),
+                       _("Show the codebook and start incremental search.")),)
 
     def _maxlen(self):
         try:
@@ -1532,7 +1549,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _disable(self):
         if self._insert_button:
             self._insert_button.Enable(False)
-        super(CodebookField, self)._disable()        
+        super(CodebookField, self)._disable()
     
     def _enable(self):
         if self._insert_button:
@@ -1558,8 +1575,8 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     def _on_invoke_selection(self, alternate=False):
         value_column = self._type.enumerator().value_column()
         value = self._get_value()
-        if not self._valid and value and self._modified() \
-               and isinstance(self.type(), pytis.data.String):
+        if ((not self._valid and value and self._modified() and
+             isinstance(self.type(), pytis.data.String))):
             begin_search = (value_column, value)
         elif alternate:
             begin_search = value_column
@@ -1581,10 +1598,10 @@ class ListField(GenericCodebookField):
 
     def _create_ctrl(self, parent):
         # Načtu specifikace.
-        view_spec = resolver().get(self._cb_name, 'view_spec')
+        view_spec = config.resolver.get(self._cb_name, 'view_spec')
         self._columns = columns = self._cb_spec.columns() or view_spec.columns()
         # Vytvořím vlastní seznamový widget.
-        style=wx.LC_REPORT|wx.SIMPLE_BORDER|wx.LC_SINGLE_SEL
+        style = wx.LC_REPORT | wx.SIMPLE_BORDER | wx.LC_SINGLE_SEL
         list = wx.ListCtrl(parent, -1, style=style)
         # Nastavím záhlaví sloupců.
         total_width = 0
@@ -1594,12 +1611,12 @@ class ListField(GenericCodebookField):
             width = col.column_width()
             if width < len(col.column_label()):
                 width = len(col.column_label())
-            list.SetColumnWidth(i, dlg2px(list, 4*(width+1)))
+            list.SetColumnWidth(i, dlg2px(list, 4 * (width + 1)))
             total_width = total_width + width
-        height = list.GetCharHeight() * 5/4 * (self.height()+ 1) + 10 # TODO: something better?
+        height = list.GetCharHeight() * 5 / 4 * (self.height() + 1) + 10 # TODO: something better?
         self._DEFAULT_WIDTH = total_width + 3
-        list.SetMinSize((dlg2px(list, 4*(self.width()+1)), height))
-        self._list =  list
+        list.SetMinSize((dlg2px(list, 4 * (self.width() + 1)), height))
+        self._list = list
         wxid = list.GetId()
         wx_callback(wx.EVT_LIST_ITEM_SELECTED, list, wxid, self._on_select)
         wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, list, wxid, self._on_activation)
@@ -1641,7 +1658,7 @@ class ListField(GenericCodebookField):
         value_column = enumerator.value_column()
         sorting = self._cb_spec.sorting()
         if sorting is None:
-            sorting = resolver().get(self._cb_name, 'view_spec').sorting()
+            sorting = config.resolver.get(self._cb_name, 'view_spec').sorting()
         rows = enumerator.rows(condition=self._row.runtime_filter(self._id),
                                transaction=self._row.transaction(), sort=sorting or (),
                                arguments=self._codebook_arguments())
@@ -1722,7 +1739,7 @@ class ListField(GenericCodebookField):
                           _("Remove the selected item from the codebook.")),
                 UICommand(self.COMMAND_NEW_CODEBOOK_RECORD(), _("Insert new item"),
                           _("Open form for new codebook record insertion.")),
-                UICommand(Application.COMMAND_RUN_FORM(form_class=BrowseForm,
+                UICommand(Application.COMMAND_RUN_FORM(form_class=pytis.form.BrowseForm,
                                                        name=self._cb_name,
                                                        select_row=self._select_row_arg()),
                           _("Show the entire table"),
@@ -1730,7 +1747,7 @@ class ListField(GenericCodebookField):
                 )
 
     def _current_row(self):
-        view = resolver().get(self._cb_name, 'view_spec')
+        view = config.resolver.get(self._cb_name, 'view_spec')
         data = create_data_object(self._cb_name)
         row = self._type.enumerator().row(self._row[self._id].value(),
                                           transaction=self._row.transaction())
@@ -1760,12 +1777,12 @@ class ListField(GenericCodebookField):
         return self._selected_item is not None
 
     def _cmd_edit_selected(self):
-        view = resolver().get(self._cb_name, 'view_spec')
+        view = config.resolver.get(self._cb_name, 'view_spec')
         on_edit_record = view.on_edit_record()
         if on_edit_record is not None:
             on_edit_record(row=self._current_row())
         else:
-            run_form(PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
+            run_form(pytis.form.PopupEditForm, self._cb_name, select_row=self._select_row_arg(),
                      transaction=self._row.transaction())
         self._reload_enumeration()
         self.set_focus()
@@ -1774,7 +1791,7 @@ class ListField(GenericCodebookField):
         return self._selected_item is not None
         
     def _cmd_delete_selected(self):
-        view = resolver().get(self._cb_name, 'view_spec')
+        view = config.resolver.get(self._cb_name, 'view_spec')
         data = create_data_object(self._cb_name)
         transaction = self._row.transaction()
         row = self._current_row()
@@ -1822,7 +1839,7 @@ class FileField(Invocable, InputField):
 
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
-        return (x+5, x+2)
+        return (x + 5, x + 2)
     
     def _validate(self):
         filename = self._buffer and self._buffer.filename()
@@ -1881,16 +1898,16 @@ class FileField(Invocable, InputField):
         # We really want to use Invocable's super method, since we don't
         # want the Invocable menu items.
         return super(Invocable, self)._menu() + \
-               (None,
-                UICommand(FileField.COMMAND_OPEN(), _("Open"),
-                          _("Open the file in a preferred application.")),
-                UICommand(FileField.COMMAND_LOAD(), _("Load from file"),
-                          _("Set the field value from a file.")),
-                UICommand(FileField.COMMAND_SAVE(), _("Save to file"),
-                          _("Save the current field value as file.")),
-                UICommand(FileField.COMMAND_CLEAR(), _("Clear value"),
-                          _("Set the field to an ampty value.")),
-                )
+            (None,
+             UICommand(FileField.COMMAND_OPEN(), _("Open"),
+                       _("Open the file in a preferred application.")),
+             UICommand(FileField.COMMAND_LOAD(), _("Load from file"),
+                       _("Set the field value from a file.")),
+             UICommand(FileField.COMMAND_SAVE(), _("Save to file"),
+                       _("Save the current field value as file.")),
+             UICommand(FileField.COMMAND_CLEAR(), _("Clear value"),
+                       _("Set the field to an ampty value.")),
+             )
 
     def _can_open(self):
         return self._buffer is not None and self._filename_extension() is not None
@@ -1911,7 +1928,7 @@ class FileField(Invocable, InputField):
             except pytis.data.ValidationError as e:
                 message(e.message(), beep_=True)
             except IOError as e:
-                message(_("Error reading file:")+' '+str(e), beep_=True)
+                message(_("Error reading file:") + ' ' + str(e), beep_=True)
             else:
                 self._on_change()
                 message(_("File loaded."))
@@ -1933,13 +1950,15 @@ class FileField(Invocable, InputField):
                 f.close()
         else:
             directory = FileField._last_load_dir or FileField._last_save_dir or ''
-            filters = _("All files") +" (*.*)|*.*"
+            filters = _("All files") + " (*.*)|*.*"
             if filename_extensions:
                 # Construct filename matchers to be case insensitive, such as '*.[jJ][pP][gG]'.
                 # This will only work on GTK!
-                matchers = ';'.join(['*.'+''.join(['[%s%s]' % (c.lower(), c.upper()) for c in ext])
+                matchers = ';'.join(['*.' + ''.join(['[%s%s]' % (c.lower(), c.upper())
+                                                     for c in ext])
                                      for ext in filename_extensions])
-                filters = _("Files of allowed type (%s)") % template +'|'+ matchers + '|'+ filters
+                filters = (_("Files of allowed type (%s)") %
+                           (template + '|' + matchers + '|' + filters,))
             dlg = wx.FileDialog(self._ctrl.GetParent(), message=msg, style=wx.OPEN,
                                 defaultDir=directory, wildcard=filters)
             if dlg.ShowModal() != wx.ID_OK:
@@ -1971,7 +1990,7 @@ class FileField(Invocable, InputField):
             try:
                 f.write(self._buffer.buffer())
             except IOError as e:
-                message(_("Error writing file to disk:")+' '+str(e), beep_=True)
+                message(_("Error writing file to disk:") + ' ' + str(e), beep_=True)
             else:
                 message(_("File saved."))
             finally:
@@ -1992,7 +2011,7 @@ class ImageField(FileField):
     
     def _create_ctrl(self, parent):
         return wx_button(parent, bitmap=self._bitmap(),
-                         size=(self.width()+10, self.height()+10),
+                         size=(self.width() + 10, self.height() + 10),
                          callback=lambda e: self._on_button())
 
     def _disable(self):
@@ -2001,7 +2020,7 @@ class ImageField(FileField):
         
     def _button_size(self, parent):
         x = self._px_size(parent, 1, 1)[1]
-        return (x+4, x+2)
+        return (x + 4, x + 2)
     
     def _bitmap(self):
         if self._buffer is not None:
@@ -2037,13 +2056,12 @@ class StructuredTextField(TextField):
             self._images = images
             super(StructuredTextField.AttachmentEnumerator, self).__init__()
         def values(self, transaction=None):
-            import lcg
             try:
                 return [r.filename() for r in self._storage.resources(transaction=transaction)
                         if isinstance(r, lcg.Image) ^ (not self._images)]
             except AttachmentStorage.StorageError as e:
                 run_dialog(Error, title=_("Error accessing attachment storrage"),
-                           message=_("Error accessing attachment storrage")+':\n'+ e)
+                           message=_("Error accessing attachment storrage") + ':\n' + e)
                 return []
             
     class ImageAlignments(pytis.presentation.Enumeration):
@@ -2053,8 +2071,10 @@ class StructuredTextField(TextField):
     class ImageSizes(pytis.presentation.Enumeration):
         SMALL_THUMBNAIL_SIZE = 200
         LARGE_THUMBNAIL_SIZE = 350
-        enumeration = (('small-thumbnail', _("Small preview (%d px), click to enlarge" % SMALL_THUMBNAIL_SIZE)),
-                       ('large-thumbnail', _("Larger preview (%d px), click to enlarge" % LARGE_THUMBNAIL_SIZE)),
+        enumeration = (('small-thumbnail', _("Small preview (%d px), click to enlarge" %
+                                             SMALL_THUMBNAIL_SIZE)),
+                       ('large-thumbnail', _("Larger preview (%d px), click to enlarge" %
+                                             LARGE_THUMBNAIL_SIZE)),
                        #('custom-thumbnail', _("Vlastní velikost náhledu")),
                        ('full-size', _("Full size (appropriate for screenshot etc.)")))
         @classmethod
@@ -2089,8 +2109,8 @@ class StructuredTextField(TextField):
                 size = custom_size
             elif size == 'full-size':
                 return tuple(orig_size)
-            scale = float(size)/float(max(*orig_size))
-            return (round(scale*orig_size[0]), round(scale*orig_size[1]))
+            scale = float(size) / float(max(*orig_size))
+            return (round(scale * orig_size[0]), round(scale * orig_size[1]))
 
     class LCGLink(object):
         """Common manipulations with LCG Structured Text links.
@@ -2119,7 +2139,7 @@ class StructuredTextField(TextField):
             self._end = end = line_text[column_number:].find(']')
             if start != -1 and end != -1:
                 # If we are inside the link, read the current link properties.
-                link_text = line_text[start+1:column_number+end]
+                link_text = line_text[start + 1:column_number + end]
                 if link_text.startswith('<'):
                     link_text = link_text[1:]
                     self._align = 'left'
@@ -2148,18 +2168,18 @@ class StructuredTextField(TextField):
             """Update link source text with values from a UI dialog."""
             link_text = target
             if title:
-                link_text += ' '+ title
+                link_text += ' ' + title
             if tooltip:
                 if not title:
-                    link_text += ' '+ target
-                link_text += ' | '+ tooltip
+                    link_text += ' ' + target
+                link_text += ' | ' + tooltip
             if align == 'left':
                 link_text = '<' + link_text
             if align == 'right':
                 link_text = '>' + link_text
             start, end, pos, col = self._start, self._end, self._position, self._column_number
             if start != -1 and end != -1:
-                self._ctrl.Remove(pos-col+start+1, pos+end)
+                self._ctrl.Remove(pos - col + start + 1, pos + end)
                 self._ctrl.WriteText(link_text)
             else:
                 self._ctrl.WriteText('[' + link_text + ']')
@@ -2169,24 +2189,24 @@ class StructuredTextField(TextField):
 
     def _commands(self):
         commands = ()
-        if isinstance(self._guardian, StructuredTextEditor):
+        if isinstance(self._guardian, pytis.form.StructuredTextEditor):
             # Add form commands only in a standalone editor, not in ordinary forms.
             commands += (
-                (UICommand(EditForm.COMMAND_COMMIT_RECORD(close=False),
+                (UICommand(pytis.form.EditForm.COMMAND_COMMIT_RECORD(close=False),
                            _("Save"),
                            _("Save the record without closing the form.")),
                  ),
-                )
-        if isinstance(self._guardian, ResizableInputForm):
+            )
+        if isinstance(self._guardian, pytis.form.ResizableInputForm):
             # ResizableInputForm is used within _cmd_open_in_editor().  Commit
             # will only return the current value (it is a virtual form), not
             # save anything to the database.
             commands += (
-                (UICommand(EditForm.COMMAND_COMMIT_RECORD(),
+                (UICommand(pytis.form.EditForm.COMMAND_COMMIT_RECORD(),
                            _("Confirm and leave"),
                            _("Confirm the changes and leave editation.")),
                  ),
-                )
+            )
         commands += (
             #(UICommand(self.COMMAND_UNDO(),
             #           _(u"Zpět"),
@@ -2257,17 +2277,18 @@ class StructuredTextField(TextField):
                        _("Show PDF preview"),
                        _("Show preview of the text formatted as PDF.")),
              ),
-            )
+        )
         return commands
 
     def _menu(self):
         menu = super(StructuredTextField, self)._menu()
-        if not isinstance(self._guardian, (StructuredTextEditor, ResizableInputForm)):
-            menu +=(None,
-                    UICommand(self.COMMAND_OPEN_IN_EDITOR(),
-                              _("Edit in a standalone window"),
-                              ""),
-                    ) 
+        if not isinstance(self._guardian,
+                          (pytis.form.StructuredTextEditor, pytis.form.ResizableInputForm)):
+            menu += (None,
+                     UICommand(self.COMMAND_OPEN_IN_EDITOR(),
+                               _("Edit in a standalone window"),
+                               ""),
+                     )
         return menu
     
     def _create_ctrl(self, parent):
@@ -2331,23 +2352,23 @@ class StructuredTextField(TextField):
         selection = ctrl.GetRange(start, end)
         prior = next = None
         if start > 0:
-            prior = ctrl.GetRange(start-1, start)
+            prior = ctrl.GetRange(start - 1, start)
         if end < ctrl.GetLastPosition():
-            next = ctrl.GetRange(end, end+1)
+            next = ctrl.GetRange(end, end + 1)
         if prior not in (None, ' ', '\t', '\n', '\r', '/', '*', '_'):
             ctrl.WriteText(' ')
         if start == end:
-            ctrl.WriteText(markup+markup)
+            ctrl.WriteText(markup + markup)
             step_back = 1
         else:
-            ctrl.WriteText(markup+selection+markup)
+            ctrl.WriteText(markup + selection + markup)
             step_back = None
         if next not in (None, ' ', '\t', '\n', '\r', '/', '*', '_'):
             ctrl.WriteText(' ')
             if step_back:
                 step_back += 1
         if step_back:
-            ctrl.SetInsertionPoint(ctrl.GetInsertionPoint()-step_back)
+            ctrl.SetInsertionPoint(ctrl.GetInsertionPoint() - step_back)
 
     def _storage_op(self, method_name, *args, **kwargs):
         method = getattr(self._storage, method_name)
@@ -2357,7 +2378,7 @@ class StructuredTextField(TextField):
             message(_("Invalid image format!"), beep_=True)
         except AttachmentStorage.StorageError as e:
             run_dialog(Error, title=_("Error accessing attachment storrage"),
-                       message=_("Error accessing attachment storrage") +":\n"+ e)
+                       message=_("Error accessing attachment storrage") + ":\n" + e)
 
     def _cmd_search(self):
         pass
@@ -2379,11 +2400,6 @@ class StructuredTextField(TextField):
         
     def _cmd_preview(self):
         text = self._get_value()
-        form = current_form()
-        if isinstance(form, PopupForm):
-            parent = form.GetParent()
-        else:
-            parent = None
         if self._storage:
             resources = self._storage_op('resources', transaction=self._row.transaction()) or ()
         else:
@@ -2391,7 +2407,6 @@ class StructuredTextField(TextField):
         InfoWindow(_(u"Preview"), text=text, format=TextFormat.LCG, resources=resources)
 
     def _cmd_export_pdf(self):
-        import tempfile
         if self._storage:
             resources = self._storage_op('resources', transaction=self._row.transaction()) or ()
         else:
@@ -2459,7 +2474,7 @@ class StructuredTextField(TextField):
             new_text = '\n' + new_text
         ctrl.WriteText(new_text)
         if not selection:
-            ctrl.SetInsertionPoint(position+6)
+            ctrl.SetInsertionPoint(position + 6)
         self.set_focus()
 
     def _load_new_file(self, row):
@@ -2516,7 +2531,6 @@ class StructuredTextField(TextField):
         return self.ImageSizes.matching_size(thumbnail)
         
     def _preview_size_computer(self, row, filename, size):
-        thumbnail = None
         resource = self._retrieve_attachment(filename)
         if resource:
             orig_size = resource.size()
@@ -2525,7 +2539,6 @@ class StructuredTextField(TextField):
         return None
     
     def _orig_size_computer(self, row, filename, size):
-        thumbnail = None
         resource = self._retrieve_attachment(filename)
         if resource:
             orig_size = resource.size()
@@ -2539,8 +2552,8 @@ class StructuredTextField(TextField):
         if resource and resource.size():
             thumbnail = resource.thumbnail()
             if thumbnail and thumbnail.size():
-                resize = thumbnail.size()[0]/resource.size()[0]*100
-                return str(resize)+'%'
+                resize = thumbnail.size()[0] / resource.size()[0] * 100
+                return str(resize) + '%'
             return thumbnail
         return None
         
@@ -2563,7 +2576,7 @@ class StructuredTextField(TextField):
             Field('preview', _(u"Náhled"), codebook='cms.Attachments', compact=True,
                   computer=computer(self._image_preview_computer), width=200, height=200,
                   editable=pytis.presentation.Editable.NEVER,
-                  type=pytis.data.Image(not_null=True, maxlen=5*1024*1024),
+                  type=pytis.data.Image(not_null=True, maxlen=5 * 1024 * 1024),
                   descr=_(u"Vyberte jeden z dostupných souborů, "
                           u"nebo vložte nový z vašeho počítače.")),
             Field('size', _(u"Zobrazit ve stránce jako"), enumerator=self.ImageSizes,
@@ -2587,10 +2600,10 @@ class StructuredTextField(TextField):
             #              u"předchozím políčku.")),
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
-            )
+        )
         button = pytis.presentation.Button(_(u"Vložit nový"), self._load_new_file)
         Columns = pytis.presentation.ColumnLayout
-        row = run_form(InputForm, title=_(u"Vložit obrázek"), fields=fields,
+        row = run_form(pytis.form.InputForm, title=_(u"Vložit obrázek"), fields=fields,
                        prefill=dict(filename=filename,
                                     align=link.align(),
                                     tooltip=link.tooltip()),
@@ -2629,9 +2642,9 @@ class StructuredTextField(TextField):
                           u"prázdné, pokud chcete zobrazit přímo název souboru.")),
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
-            )
+        )
         button = pytis.presentation.Button(_(u"Vložit nový"), self._load_new_file)
-        row = run_form(InputForm, title=_(u"Vložit přílohu"), fields=fields,
+        row = run_form(pytis.form.InputForm, title=_(u"Vložit přílohu"), fields=fields,
                        prefill=dict(filename=filename,
                                     title=link.title(),
                                     tooltip=link.tooltip()),
@@ -2655,8 +2668,8 @@ class StructuredTextField(TextField):
                           u"předchozím políčku.")),
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
-            )
-        row = run_form(InputForm, title=_(u"Zadejte parametry odkazu"), fields=fields,
+        )
+        row = run_form(pytis.form.InputForm, title=_(u"Zadejte parametry odkazu"), fields=fields,
                        prefill=dict(target=link.target(),
                                     title=link.title(),
                                     tooltip=link.tooltip()))
@@ -2688,7 +2701,7 @@ class StructuredTextField(TextField):
             title = line_text.strip()
             anchor = ''
         if level > 0:
-            new_text = '='*level + ' ' + title + ' ' + '='*level + anchor
+            new_text = '=' * level + ' ' + title + ' ' + '=' * level + anchor
         else:
             new_text = title
         ctrl.SetSelection(line_beginning, line_beginning + len(line_text))
@@ -2696,8 +2709,7 @@ class StructuredTextField(TextField):
         self.set_focus()
         
     def _cmd_open_in_editor(self):
-        form = self._guardian
-        result = run_form(ResizableInputForm, name='x', title=self._spec.label(),
+        result = run_form(pytis.form.ResizableInputForm, name='x', title=self._spec.label(),
                           fields=(self._spec,),
                           prefill={self._id: self._ctrl.GetValue()})
         if result is not None:
@@ -2713,4 +2725,3 @@ class StructuredTextField(TextField):
             return len(match.group('level'))
         else:
             return 0
-        

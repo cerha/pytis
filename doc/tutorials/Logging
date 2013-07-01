@@ -61,9 +61,9 @@ parametry: druh události, slovní popis události a libovolný pythonový objekt.
 Volání funkce =log= mù¾e vypadat napøíklad takto:
 
 <example>
-from pytis.util.log import *
+import pytis.util
 ...
-log(OPERATIONAL, 'Pád systému', exception)
+pytis.util.log(pytis.util.OPERATIONAL, 'Pád systému', exception)
 </example>
 
 První argument specifikuje, o jaký druh události jde.  S ohledem na na

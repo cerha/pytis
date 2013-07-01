@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Resolver pro specifikace výstupu
-# 
+#
 # Copyright (C) 2002, 2005, 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ from pytis.output import *
 _ = pytis.util.translations('pytis-wx')
 
 
-class ResolverModuleError(ResolverError):
+class ResolverModuleError(pytis.util.ResolverError):
     """Výjimka vyvolávaná při nedostupnosti žádaného specifikačního modulu."""
 
     def __init__(self, module_name, *args):
@@ -47,7 +47,7 @@ class ResolverModuleError(ResolverError):
         super_(ResolverModuleError).__init__(self, msg)
 
 
-class ResolverFileError(ResolverError):
+class ResolverFileError(pytis.util.ResolverError):
     """Výjimka vyvolávaná nelze-li načíst žádaný specifikační soubor."""
     
     def __init__(self, file_name, path, exception):
@@ -65,7 +65,7 @@ class ResolverFileError(ResolverError):
         super_(ResolverFileError).__init__(self, msg)
 
 
-class ResolverSpecError(ResolverError):
+class ResolverSpecError(pytis.util.ResolverError):
     """Výjimka vyvolaná není-li ve specifikačním modulu žádaná funkce."""
     
     def __init__(self, module_name, spec_name):
@@ -193,7 +193,7 @@ class Resolver(object):
 
         Argumenty:
 
-          module_name -- jméno specifikačního modulu.          
+          module_name -- jméno specifikačního modulu.
           spec_name -- jméno specifikační funkce/metoda.
           kwargs -- klíčové argumenty specifikační funkce/metody.
 
@@ -217,7 +217,7 @@ class Resolver(object):
         nalezena specifikace 'spec_name', je vyvolána výjimka
         'ResolverSpecError'.
         
-        """        
+        """
         key = (module_name, spec_name, tuple(kwargs.items()))
         return self._spec_cache[key]
 
@@ -367,7 +367,7 @@ class DatabaseResolver(Resolver):
         return self._get_object(key[:2])
 
     def _get_instance(self, key):
-        return self._get_object(key[:2])    
+        return self._get_object(key[:2])
 
 
 class OutputResolver(Resolver):
@@ -412,7 +412,7 @@ class OutputResolver(Resolver):
     def get(self, module_name, spec_name, **kwargs):
         try:
             return super(OutputResolver, self).get(module_name, spec_name, **kwargs)
-        except ResolverError:
+        except pytis.util.ResolverError:
             return self._specification_resolver.get(module_name, spec_name, **kwargs)
     
     def output_parameter(self, name, **kwargs):
@@ -441,6 +441,6 @@ class OutputResolver(Resolver):
         """
         p = self._parameters
         for k, v in parameters.items():
-            if p.has_key(k):
+            if k in p:
                 raise Exception("Key already present in output parameters", k)
             p[k] = v

@@ -24,14 +24,31 @@ uživatelského rozhraní, neřeší obecně start a zastavení aplikace.
 
 """
 
-import collections, os.path, string, sys, thread, time, wx, wx.html
+import collections
+import copy
+import os.path
+import string
+import sys
+import thread
+import time
+import wx
+import wx.html
 
+import pytis.data
+import pytis.form
+from pytis.presentation import Field, Specification
+import pytis.util
+from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
+    ProgramError, ResolverError, Stack, XStack, \
+    argument_names, find, format_traceback, identity, log, rsa_encrypt
 import config
-import pytis.data, pytis.form, pytis.util
 
-from managers import ApplicationConfigManager, FormSettingsManager, \
-    FormProfileManager, AggregatedViewsManager
-from pytis.form import *
+from command import CommandHandler
+from event import UserBreakException, interrupt_init, interrupt_watcher, \
+    top_level_exception, unlock_callbacks, wx_callback, yield_
+from screen import CheckItem, HelpBrowserFrame, KeyHandler, Keymap, \
+    Menu, MenuBar, MItem, MSeparator, StatusBar, \
+    acceskey_prefix, beep, busy_cursor, get_icon, gtk, init_colors, mitem, wx_focused_window
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -86,7 +103,6 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def OnInit(self):
         import pytis.extensions
-        from pytis.util import identity
         if gtk is not None:
             clipboard = gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD)
             clipboard.connect("owner-change", self._on_clipboard_copy)
@@ -100,7 +116,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 # *Some* wx 2.8 versions have the constant renemed!
                 release_version = wx.RELEASE_VERSION
             title += ' (wx %d.%d.%d)' % (wx.MAJOR_VERSION, wx.MINOR_VERSION, release_version)
-        frame = self._frame = wx.Frame(None, -1, title, pos=(0,0), size=(800, 600),
+        frame = self._frame = wx.Frame(None, -1, title, pos=(0, 0), size=(800, 600),
                                        style=wx.DEFAULT_FRAME_STYLE)
         wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         # This panel is here just to catch keyboard events (frame doesn't support EVT_KEY_DOWN).
@@ -126,15 +142,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
         frame.SetIcons(icons)
         self._windows = XStack()
         self._modals = Stack()
-        self._statusbar = StatusBar(frame, self._spec('status_fields',()))
+        self._statusbar = StatusBar(frame, self._spec('status_fields', ()))
         self._help_browser = None
         self._login_hook = self._spec('login_hook')
         keymap = self.keymap = Keymap()
         custom_keymap = self._spec('keymap', ())
-        assert is_sequence(custom_keymap), "Keyboard shortcuts specification returned by " + \
-               "'keymap' must be a sequence of (KEY, COMMAND) pairs."
-        for key, cmd in command.DEFAULT_KEYMAP + custom_keymap:
-            if is_sequence(cmd):
+        assert isinstance(custom_keymap, (tuple, list,)), \
+            ("Keyboard shortcuts specification returned by " +
+             "'keymap' must be a sequence of (KEY, COMMAND) pairs.")
+        for key, cmd in pytis.form.DEFAULT_KEYMAP + custom_keymap:
+            if isinstance(cmd, (list, tuple,)):
                 cmd, args = cmd
             else:
                 args = {}
@@ -143,17 +160,19 @@ class Application(wx.App, KeyHandler, CommandHandler):
         _application = self
         # Initialize login and password.
         def test():
-            bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id) for id in ('tablename',)]
+            bindings = [pytis.data.DBColumnBinding(id, 'pg_catalog.pg_tables', id)
+                        for id in ('tablename',)]
             factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0])
             factory.create(connection_data=config.dbconnection)
         db_operation(test)
-        self._initial_config = [(o, copy.copy(getattr(config, o))) for o in configurable_options()]
+        self._initial_config = [(o, copy.copy(getattr(config, o)))
+                                for o in pytis.form.configurable_options()]
         self._saved_state = {}
         # Initialize all needed user settings managers.
-        self._application_config_manager = ApplicationConfigManager(config.dbconnection)
-        self._form_settings_manager = FormSettingsManager(config.dbconnection)
-        self._profile_manager = FormProfileManager(config.dbconnection)
-        self._aggregated_views_manager = AggregatedViewsManager(config.dbconnection)
+        self._application_config_manager = pytis.form.ApplicationConfigManager(config.dbconnection)
+        self._form_settings_manager = pytis.form.FormSettingsManager(config.dbconnection)
+        self._profile_manager = pytis.form.FormProfileManager(config.dbconnection)
+        self._aggregated_views_manager = pytis.form.AggregatedViewsManager(config.dbconnection)
         # Initialize user action logger.
         try:
             self._logger = DbActionLogger(config.dbconnection, config.dbuser)
@@ -206,7 +225,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     else:
                         crypto_password = rsa_encrypt(db_key, crypto_password)
                         if pytis.extensions.dbfunction('pytis_crypto_unlock_current_user_passwords',
-                                                       ('password_', pytis.data.sval(crypto_password),)):
+                                                       ('password_',
+                                                        pytis.data.sval(crypto_password),)):
                             break
                         else:
                             run_dialog(pytis.form.Error, _("Invalid password"))
@@ -237,7 +257,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     name = list(bad_names)[0]
                     bad = True
                 else:
-                    break                
+                    break
                 message = _("Enter the password to unlock the encryption area %s.") % name
                 if bad:
                     message += "\n(" + _("This is probably your old login password.") + ")"
@@ -264,7 +284,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
         recent_forms = self._get_state_param(self._STATE_RECENT_FORMS, (), (list, tuple), tuple)
         self._recent_forms = []
         for title, args in recent_forms:
-            if not self._is_valid_spec(args['name']) or not issubclass(args['form_class'], Form):
+            if not self._is_valid_spec(args['name']) or not issubclass(args['form_class'],
+                                                                       pytis.form.Form):
                 log(OPERATIONAL, "Ignoring recent form:", args)
                 continue
             self._recent_forms.append((title, args))
@@ -279,9 +300,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self.SetTopWindow(frame)
         frame.Show(True)
         # Initialize the toolbar.
-        self._toolbar = toolbar = frame.CreateToolBar(wx.NO_BORDER|wx.TB_DOCKABLE)
-        for group in TOOLBAR_COMMANDS:
-            if group != TOOLBAR_COMMANDS[0]:
+        self._toolbar = toolbar = frame.CreateToolBar(wx.NO_BORDER | wx.TB_DOCKABLE)
+        for group in pytis.form.TOOLBAR_COMMANDS:
+            if group != pytis.form.TOOLBAR_COMMANDS[0]:
                 toolbar.AddSeparator()
             for uicmd in group:
                 uicmd.create_toolbar_ctrl(self._toolbar)
@@ -302,20 +323,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     cls_name, name = name.split('/')
                     try:
                         cls = getattr(pytis.form, cls_name.strip())
-                        if not issubclass(cls, Form):
+                        if not issubclass(cls, pytis.form.Form):
                             raise AttributeError
                     except AttributeError:
-                        self.run_dialog(Error, _("Invalid form class in 'startup_forms':") +
-                                        ' '+ cls_name)
+                        self.run_dialog(pytis.form.Error,
+                                        _("Invalid form class in 'startup_forms':") +
+                                        ' ' + cls_name)
                         continue
                 else:
-                    cls = name.find('::') == -1 and BrowseForm or BrowseDualForm
+                    cls = (name.find('::') == -1 and
+                           pytis.form.BrowseForm or
+                           pytis.form.BrowseDualForm)
                 startup_forms.append((cls, name.strip()))
         self._saved_startup_forms = []
         for pair in self._get_state_param(self._STATE_STARTUP_FORMS, (), tuple, tuple):
             if len(pair) == 2:
                 cls, name = pair
-                if issubclass(cls, Form) and self._is_valid_spec(name):
+                if issubclass(cls, pytis.form.Form) and self._is_valid_spec(name):
                     if pair not in startup_forms:
                         startup_forms.insert(0, pair)
                     self._saved_startup_forms.append(list(pair) + [None])
@@ -325,7 +349,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             i, total = 0, len(startup_forms)
             msg = _("Opening form: %s (%d/%d)")
             for cls, name in startup_forms:
-                update(int(float(i)/total*100), newmsg=msg % (name, i+1, total))
+                update(int(float(i) / total * 100), newmsg=msg % (name, i + 1, total,))
                 try:
                     run_form(cls, name)
                 except Exception as e:
@@ -339,9 +363,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
                             x[2] = f.title()
                 i += 1
         if len(startup_forms) > 1:
-            run_dialog(ProgressDialog, run_startup_forms, args=(startup_forms,),
+            run_dialog(pytis.form.ProgressDialog, run_startup_forms, args=(startup_forms,),
                        title=_("Opening saved forms"),
-                       message=_("Opening form")+' '*40) #, can_abort=True)
+                       message=_("Opening form") + ' ' * 40) #, can_abort=True)
             # In wx2.8, keyboard navigation doesn't work now.  The following
             # lines raise the previous form and then back the top form, which
             # fixes the problem.  Running a Message dialog instead also helps,
@@ -361,14 +385,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
             title = self._frame.GetTitle()
             title += " %s@%s" % (conn.user(), conn.database())
             if conn.host():
-                title += " "+conn.host()
+                title += " " + conn.host()
                 if conn.port():
                     title += ":%d" % conn.port()
             self._frame.SetTitle(title)
 
     def _spec(self, name, default=None, **kwargs):
         try:
-            result = resolver().get('application', name, **kwargs)
+            result = config.resolver.get('application', name, **kwargs)
         except ResolverError as e:
             log(OPERATIONAL, str(e))
             result = default
@@ -381,7 +405,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         else:
             side_name = None
         try:
-            resolver().get(name, 'view_spec')
+            config.resolver.get(name, 'view_spec')
         except ResolverError:
             return False
         else:
@@ -389,7 +413,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if not self._is_valid_spec(side_name):
                     return False
                 try:
-                    bindings = resolver().get(name, 'binding_spec')
+                    bindings = config.resolver.get(name, 'binding_spec')
                 except ResolverError:
                     return False
                 if not isinstance(bindings, dict) or side_name not in bindings:
@@ -398,7 +422,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _public_spec(self, name):
         try:
-            spec_class = resolver().specification(name)
+            spec_class = config.resolver.specification(name)
         except Exception:
             return True
         else:
@@ -406,7 +430,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _create_command_menu(self, menus):
         items = []
-        for group in FORM_MENU_COMMANDS:
+        for group in pytis.form.FORM_MENU_COMMANDS:
             if items:
                 items.append(MSeparator())
             for uicmd in group:
@@ -417,10 +441,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         if [m for m in menus if m.title() == _("Help")]:
             log(OPERATIONAL, "Menu nápovědy nalezeno - nevytvářím vlastní.")
             return
-        items = [mitem(UICommands.PYTIS_HELP)]
+        items = [mitem(pytis.form.UICommands.PYTIS_HELP)]
         items.extend((MSeparator(),
-                      mitem(UICommands.HELP),
-                      mitem(UICommands.DESCRIBE)))
+                      mitem(pytis.form.UICommands.HELP),
+                      mitem(pytis.form.UICommands.DESCRIBE)))
         menus.append(Menu(_("Help"), items))
 
     def _dynamic_menu(self, connection_data):
@@ -458,12 +482,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 while parent_index >= 0 and parent != parents[parent_index][0]:
                     parent_index -= 1
                 if parent_index >= 0:
-                    parents = parents[:parent_index+1]
+                    parents = parents[:parent_index + 1]
                 else:
                     continue
                 current_template = parents[-1][1]
                 if not title: # separator
-                    current_template.append(None)                    
+                    current_template.append(None)
                 elif name: # terminal item
                     current_template.append((name, title, action, help, hotkey,))
                 else:          # non-terminal item
@@ -517,17 +541,21 @@ class Application(wx.App, KeyHandler, CommandHandler):
         self._recent_forms_menu = None
         menus_prototype = self._spec('menu', ())
         menus = self._build_menu(menus_prototype, config.dbconnection)
-        menus.append(Menu(self._WINDOW_MENU_TITLE, (
-                    MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
-                          help=_("Switch to the previous window in the window list order.")),
-                    MItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM,
-                          help=_("Switch to the next window in the window list order.")),
-                    MItem(_("Most recently active window"), command=Application.COMMAND_RAISE_RECENT_FORM,
-                          help=_("Allows switching two most recently active windows cyclically.")),
-                    MItem(_("Close active window"), command=Form.COMMAND_LEAVE_FORM,
-                          help=_("Closes the window of the active form.")),
-                    MSeparator(),
-                    ), allow_autoindex=False))
+        menus.append(Menu(self._WINDOW_MENU_TITLE,
+                          (MItem(_("Previous window"), command=Application.COMMAND_RAISE_PREV_FORM,
+                                 help=_("Switch to the previous window in the window list order.")),
+                           MItem(_("Next window"), command=Application.COMMAND_RAISE_NEXT_FORM,
+                                 help=_("Switch to the next window in the window list order.")),
+                           MItem(_("Most recently active window"),
+                                 command=Application.COMMAND_RAISE_RECENT_FORM,
+                                 help=_("Allows mutual switching of two most recently active "
+                                        "windows cyclically.")),
+                           MItem(_("Close active window"),
+                                 command=pytis.form.Form.COMMAND_LEAVE_FORM,
+                                 help=_("Closes the window of the active form.")),
+                           MSeparator(),
+                           ),
+                          allow_autoindex=False))
         self._create_command_menu(menus)
         self._create_help_menu(menus)
         # Determining availability of menu items may invoke database operations...
@@ -543,7 +571,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _form_menu_item_title(self, form):
         title = form.title()
-        if form.__class__ != BrowseForm:
+        if form.__class__ != pytis.form.BrowseForm:
             title += " (%s)" % form.descr()
         return title
 
@@ -551,9 +579,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
         def wmitem(i, form):
             return CheckItem(acceskey_prefix(i) + self._form_menu_item_title(form),
                              help=_("Bring form window to the top (%s)",
-                                    form.__class__.__name__ +'/'+ form.name()),
+                                    form.__class__.__name__ + '/' + form.name()),
                              command=Application.COMMAND_RAISE_FORM,
-                             state=lambda : top_window() is form,
+                             state=lambda: top_window() is form,
                              args={'form': form})
         menu = self._window_menu
         if menu is not None:
@@ -590,7 +618,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _recent_forms_menu_items(self):
         items = [MItem(acceskey_prefix(i) + title,
                        help=_("Open the form (%s)",
-                              args['form_class'].__name__ +'/'+ args['name']),
+                              args['form_class'].__name__ + '/' + args['name']),
                        command=Application.COMMAND_RUN_FORM, args=args)
                  for i, (title, args) in enumerate(self._recent_forms)]
         items.append(MSeparator())
@@ -662,14 +690,16 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     self._modals.top())
                 return False
             forms = [(f.__class__, f.name(), f.title(), True) for f in self._windows.items()
-                     if not isinstance(f, (PrintForm, AggregationForm, AggregationDualForm))]
+                     if not isinstance(f, (pytis.form.PrintForm, pytis.form.AggregationForm,
+                                           pytis.form.AggregationDualForm))]
             for cls, name, title in self._saved_startup_forms:
                 if title is not None and (cls, name) not in [x[:2] for x in forms]:
                     forms.append((cls, name, title, False))
             if forms:
                 items = [(checked, title, cls.descr()) for cls, name, title, checked in forms]
                 save_state = self._get_state_param(self._STATE_SAVE_FORMS_ON_EXIT, True)
-                exit, result = self.run_dialog(ExitDialog, save_columns=(_("Title"), _("Type")),
+                exit, result = self.run_dialog(pytis.form.ExitDialog,
+                                               save_columns=(_("Title"), _("Type")),
                                                save_items=items, save_state=save_state)
                 if not exit:
                     return False
@@ -727,9 +757,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
             top.resize()
         if self._logo is not None:
             logo = self._logo.GetBitmap()
-            logo_posx = max((size.GetWidth()-logo.GetWidth()) / 2, 0)
-            logo_posy = max((size.GetHeight()-logo.GetHeight()-50) / 2, 0)
-            self._logo.SetPosition((logo_posx,logo_posy))
+            logo_posx = max((size.GetWidth() - logo.GetWidth()) / 2, 0)
+            logo_posy = max((size.GetHeight() - logo.GetHeight() - 50) / 2, 0)
+            self._logo.SetPosition((logo_posx, logo_posy))
             if top is None:
                 self._logo.Show(True)
         return True
@@ -755,7 +785,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
         # Beware, the `event' here is not a wx event, but a GTK event!
         if pytis.windows.windows_available():
             text = clipboard.wait_for_text()
-            client_ip  = pytis.windows.client_ip()
+            client_ip = pytis.windows.client_ip()
             log(EVENT, 'Copy text to windows clipboard on %s' % (client_ip,))
             if isinstance(text, str):
                 text = unicode(text)
@@ -808,23 +838,24 @@ class Application(wx.App, KeyHandler, CommandHandler):
 
     def _cmd_refresh(self, interactive=True):
         for w in (self._modals.top(), self._windows.active()):
-            if isinstance(w, Refreshable):
+            if isinstance(w, pytis.form.Refreshable):
                 w.refresh(interactive=interactive)
 
     def _cmd_reload_specifications(self):
         config.resolver.reload()
 
     def _can_run_form(self, form_class, name, binding=None, **kwargs):
-        if form_class is InputForm and name is None:
+        if form_class is pytis.form.InputForm and name is None:
             return True
-        if isinstance(self.current_form(), PopupForm) and not issubclass(form_class, PopupForm):
+        if ((isinstance(self.current_form(), pytis.form.PopupForm) and
+             not issubclass(form_class, pytis.form.PopupForm))):
             return False
         if not self._public_spec(name):
             return False
         try:
             if has_access(name):
-                if binding is not None or issubclass(form_class, MultiBrowseDualForm):
-                    spec = resolver().get(name, 'view_spec')
+                if binding is not None or issubclass(form_class, pytis.form.MultiBrowseDualForm):
+                    spec = config.resolver.get(name, 'view_spec')
                     if binding is None:
                         for b in spec.bindings():
                             binding_name = b.name()
@@ -852,7 +883,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     return None
             log(ACTION, 'Vytvářím nový formulář:', (form_class, name, kwargs))
             message(_("Opening form..."), root=True)
-            assert issubclass(form_class, Form)
+            assert issubclass(form_class, pytis.form.Form)
             assert name is None or isinstance(name, basestring) # May be None for InputForm.
             # We indicate busy state here so that the action is not delayed by
             # some time consuming _on_idle methods.
@@ -875,23 +906,23 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 if 'profile_id' in kwargs and kwargs['profile_id'] is not None:
                     form.apply_profile(kwargs['profile_id'])
                 return result
-            if issubclass(form_class, PopupForm):
+            if issubclass(form_class, pytis.form.PopupForm):
                 parent = self._modals.top() or self._frame
                 kwargs['guardian'] = self._modals.top() or self
             else:
                 #assert self._modals.empty()
                 kwargs['guardian'] = self
                 parent = self._frame
-            args = (parent, resolver(), name)
+            args = (parent, config.resolver, name)
             try:
                 form = form_class(*args, **kwargs)
-            except Form.InitError:
+            except pytis.form.Form.InitError:
                 form = None
             if form is None:
                 busy_cursor(False)
-                self.run_dialog(Error, _("Form creation failed: %s") % name)
+                self.run_dialog(pytis.form.Error, _("Form creation failed: %s") % name)
             else:
-                if isinstance(form, PopupForm):
+                if isinstance(form, pytis.form.PopupForm):
                     log(EVENT, "Opening modal form:", form)
                     self._modals.push(form)
                     message('', root=True)
@@ -907,7 +938,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                         busy_cursor(False)
                     top = self.top_window()
                     if top is not None:
-                        if isinstance(top, Refreshable):
+                        if isinstance(top, pytis.form.Refreshable):
                             top.refresh()
                         top.focus()
                     else:
@@ -923,7 +954,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                     form.resize() # Needed in wx 2.8.x.
                     form.show()
                     self._update_window_menu()
-                    if not isinstance(form, PrintForm):
+                    if not isinstance(form, pytis.form.PrintForm):
                         item = (self._form_menu_item_title(form),
                                 dict(form_class=form_class, name=name))
                         self._update_recent_forms(item)
@@ -945,7 +976,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_new_record(self, name, prefill=None, inserted_data=None, multi_insert=True,
                         block_on_new_record=False, transaction=None, spec_kwargs={}):
         # Dokumentace viz funkce new_record().
-        view = resolver().get(name, 'view_spec', **spec_kwargs)
+        view = config.resolver.get(name, 'view_spec', **spec_kwargs)
         on_new_record = view.on_new_record()
         if not block_on_new_record and on_new_record is not None:
             kwargs = dict(prefill=prefill)
@@ -953,13 +984,14 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 kwargs['transaction'] = transaction
             result = on_new_record(**kwargs)
             top = self.current_form()
-            if isinstance(top, Refreshable):
+            if isinstance(top, pytis.form.Refreshable):
                 top.refresh()
         else:
             if view.arguments() is not None:
                 message(_("This form doesn't allow insertion."), beep_=True)
                 return None
-            result = run_form(PopupInsertForm, name, prefill=prefill, inserted_data=inserted_data,
+            result = run_form(pytis.form.PopupInsertForm, name,
+                              prefill=prefill, inserted_data=inserted_data,
                               multi_insert=multi_insert, transaction=transaction,
                               spec_kwargs=spec_kwargs)
         return result
@@ -982,8 +1014,8 @@ class Application(wx.App, KeyHandler, CommandHandler):
             # si ho uložíme a pak zase obnovíme.
             focused = wx_focused_window()
             wx_yield_()
-            spec = resolver().get(spec_name, 'proc_spec')
-            assert is_dictionary(spec), spec
+            spec = config.resolver.get(spec_name, 'proc_spec')
+            assert isinstance(spec, dict), spec
             assert proc_name in spec, (proc_name, spec)
             proc = spec[proc_name]
             if block_refresh_:
@@ -1057,12 +1089,12 @@ class Application(wx.App, KeyHandler, CommandHandler):
         návratovou hodnotou této metody.
         
         """
-        if not isinstance(dialog_or_class_, Dialog):
+        if not isinstance(dialog_or_class_, pytis.form.Dialog):
             class_ = dialog_or_class_
-            assert issubclass(class_, Dialog)
+            assert issubclass(class_, pytis.form.Dialog)
             parent = self._frame
             if not self._modals.empty() and \
-                   isinstance(self._modals.top(), wx.Window):
+               isinstance(self._modals.top(), wx.Window):
                 parent = self._modals.top()
             dialog = class_(parent, *args, **kwargs)
             args, kwargs = (), {}
@@ -1076,7 +1108,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             self._modals.pop()
             busy_cursor(False)
         # Tento yield zaručí správné předání focusu oken.
-        wx_yield_() 
+        wx_yield_()
         top = self.top_window()
         if top is not None:
             top.focus()
@@ -1129,10 +1161,10 @@ class Application(wx.App, KeyHandler, CommandHandler):
         
         """
         form = self.top_window()
-        if not isinstance(form, Form):
+        if not isinstance(form, pytis.form.Form):
             return None
         if inner:
-            while isinstance(form, (DualForm, MultiForm)):
+            while isinstance(form, (pytis.form.DualForm, pytis.form.MultiForm)):
                 form = form.active_form()
         return form
         
@@ -1164,8 +1196,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                 log(DEBUG, u"Nastavení pole stavové řádky:", data=(id, message))
 
         modal = self._modals.top()
-        if root or not isinstance(modal, Form) \
-               or not modal.set_status(id, message):
+        if root or not isinstance(modal, pytis.form.Form) or not modal.set_status(id, message):
             return self._statusbar.message(id, message, timeout=timeout)
             
     def get_status(self, id):
@@ -1187,11 +1218,11 @@ class Application(wx.App, KeyHandler, CommandHandler):
         form = self._windows.active()
         if form is not None:
             form.resize()
-            if isinstance(form, Refreshable):
+            if isinstance(form, pytis.form.Refreshable):
                 form.refresh()
             form.show()
             form.restore()
-            form.focus()    
+            form.focus()
         else:
             self._panel.SetFocus()
 
@@ -1235,8 +1266,7 @@ class DbActionLogger(object):
     """Log user actions into the database."""
     
     def __init__(self, dbconnection, username):
-        import config
-        factory = resolver().get('pytis.defs.logging.FormActionLog', 'data_spec')
+        factory = config.resolver.get('pytis.defs.logging.FormActionLog', 'data_spec')
         self._data = factory.create(connection_data=config.dbconnection)
         self._username = username
 
@@ -1255,7 +1285,6 @@ class DbActionLogger(object):
         result, success = self._data.insert(row)
         if not success:
             raise pytis.data.DBException(result)
-        
 
 
 # Funkce odpovídající příkazům aplikace.
@@ -1360,7 +1389,7 @@ def delete_record(view, data, transaction, record,
         elif result == 1:
             return True
         elif isinstance(result, basestring):
-            run_dialog(Error, result)
+            run_dialog(pytis.form.Error, result)
             return False
         elif isinstance(result, pytis.data.Operator):
             ask = False
@@ -1372,7 +1401,7 @@ def delete_record(view, data, transaction, record,
             message(_("This form doesn't allow deletion."), beep_=True)
             return False
         op, arg = data.delete, key
-    if ask and not run_dialog(Question, question):
+    if ask and not run_dialog(pytis.form.Question, question):
         return False
     log(EVENT, 'Deleting record:', arg)
     success, result = db_operation(op, arg, transaction=transaction)
@@ -1426,21 +1455,19 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
         try:
             result = operation(*args, **kwargs)
             if _application:
-                import config
                 if _application._log_login:
                     log(ACTION, "Login action:", (config.dbschemas, 'True'))
                     _application._log_login = False
                 _application.login_hook(success=True)
             return True, result
         except pytis.data.DataAccessException as e:
-            run_dialog(Error, _("Access denied"))
+            run_dialog(pytis.form.Error, _("Access denied"))
             return FAILURE
         except pytis.data.DBLoginException as e:
-            import config
             if config.dbconnection.password() is not None and _application:
                 log(ACTION, "Login action:", (config.dbschemas, 'False'))
                 _application.login_hook(success=False)
-            login_result = run_form(InputForm, title=_("Log in for database access"),
+            login_result = run_form(pytis.form.InputForm, title=_("Log in for database access"),
                                     fields=(Field('login', _("Login"),
                                                   width=24, not_null=True,
                                                   default=config.dbuser),
@@ -1448,7 +1475,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                                                   type=pytis.data.Password(verify=False),
                                                   width=24, not_null=True),),
                                     focus_field='password')
-	    if not login_result:
+            if not login_result:
                 return FAILURE
             config.dbconnection.update_login_data(user=login_result['login'].value(),
                                                   password=login_result['password'].value())
@@ -1463,13 +1490,13 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
             if quiet:
                 return FAILURE
             if in_transaction:
-                run_dialog(Message, message, title=_("Database error"),
-                           icon=Message.ICON_ERROR)
+                run_dialog(pytis.form.Message, message, title=_("Database error"),
+                           icon=pytis.form.Message.ICON_ERROR)
                 return FAILURE
             else:
                 message += '\n' + _("Try again?")
-                if not run_dialog(Question, message, title=_("Database error"),
-                                  icon=Question.ICON_ERROR):
+                if not run_dialog(pytis.form.Question, message, title=_("Database error"),
+                                  icon=pytis.form.Question.ICON_ERROR):
                     return FAILURE
 
 def delete_record_question(msg=None):
@@ -1479,9 +1506,9 @@ def delete_record_question(msg=None):
     
     """
     log(EVENT, 'Record deletion dialog')
-    if msg == None:
-        msg = _("Are you sure to delete the record permanently?")        
-    if not run_dialog(Question, msg):
+    if msg is None:
+        msg = _("Are you sure to delete the record permanently?")
+    if not run_dialog(pytis.form.Question, msg):
         log(EVENT, 'Record deletion refused by user')
         return False
     log(EVENT, u'Record deletion confirmed by user')
@@ -1603,9 +1630,7 @@ def create_data_object(name, spec_kwargs={}, kwargs={}):
     Raises 'ResolverError' or 'ProgramError' if data object creation fails.
     
     """
-    factory = resolver().get(name, 'data_spec', **spec_kwargs)
-    import config
-    import pytis.data    
+    factory = config.resolver.get(name, 'data_spec', **spec_kwargs)
     assert isinstance(factory, pytis.data.DataFactory)
     if issubclass(factory.class_(), pytis.data.DBData):
         kwargs = dict(kwargs, connection_data=config.dbconnection)
@@ -1629,7 +1654,7 @@ def block_refresh(function, *args, **kwargs):
     Vrací: výsledek vrácený volanou funkcí.
     
     """
-    return Refreshable.block_refresh(function, *args, **kwargs)
+    return pytis.form.Refreshable.block_refresh(function, *args, **kwargs)
 
 _access_rights = None
 _access_dbconnection = None
@@ -1642,7 +1667,6 @@ def _dump_rights():
         registered_shortnames = registered_shortnames.union(_access_rights.keys())
     if Specification._access_rights not in (None, 'nonuser'):
         registered_shortnames = registered_shortnames.union(Specification._access_rights.keys())
-    import config
     resolver = config.resolver
     output = sys.stderr
     output.write("--- BEGIN list of registered rights ---\n")
@@ -1677,7 +1701,8 @@ def _dump_rights():
             output.write('specifications %s %s None %s\n' % (spec_name, permission, permitted,))
             for c in columns:
                 permitted = has_access(spec_name, permission, c)
-                output.write('specifications %s %s %s %s\n' % (spec_name, permission, c, permitted,))        
+                output.write('specifications %s %s %s %s\n' %
+                             (spec_name, permission, c, permitted,))
     output.write("--- END list of registered rights ---\n")
 
 def init_access_rights(connection_data):
@@ -1692,7 +1717,6 @@ def init_access_rights(connection_data):
     """
     global _access_rights, _user_roles, _access_dbconnection
     _access_dbconnection = connection_data
-    import config
     try:
         roles_data = pytis.data.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
         roles = [row[0].value() for row in roles_data.select_map(identity)]
@@ -1736,7 +1760,7 @@ def init_access_rights(connection_data):
                     relaxed_action_rights.append(r)
     rights_data.select_map(process)
     Specification._init_access_rights(connection_data)
-    resolver().clear()
+    config.resolver.clear()
     if config.debug:
         _dump_rights()
     
@@ -1749,14 +1773,14 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
         (containing `::').  In such a case, the permission is checked for both
         names and 'column=None' is assumed regardless of the actual 'column'
         value.
-      perm -- access permission as one of `pytis.data.Permission' constants.    
+      perm -- access permission as one of `pytis.data.Permission' constants.
       column -- string identifier of the column to check or 'None' (no specific
         column checked)
 
     Raises 'ResolverError' if given specification name cannot be found.
 
     """
-    if not action_has_access('form/'+name, perm=perm, column=column):
+    if not action_has_access('form/' + name, perm=perm, column=column):
         return False
     try:
         main, side = name.split('::')
@@ -1768,14 +1792,14 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
         return has_access(main, perm=perm) and has_access(side, perm=perm)
     else:
         try:
-            rights = resolver().get(name, 'data_spec').access_rights()
+            rights = config.resolver.get(name, 'data_spec').access_rights()
         except ResolverError:
             rights = None
         if rights:
             groups = pytis.data.default_access_groups(_access_dbconnection)
             if not rights.permitted(perm, groups, column=column):
                 return False
-    result = action_has_access('form/'+name, perm=perm, column=column)
+    result = action_has_access('form/' + name, perm=perm, column=column)
     return result
 
 def action_has_access(action, perm=pytis.data.Permission.CALL, column=None):
@@ -1855,7 +1879,7 @@ def password_dialog(title=_("Enter your password"), message=None):
         layout = (pytis.form.Text(message), 'password')
     else:
         layout = ('password',)
-    result = run_form(InputForm, title=title,
+    result = run_form(pytis.form.InputForm, title=title,
                       fields=(Field('password', _("Password"),
                                     type=pytis.data.Password, verify=False,
                                     width=40, not_null=True),),

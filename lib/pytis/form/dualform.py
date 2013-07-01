@@ -24,10 +24,22 @@ způsobem závislá.  Blíže viz dokumentace jednotlivých tříd.
 
 """
 
-from pytis.form import *
+import copy
+import re
 import wx
 
-_ = pytis.util.translations('pytis-wx')
+import pytis.data
+from pytis.presentation import Orientation
+from pytis.util import EVENT, log, translations
+from dialog import MultiQuestion
+from event import wx_callback
+from form import BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm
+from list import AggregationForm, BrowseForm, ListForm, SideBrowseForm
+from screen import CheckItem, Menu, MItem, \
+    busy_cursor, is_busy_cursor, microsleep, popup_menu, wx_focused_window
+from application import current_form, has_access, message, run_dialog, run_form
+
+_ = translations('pytis-wx')
 
 class DualForm(Form, Refreshable):
     """Formulář složený ze dvou spolupracujících formulářů.
@@ -161,7 +173,6 @@ class DualForm(Form, Refreshable):
             return
         form.focus()
         self._active_form = form
-        
 
     def title(self):
         """Vrať název formuláře jako řetězec."""
@@ -221,7 +232,7 @@ class DualForm(Form, Refreshable):
         self._main_form.save()
         self._side_form.save()
 
-    def restore(self):        
+    def restore(self):
         self._main_form.restore()
         self._side_form.restore()
 
@@ -382,7 +393,7 @@ class SideBrowseDualForm(PostponedSelectionDualForm):
         f = self._side_form
         if isinstance(self._main_form, Refreshable):
             f.set_callback(ListForm.CALL_MODIFICATION, self._main_form.refresh)
-        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda: self._select_form(f))
 
     def _do_selection(self, row):
         form = self._side_form
@@ -424,7 +435,7 @@ class BrowseDualForm(SideBrowseDualForm):
 
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda: self._select_form(f))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
         f.set_callback(f.CALL_ACTIVATION, self._on_main_activation)
     
@@ -459,7 +470,7 @@ class AggregationDualForm(PostponedSelectionDualForm):
         return Orientation.HORIZONTAL
     
     def _initial_sash_position(self, size):
-        return size.height / 2 
+        return size.height / 2
         
     def _create_main_form(self, parent, **kwargs):
         return AggregationForm(parent, self._resolver, self._name, guardian=self, **kwargs)
@@ -471,13 +482,13 @@ class AggregationDualForm(PostponedSelectionDualForm):
     
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda: self._select_form(f))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
     
     def _set_side_form_callbacks(self):
         f = self._side_form
         f.set_callback(f.CALL_MODIFICATION, self._main_form.refresh)
-        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda: self._select_form(f))
 
     def _do_selection(self, row):
         form = self._side_form
@@ -538,7 +549,7 @@ class BrowseShowDualForm(ImmediateSelectionDualForm):
 
     def _set_main_form_callbacks(self):
         f = self._main_form
-        f.set_callback(f.CALL_USER_INTERACTION, lambda : self._select_form(f))
+        f.set_callback(f.CALL_USER_INTERACTION, lambda: self._select_form(f))
         f.set_callback(f.CALL_SELECTION, self._on_main_selection)
 
     def _create_side_form(self, parent):
@@ -579,7 +590,7 @@ class DescriptiveDualForm(BrowseShowDualForm):
             # gets replaced in the side form.
             pass
         def _select_columns(self):
-            return [c.id() for c in self._data.columns() 
+            return [c.id() for c in self._data.columns()
                     if not isinstance(c.type(), pytis.data.Big)]
         def _query_fields_row(self):
             return self._main_form._query_fields_row()
@@ -676,7 +687,8 @@ class MultiForm(Form, Refreshable):
         tabctrl = [child for child in nb.GetChildren() if isinstance(child, wx.aui.AuiTabCtrl)][0]
         wx_callback(wx.EVT_LEFT_DOWN, tabctrl, self._on_mouse_left)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGING, nb, nb.GetId(), self._on_page_change)
-        wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, tabctrl.GetId(), self._on_tab_move_started)
+        wx_callback(wx.aui.EVT_AUINOTEBOOK_BEGIN_DRAG, tabctrl, tabctrl.GetId(),
+                    self._on_tab_move_started)
         wx_callback(wx.aui.EVT_AUINOTEBOOK_DRAG_DONE, nb, nb.GetId(), self._on_tab_move_done)
         try:
             tab_right_down = wx.aui.EVT_AUINOTEBOOK_TAB_RIGHT_DOWN
@@ -890,7 +902,7 @@ class MultiForm(Form, Refreshable):
         if active:
             active.save()
 
-    def restore(self):        
+    def restore(self):
         active = self._saved_active_form
         if active:
             self._init_subform(active)
@@ -930,7 +942,6 @@ class MultiSideForm(MultiForm):
             if nb.GetPageIndex(self) == nb.GetSelection():
                 # Only perform focus if the form is currently selected in the notebook.
                 super(MultiSideForm.TabbedForm, self).focus()
-            
         
     class TabbedBrowseForm(TabbedForm, SideBrowseForm):
         _ALLOW_TITLE_BAR = False
@@ -948,7 +959,8 @@ class MultiSideForm(MultiForm):
     class TabbedShowForm(TabbedForm, ShowForm):
         def _init_attributes(self, binding, main_form, **kwargs):
             self._bcol = bcol = binding.binding_column()
-            self._sbcol = main_form.data(init_select=False).find_column(bcol).type().enumerator().value_column()
+            self._sbcol = main_form.data(init_select=False).find_column(bcol).type().\
+                enumerator().value_column()
             super(MultiSideForm.TabbedShowForm, self)._init_attributes(binding=binding, **kwargs)
         def on_selection(self, row):
             self.select_row({self._sbcol: row[self._bcol]})
@@ -1035,7 +1047,6 @@ class MultiSideForm(MultiForm):
         popup_menu(self._notebook, (self._displayed_forms_menu(),), self._get_keymap())
         event.Skip()
         
-        
     def _on_page_change(self, event=None):
         if self._leave_form_requested:
             return
@@ -1076,7 +1087,7 @@ class MultiSideForm(MultiForm):
             if index != nb.GetPageIndex(form):
                 return
             if index == self._notebook.GetSelection():
-                self._cmd_next_form(back=order!=0)
+                self._cmd_next_form(back=(order != 0))
             if form.initialized():
                 form.hide()
                 form._release_data()
@@ -1193,4 +1204,3 @@ class MultiBrowseDualForm(BrowseDualForm):
 
     def filter(self, condition):
         return self._main_form.filter(condition)
-        

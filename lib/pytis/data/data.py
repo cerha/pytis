@@ -36,15 +36,18 @@ implementaci.
 
 """
 
-import functools
 import copy
-import string
-import types
+import datetime
+import functools
+import operator
 
 import pytis.util
-from pytis.data import *
+from pytis.util import EVENT, \
+    InvalidAccessError, LimitedCache, NotImplementedException, ProgramError, \
+    compare_objects, find, less, log, object_2_5, sameclass, some, translations, xtuple
+from types_ import DateTime, Number, Type, Value, WMValue
 
-_ = pytis.util.translations('pytis-data')
+_ = translations('pytis-data')
 
 FORWARD = 'FORWARD'
 """Konstanta pro dopředný posun v 'Data.fetchone'."""
@@ -70,7 +73,6 @@ ASCENDENT = 'ASCENDENT'
 """Konstanta pro vzestupné třídění."""
 DESCENDANT = 'DESCENDANT'
 """Konstanta pro sestupné třídění."""
-
 
 
 ### Datové třídy
@@ -104,7 +106,7 @@ class Operator(object):
         def __cmp__(self, other):
             if sameclass(self, other):
                 return cmp(self._value, other._value)
-            elif pytis.util.less(self, other):
+            elif less(self, other):
                 return -1
             else:
                 return 1
@@ -177,9 +179,9 @@ class Operator(object):
 
     def __str__(self):
         def arg(arg):
-            if isinstance(arg, (pytis.data.Value, pytis.data.WMValue)):
+            if isinstance(arg, (Value, WMValue)):
                 value = arg.value()
-                if isinstance(arg.type(), pytis.data.DateTime):
+                if isinstance(arg.type(), DateTime):
                     value = str(value)
                 return repr(value)
             else:
@@ -189,9 +191,9 @@ class Operator(object):
 
     def __cmp__(self, other):
         if sameclass(self, other):
-            return cmp(self._name, other._name) or \
-                   cmp(self._relaxed_args(), other._relaxed_args()) or \
-                   cmp(self._kwargs, other._kwargs)
+            return (cmp(self._name, other._name) or
+                    cmp(self._relaxed_args(), other._relaxed_args()) or
+                    cmp(self._kwargs, other._kwargs))
         else:
             return compare_objects(self, other)
 
@@ -274,11 +276,11 @@ class Data(object_2_5):
           kwargs -- given to the ancestor constructor
             
         """
-        super(Data,self).__init__(columns=columns, key=key, ordering=ordering,
-                                  **kwargs)
+        super(Data, self).__init__(columns=columns, key=key, ordering=ordering,
+                                   **kwargs)
         assert not filter(lambda c: not isinstance(c, ColumnSpec),
                           columns), \
-                          'Invalid column specification'
+            'Invalid column specification'
         key = xtuple(key)
         if ordering:
             ordering = xtuple(ordering)
@@ -488,8 +490,8 @@ class Data(object_2_5):
             select_result = self.select(condition=condition, reuse=reuse,
                                         sort=sort, columns=columns, transaction=transaction)
             def aggregate_value(cid):
-                if (operation == self.AGG_COUNT or
-                    isinstance(self.find_column(cid).type(), Number)):
+                if ((operation == self.AGG_COUNT or
+                     isinstance(self.find_column(cid).type(), Number))):
                     number = self.select_aggregate((operation, cid,), condition=condition,
                                                    transaction=transaction)
                     result = (cid, number,)
@@ -583,7 +585,7 @@ class Data(object_2_5):
         
         """
         for i in range(count):
-            if self.fetchone(direction=direction) == None:
+            if self.fetchone(direction=direction) is None:
                 return i
         return count
 
@@ -594,7 +596,7 @@ class Data(object_2_5):
         'select()' a 'close()').
 
         """
-        while self.fetchone(BACKWARD) != None:
+        while self.fetchone(BACKWARD) is not None:
             pass
 
     def search(self, condition, direction=FORWARD, transaction=None):
@@ -887,7 +889,7 @@ class Counter(object):
     Jedná se o jednoduchý čítač vracející postupně sekvenci unikátních
     vzestupných čísel, blíže viz metoda 'next()'.
 
-    """    
+    """
     def next(self):
         """Vrať další hodnotu čítače jako integer.
 
@@ -917,7 +919,6 @@ class Function(object):
 
         """
         raise NotImplementedException()
-
 
 
 class MemData(Data):
@@ -951,7 +952,7 @@ class MemData(Data):
             self.insert(row)
 
     def _mem_find_index(self, key):
-        if is_sequence(key):
+        if isinstance(key, (tuple, list,)):
             key = key[0]
         data = self._mem_data
         k = self.key()[0].id()
@@ -967,8 +968,8 @@ class MemData(Data):
             key = row[self.key()[0].id()]
         except:
             return None
-        i = self._mem_find_index(key) 
-        if index != None and i != None and i != index:
+        i = self._mem_find_index(key)
+        if index is not None and i is not None and i != index:
             return None
         pairs = []
         for c in self.columns():
@@ -988,7 +989,7 @@ class MemData(Data):
 
     def row(self, key, columns=None):
         index = self._mem_find_index(key)
-        if index == None:
+        if index is None:
             return None
         return self._restrict_row_columns(self._mem_data[index], columns)
 
@@ -1087,7 +1088,7 @@ class MemData(Data):
         """
         assert isinstance(row, Row)
         new_row = self._mem_create_row(row)
-        if new_row == None:
+        if new_row is None:
             return None, False
         self._mem_data.append(new_row)
         return new_row, True
@@ -1104,10 +1105,10 @@ class MemData(Data):
 
         """
         index = self._mem_find_index(key)
-        if index == None:
+        if index is None:
             return None, False
         new_row = self._mem_create_row(row, index)
-        if new_row == None:
+        if new_row is None:
             return None, False
         self._mem_data[index] = new_row
         return new_row, True
@@ -1117,7 +1118,7 @@ class MemData(Data):
         Argument 'transaction' is ignored.
         """
         index = self._mem_find_index(key)
-        if index == None:
+        if index is None:
             return 0
         del self._mem_data[index]
         return 1
@@ -1255,7 +1256,7 @@ def GE(x, y, ignore_case=False):
 
     """
     t = OR(GT(x, y, ignore_case=ignore_case),
-                     EQ(x, y, ignore_case=ignore_case))
+           EQ(x, y, ignore_case=ignore_case))
     return Operator('GE', x, y, ignore_case=ignore_case, translation=t)
 
 def NOT(x):
@@ -1424,7 +1425,7 @@ def reversed_sorting(sorting):
 
     """
     def revspec(spec):
-        if is_sequence(spec):
+        if isinstance(spec, (tuple, list,)):
             id, dir = spec
         else:
             id, dir = spec, ASCENDENT
@@ -1437,7 +1438,6 @@ def reversed_sorting(sorting):
         return id, result
     reversed = map(revspec, sorting)
     return tuple(reversed)
-
 
 
 # Pomocné třídy
@@ -1533,17 +1533,17 @@ class Row:
           
         """
         if __debug__:
-            assert is_sequence(data), ("Argument must be a sequence", data)
+            assert isinstance(data, (tuple, list,)), ("Argument must be a sequence", data)
             for item in data:
-                assert is_sequence(item) and len(item) == 2, \
-                       ('Column definition must be (ID, VALUE) pair', item)
+                assert isinstance(item, (tuple, list,)) and len(item) == 2, \
+                    ('Column definition must be (ID, VALUE) pair', item,)
                 k, v = item
-                assert is_anystring(k), ('Invalid column id', k)
-                assert isinstance(v, Value), ('Invalid column value', v)
+                assert isinstance(k, basestring), ('Invalid column id', k,)
+                assert isinstance(v, Value), ('Invalid column value', v,)
         self._data = list(data)
 
     def _index(self, key):
-        if is_anystring(key):
+        if isinstance(key, basestring):
             data = self._data
             for i in range(len(data)):
                 if data[i][0] == key:
@@ -1551,7 +1551,7 @@ class Row:
                     break
             else:
                 raise KeyError(key)
-        elif type(key) == type(0) or type(key) == type(0L):
+        elif isinstance(key, int) or isinstance(key, long):
             if key < 0:
                 result = len(self) + key
                 if result < 0:
@@ -1566,7 +1566,7 @@ class Row:
         return self._data
 
     def __setstate__(self, state):
-        if type(state) != types.ListType:
+        if not isinstance(state, list):
             raise InvalidAccessError('Invalid row data', state)
         for k, v in state:
             if not isinstance(k, basestring):
@@ -1726,7 +1726,7 @@ class Row:
           value -- hodnota sloupce jako instance třídy 'types_.Value'
 
         """
-        assert is_anystring(key)
+        assert isinstance(key, basestring)
         assert isinstance(value, Value)
         assert not some(lambda x, k=key: x[0] == k, self._data)
         self._data.append((key, value))
@@ -1744,8 +1744,7 @@ class Row:
         
         """
         for k in dict.keys():
-            assert isinstance(dict[k], Value), \
-                   ('Invalid column value', dict[k])
+            assert isinstance(dict[k], Value), ('Invalid column value', dict[k],)
             if k in self:
                 self[k] = dict[k]
 
@@ -1778,15 +1777,14 @@ class DataFactory(object):
         assert issubclass(class_, Data)
         self._class_ = class_
         def adjust(arg):
-            if type(arg) == types.ListType:
+            if isinstance(arg, list):
                 arg = tuple(arg)
             return arg
         self._args = tuple([adjust(a) for a in args])
         self._kwargs = kwargs
         self._kwargs_hashable = kwargs.items()
         if DataFactory._data_object_cache is None and class_.cacheable():
-            DataFactory._data_object_cache = \
-              LimitedCache(DataFactory._get_data_object)
+            DataFactory._data_object_cache = LimitedCache(DataFactory._get_data_object)
 
     def class_(self):
         """Vrať třídu datového objektu."""
@@ -1819,11 +1817,10 @@ class DataFactory(object):
                 cacheable = False
                 log(EVENT, "Non-cacheable data object cache key: %s" % (key,))
         # TODO: Stále ještě máme problém, nyní u validity_condition
-        # if cacheable:      
-        if False: 
+        # if cacheable:
+        if False:
             data_object = cache[key]
             result = copy.copy(data_object)
-            ftype = type(identity)
             for attr in result.__dict__.keys():
                 try:
                     result.__dict__[attr] = copy.copy(result.__dict__[attr])
@@ -1875,11 +1872,11 @@ def dbtable(table, columns, connection_data, arguments=None, connection_name=Non
     
     """
     def binding(spec):
-        if is_sequence(spec):
+        if isinstance(spec, (list, tuple,)):
             id, type_ = spec
         else:
             id, type_ = spec, None
-        return pytis.data.DBColumnBinding(id,  table, id, type_=type_)
+        return pytis.data.DBColumnBinding(id, table, id, type_=type_)
     bindings = [binding(spec) for spec in columns]
     factory = pytis.data.DataFactory(pytis.data.DBDataDefault, bindings, bindings[0],
                                      arguments=arguments, sql_logger=sql_logger)

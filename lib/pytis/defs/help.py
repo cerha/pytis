@@ -20,7 +20,7 @@
 import pytis.data as pd, pytis.presentation as pp, pytis.util
 from pytis.presentation import Specification, Field, CodebookSpec, Editable, HGroup, Profile, \
     Binding, computer
-from pytis.extensions import nextval
+from pytis.util import nextval
 
 class _TreeOrderLTree(pp.PrettyFoldable, pd.String):
     pass

@@ -48,15 +48,14 @@ Tento modul je doporučeno importovat následujícím způsobem:
 import getpass
 import inspect
 import os
+import re
 import socket
 import string
 import sys
 import syslog
 import time
-import logging
-import logging.handlers
 
-from util import *
+from util import ProgramError, deepstr, positive_id, some
 
 
 OPERATIONAL = 'OPR'
@@ -94,7 +93,7 @@ class Logger(object):
             class_ = list(config.log_class_filter)
             for i in range(len(class_)):
                 c = class_[i]
-                if type(c) == type(''):
+                if isinstance(c, basestring):
                     pos = string.rfind(c, '.')
                     if pos:
                         mod, cls = c[:pos], c[pos+1:]
@@ -128,7 +127,7 @@ class Logger(object):
                     class_name = class_.__name__
                 except:
                     pass
-                id_ = '%x' % positive_id(s)
+                id_ = '%x' % (positive_id(s),)
         self._module = module
         self._class_ = class_
         self._class_name = class_name
@@ -137,14 +136,15 @@ class Logger(object):
     def _is_accepted(self, kind, message, data):
         if not __debug__ and kind == DEBUG:
             return False
+        import config
         if kind in config.log_exclude:
             return False
         if kind == DEBUG:
-            if self._module_filter and not starts_with(self._module, self._module_filter):
+            if self._module_filter and not self._module.startswith(self._module_filter):
                 return False
-            if self._class_filter \
-                   and (self._class_ is None \
-                        or not some(lambda c: issubclass(self._class_, c), self._class_filter)):
+            if ((self._class_filter and
+                 (self._class_ is None or
+                  not some(lambda c: issubclass(self._class_, c), self._class_filter)))):
                 return False
         return True
 
@@ -220,7 +220,7 @@ class Logger(object):
         """
         assert kind in (OPERATIONAL, ACTION, EVENT, DEBUG), \
             ('invalid logging kind', kind)
-        assert is_anystring(message)
+        assert isinstance(message, basestring)
         self._retrieve_info()
         if not self._is_accepted(kind, message, data):
             return

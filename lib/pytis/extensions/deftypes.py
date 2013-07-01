@@ -15,9 +15,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Definice odvozených datových typů.""" 
+"""Definice odvozených datových typů."""
 
-from pytis.extensions import *
+import pytis.data
+import pytis.util
 
        
 class Price(pytis.data.Float):
@@ -26,7 +27,7 @@ class Price(pytis.data.Float):
     def default_value(self):
         value, error = self.validate('0')
         if error is not None:
-            raise ProgramError("Can't validate default value")
+            raise pytis.util.ProgramError("Can't validate default value")
         return value
         
 class StringNotNull(pytis.data.String):
@@ -35,4 +36,4 @@ class StringNotNull(pytis.data.String):
         super(StringNotNull, self)._init(**kwargs)
 
 class _TreeOrder(pytis.presentation.PrettyTreeOrder, pytis.data.String):
-      pass
+    pass

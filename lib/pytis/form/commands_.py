@@ -39,7 +39,18 @@ definujeme na jediném místě v tomto modulu.
 
 """
 
-from pytis.form import *
+import wx
+
+import pytis.util
+from command import Command, UICommand
+from dialog import Dialog
+from dualform import DualForm, MultiForm, MultiSideForm
+from form import BrowsableShowForm, EditForm, Form, InnerForm, LookupForm, RecordForm
+from inputfield import FileField, GenericCodebookField, InputField, Invocable, \
+    ListField, SpinnableField, StructuredTextField, TextField
+from list import BrowseForm, FoldableForm, ListForm
+from screen import Browser, DualFormSwitcher, ProfileSelector
+from application import Application
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -109,7 +120,8 @@ Command(LookupForm, 'RENAME_PROFILE',
 Command(LookupForm, 'RELOAD_PROFILE',
         "Reinitialize the form to the last saved state of the current profile.")
 Command(LookupForm, 'RESET_PROFILE',
-        "Discard all saved profile changes and load the original settings (only for predefined profiles)")
+        ("Discard all saved profile changes and load the original settings "
+         "(only for predefined profiles)"))
 Command(LookupForm, 'SET_INITIAL_PROFILE',
         "Use the current profile as the initial profile on next form startup")
 Command(LookupForm, 'FILTER_BY_VALUE',
@@ -184,7 +196,7 @@ Command(ListForm, 'INSERT_LINE',
 Command(ListForm, 'SET_GROUPING_COLUMN',
         "Změna sloupce vizuáního seskupování")
 Command(ListForm, 'RESIZE_COLUMN',
-        "Rozšíření/zůžení sloupce (arg. 'diff' +/- pixels)") 
+        "Rozšíření/zúžení sloupce (arg. 'diff' +/- pixels)")
 Command(ListForm, 'MOVE_COLUMN',
         "Přesunutí sloupce doprava/doleva (arg. 'diff' +/- number of columns)")
 Command(ListForm, 'TOGGLE_COLUMN',
@@ -210,7 +222,7 @@ Command(EditForm, 'COMMIT_RECORD',
 Command(EditForm, 'NAVIGATE',
         "Navigace mezi políčky editačního formuláře (arg. 'back')")
 Command(BrowsableShowForm, 'NEXT_RECORD',
-        "Přechod na další záznam vpřed/vzad (arg. 'back')") 
+        "Přechod na další záznam vpřed/vzad (arg. 'back')")
 Command(DualForm, 'OTHER_FORM',
         "Přechod mezi podformuláři duálního formuláře")
 Command(MultiForm, 'NEXT_FORM',
@@ -403,8 +415,7 @@ DEFAULT_KEYMAP = (
     # Just for backwards compatibility
     ('Ctrl-F4',       LookupForm.COMMAND_FILTER),
 
-    )
-
+)
 
 
 if __debug__:
@@ -497,15 +508,14 @@ COMMAND_ICONS = (
     (Browser.COMMAND_GO_FORWARD,                           wx.ART_GO_FORWARD),
     (Browser.COMMAND_STOP_LOADING,                         wx.ART_CROSS_MARK),
     (Browser.COMMAND_RELOAD,                               'reload'),
-    )
+)
 
 
 class UICommands(object):
     PYTIS_HELP = UICommand(
         Application.COMMAND_HELP(topic='pytis'),
         _("Pytis Help"),
-        _("Open the user's manual describing work with the application in general")
-        )
+        _("Open the user's manual describing work with the application in general"))
     HELP = UICommand(
         Form.COMMAND_HELP(),
         _("Help for the current form"),
@@ -610,54 +620,54 @@ class UICommands(object):
         _("Close the current form window."))
 
 
-TOOLBAR_COMMANDS = ((
-        UICommands.NEW_RECORD,
-        UICommands.EDIT_RECORD,
-        UICommands.DELETE_RECORD,
-        ),(
-        UICommands.EXPORT_FILE,
-        UICommands.PRINT_MENU,
-        UICommands.OTHER_FORM,
-        ),(
-        UICommands.INCREMENTAL_SEARCH,
-        UICommands.SEARCH,
-        UICommands.SEARCH_PREVIOUS,
-        UICommands.SEARCH_NEXT,
-        UICommands.JUMP,
-        ),(
-        UICommands.AGGREGATION_MENU,
-        ),(
-        UICommands.FILTER,
-        UICommands.PROFILE_MENU,
-        ),(
-        UICommands.PYTIS_HELP,
-        UICommands.HELP,
-        UICommands.DESCRIBE,
-        ),(
-        UICommands.LEAVE_FORM,
-        ))
+TOOLBAR_COMMANDS = ((UICommands.NEW_RECORD,
+                     UICommands.EDIT_RECORD,
+                     UICommands.DELETE_RECORD,
+                     ),
+                    (UICommands.EXPORT_FILE,
+                     UICommands.PRINT_MENU,
+                     UICommands.OTHER_FORM,
+                     ),
+                    (UICommands.INCREMENTAL_SEARCH,
+                     UICommands.SEARCH,
+                     UICommands.SEARCH_PREVIOUS,
+                     UICommands.SEARCH_NEXT,
+                     UICommands.JUMP,
+                     ),
+                    (UICommands.AGGREGATION_MENU,
+                     ),
+                    (UICommands.FILTER,
+                     UICommands.PROFILE_MENU,
+                     ),
+                    (UICommands.PYTIS_HELP,
+                     UICommands.HELP,
+                     UICommands.DESCRIBE,
+                     ),
+                    (UICommands.LEAVE_FORM,
+                     ),
+                    )
 
-FORM_MENU_COMMANDS = ((
-        UICommands.INCREMENTAL_SEARCH,
-        UICommands.SEARCH,
-        UICommands.SEARCH_PREVIOUS,
-        UICommands.SEARCH_NEXT,
-        UICommands.JUMP,
-        ),(
-        UICommands.SORT,
-        UICommands.FILTER,
-        UICommands.UNFILTER,
-        ),(
-        UICommands.EDIT_RECORD,
-        UICommands.NEW_RECORD,
-        UICommands.NEW_RECORD_COPY,
-        UICommands.DELETE_RECORD,
-        ),(
-        UICommands.INSERT_LINE,
-        UICommands.INSERT_LINE_BEFORE,
-        UICommands.INSERT_LINE_COPY,
-        UICommands.INSERT_LINE_COPY_BEFORE,
-        ),(
-        UICommands.EXPORT_FILE,
-        UICommands.IMPORT_INTERACTIVE,
-))
+FORM_MENU_COMMANDS = ((UICommands.INCREMENTAL_SEARCH,
+                       UICommands.SEARCH,
+                       UICommands.SEARCH_PREVIOUS,
+                       UICommands.SEARCH_NEXT,
+                       UICommands.JUMP,
+                       ),
+                      (UICommands.SORT,
+                       UICommands.FILTER,
+                       UICommands.UNFILTER,
+                       ),
+                      (UICommands.EDIT_RECORD,
+                       UICommands.NEW_RECORD,
+                       UICommands.NEW_RECORD_COPY,
+                       UICommands.DELETE_RECORD,
+                       ),
+                      (UICommands.INSERT_LINE,
+                       UICommands.INSERT_LINE_BEFORE,
+                       UICommands.INSERT_LINE_COPY,
+                       UICommands.INSERT_LINE_COPY_BEFORE,
+                       ),
+                      (UICommands.EXPORT_FILE,
+                       UICommands.IMPORT_INTERACTIVE,
+                       ),
+                      )

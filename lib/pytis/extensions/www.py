@@ -18,12 +18,11 @@
 
 """Nástroje pro generování HTML na základě dat z pytisu."""
 
-import pytis.data
-from pytis.util import *
-import HyperText
 from HyperText.HTML import TABLE, TR, TD, TH, Select, Href, URL, nbsp
+
+import pytis.data
+from pytis.util import xtuple
 from pytis.extensions import dbselect, data_object
-import config
 
 class BaseDBTable(object):
 
@@ -46,7 +45,8 @@ class BaseDBTable(object):
         attrs -- atributy pro HyperText.TABLE
         
         Vrací instanci HyperText.TABLE.
-        """        
+        
+        """
         self._spec = spec
         self._columns = columns
         self._condition = condition
@@ -115,7 +115,7 @@ class BaseDBTable(object):
                         if style:
                             r.append(TD(val, align=aligns[i],
                                 klass=style))
-                        else:    
+                        else:
                             r.append(TD(val, align=aligns[i]))
                     else:
                         r.append(TD(val, align=aligns[i]))
@@ -135,7 +135,7 @@ class BrowsableDBTable(BaseDBTable):
 
     def dbrows(self):
         self._row_count = self._data.select(condition=self._condition,
-                                      sort=self._sort)        
+                                            sort=self._sort)
         offset = (self._pageno - 1) * self._limit
         self._data.skip(offset)
         rows = []
@@ -146,9 +146,8 @@ class BrowsableDBTable(BaseDBTable):
             if row is None or i >= self._limit or i > self._row_count:
                 self._data.close()
                 break
-            rows.append(pytis.data.Row([(c,row[c])
-                                        for c in self._columns]))
-        return rows    
+            rows.append(pytis.data.Row([(c, row[c]) for c in self._columns]))
+        return rows
 
     def _labelfirst(self):
         return "|<<"
@@ -163,7 +162,7 @@ class BrowsableDBTable(BaseDBTable):
         return ">>|"
 
     def lastpageno(self):
-        return int(self._row_count / self._limit)        
+        return int(self._row_count / self._limit)
            
     def first(self):
         return Href(URL(self._uri), self._labelfirst())
@@ -195,7 +194,7 @@ class BrowsableDBTable(BaseDBTable):
             controls = self.controls()
             rcontrols = TR(TD(colspan=len(self.columns()), *controls))
             self._table.append(rcontrols)
-        return self._table            
+        return self._table
 
 def base_db_table(*args, **kwargs):
     t = BaseDBTable(*args, **kwargs)
@@ -203,7 +202,7 @@ def base_db_table(*args, **kwargs):
 
 def browsable_db_table(*args, **kwargs):
     t = BrowsableDBTable(*args, **kwargs)
-    return t.table()   
+    return t.table()
 
 
 def form_validate(spec, prefill):
@@ -241,10 +240,11 @@ def PopupCB(spec, name, column, returned_column,
       returned_column -- název sloupce číselníku, jehož hodnoty se budou vracet
       selected -- None nebo seznam hodnot, které budou mít v HTML hodnotu
                   selected
-      sort -- řazení odpovídající argumentu volání pytis.data.select()    
+      sort -- řazení odpovídající argumentu volání pytis.data.select()
       condition -- podmínka odpovídající argumentu volání pytis.data.select()
 
     Vrací instanci HyperText.Select nebo None v případě neúspěchu.
+    
     """
     dbrows = dbselect(spec, condition=condition, sort=sort)
     if len(dbrows) == 0:

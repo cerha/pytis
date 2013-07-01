@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Access rights
-# 
+#
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,8 +31,9 @@ Access rights violation is signalized exclusively using the
 
 """
 
-from pytis.data import *
-from pytis.util import *
+from pytis.util import EVENT, log, remove_duplicates, some, translations, xtuple
+from data import Data, EQ, MemData, Row
+from types_ import sval
 
 _ = translations('pytis-data')
 
@@ -123,9 +124,9 @@ class AccessRights(object):
             for p in all_permissions:
                 table_p = table[p]
                 for c in columns:
-                    if not table_p.has_key(c):
+                    if c not in table_p:
                         table_p[c] = ()
-                if not table_p.has_key(True):
+                if True not in table_p:
                     table_p[True] = ()
             for gd in groupdefs:
                 groups, permissions = xtuple(gd[0]), gd[1:]
@@ -171,8 +172,7 @@ class AccessRights(object):
         try:
             result = self._query_cache[key]
         except KeyError:
-            result = self._query_cache[key] = \
-                     self._permitted(permission, groups, column)
+            result = self._query_cache[key] = self._permitted(permission, groups, column)
         return result
 
     def _permitted_groups(self, permission, column):
@@ -180,11 +180,11 @@ class AccessRights(object):
         groups = permsets.get(column, ())
         if isinstance(column, basestring):
             for sets in self._permission_table.values():
-                if sets.has_key(column):
+                if column in sets:
                     break
             else:
                 groups += permsets.get(False, ())
-        return groups        
+        return groups
 
     def permitted_groups(self, permission, column):
         """Return list of groups with 'permission' to 'column'.
@@ -201,7 +201,7 @@ class AccessRights(object):
         if column is None:
             groups += self._permitted_groups(permission, True)
         else:
-            groups += self._permitted_groups(permission, None)            
+            groups += self._permitted_groups(permission, None)
         return remove_duplicates(list(groups))
 
     def specification(self):
@@ -218,7 +218,7 @@ class DBAccessRights(AccessRights):
 
     """
 
-    def __init__ (self, object_name, connection_data=None):
+    def __init__(self, object_name, connection_data=None):
         """
         Arguments:
 
@@ -240,7 +240,7 @@ class DBAccessRights(AccessRights):
         data = pytis.data.DBDataDefault(bindings, key,
                                         connection_data=connection_data)
         try:
-            data.select(condition=EQ('object', Value(String(), object_name)))
+            data.select(condition=EQ('object', sval(object_name)))
             while True:
                 row = data.fetchone()
                 if row is None:
@@ -301,7 +301,7 @@ class RestrictedData(Data):
         elif condition.logical():
             result = []
             for a in condition.args():
-                result+= self._check_access_condition_columns(a)
+                result += self._check_access_condition_columns(a)
             return result
         elif condition.name == 'IN':
             column, data, table_column, table_condition, table_arguments = condition.args()
@@ -333,7 +333,7 @@ class RestrictedData(Data):
             return row
         filtered_items = [item for item in row.items()
                           if rights.permitted(permission, groups, column=item[0])]
-        return pytis.data.Row(filtered_items)
+        return Row(filtered_items)
 
     def permitted(self, column_id, permission):
         """Return true iff the user may access the given column.
@@ -445,9 +445,10 @@ def is_in_groups(access_groups):
     
     """
     import config
-    groups = pytis.data.default_access_groups(config.dbconnection)
-    if groups is None or access_groups is None\
-           or some(lambda g: g in groups, xtuple(access_groups)):
+    from pytis.data import default_access_groups
+    groups = default_access_groups(config.dbconnection)
+    if ((groups is None or access_groups is None or
+         some(lambda g: g in groups, xtuple(access_groups)))):
         return True
     else:
         return False

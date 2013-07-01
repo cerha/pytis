@@ -25,9 +25,9 @@ import pytis.extensions
 import pytis.form
 import pytis.presentation
 import pytis.util
+from pytis.util import nextval
 from pytis.presentation import Editable
-from pytis.extensions import Field, nextval
-import config
+from pytis.extensions import Field
 
 _ = pytis.util.translations('pytis-defs')
 

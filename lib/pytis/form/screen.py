@@ -29,7 +29,9 @@ i třídy, které tyto specifikace následně zpracovávají.
 
 import collections
 import copy
+import os
 import string
+import types
 try:
     import gtk
     import gtk.gdk
@@ -41,10 +43,16 @@ except ImportError:
     webkit = None
 import lcg
 
-from pytis.form import *
 import wx
 import wx.combo
+
+import pytis.form
 import pytis.presentation
+from pytis.presentation import BorderStyle, Orientation, TextFormat
+from pytis.util import DEBUG, EVENT, OPERATIONAL, \
+    ProgramError, compare_objects, find, log, parse_lcg_text, public_attributes, xtuple
+from command import Command, CommandHandler, UICommand, command_icon
+from managers import FormProfileManager
 
 import config
 if config.http_proxy is not None:
@@ -118,7 +126,8 @@ def modal(window):
     nebo 'Dialog'.
 
     """
-    return window and (isinstance(window, Dialog) or isinstance(window, PopupForm))
+    return (window and
+            (isinstance(window, pytis.form.Dialog) or isinstance(window, pytis.form.PopupForm)))
 
 def copy_to_clipboard(text):
     """Copy given text into system clipboard.
@@ -140,7 +149,7 @@ def copy_to_clipboard(text):
     #    clipboard.Flush()
     #    clipboard.Close()
     # The following solution is is quite a hack, but it works consistently...
-    ctrl = wx.TextCtrl(wx_frame(), -1, text)
+    ctrl = wx.TextCtrl(pytis.form.wx_frame(), -1, text)
     ctrl.SetSelection(0, len(text))
     ctrl.Copy()
     ctrl.Destroy()
@@ -706,14 +715,14 @@ class KeyHandler:
     def _handle_keys(self, *widgets):
         """Registruj se pro ošetření klávesových událostí daných UI prvků."""
         for widget in widgets:
-            wx_callback(wx.EVT_KEY_DOWN, widget, self.on_key_down)
+            pytis.form.wx_callback(wx.EVT_KEY_DOWN, widget, self.on_key_down)
         
     def _init_commands(self):
         # Nemůžeme `_commands' inicializovat hned v konstruktoru, protože
         # tou dobou ještě nemusí být všechny příkazy ve třídě definovány.
         commands = []
         for attrname in public_attributes(self.__class__):
-            if starts_with(attrname, 'COMMAND_'):
+            if attrname.startswith('COMMAND_'):
                 command = getattr(self.__class__, attrname)
                 if isinstance(command, Command):
                     commands.append(command)
@@ -745,7 +754,7 @@ class KeyHandler:
         if self.keymap is None:
             guardian = self._key_guardian
             if guardian is None:
-                gkeymap = global_keymap()
+                gkeymap = pytis.form.global_keymap()
             else:
                 gkeymap = guardian._get_keymap()
             self.keymap = Keymap(gkeymap)
@@ -788,14 +797,14 @@ class KeyHandler:
         wk = self._wx_key
         if not wk.is_true_key(event):
             return
-        message(None)
+        pytis.form.message(None)
         if __debug__:
             log(DEBUG, 'Událost zpracovává:', str(self))
         guardian = self._key_guardian
         if self._commands is None:
             self._init_commands()
-        if self._current_keymap is None or \
-           not isinstance(last_user_event(), wx.KeyEvent):
+        if ((self._current_keymap is None or
+             not isinstance(pytis.form.last_user_event(), wx.KeyEvent))):
             self._current_keymap = self._get_keymap()
         if __debug__:
             log(DEBUG, 'Aktuální klávesová mapa:', str(self._current_keymap))
@@ -805,8 +814,8 @@ class KeyHandler:
             if __debug__:
                 log(DEBUG, 'Prefixová klávesa', keydef)
             self._prefix_key_sequence.append(key)
-            message('Prefixová klávesa: %s (%s)' % (' '.join(self._prefix_key_sequence),
-                                                    ', '.join(keydef.keys()),))
+            pytis.form.message('Prefixová klávesa: %s (%s)' % (' '.join(self._prefix_key_sequence),
+                                                               ', '.join(keydef.keys()),))
             self._current_keymap = keydef
             return True
         else:
@@ -969,7 +978,7 @@ class Menu(_TitledMenuObject):
           allow_autoindex -- allow automatic keyboard access index numbers on this menu
 
         """
-        assert is_sequence(items)
+        assert isinstance(items, (tuple, list,))
         if __debug__:
             for i in items:
                 # Empty tuple is possible for items like 'recent_forms_menu' by generating help
@@ -988,7 +997,7 @@ class Menu(_TitledMenuObject):
             msg = ""
         else:
             msg = menu.FindItemById(event.GetMenuId()).GetHelp()
-        message(msg, log_=False)
+        pytis.form.message(msg, log_=False)
         event.Skip()
         
     def create(self, parent, keymap=None):
@@ -1005,8 +1014,8 @@ class Menu(_TitledMenuObject):
         
         """
         self._wx_menu = menu = wx.Menu()
-        wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu,
-                    lambda event: self._on_highlight_item(menu, event))
+        pytis.form.wx_callback(wx.EVT_MENU_HIGHLIGHT_ALL, menu,
+                               lambda event: self._on_highlight_item(menu, event))
         # At first, compute the maximal width of hotkey string in this menu.
         max_hotkey_width = 0
         hotkey_str = {}
@@ -1124,22 +1133,20 @@ class MItem(_TitledMenuObject):
         a tudíž automaticky podléhají jazykové konverzi.
 
         """
-        if is_sequence(command):
+        if isinstance(command, (tuple, list,)):
             command_spec = command[0]
         else:
             command_spec = command
         if isinstance(command, basestring):
-            command = resolver().get('app_commands', command)
-        if is_sequence(command):
+            command = config.resolver.get('app_commands', command)
+        if isinstance(command, (tuple, list,)):
             assert len(command) == 2
             assert args is None
             command, args = command
         assert isinstance(command, Command), (command, command_spec,)
-        assert args is None or isinstance(args, types.DictType)
+        assert args is None or isinstance(args, dict)
         assert help is None or isinstance(help, basestring)
-        assert hotkey is None or isinstance(hotkey, (basestring,
-                                                     types.TupleType,
-                                                     types.ListType))
+        assert hotkey is None or isinstance(hotkey, (basestring, tuple, list,))
         assert icon is None or isinstance(icon, basestring)
         self._command = command
         self._args = args or {}
@@ -1242,12 +1249,12 @@ class MItem(_TitledMenuObject):
             command = pytis.form.Application.COMMAND_HANDLED_ACTION
             function_name = components[1]
             arguments = dict(handler=find_symbol(function_name),
-                             enabled=lambda: action_has_access(action))
+                             enabled=lambda: pytis.form.action_has_access(action))
         elif kind == 'proc':
             command = pytis.form.Application.COMMAND_RUN_PROCEDURE
             proc_name, spec_name = components[1], components[2]
             arguments = dict(proc_name=proc_name, spec_name=spec_name,
-                             enabled=lambda: action_has_access(action))
+                             enabled=lambda: pytis.form.action_has_access(action))
         elif kind == 'NEW_RECORD':
             command = pytis.form.Application.COMMAND_NEW_RECORD
             arguments = dict(name=components[1])
@@ -1263,8 +1270,9 @@ class MItem(_TitledMenuObject):
         
     def create(self, parent, parent_menu):
         item = wx.MenuItem(parent_menu, -1, self._title, self._help or "", kind=self._WX_KIND)
-        wx_callback(wx.EVT_MENU, parent, item.GetId(), lambda e: self._command.invoke(**self._args))
-        wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
+        pytis.form.wx_callback(wx.EVT_MENU, parent, item.GetId(),
+                               lambda e: self._command.invoke(**self._args))
+        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, item.GetId(), self._on_ui_event)
         self._create_icon(item)
         return item
 
@@ -1542,8 +1550,8 @@ class InfoWindow(object):
           text, format, **kwargs -- passed to 'wx_text_view()' ('text' as 'content').
 
         """
-        frame = wx.Dialog(parent or wx_frame(), title=title, name=_name,
-                          style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        frame = wx.Dialog(parent or pytis.form.wx_frame(), title=title, name=_name,
+                          style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         # Temporarily use a modal dialog instead an ordinary frame to work
         # around the problem of closing a frame whose parent is a modal dialog
         # in StructuredTextField._cmd_preview().  Once that is sorted out, a
@@ -1577,14 +1585,15 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
     def _on_left_down(self, event):
         self.Dismiss()
         if self._selected_profile_index is not None:
-            LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index)
+            pytis.form.LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index)
 
     # The following methods implement the ComboPopup API.
 
     def Create(self, parent):
         # Create the popup child control. Return True for success.
         wx.ListCtrl.Create(self, parent,
-                           style=wx.LC_REPORT|wx.LC_SINGLE_SEL|wx.SIMPLE_BORDER|wx.LC_NO_HEADER)
+                           style=(wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER |
+                                  wx.LC_NO_HEADER))
         self.InsertColumn(0, 'profile')
         self.Bind(wx.EVT_LEFT_DOWN, self._on_left_down)
         self.Bind(wx.EVT_MOTION, self._on_motion)
@@ -1598,7 +1607,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         # Called just prior to displaying the popup.
         # Fill menu items before each popup and delete them on dismiss to
         # avoid having to update the menu during form profile list update.
-        form = current_form()
+        form = pytis.form.current_form()
         profiles = form.profiles()
         current = form.current_profile()
         first_user_profile = None
@@ -1659,66 +1668,66 @@ class ProfileSelector(wx.combo.ComboCtrl):
         self._on_enter_perform = None
         ctrl = self.GetTextCtrl()
         ctrl.SetEditable(False)
-        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
-        wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
-        wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
-        wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), self._on_enter)
-        wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
-        wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
+        pytis.form.wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
+        pytis.form.wx_callback(wx.EVT_RIGHT_DOWN, self, self._on_context_menu)
+        pytis.form.wx_callback(wx.EVT_RIGHT_DOWN, ctrl, self._on_context_menu)
+        pytis.form.wx_callback(wx.EVT_TEXT_ENTER, ctrl, ctrl.GetId(), self._on_enter)
+        pytis.form.wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
+        pytis.form.wx_callback(wx.EVT_KEY_DOWN, ctrl, self._on_key_down)
             
     def _on_ui_event(self, event):
-        enabled = LookupForm.COMMAND_PROFILE_MENU.enabled()
+        enabled = pytis.form.LookupForm.COMMAND_PROFILE_MENU.enabled()
         event.Enable(enabled)
         ctrl = self.GetTextCtrl()
         if enabled:
             if not ctrl.IsEditable():
-                form = current_form()
+                form = pytis.form.current_form()
                 current_profile = form.current_profile()
                 if current_profile and ctrl.GetValue() != current_profile.title():
                     ctrl.SetValue(current_profile.title())
-            if LookupForm.COMMAND_UPDATE_PROFILE.enabled():
+            if pytis.form.LookupForm.COMMAND_UPDATE_PROFILE.enabled():
                 # Indicate changed profile by color (update is enabled for changed profiles).
                 color = wx.Colour(200, 0, 0)
             else:
                 color = wx.Colour(0, 0, 0)
             ctrl.SetForegroundColour(color)
-        elif top_window() is None and ctrl.GetValue() != '':
+        elif pytis.form.top_window() is None and ctrl.GetValue() != '':
             ctrl.SetValue('')
 
     def _on_context_menu(self, event):
         menu = (
             MItem(_(u"Uložit"),
-                  LookupForm.COMMAND_UPDATE_PROFILE(),
+                  pytis.form.LookupForm.COMMAND_UPDATE_PROFILE(),
                   help=_(u"Aktualizovat uložený profil podle současného nastavení formuláře")),
             MItem(_(u"Uložit jako nový"),
-                  Application.COMMAND_HANDLED_ACTION(
+                  pytis.form.Application.COMMAND_HANDLED_ACTION(
                       # Name must be edited first and 'cmd' will be invoked after confirmation.
                       handler=self._edit_profile_title,
                       enabled=self._edit_profile_title_enabled,
-                      cmd=LookupForm.COMMAND_SAVE_NEW_PROFILE,
+                      cmd=pytis.form.LookupForm.COMMAND_SAVE_NEW_PROFILE,
                       clear=True),
                   help=_(u"Vytvořit nový profil podle současného nastavení formuláře")),
             MItem(_(u"Přejmenovat"),
-                  Application.COMMAND_HANDLED_ACTION(
+                  pytis.form.Application.COMMAND_HANDLED_ACTION(
                       # Name must be edited first and 'cmd' will be invoked after confirmation.
                       handler=self._edit_profile_title,
                       enabled=self._edit_profile_title_enabled,
-                      cmd=LookupForm.COMMAND_RENAME_PROFILE),
+                      cmd=pytis.form.LookupForm.COMMAND_RENAME_PROFILE),
                   help=_(u"Upravit a uložit název aktuálního profilu")),
             MItem(_(u"Smazat"),
-                  LookupForm.COMMAND_DELETE_PROFILE(),
+                  pytis.form.LookupForm.COMMAND_DELETE_PROFILE(),
                   help=_(u"Smazat zvolený uložený profil")),
             MItem(_(u"Použít automaticky při otevření formuláře"),
-                  LookupForm.COMMAND_SET_INITIAL_PROFILE(),
+                  pytis.form.LookupForm.COMMAND_SET_INITIAL_PROFILE(),
                   help=_(u"Automaticky přepnout na současný profil při příštím otevření "
                          u"formuláře.")),
             MSeparator(),
             MItem(_(u"Vrátit poslední uložené nastavení"),
-                  LookupForm.COMMAND_RELOAD_PROFILE,
+                  pytis.form.LookupForm.COMMAND_RELOAD_PROFILE,
                   help=_(u"Zahodit změny nastavení formuláře provedené "
                          u"od posledního uložení profilu.")),
             MItem(_(u"Vrátit výchozí nastavení aplikace"),
-                  command=LookupForm.COMMAND_RESET_PROFILE,
+                  command=pytis.form.LookupForm.COMMAND_RESET_PROFILE,
                   help=_(u"Zahodit všechny uložené uživatelské změny nastavení formuláře.")),
         )
         popup_menu(self, menu)
@@ -1735,7 +1744,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
         else:
             ctrl.SelectAll()
         ctrl.SetFocus()
-        message(_(u"Zadejte název profilu a potvrďte stiskem ENTER."))
+        pytis.form.message(_(u"Zadejte název profilu a potvrďte stiskem ENTER."))
         self._on_enter_perform = perform
 
     def _edit_profile_title_enabled(self, cmd, clear=False):
@@ -1753,7 +1762,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
         event.Skip()
         code = event.GetKeyCode()
         if code in (wx.WXK_ESCAPE, wx.WXK_TAB, wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
-            current_form().focus()
+            pytis.form.current_form().focus()
             
 
 class TextHeadingSelector(wx.Choice):
@@ -1770,8 +1779,8 @@ class TextHeadingSelector(wx.Choice):
     def __init__(self, parent, uicmd, size=None):
         self._uicmd = uicmd
         wx.Choice.__init__(self, parent, choices=self._CHOICES, size=size)
-        wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
-        wx_callback(wx.EVT_CHOICE, self, self.GetId(), self._on_selection)
+        pytis.form.wx_callback(wx.EVT_UPDATE_UI, self, self.GetId(), self._on_ui_event)
+        pytis.form.wx_callback(wx.EVT_CHOICE, self, self.GetId(), self._on_selection)
             
     def _on_ui_event(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
@@ -1802,9 +1811,9 @@ class DualFormSwitcher(wx.BitmapButton):
                          get_icon('dual-form-active-down', type=wx.ART_TOOLBAR))
         self._current_bitmap = self._bitmaps[0]
         wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
-                                 style=wx.BU_EXACTFIT|wx.NO_BORDER)
-        wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
-        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+                                 style=wx.BU_EXACTFIT | wx.NO_BORDER)
+        pytis.form.wx_callback(wx.EVT_BUTTON, self, self.GetId(), self._on_click)
+        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
 
     def _on_click(self, event):
         cmd, kwargs = self._uicmd.command(), self._uicmd.args()
@@ -1815,7 +1824,7 @@ class DualFormSwitcher(wx.BitmapButton):
         enabled = cmd.enabled(**kwargs)
         event.Enable(enabled)
         if enabled:
-            dualform = current_form(inner=False)
+            dualform = pytis.form.current_form(inner=False)
             if dualform.active_form() == dualform.main_form():
                 i = 0
             else:
@@ -1835,9 +1844,9 @@ class LocationBar(wx.TextCtrl):
         self._uicmd = uicmd
         wx.TextCtrl.__init__(self, parent, -1, size=size, style=wx.TE_PROCESS_ENTER)
         self.SetEditable(editable)
-        wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
+        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, self.GetId(), self._on_update_ui)
         if editable:
-            wx_callback(wx.EVT_TEXT_ENTER, parent, self.GetId(), self._on_enter)
+            pytis.form.wx_callback(wx.EVT_TEXT_ENTER, parent, self.GetId(), self._on_enter)
         else:
             self.SetOwnBackgroundColour(config.field_disabled_color)
             self.Refresh()
@@ -1872,7 +1881,7 @@ class Browser(wx.Panel, CommandHandler):
         self._restricted_navigation_uri = None
         self._uri_change_callback = None
         self._last_help_uri = None
-        wx_callback(wx.EVT_IDLE, self, self._on_idle)
+        pytis.form.wx_callback(wx.EVT_IDLE, self, self._on_idle)
 
     def _on_idle(self, event):
         if self._webview is None:
@@ -1931,7 +1940,7 @@ class Browser(wx.Panel, CommandHandler):
             msg = _(u"Načítám dokument.")
             busy = True
         busy_cursor(busy)
-        message(msg, log_=False)
+        pytis.form.message(msg, log_=False)
 
     def _on_load_error(self, webview, frame, uri, gerror):
         # For debugging only! (non portable hack)
@@ -1956,7 +1965,7 @@ class Browser(wx.Panel, CommandHandler):
         if not uri.startswith('resource:') and restricted_navigation_uri is not None and \
                 not uri.startswith(restricted_navigation_uri):
             decision.ignore()
-            message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
+            pytis.form.message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
             return True
         elif uri.startswith('help:'):
             if self._last_help_uri == uri \
@@ -2144,13 +2153,13 @@ class IN(pytis.data.Operator):
         self._table_column_id = table_column_id
         self._profile_id = profile_id
         import config
-        resolver = pytis.util.resolver()
+        resolver = config.resolver
         view_spec = resolver.get(spec_name, 'view_spec')
         data_factory = resolver.get(spec_name, 'data_spec')
         data_object = data_factory.create(connection_data=config.dbconnection)
         if profile_id is not None:
             if profile_id.startswith(FormProfileManager.USER_PROFILE_PREFIX):
-                manager = profile_manager()
+                manager = pytis.form.profile_manager()
                 condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
             else:
                 profile = find(profile_id, view_spec.profiles(), lambda p: p.id())
@@ -2255,9 +2264,9 @@ def acceskey_prefix(i):
 
 def orientation2wx(orientation):
     """Převeď konstantu třídy 'Orientation' na wx reprezentaci."""
-    if orientation == spec.Orientation.VERTICAL:
+    if orientation == Orientation.VERTICAL:
         return wx.VERTICAL
-    elif orientation == spec.Orientation.HORIZONTAL:
+    elif orientation == Orientation.HORIZONTAL:
         return wx.HORIZONTAL
     else:
         raise ProgramError("Neplatná hodnota Orientation:", orientation)
@@ -2265,16 +2274,16 @@ def orientation2wx(orientation):
 def border_style2wx(style):
     """Převeď konstantu třídy 'BorderStyle' na wx reprezentaci."""
     mapping = {
-        spec.BorderStyle.ALL: wx.ALL,
-        spec.BorderStyle.TOP: wx.TOP,
-        spec.BorderStyle.BOTTOM: wx.BOTTOM,
-        spec.BorderStyle.LEFT: wx.LEFT,
-        spec.BorderStyle.RIGHT: wx.RIGHT,
+        BorderStyle.ALL: wx.ALL,
+        BorderStyle.TOP: wx.TOP,
+        BorderStyle.BOTTOM: wx.BOTTOM,
+        BorderStyle.LEFT: wx.LEFT,
+        BorderStyle.RIGHT: wx.RIGHT,
     }
     try:
         return mapping[style]
     except KeyError:
-        raise ProgramError("Neplatná hodnota BorderStyle:", orientation)
+        raise ProgramError("Neplatná hodnota BorderStyle: ", style)
 
 # Pomocné funkce
 
@@ -2337,7 +2346,8 @@ def open_data_as_file(data, suffix):
                 finally:
                     os.remove(path)
                 return
-        run_dialog(Error, _("Nenalezen odpovídající prohlížeč pro '%s'." % suffix))
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nenalezen odpovídající prohlížeč pro '%s'." % suffix))
 
 
 def popup_menu(parent, items, keymap=None, position=None):
@@ -2400,7 +2410,8 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
     if tooltip:
         ctrl.SetToolTipString(tooltip)
     if update:
-        wx_callback(wx.EVT_UPDATE_UI, parent, ctrl.GetId(), update)
+        # Bug: 'parent' is undefined!
+        pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, ctrl.GetId(), update)
     if not enabled:
         ctrl.Enable(False)
     if width:
@@ -2483,15 +2494,15 @@ def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
                 finally:
                     button._pytis_in_button_handler = False
         if tooltip:
-            hotkey = global_keymap().lookup_command(cmd, args)
+            hotkey = pytis.form.global_keymap().lookup_command(cmd, args)
             if hotkey:
                 tooltip += ' (' + hotkey_string(hotkey) + ')'
         # TODO: This causes the whole application to freeze when a dialog is closed.
         #if update:
-        #    wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
+        #    pytis.form.wx_callback(wx.EVT_UPDATE_UI, parent, button.GetId(),
         #                lambda e: e.Enable(cmd.enabled(**args)))
     if callback:
-        wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
+        pytis.form.wx_callback(wx.EVT_BUTTON, button, button.GetId(), callback)
     _init_wx_ctrl(button, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return button
 
@@ -2546,7 +2557,7 @@ def wx_choice(parent, choices, selected=None, tooltip=None, on_change=None,
     elif selected:
         ctrl.SetSelection(labels.index(selected))
     if on_change:
-        wx_callback(evt, ctrl, ctrl.GetId(), on_change)
+        pytis.form.wx_callback(evt, ctrl, ctrl.GetId(), on_change)
     _init_wx_ctrl(ctrl, tooltip=tooltip, enabled=enabled, width=width, height=height)
     return ctrl
 
@@ -2571,10 +2582,10 @@ def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=Non
         cls = wx.TextCtrl
     ctrl = cls(parent, -1, style=(readonly and wx.TE_READONLY or 0))
     if on_key_down:
-        wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
+        pytis.form.wx_callback(wx.EVT_KEY_DOWN, ctrl, on_key_down)
     if on_text:
-        wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
-    wx_callback(wx.EVT_TEXT_PASTE, ctrl, lambda e: paste_from_clipboard(ctrl))
+        pytis.form.wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), on_text)
+    pytis.form.wx_callback(wx.EVT_TEXT_PASTE, ctrl, lambda e: paste_from_clipboard(ctrl))
     if value is not None:
         ctrl.SetValue(value)
     if length:

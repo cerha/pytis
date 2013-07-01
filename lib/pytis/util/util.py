@@ -971,16 +971,16 @@ def nreverse(list):
     return list
 
 
-def starts_with(string, prefix):
-    """Vrať pravdu, právě když 'string' začíná 'prefix'.
+def starts_with(string_, prefix):
+    """Vrať pravdu, právě když 'string_' začíná 'prefix'.
 
     Argumenty:
 
-      string -- string
+      string_ -- string
       prefix -- string
 
     """
-    return string[:len(prefix)] == prefix
+    return string_.startswith(prefix)
 
 
 def super_(class_):

@@ -20,12 +20,12 @@
 from __future__ import unicode_literals
 
 import pytis.util
+from pytis.util import nextval
 import pytis.data
 import pytis.extensions
+from pytis.extensions import Field
 import pytis.form
 import pytis.presentation
-
-from pytis.extensions import Field, nextval
 
 _ = pytis.util.translations('pytis-defs')
 

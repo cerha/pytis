@@ -50,7 +50,6 @@ import config
 import pytis.data
 import pytis.form
 import pytis.presentation
-import pprint
 
 from pytis.presentation import Profile
 
@@ -121,7 +120,7 @@ class UserSetttingsManager(object):
             row = pytis.data.Row(self._values(**key) + self._values(**values))
             result, success = self._data.insert(row, transaction=transaction)
             if not success:
-                raise pd.DBException(result)
+                raise pytis.data.DBException(result)
 
     def _drop(self, transaction=None, **key):
         row = self._row(transaction=transaction, **key)
@@ -151,8 +150,6 @@ class ApplicationConfigManager(UserSetttingsManager):
         """Store configuration options as a tuple of (name, value) pairs."""
         assert isinstance(config, (tuple, list))
         db_options = dict(self.load())
-        inserts = []
-        updates = []
         deletes = set(db_options.keys()) - set(dict(config).keys())
         for option in deletes:
             condition = self._condition(option=option)
@@ -172,7 +169,7 @@ class ApplicationConfigManager(UserSetttingsManager):
                                            ))
                 result, success = self._data.insert(row, transaction=transaction)
                 if not success:
-                    raise pd.DBException(result)
+                    raise pytis.data.DBException(result)
                                             
             
 class FormSettingsManager(UserSetttingsManager):
@@ -252,7 +249,8 @@ class FormProfileManager(UserSetttingsManager):
     _TABLE = 'e_pytis_form_profile_base'
     _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'title',
                 'pickle', 'dump', 'errors')
-    _OPERATORS = ('AND','OR','EQ','NE','WM','NW','LT','LE','GT','GE', 'IN') # NOT is not allowed!
+    _OPERATORS = ('AND', 'OR', 'EQ', 'NE', 'WM', 'NW', 'LT', 'LE', 'GT', 'GE',
+                  'IN',) # NOT is not allowed!
     _PROFILE_PARAMS = ('sorting', 'columns', 'grouping', 'folding', 'aggregations', 'column_widths')
 
     USER_PROFILE_PREFIX = '_user_profile_'
@@ -385,7 +383,7 @@ class FormProfileManager(UserSetttingsManager):
             if sequence is not None:
                 for x in sequence:
                     col = getcol(x)
-                    f = view_spec.field(col) 
+                    f = view_spec.field(col)
                     if f is None:
                         errors.append((param, "Unknown column '%s'" % col))
                     elif param == 'columns' and f.disable_column():
@@ -468,7 +466,8 @@ class FormProfileManager(UserSetttingsManager):
 
         """
         def load_params(profile_id):
-            params = self._params_manager.load(spec_name, form_name, profile_id, transaction=transaction)
+            params = self._params_manager.load(spec_name, form_name, profile_id,
+                                               transaction=transaction)
             errors = self._validate_params(view_spec, params)
             return params, errors
         profiles = []
@@ -562,7 +561,7 @@ class FormProfileManager(UserSetttingsManager):
         user_profile_numbers = [int(profile.id()[len(prefix):]) for profile in profiles
                                 if profile.id().startswith(prefix)
                                 and profile.id()[len(prefix):].isdigit()]
-        return prefix + str(max(user_profile_numbers+[0])+1)
+        return prefix + str(max(user_profile_numbers + [0]) + 1)
 
     
 class FormProfileParamsManager(UserSetttingsManager):
@@ -574,7 +573,8 @@ class FormProfileParamsManager(UserSetttingsManager):
 
     """
     _TABLE = 'e_pytis_form_profile_params'
-    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'form_name', 'pickle', 'dump', 'errors')
+    _COLUMNS = ('id', 'username', 'spec_name', 'profile_id', 'form_name', 'pickle', 'dump',
+                'errors',)
 
     def load(self, spec_name, form_name, profile_id, transaction=None):
         """Return previously stored form profile parameters dictionary."""
@@ -585,7 +585,7 @@ class FormProfileParamsManager(UserSetttingsManager):
         """Return a sequence of form names for which profiles were saved."""
         condition = self._condition(spec_name=spec_name)
         values = self._data.distinct('form_name', condition=condition, transaction=transaction)
-        return [v.value() for v in values] 
+        return [v.value() for v in values]
 
     def save(self, spec_name, form_name, profile_id, params, dump, errors, transaction=None):
         """Save form profile parameters dictionary."""
@@ -677,5 +677,3 @@ class AggregatedViewsManager(UserSetttingsManager):
         """
         return tuple(row['aggregated_view_id'].value()
                      for row in self._rows(spec_name=spec_name, transaction=transaction))
-
-

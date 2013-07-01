@@ -25,11 +25,13 @@ not its concrete representation (input widget).
 
 import collections
 import copy
+import string
 
 import pytis.data
-
-from pytis.presentation import *
-from pytis.util import *
+from pytis.util import ProgramError, Resolver, \
+    argument_names, positive_id, remove_duplicates, translations
+from spec import CbComputer, CodebookSpec, Computer, Editable
+from types_ import PrettyType
 
 _ = translations('pytis-data')
 
@@ -81,7 +83,7 @@ class PresentedRow(object):
             if codebook:
                 try:
                     cbspec = resolver.get(codebook, 'cb_spec')
-                except pytis.util.ResolverError as e:
+                except pytis.util.ResolverError:
                     cbspec = CodebookSpec()
             else:
                 cbspec = None
@@ -187,8 +189,8 @@ class PresentedRow(object):
                 cb_column = self._data.find_column(computer.field())
                 type_ = cb_column.type().enumerator().type(computer.column())
                 assert type_ is not None, \
-                       "Invalid enumerator column '%s' in CbComputer for '%s'." % \
-                       (computer.column(), fspec.id())
+                    "Invalid enumerator column '%s' in CbComputer for '%s'." % \
+                    (computer.column(), fspec.id())
             else:
                 kwargs = fspec.type_kwargs()
                 if not type_:
@@ -363,7 +365,7 @@ class PresentedRow(object):
         assert isinstance(value, pytis.data.Value)
         column = self._coldict[key]
         assert value.type() == column.type, \
-               "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
+            "Invalid type for '%s': %s (expected %s)" % (key, value.type(), column.type)
         if key in self._row:
             row = self._row
         else:
@@ -695,9 +697,9 @@ class PresentedRow(object):
         happened yet.
 
         """
-        return key not in self._row or \
-               self._row[key].value() != self._initialized_original_row[key].value() or \
-               key in self._invalid
+        return (key not in self._row or
+                self._row[key].value() != self._initialized_original_row[key].value() or
+                key in self._invalid)
 
     def editable(self, key):
         """Vrať pravdu, právě když je políčko dané 'key' editovatelné.
@@ -765,8 +767,9 @@ class PresentedRow(object):
         if column.runtime_arguments:
             kwargs = dict(kwargs, arguments=self.runtime_arguments(key))
         value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
-        if not error and column.type.unique() and not column.virtual and \
-               (self._new or value != self._initialized_original_row[key]) and value.value() is not None:
+        if ((not error and column.type.unique() and not column.virtual and
+             (self._new or value != self._initialized_original_row[key]) and
+             value.value() is not None)):
             if isinstance(self._data, pytis.data.RestrictedData):
                 select_kwargs = dict(check_condition=False)
             else:
@@ -803,7 +806,8 @@ class PresentedRow(object):
     
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
-        assert function is None or isinstance(function, collections.Callable), ('Invalid callback function', function)
+        assert function is None or isinstance(function, collections.Callable), \
+            ('Invalid callback function', function)
         try:
             callbacks = self._callbacks[kind]
         except KeyError:
@@ -1100,7 +1104,7 @@ class PresentedRow(object):
             if isinstance(completer, pytis.data.DataEnumerator):
                 condition = self.runtime_filter(key)
                 if prefix:
-                    wmvalue = pytis.data.WMValue(pytis.data.String(), prefix+'*')
+                    wmvalue = pytis.data.WMValue(pytis.data.String(), prefix + '*')
                     prefix_condition = pytis.data.WM(completer.value_column(), wmvalue)
                     if condition:
                         condition = pytis.data.AND(condition, prefix_condition)

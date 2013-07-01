@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Zpracování událostí
-# 
+#
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -44,11 +44,15 @@ import collections
 import os
 import sys
 import thread
+import time
 
-from pytis.form import *
 import wx
 
-_ = pytis.util.translations('pytis-wx')
+import pytis.form
+from pytis.util import DEBUG, OPERATIONAL, format_traceback, log, translations
+import config
+
+_ = translations('pytis-wx')
 
 class UserBreakException(Exception):
     """Výjimka vyvolávaná při přerušení zpracování události.
@@ -59,7 +63,7 @@ class UserBreakException(Exception):
     """
     def __init__(self, *args):
         super(UserBreakException, self).__init__(*args)
-        message(_("Stop"), beep_=True)
+        pytis.form.message(_("Stop"), beep_=True)
 
 
 _current_event = None
@@ -87,14 +91,15 @@ def top_level_exception():
         import traceback
         tbstring = "\n".join(traceback.format_exception(*einfo))
     log(OPERATIONAL, 'Top-level exception caught', tbstring)
-    text = run_dialog(BugReport, einfo)
+    text = pytis.form.run_dialog(pytis.form.BugReport, einfo)
     if text is None:
         sys.exit()
     elif text:
         to = config.bug_report_address
         if not to:
-            run_dialog(Message, _("Destination address not known. The configuration option "
-                                  "`bug_report_address' must be set."))
+            pytis.form.run_dialog(pytis.form.Message,
+                                  _("Destination address not known. The configuration option "
+                                    "`bug_report_address' must be set."))
         else:
             tb = einfo[2]
             while tb.tb_next is not None:
@@ -108,17 +113,23 @@ def top_level_exception():
                 username = config.dbconnection.user()
                 if status:
                     address = username
-                else:    
+                else:
                     address = '%s@%s' % (username, domain)
                 while True:
-                    address = run_dialog(InputDialog, prompt=_("Your e-mail address")+': ',
-                                         value=address, input_width=30,
-                                         message=_('Set your address in form "%s" to avoid being '
-                                                   'asked next time.') % _("User interface settings"))
+                    address = pytis.form.run_dialog(pytis.form.InputDialog,
+                                                    prompt=_("Your e-mail address") + ': ',
+                                                    value=address, input_width=30,
+                                                    message=(_('Set your address in form "%s" '
+                                                               'to avoid being '
+                                                               'asked next time.') %
+                                                             (_("User interface settings"),)))
                     if address is None or address and address.strip() != '':
                         break
             if address:
-                import email.Header, email.Message, email.Utils, smtplib
+                import email.Header
+                import email.Message
+                import email.Utils
+                import smtplib
                 def header(value):
                     if isinstance(value, basestring):
                         try:
@@ -144,9 +155,10 @@ def top_level_exception():
                         except:
                             pass
                 except Exception as e:
-                    run_dialog(Error, _("Failed sending error report:") + "\n" + unicode(e))
+                    pytis.form.run_dialog(pytis.form.Error, _("Failed sending error report:") +
+                                          "\n" + unicode(e))
                 else:
-                    run_dialog(Message, _("Error report sent."))
+                    pytis.form.run_dialog(pytis.form.Message, _("Error report sent."))
     if config.debug_on_error:
         import pdb
         pdb.post_mortem(sys.exc_info()[2])
@@ -213,8 +225,8 @@ def wx_callback(evt_function, *args):
                 if _system_callback_thread_ident == ident:
                     # Jsme uvnitř vlastní slupky, jsme v pohodě
                     state = STATE_CURRENT
-                elif _system_callback_thread_ident is None and \
-                     _system_callback_lock is None:
+                elif (_system_callback_thread_ident is None and
+                      _system_callback_lock is None):
                     # Nikdo jiný nemá zájem, uzmeme to
                     _system_callback_thread_ident = ident
                     state = STATE_FREE
@@ -268,7 +280,7 @@ def wx_callback(evt_function, *args):
         global _current_event, _interrupted, _last_user_event
         is_user = _is_user_event(event)
         if is_user:
-            message('')
+            pytis.form.message('')
         if not isinstance(event, (wx.IdleEvent, wx.UpdateUIEvent)):
             if __debug__:
                 log(DEBUG, 'Zpracování události:', (event, event.__class__))
@@ -282,7 +294,7 @@ def wx_callback(evt_function, *args):
                     result = True
                 else:
                     result = system_callback()
-            elif is_user and modal(top_window()):
+            elif is_user and pytis.form.modal(pytis.form.top_window()):
                 # Událost vyvolaná uživatelským příkazem v modálním okně
                 result = callback(event)
             elif is_user:
@@ -359,6 +371,7 @@ def _stop_check(start_time, confirmed, command_number):
     global _stop_check_running
     if _stop_check_running:
         return False
+    from pytis.form import CommandHandler
     running, number = CommandHandler.command_running()
     if not running or number != command_number:
         return False
@@ -372,7 +385,8 @@ def _stop_check(start_time, confirmed, command_number):
         block_idle(True)
         _stop_check_running = True
         try:
-            answer = run_dialog(Question, u"Zobrazení formuláře už trvá dlouho, má se přerušit?")
+            answer = pytis.form.run_dialog(pytis.form.Question,
+                                           u"Zobrazení formuláře už trvá dlouho, má se přerušit?")
         finally:
             _stop_check_running = False
             block_idle(False)
@@ -396,7 +410,7 @@ def standard_stop_check_function():
 
     """
     confirmed = [False]
-    __, command_number = CommandHandler.command_running()
+    __, command_number = pytis.form.CommandHandler.command_running()
     def maybe_stop_check(start_time):
         confirmed[0] = _stop_check(start_time, confirmed[0], command_number)
     return maybe_stop_check
@@ -415,7 +429,7 @@ def interrupt_watcher():
         while application._application is not None:
             time.sleep(0.1)
             if _current_event is not None and _current_event is last_event:
-                wx_yield_(full=True)
+                pytis.form.wx_yield_(full=True)
             else:
                 last_event = _current_event
     thread.start_new_thread(watcher, ())
@@ -427,6 +441,6 @@ def interrupt_init(_main_thread_ident_=thread.get_ident(),
                    _watcher_thread_ident_=None):
     """Inicializuj zpracování přerušení události pro aktuální thread."""
     global _wx_key, _main_thread_ident, _watcher_thread_ident
-    _wx_key = WxKey()
+    _wx_key = pytis.form.WxKey()
     _main_thread_ident = _main_thread_ident_
     _watcher_thread_ident = _watcher_thread_ident_

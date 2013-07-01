@@ -24,26 +24,25 @@ hodit.
 
 """
 
-
+import os
 import re
-import types
 
+import pytis.presentation
 import pytis.util
-from pytis.extensions import *
 
 _ = pytis.util.translations('pytis-wx')
 
 
 def smssend(tel, message, server='192.168.1.55'):
-    import os, os.path, commands
+    import commands
 
-    SERVER=server
-    UID='sms'
-    PWD='sms'
-    DB='SMS'
-    MAX_LENGTH=480 # 3 SMS po 160 znacích
-    SQSH='/usr/bin/sqsh'
-    TEMPLATE="""
+    SERVER = server
+    UID = 'sms'
+    PWD = 'sms'
+    DB = 'SMS'
+    MAX_LENGTH = 480 # 3 SMS po 160 znacích
+    SQSH = '/usr/bin/sqsh'
+    TEMPLATE = """
     insert into sms_request
     (tel_num_to, message_typ, request_typ, id_module, user_data)
     values
@@ -54,19 +53,19 @@ def smssend(tel, message, server='192.168.1.55'):
         return "Není nainstalován balík 'sqsh'. SMS nebude odeslána."
     if len(message) > MAX_LENGTH:
         return "Zpráva je delší než %s. SMS nebude odeslána." % (MAX_LENGTH)
-    if len(tel) not in (14,9):
-	return ("Špatný formát telefoního čísla %s.\n\n"
-	        "Číslo musí mít tvar:\nPPPPPxxxxxxxxx - (pět znaků předvolba "
-                "- devět znaků číslo)\nxxxxxxxxx - (devět znaků číslo)") % (tel)
-    message.replace('"','')
-    message.replace("'","")	
+    if len(tel) not in (14, 9):
+        return ("Špatný formát telefoního čísla %s.\n\n"
+                "Číslo musí mít tvar:\nPPPPPxxxxxxxxx - (pět znaků předvolba "
+                "- devět znaků číslo)\nxxxxxxxxx - (devět znaků číslo)") % (tel,)
+    message.replace('"', '')
+    message.replace("'", "")
     sms_insert = TEMPLATE % (tel, message)
-    cmd = '%s -U %s -D %s -S %s -P %s -C "%s"' % \
-	  (SQSH, UID, DB, SERVER, PWD, sms_insert)
+    cmd = ('%s -U %s -D %s -S %s -P %s -C "%s"' %
+           (SQSH, UID, DB, SERVER, PWD, sms_insert,))
     test, msg = commands.getstatusoutput(cmd)
     if test:
-	msg = "SMS se nepodařilo odeslat!\n\n" + msg
-	return msg
+        msg = "SMS se nepodařilo odeslat!\n\n" + msg
+        return msg
     return None
 
 
@@ -75,7 +74,6 @@ def smssend(tel, message, server='192.168.1.55'):
 def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
     """Odešle email"""
 
-    import os
     try:
         s = os.popen('%s %s' % (sendmail_command, to), 'w')
         s.write('From: %s\n' % address)
@@ -92,7 +90,7 @@ def emailsend(to, address, subject, msg, sendmail_command, content_type=None):
         print 'ERROR: e-mail se nepodařilo odeslat'
         return 1
 
-# TODO: argument sendmail_command should be removed when all applications reflect this change    
+# TODO: argument sendmail_command should be removed when all applications reflect this change
 def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859-2',
               sendmail_command=None):
     """Send an email with the possibility to encrypt it with a GPG/PGP key."""
@@ -105,7 +103,8 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
             try:
                 arg = unicode(arg, charset)
             except:
-                raise ProgramError("Cannot convert argument to unicode for charset %s" % (charset))
+                raise pytis.util.ProgramError("Cannot convert argument to unicode for charset %s" %
+                                              (charset,))
         return arg.encode('UTF-8')
     # Převedení na UTF-8
     to = get_utf8_argument(to)
@@ -116,7 +115,7 @@ def send_mail(to, address, subject, msg, html=False, key=None, charset='ISO-8859
         # We will create GPG encrypted email
         from pytis.extensions.email_ import GPGEmail
         mail = GPGEmail(to, address, subject, msg, html=html, key=key, charset='UTF-8')
-    else:    
+    else:
         # We will create simple text/html email
         from pytis.extensions.email_ import SimpleEmail
         mail = SimpleEmail(to, address, subject, msg, html=html, charset='UTF-8')
@@ -151,10 +150,10 @@ class UserDefaultPrinter(object):
             opts = open(self.lpoptions, 'r').readlines()
         except IOError:
             return
-        for i in range (len (opts)):
-            if opts[i].startswith ("Default "):
+        for i in range(len(opts)):
+            if opts[i].startswith("Default "):
                 opts[i] = "Dest " + opts[i][8:]
-        open(self.lpoptions, "w").writelines (opts)
+        open(self.lpoptions, "w").writelines(opts)
 
     def get(self):
         if not self.lpoptions:
@@ -163,7 +162,7 @@ class UserDefaultPrinter(object):
             opts = open(self.lpoptions, 'r').readlines()
         except IOError:
             return None
-        for i in range (len (opts)):
+        for i in range(len(opts)):
             if opts[i].startswith("Default "):
                 rest = opts[i][8:]
                 slash = rest.find("/")
@@ -176,7 +175,7 @@ class UserDefaultPrinter(object):
 
     def set(self, default):
         import subprocess
-        p = subprocess.Popen([ "lpoptions", "-d", default ],
+        p = subprocess.Popen(["lpoptions", "-d", default],
                              close_fds=True,
                              stdin=open("/dev/null", 'r'),
                              stdout=open("/dev/null", 'w'),
@@ -184,17 +183,17 @@ class UserDefaultPrinter(object):
         (stdout, stderr) = p.communicate()
         exitcode = p.wait()
         if exitcode != 0:
-            raise ProgramError(stderr.strip())
+            raise pytis.util.ProgramError(stderr.strip())
         return
 
-    def __repr__ (self):
-        return "<UserDefaultPrinter (%s)>" % repr (self.get())
+    def __repr__(self):
+        return "<UserDefaultPrinter (%s)>" % repr(self.get())
     
 def set_default_printer():
     try:
         import cups
         import cupshelpers
-    except ImportError as e:
+    except ImportError:
         pytis.form.run_dialog(pytis.form.Error,
                               _("Nastavení výchozí tiskárny nemůže být provedeno.\n"
                                 "Kontaktujte správce systému."))
@@ -202,16 +201,16 @@ def set_default_printer():
     connection = cups.Connection()
     user_default = UserDefaultPrinter()
     default_printer = user_default.get()
-    if not default_printer:        
+    if not default_printer:
         default_printer = connection.getDefault()
     printers = cupshelpers.getPrinters(connection)
     printer_names = printers.keys()
-    fields = (Field('printer', "", 
-                    width=40, not_null=True,
-                    type=pytis.data.String,
-                    enumerator=pytis.data.FixedEnumerator(printer_names),
-                    default=default_printer,
-                    ),
+    fields = (pytis.presentation.Field('printer', "",
+                                       width=40, not_null=True,
+                                       type=pytis.data.String,
+                                       enumerator=pytis.data.FixedEnumerator(printer_names),
+                                       default=default_printer,
+                                       ),
               )
     layout = (pytis.form.Text(_("Zvolte výchozí tiskárnu:")), 'printer')
     result = pytis.form.run_form(pytis.form.InputForm,
@@ -236,9 +235,10 @@ def constraints_email(email):
     """
     if email is None:
         return None
-    mask=re.compile(r"^[A-Za-z0-9\d]([\w\d\.\-]?[A-Za-z0-9\_\&\.\-\d])*\@[A-Za-z0-9\d]([\w\d\.\-]?[A-Za-z0-9\_\&\d])*$")
+    mask = re.compile(r"^[A-Za-z0-9\d]([\w\d\.\-]?[A-Za-z0-9\_\&\.\-\d])*\@[A-Za-z0-9\d]"
+                      r"([\w\d\.\-]?[A-Za-z0-9\_\&\d])*$")
     if mask.match(email.strip()) is None:
-        return "Špatný tvar emailu " + email.strip()  + " !"
+        return "Špatný tvar emailu " + email.strip() + " !"
     return None
 
 def constraints_email_many(emails):
@@ -250,7 +250,7 @@ def constraints_email_many(emails):
     """
     if emails is None:
         return None
-    not_match=[]
+    not_match = []
     for email in emails.split(','):
         result = constraints_email(email)
         if not result is None:
@@ -267,6 +267,7 @@ def session_date(transaction=None):
 
 def session_date_value(transaction=None):
     """Vrať nastavené pracovní datum přihlášeného uživatele."""
+    from pytis.extensions import cfg_param
     return cfg_param('datum', 'Nastaveni.BvUsersCfg')
 
 def start_date(transaction=None):
@@ -275,6 +276,7 @@ def start_date(transaction=None):
 
 def start_date_value(transaction=None):
     """Vrať nastavené 'datum od' přihlášeného uživatele."""
+    from pytis.extensions import cfg_param
     return cfg_param('datum_od', 'Nastaveni.BvUsersCfg')
 
 def end_date(transaction=None):
@@ -283,5 +285,5 @@ def end_date(transaction=None):
 
 def end_date_value(transaction=None):
     """Vrať nastavené 'datum do' přihlášeného uživatele."""
+    from pytis.extensions import cfg_param
     return cfg_param('datum_do', 'Nastaveni.BvUsersCfg')
-

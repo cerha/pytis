@@ -30,11 +30,25 @@ import copy
 import collections
 import time
 
-import pytis.data
-import pytis.output
-from pytis.presentation import PresentedRow, Computer, Editable
-from pytis.form import *
 import wx
+
+import pytis.data
+import pytis.form
+import pytis.output
+from pytis.presentation import ActionContext, Button, Computer, Editable, Field, GroupSpec, \
+    Orientation, PresentedRow, PrintAction, Profile, Specification, TabGroup, \
+    Text, TextFormat, ViewSpec
+from pytis.util import ACTION, EVENT, OPERATIONAL, ProgramError, ResolverError, UNDEFINED, \
+    find, format_traceback, log, super_, xlist, xtuple
+from command import CommandHandler
+from screen import Browser, CallbackHandler, InfoWindow, KeyHandler, Menu, MItem, \
+    MSeparator, Window, border_style2wx, busy_cursor, dlg2px, orientation2wx, popup_menu, wx_button
+from application import Application, action_has_access, \
+    block_refresh, block_yield, create_data_object, current_form, db_op, \
+    db_operation, delete_record, form_settings_manager, get_status, \
+    has_access, message, new_record, profile_manager, refresh, run_dialog, run_form, \
+    set_status, top_window, wx_focused_window
+import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -98,7 +112,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         Argumenty:
         
           parent -- instance 'wxFrame', do kterého formulář patří
-          resolver -- resolver jmenných odkazů, instance 'pytis.util.Resolver' 
+          resolver -- resolver jmenných odkazů, instance 'pytis.util.Resolver'
           name -- jméno specifikačního souboru pro resolver; string
           guardian -- formulář (instance libovolné třídy), ve kterém je
             formulář vložen z hlediska struktury aplikace; není-li zadán, je
@@ -199,12 +213,15 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         if self._LOG_STATISTICS and config.form_statistics:
             pytis.extensions.dbfunction('pytis_log_form',
                                         ('form', pytis.data.Value(pytis.data.String(), name),),
-                                        ('class', pytis.data.Value(pytis.data.String(), self.__class__.__name__),),
-                                        ('info', pytis.data.Value(pytis.data.String(), self._form_log_info())),
+                                        ('class', pytis.data.Value(pytis.data.String(),
+                                                                   self.__class__.__name__),),
+                                        ('info', pytis.data.Value(pytis.data.String(),
+                                                                  self._form_log_info())),
                                         ('t_start', start_time,),
                                         ('t_show', show_time,),)
-        wx_callback(wx.EVT_IDLE, self, self._on_idle)        
-        log(EVENT, 'Form created in %.3fs:' % (pytis.data.DateTime.diff_seconds(start_time, show_time),), self)
+        pytis.form.wx_callback(wx.EVT_IDLE, self, self._on_idle)
+        log(EVENT, 'Form created in %.3fs:' %
+            (pytis.data.DateTime.diff_seconds(start_time, show_time),), self)
 
     def _init_attributes(self):
         """Process constructor keyword arguments and initialize the attributes.
@@ -219,7 +236,8 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
 
     def _get_saved_setting(self, option, default=None):
         """Retrieve form parameter independent on current profile."""
-        return form_settings_manager().get(self._profile_spec_name(), self._form_name(), option, default=default)
+        return form_settings_manager().get(self._profile_spec_name(), self._form_name(),
+                                           option, default=default)
         
     def _set_saved_setting(self, option, value):
         """Update saved form parameter independent on current profile."""
@@ -230,7 +248,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         spec = self._resolver.get(self._name, 'view_spec', **self._spec_kwargs)
         log(EVENT, 'Specification read in %.3fs:' % (time.time() - t), spec)
         assert isinstance(spec, ViewSpec)
-        return spec        
+        return spec
 
     def _create_data_object(self):
         return create_data_object(self._name, spec_kwargs=self._spec_kwargs,
@@ -264,7 +282,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         # In this class returns those commands from global TOOLBAR_COMMANDS
         # which belong to this form class.
         groups = []
-        for group in TOOLBAR_COMMANDS:
+        for group in pytis.form.TOOLBAR_COMMANDS:
             group = [uicmd for uicmd in group
                      if isinstance(self, uicmd.command().handler())]
             if group:
@@ -336,7 +354,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
     # Zpracování příkazů
    
     def _cmd_help(self):
-        Application.COMMAND_HELP.invoke(topic='spec/'+self._name)
+        Application.COMMAND_HELP.invoke(topic=('spec/' + self._name))
 
     def _cmd_leave_form(self):
         block_yield(True)
@@ -376,7 +394,7 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
         Argumentem je konstanta  třídy 'pytis.data.Permission'.
 
         """
-        VIEW   = pytis.data.Permission.VIEW
+        VIEW = pytis.data.Permission.VIEW
         INSERT = pytis.data.Permission.INSERT
         UPDATE = pytis.data.Permission.UPDATE
         DELETE = pytis.data.Permission.DELETE
@@ -392,12 +410,12 @@ class Form(Window, KeyHandler, CallbackHandler, CommandHandler):
                 result = False
         if not result and not quiet:
             msg = {
-                VIEW:   "Nemáte právo k zobrazení formuláře.",
+                VIEW: "Nemáte právo k zobrazení formuláře.",
                 INSERT: "Nemáte právo vložit nový záznam.",
                 UPDATE: "Nemáte právo změnit existující záznam.",
                 DELETE: "Nemáte právo smazat existující záznam.",
                 EXPORT: "Nemáte právo k exportu do CSV.",
-                }[perm]
+            }[perm]
             message(msg, beep_=True)
         return result
 
@@ -502,19 +520,22 @@ class InnerForm(Form):
         i = 1
         for row in pytis.extensions.dbselect('printing.UserOutputTemplates', condition=condition):
             template_name = row['specification'].value()
-            template_specification = row['module'].value()+'/'+template_name
+            template_specification = row['module'].value() + '/' + template_name
             print_item = PrintAction('__db_%d' % (i,), template_name, template_specification,)
             print_spec.append(print_item)
             db_print_spec.append((name, template_name,))
             i += 1
         printing_form = 'printing.DirectUserOutputTemplates'
-        menu = [MItem(p.title(), command=BrowseForm.COMMAND_PRINT(print_spec_path=p.name()))
+        menu = [MItem(p.title(),
+                      command=pytis.form.BrowseForm.COMMAND_PRINT(print_spec_path=p.name()))
                 for p in print_spec
-                if action_has_access('print/%s' % (p.dmp_name(),), perm=pytis.data.Permission.PRINT)]
+                if action_has_access('print/%s' % (p.dmp_name(),),
+                                     perm=pytis.data.Permission.PRINT)]
         if has_access(self.name(), perm=pytis.data.Permission.PRINT):
             menu.append(MSeparator())
+            prefill = dict(module=pytis.data.sval(name))
             menu.append(pytis.extensions.new_record_mitem(_("New report"), printing_form,
-                                                          prefill=dict(module=pytis.data.sval(name))))
+                                                          prefill=prefill))
             if db_print_spec:
                 mitem = pytis.extensions.run_form_mitem
                 edit_submenu = [mitem(label, printing_form, PopupEditForm,
@@ -548,7 +569,8 @@ class InnerForm(Form):
             except pytis.data.DBException:
                 description = self._view.description()
             else:
-                row = data.row((pytis.data.Value(data.find_column('spec_name').type(), self._name),))
+                row = data.row((pytis.data.Value(data.find_column('spec_name').type(),
+                                                 self._name),))
                 if row:
                     description = row['description'].value()
                 else:
@@ -559,7 +581,7 @@ class InnerForm(Form):
     def _cmd_describe(self):
         title = self._view.title()
         description = self._spec_description()
-        text = "= "+ title +" =\n\n" + description
+        text = "= " + title + " =\n\n" + description
         InfoWindow(title, text=text, format=TextFormat.LCG)
         
     def _can_describe(self):
@@ -687,7 +709,7 @@ class PopupForm:
         except AttributeError:
             frame = wx.Dialog(parent, style=self._popup_frame_style())
             self._popup_frame_ = frame
-            wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
+            pytis.form.wx_callback(wx.EVT_CLOSE, frame, self._on_frame_close)
         return frame
     
     def _popup_frame_style(self):
@@ -695,7 +717,7 @@ class PopupForm:
             modal = wx.DIALOG_MODAL
         except:
             modal = wx.wxDIALOG_MODAL
-        return modal|wx.DEFAULT_DIALOG_STYLE
+        return modal | wx.DEFAULT_DIALOG_STYLE
     
     def _on_frame_close(self, event):
         if self:
@@ -725,14 +747,14 @@ class PopupForm:
             if lock_key is not None:
                 if not self._lock_record(lock_key):
                     return None
-            unlock_callbacks()
+            pytis.form.unlock_callbacks()
             frame = self._parent
             frame.SetTitle(self.title())
             frame.SetClientSize(self.GetSize())
             frame.ShowModal()
         finally:
-            if self._governing_transaction is None and self._transaction is not None \
-                   and self._result is None:
+            if ((self._governing_transaction is None and self._transaction is not None and
+                 self._result is None)):
                 db_operation(self._transaction.rollback)
             self._governing_transaction = None
             self._transaction = None
@@ -747,7 +769,7 @@ class TitledForm:
     Lze využít buďto pouze metodu '_create_caption()', která vytváří samotný
     text titulku, nebo metodu '_create_title_bar()', která přidává 3d panel.
 
-    """    
+    """
     _TITLE_BORDER_WIDTH = 2
     
     def _create_caption(self, parent=None, size=None):
@@ -756,7 +778,7 @@ class TitledForm:
         if parent is None:
             parent = self
         caption = wx.StaticText(parent, -1, text, style=wx.ALIGN_CENTER)
-        if size is None: 
+        if size is None:
             size = caption.GetFont().GetPointSize()
         font = wx.Font(size, wx.DEFAULT, wx.NORMAL, wx.BOLD,
                        encoding=wx.FONTENCODING_DEFAULT)
@@ -770,7 +792,7 @@ class TitledForm:
         panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         caption = self._create_caption(panel)
         box = wx.BoxSizer()
-        box.Add(caption, 1, wx.EXPAND|wx.ALL, self._TITLE_BORDER_WIDTH)
+        box.Add(caption, 1, wx.EXPAND | wx.ALL, self._TITLE_BORDER_WIDTH)
         panel.SetSizer(box)
         box.Fit(panel)
         return panel
@@ -1064,15 +1086,15 @@ class LookupForm(InnerForm):
             return None
         
     def _lf_sfs_columns(self):
-        return sfs_columns(self._view.fields(), self._data)
+        return pytis.form.sfs_columns(self._view.fields(), self._data)
 
     def _search(self, condition, direction, row_number=None, report_failure=True,
                 initial_shift=False):
         if initial_shift:
             if direction == pytis.data.FORWARD:
-                start_row_number = max(row_number-1, 0)
+                start_row_number = max(row_number - 1, 0)
             else:
-                start_row_number = min(row_number+1, self._lf_count(min_value=row_number+1))
+                start_row_number = min(row_number + 1, self._lf_count(min_value=(row_number + 1)))
         else:
             start_row_number = row_number
         self._search_adjust_data_position(start_row_number)
@@ -1099,7 +1121,7 @@ class LookupForm(InnerForm):
 
     def _search_skip(self, skip, direction):
         data = self._data
-        data.skip(skip-1, direction=direction)
+        data.skip(skip - 1, direction=direction)
         row = data.fetchone(direction=direction)
         self._select_row(row)
 
@@ -1107,17 +1129,17 @@ class LookupForm(InnerForm):
         max_value = self._lf_count()
         if max_value > 0:
             prompt = _(u"Record number (1-%s):") % (max_value,)
-            result = run_dialog(InputNumeric, message=_(u"Jump to record"), prompt=prompt,
-                                min_value=1, max_value=max_value)
+            result = run_dialog(pytis.form.InputNumeric, message=_(u"Jump to record"),
+                                prompt=prompt, min_value=1, max_value=max_value)
             row = result.value()
             if row is not None:
-                self.select_row(row-1)
+                self.select_row(row - 1)
 
     def _cmd_first_record(self):
         self.select_row(0)
         
     def _cmd_last_record(self):
-        self.select_row(self._lf_count()-1)
+        self.select_row(self._lf_count() - 1)
         
     def _cmd_search(self, next=False, back=False):
         condition = self._lf_search_condition
@@ -1125,7 +1147,7 @@ class LookupForm(InnerForm):
             direction = back and pytis.data.BACKWARD or pytis.data.FORWARD
         else:
             direction, condition = block_refresh(lambda:
-                 run_dialog(SearchDialog, self._lf_sfs_columns(),
+                 run_dialog(pytis.form.SearchDialog, self._lf_sfs_columns(),
                             self.current_row(), col=self._current_column_id(),
                             condition=self._lf_search_condition))
         if direction is not None:
@@ -1222,7 +1244,7 @@ class LookupForm(InnerForm):
         return current_value != original_value
 
     def _is_user_defined_profile(self, profile):
-        return profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX)
+        return profile.id().startswith(pytis.form.FormProfileManager.USER_PROFILE_PREFIX)
 
     def _cmd_apply_profile(self, index):
         profile = self._profiles[index]
@@ -1234,8 +1256,8 @@ class LookupForm(InnerForm):
                     u"or keep it and ask the administrator to update it."
                     ) % profile.title()
             errors = '\n'.join(['%s: %s' % (param, error) for param, error in profile.errors()])
-            answer = run_dialog(MultiQuestion, title=_("Invalid profile"), message=msg,
-                                icon=Question.ICON_ERROR, buttons=(keep, remove),
+            answer = run_dialog(pytis.form.MultiQuestion, title=_("Invalid profile"), message=msg,
+                                icon=pytis.form.Question.ICON_ERROR, buttons=(keep, remove),
                                 report=errors, default=keep)
             if answer == remove:
                 if self._is_user_defined_profile(profile):
@@ -1246,12 +1268,13 @@ class LookupForm(InnerForm):
                     else:
                         profile = find(profile.id(), self._view.profiles(), key=lambda p: p.id())
                     self._profiles[index] = profile
-                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile.id())
+                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
+                                               profile.id())
         else:
             orig_profile = self._current_profile
             try:
                 self._apply_profile(profile)
-            except UserBreakException:
+            except pytis.form.UserBreakException:
                 self._apply_profile(orig_profile)
         self.focus()
 
@@ -1297,7 +1320,8 @@ class LookupForm(InnerForm):
         return self._is_user_defined_profile(self._current_profile)
 
     def _cmd_delete_profile(self):
-        profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), self._current_profile.id())
+        profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
+                                       self._current_profile.id())
         self._profiles.remove(self._current_profile)
         self._apply_profile(self._profiles[0])
 
@@ -1335,11 +1359,10 @@ class LookupForm(InnerForm):
         if condition:
             perform = True
         else:
-            perform, condition = \
-                     run_dialog(FilterDialog, self._lf_sfs_columns(),
-                                self.current_row(), self._compute_aggregate,
-                                col=self._current_column_id(),
-                                condition=self._lf_filter)
+            perform, condition = run_dialog(pytis.form.FilterDialog, self._lf_sfs_columns(),
+                                            self.current_row(), self._compute_aggregate,
+                                            col=self._current_column_id(),
+                                            condition=self._lf_filter)
         if perform and condition != self._lf_filter:
             self.filter(condition)
 
@@ -1400,25 +1423,25 @@ class LookupForm(InnerForm):
             sorting = ()
         elif col is None or direction is None:
             columns = self._lf_sfs_columns()
-            if col is None and self._lf_sorting: 
+            if col is None and self._lf_sorting:
                 col = self._sorting_columns()[0]
             if direction is not None:
-                mapping = {self.SORTING_ASCENDENT:  pytis.data.ASCENDENT,
+                mapping = {self.SORTING_ASCENDENT: pytis.data.ASCENDENT,
                            self.SORTING_DESCENDANT: pytis.data.DESCENDANT}
                 direction = mapping[direction]
-            sorting = run_dialog(SortingDialog, columns, self._lf_sorting,
+            sorting = run_dialog(pytis.form.SortingDialog, columns, self._lf_sorting,
                                  col=col, direction=direction)
             if sorting is None:
                 return None
             elif sorting is ():
                 sorting = self._lf_initial_sorting
             else:
-                mapping = {pytis.data.ASCENDENT:  self.SORTING_ASCENDENT,
+                mapping = {pytis.data.ASCENDENT: self.SORTING_ASCENDENT,
                            pytis.data.DESCENDANT: self.SORTING_DESCENDANT}
                 sorting = tuple([(cid, mapping[dir]) for cid, dir in sorting])
         elif col is not None:
-            if (not self._data.find_column(col) or
-                not self._data.permitted(col, pytis.data.Permission.VIEW)):
+            if ((not self._data.find_column(col) or
+                 not self._data.permitted(col, pytis.data.Permission.VIEW))):
                 message(_(u"This column can not be used for sorting."),
                         beep_=True)
                 return None
@@ -1430,7 +1453,7 @@ class LookupForm(InnerForm):
                 assert direction in (self.SORTING_ASCENDENT,
                                      self.SORTING_DESCENDANT)
                 new_sort_spec = (col, direction)
-                if primary and pos !=0:
+                if primary and pos != 0:
                     sorting = (new_sort_spec,)
                 elif pos is None:
                     sorting.append(new_sort_spec)
@@ -1455,7 +1478,7 @@ class LookupForm(InnerForm):
         old_filter = self._lf_filter
         try:
             self._apply_filter(condition)
-        except UserBreakException:
+        except pytis.form.UserBreakException:
             self._lf_filter = old_filter
             self._apply_filter(self._lf_filter)
         if not self._is_user_defined_profile(self._current_profile) \
@@ -1463,7 +1486,8 @@ class LookupForm(InnerForm):
             title = _(u"Unnamed profile")
             profile = find(title, self._profiles, key=lambda p: p.title())
             if profile:
-                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile.id())
+                profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
+                                               profile.id())
                 self._profiles.remove(profile)
             self._cmd_save_new_profile(title)
 
@@ -1631,9 +1655,9 @@ class RecordForm(LookupForm):
         if cols == tuple([c.id() for c in data.key()]):
             # This saves the final _init_select call
             return self._find_row_by_key(values)
-        cond = pytis.data.AND(*[pytis.data.EQ(c,v) for c,v in zip(cols, values)])
+        cond = pytis.data.AND(*[pytis.data.EQ(c, v) for c, v in zip(cols, values)])
         condition = pytis.data.AND(cond, self._current_condition())
-        def dbop(condition):            
+        def dbop(condition):
             data.select(condition, columns=self._select_columns(),
                         transaction=self._transaction)
             return data.fetchone()
@@ -1693,7 +1717,7 @@ class RecordForm(LookupForm):
             row = self._find_row_by_key(xtuple(position))
         elif isinstance(position, dict):
             row = self._find_row_by_values(position.keys(), position.values())
-        else:            
+        else:
             raise ProgramError("Invalid 'position':", position)
         return row
 
@@ -1703,7 +1727,7 @@ class RecordForm(LookupForm):
         self._run_callback(self.CALL_SELECTION, self._row)
         return True
 
-    def _current_key(self):        
+    def _current_key(self):
         the_row = self.current_row()
         if the_row is not None:
             data_row = the_row.original_row(initialized=False)
@@ -1720,9 +1744,9 @@ class RecordForm(LookupForm):
 
     def _lock_record(self, key):
         success, locked = db_operation(self._data.lock_row, key, transaction=self._transaction)
-        if success and locked != None:
+        if success and locked is not None:
             log(EVENT, 'Record is locked')
-            run_dialog(Message, _(u"The record is locked."))
+            run_dialog(pytis.form.Message, _(u"The record is locked."))
             return False
         else:
             return True
@@ -1732,7 +1756,7 @@ class RecordForm(LookupForm):
         for check in self._view.check():
             result = check(row)
             if result is not None:
-                if is_sequence(result):
+                if isinstance(result, (tuple, list,)):
                     failed_id, msg = result
                     message(msg)
                 else:
@@ -1785,11 +1809,11 @@ class RecordForm(LookupForm):
     def _dualform(self):
         # Pokud je formulář součástí duálního formuláře, vrať jej, jinak None.
         top = top_window()
-        if isinstance(top, DualForm):
+        if isinstance(top, pytis.form.DualForm):
             main, side = top.main_form(), top.side_form()
             if self in (main, side):
                 return top
-            if isinstance(side, MultiForm) and self in side.forms():
+            if isinstance(side, pytis.form.MultiForm) and self in side.forms():
                 return top
         return None
 
@@ -1798,7 +1822,7 @@ class RecordForm(LookupForm):
         if dual_form:
             if dual_form.main_form() is self:
                 form = dual_form.side_form()
-                if isinstance(form, MultiForm):
+                if isinstance(form, pytis.form.MultiForm):
                     form = form.active_form()
             else:
                 form = dual_form.main_form()
@@ -1870,12 +1894,16 @@ class RecordForm(LookupForm):
                 if read_only:
                     continue
                 field_name = field.label()
-                if self._row[fid].type().not_null() :
-                    msg = _(u"This form contains the mandatory field %s, but you don't have access to its codebook values. Please contact the access rights administrator.") % (field_name,)
-                    run_dialog(Error, msg)
+                if self._row[fid].type().not_null():
+                    msg = _(u"This form contains the mandatory field %s, "
+                            u"but you don't have access to its codebook values. "
+                            u"Please contact the access rights administrator.") % (field_name,)
+                    run_dialog(pytis.form.Error, msg)
                     return False
                 else:
-                    msg = _(u"This form contains the field %s, but you don't have access to its codebook values. Please contact the access rights administrator.") % (field_name,)
+                    msg = _(u"This form contains the field %s, "
+                            u"but you don't have access to its codebook values. "
+                            u"Please contact the access rights administrator.") % (field_name,)
                     run_dialog(Warning, msg)
         import copy as copy_
         if prefill is None:
@@ -1965,23 +1993,24 @@ class RecordForm(LookupForm):
             message(msg, beep_=True)
             return False
         msg = "\n\n".join((
-                _("Choose the file containing the imported data first. " +
-                  "You will be able to check and confirm each record separately "
-                  "in the next step."),
-                "*"+ _("Input file format:") +"*",
-                _("Each row contains a sequence of values separated by given " +
-                  "separator character (select above). Write tabelator as %s.", "='\\t'="),
-                _("The first row contains column identifiers, so it determines "
-                  "the meaning and the order of the values in the following "
-                  "data rows."),
-                _("Possible column identifiers for this form are:"),
-                "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
-                           [self._view.field(id)
-                            for id in self._view.layout().order()]])))
+            _("Choose the file containing the imported data first. "
+              "You will be able to check and confirm each record separately "
+              "in the next step."),
+            "*" + _("Input file format:") + "*",
+            _(("Each row contains a sequence of values separated by given "
+               "separator character (select above). Write tabelator as %s."),
+              "='\\t'="),
+            _("The first row contains column identifiers, so it determines "
+              "the meaning and the order of the values in the following "
+              "data rows."),
+            _("Possible column identifiers for this form are:"),
+            "\n".join(["|*%s*|=%s=|" % (c.column_label(), c.id()) for c in
+                       [self._view.field(id)
+                        for id in self._view.layout().order()]])))
         print "=============================================================="
         print msg
         print "=============================================================="
-        separator = run_dialog(InputDialog, 
+        separator = run_dialog(pytis.form.InputDialog,
                                title=_(u"Batch import"),
                                report=msg, report_format=TextFormat.LCG,
                                prompt=_("Separator"), value='|')
@@ -1991,7 +2020,7 @@ class RecordForm(LookupForm):
             return False
         separator = separator.replace('\\t', '\t')
         while 1:
-            filename = run_dialog(FileDialog)
+            filename = run_dialog(pytis.form.FileDialog)
             if filename is None:
                 message(_(u"No file given. Process terminated."), beep_=True)
                 return False
@@ -1999,14 +2028,14 @@ class RecordForm(LookupForm):
                 fh = open(filename)
             except IOError as e:
                 msg = _(u"Unable to open file '%s': %s")
-                run_dialog(Error, msg % (filename, str(e)))
+                run_dialog(pytis.form.Error, msg % (filename, str(e)))
                 continue
             break
         try:
             columns = [str(id.strip()) for id in fh.readline().split(separator)]
             for id in columns:
                 if id not in self._row:
-                    run_dialog(Error, _(u"Unknown column:")+' '+id)
+                    run_dialog(pytis.form.Error, _(u"Unknown column:") + ' ' + id)
                     return False
             types = [self._row.type(id) for id in columns]
             line_number = 1
@@ -2015,18 +2044,18 @@ class RecordForm(LookupForm):
                 line_number += 1
                 values = line.rstrip('\r\n').split(separator)
                 if len(values) != len(columns):
-                    msg = (_("Error at line %d:", line_number) +'\n'+
+                    msg = (_("Error at line %d:", line_number) + '\n' +
                            _("The number of values doesn't match the number of columns."))
-                    run_dialog(Error, msg)
+                    run_dialog(pytis.form.Error, msg)
                     return False
                 row_data = []
                 for id, type, val in zip(columns, types, values):
                     value, error = type.validate(val, transaction=self._transaction)
                     if error:
-                        msg = (_("Error at line %d:", line_number) +'\n'+
-                               _("Invalid value of column '%s':", id) +'\n'+
+                        msg = (_("Error at line %d:", line_number) + '\n' +
+                               _("Invalid value of column '%s':", id) + '\n' +
                                error.message())
-                        run_dialog(Error, msg)
+                        run_dialog(pytis.form.Error, msg)
                         return False
                     assert value.type() == type, (value.type(), type)
                     row_data.append((id, value))
@@ -2078,10 +2107,12 @@ class RecordForm(LookupForm):
         
         """
         row = self._data_row(position)
-        if (not quiet and
-            position is not None and
-            (not is_sequence(position) or len(position) != 1 or position[0].value() is not None) and
-            row is None):
+        if ((not quiet and
+             position is not None and
+             (not isinstance(position, (tuple, list,)) or
+              len(position) != 1 or
+              position[0].value() is not None) and
+             row is None)):
             if self._search_again_unfiltered():
                 self._apply_profile(self._profiles[0])
                 return self.select_row(position)
@@ -2090,7 +2121,7 @@ class RecordForm(LookupForm):
 
     def _search_again_unfiltered(self):
         if self._lf_filter:
-            if run_dialog(Question, title=_("Record not found"),
+            if run_dialog(pytis.form.Question, title=_("Record not found"),
                           message=_("The searched record was not found. "
                                     "It may be caused by the active filter.\n"
                                     "Do you want to activate the default profile and "
@@ -2214,7 +2245,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         size.height += height
         self._size = size
         if isinstance(self._parent, wx.Dialog):
-            wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
+            pytis.form.wx_callback(wx.EVT_INIT_DIALOG, self._parent, self._set_focus_field)
         else:
             self._set_focus_field()
 
@@ -2263,7 +2294,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 focused = self._focus_field(self._row)
             else:
                 focused = self._focus_field
-            if find(focused, self._fields, key=lambda f: f.id()):                
+            if find(focused, self._fields, key=lambda f: f.id()):
                 f = self._field(focused)
         else:
             f = find(True, self._fields, key=lambda f: f.enabled())
@@ -2300,16 +2331,17 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         panel = wx.ScrolledWindow(parent, style=wx.TAB_TRAVERSAL)
         panel.SetScrollRate(20, 20)
         # Create the form controls first, according to the order.
-        fields = [InputField.create(panel, self._row, id, guardian=self, readonly=self.readonly())
+        fields = [pytis.form.InputField.create(panel, self._row, id, guardian=self,
+                                               readonly=self.readonly())
                   for id in group.order() if self._view.field(id).width() != 0]
         self._fields.extend(fields)
         # Create the layout groups.
         group_sizer = self._create_group(panel, group)
-        # Add outer sizer with margins and alignment. 
+        # Add outer sizer with margins and alignment.
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(group_sizer, 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, 8)
+        sizer.Add(group_sizer, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 8)
         panel.SetSizer(sizer)
-        wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
+        pytis.form.wx_callback(wx.EVT_KEY_DOWN, panel, self.on_key_down)
         return panel
     
     def _field(self, id):
@@ -2334,9 +2366,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             cmd, args = self.COMMAND_CONTEXT_ACTION(action=action)
         return wx_button(parent, label, command=(cmd, args), tooltip=tooltip,
                          enabled=(button.active_in_popup_form() or not isinstance(self, PopupForm))
-                                  and (button.active_in_readonly_form() or not self.readonly())
-                                  and cmd.enabled(**args),
-                         width=button.width() and dlg2px(parent, 4*button.width()))
+                         and (button.active_in_readonly_form() or not self.readonly())
+                         and cmd.enabled(**args),
+                         width=button.width() and dlg2px(parent, 4 * button.width()))
 
     def _create_text(self, parent, text):
         return wx.StaticText(parent, -1, text.text(), style=wx.ALIGN_LEFT)
@@ -2360,18 +2392,18 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         border = dlg2px(parent, group.border())
         border_style = border_style2wx(group.border_style())
         for i, item in enumerate(group.items()):
-            if is_anystring(item):
+            if isinstance(item, basestring):
                 if self._view.field(item).width() == 0:
                     continue
                 item = self._field(item)
             if group.orientation() == Orientation.VERTICAL:
                 if isinstance(item, (Button, Text)) \
-                        or isinstance(item, InputField) \
+                        or isinstance(item, pytis.form.InputField) \
                         and not item.spec().compact() \
                         or isinstance(item, GroupSpec) \
                         and item.label() is None \
                         and item.orientation() == Orientation.HORIZONTAL \
-                        and is_anystring(item.items()[0]) \
+                        and isinstance(item.items()[0], basestring) \
                         and not self._field(item.items()[0]).spec().compact() \
                         and not isinstance(self._field(item.items()[0]).type(), pytis.data.Boolean):
                     # This item will become a part of the current aligned pack.
@@ -2381,11 +2413,11 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if len(pack) != 0:
                 # Add the latest aligned pack into the sizer (if there was one).
                 sizer.Add(self._pack_fields(parent, pack, space, gap),
-                          0, wx.ALIGN_TOP|border_style, border)
+                          0, wx.ALIGN_TOP | border_style, border)
                 pack = []
             if isinstance(item, GroupSpec):
                 x = self._create_group(parent, item)
-            elif isinstance(item, InputField):
+            elif isinstance(item, pytis.form.InputField):
                 if item.spec().compact():
                     # This is a compact field (not a part of the aligned pack).
                     x = wx.BoxSizer(wx.VERTICAL)
@@ -2394,7 +2426,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     # Fields in a HORIZONTAL group are packed separately (label and ctrl).
                     x = self._pack_fields(parent, (item,), space, gap,
-                                          suppress_label=(i==0 and aligned))
+                                          suppress_label=(i == 0 and aligned))
             elif isinstance(item, Button):
                 x = self._create_button(parent, item)
             elif isinstance(item, Text):
@@ -2403,12 +2435,12 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 raise ProgramError("Unsupported layout item!", item)
             bstyle = border_style
             if aligned:
-                bstyle = bstyle & ~(wx.LEFT|wx.TOP|wx.BOTTOM)
-            sizer.Add(x, 0, wx.ALIGN_TOP|bstyle, border)
+                bstyle = bstyle & ~(wx.LEFT | wx.TOP | wx.BOTTOM)
+            sizer.Add(x, 0, wx.ALIGN_TOP | bstyle, border)
         if len(pack) != 0:
             # přidej zbylý sled políček (pokud nějaký byl)
             sizer.Add(self._pack_fields(parent, pack, space, gap),
-                      0, wx.ALIGN_TOP|border_style, border)
+                      0, wx.ALIGN_TOP | border_style, border)
         # pokud má skupina orámování, přidáme ji ještě do sizeru s horním
         # odsazením, jinak je horní odsazení příliš malé.
         if group.label() is not None:
@@ -2430,11 +2462,11 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             if isinstance(item, GroupSpec):
                 field = self._field(item.items()[0])
                 label = field.label()
-                if label: 
-                    grid.Add(label, 0, wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, 2)
+                if label:
+                    grid.Add(label, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL, 2)
                 grid.Add(self._create_group(parent, item, aligned=True))
             elif isinstance(item, (Button, Text)):
-                style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+                style = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL
                 label = wx.StaticText(parent, -1, "", style=wx.ALIGN_RIGHT)
                 grid.Add(label, 0, style, 2)
                 if isinstance(item, Button):
@@ -2444,9 +2476,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             else:
                 if not suppress_label:
                     if item.height() > 1:
-                        style = wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.TOP
+                        style = wx.ALIGN_RIGHT | wx.ALIGN_TOP | wx.TOP
                     else:
-                        style = wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+                        style = wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL
                     grid.Add(item.label(), 0, style, 2)
                 grid.Add(item.widget())
         return grid
@@ -2479,9 +2511,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         # Re-validate all fields.
         for f in self._fields:
             fid = f.id()
-            if (self._mode == self.MODE_EDIT and
-                not self._row.permitted(fid, pytis.data.Permission.VIEW) and
-                fid in self._row and not self._row[fid].value()):
+            if ((self._mode == self.MODE_EDIT and
+                 not self._row.permitted(fid, pytis.data.Permission.VIEW) and
+                 fid in self._row and not self._row[fid].value())):
                 self._row[fid] = self._row.original_row()[fid]
             elif (self._mode == self.MODE_INSERT and
                   not self._row.permitted(fid, pytis.data.Permission.VIEW)):
@@ -2576,10 +2608,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 msg = _("Record update failed")
             else:
                 msg = _("Transaction aborted, unable to continue")
-            if type(result) == type(()) and \
-               isinstance(result[0], basestring):
+            if ((isinstance(result, tuple) and
+                 isinstance(result[0], basestring))):
                 msg = "%s\n\n%s" % (result[0], msg)
-            run_dialog(Error, msg)
+            run_dialog(pytis.form.Error, msg)
             return False
 
     def _insert_op_args(self, rdata):
@@ -2592,7 +2624,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         if self.changed():
             q = _(u"Unsaved changed in form data!") + "\n" + \
                 _(u"Do you really want to close the form?")
-            if not run_dialog(Question, q):
+            if not run_dialog(pytis.form.Question, q):
                 return False
         return True
 
@@ -2621,7 +2653,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     # Public methods
 
     def title(self):
-        """Return the form title as a string."""        
+        """Return the form title as a string."""
         return self._view.layout().caption()
 
     def size(self):
@@ -2633,7 +2665,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         form is displayed.
         
         """
-        return (self._size.width, self._size.height) 
+        return (self._size.width, self._size.height)
 
     def field(self, id):
         """Return the 'InputField' instance for the field 'id'.
@@ -2678,7 +2710,7 @@ class PopupEditForm(PopupForm, EditForm):
 
     def _default_transaction(self):
         try:
-            connection_name = resolver().get(self._name, 'data_spec').connection_name()
+            connection_name = config.resolver.get(self._name, 'data_spec').connection_name()
         except ResolverError:
             connection_name = None
         return pytis.data.DBTransactionDefault(config.dbconnection, connection_name=connection_name)
@@ -2714,7 +2746,7 @@ class PopupEditForm(PopupForm, EditForm):
         buttons = self._create_buttons()
         status_bar = self._create_status_bar()
         # Add parts to the sizer.
-        sizer.Add(caption, 0, wx.ALIGN_CENTER|wx.ALL, 8)
+        sizer.Add(caption, 0, wx.ALIGN_CENTER | wx.ALL, 8)
         sizer.Add(panel, 1, wx.EXPAND)
         sizer.Add(buttons, 0, wx.ALIGN_CENTER)
         sizer.Add(status_bar, 0, wx.EXPAND)
@@ -2736,9 +2768,9 @@ class PopupEditForm(PopupForm, EditForm):
         panel.SetAutoLayout(True)
         box = wx.BoxSizer()
         field = wx.StaticText(panel, -1, '', style=wx.ALIGN_LEFT)
-        box.Add(field, 1, wx.EXPAND|wx.ALL, 2)
+        box.Add(field, 1, wx.EXPAND | wx.ALL, 2)
         if width is not None:
-            width = dlg2px(field, 4*width)
+            width = dlg2px(field, 4 * width)
             height = field.GetSize().GetHeight()
             field.SetMinSize((width, height))
             expansion = 0
@@ -2757,15 +2789,15 @@ class PopupEditForm(PopupForm, EditForm):
             i = self._inserted_data_pointer
             self._select_row(None)
             if i < len(data):
-                self.set_status('progress', "%d/%d" % (i+1, len(data)))
+                self.set_status('progress', "%d/%d" % (i + 1, len(data),))
                 self._inserted_data_pointer += 1
                 ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
-                ok_button.Enable(i == len(data)-1)
+                ok_button.Enable(i == len(data) - 1)
                 for id, value in data[i].items():
                     self._row[id] = pytis.data.Value(self._row.type(id), value.value())
             else:
                 self.set_status('progress', '')
-                run_dialog(Message, _(u"All records processed."))
+                run_dialog(pytis.form.Message, _(u"All records processed."))
                 self._inserted_data = None
         self._set_focus_field()
 
@@ -2775,7 +2807,7 @@ class PopupEditForm(PopupForm, EditForm):
         if data is not None and i <= len(data):
             msg = _("Not all input records processed yet.\n" +
                     "Really quit batch insertion?")
-            if not run_dialog(Question, msg, default=False):
+            if not run_dialog(pytis.form.Question, msg, default=False):
                 return False
         return super(PopupEditForm, self)._exit_check()
 
@@ -2795,8 +2827,9 @@ class PopupEditForm(PopupForm, EditForm):
                         tooltip=_("Close the form without saving"),
                         command=self.COMMAND_LEAVE_FORM()))
         if self._mode == self.MODE_INSERT and self._multi_insert:
-            buttons += (dict(id=wx.ID_FORWARD, label=_("Next"), #icon=wx.ART_GO_FORWARD, 
-                             tooltip=_("Save the current record and read next record into the form."),
+            buttons += (dict(id=wx.ID_FORWARD, label=_("Next"), #icon=wx.ART_GO_FORWARD,
+                             tooltip=_("Save the current record and read next record into "
+                                       "the form."),
                              command=self.COMMAND_COMMIT_RECORD(next=True)),)
         if self._inserted_data is not None:
             buttons += (dict(label=_("Skip"),
@@ -2845,8 +2878,8 @@ class PopupEditForm(PopupForm, EditForm):
         self._cmd_leave_form()
         
     def can_command(self, command, **kwargs):
-        if command.handler() in (LookupForm, RecordForm) \
-               and command != RecordForm.COMMAND_CONTEXT_ACTION:
+        if ((command.handler() in (LookupForm, RecordForm) and
+             command != RecordForm.COMMAND_CONTEXT_ACTION)):
             return False
         return super(PopupEditForm, self).can_command(command, **kwargs)
         
@@ -2864,9 +2897,9 @@ class PopupEditForm(PopupForm, EditForm):
         else:
             return False
 
-    def set_row(self, row):        
+    def set_row(self, row):
         if self._transaction is None:
-             self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
+            self._transaction = pytis.data.DBTransactionDefault(config.dbconnection)
         super(PopupEditForm, self).set_row(row)
 
 
@@ -2876,7 +2909,7 @@ class _VirtualEditForm(EditForm):
     Forms derived from this class don't need to have a statically defined
     Specification class.  The specification is created in runtime according to
     keyword arguments passed to the form constructor and the data object is
-    created as MemData object so no "real" database objects are needed as well.  
+    created as MemData object so no "real" database objects are needed as well.
     
     """
     
@@ -2965,9 +2998,9 @@ class QueryFieldsForm(_VirtualEditForm):
             Field('__changed', type=pytis.data.Boolean(), default=False, virtual=True,
                   computer=pytis.presentation.Computer(lambda r: True,
                                                        depends=[f.id() for f in fields])),
-            )
+        )
         _VirtualEditForm._full_init(self, *args, **kwargs)
-        self._row.register_callback(self._row.CALL_CHANGE, '__changed', 
+        self._row.register_callback(self._row.CALL_CHANGE, '__changed',
                                     lambda: self._run_callback(self.CALL_QUERY_FIELDS_CHANGED))
         # Set the popup window size according to the ideal form size limited to
         # the screen size.  If the form size exceeds the screen, scrollbars
@@ -3007,8 +3040,8 @@ class ResizableEditForm(object):
         panel.SetSizer(field_sizer)
         for field_id in self._resizable_fields():
             if self._view.field(field_id).width() != 0:
-                field = InputField.create(panel, self._row, field_id, guardian=self,
-                                          readonly=self.readonly())
+                field = pytis.form.InputField.create(panel, self._row, field_id, guardian=self,
+                                                     readonly=self.readonly())
                 self._fields.append(field)
                 field_sizer.Add(field.widget(), 1, wx.EXPAND)
         self._form_controls_window = panel
@@ -3082,7 +3115,7 @@ class StructuredTextEditor(ResizableEditForm, PopupEditForm):
                         "changes into your version.")
                 revert, merge, ignore = (_(u"Discard my changes"), _(u"Merge"),
                                          _(u"Ignore the concurrent changes"))
-                answer = run_dialog(MultiQuestion, title=_(u"Conflicting modifications"),
+                answer = run_dialog(pytis.form.MultiQuestion, title=_(u"Conflicting modifications"),
                                     message=msg, report=diff, report_format=TextFormat.HTML,
                                     buttons=(revert, ignore)) # TODO: Add merge button.
                 if answer == merge:
@@ -3117,7 +3150,7 @@ class ShowForm(EditForm):
 
     DESCR = _(u"view form")
 
-    def _init_attributes(self, mode=EditForm.MODE_VIEW, select_row=0,**kwargs):
+    def _init_attributes(self, mode=EditForm.MODE_VIEW, select_row=0, **kwargs):
         super_(ShowForm)._init_attributes(self, mode=mode, select_row=select_row, **kwargs)
         
     def changed(self):
@@ -3143,7 +3176,7 @@ class BrowsableShowForm(ShowForm):
             row_number = 0
         if not back:
             row_number += 1
-            if row_number == self._lf_count(min_value=row_number+1):
+            if row_number == self._lf_count(min_value=(row_number + 1)):
                 message(_("Last record"), beep_=True)
                 return
         else:
@@ -3161,7 +3194,7 @@ class BrowsableShowForm(ShowForm):
             total = '%s?' % (total,)
         if current_row and total:
             n = self._get_row_number(current_row)
-            position = "%d/%s" % (n is not None and n+1 or 0, total)
+            position = "%d/%s" % (n is not None and n + 1 or 0, total)
             set_status('list-position', position)
         return result
                      
@@ -3187,7 +3220,7 @@ class WebForm(Form, Refreshable):
         
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self)
-        sizer.Add(browser.toolbar(self), 0, wx.EXPAND|wx.FIXED_MINSIZE)
+        sizer.Add(browser.toolbar(self), 0, wx.EXPAND | wx.FIXED_MINSIZE)
         sizer.Add(browser, 1, wx.EXPAND)
 
     def _refresh(self, when=None, interactive=False):

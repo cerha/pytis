@@ -31,14 +31,21 @@ se vyskytující dialogové operace.
 
 from __future__ import unicode_literals
 
-import collections
-import types
-import pytis.data
-from pytis.form import *
-import config
 from wx import calendar
 from wx.lib import masked
 import wx.lib.mixins.listctrl
+
+import collections
+import datetime
+import types
+
+import pytis.data
+import pytis.form
+from pytis.presentation import TextFormat
+import pytis.util
+from pytis.util import ProgramError, super_
+from command import CommandHandler
+from screen import KeyHandler, beep, char2px, dlg2px, wx_focused_window, wx_text_ctrl, wx_text_view
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -56,7 +63,7 @@ class Dialog(KeyHandler, CommandHandler, object):
     
     """
     def _get_command_handler_instance(cls):
-        return top_window()
+        return pytis.form.top_window()
     _get_command_handler_instance = classmethod(_get_command_handler_instance)
     
     def __init__(self, parent):
@@ -80,7 +87,7 @@ class GenericDialog(Dialog):
     Univerzální dialogová třída, od které je možno odvodit specializované třídy
     konkrétních dialogů pomocí předefinování některých metod.
     
-    """    
+    """
     _COMMIT_BUTTON = None
     _HELP_TOPIC = 'dialog'
     _STYLE = wx.CAPTION | wx.CLOSE_BOX | wx.MINIMIZE_BOX | wx.SYSTEM_MENU
@@ -124,7 +131,7 @@ class GenericDialog(Dialog):
         assert isinstance(buttons, (list, tuple)), buttons
         assert default is None or default in buttons, default
         assert report is None or isinstance(report, basestring), report
-        assert report_format in public_attr_values(TextFormat), report_format
+        assert report_format in pytis.util.public_attr_values(TextFormat), report_format
         assert isinstance(report_size, (list, tuple)) and len(report_size) == 2, report_size
         super_(GenericDialog).__init__(self, parent)
         self._title = unicode(title)
@@ -171,7 +178,7 @@ class GenericDialog(Dialog):
         for b in self._create_buttons():
             button_sizer.Add(b, 0, wx.ALL, 8)
             # registruj handlery událostí
-            wx_callback(wx.EVT_BUTTON, dialog, b.GetId(), self._on_button)
+            pytis.form.wx_callback(wx.EVT_BUTTON, dialog, b.GetId(), self._on_button)
             self._handle_keys(b)
         # poskládej obsah a tlačítka do top-level sizeru (nad sebe)
         if self._report is not None:
@@ -180,7 +187,7 @@ class GenericDialog(Dialog):
                                   width=self._report_size[0], height=self._report_size[1])
             sizer.Add(report, 1, wx.EXPAND)
         sizer.Add(button_sizer, 0, wx.CENTER)
-        wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
+        pytis.form.wx_callback(wx.EVT_IDLE, self._dialog, self._on_idle)
         # dokonči ...
         sizer.SetSizeHints(dialog)
         dialog.SetAutoLayout(True)
@@ -208,7 +215,7 @@ class GenericDialog(Dialog):
         return self._buttons
 
     def _create_icon(self, artid):
-        bitmap = wx.ArtProvider_GetBitmap(artid, wx.ART_MESSAGE_BOX, (48,48))
+        bitmap = wx.ArtProvider_GetBitmap(artid, wx.ART_MESSAGE_BOX, (48, 48))
         if bitmap.Ok():
             return wx.StaticBitmap(self._dialog, -1, bitmap)
         else:
@@ -235,7 +242,7 @@ class GenericDialog(Dialog):
     
     def _navigate(self):
         nav = wx.NavigationKeyEvent()
-        nav.SetDirection(True)        
+        nav.SetDirection(True)
         nav.SetCurrentFocus(self._dialog)
         self._dialog.GetEventHandler().ProcessEvent(nav)
 
@@ -247,12 +254,12 @@ class GenericDialog(Dialog):
     
     def _button_label(self, id):
         # Vrať nápis tlačítka s daným id.
-        button = find(id, self._buttons, key=lambda b: b.GetId())
+        button = pytis.util.find(id, self._buttons, key=lambda b: b.GetId())
         return button and button.GetLabel()
 
     def _button_id(self, label):
         # Vrať id tlačítka s daným nápisem.
-        button = find(label, self._buttons, key=lambda b: b.GetLabel())
+        button = pytis.util.find(label, self._buttons, key=lambda b: b.GetLabel())
         return button and button.GetId()
 
     def _customize_result(self, result):
@@ -286,7 +293,7 @@ class GenericDialog(Dialog):
         self._end_modal(wx.ID_CANCEL)
         
     def _cmd_help(self):
-        Application.COMMAND_HELP.invoke(topic='pytis/'+self._HELP_TOPIC)
+        pytis.form.Application.COMMAND_HELP.invoke(topic='pytis/' + self._HELP_TOPIC)
 
     def run(self):
         """Zobraz dialog a po jeho ukončení vrať jeho návratovou hodnotu.
@@ -337,7 +344,7 @@ class Message(GenericDialog):
     """
     ICON_INFO = wx.ART_INFORMATION
     "Ikona pro informativní zprávy (žárovka)"
-    ICON_QUESTION =  wx.ART_QUESTION
+    ICON_QUESTION = wx.ART_QUESTION
     "Ikona s otazníkem."
     ICON_WARNING = wx.ART_WARNING
     "Ikona s vykřičníkem."
@@ -376,11 +383,11 @@ class Message(GenericDialog):
         icon = self._icon and self._create_icon(self._icon)
         if icon is not None:
             content = wx.BoxSizer()
-            content.Add(icon, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5)
-            content.Add(message, 1, wx.EXPAND|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 12)
+            content.Add(icon, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
+            content.Add(message, 1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_VERTICAL, 12)
         else:
             content = message
-        sizer.Add(content, 0, wx.ALL|wx.CENTER, 5)
+        sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
 
     
 class Warning(Message):
@@ -493,7 +500,6 @@ class InputDialog(Message):
 
     """
     _COMMIT_BUTTON = GenericDialog.BUTTON_OK
-
     
     def __init__(self, parent, message=None, value=None, prompt=None,
                  title=_("Enter value"), passwd=False,
@@ -545,27 +551,26 @@ class InputDialog(Message):
         if self._input_width is None:
             width = wx.DefaultSize.width
         else:
-            width = 4*(self._input_width+1)+2
-        size = dlg2px(self._parent, width, 8*self._input_height+4)
+            width = 4 * (self._input_width + 1) + 2
+        size = dlg2px(self._parent, width, 8 * self._input_height + 4)
         if self._input_height > 1:
-            style = style | wx.TE_MULTILINE            
+            style = style | wx.TE_MULTILINE
         control = masked.TextCtrl(self._dialog, -1, "", style=style,
                                   size=size, emptyInvalid=not self._allow_empty,
                                   mask=self._mask, autoformat=self._autoformat)
         if self._value is not None:
             control.SetValue(self._value)
         self._control = control
-        wx_callback(wx.EVT_KILL_FOCUS, self._control, self._on_kill_control_focus)
+        pytis.form.wx_callback(wx.EVT_KILL_FOCUS, self._control, self._on_kill_control_focus)
         self._handle_keys(control)
         if self._prompt:
             prompt = wx.StaticText(self._dialog, -1, self._prompt)
             content = wx.BoxSizer()
-            content.Add(prompt, 1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
-            content.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
+            content.Add(prompt, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
+            content.Add(control, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
         else:
             content = control
-        sizer.Add(content, 0, wx.ALL|wx.CENTER, 5)
-        
+        sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
 
     def _on_kill_control_focus(self, e):
         if not self._control.IsValid(self._control.GetValue()):
@@ -584,13 +589,13 @@ class InputDate(InputDialog):
 
     Speciální případ dialogu 'InputDialog' určený pro zadávání datumu.
     
-    """    
+    """
     def __init__(self, *args, **kwargs):
         kwargs['allow_empty'] = kwargs.get('allow_empty', False)
         super_(InputDate).__init__(self, *args, **kwargs)
         import config
-        format = config.date_format.lower().replace('%d','dd')
-        format = format.replace('%m','mm').replace('%y','yyyy')
+        format = config.date_format.lower().replace('%d', 'dd')
+        format = format.replace('%m', 'mm').replace('%y', 'yyyy')
         for tag in masked.masktags.keys():
             if masked.masktags[tag]['description'].lower() == format:
                 self._autoformat = tag
@@ -602,9 +607,9 @@ class InputDate(InputDialog):
         if self._button_label(result) == GenericDialog.BUTTON_OK:
             if not self._control.IsValid(self._control.GetValue()):
                 return pytis.data.Value(pytis.data.Date(), None)
-            value, error  = pytis.data.Date().validate(self._control.GetValue())
+            value, error = pytis.data.Date().validate(self._control.GetValue())
             if error:
-                raise ProgramError("Input validation error!")                
+                raise ProgramError("Input validation error!")
             return value
         else:
             return pytis.data.Value(pytis.data.Date(), None)
@@ -625,8 +630,7 @@ class InputNumeric(InputDialog):
                  ):
         super_(InputNumeric).__init__(self, parent, message=message,
                                       value=None, prompt=prompt,
-                                      title=title, 
-                                      allow_empty=allow_empty)
+                                      title=title, allow_empty=allow_empty)
         self._decimal_width = decimal_width
         self._min_value = min_value
         self._max_value = max_value
@@ -666,19 +670,19 @@ class InputNumeric(InputDialog):
         if self._max_value:
             control.SetMax(self._max_value)
         if self._limited:
-            control.SetLimited(True)            
+            control.SetLimited(True)
         self._control = control
-        wx_callback(wx.EVT_KILL_FOCUS, self._control,
-                    self._on_kill_control_focus)        
+        pytis.form.wx_callback(wx.EVT_KILL_FOCUS, self._control,
+                               self._on_kill_control_focus)
         if self._prompt:
             prompt = wx.StaticText(self._dialog, -1, self._prompt)
             content = wx.BoxSizer()
-            content.Add(prompt,  1, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)           
-            content.Add(control, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 3)
+            content.Add(prompt, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
+            content.Add(control, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
         else:
             content = control
         self._handle_keys(control)
-        sizer.Add(content, 0, wx.ALL|wx.CENTER, 5)
+        sizer.Add(content, 0, wx.ALL | wx.CENTER, 5)
         
     def _on_kill_control_focus(self, e):
         if not self._control.IsInBounds(self._control.GetValue()):
@@ -697,7 +701,7 @@ class InputNumeric(InputDialog):
             if self._decimal_width == 0:
                 value = pytis.data.Value(pytis.data.Integer(),
                                        self._control.GetValue())
-            else:    
+            else:
                 value = pytis.data.Value(pytis.data.Float(),
                                        self._control.GetValue())
             return value
@@ -733,15 +737,15 @@ class OperationDialog(Message):
                                          title=title, icon=self.ICON_TIP,
                                          buttons=(), default=None)
         assert isinstance(function, collections.Callable)
-        assert is_sequence(args)
-        assert is_dictionary(kwargs)
+        assert isinstance(args, (tuple, list,))
+        assert isinstance(kwargs, dict)
         self._function = function
         self._args = args
         self._kwargs = kwargs
 
     def _on_show(self):
         self._result = self._function(*self._args, **self._kwargs)
-        wx_yield_(full=True)
+        pytis.form.wx_yield_(full=True)
         self._end_modal(wx.ID_OK)
         
     def _customize_result(self, result):
@@ -794,13 +798,13 @@ class ProgressDialog(OperationDialog):
                                         title=title)
         style = wx.PD_APP_MODAL
         if elapsed_time:
-            style = style|wx.PD_ELAPSED_TIME
+            style = style | wx.PD_ELAPSED_TIME
         if estimated_time:
-            style = style|wx.PD_ESTIMATED_TIME
+            style = style | wx.PD_ESTIMATED_TIME
         if remaining_time:
-            style = style|wx.PD_REMAINING_TIME
+            style = style | wx.PD_REMAINING_TIME
         if can_abort:
-            style = style|wx.PD_CAN_ABORT
+            style = style | wx.PD_CAN_ABORT
         self._style = style
 
     def _create_dialog(self):
@@ -847,14 +851,14 @@ class RepeatedOperationDialog(ProgressDialog):
           Ostatní argumenty jsou shodné jako u rodičovské třídy.
           
         """
-        assert step is None or \
-               isinstance(step, types.IntType) and step in range(1, 100)
+        assert (step is None or
+                isinstance(step, types.IntType) and step in range(1, 100))
         def do(update, *args_list):
             total = len(args_list)
             last_status = 0
             for n, arg in enumerate(args_list):
-                status = int(float(n)/total*100)
-                if step is None or status/step != last_status/step:
+                status = int(float(n) / total * 100)
+                if step is None or status / step != last_status / step:
                     last_status = status
                     try:
                         msg = self._message % arg
@@ -866,9 +870,8 @@ class RepeatedOperationDialog(ProgressDialog):
             
         super_(RepeatedOperationDialog).__init__(self, parent, do, args=args,
                                                  **kwargs)
-    
-    
-    
+
+
 class Calendar(GenericDialog):
     """Dialog zobrazující kalendář, umožňující výběr dne.
 
@@ -894,7 +897,7 @@ class Calendar(GenericDialog):
             boolean
 
         Pokud argument date neobsahuje řetězec, který je možné zpracovat pomocí
-        'wx.DateTime.ParseDate()', bude datum nastaven na dnešní datum. 
+        'wx.DateTime.ParseDate()', bude datum nastaven na dnešní datum.
 
         """
         super_(Calendar).__init__(self, parent, title=title,
@@ -905,13 +908,17 @@ class Calendar(GenericDialog):
             modal = wx.DIALOG_MODAL
         except:
             modal = wx.wxDIALOG_MODAL
-        style = modal| \
-                calendar.CAL_SHOW_HOLIDAYS| \
-                calendar.CAL_SHOW_SURROUNDING_WEEKS 
-        if not enable_year:  style = style | calendar.CAL_NO_YEAR_CHANGE
-        if not enable_month: style = style | calendar.CAL_NO_MONTH_CHANGE
-        if monday_first:     style = style | calendar.CAL_MONDAY_FIRST
-        else:                style = style | calendar.CAL_SUNDAY_FIRST
+        style = (modal |
+                 calendar.CAL_SHOW_HOLIDAYS |
+                 calendar.CAL_SHOW_SURROUNDING_WEEKS)
+        if not enable_year:
+            style = style | calendar.CAL_NO_YEAR_CHANGE
+        if not enable_month:
+            style = style | calendar.CAL_NO_MONTH_CHANGE
+        if monday_first:
+            style = style | calendar.CAL_MONDAY_FIRST
+        else:
+            style = style | calendar.CAL_SUNDAY_FIRST
         self._style = style
         if date is None:
             self._date = pytis.data.Date.datetime()
@@ -922,25 +929,25 @@ class Calendar(GenericDialog):
     def _create_content(self, sizer):
         cal = calendar.CalendarCtrl(self._dialog, -1, style=self._style)
         size = cal.GetSize()
-        cal.SetMinSize((size.GetWidth()+10, size.GetHeight()))
+        cal.SetMinSize((size.GetWidth() + 10, size.GetHeight()))
         wx_date = wx.DateTime()
         if wx_date.ParseDate(str(self._date)) is None:
             wx_date = wx.DateTime_Today()
-        wx_callback(calendar.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
+        pytis.form.wx_callback(calendar.EVT_CALENDAR, cal, cal.GetId(), self._on_calendar)
         self._handle_keys(cal)
         cal.SetDate(wx_date)
         self._cal = cal
         self._want_focus = cal
-        sizer.Add(cal, 0, wx.ALL|wx.CENTER, 5)
+        sizer.Add(cal, 0, wx.ALL | wx.CENTER, 5)
 
     def _can_commit(self, widget):
         return super(Calendar, self)._can_commit(widget) or widget == self._cal
     
     def _customize_result(self, result):
-        if result == self._cal.GetId() \
-               or self._button_label(result) == GenericDialog.BUTTON_OK:
+        if result == self._cal.GetId() or self._button_label(result) == GenericDialog.BUTTON_OK:
             date_string = str(self._cal.GetDate().FormatISODate())
-            return pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT).validate(date_string)[0].value()
+            return pytis.data.Date(format=pytis.data.Date.DEFAULT_FORMAT).\
+                validate(date_string)[0].value()
         return None
 
     def _on_calendar(self, event):
@@ -1036,34 +1043,32 @@ class BugReport(GenericDialog):
             vsizer.Add(label, 1, wx.ALIGN_CENTER_VERTICAL)
             vsizer.Add(icon, 0, wx.ALL, 5)
             label = vsizer
-        # store the traceback text    
-        import config
-        if 0:
+        # store the traceback text
+        if False:
             # Fancy HTML traceback
             import cgitb
             from wx import html
             traceback = html.HtmlWindow(dialog, -1)
-            text = "<html>"+cgitb.html(self._einfo)+"</html>"
+            text = "<html>" + cgitb.html(self._einfo) + "</html>"
             step = 3000
             pointer = 0
             while (pointer < len(text)):
-                traceback.AppendToPage(text[pointer:min(pointer+step,len(text))])
+                traceback.AppendToPage(text[pointer:min(pointer + step, len(text))])
                 pointer += step
                 traceback.SetSize(char2px(traceback, 140, 35))
             #traceback.SetFonts('Arial', 'Fixed', sizes=(6,7,8,9,10,11,12))
         else:
-            style = wx.TE_MULTILINE|wx.TE_DONTWRAP #|wx.TE_READONLY
+            style = wx.TE_MULTILINE | wx.TE_DONTWRAP #|wx.TE_READONLY
             traceback = wx.TextCtrl(dialog, -1, style=style, size=wx.Size(600, 360))
             font = wx.Font(traceback.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL)
             traceback.SetFont(font)
-            for line in exception_info(self._einfo).splitlines():
+            for line in pytis.util.exception_info(self._einfo).splitlines():
                 # Příliš "dlouhý" text se nemusí povést do políčka vložit...
-                traceback.AppendText(line+'\n')
+                traceback.AppendText(line + '\n')
         self._traceback = traceback
         self._want_focus = traceback
-        sizer.Add(label, 0, wx.EXPAND|wx.ALL|wx.CENTER, 5)
-        sizer.Add(traceback, 1, wx.EXPAND|wx.ALL, 5)
-
+        sizer.Add(label, 0, wx.EXPAND | wx.ALL | wx.CENTER, 5)
+        sizer.Add(traceback, 1, wx.EXPAND | wx.ALL, 5)
 
     def _customize_result(self, result):
         label = self._button_label(result)
@@ -1075,7 +1080,7 @@ class BugReport(GenericDialog):
             if isinstance(self._traceback, wx.TextCtrl):
                 result = self._traceback.GetValue()
             else:
-                result = exception_info(self._einfo)
+                result = pytis.util.exception_info(self._einfo)
         else:
             raise ProgramError('Unknown BugReport dialog result', label)
         return result
@@ -1088,8 +1093,8 @@ class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
     def __init__(self, parent, columns, items):
         wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
         wx.lib.mixins.listctrl.CheckListCtrlMixin.__init__(self)
-        wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, self, self.GetId(),
-                    lambda e: self.ToggleItem(e.m_itemIndex))
+        pytis.form.wx_callback(wx.EVT_LIST_ITEM_ACTIVATED, self, self.GetId(),
+                               lambda e: self.ToggleItem(e.m_itemIndex))
         for i, label in enumerate(columns):
             self.InsertColumn(i, label)
         for i, item in enumerate(items):
@@ -1099,14 +1104,14 @@ class _CheckListCtrl(wx.ListCtrl, wx.lib.mixins.listctrl.CheckListCtrlMixin):
                 self.SetStringItem(i, j, value)
         for i in range(len(columns)):
             self.SetColumnWidth(i, wx.LIST_AUTOSIZE)
-        self.SetMinSize((0, max(80, min(300, len(items)*20+30))))
+        self.SetMinSize((0, max(80, min(300, len(items) * 20 + 30))))
 
 
 class CheckListDialog(Message):
     """A question dialog with a list of checkable items.
 
     The dialog displays a question with a list of items and a checkbox for each of the items.
-    Items can 
+    Items can
 
     The result returned by the `run()' method is a sequence of boolean values, one for each item of
     'items' passed to the constructor.  The value is True for items which were checked and False
@@ -1135,7 +1140,7 @@ class CheckListDialog(Message):
     def _create_content(self, sizer):
         super(CheckListDialog, self)._create_content(sizer)
         self._checklist = _CheckListCtrl(self._dialog, self._columns, self._items)
-        sizer.Add(self._checklist, 1, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(self._checklist, 1, wx.EXPAND | wx.ALL, 5)
         
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
@@ -1191,7 +1196,7 @@ class CheckMatrixDialog(Message):
         super(CheckMatrixDialog, self)._create_content(sizer)
         panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
         panel.SetScrollRate(20, 20)
-        grid = wx.FlexGridSizer(len(self._rows)+1, len(self._columns)+1, 2, 6)
+        grid = wx.FlexGridSizer(len(self._rows) + 1, len(self._columns) + 1, 2, 6)
         self._controls = []
         grid.Add(wx.StaticText(panel, -1, ""))
         for column in self._columns:
@@ -1213,7 +1218,7 @@ class CheckMatrixDialog(Message):
             self._controls.append(controls)
         panel.SetSizer(grid)
         self._matrix_size = grid.CalcMin()
-        sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(panel, 1, wx.EXPAND | wx.ALL, 5)
 
     def _run_dialog(self):
         sizer_size = self._dialog.GetSizer().CalcMin()
@@ -1222,7 +1227,6 @@ class CheckMatrixDialog(Message):
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self._dialog.SetClientSize(size)
         return super(CheckMatrixDialog, self)._run_dialog()
-
         
     def _customize_result(self, result):
         if self._button_label(result) == self.BUTTON_OK:
@@ -1296,13 +1300,13 @@ class AggregationSetupDialog(GenericDialog):
                                           tooltip=_("Enter the name for saving the view, or "
                                                     "leave empty, if you prefer not to save it."))
         box = wx.BoxSizer(wx.HORIZONTAL)
-        box.Add(wx.StaticText(self._dialog, -1, _("Title")+':'), wx.ALL, 3)
+        box.Add(wx.StaticText(self._dialog, -1, _("Title") + ':'), wx.ALL, 3)
         box.Add(self._name_control)
-        sizer.Add(box, 0, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(box, 0, wx.EXPAND | wx.ALL, 5)
         panel = wx.ScrolledWindow(self._dialog, style=wx.TAB_TRAVERSAL)
         panel.SetScrollRate(20, 20)
-        self._grid = grid = wx.FlexGridSizer(len(self._columns)+1,
-                                             len(self._aggregation_functions)+2, 2, 6)
+        self._grid = grid = wx.FlexGridSizer(len(self._columns) + 1,
+                                             len(self._aggregation_functions) + 2, 2, 6)
         self._grouping_controls = []
         self._aggregation_controls = []
         for label in ['', _("Group by")] + [x[1] for x in self._aggregation_functions]:
@@ -1342,7 +1346,7 @@ class AggregationSetupDialog(GenericDialog):
                 grid.Add(checkbox)
                 self._aggregation_controls.append(((column_id, operation), checkbox))
         panel.SetSizer(grid)
-        sizer.Add(panel, 1, wx.EXPAND|wx.ALL, 5)
+        sizer.Add(panel, 1, wx.EXPAND | wx.ALL, 5)
 
     def _on_collapsiblepane_changed(self, event):
         self._grid.Layout()
@@ -1368,7 +1372,8 @@ class AggregationSetupDialog(GenericDialog):
             self._aggregation_columns = [spec for spec, checkbox in self._aggregation_controls
                                          if checkbox.IsChecked()]
             if not self._group_by_columns:
-                run_dialog(Warning, _("You need to select at least one grouping column."))
+                pytis.form.run_dialog(Warning,
+                                      _("You need to select at least one grouping column."))
                 return
         return super(AggregationSetupDialog, self)._on_button(event)
 
@@ -1427,8 +1432,8 @@ class ExitDialog(Question):
             self._checklist = _CheckListCtrl(self._dialog, self._save_columns, self._save_items)
             self._checkbox = wx.CheckBox(self._dialog, -1, self._save_label)
             self._checkbox.SetValue(self._save_state)
-            sizer.Add(self._checklist, 1, wx.EXPAND|wx.ALL, 5)
-            sizer.Add(self._checkbox, 0, wx.ALL|wx.ALIGN_LEFT, 5)
+            sizer.Add(self._checklist, 1, wx.EXPAND | wx.ALL, 5)
+            sizer.Add(self._checkbox, 0, wx.ALL | wx.ALIGN_LEFT, 5)
         
     def _customize_result(self, result):
         exit = super(ExitDialog, self)._customize_result(result)
@@ -1446,14 +1451,14 @@ class FileDialog(Dialog):
 
     """
     OPEN = 'OPEN'
-    """Konstanta určující dialog pro otevření existujícího souboru."""  
+    """Konstanta určující dialog pro otevření existujícího souboru."""
     SAVE = 'SAVE'
-    """Konstanta určující dialog pro zadání jména souboru pro uložení."""  
+    """Konstanta určující dialog pro zadání jména souboru pro uložení."""
 
     _last_directory = {}
 
     def __init__(self, parent, title=None, dir=None, file=None, mode=OPEN,
-                 wildcards=(_("All files")+" (*.*)|*.*",),
+                 wildcards=(_("All files") + " (*.*)|*.*",),
                  multi=False, overwrite_prompt=True):
         """Inicializuj dialog.
 
@@ -1570,5 +1575,3 @@ class DirDialog(Dialog):
             return path
         else:
             return None
-
-

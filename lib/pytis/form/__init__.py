@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2009, 2011 Brailcom, o.p.s.
+# Copyright (C) 2001-2009, 2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,7 @@ specifikace jednotlivých prvků rozhraní.
 
 """
 
-from pytis.util import *
-from pytis.presentation import *
+import os
 
 if 'WXVER' in os.environ:
     version = os.environ["WXVER"]
@@ -64,6 +63,7 @@ from output import *
 from application import *
 from configui import *
 from commands_ import *
+from managers import *
 import _grid
 
 list_ = list

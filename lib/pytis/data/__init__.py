@@ -30,8 +30,6 @@ zdroji.  Modul zavádí:
 
 """
 
-from pytis.util import *
-
 from types_ import *
 from data import *
 from access import *

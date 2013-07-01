@@ -28,40 +28,46 @@ konfiguračních voleb obsažených v tomto layoutu.
 
 """
 
-from pytis.form import *
+import wx
+
+from pytis.presentation import Field, LayoutSpec, LVGroup, VGroup, ViewSpec
+import pytis.util
+from form import PopupEditForm
+from screen import MItem
+import config
 
 _ = pytis.util.translations('pytis-wx')
 
 _LAYOUT = (
     ('ui', LayoutSpec(_("User interface settings"), VGroup(
-    LVGroup(_("Colors"),
-            LVGroup(_("Current table row highlight"),
-                    'row_highlight_color',
-                    'row_highlight_edited_color',
-                    'row_highlight_unfocused_color',
-                    'row_highlight_width',
-                    ),
-            'cell_highlight_color',
-            'grid_line_color',
-            'grouping_background_downgrade',
-            'field_disabled_color',
-            'field_denied_color',
-            'field_invalid_color',
-            ),
-    LVGroup(_("Behavior"),
-            'stretch_tables',
-            'show_tooltips',
-            'auto_menu_accel',
-            'show_splash',
-            'cache_spec_onstart',
-            'rpc_communication_enabled',
-            'rpc_remote_view',
-            ),
-    LVGroup(_("Other"),
-            'sender_address'),
+        LVGroup(_("Colors"),
+                LVGroup(_("Current table row highlight"),
+                        'row_highlight_color',
+                        'row_highlight_edited_color',
+                        'row_highlight_unfocused_color',
+                        'row_highlight_width',
+                        ),
+                'cell_highlight_color',
+                'grid_line_color',
+                'grouping_background_downgrade',
+                'field_disabled_color',
+                'field_denied_color',
+                'field_invalid_color',
+                ),
+        LVGroup(_("Behavior"),
+                'stretch_tables',
+                'show_tooltips',
+                'auto_menu_accel',
+                'show_splash',
+                'cache_spec_onstart',
+                'rpc_communication_enabled',
+                'rpc_remote_view',
+                ),
+        LVGroup(_("Other"),
+                'sender_address'),
     ))),
     ('export', LayoutSpec(_("Export settings"),
-                          VGroup('export_directory','export_encoding')),
+                          VGroup('export_directory', 'export_encoding')),
      ))
 
 _LABELS = {
@@ -157,7 +163,6 @@ class _ConfigData(pytis.data.RestrictedData):
         new_row = self.fetchone()
         return new_row, True
         
-        
 
 class ConfigForm(PopupEditForm):
     """Formulář pro editaci konfiguračních voleb.
@@ -206,4 +211,3 @@ class ConfigForm(PopupEditForm):
                       command=self.COMMAND_COMMIT_RECORD(close=False))
         buttons = super(ConfigForm, self)._buttons()
         return (buttons[0], button) + buttons[1:]
-    
