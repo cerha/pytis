@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-27 10:36+0200\n"
+"POT-Creation-Date: 2013-07-02 12:13+0200\n"
 "PO-Revision-Date: 2011-12-29 14:56+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Hungarian <wiking@lists.freebsoft.org>\n"
@@ -32,12 +32,12 @@ msgstr ""
 msgid "Database connection error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:181 ../lib/pytis/data/pgsql.py:83
-#: ../lib/pytis/data/pgsql.py:90
+#: ../lib/pytis/data/dbapi.py:181 ../lib/pytis/data/pgsql.py:87
+#: ../lib/pytis/data/pgsql.py:94
 msgid "Database operational error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:185 ../lib/pytis/data/pgsql.py:95
+#: ../lib/pytis/data/dbapi.py:185 ../lib/pytis/data/pgsql.py:99
 msgid "Database integrity violation"
 msgstr ""
 
@@ -53,11 +53,11 @@ msgstr ""
 msgid "Invalid user name or password"
 msgstr ""
 
-#: ../lib/pytis/data/pgsql.py:56
+#: ../lib/pytis/data/pgsql.py:60
 msgid "Unable to connect to the database"
 msgstr ""
 
-#: ../lib/pytis/data/pgsql.py:65
+#: ../lib/pytis/data/pgsql.py:69
 msgid "Query arguments unsupported by the pgsql backend"
 msgstr ""
 
@@ -75,51 +75,51 @@ msgid "Invalid database counter value"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:159
+#: ../lib/pytis/data/types_.py:162
 msgid "Empty value"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:161
+#: ../lib/pytis/data/types_.py:164
 msgid "Invalid value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:394
+#: ../lib/pytis/data/types_.py:396
 #, python-format
 msgid "Wildcard matching not supported for values of type '%s'."
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:528
+#: ../lib/pytis/data/types_.py:530
 #, python-format
 msgid "Minimal value is %(minimum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:531
+#: ../lib/pytis/data/types_.py:533
 #, python-format
 msgid "Maximal value is %(maximum)s"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:608
+#: ../lib/pytis/data/types_.py:610
 #, python-format
 msgid "Minimal size %(minlen)s not satisfied"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:611
+#: ../lib/pytis/data/types_.py:613
 #, python-format
 msgid "Maximal length %(maxlen)s characters exceeded"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:713
+#: ../lib/pytis/data/types_.py:715
 msgid "Not an integer"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:821
+#: ../lib/pytis/data/types_.py:823
 msgid "Invalid number"
 msgstr ""
 
@@ -130,7 +130,7 @@ msgid "Minimal length %(minlen)s characters not satisfied"
 msgstr ""
 
 #. User input validation error message.
-#: ../lib/pytis/data/types_.py:956 ../lib/pytis/data/types_.py:2000
+#: ../lib/pytis/data/types_.py:956 ../lib/pytis/data/types_.py:2002
 #, python-format
 msgid "Maximal size %(maxlen)s exceeded"
 msgstr ""
@@ -190,43 +190,43 @@ msgstr ""
 msgid "Date outside the allowed range"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:1965
+#: ../lib/pytis/data/types_.py:1967
 msgid "Invalid boolean type input value"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2046
+#: ../lib/pytis/data/types_.py:2048
 #, python-format
 msgid "Not a buffer object: %r"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2182
+#: ../lib/pytis/data/types_.py:2184
 #, python-format
 msgid "Maximal pixel size %(maxsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2184
+#: ../lib/pytis/data/types_.py:2186
 #, python-format
 msgid "Minimal pixel size %(minsize)s exceeded"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2186
+#: ../lib/pytis/data/types_.py:2188
 #, python-format
 msgid "Unsupported format %(format)s; valid formats: %(formats)s"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2202
+#: ../lib/pytis/data/types_.py:2204
 msgid "Invalid graphics format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2307
+#: ../lib/pytis/data/types_.py:2309
 msgid "Invalid hierarchical value format"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2309
+#: ../lib/pytis/data/types_.py:2311
 msgid "One of hierarchical value items is too long"
 msgstr ""
 
-#: ../lib/pytis/data/types_.py:2311
+#: ../lib/pytis/data/types_.py:2313
 msgid "One of hierarchical value items contains invalid characters"
 msgstr ""
 
