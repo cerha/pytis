@@ -131,6 +131,7 @@ def localizable_export(value):
             return lcg.Decimal(value.value())
         else:
             return value.export()
+        # BUG: There is no `localizable' defined here!
         return localizable
     else:
         return ''

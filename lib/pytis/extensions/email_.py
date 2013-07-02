@@ -21,13 +21,10 @@
 Do tohoto modulu patří pomocné funkce a třídy pro práci s email zprávami.
 """
 
-import sys
 import os
 import mimetypes
 import email
-import types
 import pytis.util
-from email import Encoders
 from email.Message import Message
 from email.MIMEAudio import MIMEAudio
 from email.MIMEBase import MIMEBase
@@ -62,7 +59,8 @@ class SimpleEmail(object):
           bcc -- adresa příjemce pro bcc nebo sekvence adres
           replyto -- adresa odesilatele pro zaslání odpovědi
           smtp -- adresa odesílacího serveru
-        """  
+        
+        """
         assert isinstance(to, (basestring, tuple, list))
         assert bcc is None or isinstance(bcc, (basestring, tuple, list))
         assert isinstance(from_, basestring)
@@ -81,7 +79,7 @@ class SimpleEmail(object):
     def create_message(self):
         self._create_message()
         self.create_headers()
-        self.create_content()      
+        self.create_content()
 
     def _create_message(self):
         """Return basic instance of Message."""
@@ -108,7 +106,7 @@ class SimpleEmail(object):
             if isinstance(to, basestring):
                 to = [to]
             if isinstance(bcc, basestring):
-                bcc = [bcc]                
+                bcc = [bcc]
             return to + bcc
         
     def create_headers(self):
@@ -117,6 +115,7 @@ class SimpleEmail(object):
                 # Not unicode
                 try:
                     test = unicode(header, 'us-ascii')
+                    test # to make flake8 happy
                     make_header = False
                 except:
                     make_header = True
@@ -154,8 +153,8 @@ class SimpleEmail(object):
             
     def create_content(self):
         pass
-        # mime_text = self.get_content_text(self.content, html=self.html, charset=self.charset)        
-        # self.msg.attach(mime_text) 
+        # mime_text = self.get_content_text(self.content, html=self.html, charset=self.charset)
+        # self.msg.attach(mime_text)
 
     def get_message(self):
         self.create_message()
@@ -178,13 +177,13 @@ class SimpleEmail(object):
             return False
         try:
             server.sendmail(self.from_, self.smtp_to(), message)
-        except smtplib.SMTPRecipientsRefused:            
+        except smtplib.SMTPRecipientsRefused:
             self._error_msg = "%s: %s" % (self.ERR_RECIPIENT, self.smtp_to())
             success = False
         except smtplib.SMTPSenderRefused:
             self._error_msg = "%s: %s" % (self.ERR_SENDER, self.from_)
             success = False
-        except smtplib.SMTPHeloError:            
+        except smtplib.SMTPHeloError:
             self._error_msg = self.ERR_HELO
             success = False
         except smtplib.SMTPDataError:
@@ -207,7 +206,7 @@ class GPGEmail(SimpleEmail):
     ERR_GPG_KEYRING = _(u"Could not create a temporary GPG keyring")
     ERR_GPG_OUTPUT = _(u"GPG process did not return string.")
     
-    def __init__(self, to, from_, subject, content, key, html=False, 
+    def __init__(self, to, from_, subject, content, key, html=False,
                  smtp='localhost', charset='iso-8859-2'):
         """Inicializuj instanci.
         
@@ -221,7 +220,7 @@ class GPGEmail(SimpleEmail):
           charset -- v případě, že content není v unicode, je zde uveden charset pro content
         """
         super(GPGEmail, self).__init__(to, from_, subject, content, html=html,
-                                           smtp=smtp, charset=charset)
+                                       smtp=smtp, charset=charset)
         self.key = key
 
     def _create_message(self):
@@ -231,7 +230,8 @@ class GPGEmail(SimpleEmail):
     def _setup_gpg(self):
         "Setup GPG process. Returns initialized gpg instance."
         try:
-            import tempfile, GnuPGInterface
+            import tempfile
+            import GnuPGInterface
         except:
             self._error_msg = self.ERR_GPG_MODULE
             return None
@@ -253,7 +253,7 @@ class GPGEmail(SimpleEmail):
         proc = gpg.run(['--import'], create_fhs=['stdin', 'stderr'])
         proc.handles['stdin'].write(self.key)
         proc.handles['stdin'].close()
-        out = proc.handles['stderr'].read()
+        proc.handles['stderr'].read()
         proc.handles['stderr'].close()
         proc.wait()
         return gpg
@@ -272,18 +272,19 @@ class GPGEmail(SimpleEmail):
                 to.append(t.encode('UTF-8'))
         else:
             to = self.to
-        content = self.get_content_text(self.content, html=self.html,
-                                                   charset=self.charset)
-        gpg.options.recipients = to   # a list or tuple!        
-        proc = gpg.run(['--encrypt'], create_fhs=['stdin', 'stdout'])        
+        content = self.get_content_text(self.content, html=self.html, charset=self.charset)
+        gpg.options.recipients = to   # a list or tuple!
+        proc = gpg.run(['--encrypt'], create_fhs=['stdin', 'stdout'])
         proc.handles['stdin'].write(content.as_string())
         proc.handles['stdin'].close()
         output = proc.handles['stdout'].read()
-        proc.handles['stdout'].close()        
+        proc.handles['stdout'].close()
         proc.wait()
         success = True
         if not isinstance(output, basestring):
             success = False
+        # BUG: There is no `keyring' defined here so the following
+        # statement is effectively void:
         try:
             os.remove(keyring)
         except:
@@ -291,28 +292,28 @@ class GPGEmail(SimpleEmail):
         if not success:
             raise pytis.util.ProgramError(self.ERR_GPG_OUTPUT)
         else:
-            return output    
+            return output
 
     def create_headers(self):
         super(GPGEmail, self).create_headers()
-        self.msg["Mime-version"]="1.0"
-        self.msg["Content-type"]="Multipart/encrypted"
-        self.msg["Content-transfer-encoding"]="8bit"
-        self.msg.preamble="This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)"       
+        self.msg["Mime-version"] = "1.0"
+        self.msg["Content-type"] = "Multipart/encrypted"
+        self.msg["Content-transfer-encoding"] = "8bit"
+        self.msg.preamble = "This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)"
        
     def create_content(self):
         # Part 1
-        firstSubMsg=email.Message.Message()
-        firstSubMsg["Content-Type"]="application/pgp-encrypted"
-        firstSubMsg["Content-Description"]="PGP/MIME version identification"
+        firstSubMsg = email.Message.Message()
+        firstSubMsg["Content-Type"] = "application/pgp-encrypted"
+        firstSubMsg["Content-Description"] = "PGP/MIME version identification"
         firstSubMsg.set_payload("Version: 1\n")
         # Part 2
         if self.html:
             filename = 'content.html.pgp'
         else:
-            filename = 'content.txt.pgp'            
+            filename = 'content.txt.pgp'
         encrypted = self._gpg_encrypt_content()
-        secondSubMsg=email.Message.Message()
+        secondSubMsg = email.Message.Message()
         secondSubMsg.add_header("Content-Type", "application/octet-stream",
                                 name=filename)
         secondSubMsg.add_header("Content-Description",
@@ -341,10 +342,11 @@ class ComplexEmail(SimpleEmail):
           bcc -- adresa příjemce pro bcc nebo sekvence adres
           replyto -- adresa odesilatele pro zaslání odpovědi
           smtp -- adresa odesílacího serveru
-        """  
+        
+        """
         super(ComplexEmail, self).__init__(to, from_, subject, content, html=html,
                                            bcc=bcc, replyto=replyto, smtp=smtp, charset=charset)
-        self.parts = []        
+        self.parts = []
 
     def _create_message(self):
         self.msg = MIMEMultipart()
@@ -376,9 +378,9 @@ class ComplexEmail(SimpleEmail):
         maintype, subtype = ctype.split('/', 1)
         if maintype == 'text':
             # Note: we should handle calculating the charset
-            if not charset: charset = self.charset
-            content = MIMEText(data, _subtype=subtype,
-                               _charset=charset)
+            if not charset:
+                charset = self.charset
+            content = MIMEText(data, _subtype=subtype, _charset=charset)
         elif maintype == 'image':
             content = MIMEImage(data, _subtype=subtype)
         elif maintype == 'audio':
@@ -392,7 +394,7 @@ class ComplexEmail(SimpleEmail):
     def add_content_text(self, data, html=False, charset=None):
         """Přidá text nebo html jako MIME část."""
         content = self.get_content_text(data, html=html, charset=charset)
-        self.parts.append(content)        
+        self.parts.append(content)
     
     def add_content_data(self, data, filename, charset=None):
         """Přidá data jako přílohu emailu."""
@@ -410,7 +412,7 @@ class ComplexEmail(SimpleEmail):
         # Guess the content type based on the file's extension.  Encoding
         # will be ignored, although we should check for simple things like
         # gzip'd or compressed files.
-        ctype, encoding = mimetypes.guess_type(path)        
+        ctype, encoding = mimetypes.guess_type(path)
         if ctype is None or encoding is not None:
             # No guess could be made, or the file is encoded (compressed), so
             # use a generic bag-of-bits type.
@@ -420,19 +422,19 @@ class ComplexEmail(SimpleEmail):
             mode = 'r'
         else:
             mode = 'rb'
-        try:    
-            fp = open(path)
+        try:
+            fp = open(path, mode)
             data = fp.read()
             fp.close()
         except:
             data = None
-        if data:    
+        if data:
             self.add_content_data(data, filename, charset)
-        return    
+        return
     
     def create_content(self):
         if self.content:
             self.msg.attach(self.get_content_text(self.content, html=self.html,
-                                                   charset=self.charset)) 
+                                                  charset=self.charset))
         for part in self.parts:
             self.msg.attach(part)
