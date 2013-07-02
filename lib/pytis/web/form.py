@@ -830,6 +830,15 @@ class BrowseForm(LayoutForm):
                            pytis.data.DESCENDANT: 'desc'}
     _NULL_FILTER_ID = '-'
 
+    class FormRecord(pytis.presentation.PresentedRow):
+
+        def __init__(self, req, *args, **kwargs):
+            self._req = req
+            super(BrowseForm.FormRecord, self).__init__(*args, **kwargs)
+
+        def req(self):
+            return self._req
+
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
                  columns=None, sorting=None, grouping=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
@@ -1164,14 +1173,19 @@ class BrowseForm(LayoutForm):
             fields_specs = self._view.query_fields().fields()
             columns = []
             for fspec in fields_specs:
-                ftype = fspec.type() or pytis.data.String
+                ftype = fspec.type() or pytis.data.String()
                 if type(ftype) == type(pytis.data.Type):
-                    ftype = ftype(**fspec.type_kwargs())
+                    ftype = ftype()
+                ftype = ftype.clone(ftype.__class__(**fspec.type_kwargs()))
+                    
                 columns.append(pytis.data.ColumnSpec(fspec.id(), ftype))
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
-            row = PresentedRow(fields_specs, data, None, resolver=self._row.resolver(), new=True)
+            row = self.FormRecord(self._req, fields_specs, data, None,
+                                  resolver=self._row.resolver(), new=True)
             locale_data = lcg.Localizer(self._lang).locale_data()
             for f in fields_specs:
+                if not row.visible(f.id()):
+                    continue
                 field = Field.create(row, f, self, self._uri_provider)
                 cookie = 'pytis-query-field-%s-%s' % (self._name, field.id)
                 if req.param('list-form-controls-submitted'):
@@ -1639,9 +1653,14 @@ class BrowseForm(LayoutForm):
             filter_content = []
             for field in self._query_fields:
                 exported_field = self._export_field(context, field, editable=True)
-                exported_label = g.label(field.label, field.html_id())
+                if field.label:
+                    exported_label = g.label(field.label, field.html_id())
+                    if field.label_in_front():
+                        exported_label += ':'
+                else:
+                    exported_label = ''
                 if field.label_in_front():
-                    filter_content.extend((exported_label+':', exported_field))
+                    filter_content.extend((exported_label, exported_field))
                 else:
                     filter_content.extend((exported_field, exported_label))
             for filter_set in self._filter_sets:

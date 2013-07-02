@@ -2412,7 +2412,7 @@ class StructuredTextField(TextField):
         else:
             resources = ()
         content = lcg.Container(lcg.Parser().parse(self._get_value()))
-        node = lcg.ContentNode('export', title=_(u"Náhled"), content=content,
+        node = lcg.ContentNode('export', title=_("Preview"), content=content,
                                resource_provider=lcg.ResourceProvider(dirs=(), resources=resources))
         exporter = lcg.pdf.PDFExporter() #translations=cfg.translation_path)
         context = exporter.context(node, 'cs')
@@ -2573,37 +2573,36 @@ class StructuredTextField(TextField):
             Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX),
-            Field('preview', _(u"Náhled"), codebook='cms.Attachments', compact=True,
+            Field('preview', _("Preview"), codebook='cms.Attachments', compact=True,
                   computer=computer(self._image_preview_computer), width=200, height=200,
                   editable=pytis.presentation.Editable.NEVER,
                   type=pytis.data.Image(not_null=True, maxlen=5 * 1024 * 1024),
-                  descr=_(u"Vyberte jeden z dostupných souborů, "
-                          u"nebo vložte nový z vašeho počítače.")),
-            Field('size', _(u"Zobrazit ve stránce jako"), enumerator=self.ImageSizes,
+                  descr=_("Choose one of available files "
+                          "or insert a new file from your computer.")),
+            Field('size', _("Display in page as"), enumerator=self.ImageSizes,
                   selection_type=pytis.presentation.SelectionType.RADIO,
                   editable=pytis.presentation.Editable.ALWAYS,
                   computer=computer(self._size_computer),
-                  descr=_(u"Vyberte jeden z uvedených způsobů zobrazení obrázku ve stránce. "
-                          u"Při použití náhledu se po kliknutí zobrazí zvětšená podoba "
-                          u"obrázku.")),
-            Field('orig_size', _(u"Velikost originálu"),
+                  descr=_("Choose the size and behavior of the image within the page.")),
+            Field('orig_size', _("Original size"),
                   computer=computer(self._orig_size_computer)),
-            Field('preview_size', _(u"Velikost náhledu"),
+            Field('preview_size', _("Preview size"),
                   computer=computer(self._preview_size_computer)),
-            Field('resize', _(u"Poměr zmenšení"),
+            Field('resize', _("Resize ratio"),
                   computer=computer(self._resize_computer)),
-            Field('align', _(u"Zarovnání"), not_null=True,
+            Field('align', _("Alignment"), not_null=True,
                   enumerator=self.ImageAlignments),
             #Field('title', _(u"Název"), width=50,
             #      descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
             #              u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
             #              u"předchozím políčku.")),
-            Field('tooltip', _(u"Tooltip"), width=50,
-                  descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
-        )
-        button = pytis.presentation.Button(_(u"Vložit nový"), self._load_new_file)
+            Field('tooltip', _("Tooltip"), width=50,
+                  descr=_("Enter the text displayed in baloon help above "
+                          "the image when the mouse moves over.")),
+            )
+        button = pytis.presentation.Button(_("Insert new"), self._load_new_file)
         Columns = pytis.presentation.ColumnLayout
-        row = run_form(pytis.form.InputForm, title=_(u"Vložit obrázek"), fields=fields,
+        row = run_form(pytis.form.InputForm, title=_("Insert Image"), fields=fields,
                        prefill=dict(filename=filename,
                                     align=link.align(),
                                     tooltip=link.tooltip()),
@@ -2634,17 +2633,18 @@ class StructuredTextField(TextField):
             # TODO: Warn the user?
             filename = None
         fields = (
-            Field('filename', _(u"Dostupné soubory"), height=7, not_null=True,
+            Field('filename', _("Available files"), height=7, not_null=True,
                   compact=True, width=25, enumerator=enumerator,
                   selection_type=pytis.presentation.SelectionType.LIST_BOX),
             Field('title', _(u"Title"), width=50,
-                  descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
-                          u"prázdné, pokud chcete zobrazit přímo název souboru.")),
+                  descr=_("Enter the link label displayed within document text. "
+                          "Leave empty if you want to dispaly the file name directly.")),
             Field('tooltip', _(u"Tooltip"), width=50,
-                  descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
-        )
-        button = pytis.presentation.Button(_(u"Vložit nový"), self._load_new_file)
-        row = run_form(pytis.form.InputForm, title=_(u"Vložit přílohu"), fields=fields,
+                  descr=_("Enter the text displayed in baloon help above the "
+                          "link when the mouse moves over.")),
+            )
+        button = pytis.presentation.Button(_("Insert new"), self._load_new_file)
+        row = run_form(pytis.form.InputForm, title=_("Insert attachment"), fields=fields,
                        prefill=dict(filename=filename,
                                     title=link.title(),
                                     tooltip=link.tooltip()),
@@ -2658,18 +2658,18 @@ class StructuredTextField(TextField):
     def _cmd_link(self):
         link = self.LCGLink(self._ctrl)
         fields = (
-            Field('target', _(u"Cíl"), width=50, not_null=True,
-                  descr=_(u"Zadejte absolutní URL ve tvaru např. "
-                          u"http://www.mojefirma.com nebo\n"
-                          u"lokální adresu jako např. identifikátor jiné stránky v CMS.")),
-            Field('title', _(u"Title"), width=50,
-                  descr=_(u"Zadejte název zobrazený v textu dokumentu.  Ponechte\n"
-                          u"prázdné, pokud chcete zobrazit přímo URL zadané v \n"
-                          u"předchozím políčku.")),
+            Field('target', _("Target"), width=50, not_null=True,
+                  descr=_("Enter the absolute URL, such as "
+                          "http://www.mycompany.com or "
+                          "a local link, such as an identifier of another page in the CMS.")),
+            Field('title', _("Title"), width=50,
+                  descr=_("Enter the link label displayed within the document text. "
+                          "Leave empty if you want to dispaly the target URL directly.")),
             Field('tooltip', _(u"Tooltip"), width=50,
-                  descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
-        )
-        row = run_form(pytis.form.InputForm, title=_(u"Zadejte parametry odkazu"), fields=fields,
+                  descr=_("Enter the text displayed in baloon help above the link "
+                          "when the mouse moves over.")),
+            )
+        row = run_form(pytis.form.InputForm, title=_("Link properties"), fields=fields,
                        prefill=dict(target=link.target(),
                                     title=link.title(),
                                     tooltip=link.tooltip()))

@@ -103,12 +103,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     
     _STATUS_FIELDS = ('list-position', 'data-changed')
 
-    _AGGREGATIONS = ((pytis.data.Data.AGG_SUM, _(u"Součet"), 'agg-sum', _('Součet:')),
-                     (pytis.data.Data.AGG_AVG, _(u"Průměr"), 'agg-avg', _('Průměr:')),
-                     (pytis.data.Data.AGG_MIN, _(u"Minimum"), 'agg-min', _('Min:')),
-                     (pytis.data.Data.AGG_MAX, _(u"Maximum"), 'agg-max', _('Max:')))
+    _AGGREGATIONS = ((pytis.data.Data.AGG_SUM, _("Sum"), 'agg-sum', _("Sum:")),
+                     (pytis.data.Data.AGG_AVG, _("Average"), 'agg-avg', _("Avg:")),
+                     (pytis.data.Data.AGG_MIN, _("Minimum"), 'agg-min', _("Min:")),
+                     (pytis.data.Data.AGG_MAX, _("Maximum"), 'agg-max', _("Max:")))
     
-    DESCR = _(u"řádkový formulář")
+    DESCR = _("row form")
 
     def _full_init(self, *args, **kwargs):
         self._grid = None
@@ -446,17 +446,17 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                    **query_fields.view_spec_kwargs())
             self._query_fields_form = form
             self._query_fields_apply_button = apply_button = \
-                wx_button(panel, label=_(u"Aplikovat"),
-                          tooltip=_(u"Přenačíst data formuláře dle aktuálních hodnot"),
+                wx_button(panel, label=_("Apply"),
+                          tooltip=_("Reload form data with current query field values."),
                           enabled=not query_fields.autoapply(),
                           callback=self._on_apply_query_fields)
             self._query_fields_panel_buttons = panel_buttons = (
-                wx_button(panel, label=_(u"Minimalizovat"),
-                          tooltip=_(u"Minimalizovat/maximalizovat panel dotazu"),
+                wx_button(panel, label=_("Minimize"),
+                          tooltip=_("Minimize/maximize query panel."),
                           icon='minimize-down', noborder=True,
                           callback=self._on_minimize_query_fields),
-                wx_button(panel, label=_(u"Přesunout nahoru"),
-                          tooltip=_(u"Přesunout panel dotazu na horní/dolní okraj formuláře"),
+                wx_button(panel, label=_("Move up"),
+                          tooltip=_("Move the query panel to the top/bottom edge of the form."),
                           icon='move-up', noborder=True,
                           callback=self._on_move_query_fields))
             panel_sizer = wx.BoxSizer()
@@ -551,19 +551,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _edit_menu(self):
         return (
-            MItem(_(u"Editovat buňku"),
+            MItem(_("Edit cell"),
                   command=ListForm.COMMAND_EDIT,
-                  help=_(u"Otevřít vstupní políčko pro tuto hodnotu.")),
-            MItem(_(u"Uložit záznam"),
+                  help=_("Enter the input field for this value.")),
+            MItem(_("Save Record"),
                   command=ListForm.COMMAND_LINE_COMMIT,
-                  help=_(u"Ukončit editaci s uložením záznamu.")),
-            MItem(_(u"Opustit editaci"),
+                  help=_("Save the record and leave editation.")),
+            MItem(_("Quit editation"),
                   command=ListForm.COMMAND_FINISH_EDITING,
-                  help=_(u"Ukončit editaci bez uložení záznamu.")),
+                  help=_("Leave editation without saving the record.")),
             MSeparator(),
-            MItem(_(u"Kopírovat obsah buňky"),
+            MItem(_("Copy cell content"),
                   command=ListForm.COMMAND_COPY_CELL,
-                  help=_(u"Zkopírovat hodnotu do schránky.")),
+                  help=_("Copy the value into the clipboard.")),
             #MItem("", command = ListForm.COMMAND_LINE_ROLLBACK),
         )
 
@@ -571,7 +571,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         def labelfunc(c):
             label = c.column_label()
             if c not in self._columns and label:
-                label += _(u" (skrytý)")
+                label += _(" (hidden)")
             return label
         return sfs_columns(self._fields, self._data, labelfunc=labelfunc)
 
@@ -584,27 +584,27 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                    if isinstance(self._row.type(c.id()), pytis.data.String)]
         self._search_panel_controls = controls = (
             wx_choice(panel, columns, selected=self._columns[self._current_cell()[1]],
-                      tooltip=_(u"Zvolte sloupec, ve kterém chcete vyhledávat (inkrementální "
-                                u"vyhledávání je možné pouze nad sloupci s řetězcovými "
-                                u"hodnotami)."),
+                      tooltip=_("Choose the column to search in (incremental search " +
+                                "is only possible in text columns)."),
                       height=HEIGHT),
-            wx_text_ctrl(panel, tooltip=_(u"Zadejte hledaný text."),
+            wx_text_ctrl(panel, tooltip=_("Enter the text search for."),
                          on_text=lambda e: self._incremental_search(newtext=True),
                          on_key_down=self._on_incremental_search_key_down, height=HEIGHT),
-            wx_button(panel, icon=wx.ART_GO_BACK, height=HEIGHT, tooltip=_(u"Najít předchozí"),
+            wx_button(panel, icon=wx.ART_GO_BACK, height=HEIGHT, tooltip=_("Find previous"),
                       command=self.COMMAND_SEARCH(next=True, back=True)),
-            wx_button(panel, icon=wx.ART_GO_FORWARD, height=HEIGHT, tooltip=_(u"Najít následující"),
+            wx_button(panel, icon=wx.ART_GO_FORWARD, height=HEIGHT, tooltip=_("Find next"),
                       command=self.COMMAND_SEARCH(next=True)),
-            wx_checkbox(panel, label=_(u"hledat i uvnitř řetězce"),
-                        tooltip=_(u"Zaškrtněnte, pokud chcete vyhledávat kdekoliv uvnitř řetězců. "
-                                  u"Jinak bude vyhledáváno pouze od počátku řetězce."),
+            wx_checkbox(panel, label=_("search also inside values"),
+                        tooltip=_("Check if you want to search anywhere inside the value. "
+                                  "Otherwise the substring is only searched at the start "
+                                  "of the string."),
                         checked=full),
-            wx_checkbox(panel, label=_(u"rozlišovat velikost písmen"),
-                        tooltip=_(u"Zaškrtněnte, pokud chcete aby vyhledávání respektovalo malá a "
-                                  u"velká písmena."),
+            wx_checkbox(panel, label=_("case sensitive"),
+                        tooltip=_("Check if you want to distinguish "
+                                  "lower and upper case letters."),
                         checked=False),
-            wx_button(panel, label=_(u"Skrýt"), tooltip=_(u"Skrýt vyhledávací panel"),
-                      icon='close', noborder=True,
+            wx_button(panel, label=_("Hide"), tooltip=_("Hide the search panel"),
+                      icon='close', noborder=True,                      
                       callback=lambda e: self._exit_incremental_search()),
         )
         sizer = wx.BoxSizer()
@@ -658,7 +658,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         found = self._search(condition, direction, row_number=row, report_failure=False,
                              initial_shift=newtext)
         if found is None:
-            message(_(u"Další záznam nenalezen"), beep_=True)
+            message(_("No next matching record"), beep_=True)
         else:
             if direction == pytis.data.FORWARD:
                 new_row = row + found
@@ -751,7 +751,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return True
         self._in_select_cell = True
         if __debug__:
-            log(DEBUG, 'Přechod na buňku gridu:', (row, col))
+            log(DEBUG, 'Grid cell move:', (row, col))
         self._table.number_of_rows(min_value=1)
         try:
             g = self._grid
@@ -761,7 +761,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 assert isinstance(row, types.IntType)
                 # Zkontroluj případné opuštění editace
                 if not self._finish_editing(row=row):
-                    log(EVENT, 'Zamítnuto opuštění editace řádku')
+                    log(EVENT, 'Quitting editation not confirmed')
                     return False
                 else:
                     if row >= g.GetNumberRows():
@@ -790,7 +790,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 g.SetGridCursor(current_row, col)
                 g.MakeCellVisible(current_row, col)
             if __debug__:
-                log(DEBUG, 'Výběr buňky proveden:', (row, col))
+                log(DEBUG, 'Cell selected:', (row, col))
             return True
         finally:
             self._in_select_cell = False
@@ -803,10 +803,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             self._init_col_attr()
         row, col = self._current_cell()
         if self._view.on_edit_record() is not None:
-            message(_(u"In-line editace zakázána.  Použijte formulář (F5)."), beep_=True)
+            message(_("In-line editation disabled.  Use a standalone form (F5)."), beep_=True)
             return False
         if not self._is_editable_cell(row, col):
-            message(_(u"Políčko je needitovatelné"), kind=ACTION, beep_=True)
+            message(_("Field not editable."), kind=ACTION, beep_=True)
             return False
         self._grid.EnableCellEditControl()
         log(EVENT, 'Grid field editor started:', (row, col))
@@ -829,42 +829,42 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             return True
         if not editing.the_row.changed():
             if __debug__:
-                log(DEBUG, 'Odchod z needitovaného řádku povolen')
+                log(DEBUG, 'Quit unchanged row editation enabled.')
             self._on_line_rollback()
             finish = True
         else:
-            log(EVENT, 'Pokus o odchod z rozeditovaného řádku seznamu')
-            if question is None:
-                question = _(u"Zrušit změny záznamu?")
+            log(EVENT, 'Quit unsaved edited record attempted.')
+            if question == None:
+                question = _("Revoke your changes?")
             buttons = bcancel, bsave, bcontinue = \
-                _(u"Zrušit změny"), _(u"Uložit"), _(u"Pokračovat v editaci")
+                      _("Revoke"), _("Save"), _("Continue editation")
             result = run_dialog(MultiQuestion, question, buttons=buttons, default=bsave)
             finish = (result != bcontinue)
             if result == bcancel:
-                log(EVENT, 'Odchod uživatelem povolen')
+                log(EVENT, 'Quit confirmed by user')
                 self._on_line_rollback()
                 finish = True
             elif result == bsave:
-                log(EVENT, 'Odchod s uložením řádku')
+                log(EVENT, 'Quit saving row data')
                 finish = self._on_line_commit()
             elif result is None or result == bcontinue:
-                log(EVENT, 'Odchod uživatelem zamítnut')
+                log(EVENT, 'Quit not confirmed')
                 finish = False
             else:
                 raise ProgramError('Unexpected dialog result', result)
         return finish
 
     def _on_line_commit(self):
-        # Zde záleží na návratové hodnotě, protože ji využívá _cmd_cell_commit.
-        log(EVENT, 'Pokus o uložení řádku seznamu do databáze')
-        # Vytažení nových dat
+        # The return value matters here, as it is used by _cmd_cell_commit().
+        log(EVENT, 'Saving changed form row to the database')
+        # Pick the new data.
         table = self._table
         editing = table.editing()
         if not editing:
             return False
         row = editing.row
         the_row = editing.the_row
-        # Ověření integrity záznamu (funkce check).
+        # Check record integrity.
         failed_id = self._check_record(the_row)
         if failed_id:
             col = find(failed_id, self._columns, key=lambda c: c.id())
@@ -873,7 +873,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 self._select_cell(row=row, col=i, invoke_callback=False)
                 self._edit_cell()
             return True
-        # Určení operace a klíče
+        # Determine the operation and the key.
         newp = editing.the_row.new()
         if newp:
             permission = pytis.data.Permission.INSERT
@@ -894,7 +894,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         else:
             key = editing.orig_row.columns(kc)
             op, args, kwargs = self._data.update, (key, rdata,), {}
-        # Provedení operace
+        # Perform the operation.
         success, result = db_operation(op, *args, **dict(kwargs, transaction=self._transaction))
         if self._governing_transaction is None and self._transaction is not None:
             self._transaction.commit()
@@ -908,7 +908,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                     new_row = the_row.row()
                 the_row.set_row(new_row, reset=True)
             table.edit_row(None)
-            message('Řádek uložen do databáze', ACTION)
+            message(_("Record saved to the database."), ACTION)
             self.refresh()
             self._run_callback(self.CALL_MODIFICATION)
             if cleanup is not None:
@@ -917,9 +917,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         elif success:
             log(EVENT, 'Zamítnuto pro chybu klíče')
             if editing.the_row.new():
-                msg = _(u"Řádek s tímto klíčem již existuje nebo změna sousedního řádku")
+                msg = _("Row with this key already exists or adjacent row changed.")
             else:
-                msg = _(u"Řádek s tímto klíčem již existuje nebo původní řádek již neexistuje")
+                msg = _("Row with this key already exists or the original row doesn't exist anymore.")
             run_dialog(Warning, msg)
             return False
         else:
@@ -1097,7 +1097,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             columns = [self._view.field(cid) for cid in select_columns]
         import locale
         columns.sort(key=lambda c: locale.strxfrm(c.column_label()))
-        return [CheckItem(_(u"Záhlaví řádků"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
+        return [CheckItem(_("Row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS,
                           state=lambda: self._grid.GetRowLabelSize() != 0)] + \
                [CheckItem(c.column_label(),
                           command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=col),
@@ -1109,15 +1109,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                           state=lambda op=op: op in self._aggregations)
                 for op, title, icon, label in self._AGGREGATIONS]
         menu.extend((MSeparator(),
-                     MItem(_(u"Zobrazit vše"), command=ListForm.COMMAND_AGGREGATE),
-                     MItem(_(u"Skrýt vše"), command=ListForm.COMMAND_UNAGGREGATE),
+                     MItem(_("Show all"), command=ListForm.COMMAND_AGGREGATE),
+                     MItem(_("Hide all"),    command=ListForm.COMMAND_UNAGGREGATE),
                      ))
         predefined_aggregated_views = self._view.aggregated_views()
         if predefined_aggregated_views:
             menu.append(MSeparator())
             menu.extend([MItem(v.name(),
                                command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
-                               help=_("Zobrazit předdefinovaný agregovaný náhled"))
+                               help=_("Open predefined aggregated view"))
                          for v in predefined_aggregated_views])
         manager = aggregated_views_manager()
         aggregated_views = [manager.load(self._name, aggregated_view_id)
@@ -1126,14 +1126,14 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             menu.append(MSeparator())
             menu.extend([MItem(v.name(),
                                command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=v.id()),
-                               help=_("Zobrazit uživatelský agregovaný náhled"))
+                               help=_("Open user defined aggregated view"))
                          for v in aggregated_views])
         menu.extend((MSeparator(),
-                     MItem(_(u"Nový agregovaný náhled"),
+                     MItem(_("Define new aggregated view"),
                            command=ListForm.COMMAND_AGGREGATED_VIEW(aggregated_view_id=None))))
         if aggregated_views:
             command = ListForm.COMMAND_DELETE_AGGREGATED_VIEW
-            menu.append(Menu(_("Smazat agregovaný náhled"),
+            menu.append(Menu(_("Remove agregated view"),
                              [MItem(v.name(), command=command(aggregated_view_id=v.id()))
                               for v in aggregated_views]))
         return menu
@@ -1145,32 +1145,32 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         ASC = LookupForm.SORTING_ASCENDENT
         DESC = LookupForm.SORTING_DESCENDANT
         c = self._columns[col]
-        items = (M(_(u"Primární řazení"),
-                   (I(_(u"Řadit vzestupně"),
+        items = (M(_("Primary Sorting"),
+                   (I(_("Sort Ascending"),
                       command=LookupForm.COMMAND_SORT(direction=ASC, col=col, primary=True)),
-                    I(_(u"Řadit sestupně"),
+                    I(_("Sort Descending"),
                       command=LookupForm.COMMAND_SORT(direction=DESC, col=col, primary=True)),)),
-                 M(_(u"Dodatečné řazení"),
-                   (I(_(u"Řadit vzestupně"),
+                 M(_("Secondary Sorting"),
+                   (I(_("Sort Ascending"),
                       command=LookupForm.COMMAND_SORT(direction=ASC, col=col)),
-                    I(_(u"Řadit sestupně"),
+                    I(_("Sort Descending"),
                       command=LookupForm.COMMAND_SORT(direction=DESC, col=col)),)),
-                 I(_(u"Neřadit podle tohoto sloupce"),
+                 I(_("Omit this column from sorting"),
                    command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE, col=col)),
-                 I(_(u"Zrušit řazení úplně"),
+                 I(_("Cancel sorting completely"),
                    command=LookupForm.COMMAND_SORT(direction=LookupForm.SORTING_NONE)),
                  ________,
-                 I(_(u"Seskupovat až po tento sloupec"),
+                 I(_("Group up to this column"),
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=col)),
-                 I(_(u"Zrušit vizuální seskupování"),
+                 I(_("Cancel visual grouping"),
                    command=ListForm.COMMAND_SET_GROUPING_COLUMN(col=None)),
                  ________,
-                 I(_(u"Autofiltr"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
-                 I(_(u"Zruš filtr"), command=LookupForm.COMMAND_UNFILTER),
+                 I(_("Autofilter"), command=ListForm.COMMAND_AUTOFILTER(col=col)),
+                 I(_("Cancel filtering"), command=LookupForm.COMMAND_UNFILTER),
                  ________,
-                 I(_(u"Skrýt tento sloupec"),
+                 I(_("Hide this column"),
                    command=ListForm.COMMAND_TOGGLE_COLUMN(column_id=c.id(), col=None)),
-                 M(_(u"Zobrazené sloupce"),
+                 M(_("Displayed columns"),
                    self._displayed_columns_menu(col=col)),
                  )
         return items
@@ -1193,7 +1193,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if col != -1:
                 cmd = self.COMMAND_COPY_AGGREGATION_RESULT(cid=self._columns[col].id(),
                                                            operation=aggregation[0])
-                menu[0:0] = (MItem(_(u"Zkopírovat výsledek"), command=cmd), MSeparator())
+                menu[0:0] = (MItem(_("Copy the Result"), command=cmd), MSeparator())
         elif col == -1:
             menu = self._displayed_columns_menu(len(self._columns))
         else:
@@ -1282,8 +1282,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             column = self._columns[col]
             aggregation = self._aggregation_info_by_position(event.GetY())
             if aggregation is not None:
-                descr = _(u"Výsledek funkce %(aggregation)s pro sloupec %(column)s") % \
-                    dict(aggregation=aggregation[1], column=column.label())
+                descr = _("Result of aggregation function %(aggregation)s "
+                          "for column %(column)s",
+                          aggregation=aggregation[1], 
+                          column=column.label())
             else:
                 descr = column.descr() or column.label() or ''
         else:
@@ -1442,7 +1444,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if event.GetY() > self._label_height:
             menu = self._aggregation_menu()
         else:
-            menu = (MItem(_(u"Skrýt záhlaví řádků"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS),)
+            menu = (MItem(_("Hide row headings"), command=ListForm.COMMAND_TOGGLE_ROW_LABELS),)
         self._popup_menu(menu)
         event.Skip()
 
@@ -1487,9 +1489,9 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _show_data_status(self):
         if self._reshuffle_request > self._last_reshuffle_request:
-            status = _(u"Data změněna")
+            status = _("Data changed")
         else:
-            status = _(u"Data ok")
+            status = _("Data ok")
         set_status('data-changed', status)
         
     def _is_changed(self):
@@ -1501,13 +1503,13 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # je nutné provést dodatečné akce.
         editing = self._table.editing()
         if editing:
-            log(EVENT, 'Pokus o odchod z řádkového formuláře během editace')
+            log(EVENT, 'Attempt to leave row form during editation')
             if ((editing.the_row.changed() and
-                 run_dialog(Question, _(u"Uložit zeditovaný řádek?"), True))):
-                log(EVENT, 'Vyžádáno uložení')
+                 run_dialog(Question, _("Save the editted record?"), True))):
+                log(EVENT, 'Saving confirmed')
                 self._on_line_commit()
             else:
-                log(EVENT, 'Uložení zamítnuto')
+                log(EVENT, 'Saving denied')
                 self._on_line_rollback()
         return True
 
@@ -1579,7 +1581,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                  self._reshuffle_request > time.time())):
                 return False
         if when is self.DOIT_IMMEDIATELY:
-            QUESTION = _(u"Zrušit změny záznamu a aktualizovat seznam?")
+            QUESTION = _("Cancel changes in row editation and refresh the form?")
             delay = not self._finish_editing(question=QUESTION)
         else:
             delay = (self._table.editing() is not None) # nechceme držet info
@@ -1854,7 +1856,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
 
     def _available_aggregations(self):
         return ([(op, title) for op, title, icon, label in self._AGGREGATIONS] +
-                [(pytis.data.Data.AGG_COUNT, _(u"Počet"))])
+                [(pytis.data.Data.AGG_COUNT, _("Count"))])
         
     def _cmd_aggregated_view(self, aggregated_view_id):
         grouping_functions = self._view.grouping_functions()
@@ -1942,7 +1944,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             limit = 60
             distinct = self._autofilter_values(cid, limit, condition=cond, arguments=arguments)
             if len(distinct) > limit:
-                message(_(u"Příliš mnoho položek pro autofiltr."), beep_=True)
+                message(_("Too many items for autofilter."), beep_=True)
                 return
             items = [MItem(v.export(), command=ListForm.COMMAND_FILTER_BY_VALUE,
                            args=dict(column_id=cid, value=v))
@@ -2002,7 +2004,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         col_id = self._columns[col].id()
         if ((not isinstance(self._row.type(col_id), pytis.data.String) or
              not self._data.permitted(col_id, pytis.data.Permission.VIEW))):
-            message(_(u"V tomto sloupci nelze vyhledávat inkrementálně"), beep_=True)
+            message(_("Unable to search incrementally in this column."), beep_=True)
             return
         if self._search_panel is None:
             self._create_search_panel(full=full, prefill=prefill)
@@ -2050,32 +2052,19 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         return True
     
     def _can_cmd_export(self):
-        # Kontrola počtu řádků
         number_rows = self._table.number_of_rows()
         if number_rows == 0:
-            msg = _(u"Tabulka neobsahuje žádné řádky! Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return False
-        if number_rows > 100000:
-            msg = _("Formulář má příliš mnoho řádků, je třeba ho vyfiltrovat. "
-                    "Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return False
-        # Seznam sloupců
-        column_list = [(c.id(), self._row.type(c.id())) for c in self._columns]
-        allowed = True
-        # Kontrola práv
-        for cid, ctype in column_list:
-            if not self._data.permitted(cid, pytis.data.Permission.EXPORT):
-                allowed = False
-                break
-        if not allowed:
-            msg = _(u"Nemáte právo exportu k této tabulce.\n")
-            msg = msg + _(u"Export nebude proveden.")
-            run_dialog(Warning, msg)
-            return False
+            problem = _("The table has no rows!")
+        elif number_rows > 100000:
+            problem = _("The table has too many rows! Use a filter.")
+        elif False in [self._data.permitted(c.id(), pytis.data.Permission.EXPORT)
+                       for c in self._columns]:
+            problem = _("You don't have permissions to export this table.")
         else:
             return True
+        run_dialog(Warning, problem + '\n' + _("Export aborted."))
+        return False
+        
         
     def _cmd_export_file(self):
         log(EVENT, 'Called export to file')
@@ -2087,24 +2076,24 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             xls_possible = True
         except:
             xls_possible = False
-        wildcards = ["Soubory TXT (*.txt)", "*.txt",
-                     "Soubory CSV (*.csv)", "*.csv"
-                     ]
+        wildcards = [_("Files %s", "TXT (*.txt)"), "*.txt",
+                     _("Files %s", "CSV (*.csv)"), "*.csv"]
         username = config.dbconnection.user()
         if username is None:
             username = ''
         default_filename = 'export_%s.txt' % username
         if xls_possible:
-            msg = _(u"Export může být proveden do XLS nebo CSV souboru.\n\n")
-            msg = msg + _(u"Zvolte požadovaný formát.")
-            fileformat = run_dialog(MultiQuestion, msg, ('CSV', 'XLS'), default='CSV')
+            msg = "\n\n".join(_("Data may be exported into one of the following file formats."),
+                              _("Choose the desired format."))
+            fileformat = run_dialog(MultiQuestion, msg, ('CSV','XLS'), default='CSV')
             if not fileformat:
                 return
-            if fileformat == 'XLS':
-                wildcards = ["Soubory XLS (*.xls)", "*.xls"]
+            if fileformat == 'XLS':                
+                wildcards = [_("Files %s", "XLS (*.xls)"), "*.xls"]
                 default_filename = 'export_%s.xls' % username
         else:
             fileformat = 'CSV'
+
         filename = None
         remote = False
         if pytis.windows.windows_available():
@@ -2121,7 +2110,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             log(EVENT, 'Windows service not available')
         if filename is None:
             export_dir = config.export_directory
-            filename = pytis.form.run_dialog(pytis.form.FileDialog, title="Zadat exportní soubor",
+            filename = pytis.form.run_dialog(pytis.form.FileDialog, title=_("Export to file"),
                                              dir=export_dir, file=default_filename, mode='SAVE',
                                              wildcards=tuple(wildcards))
             if not filename:
@@ -2133,7 +2122,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 export_file = open(filename, mode)
                 export_file.write('')
             except:
-                msg = _(u"Nepodařilo se otevřít soubor " + filename + " pro zápis!\n")
+                msg = _("Unable to open the file for writing!")
                 run_dialog(Error, msg)
                 return
         if fileformat == 'XLS':
@@ -2153,15 +2142,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         try:
             u"test".encode(export_encoding)
         except:
-            msg = _(u"Kódování %s není podporováno.\n" % export_encoding)
-            msg = msg + _(u"Export se provede bez překódování.")
+            msg = '\n'.join(_("Encoding %s not supported.", export_encoding),
+                            _("Exported data will not be recoded."))
             export_encoding = None
             run_dialog(Error, msg)
         if isinstance(filename, basestring):
             try:
                 export_file = open(filename, 'w')
             except:
-                msg = _(u"Nepodařilo se otevřít soubor " + filename + " pro zápis!\n")
+                msg = _("Unable to open the file for writing!")
                 run_dialog(Error, msg)
                 return False
         else:
@@ -2270,12 +2259,12 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         
     def _cmd_insert_line(self, before=False, copy=False):
         row = self._current_cell()[0]
-        log(EVENT, u'Vložení nového řádku:', (row, before, copy))
+        log(EVENT, 'Inserting new table row:', (row, before, copy))
         if not self._data.permitted(True, pytis.data.Permission.INSERT):
-            message(_(u"Nemáte přístupová práva pro vkládání záznamů do této tabulky!"), beep_=True)
+            message(_("You don't have insert permissions for this table!"), beep_=True)
             return False
         if self._view.on_new_record() is not None:
-            message(_(u"In-line vkládání zakázáno.  Použijte formulář (F6)."), beep_=True)
+            message(_("In-line insertion not allowed. Use a standalone form (F6)."), beep_=True)
             return False
         cols = [c.id() for c in self._columns]
         for col in self._data.columns():
@@ -2285,15 +2274,15 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 # We silently presume, that when a not null column is not in
                 # fields, it probably has a default value (if not, it would be
                 # an error anyway), so we can continue.
-                msg = _(u"Povinný sloupec '%s' není zobrazen.\n" +
-                        u"Není možné vkládat řádky v in-line režimu.\n" +
-                        u"Přidejte sloupec nebo vložte záznam přes formulář (F6).")
+                msg = _("Mandatory column '%s' not shown.\n"
+                        "Unable to insert new rows in in-line mode.\n"
+                        "Unhide the column or insert the record in a standalone form (F6).")
                 label = self._view.field(col.id()).column_label()
                 run_dialog(Warning, msg % label)
                 return False
         table = self._table
         if table.editing():
-            log(EVENT, u'Pokus o vložení nového řádku během editace')
+            log(EVENT, 'Attempted to insert a new line while editting.')
             return False
         self._last_insert_copy = copy
         oldg = self._grid
@@ -2310,10 +2299,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._select_cell(row=row, col=0, invoke_callback=False)
         if ((not self._is_editable_cell(row, 0) and
              not self._find_next_editable_cell())):
-            log(EVENT, u'Žádný sloupec není editovatelný')
+            log(EVENT, 'No editable column')
             return False
         self._edit_cell()
-        log(EVENT, u'Řádek vložen')
+        log(EVENT, 'Row inserted')
         return True
 
     def _can_line_commit(self):
@@ -2346,7 +2335,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if the_row.invalid_string(id) is None:
             if not self._find_next_editable_cell():
                 if the_row.new():
-                    q = _(u"Uložit řádek?")
+                    q = _("Save the record?")
                     if run_dialog(Question, q, True):
                         return self._on_line_commit()
                     else:
@@ -2372,10 +2361,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
     def _cmd_clear_selection(self):
         self.unselect_selected_rows()
         
-    # Veřejné metody
+    # Public methods
         
     def is_edited(self):
-        """Vrať pravdu, právě když je List ve stavu řádkové editace."""
+        """Return True, iff the table currently is in in-line edit mode."""
         return self._table.editing()
 
     def status_fields(self):
@@ -2384,7 +2373,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         # aktuálního formuláře (s využitím této metody).
         return (('list-position', 7),)
         
-    # Ostatní veřejné metody
+    # Other public methods
 
     def on_key_down(self, event, dont_skip=True):
         if self._search_panel is None:
@@ -2678,12 +2667,12 @@ class FoldableForm(ListForm):
             else:
                 return False
         if self._folding_enabled() and is_in(condition):
-            if not run_dialog(Question, _(u"Pokoušíte se uplatnit filtr s operátorem IN\n"
-                                          u"na rozbalovacím formuláři. Tato operace může\n"
-                                          u"trvat i několik minut. Vypnutím rozbalování\n"
-                                          u"(přepnutím řazení podle jiného sloupce) můžete\n"
-                                          u"operaci podstatně urychlit.\n"
-                                          u"Opravdu chcete pokračovat?"), True):
+            if not run_dialog(Question, _("You attempted to use a filter with the IN operator\n"
+                                          "on a foldable form. This operation may potentially\n"
+                                          "take several minutes. You can greatly speed up the\n"
+                                          "operation by turning the folding off (sorting by\n"
+                                          "another column).\n"
+                                          "Really continue?"), True):
                 # This should abort profile selection in _cmd_apply_profile and
                 # return the previously selected profile.
                 raise UserBreakException()
@@ -2812,8 +2801,8 @@ class FoldableForm(ListForm):
     def _cmd_folding_level(self):
         if self._folding_enabled():
             result = run_dialog(InputNumeric,
-                                message=_(u"Sbalení/rozbalení uzlů formuláře"),
-                                prompt="Úroveň rozbalení (1-...):",
+                                message=_("Folding/unfolding form nodes to a particular level."),
+                                prompt=_("Folding level (1-...):"),
                                 min_value=1,
                                 integer_width=2)
             level = result.value()
@@ -2853,7 +2842,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
     byl formulář ukončen jinak než výběrem záznamu, je vrácena hodnota 'None'.
 
     """
-    DESCR = _(u"číselník")
+    DESCR = _("codebook")
 
     _DEFAULT_WINDOW_HEIGHT = 500
     _ALLOW_TOOLBAR = True
@@ -2870,17 +2859,12 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
         wx_callback(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._grid, self._on_dclick)
 
     def _init_attributes(self, begin_search=None, **kwargs):
-        """Zpracuj klíčové argumenty konstruktoru a inicializuj atributy.
+        """Arguments:
 
-        Argumenty:
-
-          begin_search -- Pokud není None, bude po otevření formuláře
-            automaticky nastartováno inkrementální vyhledávání. Pokud
-            je hodnota řetězec, je chápán jako identifikátor
-            sloupce, ve kterém se má provádět vyhledávání. Není-li ho
-            hodnota řetězec, nebo neodpovídá-li žádnému sloupci,
-            je vyhledávání prováděno automaticky nad sloupečkem s
-            primárním tříděním.
+          begin_search -- If not None, the form will automatically start
+            incremental search on startup. If the value is a string, it is the
+            column identifier in which to search.  Otherwise the search is
+            performed on the column with primary sorting.
             
         """
         try:
@@ -2934,8 +2918,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
                 if cols:
                     col_id = cols[0]
                 else:
-                    message(_(u"Nelze začít inkrementální vyhledávání. " +
-                              u"Číselník neobsahuje žádný setříděný sloupec!"),
+                    message(_("Unable to search incrementally. No sortable column found!"),
                             beep_=True)
             col = find(col_id, self._columns, key=lambda c: c.id())
             if col is not None:
@@ -2958,7 +2941,7 @@ class CodebookForm(PopupForm, FoldableForm, KeyHandler):
             return super(CodebookForm, self)._default_sorting()
         
     def _context_menu(self):
-        return (MItem(_(u"Vybrat"), command=ListForm.COMMAND_ACTIVATE),)
+        return (MItem(_("Select"), command=ListForm.COMMAND_ACTIVATE),)
 
     def _on_activation(self, alternate=False):
         """Nastav návratovou hodnotu a ukonči modální dialog."""
@@ -3008,7 +2991,7 @@ class BrowseForm(FoldableForm):
                     result = pytis.output.data_table(self._resolver, table_id)
                     return result
                 else:
-                    run_dialog(Error, _("Tisková sestava nenalezena!"))
+                    run_dialog(Error, _("Print specification not found!"))
             def doc_header(self, resolver=None, variant=None):
                 return None
             def doc_footer(self, resolver=None, variant=None):
@@ -3070,40 +3053,40 @@ class BrowseForm(FoldableForm):
     def _init_attributes(self, **kwargs):
         super(BrowseForm, self)._init_attributes(**kwargs)
         menu = (
-            MItem(_(u"Editovat buňku"),
+            MItem(_("Edit cell"),
                   command=ListForm.COMMAND_EDIT,
-                  help=_(u"Upravit hodnotu v režimu inline editace")),
-            MItem(_(u"Filtrovat podle buňky"),
+                  help=_("Edit the value in in-line mode.")),
+            MItem(_("Filter by cell"),
                   command=ListForm.COMMAND_FILTER_BY_CELL,
-                  help=_(u"Vyfiltrovat řádky obsahující v tomto sloupci stejnou hodnotu")),
-            MItem(_(u"Zkopírovat obsah buňky"),
+                  help=_("Filter the rows containing the same value in this column.")),
+            MItem(_("Copy cell value"),
                   command=ListForm.COMMAND_COPY_CELL,
-                  help=_(u"Zkopírovat hodnotu do schránky.")),
+                  help=_("Copy the contents of the cell into the clipboard.")),
             MSeparator(),
-            MItem(_(u"Editovat záznam"),
+            MItem(_("Edit record"),
                   command=BrowseForm.COMMAND_EDIT_RECORD,
-                  help=_(u"Otevřít editační formulář pro tento záznam.")),
-            MItem(_(u"Kopírovat záznam"),
+                  help=_("Open a separate edit form for this record.")),
+            MItem(_("Copy record"),
                   command=BrowseForm.COMMAND_NEW_RECORD(copy=True),
-                  help=_(u"Otevřít formulář pro vložení kopie tohoto záznamu.")),
-            MItem(_(u"Smazat záznam"),
+                  help=_("Open a separate insert form with a copy of this record.")),
+            MItem(_("Delete record"),
                   command=RecordForm.COMMAND_DELETE_RECORD,
-                  help=_(u"Odstranit záznam z databáze.")),
-            MItem(_(u"Náhled"),
+                  help=_("Delete the record parmanently from the database.")),
+            MItem(_("Preview form"),
                   command=ListForm.COMMAND_ACTIVATE,
-                  help=_(u"Otevřít náhledový formulář s možností procházení záznamů"),
+                  help=_("Open the preview form for browsing all records."),
                   icon='show-record'),
-            MItem(_(u"Duální náhled"),
+            MItem(_("Dual preview"),
                   command=ListForm.COMMAND_ACTIVATE(alternate=True),
-                  help=_(u"Otevřít formulář s tabulkou nahoře a náhledem v dolní části."),
+                  help=_("Open a dual form with a table up and preview at the bottom."),
                   icon='show-record'),
-            MItem(_(u"Zrušit výběr"),
+            MItem(_("Cancel selection"),
                   command=ListForm.COMMAND_CLEAR_SELECTION(),
-                  help=_(u"Zrušit výběr řádků pro hromadné akce.")),
+                  help=_("Cancel the selection of rows for bulk operations.")),
         )
-        editor_items = [MItem(_(u"Textový editor políčka %s") % f.label(),
+        editor_items = [MItem(_("Text editor for field %s") % f.label(),
                               command=ListForm.COMMAND_OPEN_EDITOR(field_id=f.id()),
-                              help=_(u"Otevřít editor strukturovaného textu."))
+                              help=_("Open a structured text editor."))
                         for f in self._fields if f.text_format() == TextFormat.LCG]
         if editor_items:
             menu += (MSeparator(),) + tuple(editor_items)
@@ -3127,11 +3110,11 @@ class BrowseForm(FoldableForm):
                     title += ' / ' + config.resolver.get(b.name(), 'view_spec').title()
             return title
         def link_label(title, type=FormType.BROWSE):
-            mapping = {FormType.BROWSE: _(u"Odskok - %s"),
-                       FormType.EDIT: _(u"Editovat %s"),
-                       FormType.VIEW: _(u"Náhled %s"),
-                       FormType.INSERT: _(u"Nový záznam pro %s"),
-                       FormType.BROWSABLE_VIEW: _(u"Náhled %s")}
+            mapping = {FormType.BROWSE: _("Link - %s"),
+                       FormType.EDIT: _("Edit %s"),
+                       FormType.VIEW: _("Show %s"),
+                       FormType.INSERT: _("Insert for %s"),
+                       FormType.BROWSABLE_VIEW: _("Preview %s")}
             return mapping[type] % title
         # Create links lists as accepted by _link_mitems()
         self._explicit_links = []
@@ -3196,9 +3179,7 @@ class BrowseForm(FoldableForm):
             if type == FormType.INSERT:
                 cmd = Application.COMMAND_NEW_RECORD(name=name,
                                                      prefill={link.column(): row[f.id()]})
-                title = _(u"Vložit hodnotu sloupce '%s'") % f.label()
-                hlp = (_(u"Vložit záznam pro hodnotu '%s' sloupce '%s'.") %
-                       (row.format(f.id(), secure=''), f.column_label(),))
+                hlp = _("Insert a new record for value '%(value)s' of column %(column)s.")
                 icon = 'link-new-record'
             else:
                 kwargs = {}
@@ -3210,22 +3191,22 @@ class BrowseForm(FoldableForm):
                         kwargs['binding'] = link.binding()
                     else:
                         cls = BrowseForm
-                    title = _(u"Vyhledat hodnotu sloupce '%s'") % f.label()
-                    hlp = _(u"Vyhledat záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
+                    title = _("Search value of column %s") % f.label()
+                    hlp = _("Search the record for value '%(value)s' of column %(column)s.")
                     filter_func = link.filter()
                     if filter_func:
                         kwargs['filter'] = filter_func(row)
                 elif type == FormType.EDIT:
                     cls = PopupEditForm
-                    title = _(u"Upravit záznam sloupce '%s'") % f.label()
-                    hlp = _(u"Upravit záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
+                    title = _("Edit the record of column %s") % f.label()
+                    hlp = _("Edit the record for value '%(value)s' of column %(column)s.")
                 elif type in (FormType.VIEW, FormType.BROWSABLE_VIEW):
                     if type == FormType.BROWSABLE_VIEW:
                         cls = BrowsableShowForm
                     else:
                         cls = ShowForm
-                    title = _(u"Zobrazit záznam sloupce '%s'") % f.label()
-                    hlp = _(u"Zobrazit záznam pro hodnotu '%(value)s' sloupce '%(column)s'.")
+                    title = _("Show the record of column %s") % f.label()
+                    hlp = _("Show the record for value '%(value)s' of column %(column)s.")
                 cmd = Application.COMMAND_RUN_FORM(name=name, form_class=cls,
                                                    select_row={link.column(): row[f.id()]},
                                                    **kwargs)
@@ -3261,8 +3242,8 @@ class BrowseForm(FoldableForm):
                            u"neobsažené ve sloupci „%(column)s“ současného náhledu.")
             else:
                 select_row = {column: row[f.id()]}
-                ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
-                           u"obsažené ve sloupci „%(column)s“ současného náhledu.")
+                ititle = _("Filtrovat náhled „%(view_title)s“ na řádky "
+                           "obsažené ve sloupci „%(column)s“ současného náhledu.")
             def handler(form_class, name, **kwargs):
                 # The main reason for wrapping COMMAND_RUN_FORM in a function
                 # run through COMMAND_HANDLED_ACTION here is to postpone the

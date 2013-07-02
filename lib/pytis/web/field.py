@@ -241,7 +241,6 @@ class Field(object):
         self.style = spec.style()
         self.label = spec.label()
         self.column_label = spec.column_label()
-        self.label = spec.label()
         self.virtual = spec.virtual()
 
     def _format(self, context):
@@ -821,12 +820,16 @@ class RadioField(EnumerationField):
             null_display = self.spec.null_display()
             if null_display:
                 choices.insert(0, (None, '', null_display))
+        if self.spec.height() == 1:
+            wrap = g.span
+        else:
+            wrap = g.div
         for i, (val, strval, display) in enumerate(choices):
             radio_id = id +'-'+ str(i)
             radio = g.radio(value=strval, checked=(val==value.value()), id=radio_id, **kwargs)
             label = g.label(display, radio_id)
-            radios.append(g.div(radio + label))
-        return g.div(radios, id=id, cls='radio-group')
+            radios.append(wrap(radio + label))
+        return wrap(radios, id=id, cls='radio-group')
 
 
 class ChoiceField(EnumerationField):
