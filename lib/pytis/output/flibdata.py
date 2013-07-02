@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Formátovací funkce pro datové objekty
-# 
+#
 # Copyright (C) 2002-2011, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,12 @@
 
 """
 
-from pytis.output import *
-import pytis.presentation, pytis.util
+from lcg import UFont
+import pytis.presentation
+import pytis.util
+from pytis.util import ResolverError
+import pytis.output
+import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -37,7 +41,7 @@ P_CONDITION = 'P_CONDITION'
 """Parametr resolveru identifikující podmínku pro 'pytis.data.Data.select()'."""
 P_SORTING = 'P_SORTING'
 """Parametr resolveru identifikující třídění pro 'pytis.data.Data.select()'."""
-P_DATA= 'P_DATA'
+P_DATA = 'P_DATA'
 """Parametr resolveru identifikující datový objekt."""
 
 
@@ -79,9 +83,10 @@ def data_table(resolver, name, condition=None, sorting=None, transaction=None,
     # Prezentace
     view = resolver.get(name, 'view_spec')
     data_spec = resolver.get(name, 'data_spec')
-    import config
     data = data_spec.create(dbconnection_spec=config.dbconnection)
-    import pytis.data, pytis.form, pytis.presentation
+    import pytis.data
+    import pytis.form
+    import pytis.presentation
     presented_row = pytis.presentation.PresentedRow(view.fields(), data, None, singleline=True)
     columns = []
     for cid in view.columns():
@@ -91,10 +96,10 @@ def data_table(resolver, name, condition=None, sorting=None, transaction=None,
             continue
         label = f.column_label()
         if isinstance(presented_row[cid].type(), pytis.data.Number):
-            alignment = LongTable.Column.ALIGN_RIGHT
+            alignment = pytis.output.LongTable.Column.ALIGN_RIGHT
         else:
-            alignment = LongTable.Column.ALIGN_LEFT
-        tc = LongTable.Column(label, width, alignment=alignment)
+            alignment = pytis.output.LongTable.Column.ALIGN_LEFT
+        tc = pytis.output.LongTable.Column(label, width, alignment=alignment)
         tc.id = cid # fuj, viz `table_row' níže
         columns.append(tc)
     # Data
@@ -107,8 +112,8 @@ def data_table(resolver, name, condition=None, sorting=None, transaction=None,
         presented_row.set_row(row)
         return [presented_row.format(c.id, secure=True) for c in columns]
     long_table_args['separator_margin'] = \
-      long_table_args['line_separator_margin'] = UFont(0.2)
-    return LongTable(columns, table_row, **long_table_args)
+        long_table_args['line_separator_margin'] = UFont(0.2)
+    return pytis.output.LongTable(columns, table_row, **long_table_args)
     
 
 def data_item(resolver, name, column, key=None):
@@ -132,15 +137,14 @@ def data_item(resolver, name, column, key=None):
         resolveru '(name, P_ROW)'
 
     """
-    assert type(name) == type('')
-    assert type(column) == type('')
+    assert isinstance(name, basestring)
+    assert isinstance(column, basestring)
     if key is None:
         try:
             key = resolver.p((name, P_KEY))
         except ResolverError:
             pass
     data_spec = resolver.get(name, 'data_spec')
-    import config
     data = data_spec.create(dbconnection_spec=config.dbconnection)
     if key is None:
         row = resolver.p((name, P_ROW))
@@ -154,6 +158,6 @@ def data_item(resolver, name, column, key=None):
     try:
         value = presented_row.format(column, secure=True)
     except KeyError:
-        raise TemplateException(_(u"Chybný odkaz na sloupec"),
-                                name, column)
+        raise pytis.output.TemplateException(_(u"Chybný odkaz na sloupec"),
+                                             name, column)
     return value

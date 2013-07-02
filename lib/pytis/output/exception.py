@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Výjimky související s formátováním výstupu
-# 
+#
 # Copyright (C) 2002 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify

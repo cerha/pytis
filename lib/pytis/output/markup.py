@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Formátovací prvky
-# 
+#
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -31,12 +31,16 @@ elementy ke spojení dohromady.
 
 """
 
+import collections
+import copy
+import os
 import re
 
 import lcg
-from lcg import Unit, UMm, UPoint, UFont, USpace
-from pytis.output import *
+from lcg import Unit, UPoint
+import pytis.output
 import pytis.util
+from pytis.util import some, super_
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -93,8 +97,8 @@ class _Container(_Mark):
                 pass
             self.__dict__['arg_' + k] = v
         if kwargs:
-            raise TemplateException(_(u"Chybné argumenty prvku"),
-                                    self.__class__, kwargs.keys())
+            raise pytis.output.TemplateException(_(u"Chybné argumenty prvku"),
+                                                 self.__class__, kwargs.keys())
 
     def contents(self):
         """Vrať obsah odstavce zadaný v konstruktoru."""
@@ -540,11 +544,11 @@ class Table(_Mark):
         """
         super(Table, self).__init__()
         assert not some(lambda c: c not in ('vmargin',), kwargs.keys())
-        assert is_sequence(columns)
+        assert isinstance(columns, (tuple, list,))
         vmargin = kwargs.get('vmargin')
         assert vmargin in (None, 0)
         if len(columns) > 26:
-            raise TemplateException(_(u"Více než 26 sloupců v tabulce"))
+            raise pytis.output.TemplateException(_(u"Více než 26 sloupců v tabulce"))
         self._columns = columns
         self._data = data
         self._vmargin = vmargin
@@ -788,8 +792,7 @@ class StructuredText(_Mark):
         self._parameters = {}
         for k, v in parameters.items():
             self._parameters[k] = {None: v}
-        if (not self._parameters.has_key('first_page_header') and
-            self._parameters.has_key('page_header')):
+        if 'first_page_header' not in self._parameters and 'page_header' in self._parameters:
             self._parameters['first_page_header'] = self._parameters['page_header']
         return result
 

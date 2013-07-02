@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Formátování výstupu
-# 
+#
 # Copyright (C) 2002-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -50,8 +50,12 @@ import re
 import StringIO
 import lcg
 
-import pytis.data, pytis.presentation, pytis.util
-from pytis.output import *
+from lcg import UMm
+import pytis.data
+import pytis.output
+import pytis.presentation
+import pytis.util
+from pytis.util import EVENT, Popen, ResolverError, dev_null_stream, log, xtuple
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -77,8 +81,8 @@ class AbortOutput(Exception):
 class _ProxyDict(dict):
     def __getitem__(self, key):
         result = dict.__getitem__(self, key)
-        if (not isinstance(result, (basestring, lcg.Content, _ProxyDict,)) and
-            callable(result)):
+        if ((not isinstance(result, (basestring, lcg.Content, _ProxyDict,)) and
+             callable(result))):
             result = self[key] = result()
         return result
 class HashableDict(dict):
@@ -115,8 +119,9 @@ class _DataIterator(lcg.SubstitutionIterator):
                 if self._codebooks is None:
                     return self._row.format(key, secure=True)
                 else:
-                    columns, secret_columns = self._codebooks[key]                
-                    return _DataIterator._CodebookDictionary(self._row, key, columns, secret_columns)
+                    columns, secret_columns = self._codebooks[key]
+                    return _DataIterator._CodebookDictionary(self._row, key, columns,
+                                                             secret_columns)
             except KeyError:
                 return default
     def __init__(self, resolver, form_name, condition, sorting, transaction, codebooks=None):
@@ -124,7 +129,6 @@ class _DataIterator(lcg.SubstitutionIterator):
         self._select_kwargs = dict(condition=condition, sort=sorting, transaction=transaction)
         view = resolver.get(form_name, 'view_spec')
         data_spec = resolver.get(form_name, 'data_spec')
-        import config
         self._data = data_spec.create(dbconnection_spec=config.dbconnection)
         self._presented_row = pytis.presentation.PresentedRow(view.fields(), self._data, None,
                                                               singleline=True)
@@ -173,15 +177,15 @@ class _DataIterator(lcg.SubstitutionIterator):
 class _FormDataIterator(_DataIterator):
     def __init__(self, resolver, form, transaction):
         name = form.name()
-        condition=form.condition()
-        sorting=form.sorting()
+        condition = form.condition()
+        sorting = form.sorting()
         if condition is None:
             try:
-                condition = resolver.p((name, P_CONDITION))
+                condition = resolver.p((name, pytis.output.P_CONDITION))
             except ResolverError:
                 pass
         if sorting is None:
-            sorting = resolver.p((name, P_SORTING))
+            sorting = resolver.p((name, pytis.output.P_SORTING))
         super(_FormDataIterator, self).__init__(resolver, name, condition=condition,
                                                 sorting=sorting, transaction=transaction)
 class _FakeDataIterator(lcg.SubstitutionIterator):
@@ -198,7 +202,8 @@ class LCGFormatter(object):
             return ''
 
     class _LCGGlobals(_ProxyDict):
-        def __init__(self, resolvers, form, form_bindings, codebooks, transaction, current_row=None):
+        def __init__(self, resolvers, form, form_bindings, codebooks, transaction,
+                     current_row=None):
             self._resolvers = resolvers
             if form is not None:
                 name = form.name()
@@ -214,7 +219,6 @@ class LCGFormatter(object):
                     self._selected_resolver = resolvers[0]
             self._form = form
             self._form_bindings = form_bindings
-            import config
             self._transaction = transaction
             dictionary = self._initial_dictionary(form, form_bindings, codebooks, current_row)
             _ProxyDict.__init__(self, dictionary)
@@ -236,7 +240,8 @@ class LCGFormatter(object):
                 else:
                     current_row_dictionary = dict([(k, current_row.format(k, secure=True),)
                                                    for k in current_row.keys()
-                                                   if not isinstance(current_row[k].type(), pytis.data.Binary)])
+                                                   if not isinstance(current_row[k].type(),
+                                                                     pytis.data.Binary)])
                 dictionary['current_row'] = current_row_dictionary
                 dictionary['table'] = self._make_table
                 dictionary['agg'] = agg = _ProxyDict()
@@ -254,8 +259,8 @@ class LCGFormatter(object):
                         form_name = binding.name()
                         if form_name is None:
                             continue
-                        if (pytis.form.has_access(form_name) and
-                            pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT)):
+                        if ((pytis.form.has_access(form_name) and
+                             pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT))):
                             # I tried to use closure here, but it produced unexpected results
                             class MakeBinding(object):
                                 def __init__(self, binding, processor, current_row):
@@ -278,10 +283,12 @@ class LCGFormatter(object):
                             if (permitted and
                                 pytis.form.has_access(cb, perm=pytis.data.Permission.VIEW,
                                                       column=cb_id)):
-                                def cb_value(current_row=current_row, field_id=field_id, cb_id=cb_id):
+                                def cb_value(current_row=current_row, field_id=field_id,
+                                             cb_id=cb_id):
                                     return current_row.cb_value(field_id, cb_id).export()
                             else:
-                                def cb_value(current_row=current_row, field_id=field_id, cb_id=cb_id):
+                                def cb_value(current_row=current_row, field_id=field_id,
+                                             cb_id=cb_id):
                                     return current_row.cb_value(field_id, cb_id).secret_export()
                             field_dictionary[cb_id] = cb_value
             return dictionary
@@ -308,7 +315,8 @@ class LCGFormatter(object):
             if form is None:
                 return lcg.Content()
             colid = column.id()
-            if not pytis.form.has_access(form.name(), perm=pytis.data.Permission.VIEW, column=colid):
+            if not pytis.form.has_access(form.name(), perm=pytis.data.Permission.VIEW,
+                                         column=colid):
                 return column.type().secret_export()
             data = form.data()
             condition = form.condition()
@@ -327,13 +335,15 @@ class LCGFormatter(object):
                 condition = binding_condition(current_row)
             else:
                 condition = pytis.data.AND()
-            table = pytis.output.data_table(self._selected_resolver, binding.name(), condition=condition,
-                                            sorting=(), transaction=self._transaction)
+            table = pytis.output.data_table(self._selected_resolver, binding.name(),
+                                            condition=condition, sorting=(),
+                                            transaction=self._transaction)
             binding_dictionary['table'] = table.lcg()
             binding_dictionary['data'] = _DataIterator(self._selected_resolver, binding_name,
                                                        condition=condition, sorting=(),
                                                        transaction=self._transaction)
-            codebooks = LCGFormatter._retrieve_codebooks(self._selected_resolver.get(binding_name, 'view_spec'))
+            codebooks = LCGFormatter._retrieve_codebooks(
+                self._selected_resolver.get(binding_name, 'view_spec'))
             binding_dictionary['codebook'] = _DataIterator(self._selected_resolver, binding_name,
                                                            condition=condition, sorting=(),
                                                            transaction=self._transaction,
@@ -366,8 +376,8 @@ class LCGFormatter(object):
         self._page_header, __ = self._resolve(template_id, 'page_header', default=None)
         self._first_page_header, __ = self._resolve(template_id, 'first_page_header',
                                                     default=self._page_header)
-        self._page_footer, __ = self._resolve(template_id, 'page_footer',
-                                              default=Center('Strana ', PageNumber()))
+        page_number = pytis.output.Center('Strana ', pytis.output.PageNumber())
+        self._page_footer, __ = self._resolve(template_id, 'page_footer', default=page_number)
         self._page_background, __ = self._resolve(template_id, 'background', default=None)
         self._page_layout, __ = self._resolve(template_id, 'page_layout', default={})
         style, __ = self._resolve(template_id, 'style', default=None)
@@ -380,7 +390,7 @@ class LCGFormatter(object):
         body, __ = self._resolve(template_id, 'body')
         if body is None:
             # In order to apply style parameters correctly
-            temp_body = StructuredText('')
+            temp_body = pytis.output.StructuredText('')
         else:
             temp_body = body
         parameters = copy.copy(self._template_parameters(temp_body))
@@ -398,12 +408,13 @@ class LCGFormatter(object):
                     value = a.lcg()
                 parameters[p] = {None: value}
         self._body_parameters = parameters
-        if (not isinstance(body, Document) and
-            body and
-            not (is_sequence(body) and body and isinstance(body[0], Document))):
+        if ((not isinstance(body, pytis.output.Document) and
+             body and
+             not (isinstance(body, (tuple, list,)) and body and
+                  isinstance(body[0], pytis.output.Document)))):
             body.lcg() # to generate parameters
             simple_parameters = dict([(k, v[None],) for k, v in parameters.items()])
-            body = Document(body, **simple_parameters)
+            body = pytis.output.Document(body, **simple_parameters)
         else:
             # It's unclear how to interpret this situation.  In the Lout
             # formatter the parameters were apparently taken from
@@ -411,11 +422,11 @@ class LCGFormatter(object):
             # in the Document's (and ignored there?), with the exception of
             # background.  So let's them add to Document's if they are not
             # present there yet.
-            if isinstance(body, Document):
+            if isinstance(body, pytis.output.Document):
                 body_list = [body]
             else:
                 body_list = body
-            if is_sequence(body_list):
+            if isinstance(body_list, (tuple, list,)):
                 for document in body_list:
                     for k, v in parameters.items():
                         name = 'arg_' + k
@@ -461,7 +472,7 @@ class LCGFormatter(object):
         return codebooks
 
     def _template_parameters(self, template):
-        if isinstance(template, StructuredText):
+        if isinstance(template, pytis.output.StructuredText):
             template.lcg()
             parameters = template.parameters()
         else:
@@ -479,7 +490,7 @@ class LCGFormatter(object):
             for row in self._form.presented_rows():
                 row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
                                                    self._codebooks, transaction, current_row=row)
-                id_ = 'pytissubdoc%d' % (i,)    
+                id_ = 'pytissubdoc%d' % (i,)
                 row_template_lcg = row_template.lcg()
                 parameters = self._template_parameters(row_template)
                 document = lcg.ContentNode(id=id_, title=' ', # let's avoid printing the id
@@ -494,7 +505,7 @@ class LCGFormatter(object):
         if not body:
             body = []
         elif not isinstance(body, (list, tuple,)):
-            body = [body]            
+            body = [body]
         children = ([document.lcg_document(globals=lcg_globals) for document in body] +
                     children)
         lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children,
@@ -610,10 +621,11 @@ class LCGFormatter(object):
             for b in bindings:
                 binding_id = re.sub('[^A-Za-z0-9_]', '_', b.id())
                 form_name = b.name()
-                if (pytis.form.has_access(form_name) and
-                    pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT)):
+                if ((pytis.form.has_access(form_name) and
+                     pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT))):
                     text += "  ${Binding.%s.table} ... %s\n" % (binding_id, b.title(),)
-                    text += "  ${Binding.%s.data.IDENTIFIKÁTOR_SLOUPCE} ... %s\n" % (binding_id, b.title(),)
+                    text += ("  ${Binding.%s.data.IDENTIFIKÁTOR_SLOUPCE} ... %s\n" %
+                             (binding_id, b.title(),))
                     text += _("  Identifikátory sloupců:\n")
                     sub_view_spec = resolver.get(b.name(), 'view_spec')
                     for field in sub_view_spec.fields():
@@ -711,7 +723,7 @@ class PrintSpecification(object):
         Returns '_Mark' instance.
           
         """
-        return Center('Strana ', PageNumber())
+        return pytis.output.Center('Strana ', pytis.output.PageNumber())
     
     def doc_header(self):
         """Return initial part of the whole document.

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 # Různé formátovací funkce
-# 
-# Copyright (C) 2002, 2003, 2005 Brailcom, o.p.s.
+#
+# Copyright (C) 2002, 2003, 2005, 2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,18 +24,17 @@ Pro jména veřejných funkcí platí konvence, že začínají prefixem 'f_'.
 
 """
 
-from pytis.output import *
-
+import pytis.output
 
 _FONT_STEP = 1.2
 
 def f_larger(*contents):
     """Nechť 'contents' je vysázeno fontem větší velikosti vzhledem k okolí."""
-    return FontSize(_FONT_STEP, *contents)
+    return pytis.output.FontSize(_FONT_STEP, *contents)
 
 def f_smaller(*contents):
     """Nechť 'contents' je vysázeno fontem menší velikosti vzhledem k okolí."""
-    return FontSize(1.0/_FONT_STEP, *contents)
+    return pytis.output.FontSize(1.0 / _FONT_STEP, *contents)
 
 
 def f_table(*data, **kwargs):
@@ -52,5 +51,5 @@ def f_table(*data, **kwargs):
     nepřesahující velikost stránky.
 
     """
-    column_spec = Table.Column(alignment=Table.Column.ALIGN_LEFT)
-    return Table((column_spec,) * len(data[0]), *data, **kwargs)
+    column_spec = pytis.output.Table.Column(alignment=pytis.output.Table.Column.ALIGN_LEFT)
+    return pytis.output.Table((column_spec,) * len(data[0]), *data, **kwargs)

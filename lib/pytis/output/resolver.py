@@ -25,8 +25,14 @@ zcela samostatné třídy využívané výhradně pro sestavování tiskových v
 
 """
 
+import codecs
+import imp
+import os
+import string
+
 import pytis.util
-from pytis.output import *
+from pytis.util import SimpleCache, identity, super_, xlist
+import pytis.output
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -342,7 +348,7 @@ class DatabaseResolver(Resolver):
         """
         super(DatabaseResolver, self).__init__()
         assert isinstance(table, basestring), table
-        assert is_sequence(result_columns), result_columns
+        assert isinstance(result_columns, (tuple, list,)), result_columns
         self._result_columns = result_columns
         import config
         self._data = pytis.data.dbtable(table, ('module', 'specification') + result_columns,
@@ -424,7 +430,7 @@ class OutputResolver(Resolver):
             dávajících po spojení jednoznačný string
 
         """
-        if is_sequence(name):
+        if isinstance(name, (tuple, list,)):
             name = string.join(name, '/')
         return self.get(self.OUTPUT_PARAMETERS, name, **kwargs)
 
