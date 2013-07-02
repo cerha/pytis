@@ -1281,7 +1281,7 @@ class Invocable(object, CommandHandler):
     INVOKE_SELECTION command.
     
     """
-    _INVOKE_TITLE = _("Selection")
+    _INVOKE_TITLE = _("Select")
     _INVOKE_HELP = None
     _INVOKE_ICON = 'invoke-selection'
     
@@ -1345,7 +1345,7 @@ class DateField(Invocable, TextField, SpinnableField):
     """
 
     _DEFAULT_WIDTH = 10
-    _INVOKE_TITLE = _("Calendar selection")
+    _INVOKE_TITLE = _("Select from Calendar")
     _INVOKE_HELP = _("Show the calendar for date selection.")
     _SPIN_STEP = datetime.timedelta(days=1)
     
@@ -1398,7 +1398,7 @@ class ColorSelectionField(Invocable, TextField):
     """Vstupní pole pro výběr barvy."""
 
     _DEFAULT_WIDTH = 7
-    _INVOKE_TITLE = _("Color selection")
+    _INVOKE_TITLE = _("Select Color")
     _INVOKE_HELP = _("Show the color selection dialog.")
     
     def _on_invoke_selection(self, alternate=False):
@@ -1496,7 +1496,7 @@ class CodebookField(Invocable, GenericCodebookField, TextField):
     popisu vybrané (aktuální) hodnoty číselníku.
 
     """
-    _INVOKE_TITLE = _("Codebook selection")
+    _INVOKE_TITLE = _("Select from Codebook")
     _INVOKE_HELP = _("Show the selection of available codebook values.")
 
     def _init_attributes(self):
@@ -1815,7 +1815,7 @@ class ListField(GenericCodebookField):
 class FileField(Invocable, InputField):
     """Input field for manipulating generic binary data."""
     
-    _INVOKE_TITLE = _("File selection")
+    _INVOKE_TITLE = _("Select File")
     _INVOKE_HELP = _("Show a dialog to browse files in the file system.")
     _INVOKE_ICON = wx.ART_FILE_OPEN
 
