@@ -3238,20 +3238,20 @@ class BrowseForm(FoldableForm):
             column_label = f.column_label()
             if not_in:
                 select_row = None
-                ititle = _(u"Filtrovat náhled „%(view_title)s“ na řádky "
-                           u"neobsažené ve sloupci „%(column)s“ současného náhledu.")
+                ititle = _('Filter "%(view_title)s" for rows not contained in '
+                           'column "%(column)s" of the current form.')
             else:
                 select_row = {column: row[f.id()]}
-                ititle = _("Filtrovat náhled „%(view_title)s“ na řádky "
-                           "obsažené ve sloupci „%(column)s“ současného náhledu.")
+                ititle = _('Filter "%(view_title)s" for rows contained in '
+                           'column "%(column)s" of the current form.')
             def handler(form_class, name, **kwargs):
                 # The main reason for wrapping COMMAND_RUN_FORM in a function
                 # run through COMMAND_HANDLED_ACTION here is to postpone the
                 # time consuming IN operator construction until the menu item
                 # is actually selected.
                 if self._current_profile_changed():
-                    msg = _("Filtrování nemůže být provedeno, pokud aktuální profil není uložen!")
-                    bsave, bquit = _("Uložit"), _("Zrušit")
+                    msg = _("Can not filter as long as the current profile is unsaved!")
+                    bsave, bquit = _("Save"), _("Cancel")
                     if run_dialog(MultiQuestion, msg, buttons=(bsave, bquit),
                                   default=bsave) != bsave:
                         return
@@ -3313,12 +3313,12 @@ class BrowseForm(FoldableForm):
             return can_open_file
         menu = self._context_menu_static_part
         row = self.current_row()
-        file_open_mitems = [MItem(_(u"Otevřít soubor „%s“" % filename),
+        file_open_mitems = [MItem(_('Open file "%s"', filename),
                                   command=Application.COMMAND_HANDLED_ACTION(handler=open_file,
                                                                              data=data,
                                                                              filename=filename,
                                                                              enabled=can_open(f)),
-                                  help=_(u"Otevřít hodnotu políčka „%s“ jako soubor.") % f.label())
+                                  help=_('Open the value of field "%s" as a file.', f.label()))
                             for f, data, filename in
                             [(f, file_field_data(row, f.id()), filename)
                              for f, filename in [(f, row.filename(f.id())) for f in self._fields]
@@ -3332,17 +3332,17 @@ class BrowseForm(FoldableForm):
         if self._explicit_links:
             menu += tuple(self._link_mitems(row, self._explicit_links))
         if self._automatic_links:
-            menu += (Menu(_(u"Odskoky"), self._link_mitems(row, self._automatic_links)),)
+            menu += (Menu(_("Links"), self._link_mitems(row, self._automatic_links)),)
         if self._explicit_in_operator_links or self._automatic_in_operator_links:
             if self._explicit_in_operator_links and self._automatic_in_operator_links:
                 separator = [MSeparator()]
             else:
                 separator = []
-            menu += (Menu(_(u"Filtrovat přítomné hodnoty (operátor IN)"),
+            menu += (Menu(_("Filter existing values (operator IN)"),
                           (self._in_operator_mitems(row, self._explicit_in_operator_links)
                            + separator +
                            self._in_operator_mitems(row, self._automatic_in_operator_links))),
-                     Menu(_(u"Filtrovat nepřítomné hodnoty (operátor NOT IN)"),
+                     Menu(_("Filter missing values (operator NOT IN)"),
                           (self._in_operator_mitems(row, self._explicit_in_operator_links, True)
                            + separator +
                            self._in_operator_mitems(row, self._automatic_in_operator_links, True))),
@@ -3361,7 +3361,7 @@ class BrowseForm(FoldableForm):
         return menu
     
     def _cmd_print(self, print_spec_path=None):
-        log(EVENT, u'Vyvolání tiskového formuláře:', print_spec_path)
+        log(EVENT, 'Print form invocation:', print_spec_path)
         name = self._name
         if not print_spec_path:
             try:
