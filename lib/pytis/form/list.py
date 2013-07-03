@@ -2083,8 +2083,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             username = ''
         default_filename = 'export_%s.txt' % username
         if xls_possible:
-            msg = "\n\n".join(_("Data may be exported into one of the following file formats."),
-                              _("Choose the desired format."))
+            msg = "\n\n".join((_("Data may be exported into one of the following file formats."),
+                              _("Choose the desired format.")))
             fileformat = run_dialog(MultiQuestion, msg, ('CSV','XLS'), default='CSV')
             if not fileformat:
                 return
