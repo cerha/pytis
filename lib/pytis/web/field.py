@@ -333,8 +333,7 @@ class Field(object):
         """
         return None
 
-    def _validate(self, req, locale_data, **kwargs):
-        string_value = req.param(self.name())
+    def _validate(self, string_value, req, locale_data, **kwargs):
         return self._row.validate(self.id, string_value, **kwargs)
 
     def name(self):
@@ -376,7 +375,8 @@ class Field(object):
         # all cases.  Now it is only made to work for certain filed types, such
         # as DateTimeField and CheckboxField.  Also "ordinary" fields like
         # StringField and NumericField should work fine.
-        return self._validate(req, locale_data)
+        string_value = req.param(self.name())
+        return self._validate(string_value, req, locale_data)
 
     def format(self, context):
         """Return the exported read-only field representation."""
@@ -442,7 +442,20 @@ class TextField(Field):
 
     
 class NumericField(TextField):
-    pass
+
+    def _validate(self, string_value, req, locale_data, **kwargs):
+        if isinstance(self.type, pd.Monetary):
+            decimal_point = locale_data.mon_decimal_point
+            thousands_sep = locale_data.mon_thousands_sep
+        else:
+            decimal_point = locale_data.decimal_point
+            thousands_sep = locale_data.thousands_sep
+        # Convert the value to 'C' locale formatting before validation.
+        if thousands_sep:
+            string_value = string_value.replace(thousands_sep, '')
+        if decimal_point != '.':
+            string_value = string_value.replace(decimal_point, '.')
+        return super(NumericField, self)._validate(string_value, req, locale_data, **kwargs)
 
     
 class StringField(TextField):
@@ -683,9 +696,8 @@ class DateTimeField(TextField):
            """ % js_values)
         return result
 
-    def _validate(self, req, locale_data, **kwargs):
-        # TODO: Take locale data from somewhere as in _editor() above?
-        return super(DateTimeField, self)._validate(req, locale_data, 
+    def _validate(self, string_value, req, locale_data, **kwargs):
+        return super(DateTimeField, self)._validate(string_value, req, locale_data, 
                                                     format=self._datetime_format(locale_data),
                                                     **kwargs)
 
@@ -725,12 +737,10 @@ class CheckboxField(Field):
     def _editor(self, context, **kwargs):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
 
-    def _validate(self, req, locale_data, **kwargs):
-        if req.has_param(self.name()):
-            string_value = req.param(self.name())
-        else:
+    def _validate(self, string_value, req, locale_data, **kwargs):
+        if string_value is None:
             string_value = 'F'
-        return self._row.validate(self.id, string_value, **kwargs)
+        return super(CheckboxField, self)._validate(string_value, req, locale_data, **kwargs)
 
     def label_in_front(self):
         return False
