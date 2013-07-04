@@ -373,8 +373,8 @@ class Field(object):
         # It is necessary to move all the logic of the method
         # wiking.PytisModule._validate() into pytis fields to make it work in
         # all cases.  Now it is only made to work for certain filed types, such
-        # as DateTimeField and CheckboxField.  Also "ordinary" fields like
-        # StringField and NumericField should work fine.
+        # as DateTimeField, NumericField and CheckboxField.  Also "ordinary"
+        # fields like StringField should work fine.
         string_value = req.param(self.name())
         return self._validate(string_value, req, locale_data)
 
