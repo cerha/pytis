@@ -109,7 +109,7 @@ class ChangesLogUser(ChangesLog):
                                          VGroup('tablename_', 'key_value_'),
                                          'detail_',))
     
-    def argument_provider(self, query_fields):
+    def argument_provider(self, query_fields, **kwargs):
         if query_fields:
             date_from   = query_fields['date_from'] 
             date_to     = query_fields['date_to'] 

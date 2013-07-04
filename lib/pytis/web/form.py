@@ -1134,13 +1134,12 @@ class BrowseForm(LayoutForm):
         except:
             self._lang = None
         self._init_query_fields(req)
+        provider_kwargs = dict(req=self._req)
         if self._query_fields_row:
-            provider_args = (self._query_fields_row,)
-        else:
-            provider_args = ()
+            provider_kwargs['query_fields'] = self._query_fields_row
         condition_provider = self._view.condition_provider()
         if condition_provider:
-            provider_condition = condition_provider(*provider_args)
+            provider_condition = condition_provider(**provider_kwargs)
             if provider_condition:
                 if condition:
                     condition = pd.AND(condition, provider_condition)
@@ -1148,7 +1147,7 @@ class BrowseForm(LayoutForm):
                     condition = provider_condition
         argument_provider = self._view.argument_provider()
         if argument_provider:
-            provider_arguments = argument_provider(*provider_args)
+            provider_arguments = argument_provider(**provider_kwargs)
             if provider_arguments:
                 if arguments:
                     arguments.update(provider_arguments)

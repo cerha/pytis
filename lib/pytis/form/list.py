@@ -3421,6 +3421,7 @@ class SideBrowseForm(BrowseForm):
                 condition = column_condition
         self._main_form = main_form
         self._selection_condition = condition
+        self._main_form_row = None
         kwargs['condition'] = pytis.data.OR() # The form will be empty after initialization.
         super(SideBrowseForm, self)._init_attributes(**kwargs)
         
@@ -3429,6 +3430,10 @@ class SideBrowseForm(BrowseForm):
         if arguments == self._data.UNKNOWN_ARGUMENTS:
             return self._data.UNKNOWN_ARGUMENTS
         return dict(self._selection_arguments, **(arguments or {}))
+
+    def _provider_kwargs(self):
+        return dict(super(SideBrowseForm, self)._provider_kwargs(),
+                    main_form_row=self._main_form_row)
 
     def on_selection(self, row):
         """Update form after main form selection.
@@ -3439,6 +3444,7 @@ class SideBrowseForm(BrowseForm):
 
         """
         #log(EVENT, 'Filtrace obsahu formuláře:', (self._name, row))
+        self._main_form_row = row
         if self._xarguments is not None:
             self._selection_arguments = self._xarguments(row)
         if self._side_prefill:
@@ -3454,7 +3460,7 @@ class SideBrowseForm(BrowseForm):
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
             self._lf_condition = None
-        self._refresh(key_update=False)
+        self._refresh(key_update=False, interactive=True)
         if self._side_search:
             search = self._side_search(row)
             if search is not None:

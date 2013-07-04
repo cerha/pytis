@@ -1424,10 +1424,9 @@ class ViewSpec(object):
             function argument names (strings) as keys and 'pytis.data.Value'
             instances as corresponding database function argument values.  If
             it is 'None', no arguments are provided.  If it returns 'None', the
-            select should be cancelled.  When 'query_fields' are defined, the
-            function receives one argument - a 'PresentedRow' instance with the
-            current query field values from the user interface.  If no query
-            fields are defined, the function is called without any arguments.
+            select should be cancelled.  The function is called with various
+            keyword arguments, same as for 'condition_provider'.  These
+            arguments are described below in section Provider Arguments.
             Defining 'argument_provider' makes sense only for database table
             functions.  It should be 'None' for standard tables and views.
             
@@ -1435,14 +1434,10 @@ class ViewSpec(object):
             as a 'pytis.data.Operator' instance.  If used (not None), the
             returned condition is applied in addition to any other conditions,
             such as the static condition defined by 'condition' or conditions
-            implied by form profiles, filtering, etc.  The function is
-            typically used together with 'query_fields' to transform query
-            field values into a form filtering condition.  When 'query_fields'
-            are defined, the function receives one argument - a 'PresentedRow'
-            instance containing the current query field values from the user
-            interface.  When no query fields are defined, the function receives
-            no argument.
-            
+            implied by form profiles, filtering, etc.  The function is called
+            with various keyword arguments, same as for 'arguemnt_provider'.
+            These arguments are described below in section Provider Arguments.
+
           referer -- id of the referer column as a string (one of the id's
             defined by 'fields') or None.  If None, the id of the data key
             column is used.  The exported value of the referer column is used
@@ -1461,7 +1456,25 @@ class ViewSpec(object):
         The arguments 'layout' and 'columns' may be omitted.  Default layout
         and column list will be generated automatically based on the order of
         the field specifications in 'fields'.
+
+        Provider Arguments
+
+        Functions 'condition_provider' and 'argument_provider' are called with
+        various keyword arguemnts.  Their list is below.  Only those arguments,
+        which make sense in given case are actually passed.  The function
+        should generally consume only the arguments it needs, but still accept
+        all other keyword arguments (**kwargs) for the possibility of extending
+        the available arguments in future pytis versions.
         
+          query_fields -- 'PresentedRow' instance with the current query field
+            values from the user interface.  Only passed, when 'query_fields'
+            are defined in form specification.
+          main_form_row -- 'PresentedRow' instance with the current main form
+            row values.  Only passed, when the form is displayed as a side form
+            and currently only supported by wx forms (not web forms).
+          req -- current request object.  Only passed in web applications (not
+            in wx forms).
+
         """
         self._kwargs = dict(kwargs, title=title, fields=fields)
         self._init(**self._kwargs)

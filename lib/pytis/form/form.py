@@ -996,16 +996,19 @@ class LookupForm(InnerForm):
             return pytis.data.Value(t, v)
         return pytis.data.Row([(f.id(), value(f)) for f in self._view.query_fields().fields()])
 
+    def _provider_kwargs(self):
+        kwargs = {}
+        if self._view.query_fields():
+            kwargs['query_fields'] = self._query_fields_row()
+        return kwargs
+
     def _apply_providers(self):
         condition_provider = self._view.condition_provider()
         argument_provider = self._view.argument_provider()
         if condition_provider or argument_provider:
-            if self._view.query_fields():
-                provider_arguments = (self._query_fields_row(),)
-            else:
-                provider_arguments = ()
-            if provider_arguments == (None,):
-                # If _query_fields_row() is returs None, it means that the
+            kwargs = self._provider_kwargs()
+            if 'query_fields' in kwargs and kwargs['query_fields'] is None:
+                # If _query_fields_row() returs None, it means that the
                 # query fields are not initialized yet and autoapply is off.
                 # This happens during form initialization.  In this case we
                 # want to display an empty form without calling the provider
@@ -1018,9 +1021,9 @@ class LookupForm(InnerForm):
                     self._arguments = self._data.UNKNOWN_ARGUMENTS
             else:
                 if condition_provider:
-                    self._lf_provider_condition = condition_provider(*provider_arguments)
+                    self._lf_provider_condition = condition_provider(**kwargs)
                 if argument_provider:
-                    arguments = argument_provider(*provider_arguments)
+                    arguments = argument_provider(**kwargs)
                     if arguments is None:
                         return False
                     self._arguments = arguments
