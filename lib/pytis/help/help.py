@@ -430,12 +430,17 @@ class HelpGenerator(object):
                                    resource_provider=resource_provider,
                                    children=[make_node(r, children) for r in
                                              children.get(row['position'].value(), ())])
+        #data = pytis.data.dbtable('ev_pytis_user_help',
+        #                          ('help_id', 'fullname', 'spec_name', 'page_id', 'position',
+        #                           'title', 'description', 'menu_help', 'content', 'language',),
+        #                          config.dbconnection)
+        #data.select(condition=pytis.data.EQ('language', pytis.data.sval(current_language())),
+        #            sort=(('position', pytis.data.ASCENDENT),))
         data = pytis.data.dbtable('ev_pytis_user_help',
-                                  ('help_id', 'fullname', 'spec_name', 'page_id', 'position', 
-                                   'title', 'description', 'menu_help', 'content', 'language',),
+                                  ('help_id', 'fullname', 'spec_name', 'page_id', 'position',
+                                   'title', 'description', 'menu_help', 'content',),
                                   config.dbconnection)
-        data.select(condition=pytis.data.EQ('language', pytis.data.sval(current_language())),
-                    sort=(('position', pytis.data.ASCENDENT),))
+        data.select(sort=(('position', pytis.data.ASCENDENT),))
         children = {}
         while True:
             row = data.fetchone()
