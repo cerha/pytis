@@ -20,15 +20,17 @@ množiny těchto atributů, viz dokumentace a příklady.  V několika málo p�
 jsou vlastnosti objektů specifikovány metodami namísto atributů, typickým
 příkladem je metoda SQLView.query.
 
-Ve specifikačních souborech je automaticky naimportován obsah knihovny
-gensqlalchemy.py, není tedy nutné jej importovat.  Třídy ve specifikacích by
-neměly mít názvy začínající prefixem `SQL', tyto názvy jsou rezervovány pro
-objekty definované gensqlalchemy.py.  Specifikační třídy, jejichž názvy
-začínají podtržítkem, negenerují databázové objekty.  Typicky slouží jako
-bázové třídy, které lze podědit do jiných specifikačních tříd.
-  
+Třídy ve specifikacích by neměly mít názvy začínající prefixem `SQL', tyto
+názvy jsou rezervovány pro objekty definované gensqlalchemy.py.  Specifikační
+třídy, jejichž názvy začínají podtržítkem, negenerují databázové objekty.
+Typicky slouží jako bázové třídy, které lze podědit do jiných specifikačních
+tříd.
 
-* SQLALchemy
+Knihovna pytis/data/dbdefs.py definuje některé častěji používané konstrukce, je
+doporučeno tyto konstrukce využívat a dle potřeby přidávat další.
+
+
+* SQLAlchemy
 
 Knihovna gensqlalchemy.py je založena na pythonové knihovně SQLAlchemy
 (http://docs.sqlalchemy.org/), která poskytuje prostředky pro vyjadřování a
@@ -54,7 +56,11 @@ v metatřídách specifikačních tříd.  Ve specifikačních třídách se na
 odkazovat jen na některých místech (např. v metodách), zatímco na jiných
 místech (např. v odkazech na vlastní sloupce ve specifikací sloupců tabulky) to
 možné není.  Pak je nezbytné použít SQL výrazy v řetězcové formě.  Viz příklady
-v gensqlalchemy-demo.py.
+v pytis/doc/examples/dbdefs/demo.py.
+
+Pokud chcete využívat funkci generování aktualizačních skriptů v gsql.py, je
+třeba mít nainstalovanou pythonovou knihovnu alembic
+(https://pypi.python.org/pypi/alembic; lze nainstalovat přes pip).
 
 
 * Další dokumentace a příklady
@@ -76,12 +82,19 @@ Dokumentace konkrétních databázových objektů a jejich vlastností je v jej
 dokumentačních řetězcích v souboru pytis/lib/pytis/data/gensqlalchemy.py.
 
 
+* Emacsová podpora
+
+Pro pohodlnější práci se specifikacemi v Emacsu je k dispozici elispový program
+pytis/tools/gensqlalchemy.el.  Instrukce k jeho používání jsou uvedeny na jeho
+začátku.
+
+
 * Poznámky
 
 Předpokládá se, že specifikační mechanismy budou doplňovány o nové pomocné
 funkce, metody a jiné objekty.  Pokud při tvorbě specifikací narazíte na
 opakované zdlouhavé používání nějaké konstrukce, mělo by se uvažovat
-o zjednodušení prostřednictvím doplnění nové pomůcky do gensqlalchemy.
+o zjednodušení prostřednictvím doplnění nové pomůcky do pytis/data/dbdefs.py.
 
 SQLAlchemy nepodporuje FULL OUTER JOIN a RIGHT OUTER JOIN.  Částečnou podporu
 pro FULL OUTER JOIN doplňuje gensqlalchemy.py, je však lépe se použití FULL
@@ -92,8 +105,9 @@ JOIN.
 Pokud se v SQL výrazech, ať už jde o položky seznamu sloupců nebo podmínky,
 používají konstanty, je potřeba tyto důsledně obalovat funkcí
 sqlalchemy.literal_column, nejlépe i s uvedením příslušného typu v druhém
-argumentu.  Typickým příznakem nedodržení tohoto pravidla je výskyt elementů
-`%(param_*)' ve vygenerovaném SQL kódu.
+argumentu (nebo ještě lépe využívat funkce sval, ival,
+atd. z pytis.data.dbdefs).  Typickým příznakem nedodržení tohoto pravidla je
+výskyt elementů `%(param_*)' ve vygenerovaném SQL kódu.
 
 Je také třeba dávat pozor na to, aby SELECTy používané na místě tabulky ve FROM
 měly definované aliasy (pomocí volání metody `alias').  SQLAlchemy je samo
