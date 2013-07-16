@@ -843,7 +843,8 @@ class BrowseForm(LayoutForm):
                  columns=None, sorting=None, grouping=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
                  search=None, query=None, allow_query_search=None, filter=None, message=None, 
-                 filter_sets=None, profiles=None, immediate_filters=True,
+                 filter_sets=None, profiles=None, query_fields=None,
+                 condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  **kwargs):
         """Arguments:
@@ -954,6 +955,13 @@ class BrowseForm(LayoutForm):
             None, the profiles from specification are ignored.  This argument
             is mostly useful to construct the list of profiles dynamically
             (specification profiles are static).
+          query_fields -- Specification of query fields as a sequence of
+            'pytis.presentation.Field' instances.  Overrides the form
+            specification attribute 'query_fields'.
+          condition_provider -- Overrides the form specification attribute
+            'condition_provider'.
+          argument_provider -- Overrides the form specification attribute
+            'argument_provider'.
           immediate_filters -- when True, filters and profiles apply
             immediately after their selection in the corresponding selector;
             when False, there is a separate button for filter application.
@@ -1133,11 +1141,12 @@ class BrowseForm(LayoutForm):
             self._lang = str(req.preferred_language())
         except:
             self._lang = None
-        self._init_query_fields(req)
+        self._init_query_fields(req, query_fields)
         provider_kwargs = dict(req=self._req)
         if self._query_fields_row:
             provider_kwargs['query_fields'] = self._query_fields_row
-        condition_provider = self._view.condition_provider()
+        if condition_provider is None:
+            condition_provider = self._view.condition_provider()
         if condition_provider:
             provider_condition = condition_provider(**provider_kwargs)
             if provider_condition:
@@ -1145,7 +1154,8 @@ class BrowseForm(LayoutForm):
                     condition = pd.AND(condition, provider_condition)
                 else:
                     condition = provider_condition
-        argument_provider = self._view.argument_provider()
+        if argument_provider is None:
+            argument_provider = self._view.argument_provider()
         if argument_provider:
             provider_arguments = argument_provider(**provider_kwargs)
             if provider_arguments:
@@ -1165,10 +1175,12 @@ class BrowseForm(LayoutForm):
         self._row_actions = row_actions
         self._async_load = async_load
 
-    def _init_query_fields(self, req):
+    def _init_query_fields(self, req, query_fields_spec):
         errors = []
         query_fields = []
-        if self._view.query_fields():
+        if query_fields_spec is None:
+            query_fields_spec = self._view.query_fields()
+        if query_fields_spec:
             fields_specs = self._view.query_fields().fields()
             columns = []
             for fspec in fields_specs:
