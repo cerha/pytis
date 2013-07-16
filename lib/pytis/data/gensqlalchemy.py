@@ -2534,7 +2534,8 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         'Column' instances (composite return value of the given column types)
         or a tabular specification (composite return value of values
         corresponding to the given object columns) or 'SQLFunctional.RECORD'
-        constant (the return value is defined by output function arguments).
+        constant (the return value is defined by output function arguments) or
+        'None' (there is no return value)
       multirow -- iff true then the function may return multiple results
         (rows); boolean
       security_definer -- iff true then the function runs with permissions of
