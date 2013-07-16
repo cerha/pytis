@@ -1187,8 +1187,7 @@ class BrowseForm(LayoutForm):
                 ftype = fspec.type() or pytis.data.String()
                 if type(ftype) == type(pytis.data.Type):
                     ftype = ftype()
-                ftype = ftype.clone(ftype.__class__(**fspec.type_kwargs()))
-                    
+                ftype = ftype.__class__(**fspec.type_kwargs()).clone(ftype)
                 columns.append(pytis.data.ColumnSpec(fspec.id(), ftype))
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
             row = self.FormRecord(self._req, fields_specs, data, None,
