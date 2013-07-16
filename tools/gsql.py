@@ -48,6 +48,8 @@ def parse_options():
                       help="output SQL commands for upgrade (experimental)")
     parser.add_option("--config", action="store", type="string", dest="config_file",
                       help="pytis configuration file for database access (on upgrade)")
+    parser.add_option("--debug", action="store_true", dest="debug",
+                      help="print some debugging information to stderr")
     parser.add_option("--host", default=None, action="store", dest="host")
     parser.add_option("--port", default=None, type="int", action="store", dest="port")
     parser.add_option("--database", default=None, action="store", dest="database")
@@ -85,7 +87,7 @@ def run():
                                          views=options.views, functions=options.functions,
                                          names_only=options.names_only, pretty=options.pretty,
                                          schema=options.schema, source=options.source,
-                                         upgrade=options.upgrade)
+                                         upgrade=options.upgrade, debug=options.debug)
 
 if __name__ == '__main__':
     run()

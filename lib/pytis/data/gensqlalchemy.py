@@ -929,6 +929,8 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
             schemas = _expand_schemas(cls)
             for search_path in schemas:
                 def init_function(cls=cls, search_path=search_path, may_alter_schema=False):
+                    if _debug:
+                        sys.stderr.write('*** %s\n' % (cls.__name__,))
                     with _local_search_path(search_path):
                         if may_alter_schema and _enforced_schema:
                             search_path = [_enforced_schema] + search_path
@@ -3231,9 +3233,10 @@ def _gsql_output(output):
         _output.write(output.encode('utf-8'))
     _output.write('\n')
 
+_debug = False
 _pretty = 0
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade):
+                  config_file, upgrade, debug):
     global _output
     if upgrade:
         if alembic is None:
@@ -3244,6 +3247,8 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
         _output = sys.stdout
         if _output.encoding is None:
             _output = codecs.getwriter('UTF-8')(_output)
+    global _debug
+    _debug = debug
     global _pretty
     _pretty = pretty
     global _enforced_schema, _enforced_schema_objects
@@ -3460,7 +3465,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
     
 def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=False,
               names_only=False, pretty=0, schema=None, source=False, config_file=None,
-              upgrade=False):
+              upgrade=False, debug=False):
     """Generate SQL code from given specification file.
 
     Arguments:
@@ -3481,6 +3486,7 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
       source -- iff true, print source files and lines
       config_file -- name of pytis configuration file
       upgrade -- iff true, generate SQL commands for upgrade rather than creation
+      debug -- iff true, print some debugging information to standard error output
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -3491,11 +3497,11 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     def loader(file_name=file_name):
         execfile(file_name, copy.copy(globals()))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade)
+                  config_file, upgrade, debug)
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
                 names_only=False, pretty=0, schema=None, source=False, config_file=None,
-                upgrade=False):
+                upgrade=False, debug=False):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -3516,6 +3522,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
       source -- iff true, print source files and lines
       config_file -- name of pytis configuration file
       upgrade -- iff true, generate SQL commands for upgrade rather than creation
+      debug -- iff true, print some debugging information to standard error output
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -3526,7 +3533,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     def loader(module_name=module_name):
         pytis.util.load_module(module_name)
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade)
+                  config_file, upgrade, debug)
 
 def clear():
     "Clear all loaded specifications."
