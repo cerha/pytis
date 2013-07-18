@@ -2759,10 +2759,10 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
                 result_type = c.type.compile(_engine.dialect)
             elif isinstance(function_type, pytis.data.Type):
                 result_type = function_type.sqlalchemy_type().compile(_engine.dialect)
-            elif issubclass(function_type, (SQLTable, SQLType,)):
+            elif issubclass(function_type, _SQLTabular):
                 result_type = object_by_class(function_type, search_path).pytis_name()
             else:
-                raise SQLException("Invalid result type", function_type)
+                raise SQLException("Invalid result type", (self.__class__.__name__, function_type,))
         result_type_prefix = 'SETOF ' if self.multirow else ''
         name = self.pytis_name(real=True)
         security = ' SECURITY DEFINER' if self.security_definer else ''
