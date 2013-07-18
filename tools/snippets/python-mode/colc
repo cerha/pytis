@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+# name: colc
+# --
+sql.Column('$1', pytis.data.String(minlen=$2, maxlen=$2$3)$4),$0

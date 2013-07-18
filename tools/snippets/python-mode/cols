@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+# name: cols
+# --
+sql.Column('$1', pytis.data.String(maxlen=$2)$3),$0

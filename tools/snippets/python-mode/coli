@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+# name: coli
+# --
+sql.Column('$1', pytis.data.Integer($2)$3),$0

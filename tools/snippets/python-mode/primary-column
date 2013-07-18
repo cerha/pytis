@@ -3,4 +3,4 @@
 # key: pcol
 # group: gensqlalchemy
 # --
-sql.PrimaryColumn('$1', ${2:$$(yas/choose-value '("pytis.data.Password" "pytis.data.LTree" "pytis.data.TimeInterval" "pytis.data.Time" "pytis.data.Date" "pytis.data.DateTime" "pytis.data.Float" "pytis.data.Serial" "pytis.data.Integer" "pytis.data.Boolean" "pytis.data.String"))}(${3:not_null=True})),
+sql.PrimaryColumn('${1:id}', ${2:pytis.data.Serial}(${3:not_null=True})$4),$0

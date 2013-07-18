@@ -3,4 +3,4 @@
 # key: col
 # group: gensqlalchemy
 # --
-sql.Column('$1', ${2:$$(yas/choose-value '("pytis.data.LTree" "pytis.data.TimeInterval" "pytis.data.Time" "pytis.data.Date" "pytis.data.DateTime" "pytis.data.Float" "pytis.data.Integer" "pytis.data.Boolean" "pytis.data.String"))}()),
+sql.Column('$1', ${2:$$(yas/choose-value '("pytis.data.Binary" "pytis.data.Name" "pytis.data.LTree" "pytis.data.TimeInterval" "pytis.data.Time" "pytis.data.Date" "pytis.data.DateTime" "pytis.data.Float" "pytis.data.Integer" "pytis.data.Boolean" "pytis.data.String"))}($3)$4),$0

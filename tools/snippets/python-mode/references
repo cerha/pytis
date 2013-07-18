@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+# name: ref
+# --
+references=sql.a(sql.r.$1${2:, onupdate='CASCADE'}${3:, ondelete='CASCADE'})
