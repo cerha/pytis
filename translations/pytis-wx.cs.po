@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-07-18 07:45+0200\n"
-"PO-Revision-Date: 2013-07-18 07:50+0200\n"
+"PO-Revision-Date: 2013-07-18 08:06+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -310,7 +310,7 @@ msgstr ""
 
 #: ../lib/pytis/form/commands_.py:566
 msgid "Filter"
-msgstr "Filtrování"
+msgstr "Filtrovat"
 
 #: ../lib/pytis/form/commands_.py:567
 msgid "Filter records matching given conditions."
