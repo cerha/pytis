@@ -20,6 +20,7 @@
 
 (require 'diff-mode)
 (require 'python)
+(require 'vc-git)
 (require 'gensqlalchemy)
 
 
