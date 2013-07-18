@@ -145,7 +145,7 @@ def if_(condition, then_, else_):
     Arguments:
 
       condition -- condition, 'sqlalchemy.sql.expression.ClauseElement' instance
-      then -- then part, 'sqlalchemy.sql.expression.ClauseElement' instance
+      then_ -- then part, 'sqlalchemy.sql.expression.ClauseElement' instance
       else_ -- else part, 'sqlalchemy.sql.expression.ClauseElement' instance
 
     """
