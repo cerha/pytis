@@ -75,7 +75,7 @@ class SFSDialog(GenericDialog):
 
     _FIELD_HEIGHT = 27
     _TITLE = None
-    _ESCAPE_BUTTON = _(u"Zavřít")
+    _ESCAPE_BUTTON = _("Close")
     _BUTTONS = (_ESCAPE_BUTTON,)
     def __init__(self, parent, columns, col=None):
         """Initialize the dialog.
@@ -149,16 +149,16 @@ class SortingDialog(SFSDialog):
 
     """
 
-    _TITLE = _(u"Řazení")
-    _SORT_BUTTON = _(u"Seřadit")
-    _RESET_BUTTON = _(u"Obnovit výchozí řazení")
+    _TITLE = _("Sorting")
+    _SORT_BUTTON = _("Sort")
+    _RESET_BUTTON = _("Reset to default sorting")
     _BUTTONS = (_SORT_BUTTON, _RESET_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _SORT_BUTTON
     
     _DIRECTIONS = (pytis.data.ASCENDENT, pytis.data.DESCENDANT, None)
-    _LABELS = {pytis.data.ASCENDENT: _(u"Vzestupně"),
-               pytis.data.DESCENDANT: _(u"Sestupně"),
-               None: _(u"Neřadit")}
+    _LABELS = {pytis.data.ASCENDENT: _("Ascending"),
+               pytis.data.DESCENDANT: _("Descending"),
+               None: _("No sorting")}
     
     _HELP_TOPIC = 'sorting'
     
@@ -185,14 +185,14 @@ class SortingDialog(SFSDialog):
         for cid, dir in self._sorting or ((self._col, self._direction),):
             self._controls.append((
                 choice([(c.label(), c) for c in self._columns], selected=self._find_column(cid),
-                       tooltip=_(u"Zvolte sloupec, podle nějž chcete řadit")),
+                       tooltip=_("Choose the sorting column.")),
                 choice([(self._LABELS[d], d) for d in self._DIRECTIONS], selected=dir,
-                       tooltip=_(u"Zvolte směr řazení"))))
+                       tooltip=_("Choose the sorting direction."))))
 
     def _create_content(self, sizer):
         super(SortingDialog, self)._create_content(sizer)
-        button = self._create_button(_(u"Přidat"), self._on_add,
-                                     _(u"Přidat sloupec sekundárního řazení"))
+        button = self._create_button(_("Add"), self._on_add,
+                                     _("Add secundary sorting column."))
         sizer.Add(button, 0, wx.ALL | wx.CENTER, 5)
 
     def _customize_result(self, button_wid):
@@ -251,7 +251,7 @@ class SFDialog(SFSDialog):
                               'OR': pytis.data.OR}
     _TEXT_CTRL_SIZE = 18
     _NO_COLUMN = SFSColumn('--sfs-dlg-no-column--', pytis.data.String(),
-                           '* ' + _(u"hodnota") + ' *')
+                           '* ' + _("value") + ' *')
     
     class SFConditionError(Exception):
         def __init__(self, i, ctrl, msg):

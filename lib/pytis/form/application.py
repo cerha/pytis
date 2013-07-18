@@ -800,7 +800,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
     # Zpracování příkazů
 
     def _cmd_break(self):
-        message(_("Stop"), beep_=True)
+        message(_("Stopped..."), beep_=True)
         
     def _can_handled_action(self, handler=None, enabled=None, **kwargs):
         return enabled is None and True or enabled(**kwargs)

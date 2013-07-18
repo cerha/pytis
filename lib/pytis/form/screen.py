@@ -200,7 +200,7 @@ def paste_from_clipboard(ctrl):
             
 def hotkey_string(hotkey):
     """Return the human readable hotkey representation of Keymap.lookup_command() result."""
-    return ' '.join([k.replace(' ', _(u"Mezerník")) for k in hotkey])
+    return ' '.join([k.replace(' ', _("Space")) for k in hotkey])
 
 
 ### Pomocné třídy
@@ -1386,9 +1386,8 @@ class MenuBar(wx.MenuBar):
             if k != (None,) and k != (u'',):
                 cmd = (menu.command(), menu.args())
                 if k in self._keys and self._keys[k] != cmd:
-                    log(OPERATIONAL, _(u"Duplicitní klávesa položky menu:"),
-                        (k, menu.title(), cmd))
-                    log(OPERATIONAL, _(u"Kolidující příkaz:"), self._keys[k])
+                    log(OPERATIONAL, "Duplicate menu shortcut:", (k, menu.title(), cmd))
+                    log(OPERATIONAL, "Colliding command:", self._keys[k])
                 else:
                     self._keys[k] = cmd
                     
@@ -1617,14 +1616,14 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
                 first_user_profile = i
             title = profile.title()
             if profile.errors():
-                title += ' ' + _(u"(neplatný)")
+                title += ' ' + _("(invalid)")
             self.InsertStringItem(i, title)
             self.SetItemData(i, i)
             if profile is current:
                 self.Select(i)
         if first_user_profile:
-            for i, label in ((0, _(u"Systémové profily")),
-                             (first_user_profile + 1, _(u"Uživatelské profily"))):
+            for i, label in ((0, _("System Profiles")),
+                             (first_user_profile + 1, _("User Profiles"))):
                 self.InsertStringItem(i, '- ' + label + ' -')
                 self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
                 self.SetItemData(i, -1)
@@ -1696,39 +1695,38 @@ class ProfileSelector(wx.combo.ComboCtrl):
 
     def _on_context_menu(self, event):
         menu = (
-            MItem(_(u"Uložit"),
+            MItem(_("Save"),
                   pytis.form.LookupForm.COMMAND_UPDATE_PROFILE(),
-                  help=_(u"Aktualizovat uložený profil podle současného nastavení formuláře")),
-            MItem(_(u"Uložit jako nový"),
+                  help=_("Update the saved profile according to the current form setup.")),
+            MItem(_("Save as new"),
                   pytis.form.Application.COMMAND_HANDLED_ACTION(
                       # Name must be edited first and 'cmd' will be invoked after confirmation.
                       handler=self._edit_profile_title,
                       enabled=self._edit_profile_title_enabled,
                       cmd=pytis.form.LookupForm.COMMAND_SAVE_NEW_PROFILE,
                       clear=True),
-                  help=_(u"Vytvořit nový profil podle současného nastavení formuláře")),
-            MItem(_(u"Přejmenovat"),
+                  help=_("Create a new profile according to the current form setup.")),
+            MItem(_("Rename"),
                   pytis.form.Application.COMMAND_HANDLED_ACTION(
                       # Name must be edited first and 'cmd' will be invoked after confirmation.
                       handler=self._edit_profile_title,
                       enabled=self._edit_profile_title_enabled,
                       cmd=pytis.form.LookupForm.COMMAND_RENAME_PROFILE),
-                  help=_(u"Upravit a uložit název aktuálního profilu")),
-            MItem(_(u"Smazat"),
+                  help=_("Change the name of the current profile and save it.")),
+            MItem(_("Delete"),
                   pytis.form.LookupForm.COMMAND_DELETE_PROFILE(),
-                  help=_(u"Smazat zvolený uložený profil")),
-            MItem(_(u"Použít automaticky při otevření formuláře"),
+                  help=_("Delete the selected saved profile.")),
+            MItem(("Use automatically on form startup"),
                   pytis.form.LookupForm.COMMAND_SET_INITIAL_PROFILE(),
-                  help=_(u"Automaticky přepnout na současný profil při příštím otevření "
-                         u"formuláře.")),
+                  help=_("Automatically switch to this profile "
+                         "when this form is opened next time.")),
             MSeparator(),
-            MItem(_(u"Vrátit poslední uložené nastavení"),
+            MItem(_("Restore to previously saved form settings"),
                   pytis.form.LookupForm.COMMAND_RELOAD_PROFILE,
-                  help=_(u"Zahodit změny nastavení formuláře provedené "
-                         u"od posledního uložení profilu.")),
-            MItem(_(u"Vrátit výchozí nastavení aplikace"),
+                  help=_("Discard changes in form settings since the profile was last saved.")),
+            MItem(_("Restore to default form settings"),
                   command=pytis.form.LookupForm.COMMAND_RESET_PROFILE,
-                  help=_(u"Zahodit všechny uložené uživatelské změny nastavení formuláře.")),
+                  help=_("Discard all user changes in form settings.")),
         )
         popup_menu(self, menu)
 
@@ -1744,7 +1742,7 @@ class ProfileSelector(wx.combo.ComboCtrl):
         else:
             ctrl.SelectAll()
         ctrl.SetFocus()
-        pytis.form.message(_(u"Zadejte název profilu a potvrďte stiskem ENTER."))
+        pytis.form.message(_("Enter the profile name and press ENTER when done."))
         self._on_enter_perform = perform
 
     def _edit_profile_title_enabled(self, cmd, clear=False):
@@ -1929,15 +1927,15 @@ class Browser(wx.Panel, CommandHandler):
     def _on_load_status_changed(self, webview, signal):
         status = webview.get_property('load-status')
         if status == webkit.LOAD_FINISHED:
-            msg = _(u"Dokument byl načten.")
+            msg = _("Document loaded.")
             busy = False
             if self._uri_change_callback:
                 self._uri_change_callback(webview.get_property('uri'))
         elif status == webkit.LOAD_FAILED:
-            msg = _(u"Načtení dokumentu se nezdařilo.")
+            msg = _("Loading document failed.")
             busy = False
         else:
-            msg = _(u"Načítám dokument.")
+            msg = _("Loading document.")
             busy = True
         busy_cursor(busy)
         pytis.form.message(msg, log_=False)
@@ -1965,7 +1963,7 @@ class Browser(wx.Panel, CommandHandler):
         if not uri.startswith('resource:') and restricted_navigation_uri is not None and \
                 not uri.startswith(restricted_navigation_uri):
             decision.ignore()
-            pytis.form.message(_(u"Přechod na externí URL zamítnut: %s") % uri, beep_=True)
+            pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
             return True
         elif uri.startswith('help:'):
             if self._last_help_uri == uri \
@@ -2047,20 +2045,20 @@ class Browser(wx.Panel, CommandHandler):
     def toolbar(self, parent):
         toolbar = wx.ToolBar(parent)
         for uicmd in (UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
-                                _(u"Zpět"),
-                                _(u"Zobrazit předchozí položku historie prohlížení")),
+                                _("Back"),
+                                _("Go back to the previous location in browser history.")),
                       UICommand(Browser.COMMAND_GO_FORWARD(_command_handler=self),
-                                _(u"Vpřed"),
-                                _(u"Zobrazit následující položku historie prohlížení")),
+                                _("Forward"),
+                                _("Go forward to the following location in browser history.")),
                       UICommand(Browser.COMMAND_RELOAD(_command_handler=self),
-                                _(u"Obnovit"),
-                                _(u"Načíst aktuální dokument znovu")),
+                                _("Reload"),
+                                _("Reload the current document.")),
                       UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=self),
-                                _(u"Zastavit"),
-                                _(u"Zastavit načítání dokumentu")),
+                                _("Stop"),
+                                _("Stop loading the document.")),
                       UICommand(Browser.COMMAND_LOAD_URI(_command_handler=self),
-                                _(u"Adresa"),
-                                _(u"Aktuální adresa prohlížeče"),
+                                _("Location"),
+                                _("Current browser URI."),
                                 ctrl=(LocationBar, dict(size=(600, 25), editable=False))),
                       ):
             uicmd.create_toolbar_ctrl(toolbar)
@@ -2347,7 +2345,7 @@ def open_data_as_file(data, suffix):
                     os.remove(path)
                 return
         pytis.form.run_dialog(pytis.form.Error,
-                              _("Nenalezen odpovídající prohlížeč pro '%s'." % suffix))
+                              _("External veiwer for '%s' not found." % suffix))
 
 
 def popup_menu(parent, items, keymap=None, position=None):

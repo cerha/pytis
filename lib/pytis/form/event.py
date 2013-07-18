@@ -63,7 +63,7 @@ class UserBreakException(Exception):
     """
     def __init__(self, *args):
         super(UserBreakException, self).__init__(*args)
-        pytis.form.message(_("Stop"), beep_=True)
+        pytis.form.message(_("Stopped..."), beep_=True)
 
 
 _current_event = None

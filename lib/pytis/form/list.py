@@ -3351,12 +3351,12 @@ class BrowseForm(FoldableForm):
         if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm)
                                           and dual.main_form() == self):
             menu += (MSeparator(),
-                     MItem(_(u"Zobrazit včetně vedlejších formulářů"),
+                     MItem(_("Open with side forms"),
                            command=Application.COMMAND_RUN_FORM(name=self._name,
                                                                 form_class=pytis.form.MultiBrowseDualForm,
                                                                 select_row=self._current_key()),
-                           help=_(u"Zobrazí aktuální záznam v hlavním formuláři "
-                                  u"se souvisejícími daty ve vedlejších formulářích."),
+                           help=_("Open the current record in a main form with "
+                                  "related data in side forms."),
                            icon='link'))
         return menu
     
@@ -3612,7 +3612,7 @@ class AggregationForm(BrowseForm):
                 if c.id() in self._select_columns()]
 
     def title(self):
-        return (_("Agregovaný náhled") + ' :: ' +
+        return (_("Aggregated View") + ' :: ' +
                 super(AggregationForm, self).title() +
                 ' :: ' + self._af_name)
 

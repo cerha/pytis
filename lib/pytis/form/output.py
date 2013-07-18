@@ -332,8 +332,8 @@ class PrintForm(Form):
             tbstring = pytis.util.format_traceback()
             pytis.util.log(pytis.util.OPERATIONAL, 'Print exception caught', tbstring)
             from pytis.form import run_dialog
-            run_dialog(Error, _(u"Chybné použití identifikátoru `data' v tiskové sestavě.\n"
-                                u"Možná jste místo něj chtěli použít `current_row'?"))
+            run_dialog(Error, _("Invalid use of identifier `data' in print specification.\n"
+                                "Maybe use `current_row' instead?"))
         except UserBreakException:
             pass
         return result
@@ -407,4 +407,4 @@ def run_viewer(file_):
             os.system(command)
         else:
             from pytis.form import run_dialog
-            run_dialog(Error, _(u"Nenalezen žádný PDF prohlížeč."))
+            run_dialog(Error, _("No PDF viewer found."))
