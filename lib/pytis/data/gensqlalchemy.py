@@ -151,6 +151,15 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
                 body = body.strip()
                 command = query_prefix + body + query_suffix
                 self.connection.execute(command)
+            elif isinstance(body, (tuple, list,)):
+                n = len(body)
+                for i in range(n):
+                    query = body[i]
+                    if i == 0:
+                        query.pytis_prefix = query_prefix
+                    if i == n - 1:
+                        query.pytis_suffix = query_suffix
+                    self.connection.execute(query)
             else:
                 query = body
                 query.pytis_prefix = query_prefix
@@ -2250,6 +2259,8 @@ class _SQLQuery(SQLObject):
             elif isinstance(o, sqlalchemy.sql.ClauseElement):
                 objects += o.get_children()
                 seen.append(o)
+            elif isinstance(o, (tuple, list,)):
+                objects += list(o)
             elif not isinstance(o, (RawCondition, basestring,)):
                 raise SQLException("Unknown condition element", o)
         self._pytis_query_dependencies = seen
@@ -2780,7 +2791,9 @@ class SQLFunction(_SQLQuery, SQLFunctional):
     This class doesn't define anything new, see its superclass for information
     about function definition.
 
-    In addition to other classes, 'body()' may return 'SQLAlchemy.Select' instance.
+    In addition to other classes, 'body()' may return
+    'SQLAlchemy.sql.ClauseElement' instance or sequence of
+    'SQLAlchemy.sql.ClauseElement' instances.
 
     """
     _LANGUAGE = 'sql'
