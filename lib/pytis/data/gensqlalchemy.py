@@ -3410,7 +3410,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                     raise Exception('Invalid foreign reference',
                                     (ffk.table.name, ffk.reference._name, ffk.reference._column,))
                 kwargs = ffk.kwargs
-                kwargs['name'] += target.name.replace('.', '__')
+                kwargs['name'] += ffk.column_name + '__' + target.name.replace('.', '__')
                 f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
                                                     table=ffk.table, **kwargs)
                 fdef = sqlalchemy.schema.AddConstraint(f)
