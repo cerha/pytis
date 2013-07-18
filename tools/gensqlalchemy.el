@@ -233,7 +233,7 @@ Currently the mode just defines some key bindings."
     buffer))
 
 (defun gensqlalchemy-module ()
-  (let ((paths (split-string (getenv "PYTHONPATH") ":" t))
+  (let ((paths (split-string (or (getenv "PYTHONPATH") "") ":" t))
         (module nil)
         (directory (expand-file-name default-directory)))
     (while (and paths (not module))
@@ -542,7 +542,7 @@ objects."
         (default-directory (gensqlalchemy-process-directory nil t)))
     (with-gensqlalchemy-pythonpath
       (compilation-start (format "PYTHONPATH='%s' %s --names --source --limit='^%s$' %s"
-                                 (getenv "PYTHONPATH")
+                                 (or (getenv "PYTHONPATH") "")
                                  gensqlalchemy-gsql spec-name (gensqlalchemy-module))))))
 
 (defun gensqlalchemy-sql-function-file ()
