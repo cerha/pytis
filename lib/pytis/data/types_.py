@@ -800,19 +800,21 @@ class LargeSerial(Integer):
 
 
 class Float(Number):
-    """Číslo v pohyblivé řádové čárce v rozsahu podporovaném Pythonem.
+    """Floating point number.
 
     Constructor arguments:
 
-      precision -- nezáporný integer udávající počet čísel za desetinnou
-        čárkou uváděný při exportu, nebo 'None' (pak není přesnost uměle
-        omezena)
-      digits -- maximum number of digits, integer
+      precision -- non-negative integer determining the number of digits after
+        decimal point in the exported value, or 'None' (no explicit limit on
+        the precision)
+      digits -- maximum number of digits, integer, or 'True' (the number is
+        precise, with arbitrary number of digits after decimal point; this is
+        useful for database definitions of unqualified NUMERIC types), or
+        'None' (unspecified value)
 
-    Ostatní klíčové argumenty jsou shodné, jako v předkovi.
+    Other keyword arguments are the same is in the superclass.
 
     """
-
     CEILING = 'CEILING'
     """Konstanta pro typ zaokrouhlení ve 'validate'."""
     FLOOR = 'FLOOR'
@@ -825,10 +827,11 @@ class Float(Number):
     def _init(self, precision=None, digits=None, **kwargs):
         super(Float, self)._init(**kwargs)
         assert precision is None or precision >= 0, ('Invalid precision', precision,)
+        assert digits is None or digits is True or isinstance(digits, int), digits
         if precision is None:
             format = '%f'
         else:
-            format = '%%.%df' % precision
+            format = '%%.%df' % (precision,)
         self._format_string = format
         self._precision = precision
         self._digits = digits
@@ -838,7 +841,7 @@ class Float(Number):
         return self._precision
 
     def digits(self):
-        """Return number of digits given in the constructor, integer."""
+        """Return number of digits given in the constructor."""
         return self._digits
     
     def _validate(self, string_, precision=None, rounding=None, locale_format=True):
@@ -875,7 +878,7 @@ class Float(Number):
             else:
                 value = float(string_)
         except:
-            # Dokumentace Pythonu 1.5.2 neříká, že by `float' mohlo metat metat
+            # Dokumentace Pythonu 1.5.2 neříká, že by `float' mohlo metat
             # nějakou výjimkou, ale evidentně by mělo, pokud `string' nelze
             # na float převést.
             value = None
@@ -907,7 +910,9 @@ class Float(Number):
             return unicode(self._format_string % value)
 
     def sqlalchemy_type(self):
-        if self._precision is not None and self._digits is not None:
+        if self._digits is True:
+            alchemy_type = sqlalchemy.Numeric()
+        elif self._precision is not None and self._digits is not None:
             alchemy_type = sqlalchemy.Numeric(precision=self.digits(), scale=self.precision())
         elif self._digits is not None:
             alchemy_type = sqlalchemy.Numeric(precision=self.digits())
@@ -1190,7 +1195,7 @@ class Macaddr(String):
         if not self._MACADDR_FORMAT.match(string):
             raise self._validation_error(self.VM_MACADDR_FORMAT)
         macaddr = string.replace(':', '').replace('-', '')
-        value = ':'.join([macaddr[x:x+2] for x in range(0, len(macaddr), 2)])
+        value = ':'.join([macaddr[x:x + 2] for x in range(0, len(macaddr), 2)])
         return Value(self, unicode(value)), None
     
     def sqlalchemy_type(self):
@@ -1563,7 +1568,8 @@ class DateTime(_CommonDateTime):
         # Python datetime.strftime() doesn't support dates before 1900-01-01.
         # The following code works around that.  The original author is Andrew
         # Dalke who posted this code to
-        # http://code.activestate.com/recipes/306860-proleptic-gregorian-dates-and-strftime-before-1900/
+        # http://code.activestate.com/\
+        # recipes/306860-proleptic-gregorian-dates-and-strftime-before-1900/
         def findall(text, substr):
             # Also finds overlaps
             sites = []
@@ -1600,7 +1606,7 @@ class DateTime(_CommonDateTime):
         s = s1
         syear = "%4d" % (value.year,)
         for site in sites:
-            s = s[:site] + syear + s[site+4:]
+            s = s[:site] + syear + s[site + 4:]
         return s
 
     @classmethod
@@ -1872,8 +1878,8 @@ class TimeInterval(Type):
                 format = self.DEFAULT_FORMAT
         format_string = sign + (format.replace('%H', '%(hours)d').
                                 replace('%M', '%(minutes)02d').replace('%S', '%(seconds)02d'))
-        return format_string % dict(hours=seconds/3600, minutes=(seconds%3600)/60,
-                                    seconds=seconds%60)
+        return format_string % dict(hours=(seconds / 3600), minutes=((seconds % 3600) / 60),
+                                    seconds=(seconds % 60))
     
     def primitive_value(self, value):
         """Return given value represented by a basic python type.
