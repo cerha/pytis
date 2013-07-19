@@ -32,6 +32,7 @@ import subprocess
 import sys
 import types
 
+import pytis.presentation
 import pytis.util
 import config
 
@@ -76,6 +77,8 @@ def print_info(info):
                 print_layout(item, indent=indent+1)
         elif isinstance(layout, basestring):
             output.write('%sLayout: %s\n' % (indentation_string, layout,))
+        elif isinstance(layout, pytis.presentation.Button):
+            output.write(u'%sButton: %s\n' % (indentation_string, layout.label(),))
         else:
             output.write('%sUnknown layout object: %s\n' % (indentation_string, layout,))
     layout = info['layout']
