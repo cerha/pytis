@@ -1540,7 +1540,8 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
             return orig_type != new_type
         else:
             return False
-        
+
+    _PYTIS_TYPE_CAST_MATCHER = re.compile("^'?(.*[^'])'?::[a-z]+$")
     def _pytis_defaults_changed(self, column_1, column_2):
         default_1 = column_1.server_default
         default_2 = column_2.server_default
@@ -1562,6 +1563,9 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
                     default = str(default)
             if lower:
                 default = default.lower()
+            match = self._PYTIS_TYPE_CAST_MATCHER.match(default)
+            if match is not None:
+                default = match.group(1)
             default += for_update
             return default
         return textify(default_1) != textify(default_2)
@@ -2018,11 +2022,16 @@ class SQLTable(_SQLTabular):
             if c.name not in self.c:
                 _engine.execute(alembic.ddl.base.DropColumn(table_name, c, self.schema))
         db_indexes = dict([(i.name, i,) for i in db_table.indexes])
+        new_index_columns = {}
         for i in self.indexes:
             try:
                 del db_indexes[i.name]
             except KeyError:
-                i.create(_engine)
+                if len(i.columns) == 1:
+                    for c in i.columns:
+                        new_index_columns[c.name] = i
+                else:
+                    i.create(_engine)
         index_names = set([i.name for i in self.indexes])
         db_index_columns = {}
         for i in db_indexes.values():
@@ -2081,6 +2090,13 @@ class SQLTable(_SQLTabular):
                             if name not in index_names:
                                 sqlalchemy.Index(name, c, **kwargs).create(_engine)
                                 changed = True
+                        try:
+                            del new_index_columns[c.name]
+                        except KeyError:
+                            pass
+        for i in new_index_columns.values():
+            i.create(_engine)
+            changed = True
         for i in db_index_columns.values():
             i.drop(_engine)
             changed = True
