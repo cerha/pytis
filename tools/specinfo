@@ -17,6 +17,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+
+# If you want to make comparisons against git repositories, you must install
+# GitPython package (http://pythonhosted.org/GitPython/).  The package is
+# installable e.g. via pip:
+#   pip install GitPython
+
+
 import collections
 import optparse
 import os
