@@ -33,17 +33,41 @@
   :group 'pytis
   :type 'string)
 
+(defcustom pytis-config-directory nil
+  "Directory storing application configuration files.
+If non-nil then ask the user for a configuration file from this directory when
+`pytis-config-file' is nil."
+  :group 'pytis
+  :type 'directory)
 
+(defvar pytis-config-file nil
+  "Location of the application configuration file.
+If nil then try to find the configuration file automatically or ask the user.")
+(make-variable-buffer-local 'pytis-config-file)
+
+(defun pytis-set-config-file ()
+  (interactive)
+  (setq pytis-config-file
+        (expand-file-name
+         (read-file-name "Configuration file: " pytis-config-directory))))  
+  
 (defun pytis-config-file ()
-  (let ((config-file (concat default-directory "config.py")))
-    (while (and (not (file-exists-p config-file))
-                (not (string= (file-name-directory config-file) "/")))
-      (setq config-file (concat (file-name-directory
-                                 (directory-file-name
-                                  (file-name-directory config-file)))
-                                (file-name-nondirectory config-file))))
-    (unless (string= (file-name-directory config-file) "/")
-      config-file)))
+  (cond
+   (pytis-config-file
+    pytis-config-file)
+   (pytis-config-directory
+    (pytis-set-config-file))
+   (t
+    (let ((config-file (concat default-directory "config.py")))
+      (while (and (not (file-exists-p config-file))
+                  (not (string= (file-name-directory config-file) "/")))
+        (setq config-file (concat (file-name-directory
+                                   (directory-file-name
+                                    (file-name-directory config-file)))
+                                  (file-name-nondirectory config-file))))
+      (if (string= (file-name-directory config-file) "/")
+          (pytis-set-config-file)
+        config-file)))))
 
 (defun pytis-specinfo (arg)
   "Show information about current presentation specification.
@@ -63,6 +87,7 @@ specifications against selected git branch."
                            (unless diff (list (concat submodule "." specification-name "$"))))))
         (pop-to-buffer output-buffer)
         (erase-buffer)
+        (insert pytis-specinfo " " (mapconcat #'identity args " ") "\n")
         (when (and (= (apply 'call-process pytis-specinfo nil t nil args) 0)
                    arg)
           (diff-mode))))))
