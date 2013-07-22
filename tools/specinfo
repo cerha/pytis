@@ -77,6 +77,8 @@ def print_info(info):
                 print_layout(item, indent=indent+1)
         elif isinstance(layout, basestring):
             output.write('%sLayout: %s\n' % (indentation_string, layout,))
+        elif isinstance(layout, pytis.presentation.Text):
+            output.write(u'%sText: %s\n' % (indentation_string, layout.text(),))
         elif isinstance(layout, pytis.presentation.Button):
             output.write(u'%sButton: %s\n' % (indentation_string, layout.label(),))
         else:
