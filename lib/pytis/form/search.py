@@ -255,7 +255,7 @@ class SFDialog(SFSDialog):
     
     class SFConditionError(Exception):
         def __init__(self, i, ctrl, msg):
-            msg = _(u"Chyba v podmínce č. %d: %s") % (i + 1, msg,)
+            msg = _("Error in condition no. %d: %s",i + 1, msg)
             pytis.form.run_dialog(Error, msg)
             #ctrl.SetFocus()
             #self.focus()
@@ -338,28 +338,28 @@ class SFDialog(SFSDialog):
             return (
                 choice([(self._LABELS[op], op) for op in self._LOGICAL_OPERATORS],
                        selected=operator,
-                       tooltip=_(u"Zvolte způsob spojení s předchozími podmínkami")),
-                label(_(u"Váha operátoru:")),
-                spin(level, length=4, tooltip=_(u"Zvolte váhu logického operátoru.")))
+                       tooltip=_("Choose the logical operator to join with previous conditions.")),
+                label(_("Operator weight:")),
+                spin(level, length=4, tooltip=_("Choose the level of precedence of the logical operator.")))
         def create_relational_operator(i, n, operator, col1, col2, value):
             return (
                 choice([(c.label(), c) for c in self._columns], selected=col1,
                        on_change=lambda e: self._on_selection_change(i),
-                       tooltip=_(u"Zvolte sloupec tabulky")),
+                       tooltip=_("Choose the table column (first operand).")),
                 choice([(self._LABELS[op], op) for op in self._OPERATORS], selected=operator,
-                       tooltip=_(u"Zvolte operátor")),
+                       tooltip=_("Choose the operator.")),
                 choice([(c.label(), c) for c in self._col2_columns], selected=col2,
                        on_change=lambda e: self._on_selection_change(i),
-                       tooltip=_(u"Zvolte s čím má být hodnota porovnávána")),
+                       tooltip=_("Choose the second operand.")),
                 field(value, length=self._TEXT_CTRL_SIZE,
-                      tooltip=_(u"Zapište hodnotu podmínkového výrazu")),
-                button(_(u"Nasát"), lambda e: self._on_suck(i),
-                       _(u"Načíst hodnotu aktivní buňky"),
+                      tooltip=_("Enter the operand value.")),
+                button(_("Suck"), lambda e: self._on_suck(i),
+                       _("Use the value of the current cell."),
                        enabled=self._row is not None),
-                button(_(u"Vymazat"), lambda e: self._on_clear(i),
-                       _(u"Vymazat obsah podmínky")),
-                button(_(u"Odebrat"), lambda e: self._on_remove(i),
-                       _(u"Zrušit tuto podmínku"), enabled=n > 1))
+                button(_("Clear"), lambda e: self._on_clear(i),
+                       _("Clear the condition.")),
+                button(_("Remove"), lambda e: self._on_remove(i),
+                       _("Remove this condition"), enabled=n > 1))
         def create_in_operator(i, n, operator):
             if operator.name() == 'NOT':
                 op_label = _(u"NOT IN")
@@ -384,7 +384,7 @@ class SFDialog(SFSDialog):
             operators = self._decompose_condition(self._condition or empty)
         except Exception as e:
             pytis.form.run_dialog(Warning,
-                                  _(u"Nepodařilo se rozložit podmínkový výraz:") + " " + str(e))
+                                  _("Failed to decompose the conditional expression:") + " " + str(e))
             operators = self._decompose_condition(empty)
         for i, items in enumerate(operators):
             if len(items) == 1:
@@ -403,12 +403,12 @@ class SFDialog(SFSDialog):
         super(SFDialog, self)._create_content(sizer)
         choice, button = self._create_choice, self._create_button
         buttons = [
-            button(_(u"Přidat AND"), lambda e: self._on_add(),
-                   tooltip=_(u"Přidat novou podmínku v konjunkci (a zároveň)")),
-            button(_(u"Přidat OR"), lambda e: self._on_add(or_=True),
-                   tooltip=_(u"Přidat novou podmínku v disjunkci (a nebo)")),
-            button(_(u"Odebrat vše"), lambda e: self._on_reset(),
-                   tooltip=_(u"Zrušit všechny stávající podmínky"))]
+            button(_("Add AND"), lambda e: self._on_add(),
+                   tooltip=_("Add a new condition in conjunction.")),
+            button(_("Add OR"), lambda e: self._on_add(or_=True),
+                   tooltip=_("Add a new condition in disjunction.")),
+            button(_("Remove all"), lambda e: self._on_reset(),
+                   tooltip=_("Remove all current conditions."))]
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         for b in buttons:
             bsizer.Add(b, 0, wx.RIGHT, 10)
@@ -431,16 +431,17 @@ class SFDialog(SFSDialog):
                 for basetype in (pytis.data.String, pytis.data.Number, pytis.data.DateTime,
                                  pytis.data.Boolean, pytis.data.Binary):
                     if isinstance(col1.type(), basetype) and not isinstance(col2.type(), basetype):
-                        raise self.SFConditionError(i, wcol2, _(u"Neslučitelné typy %s a %s") %
-                                                    (col1.type().__class__.__name__,
-                                                     col2.type().__class__.__name__))
+                        raise self.SFConditionError(i, wcol2, 
+                                                    _("Incompatible types %s and %s",
+                                                      col1.type().__class__.__name__,
+                                                      col2.type().__class__.__name__))
             elif isinstance(col1.type(), pytis.data.Binary):
                 if wval.GetValue():
-                    raise self.SFConditionError(i, wval,
-                                   _(u"Binární sloupec lze testovat pouze na prázdnou hodnotu"))
+                    msg = _("Binary column can only be compared with value.")
+                    raise self.SFConditionError(i, wval, msg)
                 elif op not in (pytis.data.EQ, pytis.data.NE):
-                    raise self.SFConditionError(i, wop,
-                                   _(u"Binární sloupec lze testovat pouze na rovnost či nerovnost"))
+                    msg = _("Binary column can only be tested for equality/inequality.")
+                    raise self.SFConditionError(i, wop, msg)
                 arg2 = pytis.data.Value(col1.type(), None)
             else:
                 val = wval.GetValue()
@@ -570,11 +571,11 @@ class SearchDialog(SFDialog):
     instance.
 
     """
-    _NEXT_BUTTON = _(u"Další")
-    _PREVIOUS_BUTTON = _(u"Předchozí")
+    _NEXT_BUTTON = _("Next")
+    _PREVIOUS_BUTTON = _("Previous")
     _BUTTONS = (_NEXT_BUTTON, _PREVIOUS_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _NEXT_BUTTON
-    _TITLE = _(u"Hledání")
+    _TITLE = _("Search")
     _HELP_TOPIC = 'searching'
 
     def __init__(self, *args, **kwargs):
@@ -619,8 +620,8 @@ class FilterDialog(SFDialog):
     wishes to unfilter the underlying form.
     
     """
-    _FILTER_BUTTON = _(u"Filtrovat")
-    _UNFILTER_BUTTON = _(u"Zrušit filtr")
+    _FILTER_BUTTON = _("Filter")
+    _UNFILTER_BUTTON = _("Unfilter")
     _BUTTONS = (_FILTER_BUTTON, _UNFILTER_BUTTON) + SFSDialog._BUTTONS
     _COMMIT_BUTTON = _FILTER_BUTTON
     _AGG_OPERATORS = (pytis.data.Data.AGG_COUNT,
@@ -628,12 +629,12 @@ class FilterDialog(SFDialog):
                       pytis.data.Data.AGG_MAX,
                       pytis.data.Data.AGG_SUM,
                       pytis.data.Data.AGG_AVG)
-    _AGG_LABELS = {pytis.data.Data.AGG_COUNT: _(u"Počet"),
-                   pytis.data.Data.AGG_MIN: _(u"Minimum"),
-                   pytis.data.Data.AGG_MAX: _(u"Maximum"),
-                   pytis.data.Data.AGG_SUM: _(u"Součet"),
-                   pytis.data.Data.AGG_AVG: _(u"Průměr")}
-    _TITLE = _(u"Filtrování")
+    _AGG_LABELS = {pytis.data.Data.AGG_COUNT: _("Count"),
+                   pytis.data.Data.AGG_MIN: _("Minimum"),
+                   pytis.data.Data.AGG_MAX: _("Maximum"),
+                   pytis.data.Data.AGG_SUM: _("Sum"),
+                   pytis.data.Data.AGG_AVG: _("Average")}
+    _TITLE = _("Filter")
     _HELP_TOPIC = 'filtering'
 
     def __init__(self, parent, columns, row, compute_aggregate, **kwargs):
@@ -657,19 +658,19 @@ class FilterDialog(SFDialog):
 
     def _create_content(self, sizer):
         super(FilterDialog, self)._create_content(sizer)
-        cp = wx.CollapsiblePane(self._dialog, label=_("Agregační funkce"))
+        cp = wx.CollapsiblePane(self._dialog, label=_("Aggregation functions"))
         self._handle_keys(cp)
         pane = cp.GetPane()
         choice, field, button = self._create_choice, self._create_text_ctrl, self._create_button
         self._agg_controls = (
             choice([(c.label(), c) for c in self._columns], parent=pane,
-                   tooltip=_(u"Zvolte sloupec pro agregaci")),
+                   tooltip=_("Select the column for aggregation.")),
             choice([(self._AGG_LABELS[op], op) for op in self._AGG_OPERATORS], parent=pane,
-                   tooltip=_(u"Zvolte agregační funkci")),
+                   tooltip=_("Select the aggregation function.")),
             field(None, length=24, readonly=True, parent=pane,
-                  tooltip=_(u"Zobrazení výsledku agregační funkce")),
-            button(_(u"Zjistit"), self._on_compute_aggregate, parent=pane,
-                   tooltip=_(u"Zobraz výsledek zvolené agrekační funkce")))
+                  tooltip=_("Displays the aggregation function result.")),
+            button(_("Compute"), self._on_compute_aggregate, parent=pane,
+                   tooltip=_("Compute the aggregation function result.")))
         boxsizer = wx.BoxSizer(wx.HORIZONTAL)
         for ctrl in self._agg_controls:
             boxsizer.Add(ctrl)
@@ -689,7 +690,7 @@ class FilterDialog(SFDialog):
                 # TODO: We should also support Date and maybe other types, but first it must be
                 # implemented in the data interface.
                 pytis.form.run_dialog(Error,
-                                      _(u"Tato operace není pro daný typ sloupce podporována."))
+                                      _("Operation not supported for the selected column type."))
                 v = ''
             else:
                 result = self._compute_aggregate(op, col.id(), condition)
