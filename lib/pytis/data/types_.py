@@ -982,7 +982,9 @@ class String(Limited):
         return WMValue(self, object), None
     
     def sqlalchemy_type(self):
-        if self.minlen() and self.maxlen() and self.minlen() == self.maxlen():
+        if self.minlen() is None and self.maxlen() is None:
+            result = sqlalchemy.TEXT()
+        elif self.minlen() and self.maxlen() and self.minlen() == self.maxlen():
             result = sqlalchemy.CHAR(length=self.minlen())
         else:
             result = sqlalchemy.String(length=self.maxlen())
