@@ -1607,7 +1607,9 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         return False
 
     def _pytis_upgrade(self, metadata):
-        self.pytis_drop()
+        # We don't emit DROP here.  They may be dependencies between objects
+        # forcing them to be dropped in certain order.  So we drop objects in
+        # global gsql processing.
         self.pytis_create()
         return True
         
@@ -3127,6 +3129,9 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     def create(self, bind=None, checkfirst=False):
         bind._run_visitor(_PytisSchemaGenerator, self, checkfirst=checkfirst)
 
+    def pytis_drop(self):
+        _warn("Can't drop raw object: %s" % (self.name,))
+
 
 ## Specification processing
 
@@ -3480,6 +3485,12 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             o = id2obj.get(name)
             if o is not None:
                 o.pytis_drop()
+        drop_set = set(drop)
+        for name in changed:
+            if name not in drop_set:
+                o = id2obj.get(name)
+                if o is not None:
+                    o.pytis_drop()
         # Emit update commands
         sys.stdout.write(str_output)
         # Recreate all dropped objects
