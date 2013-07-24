@@ -2006,15 +2006,39 @@ class SQLTable(_SQLTabular):
         for c in constraints:
             simplify(c)
         return simplified
+
+    def _pytis_index_signature(self, index):
+            return (index.name, index.unique, tuple([c.name for c in index.columns]))
+
+    def _pytis_unique_indexes(self):
+        indexes = set()
+        for unique in self.unique:
+            name = self.pytis_name(real=True) + '_' + string.join(unique, '_') + '_key'
+            columns = [getattr(self.c, c) for c in unique]
+            indexes.add(sqlalchemy.Index(name, *columns, unique=True))
+        return indexes
         
     def pytis_changed(self, metadata, strict=True):
+        # Not everything covered here, but we don't support all features in upgrade
         if super(SQLTable, self).pytis_changed(metadata, strict=strict):
             return True
         db_table = self._pytis_db_table(metadata)
         constraints = self._pytis_simplified_constraints(self.constraints)
         db_constraints = self._pytis_simplified_constraints(db_table.constraints)
-        return (constraints.keys() != db_constraints.keys() or
-                self.indexes != db_table.indexes)
+        if constraints.keys() != db_constraints.keys():
+            return True
+        # Unique constraints are represented as indexes in the database
+        indexes = copy.copy(self.indexes).union(self._pytis_unique_indexes())
+        # SQLAlchemy doesn't compare some objects correctly
+        # (e.g. sqlalchemy.String() != sqlalchemy.String()) so we have to make
+        # our own index comparison.
+        index_list = [self._pytis_index_signature(i) for i in indexes]
+        index_list.sort()
+        db_index_list = [self._pytis_index_signature(i) for i in db_table.indexes]
+        db_index_list.sort()
+        if index_list != db_index_list:
+            return True
+        return False
 
     def _pytis_upgrade(self, metadata):
         changed = False
@@ -2034,11 +2058,10 @@ class SQLTable(_SQLTabular):
                         new_index_columns[c.name] = i
                 else:
                     i.create(_engine)
+                    changed = True
         index_names = set([i.name for i in self.indexes])
         db_index_columns = {}
         for i in db_indexes.values():
-            if i.unique:
-                continue
             if len(i.columns) == 1:
                 for c in i.columns:
                     db_index_columns[c.name] = i
