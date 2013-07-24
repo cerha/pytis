@@ -3489,7 +3489,7 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
         for name in changed:
             if name not in drop_set:
                 o = id2obj.get(name)
-                if o is not None:
+                if o is not None and not isinstance(o, SQLTable):
                     o.pytis_drop()
         # Emit update commands
         sys.stdout.write(str_output)
