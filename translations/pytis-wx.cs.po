@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-18 07:45+0200\n"
-"PO-Revision-Date: 2013-07-19 09:16+0200\n"
+"POT-Creation-Date: 2013-07-24 17:14+0200\n"
+"PO-Revision-Date: 2013-07-24 17:15+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -116,9 +116,9 @@ msgstr "Vyzvednout okno formuláře (%s)"
 msgid "Open the form (%s)"
 msgstr "Otevřít formulář (%s)"
 
-#: ../lib/pytis/form/application.py:625
+#: ../lib/pytis/form/application.py:625 ../lib/pytis/form/search.py:359
 msgid "Clear"
-msgstr "Vyčistit"
+msgstr "Vymazat"
 
 #: ../lib/pytis/form/application.py:626
 msgid "Clear the menu of recent forms"
@@ -257,7 +257,7 @@ msgstr "Skok na záznam"
 msgid "Jump to record by row number"
 msgstr "Skok na záznam podle čísla řádku"
 
-#: ../lib/pytis/form/commands_.py:541
+#: ../lib/pytis/form/commands_.py:541 ../lib/pytis/form/search.py:579
 msgid "Search"
 msgstr "Hledat"
 
@@ -308,7 +308,8 @@ msgstr ""
 "Zobrazuje aktivní profil a umožňuje výběr z ostatních předdefinovaných "
 "profilů."
 
-#: ../lib/pytis/form/commands_.py:566
+#: ../lib/pytis/form/commands_.py:566 ../lib/pytis/form/search.py:624
+#: ../lib/pytis/form/search.py:638
 msgid "Filter"
 msgstr "Filtrovat"
 
@@ -316,7 +317,7 @@ msgstr "Filtrovat"
 msgid "Filter records matching given conditions."
 msgstr "Filtrovat záznamy podle zadaných podmínek."
 
-#: ../lib/pytis/form/commands_.py:570
+#: ../lib/pytis/form/commands_.py:570 ../lib/pytis/form/search.py:625
 msgid "Unfilter"
 msgstr "Zruš filtr"
 
@@ -773,7 +774,7 @@ msgstr "Záznam číslo (1-%s):"
 msgid "Keep"
 msgstr "Ponechat"
 
-#: ../lib/pytis/form/form.py:1255
+#: ../lib/pytis/form/form.py:1255 ../lib/pytis/form/search.py:361
 msgid "Remove"
 msgstr "Odstranit"
 
@@ -978,7 +979,7 @@ msgstr "Uložit záznam a uzavřít formulář"
 msgid "Close the form without saving"
 msgstr "Uzavřít formulář bez uložení dat"
 
-#: ../lib/pytis/form/form.py:2833
+#: ../lib/pytis/form/form.py:2833 ../lib/pytis/form/search.py:575
 msgid "Next"
 msgstr "Další"
 
@@ -1535,7 +1536,7 @@ msgstr ""
 msgid "Link properties"
 msgstr "Vlastnosti odkazu"
 
-#: ../lib/pytis/form/list.py:106
+#: ../lib/pytis/form/list.py:106 ../lib/pytis/form/search.py:636
 msgid "Sum"
 msgstr "Součet"
 
@@ -1543,7 +1544,7 @@ msgstr "Součet"
 msgid "Sum:"
 msgstr "Součet:"
 
-#: ../lib/pytis/form/list.py:107
+#: ../lib/pytis/form/list.py:107 ../lib/pytis/form/search.py:637
 msgid "Average"
 msgstr "Průměr"
 
@@ -1551,7 +1552,7 @@ msgstr "Průměr"
 msgid "Avg:"
 msgstr "Průměr:"
 
-#: ../lib/pytis/form/list.py:108 ../lib/pytis/form/search.py:632
+#: ../lib/pytis/form/list.py:108 ../lib/pytis/form/search.py:634
 msgid "Minimum"
 msgstr "Minimum"
 
@@ -1559,7 +1560,7 @@ msgstr "Minimum"
 msgid "Min:"
 msgstr "Min:"
 
-#: ../lib/pytis/form/list.py:109 ../lib/pytis/form/search.py:633
+#: ../lib/pytis/form/list.py:109 ../lib/pytis/form/search.py:635
 msgid "Maximum"
 msgstr "Maximum"
 
@@ -1822,7 +1823,7 @@ msgstr "Uložit zeditovaný řádek?"
 msgid "Cancel changes in row editation and refresh the form?"
 msgstr "Zrušit změny záznamu a aktualizovat formulář?"
 
-#: ../lib/pytis/form/list.py:1859
+#: ../lib/pytis/form/list.py:1859 ../lib/pytis/form/search.py:633
 msgid "Count"
 msgstr "Počet"
 
@@ -2120,7 +2121,7 @@ msgstr ""
 "Zobraz aktuální záznam v hlavním formuláři se souvisejícími daty ve "
 "vedlejších formulářích."
 
-#: ../lib/pytis/form/list.py:3615
+#: ../lib/pytis/form/list.py:3620
 msgid "Aggregated View"
 msgstr "Agregovaný náhled"
 
@@ -2362,20 +2363,13 @@ msgstr "Nasát"
 msgid "Use the value of the current cell."
 msgstr "Načíst hodnotu aktivní buňky."
 
-#: ../lib/pytis/form/search.py:359
-msgid "Clear"
-msgstr "Vymazat"
-
 #: ../lib/pytis/form/search.py:360
 msgid "Clear the condition."
 msgstr "Vymazat obsah podmínky."
 
-#: ../lib/pytis/form/search.py:361 ../lib/pytis/form/search.py:378
-msgid "Remove"
-msgstr "Odebrat"
-
-#: ../lib/pytis/form/search.py:362 ../lib/pytis/form/search.py:379
-msgid "Remove this condition."
+#: ../lib/pytis/form/search.py:362
+#, fuzzy
+msgid "Remove this condition"
 msgstr "Zrušit tuto podmínku."
 
 #: ../lib/pytis/form/search.py:365
@@ -2414,7 +2408,7 @@ msgstr "Odebrat vše"
 msgid "Remove all current conditions."
 msgstr "Zrušit všechny stávající podmínky."
 
-#: ../lib/pytis/form/search.py:434
+#: ../lib/pytis/form/search.py:437
 #, python-format
 msgid "Incompatible types %s and %s"
 msgstr "Neslučitelné typy %s a %s"
@@ -2427,51 +2421,35 @@ msgstr "Binární sloupec lze testovat pouze na prázdnou hodnotu."
 msgid "Binary column can only be tested for equality/inequality."
 msgstr "Binární sloupec lze testovat pouze na rovnost či nerovnost."
 
-#: ../lib/pytis/form/search.py:573
-msgid "Další"
-msgstr ""
-
-#: ../lib/pytis/form/search.py:574
+#: ../lib/pytis/form/search.py:576
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/form/search.py:631
-msgid "Count"
-msgstr "Počet"
-
-#: ../lib/pytis/form/search.py:634
-msgid "Sum"
-msgstr "Součet"
-
-#: ../lib/pytis/form/search.py:635
-msgid "Average"
-msgstr "Průměr"
-
-#: ../lib/pytis/form/search.py:660
+#: ../lib/pytis/form/search.py:662
 msgid "Aggregation functions"
 msgstr "Agregační funkce"
 
-#: ../lib/pytis/form/search.py:666
+#: ../lib/pytis/form/search.py:668
 msgid "Select the column for aggregation."
 msgstr "Zvolte sloupec pro agregaci."
 
-#: ../lib/pytis/form/search.py:668
+#: ../lib/pytis/form/search.py:670
 msgid "Select the aggregation function."
 msgstr "Zvolte agregační funkci."
 
-#: ../lib/pytis/form/search.py:670
+#: ../lib/pytis/form/search.py:672
 msgid "Displays the aggregation function result."
 msgstr "Zobrazení výsledku agregační funkce."
 
-#: ../lib/pytis/form/search.py:671
+#: ../lib/pytis/form/search.py:673
 msgid "Compute"
 msgstr "Zjistit"
 
-#: ../lib/pytis/form/search.py:672
+#: ../lib/pytis/form/search.py:674
 msgid "Compute the aggregation function result."
 msgstr "Spočti výsledek zvolené agrekační funkce."
 
-#: ../lib/pytis/form/search.py:692
+#: ../lib/pytis/form/search.py:694
 msgid "Operation not supported for the selected column type."
 msgstr "Tato operace není pro daný typ sloupce podporována."
 
