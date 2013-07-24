@@ -3443,6 +3443,11 @@ class SideBrowseForm(BrowseForm):
           row -- main form selected row as a PresentedRow instance.
 
         """
+        def inner_value(column, value):
+            if isinstance(value, pytis.data.Value):
+                return value.value()
+            else:
+                return value
         #log(EVENT, 'Filtrace obsahu formuláře:', (self._name, row))
         self._main_form_row = row
         if self._xarguments is not None:
@@ -3454,8 +3459,8 @@ class SideBrowseForm(BrowseForm):
         else:
             prefill = {}
         if prefill:
-            self._prefill = dict([(column, pytis.data.Value(self._row.type(column), value))
-                                  for column, value in prefill.items()])
+            self._prefill = dict([(cid, pytis.data.Value(self._row.type(cid), inner_value(value)))
+                                  for cid, value in prefill.items()])
         if self._selection_condition is not None:
             self._lf_condition = self._selection_condition(row)
         elif self._xarguments is not None:
