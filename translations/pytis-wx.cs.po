@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-07-18 07:45+0200\n"
-"PO-Revision-Date: 2013-07-18 08:06+0200\n"
+"PO-Revision-Date: 2013-07-19 09:16+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -2323,173 +2323,157 @@ msgstr "hodnota"
 
 #: ../lib/pytis/form/search.py:258
 #, python-format
-msgid "Chyba v podmínce č. %d: %s"
-msgstr ""
+msgid "Error in condition no. %d: %s"
+msgstr "Chyba v podmínce č. %d: %s"
 
 #: ../lib/pytis/form/search.py:341
-msgid "Zvolte způsob spojení s předchozími podmínkami"
-msgstr ""
+msgid "Choose the logical operator to join with previous conditions."
+msgstr "Zvolte způsob spojení s předchozími podmínkami."
 
 #: ../lib/pytis/form/search.py:342
-msgid "Váha operátoru:"
-msgstr ""
+msgid "Operator weight:"
+msgstr "Váha operátoru:"
 
 #: ../lib/pytis/form/search.py:343
-msgid "Zvolte váhu logického operátoru."
-msgstr ""
+msgid "Choose the level of precedence of the logical operator."
+msgstr "Zvolte úroveň priority logického operátoru."
 
 #: ../lib/pytis/form/search.py:348
-msgid "Zvolte sloupec tabulky"
-msgstr ""
+msgid "Choose the table column (first operand)."
+msgstr "Zvolte sloupec tabulky (první operand)."
 
 #: ../lib/pytis/form/search.py:350
-msgid "Zvolte operátor"
-msgstr ""
+msgid "Choose the operator."
+msgstr "Zvolte operátor."
 
 #: ../lib/pytis/form/search.py:353
-msgid "Zvolte s čím má být hodnota porovnávána"
-msgstr ""
+msgid "Choose the second operand."
+msgstr "Zvolte druhý operand."
 
 #: ../lib/pytis/form/search.py:355
-msgid "Zapište hodnotu podmínkového výrazu"
-msgstr ""
+msgid "Enter the operand value."
+msgstr "Zapište hodnotu operandu."
 
 #: ../lib/pytis/form/search.py:356
-msgid "Nasát"
-msgstr ""
+msgid "Suck"
+msgstr "Nasát"
 
 #: ../lib/pytis/form/search.py:357
-msgid "Načíst hodnotu aktivní buňky"
-msgstr ""
+msgid "Use the value of the current cell."
+msgstr "Načíst hodnotu aktivní buňky."
 
 #: ../lib/pytis/form/search.py:359
-msgid "Vymazat"
-msgstr ""
+msgid "Clear"
+msgstr "Vymazat"
 
 #: ../lib/pytis/form/search.py:360
-msgid "Vymazat obsah podmínky"
-msgstr ""
+msgid "Clear the condition."
+msgstr "Vymazat obsah podmínky."
 
 #: ../lib/pytis/form/search.py:361 ../lib/pytis/form/search.py:378
-msgid "Odebrat"
-msgstr ""
+msgid "Remove"
+msgstr "Odebrat"
 
 #: ../lib/pytis/form/search.py:362 ../lib/pytis/form/search.py:379
-msgid "Zrušit tuto podmínku"
-msgstr ""
+msgid "Remove this condition."
+msgstr "Zrušit tuto podmínku."
 
 #: ../lib/pytis/form/search.py:365
 msgid "NOT IN"
-msgstr ""
+msgstr "NOT IN"
 
 #: ../lib/pytis/form/search.py:368
 msgid "IN"
-msgstr ""
+msgstr "IN"
 
 #: ../lib/pytis/form/search.py:387
-msgid "Nepodařilo se rozložit podmínkový výraz:"
-msgstr ""
+msgid "Failed to decompose the conditional expression:"
+msgstr "Nepodařilo se rozložit podmínkový výraz:"
 
 #: ../lib/pytis/form/search.py:406
-msgid "Přidat AND"
-msgstr ""
+msgid "Add AND"
+msgstr "Přidat AND"
 
 #: ../lib/pytis/form/search.py:407
-msgid "Přidat novou podmínku v konjunkci (a zároveň)"
-msgstr ""
+msgid "Add a new condition in conjunction."
+msgstr "Přidat novou podmínku v konjunkci (a zároveň)."
 
 #: ../lib/pytis/form/search.py:408
-msgid "Přidat OR"
-msgstr ""
+msgid "Add OR"
+msgstr "Přidat OR"
 
 #: ../lib/pytis/form/search.py:409
-msgid "Přidat novou podmínku v disjunkci (a nebo)"
-msgstr ""
+msgid "Add a new condition in disjunction."
+msgstr "Přidat novou podmínku v disjunkci (a nebo)"
 
 #: ../lib/pytis/form/search.py:410
-msgid "Odebrat vše"
-msgstr ""
+msgid "Remove all"
+msgstr "Odebrat vše"
 
 #: ../lib/pytis/form/search.py:411
-msgid "Zrušit všechny stávající podmínky"
-msgstr ""
+msgid "Remove all current conditions."
+msgstr "Zrušit všechny stávající podmínky."
 
 #: ../lib/pytis/form/search.py:434
 #, python-format
-msgid "Neslučitelné typy %s a %s"
-msgstr ""
+msgid "Incompatible types %s and %s"
+msgstr "Neslučitelné typy %s a %s"
 
 #: ../lib/pytis/form/search.py:440
-msgid "Binární sloupec lze testovat pouze na prázdnou hodnotu"
-msgstr ""
+msgid "Binary column can only be compared with value."
+msgstr "Binární sloupec lze testovat pouze na prázdnou hodnotu."
 
 #: ../lib/pytis/form/search.py:443
-msgid "Binární sloupec lze testovat pouze na rovnost či nerovnost"
-msgstr ""
+msgid "Binary column can only be tested for equality/inequality."
+msgstr "Binární sloupec lze testovat pouze na rovnost či nerovnost."
 
 #: ../lib/pytis/form/search.py:573
 msgid "Další"
 msgstr ""
 
 #: ../lib/pytis/form/search.py:574
-msgid "Předchozí"
-msgstr ""
-
-#: ../lib/pytis/form/search.py:577
-msgid "Hledání"
-msgstr ""
-
-#: ../lib/pytis/form/search.py:622
-msgid "Filtrovat"
-msgstr ""
-
-#: ../lib/pytis/form/search.py:623
-msgid "Zrušit filtr"
-msgstr ""
+msgid "Previous"
+msgstr "Předchozí"
 
 #: ../lib/pytis/form/search.py:631
-msgid "Počet"
-msgstr ""
+msgid "Count"
+msgstr "Počet"
 
 #: ../lib/pytis/form/search.py:634
-msgid "Součet"
-msgstr ""
+msgid "Sum"
+msgstr "Součet"
 
 #: ../lib/pytis/form/search.py:635
-msgid "Průměr"
-msgstr ""
-
-#: ../lib/pytis/form/search.py:636
-msgid "Filtrování"
-msgstr ""
+msgid "Average"
+msgstr "Průměr"
 
 #: ../lib/pytis/form/search.py:660
-msgid "Agregační funkce"
-msgstr ""
+msgid "Aggregation functions"
+msgstr "Agregační funkce"
 
 #: ../lib/pytis/form/search.py:666
-msgid "Zvolte sloupec pro agregaci"
-msgstr ""
+msgid "Select the column for aggregation."
+msgstr "Zvolte sloupec pro agregaci."
 
 #: ../lib/pytis/form/search.py:668
-msgid "Zvolte agregační funkci"
-msgstr ""
+msgid "Select the aggregation function."
+msgstr "Zvolte agregační funkci."
 
 #: ../lib/pytis/form/search.py:670
-msgid "Zobrazení výsledku agregační funkce"
-msgstr ""
+msgid "Displays the aggregation function result."
+msgstr "Zobrazení výsledku agregační funkce."
 
 #: ../lib/pytis/form/search.py:671
-msgid "Zjistit"
-msgstr ""
+msgid "Compute"
+msgstr "Zjistit"
 
 #: ../lib/pytis/form/search.py:672
-msgid "Zobraz výsledek zvolené agrekační funkce"
-msgstr ""
+msgid "Compute the aggregation function result."
+msgstr "Spočti výsledek zvolené agrekační funkce."
 
 #: ../lib/pytis/form/search.py:692
-msgid "Tato operace není pro daný typ sloupce podporována."
-msgstr ""
+msgid "Operation not supported for the selected column type."
+msgstr "Tato operace není pro daný typ sloupce podporována."
 
 #: ../lib/pytis/util/configuration.py:371
 msgid "Umístění konfiguračního souboru."
