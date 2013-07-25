@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-24 17:14+0200\n"
-"PO-Revision-Date: 2013-07-24 17:15+0200\n"
+"POT-Creation-Date: 2013-07-25 09:40+0200\n"
+"PO-Revision-Date: 2013-07-25 09:36+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -257,7 +257,7 @@ msgstr "Skok na záznam"
 msgid "Jump to record by row number"
 msgstr "Skok na záznam podle čísla řádku"
 
-#: ../lib/pytis/form/commands_.py:541 ../lib/pytis/form/search.py:579
+#: ../lib/pytis/form/commands_.py:541 ../lib/pytis/form/search.py:578
 msgid "Search"
 msgstr "Hledat"
 
@@ -308,8 +308,8 @@ msgstr ""
 "Zobrazuje aktivní profil a umožňuje výběr z ostatních předdefinovaných "
 "profilů."
 
-#: ../lib/pytis/form/commands_.py:566 ../lib/pytis/form/search.py:624
-#: ../lib/pytis/form/search.py:638
+#: ../lib/pytis/form/commands_.py:566 ../lib/pytis/form/search.py:623
+#: ../lib/pytis/form/search.py:637
 msgid "Filter"
 msgstr "Filtrovat"
 
@@ -317,7 +317,7 @@ msgstr "Filtrovat"
 msgid "Filter records matching given conditions."
 msgstr "Filtrovat záznamy podle zadaných podmínek."
 
-#: ../lib/pytis/form/commands_.py:570 ../lib/pytis/form/search.py:625
+#: ../lib/pytis/form/commands_.py:570 ../lib/pytis/form/search.py:624
 msgid "Unfilter"
 msgstr "Zruš filtr"
 
@@ -429,7 +429,7 @@ msgstr "Uzavřít okno aktuálního formuláře."
 msgid "User interface settings"
 msgstr "Nastavení uživatelského rozhraní"
 
-#: ../lib/pytis/form/configui.py:43
+#: ../lib/pytis/form/configui.py:43 ../lib/pytis/util/util.py:1929
 msgid "Colors"
 msgstr "Barvy"
 
@@ -506,8 +506,9 @@ msgid "Automatically stretch tables to full window width"
 msgstr "Rozpínat tabulky na šířku okna"
 
 #: ../lib/pytis/form/configui.py:89
+#, fuzzy
 msgid "Cache specification files on startup"
-msgstr "Načítat specifikace při startu"
+msgstr "Načítat všechny specifikace při startu aplikace."
 
 #: ../lib/pytis/form/configui.py:90
 msgid "E-mail address"
@@ -775,6 +776,7 @@ msgid "Keep"
 msgstr "Ponechat"
 
 #: ../lib/pytis/form/form.py:1255 ../lib/pytis/form/search.py:361
+#: ../lib/pytis/form/search.py:378
 msgid "Remove"
 msgstr "Odstranit"
 
@@ -979,7 +981,7 @@ msgstr "Uložit záznam a uzavřít formulář"
 msgid "Close the form without saving"
 msgstr "Uzavřít formulář bez uložení dat"
 
-#: ../lib/pytis/form/form.py:2833 ../lib/pytis/form/search.py:575
+#: ../lib/pytis/form/form.py:2833 ../lib/pytis/form/search.py:574
 msgid "Next"
 msgstr "Další"
 
@@ -1536,7 +1538,7 @@ msgstr ""
 msgid "Link properties"
 msgstr "Vlastnosti odkazu"
 
-#: ../lib/pytis/form/list.py:106 ../lib/pytis/form/search.py:636
+#: ../lib/pytis/form/list.py:106 ../lib/pytis/form/search.py:635
 msgid "Sum"
 msgstr "Součet"
 
@@ -1544,7 +1546,7 @@ msgstr "Součet"
 msgid "Sum:"
 msgstr "Součet:"
 
-#: ../lib/pytis/form/list.py:107 ../lib/pytis/form/search.py:637
+#: ../lib/pytis/form/list.py:107 ../lib/pytis/form/search.py:636
 msgid "Average"
 msgstr "Průměr"
 
@@ -1552,7 +1554,7 @@ msgstr "Průměr"
 msgid "Avg:"
 msgstr "Průměr:"
 
-#: ../lib/pytis/form/list.py:108 ../lib/pytis/form/search.py:634
+#: ../lib/pytis/form/list.py:108 ../lib/pytis/form/search.py:633
 msgid "Minimum"
 msgstr "Minimum"
 
@@ -1560,7 +1562,7 @@ msgstr "Minimum"
 msgid "Min:"
 msgstr "Min:"
 
-#: ../lib/pytis/form/list.py:109 ../lib/pytis/form/search.py:635
+#: ../lib/pytis/form/list.py:109 ../lib/pytis/form/search.py:634
 msgid "Maximum"
 msgstr "Maximum"
 
@@ -1823,7 +1825,7 @@ msgstr "Uložit zeditovaný řádek?"
 msgid "Cancel changes in row editation and refresh the form?"
 msgstr "Zrušit změny záznamu a aktualizovat formulář?"
 
-#: ../lib/pytis/form/list.py:1859 ../lib/pytis/form/search.py:633
+#: ../lib/pytis/form/list.py:1859 ../lib/pytis/form/search.py:632
 msgid "Count"
 msgstr "Počet"
 
@@ -2367,10 +2369,9 @@ msgstr "Načíst hodnotu aktivní buňky."
 msgid "Clear the condition."
 msgstr "Vymazat obsah podmínky."
 
-#: ../lib/pytis/form/search.py:362
-#, fuzzy
-msgid "Remove this condition"
-msgstr "Zrušit tuto podmínku."
+#: ../lib/pytis/form/search.py:362 ../lib/pytis/form/search.py:379
+msgid "Remove this condition."
+msgstr "Odebrat tuto podmínku."
 
 #: ../lib/pytis/form/search.py:365
 msgid "NOT IN"
@@ -2421,694 +2422,271 @@ msgstr "Binární sloupec lze testovat pouze na prázdnou hodnotu."
 msgid "Binary column can only be tested for equality/inequality."
 msgstr "Binární sloupec lze testovat pouze na rovnost či nerovnost."
 
-#: ../lib/pytis/form/search.py:576
+#: ../lib/pytis/form/search.py:575
 msgid "Previous"
 msgstr "Předchozí"
 
-#: ../lib/pytis/form/search.py:662
+#: ../lib/pytis/form/search.py:661
 msgid "Aggregation functions"
 msgstr "Agregační funkce"
 
-#: ../lib/pytis/form/search.py:668
+#: ../lib/pytis/form/search.py:667
 msgid "Select the column for aggregation."
 msgstr "Zvolte sloupec pro agregaci."
 
-#: ../lib/pytis/form/search.py:670
+#: ../lib/pytis/form/search.py:669
 msgid "Select the aggregation function."
 msgstr "Zvolte agregační funkci."
 
-#: ../lib/pytis/form/search.py:672
+#: ../lib/pytis/form/search.py:671
 msgid "Displays the aggregation function result."
 msgstr "Zobrazení výsledku agregační funkce."
 
-#: ../lib/pytis/form/search.py:673
+#: ../lib/pytis/form/search.py:672
 msgid "Compute"
 msgstr "Zjistit"
 
-#: ../lib/pytis/form/search.py:674
+#: ../lib/pytis/form/search.py:673
 msgid "Compute the aggregation function result."
 msgstr "Spočti výsledek zvolené agrekační funkce."
 
-#: ../lib/pytis/form/search.py:694
+#: ../lib/pytis/form/search.py:693
 msgid "Operation not supported for the selected column type."
 msgstr "Tato operace není pro daný typ sloupce podporována."
 
-#: ../lib/pytis/util/configuration.py:371
-msgid "Umístění konfiguračního souboru."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:384
-msgid "Umístění doplňujícího konfiguračního souboru uživatele."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:385
-msgid ""
-"Tento soubor, pokud, existuje, je načítán navíc ke standardní konfiguraci a "
-"v něm definované volby mají vyšší prioritu než volby ve standardním "
-"konfiguračním souboru. Užitečné převážně pro ladění."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:405
-msgid "Volba odpovídající --help na příkazové řádce."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:409
-msgid "Příznak ladícího režimu."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:410
-msgid ""
-"Je-li zapnut, aplikace může běžet s více kontrolami a vypisovat spoustu "
-"informací, obvykle však za cenu svého výrazného zpomalení."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:416
-msgid "Příznak vyvolání debuggeru při chybě."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:417
-msgid ""
-"Dojde-li k odchycení neočekávané výjimky a tato volba je zapnuta, je vyvolán "
-"interaktivní debugger.  Je-li zapnuta volba 'debug', je implicitně zapnuta "
-"i tato volba.  Užitečné pouze pro ladění."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:426
-msgid "Příznak výpisu ladících informací o paměti."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:427
-msgid ""
-"Je-li zapnuta, aplikace vypisuje informativní hlášky garbage collectoru a "
-"jiné údaje o paměti."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:432
-msgid "E-mailová adresa, na kterou mají být posílána oznámení o chybě."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:436
-msgid "Subject mailu oznámení o chybě aplikace."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:440
-msgid "Příznak profilování."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:441
-msgid ""
-"Je-li zapnut, aplikace se spustí v profilovacím režimu a ukládá informace "
-"o trvání jednotlivých volání do souboru. Zapnutí této volby velmi výrazně "
-"zpomaluje běh aplikace."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:447
-msgid "Příznak určující, zda mají být spouštěny i interaktivní testy."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:448
-msgid "Týká se pouze regresivního testování."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:451
-msgid "Zvláštní ladící funkce, napojená na příkaz 'COMMAND_CUSTOM_DEBUG'."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:457
-msgid "Names of python modules containing pytis specifications."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:458
-msgid ""
-"Sequence of names of python modules which should be searched for pytis "
-"specifications.  If empty, specification names must by fully qualified "
-"identifiers of python classes.  If a list is given, the names may be "
-"relative to one of the modules named in the list."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:466
-msgid "Specification name resolver."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:467
-msgid ""
-"Instance of 'pytis.util.Resolver' used globally to resolve specification "
-"names."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:472
-msgid "Adresář obsahující soubory s nápovědou."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:473
-#: ../lib/pytis/util/configuration.py:479
-#: ../lib/pytis/util/configuration.py:490
-#: ../lib/pytis/util/configuration.py:511
-msgid "Může být zadán absolutně i relativně vzhledem k aktuálnímu adresáři."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:478
-msgid "Adresář obsahující specifikace tiskových sestav."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:485
-msgid "Adresář obsahující dokumentaci."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:489
-msgid "Adresář s obrázkovými soubory."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:494
-msgid "Adresář pro dočasné pomocné soubory."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:510
-msgid "Cesta k souboru s logem."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:517
-msgid "Database user login name."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:524
-msgid "Database login password."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:528
-msgid "Database name."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:532
-msgid "Database host name."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:536
-msgid "Database port number."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:540
-msgid "Database SSL mode (one of string constants supported by the DB system)."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:544
-msgid "List of database schemas to use in the order of their preference."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:548
-msgid "Alternative database connections"
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:562
-msgid "Database connection specification instance ('pytis.data.DBConnection')."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:563
-msgid "The instance is constructed from the above db* option by default."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:591
-msgid "Jméno tabulky, do které mají být logovány DML SQL příkazy."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:595
-msgid "Flag určující, zda má být spouštěn dohlížeč změn dat."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:599
-msgid ""
-"Maximum number of database connections stored in a pool for a single "
-"connection specification. If None then there is no limit."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:605
-msgid ""
-"Maximum number of concurrently open database connections for a single "
-"connection specification in a database pool. If None then there is no limit."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:613
-msgid "Specifikace logovací třídy."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:614
-msgid ""
-"Trojice (CLASS, ARGS, KWARGS), kde CLASS je logovací třída a ARGS, resp. "
-"KWARGS, jsou argumenty, resp. klíčované argumenty, jejího konstruktoru.  "
-"Standardní dostupné třídy jsou SyslogLogger a StreamLogger.  Více o nich lze "
-"nalézt v jejich dokumentaci."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:626
-msgid "Seznam typů logovacích hlášek, které mají být odfiltrovány."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:627
-msgid ""
-"V seznamu lze použít konstanty 'OPERATIONAL', 'ACTION', 'EVENT' a 'DEBUG'."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:637
-msgid "Určuje, zda je preferováno stručné nebo jednotné formátování."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:638
-msgid ""
-"Je-li tato volba nastavena na pravdu, jsou krátká data v logovacích hláškách "
-"doporučujících stručnost připojena ihned za hlášku místo vypsání na "
-"samostatný řádek."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:644
-msgid "Prefix jména modulu, jehož debugovací hlášky jsou propuštěny."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:645
-msgid ""
-"Debugovací logovací hlášky modulů s jiným prefixem jsou odfiltrovány.  Není-"
-"li definováno, jsou propuštěny všechny hlášky (nestanoví-li jiný filtr "
-"jinak).  Užitečné pouze pro ladění."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:653
-msgid "Sekvence jmen tříd, jejichž debugovací hlášky jsou propuštěny."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:654
-msgid ""
-"Debugovací logovací hlášky ostatních tříd jsou odfiltrovány. Je-li 'None', "
-"jsou propuštěny všechny hlášky (nestanoví-li jiný filtr jinak).  Užitečné "
-"pouze pro ladění."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:663
-msgid "Shellový příkaz pro provedení tisku, včetně argumentů."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:664
-msgid "Příkaz musí být schopen převzít tisková data ze standardního vstupu."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:668
-msgid ""
-"Shell command to be used for displaying print preview PDF files. It must "
-"take the name of the file to be displayed as its first argument. "
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:674
-msgid "Shellový příkaz sendmail včetně celé cesty (DEPRECATED)."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:678
-msgid "Jméno serveru odchozí pošty."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:684
-msgid "Lokální komunikační port pro naslouchání pytisovým aplikacím."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:688
-msgid "Vzdálený komunikační port na klientských stanicích."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:692
-msgid "Soubor s klíčem certifikátu pro komunikaci s klientskými stanicemi."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:696
-msgid "Soubor s certifikátem pro komunikaci s klientskými stanicemi."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:700
-msgid "Zapnutí/vypnutí komunikace s windowsovými klientskými stanicemi."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:704
-msgid "Flag určující, zda prohlížet tiskové soubory na klientské stanici."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:710
-msgid "Jméno aplikace."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:711
-msgid ""
-"Jméno může být libovolné, používá se např. jako titulek okna nebo při "
-"logování.  Od něho je také odvozeno jméno výchozího souboru pro ukládání "
-"uživatelských změn v konfiguraci (po vypuštění speciálních znaků a "
-"diakritiky)"
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:718
-msgid "Formát společně uvedeného data a času."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:719
-msgid ""
-"Řetězec ve tvaru vyžadovaném parametrem `format' konstruktoru třídy 'pytis."
-"data.DateTime'."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:726
-msgid "Formát data."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:727
-msgid ""
-"Řetězec ve tvaru vyžadovaném parametrem `format' konstruktoru třídy 'pytis."
-"data.Date'."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:734
-msgid "Formát času."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:735
-msgid ""
-"Řetězec ve tvaru vyžadovaném parametrem `format' konstruktoru třídy 'pytis."
-"data.Time'."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:742
-msgid "Numeric locale."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:743
-msgid ""
-"Hodnota musí být string reprezentující locale pro formátování číselných "
-"položek."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:748
-msgid "Adresář pro export do CSV souborů."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:749
-msgid ""
-"Hodnota udává cestu k adresáři, kde se budou ukládat textové CSV soubory."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:754
-msgid "Kódování exportovaných dat."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:755
-msgid "Hodnota musí být jedním z podporovaných kódování v Pythonu."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:759
-msgid "Velikost cache pro řádky datového objektu."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:760
-msgid "Velikost je celé číslo, které udává počet řádků cache."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:764
-msgid ""
-"Počet řádků, které se přednačtou do cache při prvním selectu z datového "
-"objektu."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:769
-msgid ""
-"Počet řádků, které se přinačítají do cache při dalších selectech z datového "
-"objektu."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:774
-msgid ""
-"E-mailová adresa odesílatele použitá např. jako odchozí adresa bug-reportů  "
-"apod."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:779
-msgid "Flag určující, zda se má při exportu použít primary selection."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:783
-msgid "Flag určující, zda se má pro kopírování obsahu buňky použít wxClipboard"
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:787
-msgid ""
-"Flag určující, zda mají být do databáze ukládány statistické informace o "
-"otevíraných formulářích."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:792
-msgid ""
-"HTTP proxy URI used for integrated web browser and other http services.  "
-"Example: 'http://127.0.0.1:3129'"
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:797
-msgid ""
-"Flag určující, zda se má při tisku vytisknout prostá tabulka formuláře, "
-"pokud není aplikovatelný žádný specifičtější tisk. Není-li nastaveno, "
-"nevytiskne se v takovém případě nic."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:803
-msgid ""
-"Počet sekund, po kterých se uživateli nabídne přerušení zdlouhavého "
-"otevírání formuláře."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:808
-msgid ""
-"Maximální počet řádků, pro který se v tiskových sestavách formátuje datová "
-"tabulka bez potvrzení uživatele."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:815
-msgid "Zobrazovat bublinovou nápovědu."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:819
-msgid "Roztahovat sloupce tabulek, aby využily celou šířku okna."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:823
-msgid "Zobrazovat úvodní uvítací dialog."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:827
-msgid ""
-"Automaticky doplnit položky menu prefixy akcelerátorových kláves (změna "
-"vyžaduje restart aplikace)."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:832
-msgid "Příznak cachování specifikací při startu aplikace."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:836
-msgid "Seznam formulářů, které mají být otevřeny po spuštění aplikace."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:840
-msgid "Barva textu editovaného řádku tabulkového formuláře."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:844
-msgid "Barva pozadí editovaného řádku."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:848
-msgid "Barva zvýraznění aktivní buňky tabulkového formuláře."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:852
-msgid "Barva zvýraznění aktivního řádku tabulkového formuláře."
-msgstr ""
+#: ../lib/pytis/util/configuration.py:775
+msgid "Enable RPC communication with Windows client machines."
+msgstr "Povolit komunikaci s Windowsovými klientskými stanicemi."
+
+#: ../lib/pytis/util/configuration.py:780
+msgid "Enable viewing print files remotely on a client machine."
+msgstr "Povolit vzdálené prohlížení tiskových souborů na klientské stanici."
+
+#: ../lib/pytis/util/configuration.py:845
+msgid "Target directory for saving exported files."
+msgstr "Cílový adresář pro ukládání exportovaných souborů."
+
+#: ../lib/pytis/util/configuration.py:855
+msgid "Exported data encoding."
+msgstr "Kódování exportovaných dat."
 
 #: ../lib/pytis/util/configuration.py:856
-msgid ""
-"Barva zvýraznění aktivního řádku tabulkového formuláře během inline editace."
-msgstr ""
+msgid "Must be one of Pyhon supported encodings."
+msgstr "Hodnota musí být jedním z podporovaných kódování v Pythonu."
 
-#: ../lib/pytis/util/configuration.py:860
-msgid "Barva zvýraznění aktivního řádku neaktivního tabulkového formuláře."
-msgstr ""
+#: ../lib/pytis/util/configuration.py:936
+msgid "Show tooltips."
+msgstr "Zobrazovat bublinovou nápovědu."
 
-#: ../lib/pytis/util/configuration.py:864
-msgid "Šířka rámečku zvýraznění aktivního řádku tabulkového formuláře v px."
-msgstr ""
+#: ../lib/pytis/util/configuration.py:941
+msgid "Stretch table columns to fit full window width."
+msgstr "Roztahovat sloupce tabulek, aby využily celou šířku okna."
 
-#: ../lib/pytis/util/configuration.py:871
-msgid "Barva mřížky tabulkového formuláře."
-msgstr ""
+#: ../lib/pytis/util/configuration.py:951
+msgid "Show the initial splash screen."
+msgstr "Zobrazovat úvodní uvítací dialog."
 
-#: ../lib/pytis/util/configuration.py:875
-msgid "Ztmavení barvy skupiny při seskupování řádků."
-msgstr ""
+#: ../lib/pytis/util/configuration.py:963
+msgid "Enable automatic keyboard shortcut accelerators in menu items."
+msgstr "Automaticky doplnit položky menu prefixy akcelerátorových kláves."
 
-#: ../lib/pytis/util/configuration.py:876
-msgid ""
-"Protože barva pozadí řádků není vždy bílá, je tato hodnota chápána jako "
-"relativní.  O kolik je zvolená barva tmavší než bílá, o tolik bude výsledná "
-"barva skupiny tmavší, než barva pozadí ostatních řádků.  Barva je "
-"reprezentována řetězcem '#RRGGBB'."
-msgstr ""
+#: ../lib/pytis/util/configuration.py:964
+msgid "Change requires the application to be restarted."
+msgstr "Změna vyžaduje restart aplikace."
 
-#: ../lib/pytis/util/configuration.py:884
-msgid "Barva pozadí needitovatelného vstupního políčka."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:888
-msgid "Pozadí políčka needitovatelného kvůli přístupovým právům."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:892
-msgid "Pozadí políčka se skrytou hodnotou."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:896
-msgid "Barva pozadí vstupního políčka pokud aktuální hodnota není validní."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:900
-msgid "Barva záhlaví tabulky při zapnutém filtrování."
-msgstr ""
-
-#: ../lib/pytis/util/configuration.py:971
-msgid "Unable to stat configuration file:"
-msgstr ""
+#: ../lib/pytis/util/configuration.py:974
+msgid "Cache all specifications on application startup."
+msgstr "Načítat všechny specifikace při startu aplikace."
 
 #: ../lib/pytis/util/configuration.py:975
-msgid "Unable to open configuration file:"
+msgid ""
+"Initializes specifications of all forms when the application starts which "
+"may slightly reduce their subsequent startup time for the cost of a short "
+"initial delay."
 msgstr ""
+"Inicializuje specifikace všech formulářů při startu aplikace čímž může mírně "
+"zrychlit jejich následné spouštění za cenu drobného počátečního zrdžení."
+
+#: ../lib/pytis/util/configuration.py:998
+msgid "Current cell highlight color in table forms."
+msgstr "Barva zvýraznění aktivní buňky tabulkového formuláře."
+
+#: ../lib/pytis/util/configuration.py:1007
+msgid "Current row highlight color in table forms."
+msgstr "Barva zvýraznění aktivního řádku tabulkového formuláře."
+
+#: ../lib/pytis/util/configuration.py:1016
+msgid "Current row highlight color in table forms during inline editation."
+msgstr ""
+"Barva zvýraznění aktivního řádku tabulkového formuláře během inline editace."
+
+#: ../lib/pytis/util/configuration.py:1026
+msgid "Current row highlight color in unfocussed table forms."
+msgstr "Barva zvýraznění aktivního řádku neaktivního tabulkového formuláře."
+
+#: ../lib/pytis/util/configuration.py:1035
+msgid "Current table row highlight border width in pixels."
+msgstr "Šířka rámečku zvýraznění aktivního řádku tabulkového formuláře v px."
+
+#: ../lib/pytis/util/configuration.py:1047
+msgid "Grid line color in table forms."
+msgstr "Barva mřížky tabulkového formuláře."
+
+#: ../lib/pytis/util/configuration.py:1063
+msgid "Grouping background downgrade."
+msgstr "Ztmavení barvy skupiny při seskupování řádků."
+
+#: ../lib/pytis/util/configuration.py:1064
+msgid ""
+"Grouping may be used to visually distinguish table rows that belong to the "
+"same group.  Table background color is changing between the groups of rows, "
+"so that lighter colored rows are followed by darker colored rows and vice "
+"versa.  The color specification in this option determines the level and the "
+"tone of the darker rows.  When combined with white rows, the darker rows wil "
+"have the exactly same color as specified.  But some rows may be already "
+"colored otherwise and in this case the two colors are combined."
+msgstr ""
+"Seskupování řádků může být použito k vizuálnímu rozlišení řádků které mají "
+"něco společného.  Barva pozadí se mezi skupinami mění tak, že světlejší "
+"řádky střídají tmavší.  Specifikace barvy v této volbě určuje ztmavení a tón "
+"relativně oproti výchozí barvě pozadí řádků.  Pokud je výchozí barva bílá, "
+"bude barva skupiny odpovídat nastavené hodnotě.  Pokud řádky mají jinou "
+"výchozí barvu pozadí, barvy jsou zkombinovány.  O kolik je zvolená barva "
+"tmavší než bílá, o tolik bude výsledná barva skupiny tmavší, než výchozí "
+"barva.  Barva je reprezentována řetězcem '#RRGGBB'."
+
+#: ../lib/pytis/util/configuration.py:1077
+msgid "Ineditable input field background color."
+msgstr "Barva pozadí needitovatelného vstupního políčka."
+
+#: ../lib/pytis/util/configuration.py:1082
+msgid "Color of input field ineditable due to access rights."
+msgstr "Pozadí políčka needitovatelného kvůli přístupovým právům."
+
+#: ../lib/pytis/util/configuration.py:1096
+msgid ""
+"Background color during field editation when the current value is not valid."
+msgstr ""
+"Barva pozadí vstupního políčka během editace pokud aktuální hodnota není "
+"validní."
 
 #: ../lib/pytis/util/test.py:88
 #, python-format
-msgid "|%s (A/N)? "
-msgstr ""
+msgid "|%s (Y/N)? "
+msgstr "|%s (A/N)? "
 
 #: ../lib/pytis/util/test.py:99
-msgid "Stiskni Enter..."
-msgstr ""
-
-#: ../lib/pytis/util/util.py:1929
-msgid "Barvy"
-msgstr ""
+msgid "Press Enter..."
+msgstr "Stiskni Enter..."
 
 #: ../lib/pytis/util/util.py:1930
-msgid "Legenda"
-msgstr ""
+#, fuzzy
+msgid "Legends"
+msgstr "Legends"
 
 #: ../lib/pytis/util/util.py:1931
-msgid "Přidáno"
-msgstr ""
+msgid "Added"
+msgstr "Přidáno"
 
 #: ../lib/pytis/util/util.py:1932
-msgid "Změněno"
-msgstr ""
+msgid "Changed"
+msgstr "Změněno"
 
 #: ../lib/pytis/util/util.py:1933
-msgid "Smazáno"
-msgstr ""
+msgid "Deleted"
+msgstr "Smazáno"
 
 #: ../lib/pytis/extensions/email_.py:41
 msgid "Could not connect to SMTP server"
-msgstr ""
+msgstr "Připojení k SMPT serveru se nezdařilo"
 
 #: ../lib/pytis/extensions/email_.py:42
-msgid "Recipient refused"
-msgstr ""
+msgid "Recipient address refused"
+msgstr "Adresa příjemce odmítnuta"
 
 #: ../lib/pytis/extensions/email_.py:43
-msgid "Sender refused"
-msgstr ""
+msgid "Sender address refused"
+msgstr "Adresa odesílatele odmítnuta"
 
 #: ../lib/pytis/extensions/email_.py:44
 msgid "SMTP server disconnected"
-msgstr ""
+msgstr "Spojení se SMTP serverem ztraceno"
 
 #: ../lib/pytis/extensions/email_.py:45
 msgid "Error by sending data"
-msgstr ""
+msgstr "Chyba při odesílání dat"
 
 #: ../lib/pytis/extensions/email_.py:46
 msgid "Error by sending helo"
-msgstr ""
+msgstr "Chyba při odesílání HELO"
 
 #: ../lib/pytis/extensions/email_.py:204
 msgid "Could not import Python GnuPG module"
-msgstr ""
+msgstr "Import Pythonového modulu GnuPG se nezdařil"
 
 #: ../lib/pytis/extensions/email_.py:205
 msgid "Could not create GPG instance"
-msgstr ""
+msgstr "Vytvoření GPG instance se nezdařilo"
 
 #: ../lib/pytis/extensions/email_.py:206
 msgid "Could not create a temporary GPG keyring"
-msgstr ""
+msgstr "Vytvoření dočasné GPG klíčenky se nezdařilo"
 
 #: ../lib/pytis/extensions/email_.py:207
 msgid "GPG process did not return string."
-msgstr ""
+msgstr "GPG proces nevrátil řetězec."
 
 #: ../lib/pytis/extensions/misc.py:198
 msgid ""
+"Default printer setup failed.\n"
+"CUPS Python interface not present.\n"
+"Please, contact the system administrator."
+msgstr ""
 "Nastavení výchozí tiskárny nemůže být provedeno.\n"
-"Kontaktujte správce systému."
-msgstr ""
+"Pythonové rozhraní k CUPS nenalezeno.\n"
+"Kontaktujte, prosím, správce systému."
 
-#: ../lib/pytis/extensions/misc.py:215
-msgid "Zvolte výchozí tiskárnu:"
-msgstr ""
+#: ../lib/pytis/extensions/misc.py:216
+msgid "Choose the default printer:"
+msgstr "Zvolte výchozí tiskárnu:"
 
-#: ../lib/pytis/extensions/misc.py:217
-msgid "Výběr tiskárny"
-msgstr ""
+#: ../lib/pytis/extensions/misc.py:218
+msgid "Printer Selection"
+msgstr "Výběr tiskárny"
 
-#: ../lib/pytis/extensions/spec.py:82
+#: ../lib/pytis/extensions/spec.py:75
 #, python-format
-msgid "Otevřít %s \"%s\""
-msgstr ""
+msgid "Open %s \"%s\""
+msgstr "Otevřít %s \"%s\""
 
-#: ../lib/pytis/extensions/spec.py:88
+#: ../lib/pytis/extensions/spec.py:81
 #, python-format
-msgid "Otevřít vstupní formulář \"%s\""
-msgstr ""
+msgid "Open insertion form \"%s\""
+msgstr "Otevřít vstupní formulář \"%s\""
 
-#: ../lib/pytis/extensions/spec.py:240
-msgid "Textový soubor nenalezen"
-msgstr ""
-
-#: ../lib/pytis/extensions/spec.py:254
-#, python-format
-msgid "Nemohu otevřít soubor nápovědy: %s"
-msgstr ""
-
-#: ../lib/pytis/extensions/spec.py:258
-msgid "Nápověda"
-msgstr ""
-
-#: ../lib/pytis/extensions/spec.py:272
+#: ../lib/pytis/extensions/spec.py:242
 msgid "Spustit formulář"
 msgstr ""
 
-#: ../lib/pytis/extensions/spec.py:273
+#: ../lib/pytis/extensions/spec.py:243
 msgid "Typ formuláře"
 msgstr ""
 
-#: ../lib/pytis/extensions/spec.py:276
+#: ../lib/pytis/extensions/spec.py:246
 msgid "Název specifikace"
 msgstr ""
 
-#: ../lib/pytis/extensions/spec.py:462
+#: ../lib/pytis/extensions/spec.py:432
 #, python-format
 msgid "Požadován je typ %s."
 msgstr ""
 
-#: ../lib/pytis/extensions/spec.py:464
+#: ../lib/pytis/extensions/spec.py:434
 #, python-format
 msgid "Povolené typy jsou %s"
 msgstr ""
 
-#: ../lib/pytis/extensions/spec.py:465
+#: ../lib/pytis/extensions/spec.py:435
 #, python-format
 msgid "Detekována data typu %s. %s"
 msgstr ""
