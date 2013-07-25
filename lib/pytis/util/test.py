@@ -85,7 +85,7 @@ class InteractiveTestCase(unittest.TestCase):
     def _ask_question(self, question):
         if question:
             while 1:
-                answer = raw_input(_('|%s (A/N)? ') % question)
+                answer = raw_input(_("|%s (Y/N)? ", question))
                 if not answer:
                     continue
                 the_answer = string.lower(string.lstrip(answer)[0])
@@ -96,7 +96,7 @@ class InteractiveTestCase(unittest.TestCase):
                     print
                     return False
         else:
-            raw_input(_(u"Stiskni Enter..."))
+            raw_input(_("Press Enter..."))
             return True
 
     def ask_user(self, instructions, question):

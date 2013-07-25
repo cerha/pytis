@@ -38,12 +38,12 @@ _ = pytis.util.translations('pytis-wx')
 class SimpleEmail(object):
     """Třída pro vytvoření a odeslaní jednoduchého mailu."""
 
-    ERR_CONNECTION = _(u"Could not connect to SMTP server")
-    ERR_RECIPIENT = _(u"Recipient refused")
-    ERR_SENDER = _(u"Sender refused")
-    ERR_DISCONNECTED = _(u"SMTP server disconnected")
-    ERR_DATA = _(u"Error by sending data")
-    ERR_HELO = _(u"Error by sending helo")
+    ERR_CONNECTION = _("Could not connect to SMTP server")
+    ERR_RECIPIENT = _("Recipient address refused")
+    ERR_SENDER = _("Sender address refused")
+    ERR_DISCONNECTED = _("SMTP server disconnected")
+    ERR_DATA = _("Error by sending data")
+    ERR_HELO = _("Error by sending helo")
     
     def __init__(self, to, from_, subject, content, html=False,
                  bcc=None, replyto=None, smtp='localhost', charset='iso-8859-2'):

@@ -195,8 +195,9 @@ def set_default_printer():
         import cupshelpers
     except ImportError:
         pytis.form.run_dialog(pytis.form.Error,
-                              _("Nastavení výchozí tiskárny nemůže být provedeno.\n"
-                                "Kontaktujte správce systému."))
+                              _("Default printer setup failed.\n"
+                                "CUPS Python interface not present.\n"
+                                "Please, contact the system administrator."))
         return None
     connection = cups.Connection()
     user_default = UserDefaultPrinter()
@@ -212,9 +213,9 @@ def set_default_printer():
                                        default=default_printer,
                                        ),
               )
-    layout = (pytis.form.Text(_("Zvolte výchozí tiskárnu:")), 'printer')
+    layout = (pytis.form.Text(_("Choose the default printer:")), 'printer')
     result = pytis.form.run_form(pytis.form.InputForm,
-                                 title=_("Výběr tiskárny"),
+                                 title=_("Printer Selection"),
                                  fields=fields,
                                  layout=layout)
     if result:

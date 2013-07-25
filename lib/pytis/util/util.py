@@ -1926,11 +1926,11 @@ def html_diff(text1, text2, name1, name2, wrapcolumn=80, context=True, numlines=
     _ = translations('pytis-wx')
     for src, dst, context in (
         # Localize some strings and hack the style sheet.
-        ('Colors', _(u"Barvy"), '<th> %s </th>'),
-        ('Legends', _(u"Legenda"), '> %s </th>'),
-        ('&nbsp;Added&nbsp;', _(u"Přidáno"), '<td class="diff_add">%s</td>'),
-        ('Changed', _(u"Změněno"), '<td class="diff_chg">%s</td>'),
-        ('Deleted', _(u"Smazáno"), '<td class="diff_sub">%s</td>'),
+        ('Colors', _("Colors"), '<th> %s </th>'),
+        ('Legends', _("Legends"), '> %s </th>'),
+        ('&nbsp;Added&nbsp;', _("Added"), '<td class="diff_add">%s</td>'),
+        ('Changed', _("Changed"), '<td class="diff_chg">%s</td>'),
+        ('Deleted', _("Deleted"), '<td class="diff_sub">%s</td>'),
         ('font-family:Courier', 'font-size:0.9em;cell-padding:2px',
          'table.diff {%s; border:medium;}'),
         ('background-color:#c0c0c0', 'display:none', '.diff_next {%s}'),

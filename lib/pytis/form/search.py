@@ -359,7 +359,7 @@ class SFDialog(SFSDialog):
                 button(_("Clear"), lambda e: self._on_clear(i),
                        _("Clear the condition.")),
                 button(_("Remove"), lambda e: self._on_remove(i),
-                       _("Remove this condition"), enabled=n > 1))
+                       _("Remove this condition."), enabled=n > 1))
         def create_in_operator(i, n, operator):
             if operator.name() == 'NOT':
                 op_label = _(u"NOT IN")
@@ -375,8 +375,8 @@ class SFDialog(SFSDialog):
             ctrl = label(text)
             ctrl._pytis_in_operator = operator
             return (ctrl,
-                    button(_(u"Odebrat"), lambda e: self._on_remove(i),
-                           _(u"Zrušit tuto podmínku"), enabled=n > 1))
+                    button(_("Remove"), lambda e: self._on_remove(i),
+                           _("Remove this condition."), enabled=n > 1))
         c = self._find_column(self._col) or self._columns[0]
         empty = pytis.data.EQ(c.id(), pytis.data.Value(c.type(), None))
         #print "===", self._strop(self._condition or empty)
