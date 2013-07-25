@@ -75,10 +75,20 @@ class Configuration(object):
         __metaclass__ = _OrderedDefinitionClass
         
         _DESCR = None
-        """Stručný (jednořádkový) popis volby."""
+        """Breif one line option description to be displayed in the user interface.
+        
+        Required only for options, which are supposed to be exposed in the user
+        interface.
+
+        """
         
         _DOC = None
-        """Podrobnější dokumentace významu volby a přípustných hodnot."""
+        """Additional multiline description of the option to be displayed in the user interface.
+
+        May be defined only for options, which are supposed to be exposed in the user
+        interface and need more explanation than _DESCR gives..
+
+        """
         
         _DEFAULT = None
         """Default value of the configuration option.
@@ -129,9 +139,6 @@ class Configuration(object):
             self._value = self._undefined = object()
             self._changed = False
             self._type_ = self._type()
-            assert self._DESCR is not None, \
-                "Option '%s' doesn't define the description string." % \
-                self.name()
 
         def _compute_init_value(self, configuration):
             value = self._undefined
