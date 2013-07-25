@@ -235,29 +235,6 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
                                transaction=transaction)
 
 
-def help_window(inputfile=None, format=TextFormat.PLAIN):
-    if not inputfile:
-        pytis.form.run_dialog(pytis.form.Warning, _(u"Textový soubor nenalezen"))
-        return
-    path = os.path.join(config.help_dir, inputfile)
-    if not os.path.exists(path):
-        dir, xx = os.path.split(os.path.realpath(pytis.extensions.__file__))
-        p = os.path.normpath(os.path.join(dir, '../../../doc', inputfile))
-        if os.path.exists(p):
-            path = p
-        else:
-            pytis.util.log(pytis.util.OPERATIONAL, "Soubor nenalezen:", p)
-    try:
-        f = open(path, 'r')
-    except IOError as e:
-        pytis.form.run_dialog(pytis.form.Error,
-                              _(u"Nemohu otevřít soubor nápovědy: %s") % e)
-    else:
-        text = f.read()
-        f.close()
-        pytis.form.InfoWindow(_(u"Nápověda"), text=text, format=format)
-        
-
 def run_any_form():
     form_types = (
         ("BrowseForm", pytis.form.BrowseForm),
