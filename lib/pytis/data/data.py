@@ -1465,7 +1465,7 @@ class ColumnSpec(object):
 
         """
         assert isinstance(id, basestring), id
-        assert isinstance(type, Type), type
+        assert isinstance(type, Type), (id, type)
         self._id = id
         self._type = type
 
