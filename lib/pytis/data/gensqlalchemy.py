@@ -192,7 +192,23 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
 
     def visit_raw(self, raw, create_ok=False):
         self._set_search_path(raw.search_path())
-        self.connection.execute(raw.sql())
+        message = """-- Don't use raw constructs anymore.
+-- Never, really never, introduce new raw constructs.
+-- If there is a missing feature in gensqlalchemy, report it.
+-- But don't introduce new raw constructs just because you think it's necessary.
+-- If you try to use an existing raw construct, rewrite it to a regular
+-- gensqlalchemy construct instead.  If you think the situation is exceptional
+-- enough to mandate use of the raw construct, see above.
+"""
+        if raw.error_level == 0:
+            sql = ""
+        else:
+            sql = message
+        if raw.error_level <= 1:
+            sql += raw.sql()
+            if raw.error_level > 0:
+                sql += "\n-- I repeat:\n--\n" + message
+        self.connection.execute(sql)
 
 class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHandler):
 
@@ -3132,6 +3148,7 @@ class SQLRaw(sqlalchemy.schema.DDLElement, SQLSchematicObject):
     
     name = None
     depends_on = ()
+    error_level = 0
     
     __visit_name__ = 'raw'
     
