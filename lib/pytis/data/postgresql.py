@@ -1070,11 +1070,26 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         except:
             unique = False
         serial = (default[:len('nextval')] == 'nextval')
-        return self._pdbb_get_type(type_, size_string, not_null, serial,
-                                   ctype=ctype, unique=unique, type_kwargs=type_kwargs)
+        result = self._pdbb_get_type(type_, size_string, not_null=not_null, 
+                                     serial=serial, unique=unique)
+        if ctype:
+            db_type_cls = result.__class__
+            if type(ctype) == type(pytis.data.Type):
+                ctype = ctype()
+            assert (db_type_cls == Binary # maybe a crypto column
+                    or isinstance(ctype, TimeInterval) and db_type_cls == Time # temporary hack
+                    or isinstance(ctype, db_type_cls)), \
+                "%s.%s: User type doesn't match DB type: %s, %s" % \
+                (table, column, ctype, result)
+            if db_type_cls == Binary and not isinstance(ctype, Binary):
+                result = ctype
+            else:
+                result = result.clone(ctype)
+        if type_kwargs:
+            result = result.clone(result.__class__(**type_kwargs))
+        return result
 
-    def _pdbb_get_type(self, type_, size_string, not_null, serial,
-                       ctype=None, unique=False, type_kwargs=None):
+    def _pdbb_get_type(self, type_, size_string, not_null=False, serial=False, unique=False):
         # Zde lze doplnit další používané standardní typy z PostgreSQL
         TYPE_MAPPING = {'bool': Boolean,
                         'bpchar': String,
@@ -1132,21 +1147,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 db_type_kwargs['precision'] = precision
         elif db_type_cls == Integer and serial:
             db_type_cls = Serial
-        result = db_type_cls(**db_type_kwargs)
-        if ctype:
-            if type(ctype) == type(pytis.data.Type):
-                ctype = ctype()
-            assert (db_type_cls == Binary # maybe a crypto column
-                    or isinstance(ctype, TimeInterval) and db_type_cls == Time # temporary hack
-                    or isinstance(ctype, db_type_cls)), \
-                ("User type doesn't match DB type", ctype, db_type_cls)
-            if db_type_cls == Binary and not isinstance(ctype, Binary):
-                result = ctype
-            else:
-                result = result.clone(ctype)
-        if type_kwargs:
-            result = result.clone(result.__class__(**type_kwargs))
-        return result
+        return db_type_cls(**db_type_kwargs)
 
     def _db_bindings_to_column_spec(self, bindings):
         key = []
@@ -3639,7 +3640,7 @@ class DBPostgreSQLFunction(Function, DBDataPostgreSQL,
                     data = self._pg_query(query)
                     type_, type_ns, size_string, t_type = data[0]
                     if t_type == 'b':
-                        instances = [self._pdbb_get_type(type_, size_string, False, False)]
+                        instances = [self._pdbb_get_type(type_, size_string)]
                     elif t_type == 'c':
                         table = '%s.%s' % (type_ns, type_,)
                         table_data = self._pdbb_get_table_column_data(table)
