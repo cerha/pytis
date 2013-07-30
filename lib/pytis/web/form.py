@@ -1439,6 +1439,11 @@ class BrowseForm(LayoutForm):
                 content[0:0] = actions
             if self._bottom_actions:
                 content += actions
+            if self._row_actions:
+                # Call here to allocate the resources in the main page (before the async load
+                # request)
+                context.resource('lcg.js')
+                context.resource('lcg-widgets.css')
         return content
 
     def _export_javascript(self, context, form_id):
@@ -1541,9 +1546,6 @@ class BrowseForm(LayoutForm):
                          for op in self._view.aggregations()]
         else:
             foot_rows = []
-        if self._row_actions:
-            context.resource('lcg.js')
-            context.resource('lcg-widgets.css')
         headings = self._export_headings(context)
         foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
         return g.table((g.thead(g.tr(headings)),
