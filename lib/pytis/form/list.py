@@ -3443,7 +3443,7 @@ class SideBrowseForm(BrowseForm):
           row -- main form selected row as a PresentedRow instance.
 
         """
-        def inner_value(column, value):
+        def inner_value(value):
             if isinstance(value, pytis.data.Value):
                 return value.value()
             else:
