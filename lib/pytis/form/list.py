@@ -604,7 +604,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                                   "lower and upper case letters."),
                         checked=False),
             wx_button(panel, label=_("Hide"), tooltip=_("Hide the search panel"),
-                      icon='close', noborder=True,                      
+                      icon='close', noborder=True,
                       callback=lambda e: self._exit_incremental_search()),
         )
         sizer = wx.BoxSizer()
@@ -834,10 +834,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             finish = True
         else:
             log(EVENT, 'Quit unsaved edited record attempted.')
-            if question == None:
+            if question is None:
                 question = _("Revoke your changes?")
             buttons = bcancel, bsave, bcontinue = \
-                      _("Revoke"), _("Save"), _("Continue editation")
+                _("Revoke"), _("Save"), _("Continue editation")
             result = run_dialog(MultiQuestion, question, buttons=buttons, default=bsave)
             finish = (result != bcontinue)
             if result == bcancel:
@@ -919,7 +919,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if editing.the_row.new():
                 msg = _("Row with this key already exists or adjacent row changed.")
             else:
-                msg = _("Row with this key already exists or the original row doesn't exist anymore.")
+                msg = _("Row with this key already exists or the original row "
+                        "doesn't exist anymore.")
             run_dialog(Warning, msg)
             return False
         else:
@@ -1110,7 +1111,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                 for op, title, icon, label in self._AGGREGATIONS]
         menu.extend((MSeparator(),
                      MItem(_("Show all"), command=ListForm.COMMAND_AGGREGATE),
-                     MItem(_("Hide all"),    command=ListForm.COMMAND_UNAGGREGATE),
+                     MItem(_("Hide all"), command=ListForm.COMMAND_UNAGGREGATE),
                      ))
         predefined_aggregated_views = self._view.aggregated_views()
         if predefined_aggregated_views:
@@ -1284,7 +1285,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             if aggregation is not None:
                 descr = _("Result of aggregation function %(aggregation)s "
                           "for column %(column)s",
-                          aggregation=aggregation[1], 
+                          aggregation=aggregation[1],
                           column=column.label())
             else:
                 descr = column.descr() or column.label() or ''
@@ -2065,7 +2066,6 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         run_dialog(Warning, problem + '\n' + _("Export aborted."))
         return False
         
-        
     def _cmd_export_file(self):
         log(EVENT, 'Called export to file')
         if not self._can_cmd_export():
@@ -2085,10 +2085,10 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         if xls_possible:
             msg = "\n\n".join((_("Data may be exported into one of the following file formats."),
                               _("Choose the desired format.")))
-            fileformat = run_dialog(MultiQuestion, msg, ('CSV','XLS'), default='CSV')
+            fileformat = run_dialog(MultiQuestion, msg, ('CSV', 'XLS'), default='CSV')
             if not fileformat:
                 return
-            if fileformat == 'XLS':                
+            if fileformat == 'XLS':
                 wildcards = [_("Files %s", "XLS (*.xls)"), "*.xls"]
                 default_filename = 'export_%s.xls' % username
         else:
@@ -3350,11 +3350,12 @@ class BrowseForm(FoldableForm):
         dual = self._dualform()
         if self._view.bindings() and not (isinstance(dual, pytis.form.MultiBrowseDualForm)
                                           and dual.main_form() == self):
+            command = Application.COMMAND_RUN_FORM(name=self._name,
+                                                   form_class=pytis.form.MultiBrowseDualForm,
+                                                   select_row=self._current_key())
             menu += (MSeparator(),
                      MItem(_("Open with side forms"),
-                           command=Application.COMMAND_RUN_FORM(name=self._name,
-                                                                form_class=pytis.form.MultiBrowseDualForm,
-                                                                select_row=self._current_key()),
+                           command=command,
                            help=_("Open the current record in a main form with "
                                   "related data in side forms."),
                            icon='link'))
