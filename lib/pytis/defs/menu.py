@@ -577,12 +577,13 @@ class ColnameData(pytis.data.RestrictedMemData):
         return super(ColnameData, self).row(key, columns=columns)
         
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
-               arguments={}, async_count=False, stop_check=None):
+               arguments={}, async_count=False, stop_check=None, timeout_callback=None):
         self._update_data(arguments)
         return super(ColnameData, self).select(condition=condition, reuse=reuse, sort=sort,
                                                columns=columns, transaction=transaction,
                                                arguments=arguments, async_count=async_count,
-                                               stop_check=stop_check)
+                                               stop_check=stop_check,
+                                               timeout_callback=timeout_callback)
     
     def search(self, condition, direction=pytis.data.FORWARD, transaction=None, arguments={}):
         self._update_data(arguments)

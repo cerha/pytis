@@ -358,7 +358,7 @@ class Data(object_2_5):
         return None
     
     def select(self, condition=None, reuse=False, sort=(), columns=None, transaction=None,
-               arguments={}, async_count=False):
+               arguments={}, async_count=False, timeout_callback=None):
         """Initialize selection of records from the data source.
         
         The method itself does not necessarily load any data, the selection is only initialized if
@@ -384,6 +384,7 @@ class Data(object_2_5):
           transaction -- transaction object encapsulating the database
             operation environment or 'None' (meaning default environment)
           async_count -- if true, try to count result lines asynchronously
+          timeout_callback -- ignored
           
         Je-li 'condition' různé od 'None', specifikuje podmínku pro výběr
         řádků.  Podtřídy nejsou povinny podmínky implementovat (mohou je
@@ -1029,11 +1030,12 @@ class MemData(Data):
                 raise self.UnsupportedOperation(op_name)
 
     def select(self, condition=None, reuse=False, sort=None, columns=None, transaction=None,
-               arguments={}, async_count=False, stop_check=None):
+               arguments={}, async_count=False, stop_check=None, timeout_callback=None):
         """Inicializace vytahování záznamů.
 
         Bližší popis viz nadtřída.  Argumenty 'condition', 'sort',
-        'transaction', 'arguments', 'async_count' a 'stop_check' jsou ignorovány.
+        'transaction', 'arguments', 'async_count', 'stop_check' a 'timeout_callback'
+        jsou ignorovány.
         
         """
         if self._condition is not None:
