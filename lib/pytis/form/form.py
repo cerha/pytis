@@ -1061,12 +1061,13 @@ class LookupForm(InnerForm):
         return False
 
     def _init_data_select(self, data, async_count=False):
+        timeout_callback = self.refresh if self._governing_transaction is None else None
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._lf_sorting,
                            arguments=self._current_arguments(),
                            transaction=self._transaction, reuse=False,
-                           async_count=async_count, timeout_callback=self.refresh)
+                           async_count=async_count, timeout_callback=timeout_callback)
 
     def _init_select(self, async_count=False):
         success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
