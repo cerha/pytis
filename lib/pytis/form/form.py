@@ -1052,6 +1052,12 @@ class LookupForm(InnerForm):
         if not self._initial_profile_applied:
             self._initial_profile_applied = True
             self._apply_initial_profile()
+        pytis.data.DBTransactionDefault.close_transactions()
+        # Enforce on_idle invocation after 1 second through a timer event
+        # so that transaction can be checked again.
+        # It seems the first argument is something else, shorter,
+        # than milliseconds but hopefully we needn't care much.
+        wx.CallLater(1000, object)
         return False
 
     def _init_data_select(self, data, async_count=False):
@@ -1060,7 +1066,7 @@ class LookupForm(InnerForm):
                            sort=self._lf_sorting,
                            arguments=self._current_arguments(),
                            transaction=self._transaction, reuse=False,
-                           async_count=async_count)
+                           async_count=async_count, timeout_callback=self.refresh)
 
     def _init_select(self, async_count=False):
         success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
@@ -1612,7 +1618,7 @@ class RecordForm(LookupForm):
             # Repeat row selection even though the row should have been already
             # selected thanks to the constructor argument.  The problem with
             # the constructor argument, however, is that when the record is not
-            # found, it is not anounced.  It must be done in _on_idle, because
+            # found, it is not announced.  It must be done in _on_idle, because
             # we need the initial profile to be applied before.
             select_row = self._initial_select_row
             self._initial_select_row = None

@@ -928,6 +928,24 @@ class Configuration(object):
         
         """
         _DEFAULT = 1000
+
+    class _Option_max_transaction_time(NumericOption):
+        """Time limit for an open transaction in seconds.
+
+        When the time is exceeded, some action may be taken on the transaction.
+        
+        """
+        _DESCR = _(u"Maximum time in seconds to left an open transaction untouched.")
+        _DEFAULT = None
+
+    class _Option_max_transaction_idle_time(NumericOption):
+        """Time limit for an idle transaction in seconds.
+
+        When the time is exceeded, some action may be taken on the transaction.
+        
+        """
+        _DESCR = _(u"Maximum time in seconds to left an idle transaction untouched.")
+        _DEFAULT = None
         
     # Volby přizpůsobení uživatelského rozhraní
 

@@ -28,6 +28,7 @@ k databázi zajišťují rozhraní dále implementovaná v jiných zdrojových
 import collections
 import copy
 import datetime
+import os
 import re
 import string
 import sys
@@ -453,6 +454,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         if transaction is None:
             connection = self._pg_get_connection(outside_transaction)
         elif not transaction.open():
+            import pdb; pdb.set_trace()
             raise DBUserException("Can't use closed transaction")
         else:
             connection = transaction._trans_connection()
@@ -491,7 +493,7 @@ class PostgreSQLConnector(PostgreSQLAccessor):
 
     def _pg_flush_connections(self):
         self._pg_connection_pool().flush(self._postgresql_close_connection)
-
+        
 
 class PostgreSQLUserGroups(PostgreSQLConnector):
     """Třída pro zjišťování skupin uživatele."""
@@ -1070,7 +1072,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         except:
             unique = False
         serial = (default[:len('nextval')] == 'nextval')
-        result = self._pdbb_get_type(type_, size_string, not_null=not_null, 
+        result = self._pdbb_get_type(type_, size_string, not_null=not_null,
                                      serial=serial, unique=unique)
         if ctype:
             db_type_cls = result.__class__
@@ -1707,7 +1709,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     while j >= 0 and spec[j] == '\\':
                         j = j - 1
                     if (i - j) % 2 == 1:
-                        spec = spec[:i] + new + spec[i+1:]
+                        spec = spec[:i] + new + spec[i + 1:]
             spec = Value(String(), spec)
             rel = (op_name == 'NW' and 'NOT ' or '') + 'LIKE'
             expression = relop(rel, (cid, spec), op_kwargs)
@@ -2116,15 +2118,16 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         args['fulltext_queries'] = fulltext_queries[0]
         self._pg_make_arguments(args, arguments)
         connections = self._pg_connections()
-        if connections and connections[-1].connection_info('broken') and transaction is None:
-            # Current connection is broken, maybe after database server
-            # restart.  In such a situation ugly things happen in wx forms and
-            # we should try to avoid them.  We are most likely here
-            # because_pg_restore_select tries to reopen the select.  We replace
-            # the broken connection by a new one, but we may do it only if we
-            # are not inside higher level transaction.
-            new_connection = self._pg_connection_pool().get(self._pg_connection_data())
-            connections[-1] = new_connection
+        if False:
+            if connections and connections[-1].connection_info('broken') and transaction is None:
+                # Current connection is broken, maybe after database server
+                # restart.  In such a situation ugly things happen in wx forms and
+                # we should try to avoid them.  We are most likely here
+                # because_pg_restore_select tries to reopen the select.  We replace
+                # the broken connection by a new one, but we may do it only if we
+                # are not inside higher level transaction.
+                new_connection = self._pg_connection_pool().get(self._pg_connection_data())
+                connections[-1] = new_connection
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
                 self._pdbb_sql_column_list_from_names(
@@ -2138,18 +2141,19 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             self._pdbb_next_selection_number()
         dummy_select = (self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS)
         command = self._pdbb_command_dummy_select if dummy_select else self._pdbb_command_select
-        self._pg_query(command.format(args), transaction=transaction)
+        transaction_ = self._pg_select_transaction if transaction is None else transaction
+        self._pg_query(command.format(args), transaction=transaction_)
         if async_count:
-            result = self._pg_start_row_counting_thread(transaction, args['selection'])
+            result = self._pg_start_row_counting_thread(transaction_, args['selection'])
         elif stop_check is not None:
             # Allow stop_check even when sync count is requested.
-            counting_thread = self._pg_start_row_counting_thread(transaction, args['selection'])
+            counting_thread = self._pg_start_row_counting_thread(transaction_, args['selection'])
             result, finished = counting_thread.count()
             assert finished
         else:
             data = self._pg_query(self._pdbb_command_fetch_last.format(args),
-                                  transaction=transaction)
-            self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction)
+                                  transaction=transaction_)
+            self._pg_query(self._pdbb_command_move_to_start.format(args), transaction=transaction_)
             if data:
                 result = int(data[0][-1])
             else:
@@ -2190,7 +2194,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                     t = self.find_column(cid).type()
                     assert isinstance(t, allowed), (operation, cid, t, allowed,)
         close_select = False
-        if not self._pg_is_in_select:
+        if self._pg_select_transaction is None:
             self.select(condition=condition, transaction=transaction)
             close_select = True
         try:
@@ -2200,10 +2204,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
-                    self._pg_rollback_transaction()
+                    self._pg_select_transaction.rollback()
             except:
                 pass
-            self._pg_is_in_select = False
+            self._pg_select_transaction = None
             raise cls, e, tb
         if close_select:
             self.close()
@@ -2426,8 +2430,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             broken = self._pdbb_broken_update_result
         except AttributeError:
             broken = self._pdbb_broken_update_result = \
-                     self._pg_query(self._pdbb_command_test_broken_update,
-                                    transaction=transaction)
+                self._pg_query(self._pdbb_command_test_broken_update,
+                               transaction=transaction)
         if broken:
             d = self._pg_query(self._pdbb_command_broken_update_preselect %
                                cond_string, transaction=transaction)
@@ -2748,7 +2752,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._key_binding = tuple(key)
         else:
             self._key_binding = (key,)
-        self._pg_is_in_select = False
+        self._pg_select_transaction = None
         super(DBDataPostgreSQL, self).__init__(
             bindings=bindings, key=key, connection_data=connection_data,
             **kwargs)
@@ -2790,7 +2794,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_return_connection(self._pg_connections().pop())
 
     def _pg_begin_transaction(self, isolation=None, read_only=False):
-        if self._pg_is_in_select:
+        if self._pg_select_transaction is not None:
             self.close()
         limit = 10
         while True:
@@ -2812,14 +2816,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def _pg_commit_transaction(self):
         self._postgresql_commit_transaction()
         self._pg_deallocate_connection()
-        if self._pg_is_in_select is True:
-            self._pg_is_in_select = False
 
     def _pg_rollback_transaction(self):
         self._postgresql_rollback_transaction()
         self._pg_deallocate_connection()
-        if self._pg_is_in_select is True:
-            self._pg_is_in_select = False
 
     # Pomocné metody
 
@@ -3001,14 +3001,14 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             except:
                 pass
             raise cls, e, tb
-        if transaction is None and not self._pg_is_in_select:
+        if transaction is None and self._pg_select_transaction is None:
             self._postgresql_commit_transaction()
         result = self._pg_make_row_from_raw_data(data, template=template)
         #log(EVENT, 'Vrácený obsah řádku', result)
         return result
 
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
-               arguments={}, async_count=False, stop_check=None):
+               arguments={}, async_count=False, stop_check=None, timeout_callback=None):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
         if ((reuse and not self._pg_changed and self._pg_number_of_rows and
@@ -3019,12 +3019,18 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             use_cache = True
         else:
             use_cache = False
-        if self._pg_is_in_select:
+        if self._pg_select_transaction is not None:
             self.close()
         if transaction is None:
-            self._pg_begin_transaction(isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
-                                       read_only=False)
-        self._pg_is_in_select = transaction or True
+            from pytis.data import DBTransactionDefault
+            self._pg_select_transaction = \
+                DBTransactionDefault(self._pg_connection_data_,
+                                     isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
+                                     timeout_callback=timeout_callback)
+            self._pg_select_user_transaction = False
+        else:
+            self._pg_select_transaction = transaction
+            self._pg_select_user_transaction = True
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
         self._pg_last_select_transaction = transaction
@@ -3051,10 +3057,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             cls, e, tb = sys.exc_info()
             try:
                 if transaction is None:
-                    self._pg_rollback_transaction()
+                    self._pg_select_transaction.rollback()
             except:
                 pass
-            self._pg_is_in_select = False
+            self._pg_select_transaction = None
             raise cls, e, tb
         if ((use_cache and
              (not isinstance(row_count_info, int) or row_count_info != self._pg_number_of_rows))):
@@ -3138,7 +3144,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(DEBUG, 'Vytažení řádku ze selectu ve směru:', direction)
         assert direction in(FORWARD, BACKWARD), \
             ('Invalid direction', direction)
-        if not self._pg_is_in_select:
+        if self._pg_select_transaction is None:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
         # Tady začíná opravdové vytažení aktuálních dat
@@ -3147,10 +3153,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if row:
             result = row
         else:
-            if (transaction is None and isinstance(self._pg_is_in_select, DBPostgreSQLTransaction)):
-                transaction_ = self._pg_is_in_select
-            else:
-                transaction_ = transaction
+            transaction_ = self._pg_select_transaction if transaction is None else transaction
             # Kurzory v PostgreSQL mají spoustu chyb.  Například často
             # kolabují při překročení hranic dat a mnohdy správně nefunguje
             # FETCH BACKWARD.  V následujícím kódu se snažíme některé
@@ -3174,12 +3177,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                                       transaction=transaction_)
                     except:
                         cls, e, tb = sys.exc_info()
-                        try:
-                            if transaction is None:
-                                self._pg_rollback_transaction()
-                        except:
-                            pass
-                        self._pg_is_in_select = False
+                        if not self._pg_select_user_transaction:
+                            try:
+                                self._pg_select_transaction.rollback()
+                            except:
+                                pass
+                        self._pg_select_transaction = None
                         raise cls, e, tb
             stop_counting()
             skip()
@@ -3217,12 +3220,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                     data_ = None
             except:
                 cls, e, tb = sys.exc_info()
-                try:
-                    if transaction is None:
-                        self._pg_rollback_transaction()
-                except:
-                    pass
-                self._pg_is_in_select = False
+                if not self._pg_select_user_transaction:
+                    try:
+                        self._pg_select_transaction.rollback()
+                    except:
+                        pass
+                self._pg_select_transaction = None
                 raise cls, e, tb
             if data_:
                 r = self._pg_make_row_from_raw_data
@@ -3241,7 +3244,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def last_row_number(self):
-        if not self._pg_is_in_select:
+        if self._pg_select_transaction is None:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
         return self._pg_buffer.current()[1]
@@ -3266,7 +3269,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
 
     def rewind(self):
-        if not self._pg_is_in_select:
+        if self._pg_select_transaction is None:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
         __, pos = self._pg_buffer.current()
@@ -3284,7 +3287,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(DEBUG, 'Hledání řádku:', (condition, direction))
         assert direction in (FORWARD, BACKWARD), \
             ('Invalid direction', direction)
-        if not self._pg_is_in_select:
+        if self._pg_select_transaction is None:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
@@ -3307,12 +3310,12 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                         self._pg_number_of_rows.stop()
                     except:
                         pass
-                try:
-                    if transaction is None:
-                        self._pg_rollback_transaction()
-                except:
-                    pass
-                self._pg_is_in_select = False
+                if not self._pg_select_user_transaction:
+                    try:
+                        self._pg_select_transaction.rollback()
+                    except:
+                        pass
+                self._pg_select_transaction = None
                 raise cls, e, tb
         if __debug__:
             log(DEBUG, 'Výsledek hledání:', result)
@@ -3321,21 +3324,22 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
     def close(self):
         if __debug__:
             log(DEBUG, 'Explicitly closing current select')
-        if self._pg_is_in_select:
+        if self._pg_select_transaction is not None:
             if isinstance(self._pg_number_of_rows, self._PgRowCounting):
                 self._pg_number_of_rows.stop()
             _, self._pg_last_select_row_number = self._pg_buffer.current()
             args = dict(selection=self._pdbb_selection_number)
-        if self._pg_is_in_select is True: # no user transaction
+        if self._pg_select_transaction is not None and not self._pg_select_user_transaction:
             try:
-                self._pg_commit_transaction()
+                self._pg_select_transaction.commit()
             except DBSystemException: # e.g. after db engine restart
                 pass
-        elif self._pg_is_in_select: # inside user transaction
+            self._pg_select_transaction = None
+        elif self._pg_select_transaction is not None: # inside user transaction
             query = self._pdbb_command_close_select.format(args)
-            transaction = self._pg_is_in_select
+            transaction = self._pg_select_transaction
             self._pg_query(query, transaction=transaction)
-        self._pg_is_in_select = False
+        self._pg_select_transaction = None
         # Flush cached data
         self._pg_buffer.reset()
 
@@ -3703,7 +3707,11 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
     REPEATABLE_READ = 'repeatable read'
 
-    def __init__(self, connection_data, isolation=None, **kwargs):
+    _watched_transactions = weakref.WeakSet()
+    _trans_last_check = {}
+    _trans_check_interval = None
+
+    def __init__(self, connection_data, isolation=None, timeout_callback=None, **kwargs):
         """
         Arguments:
 
@@ -3713,14 +3721,27 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
           isolation -- transaction isolation level, either 'None' (default
             isolation level, i.e. read commited) or 'REPEATABLE_READ' constant of
             this class (repeatable read isolation level)
+          timeout_callback -- function to be called on transaction timeout or 'None';
+            the function is called with no arguments
 
         """
         super(DBPostgreSQLTransaction, self).__init__(
             bindings=(), key=(), connection_data=connection_data,
             **kwargs)
+        self._trans_timeout_callback = timeout_callback
         self._trans_notifications = []
         self._pg_begin_transaction(isolation=isolation)
         self._open = True
+        if timeout_callback is not None:
+            self._pid = os.getpid()
+            DBPostgreSQLTransaction._watched_transactions.add(self)
+
+    def __del__(self):
+        if self._open:
+            try:
+                self._pg_close_transaction()
+            except:
+                pass
 
     def _db_bindings_to_column_spec(self, __bindings):
         return (), ()
@@ -3774,3 +3795,33 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     def open(self):
         """Return true iff the transaction is open and hasn't been closed yet."""
         return self._open
+
+    @classmethod
+    def close_transactions(class_):
+        """Check all transactions for timeout.
+
+        Call timeout callbacks for timeouted transactions.
+        
+        """
+        T = DBPostgreSQLTransaction
+        if T._trans_check_interval is None:
+            import config
+            T._trans_max_time = config.max_transaction_time
+            if T._trans_max_time is None:
+                T._trans_max_time = 100000000
+            T._trans_max_idle_time = config.max_transaction_idle_time
+            if T._trans_max_idle_time is None:
+                T._trans_max_idle_time = 100000000
+            T._trans_check_interval = \
+                max(1, min(T._trans_max_time, T._trans_max_idle_time) / 3)
+        now = time.time()
+        pid = os.getpid()
+        if now - T._trans_last_check.get(pid, 0) >= T._trans_check_interval:
+            T._trans_last_check[pid] = now
+            for t in set(class_._watched_transactions):
+                callback = t._trans_timeout_callback
+                if callback is not None and t._pid == pid and t._open:
+                    c = t._trans_connection()
+                    if ((now - c.connection_info('transaction_start_time') > t._trans_max_time or
+                         now - c.connection_info('last_query_time') > t._trans_max_idle_time)):
+                        callback()

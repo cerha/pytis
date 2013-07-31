@@ -98,6 +98,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
     def _postgresql_reset_connection_info(class_, connection, commands=None):
         connection.set_connection_info('transaction_commands', (commands or []))
         connection.set_connection_info('search_path', None)
+        connection.set_connection_info('transaction_start_time', None)
+        connection.set_connection_info('last_query_time', None)
     
     def _postgresql_query(self, connection, query, outside_transaction, query_args=(), _retry=True):
         result = None
@@ -198,13 +200,17 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         except dbapi.IntegrityError as e:
             raise DBUserException(_(u"Database integrity violation"),
                                   e, e.args, query)
+        now = time.time()
+        connection.set_connection_info('last_query_time', now)
+        if connection.connection_info('transaction_start_time') is None:
+            connection.set_connection_info('transaction_start_time', now)
         if __debug__:
             if query.startswith('fetch') or query.startswith('skip'):
                 extra_info = (query,)
             else:
                 self._last_informative_query = query
                 extra_info = ()
-            info = (time.ctime(time.time()), self._last_informative_query,) + extra_info
+            info = (time.ctime(now), self._last_informative_query,) + extra_info
             connection.set_connection_info('last_access', info)
         return self._postgresql_Result(result), connection
 
