@@ -2261,6 +2261,21 @@ class SQLTable(_SQLTabular):
     def specification_fields(class_):
         return class_.fields
 
+    @classmethod
+    def add_init_values(class_, *values):
+        """Add given 'values' to init_values.
+
+        This is useful when you need to add init values to an existing table
+        from another library or application.
+
+        Arguments:
+
+          values -- each of the values represents a single init row, as
+            described in 'init_values' property
+
+        """
+        class_.init_values = class_.init_values + values
+
 class _SQLReplaceable(SQLObject):
 
     def _pytis_definition(self, connection):
