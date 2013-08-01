@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, XChanges, default_access_rights
+from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, XChanges, \
+    default_access_rights
 
 class EPytisDisabledDmpTriggers(sql.SQLTable):
     """This table allows disabling some trigger calls.
@@ -17,9 +18,7 @@ class EPytisDisabledDmpTriggers(sql.SQLTable):
     note this way of doing it is not safe in case of parallel table updates
     """
     name = 'e_pytis_disabled_dmp_triggers'
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.Name()),
-             )
+    fields = (sql.PrimaryColumn('id', pytis.data.Name()),)
     inherits = (XChanges,)
     with_oids = True
     depends_on = ()
@@ -33,17 +32,15 @@ class CPytisRolePurposes(sql.SQLTable):
     3. Pure application roles.
     """
     name = 'c_pytis_role_purposes'
-    fields = (
-              sql.PrimaryColumn('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=False)),
+    fields = (sql.PrimaryColumn('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=False)),
               sql.Column('purpose', pytis.data.String(maxlen=32, not_null=True), unique=True),
-             )
+              )
     inherits = (XChanges,)
     init_columns = ('purposeid', 'purpose')
-    init_values = (
-                   ('admn', 'Správcovská',),
+    init_values = (('admn', 'Správcovská',),
                    ('user', 'Uživatelská',),
                    ('appl', 'Aplikační',),
-                  )
+                   )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -51,21 +48,20 @@ class CPytisRolePurposes(sql.SQLTable):
 class EPytisRoles(Base_LogSQLTable):
     """Application user roles."""
     name = 'e_pytis_roles'
-    fields = (
-              sql.PrimaryColumn('name', pytis.data.Name()),
+    fields = (sql.PrimaryColumn('name', pytis.data.Name()),
               sql.Column('description', pytis.data.String(maxlen=64, not_null=False)),
-              sql.Column('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=True), default='appl', references=sql.r.CPytisRolePurposes.purposeid),
+              sql.Column('purposeid', pytis.data.String(minlen=4, maxlen=4, not_null=True),
+                         default='appl', references=sql.r.CPytisRolePurposes.purposeid),
               sql.Column('deleted', pytis.data.Date(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     init_columns = ('name', 'description', 'purposeid', 'deleted')
-    init_values = (
-                   ('*', 'Zástupná role pro všechny role', 'admn', None,),
+    init_values = (('*', 'Zástupná role pro všechny role', 'admn', None,),
                    ('admin_roles', 'Administrátor rolí', 'admn', None,),
                    ('admin_menu', 'Administrátor menu', 'admn', None,),
                    ('admin', 'Administrátor rolí a menu', 'admn', None,),
                    ('__pytis', 'Zástupná role pro číselník sloupců', 'admn', None,),
-                  )
+                   )
     with_oids = True
     depends_on = (CPytisRolePurposes,)
     access_rights = default_access_rights.value(globals())
@@ -81,7 +77,7 @@ class EvPytisValidRoles(sql.SQLView):
             cls._exclude(codebook, 'purposeid'),
             from_obj=[main.join(codebook, main.c.purposeid == codebook.c.purposeid)],
             whereclause='main.deleted is null or main.deleted > now()'
-            )
+        )
 
     insert_order = (EPytisRoles,)
     update_order = (EPytisRoles,)
@@ -99,7 +95,7 @@ class EvPytisRoles(sql.SQLView):
             cls._exclude(t1) +
             cls._exclude(t2, 'purposeid'),
             from_obj=[t1.join(t2, t1.c.purposeid == t2.c.purposeid)]
-            )
+        )
 
     insert_order = (EPytisRoles,)
     update_order = (EPytisRoles,)
@@ -112,17 +108,17 @@ class EPytisRoleMembers(Base_LogSQLTable):
     Entries in this table define members of each roleid.
     """
     name = 'e_pytis_role_members'
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
-              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
-              sql.Column('member', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
-             )
+    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
+              sql.Column('roleid', pytis.data.Name(not_null=True),
+                         references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
+              sql.Column('member', pytis.data.Name(not_null=True),
+                         references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
+              )
     inherits = (XChanges,)
     init_columns = ('id', 'roleid', 'member')
-    init_values = (
-                   (-1, 'admin_roles', 'admin',),
+    init_values = ((-1, 'admin_roles', 'admin',),
                    (-2, 'admin_menu', 'admin',),
-                  )
+                   )
     with_oids = True
     depends_on = (EPytisRoles,)
     access_rights = default_access_rights.value(globals())
@@ -137,9 +133,12 @@ class EvPytisValidRoleMembers(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(main) +
             cls._exclude(roles1) +
-            cls._alias(roles2.c, mname=roles2.c.name, mdescription=roles2.c.description, mpurposeid=roles2.c.purposeid, mpurpose=roles2.c.purpose, mdeleted=roles2.c.deleted),
-            from_obj=[main.join(roles1, roles1.c.name == main.c.roleid).join(roles2, roles2.c.name == main.c.member)]
-            )
+            cls._alias(roles2.c, mname=roles2.c.name, mdescription=roles2.c.description,
+                       mpurposeid=roles2.c.purposeid, mpurpose=roles2.c.purpose,
+                       mdeleted=roles2.c.deleted),
+            from_obj=[main.join(roles1, roles1.c.name == main.c.roleid).
+                      join(roles2, roles2.c.name == main.c.member)]
+        )
 
     insert_order = (EPytisRoleMembers,)
     update_order = (EPytisRoleMembers,)
@@ -152,10 +151,13 @@ class APytisValidRoleMembers(sql.SQLTable):
     This table is modified only by triggers.
     """
     name = 'a_pytis_valid_role_members'
-    fields = (
-              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE', ondelete='CASCADE')),
-              sql.Column('member', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE', ondelete='CASCADE')),
-             )
+    fields = (sql.Column('roleid', pytis.data.Name(not_null=True),
+                         references=sql.a(sql.r.EPytisRoles.name,
+                                          onupdate='CASCADE', ondelete='CASCADE')),
+              sql.Column('member', pytis.data.Name(not_null=True),
+                         references=sql.a(sql.r.EPytisRoles.name,
+                                          onupdate='CASCADE', ondelete='CASCADE')),
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = (EPytisRoles,)
@@ -235,8 +237,6 @@ class EPytisRolesTrigger(Base_PyTriggerFunction):
         roles = Roles(TD)
         return roles.do_trigger()
 
-
-
 class EPytisRolesTriggers(sql.SQLRaw):
     name = 'e_pytis_roles_triggers'
     @classmethod
@@ -275,14 +275,12 @@ class PytisUser(sql.SQLFunction):
 class CPytisActionTypes(sql.SQLTable):
     """List of defined action types."""
     name = 'c_pytis_action_types'
-    fields = (
-              sql.PrimaryColumn('type', pytis.data.String(minlen=4, maxlen=4, not_null=False)),
+    fields = (sql.PrimaryColumn('type', pytis.data.String(minlen=4, maxlen=4, not_null=False)),
               sql.Column('description', pytis.data.String(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     init_columns = ('type', 'description')
-    init_values = (
-                   ('----', '',),
+    init_values = (('----', '',),
                    ('item', 'Položka menu',),
                    ('menu', 'Menu',),
                    ('sepa', 'Separátor',),
@@ -291,7 +289,7 @@ class CPytisActionTypes(sql.SQLTable):
                    ('proc', 'Procedura',),
                    ('actf', 'Akce formuláře',),
                    ('prnt', 'Tisk',),
-                  )
+                   )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -299,14 +297,13 @@ class CPytisActionTypes(sql.SQLTable):
 class CPytisMenuActions(sql.SQLTable):
     """List of available application actions."""
     name = 'c_pytis_menu_actions'
-    fields = (
-              sql.PrimaryColumn('fullname', pytis.data.String(not_null=False)),
+    fields = (sql.PrimaryColumn('fullname', pytis.data.String(not_null=False)),
               sql.Column('shortname', pytis.data.String(not_null=True)),
               sql.Column('action_title', pytis.data.String(not_null=False)),
               sql.Column('description', pytis.data.String(not_null=False)),
               sql.Column('parent_action', pytis.data.String(not_null=False)),
               sql.Column('spec_name', pytis.data.String(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = ()
@@ -348,17 +345,33 @@ as select distinct shortname from c_pytis_menu_actions ORDER BY c_pytis_menu_act
 class EPytisMenu(Base_LogSQLTable):
     """Menu structure definition."""
     name = 'e_pytis_menu'
-    fields = (
-              sql.PrimaryColumn('menuid', pytis.data.Serial()),
-              sql.Column('name', pytis.data.String(not_null=False), doc="Unique identifiers of terminal menu items.  NULL for non-terminal items and separators.", unique=True),
-              sql.Column('title', pytis.data.String(maxlen=64, not_null=False), doc="User title of the item. If NULL then it is a separator."),
-              sql.Column('position', pytis.data.LTree(not_null=False), doc="Unique identifier of menu item placement within menu. The top-menu item position is ''. Each submenu has exactly one label more than its parent. ", unique=True, index={'method': 'gist'}),
-              sql.Column('next_position', pytis.data.LTree(not_null=False), doc="Free position just after this menu item.", unique=True, default='dummy'),
-              sql.Column('fullname', pytis.data.String(not_null=False), doc="Application action assigned to the menu item.Menu items bound to submenus should have this value NULL; if they do not, the assigned action is ignored.", references=sql.a(sql.r.CPytisMenuActions.fullname, onupdate='CASCADE')),
-              sql.Column('help', pytis.data.String(not_null=False), doc="Arbitrary single-line help string."),
-              sql.Column('hotkey', pytis.data.String(not_null=False), doc="Sequence of command keys, separated by single spaces.The space key is represented by SPC string."),
-              sql.Column('locked', pytis.data.Boolean(not_null=False), doc="Iff true, this item may not be edited."),
-             )
+    fields = (sql.PrimaryColumn('menuid', pytis.data.Serial()),
+              sql.Column('name', pytis.data.String(not_null=False),
+                         doc=("Unique identifiers of terminal menu items. "
+                              "NULL for non-terminal items and separators."), unique=True),
+              sql.Column('title', pytis.data.String(maxlen=64, not_null=False),
+                         doc="User title of the item. If NULL then it is a separator."),
+              sql.Column('position', pytis.data.LTree(not_null=False),
+                         doc=("Unique identifier of menu item placement within menu. "
+                              "The top-menu item position is ''. "
+                              "Each submenu has exactly one label more than its parent. "),
+                         unique=True, index={'method': 'gist'}),
+              sql.Column('next_position', pytis.data.LTree(not_null=False),
+                         doc="Free position just after this menu item.",
+                         unique=True, default='dummy'),
+              sql.Column('fullname', pytis.data.String(not_null=False),
+                         doc=("Application action assigned to the menu item. "
+                              "Menu items bound to submenus should have this value NULL; "
+                              "if they do not, the assigned action is ignored."),
+                         references=sql.a(sql.r.CPytisMenuActions.fullname, onupdate='CASCADE')),
+              sql.Column('help', pytis.data.String(not_null=False),
+                         doc="Arbitrary single-line help string."),
+              sql.Column('hotkey', pytis.data.String(not_null=False),
+                         doc=("Sequence of command keys, separated by single spaces. "
+                              "The space key is represented by SPC string.")),
+              sql.Column('locked', pytis.data.Boolean(not_null=False),
+                         doc="Iff true, this item may not be edited."),
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = (CPytisMenuActions,)
@@ -378,7 +391,8 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
         class Menu(EPytisMenuTrigger.Util.BaseTriggerObject):
             ## BEFORE
             def _maybe_new_action(self, old=None):
-                if not self._new['name'] and self._new['title'] and (old is None or not old['title']):
+                if ((not self._new['name'] and self._new['title'] and
+                     (old is None or not old['title']))):
                     # New non-terminal menu item
                     self._new['fullname'] = action = 'menu/' + str(self._new['menuid'])
                     if not plpy.execute("select * from c_pytis_menu_actions where fullname='%s'" %
@@ -403,7 +417,9 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                 components = new_position.split('.')
                 import string
                 parent = string.join(components[:-1], '.')
-                if parent and not plpy.execute("select menuid from e_pytis_menu where position='%s'" % (parent,)):
+                if (parent and
+                    not plpy.execute("select menuid from e_pytis_menu where position='%s'" %
+                                     (parent,))):
                     raise Exception('error', "No menu item parent")
             def _do_before_insert(self):
                 self._maybe_new_action()
@@ -420,24 +436,30 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                     return
                 # If there are any children, reject deletion
                 old_position = self._old['position']
-                data = plpy.execute("select * from e_pytis_menu where position ~ '%s.*' and position != '%s'" %
+                data = plpy.execute(("select * from e_pytis_menu where position ~ '%s.*' and "
+                                     "position != '%s'") %
                                     (old_position, old_position,),
                                     1)
                 if data:
                     self._return_code = self._RETURN_CODE_SKIP
-            ## AFTER      
+            ## AFTER
             def _update_positions(self, new=None, old=None):
-                if old and new and old['position'] == new['position'] and old['next_position'] == new['next_position']:
+                if ((old and new and
+                     old['position'] == new['position'] and
+                     old['next_position'] == new['next_position'])):
                     return
                 plpy.execute('lock e_pytis_menu in exclusive mode')
                 if old and new:
                     old_position = old['position']
                     new_position = new['position']
                     if old_position != new_position:
-                        plpy.execute("update e_pytis_menu set position='%s'||subpath(position, nlevel('%s')) where position <@ '%s'" %
+                        plpy.execute(("update e_pytis_menu "
+                                      "set position='%s'||subpath(position, nlevel('%s')) "
+                                      "where position <@ '%s'") %
                                      (new_position, old_position, old_position,))
                 if new:
-                    data = plpy.execute("select position, next_position from e_pytis_menu where position != '' order by position")
+                    data = plpy.execute("select position, next_position from e_pytis_menu "
+                                        "where position != '' order by position")
                     sequences = {}
                     for row in data:
                         position = row['position'].split('.')
@@ -448,16 +470,17 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                         sequences[position_stamp].append((position, next_position,))
                     import string
                     def update_next_position(position, next_position):
-                        plpy.execute("update e_pytis_menu set next_position='%s' where position='%s'" %
+                        plpy.execute(("update e_pytis_menu set next_position='%s' "
+                                      "where position='%s'") %
                                      (string.join(next_position, '.'), string.join(position, '.'),))
                     for position_list in sequences.values():
                         position_list_len = len(position_list)
                         for i in range(position_list_len - 1):
                             position, next_position = position_list[i]
-                            next_item_position = position_list[i+1][0]
-                            if (len(position) != len(next_position) or
-                                position >= next_position or
-                                next_position >= next_item_position):
+                            next_item_position = position_list[i + 1][0]
+                            if ((len(position) != len(next_position) or
+                                 position >= next_position or
+                                 next_position >= next_item_position)):
                                 suffix = position[-1]
                                 next_suffix = next_item_position[-1]
                                 suffix += '0' * max(len(next_suffix) - len(suffix), 0)
@@ -471,8 +494,8 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                                 update_next_position(position, next_position)
                         last_item = position_list[position_list_len - 1]
                         position, next_position = last_item
-                        if (len(position) != len(next_position) or
-                            position >= next_position):
+                        if ((len(position) != len(next_position) or
+                             position >= next_position)):
                             suffix = position[-1]
                             if suffix[-1] == '9':
                                 next_position = position[:-1] + [position[-1] + '4']
@@ -492,8 +515,10 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                 plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
                 if not self._new['name'] and self._old['title'] and not self._new['title']:
                     # Non-terminal item changed to separator
-                    plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" % (self._old['fullname'],))
-                    plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" % (self._old['fullname'],))
+                    plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" %
+                                 (self._old['fullname'],))
+                    plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" %
+                                 (self._old['fullname'],))
                 self._update_positions(new=self._new, old=self._old)
                 if self._old['title'] != self._new['title']:
                     plpy.execute("update e_pytis_menu_translations set dirty=true where menuid=%s" %
@@ -505,14 +530,14 @@ class EPytisMenuTrigger(Base_PyTriggerFunction):
                 plpy.execute("insert into e_pytis_disabled_dmp_triggers (id) values ('positions')")
                 if not self._old['name'] and self._old['title']:
                     # Non-terminal menu item
-                    plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" % (self._old['fullname'],))
-                    plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" % (self._old['fullname'],))
+                    plpy.execute("delete from c_pytis_menu_actions where fullname = '%s'" %
+                                 (self._old['fullname'],))
+                    plpy.execute("delete from e_pytis_action_rights where shortname = '%s'" %
+                                 (self._old['fullname'],))
                 self._update_positions(old=self._old)
                 plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='positions'")
         menu = Menu(TD)
         return menu.do_trigger()
-
-
 
 class EPytisMenuTriggers(sql.SQLRaw):
     name = 'e_pytis_menu_triggers'
@@ -555,15 +580,12 @@ for each statement execute procedure e_pytis_menu_check_trigger();
 class CPytisMenuLanguages(sql.SQLTable):
     """Codebook of available menu languages."""
     name = 'c_pytis_menu_languages'
-    fields = (
-              sql.PrimaryColumn('language', pytis.data.String(not_null=False)),
+    fields = (sql.PrimaryColumn('language', pytis.data.String(not_null=False)),
               sql.Column('description', pytis.data.String(not_null=True)),
-             )
+              )
     inherits = (XChanges,)
     init_columns = ('language', 'description')
-    init_values = (
-                   ('cs', 'čeština',),
-                  )
+    init_values = (('cs', 'čeština',),)
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -571,12 +593,15 @@ class CPytisMenuLanguages(sql.SQLTable):
 class EPytisMenuTranslations(sql.SQLTable):
     """Translations of menu titles."""
     name = 'e_pytis_menu_translations'
-    fields = (
-              sql.Column('menuid', pytis.data.Integer(not_null=False), references=sql.gA('e_pytis_menu', onupdate='CASCADE', ondelete='CASCADE'), index=True),
-              sql.Column('language', pytis.data.String(not_null=True), references=sql.gA('c_pytis_menu_languages', onupdate='CASCADE', ondelete='CASCADE')),
+    fields = (sql.Column('menuid', pytis.data.Integer(not_null=False),
+                         references=sql.gA('e_pytis_menu', onupdate='CASCADE', ondelete='CASCADE'),
+                         index=True),
+              sql.Column('language', pytis.data.String(not_null=True),
+                         references=sql.gA('c_pytis_menu_languages',
+                                          onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('t_title', pytis.data.String(not_null=True)),
               sql.Column('dirty', pytis.data.Boolean(not_null=True)),
-             )
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = (EPytisMenu,)
@@ -592,10 +617,11 @@ class EvPytisMenu(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(main, 'fullname') +
             cls._exclude(actions, 'description', 'spec_name', 'parent_action') +
-            [sql.gL("(select count(*)-1 from e_pytis_menu where position <@ main.position)").label('position_nsub'),
+            [sql.gL("(select count(*)-1 from e_pytis_menu where position <@ main.position)")
+             .label('position_nsub'),
              sql.gL("coalesce(main.title, '――――')").label('xtitle')],
             from_obj=[main.outerjoin(actions, main.c.fullname == actions.c.fullname)]
-            )
+        )
 
     insert_order = (EPytisMenu,)
     no_insert_columns = ('position_nsub', 'xtitle',)
@@ -619,7 +645,7 @@ $$ language sql;
 
 class EvPytisTranslatedMenu(sql.SQLView):
     name = 'ev_pytis_translated_menu'
-    special_insert_columns=((EvPytisMenu, 'menuid', "substring(new.id from '/(.*)$')::int",),)
+    special_insert_columns = ((EvPytisMenu, 'menuid', "substring(new.id from '/(.*)$')::int",),)
     @classmethod
     def query(cls):
         menu = sql.t.EvPytisMenu.alias('menu')
@@ -632,19 +658,27 @@ class EvPytisTranslatedMenu(sql.SQLView):
             [sql.gL("coalesce(t_title, xtitle)").label('t_xtitle'),
              sql.gL("coalesce(dirty, title is not null)").label('dirty'),
              sql.gL("languages.language||'/'||menu.menuid").label('id')],
-            from_obj=[menu.join(languages, sqlalchemy.sql.true()).outerjoin(translations, sql.gR('menu.menuid=translations.menuid and languages.language=translations.language'))]
-            )
+            from_obj=[menu.join(languages, sqlalchemy.sql.true()).
+                      outerjoin(translations, sql.gR('menu.menuid=translations.menuid and '
+                                                    'languages.language=translations.language'))]
+        )
 
     insert_order = (EvPytisMenu,)
     no_insert_columns = ('t_xtitle', 'dirty', 'id',)
     def on_insert_also(self):
-        return ("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) values (substring(new.id from '/(.*)$')::int, substring(new.id from '^(.*)/'), coalesce(new.t_title, new.title), new.t_title is null)",)
+        return ("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) "
+                "values (substring(new.id from '/(.*)$')::int, "
+                "substring(new.id from '^(.*)/'), coalesce(new.t_title, new.title), "
+                "new.t_title is null)",)
     update_order = (EvPytisMenu,)
     no_update_columns = ('t_xtitle', 'dirty', 'id',)
     def on_update_also(self):
-        return ("select update_e_pytis_menu_translations(substring(new.id from '/(.*)$')::int, new.language, new.t_title, old.t_title, new.title) where new.language=substring(new.id from '^(.*)/') and new.t_title is not null",)
+        return ("select update_e_pytis_menu_translations(substring(new.id from '/(.*)$')::int, "
+                "new.language, new.t_title, old.t_title, new.title) "
+                "where new.language=substring(new.id from '^(.*)/') and new.t_title is not null",)
     delete_order = (EvPytisMenu,)
-    depends_on = (EvPytisMenu, CPytisMenuLanguages, EPytisMenuTranslations, UpdateEPytisMenuTranslations,)
+    depends_on = (EvPytisMenu, CPytisMenuLanguages, EPytisMenuTranslations,
+                  UpdateEPytisMenuTranslations,)
     access_rights = default_access_rights.value(globals())
 
 class PytisFirstPosition(Base_PyFunction):
@@ -665,8 +699,6 @@ class PytisFirstPosition(Base_PyFunction):
             first += '8'
         return first
 
-
-
 class EvPytisMenuAllPositions(sql.SQLView):
     name = 'ev_pytis_menu_all_positions'
     @classmethod
@@ -677,7 +709,7 @@ class EvPytisMenuAllPositions(sql.SQLView):
                 sql.reorder_columns([sql.gL("position"),
                 sql.gL("coalesce(menu1.title, '――――')").label('xtitle')], ['position', 'xtitle']),
                 from_obj=[menu1]
-                )
+            )
         def select_2():
             menu2 = sql.t.EPytisMenu.alias('menu2')
             return sqlalchemy.select(
@@ -685,16 +717,20 @@ class EvPytisMenuAllPositions(sql.SQLView):
                 sql.gL("''").label('xtitle')], ['position', 'xtitle']),
                 from_obj=[menu2],
                 whereclause='position != \'\''
-                )
+            )
         set_1 = sqlalchemy.union(select_1(), select_2())
         def select_3():
             menu3 = sql.t.EPytisMenu.alias('menu3')
             return sqlalchemy.select(
-                sql.reorder_columns([sql.gL("menu3.position||pytis_first_position(subpath((select position from e_pytis_menu where position <@ menu3.position and position != menu3.position union select '9' order by position limit 1), -1)::text)::ltree").label('position'),
-                sql.gL("''").label('xtitle')], ['position', 'xtitle']),
+                sql.reorder_columns([
+                    sql.gL("menu3.position||pytis_first_position(subpath((select position "
+                          "from e_pytis_menu where position <@ menu3.position and "
+                          "position != menu3.position union select '9' order by position limit 1),"
+                          " -1)::text)::ltree").label('position'),
+                    sql.gL("''").label('xtitle')], ['position', 'xtitle']),
                 from_obj=[menu3],
                 whereclause='name is NULL and title is not NULL'
-                )
+            )
         return sqlalchemy.union(set_1, select_3())
     insert_order = ()
     update_order = ()
@@ -712,7 +748,7 @@ class EvPytisMenuPositions(sql.SQLView):
             cls._exclude(positions) +
             cls._exclude(menu, 'name', 'fullname', 'position', 'hotkey', 'help', 'locked'),
             from_obj=[positions.outerjoin(menu, positions.c.position == menu.c.position)]
-            )
+        )
 
     insert_order = ()
     update_order = ()
@@ -723,14 +759,12 @@ class EvPytisMenuPositions(sql.SQLView):
 class CPytisAccessRights(sql.SQLTable):
     """Available rights.  Not all rights make sense for all actions and menus."""
     name = 'c_pytis_access_rights'
-    fields = (
-              sql.PrimaryColumn('rightid', pytis.data.String(maxlen=8, not_null=False)),
+    fields = (sql.PrimaryColumn('rightid', pytis.data.String(maxlen=8, not_null=False)),
               sql.Column('description', pytis.data.String(not_null=True)),
-             )
+              )
     inherits = (XChanges,)
     init_columns = ('rightid', 'description')
-    init_values = (
-                   ('*', 'Všechna práva',),
+    init_values = (('*', 'Všechna práva',),
                    ('show', 'Viditelnost položek menu',),
                    ('view', 'Prohlížení existujících záznamů',),
                    ('insert', 'Vkládání nových záznamů',),
@@ -739,44 +773,54 @@ class CPytisAccessRights(sql.SQLTable):
                    ('print', 'Tisky',),
                    ('export', 'Exporty',),
                    ('call', 'Spouštění aplikačních procedur',),
-                  )
+                   )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
 
 class EPytisActionRights(Base_LogSQLTable):
     """Assignments of access rights to actions.
-    
+
     Extent of each action right is strictly limited by its granted system
     permissions.  Non-system rights can only further limit the system rights.  If
     there is no system permission for a given action, the action is forbidden.  The
     resulting right is not broader than the intersection of all the related
     permissions.
-    
+
     Some actions, e.g. dual form actions, form its access rights set by inclusion
     of other action rights.
-    
+
     Access rights of non-terminal menu items, identified by action name
     'menu/MENUID' define default rights, used when no non-system access right
     definition is present for a terminal item.  More nested access rights of
     non-terminal menu items have higher precedence.
-    
+
     Action rights are supported and used in the application, but they are not
     exposed in the current user interface directly.  In future they may also
     support extended rights assignment, e.g. in context menus etc.
     """
     name = 'e_pytis_action_rights'
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
+    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), doc="Just to make logging happy"),
               sql.Column('shortname', pytis.data.String(not_null=True)),
-              sql.Column('roleid', pytis.data.Name(not_null=True), references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
-              sql.Column('rightid', pytis.data.String(maxlen=8, not_null=True), references=sql.a(sql.r.CPytisAccessRights.rightid, onupdate='CASCADE')),
+              sql.Column('roleid', pytis.data.Name(not_null=True),
+                         references=sql.a(sql.r.EPytisRoles.name, onupdate='CASCADE')),
+              sql.Column('rightid', pytis.data.String(maxlen=8, not_null=True),
+                         references=sql.a(sql.r.CPytisAccessRights.rightid, onupdate='CASCADE')),
               sql.Column('colname', pytis.data.Name()),
-              sql.Column('system', pytis.data.Boolean(not_null=True), doc="Iff true, this is a system (noneditable) permission.", default=False),
-              sql.Column('granted', pytis.data.Boolean(not_null=True), doc="If true the right is granted, otherwise it is denied; system rights are always granted.", default=True),
-              sql.Column('redundant', pytis.data.Boolean(not_null=False), doc="If true, the right is redundant in the current set of access rights.", default=False),
-              sql.Column('status', pytis.data.SmallInteger(not_null=True), doc="Status of the right: 0 = current; -1 = old (to be deleted after the next global rights update);\n1 = new (not yet active, to be activated after the next global rights update).", default=1),
-             )
+              sql.Column('system', pytis.data.Boolean(not_null=True),
+                         doc="Iff true, this is a system (noneditable) permission.", default=False),
+              sql.Column('granted', pytis.data.Boolean(not_null=True),
+                         doc=("If true the right is granted, otherwise it is denied; "
+                              "system rights are always granted."), default=True),
+              sql.Column('redundant', pytis.data.Boolean(not_null=False),
+                         doc="If true, the right is redundant in the current set of access rights.",
+                         default=False),
+              sql.Column('status', pytis.data.SmallInteger(not_null=True),
+                         doc=("Status of the right: 0 = current; -1 = old "
+                              "(to be deleted after the next global rights update); "
+                              "1 = new (not yet active, to be activated after the next "
+                              "global rights update)."), default=1),
+              )
     inherits = (XChanges,)
     with_oids = True
     unique = (('shortname', 'roleid', 'rightid', 'colname', 'system', 'granted', 'status',),)
@@ -804,8 +848,9 @@ class PytisConvertSystemRights(Base_PyFunction):
         result = plpy.execute(q)
         temp_old = plpy.execute("select new_tempname() as jmeno")[0]["jmeno"]
         temp_new = plpy.execute("select new_tempname() as jmeno")[0]["jmeno"]
-        q = """create temp table %s as select * from pytis_view_summary_rights('%s', NULL, False, False)
-            """ % (temp_old, shortname)
+        q = (("create temp table %s as "
+              "select * from pytis_view_summary_rights('%s', NULL, False, False)") %
+             (temp_old, shortname,))
         result = plpy.execute(q)
         q = "delete from e_pytis_action_rights where shortname='%s' and redundant" % (shortname,)
         plpy.execute(q)
@@ -819,8 +864,9 @@ class PytisConvertSystemRights(Base_PyFunction):
         plpy.execute(q)
         q = "select pytis_update_summary_rights()"
         plpy.execute(q)
-        q = """create temp table %s as select * from pytis_view_summary_rights('%s', NULL, False, False)
-            """ % (temp_new, shortname)
+        q = (("create temp table %s as "
+              "select * from pytis_view_summary_rights('%s', NULL, False, False)") %
+             (temp_new, shortname,))
         result = plpy.execute(q)
         q = """select * from %s except select * from %s
                 union
@@ -830,8 +876,6 @@ class PytisConvertSystemRights(Base_PyFunction):
         if len(result) > 0:
             msg = "Converted rights are not the same as original rights"
             plpy.error(msg)
-
-
 
 class PytisUpdateRightsRedundancy(Base_PyFunction):
     name = 'pytis_update_rights_redundancy'
@@ -853,7 +897,8 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
                 role_list = roles[roleid] = [roleid]
             role_list.append(member)
         class Right(object):
-            properties = ('id', 'shortname', 'roleid', 'rightid', 'granted', 'colname', 'system', 'redundant', 'status',)
+            properties = ('id', 'shortname', 'roleid', 'rightid', 'granted', 'colname', 'system',
+                          'redundant', 'status',)
             def __init__(self, **kwargs):
                 for k, v in kwargs.items():
                     if k not in ('vytvoril', 'vytvoreno', 'zmenil', 'zmeneno',):
@@ -882,9 +927,9 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
                             return False
                 if self.system and not other.system:
                     return False
-                if ((self.rightid == other.rightid or other.rightid == '*') and
-                    (self.roleid in roles.get(other.roleid, []) or other.roleid == '*') and
-                    (self.colname == other.colname or other.colname is None)):
+                if (((self.rightid == other.rightid or other.rightid == '*') and
+                     (self.roleid in roles.get(other.roleid, []) or other.roleid == '*') and
+                     (self.colname == other.colname or other.colname is None))):
                     if self.granted == other.granted:
                         return True
                     else:
@@ -899,9 +944,10 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
                     # Well, there are typically no SHOW system rights...
                     return True
                 for r in system_rights:
-                    if ((self.roleid not in roles.get(r.roleid, []) or self.roleid == '*' or r.roleid == '*') and
-                        (self.rightid == r.rightid or self.rightid == '*' or r.rightid == '*') and
-                        (self.colname == r.colname or self.colname is None or r.colname is None)):
+                    if (((self.roleid not in roles.get(r.roleid, []) or
+                          self.roleid == '*' or r.roleid == '*') and
+                         (self.rightid == r.rightid or self.rightid == '*' or r.rightid == '*') and
+                         (self.colname == r.colname or self.colname is None or r.colname is None))):
                         return True
                 return False
         rights = {}
@@ -989,13 +1035,13 @@ class PytisUpdateRightsRedundancy(Base_PyFunction):
             base_rights += list(base)
         for r in base_rights:
             if r.redundant:
-                plpy.execute("update e_pytis_action_rights set redundant='F' where id='%d' and redundant!='F'" % (r.id,))
+                plpy.execute("update e_pytis_action_rights set redundant='F' "
+                             "where id='%d' and redundant!='F'" % (r.id,))
         for r in redundant_rights:
             if not r.redundant:
-                plpy.execute("update e_pytis_action_rights set redundant='T' where id='%d' and redundant!='T'" % (r.id,))
+                plpy.execute("update e_pytis_action_rights set redundant='T' "
+                             "where id='%d' and redundant!='T'" % (r.id,))
         plpy.execute("delete from e_pytis_disabled_dmp_triggers where id='redundancy'")
-
-
 
 class EPytisRoleMembersTrigger(Base_PyTriggerFunction):
     name = 'e_pytis_role_members_trigger'
@@ -1003,7 +1049,8 @@ class EPytisRoleMembersTrigger(Base_PyTriggerFunction):
     result_type = sql.G_CONVERT_THIS_FUNCTION_TO_TRIGGER
     multirow = False
     stability = 'VOLATILE'
-    depends_on = (EPytisRoleMembers, EPytisDisabledDmpTriggers, APytisValidRoleMembers, PytisUpdateTransitiveRoles, PytisUpdateRightsRedundancy,)
+    depends_on = (EPytisRoleMembers, EPytisDisabledDmpTriggers, APytisValidRoleMembers,
+                  PytisUpdateTransitiveRoles, PytisUpdateRightsRedundancy,)
     access_rights = ()
 
     @staticmethod
@@ -1026,8 +1073,6 @@ class EPytisRoleMembersTrigger(Base_PyTriggerFunction):
                 self._update_all()
         roles = Roles(TD)
         return roles.do_trigger()
-
-
 
 class EPytisRoleMembersTriggers(sql.SQLRaw):
     name = 'e_pytis_role_members_triggers'
@@ -1062,15 +1107,14 @@ class EPytisActionRightsTrigger(Base_PyTriggerFunction):
             def _do_after_insert(self):
                 self._update_redundancy()
             def _do_after_update(self):
-                if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='redundancy'"):
+                if plpy.execute("select * from e_pytis_disabled_dmp_triggers "
+                                "where id='redundancy'"):
                     return
                 self._update_redundancy()
             def _do_after_delete(self):
                 self._update_redundancy()
         rights = Rights(TD)
         return rights.do_trigger()
-
-
 
 class EPytisActionRightsTriggers(sql.SQLRaw):
     name = 'e_pytis_action_rights_triggers'
@@ -1094,9 +1138,10 @@ class EvPytisActionRights(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(rights) +
             cls._exclude(purposes, 'purposeid'),
-            from_obj=[rights.outerjoin(roles, rights.c.roleid == roles.c.name).outerjoin(purposes, roles.c.purposeid == purposes.c.purposeid)],
+            from_obj=[rights.outerjoin(roles, rights.c.roleid == roles.c.name).
+                      outerjoin(purposes, roles.c.purposeid == purposes.c.purposeid)],
             whereclause='rights.status>=0'
-            )
+        )
 
     insert_order = (EPytisActionRights,)
     def on_update(self):
@@ -1115,8 +1160,7 @@ update e_pytis_action_rights set status=-1 where id=old.id and status=0;
 
 class TypActionRightsFoldable(sql.SQLType):
     name = 'typ_action_rights_foldable'
-    fields = (
-              sql.Column('id', pytis.data.Integer(not_null=False)),
+    fields = (sql.Column('id', pytis.data.Integer(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('purpose', pytis.data.String(not_null=False)),
               sql.Column('shortname', pytis.data.String(not_null=False)),
@@ -1127,7 +1171,7 @@ class TypActionRightsFoldable(sql.SQLType):
               sql.Column('redundant', pytis.data.Boolean(not_null=False)),
               sql.Column('tree', pytis.data.LTree()),
               sql.Column('subcount', pytis.data.Integer(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1152,7 +1196,8 @@ class PytisActionRightsFoldable(Base_PyFunction):
             condition = "shortname='%s'" % (shortname,)
         else:
             condition = "true"
-        query = ("select id, roleid, purpose, shortname, colname, rightid, system, granted, redundant "
+        query = ("select id, roleid, purpose, shortname, colname, rightid, system, "
+                 "granted, redundant "
                  "from ev_pytis_action_rights where %s" % (condition,))
         for row in plpy.execute(query):
             column_value = row[column]
@@ -1185,12 +1230,11 @@ class PytisActionRightsFoldable(Base_PyFunction):
                            ltree_value(column_value), len(rows),))
             for row in rows:
                 tree_id = ltree_value(column_value) + '.' + ltree_value(row[other_column])
-                result.append((row['id'], row['roleid'], row['purpose'], row['shortname'], row['colname'],
-                               row['rightid'], row['system'], row['granted'], row['redundant'],
+                result.append((row['id'], row['roleid'], row['purpose'], row['shortname'],
+                               row['colname'], row['rightid'], row['system'], row['granted'],
+                               row['redundant'],
                                tree_id, 0,))
         return result
-
-
 
 class PytisCopyRights(sql.SQLFunction):
     """Make access rights of a menu item the same as of another menu item."""
@@ -1238,12 +1282,11 @@ class PytisActionsLockId(sql.SQLFunction):
 
 class TypSummaryRights(sql.SQLType):
     name = 'typ_summary_rights'
-    fields = (
-              sql.Column('shortname', pytis.data.String(not_null=False)),
+    fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
               sql.Column('columns', pytis.data.String(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1293,7 +1336,8 @@ class PytisComputeSummaryRights(Base_PyFunction):
             s = pg_escape(shortname_arg)
             q = (("select distinct shortname from c_pytis_menu_actions "
                   "where shortname='%s' or "
-                  "substr(fullname, 8) in (select fullname from c_pytis_menu_actions where shortname='%s')")
+                  "substr(fullname, 8) in "
+                  "(select fullname from c_pytis_menu_actions where shortname='%s')")
                  % (s, s,))
             related_shortnames_list = ["'%s'" % (pg_escape(row['shortname']),)
                                        for row in plpy.execute(q)]
@@ -1305,7 +1349,9 @@ class PytisComputeSummaryRights(Base_PyFunction):
                         "from e_pytis_action_rights "
                         "where %s") % (condition,)
         for row in plpy.execute(rights_query):
-            rightid, granted, roleid, shortname, column, system = row['rightid'], row['granted'], row['roleid'], row['shortname'], row['colname'], row['system']
+            rightid, granted, roleid, shortname, column, system = \
+                row['rightid'], row['granted'], row['roleid'], row['shortname'], row['colname'], \
+                row['system']
             key = shortname
             item_rights = raw_rights.get(key)
             if item_rights is None:
@@ -1324,13 +1370,15 @@ class PytisComputeSummaryRights(Base_PyFunction):
         subactions = {}
         if shortname_arg:
             shortname_condition = "c_pytis_menu_actions.shortname in (%s)" % (related_shortnames,)
-            condition = 'fullname in (select fullname from c_pytis_menu_actions where %s)' % (shortname_condition,)
+            condition = ('fullname in (select fullname from c_pytis_menu_actions where %s)' %
+                         (shortname_condition,))
         else:
-            shortname_condition = condition = 'true'    
-        for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%%' and %s order by fullname"
-                                % (condition,)):
+            shortname_condition = condition = 'true'
+        for row in plpy.execute(("select fullname, shortname from c_pytis_menu_actions "
+                                 "where fullname like 'sub/%%' and %s order by fullname") %
+                                (condition,)):
             fullname, shortname = row['fullname'], row['shortname']
-            parent = fullname[fullname.find('/', 4)+1:]
+            parent = fullname[fullname.find('/', 4) + 1:]
             parent_subactions = subactions.get(parent)
             if parent_subactions is None:
                 parent_subactions = subactions[parent] = []
@@ -1345,7 +1393,8 @@ class PytisComputeSummaryRights(Base_PyFunction):
                 self.subforms = subforms
                 self.columns = columns
         computed_rights = {}
-        for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where %s" % (shortname_condition,)):
+        for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where %s" %
+                                (shortname_condition,)):
             shortname, fullname = row['shortname'], row['fullname']
             item_rights = raw_rights.get(shortname, {})
             subforms = subactions.get(fullname, ())
@@ -1355,7 +1404,8 @@ class PytisComputeSummaryRights(Base_PyFunction):
                 default_forbidden = set((('view', None,), ('insert', None,), ('update', None,),
                                          ('delete', None,), ('print', None,), ('export', None,),))
             elif shortname[:5] == 'menu/':
-                default_forbidden = set((('view', None,), ('insert', None,), ('update', None,), ('delete', None,),
+                default_forbidden = set((('view', None,), ('insert', None,), ('update', None,),
+                                         ('delete', None,),
                                          ('print', None,), ('export', None,), ('call', None,),))
             else:
                 default_forbidden = set()
@@ -1390,14 +1440,19 @@ class PytisComputeSummaryRights(Base_PyFunction):
                 def store_rights(shortname, max_rights, allowed_rights, forbidden_rights):
                     if max_rights is None:
                         max_rights = allowed_rights
-                    rights = set([right for right in max_rights if right not in forbidden_rights and ('*', right[1],) not in forbidden_rights])
+                    rights = set([right for right in max_rights
+                                  if right not in forbidden_rights and
+                                  ('*', right[1],) not in forbidden_rights])
                     for r in allowed_rights.difference(forbidden_rights):
                         if r in max_rights or (r[0], None,) in max_rights:
                             rights.add(r)
                     if ('show', None,) not in forbidden_rights:
                         rights.add(('show', None,))
-                    computed_rights[(shortname, roleid,)] = Rights(total=rights, allowed=allowed_rights, forbidden=forbidden_rights,
-                                                                   subforms=subforms, columns=columns)
+                    computed_rights[(shortname, roleid,)] = Rights(total=rights,
+                                                                   allowed=allowed_rights,
+                                                                   forbidden=forbidden_rights,
+                                                                   subforms=subforms,
+                                                                   columns=columns)
                 store_rights(shortname, max_rights, allowed_rights, forbidden_rights)
         # Output summary rights
         result = []
@@ -1423,7 +1478,9 @@ class PytisComputeSummaryRights(Base_PyFunction):
                         break
                     else:
                         subforms_total.update(r.total)
-                all_rights.total = set([r for r in total if r[0] != 'view' or r[0] in [rr[0] for rr in subforms_total]])
+                all_rights.total = set([r for r in total
+                                        if r[0] != 'view' or
+                                        r[0] in [rr[0] for rr in subforms_total]])
             # Format and return the rights
             if compress_arg:
                 rights = []
@@ -1450,11 +1507,13 @@ class PytisComputeSummaryRights(Base_PyFunction):
                         crights_list = list(crights)
                     crights_list = [r for r in crights
                                     if (r, None,) in rights or (r, column,) in rights]
-                    crights_list = crights_list + [r for r in general_rights if (r, column) not in all_rights.forbidden]
+                    crights_list = crights_list + [r for r in general_rights
+                                                   if (r, column) not in all_rights.forbidden]
                     crights_list = list(set(crights_list)) # remove duplicates
                     crights_list.sort()
                     rights_string = string.join(crights_list, ' ')
-                    summarized_rights[rights_string] = summarized_rights.get(rights_string, []) + [column]
+                    summarized_rights[rights_string] = (summarized_rights.get(rights_string, []) +
+                                                        [column])
                 general_rights = list(general_rights)
                 general_rights.sort()
                 summarized_rights[string.join(general_rights, ' ')] = None
@@ -1466,8 +1525,6 @@ class PytisComputeSummaryRights(Base_PyFunction):
                         columns_string = string.join(columns, ' ')
                     result.append((shortname, roleid, rights_string, columns_string,))
         return result
-
-
 
 class PytisUpdateSummaryRights(sql.SQLFunction):
     name = 'pytis_update_summary_rights'
@@ -1484,14 +1541,14 @@ class APytisActionsStructure(sql.SQLTable):
     This table is modified only by triggers.
     """
     name = 'a_pytis_actions_structure'
-    fields = (
-              sql.Column('fullname', pytis.data.String(not_null=True)),
+    fields = (sql.Column('fullname', pytis.data.String(not_null=True)),
               sql.Column('shortname', pytis.data.String(not_null=True)),
               sql.Column('menuid', pytis.data.Integer(not_null=False)),
               sql.Column('position', pytis.data.LTree(not_null=True), index={'method': 'gist'}),
-              sql.Column('type', pytis.data.String(minlen=4, maxlen=4, not_null=True), references=sql.r.CPytisActionTypes.type),
+              sql.Column('type', pytis.data.String(minlen=4, maxlen=4, not_null=True),
+                         references=sql.r.CPytisActionTypes.type),
               sql.Column('summaryid', pytis.data.String(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = (CPytisActionTypes,)
@@ -1509,11 +1566,15 @@ class EvPytisMenuStructure(sql.SQLView):
             cls._exclude(structure, 'menuid', 'summary_id', 'summaryid') +
             cls._exclude(menu, 'name', 'fullname', 'position', 'title') +
             cls._alias(cls._exclude(atypes, 'type'), actiontype=atypes.c.description) +
-            cls._exclude(actions, 'fullname', 'shortname', 'action_title', 'spec_name', 'parent_action') +
-            [sql.gL("(select count(*)-1 from a_pytis_actions_structure where position <@ structure.position)").label('position_nsub'),
+            cls._exclude(actions, 'fullname', 'shortname', 'action_title', 'spec_name',
+                         'parent_action') +
+            [sql.gL("(select count(*)-1 from a_pytis_actions_structure "
+                   "where position <@ structure.position)").label('position_nsub'),
              sql.gL("coalesce(menu.title, '('||actions.action_title||')')").label('title')],
-            from_obj=[structure.outerjoin(menu, structure.c.menuid == menu.c.menuid).outerjoin(atypes, structure.c.type == atypes.c.type).outerjoin(actions, structure.c.fullname == actions.c.fullname)]
-            )
+            from_obj=[structure.outerjoin(menu, structure.c.menuid == menu.c.menuid).
+                      outerjoin(atypes, structure.c.type == atypes.c.type).
+                      outerjoin(actions, structure.c.fullname == actions.c.fullname)]
+        )
 
     @classmethod
     def join_columns(cls):
@@ -1544,17 +1605,20 @@ class PytisUpdateActionsStructure(Base_PyFunction):
             pg_escape = PytisUpdateActionsStructure.Util.pg_escape
             plpy.execute("delete from a_pytis_actions_structure")
             subactions = {}
-            for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions where fullname like 'sub/%' order by fullname"):
+            for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions "
+                                    "where fullname like 'sub/%' order by fullname"):
                 fullname, shortname = row['fullname'], row['shortname']
-                parent = fullname[fullname.find('/', 4)+1:]
+                parent = fullname[fullname.find('/', 4) + 1:]
                 parent_subactions = subactions.get(parent)
                 if parent_subactions is None:
                     parent_subactions = subactions[parent] = []
                 parent_subactions.append((fullname, shortname,))
             formactions = {}
-            for row in plpy.execute("select shortname, fullname from c_pytis_menu_actions where shortname like 'action/%' or shortname like 'print/%' order by shortname"):
+            for row in plpy.execute("select shortname, fullname from c_pytis_menu_actions "
+                                    "where shortname like 'action/%' or shortname like 'print/%' "
+                                    "order by shortname"):
                 fullname = row['fullname']
-                form_name = fullname[fullname.find('/', 7)+1:]
+                form_name = fullname[fullname.find('/', 7) + 1:]
                 form_name_formactions = formactions.get(form_name)
                 if form_name_formactions is None:
                     form_name_formactions = formactions[form_name] = []
@@ -1591,11 +1655,13 @@ class PytisUpdateActionsStructure(Base_PyFunction):
                     faction_fullname, faction_shortname = formaction_list[i]
                     subposition = '%s.%02d' % (position, (i + 50),)
                     add_row(faction_fullname, faction_shortname, None, subposition)
-            for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, shortname "
+            for row in plpy.execute("select menuid, position, c_pytis_menu_actions.fullname, "
+                                    "shortname "
                                     "from e_pytis_menu, c_pytis_menu_actions "
                                     "where e_pytis_menu.fullname = c_pytis_menu_actions.fullname "
                                     "order by position"):
-                menuid, position, shortname, fullname = row['menuid'], row['position'], row['shortname'], row['fullname']
+                menuid, position, shortname, fullname = \
+                    row['menuid'], row['position'], row['shortname'], row['fullname']
                 add_row(fullname, shortname, menuid, position)
                 action_components = shortname.split('/')
                 if action_components[0] == 'form' or action_components[0] == 'RUN_FORM':
@@ -1609,17 +1675,17 @@ class PytisUpdateActionsStructure(Base_PyFunction):
                         add_formactions(shortname, position)
             position = '8.0001'
             add_row('label/1', 'label/1', None, '8')
-            for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions order by shortname"):
+            for row in plpy.execute("select fullname, shortname from c_pytis_menu_actions "
+                                    "order by shortname"):
                 fullname, shortname = row['fullname'], row['shortname']
                 if shortname in actions:
                     continue
                 add_row(fullname, shortname, None, position)
                 position_components = position.split('.')
-                position = string.join(position_components[:-1] + ['%04d' % (int(position_components[-1]) + 1)], '.')
+                position = string.join(position_components[:-1] +
+                                       ['%04d' % (int(position_components[-1]) + 1)], '.')
         finally:
             plpy.execute("select pg_advisory_unlock(%s)" % (lock_id,))
-
-
 
 class CPytisMenuActionsTrigger(Base_PyTriggerFunction):
     name = 'c_pytis_menu_actions_trigger'
@@ -1645,8 +1711,6 @@ class CPytisMenuActionsTrigger(Base_PyTriggerFunction):
                 self._update_all()
         menu = Menu(TD)
         return menu.do_trigger()
-
-
 
 class CPytisMenuActionsTriggers(sql.SQLRaw):
     name = 'c_pytis_menu_actions_triggers'
@@ -1674,7 +1738,8 @@ class EPytisMenuTriggerRights(Base_PyTriggerFunction):
     def e_pytis_menu_trigger_rights():
         class Menu(EPytisMenuTriggerRights.Util.BaseTriggerObject):
             def _update_all(self):
-                if plpy.execute("select * from e_pytis_disabled_dmp_triggers where id='genmenu' or id='positions'"):
+                if plpy.execute("select * from e_pytis_disabled_dmp_triggers "
+                                "where id='genmenu' or id='positions'"):
                     return
                 plpy.execute("select pytis_update_actions_structure()")
             def _do_after_insert(self):
@@ -1711,8 +1776,7 @@ class PytisMultiformSpec(sql.SQLFunction):
 
 class TypPreviewSummaryRights(sql.SQLType):
     name = 'typ_preview_summary_rights'
-    fields = (
-              sql.Column('shortname', pytis.data.String(not_null=False)),
+    fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
               sql.Column('columns', pytis.data.String(not_null=False)),
@@ -1725,7 +1789,7 @@ class TypPreviewSummaryRights(sql.SQLType):
               sql.Column('rights_print', pytis.data.Boolean(not_null=False)),
               sql.Column('rights_export', pytis.data.Boolean(not_null=False)),
               sql.Column('rights_call', pytis.data.Boolean(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1738,13 +1802,13 @@ class PytisViewSummaryRights(sql.SQLFunction):
     result_type = TypPreviewSummaryRights
     multirow = True
     stability = 'VOLATILE'
-    depends_on = (TypPreviewSummaryRights, PytisComputeSummaryRights, EPytisRoles, CPytisRolePurposes,)
+    depends_on = (TypPreviewSummaryRights, PytisComputeSummaryRights, EPytisRoles,
+                  CPytisRolePurposes,)
     access_rights = default_access_rights.value(globals())
 
 class TypPreviewRoleMenu(sql.SQLType):
     name = 'typ_preview_role_menu'
-    fields = (
-              sql.Column('menuid', pytis.data.Integer(not_null=False)),
+    fields = (sql.Column('menuid', pytis.data.Integer(not_null=False)),
               sql.Column('title', pytis.data.String(not_null=False)),
               sql.Column('position', pytis.data.LTree()),
               sql.Column('position_nsub', pytis.data.LargeInteger()),
@@ -1758,7 +1822,7 @@ class TypPreviewRoleMenu(sql.SQLType):
               sql.Column('rights_print', pytis.data.Boolean(not_null=False)),
               sql.Column('rights_export', pytis.data.Boolean(not_null=False)),
               sql.Column('rights_call', pytis.data.Boolean(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1769,13 +1833,13 @@ class PytisViewRoleMenu(sql.SQLFunction):
     result_type = TypPreviewRoleMenu
     multirow = True
     stability = 'VOLATILE'
-    depends_on = (TypPreviewRoleMenu, PytisComputeSummaryRights, EPytisRoles, CPytisRolePurposes, EvPytisMenu,)
+    depends_on = (TypPreviewRoleMenu, PytisComputeSummaryRights, EPytisRoles,
+                  CPytisRolePurposes, EvPytisMenu,)
     access_rights = default_access_rights.value(globals())
 
 class TypPreviewExtendedRoleMenu(sql.SQLType):
     name = 'typ_preview_extended_role_menu'
-    fields = (
-              sql.Column('shortname', pytis.data.String(not_null=False)),
+    fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('position', pytis.data.LTree()),
               sql.Column('type', pytis.data.String(minlen=4, maxlen=4)),
               sql.Column('menuid', pytis.data.Integer(not_null=False)),
@@ -1797,7 +1861,7 @@ class TypPreviewExtendedRoleMenu(sql.SQLType):
               sql.Column('rights_print', pytis.data.Boolean(not_null=False)),
               sql.Column('rights_export', pytis.data.Boolean(not_null=False)),
               sql.Column('rights_call', pytis.data.Boolean(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1808,13 +1872,14 @@ class PytisViewExtendedRoleMenu(sql.SQLFunction):
     result_type = TypPreviewExtendedRoleMenu
     multirow = True
     stability = 'VOLATILE'
-    depends_on = (TypPreviewExtendedRoleMenu, APytisActionsStructure, EPytisMenu, EvPytisValidRoles, PytisComputeSummaryRights, CPytisActionTypes, PytisMultiformSpec, CPytisMenuActions,)
+    depends_on = (TypPreviewExtendedRoleMenu, APytisActionsStructure, EPytisMenu,
+                  EvPytisValidRoles, PytisComputeSummaryRights, CPytisActionTypes,
+                  PytisMultiformSpec, CPytisMenuActions,)
     access_rights = default_access_rights.value(globals())
 
 class TypPreviewUserMenu(sql.SQLType):
     name = 'typ_preview_user_menu'
-    fields = (
-              sql.Column('menuid', pytis.data.Integer(not_null=False)),
+    fields = (sql.Column('menuid', pytis.data.Integer(not_null=False)),
               sql.Column('name', pytis.data.String(not_null=False)),
               sql.Column('title', pytis.data.String(not_null=False)),
               sql.Column('position', pytis.data.LTree()),
@@ -1824,7 +1889,7 @@ class TypPreviewUserMenu(sql.SQLType):
               sql.Column('hotkey', pytis.data.String(not_null=False)),
               sql.Column('locked', pytis.data.Boolean(not_null=False)),
               sql.Column('language', pytis.data.String(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1834,16 +1899,16 @@ class PytisViewUserMenu(sql.SQLFunction):
     result_type = TypPreviewUserMenu
     multirow = True
     stability = 'VOLATILE'
-    depends_on = (TypPreviewUserMenu, EvPytisTranslatedMenu, PytisComputeSummaryRights, PytisMultiformSpec, PytisUser,)
+    depends_on = (TypPreviewUserMenu, EvPytisTranslatedMenu, PytisComputeSummaryRights,
+                  PytisMultiformSpec, PytisUser,)
     access_rights = default_access_rights.value(globals())
 
 class TypPreviewRights(sql.SQLType):
     name = 'typ_preview_rights'
-    fields = (
-              sql.Column('shortname', pytis.data.String(not_null=False)),
+    fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
               sql.Column('columns', pytis.data.String(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1864,9 +1929,10 @@ class EvPytisUserRoles(sql.SQLView):
         roles = sql.t.EPytisRoles.alias('roles')
         return sqlalchemy.select(
             cls._exclude(members, 'member'),
-            from_obj=[members.join(roles, sql.gR('members.member = roles.name and roles.purposeid = \'user\''))],
+            from_obj=[members.join(roles, sql.gR('members.member = roles.name and '
+                                                'roles.purposeid = \'user\''))],
             whereclause='members.member = pytis_user()'
-            )
+        )
 
     depends_on = (EPytisRoles, APytisValidRoleMembers, PytisUser,)
     access_rights = default_access_rights.value(globals())
@@ -1879,8 +1945,8 @@ class EvPytisUserSystemRights(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(rights),
             from_obj=[rights],
-            whereclause='rights.system = \'T\' and roleid = \'*\' or roleid in (select roleid from ev_pytis_user_roles)'
-            )
+            whereclause=("rights.system = 'T' and roleid = '*' or "
+                         "roleid in (select roleid from ev_pytis_user_roles)"))
 
     insert_order = (EPytisActionRights,)
     update_order = (EPytisActionRights,)
@@ -1916,8 +1982,7 @@ class PytisCheckCodebookRights(sql.SQLFunction):
 
 class TypChangedRights(sql.SQLType):
     name = 'typ_changed_rights'
-    fields = (
-              sql.Column('shortname', pytis.data.String(not_null=False)),
+    fields = (sql.Column('shortname', pytis.data.String(not_null=False)),
               sql.Column('roleid', pytis.data.String(not_null=False)),
               sql.Column('rights', pytis.data.String(not_null=False)),
               sql.Column('columns', pytis.data.String(not_null=False)),
@@ -1931,7 +1996,7 @@ class TypChangedRights(sql.SQLType):
               sql.Column('rights_export', pytis.data.Boolean(not_null=False)),
               sql.Column('rights_call', pytis.data.Boolean(not_null=False)),
               sql.Column('change', pytis.data.Boolean(not_null=False)),
-             )
+              )
     depends_on = ()
     access_rights = ()
 
@@ -1963,15 +2028,13 @@ class PytisChangeShortname(Base_PyFunction):
         if shortname is None:
             return shortname
         components = shortname.split('/')
-        if (len(components) == 3 and
-            components[0] in ('action', 'print',) and components[2] == old_name):
+        if ((len(components) == 3 and
+             components[0] in ('action', 'print',) and components[2] == old_name)):
             components[2] = new_name
         elif (len(components) == 2 and
               components[0] == 'form' and components[1] == old_name):
             components[1] = new_name
         return '/'.join(components)
-
-
 
 class PytisChangeFullname(Base_PyFunction):
     name = 'pytis_change_fullname'
@@ -1990,8 +2053,8 @@ class PytisChangeFullname(Base_PyFunction):
         if fullname is None:
             return fullname
         components = fullname.split('/')
-        if (len(components) == 3 and
-            components[0] in ('action', 'print',) and components[2] == old_name):
+        if ((len(components) == 3 and
+             components[0] in ('action', 'print',) and components[2] == old_name)):
             components[2] = new_name
         elif (len(components) >= 3 and
               components[0] == 'form' and components[2] == old_name):
@@ -1999,9 +2062,7 @@ class PytisChangeFullname(Base_PyFunction):
         elif (len(components) >= 5 and
               components[0] == 'sub' and components[4] == old_name):
             components[4] = new_name
-        return '/'.join(components)        
-
-
+        return '/'.join(components)
 
 class PytisChangeSpecificationName(sql.SQLFunction):
     name = 'pytis_change_specification_name'
@@ -2010,5 +2071,7 @@ class PytisChangeSpecificationName(sql.SQLFunction):
     result_type = None
     multirow = False
     stability = 'VOLATILE'
-    depends_on = (PytisChangeShortname, PytisChangeFullname, EPytisDisabledDmpTriggers, CPytisMenuActions, EPytisMenu, EPytisActionRights, APytisActionsStructure,)
+    depends_on = (PytisChangeShortname, PytisChangeFullname, EPytisDisabledDmpTriggers,
+                  CPytisMenuActions, EPytisMenu, EPytisActionRights,
+                  APytisActionsStructure,)
     access_rights = ()

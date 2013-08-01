@@ -5,20 +5,21 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import Base_LogSQLTable, EPytisMenu, PytisViewUserMenu, XChanges, default_access_rights
+from pytis.dbdefs import Base_LogSQLTable, EPytisMenu, PytisViewUserMenu, XChanges, \
+    default_access_rights
 
 class EPytisHelpPages(Base_LogSQLTable):
     """Structure of static help pages."""
     name = 'e_pytis_help_pages'
-    fields = (
-              sql.PrimaryColumn('page_id', pytis.data.Serial()),
-              sql.Column('parent', pytis.data.Integer(not_null=False), references=sql.r.EPytisHelpPages.page_id),
+    fields = (sql.PrimaryColumn('page_id', pytis.data.Serial()),
+              sql.Column('parent', pytis.data.Integer(not_null=False),
+                         references=sql.r.EPytisHelpPages.page_id),
               sql.Column('ord', pytis.data.Integer(not_null=True)),
               sql.Column('position', pytis.data.LTree(not_null=True), unique=True),
               sql.Column('title', pytis.data.String(not_null=True)),
               sql.Column('description', pytis.data.String(not_null=False)),
               sql.Column('content', pytis.data.String(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = ()
@@ -44,13 +45,14 @@ class FPytisHelpPagePosition(sql.SQLFunction):
 class EPytisHelpSpec(Base_LogSQLTable):
     """Help texts for specifications."""
     name = 'e_pytis_help_spec'
-    fields = (
-              sql.PrimaryColumn('spec_name', pytis.data.String(not_null=False)),
+    fields = (sql.PrimaryColumn('spec_name', pytis.data.String(not_null=False)),
               sql.Column('description', pytis.data.String(not_null=False)),
               sql.Column('help', pytis.data.String(not_null=False)),
-              sql.Column('changed', pytis.data.Boolean(not_null=True), doc="True when the content was edited by hand.", default=False),
-              sql.Column('removed', pytis.data.Boolean(not_null=True), doc="False when the specification still exists.", default=False),
-             )
+              sql.Column('changed', pytis.data.Boolean(not_null=True),
+                         doc="True when the content was edited by hand.", default=False),
+              sql.Column('removed', pytis.data.Boolean(not_null=True),
+                         doc="False when the specification still exists.", default=False),
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = ()
@@ -59,15 +61,19 @@ class EPytisHelpSpec(Base_LogSQLTable):
 class EPytisHelpSpecItems(Base_LogSQLTable):
     """Help texts for specification items, such as fields, bindings, actions."""
     name = 'e_pytis_help_spec_items'
-    fields = (
-              sql.PrimaryColumn('item_id', pytis.data.Serial()),
-              sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.a(sql.r.EPytisHelpSpec.spec_name, onupdate='CASCADE', ondelete='CASCADE')),
-              sql.Column('kind', pytis.data.String(not_null=True), check="kind in ('field', 'profile', 'binding', 'action', 'proc')"),
+    fields = (sql.PrimaryColumn('item_id', pytis.data.Serial()),
+              sql.Column('spec_name', pytis.data.String(not_null=True),
+                         references=sql.a(sql.r.EPytisHelpSpec.spec_name,
+                                          onupdate='CASCADE', ondelete='CASCADE')),
+              sql.Column('kind', pytis.data.String(not_null=True),
+                         check="kind in ('field', 'profile', 'binding', 'action', 'proc')"),
               sql.Column('identifier', pytis.data.String(not_null=True)),
               sql.Column('content', pytis.data.String(not_null=False)),
-              sql.Column('changed', pytis.data.Boolean(not_null=True), doc="True when the content was edited by hand.", default=False),
-              sql.Column('removed', pytis.data.Boolean(not_null=True), doc="False when the item still exists in specification.", default=False),
-             )
+              sql.Column('changed', pytis.data.Boolean(not_null=True),
+                         doc="True when the content was edited by hand.", default=False),
+              sql.Column('removed', pytis.data.Boolean(not_null=True),
+                         doc="False when the item still exists in specification.", default=False),
+              )
     inherits = (XChanges,)
     with_oids = True
     unique = (('spec_name', 'kind', 'identifier',),)
@@ -77,12 +83,15 @@ class EPytisHelpSpecItems(Base_LogSQLTable):
 class EPytisHelpMenu(Base_LogSQLTable):
     """Texts for help pages."""
     name = 'e_pytis_help_menu'
-    fields = (
-              sql.PrimaryColumn('fullname', pytis.data.String(not_null=False), references=sql.a(sql.r.CPytisMenuActions.fullname, onupdate='CASCADE', ondelete='CASCADE')),
+    fields = (sql.PrimaryColumn('fullname', pytis.data.String(not_null=False),
+                                references=sql.a(sql.r.CPytisMenuActions.fullname,
+                                                 onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('content', pytis.data.String(not_null=False)),
-              sql.Column('changed', pytis.data.Boolean(not_null=True), doc="True when the content was edited by hand.", default=False),
-              sql.Column('removed', pytis.data.Boolean(not_null=True), doc="False when the item still exists in menu.", default=False),
-             )
+              sql.Column('changed', pytis.data.Boolean(not_null=True),
+                         doc="True when the content was edited by hand.", default=False),
+              sql.Column('removed', pytis.data.Boolean(not_null=True),
+                         doc="False when the item still exists in menu.", default=False),
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = (EPytisMenu,)
@@ -99,65 +108,83 @@ class EvPytisHelp(sql.SQLView):
             mh = sql.t.EPytisHelpMenu.alias('mh')
             sh = sql.t.EPytisHelpSpec.alias('sh')
             return sqlalchemy.select(
-                sql.reorder_columns([sql.gL("'menu/'||m.menuid").label('help_id'),
-                m.c.menuid.label('menuid'),
-                m.c.fullname.label('fullname'),
-                m.c.title.label('title'),
-                m.c.help.label('description'),
-                mh.c.content.label('menu_help'),
-                a_.c.spec_name.label('spec_name'),
-                sh.c.description.label('spec_description'),
-                sh.c.help.label('spec_help'),
-                sql.gL("null::int").label('page_id'),
-                sql.gL("null::int").label('parent'),
-                sql.gL("null").label('ord'),
-                sql.gL("null").label('content'),
-                sql.gL("text2ltree('999999')||subpath(m.position, 1)").label('position'),
-                sql.gL("(select count(*)-1 from e_pytis_menu where position <@ m.position)").label('position_nsub'),
-                sql.gL("coalesce(mh.changed, false) or coalesce(sh.changed, false)").label('changed'),
-                sql.gL("coalesce(mh.removed, false) or coalesce(sh.removed, false)").label('removed')], ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help', 'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord', 'content', 'position', 'position_nsub', 'changed', 'removed']),
-                from_obj=[m.join(a_, a_.c.fullname == m.c.fullname).outerjoin(mh, mh.c.fullname == a_.c.fullname).outerjoin(sh, sh.c.spec_name == a_.c.spec_name)],
+                sql.reorder_columns(
+                    [sql.gL("'menu/'||m.menuid").label('help_id'),
+                     m.c.menuid.label('menuid'),
+                     m.c.fullname.label('fullname'),
+                     m.c.title.label('title'),
+                     m.c.help.label('description'),
+                     mh.c.content.label('menu_help'),
+                     a_.c.spec_name.label('spec_name'),
+                     sh.c.description.label('spec_description'),
+                     sh.c.help.label('spec_help'),
+                     sql.gL("null::int").label('page_id'),
+                     sql.gL("null::int").label('parent'),
+                     sql.gL("null").label('ord'),
+                     sql.gL("null").label('content'),
+                     sql.gL("text2ltree('999999')||subpath(m.position, 1)").label('position'),
+                     sql.gL("(select count(*)-1 from e_pytis_menu where position <@ m.position)")
+                     .label('position_nsub'),
+                     sql.gL("coalesce(mh.changed, false) or coalesce(sh.changed, false)")
+                     .label('changed'),
+                     sql.gL("coalesce(mh.removed, false) or coalesce(sh.removed, false)")
+                     .label('removed')],
+                    ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
+                     'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
+                     'content', 'position', 'position_nsub', 'changed', 'removed']),
+                from_obj=[m.join(a_, a_.c.fullname == m.c.fullname).
+                          outerjoin(mh, mh.c.fullname == a_.c.fullname).
+                          outerjoin(sh, sh.c.spec_name == a_.c.spec_name)],
                 whereclause='nlevel(position) >= 2'
-                )
+            )
         def select_2():
             series = sqlalchemy.select(["*"], from_obj=["generate_series(0, 0)"]).alias('series')
             return sqlalchemy.select(
-                sql.reorder_columns([sql.gL("'menu/'").label('help_id'),
-                sql.gL("null").label('menuid'),
-                sql.gL("null").label('fullname'),
-                sql.gL("'Aplikační menu '").label('title'),
-                sql.gL("null").label('description'),
-                sql.gL("null").label('menu_help'),
-                sql.gL("null").label('spec_name'),
-                sql.gL("null").label('spec_description'),
-                sql.gL("null").label('spec_help'),
-                sql.gL("null::int").label('page_id'),
-                sql.gL("null::int").label('parent'),
-                sql.gL("null::int").label('ord'),
-                sql.gL("null").label('content'),
-                sql.gL("text2ltree('999999')").label('position'),
-                sql.gL("(select count(*) from e_pytis_menu)").label('position_nsub'),
-                sql.gL("false").label('changed'),
-                sql.gL("false").label('removed')], ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help', 'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord', 'content', 'position', 'position_nsub', 'changed', 'removed']),
+                sql.reorder_columns(
+                    [sql.gL("'menu/'").label('help_id'),
+                     sql.gL("null").label('menuid'),
+                     sql.gL("null").label('fullname'),
+                     sql.gL("'Aplikační menu '").label('title'),
+                     sql.gL("null").label('description'),
+                     sql.gL("null").label('menu_help'),
+                     sql.gL("null").label('spec_name'),
+                     sql.gL("null").label('spec_description'),
+                     sql.gL("null").label('spec_help'),
+                     sql.gL("null::int").label('page_id'),
+                     sql.gL("null::int").label('parent'),
+                     sql.gL("null::int").label('ord'),
+                     sql.gL("null").label('content'),
+                     sql.gL("text2ltree('999999')").label('position'),
+                     sql.gL("(select count(*) from e_pytis_menu)").label('position_nsub'),
+                     sql.gL("false").label('changed'),
+                     sql.gL("false").label('removed')],
+                    ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
+                     'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
+                     'content', 'position', 'position_nsub', 'changed', 'removed']),
                 from_obj=[series]
-                )
+            )
         set_1 = sqlalchemy.union(select_1(), select_2())
         def select_3():
             p = sql.t.EPytisHelpPages.alias('p')
             return sqlalchemy.select(
-                sql.reorder_columns(cls._exclude(p) +
-                [sql.gL("'page/'||page_id").label('help_id'),
-                 sql.gL("null").label('menuid'),
-                 sql.gL("null").label('fullname'),
-                 sql.gL("null").label('menu_help'),
-                 sql.gL("null").label('spec_name'),
-                 sql.gL("null").label('spec_description'),
-                 sql.gL("null").label('spec_help'),
-                 sql.gL("(select count(*)-1 from e_pytis_help_pages where position <@ p.position)").label('position_nsub'),
-                 sql.gL("false").label('changed'),
-                 sql.gL("false").label('removed')], ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help', 'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord', 'content', 'position', 'position_nsub', 'changed', 'removed']),
+                sql.reorder_columns(
+                    cls._exclude(p) +
+                    [sql.gL("'page/'||page_id").label('help_id'),
+                     sql.gL("null").label('menuid'),
+                     sql.gL("null").label('fullname'),
+                     sql.gL("null").label('menu_help'),
+                     sql.gL("null").label('spec_name'),
+                     sql.gL("null").label('spec_description'),
+                     sql.gL("null").label('spec_help'),
+                     sql.gL("(select count(*)-1 from e_pytis_help_pages "
+                           "where position <@ p.position)").label('position_nsub'),
+                     sql.gL("false").label('changed'),
+                     sql.gL("false").label('removed')],
+                    ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help',
+                     'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord',
+                     'content', 'position', 'position_nsub', 'changed', 'removed']),
                 from_obj=[p]
-                )
+            )
         return sqlalchemy.union(set_1, select_3())
     def on_insert(self):
         return ("""(
@@ -210,16 +237,24 @@ class EvPytisUserHelp(sql.SQLView):
             h = sql.t.EvPytisHelp.alias('h')
             u = sqlalchemy.select(["*"], from_obj=["pytis_view_user_menu()"]).alias('u')
             return sqlalchemy.select(
-                sql.reorder_columns(cls._exclude(h), ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help', 'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord', 'content', 'position', 'position_nsub', 'changed', 'removed']),
+                sql.reorder_columns(cls._exclude(h),
+                                    ['help_id', 'menuid', 'fullname', 'title', 'description',
+                                     'menu_help', 'spec_name', 'spec_description', 'spec_help',
+                                     'page_id', 'parent', 'ord', 'content', 'position',
+                                     'position_nsub', 'changed', 'removed']),
                 from_obj=[h.join(u, sql.gR('h.menuid = u.menuid'))]
-                )
+            )
         def select_2():
             h = sql.t.EvPytisHelp.alias('h')
             return sqlalchemy.select(
-                sql.reorder_columns(cls._exclude(h), ['help_id', 'menuid', 'fullname', 'title', 'description', 'menu_help', 'spec_name', 'spec_description', 'spec_help', 'page_id', 'parent', 'ord', 'content', 'position', 'position_nsub', 'changed', 'removed']),
+                sql.reorder_columns(cls._exclude(h),
+                                    ['help_id', 'menuid', 'fullname', 'title', 'description',
+                                     'menu_help', 'spec_name', 'spec_description', 'spec_help',
+                                     'page_id', 'parent', 'ord', 'content', 'position',
+                                     'position_nsub', 'changed', 'removed']),
                 from_obj=[h],
                 whereclause='h.menuid is null'
-                )
+            )
         return sqlalchemy.union(select_1(), select_2())
     depends_on = (EvPytisHelp, PytisViewUserMenu,)
     access_rights = default_access_rights.value(globals())
@@ -227,9 +262,10 @@ class EvPytisUserHelp(sql.SQLView):
 class EPytisHelpSpecAttachments(Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""
     name = 'e_pytis_help_spec_attachments'
-    fields = (
-              sql.PrimaryColumn('file_id', pytis.data.Serial()),
-              sql.Column('spec_name', pytis.data.String(not_null=True), references=sql.a(sql.r.EPytisHelpSpec.spec_name, onupdate='CASCADE', ondelete='CASCADE')),
+    fields = (sql.PrimaryColumn('file_id', pytis.data.Serial()),
+              sql.Column('spec_name', pytis.data.String(not_null=True),
+                         references=sql.a(sql.r.EPytisHelpSpec.spec_name,
+                                          onupdate='CASCADE', ondelete='CASCADE')),
               sql.Column('file_name', pytis.data.String(not_null=True)),
               sql.Column('byte_size', pytis.data.Integer(not_null=True)),
               sql.Column('width', pytis.data.Integer(not_null=False)),
@@ -241,7 +277,7 @@ class EPytisHelpSpecAttachments(Base_LogSQLTable):
               sql.Column('file', pytis.data.Binary(not_null=True)),
               sql.Column('resized', pytis.data.Binary(not_null=False)),
               sql.Column('thumbnail', pytis.data.Binary(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     with_oids = True
     unique = (('spec_name', 'file_name',),)
@@ -251,9 +287,9 @@ class EPytisHelpSpecAttachments(Base_LogSQLTable):
 class EPytisHelpPagesAttachments(Base_LogSQLTable):
     """Attachments for help texts (images etc.)"""
     name = 'e_pytis_help_pages_attachments'
-    fields = (
-              sql.PrimaryColumn('file_id', pytis.data.Serial()),
-              sql.Column('page_id', pytis.data.Integer(not_null=True), references=sql.a(sql.r.EPytisHelpPages.page_id, ondelete='CASCADE')),
+    fields = (sql.PrimaryColumn('file_id', pytis.data.Serial()),
+              sql.Column('page_id', pytis.data.Integer(not_null=True),
+                         references=sql.a(sql.r.EPytisHelpPages.page_id, ondelete='CASCADE')),
               sql.Column('file_name', pytis.data.String(not_null=True)),
               sql.Column('byte_size', pytis.data.Integer(not_null=True)),
               sql.Column('width', pytis.data.Integer(not_null=False)),
@@ -265,10 +301,9 @@ class EPytisHelpPagesAttachments(Base_LogSQLTable):
               sql.Column('file', pytis.data.Binary(not_null=True)),
               sql.Column('resized', pytis.data.Binary(not_null=False)),
               sql.Column('thumbnail', pytis.data.Binary(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     with_oids = True
     unique = (('page_id', 'file_name',),)
     depends_on = (EPytisHelpPages,)
     access_rights = default_access_rights.value(globals())
-

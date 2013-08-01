@@ -50,15 +50,14 @@ class EPytisFormLog(sql.SQLTable):
     """
     name = 'e_pytis_form_log'
     schemas = pytis_schemas.value(globals())
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial()),
+    fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('form', pytis.data.String(not_null=True), index=True),
               sql.Column('class', pytis.data.String(not_null=True), index=True),
               sql.Column('info', pytis.data.String(not_null=False), index=True),
               sql.Column('login', pytis.data.Name(not_null=True), index=True),
               sql.Column('t_start', pytis.data.DateTime(not_null=True), index=True),
               sql.Column('t_show', pytis.data.DateTime(not_null=True)),
-             )
+              )
     inherits = (XChanges,)
     with_oids = True
     depends_on = ()
@@ -97,7 +96,7 @@ class EvPytisFormSummary(sql.SQLView):
              sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
              sql.gL("max(t_start)").label('last_used')],
             from_obj=[log]
-            ).group_by('form', 'class', 'info')
+        ).group_by('form', 'class', 'info')
 
     depends_on = (EPytisFormLog,)
     access_rights = default_access_rights.value(globals())
@@ -115,7 +114,7 @@ class EvPytisFormShortSummary(sql.SQLView):
              sql.gL("extract('epoch' from avg(t_show-t_start))").label('avg_start'),
              sql.gL("max(t_start)").label('last_used')],
             from_obj=[log]
-            ).group_by('form', 'class')
+        ).group_by('form', 'class')
 
     depends_on = (EPytisFormLog,)
     access_rights = default_access_rights.value(globals())
@@ -131,7 +130,7 @@ class EvPytisFormUsers(sql.SQLView):
             [sql.gL("count(t_start)").label('n_open'),
              sql.gL("max(t_start)").label('last_used')],
             from_obj=[log]
-            ).group_by('form', 'class', 'info', 'login')
+        ).group_by('form', 'class', 'info', 'login')
 
     depends_on = (EPytisFormLog,)
     access_rights = default_access_rights.value(globals())
@@ -149,7 +148,7 @@ class EvPytisFormUsersNoinfo(sql.SQLView):
              sql.gL("'form/'||form").label('shortname')],
             from_obj=[log],
             whereclause='log.t_start between f_user_cfg_datum_od() and f_user_cfg_datum_do()'
-            ).group_by('form', 'class', 'login')
+        ).group_by('form', 'class', 'login')
 
     depends_on = (EPytisFormLog, FUserCfg,)
     access_rights = default_access_rights.value(globals())
@@ -163,8 +162,7 @@ class EvPytisFormUserList(sql.SQLView):
         return sqlalchemy.select(
             cls._exclude(log, 'id', 'form', 'class', 'info', 't_start', 't_show'),
             from_obj=[log]
-            ).group_by('login')
+        ).group_by('login')
 
     depends_on = (EPytisFormLog,)
     access_rights = default_access_rights.value(globals())
-

@@ -2,9 +2,7 @@
 
 from __future__ import unicode_literals
 
-import sqlalchemy
 import pytis.data.gensqlalchemy as sql
-import pytis.data
 
 class PytisBasicCryptoFunctions(sql.SQLRaw):
     name = 'pytis_basic_crypto_functions'
@@ -132,4 +130,3 @@ end;
 $$ language plpgsql;
 """
     depends_on = ()
-

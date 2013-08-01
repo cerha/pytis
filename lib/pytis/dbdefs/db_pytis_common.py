@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 import sqlalchemy
 import pytis.data.gensqlalchemy as sql
 import pytis.data
-from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, XDeletes, XInserts, XUpdates, default_access_rights, pytis_schemas
+from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, Base_PyTriggerFunction, XDeletes, \
+    XInserts, XUpdates, default_access_rights, pytis_schemas
 
 class PartitioningTrigger(Base_PyTriggerFunction):
     name = 'partitioning_trigger'
@@ -51,22 +52,20 @@ class PartitioningTrigger(Base_PyTriggerFunction):
                 self._return_code = self._RETURN_CODE_SKIP
             def _do_before_update(self):
                 table, id_key, key = self._get_table_name()
-                updates = ", ".join(["%s = %s" % (x, pg_val(self._new[x])) for x in \
-                                     self._new.keys()])
+                updates = ", ".join(["%s = %s" % (x, pg_val(self._new[x]))
+                                     for x in self._new.keys()])
                 plpy.execute("update %s set %s where %s = %s" % (table, updates, id_key, key))
-                self._return_code = self._RETURN_CODE_SKIP        
+                self._return_code = self._RETURN_CODE_SKIP
         # MAIN
         part = Part(TD)
         result = part.do_trigger()
         return result
 
-
-
 class CommaAggregate(sql.SQLRaw):
     name = 'comma_aggregate'
     @classmethod
     def sql(class_):
-        return """create or replace function comma_aggregate(text,text) returns 
+        return """create or replace function comma_aggregate(text,text) returns
 text as '
 begin
   if length($1)>0 and length($2)>0 then
@@ -92,7 +91,7 @@ class LineFeedAggregate(sql.SQLRaw):
     name = 'line_feed_aggregate'
     @classmethod
     def sql(class_):
-        return """create or replace function line_feed_aggregate(text,text) returns 
+        return """create or replace function line_feed_aggregate(text,text) returns
 text as '
 begin
   if length($1)>0 and length($2)>0 then
@@ -119,7 +118,7 @@ class SpaceAggregate(sql.SQLRaw):
     name = 'space_aggregate'
     @classmethod
     def sql(class_):
-        return """create or replace function space_aggregate(text,text) returns 
+        return """create or replace function space_aggregate(text,text) returns
 text as '
 begin
   if length($1)>0 and length($2)>0 then
@@ -187,17 +186,15 @@ class GenMirrorSpec(Base_PyFunction):
             specs.append(spec + fields)
         return "\n\n\n".join(specs)
 
-
-
 class Log(sql.SQLTable):
     """Tabulka pro logování provedených DML příkazů."""
     name = 'log'
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial()),
+    fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('command', pytis.data.String(not_null=True)),
               sql.Column('login', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
-              sql.Column('timestamp', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
-             )
+              sql.Column('timestamp', pytis.data.DateTime(not_null=True),
+                         default=sqlalchemy.text('now()')),
+              )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -275,12 +272,15 @@ class XChanges(sql.SQLTable):
     """Sloupečky zaznamenávající uživatele a časy vytvoření a změn údajů.
     Je určena k tomu, aby ji dědily všechny ostatní tabulky."""
     name = '_changes'
-    fields = (
-              sql.Column('vytvoril', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
-              sql.Column('vytvoreno', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
-              sql.Column('zmenil', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
-              sql.Column('zmeneno', pytis.data.DateTime(not_null=True), default=sqlalchemy.text('now()')),
-             )
+    fields = (sql.Column('vytvoril', pytis.data.Name(not_null=True),
+                         default=sqlalchemy.text('user')),
+              sql.Column('vytvoreno', pytis.data.DateTime(not_null=True),
+                         default=sqlalchemy.text('now()')),
+              sql.Column('zmenil', pytis.data.Name(not_null=True),
+                         default=sqlalchemy.text('user')),
+              sql.Column('zmeneno', pytis.data.DateTime(not_null=True),
+                         default=sqlalchemy.text('now()')),
+              )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -434,14 +434,14 @@ class VDeletesUser(sql.SQLView):
 class XChangesStatistic(sql.SQLTable):
     """Tabulka pro statistiky změn v tabulkách."""
     name = '_changes_statistic'
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
-              sql.Column('uzivatel', pytis.data.Name(not_null=True), default=sqlalchemy.text('user')),
+    fields = (sql.PrimaryColumn('id', pytis.data.Serial(), doc="identifikace řádku"),
+              sql.Column('uzivatel', pytis.data.Name(not_null=True),
+                         default=sqlalchemy.text('user')),
               sql.Column('datum', pytis.data.Date(not_null=False)),
               sql.Column('inserts', pytis.data.Integer(not_null=False)),
               sql.Column('updates', pytis.data.Integer(not_null=False)),
               sql.Column('deletes', pytis.data.Integer(not_null=False)),
-             )
+              )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -496,7 +496,7 @@ class UpdateStatistic(Base_PyFunction):
                    UNION
                    select min(smazano) as datum
                      from _deletes
-                   ) m
+                    ) m
             """
         q = plpy.execute(q)
         minimum = q[0]["minimum"]
@@ -510,7 +510,7 @@ class UpdateStatistic(Base_PyFunction):
                    UNION
                    select max(smazano) as datum
                      from _deletes
-                   ) m
+                    ) m
             """
         q = plpy.execute(q)
         maximum = q[0]["maximum"]
@@ -528,16 +528,16 @@ class UpdateStatistic(Base_PyFunction):
                      select distinct zmenil as jmeno from _updates
                      union
                      select distinct smazal as jmeno from _deletes
-                    ) j
+                     ) j
             """ % (minimum, maximum, minimum)
         q = plpy.execute(q)
-        q = """select new_tempname() as temp"""          
+        q = """select new_tempname() as temp"""
         q = plpy.execute(q)
         temp = q[0]["temp"]
         # Aktualizujeme inserts, updates a deletes
-        for u, d, t, p in (('vytvoril', 'vytvoreno' ,'_inserts', 'inserts'),
-                           ('zmenil', 'zmeneno' ,'_updates', 'updates'),
-                           ('smazal', 'smazano' ,'_deletes', 'deletes'),
+        for u, d, t, p in (('vytvoril', 'vytvoreno', '_inserts', 'inserts'),
+                           ('zmenil', 'zmeneno', '_updates', 'updates'),
+                           ('smazal', 'smazano', '_deletes', 'deletes'),
                            ):
             q = """create temp table %s as
                    select uzivatel, datum, count(*) as pocet
@@ -552,31 +552,29 @@ class UpdateStatistic(Base_PyFunction):
                      from %s
                     where _changes_statistic.uzivatel = %s.uzivatel
                       and _changes_statistic.datum = %s.datum
-            """ % (p, temp, temp, temp)      
+            """ % (p, temp, temp, temp)
             q = plpy.execute(q)
             plpy.execute("drop table %s" % (temp))
         # Vrátíme počet řádků tabulky
         q = """select count(*) as pocet from _changes_statistic as pocet"""
         q = plpy.execute(q)
         pocet = q[0]["pocet"]
-        return pocet    
-
-
+        return pocet
 
 class TChanges(sql.SQLTable):
     """Log of data changes."""
     name = 't_changes'
     schemas = (('public',),)
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.Serial()),
+    fields = (sql.PrimaryColumn('id', pytis.data.Serial()),
               sql.Column('timestamp', pytis.data.DateTime(not_null=True), index=True),
               sql.Column('username', pytis.data.String(not_null=True), index=True),
               sql.Column('schemaname', pytis.data.String(not_null=True)),
               sql.Column('tablename', pytis.data.String(not_null=True), index=True),
-              sql.Column('operation', pytis.data.String(not_null=True), doc="One of: INSERT, UPDATE, DELETE"),
+              sql.Column('operation', pytis.data.String(not_null=True),
+                         doc="One of: INSERT, UPDATE, DELETE"),
               sql.Column('key_column', pytis.data.String(not_null=True)),
               sql.Column('key_value', pytis.data.String(not_null=True), index=True),
-             )
+              )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -585,10 +583,11 @@ class TChangesDetail(sql.SQLTable):
     """Detail information about database changes."""
     name = 't_changes_detail'
     schemas = (('public',),)
-    fields = (
-              sql.Column('id', pytis.data.Integer(not_null=True), references=sql.a(sql.r.TChanges.id, onupdate='CASCADE', ondelete='CASCADE'), index=True),
+    fields = (sql.Column('id', pytis.data.Integer(not_null=True), index=True,
+                         references=sql.a(sql.r.TChanges.id, onupdate='CASCADE',
+                                          ondelete='CASCADE')),
               sql.Column('detail', pytis.data.String(not_null=True)),
-             )
+              )
     with_oids = True
     depends_on = (TChanges,)
     access_rights = default_access_rights.value(globals())
@@ -604,7 +603,7 @@ class VChanges(sql.SQLView):
             cls._exclude(changes) +
             cls._exclude(detail, 'id'),
             from_obj=[changes.outerjoin(detail, changes.c.id == detail.c.id)]
-            )
+        )
 
     insert_order = ()
     update_order = ()
@@ -711,13 +710,13 @@ class XUpdateColumnZmeneno(sql.SQLRaw):
     def sql(class_):
         return """
 CREATE OR REPLACE FUNCTION _update_column_zmeneno()
-	RETURNS TRIGGER AS $$
-	BEGIN
-	   NEW.zmeneno = current_timestamp; 
-	   NEW.zmenil = current_user; 
-	   RETURN NEW;
-	END;
-	$$ language 'plpgsql';"""
+        RETURNS TRIGGER AS $$
+        BEGIN
+           NEW.zmeneno = current_timestamp;
+           NEW.zmenil = current_user;
+           RETURN NEW;
+        END;
+        $$ language 'plpgsql';"""
     depends_on = ()
 
 class Disabletriggers(sql.SQLRaw):
@@ -765,7 +764,9 @@ END;
     depends_on = ()
 
 class DropTemptables(Base_PyFunction):
-    """Slouží k zrušení dočasných temporery tabulek. Funkce otestuje, zda tabulky uvedené v seznamu existují a případně je dropne."""
+    """Slouží k zrušení dočasných temporery tabulek.
+    Funkce otestuje, zda tabulky uvedené v seznamu existují a případně je dropne.
+    """
     name = 'drop_temptables'
     arguments = (sql.Column('', pytis.data.String()),)
     result_type = pytis.data.Integer()
@@ -798,21 +799,17 @@ class DropTemptables(Base_PyFunction):
             plpy.execute("drop table %s" % ",".join(tables))
         return pocet
 
-
-
 class CTypFormular(Base_LogSQLTable):
     """Slouží jako číselník typů formulářů"""
     name = 'c_typ_formular'
-    fields = (
-              sql.PrimaryColumn('id', pytis.data.String(maxlen=2, not_null=False)),
+    fields = (sql.PrimaryColumn('id', pytis.data.String(maxlen=2, not_null=False)),
               sql.Column('popis', pytis.data.String(not_null=False)),
-             )
+              )
     inherits = (XChanges,)
     init_columns = ('id', 'popis')
-    init_values = (
-                   ('BF', 'Jednoduchý náhled',),
+    init_values = (('BF', 'Jednoduchý náhled',),
                    ('DF', 'Duální náhled',),
-                  )
+                   )
     with_oids = True
     depends_on = ()
     access_rights = default_access_rights.value(globals())
@@ -833,14 +830,13 @@ class EasterDate(Base_PyFunction):
         """Pro udaný rok (parametr) vrátí datum velikonoční neděle."""
         # Podle Oudionova algoritmu
         rok = args[0]
-        c = int(rok/100)
+        c = int(rok / 100)
         n = rok - 19 * int(rok / 19)
         k = int((c - 17) / 25)
         i1 = c - int(c / 4) - int((c - k) / 3) + 19 * n + 15
         i2 = i1 - 30 * int(i1 / 30)
-        i3 = i2 - int(i2 / 28) * (1 - int(i2 / 28) * int(29 / (i2 + 1)) * \
-                                  int((21 - n) / 11))
-        a1 = rok + int(rok / 4) + i3 + 2 - c + int(c/4)
+        i3 = i2 - int(i2 / 28) * (1 - int(i2 / 28) * int(29 / (i2 + 1)) * int((21 - n) / 11))
+        a1 = rok + int(rok / 4) + i3 + 2 - c + int(c / 4)
         a2 = a1 - 7 * int(a1 / 7)
         l = i3 - a2
         m = 3 + int((l + 40) / 44)
