@@ -3027,7 +3027,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_select_transaction = \
                 DBTransactionDefault(self._pg_connection_data_,
                                      isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
-                                     timeout_callback=timeout_callback)
+                                     timeout_callback=timeout_callback, read_only=True)
             self._pg_select_user_transaction = False
         else:
             self._pg_select_transaction = transaction
@@ -3714,7 +3714,8 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
     _trans_last_check = {}
     _trans_check_interval = None
 
-    def __init__(self, connection_data, isolation=None, timeout_callback=None, **kwargs):
+    def __init__(self, connection_data, isolation=None, read_only=False, timeout_callback=None,
+                 **kwargs):
         """
         Arguments:
 
@@ -3724,6 +3725,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
           isolation -- transaction isolation level, either 'None' (default
             isolation level, i.e. read commited) or 'REPEATABLE_READ' constant of
             this class (repeatable read isolation level)
+          read_only -- whether the transaction is read-only; boolean
           timeout_callback -- function to be called on transaction timeout or 'None';
             the function is called with no arguments
 
@@ -3739,7 +3741,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
                         self._trans_connection().connection_info('transaction_commands'))
         self._trans_timeout_callback = timeout_callback
         self._trans_notifications = []
-        self._pg_begin_transaction(isolation=isolation)
+        self._pg_begin_transaction(isolation=isolation, read_only=read_only)
         self._open = True
         if timeout_callback is not None:
             self._pid = os.getpid()
