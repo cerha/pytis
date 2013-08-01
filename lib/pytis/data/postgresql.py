@@ -454,7 +454,6 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         if transaction is None:
             connection = self._pg_get_connection(outside_transaction)
         elif not transaction.open():
-            import pdb; pdb.set_trace()
             raise DBUserException("Can't use closed transaction")
         else:
             connection = transaction._trans_connection()
@@ -2118,16 +2117,15 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         args['fulltext_queries'] = fulltext_queries[0]
         self._pg_make_arguments(args, arguments)
         connections = self._pg_connections()
-        if False:
-            if connections and connections[-1].connection_info('broken') and transaction is None:
-                # Current connection is broken, maybe after database server
-                # restart.  In such a situation ugly things happen in wx forms and
-                # we should try to avoid them.  We are most likely here
-                # because_pg_restore_select tries to reopen the select.  We replace
-                # the broken connection by a new one, but we may do it only if we
-                # are not inside higher level transaction.
-                new_connection = self._pg_connection_pool().get(self._pg_connection_data())
-                connections[-1] = new_connection
+        if connections and connections[-1].connection_info('broken') and transaction is None:
+            # Current connection is broken, maybe after database server
+            # restart.  In such a situation ugly things happen in wx forms and
+            # we should try to avoid them.  We are most likely here
+            # because_pg_restore_select tries to reopen the select.  We replace
+            # the broken connection by a new one, but we may do it only if we
+            # are not inside higher level transaction.
+            new_connection = self._pg_connection_pool().get(self._pg_connection_data())
+            connections[-1] = new_connection
         if columns:
             args['columns'] = self._pdbb_select_column_list = \
                 self._pdbb_sql_column_list_from_names(
