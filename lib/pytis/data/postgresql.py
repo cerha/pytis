@@ -3731,6 +3731,12 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         super(DBPostgreSQLTransaction, self).__init__(
             bindings=(), key=(), connection_data=connection_data,
             **kwargs)
+        if timeout_callback is None:
+            import config
+            if config.debug:
+                def timeout_callback(self=self):
+                    log(DEBUG, "Unhandled transaction timeout",
+                        self._trans_connection().connection_info('transaction_commands'))
         self._trans_timeout_callback = timeout_callback
         self._trans_notifications = []
         self._pg_begin_transaction(isolation=isolation)
@@ -3822,8 +3828,10 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         if now - T._trans_last_check.get(pid, 0) >= T._trans_check_interval:
             T._trans_last_check[pid] = now
             for t in set(class_._watched_transactions):
-                callback = t._trans_timeout_callback
-                if callback is not None and t._pid == pid and t._open:
+                if t._open and t._pid == pid:
+                    callback = t._trans_timeout_callback
+                    if callback is None:
+                        continue
                     c = t._trans_connection()
                     if ((now - c.connection_info('transaction_start_time') > t._trans_max_time or
                          now - c.connection_info('last_query_time') > t._trans_max_idle_time)):
