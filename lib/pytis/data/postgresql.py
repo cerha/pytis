@@ -2959,7 +2959,10 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self.select(condition=self._pg_last_select_condition,
                     sort=self._pg_last_select_sorting,
                     transaction=self._pg_last_select_transaction,
-                    arguments=self._pg_last_select_arguments)
+                    arguments=self._pg_last_select_arguments,
+                    async_count=self._pg_async_count,
+                    stop_check=self._pg_stop_check,
+                    timeout_callback=self._pg_timeout_callback)
         if row_number >= 0:
             self.skip(row_number)
         return True
@@ -3036,6 +3039,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_fetch_row = None
         self._pg_last_select_row_number = None
         self._pg_stop_check = stop_check
+        self._pg_async_count = async_count
+        self._pg_timeout_callback = timeout_callback
         self._pg_changed = False
         if columns:
             self._pg_make_row_template_limited = \

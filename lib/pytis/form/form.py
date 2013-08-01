@@ -1061,7 +1061,11 @@ class LookupForm(InnerForm):
         return False
 
     def _init_data_select(self, data, async_count=False):
-        timeout_callback = self.refresh if self._governing_transaction is None else None
+        if self._governing_transaction is None:
+            def timeout_callback():
+                data.close()
+        else:
+            timeout_callback = None
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._lf_sorting,

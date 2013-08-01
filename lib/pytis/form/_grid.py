@@ -557,7 +557,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
     def GetValue(self, row, col):
         # `row' a `col' jsou číslovány od 0.
         # Je tabulka již uzavřena?
-        if not self._data or col >= self.GetNumberCols():
+        if self._data is None or col >= self.GetNumberCols():
             return ''
         column = self._columns[col]
         if self._edited_row and row == self._edited_row.row:
