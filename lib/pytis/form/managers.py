@@ -95,6 +95,7 @@ class UserSetttingsManager(object):
             if row is None:
                 break
             rows.append(row)
+        self._data.close()
         return rows
 
     def _pickle(self, value):

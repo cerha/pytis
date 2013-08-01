@@ -4761,6 +4761,7 @@ class Specification(object):
         try:
             roles_data = pytis.data.dbtable('ev_pytis_user_roles', ('roleid',), connection_data)
             roles = roles_data.select()
+            roles_data.close()
         except pytis.data.DBException:
             return
         if roles == 0:
