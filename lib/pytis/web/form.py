@@ -1034,15 +1034,16 @@ class BrowseForm(LayoutForm):
             profile_id = self._filter_ids['profile']
             if profile_id is not None:
                 profile = find(profile_id, profiles, key=lambda p: p.id())
-                if profile.columns() is not None:
-                    columns = profile.columns()
-                if profile.sorting() is not None:
-                    sorting = profile.sorting()
-                if profile.grouping() is not None:
-                    grouping = profile.grouping()
-                profile_filter_sets = profile.filter_sets()
-                if profile_filter_sets is not None:
-                    self._init_filter_sets(profile_filter_sets, req, param)
+                if profile:
+                    if profile.columns() is not None:
+                        columns = profile.columns()
+                    if profile.sorting() is not None:
+                        sorting = profile.sorting()
+                    if profile.grouping() is not None:
+                        grouping = profile.grouping()
+                    profile_filter_sets = profile.filter_sets()
+                    if profile_filter_sets is not None:
+                        self._init_filter_sets(profile_filter_sets, req, param)
         self._init_filter_sets(filter_sets, req, param)
         # Determine the current sorting.
         self._user_sorting = None
