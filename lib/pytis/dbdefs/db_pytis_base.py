@@ -37,7 +37,7 @@ class Base_PyFunction(sql.SQLPyFunction):
         TKurz = 'numeric(12,6)'
         @staticmethod
         def pg_escape(val):
-            return str(val).replace("'", "''").replace("\\", "\\\\")
+            return str(val).replace("'", "''").replace("\\", "\\\\") #'
         @staticmethod
         def pg_val(val):
             if val is None:
@@ -47,7 +47,7 @@ class Base_PyFunction(sql.SQLPyFunction):
             elif isinstance(val, bool):
                 pg_value = val and "TRUE" or "FALSE"
             else:
-                pg_value = "'%s'" % (BasePyFunction.Util.pg_escape(val))
+                pg_value = "'%s'" % (str(val).replace("'", "''").replace("\\", "\\\\"),) #'
             return pg_value
         @staticmethod
         def html_table(columns_labels, rows):
@@ -67,7 +67,7 @@ class Base_PyFunction(sql.SQLPyFunction):
                 html_rows.append('</tr>')
             html_rows.append('</table>')
             html_table = '\n'.join(html_rows)
-            return html_table.replace("'", "''")
+            return html_table.replace("'", "''") #'
 
 class Base_PyTriggerFunction(Base_PyFunction):
     
