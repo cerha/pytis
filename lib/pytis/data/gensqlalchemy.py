@@ -1271,8 +1271,8 @@ class SQLObject(object):
         return class_.name
 
     def pytis_exists(self, metadata):
-        _warn(u"Can't check existence of an object of type %s: %s." %
-              (self.pytis_kind(), self.name,))
+        _warn(u"Can't check existence of an object of %s type: %s." %
+              (self.pytis_kind() or 'raw', self.name,))
         return True
 
     def pytis_changed(self, metadata, strict=True):
@@ -1285,7 +1285,8 @@ class SQLObject(object):
         self.drop(_engine)
 
     def _pytis_upgrade(self, metadata):
-        _warn("Can't upgrade an object of type %s: %s." % (self.pytis_kind(), self.name,))
+        _warn("Can't upgrade an object of %s type: %s." %
+              (self.pytis_kind() or 'raw', self.name,))
         return True
         
     def pytis_upgrade(self, metadata, strict=True):
