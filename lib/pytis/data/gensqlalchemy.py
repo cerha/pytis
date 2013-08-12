@@ -2032,7 +2032,7 @@ class SQLTable(_SQLTabular):
     def _pytis_unique_indexes(self):
         indexes = set()
         for unique in self.unique:
-            name = self.pytis_name(real=True) + '_' + string.join(unique, '_') + '_key'
+            name = (self.pytis_name(real=True) + '_' + string.join(unique, '_'))[:59] + '_key'
             columns = [getattr(self.c, c) for c in unique]
             indexes.add(sqlalchemy.Index(name, *columns, unique=True))
         return indexes
