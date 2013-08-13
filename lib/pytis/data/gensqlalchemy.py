@@ -1647,7 +1647,7 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         if self.owner:
             command = ('ALTER %s "%s"."%s" OWNER TO "%s"' %
                        (self._DB_OBJECT, self.schema, self.name, self.owner,))
-            sqlalchemy.event.listen(self, 'after_create', command)
+            sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
         
     def _create_rules(self):
         def make_rule(action, instead_commands, also_commands):

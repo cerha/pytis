@@ -82,6 +82,7 @@ class Bar(sql.SQLTable):
                 sql.InsertFromSelect(Foo2, sqlalchemy.select([n_column])),
                 "select 42",
                 )
+    owner = 'pytis'
 
 class BarTrigger(sql.SQLPlFunction, sql.SQLTrigger):
     "Trigger directly defining its function."
