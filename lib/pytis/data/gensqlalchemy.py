@@ -3328,7 +3328,7 @@ def _gsql_output(output):
 _debug = False
 _pretty = 0
 def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, debug):
+                  config_file, upgrade, debug, module_name):
     global _output
     if upgrade:
         if alembic is None:
@@ -3362,10 +3362,10 @@ def _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty,
     else:
         upgrade_metadata = None
     _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
-                    upgrade_metadata)
+                    upgrade_metadata, module_name)
 
 def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, source,
-                    upgrade_metadata):
+                    upgrade_metadata, module_name):
     if regexp is not None:
         matcher = re.compile(regexp)
     matched = set()
@@ -3375,6 +3375,10 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
             cls = o.__class__
         else:
             cls = o
+        if ((module_name is not None and
+             not o.__module__ == module_name and
+             not o.__module__.startswith(module_name + '.'))):
+            return False
         if (views or functions):
             if issubclass(cls, SQLView):
                 if not views:
@@ -3595,7 +3599,7 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
     def loader(file_name=file_name):
         execfile(file_name, copy.copy(globals()))
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, debug)
+                  config_file, upgrade, debug, None)
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
                 names_only=False, pretty=0, schema=None, source=False, config_file=None,
@@ -3631,7 +3635,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     def loader(module_name=module_name):
         pytis.util.load_module(module_name)
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, debug)
+                  config_file, upgrade, debug, module_name)
 
 def clear():
     "Clear all loaded specifications."
