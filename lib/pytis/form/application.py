@@ -1796,6 +1796,8 @@ def has_access(name, perm=pytis.data.Permission.VIEW, column=None):
         except ResolverError:
             rights = None
         if rights:
+            if _access_dbconnection is None:
+                init_access_rights(config.dbconnection)
             groups = pytis.data.default_access_groups(_access_dbconnection)
             if not rights.permitted(perm, groups, column=column):
                 return False
