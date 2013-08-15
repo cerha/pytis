@@ -1490,8 +1490,11 @@ class LookupForm(InnerForm):
         if append and self._lf_filter:
             condition = pytis.data.AND(self._lf_filter, condition)
         old_filter = self._lf_filter
+        start_time = time.time()
+        success = False
         try:
             self._apply_filter(condition)
+            success = True
         except pytis.form.UserBreakException:
             self._lf_filter = old_filter
             self._apply_filter(self._lf_filter)
@@ -1504,6 +1507,8 @@ class LookupForm(InnerForm):
                                                profile.id())
                 self._profiles.remove(profile)
             self._cmd_save_new_profile(title)
+        log(EVENT, "%s filter application in %.3f seconds" %
+            ("Successful" if success else "Unsuccessful", time.time() - start_time,))
 
     def apply_profile(self, profile_id):
         """Apply the profile given by profile_id.
