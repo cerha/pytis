@@ -711,6 +711,46 @@ class PrimaryColumn(Column):
         kwargs['primary_key'] = True
         super(PrimaryColumn, self).__init__(*args, **kwargs)
 
+class _TabularType(pytis.data.Type):
+
+    class _SqlAlchemyType(sqlalchemy.types.UserDefinedType):
+
+        def __init__(self, tabular):
+            super(_TabularType._SqlAlchemyType, self).__init__()
+            self._pytis_tabular = tabular
+
+        def get_col_spec(self):
+            return self._pytis_tabular.pytis_name(real=True)
+
+        def bind_processor(self, dialect):
+            def process(value):
+                return value
+            return process
+
+        def result_processor(self, dialect, coltype):
+            def process(value):
+                return value
+            return process
+    
+    def __init__(self, tabular):
+        super(_TabularType, self).__init__()
+        self._tabular = self._SqlAlchemyType(tabular)
+
+    def sqlalchemy_type(self):
+        return self._tabular
+
+class Argument(Column):
+    """Specification of a function argument.
+
+    This is basically the same as 'Column', but it additionaly allows
+    specifying '_SQLTabular' subclass as the argument type.
+    
+    """
+    def __init__(self, name, type_, *args, **kwargs):
+        if isinstance(type_, type) and issubclass(type_, _SQLTabular):
+            type_ = _TabularType(type_)
+        super(Argument, self).__init__(name, type_, *args, **kwargs)
+    
 
 ## Utilities
     

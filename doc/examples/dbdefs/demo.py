@@ -297,7 +297,7 @@ class BogusView(sql.SQLView):
 
 class Func(sql.SQLFunction):
     name = 'plus'
-    arguments = (sql.Column('x', pytis.data.Integer()), sql.Column('y', pytis.data.Integer()),)
+    arguments = (sql.Argument('x', pytis.data.Integer()), sql.Argument('y', pytis.data.Integer()),)
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
@@ -306,20 +306,20 @@ class Func(sql.SQLFunction):
 
 class FileFunc(sql.SQLFunction):
     name = 'minus'
-    arguments = (sql.Column('x', pytis.data.Integer()), sql.Column('y', pytis.data.Integer()),)
+    arguments = (sql.Argument('x', pytis.data.Integer()), sql.Argument('y', pytis.data.Integer()),)
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
 class FileFuncOverloaded(sql.SQLFunction):
     db_name = 'minus'
     name = 'minus_float'
-    arguments = (sql.Column('x', pytis.data.Float()), sql.Column('y', pytis.data.Float()),)
+    arguments = (sql.Argument('x', pytis.data.Float()), sql.Argument('y', pytis.data.Float()),)
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
 class SelectFunc(sql.SQLFunction):
     name = 'foo_increment'
-    arguments = (sql.Column('inc', pytis.data.Integer()),)
+    arguments = (sql.Argument('inc', pytis.data.Integer()),)
     result_type = pytis.data.Integer()
     multirow = True
     stability = 'stable'
@@ -332,7 +332,7 @@ class SelectFunc(sql.SQLFunction):
 
 class PyFunc(sql.SQLPyFunction):
     name = 'times'
-    arguments = (sql.Column('x', pytis.data.Integer()), sql.Column('y', pytis.data.Integer()),)
+    arguments = (sql.Argument('x', pytis.data.Integer()), sql.Argument('y', pytis.data.Integer()),)
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
@@ -355,7 +355,7 @@ class PyFunc(sql.SQLPyFunction):
 
 class PyFuncSingleArg(sql.SQLPyFunction):
     name = 'single_argument'
-    arguments = (sql.Column('x', pytis.data.Integer()),)
+    arguments = (sql.Argument('x', pytis.data.Integer()),)
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
@@ -375,7 +375,7 @@ class PyFuncZeroArg(sql.SQLPyFunction):
 
 class SideEffectFunction(sql.SQLPyFunction):
     name = 'foo_insert'
-    arguments = (sql.Column('n', pytis.data.Integer()),)
+    arguments = (sql.Argument('n', pytis.data.Integer()),)
 
     @staticmethod
     def foo_insert(n):
@@ -384,7 +384,7 @@ class SideEffectFunction(sql.SQLPyFunction):
 class TableSelectFunction(sql.SQLPyFunction):
     name = 'tableselect'
     schemas = (('public', Private,),)
-    arguments = (sql.Column('foo', pytis.data.Integer()),)
+    arguments = (sql.Argument('foo', pytis.data.Integer()),)
     result_type = Bar
     multirow = True
     stability = 'stable'
@@ -395,7 +395,7 @@ class TableSelectFunction(sql.SQLPyFunction):
     
 class TableFunction(sql.SQLPyFunction):
     name = 'pseudotable'
-    arguments = (sql.Column('n', pytis.data.Integer()),)
+    arguments = (sql.Argument('n', pytis.data.Integer()),)
     result_type = (sql.Column('x', pytis.data.Integer()),
                    sql.Column('y', pytis.data.Integer()),
                    sql.Column('z', pytis.data.Integer()),)
@@ -420,7 +420,7 @@ class TableFunctionView(sql.SQLView):
 
 class MultilinePyArguments(sql.SQLPyFunction):
     name = 'multilineargs'
-    arguments = tuple([sql.Column(n, pytis.data.Integer()) for n in 'abcdefghi'])
+    arguments = tuple([sql.Argument(n, pytis.data.Integer()) for n in 'abcdefghi'])
     result_type = pytis.data.Integer()
     stability = 'immutable'
 
@@ -429,6 +429,14 @@ class MultilinePyArguments(sql.SQLPyFunction):
                       d, e, f,
                       g, h, i):
         return a + b + c + d + e + f + g + h + i
+
+class RowFunction(sql.SQLPlFunction):
+    name = 'row_n'
+    arguments = (sql.Argument('row', Foo),)
+    result_type = pytis.data.Integer()
+    stability = 'immutable'
+    def body(self):
+        return "begin return row.n; end;"
 
 class SomeType(sql.SQLType):
     name = 'some_type'
