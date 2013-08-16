@@ -151,6 +151,16 @@ class AnotherLoggingTable(_LoggingTable):
     name = 'another_logging_table'
     fields = (sql.PrimaryColumn('x', pytis.data.Integer()),)
 
+class AnonymousTrigger(sql.SQLTrigger):
+    """There is no explicit name for this trigger.
+
+    The trigger name is generated from its table name, events and position.
+    
+    """
+    body = LogFunction
+    table = Bar
+    schemas = ((Private, 'public',),)
+    
 class ReferencingTable(sql.SQLTable):
     name = 'referencing_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),

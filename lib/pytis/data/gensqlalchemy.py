@@ -3066,6 +3066,15 @@ class SQLTrigger(SQLEventHandler):
         if real:
             return '%s__%s' % (class_.name, class_.position,)
         return super(SQLTrigger, class_).pytis_name()
+        
+    def __new__(cls, metadata, search_path):
+        if cls.name is None:
+            if cls.table is None:
+                raise SQLException("Table not set in anonymous trigger", cls)
+            name = cls.table.pytis_name(real=True) + '__'
+            name += string.join([e[:3] for e in cls.events], '_')
+            cls.name = name
+        return SQLEventHandler.__new__(cls, metadata, search_path)
 
     def _add_dependencies(self):
         super(SQLTrigger, self)._add_dependencies()
