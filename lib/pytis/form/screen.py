@@ -1805,8 +1805,10 @@ class DualFormSwitcher(wx.BitmapButton):
     def __init__(self, parent, uicmd):
         self._toolbar = parent
         self._uicmd = uicmd
-        self._bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR),
-                         get_icon('dual-form-active-down', type=wx.ART_TOOLBAR))
+        self._bitmaps = (get_icon('dual-form-active-up', type=wx.ART_TOOLBAR) or
+                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),
+                         get_icon('dual-form-active-down', type=wx.ART_TOOLBAR) or
+                         get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR),)
         self._current_bitmap = self._bitmaps[0]
         wx.BitmapButton.__init__(self, parent, -1, self._current_bitmap,
                                  style=wx.BU_EXACTFIT | wx.NO_BORDER)

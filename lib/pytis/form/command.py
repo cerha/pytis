@@ -415,6 +415,8 @@ class UICommand(object):
             import wx
             from pytis.form import get_icon
             icon = get_icon(assigned_icon, type=wx.ART_TOOLBAR)
+            if icon is None:
+                icon = get_icon(wx.ART_ERROR, type=wx.ART_TOOLBAR)
             tool = toolbar.AddTool(-1, icon,
                                    shortHelpString=self._title,
                                    longHelpString=self._descr)
