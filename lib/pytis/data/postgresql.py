@@ -3027,11 +3027,13 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             self._pg_select_transaction = \
                 DBTransactionDefault(self._pg_connection_data_,
                                      isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
-                                     timeout_callback=timeout_callback, read_only=True)
+                                     timeout_callback=timeout_callback)
             self._pg_select_user_transaction = False
+            self._pg_select_set_read_only = True
         else:
             self._pg_select_transaction = transaction
             self._pg_select_user_transaction = True
+            self._pg_select_set_read_only = False
         self._pg_last_select_condition = condition
         self._pg_last_select_sorting = sort
         self._pg_last_select_transaction = transaction
@@ -3244,6 +3246,9 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_last_fetch_row = result
         if __debug__:
             log(DEBUG, 'Vrácený řádek', str(result))
+        if self._pg_select_set_read_only:
+            self._pg_select_transaction.set_read_only()
+            self._pg_select_set_read_only = False
         return result
 
     def last_row_number(self):
@@ -3802,6 +3807,18 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         assert re.match('^[a-z]+$', point)
         self._pg_query('rollback to %s' % (point,), transaction=self)
         self._pg_query('release %s' % (point,), transaction=self)
+
+    def set_read_only(self):
+        """Make the transaction read-only.
+
+        Usually, the transaction should be marked as read-only using
+        'read_only' constructor argument.  But in some situations, such as with
+        cursors calling functions utilizing temporary tables, this is not
+        possible and the transaction can be set as read-only only after the
+        database modifying operation, using this method.
+
+        """
+        self._pg_query('set transaction read only', transaction=self)
 
     def open(self):
         """Return true iff the transaction is open and hasn't been closed yet."""
