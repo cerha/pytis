@@ -292,14 +292,22 @@ def visit_access_right(element, compiler, **kw):
             (element.right, kind, schema, name, extra, element.group,))
 
 class _Rule(sqlalchemy.schema.DDLElement):
-    def __init__(self, table, action, kind, commands):
+    def __init__(self, table, action, instead_commands, also_commands):
         self.table = table
         self.action = action
-        self.kind = kind
-        self.commands = commands
+        self.instead_commands = instead_commands
+        self.also_commands = also_commands
 @compiles(_Rule)
 def visit_rule(element, compiler, **kw):
-    commands = element.commands
+    instead_commands = element.instead_commands()
+    also_commands = element.also_commands()
+    if instead_commands is None and not also_commands:
+        return
+    # We have to attach also_commands to instead_commands because
+    # also_commands may contain references to NEW and OLD which are not
+    # available in ALSO rules.
+    kind = 'ALSO' if instead_commands is None and also_commands else 'INSTEAD'
+    commands = tuple(instead_commands or ()) + tuple(also_commands or ())
     if commands:
         sql_commands = [_make_sql_command(c) for c in commands]
         if len(sql_commands) == 1:
@@ -309,9 +317,9 @@ def visit_rule(element, compiler, **kw):
     else:
         sql = 'NOTHING'
     table = element.table
-    rule_name = '%s__%s_%s' % (table.name, element.action.lower(), element.kind.lower(),)
+    rule_name = '%s__%s_%s' % (table.name, element.action.lower(), kind.lower(),)
     return ('CREATE OR REPLACE RULE "%s" AS ON %s TO "%s"."%s"\nDO %s %s' %
-            (rule_name, element.action, table.schema, table.name, element.kind, sql,))
+            (rule_name, element.action, table.schema, table.name, kind, sql,))
 
 class FullOuterJoin(sqlalchemy.sql.Join):
     __visit_name__ = 'full_outer_join'
@@ -1691,18 +1699,11 @@ class _SQLTabular(sqlalchemy.Table, SQLSchematicObject):
         
     def _create_rules(self):
         def make_rule(action, instead_commands, also_commands):
-            if instead_commands is None and not also_commands:
-                return
-            # We have to attach also_commands to instead_commands because
-            # also_commands may contain references to NEW and OLD which are not
-            # available in ALSO rules.
-            kind = 'ALSO' if instead_commands is None and also_commands else 'INSTEAD'
-            commands = tuple(instead_commands or ()) + tuple(also_commands or ())
-            rule = _Rule(self, action, kind, commands)
+            rule = _Rule(self, action, instead_commands, also_commands)
             sqlalchemy.event.listen(self, 'after_create', rule)
-        make_rule('INSERT', self.on_insert(), self.on_insert_also())
-        make_rule('UPDATE', self.on_update(), self.on_update_also())
-        make_rule('DELETE', self.on_delete(), self.on_delete_also())
+        make_rule('INSERT', self.on_insert, self.on_insert_also)
+        make_rule('UPDATE', self.on_update, self.on_update_also)
+        make_rule('DELETE', self.on_delete, self.on_delete_also)
 
     def _original_columns(self):
         return self.c
