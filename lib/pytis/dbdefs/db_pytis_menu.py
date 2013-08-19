@@ -667,9 +667,11 @@ class EvPytisTranslatedMenu(sql.SQLView):
     no_insert_columns = ('t_xtitle', 'dirty', 'id',)
     def on_insert_also(self):
         return ("insert into e_pytis_menu_translations (menuid, language, t_title, dirty) "
-                "values (substring(new.id from '/(.*)$')::int, "
+                "(select "
+                "substring(new.id from '/(.*)$')::int, "
                 "substring(new.id from '^(.*)/'), coalesce(new.t_title, new.title), "
-                "new.t_title is null)",)
+                "new.t_title is null "
+                "where new.t_title is not null or new.title is not null)",)
     update_order = (EvPytisMenu,)
     no_update_columns = ('t_xtitle', 'dirty', 'id',)
     def on_update_also(self):
