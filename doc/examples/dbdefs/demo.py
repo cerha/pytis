@@ -59,6 +59,7 @@ class Foo2(Foo):
     init_columns = ()
     init_values = ()
     with_oids = False
+    access_rights = (('ALL', True,),)
 
 class Bar(sql.SQLTable):
     """Bar table."""
@@ -83,6 +84,7 @@ class Bar(sql.SQLTable):
                 "select 42",
                 )
     owner = 'pytis'
+    access_rights = (('ALL', True,),)
 
 class BarTrigger(sql.SQLPlFunction, sql.SQLTrigger):
     "Trigger directly defining its function."

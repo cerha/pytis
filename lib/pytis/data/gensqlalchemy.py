@@ -104,6 +104,13 @@ def _function_arguments(function):
         return '%s%s%s' % (in_out, name, a_column.type.compile(_engine.dialect),)
     return string.join([arg(c) for c in function.arguments], ', ')
 
+def _role_string(role):
+    if role is True:
+        role_string = 'PUBLIC'
+    else:
+        role_string = '"%s"' % (role,)
+    return role_string
+    
 class _PytisSchemaHandler(object):
 
     def _set_search_path(self, search_path):
@@ -288,8 +295,8 @@ def visit_access_right(element, compiler, **kw):
         kind = ''                       # PostgreSQL requires this
     else:
         kind = o._DB_OBJECT + ' '
-    return ("GRANT %s ON %s%s%s%s TO \"%s\"" %
-            (element.right, kind, schema, name, extra, element.group,))
+    return ("GRANT %s ON %s%s%s%s TO %s" %
+            (element.right, kind, schema, name, extra, _role_string(element.group),))
 
 class _Rule(sqlalchemy.schema.DDLElement):
     def __init__(self, table, action, instead_commands, also_commands):
@@ -1288,8 +1295,9 @@ class SQLObject(object):
 
     Properties:
 
-      access-rights -- definition of access rights to the object; sequence of
-        pairs (RIGHT, ROLE)
+      access_rights -- definition of access rights to the object; sequence of
+        pairs (RIGHT, ROLE); if ROLE is 'True' then the right is granted to
+        all users
       owner -- database owner of the object; string
       external -- iff true then do not create the object as it's just a
         declaration of a database object defined outside our specifications,
@@ -2273,8 +2281,8 @@ class SQLTable(_SQLTabular):
             if isinstance(c.type, (SERIAL, BIGSERIAL,)) and not c.info.get('inherited'):
                 for g in groups:
                     cname = c.name
-                    command = ('GRANT usage ON "%s"."%s_%s_seq" TO GROUP "%s"' %
-                               (self.schema, self.name, cname, g,))
+                    command = ('GRANT usage ON "%s"."%s_%s_seq" TO GROUP %s' %
+                               (self.schema, self.name, cname, _role_string(g),))
                     sqlalchemy.event.listen(self, 'after_create', sqlalchemy.DDL(command))
 
     def create(self, bind=None, checkfirst=False):
