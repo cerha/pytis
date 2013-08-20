@@ -93,16 +93,22 @@ import pytis.util
 
 G_CONVERT_THIS_FUNCTION_TO_TRIGGER = object()  # hack for gensql conversions
 
-def _function_arguments(function):
+def _function_arguments_seq(function, types_only=False):
     search_path = function.search_path()
     def arg(column):
         a_column = column.sqlalchemy_column(search_path, None, None, None)
-        in_out = 'out ' if column.out() else ''
-        name = a_column.name
-        if name:
-            name = '"%s" ' % (name,)
+        in_out = 'out ' if column.out() and not types_only else ''
+        if types_only:
+            name = ''
+        else:
+            name = a_column.name
+            if name:
+                name = '"%s" ' % (name,)
         return '%s%s%s' % (in_out, name, a_column.type.compile(_engine.dialect),)
-    return string.join([arg(c) for c in function.arguments], ', ')
+    return [arg(c) for c in function.arguments]
+
+def _function_arguments(function, types_only=False):
+    return string.join(_function_arguments_seq(function, types_only=types_only), ', ')
 
 def _role_string(role):
     if role is True:
@@ -175,6 +181,29 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
             function.dispatch.after_create(function, self.connection, checkfirst=self.checkfirst,
                                            _ddl_runner=self)
 
+    def visit_aggregate(self, aggregate, create_ok=False):
+        search_path = aggregate.search_path()
+        with _local_search_path(self._set_search_path(search_path)):
+            self.visit_function(aggregate, create_ok=create_ok)
+            name = aggregate.pytis_name(real=True)
+            arguments = _function_arguments_seq(aggregate, types_only=True)
+            if len(arguments) < 2:
+                arguments.append('*')
+            settings = ['sfunc=%s' % (name,),
+                        'stype=%s' % (arguments[0],)]
+            init_value = aggregate.initial_value
+            if init_value is not None:
+                if isinstance(init_value, basestring):
+                    init_value = "'%s'" % (init_value.replace("'", "''"),)
+                settings.append('initcond=%s' % (init_value,))
+            command = (('CREATE AGGREGATE "%s"."%s_aggregate" (%s) (\n'
+                        '%s\n)') %
+                       (aggregate.schema, name, string.join(arguments[1:], ', '),
+                        string.join(settings, ', '),))
+            self.connection.execute(command)
+            aggregate.dispatch.after_create(aggregate, self.connection, checkfirst=self.checkfirst,
+                                            _ddl_runner=self)
+
     def visit_trigger(self, trigger, create_ok=False):
         for search_path in _expand_schemas(trigger):
             with _local_search_path(self._set_search_path(search_path)):
@@ -231,6 +260,12 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
         name = function.pytis_name(real=True)
         arguments = _function_arguments(function)
         command = 'DROP FUNCTION "%s"."%s" (%s)' % (function.schema, name, arguments,)
+        self.connection.execute(command)
+
+    def visit_aggregate(self, aggregate, checkfirst=False):
+        name = aggregate.pytis_name(real=True)
+        arguments = _function_arguments(aggregate, types_only=True)[1:]
+        command = 'DROP AGGREGATE "%s"."%s_aggregate" (%s)' % (aggregate.schema, name, arguments,)
         self.connection.execute(command)
 
     def visit_trigger(self, trigger, checkfirst=False):
@@ -749,10 +784,14 @@ class _TabularType(pytis.data.Type):
     
     def __init__(self, tabular):
         super(_TabularType, self).__init__()
+        self._orig_tabular = tabular
         self._tabular = self._SqlAlchemyType(tabular)
 
     def sqlalchemy_type(self):
         return self._tabular
+
+    def tabular(self):
+        return self._orig_tabular
 
 class Argument(Column):
     """Specification of a function argument.
@@ -2772,6 +2811,12 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
              not isinstance(result_type, (tuple, list, Column, pytis.data.Type,)) and
              result_type != SQLFunctional.RECORD)):
             self.add_is_dependent_on(object_by_class(result_type, self._search_path))
+        for a in self.arguments:
+            if isinstance(a, Argument):
+                t = a.type()
+                if isinstance(t, _TabularType):
+                    o = object_by_class(t.tabular(), self._search_path)
+                    self.add_is_dependent_on(o)
 
     def pytis_exists(self, metadata):
         # This can't distinguish between functions overloaded by argument types
@@ -3063,6 +3108,27 @@ class SQLPyFunction(SQLFunctional):
                 return line[-indentation:]
         lines = [unicode(l.rstrip(), 'utf-8') for l in lines]
         return [reindent(l) for l in lines if l.strip()]
+
+class SQLAggregate(SQLFunctional):
+    """Aggregate function definition.
+
+    Aggregate functions can be basically defined like other database
+    functions.  Function arguments define the internal state type (the first
+    argument) and the input data types (the rest of the arguments).  The
+    function definition itself serves as the internal state transition
+    function.
+
+    The following optional properties may be defined:
+
+      initial_value -- the initial state value; internal value of the internal
+        state pytis type
+
+    """
+    _DB_OBJECT = 'AGGREGATE'
+
+    initial_value = None
+
+    __visit_name__ = 'aggregate'
 
 class SQLEventHandler(SQLFunctional):
     """Definition of a function serving as a table event handler.

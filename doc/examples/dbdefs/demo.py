@@ -440,6 +440,24 @@ class RowFunction(sql.SQLPlFunction):
     def body(self):
         return "begin return row.n; end;"
 
+class CountFunction(sql.SQLFunction, sql.SQLAggregate):
+    name = 'count_f'
+    arguments = (sql.Column('state', pytis.data.Integer()),)
+    result_type = pytis.data.Integer()
+    initial_value = 0
+    def body(self):
+        return 'SELECT $1 + 1'
+
+class SumFunction(sql.SQLFunction, sql.SQLAggregate):
+    name = 'sum_f'
+    arguments = (sql.Column('state', pytis.data.Integer()),
+                 sql.Column('n', pytis.data.Integer()),
+                 )
+    result_type = pytis.data.Integer()
+    initial_value = 0
+    def body(self):
+        return 'SELECT $1 + $2'
+
 class SomeType(sql.SQLType):
     name = 'some_type'
     fields = (sql.Column('x', pytis.data.Integer()),
