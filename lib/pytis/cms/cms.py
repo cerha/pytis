@@ -266,12 +266,12 @@ class Menu(Specification):
         Field('content', _("Obsah"), compact=True, height=20, width=80,
               text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage,
               descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
-        Field('mod_id', _("Modul"), type=pd.Integer(not_null=False),
+        Field('mod_id', _("Modul"), type=pd.Integer(), not_null=False,
               codebook=self._spec_name('Modules', False), allow_codebook_insert=True,
               descr=_("Vyberte rozšiřující modul zobrazený uvnitř stránky.  Ponechte prázdné pro "
                       "prostou textovou stránku.")),
         Field('modname', _("Modul")),
-        Field('parent', _("Nadřízená položka"), type=pd.Integer(not_null=False),
+        Field('parent', _("Nadřízená položka"), type=pd.Integer(), not_null=False,
               codebook=self._spec_name('MenuParents', False), value_column='menu_item_id',
               runtime_filter=computer(self._parent_filter),
               descr=_("Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
