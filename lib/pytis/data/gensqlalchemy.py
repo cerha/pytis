@@ -3353,6 +3353,8 @@ def _make_sql_command(sql, *multiparams, **params):
     return output
 def _dump_sql_command(sql, *multiparams, **params):
     output = _make_sql_command(sql, *multiparams, **params)
+    if not output:
+        return
     output_string = output + ';'
     if _pretty:
         output_string += '\n'
