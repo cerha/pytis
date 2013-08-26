@@ -1862,6 +1862,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         return self._pg_query(query, transaction=transaction)
 
     def _pg_search(self, row, condition, direction, transaction=None, arguments={}):
+        if transaction is None:
+            transaction = self._pg_select_transaction
         sorting = self._pg_last_select_sorting
         if direction == FORWARD:
             pass
@@ -2263,6 +2265,8 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             args = {}
             self._pg_make_arguments(args, arguments)
             query = query % args
+        if transaction is None:
+            transaction = self._pg_select_transaction
         return self._pg_query(query, transaction=transaction)
 
     def _pg_fetchmany(self, count, direction, transaction=None):

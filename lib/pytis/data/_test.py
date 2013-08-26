@@ -1307,6 +1307,7 @@ class DBDataDefault(_DBTest):
                 assert synt == k1, ('bad value', synt, k1, spec)
                 assert anal == k2, ('bad value', anal, k2, spec)
             assert not d.fetchone(), 'too many lines'
+            d.close()
     def test_select_distinct_on(self):
         def check(d, condition, result):
             d.select(condition=condition)
@@ -1537,6 +1538,9 @@ class DBDataDefault(_DBTest):
             assert self.funcdata.fetchone() is not None
             assert self.funcdata.fetchone() is not None
             assert self.funcdata.fetchone() is None
+        finally:
+            self.funcdata.close()
+        try:
             result = [v.value() for v in self.funcdata.distinct('id', arguments=dict(id=id_value))]
             assert len(result) == 2
             assert 5 in result and 999 in result
