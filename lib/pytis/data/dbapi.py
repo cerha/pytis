@@ -250,7 +250,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._maybe_connection_error(e)
     
     def _postgresql_commit_transaction(self):
-        connection = self._pg_get_connection()
+        connection = self._pg_get_connection()[0]
         raw_connection = connection.connection()
         try:
             raw_connection.commit()
@@ -259,7 +259,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._maybe_connection_error(e)
         
     def _postgresql_rollback_transaction(self):
-        connection = self._pg_get_connection()
+        connection = self._pg_get_connection()[0]
         raw_connection = connection.connection()
         try:
             raw_connection.rollback()

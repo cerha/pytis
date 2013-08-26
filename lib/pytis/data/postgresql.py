@@ -407,9 +407,9 @@ class PostgreSQLConnector(PostgreSQLAccessor):
         connections = self._pg_connections()
         if outside_transaction or not connections:
             pool = self._pg_connection_pool()
-            connection = pool.get(self._pg_connection_data())
+            connection = pool.get(self._pg_connection_data()), True
         else:
-            connection = connections[-1]
+            connection = connections[-1], False
         return connection
         
     def _pg_return_connection(self, connection):
@@ -451,8 +451,11 @@ class PostgreSQLConnector(PostgreSQLAccessor):
             query = query.encode('utf-8')
         assert transaction is None or not outside_transaction, \
             'Connection given to a query to be performed outside transaction'
+        borrowed_connection = None
         if transaction is None:
-            connection = self._pg_get_connection(outside_transaction)
+            connection, new = self._pg_get_connection(outside_transaction)
+            if new:
+                borrowed_connection = connection
         elif not transaction.open():
             raise DBUserException("Can't use closed transaction")
         else:
@@ -470,7 +473,8 @@ class PostgreSQLConnector(PostgreSQLAccessor):
                                                             query_args=query_args)
             finally:
                 # Vrať DB spojení zpět
-                if connection and transaction is None and outside_transaction:
+                if connection is not None and connection is borrowed_connection:
+                    self._postgresql_query(connection, "commit", outside_transaction)
                     self._pg_return_connection(connection)
             if backup and self._pdbb_logging_command:
                 assert not outside_transaction, \
@@ -2785,7 +2789,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if __debug__:
             if len(connections) >= 3:
                 log(DEBUG, 'Podezřele velká hloubka spojení:', len(connections))
-        connection = self._pg_get_connection(outside_transaction=True)
+        connection = self._pg_get_connection(outside_transaction=True)[0]
         connections.append(connection)
 
     def _pg_deallocate_connection(self):
@@ -3766,7 +3770,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         self._pdbb_command_isolation = 'set transaction isolation level %s%s'
 
     def _trans_connection(self):
-        return self._pg_get_connection()
+        return self._pg_get_connection()[0]
 
     def _trans_notify(self, dbdata):
         self._trans_notifications.append(dbdata)
