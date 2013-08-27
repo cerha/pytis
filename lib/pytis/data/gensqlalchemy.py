@@ -3330,9 +3330,13 @@ def _db_dependencies(metadata):
             dictionary[oid] = otype + ' ' + row_identifier(tuple(row[1:]))
         return dictionary
     pg_class = load(("select pg_class.oid, nspname, relname "
-                     "from pg_class join pg_namespace on relnamespace=pg_namespace.oid"), 'TABLE')
+                     "from pg_class join pg_namespace on relnamespace=pg_namespace.oid "
+                     "where relkind not in ('c', 'v')"), 'TABLE')
     pg_namespace = load("select oid, nspname from pg_namespace", 'SCHEMA',
                         lambda row: '"%s"' % (row[0],))
+    pg_class.update(load(("select pg_class.oid, nspname, relname "
+                          "from pg_class join pg_namespace on relnamespace=pg_namespace.oid "
+                          "where relkind = 'c'"), 'TYPE'))
     pg_type = load(("select pg_type.oid, nspname, typname "
                     "from pg_type join pg_namespace on typnamespace=pg_namespace.oid"), 'TYPE')
     pg_proc = load(("select pg_proc.oid, nspname, proname, '' "
@@ -3343,10 +3347,15 @@ def _db_dependencies(metadata):
                        "from pg_trigger join pg_class on tgrelid = pg_class.oid join "
                        "pg_namespace on relnamespace=pg_namespace.oid"), 'TRIGGER',
                       lambda row: '"%s" ON "%s"."%s"' % row)
+    # Views are tricky, they are both tables and rules, with the roles in
+    # dependencies mixed.  So we must consider both forms and exclude
+    # dependencies on itself (rule on the view) below.
+    pg_class.update(load(("select pg_class.oid, nspname, relname "
+                          "from pg_class join pg_namespace on relnamespace=pg_namespace.oid "
+                          "where relkind = 'v'"), 'VIEW'))
     pg_rewrite = load(("select pg_rewrite.oid, nspname, relname "
                        "from pg_rewrite join pg_class on ev_class = pg_class.oid join "
-                       "pg_namespace on relnamespace=pg_namespace.oid "
-                       "where ev_type = '1'"), 'VIEW')
+                       "pg_namespace on relnamespace=pg_namespace.oid"), 'VIEW')
     loc = locals()
     dependencies = []
     query = ("select distinct objid, c.relname, refobjid, refc.relname "
@@ -3364,14 +3373,15 @@ def _db_dependencies(metadata):
     # Let's reduce the set and break unimportant circular dependencies:
     regexp = re.compile('[A-Z]+ "(pg_catalog|information_schema)"\.|'
                         'FUNCTION "public"\."(ltree|ltxtq|lquery)_')
-    for oid, relname, refoid, refrelname in result:
+    for oid, reltypename, refoid, refreltypename in result:
         try:
-            base = loc[refrelname][refoid]
-            dependent = loc[relname][oid]
+            base = loc[refreltypename][refoid]
+            dependent = loc[reltypename][oid]
         except KeyError:
             # Some objects may be no longer present in the database
             continue
-        if regexp.match(base) is None and regexp.match(dependent) is None:
+        if ((regexp.match(base) is None and regexp.match(dependent) is None and
+             base != dependent)):
             dependencies.append((base, dependent,))
     result.close()
     connection.close()
