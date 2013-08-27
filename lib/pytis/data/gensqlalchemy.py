@@ -421,6 +421,7 @@ def _get_columns(dialect, connection, relation_name, schema):
                              ('tsrange', TSRANGE),
                              ('tstzrange', TSTZRANGE),
                              ('daterange', DATERANGE),
+                             ('bpchar', sqlalchemy.String), # == char()
                              ):
             if name not in dialect.ischema_names:
                 dialect.ischema_names[name] = class_
