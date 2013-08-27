@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: SQLTrigger
+# key: trigger
+# group: gensqlalchemy
+# --
+class $1(sql.SQLTrigger, ${2:sql.SQLPlFunction}):
+    name = '${1:$(gensqlalchemy-class->name text)}'
+    table = $3
+    events = ($4)
+    position = ${5:$$(yas/choose-value '("'after'" "'before'"))}
+    $0
