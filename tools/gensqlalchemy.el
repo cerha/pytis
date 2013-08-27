@@ -142,6 +142,11 @@
   :group 'gensqlalchemy
   :type 'string)
 
+(defcustom gensqlalchemy-shrink-to-function nil
+  "If non-nil, shrink specification window when displaying SQL function."
+  :group 'gensqlalchemy
+  :type 'boolean)
+
 (defvar gensqlalchemy-specification-directory "dbdefs")
 (defvar gensqlalchemy-common-directories '("lib" "dbdefs"))
 
@@ -552,6 +557,18 @@ objects."
                (unless (re-search-forward "^    name = ['\"]\\(.*\\)['\"]" nil t)
                  (error "Function name not found"))
                (match-string 1))))
+    (when gensqlalchemy-shrink-to-function
+      (split-window-below)
+      (save-match-data
+        (save-excursion
+          (save-restriction
+            (unless (looking-at "^class ")
+              (python-nav-backward-up-list 9))
+            (goto-char (line-end-position))
+            (narrow-to-defun)
+            (sit-for 0)
+            (shrink-window-if-larger-than-buffer)
+            (widen)))))
     (find-file-other-window (concat "sql/" (match-string 1) ".sql"))))
 
 (defun gensqlalchemy-find-object (name)
