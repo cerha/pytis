@@ -55,6 +55,10 @@
 ;; transactions.  Nevertheless you should always be careful and not to use
 ;; gensqlalchemy.el interactions on production databases.
 
+;; An exception is the command `C-c C-q !' (`gensqlalchemy-execute') which
+;; executes the current gensqlalchemy output buffer in the associated database
+;; connection, as a single transaction.
+
 ;; You can view current object definition in the database using `C-c C-q s'
 ;; (`gensqlalchemy-show-definition').  With a prefix argument new definition of
 ;; the object is inserted into the database into a separate schema and then
@@ -165,6 +169,7 @@ Currently the mode just defines some key bindings."
                 ("\C-c\C-qu" . gensqlalchemy-upgrade)
                 ("\C-c\C-qz" . gensqlalchemy-show-sql-buffer)
                 ("\C-c\C-q=" . gensqlalchemy-compare)
+                ("\C-c\C-q!" . gensqlalchemy-execute)
                 ))
 
 (defun gensqlalchemy-sql-mode ()
@@ -222,6 +227,8 @@ Currently the mode just defines some key bindings."
     specification-name))
 
 (defun gensqlalchemy-temp-file (file-name)
+  (unless (file-exists-p gensqlalchemy-temp-directory)
+    (make-directory gensqlalchemy-temp-directory))
   (concat gensqlalchemy-temp-directory file-name))
 
 (defun gensqlalchemy-empty-file (file-name)
@@ -347,7 +354,7 @@ If called with a prefix argument then show dependent objects as well."
          (sql-set-sqli-buffer))
        ,@body)))
 
-(defmacro with-gensqlalchemy-rollback (&rest body)
+(defmacro with-gensqlalchemy-transaction (commit-command &rest body)
   (let (($buffer (gensym)))
     `(let ((,$buffer (if (eq major-mode 'sql-mode)
                          (current-buffer)
@@ -357,12 +364,18 @@ If called with a prefix argument then show dependent objects as well."
            (sql-send-string "begin;")
            (unwind-protect (progn ,@body)
              (with-current-buffer ,$buffer
-               (sql-send-string "rollback;"))))))))
+               (sql-send-string (concat ,commit-command ";")))))))))
+
+(defmacro with-gensqlalchemy-rollback (&rest body)
+  `(with-gensqlalchemy-transaction "rollback"
+     ,@body))
+
+(defmacro with-gensqlalchemy-commit (&rest body)
+  `(with-gensqlalchemy-transaction "commit"
+     ,@body))
 
 (defmacro with-gensqlalchemy-log-file (file-name &rest body)
   `(progn
-     (unless (file-exists-p gensqlalchemy-temp-directory)
-       (make-directory gensqlalchemy-temp-directory))
      (sql-send-string (concat "\\o " ,file-name))
      ,@body
      (sql-send-string "\\o")))
@@ -463,6 +476,14 @@ With an optional prefix argument show new definition of the specification."
 The commands are wrapped in a transaction which is aborted at the end."
   (interactive)
   (with-gensqlalchemy-rollback
+    (gensqlalchemy-send-buffer)))
+
+(defun gensqlalchemy-execute ()
+  "Run SQL commands from SQL output buffer.
+The commands are wrapped in a transaction so they are either all executed
+successfully or all the changes are rolled back."
+  (interactive)
+  (with-gensqlalchemy-commit
     (gensqlalchemy-send-buffer)))
 
 (defun gensqlalchemy-compare (&optional arg)
