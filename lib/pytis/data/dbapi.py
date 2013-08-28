@@ -45,6 +45,15 @@ _ = translations('pytis-data')
 
 class _DBAPIAccessor(PostgreSQLAccessor):
 
+    _query_callback = (None,)
+
+    @classmethod
+    def set_query_callback(class_, callback):
+        # We can't simply assign callback, because Python would made an unbound
+        # class method from it.  By wrapping the callback by a tuple we prevent
+        # that misbehavior.
+        class_._query_callback = (callback,)
+    
     @classmethod
     def _postgresql_open_connection(class_, connection_data):
         # Prepare connection data
@@ -98,6 +107,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             if not standard_strings:
                 query = query.replace('\\', '\\\\')
             cursor = raw_connection.cursor()
+            callback = self._query_callback[0]
             # The hasattr test is a hack enforced by the fact that constructor
             # calls of pytis.data classes are in very strange state now.
             if hasattr(self, '_sql_logger') and self._sql_logger is not None:
@@ -114,6 +124,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 else:
                     query_string = query
                 self._sql_logger.write(query_string + '\n')
+            if callback is not None:
+                start_time = time.time()
             # query_args shouldn't be used when empty to prevent mistaken
             # '%' processing in `query'
             try:
@@ -126,6 +138,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                 if outside_transaction:
                     raw_connection.commit()
                     self._postgresql_reset_connection_info(connection, ['commit'])
+            if callback is not None:
+                callback(query, start_time, time.time())
             return cursor
         def retry(message, exception):
             connection.set_connection_info('broken', True)
