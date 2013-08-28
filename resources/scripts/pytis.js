@@ -406,10 +406,12 @@ pytis.Field = Class.create({
 	var labels = $$('.field-label.id-'+this._id);
 	if (labels) {
 	    var label = labels[0]
-	    if (value && label.hasClassName('disabled'))
-		label.removeClassName('disabled');
-	    if (!value && !label.hasClassName('disabled'))
-		label.addClassName('disabled');
+            if (label != undefined) {
+	        if (value && label.hasClassName('disabled'))
+		    label.removeClassName('disabled');
+	        if (!value && !label.hasClassName('disabled'))
+		    label.addClassName('disabled');
+            }
 	}
 	this._set_editability(value);
     },
