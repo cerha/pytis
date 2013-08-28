@@ -152,13 +152,14 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
         command = 'CREATE TYPE %s AS\n(%s)' % (type_name, column_string,)
         self.connection.execute(command)
 
-    def visit_function(self, function, create_ok=False, result_type=None):
+    def visit_function(self, function, create_ok=False, result_type=None, suffix=''):
         search_path = function.search_path()
         with _local_search_path(self._set_search_path(search_path)):
             if isinstance(function.result_type, (tuple, list,)):
-                self.make_type('t_' + function.pytis_name(), function.result_type)
+                self.make_type('t_' + function.pytis_name() + suffix, function.result_type)
             query_prefix, query_suffix = \
-                function._pytis_header_footer(result_type=result_type, search_path=search_path)
+                function._pytis_header_footer(result_type=result_type, search_path=search_path,
+                                              suffix=suffix)
             body = function.body()
             if isinstance(body, basestring):
                 body = body.strip()
@@ -184,19 +185,19 @@ class _PytisSchemaGenerator(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaH
     def visit_aggregate(self, aggregate, create_ok=False):
         search_path = aggregate.search_path()
         with _local_search_path(self._set_search_path(search_path)):
-            self.visit_function(aggregate, create_ok=create_ok)
+            self.visit_function(aggregate, create_ok=create_ok, suffix='_agg')
             name = aggregate.pytis_name(real=True)
             arguments = _function_arguments_seq(aggregate, types_only=True)
             if len(arguments) < 2:
                 arguments.append('*')
-            settings = ['sfunc=%s' % (name,),
+            settings = ['sfunc=%s_agg' % (name,),
                         'stype=%s' % (arguments[0],)]
             init_value = aggregate.initial_value
             if init_value is not None:
                 if isinstance(init_value, basestring):
                     init_value = "'%s'" % (init_value.replace("'", "''"),)
                 settings.append('initcond=%s' % (init_value,))
-            command = (('CREATE AGGREGATE "%s"."%s_aggregate" (%s) (\n'
+            command = (('CREATE AGGREGATE "%s"."%s" (%s) (\n'
                         '%s\n)') %
                        (aggregate.schema, name, string.join(arguments[1:], ', '),
                         string.join(settings, ', '),))
@@ -265,7 +266,7 @@ class _PytisSchemaDropper(sqlalchemy.engine.ddl.SchemaGenerator, _PytisSchemaHan
     def visit_aggregate(self, aggregate, checkfirst=False):
         name = aggregate.pytis_name(real=True)
         arguments = _function_arguments(aggregate, types_only=True)[1:]
-        command = 'DROP AGGREGATE "%s"."%s_aggregate" (%s)' % (aggregate.schema, name, arguments,)
+        command = 'DROP AGGREGATE "%s"."%s" (%s)' % (aggregate.schema, name, arguments,)
         self.connection.execute(command)
 
     def visit_trigger(self, trigger, checkfirst=False):
@@ -2920,7 +2921,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
         sql_file = os.path.join(module_path, self.sql_directory, self.name + '.sql')
         return codecs.open(sql_file, encoding='UTF-8').read()
 
-    def _pytis_header_footer(self, result_type=None, search_path=None, marker='$$'):
+    def _pytis_header_footer(self, result_type=None, search_path=None, marker='$$', suffix=''):
         arguments = _function_arguments(self)
         if result_type is None:
             function_type = self.result_type
@@ -2945,7 +2946,7 @@ class SQLFunctional(_SQLReplaceable, _SQLTabular):
             else:
                 raise SQLException("Invalid result type", (self.__class__.__name__, function_type,))
         result_type_prefix = 'SETOF ' if self.multirow else ''
-        name = self.pytis_name(real=True)
+        name = self.pytis_name(real=True) + suffix
         security = ' SECURITY DEFINER' if self.security_definer else ''
         stability = ' ' + self.stability if self.stability != 'volatile' else ''
         query_prefix = (('CREATE OR REPLACE FUNCTION "%s"."%s"(%s) RETURNS %s%s '
