@@ -351,8 +351,10 @@ pytis.FormHandler = Class.create({
 			}
 		    }
 		}
-		document.body.style.cursor = "default";
 	    }
+            if (response_number == this._last_request_number) {
+		document.body.style.cursor = "default";
+            }
 	}
     }
     
