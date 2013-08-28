@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+# name: argi
+# --
+sql.Argument('$1', pytis.data.Integer()),$0

@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+# name: argb
+# --
+sql.Argument('$1', pytis.data.Boolean()),$0

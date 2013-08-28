@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: argument
+# key: arg
+# group: gensqlalchemy
+# --
+sql.Argument('$1', ${2:$$(yas/choose-value '("pytis.data.Binary" "pytis.data.Name" "pytis.data.LTree" "pytis.data.TimeInterval" "pytis.data.Time" "pytis.data.Date" "pytis.data.DateTime" "pytis.data.Float" "pytis.data.Integer" "pytis.data.Boolean" "pytis.data.String"))}()),$0
