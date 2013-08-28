@@ -334,10 +334,15 @@ pytis.FormHandler = Class.create({
 			var original_value = field.value();
 			for (var key in cdata) {
 			    var value = cdata[key];
-			    if (key == 'enumeration')   field.set_enumeration(value, cdata['links']);
-			    else if (key == 'value')    field.set_value(value);
-		            else if (key == 'editable') field.set_editability(value);
-			    else if (key == 'state')    this._state[id] = value;
+                            try {
+			        if (key == 'enumeration')   field.set_enumeration(value, cdata['links']);
+			        else if (key == 'value')    field.set_value(value);
+		                else if (key == 'editable') field.set_editability(value);
+			        else if (key == 'state')    this._state[id] = value;
+                            }
+                            catch (e) {
+                                console.log(e);
+                            }
 			}
 			if (cdata.enumeration && !cdata.value) {
 			    // Retain the value of enumeration fields even
