@@ -30,6 +30,8 @@ def parse_options():
     parser = optparse.OptionParser(usage=USAGE)
     parser.add_option("--limit", default=None, action="store", dest="regexp",
                       help="output specifications matching and dependent on REGEXP")
+    parser.add_option("--limit-module", action="store_true", dest="limit_module",
+                      help="output only specifications defined directly in the module"),
     parser.add_option("--no-deps", action="store_true", dest="no_deps",
                       help="do not output dependent objects on --limit")
     parser.add_option("--views", action="store_true", dest="views",
@@ -87,7 +89,8 @@ def run():
                                          views=options.views, functions=options.functions,
                                          names_only=options.names_only, pretty=options.pretty,
                                          schema=options.schema, source=options.source,
-                                         upgrade=options.upgrade, debug=options.debug)
+                                         upgrade=options.upgrade, debug=options.debug,
+                                         limit_module=options.limit_module)
 
 if __name__ == '__main__':
     run()

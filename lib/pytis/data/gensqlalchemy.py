@@ -3745,7 +3745,7 @@ def gsql_file(file_name, regexp=None, no_deps=False, views=False, functions=Fals
 
 def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=False,
                 names_only=False, pretty=0, schema=None, source=False, config_file=None,
-                upgrade=False, debug=False):
+                upgrade=False, debug=False, limit_module=False):
     """Generate SQL code from given specification module.
 
     Arguments:
@@ -3767,6 +3767,8 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
       config_file -- name of pytis configuration file
       upgrade -- iff true, generate SQL commands for upgrade rather than creation
       debug -- iff true, print some debugging information to standard error output
+      limit_module -- iff true, limit output to specifications defined directly
+        in the given module
 
     If both 'views' and 'functions' are specified, output both views and
     functions.
@@ -3777,7 +3779,7 @@ def gsql_module(module_name, regexp=None, no_deps=False, views=False, functions=
     def loader(module_name=module_name):
         pytis.util.load_module(module_name)
     _gsql_process(loader, regexp, no_deps, views, functions, names_only, pretty, schema, source,
-                  config_file, upgrade, debug, module_name)
+                  config_file, upgrade, debug, (module_name if limit_module else None))
 
 def clear():
     "Clear all loaded specifications."
