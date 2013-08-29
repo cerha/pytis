@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+# name: cold
+# --
+sql.Column('$1', pytis.data.Date()$2),$0

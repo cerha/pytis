@@ -1,4 +1,4 @@
 # -*- mode: snippet -*-
 # name: colb
 # --
-sql.Column('$1', pytis.data.Boolean(not_null=${2:$$(yas-choose-value '("False" "True"))})$3),$0
+sql.Column('$1', pytis.data.Boolean(${2:$$(yas-choose-value '("" "not_null=False" "not_null=True"))})$3),$0
