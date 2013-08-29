@@ -3181,7 +3181,11 @@ class SQLTrigger(SQLEventHandler):
     @classmethod
     def pytis_name(class_, real=False):
         if real:
-            return '%s__%s' % (class_.name, class_.position,)
+            name = class_.name
+            position = class_.position
+            if name.find('_' + position) < 0:
+                name = '%s__%s' % (name, position,)
+            return name
         return super(SQLTrigger, class_).pytis_name()
         
     def __new__(cls, metadata, search_path):
