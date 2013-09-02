@@ -869,6 +869,7 @@ class LookupForm(InnerForm):
         """
         super_(LookupForm)._init_attributes(self, **kwargs)
         assert columns is None or isinstance(columns, (list, tuple))
+        self._transaction_close_scheduled = False
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
@@ -1052,13 +1053,14 @@ class LookupForm(InnerForm):
         if not self._initial_profile_applied:
             self._initial_profile_applied = True
             self._apply_initial_profile()
-        pytis.data.DBTransactionDefault.close_transactions()
-        # Enforce on_idle invocation after 1 second through a timer event
-        # so that transaction can be checked again.
-        # It seems the first argument is something else, shorter,
-        # than milliseconds but hopefully we needn't care much.
-        wx.CallLater(1000, object)
+        if not self._transaction_close_scheduled:
+            self._on_idle_close_transactions()
+            self._transaction_close_scheduled = True
         return False
+
+    def _on_idle_close_transactions(self):
+        pytis.data.DBTransactionDefault.close_transactions()
+        wx.CallLater(1000, self._on_idle_close_transactions)
 
     def _init_data_select(self, data, async_count=False):
         if self._governing_transaction is None:
