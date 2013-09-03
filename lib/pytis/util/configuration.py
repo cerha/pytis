@@ -1258,8 +1258,10 @@ class Configuration(object):
         
         """
         if name == 'user_config_file':
-            self.__dict__['_user_config_file'] = value
-            self.__dict__['_user_config_mtime'] = 0
+            if self.__dict__['_user_config_file'] != value:
+                self.__dict__['_user_config_file'] = value
+                self.__dict__['_user_config_mtime'] = 0
+                self._read_configuration()
         if name in self.__dict__['_options']:
             self.__dict__['_options'][name].set_value(value)
         elif hasattr(self, name):
