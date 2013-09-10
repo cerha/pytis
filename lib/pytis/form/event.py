@@ -174,6 +174,17 @@ def last_user_event():
     """
     return _last_user_event
 
+_last_user_event_time = None
+def last_event_age():
+    """Return the age of the last user event in seconds.
+
+    Return -1 before the first user event is invoked.
+    
+    """
+    if _last_user_event_time is None:
+        return -1
+    else:
+        return time.time() - _last_user_event_time
 
 def _is_user_event(event):
     # Sem nelze přidat jen tak jakoukoliv událost, protože některé uživatelské
@@ -277,7 +288,7 @@ def wx_callback(evt_function, *args):
             return result
         if isinstance(event, wx.IdleEvent) and idle_blocked():
             return
-        global _current_event, _interrupted, _last_user_event
+        global _current_event, _interrupted, _last_user_event, _last_user_event_time
         is_user = _is_user_event(event)
         if is_user:
             pytis.form.message('')
@@ -315,6 +326,9 @@ def wx_callback(evt_function, *args):
         except:
             top_level_exception()
             return
+        finally:
+            if is_user:
+                _last_user_event_time = time.time()
         return result
     evt_function(*(evt_function_args + (process_event,)))
 

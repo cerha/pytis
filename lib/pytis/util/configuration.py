@@ -738,7 +738,7 @@ class Configuration(object):
     class _Option_postscript_viewer(StringOption):
         """Shell command to be used for displaying print preview PDF files.
 
-        It must take the name of the file to be displayed as its first argument. 
+        It must take the name of the file to be displayed as its first argument.
 
         """
         _DEFAULT = ''
@@ -919,6 +919,16 @@ class Configuration(object):
         
         """
         _DEFAULT = 40
+
+    class _Option_edit_form_timeout(NumericOption):
+        u"""Časový limit pro uzavření editačního formuláře při nečinnosti.
+
+        Po uvedeném počtu sekund, během nichž uživatel nepracoval s editačním
+        formulářem, se tento formulář automaticky uzavře.  Nastavením hodnoty
+        na 'None' se automatické uzavírání editačních formulářů vypne.
+
+        """
+        _DEFAULT = None
 
     class _Option_output_row_limit(NumericOption):
         u"""Limit počtu řádků tisku bez potvrzení.

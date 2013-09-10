@@ -1066,8 +1066,12 @@ class LookupForm(InnerForm):
         if self._governing_transaction is None:
             def timeout_callback():
                 data.close()
+                if self._transaction is not None:
+                    db_operation(self._transaction.rollback)
+                    self._transaction = None
         else:
             timeout_callback = None
+        self._transaction_timeout_callback = timeout_callback
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._lf_sorting,
@@ -2297,6 +2301,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         super_(EditForm)._init_attributes(self, _new=new, **kwargs)
         self._mode = mode
         self._focus_field = focus_field or self._view.focus_field()
+        self._edit_form_timeout = config.edit_form_timeout
         # Other attributes
         self._fields = []
         if set_values:
@@ -2307,6 +2312,18 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 else:
                     value = pytis.data.Value(type, value)
                 self._row[key] = value
+
+    def _on_idle_close_transactions(self):
+        if ((self._edit_form_timeout is not None and
+             pytis.form.last_event_age() > self._edit_form_timeout)):
+            ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
+            ok_button.Enable(False)
+            callback = self._transaction_timeout_callback
+            if callback is not None:
+                callback()
+            self._edit_form_timeout = None
+            run_dialog(pytis.form.Error, _(u"Vypršel časový limit pro editaci formuláře."))
+        super(EditForm, self)._on_idle_close_transactions()
 
     def _set_focus_field(self, event=None):
         """Inicalizuj dialog nastavením hodnot políček."""
