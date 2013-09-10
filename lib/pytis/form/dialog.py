@@ -454,7 +454,7 @@ class Question(MultiQuestion):
 
     """
     def __init__(self, parent, message, default=True,
-                 title=_("Question"), icon=Message.ICON_QUESTION,
+                 title=_("Question"), icon=Message.ICON_QUESTION, timeout=None,
                  **kwargs):
         """Inicializuj dialog.
         
@@ -463,6 +463,10 @@ class Question(MultiQuestion):
           default -- pokud je pravda, bude předvoleným tlačítkem tlačítko
             'GenericDialog.BUTTON_YES'. Jinak je předvolená odpověď
             'GenericDialog.BUTTON_NO' (implicitně).
+          timeout -- dialog timeout in seconds; integer.  When the dialog is
+            shown for more than the given time, it gets automatically closed
+            and 'None' is returned as the answer.  If the argument value is
+            'None' then the dialog is shown until user chooses an answer.
         
           Ostatní argumenty odpovídají stejným argumentům rodičovské třídy s
           tím, že následující argumenty tato třída definuje vždy napevno:
@@ -482,9 +486,19 @@ class Question(MultiQuestion):
         super_(Question).__init__(self, parent, message, title=title,
                                   buttons=(self.BUTTON_YES, self.BUTTON_NO),
                                   default=default, icon=icon, **kwargs)
+        self._timeout_limit = timeout
+
+    def _create_dialog(self):
+        super(Question, self)._create_dialog()
+        if self._timeout_limit is not None:
+            def destroy():
+                self._dialog.EndModal(-1000)
+            wx.FutureCall(self._timeout_limit * 1000, destroy)
         
     def _customize_result(self, result):
-        if self._button_label(result) == self.BUTTON_YES:
+        if result == -1000:
+            return None
+        elif self._button_label(result) == self.BUTTON_YES:
             return True
         else:
             return False

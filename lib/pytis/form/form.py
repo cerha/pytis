@@ -2316,13 +2316,19 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _on_idle_close_transactions(self):
         if ((self._edit_form_timeout is not None and
              pytis.form.last_event_age() > self._edit_form_timeout)):
-            ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
-            ok_button.Enable(False)
-            callback = self._transaction_timeout_callback
-            if callback is not None:
-                callback()
-            self._edit_form_timeout = None
-            run_dialog(pytis.form.Error, _(u"Vypršel časový limit pro editaci formuláře."))
+            edit = run_dialog(pytis.form.Question, title=_(u"Zrušit formulář?"),
+                              message=_(u"Vypršel časový limit pro editaci formuláře.\n"
+                                        u"Chcete v editaci ještě pokračovat?"),
+                              timeout=2)
+            if not edit:
+                ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
+                ok_button.Enable(False)
+                callback = self._transaction_timeout_callback
+                if callback is not None:
+                    callback()
+                self._edit_form_timeout = None
+                if edit is None:
+                    run_dialog(pytis.form.Error, _(u"Vypršel časový limit pro editaci formuláře."))
         super(EditForm, self)._on_idle_close_transactions()
 
     def _set_focus_field(self, event=None):
