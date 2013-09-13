@@ -1582,6 +1582,12 @@ class Row:
                  for i, item in enumerate(self)]
         return '<Row: %s>' % ', '.join(items)
 
+    def __hash__(self):
+        value = 0
+        for k, v in self._data:
+            value = value ^ hash(k) ^ hash(v)
+        return value
+
     def __cmp__(self, other):
         """Vrať 0, právě když 'self' a 'other' obsahují stejné názvy a hodnoty.
 
@@ -1665,7 +1671,7 @@ class Row:
         if n != j - i:
             raise IndexError("Sequence length doesn't match")
         for k in range(n):
-            self[i+k] = data[k]
+            self[i + k] = data[k]
 
     def __contains__(self, key):
         """Vrať pravdu, právě když řádek obsahuje sloupec jména 'key'."""

@@ -2907,6 +2907,9 @@ class Value(_Value):
             self._exported = isinstance(e, unicode) and e or unicode(e)
         else:
             self._exported = self._VOID
+
+    def __hash__(self):
+        return hash(self._type) ^ hash(self._value)
         
     def export(self, *args, **kwargs):
         """Vrať stringovou reprezentaci hodnoty schopnou validace.
