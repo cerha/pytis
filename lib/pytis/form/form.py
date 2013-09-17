@@ -2319,7 +2319,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             edit = run_dialog(pytis.form.Question, title=_(u"Zrušit formulář?"),
                               message=_(u"Vypršel časový limit pro editaci formuláře.\n"
                                         u"Chcete v editaci ještě pokračovat?"),
-                              timeout=2)
+                              timeout=20)
             if not edit:
                 ok_button = wx.FindWindowById(wx.ID_OK, self._parent)
                 ok_button.Enable(False)
