@@ -109,6 +109,18 @@ class Indexed(sql.SQLTable):
     index_columns = (('x', 'y',),
                      sql.a('x', 'y', 'z', method='gist'),)
 
+class FunctionallyIndexed(sql.SQLTable):
+    name = 'functionally_indexed'
+    fields = (sql.Column('x', pytis.data.Integer()),
+              sql.Column('y', pytis.data.Integer()),
+              sql.Column('z', pytis.data.Integer()),
+              )
+    @property
+    def index_columns(self):
+        y = sqlalchemy.func.coalesce(sql.c.FunctionallyIndexed.y,
+                                     sqlalchemy.literal_column('-1', type_=sqlalchemy.Integer()))
+        return (sql.a('x', y, unique=True),)
+
 class LogTable(sql.SQLTable):
     name = 'log_table'
     fields = (sql.PrimaryColumn('id', pytis.data.Serial()),

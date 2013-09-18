@@ -1942,12 +1942,14 @@ class SQLTable(_SQLTabular):
         'references' argument in 'Column' definitions.
       with_oids -- iff True then oids are assigned to the table rows; boolean
       index_columns -- tuple of tuples or 'Arguments' instances.  Each of the
-        tuples or 'Arguments' instances contains names of columns to include
-        within a single index.  An additional keyword argument 'method' may be
-        provided in an 'Arguments' whose value determines indexing method to be
-        used for this index.  Use this property only for multicolumn indexes,
-        specify single column indexes directly in the corresponding 'Column'
-        specifications.
+        tuples or 'Arguments' instances contains names of columns or SQLAlchemy
+        expressions to include within a single index.  An additional keyword
+        argument 'method' may be provided in an 'Arguments' whose value
+        determines indexing method to be used for this index.  The optional
+        argument 'unique' in 'Arguments' marks the index as unique if the
+        argument value is true.  Use 'index_columns' only for multicolumn indexes
+        and functional indexes, plain single column indexes should be specified
+        directly in the corresponding 'Column' specifications.
       triggers -- tuple of trigger specifications to assign to this table.  You
         can assign a trigger to a table directly in 'SQLTrigger' specification.
         But if the same trigger function is to be used in more than one table
@@ -1967,7 +1969,7 @@ class SQLTable(_SQLTabular):
         SQLAlchemy for given columns.
 
     See also '_SQLTabular' properties.
-    
+
     """
     _DB_OBJECT = 'TABLE'
     
@@ -2280,14 +2282,26 @@ class SQLTable(_SQLTabular):
         for index in self.index_columns:
             ikwargs = {}
             if isinstance(index, Arguments):
-                colnames = index.args()
-                method = index.kwargs().get('method')
+                index_content = index.args()
+                index_kwargs = index.kwargs()
+                method = index_kwargs.get('method')
                 if method:
                     ikwargs['postgresql_using'] = method
+                if index_kwargs.get('unique'):
+                    ikwargs['unique'] = True
             else:
-                colnames = index
+                index_content = index
                 method = None
-            columns = [getattr(self.c, c) for c in colnames]
+            columns = []
+            colnames = []
+            for i in range(len(index_content)):
+                c = index_content[i]
+                if isinstance(c, basestring):
+                    columns.append(getattr(self.c, c))
+                    colnames.append(c)
+                else:
+                    columns.append(c)
+                    colnames.append(str(i))
             index_name = string.join(colnames, '_')
             if method:
                 index_name += '_' + method
