@@ -1131,6 +1131,7 @@ class Configuration(object):
     # Metody
 
     def __init__(self):
+        self.__dict__['_reading_configuration'] = False
         self._init_options()
 
     def add_command_line_options(self, command_line):
@@ -1185,12 +1186,18 @@ class Configuration(object):
         return command_line_options
 
     def _read_configuration(self):
-        conffile = self._config_file
-        if conffile is not None:
-            self.__dict__['_config_mtime'] = self._read_configuration_file(conffile)
-        uconffile = self._user_config_file
-        if uconffile is not None:
-            self.__dict__['_user_config_mtime'] = self._read_configuration_file(uconffile)
+        if self._reading_configuration:
+            return
+        self._reading_configuration = True
+        try:
+            conffile = self._config_file
+            if conffile is not None:
+                self.__dict__['_config_mtime'] = self._read_configuration_file(conffile)
+            uconffile = self._user_config_file
+            if uconffile is not None:
+                self.__dict__['_user_config_mtime'] = self._read_configuration_file(uconffile)
+        finally:
+            self._reading_configuration = False
 
     def _read_configuration_file(self, filename=True):
         try:
