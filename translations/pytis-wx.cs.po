@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-07-25 09:40+0200\n"
-"PO-Revision-Date: 2013-07-25 09:36+0200\n"
+"POT-Creation-Date: 2013-09-23 11:45+0200\n"
+"PO-Revision-Date: 2013-09-23 11:47+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -124,7 +124,7 @@ msgstr "Vymazat"
 msgid "Clear the menu of recent forms"
 msgstr "Vymazat menu posledně otevřených formulářů"
 
-#: ../lib/pytis/form/application.py:702 ../lib/pytis/form/dialog.py:1303
+#: ../lib/pytis/form/application.py:702 ../lib/pytis/form/dialog.py:1317
 #: ../lib/pytis/form/inputfield.py:2639 ../lib/pytis/form/inputfield.py:2665
 msgid "Title"
 msgstr "Název"
@@ -187,7 +187,7 @@ msgstr "Přihlášení pro přístup do databáze"
 msgid "Login"
 msgstr "Uživatelské jméno"
 
-#: ../lib/pytis/form/application.py:1474 ../lib/pytis/form/application.py:1883
+#: ../lib/pytis/form/application.py:1474 ../lib/pytis/form/application.py:1885
 msgid "Password"
 msgstr "Heslo"
 
@@ -199,7 +199,7 @@ msgstr "Databázová chyba"
 msgid "Try again?"
 msgstr "Zkusit znovu?"
 
-#: ../lib/pytis/form/application.py:1877
+#: ../lib/pytis/form/application.py:1879
 msgid "Enter your password"
 msgstr "Zadejte heslo"
 
@@ -249,7 +249,7 @@ msgstr "Zobrazit tiskové menu"
 msgid "Show the menu of print reports for the current form"
 msgstr "Zobrazit menu tiskových sestav pro aktivní formulář"
 
-#: ../lib/pytis/form/commands_.py:537 ../lib/pytis/form/form.py:1135
+#: ../lib/pytis/form/commands_.py:537 ../lib/pytis/form/form.py:1152
 msgid "Jump to record"
 msgstr "Skok na záznam"
 
@@ -576,51 +576,51 @@ msgstr "Chyba"
 msgid "Question"
 msgstr "Otázka"
 
-#: ../lib/pytis/form/dialog.py:505 ../lib/pytis/form/dialog.py:626
+#: ../lib/pytis/form/dialog.py:519 ../lib/pytis/form/dialog.py:640
 msgid "Enter value"
 msgstr "Zadejte hodnotu"
 
-#: ../lib/pytis/form/dialog.py:724 ../lib/pytis/form/dialog.py:777
+#: ../lib/pytis/form/dialog.py:738 ../lib/pytis/form/dialog.py:791
 msgid "Operation in progress"
 msgstr "Provádí se operace"
 
-#: ../lib/pytis/form/dialog.py:725 ../lib/pytis/form/dialog.py:777
+#: ../lib/pytis/form/dialog.py:739 ../lib/pytis/form/dialog.py:791
 msgid "Please wait..."
 msgstr "Čekejte prosím..."
 
-#: ../lib/pytis/form/dialog.py:885
+#: ../lib/pytis/form/dialog.py:899
 msgid "Calendar"
 msgstr "Kalendář"
 
-#: ../lib/pytis/form/dialog.py:966
+#: ../lib/pytis/form/dialog.py:980
 msgid "Color selection"
 msgstr "Výběr barvy"
 
-#: ../lib/pytis/form/dialog.py:1012
+#: ../lib/pytis/form/dialog.py:1026
 msgid "Ignore"
 msgstr "Ignorovat"
 
-#: ../lib/pytis/form/dialog.py:1013
+#: ../lib/pytis/form/dialog.py:1027
 msgid "Send error report"
 msgstr "Poslat oznámení o chybě"
 
-#: ../lib/pytis/form/dialog.py:1014 ../lib/pytis/form/dialog.py:1402
+#: ../lib/pytis/form/dialog.py:1028 ../lib/pytis/form/dialog.py:1416
 msgid "Exit application"
 msgstr "Ukončit aplikaci"
 
-#: ../lib/pytis/form/dialog.py:1028
+#: ../lib/pytis/form/dialog.py:1042
 msgid "Unhandled exception"
 msgstr "Neočekávaná chyba"
 
-#: ../lib/pytis/form/dialog.py:1037
+#: ../lib/pytis/form/dialog.py:1051
 msgid "Oops"
 msgstr "Nevyšlo to"
 
-#: ../lib/pytis/form/dialog.py:1263
+#: ../lib/pytis/form/dialog.py:1277
 msgid "Aggregated view parameters"
 msgstr "Parametry agregačního náhledu"
 
-#: ../lib/pytis/form/dialog.py:1300
+#: ../lib/pytis/form/dialog.py:1314
 msgid ""
 "Enter the name for saving the view, or leave empty, if you prefer not to "
 "save it."
@@ -628,39 +628,39 @@ msgstr ""
 "Zadejte název pod kterým se má náhled uložit, nebo ponechte prázdné, pokud "
 "náhled nechcete ukládat."
 
-#: ../lib/pytis/form/dialog.py:1312
+#: ../lib/pytis/form/dialog.py:1326
 msgid "Group by"
 msgstr "Seskupování"
 
-#: ../lib/pytis/form/dialog.py:1323
+#: ../lib/pytis/form/dialog.py:1337
 msgid "Function"
 msgstr "Funkce"
 
-#: ../lib/pytis/form/dialog.py:1376
+#: ../lib/pytis/form/dialog.py:1390
 msgid "You need to select at least one grouping column."
 msgstr "Musíte zvolit alespoň jeden sloupec pro seskupování."
 
-#: ../lib/pytis/form/dialog.py:1403
+#: ../lib/pytis/form/dialog.py:1417
 msgid "Really quit the application?"
 msgstr "Opravdu chcete ukončit aplikaci?"
 
-#: ../lib/pytis/form/dialog.py:1404
+#: ../lib/pytis/form/dialog.py:1418
 msgid "Automatically open the checked forms on next startup"
 msgstr "Zapamatovat označené formuláře pro příští spuštění"
 
-#: ../lib/pytis/form/dialog.py:1461 ../lib/pytis/form/inputfield.py:1953
+#: ../lib/pytis/form/dialog.py:1475 ../lib/pytis/form/inputfield.py:1953
 msgid "All files"
 msgstr "Všechny soubory"
 
-#: ../lib/pytis/form/dialog.py:1490
+#: ../lib/pytis/form/dialog.py:1504
 msgid "Open file"
 msgstr "Otevřít soubor"
 
-#: ../lib/pytis/form/dialog.py:1491
+#: ../lib/pytis/form/dialog.py:1505
 msgid "Save file"
 msgstr "Uložit soubor"
 
-#: ../lib/pytis/form/dialog.py:1545
+#: ../lib/pytis/form/dialog.py:1559
 msgid "Directory selection"
 msgstr "Výběr adresáře"
 
@@ -753,34 +753,34 @@ msgstr "Editace sestav"
 msgid "Delete report"
 msgstr "Mazání sestav"
 
-#: ../lib/pytis/form/form.py:875
+#: ../lib/pytis/form/form.py:876
 msgid "Default profile"
 msgstr "Výchozí profil"
 
-#: ../lib/pytis/form/form.py:881
+#: ../lib/pytis/form/form.py:882
 msgid "Initial profile"
 msgstr "Počáteční profil"
 
-#: ../lib/pytis/form/form.py:1109 ../lib/pytis/form/form.py:2127
-#: ../lib/pytis/form/form.py:2134
+#: ../lib/pytis/form/form.py:1126 ../lib/pytis/form/form.py:2149
+#: ../lib/pytis/form/form.py:2156
 msgid "Record not found"
 msgstr "Záznam nenalezen"
 
-#: ../lib/pytis/form/form.py:1134
+#: ../lib/pytis/form/form.py:1151
 #, python-format
 msgid "Record number (1-%s):"
 msgstr "Záznam číslo (1-%s):"
 
-#: ../lib/pytis/form/form.py:1255
+#: ../lib/pytis/form/form.py:1272
 msgid "Keep"
 msgstr "Ponechat"
 
-#: ../lib/pytis/form/form.py:1255 ../lib/pytis/form/search.py:361
+#: ../lib/pytis/form/form.py:1272 ../lib/pytis/form/search.py:361
 #: ../lib/pytis/form/search.py:378
 msgid "Remove"
 msgstr "Odstranit"
 
-#: ../lib/pytis/form/form.py:1256
+#: ../lib/pytis/form/form.py:1273
 #, python-format
 msgid ""
 "User profile \"%s\" is invalid.\n"
@@ -793,36 +793,36 @@ msgstr ""
 "profil nyní nelze použít. Profil můžete buďto odstranit,\n"
 "nebo ponechat a požádat správce aplikace o jeho obnovení."
 
-#: ../lib/pytis/form/form.py:1262
+#: ../lib/pytis/form/form.py:1279
 msgid "Invalid profile"
 msgstr "Neplatný profil"
 
-#: ../lib/pytis/form/form.py:1286 ../lib/pytis/form/form.py:1301
+#: ../lib/pytis/form/form.py:1303 ../lib/pytis/form/form.py:1318
 msgid "Profile of this name already exists."
 msgstr "Takto pojmenovaný profil již existuje."
 
-#: ../lib/pytis/form/form.py:1293 ../lib/pytis/form/form.py:1307
+#: ../lib/pytis/form/form.py:1310 ../lib/pytis/form/form.py:1324
 #, python-format
 msgid "Profile saved as '%s'."
 msgstr "Profil uložen pod názvem '%s'."
 
-#: ../lib/pytis/form/form.py:1380
+#: ../lib/pytis/form/form.py:1397
 msgid "This column can not be used for filtering."
 msgstr "Podle tohoto sloupce nelze filtrovat."
 
-#: ../lib/pytis/form/form.py:1448
+#: ../lib/pytis/form/form.py:1465
 msgid "This column can not be used for sorting."
 msgstr "Podle tohoto sloupce nelze třídit."
 
-#: ../lib/pytis/form/form.py:1489
+#: ../lib/pytis/form/form.py:1509
 msgid "Unnamed profile"
 msgstr "Nepojmenovaný profil"
 
-#: ../lib/pytis/form/form.py:1752
+#: ../lib/pytis/form/form.py:1774
 msgid "The record is locked."
 msgstr "Záznam je zamčen."
 
-#: ../lib/pytis/form/form.py:1901
+#: ../lib/pytis/form/form.py:1923
 #, python-format
 msgid ""
 "This form contains the mandatory field %s, but you don't have access to its "
@@ -831,7 +831,7 @@ msgstr ""
 "Tento náhled obsahuje povinné políčko %s, k jehož číselníkovým hodnotám "
 "nemáte přístup. Obraťte se na správce přístupových práv."
 
-#: ../lib/pytis/form/form.py:1907
+#: ../lib/pytis/form/form.py:1929
 #, python-format
 msgid ""
 "This form contains the field %s, but you don't have access to its codebook "
@@ -840,19 +840,19 @@ msgstr ""
 "Tento náhled obsahuje políčko %s, k jehož číselníkovým hodnotám nemáte "
 "přístup. Obraťte se na správce přístupových práv."
 
-#: ../lib/pytis/form/form.py:1919
+#: ../lib/pytis/form/form.py:1941
 msgid "The inserted record didn't appear in the current view."
 msgstr "Vložený záznam se neobjevil v aktuálním náhledu."
 
-#: ../lib/pytis/form/form.py:1942
+#: ../lib/pytis/form/form.py:1964
 msgid "This form is read-only."
 msgstr "Tento formulář je pouze pro čtení."
 
-#: ../lib/pytis/form/form.py:1995
+#: ../lib/pytis/form/form.py:2017
 msgid "Insufficient permissions to insert records to this table."
 msgstr "Nemáte práva pro vkládání záznamů do této tabulky."
 
-#: ../lib/pytis/form/form.py:1999
+#: ../lib/pytis/form/form.py:2021
 msgid ""
 "Choose the file containing the imported data first. You will be able to "
 "check and confirm each record separately in the next step."
@@ -860,11 +860,11 @@ msgstr ""
 "Nejprve vyberte soubor obsahující importovaná data. Poté budete moci "
 "zkontrolovat a potvrdit každý záznam."
 
-#: ../lib/pytis/form/form.py:2002
+#: ../lib/pytis/form/form.py:2024
 msgid "Input file format:"
 msgstr "Formát vstupního souboru:"
 
-#: ../lib/pytis/form/form.py:2006
+#: ../lib/pytis/form/form.py:2028
 msgid ""
 "The first row contains column identifiers, so it determines the meaning and "
 "the order of the values in the following data rows."
@@ -872,50 +872,50 @@ msgstr ""
 "První řádek obsahuje identifikátory sloupců a určuje tedy význam a pořadí "
 "hodnot v následujících (datových) řádcích."
 
-#: ../lib/pytis/form/form.py:2009
+#: ../lib/pytis/form/form.py:2031
 msgid "Possible column identifiers for this form are:"
 msgstr "Identifikátory jednotlivých sloupců jsou následující:"
 
-#: ../lib/pytis/form/form.py:2017
+#: ../lib/pytis/form/form.py:2039
 msgid "Batch import"
 msgstr "Hromadné vkládání dat"
 
-#: ../lib/pytis/form/form.py:2019
+#: ../lib/pytis/form/form.py:2041
 msgid "Separator"
 msgstr "Oddělovač"
 
-#: ../lib/pytis/form/form.py:2022
+#: ../lib/pytis/form/form.py:2044
 msgid "No separator given."
 msgstr "Nebyl zadán oddělovač."
 
-#: ../lib/pytis/form/form.py:2028
+#: ../lib/pytis/form/form.py:2050
 msgid "No file given. Process terminated."
 msgstr "Nebyl zadán soubor. Proces ukončen."
 
-#: ../lib/pytis/form/form.py:2033
+#: ../lib/pytis/form/form.py:2055
 #, python-format
 msgid "Unable to open file '%s': %s"
 msgstr "Nepodařilo se otevřít soubor '%s': %s"
 
-#: ../lib/pytis/form/form.py:2041
+#: ../lib/pytis/form/form.py:2063
 msgid "Unknown column:"
 msgstr "Neznámý sloupec:"
 
-#: ../lib/pytis/form/form.py:2050 ../lib/pytis/form/form.py:2058
+#: ../lib/pytis/form/form.py:2072 ../lib/pytis/form/form.py:2080
 #, python-format
 msgid "Error at line %d:"
 msgstr "Chyba na řádku %d:"
 
-#: ../lib/pytis/form/form.py:2051
+#: ../lib/pytis/form/form.py:2073
 msgid "The number of values doesn't match the number of columns."
 msgstr "Počet hodnot neodpovídá počtu sloupců."
 
-#: ../lib/pytis/form/form.py:2059
+#: ../lib/pytis/form/form.py:2081
 #, python-format
 msgid "Invalid value of column '%s':"
 msgstr "Neplatná hodnota sloupce '%s':"
 
-#: ../lib/pytis/form/form.py:2128
+#: ../lib/pytis/form/form.py:2150
 msgid ""
 "The searched record was not found. It may be caused by the active filter.\n"
 "Do you want to activate the default profile and try searching again?"
@@ -924,39 +924,53 @@ msgstr ""
 "filtr.\n"
 "Chcete aktivovat výchozí profil a zkusit záznam vyhledat znovu?"
 
-#: ../lib/pytis/form/form.py:2611
+#: ../lib/pytis/form/form.py:2319
+msgid "Zrušit formulář?"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2320
+msgid ""
+"Vypršel časový limit pro editaci formuláře.\n"
+"Chcete v editaci ještě pokračovat?"
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2331
+msgid "Vypršel časový limit pro editaci formuláře."
+msgstr ""
+
+#: ../lib/pytis/form/form.py:2652
 msgid "Record update failed"
 msgstr "Uložení záznamu se nezdařilo"
 
-#: ../lib/pytis/form/form.py:2613
+#: ../lib/pytis/form/form.py:2654
 msgid "Transaction aborted, unable to continue"
 msgstr "Transakce přerušena, nelze pokračovat"
 
-#: ../lib/pytis/form/form.py:2628
+#: ../lib/pytis/form/form.py:2669
 msgid "Unsaved changed in form data!"
 msgstr "Data byla změněna a nebyla uložena!"
 
-#: ../lib/pytis/form/form.py:2629
+#: ../lib/pytis/form/form.py:2670
 msgid "Do you really want to close the form?"
 msgstr "Opravdu chcete uzavřít formulář?"
 
-#: ../lib/pytis/form/form.py:2693
+#: ../lib/pytis/form/form.py:2734
 msgid "edit form"
 msgstr "editační formulář"
 
-#: ../lib/pytis/form/form.py:2759
+#: ../lib/pytis/form/form.py:2800
 msgid "Notification area"
 msgstr "Oznamovací oblast"
 
-#: ../lib/pytis/form/form.py:2761
+#: ../lib/pytis/form/form.py:2802
 msgid "Batch insertion progress indicator"
 msgstr "Ukazatel pozice hromadného vkládání"
 
-#: ../lib/pytis/form/form.py:2803
+#: ../lib/pytis/form/form.py:2844
 msgid "All records processed."
 msgstr "Všechny záznamy byly zpracovány."
 
-#: ../lib/pytis/form/form.py:2811
+#: ../lib/pytis/form/form.py:2852
 msgid ""
 "Not all input records processed yet.\n"
 "Really quit batch insertion?"
@@ -964,52 +978,52 @@ msgstr ""
 "Ještě nebyly zpracovány všechny řádky vstupních dat.\n"
 "Chcete opravdu ukončit vkládání?"
 
-#: ../lib/pytis/form/form.py:2820
+#: ../lib/pytis/form/form.py:2861
 msgid "No next record"
 msgstr "Není další záznam"
 
-#: ../lib/pytis/form/form.py:2822
+#: ../lib/pytis/form/form.py:2863
 #, python-format
 msgid "Record %d/%d skipped"
 msgstr "Záznam %d/%d přeskočen"
 
-#: ../lib/pytis/form/form.py:2827
+#: ../lib/pytis/form/form.py:2868
 msgid "Save the record and close the form"
 msgstr "Uložit záznam a uzavřít formulář"
 
-#: ../lib/pytis/form/form.py:2830
+#: ../lib/pytis/form/form.py:2871
 msgid "Close the form without saving"
 msgstr "Uzavřít formulář bez uložení dat"
 
-#: ../lib/pytis/form/form.py:2833 ../lib/pytis/form/search.py:574
+#: ../lib/pytis/form/form.py:2874 ../lib/pytis/form/search.py:574
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/form/form.py:2834
+#: ../lib/pytis/form/form.py:2875
 msgid "Save the current record and read next record into the form."
 msgstr "Uložit současný záznam a načíst následující záznam do formuláře."
 
-#: ../lib/pytis/form/form.py:2838
+#: ../lib/pytis/form/form.py:2879
 msgid "Skip"
 msgstr "Přeskočit"
 
-#: ../lib/pytis/form/form.py:2839
+#: ../lib/pytis/form/form.py:2880
 msgid "Skip this record without saving"
 msgstr "Přeskočit tento záznam bez uložení"
 
-#: ../lib/pytis/form/form.py:2871
+#: ../lib/pytis/form/form.py:2912
 msgid "Record saved"
 msgstr "Záznam uložen"
 
-#: ../lib/pytis/form/form.py:3112
+#: ../lib/pytis/form/form.py:3153
 msgid "Original text"
 msgstr "Původní text"
 
-#: ../lib/pytis/form/form.py:3112
+#: ../lib/pytis/form/form.py:3153
 msgid "Concurrently changed version"
 msgstr "Kolegova nová verze"
 
-#: ../lib/pytis/form/form.py:3113
+#: ../lib/pytis/form/form.py:3154
 msgid ""
 "Someone else has changed the same text while you made your modifications. "
 "You can see the overview of the changes below.\n"
@@ -1025,35 +1039,35 @@ msgstr ""
 "pokusit obě verze sloučit tím, že do Vašeho současného textu aplikujete níže "
 "uvedené změny."
 
-#: ../lib/pytis/form/form.py:3119
+#: ../lib/pytis/form/form.py:3160
 msgid "Discard my changes"
 msgstr "Zahodit moje změny"
 
-#: ../lib/pytis/form/form.py:3119
+#: ../lib/pytis/form/form.py:3160
 msgid "Merge"
 msgstr "Sloučit"
 
-#: ../lib/pytis/form/form.py:3120
+#: ../lib/pytis/form/form.py:3161
 msgid "Ignore the concurrent changes"
 msgstr "Ignorovat kolegovy změny"
 
-#: ../lib/pytis/form/form.py:3121
+#: ../lib/pytis/form/form.py:3162
 msgid "Conflicting modifications"
 msgstr "Konflikt editace"
 
-#: ../lib/pytis/form/form.py:3139
+#: ../lib/pytis/form/form.py:3180
 msgid "insert form"
 msgstr "vkládací formulář"
 
-#: ../lib/pytis/form/form.py:3154
+#: ../lib/pytis/form/form.py:3195
 msgid "view form"
 msgstr "náhledový formulář"
 
-#: ../lib/pytis/form/form.py:3183
+#: ../lib/pytis/form/form.py:3224
 msgid "Last record"
 msgstr "Poslední záznam"
 
-#: ../lib/pytis/form/form.py:3187
+#: ../lib/pytis/form/form.py:3228
 msgid "First record"
 msgstr "První záznam"
 
@@ -1720,136 +1734,136 @@ msgid ""
 "Row with this key already exists or the original row doesn't exist anymore."
 msgstr "Řádek s tímto klíčem již existuje nebo původní řádek již neexistuje."
 
-#: ../lib/pytis/form/list.py:1100
+#: ../lib/pytis/form/list.py:1101
 msgid "Row headings"
 msgstr "Záhlaví řádků"
 
-#: ../lib/pytis/form/list.py:1112
+#: ../lib/pytis/form/list.py:1113
 msgid "Show all"
 msgstr "Zobrazit vše"
 
-#: ../lib/pytis/form/list.py:1113
+#: ../lib/pytis/form/list.py:1114
 msgid "Hide all"
 msgstr "Skrýt vše"
 
-#: ../lib/pytis/form/list.py:1120
+#: ../lib/pytis/form/list.py:1121
 msgid "Open predefined aggregated view"
 msgstr "Otevřít předdefinovaný agregovaný náhled"
 
-#: ../lib/pytis/form/list.py:1129
+#: ../lib/pytis/form/list.py:1130
 msgid "Open user defined aggregated view"
 msgstr "Zobrazit uživatelský agregovaný náhled"
 
-#: ../lib/pytis/form/list.py:1132
+#: ../lib/pytis/form/list.py:1133
 msgid "Define new aggregated view"
 msgstr "Nový agregovaný náhled"
 
-#: ../lib/pytis/form/list.py:1136
+#: ../lib/pytis/form/list.py:1137
 msgid "Remove agregated view"
 msgstr "Smazat agregovaný náhled"
 
-#: ../lib/pytis/form/list.py:1148
+#: ../lib/pytis/form/list.py:1149
 msgid "Primary Sorting"
 msgstr "Primární řazení"
 
-#: ../lib/pytis/form/list.py:1149 ../lib/pytis/form/list.py:1154
+#: ../lib/pytis/form/list.py:1150 ../lib/pytis/form/list.py:1155
 msgid "Sort Ascending"
 msgstr "Řadit vzestupně"
 
-#: ../lib/pytis/form/list.py:1151 ../lib/pytis/form/list.py:1156
+#: ../lib/pytis/form/list.py:1152 ../lib/pytis/form/list.py:1157
 msgid "Sort Descending"
 msgstr "Řadit sestupně"
 
-#: ../lib/pytis/form/list.py:1153
+#: ../lib/pytis/form/list.py:1154
 msgid "Secondary Sorting"
 msgstr "Dodatečné řazení"
 
-#: ../lib/pytis/form/list.py:1158
+#: ../lib/pytis/form/list.py:1159
 msgid "Omit this column from sorting"
 msgstr "Neřadit podle tohoto sloupce"
 
-#: ../lib/pytis/form/list.py:1160
+#: ../lib/pytis/form/list.py:1161
 msgid "Cancel sorting completely"
 msgstr "Zrušit řazení úplně"
 
-#: ../lib/pytis/form/list.py:1163
+#: ../lib/pytis/form/list.py:1164
 msgid "Group up to this column"
 msgstr "Seskupovat až po tento sloupec"
 
-#: ../lib/pytis/form/list.py:1165
+#: ../lib/pytis/form/list.py:1166
 msgid "Cancel visual grouping"
 msgstr "Zrušit vizuální seskupování"
 
-#: ../lib/pytis/form/list.py:1168
+#: ../lib/pytis/form/list.py:1169
 msgid "Autofilter"
 msgstr "Autofiltr"
 
-#: ../lib/pytis/form/list.py:1169
+#: ../lib/pytis/form/list.py:1170
 msgid "Cancel filtering"
 msgstr "Zruš filtrování"
 
-#: ../lib/pytis/form/list.py:1171
+#: ../lib/pytis/form/list.py:1172
 msgid "Hide this column"
 msgstr "Skrýt tento sloupec"
 
-#: ../lib/pytis/form/list.py:1173
+#: ../lib/pytis/form/list.py:1174
 msgid "Displayed columns"
 msgstr "Zobrazené sloupce"
 
-#: ../lib/pytis/form/list.py:1196
+#: ../lib/pytis/form/list.py:1197
 msgid "Copy the Result"
 msgstr "Zkopírovat výsledek"
 
-#: ../lib/pytis/form/list.py:1288
+#: ../lib/pytis/form/list.py:1289
 #, python-format
 msgid "Result of aggregation function %(aggregation)s for column %(column)s"
 msgstr "Výsledek funkce %(aggregation)s pro sloupec %(column)s"
 
-#: ../lib/pytis/form/list.py:1447
+#: ../lib/pytis/form/list.py:1448
 msgid "Hide row headings"
 msgstr "Skrýt záhlaví řádků"
 
-#: ../lib/pytis/form/list.py:1492
+#: ../lib/pytis/form/list.py:1493
 msgid "Data changed"
 msgstr "Data změněna"
 
-#: ../lib/pytis/form/list.py:1494
+#: ../lib/pytis/form/list.py:1495
 msgid "Data ok"
 msgstr "Data ok"
 
-#: ../lib/pytis/form/list.py:1508
+#: ../lib/pytis/form/list.py:1509
 msgid "Save the editted record?"
 msgstr "Uložit zeditovaný řádek?"
 
-#: ../lib/pytis/form/list.py:1584
+#: ../lib/pytis/form/list.py:1585
 msgid "Cancel changes in row editation and refresh the form?"
 msgstr "Zrušit změny záznamu a aktualizovat formulář?"
 
-#: ../lib/pytis/form/list.py:1859 ../lib/pytis/form/search.py:632
+#: ../lib/pytis/form/list.py:1860 ../lib/pytis/form/search.py:632
 msgid "Count"
 msgstr "Počet"
 
-#: ../lib/pytis/form/list.py:1947
+#: ../lib/pytis/form/list.py:1948
 msgid "Too many items for autofilter."
 msgstr "Příliš mnoho položek pro autofiltr."
 
-#: ../lib/pytis/form/list.py:2007
+#: ../lib/pytis/form/list.py:2008
 msgid "Unable to search incrementally in this column."
 msgstr "V tomto sloupci nelze vyhledávat inkrementálně."
 
-#: ../lib/pytis/form/list.py:2057
+#: ../lib/pytis/form/list.py:2058
 msgid "The table has no rows!"
 msgstr "Tabulka neobsahuje žádné řádky!"
 
-#: ../lib/pytis/form/list.py:2059
+#: ../lib/pytis/form/list.py:2060
 msgid "The table has too many rows! Use a filter."
 msgstr "Formulář má příliš mnoho řádků. Je třeba ho vyfiltrovat."
 
-#: ../lib/pytis/form/list.py:2062
+#: ../lib/pytis/form/list.py:2063
 msgid "You don't have permissions to export this table."
 msgstr "Nemáte právo exportu k této tabulce."
 
-#: ../lib/pytis/form/list.py:2065
+#: ../lib/pytis/form/list.py:2066
 msgid "Export aborted."
 msgstr "Export nebude proveden."
 
@@ -2113,17 +2127,17 @@ msgstr "Filtrovat přítomné hodnoty (operátor IN)"
 msgid "Filter missing values (operator NOT IN)"
 msgstr "Filtrovat nepřítomné hodnoty (operátor NOT IN)"
 
-#: ../lib/pytis/form/list.py:3354
+#: ../lib/pytis/form/list.py:3357
 msgid "Open with side forms"
 msgstr "Zobrazit včetně vedlejších formulářů"
 
-#: ../lib/pytis/form/list.py:3358
+#: ../lib/pytis/form/list.py:3359
 msgid "Open the current record in a main form with related data in side forms."
 msgstr ""
 "Zobraz aktuální záznam v hlavním formuláři se souvisejícími daty ve "
 "vedlejších formulářích."
 
-#: ../lib/pytis/form/list.py:3620
+#: ../lib/pytis/form/list.py:3621
 msgid "Aggregated View"
 msgstr "Agregovaný náhled"
 
@@ -2210,64 +2224,64 @@ msgstr "Zahodit všechny uložené uživatelské změny nastavení formuláře."
 msgid "Enter the profile name and press ENTER when done."
 msgstr "Zadejte název profilu a potvrďte stiskem ENTER."
 
-#: ../lib/pytis/form/screen.py:1930
+#: ../lib/pytis/form/screen.py:1932
 msgid "Document loaded."
 msgstr "Dokument byl načten."
 
-#: ../lib/pytis/form/screen.py:1935
+#: ../lib/pytis/form/screen.py:1937
 msgid "Loading document failed."
 msgstr "Načtení dokumentu se nezdařilo."
 
-#: ../lib/pytis/form/screen.py:1938
+#: ../lib/pytis/form/screen.py:1940
 msgid "Loading document."
 msgstr "Načítám dokument."
 
-#: ../lib/pytis/form/screen.py:1966
+#: ../lib/pytis/form/screen.py:1968
 #, python-format
 msgid "External URL navigation denied: %s"
 msgstr "Přechod na externí URL zamítnut: %s"
 
-#: ../lib/pytis/form/screen.py:2048
+#: ../lib/pytis/form/screen.py:2050
 msgid "Back"
 msgstr "Zpět"
 
-#: ../lib/pytis/form/screen.py:2049
+#: ../lib/pytis/form/screen.py:2051
 msgid "Go back to the previous location in browser history."
 msgstr "Zobrazit předchozí položku historie prohlížení."
 
-#: ../lib/pytis/form/screen.py:2051
+#: ../lib/pytis/form/screen.py:2053
 msgid "Forward"
 msgstr "Vpřed"
 
-#: ../lib/pytis/form/screen.py:2052
+#: ../lib/pytis/form/screen.py:2054
 msgid "Go forward to the following location in browser history."
 msgstr "Zobrazit následující položku historie prohlížení."
 
-#: ../lib/pytis/form/screen.py:2054
+#: ../lib/pytis/form/screen.py:2056
 msgid "Reload"
 msgstr "Obnovit"
 
-#: ../lib/pytis/form/screen.py:2055
+#: ../lib/pytis/form/screen.py:2057
 msgid "Reload the current document."
 msgstr "Načíst aktuální dokument znovu."
 
-#: ../lib/pytis/form/screen.py:2057
+#: ../lib/pytis/form/screen.py:2059
 msgid "Stop"
 msgstr "Zastavit"
 
-#: ../lib/pytis/form/screen.py:2058
+#: ../lib/pytis/form/screen.py:2060
 msgid "Stop loading the document."
 msgstr "Zastavit načítání dokumentu."
 
-#: ../lib/pytis/form/screen.py:2060
+#: ../lib/pytis/form/screen.py:2062
 msgid "Location"
 msgstr "Adresa"
 
-#: ../lib/pytis/form/screen.py:2061
+#: ../lib/pytis/form/screen.py:2063
 msgid "Current browser URI."
 msgstr "Aktuální adresa prohlížeče."
 
-#: ../lib/pytis/form/screen.py:2348
+#: ../lib/pytis/form/screen.py:2350
 #, python-format
 msgid "External veiwer for '%s' not found."
 msgstr "Nenalezen odpovídající prohlížeč pro '%s'."
@@ -2474,31 +2488,39 @@ msgstr "Kódování exportovaných dat."
 msgid "Must be one of Pyhon supported encodings."
 msgstr "Hodnota musí být jedním z podporovaných kódování v Pythonu."
 
-#: ../lib/pytis/util/configuration.py:936
+#: ../lib/pytis/util/configuration.py:948
+msgid "Maximum time in seconds to left an open transaction untouched."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:957
+msgid "Maximum time in seconds to left an idle transaction untouched."
+msgstr ""
+
+#: ../lib/pytis/util/configuration.py:964
 msgid "Show tooltips."
 msgstr "Zobrazovat bublinovou nápovědu."
 
-#: ../lib/pytis/util/configuration.py:941
+#: ../lib/pytis/util/configuration.py:969
 msgid "Stretch table columns to fit full window width."
 msgstr "Roztahovat sloupce tabulek, aby využily celou šířku okna."
 
-#: ../lib/pytis/util/configuration.py:951
+#: ../lib/pytis/util/configuration.py:979
 msgid "Show the initial splash screen."
 msgstr "Zobrazovat úvodní uvítací dialog."
 
-#: ../lib/pytis/util/configuration.py:963
+#: ../lib/pytis/util/configuration.py:991
 msgid "Enable automatic keyboard shortcut accelerators in menu items."
 msgstr "Automaticky doplnit položky menu prefixy akcelerátorových kláves."
 
-#: ../lib/pytis/util/configuration.py:964
+#: ../lib/pytis/util/configuration.py:992
 msgid "Change requires the application to be restarted."
 msgstr "Změna vyžaduje restart aplikace."
 
-#: ../lib/pytis/util/configuration.py:974
+#: ../lib/pytis/util/configuration.py:1002
 msgid "Cache all specifications on application startup."
 msgstr "Načítat všechny specifikace při startu aplikace."
 
-#: ../lib/pytis/util/configuration.py:975
+#: ../lib/pytis/util/configuration.py:1003
 msgid ""
 "Initializes specifications of all forms when the application starts which "
 "may slightly reduce their subsequent startup time for the cost of a short "
@@ -2507,36 +2529,36 @@ msgstr ""
 "Inicializuje specifikace všech formulářů při startu aplikace čímž může mírně "
 "zrychlit jejich následné spouštění za cenu drobného počátečního zrdžení."
 
-#: ../lib/pytis/util/configuration.py:998
+#: ../lib/pytis/util/configuration.py:1026
 msgid "Current cell highlight color in table forms."
 msgstr "Barva zvýraznění aktivní buňky tabulkového formuláře."
 
-#: ../lib/pytis/util/configuration.py:1007
+#: ../lib/pytis/util/configuration.py:1035
 msgid "Current row highlight color in table forms."
 msgstr "Barva zvýraznění aktivního řádku tabulkového formuláře."
 
-#: ../lib/pytis/util/configuration.py:1016
+#: ../lib/pytis/util/configuration.py:1044
 msgid "Current row highlight color in table forms during inline editation."
 msgstr ""
 "Barva zvýraznění aktivního řádku tabulkového formuláře během inline editace."
 
-#: ../lib/pytis/util/configuration.py:1026
+#: ../lib/pytis/util/configuration.py:1054
 msgid "Current row highlight color in unfocussed table forms."
 msgstr "Barva zvýraznění aktivního řádku neaktivního tabulkového formuláře."
 
-#: ../lib/pytis/util/configuration.py:1035
+#: ../lib/pytis/util/configuration.py:1063
 msgid "Current table row highlight border width in pixels."
 msgstr "Šířka rámečku zvýraznění aktivního řádku tabulkového formuláře v px."
 
-#: ../lib/pytis/util/configuration.py:1047
+#: ../lib/pytis/util/configuration.py:1075
 msgid "Grid line color in table forms."
 msgstr "Barva mřížky tabulkového formuláře."
 
-#: ../lib/pytis/util/configuration.py:1063
+#: ../lib/pytis/util/configuration.py:1091
 msgid "Grouping background downgrade."
 msgstr "Ztmavení barvy skupiny při seskupování řádků."
 
-#: ../lib/pytis/util/configuration.py:1064
+#: ../lib/pytis/util/configuration.py:1092
 msgid ""
 "Grouping may be used to visually distinguish table rows that belong to the "
 "same group.  Table background color is changing between the groups of rows, "
@@ -2555,15 +2577,15 @@ msgstr ""
 "tmavší než bílá, o tolik bude výsledná barva skupiny tmavší, než výchozí "
 "barva.  Barva je reprezentována řetězcem '#RRGGBB'."
 
-#: ../lib/pytis/util/configuration.py:1077
+#: ../lib/pytis/util/configuration.py:1105
 msgid "Ineditable input field background color."
 msgstr "Barva pozadí needitovatelného vstupního políčka."
 
-#: ../lib/pytis/util/configuration.py:1082
+#: ../lib/pytis/util/configuration.py:1110
 msgid "Color of input field ineditable due to access rights."
 msgstr "Pozadí políčka needitovatelného kvůli přístupovým právům."
 
-#: ../lib/pytis/util/configuration.py:1096
+#: ../lib/pytis/util/configuration.py:1124
 msgid ""
 "Background color during field editation when the current value is not valid."
 msgstr ""
@@ -2665,101 +2687,98 @@ msgid "Open insertion form \"%s\""
 msgstr "Otevřít vstupní formulář \"%s\""
 
 #: ../lib/pytis/extensions/spec.py:242
-msgid "Spustit formulář"
-msgstr ""
+msgid "Run Form"
+msgstr "Spustit formulář"
 
 #: ../lib/pytis/extensions/spec.py:243
-msgid "Typ formuláře"
-msgstr ""
+msgid "Form type"
+msgstr "Typ formuláře"
 
 #: ../lib/pytis/extensions/spec.py:246
-msgid "Název specifikace"
-msgstr ""
+msgid "Specification name"
+msgstr "Název specifikace"
 
 #: ../lib/pytis/extensions/spec.py:432
 #, python-format
-msgid "Požadován je typ %s."
-msgstr ""
-
-#: ../lib/pytis/extensions/spec.py:434
-#, python-format
-msgid "Povolené typy jsou %s"
-msgstr ""
-
-#: ../lib/pytis/extensions/spec.py:435
-#, python-format
-msgid "Detekována data typu %s. %s"
-msgstr ""
+msgid "Detected data type %(detected)s. Expected %(expected)."
+msgstr "Detekována data typu %(detected)s. Očekávám %(expected)s."
 
 #: ../lib/pytis/output/flibdata.py:161
-msgid "Chybný odkaz na sloupec"
-msgstr ""
+msgid "Invalid column reference"
+msgstr "Chybný odkaz na sloupec"
 
 #: ../lib/pytis/output/formatter.py:160
 #, python-format
-msgid "Bude se formátovat tabulka s mnoha řádky (%d).\n"
-msgstr ""
+msgid "Going to format a table with many rows (%d)."
+msgstr "Bude se formátovat tabulka s mnoha řádky (%d)."
 
 #: ../lib/pytis/output/formatter.py:161
-msgid "Chcete v tisku přesto pokračovat?"
+msgid "Do you want to continue printing anyway?"
 msgstr ""
 
 #: ../lib/pytis/output/formatter.py:536
 msgid ""
-"Chybné použití iterátoru.\n"
-"Možná se v tabulce odkazujete na neexistující nebo nepřístupný objekt?\n"
+"Invalid use of iterator.\n"
+"Maybe you refer to an non-existent or inaccessible object in the table?"
 msgstr ""
+"Chybné použití iterátoru.\n"
+"Možná se v tabulce odkazujete na neexistující nebo nepřístupný objekt?"
+
+#: ../lib/pytis/output/formatter.py:595
+msgid "COLUMN_IDENTIFIER"
+msgstr "IDENTIFIKÁTOR_SLOUPCE"
 
 #: ../lib/pytis/output/formatter.py:596
-msgid ""
-"Proměnné pro hlavní šablonu:\n"
-"  ${current_row.IDENTIFIKÁTOR_SLOUPCE} ... vložení hodnoty sloupce\n"
-"  ${table} ... vložení celé tabulky\n"
-"  ${data.IDENTIFIKÁTOR_SLOUPCE} ... vložení hodnoty v opakovaném řádku "
-"tabulky\n"
-"  \n"
-msgstr ""
+msgid "Primary template variables:"
+msgstr "Proměnné pro hlavní šablonu:"
 
-#: ../lib/pytis/output/formatter.py:609
-msgid "Identifikátory sloupců:\n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:598
+msgid "column value insertion"
+msgstr "vložení hodnoty sloupce"
 
-#: ../lib/pytis/output/formatter.py:611
-#, python-format
-msgid "  %s ... %s\n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:599
+msgid "complete table insertion"
+msgstr "vložení celé tabulky"
 
-#: ../lib/pytis/output/formatter.py:615
-msgid "Číselníky:\n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:600
+msgid "value insertion in repeated table row"
+msgstr "vložení hodnoty v opakovaném řádku tabulky"
 
-#: ../lib/pytis/output/formatter.py:620
-msgid "Vedlejší formuláře:\n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:608 ../lib/pytis/output/formatter.py:628
+msgid "Column identifiers:"
+msgstr "Identifikátory sloupců:"
 
-#: ../lib/pytis/output/formatter.py:629
-msgid "  Identifikátory sloupců:\n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:614 ../lib/pytis/output/formatter.py:634
+msgid "Codebooks:"
+msgstr "Číselníky:"
 
-#: ../lib/pytis/output/formatter.py:632
-#, python-format
-msgid "    %s ... %s\n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:619
+msgid "Side forms:"
+msgstr "Vedlejší formuláře:"
 
-#: ../lib/pytis/output/formatter.py:635
-msgid "  Číselníky:\n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:640
+msgid "Aggregation variables:"
+msgstr "Agregační proměnné:"
 
-#: ../lib/pytis/output/formatter.py:641
-msgid ""
-"Agregační proměnné:\n"
-"  ${agg.min.IDENTIFIKÁTOR_SLOUPCE} ..... minimum\n"
-"  ${agg.max.IDENTIFIKÁTOR_SLOUPCE} ..... maximum\n"
-"  ${agg.count.IDENTIFIKÁTOR_SLOUPCE} ... počet\n"
-"  ${agg.sum.IDENTIFIKÁTOR_SLOUPCE} ..... součet\n"
-"  ${agg.avg.IDENTIFIKÁTOR_SLOUPCE} ..... průměr\n"
-"  \n"
-msgstr ""
+#: ../lib/pytis/output/formatter.py:642
+msgid "minimum"
+msgstr "minimum"
+
+#: ../lib/pytis/output/formatter.py:643
+msgid "maximum"
+msgstr "maximum"
+
+#: ../lib/pytis/output/formatter.py:644
+msgid "count"
+msgstr "počet"
+
+#: ../lib/pytis/output/formatter.py:645
+msgid "sum"
+msgstr "součet"
+
+#: ../lib/pytis/output/formatter.py:646
+msgid "average"
+msgstr "průměr"
 
 #: ../lib/pytis/output/markup.py:100
 msgid "Chybné argumenty prvku"
@@ -2928,6 +2947,9 @@ msgstr ""
 #, python-format
 msgid "Nepodařilo se vybrat soubor k uložení: %s"
 msgstr ""
+
+#~ msgid "Chcete v tisku přesto pokračovat?"
+#~ msgstr "Do you want to continue printing anyway?"
 
 #~ msgid "Use automatically on form startup"
 #~ msgstr "Použít automaticky při otevření formuláře"
