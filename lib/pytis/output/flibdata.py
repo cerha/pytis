@@ -158,6 +158,5 @@ def data_item(resolver, name, column, key=None):
     try:
         value = presented_row.format(column, secure=True)
     except KeyError:
-        raise pytis.output.TemplateException(_(u"Chybný odkaz na sloupec"),
-                                             name, column)
+        raise pytis.output.TemplateException(_("Invalid column reference"), name, column)
     return value

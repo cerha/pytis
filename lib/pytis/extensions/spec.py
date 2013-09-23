@@ -239,11 +239,11 @@ def run_any_form():
     )
     row = pytis.form.run_form(
         pytis.form.InputForm,
-        title=_("Spustit formulář"),
-        fields=(Field('type', _(u"Typ formuláře"), not_null=True,
+        title=_("Run Form"),
+        fields=(Field('type', _("Form type"), not_null=True,
                       enumerator=pytis.data.FixedEnumerator([x[0] for x in form_types]),
                       default='BrowseForm'),
-                Field('name', _(u"Název specifikace"), width=40),
+                Field('name', _("Specification name"), width=40),
                 ))
     if row is not None:
         form_type = dict(form_types)[row['type'].value()]
@@ -428,9 +428,6 @@ def mime_type_constraint(*allowed_mime_types):
         if mime_type in allowed_mime_types:
             return None
         else:
-            if len(allowed_mime_types) == 1:
-                allowed_types_msg = _(u"Požadován je typ %s.") % allowed_mime_types
-            else:
-                allowed_types_msg = _(u"Povolené typy jsou %s") % ', '.join(allowed_mime_types)
-            return _(u"Detekována data typu %s. %s") % (mime_type, allowed_types_msg)
+            return _("Detected data type %(detected)s. Expected %(expected).", 
+                     detected=mime_type, expected=', '.join(allowed_mime_types))
     return constraint

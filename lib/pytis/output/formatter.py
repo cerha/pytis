@@ -157,8 +157,8 @@ class _DataIterator(lcg.SubstitutionIterator):
             self._select_kwargs = None
             if count > config.output_row_limit:
                 import pytis.form
-                message = (_("Bude se formátovat tabulka s mnoha řádky (%d).\n") % (count,) +
-                           _("Chcete v tisku přesto pokračovat?"))
+                message = (_("Going to format a table with many rows (%d).", count) + "\n" +
+                           _("Do you want to continue printing anyway?"))
                 if not pytis.form.run_dialog(pytis.form.Question, message):
                     raise pytis.form.UserBreakException()
     def _value(self):
@@ -533,9 +533,9 @@ class LCGFormatter(object):
         try:
             pdf = exporter.export(context, global_presentation=presentation)
         except lcg.SubstitutionIterator.IteratorError, e:
-            message = _("Chybné použití iterátoru.\n"
-                        "Možná se v tabulce odkazujete na neexistující nebo nepřístupný objekt?\n")
-            message += unicode(e)
+            message = _("Invalid use of iterator.\n"
+                        "Maybe you refer to an non-existent or inaccessible object in the table?")
+            message += "\n" + unicode(e)
             pytis.form.run_dialog(pytis.form.Error, message)
             return ''
         show_time = pytis.data.DateTime.now()
@@ -592,13 +592,12 @@ class LCGFormatter(object):
           module -- name of the specification to generate the help for, string
 
         """
-        text = u""
-        text += _("""Proměnné pro hlavní šablonu:
-  ${current_row.IDENTIFIKÁTOR_SLOUPCE} ... vložení hodnoty sloupce
-  ${table} ... vložení celé tabulky
-  ${data.IDENTIFIKÁTOR_SLOUPCE} ... vložení hodnoty v opakovaném řádku tabulky
-  
-""")
+        cid = _("COLUMN_IDENTIFIER")
+        text = (_("Primary template variables:") + "\n" +
+                "".join(["  ${%s} ... %s\n" % (name, descr) for name, descr in (
+                    ('current_row.' + cid, _("column value insertion")),
+                    ('table', _("complete table insertion")),
+                    ('data.' + cid, _("value insertion in repeated table row")))]) + "\n")
         resolver = pytis.util.resolver()
         try:
             view_spec = resolver.get(module, 'view_spec')
@@ -606,46 +605,45 @@ class LCGFormatter(object):
             return text
         bindings = view_spec.bindings()
         bindings = [b for b in bindings if b.name() and pytis.form.has_access(b.name())]
-        text += _("Identifikátory sloupců:\n")
+        text += _("Column identifiers:") + "\n"
         for field in view_spec.fields():
-            text += _("  %s ... %s\n") % (field.id(), field.label(),)
+            text += '  %s ... %s\n' % (field.id(), field.label(),)
         text += "\n"
         codebooks = LCGFormatter._retrieve_codebooks(view_spec)
         if codebooks:
-            text += _("Číselníky:\n")
+            text += _("Codebooks:") + "\n"
             for field_id, cb_fields, _cb in codebooks:
                 for cb_id, cb_label in cb_fields:
                     text += "  ${codebook.%s.%s} ... %s\n" % (field_id, cb_id, cb_label,)
         if bindings:
-            text += _("Vedlejší formuláře:\n")
+            text += _("Side forms:") + "\n"
             for b in bindings:
                 binding_id = re.sub('[^A-Za-z0-9_]', '_', b.id())
                 form_name = b.name()
                 if ((pytis.form.has_access(form_name) and
                      pytis.form.has_access(form_name, perm=pytis.data.Permission.PRINT))):
-                    text += "  ${Binding.%s.table} ... %s\n" % (binding_id, b.title(),)
-                    text += ("  ${Binding.%s.data.IDENTIFIKÁTOR_SLOUPCE} ... %s\n" %
-                             (binding_id, b.title(),))
-                    text += _("  Identifikátory sloupců:\n")
+                    text += '  ${Binding.%s.table} ... %s\n' % (binding_id, b.title(),)
+                    text += ('  ${Binding.%s.data.%s} ... %s\n' %
+                             (binding_id, cid, b.title(),))
+                    text += "  " + _("Column identifiers:") + "\n"
                     sub_view_spec = resolver.get(b.name(), 'view_spec')
                     for field in sub_view_spec.fields():
-                        text += _("    %s ... %s\n") % (field.id(), field.label(),)
+                        text += '    %s ... %s\n' % (field.id(), field.label(),)
                     codebooks = LCGFormatter._retrieve_codebooks(sub_view_spec)
                     if codebooks:
-                        text += _("  Číselníky:\n")
+                        text += "  " + _("Codebooks:")
                         for field_id, cb_fields, _cb in codebooks:
                             for cb_id, cb_label in cb_fields:
-                                text += ("  ${Binding.%s.codebook.%s.%s} ... %s\n" %
+                                text += ('  ${Binding.%s.codebook.%s.%s} ... %s\n' %
                                          (binding_id, field_id, cb_id, cb_label,))
                     text += "\n"
-        text += _("""Agregační proměnné:
-  ${agg.min.IDENTIFIKÁTOR_SLOUPCE} ..... minimum
-  ${agg.max.IDENTIFIKÁTOR_SLOUPCE} ..... maximum
-  ${agg.count.IDENTIFIKÁTOR_SLOUPCE} ... počet
-  ${agg.sum.IDENTIFIKÁTOR_SLOUPCE} ..... součet
-  ${agg.avg.IDENTIFIKÁTOR_SLOUPCE} ..... průměr
-  
-""")
+        text += (_("Aggregation variables:") + "\n" +
+                 "".join(["  ${agg.%s.%s} ...%s %s\n" % (agg, cid, '.' * (3 - len(name)), name)
+                          for agg, name in (('min', _("minimum")),
+                                            ('max', _("maximum")),
+                                            ('count', _("count")),
+                                            ('sum', _("sum")),
+                                            ('avg', _("average")))]))
         return text
 
 
