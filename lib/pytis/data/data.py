@@ -1542,18 +1542,13 @@ class Row:
                 k, v = item
                 assert isinstance(k, basestring), ('Invalid column id', k,)
                 assert isinstance(v, Value), ('Invalid column value', v,)
+        self._indexes = dict([(key, i) for i, (key, value) in enumerate(data)])
         self._data = list(data)
 
     def _index(self, key):
         if isinstance(key, basestring):
-            data = self._data
-            for i in range(len(data)):
-                if data[i][0] == key:
-                    result = i
-                    break
-            else:
-                raise KeyError(key)
-        elif isinstance(key, int) or isinstance(key, long):
+            return self._indexes[key]
+        elif isinstance(key, (int, long)):
             if key < 0:
                 result = len(self) + key
                 if result < 0:
@@ -1698,7 +1693,7 @@ class Row:
         Pořadí položek vráceného seznamu je nedefinováno.
         
         """
-        return [c[0] for c in self._data]
+        return self._indexes.keys()
 
     def items(self):
         """Vrať seznam dvojic [ID, VALUE] odpovídajících všem sloupcům.
@@ -1721,8 +1716,7 @@ class Row:
         v odpovídajícím pořadí.
 
         """
-        values = map(lambda k, self=self: self[k], keys)
-        return tuple(values)
+        return tuple([self[k] for k in keys])
 
     def append(self, key, value):
         """Připoj na konec řádku sloupec 'key' s hodnotou 'value'.
@@ -1738,6 +1732,7 @@ class Row:
         assert isinstance(value, Value)
         assert not some(lambda x, k=key: x[0] == k, self._data)
         self._data.append((key, value))
+        self._indexes[key] = len(self._data) - 1
         
     def update(self, dict):
         """Updatuj hodnoty sloupců hodnotami z 'dict'.
