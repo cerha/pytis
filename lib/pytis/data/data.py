@@ -1542,8 +1542,11 @@ class Row:
                 k, v = item
                 assert isinstance(k, basestring), ('Invalid column id', k,)
                 assert isinstance(v, Value), ('Invalid column value', v,)
+        self._set_data(list(data))
+            
+    def _set_data(self, data):
+        self._data = data
         self._indexes = dict([(key, i) for i, (key, value) in enumerate(data)])
-        self._data = list(data)
 
     def _index(self, key):
         if isinstance(key, basestring):
@@ -1570,8 +1573,8 @@ class Row:
                 raise InvalidAccessError('Invalid row key', k)
             if not isinstance(v, Value):
                 raise InvalidAccessError('Invalid row value', v)
-        self._data = state
-        
+        self._set_data(state)
+
     def __unicode__(self):
         items = [self._data[i][0] + '==' + unicode(item)
                  for i, item in enumerate(self)]
