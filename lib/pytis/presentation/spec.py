@@ -3126,8 +3126,6 @@ class Field(object):
         assert null_display is None or isinstance(null_display, basestring), null_display
         assert inline_display is None or isinstance(inline_display, basestring), inline_display
         assert inline_referer is None or isinstance(inline_referer, basestring), inline_referer
-        # TODO: Enable this after merging data-type-cleanup! (belongs to the line above)
-        # and not not_null and (codebook or enumerator)
         assert isinstance(allow_codebook_insert, bool), allow_codebook_insert
         assert codebook_insert_spec is None \
             or isinstance(codebook_insert_spec, basestring), codebook_insert_spec
