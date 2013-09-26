@@ -3832,6 +3832,22 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
         """Return true iff the transaction is open and hasn't been closed yet."""
         return self._open
 
+    def set_max_age(self, moment):
+        """Set maximum transaction age.
+
+        Calling the method has the same effect on transaction age as if an SQL
+        command was called at 'moment'.
+
+        Arguments:
+
+          moment -- minimum time to set in the same form as 'time.time()'
+            result
+
+        """
+        c = self._trans_connection()
+        value = max(c.connection_info('last_query_time') or 0, moment)
+        c.set_connection_info('last_query_time', value)
+        
     @classmethod
     def close_transactions(class_):
         """Check all transactions for timeout.

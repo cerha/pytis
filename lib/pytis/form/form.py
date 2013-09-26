@@ -2314,8 +2314,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._row[key] = value
 
     def _on_idle_close_transactions(self):
-        if ((self._edit_form_timeout is not None and
-             pytis.form.last_event_age() > self._edit_form_timeout)):
+        age = pytis.form.last_event_age()
+        if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
             edit = run_dialog(pytis.form.Question, title=_(u"Zrušit formulář?"),
                               message=_(u"Vypršel časový limit pro editaci formuláře.\n"
                                         u"Chcete v editaci ještě pokračovat?"),
@@ -2329,6 +2329,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                 self._edit_form_timeout = None
                 if edit is None:
                     run_dialog(pytis.form.Error, _(u"Vypršel časový limit pro editaci formuláře."))
+        if self._transaction is not None:
+            self._transaction.set_max_age(age)
         super(EditForm, self)._on_idle_close_transactions()
 
     def _set_focus_field(self, event=None):
