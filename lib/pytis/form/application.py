@@ -232,6 +232,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
                             run_dialog(pytis.form.Error, _("Invalid password"))
                 if crypto_password:
                     config.dbconnection.set_crypto_password(crypto_password)
+                    config.dbconnection = config.dbconnection # mark as changed
         decrypted_names = set()
         if count > 0 and crypto_password and data is not None:
             crypto_password_value = pytis.data.sval(crypto_password)
@@ -1479,6 +1480,7 @@ def db_op(operation, args=(), kwargs={}, in_transaction=False, quiet=False):
                 return FAILURE
             config.dbconnection.update_login_data(user=login_result['login'].value(),
                                                   password=login_result['password'].value())
+            config.dbconnection = config.dbconnection # mark as changed
         except pytis.data.DBException as e:
             log(OPERATIONAL, "Database exception in db_operation", format_traceback())
             message = e.message()
