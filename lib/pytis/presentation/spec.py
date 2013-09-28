@@ -1460,7 +1460,7 @@ class ViewSpec(object):
         Provider Arguments
 
         Functions 'condition_provider' and 'argument_provider' are called with
-        various keyword arguemnts.  Their list is below.  Only those arguments,
+        various keyword arguments.  Their list is below.  Only those arguments,
         which make sense in given case are actually passed.  The function
         should generally consume only the arguments it needs, but still accept
         all other keyword arguments (**kwargs) for the possibility of extending
