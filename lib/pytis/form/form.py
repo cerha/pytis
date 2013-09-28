@@ -1065,10 +1065,13 @@ class LookupForm(InnerForm):
     def _init_data_select(self, data, async_count=False):
         if self._governing_transaction is None:
             def timeout_callback():
-                data.close()
-                if self._transaction is not None:
-                    db_operation(self._transaction.rollback)
-                    self._transaction = None
+                try:
+                    data.close()
+                    if self._transaction is not None:
+                        db_operation(self._transaction.rollback)
+                        self._transaction = None
+                except pytis.data.DBException:
+                    pass
         else:
             timeout_callback = None
         self._transaction_timeout_callback = timeout_callback
