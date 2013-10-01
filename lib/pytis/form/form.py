@@ -2304,7 +2304,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         super_(EditForm)._init_attributes(self, _new=new, **kwargs)
         self._mode = mode
         self._focus_field = focus_field or self._view.focus_field()
-        self._edit_form_timeout = config.edit_form_timeout
+        self._edit_form_timeout = None if self._transaction is None else config.edit_form_timeout
         # Other attributes
         self._fields = []
         if set_values:
@@ -3188,6 +3188,9 @@ class PopupInsertForm(PopupEditForm):
     
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
+        
+    def _default_transaction(self):
+        return None
         
         
 class ShowForm(EditForm):
