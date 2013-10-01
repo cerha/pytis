@@ -2324,10 +2324,14 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                                         u"Chcete v editaci ještě pokračovat?"),
                               timeout=20)
             if not edit:
-                for id_ in (wx.ID_OK, wx.ID_FORWARD, wx.ID_BACKWARD,):
-                    button = wx.FindWindowById(id_, self._parent)
-                    if button is not None:
-                        button.Enable(False)
+                def disable_buttons(w):
+                    for c in w.GetChildren():
+                        if isinstance(c, wx.Button):
+                            if c.GetId() != wx.ID_CANCEL:
+                                c.Enable(False)
+                        else:
+                            disable_buttons(c)
+                disable_buttons(self._parent)
                 callback = self._transaction_timeout_callback
                 if callback is not None:
                     callback()
