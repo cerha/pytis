@@ -3193,9 +3193,6 @@ class PopupInsertForm(PopupEditForm):
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
         
-    def _default_transaction(self):
-        return None
-        
         
 class ShowForm(EditForm):
     """Formulář pro zobrazení náhledu.
