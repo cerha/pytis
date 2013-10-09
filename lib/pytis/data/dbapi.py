@@ -250,16 +250,18 @@ class _DBAPIAccessor(PostgreSQLAccessor):
             self._maybe_connection_error(e)
     
     def _postgresql_commit_transaction(self):
-        connection = self._pg_get_connection()[0]
+        connection, new = self._pg_get_connection()
         raw_connection = connection.connection()
         try:
             raw_connection.commit()
             self._postgresql_reset_connection_info(connection, ['commit'])
         except dbapi.OperationalError as e:
             self._maybe_connection_error(e)
+        if new:
+            self._pg_return_connection(connection)
         
     def _postgresql_rollback_transaction(self):
-        connection = self._pg_get_connection()[0]
+        connection, new = self._pg_get_connection()
         raw_connection = connection.connection()
         try:
             raw_connection.rollback()
@@ -277,6 +279,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         # We commit the transaction immediately to prevent an open
         # (maybe) idle transaction.
         raw_connection.commit()
+        if new:
+            self._pg_return_connection(connection)
 
     def _maybe_connection_error(self, e):
         if e.args[0].find('server closed the connection unexpectedly') != -1:
