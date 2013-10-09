@@ -36,6 +36,12 @@ import thread
 import threading
 import time
 import weakref
+try:
+    # WeakSet was introduced in Python 2.7 and we need to support Wiking
+    # applications on older installations.
+    WeakSet = weakref.WeakSet
+except AttributeError:
+    WeakSet = object
 
 import pytis.data
 from pytis.data import DBException, DBInsertException, DBLockException, DBRetryException, \
@@ -3723,7 +3729,7 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
     REPEATABLE_READ = 'repeatable read'
 
-    _watched_transactions = weakref.WeakSet()
+    _watched_transactions = WeakSet()
     _trans_last_check = {}
     _trans_check_interval = None
 
