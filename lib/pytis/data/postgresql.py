@@ -36,12 +36,6 @@ import thread
 import threading
 import time
 import weakref
-try:
-    # WeakSet was introduced in Python 2.7 and we need to support Wiking
-    # applications on older installations.
-    WeakSet = weakref.WeakSet
-except AttributeError:
-    WeakSet = object
 
 import pytis.data
 from pytis.data import DBException, DBInsertException, DBLockException, DBRetryException, \
@@ -56,6 +50,20 @@ from pytis.util import ACTION, Counter, DEBUG, ecase, EVENT, is_anystring, is_se
     with_lock, xtuple
 import evaction
 
+try:
+    # WeakSet was introduced in Python 2.7 and we need to support Wiking
+    # applications on older installations.
+    WeakSet = weakref.WeakSet
+except AttributeError:
+    class WeakSet(weakref.WeakValueDictionary):
+        def __init__(self):
+            weakref.WeakValueDictionary.__init__(self)
+            self._pg_counter = pytis.util.Counter()
+        def add(self, item):
+            self[self._pg_counter.next()] = item
+        def __iter__(self):
+            for v in self.values():
+                yield v
 
 _ = pytis.util.translations('pytis-data')
 
@@ -172,6 +180,8 @@ class PostgreSQLAccessor(object_2_5):
     class _postgresql_Connection(object):
         """Spojení do databáze.
         """
+        _connection_set = WeakSet()
+
         def __init__(self, connection, connection_data):
             """
 
@@ -181,6 +191,7 @@ class PostgreSQLAccessor(object_2_5):
               connection_data -- specifikace parametrů spojení
               
             """
+            self._connection_set.add(self)
             self._connection = connection
             self._connection_data = connection_data
             self._connection_info = {}
@@ -196,6 +207,14 @@ class PostgreSQLAccessor(object_2_5):
 
         def set_connection_info(self, key, value):
             self._connection_info[key] = value
+
+        @classmethod
+        def rollback_connections(class_):
+            for c in class_._connection_set:
+                try:
+                    c._connection.rollback()
+                except:
+                    pass
 
     class _postgresql_Result(object):
         """Výsledek SQL příkazu.
@@ -351,6 +370,10 @@ class PostgreSQLAccessor(object_2_5):
         
     def _postgresql_rollback_transaction(self):
         self._pg_query('rollback')
+
+    @classmethod
+    def rollback_connections(class_):
+        class_._postgresql_Connection.rollback_connections()
 
 
 class PostgreSQLConnector(PostgreSQLAccessor):
