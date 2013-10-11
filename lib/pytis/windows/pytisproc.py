@@ -178,7 +178,8 @@ class PytisUserService(PytisService):
                 return self._filename
         return Wrapper(filename)
 
-    def exposed_make_selected_file(self, filename=None, template=None, encoding=None, mode='wb'):
+    def exposed_make_selected_file(self, filename=None, template=None, encoding=None, mode='wb',
+                                   multi=False):
         """Return a write-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -190,6 +191,7 @@ class PytisUserService(PytisService):
           template -- a string defining the required file name pattern, or 'None'
           encoding -- output encoding, string or None
           mode -- default mode for opening the file
+          multi -- iff true, allow selecting multiple files
 
         """
         assert template is None or isinstance(template, basestring), template
@@ -214,8 +216,10 @@ class PytisUserService(PytisService):
         # Without this parent windows the method DoModal doesn't show
         # the dialog window on top...
         parent = win32ui.FindWindow(None, None)
-        dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename,
-                                          win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT,
+        flags = win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT
+        if multi:
+            flags |= win32con.OFN_ALLOWMULTISELECT
+        dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename, flags,
                                           file_filter, parent)
         result = dialog.DoModal()
         if result != 1:
