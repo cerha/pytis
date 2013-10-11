@@ -191,3 +191,11 @@ def make_temporary_file(suffix='', encoding=None, mode='wb'):
         return _request('make_temporary_file', suffix=suffix, encoding=encoding, mode=mode)
     except:
         return None
+
+def select_directory(self):
+    try:
+        return _request('select_directory')
+    except Exception as e:
+        import pytis.form
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nepodařilo se vybrat adresář: %s") % (e,))

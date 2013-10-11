@@ -275,6 +275,16 @@ class PytisUserService(PytisService):
         handle, filename = tempfile.mkstemp(prefix='pytis', suffix=suffix)
         return Wrapper(handle, filename, encoding, mode)
 
+    def exposed_select_directory(self):
+        import win32gui
+        from win32com.shell import shell, shellcon
+        # Get PIDL of the topmost folder for the dialog
+        desktop_pidl = shell.SHGetFolderLocation(0, shellcon.CSIDL_DESKTOP, 0, 0)
+        pidl, display_name, image_list = shell.SHBrowseForFolder(
+            win32gui.GetDesktopWindow(), desktop_pidl, u"Výběr adresáře", 0, None, None)
+        # Transform PIDL back to a directory name and return it
+        return shell.SHGetPathFromIDList(pidl)
+
 class PytisAdminService(PytisService):
 
     def _true_authentication(self):

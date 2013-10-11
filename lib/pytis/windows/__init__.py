@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -24,4 +24,5 @@ except ImportError as e:
         raise e
 from remote import nx_ip, client_ip, x2go_ip, windows_available, version, \
     get_clipboard_text, set_clipboard_text, \
-    launch_file, launch_url, open_selected_file, make_selected_file, make_temporary_file
+    launch_file, launch_url, open_selected_file, make_selected_file, make_temporary_file, \
+    select_directory
