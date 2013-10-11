@@ -679,9 +679,9 @@ class InputNumeric(InputDialog):
                                  )
         if self._value is not None:
             control.SetValue(self._value)
-        if self._min_value:
+        if self._min_value is not None:
             control.SetMin(self._min_value)
-        if self._max_value:
+        if self._max_value is not None:
             control.SetMax(self._max_value)
         if self._limited:
             control.SetLimited(True)
