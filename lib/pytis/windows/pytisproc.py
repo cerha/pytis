@@ -156,9 +156,9 @@ class PytisUserService(PytisService):
         else:
             file_filter = u"Všechny soubory (*.*)|*.*||"
             filename = "*.*"
-        parent = win32ui.FindWindow(None,None)
+        parent = win32ui.FindWindow(None, None)
         dialog = win32ui.CreateFileDialog(1, extension, "%s" % filename,
-                                          win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
+                                          win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT,
                                           file_filter, parent)
         result = dialog.DoModal()
         if result != 1:
@@ -189,7 +189,7 @@ class PytisUserService(PytisService):
           filename -- default filename or None
           template -- a string defining the required file name pattern, or 'None'
           encoding -- output encoding, string or None
-          mode -- default mode for opening the file 
+          mode -- default mode for opening the file
 
         """
         assert template is None or isinstance(template, basestring), template
@@ -213,9 +213,9 @@ class PytisUserService(PytisService):
         # we get some parent window for CreateFileDialog.
         # Without this parent windows the method DoModal doesn't show
         # the dialog window on top...
-        parent = win32ui.FindWindow(None,None) 
+        parent = win32ui.FindWindow(None, None)
         dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename,
-                                          win32con.OFN_HIDEREADONLY|win32con.OFN_OVERWRITEPROMPT,
+                                          win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT,
                                           file_filter, parent)
         result = dialog.DoModal()
         if result != 1:
@@ -250,7 +250,7 @@ class PytisUserService(PytisService):
           suffix -- suffix to use in the temporary file name; if a dot should
             be part of the suffix then it must be explicitly included in it
           encoding -- output encoding, string or None
-          mode -- default mode for opening the file 
+          mode -- default mode for opening the file
         
         """
         class Wrapper(object):
@@ -301,7 +301,7 @@ class PytisAdminService(PytisService):
             task.SetApplicationName(cmd[0])
             task.SetParameters(' '.join(cmd[1:]))
             task.SetPriority(taskscheduler.REALTIME_PRIORITY_CLASS)
-            task.SetFlags(taskscheduler.TASK_FLAG_DELETE_WHEN_DONE|
+            task.SetFlags(taskscheduler.TASK_FLAG_DELETE_WHEN_DONE |
                           taskscheduler.TASK_FLAG_RUN_ONLY_IF_LOGGED_ON)
             task.SetAccountInformation('', None)
             scheduler.AddWorkItem(name, task)
@@ -320,8 +320,8 @@ class PytisAdminService(PytisService):
             persist_file.Save(None, 1)
             task = scheduler.Activate(name)
         now = time.time()
-        add_task('pytis_service_stop', 'sc stop PytisService', now + delay*60)
-        add_task('pytis_service_start', 'sc start PytisService', now + (delay+1)*60)
+        add_task('pytis_service_stop', 'sc stop PytisService', now + delay * 60)
+        add_task('pytis_service_start', 'sc start PytisService', now + (delay + 1) * 60)
         
     def exposed_register_user(self, user, port):
         assert isinstance(user, basestring), user

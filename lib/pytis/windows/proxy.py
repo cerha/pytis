@@ -53,7 +53,7 @@ class ProxyService(rpyc.Service):
                 port = getattr(master_connection.root, 'user_port')(user_name)
             except:
                 master_connection = self._connections[master_port] = \
-                  self._new_pytis_connection(target_ip, master_port)
+                    self._new_pytis_connection(target_ip, master_port)
                 port = getattr(master_connection.root, 'user_port')(user_name)
                 if port is None:
                     raise ProxyException("User server unavailable", user_name)

@@ -22,7 +22,7 @@ import pwd
 import re
 import subprocess
 
-from pytis.util import *
+from pytis.util import DEBUG, UNDEFINED, log, translations
 import config
 
 _ = translations('pytis-wx')
@@ -149,7 +149,8 @@ def launch_file(path):
         return _request('launch_file', wpath)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Soubor %s se nepodařilo otevřít: %s") % (wpath, e,))
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Soubor %s se nepodařilo otevřít: %s") % (wpath, e,))
 
 def launch_url(url):
     assert isinstance(url, basestring), url
@@ -165,7 +166,8 @@ def open_selected_file(template=None):
         return _request('open_selected_file', template)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Nepodařilo se vybrat soubor ke stažení: %s") % (e,))    
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nepodařilo se vybrat soubor ke stažení: %s") % (e,))
 
 def make_selected_file(filename=None, template=None, encoding=None, mode='wb'):
     assert filename is None or isinstance(filename, basestring), filename
@@ -177,7 +179,8 @@ def make_selected_file(filename=None, template=None, encoding=None, mode='wb'):
                         encoding=encoding, mode=mode)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("Nepodařilo se vybrat soubor k uložení: %s") % (e,))    
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nepodařilo se vybrat soubor k uložení: %s") % (e,))
 
 def make_temporary_file(suffix='', encoding=None, mode='wb'):
     assert isinstance(suffix, basestring), suffix
