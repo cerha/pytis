@@ -192,7 +192,7 @@ def make_temporary_file(suffix='', encoding=None, mode='wb'):
     except:
         return None
 
-def select_directory(self):
+def select_directory():
     try:
         return _request('select_directory')
     except Exception as e:
