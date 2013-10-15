@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2012-11-30 17:08'
+_VERSION = '2013-10-15 17:24'
 
 import os
 import rpyc
@@ -163,7 +163,7 @@ class PytisUserService(PytisService):
         result = dialog.DoModal()
         if result != 1:
             return None
-        filename = dialog.GetPathName()
+        filename = unicode(dialog.GetPathName(), sys.getfilesystemencoding())
         if filename is None:
             return None
         class Wrapper(object):
@@ -224,7 +224,7 @@ class PytisUserService(PytisService):
         result = dialog.DoModal()
         if result != 1:
             return None
-        filename = dialog.GetPathName()
+        filename = unicode(dialog.GetPathName(), sys.getfilesystemencoding())
         if filename is None:
             return None
         class Wrapper(object):
