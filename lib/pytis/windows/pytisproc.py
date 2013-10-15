@@ -220,9 +220,10 @@ class PytisUserService(PytisService):
         result = dialog.DoModal()
         if result != 1:
             return None
-        filename = unicode(dialog.GetPathName(), sys.getfilesystemencoding())
+        filename = dialog.GetPathName()
         if filename is None:
             return None
+        filename = unicode(filename, sys.getfilesystemencoding())
         class Wrapper(object):
             def __init__(self, filename, encoding, mode):
                 self._f = open(filename, mode)
