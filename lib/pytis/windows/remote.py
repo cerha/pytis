@@ -169,15 +169,14 @@ def open_selected_file(template=None):
         pytis.form.run_dialog(pytis.form.Error,
                               _("Nepodařilo se vybrat soubor ke stažení: %s") % (e,))
 
-def make_selected_file(filename=None, template=None, encoding=None, mode='wb', multi=False):
+def make_selected_file(filename=None, template=None, encoding=None, mode='wb'):
     assert filename is None or isinstance(filename, basestring), filename
     assert template is None or isinstance(template, basestring), template
     assert encoding is None or isinstance(encoding, basestring), encoding
     assert mode is None or isinstance(mode, basestring), mode
-    assert isinstance(multi, False)
     try:
         return _request('make_selected_file', filename=filename, template=template,
-                        encoding=encoding, mode=mode, multi=multi)
+                        encoding=encoding, mode=mode)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error,
