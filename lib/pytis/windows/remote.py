@@ -198,3 +198,11 @@ def select_directory():
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error,
                               _("Nepodařilo se vybrat adresář: %s") % (e,))
+
+def select_file(filename=None, template=None, multi=False):
+    try:
+        return _request('select_directory', filename=filename, template=template, multi=multi)
+    except Exception as e:
+        import pytis.form
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nepodařilo se vybrat soubor: %s") % (e,))
