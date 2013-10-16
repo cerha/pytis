@@ -202,7 +202,7 @@ def select_directory():
 
 def select_file(filename=None, template=None, multi=False):
     try:
-        return _request('select_directory', filename=filename, template=template, multi=multi)
+        return _request('select_file', filename=filename, template=template, multi=multi)
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error,
