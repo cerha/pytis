@@ -178,7 +178,8 @@ class PytisUserService(PytisService):
                 return self._filename
         return Wrapper(filename)
 
-    def exposed_make_selected_file(self, filename=None, template=None, encoding=None, mode='wb'):
+    def exposed_make_selected_file(self, directory=None, filename=None, template=None,
+                                   encoding=None, mode='wb'):
         """Return a write-only 'file' like object of a user selected file.
 
         The file is selected by the user using a GUI dialog.  If the user
@@ -186,6 +187,7 @@ class PytisUserService(PytisService):
 
         Arguments:
 
+          directory -- initial directory for the dialog
           filename -- default filename or None
           template -- a string defining the required file name pattern, or 'None'
           encoding -- output encoding, string or None
@@ -217,6 +219,8 @@ class PytisUserService(PytisService):
         dialog = win32ui.CreateFileDialog(0, extension, "%s" % filename,
                                           win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT,
                                           file_filter, parent)
+        if directory:
+            dialog.SetOFNInitialDir(directory)
         result = dialog.DoModal()
         if result != 1:
             return None
