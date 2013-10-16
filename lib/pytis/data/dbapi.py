@@ -33,7 +33,7 @@ import time
 import psycopg2 as dbapi
 import psycopg2.extensions
 
-from pytis.util import log, translations, with_lock, with_locks, DEBUG, OPERATIONAL
+from pytis.util import log, stack_info, translations, with_lock, with_locks, DEBUG, OPERATIONAL
 from pytis.data import AccessRights, Permission, RestrictedData
 from dbdata import DBConnection, DBException, DBInsertException, DBLockException, \
     DBLoginException, DBRetryException, DBSystemException, DBUserException
@@ -100,6 +100,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         connection.set_connection_info('search_path', None)
         connection.set_connection_info('transaction_start_time', None)
         connection.set_connection_info('last_query_time', None)
+        if __debug__:
+            connection.set_connection_info('transaction_start_stack', '')
     
     def _postgresql_query(self, connection, query, outside_transaction, query_args=(), _retry=True):
         result = None
@@ -204,6 +206,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         connection.set_connection_info('last_query_time', now)
         if connection.connection_info('transaction_start_time') is None:
             connection.set_connection_info('transaction_start_time', now)
+            if __debug__:
+                connection.set_connection_info('transaction_start_stack', stack_info())
         if __debug__:
             if query.startswith('fetch') or query.startswith('skip'):
                 extra_info = (query,)
