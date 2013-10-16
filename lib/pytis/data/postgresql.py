@@ -209,8 +209,10 @@ class PostgreSQLAccessor(object_2_5):
             self._connection_info[key] = value
 
         @classmethod
-        def rollback_connections(class_):
+        def rollback_connections(class_, callback=None):
             for c in class_._connection_set:
+                if callback is not None:
+                    callback(c)
                 try:
                     c._connection.rollback()
                 except:
@@ -372,8 +374,17 @@ class PostgreSQLAccessor(object_2_5):
         self._pg_query('rollback')
 
     @classmethod
-    def rollback_connections(class_):
-        class_._postgresql_Connection.rollback_connections()
+    def rollback_connections(class_, callback=None):
+        """Rollback all database connections.
+
+        Arguments:
+
+          callback -- function of a single argument to be called for each of
+            the rollbacked connections with the connection instance as its
+            single argument; it's currently useful only for debugging
+
+        """
+        class_._postgresql_Connection.rollback_connections(callback)
 
 
 class PostgreSQLConnector(PostgreSQLAccessor):
