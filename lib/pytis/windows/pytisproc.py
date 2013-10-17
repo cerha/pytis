@@ -343,7 +343,7 @@ class PytisUserService(PytisService):
         flags = win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT
         if multi:
             flags |= win32con.OFN_ALLOWMULTISELECT
-        dialog = win32ui.CreateFileDialog(0, extension, "%s" % (filename,), flags,
+        dialog = win32ui.CreateFileDialog(1, extension, "%s" % (filename,), flags,
                                           file_filter, parent)
         result = dialog.DoModal()
         if result != 1:
