@@ -132,6 +132,38 @@ class PytisUserService(PytisService):
         assert isinstance(path, basestring), path
         os.startfile(path)
 
+    def _open_file(self, filename, encoding, mode):
+        class Wrapper(object):
+            def __init__(self, filename, encoding, mode):
+                self._f = open(filename, mode)
+                self._filename = filename
+                self._encoding = encoding
+            def exposed_read(self):
+                return self._f.read()
+            def exposed_write(self, data):
+                if isinstance(data, buffer):
+                    data = data[:]
+                elif self._encoding is not None:
+                    data = data.encode(self._encoding)
+                self._f.write(data)
+            def exposed_close(self):
+                self._f.close()
+            def exposed_name(self):
+                return self._filename
+        return Wrapper(filename, encoding, mode)
+
+    def exposed_open_file(self, filename, mode, encoding=None):
+        """Return a read-only 'file' like object of the given file.
+
+        Arguments:
+
+          filename -- name of the file to open, basestring
+          mode -- mode for opening the file
+          encoding -- file content output encoding, string or None
+
+        """
+        return self._open_file(filename, encoding, mode)
+
     def exposed_open_selected_file(self, template=None):
         """Return a read-only 'file' like object of a user selected file.
 
@@ -228,22 +260,7 @@ class PytisUserService(PytisService):
         if filename is None:
             return None
         filename = unicode(filename, sys.getfilesystemencoding())
-        class Wrapper(object):
-            def __init__(self, filename, encoding, mode):
-                self._f = open(filename, mode)
-                self._filename = filename
-                self._encoding = encoding
-            def exposed_write(self, data):
-                if isinstance(data, buffer):
-                    data = data[:]
-                elif self._encoding is not None:
-                    data = data.encode(self._encoding)
-                self._f.write(data)
-            def exposed_close(self):
-                self._f.close()
-            def exposed_name(self):
-                return self._filename
-        return Wrapper(filename, encoding, mode)
+        return self._open_file(filename, encoding, mode)
 
     def exposed_make_temporary_file(self, suffix='', encoding=None, mode='wb'):
         """Create a temporary file and return its instance.

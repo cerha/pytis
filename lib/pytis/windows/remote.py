@@ -160,6 +160,17 @@ def launch_url(url):
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error, _("URL %s se nepodařilo otevřít") % (url,))
 
+def open_file(filename, mode, encoding=None):
+    assert isinstance(filename, basestring), filename
+    assert isinstance(mode, str), mode
+    assert encoding is None or isinstance(encoding, basestring), encoding
+    try:
+        return _request('open_file', filename, mode, encoding=encoding)
+    except Exception as e:
+        import pytis.form
+        pytis.form.run_dialog(pytis.form.Error,
+                              _("Nepodařilo se otevřít soubor %s: %s") % (filename, e,))
+
 def open_selected_file(template=None):
     assert template is None or isinstance(template, basestring), template
     try:
