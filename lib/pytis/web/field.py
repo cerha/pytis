@@ -375,7 +375,7 @@ class Field(object):
         # all cases.  Now it is only made to work for certain filed types, such
         # as DateTimeField, NumericField and CheckboxField.  Also "ordinary"
         # fields like StringField should work fine.
-        string_value = req.param(self.name())
+        string_value = req.param(self.name(), '')
         return self._validate(string_value, req, locale_data)
 
     def format(self, context):
