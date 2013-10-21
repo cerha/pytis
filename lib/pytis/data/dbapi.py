@@ -232,6 +232,9 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                         coldata = 'T'
                     elif col is False:
                         coldata = 'F'
+                    elif hasattr(col, 'lower_inf'):
+                        # Make it compatible with older psycopg2 versions
+                        coldata = '[%s,%s)' % (col.lower, col.upper,)
                     else:
                         coldata = str(col)
                     row_data.append(coldata)
