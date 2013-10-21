@@ -2611,6 +2611,9 @@ tests.add(TutorialTest)
 
 class AccessRightsTest(_DBBaseTest):
     def setUp(self):
+        self._sql_command("CREATE SCHEMA pytis")
+        self._sql_command("CREATE TABLE pytis.access_rights (id serial, object varchar(32), "
+                          "column_ varchar(32), group_ name, permission varchar(32))")
         P = pytis.data.Permission
         for item in (('table1', 'column1', 'group1', P.VIEW,),
                      ('table1', 'column1', 'group2', P.VIEW,),
@@ -2632,7 +2635,8 @@ class AccessRightsTest(_DBBaseTest):
         self._access_rights = pytis.data.DBAccessRights(
             'table1', connection_data=connection_data)
     def tearDown(self):
-        self._sql_command("DELETE FROM pytis.access_rights")
+        self._sql_command("DROP TABLE pytis.access_rights")
+        self._sql_command("DROP SCHEMA pytis")
     def test_permitted_groups(self):
         P = pytis.data.Permission
         a = self._access_rights
