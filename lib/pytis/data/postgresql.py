@@ -3821,6 +3821,9 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
     def commit(self):
         """Commit the transaction."""
+        if not self._open:
+            log(EVENT, "Attempt to commit closed transaction")
+            return
         self._pg_commit_transaction()
         self._open = False
         for dbdata in self._trans_notifications:
@@ -3828,6 +3831,9 @@ class DBPostgreSQLTransaction(DBDataPostgreSQL):
 
     def rollback(self):
         """Rollback the transaction."""
+        if not self._open:
+            log(EVENT, "Attempt to rollback closed transaction")
+            return
         self._pg_rollback_transaction()
         self._open = False
 
