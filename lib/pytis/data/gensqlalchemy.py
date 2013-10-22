@@ -3192,16 +3192,6 @@ class SQLTrigger(SQLEventHandler):
     call_arguments = ()
 
     __visit_name__ = 'trigger'
-
-    @classmethod
-    def pytis_name(class_, real=False):
-        if real:
-            name = class_.name
-            position = class_.position
-            if name.find('_' + position) < 0:
-                name = '%s__%s' % (name, position,)
-            return name
-        return super(SQLTrigger, class_).pytis_name()
         
     def __new__(cls, metadata, search_path):
         if cls.name is None:
@@ -3209,6 +3199,7 @@ class SQLTrigger(SQLEventHandler):
                 raise SQLException("Table not set in anonymous trigger", cls)
             name = cls.table.pytis_name(real=True) + '__'
             name += string.join([e[:3] for e in cls.events], '_')
+            name += '__' % (position,)
             cls.name = name
         return SQLEventHandler.__new__(cls, metadata, search_path)
 
