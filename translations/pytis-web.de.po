@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-23 11:41+0200\n"
+"POT-Creation-Date: 2013-10-23 13:14+0200\n"
 "PO-Revision-Date: 2011-12-29 12:15+0100\n"
 "Last-Translator: Pavel Vohnout <vohnout@officehouse.cz>\n"
 "Language-Team: German <wiking@lists.freebsoft.org>\n"
@@ -21,26 +21,26 @@ msgstr ""
 msgid "Submit"
 msgstr "Senden"
 
-#: ../lib/pytis/web/field.py:681
+#: ../lib/pytis/web/field.py:697
 msgid "today"
 msgstr ""
 
 #. Boolean value display.  Should be Yes/No in the meaning True/False.
-#: ../lib/pytis/web/field.py:735 ../lib/pytis/web/field.py:789
+#: ../lib/pytis/web/field.py:751 ../lib/pytis/web/field.py:805
 msgid "Yes"
 msgstr "Ja"
 
-#: ../lib/pytis/web/field.py:735 ../lib/pytis/web/field.py:789
+#: ../lib/pytis/web/field.py:751 ../lib/pytis/web/field.py:805
 msgid "No"
 msgstr "Nein"
 
 #. The label "image"/"file" is used in textual representation of binary
 #. data values, usually as a link to download the actual binary file.
-#: ../lib/pytis/web/field.py:763
+#: ../lib/pytis/web/field.py:779
 msgid "image"
 msgstr "Bild"
 
-#: ../lib/pytis/web/field.py:765
+#: ../lib/pytis/web/field.py:781
 msgid "file"
 msgstr "Datei"
 
@@ -299,10 +299,6 @@ msgstr ""
 msgid "You must choose an object to include"
 msgstr ""
 
-#: ../resources/scripts/pytis-ckeditor.js:497
-msgid "Upload"
-msgstr ""
-
 #: ../resources/scripts/pytis-ckeditor.js:555
 msgid "Upload successful"
 msgstr ""
@@ -312,7 +308,7 @@ msgid "Upload new file"
 msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:580
-msgid "Select a file to be uploaded."
+msgid "First select a file to be uploaded."
 msgstr ""
 
 #: ../resources/scripts/pytis-ckeditor.js:589
@@ -472,11 +468,11 @@ msgstr ""
 msgid "Index item cannot be empty."
 msgstr ""
 
-#: ../resources/scripts/pytis.js:113
+#: ../resources/scripts/pytis.js:136
 msgid "Failed loading form:"
 msgstr ""
 
-#: ../resources/scripts/pytis.js:123
+#: ../resources/scripts/pytis.js:146
 msgid "show details"
 msgstr ""
 
