@@ -428,6 +428,6 @@ def mime_type_constraint(*allowed_mime_types):
         if mime_type in allowed_mime_types:
             return None
         else:
-            return _("Detected data type %(detected)s. Expected %(expected).", 
+            return _("Detected data type %(detected)s. Expected %(expected)s.", 
                      detected=mime_type, expected=', '.join(allowed_mime_types))
     return constraint
