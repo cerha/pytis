@@ -27,6 +27,7 @@ div.cke_dialog_body .cke_dialog_ui_file label {
 
 div.cke_dialog_body .attachment-selector {
     width: 350px;
+    height: 200px;
 }
 
 div.cke_dialog_body .attachment-selector label {
@@ -36,7 +37,7 @@ div.cke_dialog_body .attachment-selector label {
 }
 
 div.cke_dialog_body div.preview-container {
-    width: 200px;
+    width: 234px;
     height: 200px;
     background: #eee;
     border: 1px solid #ddd;
