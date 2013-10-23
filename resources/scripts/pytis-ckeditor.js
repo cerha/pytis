@@ -359,7 +359,7 @@ function ck_dialog_update_attachment_list (editor, field, attachment_type, keep_
     for (var i = 0; i < attachments.length; i++) {
         var a = attachments[i];
         if (a.type == attachment_type) {
-            var label = (a.title ? a.title + " (" + a.filename + ")": a.filename);
+            var label = a.filename + (a.title ? ': ' + a.title : '');
             options.add(new Option(label, a.filename));
         }
     }
