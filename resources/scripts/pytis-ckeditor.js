@@ -577,7 +577,7 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
                                // (not really clever...).
                                var result = document.createElement('form').submit.call(field._file_upload_form);
 			   } else {
-                               $('ckeditor-upload-result').update(pytis._("Select a file to be uploaded."));
+                               $('ckeditor-upload-result').update(pytis._("First select a file to be uploaded."));
 			   }
 			   return false;
                        }
