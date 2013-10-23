@@ -33,6 +33,29 @@ var pytis = {};
 pytis.gettext = new Gettext({domain:'pytis'});
 pytis._ = function (msg) { return pytis.gettext.gettext(msg); };
 
+pytis.show_tooltip = function(event, uri) {
+    // This can't be implemented as a Field method as Field instances are not 
+    // created in BrowseForm (currentyl only in edit form).
+    if (event) {
+	var element = event.target;
+    } else {
+	event = window.event;
+	var element = event.srcElement;
+    }
+    if (element._pytis_tooltip) {
+	var tooltip = element._pytis_tooltip
+    } else {
+	var tooltip = new lcg.Tooltip(uri);
+	element._pytis_tooltip = tooltip;
+    }
+    tooltip.show(event.pointerX(), event.pointerY());
+};
+
+pytis.hide_tooltip = function(element) {
+    if (element._pytis_tooltip)
+	element._pytis_tooltip.hide();
+};
+
 pytis.BrowseFormHandler = Class.create({
     /* Handles asynchronous load of a Pytis browse form.
 

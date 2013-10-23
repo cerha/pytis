@@ -60,6 +60,15 @@ class UriType(object):
     directly).
 
     """
+    TOOLTIP = 'TOOLTIP'
+    """URI for loading an asynchronous tooltip content for given field.
+
+    If an URI is returned by URI provider for this URI kind and given field,
+    the field will display the content loaded from this uri as a tooltip when
+    the mouse hovers over the field value.  Any errors loading the URI are
+    silently ignored and the tooltip is just not dispayed in this case.
+
+    """
     PRINT = 'PRINT'
     """URI of a print field link for printable fields.
 
@@ -406,9 +415,16 @@ class Field(object):
                 if isinstance(link, collections.Callable):
                     pass # Ignore array item links here
                 elif isinstance(link, basestring):
-                    value = g.a(value, href=link)
+                    kwargs = dict(href=link)
                 else:
-                    value = g.a(value, href=link.uri(), title=link.title(), target=link.target())
+                    kwargs = dict(href=link.uri(), title=link.title(), target=link.target())
+                tooltip_uri = self._uri_provider(self._row, UriType.TOOLTIP, self.id)
+                if tooltip_uri:
+                    kwargs = dict(kwargs,
+                                  onmouseover="pytis.show_tooltip(event, '%s')" % tooltip_uri,
+                                  onmouseout="pytis.hide_tooltip(this)",
+                    )
+                value = g.a(value, **kwargs)
             if info is not None:
                 value += ' ('+ info +')'
         return value
