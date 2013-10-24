@@ -643,6 +643,7 @@ class MultiForm(Form, Refreshable):
         return form
     
     def _full_init(self, *args, **kwargs):
+        self._block_on_page_change = False
         self._form_callbacks_args = []
         self._old_notebook_selection = -1
         self._moved_notebook_tab = None
@@ -745,6 +746,8 @@ class MultiForm(Form, Refreshable):
             # called when the form is being closed asynchronously from _on_idle
             # method.
             return
+        if self._block_on_page_change:
+            return
         if event:
             #event.Skip()
             selection = event.GetSelection()
@@ -760,7 +763,11 @@ class MultiForm(Form, Refreshable):
                 # before the webkit widget can be embedded into it.  And the
                 # embedding is done within _init_subform(), so we must ensure
                 # the page is changed before.
-                self._notebook.SetSelection(selection)
+                self._block_on_page_change = True
+                try:
+                    self._notebook.SetSelection(selection)
+                finally:
+                    self._block_on_page_change = False
                 self._init_subform(form)
                 row = self._last_selection
                 if row is not None:
@@ -1048,7 +1055,7 @@ class MultiSideForm(MultiForm):
         event.Skip()
         
     def _on_page_change(self, event=None):
-        if self._leave_form_requested:
+        if self._leave_form_requested or self._block_on_page_change:
             return
         super(MultiSideForm, self)._on_page_change(event=event)
         binding = self._forms[self._notebook.GetSelection()].binding()
