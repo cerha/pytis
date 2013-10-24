@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-09-23 11:41+0200\n"
+"POT-Creation-Date: 2013-10-24 15:27+0200\n"
 "PO-Revision-Date: 2011-12-29 12:20+0100\n"
 "Last-Translator: Hynek Hanke <hanke@volny.cz>\n"
 "Language-Team: Spanish <wiking@lists.freebsoft.org>\n"
@@ -20,24 +20,24 @@ msgstr ""
 msgid "Access denied"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:82
+#: ../lib/pytis/data/dbapi.py:83
 msgid "Can't connect to database"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:167
+#: ../lib/pytis/data/dbapi.py:170
 msgid "Database interface error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:183 ../lib/pytis/data/dbapi.py:283
+#: ../lib/pytis/data/dbapi.py:186 ../lib/pytis/data/dbapi.py:295
 msgid "Database connection error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:197 ../lib/pytis/data/pgsql.py:87
+#: ../lib/pytis/data/dbapi.py:200 ../lib/pytis/data/pgsql.py:87
 #: ../lib/pytis/data/pgsql.py:94
 msgid "Database operational error"
 msgstr ""
 
-#: ../lib/pytis/data/dbapi.py:201 ../lib/pytis/data/pgsql.py:99
+#: ../lib/pytis/data/dbapi.py:204 ../lib/pytis/data/pgsql.py:99
 msgid "Database integrity violation"
 msgstr ""
 
@@ -62,16 +62,16 @@ msgstr ""
 msgid "Query arguments unsupported by the pgsql backend"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:240 ../lib/pytis/data/postgresql.py:326
-#: ../lib/pytis/data/postgresql.py:338
+#: ../lib/pytis/data/postgresql.py:267 ../lib/pytis/data/postgresql.py:353
+#: ../lib/pytis/data/postgresql.py:365
 msgid "Method not implemented"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:448
+#: ../lib/pytis/data/postgresql.py:488
 msgid "Characters present in data not representable in database encoding"
 msgstr ""
 
-#: ../lib/pytis/data/postgresql.py:3602
+#: ../lib/pytis/data/postgresql.py:3642
 #, fuzzy
 msgid "Invalid database counter value"
 msgstr "Fecha y/o hora no válida"
