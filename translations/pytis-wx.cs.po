@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-09-23 11:45+0200\n"
-"PO-Revision-Date: 2013-09-23 11:47+0200\n"
+"PO-Revision-Date: 2013-10-24 11:02+0200\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -506,9 +506,8 @@ msgid "Automatically stretch tables to full window width"
 msgstr "Rozpínat tabulky na šířku okna"
 
 #: ../lib/pytis/form/configui.py:89
-#, fuzzy
 msgid "Cache specification files on startup"
-msgstr "Načítat všechny specifikace při startu aplikace."
+msgstr "Načítat všechny specifikace při startu aplikace"
 
 #: ../lib/pytis/form/configui.py:90
 msgid "E-mail address"
@@ -925,18 +924,20 @@ msgstr ""
 "Chcete aktivovat výchozí profil a zkusit záznam vyhledat znovu?"
 
 #: ../lib/pytis/form/form.py:2319
-msgid "Zrušit formulář?"
-msgstr ""
+msgid "Continue editing?"
+msgstr "Pokračovat v editaci?"
 
 #: ../lib/pytis/form/form.py:2320
 msgid ""
+"The time limit for form editing has expired.\n"
+"Do you want to continue?"
+msgstr ""
 "Vypršel časový limit pro editaci formuláře.\n"
 "Chcete v editaci ještě pokračovat?"
-msgstr ""
 
 #: ../lib/pytis/form/form.py:2331
-msgid "Vypršel časový limit pro editaci formuláře."
-msgstr ""
+msgid "The time limit for form editing has expired."
+msgstr "Vypršel časový limit pro editaci formuláře."
 
 #: ../lib/pytis/form/form.py:2652
 msgid "Record update failed"
@@ -2489,12 +2490,12 @@ msgid "Must be one of Pyhon supported encodings."
 msgstr "Hodnota musí být jedním z podporovaných kódování v Pythonu."
 
 #: ../lib/pytis/util/configuration.py:948
-msgid "Maximum time in seconds to left an open transaction untouched."
-msgstr ""
+msgid "Maximum time in seconds to leave an open transaction untouched."
+msgstr "Maximální doba v sekundách, po kterou je otevřená transakce ponechána bez povšimnutí."
 
 #: ../lib/pytis/util/configuration.py:957
-msgid "Maximum time in seconds to left an idle transaction untouched."
-msgstr ""
+msgid "Maximum time in seconds to leave an idle transaction untouched."
+msgstr "Maximální doba v sekundách, po kterou je nečinná transakce ponechána bez povšimnutí."
 
 #: ../lib/pytis/util/configuration.py:964
 msgid "Show tooltips."
@@ -2602,9 +2603,8 @@ msgid "Press Enter..."
 msgstr "Stiskni Enter..."
 
 #: ../lib/pytis/util/util.py:1930
-#, fuzzy
 msgid "Legends"
-msgstr "Legends"
+msgstr "Legenda"
 
 #: ../lib/pytis/util/util.py:1931
 msgid "Added"
@@ -2714,7 +2714,7 @@ msgstr "Bude se formátovat tabulka s mnoha řádky (%d)."
 
 #: ../lib/pytis/output/formatter.py:161
 msgid "Do you want to continue printing anyway?"
-msgstr ""
+msgstr "Chcete přesto pokračovat v tisku?"
 
 #: ../lib/pytis/output/formatter.py:536
 msgid ""
@@ -2781,172 +2781,173 @@ msgid "average"
 msgstr "průměr"
 
 #: ../lib/pytis/output/markup.py:100
-msgid "Chybné argumenty prvku"
-msgstr ""
+msgid "Invalid item arguments"
+msgstr "Chybné argumenty prvku"
 
 #: ../lib/pytis/output/markup.py:551
-msgid "Více než 26 sloupců v tabulce"
-msgstr ""
+msgid "More than 26 columns in a table"
+msgstr "Více než 26 sloupců v tabulce"
 
 #: ../lib/pytis/help/help.py:170
-msgid "Vyvolá formulář pro přizpůsobení uživatelského rozhraní aplikace."
-msgstr ""
+msgid "Opens a form for customizing the application user interface."
+msgstr "Vyvolá formulář pro přizpůsobení uživatelského rozhraní aplikace."
 
 #: ../lib/pytis/help/help.py:172
-msgid "Vyvolá formulář uživatelského nastavení exportu dat."
-msgstr ""
+msgid "Opens a form for customizing data export."
+msgstr "Vyvolá formulář uživatelského nastavení exportu dat."
 
 #: ../lib/pytis/help/help.py:197
 #, python-format
 msgid ""
-"Formuláře jsou propojeny přes shodu hodnot sloupce '%s' hlavního formuláře a "
-"sloupce '%s' vedlejšího formuláře."
-msgstr ""
+"Forms are connected through the equality of values "
+"in column '%(main_form_column)s' of the main form and "
+"column '%(side_form_column)s' of the side form."
+msgstr "Formuláře jsou propojeny přes shodu hodnot sloupce '%s' hlavního formuláře a sloupce '%s' vedlejšího formuláře."
 
 #: ../lib/pytis/help/help.py:202
-msgid "Otevře duální formulář:"
-msgstr ""
+msgid "Opens a dual form:"
+msgstr "Otevře duální formulář:"
 
 #: ../lib/pytis/help/help.py:203
-msgid "Hlavní formulář"
-msgstr ""
+msgid "Main form"
+msgstr "Hlavní formulář"
 
 #: ../lib/pytis/help/help.py:205
-msgid "Vedlejší formulář"
-msgstr ""
+msgid "Side form"
+msgstr "Vedlejší formulář"
 
 #: ../lib/pytis/help/help.py:216
 #, python-format
-msgid "Otevře %s pro %s"
-msgstr ""
+msgid "Opens %(form_type)s for %(spec_name)s"
+msgstr "Otevře %(form_type)s pro %(spec_name)s"
 
 #: ../lib/pytis/help/help.py:220
 #, python-format
-msgid "Vyvolá formulář pro vložení nového záznamu do náhledu %s."
-msgstr ""
+msgid "Opens a form for new record insertion into %s."
+msgstr "Vyvolá formulář pro vložení nového záznamu do náhledu %s."
 
 #: ../lib/pytis/help/help.py:231
 #, python-format
-msgid "Vyvolá příkaz %s."
-msgstr ""
+msgid "Invokes command %s."
+msgstr "Vyvolá příkaz %s."
 
 #: ../lib/pytis/help/help.py:234
 #, python-format
-msgid "Vyvolá proceduru %s z %s."
-msgstr ""
+msgid "Invokes procedure %s from %s."
+msgstr "Vyvolá proceduru %s z %s."
 
 #: ../lib/pytis/help/help.py:237
 #, python-format
-msgid "Vyvolá funkci %s."
-msgstr ""
+msgid "Invokes action %s."
+msgstr "Vyvolá akci %s."
 
 #: ../lib/pytis/help/help.py:240
-msgid "Vyvolá přenačtení práv."
-msgstr ""
+msgid "Reloads access rights."
+msgstr "Vyvolá přenačtení přístupových práv."
 
 #: ../lib/pytis/help/help.py:243
 #, python-format
-msgid "Vyvolá formulář %s."
-msgstr ""
+msgid "Invokes form %s."
+msgstr "Vyvolá formulář %s."
 
 #: ../lib/pytis/help/help.py:246
-msgid "Ukončí běh aplikace."
-msgstr ""
+msgid "Exits the application."
+msgstr "Ukončí běh aplikace."
 
 #: ../lib/pytis/help/help.py:282
-msgid "Přístup odepřen"
-msgstr ""
+msgid "Access denied"
+msgstr "Přístup odepřen"
 
 #: ../lib/pytis/help/help.py:283
 #, python-format
-msgid "Nemáte přístup ke specifikaci „%s“."
-msgstr ""
+msgid "You don't have permissions for specification „%s“."
+msgstr "Nemáte přístup ke specifikaci „%s“."
 
 #: ../lib/pytis/help/help.py:296
-msgid "Popis není k dispozici."
-msgstr ""
+msgid "Description not available."
+msgstr "Popis není k dispozici."
 
 #: ../lib/pytis/help/help.py:311
-msgid "Související náhledy:"
-msgstr ""
+msgid "Related views:"
+msgstr "Související náhledy:"
 
 #: ../lib/pytis/help/help.py:331
-msgid "Shrnutí"
-msgstr ""
+msgid "Overview"
+msgstr "Shrnutí"
 
 #: ../lib/pytis/help/help.py:332
-msgid "Popis"
-msgstr ""
+msgid "Description"
+msgstr "Popis"
 
 #: ../lib/pytis/help/help.py:333
-msgid "Políčka formuláře"
-msgstr ""
+msgid "Form fields"
+msgstr "Políčka formuláře"
 
 #: ../lib/pytis/help/help.py:336
-msgid "Profily"
-msgstr ""
+msgid "Profiles"
+msgstr "Profily"
 
 #: ../lib/pytis/help/help.py:339
-msgid "Akce kontextového menu"
-msgstr ""
+msgid "Context menu actions"
+msgstr "Akce kontextového menu"
 
 #: ../lib/pytis/help/help.py:342
-msgid "Vedlejší formuláře"
-msgstr ""
+msgid "Side forms"
+msgstr "Vedlejší formuláře"
 
 #: ../lib/pytis/help/help.py:382
-msgid "Příručka uživatele systému Pytis"
-msgstr ""
+msgid "Pytis User Guide"
+msgstr "Příručka uživatele systému Pytis"
 
 #: ../lib/pytis/help/help.py:383
-msgid "Soubory s nápovědou nebyly nalezeny!"
-msgstr ""
+msgid "Help files not found!"
+msgstr "Soubory s nápovědou nebyly nalezeny!"
 
 #: ../lib/pytis/help/help.py:409 ../lib/pytis/help/help.py:468
-msgid "Obsah"
-msgstr ""
+msgid "Contents"
+msgstr "Obsah"
 
 #: ../lib/pytis/help/help.py:453
 #, python-format
-msgid "Nápověda aplikace %s"
-msgstr ""
+msgid "%s application help"
+msgstr "Nápověda aplikace %s"
 
 #: ../lib/pytis/help/help.py:457
-msgid "Nenalezeno"
-msgstr ""
+msgid "Not Found"
+msgstr "Nenalezeno"
 
 #: ../lib/pytis/help/help.py:458
 #, python-format
-msgid "Požadovaná stránka nápovědy nenalezena: %s"
-msgstr ""
+msgid "The requested help page not found: %s"
+msgstr "Požadovaná stránka nápovědy nenalezena: %s"
 
 #: ../lib/pytis/help/help.py:489
 msgid "Expand/collapse complete menu hierarchy"
-msgstr ""
+msgstr "Rozbalit/sbalit celou hierarchii menu"
 
 #: ../lib/pytis/help/help.py:490
-msgid "Navigace"
-msgstr ""
+msgid "Navigation"
+msgstr "Navigace"
 
 #: ../lib/pytis/windows/remote.py:152
 #, python-format
-msgid "Soubor %s se nepodařilo otevřít: %s"
-msgstr ""
+msgid "Unable to open file %(filename)s: %(error)s"
+msgstr "Soubor %(filename)s se nepodařilo otevřít: %(error)s"
 
 #: ../lib/pytis/windows/remote.py:160
 #, python-format
-msgid "URL %s se nepodařilo otevřít"
-msgstr ""
+msgid "Unable to open URL %s"
+msgstr "URL %s se nepodařilo otevřít."
 
 #: ../lib/pytis/windows/remote.py:168
 #, python-format
-msgid "Nepodařilo se vybrat soubor ke stažení: %s"
-msgstr ""
+msgid "Unable to select a file for download: %s"
+msgstr "Nepodařilo se vybrat soubor ke stažení: %s"
 
 #: ../lib/pytis/windows/remote.py:180
 #, python-format
-msgid "Nepodařilo se vybrat soubor k uložení: %s"
-msgstr ""
+msgid "Unable to select a file to save: %s"
+msgstr "Nepodařilo se vybrat soubor k uložení: %s"
 
 #~ msgid "Chcete v tisku přesto pokračovat?"
 #~ msgstr "Do you want to continue printing anyway?"
