@@ -97,7 +97,7 @@ class _Container(_Mark):
                 pass
             self.__dict__['arg_' + k] = v
         if kwargs:
-            raise pytis.output.TemplateException(_(u"Chybné argumenty prvku"),
+            raise pytis.output.TemplateException(_("Invalid item arguments"),
                                                  self.__class__, kwargs.keys())
 
     def contents(self):
@@ -548,7 +548,7 @@ class Table(_Mark):
         vmargin = kwargs.get('vmargin')
         assert vmargin in (None, 0)
         if len(columns) > 26:
-            raise pytis.output.TemplateException(_(u"Více než 26 sloupců v tabulce"))
+            raise pytis.output.TemplateException(_("More than 26 columns in a table"))
         self._columns = columns
         self._data = data
         self._vmargin = vmargin

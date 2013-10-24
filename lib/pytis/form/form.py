@@ -2319,9 +2319,9 @@ class EditForm(RecordForm, TitledForm, Refreshable):
     def _on_idle_close_transactions(self):
         age = pytis.form.last_event_age()
         if ((self._edit_form_timeout is not None and age > self._edit_form_timeout)):
-            edit = run_dialog(pytis.form.Question, title=_(u"Zrušit formulář?"),
-                              message=_(u"Vypršel časový limit pro editaci formuláře.\n"
-                                        u"Chcete v editaci ještě pokračovat?"),
+            edit = run_dialog(pytis.form.Question, title=_("Continue editing?"),
+                              message=_("The time limit for form editing has expired.\n"
+                                        "Do you want to continue?"),
                               timeout=20)
             if not edit:
                 def disable_buttons(w):

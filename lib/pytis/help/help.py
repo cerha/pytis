@@ -167,9 +167,9 @@ class HelpUpdater(object):
     def _generate_form_help(self, form_class, spec_name):
         if form_class.endswith('.ConfigForm'):
             if spec_name == 'ui':
-                return _(u"Vyvolá formulář pro přizpůsobení uživatelského rozhraní aplikace.")
+                return _("Opens a form for customizing the application user interface.")
             if spec_name == 'export':
-                return _(u"Vyvolá formulář uživatelského nastavení exportu dat.")
+                return _("Opens a form for customizing data export.")
             else:
                 return None
         elif '::' in spec_name:
@@ -194,15 +194,16 @@ class HelpUpdater(object):
                         print e
                         return cid
                     return c.label()
-                description = (_(u"Formuláře jsou propojeny přes shodu hodnot sloupce '%s' "
-                                 u"hlavního formuláře a sloupce '%s' vedlejšího formuláře.") % 
-                               (clabel(mainname, b.binding_column()),
-                                clabel(sidename, b.side_binding_column())))
+                description = _("Forms are connected through the equality of values "
+                                "in column '%(main_form_column)s' of the main form and "
+                                "column '%(side_form_column)s' of the side form.", 
+                                main_form_column=clabel(mainname, b.binding_column()),
+                                side_form_column=clabel(sidename, b.side_binding_column()))
             return '%s\n\n:%s::%s\n:%s::%s\n\n%s' % (
-                _(u"Otevře duální formulář:"),
-                _(u"Hlavní formulář"),
+                _("Opens a dual form:"),
+                _("Main form"),
                 self._spec_link(mainname),
-                _(u"Vedlejší formulář"),
+                _("Side form"),
                 self._spec_link(sidename),
                 description)
         else:
@@ -213,11 +214,13 @@ class HelpUpdater(object):
                 form_type = getattr(pytis.form, form_name).DESCR
             else:
                 form_type = form_class
-            return _(u"Otevře %s pro %s") % (form_type, self._spec_link(spec_name))
+            return _("Opens %(form_type)s for %(spec_name)s", 
+                     form_type=form_type, spec_name=self._spec_link(spec_name))
 
     def _generate_new_record_help(self, spec_name, command_name):
         if spec_name:
-            return _(u"Vyvolá formulář pro vložení nového záznamu do náhledu %s.") % self._spec_link(spec_name)
+            return _("Opens a form for new record insertion into %s.", 
+                     self._spec_link(spec_name))
         else:
             #resolver = pytis.util.resolver()
             #try:
@@ -228,22 +231,22 @@ class HelpUpdater(object):
             #if command and command.__doc__:
             #    return command.__doc__
             #else:
-            return _(u"Vyvolá příkaz %s.") % command_name
+            return _("Invokes command %s.") % command_name
     
     def _generate_proc_help(self, procname, spec_name):
-        return _(u"Vyvolá proceduru %s z %s.") % (procname, spec_name)
+        return _("Invokes procedure %s from %s.") % (procname, spec_name)
 
     def _generate_action_help(self, action):
-        return _(u"Vyvolá funkci %s.") % action
+        return _("Invokes  %s.") % action
 
     def _generate_reload_rights_help(self):
-        return _(u"Vyvolá přenačtení práv.")
+        return _("Reloads access rights.")
 
     def _generate_run_form_help(self, formname):
-        return _(u"Vyvolá formulář %s.") % formname
+        return _("Invokes form %s.") % formname
 
     def _generate_exit_help(self):
-        return _(u"Ukončí běh aplikace.")
+        return _("Exits the application.")
 
     def update(self):
         """(Re)generate help for all menu items."""
@@ -279,8 +282,8 @@ class HelpGenerator(object):
     def _spec_help_content(self, spec_name):
         from pytis.form import has_access
         if not has_access(spec_name):
-            return (_(u"Přístup odepřen"),
-                    lcg.p(_(u"Nemáte přístup ke specifikaci „%s“.") % spec_name))
+            return (_("Access denied"),
+                    lcg.p(_("You don't have permissions for specification „%s“.") % spec_name))
         resolver = pytis.util.resolver()
         def spec_link(spec_name, title=None):
             if title is None:
@@ -293,7 +296,7 @@ class HelpGenerator(object):
             return lcg.link('help:spec/%s' % spec_name, title)
         descriptions = self._spec_items_descriptions(spec_name)
         def description(kind, identifier, default):
-            return descriptions[kind].get(identifier, default or _(u"Popis není k dispozici."))
+            return descriptions[kind].get(identifier, default or _("Description not available."))
         def field_label(f):
             label = f.column_label()
             if not label:
@@ -308,7 +311,7 @@ class HelpGenerator(object):
             if related_specnames:
                 pytis.util.remove_duplicates(related_specnames)
                 result = (result,
-                          lcg.p(_(u"Související náhledy:")),
+                          lcg.p(_("Related views:")),
                           lcg.ul([spec_link(name) for name in related_specnames]))
             return result
         try:
@@ -328,18 +331,18 @@ class HelpGenerator(object):
         sections = [
             lcg.Section(title=title, content=f(content))
             for title, f, content in (
-                (_(u"Shrnutí"), lcg.p, spec_description),
-                (_(u"Popis"), parser.parse, spec_help),
-                (_(u"Políčka formuláře"), lcg.dl,
+                (_("Overview"), lcg.p, spec_description),
+                (_("Description"), parser.parse, spec_help),
+                (_("Form fields"), lcg.dl,
                  sorted([(field_label(f), field_description(f)) for f in view_spec.fields()],
                         key=lambda x: x[0])),
-                (_(u"Profily"), lcg.dl,
+                (_("Profiles"), lcg.dl,
                  [(p.title(), description('profile', p.id(), p.descr()))
                   for p in view_spec.profiles()]),
-                (_(u"Akce kontextového menu"), lcg.dl,
+                (_("Context menu actions"), lcg.dl,
                  [(a.title(), description('action', a.id(), a.descr()))
                   for a in view_spec.actions(linear=True)]),
-                (_(u"Vedlejší formuláře"), lcg.dl,
+                (_("Side forms"), lcg.dl,
                  [(spec_link(b.name(), b.title()), description('binding', b.id(), b.descr()))
                   for b in view_spec.bindings() if b.name()]),
                 )
@@ -379,8 +382,8 @@ class HelpGenerator(object):
                 node = self._pytis_help_root_node = reader.build()
             except IOError as e:
                 log(OPERATIONAL, "Unable to read Pytis help files from '%s':" % directory, e)
-                node = lcg.ContentNode('pytis:', title=_(u"Příručka uživatele systému Pytis"),
-                                       content=lcg.p(_(u"Soubory s nápovědou nebyly nalezeny!")),
+                node = lcg.ContentNode('pytis:', title=_("Pytis User Guide"),
+                                       content=lcg.p(_("Help files not found!")),
                                        hidden=True, resource_provider=resource_provider)
         # We need to clone on every request because set_parent() is called on
         # the result when added to the help tree and set_parent may not be
@@ -406,7 +409,7 @@ class HelpGenerator(object):
                     content = lcg.Container(parser.parse(row['content'].value()),
                                             resources=storage.resources())
                 else:
-                    content = [lcg.TableOfContents(title=_(u"Obsah"))]
+                    content = [lcg.TableOfContents(title=_("Contents"))]
                     fullname, spec_name = row['fullname'].value(), row['spec_name'].value()
                     if row['menu_help'].value():
                         content.extend(parser.parse(row['menu_help'].value()))
@@ -450,13 +453,13 @@ class HelpGenerator(object):
             children.setdefault(parent, []).append(row)
         data.close()
         nodes = [lcg.ContentNode('help:application',
-                                 title=_(u"Nápověda aplikace %s") % config.application_name,
+                                 title=_("%s application help") % config.application_name,
                                  content=lcg.NodeIndex(), resource_provider=resource_provider,
                                  children=[make_node(r, children) for r in children['']]),
                  self._pytis_help(resource_dirs),
-                 lcg.ContentNode('NotFound', title=_("Nenalezeno"), hidden=True,
-                                 content=lcg.p(_(u"Požadovaná stránka nápovědy nenalezena: "
-                                                 "%s") % topic),
+                 lcg.ContentNode('NotFound', title=_("Not Found"), hidden=True,
+                                 content=lcg.p(_("The requested help page not found: %s",
+                                                 topic)),
                                  resource_provider=resource_provider)]
         if topic.startswith('spec/'):
             # Separate specification descriptions are not in the menu generated
@@ -487,7 +490,7 @@ class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
     def _menu(self, context):
         g = self._generator
         tree = lcg.FoldableTree(tooltip=_("Expand/collapse complete menu hierarchy"))
-        return g.div((g.h(g.a(_("Navigace"), accesskey="3"), 3),
+        return g.div((g.h(g.a(_("Navigation"), accesskey="3"), 3),
                       tree.export(context)),
                      cls='menu-panel')
 

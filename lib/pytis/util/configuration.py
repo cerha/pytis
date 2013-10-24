@@ -945,7 +945,7 @@ class Configuration(object):
         When the time is exceeded, some action may be taken on the transaction.
         
         """
-        _DESCR = _(u"Maximum time in seconds to left an open transaction untouched.")
+        _DESCR = _("Maximum time in seconds to leave an open transaction untouched.")
         _DEFAULT = None
 
     class _Option_max_transaction_idle_time(NumericOption):
@@ -954,7 +954,7 @@ class Configuration(object):
         When the time is exceeded, some action may be taken on the transaction.
         
         """
-        _DESCR = _(u"Maximum time in seconds to left an idle transaction untouched.")
+        _DESCR = _("Maximum time in seconds to leave an idle transaction untouched.")
         _DEFAULT = None
         
     # Volby přizpůsobení uživatelského rozhraní

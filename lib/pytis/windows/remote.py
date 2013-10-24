@@ -149,8 +149,8 @@ def launch_file(path):
         return _request('launch_file', wpath)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Soubor %s se nepodařilo otevřít: %s") % (wpath, e,))
+        pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
+                                                  filename=wpath, error=e))
 
 def launch_url(url):
     assert isinstance(url, basestring), url
@@ -158,7 +158,7 @@ def launch_url(url):
         return _request('launch_file', url)
     except:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error, _("URL %s se nepodařilo otevřít") % (url,))
+        pytis.form.run_dialog(pytis.form.Error, _("Unable to open URL %s", url))
 
 def open_file(filename, mode, encoding=None):
     assert isinstance(filename, basestring), filename
@@ -168,8 +168,8 @@ def open_file(filename, mode, encoding=None):
         return _request('open_file', filename, mode, encoding=encoding)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Nepodařilo se otevřít soubor %s: %s") % (filename, e,))
+        pytis.form.run_dialog(pytis.form.Error, _("Unable to open file %(filename)s: %(error)s",
+                                                  filename=filename, error=e))
 
 def open_selected_file(template=None):
     assert template is None or isinstance(template, basestring), template
@@ -177,8 +177,7 @@ def open_selected_file(template=None):
         return _request('open_selected_file', template)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Nepodařilo se vybrat soubor ke stažení: %s") % (e,))
+        pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file for download: %s", e))
 
 def make_selected_file(directory=None, filename=None, template=None, encoding=None, mode='wb'):
     assert directory is None or isinstance(directory, basestring), directory
@@ -191,8 +190,7 @@ def make_selected_file(directory=None, filename=None, template=None, encoding=No
                         template=template, encoding=encoding, mode=mode)
     except Exception as e:
         import pytis.form
-        pytis.form.run_dialog(pytis.form.Error,
-                              _("Nepodařilo se vybrat soubor k uložení: %s") % (e,))
+        pytis.form.run_dialog(pytis.form.Error, _("Unable to select a file to save: %s", e))
 
 def make_temporary_file(suffix='', encoding=None, mode='wb'):
     assert isinstance(suffix, basestring), suffix
