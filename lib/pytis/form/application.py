@@ -388,7 +388,7 @@ class Application(wx.App, KeyHandler, CommandHandler):
             if conn.host():
                 title += " " + conn.host()
                 if conn.port():
-                    title += ":%d" % conn.port()
+                    title += ":%s" % (conn.port(),)
             self._frame.SetTitle(title)
 
     def _spec(self, name, default=None, **kwargs):
