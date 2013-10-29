@@ -86,7 +86,7 @@ class Form(lcg.Content):
     """
     _HTTP_METHOD = 'POST'
     _CSS_CLS = None
-    def __init__(self, view, req, row, handler='#', prefill=None, hidden=(), name=None,
+    def __init__(self, view, req, row, handler='#', hidden=(), name=None,
                  uri_provider=None, actions=None, **kwargs):
         """Arguments:
 
@@ -96,7 +96,6 @@ class Form(lcg.Content):
           row -- 'pytis.presentation.PresentedRow' instance.
           handler -- form handler URI as a string.  This URI is used in the
             form's 'action' attribute.
-          prefill -- form prefill data as a dictionary of string values.
           uri_provider -- callable object (function) returning URIs for form
             fields.  The function must have the interface
             described in the class docstring.
@@ -120,14 +119,12 @@ class Form(lcg.Content):
         assert isinstance(row, pytis.presentation.PresentedRow), row
         assert isinstance(handler, basestring), handler
         assert isinstance(hidden, (tuple, list)), hidden
-        assert prefill is None or isinstance(prefill, dict), prefill
         assert actions is None or isinstance(actions, (tuple, list, collections.Callable)), actions
         self._view = view
         self._req = req
         self._row = row
         self._key = row.data().key()[0].id()
         self._handler = handler
-        self._prefill = prefill or {}
         self._uri_provider = uri_provider
         self._hidden = list(hidden)
         self._name = name
@@ -139,57 +136,8 @@ class Form(lcg.Content):
     def _export_javascript(self, context, form_id):
         return None
 
-    def form_id(self):
-        """Return the HTML id of the form used in the last export.
-
-        Knowing the HTML id can be usefull for example in JavaScript code
-        accessing the form's DOM elements or its JavaScript instance.
-
-        The form can be theoretically exported several times but usually
-        there's just one export alltogether.  In any case, the HTML id is
-        generated when the export starts, so calling this method before
-        exporting the form will raise an AttributeError exception.
-
-        """
-
-        
-        return self._form_id
-
-    def export(self, context):
-        g = context.generator()
-        cls = 'pytis-form ' + self._CSS_CLS
-        if self._name:
-            cls += ' ' + camel_case_to_lower(self._name, '-')
-        self._form_id = form_id = context.unique_id()
-        javascript = self._export_javascript(context, form_id)
-        if javascript:
-            # Javascript dependencies must be allocated before the form is
-            # exported because form field export may rely on these dependencies
-            # to be available.
-            context.resource('prototype.js')
-            context.resource('gettext.js')
-            context.resource('pytis.js')
-            if context.lang() != 'en':
-                context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
-        result = g.div(self._export_form(context, form_id), cls=cls, id=form_id)
-        if javascript:
-            result += g.script(javascript)
-        context.resource('pytis-forms.css')
-        return result
-
     def _export_form(self, context, form_id):
         return self._export_body(context, form_id)
-
-    def heading_info(self):
-        """Return basestring to be possibly put into a document heading.
-
-        If the return value is 'None' or an empty basestring, nothing is added
-        to the document heading.  Otherwise the returned basestring may or may
-        not be added to some document heading, based on decision of the code
-        making the final document.
-
-        """
-        return None
 
     def _export_actions(self, context, record, uri):
         g = context.generator()
@@ -239,6 +187,68 @@ class Form(lcg.Content):
             actions = self._view.actions()
         return [(action, is_enabled(action)) for action in actions if is_visible(action)]
 
+    def _localizer(self, req):
+        # TODO: The method 'preferred_language()' is Wiking specific so it is not correct to rely
+        # on it here.
+        try:
+            lang = req.preferred_language()
+        except:
+            lang = None
+        return lcg.Localizer(str(lang))
+
+    def form_id(self):
+        """Return the HTML id of the form used in the last export.
+
+        Knowing the HTML id can be usefull for example in JavaScript code
+        accessing the form's DOM elements or its JavaScript instance.
+
+        The form can be theoretically exported several times but usually
+        there's just one export alltogether.  In any case, the HTML id is
+        generated when the export starts, so calling this method before
+        exporting the form will raise an AttributeError exception.
+
+        """
+
+        
+        return self._form_id
+
+    def row(self):
+        """Return the form row as a pytis.presentation.PresentedRow' instance."""
+        return self._row
+
+    def export(self, context):
+        g = context.generator()
+        cls = 'pytis-form ' + self._CSS_CLS
+        if self._name:
+            cls += ' ' + camel_case_to_lower(self._name, '-')
+        self._form_id = form_id = context.unique_id()
+        javascript = self._export_javascript(context, form_id)
+        if javascript:
+            # Javascript dependencies must be allocated before the form is
+            # exported because form field export may rely on these dependencies
+            # to be available.
+            context.resource('prototype.js')
+            context.resource('gettext.js')
+            context.resource('pytis.js')
+            if context.lang() != 'en':
+                context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
+        result = g.div(self._export_form(context, form_id), cls=cls, id=form_id)
+        if javascript:
+            result += g.script(javascript)
+        context.resource('pytis-forms.css')
+        return result
+
+    def heading_info(self):
+        """Return basestring to be possibly put into a document heading.
+
+        If the return value is 'None' or an empty basestring, nothing is added
+        to the document heading.  Otherwise the returned basestring may or may
+        not be added to some document heading, based on decision of the code
+        making the final document.
+
+        """
+        return None
+
 
 class FieldForm(Form):
     """Form with formattable fields."""
@@ -252,8 +262,7 @@ class FieldForm(Form):
         
     def _export_field(self, context, field, editable=False):
         if editable:
-            result = field.editor(context, prefill=self._prefill.get(field.id),
-                                           error=dict(self._errors).get(field.id))
+            result = field.editor(context)
         else:
             formatted = field.format(context)
             if field.spec.text_format() == pytis.presentation.TextFormat.LCG:
@@ -500,6 +509,9 @@ class LayoutForm(FieldForm):
     def _export_field_help(self, context, field):
         return None
 
+    def _field_order(self):
+        return self._layout.order()
+
 
 class _SingleRecordForm(LayoutForm):
 
@@ -531,6 +543,7 @@ class _SubmittableForm(Form):
         self._submit = submit
         self._reset = reset
         self._enctype = None
+        self._last_validation_errors = []
         super(_SubmittableForm, self).__init__(view, req, row, **kwargs)
     
 
@@ -559,6 +572,64 @@ class _SubmittableForm(Form):
             content.append(g.button(g.span(_(u"Reset")), type='reset', title=self._reset))
         return [g.div(content, cls='submit')]
 
+    def _field_order(self):
+        """Return the order of visible fields in the form as a sequence of field ids."""
+        raise Exception("This method must be defined in derived class.")
+
+    def _check(self):
+        errors = []
+        for check in self._view.check():
+            result = check(self._row)
+            if result:
+                if isinstance(result, (str, unicode)):
+                    result = (result, _("Integrity check failed."))
+                else:
+                    assert isinstance(result, tuple) and len(result) == 2, \
+                        ('Invalid check() result:', result)
+                errors.append(result)
+        return errors
+
+    def prefill(self, req):
+        """Use values passed as request arguments as form prefill.
+
+        The request parameters may contain values to be prefilled in the form
+        fields.  The values are displayed in fields even if they are invalid
+        (but they will not invoke computers in this case).  Validation errors
+        are however not displayed above the form -- the user may edit the
+        prefilled values and validation errors will be displayed after form
+        submission if any.
+
+        """
+        locale_data = self._localizer(req).locale_data()
+        for fid in self._field_order():
+            if req.has_param(fid) and self._row.editable(fid):
+                field = self._fields[fid]
+                if not isinstance(field.type, (pd.Binary, pd.Password)):
+                    # Even if the value is vot valid, the field will contain
+                    # the passed value, but the error will not be displayed
+                    # by '_export_errors()'.
+                    field.validate(req, locale_data)
+
+    def validate(self, req):
+        """Validate form values and return True if all of them are valid.
+
+        False is returned if at least one field value is invalid or the
+        specifications's 'check' constraint is not passed.
+
+        """
+        self._last_validation_errors = errors = []
+        row = self._row
+        locale_data = self._localizer(req).locale_data()
+        for fid in self._field_order():
+            if row.editable(fid):
+                field = self._fields[fid]
+                error = field.validate(req, locale_data)
+                #lcg.log("Validation:", (fid, req.param(fid), error))
+                if error:
+                    errors.append((fid, error.message()))
+        if not errors:
+            errors.extend(self._check())
+        return not errors
 
 
 class ShowForm(_SingleRecordForm):
@@ -575,18 +646,9 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     _EDITABLE = True
     
-    def __init__(self, view, req, row, errors=(), multipart=None, **kwargs):
+    def __init__(self, view, req, row, multipart=None, **kwargs):
         """Arguments:
 
-          errors -- a sequence of error messages to display within the form
-            (results of previous attempt to commit the form).  The sequence
-            consists of pairs (ID, MESSAGE), where ID is the field identifier
-            and MESSAGE is the error message for given field.  ID can also be
-            None for messages which don't belong to any particular field and it
-            is also legal to pass field identifiers, which don't appear in the
-            current form or even don't exist in the current specification
-            (typically for fields which only appear in the underlying database
-            objects).
           multipart -- force form encoding type to 'multipart/form-data'.  If
             None, the encoding is set to 'multipart/form-data' automatically
             when the form includes any binary (file upload) fields.  If False,
@@ -598,18 +660,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
         """
         super(EditForm, self).__init__(view, req, row, **kwargs)
-        key, order = self._key, tuple(self._layout.order())
-        self._hidden += [(k, v) for k, v in self._prefill.items()
-                         if view.field(k) and not k in order and k != key]
+        key = self._key
+        order = tuple(self._layout.order())
         if not self._row.new() and key not in order + tuple([k for k,v in self._hidden]):
             self._hidden += [(key,  self._row[key].export())]
-        assert isinstance(errors, (tuple, list)), errors
-        if __debug__:
-            for e in errors:
-                assert isinstance(e, tuple) and len(e) == 2, e
-                assert e[0] is None or isinstance(e[0], basestring), e[0]
-                assert isinstance(e[1], basestring), e[1]
-        self._errors = errors
         assert multipart in (None, True, False), multipart
         if multipart is None:
             multipart = any([f for f in order if isinstance(self._row.type(f), pytis.data.Binary)])
@@ -634,14 +688,16 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     
     def _export_errors(self, context, form_id):
         g = context.generator()
-        errors = []
-        for id, msg in self._errors:
-            if id is not None:
-                f = self._view.field(id)
-                msg = g.strong(f and f.label() or id) + ": " + msg
-            errors.append(g.p(msg))
-        if errors:
-            return [g.div(errors, cls='errors')]
+        def export_error(fid, message):
+            if fid:
+                field = self._fields.get(fid)
+                content = g.strong(field and field.label or fid) + ": " + message
+            else:
+                conent = message
+            return g.p(content)
+        content = [export_error(fid, message) for fid, message in self._last_validation_errors]
+        if content:
+            return [g.div(content, cls='errors')]
         else:
             return []
 
@@ -671,21 +727,60 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                               cls='footer')]
         return []
 
-    @classmethod
-    def ajax_response(cls, req, row, layout, errors, localizer, uri_provider=None):
-        """Return the AJAX request response as a JSON encoded data structure.
+    def _attachment_storage_request(self, req, row):
+        method_name = req.param('_pytis_attachment_storage_request')
+        try:
+            method = getattr(self, '_attachment_storage_'+method_name)
+        except AttributeError:
+            raise BadRequest()
+        storage = row.attachment_storage(req.param('_pytis_attachment_storage_field'))
+        if not storage:
+            raise BadRequest()
+        return method(req, row, storage)
 
-        Arguments:
-          req -- AJAX request object as an instance of class implementing the
-            pytis 'Request' API.
-          row -- edited form record as a 'PresentedRow' instance.
-          layout -- edited form layout as a 'GroupSpec' instance.
-          errors -- form data validation result as a sequence of pairs
-            (field_id, error_message).
-          localizer -- 'lcg.Localizer' instance used for localization of
-            computed field values (such as dates, numbers, etc).
-          uri_provider -- URI provider function same as in the Form constructor
-            argument of the same name.
+    def _resource2dict(self, resource):
+        result = dict([(attr, getattr(resource, attr)())
+                       for attr in ('filename', 'uri', 'title', 'descr')],
+                      type=resource.__class__.__name__,
+                      **(resource.info() or {}))
+        if isinstance(resource, lcg.Image) and resource.thumbnail():
+            result['thumbnail'] = self._resource2dict(resource.thumbnail())
+        return result
+
+    def _attachment_storage_get(self, req, row, storage):
+        resource = storage.resource(req.param('filename'))
+        return resource and self._resource2dict(resource)
+        
+    def _attachment_storage_list(self, req, row, storage):
+        return [self._resource2dict(r) for r in storage.resources()]
+    
+    def _attachment_storage_update(self, req, row, storage):
+        try:
+            import json
+        except:
+            import simplejson as json
+        return storage.update(req.param('filename'), json.loads(req.param('values')))
+
+    def _attachment_storage_insert(self, req, row, storage):
+        upload = req.param('upload')
+        if not upload:
+            raise BadRequest()
+        error = storage.insert(upload.filename(), upload.file(), dict(mime_type=upload.mime_type()))
+        return {'success': error is None, 'message': error and req.localize(error),
+                'filename': upload.filename()}
+
+    def is_ajax_request(self, req):
+        """Return True if the request is an AJAX request.
+
+        If the current request is a pytis form update request, return True,
+        Otherwise return False.  If True is returned, the request should return
+        the result of the method 'ajax_response()'.
+
+        """
+        return req.param('_pytis_form_update_request') is not None
+
+    def ajax_response(self, req):
+        """Return the AJAX request response as a JSON encoded data structure.
 
         This method acts as the server side counter-part of the client side
         code defined in the pytis form JavaScript code in 'pytis.js'.  The
@@ -694,18 +789,24 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         response headers.  That way the client side code will be able to
         process it.
 
-        May raise 'BadRequest' exception id the request parameters don't make
-        sense.
-        
+        May raise 'pytis.web.BadRequest' exception id the request parameters
+        don't make sense.
+
         """
         try:
             import json
         except:
             import simplejson as json
         if req.param('_pytis_attachment_storage_request'):
-            return json.dumps(cls._attachment_storage_request(req, row))
+            return json.dumps(self._attachment_storage_request(req, row))
         request_number = req.param('_pytis_form_update_request')
         changed_field = str(req.param('_pytis_form_changed_field'))
+        order = self._field_order()
+        # Validate the changed field last (for AJAX update request) to invoke computers correctly.
+        if changed_field:
+            if changed_field in order:
+                order.remove(changed_field)
+            order.append(changed_field)
         state = req.param('_pytis_form_state')
         if state:
             import urlparse
@@ -713,19 +814,24 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         else:
             field_states = {}
         fields = {}
-        computed_fields = [f.id() for f in row.fields() if f.computer() is not None]
-        for fid in layout.order():
+        localizer = self._localizer(req)
+        locale_data = localizer.locale_data()
+        for fid in order:
+            field = self._fields[fid]
             fields[fid] = fdata = {}
+            computer = field.spec.computer()
+            if computer and changed_field and changed_field in computer.depends():
+                # Don't validate fields which depend on the field currently changed by
+                # the user during AJAX form updates.
+                error = None
+            else:
+                error = field.validate(req, locale_data)
+                if error:
+                    fdata['error'] = localizer.localize(error.message())
             if fid != changed_field:
-                fdata['editable'] = row.editable(fid)
-                if fid in computed_fields and row.invalid_string(fid) is None \
-                        and not isinstance(row.type(fid), pd.Binary):
-                    value = row[fid]
-                    if isinstance(value.type(), pd.DateTime):
-                        exported_value = localizable_datetime(value)
-                    else:
-                        exported_value = value.export()
-                    localized_value = localizer.localize(exported_value)
+                fdata['editable'] = self._row.editable(fid)
+                if computer and not error and not isinstance(field.type, pd.Binary):
+                    localized_value = localizer.localize(localizable_export(self._row[fid]))
                     # Values of disabled fields are not in the request, so send them always...
                     if not req.has_param(fid) or localized_value != req.param(fid):
                         fdata['value'] = localized_value
@@ -734,14 +840,15 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     # We rely on the fact, that a stringified
                     # 'pytis.data.Operator' uniquely represents the
                     # corresponding runtime filter state.
-                    new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
+                    new_state = 'f=%s;a=%s' % (self._row.runtime_filter(fid), 
+                                               self._row.runtime_arguments(fid))
                     if new_state != old_state:
                         enumeration = [(value, localizer.localize(label))
-                                       for value, label in row.enumerate(fid)]
+                                       for value, label in self._row.enumerate(fid)]
                         fdata['state'] = new_state
                         fdata['enumeration'] = enumeration
-                        if uri_provider and isinstance(row.type(fid), pd.Array):
-                            func = uri_provider(row, UriType.LINK, fid)
+                        if isinstance(field.type, pd.Array):
+                            func = self._uri_provider(self._row, UriType.LINK, fid)
                             def link(value):
                                 lnk = func(value)
                                 if isinstance(lnk, Link):
@@ -753,59 +860,26 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                             if func:
                                 fdata['links'] = dict([(value, link(value))
                                                        for (value, display) in enumeration])
-        for fid, error in errors:
+        for fid, error in self._check():
             if fid in fields:
                 fields[fid]['error'] = localizer.localize(error)
         result = dict(request_number=request_number, fields=fields)
         return json.dumps(result)
 
-    @classmethod
-    def _attachment_storage_request(cls, req, row):
-        method_name = req.param('_pytis_attachment_storage_request')
-        try:
-            method = getattr(cls, '_attachment_storage_'+method_name)
-        except AttributeError:
-            raise BadRequest()
-        storage = row.attachment_storage(req.param('_pytis_attachment_storage_field'))
-        if not storage:
-            raise BadRequest()
-        return method(req, row, storage)
+    def set_error(self, field_id, error):
+        """Arguments:
 
-    @classmethod
-    def _resource2dict(cls, resource):
-        result = dict([(attr, getattr(resource, attr)())
-                       for attr in ('filename', 'uri', 'title', 'descr')],
-                      type=resource.__class__.__name__,
-                      **(resource.info() or {}))
-        if isinstance(resource, lcg.Image) and resource.thumbnail():
-            result['thumbnail'] = cls._resource2dict(resource.thumbnail())
-        return result
+           field_id -- identifier of the field to which the error relates.  Can
+             be None for messages which don't belong to any particular field
+             and it is also legal to pass field identifiers, which don't appear
+             in the form or even don't exist in its specification (typically
+             for fields which only appear in the underlying database objects).
 
-    @classmethod
-    def _attachment_storage_get(cls, req, row, storage):
-        resource = storage.resource(req.param('filename'))
-        return resource and cls._resource2dict(resource)
-        
-    @classmethod
-    def _attachment_storage_list(cls, req, row, storage):
-        return [cls._resource2dict(r) for r in storage.resources()]
-    
-    @classmethod
-    def _attachment_storage_update(cls, req, row, storage):
-        try:
-            import json
-        except:
-            import simplejson as json
-        return storage.update(req.param('filename'), json.loads(req.param('values')))
+           error -- error message.
 
-    @classmethod
-    def _attachment_storage_insert(cls, req, row, storage):
-        upload = req.param('upload')
-        if not upload:
-            raise BadRequest()
-        error = storage.insert(upload.filename(), upload.file(), dict(mime_type=upload.mime_type()))
-        return {'success': error is None, 'message': error and req.localize(error),
-                'filename': upload.filename()}
+        """
+        self._error = (field_id, error)
+
     
 class FilterForm(EditForm):
     """Simple form for displaying a list of fields for advanced filtering."""
@@ -1135,13 +1209,6 @@ class BrowseForm(LayoutForm):
         self._align = dict([(f.id, 'right') for f in cfields
                             if not f.type.enumerator() and isinstance(f.type, pd.Number)])
         self._custom_message = message
-        # Hack allowing locale dependent index search controls.  The method
-        # 'preferred_language()' is Wiking specific so it is not correct to rely
-        # on it here.
-        try:
-            self._lang = str(req.preferred_language())
-        except:
-            self._lang = None
         self._init_query_fields(req, query_fields)
         provider_kwargs = dict(req=self._req)
         if self._query_fields_row:
@@ -1179,7 +1246,6 @@ class BrowseForm(LayoutForm):
                                 if not isinstance(c.type(), pytis.data.Big)]
 
     def _init_query_fields(self, req, query_fields_spec):
-        errors = []
         query_fields = []
         if query_fields_spec is None:
             query_fields_spec = self._view.query_fields()
@@ -1195,7 +1261,7 @@ class BrowseForm(LayoutForm):
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
             row = self.FormRecord(self._req, fields_specs, data, None,
                                   resolver=self._row.resolver(), new=True)
-            locale_data = lcg.Localizer(self._lang).locale_data()
+            locale_data = self._localizer(req).locale_data()
             for f in fields_specs:
                 if not row.visible(f.id()):
                     continue
@@ -1203,9 +1269,7 @@ class BrowseForm(LayoutForm):
                 cookie = 'pytis-query-field-%s-%s' % (self._name, field.id)
                 if req.param('list-form-controls-submitted'):
                     error = field.validate(req, locale_data)
-                    if error:
-                        errors.append((field.id, error.message()))
-                    else:
+                    if not error:
                         req.set_cookie(cookie, row[field.id].export())
                 else:
                     saved_value = req.cookie(cookie)
@@ -1214,10 +1278,6 @@ class BrowseForm(LayoutForm):
                 query_fields.append(field)
         else:
             row = None
-        # TODO: self._errors doesn't really belong here -- it belongs to
-        # Editform, but it is used within _export_field() so we need to
-        # initialize it here or (better) fix _export_field().
-        self._query_fields_errors = self._errors = errors
         self._query_fields = query_fields
         self._query_fields_row = row
 
@@ -1591,7 +1651,7 @@ class BrowseForm(LayoutForm):
             values = [v.value() for v in data.distinct(field.id, prefix=level+1,
                                                        condition=self._conditions(condition))
                       if v.value() is not None]
-            if self._lang == 'cs':
+            if context.lang() == 'cs':
                 # Total hack allowing correct usage of Czech character 'ch' in index search.
                 # A more appropriate solution would be to handle that on the database level.
                 values = [v for v in values if not v.lower().endswith('ch')]
@@ -1667,11 +1727,12 @@ class BrowseForm(LayoutForm):
                 submit_button = g.noscript(submit_button)
             else:
                 onchange = None
-            for fid, msg in self._query_fields_errors:
-                f = find(fid, self._query_fields, key=lambda f: f.id)
-                content.append(g.div(g.strong(f.label) + ": " + msg, cls='errors'))
             filter_content = []
             for field in self._query_fields:
+                error = self._query_fields_row.validation_error(field.id)
+                if error:
+                    content.append(g.div(g.strong(field.label) + ": " + error.message(), 
+                                         cls='errors'))
                 exported_field = self._export_field(context, field, editable=True)
                 if field.label:
                     exported_label = g.label(field.label, field.html_id())
@@ -2114,25 +2175,13 @@ class EditableBrowseForm(BrowseForm):
             self._set_row_callback(self._row)
         if self._req.param('submit'):
             # If we are displaying a submitted form (after validation failed in
-            # 'submit()'), We need to revalidate editable fields in each row
-            # and reset self._prefill and self._errors to be able to display
-            # the form with the invalid user values and validation error
-            # messages within the fields.  Note, that the 'prefill' and
-            # 'errors' form constructor parameters exist only for historical
-            # reasons and they should be eliminated in future, when form
-            # validation is completely moved from Wiking to Pytis forms. It
-            # doesn't work at all for multirow forms, so that is why it must be
-            # now done here specifically.
-            locale_data = lcg.Localizer(self._lang).locale_data()
-            self._prefill = {}
-            self._errors = []
+            # 'submit()'), we need to revalidate editable fields in each row
+            # to be able to display the form with the invalid user values 
+            # and validation error messages within the fields.
+            locale_data = self._localizer(self._req).locale_data()
             for cid in self._editable_columns:
                 field = self._fields[cid]
-                key = (row[self._key],)
-                error = field.validate(self._req, locale_data)
-                if error:
-                    self._prefill[cid] = self._row.invalid_string(field.id)
-                    self._errors.append((cid, error.message()))
+                field.validate(self._req, locale_data)
 
     def _field(self, id, multirow=False):
         if id in self._editable_columns:
@@ -2147,7 +2196,7 @@ class EditableBrowseForm(BrowseForm):
                 result += context.generator().div(error, cls='validation-error')
         return result
 
-    def validate(self):
+    def validate(self, req):
         """Validate the submitted form and return data to be updated if no errors are found.
 
         Returns None if validation of at least one field fails.  If all form
@@ -2156,13 +2205,12 @@ class EditableBrowseForm(BrowseForm):
         which are editable.
 
         """
-        req = self._req
         data = self._row.data()
         data.select(columns=self._select_columns,
                     condition=self._conditions(),
                     arguments=self._arguments,
                     sort=self._sorting)
-        locale_data = lcg.Localizer(self._lang).locale_data()
+        locale_data = self._localizer(req).locale_data()
         result = []
         column_ids = [c.id() for c in data.columns()]
         for cid in self._editable_columns:

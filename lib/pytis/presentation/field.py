@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002-2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -794,7 +794,7 @@ class PresentedRow(object):
                 self.__setitem__(key, value, run_callback=False)
         else:
             if string != self.format(key):
-                self._invalid[key] = string
+                self._invalid[key] = (string, error)
             elif key in self._invalid:
                 del self._invalid[key]
         if key not in self._validated_fields:
@@ -802,14 +802,23 @@ class PresentedRow(object):
         return result
 
     def invalid_string(self, key):
-        """Return the last invalid user input string.
+        """Return the last invalid user input string for given field.
 
         Returns a string passed to the last call to 'validate()' if this last input string was
         invalid.  None is returned if the last validation was successful.
         
         """
-        return self._invalid.get(key)
+        return self._invalid.get(key, (None,None))[0]
 
+    def validation_error(self, key):
+        """Return the last validation error for given field.
+
+        Returns the result returned by the last call to 'validate()'.  None is
+        returned if the last validation was successful.
+
+        """
+        return self._invalid.get(key, (None,None))[1]
+    
     def validated(self, key):
         """Return True if the given field has been validated or False otherwise.
 
@@ -820,9 +829,8 @@ class PresentedRow(object):
         present in form layout before submit.
 
         """
-
         return key in self._validated_fields
-    
+
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
         assert function is None or isinstance(function, collections.Callable), \
