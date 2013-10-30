@@ -813,8 +813,9 @@ class PresentedRow(object):
     def validation_error(self, key):
         """Return the last validation error for given field.
 
-        Returns the result returned by the last call to 'validate()'.  None is
-        returned if the last validation was successful.
+        Returns the 'pytis.data.ValidationError' instance returned by the last
+        call to 'validate()'.  None is returned if the last validation was
+        successful.
 
         """
         return self._invalid.get(key, (None,None))[1]

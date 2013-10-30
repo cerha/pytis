@@ -613,8 +613,8 @@ class _SubmittableForm(Form):
     def validate(self, req):
         """Validate form values and return True if all of them are valid.
 
-        False is returned if at least one field value is invalid or the
-        specifications's 'check' constraint is not passed.
+        False is returned if at least one field value is invalid or
+        specifications's 'check' constraints are not passed.
 
         """
         self._last_validation_errors = errors = []
