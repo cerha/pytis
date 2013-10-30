@@ -4834,10 +4834,11 @@ class Specification(object):
         # applications, it should be removed from here too.
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
+                     'distinct_on', 'bindings', 'cb', 'check', 'sorting', 'profiles', 'filters',
                      'folding', 'initial_folding', 'query_fields', 'ro_select',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
-                if isinstance(value, collections.Callable):
+                if isinstance(value, collections.Callable) and len(argument_names(value)) == 0:
                     setattr(self, attr, value())
         assert isinstance(self.fields, (list, tuple,)), self.fields
         assert self.arguments is None or isinstance(self.arguments, (list, tuple))
