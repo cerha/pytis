@@ -84,6 +84,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
         connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
         connection_instance = class_._postgresql_Connection(connection, connection_data)
         class_._postgresql_reset_connection_info(connection_instance)
+        connection_instance.set_connection_info('last_activity', time.time())
         cursor = connection.cursor()
         cursor.execute("show standard_conforming_strings")
         result = cursor.fetchone()[0]
@@ -205,6 +206,7 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                                   e, e.args, query)
         now = time.time()
         connection.set_connection_info('last_query_time', now)
+        connection.set_connection_info('last_activity', now)
         if connection.connection_info('transaction_start_time') is None:
             connection.set_connection_info('transaction_start_time', now)
             if __debug__:

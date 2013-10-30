@@ -218,6 +218,13 @@ class PostgreSQLAccessor(object_2_5):
                 except:
                     pass
 
+        @classmethod
+        def close_idle_connections(class_, timeout):
+            limit = time.time() - timeout
+            for c in class_._connection_set:
+                if c.connection_info('last_activity') <= limit:
+                    PostgreSQLAccessor._postgresql_close_connection(c)
+
     class _postgresql_Result(object):
         """Výsledek SQL příkazu.
         """
@@ -385,6 +392,18 @@ class PostgreSQLAccessor(object_2_5):
 
         """
         class_._postgresql_Connection.rollback_connections(callback)
+
+    @classmethod
+    def close_idle_connections(class_, timeout=60):
+        """Close all inactive database connections.
+
+        Arguments:
+
+          timeout -- number of seconds defining the interval of connection
+            inactivity to consider the connection inactive
+
+        """
+        class_._postgresql_Connection.close_idle_connections(timeout)
 
 
 class PostgreSQLConnector(PostgreSQLAccessor):

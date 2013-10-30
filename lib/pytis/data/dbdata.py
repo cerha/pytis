@@ -53,7 +53,6 @@ tabulky.
 # bezpodmínečně nutno tyto situace řádně ošetřovat a prošetřovat.  Nejprve je
 # ovšem nutno definovat nějaký mechanismus ošetřování chyb.
 
-import copy
 import gc
 import thread
 import weakref
