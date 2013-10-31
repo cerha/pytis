@@ -223,6 +223,7 @@ class PostgreSQLAccessor(object_2_5):
             limit = time.time() - timeout
             for c in class_._connection_set:
                 if c.connection_info('last_activity') <= limit:
+                    c._connection.rollback()
                     PostgreSQLAccessor._postgresql_close_connection(c)
 
     class _postgresql_Result(object):
