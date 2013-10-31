@@ -754,7 +754,7 @@ class CheckboxField(Field):
         return context.generator().checkbox(value='T', checked=self._value().value(), **kwargs)
 
     def _validate(self, string_value, req, locale_data, **kwargs):
-        if string_value is None:
+        if not string_value:
             string_value = 'F'
         return super(CheckboxField, self)._validate(string_value, req, locale_data, **kwargs)
 
