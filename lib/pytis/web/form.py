@@ -1175,6 +1175,8 @@ class BrowseForm(LayoutForm):
         self._bottom_actions = bottom_actions
         self._row_actions = row_actions
         self._async_load = async_load
+        self._select_columns = [c.id() for c in self._row.data().columns()
+                                if not isinstance(c.type(), pytis.data.Big)]
 
     def _init_query_fields(self, req, query_fields_spec):
         errors = []
@@ -1460,7 +1462,8 @@ class BrowseForm(LayoutForm):
         data = self._row.data()
         limit = self._limit
         exported_rows = []
-        count = data.select(condition=self._conditions(),
+        count = data.select(columns=self._select_columns,
+                            condition=self._conditions(),
                             arguments=self._arguments,
                             sort=self._sorting)
         found = False
@@ -1596,7 +1599,8 @@ class BrowseForm(LayoutForm):
                 search_ch_string = (search_string or '')+ch
                 condition = self._index_search_condition(search_ch_string)
                 try:
-                    count = data.select(condition=self._conditions(condition))
+                    count = data.select(columns=self._data.key(),
+                                        condition=self._conditions(condition))
                 finally:
                     data.close()
                 if count:
@@ -2151,7 +2155,8 @@ class EditableBrowseForm(BrowseForm):
         """
         req = self._req
         data = self._row.data()
-        data.select(condition=self._conditions(),
+        data.select(columns=self._select_columns,
+                    condition=self._conditions(),
                     arguments=self._arguments,
                     sort=self._sorting)
         locale_data = lcg.Localizer(self._lang).locale_data()
