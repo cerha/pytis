@@ -1599,7 +1599,7 @@ class BrowseForm(LayoutForm):
                 search_ch_string = (search_string or '')+ch
                 condition = self._index_search_condition(search_ch_string)
                 try:
-                    count = data.select(columns=self._data.key(),
+                    count = data.select(columns=(self._key,),
                                         condition=self._conditions(condition))
                 finally:
                     data.close()
