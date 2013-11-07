@@ -2590,6 +2590,8 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         for callback in self._change_callbacks:
             self._data.add_callback_on_change(callback)
         self._change_callbacks = []
+        self._non_big_columns = [c.id() for c in data.columns()
+                                 if not isinstance(c.type(), pytis.data.Big)]
         if __debug__:
             if self._validity_column is not None:
                 c = data.find_column(self._validity_column)
@@ -2617,7 +2619,8 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         def lfunction():
             data = self._data
             try:
-                count = data.select(the_condition, transaction=transaction, arguments=arguments)
+                count = data.select(the_condition, transaction=transaction, arguments=arguments,
+                                    columns=self._non_big_columns)
                 if count > 1:
                     raise ProgramError('Insufficient runtime filter for DataEnumerator',
                                        str(the_condition))
@@ -2651,7 +2654,8 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             result = []
             try:
                 count = self._data.select(condition=the_condition, transaction=transaction,
-                                          sort=sort, arguments=arguments)
+                                          sort=sort, arguments=arguments,
+                                          columns=(self._value_column,))
                 if max is not None and count > max:
                     return None
                 while True:
@@ -2729,6 +2733,7 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
         def lfunction():
             return self._data.select_map(identity, transaction=transaction,
                                          condition=the_condition, arguments=arguments,
+                                         columns=self._non_big_columns,
                                          sort=sort)
         return with_lock(self._data_lock, lfunction)
 
