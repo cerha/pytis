@@ -5016,6 +5016,16 @@ class Specification(object):
         return self._init_from_db_fields(table, ())
 
     def _customize_fields(self, fields):
+        """Customize fields defined by the parent class or db specification.
+
+        This method may be used to manipulate the list of specification fields.
+        The 'fields' argument is a 'Specification._Fields' instance.  Use the
+        methods of this class to customize the fields.
+
+        An alternative way of modifying inherited fields is the method
+        '_customize_fields()'.  Use which ever makes more sense in your case.
+
+        """
         pass
 
     def _inherited_fields(self, cls, override=(), exclude=()):
@@ -5036,6 +5046,9 @@ class Specification(object):
         modified by the attributes passed to the corresponding Field
         constructors, but their other attributes will remain as in the parent
         class.
+
+        An alternative way of modifying inherited fields is the method
+        '_customize_fields()'.  Use which ever makes more sense in your case.
 
         """
         fields = super(cls, self).fields
