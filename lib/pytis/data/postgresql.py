@@ -1231,7 +1231,10 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 assert t is not None, ("Column types must be specified for table functions",
                                        b.id(), b.table(),)
                 if type(t) == type(Type):
-                    t = t(**b.kwargs())
+                    t = t()
+                type_kwargs = b.kwargs()
+                if type_kwargs:
+                    t = t.clone(t.__class__(**type_kwargs))
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
