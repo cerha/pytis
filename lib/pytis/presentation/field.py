@@ -804,9 +804,11 @@ class PresentedRow(object):
     def invalid_string(self, key):
         """Return the last invalid user input string for given field.
 
-        Returns a string passed to the last call to 'validate()' if this last input string was
-        invalid.  None is returned if the last validation was successful.
-        
+        Returns a string passed to the last call to 'validate()' since the last
+        'set_row()' or '__setitem__(key)' call if this last input string was
+        invalid.  None is returned if the last validation was successful or if
+        the field has not been validated yet.
+
         """
         return self._invalid.get(key, (None,None))[0]
 
@@ -814,11 +816,24 @@ class PresentedRow(object):
         """Return the last validation error for given field.
 
         Returns the 'pytis.data.ValidationError' instance returned by the last
-        call to 'validate()'.  None is returned if the last validation was
-        successful.
+        call to 'validate()' since the last 'set_row()' or '__setitem__(key)' call.  None is returned if the last validation was
+        successful or if the field has not been validated yet.
 
         """
         return self._invalid.get(key, (None,None))[1]
+
+    def validated(self, key):
+        """Return True if the given field has been validated or False otherwise.
+
+        Returns True if 'validate()' was called on this record instance for the
+        given 'key' since the last 'set_row()' or '__setitem__(key)' call.
+
+        This method may be usefull if you need to know whether some field was
+        present in form layout before submit.
+
+        """
+
+        return key in self._validated_fields
     
     def validated(self, key):
         """Return True if the given field has been validated or False otherwise.
