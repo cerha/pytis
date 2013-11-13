@@ -156,6 +156,7 @@ class PresentedRow(object):
         self._new = new
         self._cache = {}
         self._invalid = {}
+        self._validated_fields = []
         self._transaction = transaction
         self._resolver = resolver or pytis.util.resolver()
         self._columns = columns = tuple([self._Column(f, self._type(f), data, self._resolver)
@@ -255,6 +256,7 @@ class PresentedRow(object):
         self._row = pytis.data.Row(row_data)
         self._virtual = dict(virtual)
         self._invalid = {}
+        self._validated_fields = []
         if reset:
             self._original_row = copy.copy(row)
             if not hasattr(self, '_initialized_original_row'):
@@ -372,6 +374,8 @@ class PresentedRow(object):
             row = self._virtual
         if key in self._invalid:
             del self._invalid[key]
+        if key in self._validated_fields:
+            self._validated_fields.remove(key)
         if row[key].value() != value.value():
             row[key] = value
             self._cache = {}
@@ -793,6 +797,8 @@ class PresentedRow(object):
                 self._invalid[key] = string
             elif key in self._invalid:
                 del self._invalid[key]
+        if key not in self._validated_fields:
+            self._validated_fields.append(key)
         return result
 
     def invalid_string(self, key):
@@ -803,6 +809,19 @@ class PresentedRow(object):
         
         """
         return self._invalid.get(key)
+
+    def validated(self, key):
+        """Return True if the given field has been validated or False otherwise.
+
+        Returns True if 'validate()' was called on this record instance for the
+        given 'key' since the last 'set_row()' or '__setitem__(key)' call.
+
+        This method may be usefull if you need to know whether some field was
+        present in form layout before submit.
+
+        """
+
+        return key in self._validated_fields
     
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
