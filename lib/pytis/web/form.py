@@ -816,6 +816,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         fields = {}
         localizer = self._localizer(req)
         locale_data = localizer.locale_data()
+        # Validate all fields first.
         for fid in order:
             field = self._fields[fid]
             fields[fid] = fdata = {}
@@ -828,8 +829,13 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 error = field.validate(req, locale_data)
                 if error:
                     fdata['error'] = localizer.localize(error.message())
+        # Compute field state after all fields are validated.
+        for fid in order:
             if fid != changed_field:
+                field = self._fields[fid]
+                fdata = fields[fid]
                 fdata['editable'] = self._row.editable(fid)
+                lcg.log("..", fid, fdata['editable'])
                 if computer and not error and not isinstance(field.type, pd.Binary):
                     localized_value = localizer.localize(localizable_export(self._row[fid]))
                     # Values of disabled fields are not in the request, so send them always...
