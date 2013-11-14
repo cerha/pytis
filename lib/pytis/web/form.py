@@ -2198,9 +2198,9 @@ class EditableBrowseForm(BrowseForm):
     def _export_field(self, context, field, editable=False):
         result = super(EditableBrowseForm, self)._export_field(context, field, editable=editable)
         if editable:
-            error = dict(self._errors).get(field.id)
+            error = self._row.validation_error(field.id)
             if error:
-                result += context.generator().div(error, cls='validation-error')
+                result += context.generator().div(error.message(), cls='validation-error')
         return result
 
     def validate(self, req):
