@@ -2163,6 +2163,7 @@ class EditableBrowseForm(BrowseForm):
             set_row_callback
         self._editable_columns = editable_columns
         self._set_row_callback = set_row_callback
+        self._valid_rows = []
         kwargs['limits'] = ()
         kwargs['limit'] = None
         super(EditableBrowseForm, self).__init__(view, req, row, **kwargs)
@@ -2203,12 +2204,11 @@ class EditableBrowseForm(BrowseForm):
         return result
 
     def validate(self, req):
-        """Validate the submitted form and return data to be updated if no errors are found.
+        """Validate the submitted form and return True if no errors are found.
 
-        Returns None if validation of at least one field fails.  If all form
-        fields are valid, returns a sequence of pytis.data.Row' instances.  The
-        returned rows contain all non-virtual columns plus any virtual columns
-        which are editable.
+        Returns False if validation of at least one field fails.  If all form
+        fields are valid, their values are saved and can be obtained later by
+        the method 'rows()'.
 
         """
         data = self._row.data()
@@ -2217,11 +2217,11 @@ class EditableBrowseForm(BrowseForm):
                     arguments=self._arguments,
                     sort=self._sorting)
         locale_data = self._localizer(req).locale_data()
-        result = []
         column_ids = [c.id() for c in data.columns()]
         for cid in self._editable_columns:
             if cid not in column_ids:
                 column_ids.append(cid)
+        self._valid_rows = rows = []
         while True:
             row = data.fetchone()
             if row is None:
@@ -2231,7 +2231,17 @@ class EditableBrowseForm(BrowseForm):
                 field = self._fields[cid]
                 error = field.validate(req, locale_data)
                 if error:
-                    return None
-            result.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
-        return result
+                    return False
+            rows.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
+        return True
 
+    def rows(self):
+        """Return validated form data as a sequence of 'pytis.data.Row' instances.
+
+        Returns a list of rows, where each row contains all non-virtual columns
+        plus also values of all editable virtual columns.  An empty list is
+        returned if previous validation (calling 'validate()') of at least one
+        form field failed or if validation has not been called yet.
+
+        """
+        return self._valid_rows
