@@ -3096,7 +3096,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         if transaction is None:
             from pytis.data import DBTransactionDefault
             self._pg_select_transaction = \
-                DBTransactionDefault(self._pg_connection_data_,
+                DBTransactionDefault(self._pg_connection_data(),
+                                     connection_name=self._connection_name,
                                      isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
                                      timeout_callback=timeout_callback)
             self._pg_select_user_transaction = False
