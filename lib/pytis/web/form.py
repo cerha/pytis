@@ -835,7 +835,6 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 field = self._fields[fid]
                 fdata = fields[fid]
                 fdata['editable'] = self._row.editable(fid)
-                lcg.log("..", fid, fdata['editable'])
                 if computer and not error and not isinstance(field.type, pd.Binary):
                     localized_value = localizer.localize(localizable_export(self._row[fid]))
                     # Values of disabled fields are not in the request, so send them always...
