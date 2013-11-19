@@ -846,10 +846,10 @@ class RadioField(EnumerationField):
             null_display = self.spec.null_display()
             if null_display:
                 choices.insert(0, (None, '', null_display))
-        if self.spec.height() == 1:
-            wrap = g.span
-        else:
+        if self.spec.orientation() == Orientation.VERTICAL or self.spec.height() > 1:
             wrap = g.div
+        else:
+            wrap = g.span
         for i, (val, strval, display) in enumerate(choices):
             radio_id = id +'-'+ str(i)
             radio = g.radio(value=strval, checked=(val==value.value()), id=radio_id, **kwargs)
