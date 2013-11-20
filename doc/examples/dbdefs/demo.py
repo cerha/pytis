@@ -20,6 +20,7 @@
 import sqlalchemy
 import pytis.data
 import pytis.data.gensqlalchemy as sql
+from pytis.data.dbdefs import ival
 
 class Private(sql.SQLSchema):
     name = 'private'
@@ -341,6 +342,23 @@ class SelectFunc(sql.SQLFunction):
     def body(self):
         return sqlalchemy.select([sql.c.Foo.n + sqlalchemy.literal_column('$1')],
                                  from_obj=[sql.t.Foo])
+
+    depends_on = (Foo,)
+
+class RowSelectFunc(sql.SQLFunction):
+    name = 'row_select_func'
+    arguments = (sql.Argument('min_n', pytis.data.Integer()),)
+    result_type = (sql.Column('foo', pytis.data.String()),
+                   sql.Column('n', pytis.data.Integer()),
+                   sql.Column('b', pytis.data.Boolean()),
+                   )
+    multirow = True
+    stability = 'stable'
+
+    def body(self):
+        foo = sql.t.Foo
+        return sqlalchemy.select(self._exclude(foo, foo.c.id, foo.c.description),
+                                 whereclause=(foo.c.n >= ival('$1')))
 
     depends_on = (Foo,)
 

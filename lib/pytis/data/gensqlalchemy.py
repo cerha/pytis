@@ -2451,6 +2451,55 @@ class _SQLQuery(SQLObject):
     def pytis_dependencies(self):
         return (list(super(_SQLQuery, self).pytis_dependencies()) +
                 self._pytis_query_dependencies)
+
+    @classmethod
+    def _exclude(cls, tabular, *columns_tables, **kwargs):
+        """Return sequence of 'tabular' columns with some exclusions.
+
+        Arguments:
+
+          tabular -- 'SQLTable' instance providing the initial sequence of columns
+          columns_tables -- sequence of objects to exclude from columns of
+            'tabular'.  The objects can be names of the columns to exclude
+            (strings) or tables (or their aliases) in which case all columns
+            with names present among those table column names are excluded.
+          inherited (in kwargs) -- iff true, exclude all inherited columns;
+            boolean
+
+        """
+        inherited = kwargs.get('inherited', True)
+        columns = []
+        tables = []
+        for x in columns_tables:
+            if isinstance(x, SQLTable):
+                tables.append(x)
+            elif isinstance(x, sqlalchemy.sql.Alias):
+                tables.append(x.original)
+            else:
+                columns.append(x)
+        inherited_columns = {}
+        if inherited:
+            t = tabular
+            if isinstance(t, sqlalchemy.sql.expression.Alias):
+                t = t.element
+            for c in t.c:
+                if isinstance(c, sqlalchemy.Column) and c.info.get('inherited'):
+                    inherited_columns[c.name] = True
+        included = []
+        for c in tabular.c:
+            if c in columns:
+                continue
+            cname = c.name
+            if cname in columns:
+                continue
+            if inherited_columns.get(cname):
+                continue
+            for t in tables:
+                if cname in t.c:
+                    break
+            else:
+                included.append(c)
+        return included
     
 class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     """View specification.
@@ -2560,55 +2609,6 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
                     if c.table is tabular and c not in original_columns:
                         hidden_columns.append(c.label(alias))
         return hidden_columns
-
-    @classmethod
-    def _exclude(cls, tabular, *columns_tables, **kwargs):
-        """Return sequence of 'tabular' columns with some exclusions.
-
-        Arguments:
-
-          tabular -- 'SQLTable' instance providing the initial sequence of columns
-          columns_tables -- sequence of objects to exclude from columns of
-            'tabular'.  The objects can be names of the columns to exclude
-            (strings) or tables (or their aliases) in which case all columns
-            with names present among those table column names are excluded.
-          inherited (in kwargs) -- iff true, exclude all inherited columns;
-            boolean
-
-        """
-        inherited = kwargs.get('inherited', True)
-        columns = []
-        tables = []
-        for x in columns_tables:
-            if isinstance(x, SQLTable):
-                tables.append(x)
-            elif isinstance(x, sqlalchemy.sql.Alias):
-                tables.append(x.original)
-            else:
-                columns.append(x)
-        inherited_columns = {}
-        if inherited:
-            t = tabular
-            if isinstance(t, sqlalchemy.sql.expression.Alias):
-                t = t.element
-            for c in t.c:
-                if isinstance(c, sqlalchemy.Column) and c.info.get('inherited'):
-                    inherited_columns[c.name] = True
-        included = []
-        for c in tabular.c:
-            if c in columns:
-                continue
-            cname = c.name
-            if cname in columns:
-                continue
-            if inherited_columns.get(cname):
-                continue
-            for t in tables:
-                if cname in t.c:
-                    break
-            else:
-                included.append(c)
-        return included
 
     @classmethod
     def _alias(cls, columns, **aliases):
