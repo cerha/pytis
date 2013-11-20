@@ -853,7 +853,7 @@ def _sql_value_escape(value):
 def _sql_plain_name(name):
     pos = name.rfind('.')
     if pos >= 0:
-        name = name[pos+1:]
+        name = name[pos + 1:]
     return name
 
 def _is_specification_name(name):
@@ -1167,7 +1167,7 @@ def object_by_reference(name):
     pos = name.find('(')
     if pos > 0:
         table = name[:pos].strip()
-        column = name[pos+1:-1].strip()
+        column = name[(pos + 1):-1].strip()
     else:
         table = name
         column = None
@@ -3199,7 +3199,7 @@ class SQLTrigger(SQLEventHandler):
                 raise SQLException("Table not set in anonymous trigger", cls)
             name = cls.table.pytis_name(real=True) + '__'
             name += string.join([e[:3] for e in cls.events], '_')
-            name += '__' % (position,)
+            name += '__' + cls.position
             cls.name = name
         return SQLEventHandler.__new__(cls, metadata, search_path)
 
