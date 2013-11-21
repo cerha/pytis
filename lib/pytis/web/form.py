@@ -157,9 +157,6 @@ class Form(lcg.Content):
             return []
 
     def _visible_actions(self, context, record):
-        class Action(object):
-            def __init__(self, **kwargs):
-                self.__dict__.update(kwargs)
         if record is not None:
             required_context = ActionContext.RECORD
             function_args = (record,)
