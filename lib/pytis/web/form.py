@@ -2148,9 +2148,9 @@ class EditableBrowseForm(BrowseForm):
         """Validate the submitted form and return data to be updated if no errors are found.
 
         Returns None if validation of at least one field fails.  If all form
-        fields are valid, returns a sequence of pairs (key, row), where key is
-        a pytis row key and row is a pytis.data.Row instance with values to be
-        updated for given key.
+        fields are valid, returns a sequence of pytis.data.Row' instances.  The
+        returned rows contain all non-virtual columns plus any virtual columns
+        which are editable.
 
         """
         req = self._req
@@ -2161,18 +2161,20 @@ class EditableBrowseForm(BrowseForm):
                     sort=self._sorting)
         locale_data = lcg.Localizer(self._lang).locale_data()
         result = []
+        column_ids = [c.id() for c in data.columns()]
+        for cid in self._editable_columns:
+            if cid not in column_ids:
+                column_ids.append(cid)
         while True:
             row = data.fetchone()
             if row is None:
                 break
             self._set_row(row)
-            row_values = []
             for cid in self._editable_columns:
                 field = self._fields[cid]
                 error = field.validate(req, locale_data)
                 if error:
                     return None
-                row_values.append((field.id, self._row[field.id]))
-            result.append(((row[self._key],), pd.Row(row_values)))
+            result.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
         return result
 
