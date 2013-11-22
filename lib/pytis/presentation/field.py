@@ -929,7 +929,7 @@ class PresentedRow(object):
         column = self._coldict[key]
         return column.prefer_display
         
-    def display(self, key):
+    def display(self, key, export=None):
         """Return enumerator `display' value for given field as a string.
 
         If the field has no enumerator or no display was specified, an empty
@@ -944,6 +944,8 @@ class PresentedRow(object):
         column = self._coldict[key]
         if self._secret_column(column):
             return ''
+        if export is None:
+            export = lambda value: value.export()
         inline_display = column.inline_display
         if inline_display and inline_display in self._row and not self.field_changed(key):
             # The row doesn't contain inline_display when it was created in
@@ -953,7 +955,7 @@ class PresentedRow(object):
             if value.value() is None:
                 return column.null_display or ''
             else:
-                return value.export()
+                return export(value)
         display = self._display(column)
         if not display:
             computer = column.computer

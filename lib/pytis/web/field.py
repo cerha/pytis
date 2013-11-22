@@ -798,17 +798,17 @@ class EnumerationField(Field):
     def _format(self, context):
         fid = self.id
         if self._row.prefer_display(fid):
-            return self._row.display(fid)
+            return self._row.display(fid, export=localizable_export)
         if isinstance(self.type, pd.Boolean):
             # Boolean fields may by also rendered as radio, etc. when
             # selection_type is defined.
             value = self._row[fid].value() and _(u"Yes") or _(u"No")
         else:
-            value = self._row[fid].export()
+            value = localizable_export(self._row[fid])
         if self._showform:
             # The display value is returned by the _display method in this case...
             return value
-        display = self._row.display(fid)
+        display = self._row.display(fid, export=localizable_export)
         if display and value:
             return context.generator().abbr(value, title=display)
         else:
@@ -820,7 +820,7 @@ class EnumerationField(Field):
         # should probably be handled in the same way for all field types on the
         # level of the form.
         if self._showform and not self._row.prefer_display(self.id):
-            return self._row.display(self.id) or None
+            return self._row.display(self.id, export=localizable_export) or None
         else:
             return None
 
