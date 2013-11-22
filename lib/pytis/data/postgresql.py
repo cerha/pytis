@@ -2801,7 +2801,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             return '<PgBuffer: db=%d, start=%d, index=%d\n%s>' % \
                    (self._dbpointer, self._dbposition, self._pointer, bufstr)
 
-    def __init__(self, bindings, key, connection_data, **kwargs):
+    def __init__(self, bindings, key, connection_data, ro_select=True, **kwargs):
         """Inicializuj databázovou tabulku dle uvedených specifikací.
 
         Argumenty:
@@ -2812,6 +2812,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           connection_data -- instance třídy 'DBConnection' definující
             parametry připojení, nebo funkce bez argumentů vracející takovou
             instanci 'DBConnection'
+          ro_select -- iff true, make select transactions read-only when
+            possible
           kwargs -- předá se předkovi
 
         """
@@ -2828,6 +2830,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         self._pg_buffer = self._PgBuffer()
         self._pg_number_of_rows = None
         self._pg_initial_select = False
+        self._pg_ro_select = ro_select
         # TODO: Ugly, fix this!
         if hasattr(self, '_pdbb_filtered_bindings'):
             binding_ids = [b.id() for b in self._pdbb_filtered_bindings]
@@ -3101,7 +3104,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                                      isolation=DBPostgreSQLTransaction.REPEATABLE_READ,
                                      timeout_callback=timeout_callback)
             self._pg_select_user_transaction = False
-            self._pg_select_set_read_only = True
+            self._pg_select_set_read_only = self._pg_ro_select
         else:
             self._pg_select_transaction = transaction
             self._pg_select_user_transaction = True

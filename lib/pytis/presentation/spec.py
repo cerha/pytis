@@ -4624,6 +4624,16 @@ class Specification(object):
 
     """
 
+    ro_select = True
+    """Iff true then database select operations are set read only if possible.
+
+    This is useful to lessen burden on the database server and avoid various
+    problems.  But it doesn't work when the underlying database object performs
+    read-write operations, e.g. creates temporary tables for its operation; in
+    such a case this property must be set to false.
+
+    """
+
     __metaclass__ = _SpecificationMetaclass
     _specifications_by_db_spec_name = {}
     _access_rights = None
@@ -4828,7 +4838,7 @@ class Specification(object):
         # applications, it should be removed from here too.
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
                      'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
-                     'folding', 'initial_folding', 'query_fields'):
+                     'folding', 'initial_folding', 'query_fields', 'ro_select',):
             if hasattr(self, attr):
                 value = getattr(self, attr)
                 if isinstance(value, collections.Callable):
@@ -4841,7 +4851,7 @@ class Specification(object):
                  attr not in ('table', 'key', 'connection', 'access_rights', 'condition',
                               'distinct_on', 'data_cls', 'bindings', 'cb', 'prints',
                               'data_access_rights', 'crypto_names',
-                              'add_specification_by_db_spec_name',
+                              'add_specification_by_db_spec_name', 'ro_select',
                               'oid', # for backward compatibility
                               ))):
                 self._view_spec_kwargs[attr] = getattr(self, attr)
@@ -5001,7 +5011,7 @@ class Specification(object):
         kwargs = dict(access_rights=access_rights, connection_name=self.connection,
                       condition=self.condition, distinct_on=self.distinct_on,
                       arguments=arguments, crypto_names=self.crypto_names,
-                      db_spec=db_spec)
+                      db_spec=db_spec, ro_select=self.ro_select)
         return pytis.data.DataFactory(self.data_cls, *args, **kwargs)
 
     def _create_view_spec(self, title=None, **kwargs):
