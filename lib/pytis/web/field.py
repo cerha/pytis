@@ -413,18 +413,19 @@ class Field(object):
             link = self._uri_provider(self._row, UriType.LINK, self.id)
             if link:
                 if isinstance(link, collections.Callable):
-                    pass # Ignore array item links here
+                    kwargs = None # Ignore array item links here
                 elif isinstance(link, basestring):
                     kwargs = dict(href=link)
                 else:
                     kwargs = dict(href=link.uri(), title=link.title(), target=link.target())
-                tooltip_uri = self._uri_provider(self._row, UriType.TOOLTIP, self.id)
-                if tooltip_uri:
-                    kwargs = dict(kwargs,
-                                  onmouseover="pytis.show_tooltip(event, '%s')" % tooltip_uri,
-                                  onmouseout="pytis.hide_tooltip(this)",
-                    )
-                value = g.a(value, **kwargs)
+                if kwargs:
+                    tooltip_uri = self._uri_provider(self._row, UriType.TOOLTIP, self.id)
+                    if tooltip_uri:
+                        kwargs = dict(kwargs,
+                                      onmouseover="pytis.show_tooltip(event, '%s')" % tooltip_uri,
+                                      onmouseout="pytis.hide_tooltip(this)",
+                        )
+                    value = g.a(value, **kwargs)
             if info is not None:
                 value += ' ('+ info +')'
         return value
