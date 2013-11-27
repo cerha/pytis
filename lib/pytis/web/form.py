@@ -727,16 +727,16 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                               cls='footer')]
         return []
 
-    def _attachment_storage_request(self, req, row):
+    def _attachment_storage_request(self, req):
         method_name = req.param('_pytis_attachment_storage_request')
         try:
             method = getattr(self, '_attachment_storage_'+method_name)
         except AttributeError:
             raise BadRequest()
-        storage = row.attachment_storage(req.param('_pytis_attachment_storage_field'))
+        storage = self._row.attachment_storage(req.param('_pytis_attachment_storage_field'))
         if not storage:
             raise BadRequest()
-        return method(req, row, storage)
+        return method(req, self._row, storage)
 
     def _resource2dict(self, resource):
         result = dict([(attr, getattr(resource, attr)())
@@ -798,7 +798,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         except:
             import simplejson as json
         if req.param('_pytis_attachment_storage_request'):
-            return json.dumps(self._attachment_storage_request(req, row))
+            return json.dumps(self._attachment_storage_request(req))
         request_number = req.param('_pytis_form_update_request')
         changed_field = str(req.param('_pytis_form_changed_field'))
         order = self._field_order()
@@ -829,14 +829,16 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 error = field.validate(req, locale_data)
                 if error:
                     fdata['error'] = localizer.localize(error.message())
+        row = self._row
         # Compute field state after all fields are validated.
         for fid in order:
             if fid != changed_field:
                 field = self._fields[fid]
                 fdata = fields[fid]
-                fdata['editable'] = self._row.editable(fid)
-                if computer and not error and not isinstance(field.type, pd.Binary):
-                    localized_value = localizer.localize(localizable_export(self._row[fid]))
+                fdata['editable'] = row.editable(fid)
+                if ((field.spec.computer() and row.invalid_string(fid) is None 
+                     and not isinstance(field.type, pd.Binary))):
+                    localized_value = localizer.localize(localizable_export(row[fid]))
                     # Values of disabled fields are not in the request, so send them always...
                     if not req.has_param(fid) or localized_value != req.param(fid):
                         fdata['value'] = localized_value
@@ -845,15 +847,14 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     # We rely on the fact, that a stringified
                     # 'pytis.data.Operator' uniquely represents the
                     # corresponding runtime filter state.
-                    new_state = 'f=%s;a=%s' % (self._row.runtime_filter(fid), 
-                                               self._row.runtime_arguments(fid))
+                    new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
                     if new_state != old_state:
                         enumeration = [(value, localizer.localize(label))
-                                       for value, label in self._row.enumerate(fid)]
+                                       for value, label in row.enumerate(fid)]
                         fdata['state'] = new_state
                         fdata['enumeration'] = enumeration
                         if isinstance(field.type, pd.Array):
-                            func = self._uri_provider(self._row, UriType.LINK, fid)
+                            func = self._uri_provider(row, UriType.LINK, fid)
                             def link(value):
                                 lnk = func(value)
                                 if isinstance(lnk, Link):
