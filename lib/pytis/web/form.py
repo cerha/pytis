@@ -665,6 +665,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         if multipart is None:
             multipart = any([f for f in order if isinstance(self._row.type(f), pytis.data.Binary)])
         self._enctype = (multipart and 'multipart/form-data' or None)
+        self._error = None
 
     def _export_field_help(self, context, field):
         descr = field.spec.descr()
@@ -690,9 +691,11 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 field = self._fields.get(fid)
                 content = g.strong(field and field.label or fid) + ": " + message
             else:
-                conent = message
+                content = message
             return g.p(content)
         content = [export_error(fid, message) for fid, message in self._last_validation_errors]
+        if self._error:
+            content.append(export_error(*self._error))
         if content:
             return [g.div(content, cls='errors')]
         else:
