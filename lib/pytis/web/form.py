@@ -1677,7 +1677,7 @@ class BrowseForm(LayoutForm):
                 else:
                     exported_label = ''
                 if field.label_in_front():
-                    filter_content.extend((exported_label, exported_field))
+                    filter_content.extend((exported_label, exported_field, '&nbsp;&nbsp;'))
                 else:
                     filter_content.extend((exported_field, exported_label))
             for filter_set in self._filter_sets:
