@@ -3193,7 +3193,12 @@ class PopupInsertForm(PopupEditForm):
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
         
-        
+    def _init_data_select(self, data, async_count=False):
+        # We needn't open data select on insertion; it just delays opening the
+        # form in some situations.
+        pass
+
+
 class ShowForm(EditForm):
     """Formulář pro zobrazení náhledu.
 
