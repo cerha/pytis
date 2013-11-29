@@ -1062,7 +1062,7 @@ class LookupForm(InnerForm):
         pytis.data.DBTransactionDefault.close_transactions()
         wx.CallLater(1000, self._on_idle_close_transactions)
 
-    def _init_data_select(self, data, async_count=False):
+    def _init_transaction_timeouts(self, data):
         if self._governing_transaction is None:
             def timeout_callback():
                 try:
@@ -1075,12 +1075,19 @@ class LookupForm(InnerForm):
         else:
             timeout_callback = None
         self._transaction_timeout_callback = timeout_callback
+
+    def _open_data_select(self, data, async_count):
         return data.select(condition=self._current_condition(display=True),
                            columns=self._select_columns(),
                            sort=self._lf_sorting,
                            arguments=self._current_arguments(),
                            transaction=self._transaction, reuse=False,
-                           async_count=async_count, timeout_callback=timeout_callback)
+                           async_count=async_count,
+                           timeout_callback=self._transaction_timeout_callback)
+        
+    def _init_data_select(self, data, async_count=False):
+        self._init_transaction_timeouts(data)
+        return self._open_data_select(data, async_count)
 
     def _init_select(self, async_count=False):
         success, self._lf_select_count_ = db_operation(self._init_data_select, self._data,
@@ -3193,10 +3200,10 @@ class PopupInsertForm(PopupEditForm):
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
         
-    def _init_data_select(self, data, async_count=False):
+    def _open_data_select(self, data, async_count=False):
         # We needn't open data select on insertion; it just delays opening the
         # form in some situations.
-        pass
+        return None
 
 
 class ShowForm(EditForm):
