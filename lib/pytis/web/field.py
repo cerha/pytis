@@ -266,45 +266,46 @@ class Field(object):
         value = self._exported_value()
         if value and not isinstance(value, lcg.Localizable):
             g = context.generator()
-            escaped = g.escape(self._row.format(self.id))
-            lines = escaped.splitlines()
-            if self._showform and len(lines) > self.spec.height()+2:
-                width = self.spec.width()
-                value = g.textarea(self.id, value=escaped, readonly=True,
-                                   rows=min(self.spec.height(), 8), cols=width,
-                                   cls=width >= 80 and 'fullsize' or None)
-            else:
-                # Preserve linebreaks and indentation in multiline text.
-                nbsp = '&nbsp;'
-                len_nbsp = len(nbsp)
-                def convert_line(line):
-                    line_length = len(line)
-                    i = 0
-                    while i < line_length and line[i] == ' ':
-                        i += 1
-                    if i > 0:
-                        line = nbsp*i + line[i:]
-                        line_length += (len_nbsp - 1) * i
-                        i = len_nbsp * i
-                    while i < line_length:
-                        if line[i] == ' ':
-                            j = i + 1
-                            while j < line_length and line[j] == ' ':
-                                j += 1
-                            if j > i + 1:
-                                line = line[:i] + nbsp*(j-i) + line[j:]
-                                line_length += (len_nbsp - 1) * (j - i)
-                                i += len_nbsp * (j - i)
-                            else:
-                                i += 1
+            # Preserve linebreaks and indentation in multiline text.
+            nbsp = '&nbsp;'
+            len_nbsp = len(nbsp)
+            def convert_line(line):
+                line_length = len(line)
+                i = 0
+                while i < line_length and line[i] == ' ':
+                    i += 1
+                if i > 0:
+                    line = nbsp*i + line[i:]
+                    line_length += (len_nbsp - 1) * i
+                    i = len_nbsp * i
+                while i < line_length:
+                    if line[i] == ' ':
+                        j = i + 1
+                        while j < line_length and line[j] == ' ':
+                            j += 1
+                        if j > i + 1:
+                            line = line[:i] + nbsp*(j-i) + line[j:]
+                            line_length += (len_nbsp - 1) * (j - i)
+                            i += len_nbsp * (j - i)
                         else:
                             i += 1
-                    return line
-                # Join lines and substitute links for HTML links
-                converted_text = '<br>\n'.join(convert_line(l) for l in lines)
-                value = self._URL_MATCHER.sub(r'<a href="\1">\1</a>', converted_text)
-                if len(lines) > 1:
-                    value = g.div(value)
+                    else:
+                        i += 1
+                return line
+            # Join lines and substitute links for HTML links
+            escaped = g.escape(self._row.format(self.id))
+            lines = escaped.splitlines()
+            converted_text = '<br>\n'.join(convert_line(l) for l in lines)
+            value = self._URL_MATCHER.sub(r'<a href="\1">\1</a>', converted_text)
+            len_lines = len(lines)
+            if len_lines > 1:
+                height = self.spec.height()
+                cls = 'multiline'
+                style = None
+                if self._showform and height > 1 and len_lines > height + 2:
+                    style = 'height: %dem;' % int(height * 1.4)
+                    cls += ' scrolled'
+                value = g.div(value, cls=cls, style=style)
         return value
 
     def _exported_value(self):

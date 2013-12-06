@@ -16,6 +16,13 @@
     border-width: 1px;
 }
 
+@media print {
+    .pytis-form .group {
+	/* Make the border all around, not just top and bottom, when printing. */
+	border-width: 1px !important; 
+    }
+}
+
 .pytis-form fieldset.outer {
     border: none;
     margin: 0;
@@ -278,6 +285,20 @@
 .pytis-form textarea.fullsize {
     width: 100%;
 }
+.pytis-form .field div.multiline.scrolled {
+    overflow-y: scroll;
+    resize: vertical;
+    border: 1px solid #ddd;
+    border-width: 1px 0;
+}
+
+@media print {
+    .pytis-form .field div.multiline.scrolled { 
+	height: auto !important;
+	border: none;
+    }
+}
+
 .pytis-form input.button.selection-invocation { 
     margin-left: 2px;
     padding: 0;
