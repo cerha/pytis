@@ -793,12 +793,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         don't make sense.
 
         """
-        try:
-            import json
-        except:
-            import simplejson as json
         if req.param('_pytis_attachment_storage_request'):
-            return json.dumps(self._attachment_storage_request(req))
+            return self._attachment_storage_request(req)
         request_number = req.param('_pytis_form_update_request')
         changed_field = str(req.param('_pytis_form_changed_field'))
         order = self._field_order()
@@ -869,8 +865,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         for fid, error in self._check():
             if fid in fields:
                 fields[fid]['error'] = localizer.localize(error)
-        result = dict(request_number=request_number, fields=fields)
-        return json.dumps(result)
+        return dict(request_number=request_number, fields=fields)
 
     def set_error(self, field_id, error):
         """Arguments:
