@@ -632,8 +632,12 @@ pytis.HtmlField.attachment_dialog = function(editor, attachment_name, attachment
             var filename = dialog.getValueOf('main', 'identifier')
             var field = $(editor.config.pytisFieldId)._pytis_field_instance;
             attributes = {}
-            for (var i=0; i<=attachment_properties.length; i++)
-                attributes[attachment_properties[i]] = dialog.getValueOf('main', attachment_properties[i]);
+            for (var i=0; i<=attachment_properties.length; i++) {
+		var value = dialog.getValueOf('main', attachment_properties[i]);
+	        if (attachment_properties[i] == 'thumbnail_size' && value == 'full')
+		    value = null;
+                attributes[attachment_properties[i]] = value;
+	    }
             var error = field.update_attachment(filename, attributes); // TODO: Display error message when error != null.
             // Insert or update the HTML element
             if (this.insertMode){
@@ -652,7 +656,7 @@ pytis.HtmlField.image_dialog = function(editor) {
         ['a', 'img']);
 
     ck_element(dialog, 'identifier').updatePreview = function(attachment) {
-        if (attachment){
+        if (attachment) {
             if (attachment.thumbnail)
                 $('image-preview').src = attachment.thumbnail.uri;
             else
