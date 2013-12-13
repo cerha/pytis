@@ -1455,7 +1455,10 @@ class BrowseForm(LayoutForm):
         return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri)
 
     def _set_row(self, row):
-        self._row.set_row(row, reset=True)
+        # Please, don't think about passing reset=True here.  See PresentedRow.display()
+        # for some hints.  It would unnecessarily call computers, some of which may be
+        # really expensive (i.e. on binary fields).
+        self._row.set_row(row)
             
     def _export_table(self, context, form_id):
         g = context.generator()

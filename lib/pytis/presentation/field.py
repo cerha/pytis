@@ -966,10 +966,17 @@ class PresentedRow(object):
         if export is None:
             export = lambda value: value.export()
         inline_display = column.inline_display
-        if inline_display and inline_display in self._row and not self.field_changed(key):
-            # The row doesn't contain inline_display when it was created in
-            # _set_row (not passed from the data interface) and inline_display
-            # field is not explicitly present in fields.
+        if inline_display and inline_display in self._row and not self.validated(key):
+            # The row doesn't contain inline_display when it was created in _set_row 
+            # (not passed from the data interface) and inline_display field is not
+            # explicitly present in fields.  The test of .validated() important during
+            # row changes, where the current inline display value doesn't match the
+            # changed field value.  But beware!  We can not use .field_changed() for
+            # this purpose, because it would prevent using inline display in browse
+            # form (which is tha mail purpose of inline display) because we cycle
+            # through rows using set_row() without reset=True.  To make the story
+            # even longer, we don't want to call set_row() with reset=True in
+            # BrowseForm, because it would invoke unnecessary computers.
             value = self._row[inline_display]
             if value.value() is None:
                 return column.null_display or ''
