@@ -1491,6 +1491,8 @@ def _alchemy2pytis_type(atype):
         return pytis.data.Integer()
     elif isinstance(atype, sqlalchemy.String):
         return pytis.data.String()
+    elif isinstance(atype, sqlalchemy.Boolean):
+        return pytis.data.Boolean()
     elif isinstance(atype, sqlalchemy.Numeric):
         return pytis.data.Float(digits=atype.precision, precision=atype.scale)
     elif isinstance(atype, sqlalchemy.types.NullType):
