@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -183,6 +183,8 @@ class _DBAPIAccessor(PostgreSQLAccessor):
                     raise DBLockException()
                 elif e.args[0].find('cannot perform INSERT RETURNING') != -1:
                     raise DBInsertException()
+                elif e.args[0].find('error: Connection timed out') != -1:
+                    raise DBSystemException(_(u"Database connection timeout"), e, e.args, query)
                 elif e.args[0].find('server closed the connection unexpectedly') != -1:
                     result, connection = retry(_(u"Database connection error"), e)
                 else:
