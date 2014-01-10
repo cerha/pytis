@@ -1049,8 +1049,8 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
         _PytisBaseMetaclass.__init__(cls, clsname, bases, clsdict)
         if cls._is_specification(clsname):
             schemas = _expand_schemas(cls)
-            for search_path in schemas:
-                def init_function(cls=cls, search_path=search_path, may_alter_schema=False):
+            def init_function(cls=cls, may_alter_schema=False, schemas=schemas):
+                for search_path in schemas:
                     if _debug:
                         sys.stderr.write('*** %s\n' % (cls.__name__,))
                     with _local_search_path(search_path):
@@ -1063,16 +1063,16 @@ class _PytisSchematicMetaclass(_PytisBaseMetaclass):
                         else:
                             o = cls(_metadata, search_path)
                     _PytisSchematicMetaclass.objects.append(o)
-                # Instance construction takes a lot of time.  In some
-                # situations we may be interested just in classes or only in
-                # some instances.  In such a case instance creation is delayed
-                # using the init_function mechanism.
-                # Additionally it is necessary to make all objects available
-                # before their instances are created so that all classes and
-                # objects are available in _SQLQuery (to get columns and
-                # dynamic dependencies) even without explicit dependencies.
-                _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_function
-                _PytisSchematicMetaclass.init_function_list.append((cls, init_function,))
+            # Instance construction takes a lot of time.  In some
+            # situations we may be interested just in classes or only in
+            # some instances.  In such a case instance creation is delayed
+            # using the init_function mechanism.
+            # Additionally it is necessary to make all objects available
+            # before their instances are created so that all classes and
+            # objects are available in _SQLQuery (to get columns and
+            # dynamic dependencies) even without explicit dependencies.
+            _PytisSchematicMetaclass.init_functions[cls.pytis_name()] = init_function
+            _PytisSchematicMetaclass.init_function_list.append((cls, init_function,))
 
     @classmethod
     def clear(cls):
