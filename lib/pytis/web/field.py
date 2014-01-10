@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2006-2013 Brailcom, o.p.s.
+# Copyright (C) 2006-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -661,9 +661,7 @@ class HtmlField(MultilineField):
                                                           exercises.Selections,
                                                           exercises.WrittenAnswers,
                                                           exercises.NumberedCloze,
-                                                          exercises.NumberedExposedCloze,
                                                           exercises.Cloze,
-                                                          exercises.ExposedCloze,
                                                           )]
             content += g.script(g.js_call('CKEDITOR.replace', html_id, config))
         return content
