@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2012, 2013 Brailcom, o.p.s.
+ * Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
  * Author: Hynek Hanke
  *
  * This program is free software; you can redistribute it and/or modify
@@ -238,7 +238,7 @@ pytis.HtmlField.plugin = function(editor) {
     });
 
     /* Simplify table dialog */
-    CKEDITOR.on( 'dialogDefinition', function( ev )
+    CKEDITOR.on('dialogDefinition', function( ev )
         {
             var dialog_definition = ev.data.definition;
             var dialog_name = ev.data.name;
@@ -253,6 +253,28 @@ pytis.HtmlField.plugin = function(editor) {
                 }
             }
         });
+
+    editor.on('key', function(event) {
+	var format = null;
+	var keyCode = event.data.keyCode;
+        if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 49) // CTRL+SHIFT+1
+	    format = CKEDITOR.config.format_h1;
+        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 50) // CTRL+SHIFT+2
+	    format = CKEDITOR.config.format_h2;
+        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 51) // CTRL+SHIFT+3
+	    format = CKEDITOR.config.format_h3;
+        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 52) // CTRL+SHIFT+4
+	    format = CKEDITOR.config.format_h4;
+        else if (keyCode == CKEDITOR.CTRL + CKEDITOR.SHIFT + 53) // CTRL+SHIFT+5
+	    format = CKEDITOR.config.format_h5;
+	if (format) {
+            this.fire('saveSnapshot');
+	    var style = new CKEDITOR.style(format);
+            var elementPath = this.elementPath();
+	    this[style.checkActive(elementPath) ? 'removeStyle' : 'applyStyle'](style);
+	    this.fire('saveSnapshot');
+        }
+    });
 }
 
 
