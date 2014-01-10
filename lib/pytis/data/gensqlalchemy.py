@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -3654,7 +3654,8 @@ def _gsql_process_1(loader, regexp, no_deps, views, functions, names_only, sourc
                 target = ffk.reference.get(ffk.search_path)
                 if target is None:
                     raise Exception('Invalid foreign reference',
-                                    (ffk.table.name, ffk.reference._name, ffk.reference._column,))
+                                    (ffk.table.name, ffk.reference.specification_name(),
+                                     ffk.reference._column,))
                 kwargs = ffk.kwargs
                 kwargs['name'] += ffk.column_name + '__' + target.name.replace('.', '__')
                 f = sqlalchemy.ForeignKeyConstraint((ffk.column_name,), (target,), *ffk.args,
