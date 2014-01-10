@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2769,6 +2769,11 @@ class PopupEditForm(PopupForm, EditForm):
         # irrelevant here and it causes problems with set_values - the
         # additional select_row() call resets them.
         self._initial_select_row = None
+        
+    def _open_data_select(self, data, async_count=False):
+        # Apparently we needn't open data select here; it just delays opening
+        # the form in some situations.
+        return None
 
     def _default_transaction(self):
         try:
@@ -2785,11 +2790,9 @@ class PopupEditForm(PopupForm, EditForm):
           inserted_data -- allows to pass a sequence of 'pytis.data.Row' instances to be inserted.
             The form is then gradually prefilled by values of these rows and the user can
             individually accept or skip each row.
-
           multi_insert -- boolean flag indicating whether inserting multiple values is permitted.
             This option is only relevant in insert mode.  False value will disable this feature and
             the `Next' button will not be present on the form.
-
           kwargs -- arguments passed to the parent class
             
         """
@@ -3199,11 +3202,6 @@ class PopupInsertForm(PopupEditForm):
     
     def _init_attributes(self, **kwargs):
         super_(PopupInsertForm)._init_attributes(self, mode=EditForm.MODE_INSERT, **kwargs)
-        
-    def _open_data_select(self, data, async_count=False):
-        # We needn't open data select on insertion; it just delays opening the
-        # form in some situations.
-        return None
 
 
 class ShowForm(EditForm):
