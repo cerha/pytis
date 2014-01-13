@@ -3281,7 +3281,8 @@ class BrowseForm(FoldableForm):
                     data_object = self.data()
                     key_id = data_object.key()[0].id()
                     data_object.select(condition=pytis.data.EQ(key_id, row[key_id]),
-                                       columns=(field_id,), transaction=row.transaction())
+                                       columns=(field_id,), transaction=row.transaction(),
+                                       arguments=self._current_arguments())
                     complete_row = data_object.fetchone()
                     data_object.close()
                     if complete_row is None:
