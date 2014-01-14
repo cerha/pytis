@@ -704,7 +704,18 @@ pytis.HtmlField.image_dialog = function(editor) {
             var img = element.getFirst();
             if (img) {
                 var uri = (attachment.thumbnail ? attachment.thumbnail.uri : attachment.uri);
-                ck_set_protected_attribute(img, 'src',  uri);
+		// Append cache killer suffix to the uri to force reloading the displayed 
+		// image when thumbnail size is changed.
+		uri += (uri.indexOf('?') == -1 ? '?' : '&') + 'time=' + new Date().getTime();
+		img.removeAttribute('width');
+		img.removeAttribute('height');
+		// This doesn't seem to work so the selection stays at the
+		// previous size iv the thumbnail size is changed.
+		/* img.onload = function () {
+		    editor.getSelection().selectElement(img);
+		    console.log('...');
+		}; */
+		ck_set_protected_attribute(img, 'src',  uri);
                 img.data('lcg-resource', attachment.filename);
             }
         }
