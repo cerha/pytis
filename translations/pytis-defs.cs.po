@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-13 17:02+0100\n"
-"PO-Revision-Date: 2014-01-14 16:50+0100\n"
+"POT-Creation-Date: 2014-01-14 16:54+0100\n"
+"PO-Revision-Date: 2014-01-14 16:54+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -74,22 +74,26 @@ msgstr "Stručný popis náhledu"
 msgid "Detailed form help"
 msgstr "Podrobná nápověda náhledu"
 
-#: ../lib/pytis/defs/help.py:75 ../lib/pytis/cms/cms.py:286
+#: ../lib/pytis/defs/help.py:75
 msgid ""
-Choose the directly superordinate item in menu hierarchy. Leave "
-"empty for pages at the top level menu."
-msgstr "Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte prázdné pro stránky na nejvyšší úrovni menu."
+"Choose the directly superordinate item in menu hierarchy. Leave empty for "
+"pages at the top level menu."
+msgstr ""
+"Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
+"prázdné pro stránky na nejvyšší úrovni menu."
 
 #: ../lib/pytis/defs/help.py:77 ../lib/pytis/cms/cms.py:291
 msgid "Ordering"
 msgstr "Pořadí"
 
-#: ../lib/pytis/defs/help.py:79
+#: ../lib/pytis/defs/help.py:79 ../lib/pytis/cms/cms.py:292
 msgid ""
-"Enter a number denoting the order of the item in menu between "
-"pages of the same hierarchy level.  Leave empty to put the item "
-"automatically to bottom."
-msgstr "Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné úrovni hierarchie).  Pokud nevyplníte, stránka bude automaticky zařazena na konec."
+"Enter a number denoting the order of the item in menu between pages of the "
+"same hierarchy level.  Leave empty to put the item automatically to bottom."
+msgstr ""
+"Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné "
+"úrovni hierarchie).  Pokud nevyplníte, stránka bude automaticky zařazena na "
+"konec."
 
 #: ../lib/pytis/defs/help.py:82 ../lib/pytis/defs/help.py:159
 msgid "Removed"
@@ -108,17 +112,8 @@ msgstr "Políčka"
 msgid "Profiles"
 msgstr "Profily"
 
-#: ../lib/pytis/defs/help.py:118 ../lib/pytis/defs/logging.py:48
-#: ../lib/pytis/defs/menu.py:223 ../lib/pytis/defs/menu.py:237
-#: ../lib/pytis/defs/menu.py:329 ../lib/pytis/defs/menu.py:489
-#: ../lib/pytis/defs/menu.py:655 ../lib/pytis/defs/menu.py:752
-#: ../lib/pytis/defs/menu.py:831 ../lib/pytis/defs/statistics.py:110
-#: ../lib/pytis/cms/cms.py:191 ../lib/pytis/cms/cms.py:511
-#: ../lib/pytis/cms/cms.py:513 ../lib/pytis/cms/cms.py:596
+#: ../lib/pytis/defs/help.py:118
 msgid "Actions"
-msgstr "Akce"
-
-msgid "Action"
 msgstr "Akce"
 
 #: ../lib/pytis/defs/help.py:119
@@ -142,8 +137,9 @@ msgid "Identifier"
 msgstr "Identifikátor"
 
 #: ../lib/pytis/defs/logging.py:38
-msgid "Log uživatelských akcí"
-msgstr "User Actions Log"
+#, fuzzy
+msgid "User Actions Log"
+msgstr "Akce"
 
 #: ../lib/pytis/defs/logging.py:41
 msgid "Time"
@@ -162,6 +158,15 @@ msgstr "Uživatel"
 #: ../lib/pytis/defs/statistics.py:113
 msgid "Form Class"
 msgstr "Třída formuláře"
+
+#: ../lib/pytis/defs/logging.py:48 ../lib/pytis/defs/menu.py:223
+#: ../lib/pytis/defs/menu.py:237 ../lib/pytis/defs/menu.py:329
+#: ../lib/pytis/defs/menu.py:489 ../lib/pytis/defs/menu.py:655
+#: ../lib/pytis/defs/menu.py:752 ../lib/pytis/defs/menu.py:831
+#: ../lib/pytis/defs/statistics.py:110 ../lib/pytis/cms/cms.py:191
+#: ../lib/pytis/cms/cms.py:511 ../lib/pytis/cms/cms.py:596
+msgid "Action"
+msgstr "Akce"
 
 #: ../lib/pytis/defs/logging.py:49
 msgid "Information"
@@ -993,6 +998,12 @@ msgid ""
 "prostou textovou stránku."
 msgstr ""
 
+#: ../lib/pytis/cms/cms.py:286
+msgid ""
+"Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
+"prázdné pro stránky na nejvyšší úrovni menu."
+msgstr ""
+
 #: ../lib/pytis/cms/cms.py:288
 msgid "Zveřejněno"
 msgstr ""
@@ -1000,13 +1011,6 @@ msgstr ""
 #: ../lib/pytis/cms/cms.py:289
 msgid ""
 "Umožňuje řídit dostupnost dané položky nezávisle pro kažou jazykovou verzi."
-msgstr ""
-
-#: ../lib/pytis/cms/cms.py:292
-msgid ""
-"Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné "
-"úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zařazena na "
-"konec."
 msgstr ""
 
 #: ../lib/pytis/cms/cms.py:323
@@ -1135,6 +1139,11 @@ msgstr ""
 #: ../lib/pytis/cms/cms.py:500
 msgid "Přiřazení práv k akcím modulů pro jednotlivé uživatelské role."
 msgstr ""
+
+#: ../lib/pytis/cms/cms.py:513
+#, fuzzy
+msgid "Action Name"
+msgstr "Akce"
 
 #: ../lib/pytis/cms/cms.py:534
 msgid "IP adresa"
@@ -1378,3 +1387,6 @@ msgstr ""
 #: ../lib/pytis/cms/cms.py:702
 msgid "Informační zprávy"
 msgstr ""
+
+#~ msgid "Log uživatelských akcí"
+#~ msgstr "User Actions Log"

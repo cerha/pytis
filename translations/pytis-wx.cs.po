@@ -1,5 +1,5 @@
 # Pytis translations
-# Copyright (C) 2013 Brailcom, o.p.s.
+# Copyright (C) 2013, 2014 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
 # Tomas Cerha <cerha@brailcom.org>, 2013.
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-13 17:02+0100\n"
-"PO-Revision-Date: 2013-10-24 15:28+0200\n"
+"POT-Creation-Date: 2014-01-14 16:54+0100\n"
+"PO-Revision-Date: 2014-01-14 17:01+0100\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -936,8 +936,8 @@ msgstr ""
 "Chcete v editaci ještě pokračovat?"
 
 #: ../lib/pytis/form/form.py:2347
-msgid "Vypršel časový limit pro editaci formuláře."
-msgstr ""
+msgid "The time limit for form editation has elapsed."
+msgstr "Vypršel časový limit pro editaci formuláře."
 
 #: ../lib/pytis/form/form.py:2670
 msgid "Record update failed"
@@ -2106,39 +2106,39 @@ msgstr ""
 msgid "Can not filter as long as the current profile is unsaved!"
 msgstr "Filtrování nemůže být provedeno, pokud aktuální profil není uložen!"
 
-#: ../lib/pytis/form/list.py:3316
+#: ../lib/pytis/form/list.py:3317
 #, python-format
 msgid "Open file \"%s\""
 msgstr "Otevřít soubor „%s“"
 
-#: ../lib/pytis/form/list.py:3321
+#: ../lib/pytis/form/list.py:3322
 #, python-format
 msgid "Open the value of field \"%s\" as a file."
 msgstr "Otevřít hodnotu políčka „%s“ jako soubor."
 
-#: ../lib/pytis/form/list.py:3335
+#: ../lib/pytis/form/list.py:3336
 msgid "Links"
 msgstr "Odskoky"
 
-#: ../lib/pytis/form/list.py:3341
+#: ../lib/pytis/form/list.py:3342
 msgid "Filter existing values (operator IN)"
 msgstr "Filtrovat přítomné hodnoty (operátor IN)"
 
-#: ../lib/pytis/form/list.py:3345
+#: ../lib/pytis/form/list.py:3346
 msgid "Filter missing values (operator NOT IN)"
 msgstr "Filtrovat nepřítomné hodnoty (operátor NOT IN)"
 
-#: ../lib/pytis/form/list.py:3357
+#: ../lib/pytis/form/list.py:3358
 msgid "Open with side forms"
 msgstr "Zobrazit včetně vedlejších formulářů"
 
-#: ../lib/pytis/form/list.py:3359
+#: ../lib/pytis/form/list.py:3360
 msgid "Open the current record in a main form with related data in side forms."
 msgstr ""
 "Zobraz aktuální záznam v hlavním formuláři se souvisejícími daty ve "
 "vedlejších formulářích."
 
-#: ../lib/pytis/form/list.py:3621
+#: ../lib/pytis/form/list.py:3622
 msgid "Aggregated View"
 msgstr "Agregovaný náhled"
 
@@ -2923,10 +2923,6 @@ msgstr "Nenalezeno"
 msgid "The requested help page not found: %s"
 msgstr "Požadovaná stránka nápovědy nenalezena: %s"
 
-#: ../lib/pytis/help/help.py:471
-msgid "Obsah"
-msgstr ""
-
 #: ../lib/pytis/help/help.py:492
 msgid "Expand/collapse complete menu hierarchy"
 msgstr "Rozbalit/sbalit celou hierarchii menu"
@@ -2957,13 +2953,13 @@ msgstr "Nepodařilo se vybrat soubor k uložení: %s"
 
 #: ../lib/pytis/windows/remote.py:210
 #, python-format
-msgid "Nepodařilo se vybrat adresář: %s"
-msgstr ""
+msgid "Failed selecting directory: %s"
+msgstr "Nepodařilo se vybrat adresář: %s"
 
 #: ../lib/pytis/windows/remote.py:218
 #, python-format
-msgid "Nepodařilo se vybrat soubor: %s"
-msgstr ""
+msgid "Failed selecting file: %s"
+msgstr "Nepodařilo se vybrat soubor: %s"
 
 #~ msgid "The time limit for form editing has expired."
 #~ msgstr "Vypršel časový limit pro editaci formuláře."
