@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -207,7 +207,7 @@ def select_directory():
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error,
-                              _("Nepodařilo se vybrat adresář: %s") % (e,))
+                              _("Failed selecting directory: %s") % (e,))
 
 def select_file(filename=None, template=None, multi=False):
     try:
@@ -215,4 +215,4 @@ def select_file(filename=None, template=None, multi=False):
     except Exception as e:
         import pytis.form
         pytis.form.run_dialog(pytis.form.Error,
-                              _("Nepodařilo se vybrat soubor: %s") % (e,))
+                              _("Failed selecting file: %s") % (e,))

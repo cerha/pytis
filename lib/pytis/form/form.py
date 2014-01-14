@@ -2344,7 +2344,8 @@ class EditForm(RecordForm, TitledForm, Refreshable):
                     callback()
                 self._edit_form_timeout = None
                 if edit is None:
-                    run_dialog(pytis.form.Error, _(u"Vypršel časový limit pro editaci formuláře."))
+                    run_dialog(pytis.form.Error,
+                               _("The time limit for form editation has elapsed."))
         if self._transaction is not None:
             self._transaction.set_max_age(age)
         super(EditForm, self)._on_idle_close_transactions()

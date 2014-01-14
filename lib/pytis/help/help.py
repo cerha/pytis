@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -468,7 +468,7 @@ class HelpGenerator(object):
             spec_name = topic[5:]
             title, content = self._spec_help_content(spec_name)
             if title and content:
-                content = lcg.Container((lcg.TableOfContents(title=_(u"Obsah")), content))
+                content = lcg.Container((lcg.TableOfContents(title=_("Contents")), content))
                 node = lcg.ContentNode('help:'+topic, title=title, hidden=True, content=content,
                                        resource_provider=resource_provider)
                 nodes.append(node)
