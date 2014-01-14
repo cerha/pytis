@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-24 15:27+0200\n"
+"POT-Creation-Date: 2014-01-13 17:02+0100\n"
 "PO-Revision-Date: 2013-05-07 17:27+0200\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
@@ -25,32 +25,37 @@ msgstr "Neoprávněný přístup"
 msgid "Can't connect to database"
 msgstr "Nemohu se připojit do databáze"
 
-#: ../lib/pytis/data/dbapi.py:170
+#: ../lib/pytis/data/dbapi.py:171
 msgid "Database interface error"
 msgstr "Chyba v databázovém rozhraní"
 
-#: ../lib/pytis/data/dbapi.py:186 ../lib/pytis/data/dbapi.py:295
+#: ../lib/pytis/data/dbapi.py:187
+#, fuzzy
+msgid "Database connection timeout"
+msgstr "Chyba databázového spojení"
+
+#: ../lib/pytis/data/dbapi.py:189 ../lib/pytis/data/dbapi.py:299
 msgid "Database connection error"
 msgstr "Chyba databázového spojení"
 
-#: ../lib/pytis/data/dbapi.py:200 ../lib/pytis/data/pgsql.py:87
+#: ../lib/pytis/data/dbapi.py:203 ../lib/pytis/data/pgsql.py:87
 #: ../lib/pytis/data/pgsql.py:94
 msgid "Database operational error"
 msgstr "Chyba databázové operace"
 
-#: ../lib/pytis/data/dbapi.py:204 ../lib/pytis/data/pgsql.py:99
+#: ../lib/pytis/data/dbapi.py:207 ../lib/pytis/data/pgsql.py:99
 msgid "Database integrity violation"
 msgstr "Porušení integrity dat v databázi"
 
-#: ../lib/pytis/data/dbdata.py:300
+#: ../lib/pytis/data/dbdata.py:299
 msgid "Too many database connections"
 msgstr "Příliš mnoho databázových spojení"
 
-#: ../lib/pytis/data/dbdata.py:696
+#: ../lib/pytis/data/dbdata.py:695
 msgid "Database error"
 msgstr "Databázová chyba"
 
-#: ../lib/pytis/data/dbdata.py:764
+#: ../lib/pytis/data/dbdata.py:763
 msgid "Invalid user name or password"
 msgstr "Chybné uživatelské jméno nebo heslo"
 
@@ -62,16 +67,16 @@ msgstr "Nelze se připojit k databázi"
 msgid "Query arguments unsupported by the pgsql backend"
 msgstr "Argumenty dotazu nejsou podporovány při použití pgsql backendu"
 
-#: ../lib/pytis/data/postgresql.py:267 ../lib/pytis/data/postgresql.py:353
-#: ../lib/pytis/data/postgresql.py:365
+#: ../lib/pytis/data/postgresql.py:275 ../lib/pytis/data/postgresql.py:361
+#: ../lib/pytis/data/postgresql.py:373
 msgid "Method not implemented"
 msgstr "Volána neimplementovaná metoda"
 
-#: ../lib/pytis/data/postgresql.py:488
+#: ../lib/pytis/data/postgresql.py:508
 msgid "Characters present in data not representable in database encoding"
 msgstr "Data obsahují znaky, které nelze reprezentovat v kódování databáze"
 
-#: ../lib/pytis/data/postgresql.py:3642
+#: ../lib/pytis/data/postgresql.py:3669
 msgid "Invalid database counter value"
 msgstr "Chybná hodnota čítače z databáze"
 

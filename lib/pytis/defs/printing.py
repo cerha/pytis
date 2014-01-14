@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2010, 2011, 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -42,7 +42,7 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
         Field('rowtemplate', _("Šablona pro jednotlivé řádky"),
               text_format=pytis.presentation.TextFormat.LCG,
               width=80, height=20, compact=True),
-        Field('help', _("Nápověda"), virtual=True,
+        Field('help', _("Help"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=20, compact=True),
         )
@@ -74,8 +74,8 @@ class UserOutputTemplates(pytis.presentation.Specification):
               width=80, height=10, compact=True),
         Field('style', _("Styl"),
               width=80, height=25, compact=True),
-        Field('username', _("Uživatel")),
-        Field('help', _("Nápověda"), virtual=True,
+        Field('username', _("User")),
+        Field('help', _("Help"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=25, compact=True),
         )
@@ -84,7 +84,7 @@ class UserOutputTemplates(pytis.presentation.Specification):
                                          (_("Řádková šablona"), ('rowtemplate',)),
                                          (_("Hlavičky a patičky"), ('header', 'first_page_header', 'footer',)),
                                          (_("Styl"), ('style',)),
-                                         (_("Nápověda"), ('help',)))
+                                         (_("Help"), ('help',)))
     def on_delete_record(self, row):
         if not row['username'].value():
             pytis.form.run_dialog(pytis.form.Warning, _("Můžete mazat pouze své vlastní záznamy."))

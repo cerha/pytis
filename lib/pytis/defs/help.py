@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -30,12 +30,12 @@ _ = pytis.util.translations('pytis-defs')
 class HelpParents(Specification):
     # Codebook of parent items for Help (to prevent recursion).
     public = True
-    title = _(u"Nadřízená položka")
+    title = _("Parent item")
     table = 'ev_pytis_help'
     def fields(self): return (
         Field('page_id'),
         Field('position'),
-        Field('title', _(u"Název")),
+        Field('title', _("Title")),
         )
     sorting = ('position', pd.ASCENDENT),
     columns = ('title',)
@@ -44,7 +44,7 @@ class HelpParents(Specification):
 class Help(Specification):
     public = True
     table = 'ev_pytis_help'
-    title = _(u"Nápověda")
+    title = _("Help")
     def fields(self):
         return (
             Field('help_id',
@@ -52,35 +52,35 @@ class Help(Specification):
                   # we don't need to care about other kinds of help_id.  New
                   # record is always a new page.
                   computer=computer(lambda r, page_id: 'page/%d' % page_id)),
-            Field('fullname', _(u"Fullname"), width=50, editable=Editable.NEVER),
-            Field('spec_name', _("Název specifikace"), width=50, editable=Editable.NEVER),
+            Field('fullname', _("Fullname"), width=50, editable=Editable.NEVER),
+            Field('spec_name', _("Specification Name"), width=50, editable=Editable.NEVER),
             Field('page_id', default=nextval('e_pytis_help_pages_page_id_seq')),
             Field('position'),
             Field('position_nsub'),
-            Field('title', _(u"Název"), width=20, editable=computer(self._is_page),
+            Field('title', _("Title"), width=20, editable=computer(self._is_page),
                   type=_TreeOrderLTree(tree_column_id='position', subcount_column_id='position_nsub'),
                   ),
-            Field('description', _(u"Popis"), width=70, editable=computer(self._is_page),),
-            Field('content', _(u"Obsah"), width=80, height=20, compact=True,
+            Field('description', _("Description"), width=70, editable=computer(self._is_page),),
+            Field('content', _("Content"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('menu_help', _(u"Popis položky menu"), width=80, height=20, compact=True,
+            Field('menu_help', _(u"Menu item description"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('spec_description', _(u"Stručný popis náhledu"), width=80, height=3, compact=True),
-            Field('spec_help', _(u"Podrobná nápověda náhledu"), width=80, height=20, compact=True,
+            Field('spec_description', _("Brief form description"), width=80, height=3, compact=True),
+            Field('spec_help', _("Detailed form help"), width=80, height=20, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('parent', _("Nadřízená položka"), not_null=False,
+            Field('parent', _("Parent item"), not_null=False,
                   codebook='help.HelpParents', value_column='page_id',
                   editable=computer(self._is_page),
                   runtime_filter=computer(self._parent_filter),
-                  descr=_("Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
-                          "prázdné pro stránky na nejvyšší úrovni menu.")),
-            Field('ord', _("Pořadí"), width=8, fixed=True, type=pd.Integer, maximum=999998,
+                  descr=_("Choose the directly superordinate item in menu hierarchy. Leave "
+                          "empty for pages at the top level menu.")),
+            Field('ord', _("Ordering"), width=8, fixed=True, type=pd.Integer, maximum=999998,
                   editable=computer(self._is_page),
-                  descr=_("Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné "
-                          "úrovni hierarchie).  Pokud nevyplníte, stránka bude automaticky "
-                          "zařazena na konec.")),
-            Field('removed', _("Zrušeno"), editable=pp.Editable.NEVER),
-            Field('changed', _("Změněno"), editable=pp.Editable.NEVER),
+                  descr=_("Enter a number denoting the order of the item in menu between "
+                          "pages of the same hierarchy level.  Leave empty to put the item "
+                          "automatically to bottom.")),
+            Field('removed', _("Removed"), editable=pp.Editable.NEVER),
+            Field('changed', _("Changed"), editable=pp.Editable.NEVER),
             )
     def row_style(self, row):
         return not row['changed'].value() and pp.Style(background='#ffd') or None
@@ -112,18 +112,18 @@ class Help(Specification):
             return 'help.NoHelp'
     def bindings(self):
         return (
-            Binding('content', _("Obsah"), uri=lambda r: 'help:'+r['help_id'].value()),
-            Binding('fields', _("Políčka"), 'help.FieldItemsHelp', 'spec_name'),
-            Binding('profiles', _("Profily"), 'help.ProfileItemsHelp', 'spec_name'),
-            Binding('actions', _("Akce"), 'help.ActionItemsHelp', 'spec_name'),
-            Binding('bindings', _("Vedlejší formuláře"), 'help.BindingItemsHelp', 'spec_name'),
+            Binding('content', _("Content"), uri=lambda r: 'help:'+r['help_id'].value()),
+            Binding('fields', _("Fields"), 'help.FieldItemsHelp', 'spec_name'),
+            Binding('profiles', _("Profiles"), 'help.ProfileItemsHelp', 'spec_name'),
+            Binding('actions', _("Actions"), 'help.ActionItemsHelp', 'spec_name'),
+            Binding('bindings', _("Side Forms"), 'help.BindingItemsHelp', 'spec_name'),
             )
 
     layout = ('title', 'description', 'parent', 'ord', 'content')
     cb = CodebookSpec(display='title')
     columns = ('title', 'description', 'spec_name', 'changed', 'removed')
     sorting = ('position', pd.ASCENDENT),
-    profiles = pp.Profiles((pp.Profile('active', _("Aktivní"),
+    profiles = pp.Profiles((pp.Profile('active', _("Active"),
                                        filter=pd.EQ('removed', pd.bval(False)),
                                        columns=('title', 'description', 'spec_name', 'removed')),),
                            default='active')
@@ -140,7 +140,7 @@ class MenuHelp(Help):
 
     
 class NoHelp(Help):
-    layout = ('title', pp.Text(_(u"Tato položka nemá editovatelnou nápovědu.")))
+    layout = ('title', pp.Text(_("This item has no editable help.")))
 
 
 class ItemsHelp(Specification):
@@ -152,12 +152,12 @@ class ItemsHelp(Specification):
             Field('item_id'),
             Field('kind'),
             Field('spec_name', codebook='help.Help', value_column='spec_name'),
-            Field('identifier', _(u"Identifikátor"), width=30, editable=Editable.NEVER),
-            Field('content', _(u"Popis"), width=80, height=15, compact=True,
+            Field('identifier', _("Identifier"), width=30, editable=Editable.NEVER),
+            Field('content', _("Description"), width=80, height=15, compact=True,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage),
-            Field('label', _(u"Název"), width=30, virtual=True, computer=computer(self._label)),
-            Field('removed', _("Zrušeno"), editable=pp.Editable.NEVER),
-            Field('changed', _("Změněno"), editable=pp.Editable.NEVER,
+            Field('label', _("Title"), width=30, virtual=True, computer=computer(self._label)),
+            Field('removed', _("Removed"), editable=pp.Editable.NEVER),
+            Field('changed', _("Changed"), editable=pp.Editable.NEVER,
                   computer=computer(lambda r, content: True)),
             )
     
@@ -191,7 +191,7 @@ class ItemsHelp(Specification):
         return pd.EQ('kind', pd.sval(self._ITEM_KIND))
     columns = ('identifier', 'label', 'changed', 'removed')
     layout = ('identifier', 'label', 'content')
-    profiles = pp.Profiles((pp.Profile('active', _("Aktivní"),
+    profiles = pp.Profiles((pp.Profile('active', _("Active"),
                                        filter=pd.EQ('removed', pd.bval(False)),
                                        columns=('identifier', 'label', 'changed')),),
                            default='active')

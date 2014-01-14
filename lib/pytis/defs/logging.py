@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -35,18 +35,18 @@ class FormActionLog(Specification):
     # FormActionLogView is used for viewing the logs through admin forms.
     public = False
     table = 'e_pytis_action_log'
-    title = _(u"Log uživatelských akcí")
+    title = _("User Actions Log")
     fields = (
         Field('id', editable=Editable.NEVER),
-        Field('timestamp', _(u"Čas"), width=25, editable=Editable.NEVER),
-        Field('username', _(u"Uživatel"), codebook='statistics.FormUserList',
+        Field('timestamp', _("Time"), width=25, editable=Editable.NEVER),
+        Field('username', _("User"), codebook='statistics.FormUserList',
               value_column='login', editable=Editable.NEVER),
-        Field('spec_name', _(u"Název specifikace"),
+        Field('spec_name', _("Specification Name"),
               width=50, column_width=30, editable=Editable.NEVER),
-        Field('form_name', _(u"Třída formuláře"),
+        Field('form_name', _("Form Class"),
               width=50, column_width=30, editable=Editable.NEVER),
-        Field('action', _(u"Akce"), width=25, editable=Editable.NEVER),
-        Field('info', _("Informace"), editable=Editable.NEVER, height=10, width=70),
+        Field('action', _("Action"), width=25, editable=Editable.NEVER),
+        Field('info', _("Information"), editable=Editable.NEVER, height=10, width=70),
         )
     sorting = (('timestamp', pd.ASCENDENT),)
     columns = ('timestamp', 'username', 'spec_name', 'form_name', 'action')
@@ -63,7 +63,7 @@ class ChangesLog(Specification):
     # This specification is used for viewing the logs from log_trigger on db table.
     public = True
 
-    title = _("Přehled změn")
+    title = _("Overview of Changes")
     table = 'f_view_log'
     columns = layout = ('timestamp', 'username', 'operation', 'schemaname',
                         'tablename', 'key_column', 'key_value', 'detail')
@@ -73,11 +73,11 @@ class ChangesLog(Specification):
         return config.dbschemas
 
     def arguments(self):
-        return (Field('date_from', _("Od"), type=pd.Date, not_null=True,
+        return (Field('date_from', _("From"), type=pd.Date, not_null=True,
                       default=lambda: pd.Date.now().value()),
-                Field('date_to', _("Do"), type=pd.Date, not_null=True,
+                Field('date_to', _("To"), type=pd.Date, not_null=True,
                       default=lambda: pd.Date.now().value()),
-                Field('username_', _("Uživatel"), type=pd.String),
+                Field('username_', _("User"), type=pd.String),
                 Field('tablename_', _("Tabulka"), type=pd.String),
                 Field('key_value_', _("Klíč"), type=pd.String),
                 Field('detail_', _("Řádek obsahuje"), type=pd.String),
@@ -88,7 +88,7 @@ class ChangesLog(Specification):
     def fields(self): return (
         Field("id", _("ID"), width=10, type=pd.Integer),
         Field("timestamp", _("Datum a čas"), width=17, type=pd.DateTime),
-        Field("username", _("Uživatel"), width=20, type=pd.String),
+        Field("username", _("User"), width=20, type=pd.String),
         Field("schemaname", _("Schema"), width=20, type=pd.String),
         Field("tablename", _("Tabulka"), width=20, type=pd.String),
         Field("operation", _("Operace"), width=10, type=pd.String),

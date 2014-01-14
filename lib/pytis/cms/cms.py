@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ class Languages(Specification):
             Field('lang_id', default=nextval('cms_languages_lang_id_seq')),
             Field('lang', _("Kód"), width=2, column_width=6, fixed=True,
                   filter=pp.TextFilter.ALPHANUMERIC, post_process=pp.PostProcess.LOWER),
-            Field('name', _("Název"), virtual=True,
+            Field('name', _("Title"), virtual=True,
                   computer=computer(lambda record, lang: self._language_name(lang))),
         )
     def _language_name(self, lang):
@@ -102,8 +102,8 @@ class Modules(Specification):
     def fields(self):
         return (
             Field('mod_id', default=nextval('cms_modules_mod_id_seq')),
-            Field('modname', _("Název"), width=32),
-            Field('descr', _("Popis"), width=64, virtual=True, computer=computer(self._descr)),
+            Field('modname', _("Title"), width=32),
+            Field('descr', _("Description"), width=64, virtual=True, computer=computer(self._descr)),
         )
     def _module(self, modname):
         if modname:
@@ -188,7 +188,7 @@ class Modules(Specification):
                                           "uživatelům:"),
                                 items=zip([a in existing_actions for a in actions],
                                           actions, descriptions),
-                                columns=(_("Akce"), _("Popis")))
+                                columns=(_("Action"), _("Description")))
             if result is not None:
                 # TODO: Use a transaction.  Respect existing actions.
                 for i, action in enumerate(actions):
@@ -232,10 +232,10 @@ class MenuParents(Specification):
             Field('menu_item_id'),
             Field('tree_order'),
             Field('lang'),
-            Field('title_or_identifier', _("Název"), width=32, type=_TreeOrder),
-            Field('identifier', _("Identifikátor"), width=20),
+            Field('title_or_identifier', _("Title"), width=32, type=_TreeOrder),
+            Field('identifier', _("Identifier"), width=20),
             Field('modname', _("Modul")),
-            #Field('description', _("Popis"), width=64),
+            #Field('description', _("Description"), width=64),
         )
     sorting = ('tree_order', ASC),
     columns = ('title_or_identifier', 'identifier', 'modname')
@@ -254,7 +254,7 @@ class Menu(Specification):
             Field('menu_item_id'),
             Field('tree_order'),
             Field('tree_order_nsub'),
-            Field('identifier', _("Identifikátor"), width=20, fixed=True, editable=ONCE,
+            Field('identifier', _("Identifier"), width=20, fixed=True, editable=ONCE,
                   type=pd.RegexString(maxlen=32, not_null=True, regex='^[a-zA-Z][0-9a-zA-Z_-]*$'),
                   descr=_("Identifikátor bude vystupovat jako vnější adresa stránky.  "
                           "Může být použit "
@@ -263,16 +263,16 @@ class Menu(Specification):
                           "pomlčky a podtržítka a musí začínat písmenem.")),
             Field('lang', _("Jazyk"), editable=ONCE, codebook=self._spec_name('Languages'),
                   value_column='lang', selection_type=pp.SelectionType.CHOICE),
-            Field('title_or_identifier', _("Název"), width=30, type=_TreeOrder()),
-            Field('title', _("Název"), width=20, type=pd.String(maxlen=32, not_null=True),
+            Field('title_or_identifier', _("Title"), width=30, type=_TreeOrder()),
+            Field('title', _("Title"), width=20, type=pd.String(maxlen=32, not_null=True),
                   descr=_("Název položky menu - krátký a výstižný.")),
             Field('heading', _("Nadpis"), width=32, type=pd.String(maxlen=40),
                   descr=_("Hlavní nadpis při zobrazení stránky.  Pokud ponecháte nevyplněné, "
                           "použije se název položky.  Ten je ale někdy kvůli použití v menu příliš "
                           "krátký, takže zde je možné určit jeho delší variantu.")),
-            Field('description', _("Popis"), width=72,
+            Field('description', _("Description"), width=72,
                   descr=_("Stručný popis stránky (zobrazen v menu jako tooltip).")),
-            Field('content', _("Obsah"), compact=True, height=20, width=80,
+            Field('content', _("Content"), compact=True, height=20, width=80,
                   text_format=pp.TextFormat.LCG, attachment_storage=self._attachment_storage,
                   descr=_("Text stránky formátovaný jako LCG strukturovaný text (wiki)")),
             Field('mod_id', _("Modul"), type=pd.Integer(), not_null=False,
@@ -280,7 +280,7 @@ class Menu(Specification):
                   descr=_("Vyberte rozšiřující modul zobrazený uvnitř stránky.  "
                           "Ponechte prázdné pro prostou textovou stránku.")),
             Field('modname', _("Modul")),
-            Field('parent', _("Nadřízená položka"), type=pd.Integer(), not_null=False,
+            Field('parent', _("Parent item"), type=pd.Integer(), not_null=False,
                   codebook=self._spec_name('MenuParents', False), value_column='menu_item_id',
                   runtime_filter=computer(self._parent_filter),
                   descr=_("Vyberte bezprostředně nadřízenou položku v hierarchii menu.  Ponechte "
@@ -288,10 +288,10 @@ class Menu(Specification):
             Field('published', _("Zveřejněno"), width=6, default=True, fixed=True,
                   descr=_("Umožňuje řídit dostupnost dané položky nezávisle pro kažou jazykovou "
                           "verzi.")),
-            Field('ord', _("Pořadí"), width=8, editable=ALWAYS, fixed=True,
-                  descr=_("Zadejte číslo určující pořadí položky v menu (mezi stránkami na stejné "
-                          "úrovni hierarchie.  Pokud nevyplníte, stránka bude automaticky zařazena "
-                          "na konec.")),
+            Field('ord', _("Ordering"), width=8, editable=ALWAYS, fixed=True,
+                  descr=_("Enter a number denoting the order of the item in menu between "
+                          "pages of the same hierarchy level.  Leave empty to put the item "
+                          "automatically to bottom.")),
         )
     def _attachment_storage(self, record, base_uri='resource:'):
         # Determines the directory for storing the attachments for the 'content' field.
@@ -361,7 +361,7 @@ class Menu(Specification):
                     condition=lambda r: pd.EQ('menu_item_id', r['menu_item_id']),
                     prefill=lambda r: {'menu_item_id': r['menu_item_id'].value(),
                                        'mod_id': r['mod_id'].value()}),
-            Binding('content', _("Obsah"), content=self._page_content),
+            Binding('content', _("Content"), content=self._page_content),
         )
 
     def _page_content(self, row):
@@ -412,9 +412,9 @@ class Roles(Specification):
     def fields(self):
         return (
             Field('role_id', default=nextval('cms_roles_role_id_seq')),
-            Field('name', _("Název"), width=16),
+            Field('name', _("Title"), width=16),
             Field('system_role', _("Systémová role"), width=16, type=pd.String(not_null=True)),
-            Field('description', _("Popis"), width=64),
+            Field('description', _("Description"), width=64),
         )
     layout = ('name', 'description')
     columns = ('name', 'description')
@@ -456,7 +456,7 @@ class UserRoles(Specification):
             Field('login', _("Přihlašovací jméno"), width=16),
             Field('fullname', _("Celé jméno"), width=50),
             Field('name', _("Název role"), width=16),
-            Field('description', _("Popis"), width=50)
+            Field('description', _("Description"), width=50)
         )
     layout = ('role_id',)
     columns = ('name', 'description')
@@ -478,8 +478,8 @@ class Actions(Specification):
         return (
             Field('action_id', default=nextval('cms_actions_action_id_seq')),
             Field('mod_id', _("Modul"), codebook=self._spec_name('Modules', False)),
-            Field('name', _("Název"), width=16),
-            Field('description', _("Popis"), width=64)
+            Field('name', _("Title"), width=16),
+            Field('description', _("Description"), width=64)
         )
     sorting = (('action_id', ASC),)
     layout = ('name', 'description')
@@ -508,10 +508,10 @@ class Rights(Specification):
             Field('role_name', _("Role")),
             Field('system_role'),
             Field('mod_id'),
-            Field('action_id', _("Akce"), codebook=self._spec_name('Actions', False),
+            Field('action_id', _("Action"), codebook=self._spec_name('Actions', False),
                   runtime_filter=computer(self._action_filter)),
-            Field('action_name', _("Akce")),
-            Field('action_description', _("Popis"), width=30, editable=NEVER),
+            Field('action_name', _("Action Name")),
+            Field('action_description', _("Description"), width=30, editable=NEVER),
         )
     grouping = 'role_id'
     sorting = (('role_name', ASC), ('mod_id', DESC), ('action_id', ASC))
@@ -559,7 +559,7 @@ class SessionLog(_Log):
             Field('success', _("Úspěch"), width=3),
             Field('start_time', _("Začátek"), width=17),
             Field('duration', _("Trvání"), width=17),
-            Field('active', _("Aktivní")),
+            Field('active', _("Active")),
         ) + super(SessionLog, self).fields()
     def row_style(self, row):
         if row['success'].value():
@@ -591,9 +591,9 @@ class AccessLog(_Log):
             Field('log_id'),
             Field('timestamp', _("Datum a čas"), width=17),
             Field('uri', _("Cesta"), width=17),
-            Field('uid', _("Uživatel"), codebook=self._spec_name('Users')),
+            Field('uid', _("User"), codebook=self._spec_name('Users')),
             Field('modname', _("Modul"), width=17),
-            Field('action', _("Akce"), width=17),
+            Field('action', _("Action"), width=17),
         ) + super(AccessLog, self).fields()
     layout = ('timestamp', 'uri', 'uid', 'modname', 'action',
               'ip_address', 'hostname', 'user_agent', 'referer')
@@ -612,7 +612,7 @@ class Themes(Specification):
     table = 'cms_themes'
     fields = (
         Field('theme_id'),
-        Field('name', _("Název"), nocopy=True),
+        Field('name', _("Title"), nocopy=True),
         _Field('foreground', _("Text"),
                descr=("Barva popředí hlavních obsahových ploch.")),
         _Field('background', _("Pozadí"),

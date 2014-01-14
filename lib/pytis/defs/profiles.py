@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009, 2010, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2009, 2010, 2011, 2013, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -30,19 +30,19 @@ class FormProfiles(Specification):
     table = 'ev_pytis_form_profiles'
     title = _(u"Profily formulářů")
     fields = (
-        Field('id', _(u"Identifikátor"), width=25, editable=Editable.NEVER),
-        Field('title', _(u"Název"), width=25, editable=Editable.NEVER),
-        Field('username', _(u"Uživatel"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
-        Field('fullname', _(u"Fullname"), codebook='menu.ApplicationMenuM',
+        Field('id', _("Identifier"), width=25, editable=Editable.NEVER),
+        Field('title', _("Title"), width=25, editable=Editable.NEVER),
+        Field('username', _("User"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
+        Field('fullname', _("Fullname"), codebook='menu.ApplicationMenuM',
               width=80, column_width=30, editable=Editable.NEVER),
-        Field('spec_name', _(u"Název specifikace"),
+        Field('spec_name', _("Specification Name"),
               width=50, column_width=30, editable=Editable.NEVER),
-        Field('form_name', _(u"Třída formuláře"),
+        Field('form_name', _("Form Class"),
               width=50, column_width=30, editable=Editable.NEVER),
         Field('profile_id', _(u"Id profilu"), width=25, editable=Editable.NEVER),
         Field('pickled_filter', editable=Editable.NEVER),
         Field('pickled_params', editable=Editable.NEVER),
-        Field('dump', _(u"Obsah"), width=80, height=8, editable=Editable.NEVER),
+        Field('dump', _("Content"), width=80, height=8, editable=Editable.NEVER),
         Field('errors', _(u"Chyby"), width=80, height=8, editable=Editable.NEVER),
         Field('invalid', _(u"Neplatný"), type=pd.Boolean, virtual=True, width=1,
               computer=computer(lambda r, errors: errors is not None), editable=Editable.NEVER),
@@ -64,12 +64,12 @@ class FormSettings(Specification):
     table = 'e_pytis_form_settings'
     title = _(u"Nastavení formulářů")
     fields = (
-        Field('id', _(u"Identifikátor"), width=20, editable=Editable.NEVER),
-        Field('username', _(u"Uživatel"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
-        Field('spec_name', _(u"Název specifikace"), width=50, editable=Editable.NEVER),
+        Field('id', _("Identifier"), width=20, editable=Editable.NEVER),
+        Field('username', _("User"), codebook='statistics.FormUserList', value_column='login', editable=Editable.NEVER),
+        Field('spec_name', _("Specification Name"), width=50, editable=Editable.NEVER),
         Field('form_name', _(u"Typ formuláře"), width=50, editable=Editable.NEVER),
         Field('pickle', editable=Editable.NEVER),
-        Field('dump', _(u"Obsah"), width=40, height=5, editable=Editable.NEVER),
+        Field('dump', _("Content"), width=40, height=5, editable=Editable.NEVER),
         )
     columns = ('username', 'spec_name', 'form_name')
     layout = HGroup(('username', 'spec_name', 'form_name'),
