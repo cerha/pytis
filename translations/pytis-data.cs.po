@@ -1,5 +1,5 @@
 # Pytis translations
-# Copyright (C) 2006-2013 Brailcom, o.p.s.
+# Copyright (C) 2006-2014 Brailcom, o.p.s.
 # This file is distributed under the same license as the Pytis package.
 # Tomas Cerha <cerha@brailcom.org>, 2006.
 #
@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2014-01-13 17:02+0100\n"
-"PO-Revision-Date: 2013-05-07 17:27+0200\n"
+"PO-Revision-Date: 2014-01-14 17:09+0100\n"
 "Last-Translator: Hynek Hanke <hanke@brailcom.org>\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
@@ -30,9 +30,8 @@ msgid "Database interface error"
 msgstr "Chyba v databázovém rozhraní"
 
 #: ../lib/pytis/data/dbapi.py:187
-#, fuzzy
 msgid "Database connection timeout"
-msgstr "Chyba databázového spojení"
+msgstr "Vypršel časový limit pro navázání databázového spojení"
 
 #: ../lib/pytis/data/dbapi.py:189 ../lib/pytis/data/dbapi.py:299
 msgid "Database connection error"

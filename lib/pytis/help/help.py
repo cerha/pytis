@@ -237,7 +237,7 @@ class HelpUpdater(object):
         return _("Invokes procedure %s from %s.") % (procname, spec_name)
 
     def _generate_action_help(self, action):
-        return _("Invokes  %s.") % action
+        return _("Invokes %s.") % action
 
     def _generate_reload_rights_help(self):
         return _("Reloads access rights.")

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pytis 0.1\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-14 16:54+0100\n"
-"PO-Revision-Date: 2014-01-14 17:01+0100\n"
+"POT-Creation-Date: 2014-01-14 17:06+0100\n"
+"PO-Revision-Date: 2014-01-14 17:06+0100\n"
 "Language-Team: Czech <wiking@lists.freebsoft.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -935,43 +935,43 @@ msgstr ""
 "Vypršel časový limit pro editaci formuláře.\n"
 "Chcete v editaci ještě pokračovat?"
 
-#: ../lib/pytis/form/form.py:2347
+#: ../lib/pytis/form/form.py:2348
 msgid "The time limit for form editation has elapsed."
 msgstr "Vypršel časový limit pro editaci formuláře."
 
-#: ../lib/pytis/form/form.py:2670
+#: ../lib/pytis/form/form.py:2671
 msgid "Record update failed"
 msgstr "Uložení záznamu se nezdařilo"
 
-#: ../lib/pytis/form/form.py:2672
+#: ../lib/pytis/form/form.py:2673
 msgid "Transaction aborted, unable to continue"
 msgstr "Transakce přerušena, nelze pokračovat"
 
-#: ../lib/pytis/form/form.py:2687
+#: ../lib/pytis/form/form.py:2688
 msgid "Unsaved changed in form data!"
 msgstr "Data byla změněna a nebyla uložena!"
 
-#: ../lib/pytis/form/form.py:2688
+#: ../lib/pytis/form/form.py:2689
 msgid "Do you really want to close the form?"
 msgstr "Opravdu chcete uzavřít formulář?"
 
-#: ../lib/pytis/form/form.py:2752
+#: ../lib/pytis/form/form.py:2753
 msgid "edit form"
 msgstr "editační formulář"
 
-#: ../lib/pytis/form/form.py:2821
+#: ../lib/pytis/form/form.py:2822
 msgid "Notification area"
 msgstr "Oznamovací oblast"
 
-#: ../lib/pytis/form/form.py:2823
+#: ../lib/pytis/form/form.py:2824
 msgid "Batch insertion progress indicator"
 msgstr "Ukazatel pozice hromadného vkládání"
 
-#: ../lib/pytis/form/form.py:2865
+#: ../lib/pytis/form/form.py:2866
 msgid "All records processed."
 msgstr "Všechny záznamy byly zpracovány."
 
-#: ../lib/pytis/form/form.py:2873
+#: ../lib/pytis/form/form.py:2874
 msgid ""
 "Not all input records processed yet.\n"
 "Really quit batch insertion?"
@@ -979,52 +979,52 @@ msgstr ""
 "Ještě nebyly zpracovány všechny řádky vstupních dat.\n"
 "Chcete opravdu ukončit vkládání?"
 
-#: ../lib/pytis/form/form.py:2882
+#: ../lib/pytis/form/form.py:2883
 msgid "No next record"
 msgstr "Není další záznam"
 
-#: ../lib/pytis/form/form.py:2884
+#: ../lib/pytis/form/form.py:2885
 #, python-format
 msgid "Record %d/%d skipped"
 msgstr "Záznam %d/%d přeskočen"
 
-#: ../lib/pytis/form/form.py:2889
+#: ../lib/pytis/form/form.py:2890
 msgid "Save the record and close the form"
 msgstr "Uložit záznam a uzavřít formulář"
 
-#: ../lib/pytis/form/form.py:2892
+#: ../lib/pytis/form/form.py:2893
 msgid "Close the form without saving"
 msgstr "Uzavřít formulář bez uložení dat"
 
-#: ../lib/pytis/form/form.py:2895 ../lib/pytis/form/search.py:574
+#: ../lib/pytis/form/form.py:2896 ../lib/pytis/form/search.py:574
 msgid "Next"
 msgstr "Další"
 
-#: ../lib/pytis/form/form.py:2896
+#: ../lib/pytis/form/form.py:2897
 msgid "Save the current record and read next record into the form."
 msgstr "Uložit současný záznam a načíst následující záznam do formuláře."
 
-#: ../lib/pytis/form/form.py:2900
+#: ../lib/pytis/form/form.py:2901
 msgid "Skip"
 msgstr "Přeskočit"
 
-#: ../lib/pytis/form/form.py:2901
+#: ../lib/pytis/form/form.py:2902
 msgid "Skip this record without saving"
 msgstr "Přeskočit tento záznam bez uložení"
 
-#: ../lib/pytis/form/form.py:2933
+#: ../lib/pytis/form/form.py:2934
 msgid "Record saved"
 msgstr "Záznam uložen"
 
-#: ../lib/pytis/form/form.py:3174
+#: ../lib/pytis/form/form.py:3175
 msgid "Original text"
 msgstr "Původní text"
 
-#: ../lib/pytis/form/form.py:3174
+#: ../lib/pytis/form/form.py:3175
 msgid "Concurrently changed version"
 msgstr "Kolegova nová verze"
 
-#: ../lib/pytis/form/form.py:3175
+#: ../lib/pytis/form/form.py:3176
 msgid ""
 "Someone else has changed the same text while you made your modifications. "
 "You can see the overview of the changes below.\n"
@@ -1040,35 +1040,35 @@ msgstr ""
 "pokusit obě verze sloučit tím, že do Vašeho současného textu aplikujete níže "
 "uvedené změny."
 
-#: ../lib/pytis/form/form.py:3181
+#: ../lib/pytis/form/form.py:3182
 msgid "Discard my changes"
 msgstr "Zahodit moje změny"
 
-#: ../lib/pytis/form/form.py:3181
+#: ../lib/pytis/form/form.py:3182
 msgid "Merge"
 msgstr "Sloučit"
 
-#: ../lib/pytis/form/form.py:3182
+#: ../lib/pytis/form/form.py:3183
 msgid "Ignore the concurrent changes"
 msgstr "Ignorovat kolegovy změny"
 
-#: ../lib/pytis/form/form.py:3183
+#: ../lib/pytis/form/form.py:3184
 msgid "Conflicting modifications"
 msgstr "Konflikt editace"
 
-#: ../lib/pytis/form/form.py:3201
+#: ../lib/pytis/form/form.py:3202
 msgid "insert form"
 msgstr "vkládací formulář"
 
-#: ../lib/pytis/form/form.py:3216
+#: ../lib/pytis/form/form.py:3217
 msgid "view form"
 msgstr "náhledový formulář"
 
-#: ../lib/pytis/form/form.py:3245
+#: ../lib/pytis/form/form.py:3246
 msgid "Last record"
 msgstr "Poslední záznam"
 
-#: ../lib/pytis/form/form.py:3249
+#: ../lib/pytis/form/form.py:3250
 msgid "First record"
 msgstr "První záznam"
 
@@ -2703,7 +2703,7 @@ msgid "Specification name"
 msgstr "Název specifikace"
 
 #: ../lib/pytis/extensions/spec.py:432
-#, fuzzy, python-format
+#, python-format
 msgid "Detected data type %(detected)s. Expected %(expected)s."
 msgstr "Detekována data typu %(detected)s. Očekávám %(expected)s."
 
@@ -2843,9 +2843,9 @@ msgid "Invokes procedure %s from %s."
 msgstr "Vyvolá proceduru %s z %s."
 
 #: ../lib/pytis/help/help.py:240
-#, fuzzy, python-format
-msgid "Invokes  %s."
-msgstr "Vyvolá formulář %s."
+#, python-format
+msgid "Invokes %s."
+msgstr "Vyvolá %s."
 
 #: ../lib/pytis/help/help.py:243
 msgid "Reloads access rights."
@@ -2905,7 +2905,7 @@ msgstr "Příručka uživatele systému Pytis"
 msgid "Help files not found!"
 msgstr "Soubory s nápovědou nebyly nalezeny!"
 
-#: ../lib/pytis/help/help.py:412
+#: ../lib/pytis/help/help.py:412 ../lib/pytis/help/help.py:471
 msgid "Contents"
 msgstr "Obsah"
 
