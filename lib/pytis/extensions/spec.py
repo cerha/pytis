@@ -31,7 +31,7 @@ import os
 import config
 import pytis.util
 from pytis.presentation import Color, Editable, Field, FormType, PostProcess, Style, TextFilter, \
-    TextFormat
+    TextFormat, SelectionType
 import pytis.extensions
 
 _ = pytis.util.translations('pytis-wx')
@@ -237,13 +237,28 @@ def run_any_form():
         ("MultiBrowseDualForm", pytis.form.MultiBrowseDualForm),
         ("CodebookForm", pytis.form.CodebookForm),
     )
+    resolver = config.resolver
+    all_defs = []
+    for d in get_form_defs(resolver):
+        found_prefix = None
+        for prefix in config.search_modules:
+            if d.startswith(prefix):
+                found_prefix = prefix
+                break
+        if found_prefix:
+            all_defs.append(d[len(found_prefix)+1:])
+        else:
+            all_defs.append(d)
+    all_defs.sort()
     row = pytis.form.run_form(
         pytis.form.InputForm,
         title=_("Run Form"),
         fields=(Field('type', _("Form type"), not_null=True,
                       enumerator=pytis.data.FixedEnumerator([x[0] for x in form_types]),
                       default='BrowseForm'),
-                Field('name', _("Specification name"), width=40),
+                Field('name', _("Specification name"), width=40,
+                      completer=pytis.data.FixedEnumerator(all_defs),
+                  ),
                 ))
     if row is not None:
         form_type = dict(form_types)[row['type'].value()]
