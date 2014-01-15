@@ -275,7 +275,7 @@ class Field(object):
                 while i < line_length and line[i] == ' ':
                     i += 1
                 if i > 0:
-                    line = nbsp*i + line[i:]
+                    line = nbsp * i + line[i:]
                     line_length += (len_nbsp - 1) * i
                     i = len_nbsp * i
                 while i < line_length:
@@ -284,7 +284,7 @@ class Field(object):
                         while j < line_length and line[j] == ' ':
                             j += 1
                         if j > i + 1:
-                            line = line[:i] + nbsp*(j-i) + line[j:]
+                            line = line[:i] + nbsp * (j - i) + line[j:]
                             line_length += (len_nbsp - 1) * (j - i)
                             i += len_nbsp * (j - i)
                         else:
@@ -408,7 +408,7 @@ class Field(object):
             src = self._uri_provider(self._row, UriType.IMAGE, self.id)
             if src:
                 if info is not None:
-                    value += ' ('+ info +')'
+                    value += ' (' + info + ')'
                     info = None
                 value = g.img(src, alt=value) #, cls=cls)
             link = self._uri_provider(self._row, UriType.LINK, self.id)
@@ -422,13 +422,14 @@ class Field(object):
                 if kwargs:
                     tooltip_uri = self._uri_provider(self._row, UriType.TOOLTIP, self.id)
                     if tooltip_uri:
-                        kwargs = dict(kwargs,
-                                      onmouseover="pytis.show_tooltip(event, '%s')" % tooltip_uri,
-                                      onmouseout="pytis.hide_tooltip(this)",
+                        kwargs = dict(
+                            kwargs,
+                            onmouseover="pytis.show_tooltip(event, '%s')" % tooltip_uri,
+                            onmouseout="pytis.hide_tooltip(this)",
                         )
                     value = g.a(value, **kwargs)
             if info is not None:
-                value += ' ('+ info +')'
+                value += ' (' + info + ')'
         return value
 
     def editor(self, context, prefill=None, error=None):
@@ -508,7 +509,7 @@ class MultilineField(Field):
         width, height = self.spec.width(), self.spec.height()
         cls = kwargs.get('cls')
         if width >= 80:
-            cls = (cls and cls+' ' or '') + 'fullsize'
+            cls = (cls and cls + ' ' or '') + 'fullsize'
         return dict(kwargs, value=value, rows=height, cols=width, cls=cls)
 
     def _editor(self, context, **kwargs):
@@ -548,7 +549,7 @@ class HtmlField(MultilineField):
                 res += " {" + ", ".join(self.styles) + "}"
             if (self.classes):
                 res += " (" + ", ".join(self.classes) + ")"
-            return res;
+            return res
         
     class AcfRequiredAttribute(object):
         """Required attribute in ACF rule for CKEditor"""
@@ -571,24 +572,24 @@ class HtmlField(MultilineField):
             context.resource('ASCIIMathML.js')
             context.resource('ckeditor.css')
             toolbar = (
-                ('clipboard',   ('Cut', 'Copy', 'Paste', 'PasteText', #'PasteFromWord',
-                                 '-', 'Undo', 'Redo')),
-                ('editing',     ('Find', 'Replace', '-', 'SelectAll')),
+                ('clipboard', ('Cut', 'Copy', 'Paste', 'PasteText', #'PasteFromWord',
+                               '-', 'Undo', 'Redo')),
+                ('editing', ('Find', 'Replace', '-', 'SelectAll')),
                 ('basicstyles', ('Bold', 'Italic', 'Underline', #'Strike',
                                  'Subscript', 'Superscript', '-', 'RemoveFormat')),
-                ('tools',       ('Source', 'Maximize', 'ShowBlocks','-', 'About')),
+                ('tools', ('Source', 'Maximize', 'ShowBlocks', '-', 'About')),
                 ('/', None),
-                ('styles',      ('Format', 'Language')), #'Font','FontSize')),
-                ('paragraph',   ('NumberedList','BulletedList','DefinitionList','-',
-                                 'Outdent','Indent','-', 'Blockquote', 'BlockquoteFooter', '-',
-                                 'JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
-                                 # '-', 'BidiLtr','BidiRtl'
-                                 )),
-                ('pytis',       ('PytisImage', 'PytisAudio', 'PytisVideo', 'PytisResource',
-                                 'PytisExercise', 'PytisMathML')),
-                ('links',       ('Link', 'Unlink', 'Anchor', 'PytisIndexItem')),
-                ('insert',      ('Table','HorizontalRule', 'PageBreak', 'SpecialChar')), #'Smiley',
-                )
+                ('styles', ('Format', 'Language')), #'Font','FontSize')),
+                ('paragraph', ('NumberedList', 'BulletedList', 'DefinitionList', '-',
+                               'Outdent', 'Indent', '-', 'Blockquote', 'BlockquoteFooter', '-',
+                               'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock',
+                               # '-', 'BidiLtr','BidiRtl'
+                               )),
+                ('pytis', ('PytisImage', 'PytisAudio', 'PytisVideo', 'PytisResource',
+                           'PytisExercise', 'PytisMathML')),
+                ('links', ('Link', 'Unlink', 'Anchor', 'PytisIndexItem')),
+                ('insert', ('Table', 'HorizontalRule', 'PageBreak', 'SpecialChar')), #'Smiley',
+            )
 
             Rule = self.AcfRule
             R = self.AcfRequiredAttribute
@@ -619,33 +620,35 @@ class HtmlField(MultilineField):
                 Rule(['a'], [R('href'), R('data-lcg-resource')], classes=['lcg-video']),
                 Rule(['a'], [R('href'), R('data-lcg-resource')], classes=['lcg-resource']),
                 # Exercises
-                Rule(['pre'], classes=['lcg-exercise'], attributes=['data-type', 'contenteditable'], styles=['display']),
+                Rule(['pre'], classes=['lcg-exercise'],
+                     attributes=['data-type', 'contenteditable'], styles=['display']),
                 # Mathematics
                 Rule(['span'], ['contenteditable'], styles=['display'], classes=['lcg-mathml']),
                 Rule(['math'], ['contenteditable', 'xmlns'], styles=['display']),
                 Rule(['maction', 'maligngroup', 'malignmark', 'menclose', 'merror', 'mfenced',
-                      'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mlongdiv', 'mmultiscripts', 'mn', 'mo',
-                      'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mscarries', 'mscarry',
-                      'msgroup', 'msline', 'mspace', 'msqrt', 'msrow', 'mstack', 'mstyle', 'msub',
-                      'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover',
-                      'semantics', 'annotation'], ['*']),
+                      'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mlongdiv', 'mmultiscripts', 'mn',
+                      'mo', 'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mscarries',
+                      'mscarry', 'msgroup', 'msline', 'mspace', 'msqrt', 'msrow', 'mstack',
+                      'mstyle', 'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr',
+                      'munder', 'munderover', 'semantics', 'annotation'], ['*']),
                 # Language marking
                 Rule(['*'], ['lang'], classes=['cke-explicit-language']),
                 Rule(['span'], [R('lang')], classes=['cke-explicit-language']),
                 # Figures and captions
                 Rule(['figure'], ['data-lcg-align']),
                 Rule(['figcaption']),
-                );
-            config = dict(toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
-                          language=context.lang(),
-                          removePlugins = 'forms,image',
-                          contentsCss = context.uri(lcg.Stylesheet('ckeditor-content.css')),
-                          entities=False,
-                          entities_greek=False,
-                          entities_latin=False,
-                          entities_processNumerical=False,
-                          allowedContent="; ".join(map(str, acf_rules)),
-                          )
+            )
+            config = dict(
+                toolbar=[i and dict(name=n, items=i) or n for n, i in toolbar],
+                language=context.lang(),
+                removePlugins='forms,image',
+                contentsCss=context.uri(lcg.Stylesheet('ckeditor-content.css')),
+                entities=False,
+                entities_greek=False,
+                entities_latin=False,
+                entities_processNumerical=False,
+                allowedContent="; ".join(map(str, acf_rules)),
+            )
             html_id = self.html_id()
             if self._row.attachment_storage(self.id) is not None:
                 from lcg import exercises
@@ -675,7 +678,7 @@ class DateTimeField(TextField):
             time_format = locale_data.time_format
         else:
             time_format = locale_data.exact_time_format
-        return locale_data.date_format +' '+ time_format
+        return locale_data.date_format + ' ' + time_format
 
     def _maxlen(self):
         # TODO: Respect date format!
@@ -692,15 +695,15 @@ class DateTimeField(TextField):
         context.resource('calendarview.css')
         locale_data = context.locale_data()
         js_values = dict(
-            id = kwargs['id'],
-            format = self._datetime_format(locale_data),
-            today = context.localize(_(u"today")),
-            day_names = g.js_value([context.localize(lcg.week_day_name(i, abbrev=True))
-                                    for i in (6,0,1,2,3,4,5)]),
-            month_names = g.js_value([context.localize(lcg.month_name(i))
-                                      for i in range(12)]),
-            first_week_day = (locale_data.first_week_day + 1) % 7,
-            )
+            id=kwargs['id'],
+            format=self._datetime_format(locale_data),
+            today=context.localize(_(u"today")),
+            day_names=g.js_value([context.localize(lcg.week_day_name(i, abbrev=True))
+                                  for i in (6, 0, 1, 2, 3, 4, 5)]),
+            month_names=g.js_value([context.localize(lcg.month_name(i))
+                                    for i in range(12)]),
+            first_week_day=(locale_data.first_week_day + 1) % 7,
+        )
         result += g.script("""
            Calendar.setup({dateField: '%(id)s',
                            triggerElement: '%(id)s-button',
@@ -713,7 +716,7 @@ class DateTimeField(TextField):
         return result
 
     def _validate(self, string_value, req, locale_data, **kwargs):
-        return super(DateTimeField, self)._validate(string_value, req, locale_data, 
+        return super(DateTimeField, self)._validate(string_value, req, locale_data,
                                                     format=self._datetime_format(locale_data),
                                                     **kwargs)
 
@@ -739,8 +742,8 @@ class ColorField(StringField):
     def _format(self, context):
         g = context.generator()
         color = self._value().export()
-        return g.span(color or '&nbsp;', cls="color-value") +' '+ \
-               g.span('&nbsp;', cls="color-display", style="background-color: %s;" %color)
+        return (g.span(color or '&nbsp;', cls="color-value") + ' ' +
+                g.span('&nbsp;', cls="color-display", style="background-color: %s;" % color))
 
 
 class CheckboxField(Field):
@@ -851,8 +854,8 @@ class RadioField(EnumerationField):
         else:
             wrap = g.span
         for i, (val, strval, display) in enumerate(choices):
-            radio_id = id +'-'+ str(i)
-            radio = g.radio(value=strval, checked=(val==value.value()), id=radio_id, **kwargs)
+            radio_id = id + '-' + str(i)
+            radio = g.radio(value=strval, checked=(val == value.value()), id=radio_id, **kwargs)
             label = g.label(display, radio_id)
             radios.append(wrap(radio + label))
         return wrap(radios, id=id, cls='radio-group')
@@ -890,14 +893,14 @@ class ChecklistField(EnumerationField):
             # Beware!  Any changes in checkbox rendering made here should be
             # also reflected in the javascript code rendering the items
             # dynamically on form changes.
-            checkbox_id = id+'-'+str(i)
+            checkbox_id = id + '-' + str(i)
             checked = value in values
             if readonly:
                 onchange = "this.checked=" + (checked and 'true' or 'false')
             else:
                 onchange = None
             result = (g.checkbox(id=checkbox_id, name=name, value=strval, checked=checked,
-                                 disabled=disabled, onchange=onchange) +'&nbsp;'+
+                                 disabled=disabled, onchange=onchange) + '&nbsp;' +
                       g.label(display, checkbox_id))
             if uri_provider:
                 uri = uri_provider(value)
@@ -906,9 +909,9 @@ class ChecklistField(EnumerationField):
                         link = g.a(strval, href=uri)
                     else:
                         link = g.a(strval, href=uri.uri(), title=uri.title(), target=uri.target())
-                    result += '&nbsp;['+ link +']'
+                    result += '&nbsp;[' + link + ']'
             return result
-        checkboxes = [g.div(checkbox(i, val, strval, display) )
+        checkboxes = [g.div(checkbox(i, val, strval, display))
                       for i, (val, strval, display) in enumerate(self._enumeration(context))]
         return g.div(checkboxes, id=id, cls='checkbox-group')
     
@@ -940,4 +943,3 @@ class FileField(TextField):
             return format_byte_size(len(value))
         else:
             return None
-    
