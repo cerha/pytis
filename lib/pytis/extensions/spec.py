@@ -31,7 +31,7 @@ import os
 import config
 import pytis.util
 from pytis.presentation import Color, Editable, Field, FormType, PostProcess, Style, TextFilter, \
-    TextFormat, SelectionType
+    TextFormat, Computer, SelectionType
 import pytis.extensions
 
 _ = pytis.util.translations('pytis-wx')
@@ -226,8 +226,7 @@ def run_cb(spec, begin_search=None, condition=None, sort=(),
                                select_row=select_row,
                                filter=filter,
                                transaction=transaction)
-
-
+    
 def run_any_form():
     form_types = (
         ("BrowseForm", pytis.form.BrowseForm),
@@ -250,14 +249,23 @@ def run_any_form():
         else:
             all_defs.append(d)
     all_defs.sort()
+    def name_runtime_filter(row):
+        name_substr = row['name_substr'].value()
+        if name_substr:
+            return lambda val: val.lower().find(name_substr.lower()) != -1
+        else:
+            return None
     row = pytis.form.run_form(
         pytis.form.InputForm,
         title=_("Run Form"),
         fields=(Field('type', _("Form type"), not_null=True,
                       enumerator=pytis.data.FixedEnumerator([x[0] for x in form_types]),
                       default='BrowseForm'),
-                Field('name', _("Specification name"), width=40,
-                      completer=pytis.data.FixedEnumerator(all_defs),
+                Field('name_substr', _("Search string"), width=40,),
+                Field('name', _("Specification name"), width=40, height=10,
+                      enumerator=pytis.data.FixedEnumerator(all_defs),
+                      selection_type=SelectionType.LIST_BOX,
+                      runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
                   ),
                 ))
     if row is not None:
