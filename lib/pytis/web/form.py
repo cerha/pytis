@@ -1703,7 +1703,7 @@ class BrowseForm(LayoutForm):
                              options=[(f.title(), f.id()) for f in filter_set],
                              onchange=onchange),
                     )
-                filter_content.append(g.span(filter_set_content))
+                filter_content.append(g.span(filter_set_content) + '&nbsp;&nbsp;')
             filter_content.append(submit_button)
             content.append(g.div(filter_content, cls="filter"))
         limit, limits = self._limit, self._limits
