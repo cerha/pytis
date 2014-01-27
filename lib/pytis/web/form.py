@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2006-2013 Brailcom, o.p.s.
+# Copyright (C) 2006-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2217,17 +2217,20 @@ class EditableBrowseForm(BrowseForm):
             if cid not in column_ids:
                 column_ids.append(cid)
         self._valid_rows = rows = []
-        while True:
-            row = data.fetchone()
-            if row is None:
-                break
-            self._set_row(row)
-            for cid in self._editable_columns:
-                field = self._fields[cid]
-                error = field.validate(req, locale_data)
-                if error:
-                    return False
-            rows.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
+        try:
+            while True:
+                row = data.fetchone()
+                if row is None:
+                    break
+                self._set_row(row)
+                for cid in self._editable_columns:
+                    field = self._fields[cid]
+                    error = field.validate(req, locale_data)
+                    if error:
+                        return False
+                rows.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
+        finally:
+            data.close()
         return True
 
     def rows(self):
