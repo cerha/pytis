@@ -437,7 +437,7 @@ class LayoutForm(FieldForm):
                      for i, (label, content_, fullsize, right_aligned)
                      in enumerate(content.content())]
             if cells:
-                result = [g.table([g.tr(cells)], cellspacing=0, cellpadding=0,
+                result = [g.table([g.tr(cells)], cellspacing=0, cellpadding=0, role='presentation',
                                   cls='horizontal-group' + (not omit_first_field_label
                                                             and ' expanded' or ''))]
             else:
@@ -465,7 +465,7 @@ class LayoutForm(FieldForm):
                 rows = [g.tr(td(label, content_, fullsize, right_aligned, fullspan, normalspan))
                         for label, content_, fullsize, right_aligned in content.content()]
                 if rows:
-                    result = [g.table(rows, cls='vertical-group')]
+                    result = [g.table(rows, cls='vertical-group', role='presentation')]
                 else:
                     result = []
             else:
