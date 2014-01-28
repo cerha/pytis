@@ -1624,10 +1624,10 @@ class RecordForm(LookupForm):
           kwargs -- arguments passed to the parent class
 
         """
+        self._initial_select_row = select_row
         super_(RecordForm)._init_attributes(self, **kwargs)
         assert prefill is None or isinstance(prefill, dict)
         self._prefill = prefill
-        self._initial_select_row = select_row
         self._row = self.record(self._data_row(select_row), prefill=prefill, new=_new,
                                 singleline=_singleline)
 
@@ -2766,15 +2766,18 @@ class PopupEditForm(PopupForm, EditForm):
         size = wx.Size(*self.size())
         size.DecTo(wx.GetDisplaySize() - wx.Size(50, 80))
         self.SetClientSize(size)
-        # HACK: Avoid initial selec_row call in popup forms.  It's purpose is
+        # HACK: Avoid initial select_row call in popup forms.  Its purpose is
         # irrelevant here and it causes problems with set_values - the
         # additional select_row() call resets them.
         self._initial_select_row = None
         
     def _open_data_select(self, data, async_count=False):
-        # Apparently we needn't open data select here; it just delays opening
-        # the form in some situations.
-        return None
+        if self._initial_select_row is None:
+            # Apparently we needn't open data select here; it just delays opening
+            # the form in some situations.
+            return None
+        else:
+            return super(PopupEditForm, self)._open_data_select(data, async_count=async_count)
 
     def _default_transaction(self):
         try:
