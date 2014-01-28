@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,27 +71,27 @@ _LAYOUT = (
      ))
 
 _LABELS = {
-    'row_highlight_color':   _("Default"),
+    'row_highlight_color': _("Default"),
     'row_highlight_edited_color': _("During inline editation"),
     'row_highlight_unfocused_color': _("Inactive form"),
-    'row_highlight_width':   _("Border width"),
-    'cell_highlight_color':  _("Current cell highlight"),
-    'grid_line_color':       _("Table grid"),
+    'row_highlight_width': _("Border width"),
+    'cell_highlight_color': _("Current cell highlight"),
+    'grid_line_color': _("Table grid"),
     'grouping_background_downgrade': _("Grouping background change"),
 
-    'field_disabled_color':  _("Inactive input field"),
-    'field_denied_color':    _("Disabled input field"),
-    'field_invalid_color':   _("Invalid input field"),
-    'show_splash':           _("Show start-up dialog"),
-    'show_tooltips':         _("Show tooltips"),
-    'auto_menu_accel':       _("Automatically numbered menus with accellerator keys"),
-    'stretch_tables':        _("Automatically stretch tables to full window width"),
-    'cache_spec_onstart':    _("Cache specification files on startup"),
-    'sender_address':        _("E-mail address"),
-    'export_directory':      _("Default directory"),
-    'export_encoding':       _("Character encoding"),
+    'field_disabled_color': _("Inactive input field"),
+    'field_denied_color': _("Disabled input field"),
+    'field_invalid_color': _("Invalid input field"),
+    'show_splash': _("Show start-up dialog"),
+    'show_tooltips': _("Show tooltips"),
+    'auto_menu_accel': _("Automatically numbered menus with accellerator keys"),
+    'stretch_tables': _("Automatically stretch tables to full window width"),
+    'cache_spec_onstart': _("Cache specification files on startup"),
+    'sender_address': _("E-mail address"),
+    'export_directory': _("Default directory"),
+    'export_encoding': _("Character encoding"),
     'rpc_communication_enabled': _("Windows workstation support"),
-    'rpc_remote_view':       _("Open PDF documents on Windows workstation"),
+    'rpc_remote_view': _("Open PDF documents on Windows workstation"),
 }
 
 _FIELDSPEC_KWARGS = {
@@ -115,7 +115,7 @@ def config_menu_items(hotkeys={}):
                    args=dict(form_class=ConfigForm, name=name),
                    hotkey=hotkeys.get(name),
                    help=(_('Open configuration form "%s"') % layout.caption()),
-                   icon='config-'+name)
+                   icon=('config-' + name))
              for name, layout in _LAYOUT]
     return tuple(items)
 
