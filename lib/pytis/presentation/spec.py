@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -3210,7 +3210,8 @@ class Field(object):
             # arguments in the first step.  We will uncomment it when we decide
             # to start modifying the applications.
             #if kwargs:
-            #    log_("Passing data type arguments to Field is deprecated: %r", tuple(kwargs.keys()))
+            #    log_("Passing data type arguments to Field is deprecated: %r",
+            #          tuple(kwargs.keys()))
         self._id = id
         self._dbcolumn = dbcolumn or id
         if label is None:
@@ -4915,8 +4916,14 @@ class Specification(object):
                 codebook = self._codebook_by_db_spec_name(db_spec_name)
             default = c.default()
             if default is None and isinstance(type_, pytis.data.Serial):
-                default = pytis.util.nextval('%s_%s_seq' % (table.pytis_name(real=True),
-                                                            c.id(),))
+                if isinstance(table, pytis.data.gensqlalchemy.SQLTable):
+                    default = pytis.util.nextval('%s_%s_seq' % (table.pytis_name(real=True),
+                                                                c.id(),))
+                else:
+                    orig_c = c.original_column()
+                    if orig_c is not None:
+                        default = pytis.util.nextval('%s_%s_seq' %
+                                                     (orig_c.table.name, orig_c.name,))
             f = Field(c.id(), c.label(), type=None, descr=descr, default=default,
                       editable=editable, codebook=codebook, not_null=c.type().not_null())
             f.set_type(type_)

@@ -612,7 +612,8 @@ class Column(pytis.data.ColumnSpec):
     
     """
     def __init__(self, name, type, label=None, doc=None, unique=False, check=None,
-                 default=None, references=None, primary_key=False, index=False, out=False):
+                 default=None, references=None, primary_key=False, index=False, out=False,
+                 original_column=None):
         """
         Arguments:
 
@@ -655,6 +656,9 @@ class Column(pytis.data.ColumnSpec):
           out -- when the column is an 'SQLFunction' argument, the value
             defines whether the given function argument is an output argument;
             boolean
+          original_column -- original column of this column;
+            'sqlalchemy.Column' instance.  Useful in views where the column
+            origin must be known for some reason.
           
         """
         pytis.data.ColumnSpec.__init__(self, name, type)
@@ -665,6 +669,8 @@ class Column(pytis.data.ColumnSpec):
         assert isinstance(primary_key, bool), primary_key
         assert isinstance(index, (bool, dict,)), index
         assert isinstance(out, bool), out
+        assert original_column is None or isinstance(original_column, sqlalchemy.Column), \
+            original_column
         self._label = label
         self._doc = doc
         self._unique = unique
@@ -674,6 +680,7 @@ class Column(pytis.data.ColumnSpec):
         self._primary_key = primary_key
         self._index = index
         self._out = out
+        self._original_column = original_column
 
     def label(self):
         return self._label
@@ -695,6 +702,9 @@ class Column(pytis.data.ColumnSpec):
 
     def out(self):
         return self._out
+
+    def original_column(self):
+        return self._original_column
 
     def sqlalchemy_column(self, search_path, table_name, key_name, orig_table_name, inherited=False,
                           foreign_constraints=None, check_constraints=None):
@@ -2667,8 +2677,20 @@ class SQLView(_SQLReplaceable, _SQLQuery, _SQLTabular):
     def specification_fields(class_):
         with _local_search_path(class_.default_search_path()):
             query = class_.query()
+        def original_column(c):
+            result = None
+            if isinstance(c.type, SERIAL) and len(c.base_columns) == 1:
+                base_column = list(c.base_columns)[0]
+                if ((isinstance(base_column, sqlalchemy.Column) and
+                     isinstance(base_column.type, SERIAL))):
+                    table = base_column.table
+                    if isinstance(table, SQLTable):
+                        result = base_column
+                    elif isinstance(table, SQLView):
+                        result = original_column(base_column)
+            return result
         def make_column(c):
-            return Column(c.name, _alchemy2pytis_type(c.type))
+            return Column(c.name, _alchemy2pytis_type(c.type), original_column=original_column(c))
         fields = [make_column(c) for c in query.c]
         return fields
 
