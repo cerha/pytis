@@ -2,7 +2,7 @@
 
 # Datové typy
 #
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2584,9 +2584,9 @@ class DataEnumerator(Enumerator, TransactionalEnumerator):
             self._value_column = data.key()[0].id()
         else:
             self._value_column = self._value_column_
-        c = data.find_column(self._value_column)
-        assert c, ('Non-existent value column', self._value_column)
-        self._value_column_type = c.type()
+        column = data.find_column(self._value_column)
+        assert column, ('Non-existent value column', self._value_column)
+        self._value_column_type = column.type()
         for callback in self._change_callbacks:
             self._data.add_callback_on_change(callback)
         self._change_callbacks = []
