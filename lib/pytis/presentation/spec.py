@@ -607,9 +607,7 @@ class Profile(object):
             'ViewSpec'.  If None, 'ViewSpec' aggregations apply.
           folding -- folding specification ('FoldableForm.Folding' instance)
             If None, the 'ViewSpec' folding applies.
-          filter_sets -- profile specific filter sets.  Additional to global
-            filter sets defined for 'ViewSpec'.  The same format and
-            limitations as for the same argument of 'ViewSpec'.
+          filter_sets -- Deprecated: Use 'query_fields' instead.
           column_widths -- dictionary of table column widths keyed by string
             column identifiers with integer values representing pixel width.
             This is not designed to be used in specifications, but rather for
@@ -1378,10 +1376,7 @@ class ViewSpec(object):
             want to specify which of the profiles is selected in the user
             interface by default.
 
-          filter_sets -- a sequence of filter sets as 'FilterSet' instances.
-            Filter sets are only supported by web applications to present
-            multiple filter selectors which can be combined into one final
-            filtering condition.
+          filter_sets -- Deprecated: Use query_fields instead.
 
           aggregations -- a sequence aggregation functions which should be
             turned on automatically for this view (in forms which support
