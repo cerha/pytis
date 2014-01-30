@@ -184,15 +184,6 @@ class Form(lcg.Content):
             actions = self._view.actions()
         return [(action, is_enabled(action)) for action in actions if is_visible(action)]
 
-    def _localizer(self, req):
-        # TODO: The method 'preferred_language()' is Wiking specific so it is not correct to rely
-        # on it here.
-        try:
-            lang = req.preferred_language()
-        except:
-            lang = None
-        return lcg.Localizer(str(lang))
-
     def form_id(self):
         """Return the HTML id of the form used in the last export.
 
@@ -597,7 +588,7 @@ class _SubmittableForm(Form):
         submission if any.
 
         """
-        locale_data = self._localizer(req).locale_data()
+        locale_data = req.localizer().locale_data()
         for fid in self._field_order():
             if req.has_param(fid) and self._row.editable(fid):
                 field = self._fields[fid]
@@ -616,7 +607,7 @@ class _SubmittableForm(Form):
         """
         self._last_validation_errors = errors = []
         row = self._row
-        locale_data = self._localizer(req).locale_data()
+        locale_data = req.localizer().locale_data()
         for fid in self._field_order():
             if row.editable(fid):
                 field = self._fields[fid]
@@ -810,7 +801,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         else:
             field_states = {}
         fields = {}
-        localizer = self._localizer(req)
+        localizer = req.localizer()
+        localize = localizer.localize
         locale_data = localizer.locale_data()
         # Validate all fields first.
         for fid in order:
@@ -824,7 +816,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             else:
                 error = field.validate(req, locale_data)
                 if error:
-                    fdata['error'] = localizer.localize(error.message())
+                    fdata['error'] = localize(error.message())
         row = self._row
         # Compute field state after all fields are validated.
         for fid in order:
@@ -834,7 +826,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 fdata['editable'] = row.editable(fid)
                 if ((field.spec.computer() and row.invalid_string(fid) is None 
                      and not isinstance(field.type, pd.Binary))):
-                    localized_value = localizer.localize(localizable_export(row[fid]))
+                    localized_value = localize(localizable_export(row[fid]))
                     # Values of disabled fields are not in the request, so send them always...
                     if not req.has_param(fid) or localized_value != req.param(fid):
                         fdata['value'] = localized_value
@@ -845,7 +837,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                     # corresponding runtime filter state.
                     new_state = 'f=%s;a=%s' % (row.runtime_filter(fid), row.runtime_arguments(fid))
                     if new_state != old_state:
-                        enumeration = [(value, localizer.localize(label))
+                        enumeration = [(value, localize(label))
                                        for value, label in row.enumerate(fid)]
                         fdata['state'] = new_state
                         fdata['enumeration'] = enumeration
@@ -855,7 +847,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                 lnk = func(value)
                                 if isinstance(lnk, Link):
                                     return dict(href=lnk.uri(),
-                                                title=localizer.localize(lnk.title()),
+                                                title=localize(lnk.title()),
                                                 target=lnk.target())
                                 else:
                                     return dict(href=lnk)
@@ -864,7 +856,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                                        for (value, display) in enumeration])
         for fid, error in self._check():
             if fid in fields:
-                fields[fid]['error'] = localizer.localize(error)
+                fields[fid]['error'] = localize(error)
         return dict(request_number=request_number, fields=fields)
 
     def set_error(self, field_id, error):
@@ -1262,7 +1254,7 @@ class BrowseForm(LayoutForm):
             data = pytis.data.DataFactory(pytis.data.RestrictedMemData, columns).create()
             row = self.FormRecord(self._req, fields_specs, data, None,
                                   resolver=self._row.resolver(), new=True)
-            locale_data = self._localizer(req).locale_data()
+            locale_data = req.localizer().locale_data()
             for f in fields_specs:
                 if not row.visible(f.id()):
                     continue
@@ -2180,7 +2172,7 @@ class EditableBrowseForm(BrowseForm):
             # 'submit()'), we need to revalidate editable fields in each row
             # to be able to display the form with the invalid user values 
             # and validation error messages within the fields.
-            locale_data = self._localizer(self._req).locale_data()
+            locale_data = self._req.localizer().locale_data()
             for cid in self._editable_columns:
                 field = self._fields[cid]
                 field.validate(self._req, locale_data)
@@ -2211,7 +2203,7 @@ class EditableBrowseForm(BrowseForm):
                     condition=self._conditions(),
                     arguments=self._arguments,
                     sort=self._sorting)
-        locale_data = self._localizer(req).locale_data()
+        locale_data = req.localizer().locale_data()
         column_ids = [c.id() for c in data.columns()]
         for cid in self._editable_columns:
             if cid not in column_ids:
