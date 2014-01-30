@@ -908,10 +908,10 @@ class BrowseForm(LayoutForm):
             return self._req
 
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
-                 columns=None, sorting=None, grouping=None,
+                 columns=None, sorting=None, grouping=None, message=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
-                 search=None, query=None, allow_query_search=None, filter=None, message=None,
-                 filter_sets=None, profiles=None, query_fields=None,
+                 search=None, allow_text_search=None, text_search_condition=None,
+                 filter=None, filter_sets=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
                  **kwargs):
@@ -942,6 +942,13 @@ class BrowseForm(LayoutForm):
             the default grouping defined by the specification, but may be
             further overriden by the grouping defined by the currently selected
             form profile (see 'profiles').
+          message -- function returning a custom search result message.  If
+            none, a default message will be used, such as 'Found 5 records
+            matching the search expression.'.  A function of one argument
+            (integer determining the number of records in the form) may be used
+            to return a custom message as a string (possibly an
+            'lcg.Localizable' instance).  An example of a custom message might
+            be 'Found 15 articles in category Python'.
           limit -- maximal number of rows per page.  If the current condition
             produces more rows, the listing will be split into pages and the
             form will include controls for navigation between these pages.
@@ -978,42 +985,28 @@ class BrowseForm(LayoutForm):
             the request), the offset is controlled by the 'offset' argument.
             Searching is ignored when the current limit is greater than the
             total number of records.
-          query -- query search string.  If None, the form automatically
-            displays search controls when the number of records exceeds one
-            page.  If 'query' is passed, these embedded search conrols are
-            disabled (it is considered, that the application has it's own
-            search interface), but otherwise the form behaves as if the query
-            was filled in its own search field.  The query string is split into
-            query words by space and the form is filtered to contain only
-            records containing all the words in any of its string columns.
-          allow_query_search -- explicitly enable or disable displaying the
-            query search controls.  Query search allows filtering the form
-            records by a text string.  By default (when None), query search
-            controls are displayed automatically when the number of records
-            exceeds one page.  The controls initially contain only a "Search"
-            button, which, when pressed, displays a text field for entering the
-            search query above the form.  When the query is submitted, the form
-            is filtered to contain only matching records (the query string is
-            split into separate query words by space and matching records must
-            contain all the words in any of its string columns).  Passing True
-            to this argument will force displaying the query field, which may
-            be practical for forms where searching is highly expected.  The
-            unnecessary step of pressing the "Search" button is not necessary,
-            but the user interface is a little more cluttered by search
-            controls.  Passing False, on the other hand, will disable the query
-            search controls altogether.  The search query string may still be
-            passed programatically through the 'query' argument in this case.
+          allow_text_search -- explicitly enable or disable displaying the
+            search controls.  Search controls allow filtering the form records
+            by a text string.  By default (when None), search controls are
+            displayed automatically when the number of records exceeds one
+            page.  The controls initially contain only a "Search" button,
+            which, when pressed, displays a text field for entering the search
+            string above the form.  When the search string is submitted, the
+            form is filtered to contain only matching records (see
+            'text_search_condition' for explanation how the filtering condition
+            is constructed).  Passing True to this argument will force
+            displaying the search field without any user action.  Passing
+            False, on the other hand, will disable the search controls
+            altogether.
+          text_search_condition -- define a custom text search condition. A
+            function of one argument -- the search string.  If None, the
+            default condition is created by splitting the search string into
+            separate words by blank characters.  Matching records must contain
+            all the words in any of its string columns.
           filter -- filter condition as a 'pytis.data.Operator' instance.  This
             condition will be appended to 'condition', but the difference is
             that 'condition' is invisible to the user, but 'filter' may be
             indicated in the user interface.
-          message -- function returning a custom search result message.  If
-            none, a default message will be used according to current query,
-            such as 'Found 5 records matching the search expression.'.  A
-            function of one argument (integer determining the number of records
-            in the form) may be used to return a custom message as a string
-            (possibly LCG Translatable object).  An example of a custom message
-            might be 'Found 15 articles in category Python'.
           filter_sets -- Deprecated. Filter sets can be implemented using query
             fields.
           profiles -- specification of form profiles as a 'Profiles' instance
@@ -1066,6 +1059,7 @@ class BrowseForm(LayoutForm):
         else:
             uri_provider_ = None
         super(BrowseForm, self).__init__(view, req, row, uri_provider=uri_provider_, **kwargs)
+        assert allow_text_search is None or isinstance(allow_text_search, bool), allow_text_search
         data = self._row.data()
         def param(name, func=None, default=None):
             # Consider request params only if they belong to the current form.
@@ -1172,25 +1166,31 @@ class BrowseForm(LayoutForm):
                     search = self._index_search_condition(index_search_string)
         self._index_search_string = index_search_string
         self._search = search
-        # Determine the current query search condition.
-        if allow_query_search is False or query is not None:
-            show_query_field = False
-            allow_query_field = False
+        # Determine the current text search condition.
+        if allow_text_search or allow_text_search is None:
+            text_search_string = param('query', unicode)
+            show_search_field = bool(text_search_string or param('show-search-field', bool)
+                                     or allow_text_search)
+            allow_search_field = True
         else:
-            query = param('query', unicode)
-            show_query_field = bool(query or param('show_query_field', bool) or allow_query_search)
-            allow_query_field = True
-        if query:
-            query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*' + word + '*'))
-                                               for f in self._fields.values()
-                                               if isinstance(f.type, pd.String) and not f.virtual])
-                                       for word in query.split()])
+            show_search_field = False
+            allow_search_field = False
+        if text_search_string:
+            if text_search_condition:
+                text_search_condition_ = text_search_condition(text_search_string)
+            else:
+                text_search_condition_ = pd.AND(*[
+                    pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*' + word + '*'))
+                            for f in self._fields.values()
+                            if isinstance(f.type, pd.String) and not f.virtual])
+                    for word in text_search_string.split()
+                ])
         else:
-            query_condition = None
-        self._query = query
-        self._query_condition = query_condition
-        self._show_query_field = show_query_field
-        self._allow_query_field = allow_query_field
+            text_search_condition_ = None
+        self._text_search_string = text_search_string
+        self._text_search_condition = text_search_condition_
+        self._show_search_field = show_search_field
+        self._allow_search_field = allow_search_field
         # Determine whether tree emulation should be used.
         if sorting and isinstance(self._row.type(sorting[0][0]),
                                   (pytis.data.LTree, pytis.data.TreeOrder)):
@@ -1457,7 +1457,10 @@ class BrowseForm(LayoutForm):
                 for f in self._column_fields]
 
     def _conditions(self, condition=None):
-        conditions = [c for c in (self._condition, self._filter, self._query_condition, condition)
+        conditions = [c for c in (self._condition,
+                                  self._filter,
+                                  self._text_search_condition, 
+                                  condition)
                       if c is not None]
         if len(conditions) == 0:
             return None
@@ -1469,7 +1472,7 @@ class BrowseForm(LayoutForm):
     def _message(self, count):
         if self._custom_message:
             msg = self._custom_message(count)
-        elif self._query:
+        elif self._text_search_string:
             # Translators: This string uses plural forms.  '%d' is replaced by
             # the number and this number also denotes the plural form used.
             # Please supply translations for all plural forms relevant for the
@@ -1710,7 +1713,7 @@ class BrowseForm(LayoutForm):
                                                [v for v in self._filter_ids.values()
                                                 if v is not None])
                         or self._query_fields)
-        show_query_field = self._show_query_field
+        show_search_field = self._show_search_field
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
             submit_button = g.button(g.span(_("Change filters")), cls='apply-filters')
@@ -1773,9 +1776,9 @@ class BrowseForm(LayoutForm):
                     controls += index_search_controls
             if pages > 1:
                 offset_id = 'offset-' + html_id
-                if self._allow_query_field:
+                if self._allow_search_field:
                     search_button = g.button(g.span(_(u"Search")), cls='search-button',
-                                             style=show_query_field and 'display:none' or None)
+                                             style=show_search_field and 'display:none' or None)
                 else:
                     search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into
@@ -1811,18 +1814,20 @@ class BrowseForm(LayoutForm):
                 cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
                 content.append(g.div(controls, cls=cls))
         if content:
-            if not bottom and self._allow_query_field:
-                query_id = 'filter-' + html_id
-                query_field = g.div((g.label(_(u"Search expression") + ': ', query_id),
-                                     g.field(self._query, name='query', id=query_id,
-                                             cls='query-field'),
-                                     g.hidden('show_query_field', show_query_field and '1' or ''),
-                                     # Translators: Search button label.
-                                     g.button(g.span(_(u"Search")), cls='search-button'),
-                                     g.button(g.span(_(u"Cancel")), cls='cancel-search')),
-                                    cls='query' + (show_filters and ' with-filter' or ''),
-                                    style=not show_query_field and 'display:none' or None)
-                content.insert(0, query_field)
+            if not bottom and self._allow_search_field:
+                search_id = 'filter-' + html_id
+                search_field = g.div(
+                    (g.label(_(u"Search expression") + ': ', search_id),
+                     g.field(self._text_search_string, name='query', id=search_id,
+                             cls='text-search-field'),
+                     g.hidden('show-search-field', show_search_field and '1' or ''),
+                     # Translators: Search button label.
+                     g.button(g.span(_(u"Search")), cls='search-button'),
+                     g.button(g.span(_(u"Cancel")), cls='cancel-search')),
+                    cls='query' + (show_filters and ' with-filter' or ''),
+                    style=not show_search_field and 'display:none' or None,
+                )
+                content.insert(0, search_field)
             if self._name is not None:
                 content.append(g.hidden('form_name', self._name))
             if self._user_sorting:
@@ -2084,7 +2089,7 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
 
     *Processing the submitted form:*
 
-    Each checkbox column is represented by one query parameter.  Its name is
+    Each checkbox column is represented by one request parameter.  Its name is
     the column identifier and the values are the key column values of all
     checked rows.
     
