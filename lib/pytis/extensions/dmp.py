@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2009-2013 Brailcom, o.p.s.
+# Copyright (C) 2009-2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -86,6 +86,7 @@ import sys
 import pytis.data
 import pytis.extensions
 import pytis.form
+import pytis.presentation
 from pytis.util import Attribute, Counter, is_sequence, remove_duplicates, ResolverError, Structure
 
 class DMPMessage(Structure):
@@ -299,15 +300,8 @@ class DMPObject(object):
         return pytis.data.Value(pytis.data.String(), value)
 
     def _all_form_specification_names(self, messages):
-        import config
-        def strip_prefix(spec_name):
-            for prefix in config.search_modules:
-                prefix = prefix + '.'
-                if spec_name.startswith(prefix) and len(spec_name) > len(prefix):
-                    spec_name = spec_name[len(prefix):]
-            return spec_name
         specification_names = pytis.extensions.get_form_defs(self._resolver(), messages)
-        return [strip_prefix(name) for name in specification_names]
+        return [pytis.presentation.specification_path(name)[1] for name in specification_names]
 
     def _specification(self, name, messages):
         resolver = self._resolver()

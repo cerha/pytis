@@ -46,6 +46,31 @@ from pytis.util import argument_names, camel_case_to_lower, find, is_anystring, 
 import pytis.presentation
 
 
+def specification_path(specification_name):
+    """Return specification path and the relative specification name.
+
+    Given the fully qualified specification name, return pair (PATH, NAME)
+    where PATH is the search path (one of 'config.search_modules' members) of
+    the specification name and NAME is the specification name without the path.
+    If no path is identified then PATH is empty and NAME is
+    'specification_name'.
+    
+    Arguments:
+
+      specification_name -- name of the specification; basestring
+
+    """
+    import config
+    path = ''
+    for prefix in config.search_modules:
+        prefix = prefix + '.'
+        if specification_name.startswith(prefix) and len(specification_name) > len(prefix):
+            n = len(prefix)
+            specification_name = specification_name[n:]
+            path = specification_name[:n - 1]
+    return path, specification_name
+
+
 class TextFormat(object):
     """Constants for definition of text format.
 
@@ -4952,12 +4977,7 @@ class Specification(object):
         if self.__class__.__module__:
             spec_name = self.__class__.__module__ + '.' + spec_name
         spec_name = spec_name.replace('/', '.')
-        import config
-        for prefix in config.search_modules:
-            prefix = prefix + '.'
-            if spec_name.startswith(prefix) and len(spec_name) > len(prefix):
-                spec_name = spec_name[len(prefix):]
-        return spec_name
+        return pytis.presentation.specification_path(spec_name)[1]
 
     def _create_data_spec(self):
         db_spec = None
@@ -5160,8 +5180,8 @@ class Specification(object):
                 (db_spec_name, specification_list,))
             return None
         specification = specification_list[0]
-        module = string.join(string.split(specification.__module__, '.')[1:], '.')
-        return '%s.%s' % (module, specification.__name__,)
+        spec_name = specification.__module__ + '.' + specification.__name__
+        return pytis.presentation.specification_path(spec_name)[1]
 
     @classmethod
     def add_specification_by_db_spec_name(class_, db_spec_name, specification):

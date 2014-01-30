@@ -31,7 +31,7 @@ import os
 import config
 import pytis.util
 from pytis.presentation import Color, Editable, Field, FormType, PostProcess, Style, TextFilter, \
-    TextFormat, Computer, SelectionType
+    Computer, SelectionType, specification_path
 import pytis.extensions
 
 _ = pytis.util.translations('pytis-wx')
@@ -238,16 +238,8 @@ def run_any_form():
     )
     resolver = config.resolver
     all_defs = []
-    for d in get_form_defs(resolver):
-        found_prefix = None
-        for prefix in config.search_modules:
-            if d.startswith(prefix):
-                found_prefix = prefix
-                break
-        if found_prefix:
-            all_defs.append(d[len(found_prefix)+1:])
-        else:
-            all_defs.append(d)
+    for d in pytis.extensions.get_form_defs(resolver):
+        all_defs.append(specification_path(d)[1])
     all_defs.sort()
     def name_runtime_filter(row):
         name_substr = row['name_substr'].value()
@@ -266,7 +258,7 @@ def run_any_form():
                       enumerator=pytis.data.FixedEnumerator(all_defs),
                       selection_type=SelectionType.LIST_BOX,
                       runtime_filter=Computer(name_runtime_filter, depends=('name_substr',))
-                  ),
+                      ),
                 ))
     if row is not None:
         form_type = dict(form_types)[row['type'].value()]
@@ -354,7 +346,6 @@ def print2mail(resolver, spec, print_spec, row, to, from_, subject, msg, filenam
       Klíčové argumenty jsou dále předány PrintResolver pro použití v tiskové proceduře.
     """
     import tempfile
-    import os
     fd, fname = tempfile.mkstemp(suffix='.pdf')
     handle = os.fdopen(fd, 'wb')
     printdirect(resolver, spec, print_spec, row, output_file=handle, **kwargs)
@@ -451,6 +442,6 @@ def mime_type_constraint(*allowed_mime_types):
         if mime_type in allowed_mime_types:
             return None
         else:
-            return _("Detected data type %(detected)s. Expected %(expected)s.", 
+            return _("Detected data type %(detected)s. Expected %(expected)s.",
                      detected=mime_type, expected=', '.join(allowed_mime_types))
     return constraint
