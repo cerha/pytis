@@ -34,10 +34,16 @@ http://www.freebsoft.org/lcg.
 """
 
 import collections
+import lcg
+import copy
 
-from pytis.web import *
-from pytis.presentation import ActionContext
+import pytis.data as pd
+
+from pytis.presentation import ActionContext, ViewSpec, GroupSpec, Orientation, Text, Button, \
+    Profiles, FilterSet, Filter
 import pytis.util
+
+from pytis.web import Field, UriType, Link, localizable_export
 
 _ = pytis.util.translations('pytis-web')
 
@@ -205,7 +211,7 @@ class Form(lcg.Content):
         g = context.generator()
         cls = 'pytis-form ' + self._CSS_CLS
         if self._name:
-            cls += ' ' + camel_case_to_lower(self._name, '-')
+            cls += ' ' + pytis.util.camel_case_to_lower(self._name, '-')
         self._form_id = form_id = context.unique_id()
         javascript = self._export_javascript(context, form_id)
         if javascript:
@@ -413,7 +419,7 @@ class LayoutForm(FieldForm):
             elif isinstance(item, Button):
                 pass
             else:
-                raise ProgramError("Unsupported layout item type:", item)
+                raise pytis.util.ProgramError("Unsupported layout item type:", item)
         if group.orientation() == Orientation.HORIZONTAL:
             def td(i, label, content_):
                 spaced = (i != 0 and ' spaced' or '')
@@ -471,7 +477,7 @@ class LayoutForm(FieldForm):
                 # This fieldset fixes MSIE display of top-level horizontal groups...
                 result = g.fieldset(None, result, cls='outer')
             else:
-                result = concat(result, separator="\n")
+                result = lcg.concat(result, separator="\n")
             return result
         else:
             return ''
@@ -1095,7 +1101,7 @@ class BrowseForm(LayoutForm):
             self._init_filter_sets((filter_set,), req, param)
             profile_id = self._filter_ids['profile']
             if profile_id is not None:
-                profile = find(profile_id, profiles, key=lambda p: p.id())
+                profile = pytis.util.find(profile_id, profiles, key=lambda p: p.id())
                 if profile:
                     if profile.columns() is not None:
                         columns = profile.columns()
@@ -1273,7 +1279,7 @@ class BrowseForm(LayoutForm):
         for i, filter_set in enumerate(filter_sets):
             filter_set_id = filter_set.id()
             # Determine the current set of user selectable filters.
-            null_filter = find(None, filter_set, key=lambda f: f.condition())
+            null_filter = pytis.util.find(None, filter_set, key=lambda f: f.condition())
             if not null_filter:
                 # Translators: Label used in filter selection box for the
                 # option which disables filtering and thus results in all
@@ -1296,7 +1302,7 @@ class BrowseForm(LayoutForm):
                 else:
                     filter_id = null_filter.id()
             if filter_id:
-                matching_filter = find(filter_id, filter_set, key=lambda f: f.id())
+                matching_filter = pytis.util.find(filter_id, filter_set, key=lambda f: f.id())
                 # Append the current user selected filter to the filter passed
                 # as 'filter' argument.
                 if matching_filter:
@@ -1438,7 +1444,7 @@ class BrowseForm(LayoutForm):
         g = context.generator()
         current_sorting_column, current_dir = self._sorting[0]
         def sorting_indicator(field):
-            sorting = find(field.id, self._sorting, key=lambda x: x[0])
+            sorting = pytis.util.find(field.id, self._sorting, key=lambda x: x[0])
             if sorting:
                 return g.span('', cls='sort-indicator sort-direction-%s sort-position-%d' %
                               (self._SORTING_DIRECTIONS[sorting[1]],
@@ -1685,7 +1691,7 @@ class BrowseForm(LayoutForm):
                          # Translators: Index search controls link tooltip.
                          title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
-            result.append(g.div(label + ' ' + concat(links, separator=' ')))
+            result.append(g.div(label + ' ' + lcg.concat(links, separator=' ')))
         return (g.div(result, cls='index-search-controls'),)
 
     def _export_message(self, context, count):
@@ -1832,7 +1838,7 @@ class BrowseForm(LayoutForm):
     def export(self, context):
         if self._async_load and self._req.param('_pytis_async_load_request'):
             form_id = context.unique_id()
-            return concat(self._export_table(context, form_id))
+            return lcg.concat(self._export_table(context, form_id))
         else:
             return super(BrowseForm, self).export(context)
         
@@ -1913,7 +1919,7 @@ class ListView(BrowseForm):
             self._image = list_layout.image() and self._field(list_layout.image())
             anchor = list_layout.anchor()
             if not anchor and list_layout.allow_index():
-                anchor = camel_case_to_lower(self._name, '-') + '-%s'
+                anchor = pytis.util.camel_case_to_lower(self._name, '-') + '-%s'
             if anchor:
                 anchor = anchor.replace('%s', '%%(%s)s' % self._key)
             self._anchor = anchor
@@ -1951,7 +1957,7 @@ class ListView(BrowseForm):
                     self._export_field(context, field)
                     for field, labeled in self._meta if row.visible(field.id)]
             if meta:
-                parts.append(g.div(concat(meta, separator=', '), cls='meta'))
+                parts.append(g.div(lcg.concat(meta, separator=', '), cls='meta'))
         if layout.layout():
             parts.append(self._export_group(context, layout.layout()))
         for item in layout.content():
@@ -2006,7 +2012,7 @@ class ListView(BrowseForm):
                             for i in range(n + min(mod, 1))], border=0, cls='grid')
         result += (g.div(rows, cls="body"),
                    g.div(summary, cls="summary"))
-        return concat(result)
+        return lcg.concat(result)
 
 
 class ItemizedView(BrowseForm):
@@ -2053,10 +2059,10 @@ class ItemizedView(BrowseForm):
         if template:
             content = self._interpolate(context, template, row)
         else:
-            content = concat([self._export_field(context, field)
-                              for field in self._column_fields
-                              if row.visible(field.id) and row[field.id].value() is not None],
-                             separator=self._separator)
+            content = lcg.concat([self._export_field(context, field)
+                                  for field in self._column_fields
+                                  if row.visible(field.id) and row[field.id].value() is not None],
+                                 separator=self._separator)
         return g.li(content, id=row_id)
         
     def _export_group_heading(self, context):
@@ -2065,7 +2071,7 @@ class ItemizedView(BrowseForm):
     
     def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
         g = context.generator()
-        return g.ul(concat(rows))
+        return g.ul(lcg.concat(rows))
 
 
 class CheckRowsForm(BrowseForm, _SubmittableForm):

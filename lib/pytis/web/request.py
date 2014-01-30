@@ -1,4 +1,4 @@
-# Copyright (C) 2007, 2011 Brailcom, o.p.s.
+# Copyright (C) 2007, 2011, 2014 Brailcom, o.p.s.
 # Author: Tomas Cerha <cerha@brailcom.org>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-from pytis.util import *
+from pytis.util import ProgramError
 
 """Abstract specification of APIs used by pytis web components to access the HTTP request data."""
 
@@ -62,8 +62,7 @@ class Request(object):
 
         """
         raise ProgramError("Pytis Request interface not implemented by derived class!")
-        
-        
+                
     def cookie(self, name, default=None):
         """Return the value of given cookie as a unicode string.
 

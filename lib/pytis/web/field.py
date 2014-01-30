@@ -18,8 +18,11 @@
 
 import collections
 import re
+import lcg
+import pytis.data as pd
+import pytis.util
 
-from pytis.web import *
+from pytis.presentation import SelectionType, TextFormat, Orientation
 
 _ = lcg.TranslatableTextFactory('pytis')
 
@@ -125,28 +128,23 @@ def localizable_export(value):
     """
     if value.value() is not None:
         type_cls = value.type().__class__
-        if type_cls is pytis.data.DateTime:
+        if type_cls is pd.DateTime:
             return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d %H:%M:%S'),
                                            utc=value.type().utc())
-        elif type_cls is pytis.data.Date:
+        elif type_cls is pd.Date:
             return lcg.LocalizableDateTime(value.value().strftime('%Y-%m-%d'))
-        elif type_cls is pytis.data.Time:
+        elif type_cls is pd.Time:
             return lcg.LocalizableTime(value.value().strftime('%H:%M:%S'))
-        elif type_cls is pytis.data.Monetary:
+        elif type_cls is pd.Monetary:
             return lcg.Monetary(value.value(), precision=value.type().precision())
-        elif type_cls is pytis.data.Float:
+        elif type_cls is pd.Float:
             return lcg.Decimal(value.value(), precision=value.type().precision())
-        elif type_cls is pytis.data.Integer:
+        elif type_cls is pd.Integer:
             return lcg.Decimal(value.value())
         else:
             return value.export()
-        # BUG: There is no `localizable' defined here!
-        return localizable
     else:
         return ''
-
-# For backwards compatibility.
-localizable_datetime = localizable_export
 
     
 class Field(object):
@@ -186,17 +184,17 @@ class Field(object):
         
         """
         data_type = row.type(spec.id())
-        if isinstance(data_type, pytis.data.Password):
+        if isinstance(data_type, pd.Password):
             cls = PasswordField
-        elif isinstance(data_type, pytis.data.Color):
+        elif isinstance(data_type, pd.Color):
             cls = ColorField
-        elif isinstance(data_type, pytis.data.Binary):
+        elif isinstance(data_type, pd.Binary):
             cls = FileUploadField
-        elif isinstance(data_type, pytis.data.Date):
+        elif isinstance(data_type, pd.Date):
             cls = DateField
-        elif isinstance(data_type, pytis.data.DateTime):
+        elif isinstance(data_type, pd.DateTime):
             cls = DateTimeField
-        elif isinstance(data_type, pytis.data.Array):
+        elif isinstance(data_type, pd.Array):
             inner_type = data_type.inner_type()
             if inner_type.enumerator():
                 cls = ChecklistField
@@ -206,7 +204,7 @@ class Field(object):
             selection_type = spec.selection_type()
             if selection_type == SelectionType.RADIO:
                 cls = RadioField
-            elif selection_type is None and isinstance(data_type, pytis.data.Boolean):
+            elif selection_type is None and isinstance(data_type, pd.Boolean):
                 cls = CheckboxField
             elif selection_type in (SelectionType.CHOICE, None):
                 cls = ChoiceField
@@ -220,9 +218,9 @@ class Field(object):
             cls = HtmlField
         elif spec.height() > 1:
             cls = MultilineField
-        elif isinstance(data_type, pytis.data.String):
+        elif isinstance(data_type, pd.String):
             cls = StringField
-        elif isinstance(data_type, pytis.data.Number):
+        elif isinstance(data_type, pd.Number):
             cls = NumericField
         else:
             cls = TextField
@@ -230,9 +228,10 @@ class Field(object):
 
     def __init__(self, row, spec, form, uri_provider, multirow=False):
         """Don't use directly - use 'Field.create()'."""
+        from form import ShowForm
         fid = spec.id()
         t = row.type(fid)
-        self._html_id = "f%x" % positive_id(self)
+        self._html_id = "f%x" % pytis.util.positive_id(self)
         self._row = row
         self._showform = isinstance(form, ShowForm)
         self._uri_provider = uri_provider
@@ -240,8 +239,8 @@ class Field(object):
         self._format_cache_context = None
         self._multirow = multirow
         self._key = row.data().key()[0].id()
-        self._not_null = t.not_null() and not isinstance(t, pytis.data.Boolean) and \
-            (row.new() or not isinstance(t, (pytis.data.Password, pytis.data.Binary)))
+        self._not_null = t.not_null() and not isinstance(t, pd.Boolean) and \
+            (row.new() or not isinstance(t, (pd.Password, pd.Binary)))
         # All public attributes must be treated as read-only!
         self.id = fid
         self.type = t
@@ -796,12 +795,12 @@ class FileUploadField(Field):
             else:
                 if self.type.minlen() is not None and size < self.type.minlen():
                     error = _(u"Minimal size %(minlen)s not satisfied",
-                              minlen=format_byte_size(self.type.minlen()))
-                    return pytis.data.ValidationError(error)
+                              minlen=pytis.util.format_byte_size(self.type.minlen()))
+                    return pd.ValidationError(error)
                 if self.type.maxlen() is not None and size > self.type.maxlen():
                     error = _(u"Maximal size %(maxlen)s exceeded",
-                              maxlen=format_byte_size(self.type.maxlen()))
-                    return pytis.data.ValidationError(error)
+                              maxlen=pytis.util.format_byte_size(self.type.maxlen()))
+                    return pd.ValidationError(error)
                 return None
             if not self._row.new():
                 # The original file is kept if no file is uploaded to replace it,
@@ -829,7 +828,7 @@ class FileUploadField(Field):
     def _display(self, context):
         buf = self._value().value()
         if buf:
-            return format_byte_size(len(buf))
+            return pytis.util.format_byte_size(len(buf))
         else:
             return None
 
@@ -871,7 +870,7 @@ class EnumerationField(Field):
     def _enumeration(self, context):
         g = context.generator()
         type = self.type
-        if isinstance(type, pytis.data.Array):
+        if isinstance(type, pd.Array):
             type = type.inner_type()
         return [(val, type.export(val),
                  g.escape(display).replace(' ', '&nbsp;').replace("\n", "<br/>"))
@@ -988,6 +987,6 @@ class FileField(TextField):
     def _display(self, context):
         value = self._value().value()
         if value:
-            return format_byte_size(len(value))
+            return pytis.util.format_byte_size(len(value))
         else:
             return None

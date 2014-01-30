@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2007, 2008, 2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2007, 2008, 2011, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ This module implements web-based dialogs.
 
 """
 
-from pytis.web import *
+import lcg
 
 _ = lcg.TranslatableTextFactory('pytis')
 
@@ -47,8 +47,7 @@ class Dialog(lcg.Content):
         if self._action:
             hidden += [('action', self._action)]
         # Translators: Default edit form submit button label.
-        content += tuple([g.hidden(k, v) for k, v in hidden]) + \
-                   (g.submit(_(u"Submit")),)
+        content += tuple([g.hidden(k, v) for k, v in hidden]) + (g.submit(_(u"Submit")),)
         return g.form(content, action=self._handler, cls="dialog", method="POST") + "\n"
 
 
@@ -69,5 +68,5 @@ class SelectionDialog(Dialog):
         g = exporter.generator()
         label = g.label(self._label, self._id)
         ctrl = g.select(self._id, [(uv, str(v)) for v, uv in self._values],
-                            id=self._id, selected=self._selected)
+                        id=self._id, selected=self._selected)
         return (label, ": ", ctrl)
