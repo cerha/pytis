@@ -944,11 +944,10 @@ class BrowseForm(LayoutForm):
             form profile (see 'profiles').
           message -- function returning a custom search result message.  If
             none, a default message will be used, such as 'Found 5 records
-            matching the search expression.'.  A function of one argument
-            (integer determining the number of records in the form) may be used
-            to return a custom message as a string (possibly an
-            'lcg.Localizable' instance).  An example of a custom message might
-            be 'Found 15 articles in category Python'.
+            matching the search expression.'.  A function of one argument (the
+            form instance) may be used to return a custom message as a string
+            (possibly an 'lcg.Localizable' instance).  An example of a custom
+            message might be 'Found 15 articles in category Python'.
           limit -- maximal number of rows per page.  If the current condition
             produces more rows, the listing will be split into pages and the
             form will include controls for navigation between these pages.
@@ -1238,6 +1237,7 @@ class BrowseForm(LayoutForm):
         self._async_load = async_load
         self._select_columns = [c.id() for c in self._row.data().columns()
                                 if not isinstance(c.type(), pytis.data.Big)]
+        self._row_count = None
 
     def _init_query_fields(self, req, query_fields_spec):
         query_fields = []
@@ -1469,9 +1469,9 @@ class BrowseForm(LayoutForm):
         else:
             return pytis.data.AND(*conditions)
     
-    def _message(self, count):
+    def _message(self):
         if self._custom_message:
-            msg = self._custom_message(count)
+            msg = self._custom_message(self)
         elif self._text_search_string:
             # Translators: This string uses plural forms.  '%d' is replaced by
             # the number and this number also denotes the plural form used.
@@ -1479,7 +1479,7 @@ class BrowseForm(LayoutForm):
             # target language.
             msg = _.ngettext("Found %d record matching the search expression.",
                              "Found %d records matching the search expression.",
-                             count)
+                             self._row_count)
         else:
             msg = None
         return msg
@@ -1525,6 +1525,7 @@ class BrowseForm(LayoutForm):
                             condition=self._conditions(),
                             arguments=self._arguments,
                             sort=self._sorting)
+        self._row_count = count
         found = False
         offset = self._offset
         if self._search:
@@ -1575,7 +1576,7 @@ class BrowseForm(LayoutForm):
                 break
         data.close()
         if n == 0:
-            if self._message(0):
+            if self._message():
                 # The message about search/filter results is printed in _export_message().
                 result = None
             else:
@@ -1595,7 +1596,7 @@ class BrowseForm(LayoutForm):
                             total=g.strong(str(count)))
             result = self._wrap_exported_rows(context, exported_rows, summary, count, page, pages)
         return [x for x in
-                (self._export_message(context, count),
+                (self._export_message(context),
                  self._export_controls(context, form_id, count, page, pages),
                  result,
                  self._export_controls(context, form_id, count, page, pages, bottom=True))
@@ -1697,8 +1698,8 @@ class BrowseForm(LayoutForm):
             result.append(g.div(label + ' ' + lcg.concat(links, separator=' ')))
         return (g.div(result, cls='index-search-controls'),)
 
-    def _export_message(self, context, count):
-        msg = self._message(count)
+    def _export_message(self, context):
+        msg = self._message()
         if msg:
             return context.generator().div(msg, cls='results')
         else:
@@ -1877,6 +1878,14 @@ class BrowseForm(LayoutForm):
         """
         row = self._query_fields_row
         return [(key, row[key]) for key in row.keys()]
+
+    def row_count(self):
+        """Return the number of rows in the form as integer.
+        
+        This method will return None before the form is exported.
+
+        """
+        return self._row_count
 
 
 class ListView(BrowseForm):
