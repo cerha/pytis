@@ -729,7 +729,7 @@ class DateTimeField(TextField):
         return result
 
     def _validate(self, value, req, locale_data, **kwargs):
-        return super(DateTimeField, self)._validate(value, req, locale_data, 
+        return super(DateTimeField, self)._validate(value, req, locale_data,
                                                     format=self._datetime_format(locale_data),
                                                     **kwargs)
 
@@ -804,7 +804,7 @@ class FileUploadField(Field):
                     return pytis.data.ValidationError(error)
                 return None
             if not self._row.new():
-                # The original file is kept if no file is uploaded to replace it, 
+                # The original file is kept if no file is uploaded to replace it,
                 # so empty field is ok.
                 return None
         return super(FileUploadField, self)._validate(value, req, locale_data, **kwargs)
