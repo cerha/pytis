@@ -49,6 +49,16 @@ class Request(object):
 
     """
     
+    def uri(self):
+        """Return request URI path relative to server's root.
+
+        The returned URI is a unicode value, which normally starts with a slash
+        and continues with an arbitrary numper of path elements separated by
+        slashes.  Transfer encoding and HTTP escapes are decoded.
+
+        """
+        raise ProgramError("Pytis Request interface not implemented by derived class!")
+
     def has_param(self, name):
         """Return true if the parameter 'name' was sent with the request."""
         raise ProgramError("Pytis Request interface not implemented by derived class!")
@@ -81,5 +91,6 @@ class Request(object):
         """
         raise ProgramError("Pytis Request interface not implemented by derived class!")
 
-    #def header(self, name):
-    #def set_header(self, name, value):
+    def localizer(self):
+        """Return an 'lcg.Localizer()' instance for the current request locales."""
+        raise ProgramError("Pytis Request interface not implemented by derived class!")
