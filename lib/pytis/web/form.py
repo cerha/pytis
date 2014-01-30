@@ -1887,6 +1887,9 @@ class BrowseForm(LayoutForm):
         """
         return self._row_count
 
+    def text_search_string(self):
+        """Return the current text of the search field or None if text search is not active."""
+        return self._text_search_string
 
 class ListView(BrowseForm):
     """Listing with a customizable layout for each record.
