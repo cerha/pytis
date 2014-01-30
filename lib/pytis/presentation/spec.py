@@ -4913,6 +4913,7 @@ class Specification(object):
     def _init_from_db_fields(self, table, fields):
         xfields = []
         xfields_map = {}
+        self_spec_name = self._spec_name()
         i = 0
         for c in table.specification_fields():
             descr = None
@@ -4935,6 +4936,10 @@ class Specification(object):
                     pass
                 db_spec_name = ref.specification_name()
                 codebook = self._codebook_by_db_spec_name(db_spec_name)
+                if codebook == self_spec_name:
+                    # We ignore self references here to avoid infinite
+                    # recursion in the resolver.
+                    codebook = None
             default = c.default()
             if default is None and isinstance(type_, pytis.data.Serial):
                 if isinstance(table, pytis.data.gensqlalchemy.SQLTable):
@@ -5168,6 +5173,11 @@ class Specification(object):
         return access_rights
 
     @classmethod
+    def _spec_name(class_):
+        full_name = class_.__module__ + '.' + class_.__name__
+        return pytis.presentation.specification_path(full_name)[1]
+        
+    @classmethod
     def _codebook_by_db_spec_name(class_, db_spec_name):
         specification_list = class_._specifications_by_db_spec_name.get(db_spec_name)
         if specification_list is None:
@@ -5180,8 +5190,7 @@ class Specification(object):
                 (db_spec_name, specification_list,))
             return None
         specification = specification_list[0]
-        spec_name = specification.__module__ + '.' + specification.__name__
-        return pytis.presentation.specification_path(spec_name)[1]
+        return specification._spec_name()
 
     @classmethod
     def add_specification_by_db_spec_name(class_, db_spec_name, specification):
