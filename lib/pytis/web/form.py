@@ -34,7 +34,6 @@ http://www.freebsoft.org/lcg.
 """
 
 import collections
-import string
 
 from pytis.web import *
 from pytis.presentation import ActionContext
@@ -148,7 +147,7 @@ class Form(lcg.Content):
                      ] + action.kwargs().items()] +
                    [g.button(g.span(action.title()), title=action.descr(),
                              disabled=not enabled,
-                             cls='action-'+action.id() + (not enabled and ' disabled' or ''))],
+                             cls='action-' + action.id() + (not enabled and ' disabled' or ''))],
                    action=uri)
             for action, enabled in self._visible_actions(context, record)]
         if buttons:
@@ -196,8 +195,6 @@ class Form(lcg.Content):
         exporting the form will raise an AttributeError exception.
 
         """
-
-        
         return self._form_id
 
     def row(self):
@@ -246,7 +243,8 @@ class FieldForm(Form):
         self._fields = dict([(f.id(), self._field(f.id())) for f in self._view.fields()])
         
     def _field(self, id, multirow=False):
-        return Field.create(self._row, self._view.field(id), self, self._uri_provider, multirow=multirow)
+        return Field.create(self._row, self._view.field(id), self, self._uri_provider,
+                            multirow=multirow)
         
     def _export_field(self, context, field, editable=False):
         if editable:
@@ -269,7 +267,7 @@ class FieldForm(Form):
                 wrap = context.generator().div
             else:
                 wrap = context.generator().span
-            result = wrap(formatted, cls='field id-'+field.id)
+            result = wrap(formatted, cls='field id-' + field.id)
         return result
 
     def _interpolate(self, context, template, row):
@@ -420,10 +418,10 @@ class LayoutForm(FieldForm):
             def td(i, label, content_):
                 spaced = (i != 0 and ' spaced' or '')
                 if label:
-                    return (g.th(label, valign='top', cls='label'+spaced) +
+                    return (g.th(label, valign='top', cls='label' + spaced) +
                             g.td(content_, valign='top', cls='ctrl'))
                 else:
-                    return g.td(content_, valign='top', cls='ctrl'+spaced)
+                    return g.td(content_, valign='top', cls='ctrl' + spaced)
             cells = [td(i, label, content_)
                      for i, (label, content_, fullsize, right_aligned)
                      in enumerate(content.content())]
@@ -440,10 +438,10 @@ class LayoutForm(FieldForm):
                 else:
                     if content.allow_right_aligned_fields() and right_aligned:
                         spacer = g.td('', width='100%', cls='spacer')
-                        kwargs =  dict(align='right')
+                        kwargs = dict(align='right')
                     else:
                         spacer = ''
-                        kwargs =  dict(width='100%', colspan=normalspan)
+                        kwargs = dict(width='100%', colspan=normalspan)
                     return (g.th(label or '', valign='top', cls='label', align='right') +
                             g.td(content_, cls='ctrl', valign='top', **kwargs) + spacer)
             if content.has_labeled_items():
@@ -464,7 +462,7 @@ class LayoutForm(FieldForm):
         if result:
             cls = 'group' + (id and ' ' + id or '')
             if group.label():
-                result = g.fieldset(group.label()+':', result, cls=cls)
+                result = g.fieldset(group.label() + ':', result, cls=cls)
             elif content.needs_panel():
                 # If there are any items which need a panel and there is no
                 # fieldset panel, add a panel styled div.
@@ -481,7 +479,7 @@ class LayoutForm(FieldForm):
     def _export_field_label(self, context, field):
         if field.label:
             g = context.generator()
-            cls = 'field-label id-'+field.id
+            cls = 'field-label id-' + field.id
             html_id = None
             sign = ''
             if self._EDITABLE:
@@ -490,7 +488,7 @@ class LayoutForm(FieldForm):
                     sign = g.sup("*", cls="not-null")
                 if not self._row.editable(field.id):
                     cls += ' disabled'
-            return g.span(g.label(field.label, html_id) + sign +':', cls=cls)
+            return g.span(g.label(field.label, html_id) + sign + ':', cls=cls)
         else:
             return None
     
@@ -534,7 +532,6 @@ class _SubmittableForm(Form):
         self._last_validation_errors = []
         super(_SubmittableForm, self).__init__(view, req, row, **kwargs)
     
-
     def _export_form(self, context, form_id):
         g = context.generator()
         return [g.form((super(_SubmittableForm, self)._export_form(context, form_id) +
@@ -628,8 +625,7 @@ class ShowForm(_SingleRecordForm):
         return (super(ShowForm, self)._export_form(context, form_id) +
                 self._export_actions(context, self._row, self._req.uri()))
 
-    
-    
+
 class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     _EDITABLE = True
@@ -650,8 +646,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         super(EditForm, self).__init__(view, req, row, **kwargs)
         key = self._key
         order = tuple(self._layout.order())
-        if not self._row.new() and key not in order + tuple([k for k,v in self._hidden]):
-            self._hidden += [(key,  self._row[key].export())]
+        if not self._row.new() and key not in order + tuple([k for k, v in self._hidden]):
+            self._hidden += [(key, self._row[key].export())]
         assert multipart in (None, True, False), multipart
         if multipart is None:
             multipart = any([f for f in order if isinstance(self._row.type(f), pytis.data.Binary)])
@@ -707,21 +703,20 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                                             self._row.runtime_arguments(fid))
                 js_fields.append(field.javascript(context, form_id, active))
         return g.js_call('new pytis.FormHandler', form_id, js_fields, state)
-        
-    
+
     def _export_footer(self, context):
         for f in self._fields.values():
             if f.label and f.not_null() and f.id in self._layout.order():
                 g = context.generator()
-                return [g.div(g.span("*", cls="not-null") +") "+\
-                                  _(u"Fields marked by an asterisk are mandatory."),
+                return [g.div(g.span("*", cls="not-null") + ") " +
+                              _(u"Fields marked by an asterisk are mandatory."),
                               cls='footer')]
         return []
 
     def _attachment_storage_request(self, req):
         method_name = req.param('_pytis_attachment_storage_request')
         try:
-            method = getattr(self, '_attachment_storage_'+method_name)
+            method = getattr(self, '_attachment_storage_' + method_name)
         except AttributeError:
             raise BadRequest()
         storage = self._row.attachment_storage(req.param('_pytis_attachment_storage_field'))
@@ -824,7 +819,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 field = self._fields[fid]
                 fdata = fields[fid]
                 fdata['editable'] = row.editable(fid)
-                if ((field.spec.computer() and row.invalid_string(fid) is None 
+                if ((field.spec.computer() and row.invalid_string(fid) is None
                      and not isinstance(field.type, pd.Binary))):
                     localized_value = localize(localizable_export(row[fid]))
                     # Values of disabled fields are not in the request, so send them always...
@@ -909,7 +904,7 @@ class BrowseForm(LayoutForm):
     def __init__(self, view, req, row, uri_provider=None, condition=None, arguments=None,
                  columns=None, sorting=None, grouping=None,
                  limits=(25, 50, 100, 200, 500), limit=50, offset=0,
-                 search=None, query=None, allow_query_search=None, filter=None, message=None, 
+                 search=None, query=None, allow_query_search=None, filter=None, message=None,
                  filter_sets=None, profiles=None, query_fields=None,
                  condition_provider=None, argument_provider=None, immediate_filters=True,
                  top_actions=False, bottom_actions=True, row_actions=False, async_load=False,
@@ -1180,7 +1175,7 @@ class BrowseForm(LayoutForm):
             show_query_field = bool(query or param('show_query_field', bool) or allow_query_search)
             allow_query_field = True
         if query:
-            query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*'+word+'*'))
+            query_condition = pd.AND(*[pd.OR(*[pd.WM(f.id, pd.WMValue(f.type, '*' + word + '*'))
                                                for f in self._fields.values()
                                                if isinstance(f.type, pd.String) and not f.virtual])
                                        for word in query.split()])
@@ -1291,11 +1286,11 @@ class BrowseForm(LayoutForm):
             filter_id = param('filter_%s' % (filter_set_id,), str)
             if filter_id is not None:
                 req.set_cookie('pytis-form-last-filter-%s' % (filter_set_id,),
-                               self._name +':'+ filter_id)
+                               self._name + ':' + filter_id)
             else:
                 cookie = req.cookie('pytis-form-last-filter-%s' % (filter_set_id,))
-                if cookie and cookie.startswith(self._name +':'):
-                    filter_id = cookie[len(self._name)+1:]
+                if cookie and cookie.startswith(self._name + ':'):
+                    filter_id = cookie[len(self._name) + 1:]
                 elif filter_set.default():
                     filter_id = filter_set.default()
                 else:
@@ -1323,7 +1318,6 @@ class BrowseForm(LayoutForm):
                 return len(order.strip('.').split('.')) - 1
         return None
 
-
     def _export_popup_ctrl(self, context, row, selector):
         items = [lcg.PopupMenuItem(action.title(),
                                    tooltip=action.descr(),
@@ -1343,8 +1337,8 @@ class BrowseForm(LayoutForm):
             g = context.generator()
             tree_level = self._tree_level()
             if tree_level is not None and tree_level > 0:
-                indent = tree_level * g.span(2*'&nbsp;', cls='tree-indent')
-                value = indent + '&bull;&nbsp;'+ g.span(value, cls='tree-node')
+                indent = tree_level * g.span(2 * '&nbsp;', cls='tree-indent')
+                value = indent + '&bull;&nbsp;' + g.span(value, cls='tree-node')
             # &#8227 does not work in MSIE
             if self._row_actions:
                 value += self._export_popup_ctrl(context, row, 'tr')
@@ -1358,14 +1352,14 @@ class BrowseForm(LayoutForm):
                 return c + ' !important'
             else:
                 return None
-        styles = [name +': '+ f(attr()) for attr, name, f in (
-            (style.foreground, 'color',            color),
+        styles = [name + ': ' + f(attr()) for attr, name, f in (
+            (style.foreground, 'color', color),
             (style.background, 'background-color', color),
-            (style.slanted,    'font-style',       lambda x: x and 'italic' or 'normal'),
-            (style.bold,       'font-weight',      lambda x: x and 'bold' or 'normal'),
-            (style.overstrike, 'text-decoration',  lambda x: x and 'line-through' or 'none'),
-            (style.underline,  'text-decoration',  lambda x: x and 'underline' or 'none'),
-            ) if attr() is not None]
+            (style.slanted, 'font-style', lambda x: x and 'italic' or 'normal'),
+            (style.bold, 'font-weight', lambda x: x and 'bold' or 'normal'),
+            (style.overstrike, 'text-decoration', lambda x: x and 'line-through' or 'none'),
+            (style.underline, 'text-decoration', lambda x: x and 'underline' or 'none'),
+        ) if attr() is not None]
         return '; '.join(styles)
     
     def _field_style(self, field, row):
@@ -1422,11 +1416,11 @@ class BrowseForm(LayoutForm):
                          pytis.data.Data.AGG_AVG: ('agg-avg', _(u"Average")),
                          pytis.data.Data.AGG_MIN: ('agg-min', _(u"Minimum")),
                          pytis.data.Data.AGG_MAX: ('agg-max', _(u"Maximum"))}[op]
-        cells = [i==0 and \
-                 g.th(label+':', scope='row') or \
-                 g.td(export_aggregation_value(data, op, field), cls='id-'+field.id)
+        cells = [i == 0 and
+                 g.th(label + ':', scope='row') or
+                 g.td(export_aggregation_value(data, op, field), cls='id-' + field.id)
                  for i, field in enumerate(self._column_fields)]
-        return g.tr(cells, cls='aggregation-results '+agg_id)
+        return g.tr(cells, cls='aggregation-results ' + agg_id)
     
     def _export_group_heading(self, context):
         group_heading = self._view.group_heading()
@@ -1454,7 +1448,7 @@ class BrowseForm(LayoutForm):
         return [g.th(f.column_label + sorting_indicator(f),
                      cls='column-heading column-id-%s' % f.id
                      + (not f.virtual and ' sortable-column' or ''))
-                 for f in self._column_fields]
+                for f in self._column_fields]
 
     def _conditions(self, condition=None):
         conditions = [c for c in (self._condition, self._filter, self._query_condition, condition)
@@ -1530,8 +1524,8 @@ class BrowseForm(LayoutForm):
                 found = True
                 offset = dist - 1
         if limit is not None:
-            page = int(max(0, min(offset, count-1)) / limit)
-            first_record_offset = page*limit
+            page = int(max(0, min(offset, count - 1)) / limit)
+            first_record_offset = page * limit
         else:
             page = 0
             first_record_offset = 0
@@ -1560,14 +1554,14 @@ class BrowseForm(LayoutForm):
                     group_heading = self._export_group_heading(context)
                     if group_heading is not None:
                         exported_rows.append(group_heading)
-            if found and (limit is None and offset == n or \
+            if found and (limit is None and offset == n or
                           limit is not None and offset == (n + page * limit)):
                 row_id = 'found-record'
             else:
                 row_id = None
             exported_rows.append(self._export_row(context, self._row, n, row_id))
             self._last_group = self._group
-            n += 1 
+            n += 1
             if limit is not None and n >= limit:
                 break
         data.close()
@@ -1581,14 +1575,14 @@ class BrowseForm(LayoutForm):
                 result = g.strong(_(u"No records."))
         else:
             if limit is None or count <= self._limits[0]:
-                summary = _(u"Total records:") +' '+ g.strong(str(count))
+                summary = _(u"Total records:") + ' ' + g.strong(str(count))
             else:
                 # Translators: The variables '%(first)s', '%(last)s' and
                 # '%(total)s' are replaced by the numbers corresponding to the
                 # current listing range.
                 summary = _(u"Displayed records %(first)s-%(last)s of total %(total)s",
-                            first=g.strong(str(first_record_offset+1)),
-                            last=g.strong(str(first_record_offset+n)),
+                            first=g.strong(str(first_record_offset + 1)),
+                            last=g.strong(str(first_record_offset + n)),
                             total=g.strong(str(count)))
             result = self._wrap_exported_rows(context, exported_rows, summary, count, page, pages)
         return [x for x in
@@ -1624,7 +1618,7 @@ class BrowseForm(LayoutForm):
         return generator.uri(self._handler, *args, **kwargs)
 
     def _index_search_condition(self, search_string):
-        value = pd.Value(pd.String(), search_string+"*")
+        value = pd.Value(pd.String(), search_string + "*")
         return pytis.data.WM(self._sorting[0][0], value, ignore_case=False)
     
     def _export_index_search_controls(self, context):
@@ -1634,14 +1628,14 @@ class BrowseForm(LayoutForm):
             return ()
         result = []
         data = self._row.data()
-        for level in range(len(self._index_search_string)+1):
+        for level in range(len(self._index_search_string) + 1):
             if level:
                 search_string = self._index_search_string[:level]
                 condition = self._index_search_condition(search_string)
             else:
                 search_string = None
                 condition = None
-            values = [v.value() for v in data.distinct(field.id, prefix=level+1,
+            values = [v.value() for v in data.distinct(field.id, prefix=level + 1,
                                                        condition=self._conditions(condition))
                       if v.value() is not None]
             if context.lang() == 'cs':
@@ -1652,7 +1646,7 @@ class BrowseForm(LayoutForm):
                     ch = 'ch'
                 else:
                     ch = 'CH'
-                search_ch_string = (search_string or '')+ch
+                search_ch_string = (search_string or '') + ch
                 condition = self._index_search_condition(search_ch_string)
                 try:
                     count = data.select(columns=(self._key,),
@@ -1660,10 +1654,10 @@ class BrowseForm(LayoutForm):
                 finally:
                     data.close()
                 if count:
-                    i = 0;
-                    while i < len(values) \
-                              and (values[i][-1].lower() in (u'á',u'č',u'ď',u'é',u'ě') \
-                                   or values[i][-1].lower() < u'i'):
+                    i = 0
+                    while (i < len(values)
+                           and (values[i][-1].lower() in (u'á', u'č', u'ď', u'é', u'ě')
+                                or values[i][-1].lower() < u'i')):
                         i += 1
                     values.insert(i, search_ch_string)
             if len(values) < 3 or len(values) > 100:
@@ -1687,11 +1681,11 @@ class BrowseForm(LayoutForm):
                 label = _('%(label)s on "%(prefix)s":', label=field.label, prefix=search_string)
             else:
                 label = field.label + ":"
-            links = [g.a(v, href=self._link_ctrl_uri(g, index_search=v)+'#found-record',
+            links = [g.a(v, href=self._link_ctrl_uri(g, index_search=v) + '#found-record',
                          # Translators: Index search controls link tooltip.
                          title=_('Skip to the first record beginning with "%s"', v))
                      for v in values]
-            result.append(g.div(label +' '+ concat(links, separator=' ')))
+            result.append(g.div(label + ' ' + concat(links, separator=' ')))
         return (g.div(result, cls='index-search-controls'),)
 
     def _export_message(self, context, count):
@@ -1724,7 +1718,7 @@ class BrowseForm(LayoutForm):
             for field in self._query_fields:
                 error = self._query_fields_row.validation_error(field.id)
                 if error:
-                    content.append(g.div(g.strong(field.label) + ": " + error.message(), 
+                    content.append(g.div(g.strong(field.label) + ": " + error.message(),
                                          cls='errors'))
                 exported_field = self._export_field(context, field, editable=True)
                 if field.label:
@@ -1742,13 +1736,13 @@ class BrowseForm(LayoutForm):
                 filter_name = 'filter_%s' % (filter_set_id,)
                 filter_id = filter_name + '-' + html_id
                 filter_set_content = (
-                    g.label(filter_set.title()+': ', filter_id),
+                    g.label(filter_set.title() + ': ', filter_id),
                     g.select(name=filter_name, id=filter_id,
                              selected=self._filter_ids.get(filter_set_id),
                              # Translators: Label of filter selection box.
                              # Filtering limits the displayed form records by
                              # certain criterias.
-                             title=(_(u"Filter")+' '+
+                             title=(_(u"Filter") + ' ' +
                                     # Translators: Tooltip text suggesting
                                     # keyboard combination to use for selection
                                     # without unexpected invocation of the
@@ -1756,7 +1750,7 @@ class BrowseForm(LayoutForm):
                                     _(u"(Use ALT+arrow down to select)")),
                              options=[(f.title(), f.id()) for f in filter_set],
                              onchange=onchange),
-                    )
+                )
                 filter_content.append(g.span(filter_set_content) + '&nbsp;&nbsp;')
             filter_content.append(submit_button)
             content.append(g.div(filter_content, cls="filter"))
@@ -1780,12 +1774,13 @@ class BrowseForm(LayoutForm):
                     search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into
                 # several pages.  The user can select a specific page or browse forward/backwards.
-                controls += (g.span((g.label(_(u"Page")+': ', offset_id),
-                                     g.select(name='offset', id=offset_id, selected=page*limit,
-                                              title=(_(u"Page")+' '+
+                controls += (g.span((g.label(_(u"Page") + ': ', offset_id),
+                                     g.select(name='offset', id=offset_id, selected=page * limit,
+                                              title=(_(u"Page") + ' ' +
                                                      _(u"(Use ALT+arrow down to select)")),
                                               onchange='this.form.submit(); return true',
-                                              options=[(str(i+1), i*limit) for i in range(pages)]),
+                                              options=[(str(i + 1), i * limit)
+                                                       for i in range(pages)]),
                                      ' / ',
                                      g.strong(str(pages))), cls="offset"),
                              g.span((g.button(g.span(_(u"Previous")), name='prev', value='1',
@@ -1793,14 +1788,14 @@ class BrowseForm(LayoutForm):
                                               cls='prev-page-button'),
                                      g.button(g.span(_(u"Next")), name='next', value='1',
                                               title=_(u"Go to next page"),
-                                              disabled=(page+1)*limit >= count,
+                                              disabled=(page + 1) * limit >= count,
                                               cls='next-page-button'),
                                      ) + (search_button and (search_button,) or ()),
                                     cls="buttons"))
             limit_id = 'limit-' + html_id
-            controls += (g.span((g.label(_(u"Records per page")+':', limit_id)+' ',
+            controls += (g.span((g.label(_(u"Records per page") + ':', limit_id) + ' ',
                                  g.select(name='limit', id=limit_id, selected=limit,
-                                          title=(_(u"Records per page")+' '+
+                                          title=(_(u"Records per page") + ' ' +
                                                  _(u"(Use ALT+arrow down to select)")),
                                           onchange='this.form.submit(); return true',
                                           options=[(str(i), i) for i in limits])),
@@ -1812,7 +1807,7 @@ class BrowseForm(LayoutForm):
         if content:
             if not bottom and self._allow_query_field:
                 query_id = 'filter-' + html_id
-                query_field = g.div((g.label(_(u"Search expression") +': ', query_id),
+                query_field = g.div((g.label(_(u"Search expression") + ': ', query_id),
                                      g.field(self._query, name='query', id=query_id,
                                              cls='query-field'),
                                      g.hidden('show_query_field', show_query_field and '1' or ''),
@@ -1942,17 +1937,17 @@ class ListView(BrowseForm):
         else:
             heading = title
         if layout.allow_index():
-            self._exported_row_index.append(g.li(g.a(title, href='#'+anchor)))
+            self._exported_row_index.append(g.li(g.a(title, href='#' + anchor)))
         if self._row_actions and layout.popup_actions():
             heading += self._export_popup_ctrl(context, row, 'h3')
         parts = [g.h(heading, level=3)]
         if self._image and row.visible(self._image.id):
-            img = self._export_field(context, self._image) 
+            img = self._export_field(context, self._image)
             if img:
                 parts.append(g.span(img, cls='list-layout-image'))
         if self._meta:
-            meta = [(labeled and
-                     g.span(field.label+":", cls='label id-'+ field.id)+" " or '') + \
+            meta = [(g.span(field.label + ":", cls='label id-' + field.id) + " "
+                     if labeled else '') +
                     self._export_field(context, field)
                     for field, labeled in self._meta if row.visible(field.id)]
             if meta:
@@ -1972,11 +1967,11 @@ class ListView(BrowseForm):
                     content = lcg.Container(parser.parse(text))
                 else:
                     content = lcg.HtmlContent(self._export_field(context, field))
-                cls = 'content id-'+ item
+                cls = 'content id-' + item
             else:
                 continue
-            # Hack: Add a fake container to force the heading level start at 4.
-            container = lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
+            # Hack: Create a fake container to force the heading level start at 4.
+            lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
         if self._row_actions and not layout.popup_actions():
             parts.extend(self._export_actions(context, row,
@@ -2005,10 +2000,10 @@ class ListView(BrowseForm):
         if columns > 1:
             n, mod = divmod(len(rows), columns)
             # Add empty cells to prevent spanning of unfinished grid rows.
-            rows.extend(['' for i in range(columns-mod)])
-            rows = g.table([g.tr([g.td(r, width="%d%%" % (100/columns), valign='top')
-                                  for r in rows[i*columns:(i+1)*columns]])
-                            for i in range(n+min(mod, 1))], border=0, cls='grid')
+            rows.extend(['' for i in range(columns - mod)])
+            rows = g.table([g.tr([g.td(r, width="%d%%" % (100 / columns), valign='top')
+                                  for r in rows[i * columns:(i + 1) * columns]])
+                            for i in range(n + min(mod, 1))], border=0, cls='grid')
         result += (g.div(rows, cls="body"),
                    g.div(summary, cls="summary"))
         return concat(result)
@@ -2047,7 +2042,8 @@ class ItemizedView(BrowseForm):
             columns = (view.columns()[0],) # Include just the first column by default.
         super(ItemizedView, self).__init__(view, req, row, columns=columns, **kwargs)
         assert isinstance(separator, basestring)
-        assert template is None or isinstance(template, (lcg.TranslatableText, collections.Callable))
+        assert (template is None or
+                isinstance(template, (lcg.TranslatableText, collections.Callable)))
         self._separator = separator
         self._template = template
         
@@ -2115,13 +2111,15 @@ class CheckRowsForm(BrowseForm, _SubmittableForm):
             return context.generator().checkbox(name=field.id, value=self._row.format(self._key),
                                                 checked=self._row[field.id].value())
         else:
-            return super(CheckRowsForm, self)._export_cell(context, row, n, field, editable=editable)
+            return super(CheckRowsForm, self)._export_cell(context, row, n, field,
+                                                           editable=editable)
         
 
 class EditableBrowseForm(BrowseForm):
     """Web BrowseForm with editable fields in certain columns.
 
-    The form is rendered as an ordinary table, but columns given by constructor argument editable_columns
+    The form is rendered as an ordinary table, but columns given by constructor
+    argument 'editable_columns'.
 
     are rendered as editable fields in each row.  The form has no submit
     controls -- it must be used inside another submittable form.
@@ -2130,14 +2128,14 @@ class EditableBrowseForm(BrowseForm):
     form values on submit.  So for example, The value of column 'count' for the
     row with exported key value '654' will be submitted as parameter
     'count-654'.
-    
+
     """
     
     def __init__(self, view, req, row, editable_columns=None, set_row_callback=None, **kwargs):
         """Arguments:
 
             editable_columns -- a sequence of column identifiers whoose fields
-              will be editable. 
+              will be editable.
             set_row_callback -- callback function called on each form row
               initialization.  Function of one argument - PresentedRow instance.
 
@@ -2161,7 +2159,8 @@ class EditableBrowseForm(BrowseForm):
     def _export_cell(self, context, row, n, field, editable=False):
         if field.id in self._editable_columns:
             editable = True
-        return super(EditableBrowseForm, self)._export_cell(context, row, n, field, editable=editable)
+        return super(EditableBrowseForm, self)._export_cell(context, row, n, field,
+                                                            editable=editable)
 
     def _set_row(self, row):
         super(EditableBrowseForm, self)._set_row(row)
@@ -2170,7 +2169,7 @@ class EditableBrowseForm(BrowseForm):
         if self._req.param('submit'):
             # If we are displaying a submitted form (after validation failed in
             # 'submit()'), we need to revalidate editable fields in each row
-            # to be able to display the form with the invalid user values 
+            # to be able to display the form with the invalid user values
             # and validation error messages within the fields.
             locale_data = self._req.localizer().locale_data()
             for cid in self._editable_columns:
