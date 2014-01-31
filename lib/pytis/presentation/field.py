@@ -766,12 +766,13 @@ class PresentedRow(object):
         
         """
         column = self._coldict[key]
+        ctype = column.type
         if column.runtime_filter is not None:
             kwargs = dict(kwargs, condition=self.runtime_filter(key))
         if column.runtime_arguments:
             kwargs = dict(kwargs, arguments=self.runtime_arguments(key))
-        value, error = column.type.validate(string, transaction=self._transaction, **kwargs)
-        if ((not error and column.type.unique() and not column.virtual and
+        value, error = ctype.validate(string, transaction=self._transaction, **kwargs)
+        if ((not error and ctype.unique() and not column.virtual and
              (self._new or value != self._initialized_original_row[key]) and
              value.value() is not None)):
             if isinstance(self._data, pytis.data.RestrictedData):
@@ -783,23 +784,17 @@ class PresentedRow(object):
             self._data.close()
             if count != 0:
                 error = pytis.data.ValidationError(_(u"Taková hodnota již existuje."))
-        result = error
-        if error:
-            value, error = column.type.validate(string, transaction=self._transaction,
-                                                strict=False, **kwargs)
-        if not error:
-            if key in self._invalid:
-                del self._invalid[key]
-            if string != self.format(key):
-                self.__setitem__(key, value, run_callback=False)
-        else:
-            if string != self.format(key):
-                self._invalid[key] = (string, error)
-            elif key in self._invalid:
-                del self._invalid[key]
+        if not value:
+            value, e = ctype.validate(string, strict=False, transaction=self._transaction, **kwargs)
+        if value and string != self.format(key):
+            self.__setitem__(key, value, run_callback=False)
+        if error and string != self.format(key):
+            self._invalid[key] = (string, error)
+        elif key in self._invalid:
+            del self._invalid[key]
         if key not in self._validated_fields:
             self._validated_fields.append(key)
-        return result
+        return error
 
     def invalid_string(self, key):
         """Return the last invalid user input string for given field.
