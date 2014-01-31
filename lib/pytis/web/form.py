@@ -1459,7 +1459,7 @@ class BrowseForm(LayoutForm):
     def _conditions(self, condition=None):
         conditions = [c for c in (self._condition,
                                   self._filter,
-                                  self._text_search_condition, 
+                                  self._text_search_condition,
                                   condition)
                       if c is not None]
         if len(conditions) == 0:
