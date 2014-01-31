@@ -251,19 +251,10 @@ pytis.BrowseFormHandler = Class.create({
 
     on_hide_search_controls: function(event) {
 	var search_controls = $(this.form).down('div.query');
-	search_controls.hide();
-	search_controls.down('input[type=hidden]').value = '0';
-	for (var i=0; i<2; i++) {
-	    var panel = this.form.down('.list-form-controls', i);
-	    if (panel) {
-		var button = panel.down('.paging-controls button.search-button');
-		if (button) {
-		    button.show();
-		    if (i==0)
-			button.focus();
-		}
-	    }
-	}
+	var form = search_controls.up('form');
+	form['show-search-field'].value = '';
+	form['query'].value = '';
+	form.submit();
 	event.stop();
     },
 
