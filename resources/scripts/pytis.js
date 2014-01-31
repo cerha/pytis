@@ -27,6 +27,24 @@
  *   - updating field editability dynamically,
  *   - updating enumerations based on pytis runtime filters and arguments.
  */
+/*jslint browser: true */
+/*jslint unparam: true */
+/*jslint todo: true */
+/*global Class */
+/*global Element */
+/*global Ajax */
+/*global Hash */
+/*global Gettext */
+/*global Form */
+/*global lcg */
+/*global $ */
+/*global $$ */
+/*global $w */
+/*global $F */
+/*global $break */
+/*global CKEDITOR */
+
+"use strict";
 
 var pytis = {};
 
@@ -36,24 +54,26 @@ pytis._ = function (msg) { return pytis.gettext.gettext(msg); };
 pytis.show_tooltip = function(event, uri) {
     // This can't be implemented as a Field method as Field instances are not 
     // created in BrowseForm (currentyl only in edit form).
+    var element, tooltip;
     if (event) {
-	var element = event.target;
+	element = event.target;
     } else {
 	event = window.event;
-	var element = event.srcElement;
+	element = event.srcElement;
     }
     if (element._pytis_tooltip) {
-	var tooltip = element._pytis_tooltip
+	tooltip = element._pytis_tooltip;
     } else {
-	var tooltip = new lcg.Tooltip(uri);
+	tooltip = new lcg.Tooltip(uri);
 	element._pytis_tooltip = tooltip;
     }
     tooltip.show(event.pointerX(), event.pointerY());
 };
 
 pytis.hide_tooltip = function(element) {
-    if (element._pytis_tooltip)
+    if (element._pytis_tooltip) {
 	element._pytis_tooltip.hide();
+    }
 };
 
 pytis.BrowseFormHandler = Class.create({
@@ -86,17 +106,17 @@ pytis.BrowseFormHandler = Class.create({
 	    this.async_load = true;
 	    var parameters = {};
 	    var query = window.location.search.replace(/;/g, '&').parseQuery();
-	    if (query['form_name'] == form_name)
-		var parameters = query;
-	    else
-		var parameters = {};
+	    if (query.form_name === form_name) {
+		parameters = query;
+	    }
 	    var page = this.form.up('.notebook-widget > div');
-	    if (page)
+	    if (page) { 
 		lcg.Notebook.on_activation(page, function() {
 		    this.load_form_data(parameters);
 		}.bind(this));
-	    else
+	    } else {
 		this.load_form_data(parameters);
+	    }
 	} else {
 	    this.async_load = false;
 	    this.bind_search_controls(this.form.down('.list-form-controls', 0));
@@ -106,25 +126,27 @@ pytis.BrowseFormHandler = Class.create({
     },
 
     load_form_data: function(parameters) {
-	parameters['_pytis_async_load_request'] = 1;
+	parameters._pytis_async_load_request = 1;
 	new Ajax.Request(this.uri, {
 	    method: 'get',
 	    parameters: parameters,
 	    onSuccess: function(transport) {
 		try {
-		    var container = this.ajax_container
+		    var container = this.ajax_container;
+		    var i, callback;
 		    container.update(transport.responseText);
 		    this.bind_controls(container.down('.list-form-controls', 0));
 		    this.bind_controls(container.down('.list-form-controls', 1));
 		    this.bind_table_headings(container.down('table'));
-		    for (var i=0; i<this.on_load_callbacks.length; i++) {
-			var callback = this.on_load_callbacks[i];
+		    for (i=0; i<this.on_load_callbacks.length; i++) {
+			callback = this.on_load_callbacks[i];
 			callback(this.form);
 		    }
 		    document.body.style.cursor = "default";
-		    if (container.down('#found-record')) window.location.hash = '#found-record';
-		}
-		catch (e) {
+		    if (container.down('#found-record')) {
+			window.location.hash = '#found-record';
+		    }
+		} catch (e) {
 		    // Errors in asynchronous handlers are otherwise silently
 		    // ignored.  This will only work in Firefox with Firebug,
 		    // but it is only useful for debugging anyway...
@@ -136,20 +158,19 @@ pytis.BrowseFormHandler = Class.create({
 		var msg = (pytis._("Failed loading form:") +' '+ 
 			   transport.status +' '+ transport.statusText);
 		var tb_start = transport.responseText.search('here is the original traceback:');
-		if (tb_start != -1) {
+		var traceback = '';
+		if (tb_start !== -1) {
 		    var tb_len = transport.responseText.slice(tb_start).search('-->');
-		    var traceback = ('<pre class="form-load-traceback" style="display: none">' +
+		    traceback = ('<pre class="form-load-traceback" style="display: none">' +
 				     transport.responseText.slice(tb_start+32, tb_start+tb_len-3) +
 				     '</pre>');
 		    msg += (' (<a href="#" onclick="' +
 			    'this.parentNode.parentNode.down(\'.form-load-traceback\').toggle();' +
 			    '">' + pytis._("show details") + '</a>)');
-		} else {
-		    var traceback = '';
 		}
 		this.ajax_container.update('<div class="form-load-error">' + msg + '</div>' +
 					   traceback);
-	    }.bind(this)
+	    }.bind(this),
 	});
     },
 
@@ -171,9 +192,9 @@ pytis.BrowseFormHandler = Class.create({
 	    panel.select('.index-search-controls a').each(function(ctrl) {
 		var params = ctrl.href.replace(/;/g, '&').parseQuery();
 		ctrl.observe('click', function(event) {
-		    this.reload_form_data(ctrl, {index_search: params['index_search'],
-						 sort: params['sort'],
-						 dir: params['dir']});
+		    this.reload_form_data(ctrl, {index_search: params.index_search,
+						 sort: params.sort,
+						 dir: params.dir});
 		    event.stop();
 		}.bind(this));
 	    }.bind(this));
@@ -182,18 +203,21 @@ pytis.BrowseFormHandler = Class.create({
     },
 
     bind_table_headings: function(table) {
-	if (table)
+	if (table) {
 	    table.select('th.column-heading').each(function(th) {
-		if (th.hasClassName('sortable-column'))
+		if (th.hasClassName('sortable-column')) {
 		    th.observe('click', this.on_table_heading_clicked.bind(this));
+		}
 	    }.bind(this));
+	}
     },
 
     reload_form_data: function(ctrl, params) {
-	var parameters = (typeof(params) != 'undefined' ? params : {});
+	var parameters = (params !== undefined ? params : {});
 	ctrl.up('form').getElements().each(function(x) {
-	    if (x.tagName != 'BUTTON')
+	    if (x.tagName !== 'BUTTON') {
 		parameters[x.name] = x.value;
+	    }
 	});
 	parameters[ctrl.name] = ctrl.value;
 	document.body.style.cursor = "wait";
@@ -204,30 +228,40 @@ pytis.BrowseFormHandler = Class.create({
     bind_search_controls: function(panel) {
 	if (panel) {
 	    var search_button = panel.down('.paging-controls button.search-button');
-	    if (search_button)
+	    if (search_button) {
 		search_button.observe('click', this.on_show_search_controls.bind(this));
+	    }
 	    var cancel_button = panel.down('div.query button.cancel-search');
-	    if (cancel_button)
+	    if (cancel_button) {
 		cancel_button.observe('click', this.on_hide_search_controls.bind(this));
+	    }
 	}
     },
 
     on_table_heading_clicked: function(event) {
 	var th = event.element();
-	if (th.nodeName != 'TH') th = th.up('th');
-	var colid_cls = $w(th.className).find(function(x) { return x.startsWith('column-id-') });
+	if (th.nodeName !== 'TH') {
+	    th = th.up('th');
+	}
+	var colid_cls = $w(th.className).find(function(x) {
+	    return x.startsWith('column-id-');
+	});
 	if (colid_cls) {
 	    var column_id = colid_cls.substring(10);
 	    var dir = 'asc';
-	    if (th.down('.sort-direction-asc')) dir='desc';
-	    if (th.down('.sort-direction-desc')) dir='';
+	    if (th.down('.sort-direction-asc')) {
+		dir='desc';
+	    }
+	    if (th.down('.sort-direction-desc')) {
+		dir='';
+	    }
 	    var parameters = {form_name: this.form_name, sort: column_id, dir: dir};
 	    if (this.async_load) {
 		document.body.style.cursor = "wait";
 		this.form.select('form.list-form-controls').each(function(f) { f.disable(); });
 		this.load_form_data(parameters);
 	    } else {
-		window.location.search = $H(parameters).toQueryString();
+		window.location.search = new Hash(parameters).toQueryString();
 	    }
 	    event.stop();
 	}
@@ -235,15 +269,17 @@ pytis.BrowseFormHandler = Class.create({
     
     on_show_search_controls: function(event) {
 	var search_controls = $(this.form).down('div.query');
+	var i, panel, button;
 	search_controls.show();
 	search_controls.down('input.text-search-field').focus();
 	search_controls.down('input[type=hidden]').value = '1';
-	for (var i=0; i<2; i++) {
-	    var panel = this.form.down('.list-form-controls', i);
+	for (i=0; i<2; i++) {
+	    panel = this.form.down('.list-form-controls', i);
 	    if (panel) {
-		var button = panel.down('.paging-controls button.search-button');
-		if (button)
+		button = panel.down('.paging-controls button.search-button');
+		if (button) {
 		    button.hide();
+		}
 	    }
 	}
 	event.stop();
@@ -253,7 +289,7 @@ pytis.BrowseFormHandler = Class.create({
 	var search_controls = $(this.form).down('div.query');
 	var form = search_controls.up('form');
 	form['show-search-field'].value = '';
-	form['query'].value = '';
+	form.query.value = '';
 	form.submit();
 	event.stop();
     },
@@ -268,12 +304,12 @@ pytis.BrowseFormHandler = Class.create({
 	   as an argument.
 
 	 */
-	if (this.async_load)
+	if (this.async_load) {
 	    this.on_load_callbacks[this.on_load_callbacks.length] = callback;
-	else
+	} else {
 	    callback(this.form);
+	}
     }
-
 });
 
 pytis.FormHandler = Class.create({
@@ -286,19 +322,22 @@ pytis.FormHandler = Class.create({
 	 *    comparisons.
 	 */
 	var form = $(form_id).down('form');
+	var i, field;
 	this._form = form;
-	this._fields = {};
+	this._fields = new Hash();
 	this._state = state;
 	var observe = false;
-	for (var i=0; i<fields.length; i++) {
-	    var field = fields[i];
-	    this._fields[field.id()] = field;
-	    if (field.active())
+	for (i=0; i<fields.length; i++) {
+	    field = fields[i];
+	    this._fields.set(field.id(), field);
+	    if (field.active()) {
 		observe = true;
+	    }
 	}
 	this._last_request_number = 0;
-	if (observe)
+	if (observe) {
 	    this._observer = new Form.Observer(form, 1, this.on_change.bind(this));
+	}
     },
     
     on_change: function(form, value) {
@@ -308,65 +347,70 @@ pytis.FormHandler = Class.create({
 	// don't know whether another change comes soon.  Maybe we could send
 	// the request after some delay if no other change comes in the
 	// meantime, but this would slow down the UI responsivity.
-	var values = value.parseQuery(); 
+	var values = value.parseQuery();
 	var last_values = this._observer.lastValue.parseQuery();
-	for (var id in this._fields) {
-	    var field = this._fields[id];
+	this._fields.each(function(item) {
+	    var id = item.key;
+	    var field = item.value;
 	    // Disabled fields are not present in values/last_values, but also
 	    // checkbox fields are not there if unchecked.
-	    if (field.active()
-		&& (id in values || id in last_values) && values[id] != last_values[id]) {
+	    if ((field.active()
+		 && (values.hasOwnProperty(id) || last_values.hasOwnProperty(id)) 
+		 && values[id] !== last_values[id])) {
 		document.body.style.cursor = "wait";
-		var state = (this._state ? $H(this._state).toQueryString() : null);
+		var state = (this._state ? new Hash(this._state).toQueryString() : null);
 		this._form.request({
 		    parameters: {_pytis_form_update_request: ++this._last_request_number,
 				 _pytis_form_changed_field: id,
  				 _pytis_form_state: state},
 		    onSuccess: this.update.bind(this)
 		});
-		break
+		throw $break;
 	    }
-	}
+	}.bind(this));
     },
     
     update: function(response) {
 	// Update the form state in reaction to previously sent AJAX request.
 	var data = response.responseJSON;
-	if (data != null) {
-	    var response_number = data['request_number'];
-	    var field_data = data['fields'];
+	if (data) {
+	    var response_number = parseInt(data.request_number, 10);
 	    // Ignore the response if other requests were sent in the meantime.
 	    // Only the most recently sent request really corresponds to the
 	    // current form state!  This also prevents processing responses
 	    // coming in wrong order (earlier request may be processed longer
 	    // than a later one).
-	    if (response_number == this._last_request_number && field_data != null) {
-		for (var id in field_data) {
-		    var field = this._fields[id];
+	    if (response_number === this._last_request_number) {
+		new Hash(data.fields).each(function(item) {
+		    var field = this._fields.get(item.key);
  		    if (field) {
-			var cdata = field_data[id];
-			var original_value = field.value();
-			for (var key in cdata) {
-			    var value = cdata[key];
-                            try {
-			        if (key == 'enumeration')   field.set_enumeration(value, cdata['links']);
-			        else if (key == 'value')    field.set_value(value);
-		                else if (key == 'editable') field.set_editability(value);
-			        else if (key == 'state')    this._state[id] = value;
-                            }
-                            catch (e) {
-                                console.log(e);
-                            }
-			}
-			if (cdata.enumeration && !cdata.value) {
-			    // Retain the value of enumeration fields even
-			    // after the enumeration changes (if possible).
-			    field.set_value(original_value);
-			}
+			var cdata = item.value;
+                        try {
+			    if (cdata.enumeration !== undefined) {
+				var original_value = field.value();
+				field.set_enumeration(cdata.enumeration, cdata.links);
+				if (cdata.value === undefined) {
+				    // Retain the value of enumeration fields
+				    // after enumeration changes if possible.
+				    field.set_value(original_value);
+				}
+			    }
+			    if (cdata.value !== undefined) {
+				field.set_value(cdata.value);
+		            }
+			    if (cdata.editable !== undefined) {
+				field.set_editability(cdata.editable);
+			    }
+			    if (cdata.state !== undefined) {
+				this._state[field.id()] = cdata.state;
+			    }
+                        } catch (e) {
+                            console.log(e);
+                        }
 		    }
-		}
+		}.bind(this));
 	    }
-            if (response_number == this._last_request_number) {
+            if (response_number === this._last_request_number) {
 		document.body.style.cursor = "default";
             }
 	}
@@ -395,7 +439,7 @@ pytis.Field = Class.create({
 	this._ctrl = this._form[id];
 	this._id = id;
 	this._active = active;
-	if (required && this._ctrl && this._ctrl.length == undefined) {
+	if (required && this._ctrl && this._ctrl.length === undefined) {
 	    // TODO: handle aria-required also for compound fields (radio group, checklist).
 	    this._ctrl.setAttribute('aria-required', 'true');
 	}
@@ -419,12 +463,14 @@ pytis.Field = Class.create({
 	// Disable/enable field editability.
 	var labels = $$('.field-label.id-'+this._id);
 	if (labels) {
-	    var label = labels[0]
-            if (label != undefined) {
-	        if (value && label.hasClassName('disabled'))
+	    var label = labels[0];
+            if (label !== undefined) {
+	        if (value && label.hasClassName('disabled')) {
 		    label.removeClassName('disabled');
-	        if (!value && !label.hasClassName('disabled'))
+		}
+	        if (!value && !label.hasClassName('disabled')) {
 		    label.addClassName('disabled');
+		}
             }
 	}
 	this._set_editability(value);
@@ -441,6 +487,7 @@ pytis.Field = Class.create({
     
     set_enumeration: function(value, links) {
 	// Update enumeration controls (only for enumeration fields).
+	return;
     }
 
 });
@@ -450,7 +497,7 @@ pytis.CheckboxField = Class.create(pytis.Field, {
 
     set_value: function(value) {
 	// Set the field value.
-	this._ctrl.checked = value == 'T';
+	this._ctrl.checked = value === 'T';
     }
 
 });
@@ -459,14 +506,16 @@ pytis.RadioField = Class.create(pytis.Field, {
     // Specific handler for a radio button group.
 
     set_value: function(value) {
-	for (var i=0; i<this._ctrl.length; i++) {
-	    var radio = this._ctrl[i];
-	    radio.checked = radio.value == value;
+	var i, radio;
+	for (i=0; i<this._ctrl.length; i++) {
+	    radio = this._ctrl[i];
+	    radio.checked = radio.value === value;
 	}
     },
 
     _set_editability: function(value) {
-	for (var i=0; i<this._ctrl.length; i++) {
+	var i;
+	for (i=0; i<this._ctrl.length; i++) {
 	    this._ctrl[i].disabled = !value;
 	}
     }
@@ -477,16 +526,18 @@ pytis.PasswordField = Class.create(pytis.Field, {
     // Specific handler for a radio button group.
 
     set_value: function(value) {
-	for (var i=0; i<this._ctrl.length; i++) {
+	var i;
+	for (i=0; i<this._ctrl.length; i++) {
 	    this._ctrl[i].value = value;
 	}
     },
 
     _set_editability: function($super, value) {
-	if (typeof(this._ctrl.length) == 'undefined') {
+	if (this._ctrl.length === undefined) {
 	    $super(value);
 	} else {
-	    for (var i=0; i<this._ctrl.length; i++) {
+	    var i;
+	    for (i=0; i<this._ctrl.length; i++) {
 		this._ctrl[i].disabled = !value;
 	    }
 	}
@@ -500,18 +551,21 @@ pytis.ChoiceField = Class.create(pytis.Field, {
     set_enumeration: function(value, links) {
 	var options = this._ctrl.options;
 	var selected = $F(this._ctrl);
-	for (var i=options.length-1; i>=0; --i) {
+	var i, len, option, item, attr, text;
+	for (i=options.length-1; i>=0; --i) {
 	    //Remove all options except for the (first) NULL option (if present).
-	    var option = $(options[i]);
-	    if (option.value != '') option.remove();
+	    option = $(options[i]);
+	    if (option.value !== '') {
+		option.remove();
+	    }
 	}
 	this._ctrl.cleanWhitespace();
-	for (var i=0, len=value.length; i<len; ++i) {
+	for (i=0, len=value.length; i<len; ++i) {
 	    //Append options according to the new enumeration received;
-	    var item = value[i];
-	    var attr = {value: item[0], selected: item[0] == selected};
-	    var text = item[1].escapeHTML().gsub(' ', '&nbsp;');
-	    var option = new Element('option', attr).update(text);
+	    item = value[i];
+	    attr = {value: item[0], selected: item[0] === selected};
+	    text = item[1].escapeHTML().gsub(' ', '&nbsp;');
+	    option = new Element('option', attr).update(text);
 	    this._ctrl.insert(option);
 	}
     }
@@ -522,21 +576,27 @@ pytis.ChecklistField = Class.create(pytis.Field, {
     // Specific handler for a multi select control represented by a group of checkboxes.
 
     _checkboxes: function() {
-	return this._element.immediateDescendants().collect(function(item) {return item.firstDescendant()});
+	return this._element.immediateDescendants().collect(function(item) {
+	    return item.firstDescendant();
+	});
     },
     
     value: function() {
 	var checkboxes = this._checkboxes();
-	return checkboxes.map(function(checkbox) {return checkbox.value});
+	return checkboxes.map(function(checkbox) {
+	    return checkbox.value;
+	});
     },
 
     set_value: function(value) {
 	this._checkboxes().each(function(checkbox) {
 	    checkbox.checked = false;
 	    if (value) {
-		for (var j=0; j<value.length; j++) {
-		    if (value[j] == checkbox.value)
+		var j;
+		for (j=0; j<value.length; j++) {
+		    if (value[j] === checkbox.value) {
 			checkbox.checked = true;
+		    }
 		}
 	    }
 	});
@@ -551,22 +611,23 @@ pytis.ChecklistField = Class.create(pytis.Field, {
     set_enumeration: function(value, links) {
 	var elem = this._element;
 	var descendants = elem.immediateDescendants();
-	for (var i=0; i<(descendants.length); i++) {
+	var i, len, item, id, text, div, link;
+	for (i=0; i<(descendants.length); i++) {
 	    $(descendants[i]).remove();
 	}
 	elem.cleanWhitespace();
-	for (var i=0, len=value.length; i<len; ++i) {
+	for (i=0, len=value.length; i<len; ++i) {
 	    //Append options according to the new enumeration received;
-	    var item = value[i];
-	    var id = elem.getAttribute('id')+'-'+i
-	    var text = (' '+ item[1]).escapeHTML().gsub(' ', '&nbsp;');
-	    var div = new Element('div');
+	    item = value[i];
+	    id = elem.getAttribute('id') + '-' + i;
+	    text = (' ' + item[1]).escapeHTML().gsub(' ', '&nbsp;');
+	    div = new Element('div');
 	    div.insert(new Element('input', {'type': 'checkbox',
 					     'value': item[0],
 					     'name': this._id,
 					     'id': id}));
 	    div.insert(new Element('label', {'for': id}).update(text));
-	    var link = (links ? links[item[0]] : null);
+	    link = (links ? links[item[0]] : null);
 	    if (link) {
 		div.insert('&nbsp;[');
 		div.insert(new Element('a', link).update(item[0]));
@@ -581,7 +642,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 pytis.HtmlField = Class.create(pytis.Field, {
     initialize: function($super, form_id, field_id, id, active, required) {
 	$super(form_id, field_id, id, active, required);
-        if (typeof(CKEDITOR) != 'undefined') {
+        if (CKEDITOR !== undefined) {
 	    // The function pytis.HtmlField.plugin is defined in pytis-ckeditor.js.
 	    CKEDITOR.plugins.add('pytis-attachments', {init: pytis.HtmlField.plugin});
 	    CKEDITOR.on('dialogDefinition', pytis.HtmlField.on_dialog);
@@ -589,9 +650,9 @@ pytis.HtmlField = Class.create(pytis.Field, {
     },
     
     _attachment_storage_request: function(request, parameters) {
-	parameters['_pytis_form_update_request'] = 1;
-	parameters['_pytis_attachment_storage_field'] = this._id;
-	parameters['_pytis_attachment_storage_request'] = request;
+	parameters._pytis_form_update_request = 1;
+	parameters._pytis_attachment_storage_field = this._id;
+	parameters._pytis_attachment_storage_request = request;
 	var req = this._form.request({
 	    parameters: parameters,
 	    asynchronous: false
@@ -620,7 +681,7 @@ pytis.HtmlField = Class.create(pytis.Field, {
 pytis.DateTimeField = Class.create(pytis.Field, {
     _set_editability: function(value) {
 	this._ctrl.disabled = !value;
-	var button = $(this._ctrl.id+'-button')
+	var button = $(this._ctrl.id + '-button');
 	button.disabled = !value;
     }
 });
@@ -653,20 +714,22 @@ pytis.FileUploadField = Class.create(pytis.Field, {
     update: function(response) {
 	// Update the form state in reaction to previously sent AJAX request.
 	var data = response.responseJSON;
-	if (data != null) {
-	    var error = data['fields'][this._id]['error'];
+	if (data !== null) {
+	    var error = data.fields[this._id].error;
 	    var div = this._ctrl.next('.error');
 	    if (error) {
-		if (div)
+		if (div) {
 		    div.update(error);
-		else
+		} else {
 		    this._ctrl.insert({after: new Element('div', {'class': 'error'}).update(error)});
-	    } 
-	    else if (div)
+		}
+	    } else if (div) {
 		div.remove();
+	    }
 	    var submit = this._form.down('button[type="submit"]');
-	    if (submit)
-		submit.disabled = (error != null);
+	    if (submit) {
+		submit.disabled = (error !== null);
+	    }
 	}
 	document.body.style.cursor = "default";
     }
