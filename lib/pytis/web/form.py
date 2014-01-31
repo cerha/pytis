@@ -1267,7 +1267,7 @@ class BrowseForm(LayoutForm):
                         req.set_cookie(cookie, row[field.id].export())
                 else:
                     saved_value = req.cookie(cookie)
-                    if saved_value:
+                    if saved_value is not None:
                         row.validate(field.id, saved_value)
                 query_fields.append(field)
         else:
