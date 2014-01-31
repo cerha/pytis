@@ -1,6 +1,6 @@
 /* -*- coding: utf-8 -*-
  *
- * Copyright (C) 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
  * Author: Tomas Cerha
  *
  * This program is free software; you can redistribute it and/or modify
@@ -236,7 +236,7 @@ pytis.BrowseFormHandler = Class.create({
     on_show_search_controls: function(event) {
 	var search_controls = $(this.form).down('div.query');
 	search_controls.show();
-	search_controls.down('input.query-field').focus();
+	search_controls.down('input.text-search-field').focus();
 	search_controls.down('input[type=hidden]').value = '1';
 	for (var i=0; i<2; i++) {
 	    var panel = this.form.down('.list-form-controls', i);
