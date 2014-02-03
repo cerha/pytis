@@ -1,6 +1,6 @@
 ;;; gensqlalchemy.el --- support for working with pytis database specifications
 
-;; Copyright (C) 2012, 2013 Brailcom, o.p.s.
+;; Copyright (C) 2012, 2013, 2014 Brailcom, o.p.s.
 
 ;; COPYRIGHT NOTICE
 
@@ -696,7 +696,7 @@ where the specification may be put without breaking dependencies."
 (defun gensqlalchemy-show-error ()
   "Try to show specification error from the last traceback in current buffer."
   (interactive)
-  (let ((regexp "^  File \"\\(.*/dbdefs/.*\\.py\\)\", line \\([0-9]+\\), in .*$"))
+  (let ((regexp "^  File \"\\(.*/dbdefs/.*\\.py\\)\", line \\([0-9]+\\)\\(, in .*$\\)?"))
     (when (save-excursion
             (or (re-search-backward regexp nil t)
                 (re-search-forward regexp nil t)))
