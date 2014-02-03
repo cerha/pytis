@@ -1085,6 +1085,7 @@ class BrowseForm(LayoutForm):
         self._filter = filter
         self._filter_ids = {}
         self._filter_sets = []
+        self._current_profile = None
         if profiles:
             assert 'profile' not in [fs.id() for fs in filter_sets]
             # Add profile selection as another filter set, since the user interface is the same.
@@ -1096,6 +1097,7 @@ class BrowseForm(LayoutForm):
             if profile_id is not None:
                 profile = pytis.util.find(profile_id, profiles, key=lambda p: p.id())
                 if profile:
+                    self._current_profile = profile
                     if profile.columns() is not None:
                         columns = profile.columns()
                     if profile.sorting() is not None:
@@ -1516,16 +1518,33 @@ class BrowseForm(LayoutForm):
         # really expensive (i.e. on binary fields).
         self._row.set_row(row)
             
+    def _table_rows(self):
+        data = self._row.data()
+        self._row_count = data.select(columns=self._select_columns,
+                                      condition=self._conditions(),
+                                      arguments=self._arguments,
+                                      sort=self._sorting)
+        def generator():
+            try:
+                while True:
+                    row = data.fetchone()
+                    if row is None:
+                        break
+                    yield row
+            finally:
+                try:
+                    data.close()
+                except:
+                    pass
+        return generator()
+
     def _export_table(self, context, form_id):
         g = context.generator()
         data = self._row.data()
         limit = self._limit
         exported_rows = []
-        count = data.select(columns=self._select_columns,
-                            condition=self._conditions(),
-                            arguments=self._arguments,
-                            sort=self._sorting)
-        self._row_count = count
+        rows = self._table_rows()
+        count = self._row_count
         found = False
         offset = self._offset
         if self._search:
@@ -1551,10 +1570,7 @@ class BrowseForm(LayoutForm):
         group_values = last_group_values = None
         n = 0
         data.skip(first_record_offset)
-        while True:
-            row = data.fetchone()
-            if row is None:
-                break
+        for row in rows:
             self._set_row(row)
             if self._grouping:
                 group_values = [self._row[cid].value() for cid in self._grouping]
@@ -1879,10 +1895,31 @@ class BrowseForm(LayoutForm):
         row = self._query_fields_row
         return [(key, row[key]) for key in row.keys()]
 
+    def current_profile(self):
+        """Return the current form profile as 'pytis.presentation.Profile' instance."""
+        return self._current_profile
+        
+    def condition(self):
+        """Return the current form condition as 'pytis.data.Operator' instance."""
+        return self._conditions()
+        
+    def arguments(self):
+        """Return the current select arguments as a dictionary."""
+        return  self._arguments
+
+    def rows(self):
+        """Return a generator returning all form data rows as 'pytis.data.Row' instances.
+        
+        This method can not be called inside 'export()' and vice versa (export
+        can not be called before the row generator is exhausted).
+
+        """
+        return self._table_rows()
+
     def row_count(self):
         """Return the number of rows in the form as integer.
         
-        This method will return None before the form is exported.
+        This method will return None before either 'export()' or 'rows()' is called.
 
         """
         return self._row_count
@@ -1890,6 +1927,7 @@ class BrowseForm(LayoutForm):
     def text_search_string(self):
         """Return the current text of the search field or None if text search is not active."""
         return self._text_search_string
+        
 
 class ListView(BrowseForm):
     """Listing with a customizable layout for each record.
