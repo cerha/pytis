@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -938,8 +938,9 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                       column_groups=None):
         """Vrať sloupec z 'binding' zformátovaný pro SQL."""
         def column_type():
-            return self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
-                                             type_kwargs=binding.kwargs(), noerror=True)
+            t = self._pdbb_get_table_type(binding.table(), binding.column(), binding.type(),
+                                          noerror=True)
+            return self._pdbb_apply_type_kwargs(t, binding.kwargs())
         result = None
         if operations is not None:
             for aggregate, id_, name in operations:
@@ -1098,7 +1099,7 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
         PostgreSQLStandardBindingHandler._pdbb_table_column_data[table_key] = table_data
         return table_data
 
-    def _pdbb_get_table_type(self, table, column, ctype=None, type_kwargs=None, noerror=False):
+    def _pdbb_get_table_type(self, table, column, ctype=None, noerror=False):
         if self._pdbb_db_spec is not None:
             for b in self._bindings:
                 if b.id() == column:
@@ -1150,8 +1151,6 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
                 result = ctype
             else:
                 result = result.clone(ctype)
-        if type_kwargs:
-            result = result.clone(result.__class__(**type_kwargs))
         return result
 
     def _pdbb_get_type(self, type_, size_string, not_null=False, serial=False, unique=False):
@@ -1214,6 +1213,11 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             db_type_cls = Serial
         return db_type_cls(**db_type_kwargs)
 
+    def _pdbb_apply_type_kwargs(self, ctype, kwargs):
+        if ctype and kwargs:
+            ctype = ctype.clone(ctype.__class__(**kwargs))
+        return ctype
+
     def _db_bindings_to_column_spec(self, bindings):
         key = []
         columns = []
@@ -1224,17 +1228,14 @@ class PostgreSQLStandardBindingHandler(PostgreSQLConnector, DBData):
             if direct_types:
                 t = b.type()
             elif self._arguments is None:
-                t = self._pdbb_get_table_type(b.table(), b.column(), b.type(),
-                                              type_kwargs=b.kwargs())
+                t = self._pdbb_get_table_type(b.table(), b.column(), b.type())
             else:
                 t = b.type()
                 assert t is not None, ("Column types must be specified for table functions",
                                        b.id(), b.table(),)
                 if type(t) == type(Type):
                     t = t()
-                type_kwargs = b.kwargs()
-                if type_kwargs:
-                    t = t.clone(t.__class__(**type_kwargs))
+            t = self._pdbb_apply_type_kwargs(t, b.kwargs())
             colspec = ColumnSpec(b.id(), t)
             columns.append(colspec)
             if b in self._key_binding:
