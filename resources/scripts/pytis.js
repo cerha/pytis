@@ -714,25 +714,30 @@ pytis.FileUploadField = Class.create(pytis.Field, {
     update: function(response) {
 	// Update the form state in reaction to previously sent AJAX request.
 	var data = response.responseJSON;
-	if (data !== null) {
+	if (data) {
 	    var error = data.fields[this._id].error;
 	    var div = this._ctrl.next('.error');
+	    var submit = this._form.down('button[type="submit"]');
 	    if (error) {
 		if (div) {
-		    div.update(error);
-		} else {
-		    this._ctrl.insert({after: new Element('div', {'class': 'error'}).update(error)});
+		    div = new Element('div', {'class': 'error'});
+		    this._ctrl.insert({after: div});
 		}
-	    } else if (div) {
-		div.remove();
-	    }
-	    var submit = this._form.down('button[type="submit"]');
-	    if (submit) {
-		submit.disabled = (error !== null);
+		div.update(error);
+		if (submit) {
+		    // Protect the server from invalid (most likely oversized) file uploads.
+		    submit.disabled = true;
+		}
+	    } else {
+		if (div) {
+		    div.remove();
+		}
+		if (submit) {
+		    submit.disabled = false;
+		}
 	    }
 	}
 	document.body.style.cursor = "default";
     }
-
 
 });
