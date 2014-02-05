@@ -396,7 +396,7 @@ pytis.FormHandler = Class.create({
 				}
 			    }
 			    if (cdata.value !== undefined) {
-				field.set_value(cdata.value);
+				field.set_value(cdata.value, cdata.localized_value);
 		            }
 			    if (cdata.editable !== undefined) {
 				field.set_editability(cdata.editable);
@@ -480,9 +480,13 @@ pytis.Field = Class.create({
 	this._ctrl.disabled = !value;
     },
     
-    set_value: function(value) {
+    set_value: function(value, localized_value) {
 	// Set the field value.
-	this._ctrl.value = value;
+	if (localized_value !== undefined) {
+	    this._ctrl.value = localized_value;
+	} else {
+	    this._ctrl.value = value;
+	}
     },
     
     set_enumeration: function(value, links) {
@@ -495,7 +499,7 @@ pytis.Field = Class.create({
 pytis.CheckboxField = Class.create(pytis.Field, {
     // Specific handler for a checkbox field.
 
-    set_value: function(value) {
+    set_value: function(value, localized_value) {
 	// Set the field value.
 	this._ctrl.checked = value === 'T';
     }
@@ -505,7 +509,7 @@ pytis.CheckboxField = Class.create(pytis.Field, {
 pytis.RadioField = Class.create(pytis.Field, {
     // Specific handler for a radio button group.
 
-    set_value: function(value) {
+    set_value: function(value, localized_value) {
 	var i, radio;
 	for (i=0; i<this._ctrl.length; i++) {
 	    radio = this._ctrl[i];
@@ -523,9 +527,9 @@ pytis.RadioField = Class.create(pytis.Field, {
 });
 
 pytis.PasswordField = Class.create(pytis.Field, {
-    // Specific handler for a radio button group.
+    // Specific handler a password field.
 
-    set_value: function(value) {
+    set_value: function(value, localized_value) {
 	var i;
 	for (i=0; i<this._ctrl.length; i++) {
 	    this._ctrl[i].value = value;
@@ -588,7 +592,7 @@ pytis.ChecklistField = Class.create(pytis.Field, {
 	});
     },
 
-    set_value: function(value) {
+    set_value: function(value, localized_value) {
 	this._checkboxes().each(function(checkbox) {
 	    checkbox.checked = false;
 	    if (value) {

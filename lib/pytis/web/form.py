@@ -827,10 +827,14 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 fdata['editable'] = row.editable(fid)
                 if ((field.spec.computer() and row.invalid_string(fid) is None
                      and not isinstance(field.type, pd.Binary))):
+                    exported_value = row[fid].export()
                     localized_value = localize(localizable_export(row[fid]))
                     # Values of disabled fields are not in the request, so send them always...
-                    if not req.has_param(fid) or localized_value != req.param(fid):
-                        fdata['value'] = localized_value
+                    if ((not req.has_param(fid) or
+                         req.param(fid) not in (exported_value, localized_value))):
+                        fdata['value'] = exported_value
+                        fdata['localized_value'] = localized_value
+                    #lcg.log('-', fid, localized_value, req.param(fid), field.value());
                 if fid in field_states:
                     old_state = field_states[fid]
                     # We rely on the fact, that a stringified
