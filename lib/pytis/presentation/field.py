@@ -805,17 +805,18 @@ class PresentedRow(object):
         the field has not been validated yet.
 
         """
-        return self._invalid.get(key, (None,None))[0]
+        return self._invalid.get(key, (None, None))[0]
 
     def validation_error(self, key):
         """Return the last validation error for given field.
 
         Returns the 'pytis.data.ValidationError' instance returned by the last
-        call to 'validate()' since the last 'set_row()' or '__setitem__(key)' call.  None is returned if the last validation was
-        successful or if the field has not been validated yet.
+        call to 'validate()' since the last 'set_row()' or '__setitem__(key)'
+        call.  None is returned if the last validation was successful or if the
+        field has not been validated yet.
 
         """
-        return self._invalid.get(key, (None,None))[1]
+        return self._invalid.get(key, (None, None))[1]
 
     def validated(self, key):
         """Return True if the given field has been validated or False otherwise.
@@ -830,18 +831,6 @@ class PresentedRow(object):
 
         return key in self._validated_fields
     
-    def validated(self, key):
-        """Return True if the given field has been validated or False otherwise.
-
-        Returns True if 'validate()' was called on this record instance for the
-        given 'key' since the last 'set_row()' or '__setitem__(key)' call.
-
-        This method may be usefull if you need to know whether some field was
-        present in form layout before submit.
-
-        """
-        return key in self._validated_fields
-
     def register_callback(self, kind, key, function):
         assert kind[:5] == 'CALL_' and hasattr(self, kind), ('Invalid callback kind', kind)
         assert function is None or isinstance(function, collections.Callable), \
@@ -986,7 +975,7 @@ class PresentedRow(object):
             export = lambda value: value.export()
         inline_display = column.inline_display
         if inline_display and inline_display in self._row and not self.validated(key):
-            # The row doesn't contain inline_display when it was created in _set_row 
+            # The row doesn't contain inline_display when it was created in _set_row
             # (not passed from the data interface) and inline_display field is not
             # explicitly present in fields.  The test of .validated() important during
             # row changes, where the current inline display value doesn't match the
