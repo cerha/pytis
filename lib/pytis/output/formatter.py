@@ -542,6 +542,10 @@ class LCGFormatter(object):
         log(EVENT, ('Output formatting took %.3fs (PDF export %.3fs)' %
                     (pytis.data.DateTime.diff_seconds(start_time, show_time),
                      pytis.data.DateTime.diff_seconds(start_time_export, show_time),)))
+        try:
+            transaction.commit()
+        except pytis.data.DBSystemException:
+            pass
         return pdf
         
     def preview(self, stream):
