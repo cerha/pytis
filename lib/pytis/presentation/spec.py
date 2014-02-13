@@ -4858,7 +4858,6 @@ class Specification(object):
         # additional kwargs).  Once the resolver argument is removed from
         # applications, it should be removed from here too.
         for attr in ('fields', 'arguments', 'crypto_names', 'access_rights', 'condition',
-                     'distinct_on', 'bindings', 'cb', 'sorting', 'profiles', 'filters',
                      'distinct_on', 'bindings', 'cb', 'check', 'sorting', 'profiles', 'filters',
                      'folding', 'initial_folding', 'query_fields', 'ro_select',):
             if hasattr(self, attr):
