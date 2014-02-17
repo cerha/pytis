@@ -2990,8 +2990,15 @@ class _VirtualEditForm(EditForm):
             if isinstance(value, collections.Callable):
                 # This is necessary to avoid calling functions (such as 'check'
                 # or 'row_style') as methods.
-                funcion = value
-                value = lambda self, *args, **kwargs: funcion(*args, **kwargs)
+                function = value
+                if len(argument_names(function)) > 0:
+                    # This is an ugly hack.  It is necessary to make the introspection
+                    # in Specification.__init__ work.  It actually makes sure that the
+                    # condition len(argument_names(value)) == 0 returns the same results
+                    # for 'value' and for 'function'.
+                    value = lambda self, x, *args, **kwargs: function(x, *args, **kwargs)
+                else:
+                    value = lambda self, *args, **kwargs: function(*args, **kwargs)
             setattr(Spec, key, value)
         self._specification = Spec(resolver)
         if isinstance(self, PopupEditForm):
