@@ -348,7 +348,10 @@ class Field(object):
     def name(self):
         name = self.id
         if self._multirow:
-            name += '-' + self._row[self._key].export()
+            key = self._row[self._key].export()
+            if not key:
+                key = 'pytis-inserted-row-%d' % self._row.inserted_row_number
+            name += '-' + key
         return name
 
     def html_id(self):

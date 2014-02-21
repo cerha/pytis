@@ -618,6 +618,9 @@ class _SubmittableForm(Form):
                 #lcg.log("Validation:", (fid, req.param(fid), error))
                 if error:
                     errors.append((fid, error.message()))
+        subform = self._find_subform(self._layout)
+        if subform and not subform.validate(req):
+            errors.append((None, _("Invalid subform values.")))
         if not errors:
             errors.extend(self._check())
         return not errors
@@ -761,6 +764,18 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return {'success': error is None, 'message': error and req.localizer().localize(error),
                 'filename': upload.filename()}
 
+    def _find_subform(self, group):
+        for item in group.items():
+            if isinstance(item, collections.Callable):
+                item = item(self._row)
+            if isinstance(item, GroupSpec):
+                result = self._find_subform(item)
+                if result is not None:
+                    return result
+            elif isinstance(item, EditableBrowseForm):
+                return item
+        return None
+
     def is_ajax_request(self, req):
         """Return True if the request is an AJAX request.
 
@@ -772,21 +787,26 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return req.param('_pytis_form_update_request') is not None
 
     def ajax_response(self, req):
-        """Return the AJAX request response as a JSON encoded data structure.
+        """Return the AJAX request response data.
 
         This method acts as the server side counter-part of the client side
         code defined in the pytis form JavaScript code in 'pytis.js'.  The
-        returned string is supposed to be sent back to the client within the
-        response body with the 'application/json' content type set in HTTP
-        response headers.  That way the client side code will be able to
-        process it.
+        returned value is typically a data structure to be encoded into a JSON
+        string and sent back to the client within the response body with the
+        'application/json' content type set in HTTP response headers.  That way
+        the client side code will be able to process it.  Alternatively, the
+        result may be an 'lcg.Content' instance which should be exported and
+        sent back to the client as 'text/html'.
 
-        May raise 'pytis.web.BadRequest' exception id the request parameters
+        May raise 'pytis.web.BadRequest' exception if the request parameters
         don't make sense.
 
         """
         if req.param('_pytis_attachment_storage_request'):
             return self._attachment_storage_request(req)
+        if req.param('_pytis_insert_new_row'):
+            form = self._find_subform(self._layout)
+            return form.ajax_response(req)
         request_number = req.param('_pytis_form_update_request')
         changed_field = str(req.param('_pytis_form_changed_field'))
         order = self._field_order()
@@ -1330,12 +1350,15 @@ class BrowseForm(LayoutForm):
                 return len(order.strip('.').split('.')) - 1
         return None
 
+    def _popup_menu_items(self, context, row):
+        return [lcg.PopupMenuItem(action.title(),
+                                  tooltip=action.descr(),
+                                  enabled=enabled,
+                                  uri=self._uri_provider(row, UriType.ACTION, action))
+                for action, enabled in self._visible_actions(context, row)]
+
     def _export_popup_ctrl(self, context, row, selector):
-        items = [lcg.PopupMenuItem(action.title(),
-                                   tooltip=action.descr(),
-                                   enabled=enabled,
-                                   uri=self._uri_provider(row, UriType.ACTION, action))
-                 for action, enabled in self._visible_actions(context, row)]
+        items = self._popup_menu_items(context, row)
         if items:
             ctrl = lcg.PopupMenuCtrl(items, _("Popup the menu of actions for this record"),
                                      selector)
@@ -1388,7 +1411,7 @@ class BrowseForm(LayoutForm):
                 kwargs['style'] = style
         return kwargs
 
-    def _row_style(self, row, n):
+    def _row_attr(self, row, n):
         row_style = self._view.row_style()
         if isinstance(row_style, collections.Callable):
             row_style = row_style(row)
@@ -1404,17 +1427,17 @@ class BrowseForm(LayoutForm):
             style = self._style(row_style)
         else:
             style = None
-        kwargs = dict(cls=' '.join(cls))
+        attr = dict(cls=' '.join(cls))
         if style:
-            kwargs['style'] = style
-        return kwargs
+            attr['style'] = style
+        return attr
     
     def _export_row(self, context, row, n, row_id):
         g = context.generator()
         cells = [g.td(self._export_cell(context, row, n, field), align=self._align.get(field.id),
                       **self._field_style(field, row))
                  for field in self._column_fields]
-        return g.tr(cells, id=row_id, **self._row_style(row, n))
+        return g.tr(cells, id=row_id, **self._row_attr(row, n))
 
     def _export_aggregation(self, context, op):
         def export_aggregation_value(data, op, field):
@@ -1631,7 +1654,8 @@ class BrowseForm(LayoutForm):
         else:
             foot_rows = []
         headings = self._export_headings(context)
-        foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
+        if summary:
+            foot_rows.append(g.tr(g.td(summary, colspan=len(headings))))
         return g.table((g.thead(g.tr(headings)),
                         g.tfoot(foot_rows),
                         g.tbody(rows)), border=1)
@@ -1909,7 +1933,7 @@ class BrowseForm(LayoutForm):
         
     def arguments(self):
         """Return the current select arguments as a dictionary."""
-        return  self._arguments
+        return self._arguments
 
     def rows(self):
         """Return a generator returning all form data rows as 'pytis.data.Row' instances.
@@ -2043,7 +2067,7 @@ class ListView(BrowseForm):
                                               self._uri_provider(row, UriType.LINK, None)))
         # We use only css class name from row_style, because we consider the
         # other attributes to be BrowseForm specific.
-        cls = 'list-item ' + self._row_style(row, n)['cls']
+        cls = 'list-item ' + self._row_attr(row, n)['cls']
         result = g.div(parts, id=row_id, cls=cls)
         for tree_level in reversed(range(self._tree_level() or 0)):
             result = g.div(result, cls='tree-indent tree-level-%d' % (tree_level + 1))
@@ -2196,13 +2220,18 @@ class EditableBrowseForm(BrowseForm):
 
     """
     
-    def __init__(self, view, req, row, editable_columns=None, set_row_callback=None, **kwargs):
+    def __init__(self, view, req, row, editable_columns=None, set_row_callback=None,
+                 allow_insertion=False, extra_rows=0, **kwargs):
         """Arguments:
 
             editable_columns -- a sequence of column identifiers whoose fields
               will be editable.
             set_row_callback -- callback function called on each form row
               initialization.  Function of one argument - PresentedRow instance.
+            allow_insertion -- boolean flag indicating whether insertion of new
+              table rows is allowed.
+            extra_rows -- number of extra rows to insert into the form
+              (allow_insertion must be True)
 
           See the parent classes for definition of the remaining arguments.
           The arguments 'limits' and 'limit' are ignored.
@@ -2213,10 +2242,13 @@ class EditableBrowseForm(BrowseForm):
             set_row_callback
         self._editable_columns = editable_columns
         self._set_row_callback = set_row_callback
-        self._valid_rows = []
-        kwargs['limits'] = ()
-        kwargs['limit'] = None
-        super(EditableBrowseForm, self).__init__(view, req, row, **kwargs)
+        self._valid_rows = ()
+        self._removed_rows = ()
+        self._allow_insertion = allow_insertion
+        self._extra_rows = extra_rows
+        super(EditableBrowseForm, self).__init__(view, req, row,
+                                                 **dict(kwargs, limits=(), limit=None,
+                                                        row_actions=True))
         if __debug__:
             for cid in editable_columns:
                 assert cid in self._row, cid
@@ -2227,13 +2259,18 @@ class EditableBrowseForm(BrowseForm):
         return super(EditableBrowseForm, self)._export_cell(context, row, n, field,
                                                             editable=editable)
 
+    def _row_attr(self, row, n):
+        attr = super(EditableBrowseForm, self)._row_attr(row, n)
+        attr['data-pytis-row-key'] = row[self._key].export()
+        return attr
+
     def _set_row(self, row):
         super(EditableBrowseForm, self)._set_row(row)
         if self._set_row_callback:
             self._set_row_callback(self._row)
-        if self._req.param('submit'):
+        if self._req.param('submit') and not self._req.param('_pytis_insert_new_row'):
             # If we are displaying a submitted form (after validation failed in
-            # 'submit()'), we need to revalidate editable fields in each row
+            # 'validate()'), we need to revalidate editable fields in each row
             # to be able to display the form with the invalid user values
             # and validation error messages within the fields.
             locale_data = self._req.localizer().locale_data()
@@ -2254,6 +2291,56 @@ class EditableBrowseForm(BrowseForm):
                 result += context.generator().div(error.message(), cls='validation-error')
         return result
 
+    def _popup_menu_items(self, context, row):
+        return [lcg.PopupMenuItem(_("Remove"),
+                                  callback='pytis.BrowseFormHandler.remove_row')]
+
+    def _export_javascript(self, context, form_id):
+        g = context.generator()
+        uri = self._uri_provider(None, UriType.LINK, None)
+        return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri,
+                         self._allow_insertion)
+
+    def _table_rows(self):
+        rows = super(EditableBrowseForm, self)._table_rows()
+        self._row.inserted_row_number = 0
+        def g():
+            for row in rows:
+                yield row
+            for i in range(self._extra_rows):
+                self._row.inserted_row_number += 1
+                yield None
+        return g()
+
+    def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
+        g = context.generator()
+        if self._allow_insertion:
+            summary = None
+        hidden = g.hidden(self._name + '_inserted_rows', self._extra_rows)
+        return super(EditableBrowseForm, self)._wrap_exported_rows(context, rows, summary,
+                                                                   count, page, pages) + hidden
+
+    def ajax_response(self, req):
+        """Return the AJAX request response as a JSON encoded data structure.
+
+        Same rules for the returned value apply as in 'EditForm.ajax_response()'.
+
+        """
+        try:
+            inserted_rows = int(req.param(self._name + '_inserted_rows'))
+        except (TypeError, ValueError):
+            inserted_rows = 0
+        self._row.inserted_row_number = inserted_rows + 1
+        self._set_row(None)
+        def export_row(context):
+            self._group = True
+            self._last_group = None
+            return self._export_row(context, self._row, 0, None)
+        class TableRow(lcg.Content):
+            def export(self, context):
+                return export_row(context)
+        return TableRow()
+
     def validate(self, req):
         """Validate the submitted form and return True if no errors are found.
 
@@ -2263,39 +2350,50 @@ class EditableBrowseForm(BrowseForm):
 
         """
         data = self._row.data()
-        data.select(columns=self._select_columns,
-                    condition=self._conditions(),
-                    arguments=self._arguments,
-                    sort=self._sorting)
+        try:
+            self._extra_rows = int(req.param(self._name + '_inserted_rows'))
+        except (TypeError, ValueError):
+            pass
         locale_data = req.localizer().locale_data()
         column_ids = [c.id() for c in data.columns()]
         for cid in self._editable_columns:
             if cid not in column_ids:
                 column_ids.append(cid)
-        self._valid_rows = rows = []
-        try:
-            while True:
-                row = data.fetchone()
-                if row is None:
-                    break
-                self._set_row(row)
-                for cid in self._editable_columns:
-                    field = self._fields[cid]
-                    error = field.validate(req, locale_data)
-                    if error:
-                        return False
-                rows.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
-        finally:
-            data.close()
-        return True
+        rows = []
+        removed = []
+        valid = True
+        removed_keys = pytis.util.xtuple(req.param('_pytis_removed_row_key'))
+        for row in self._table_rows():
+            self._set_row(row)
+            if self._row[self._key].export() in removed_keys:
+                if row is not None:
+                    removed.append(row)
+                continue
+            for cid in self._editable_columns:
+                field = self._fields[cid]
+                error = field.validate(req, locale_data)
+                if error:
+                    valid = False
+            rows.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
+        self._valid_rows = tuple(rows)
+        self._removed_rows = tuple(removed)
+        return valid
 
-    def rows(self):
-        """Return validated form data as a sequence of 'pytis.data.Row' instances.
+    def valid_rows(self):
+        """Return validated form data as a tuple of 'pytis.data.Row' instances.
 
-        Returns a list of rows, where each row contains all non-virtual columns
-        plus also values of all editable virtual columns.  An empty list is
-        returned if previous validation (calling 'validate()') of at least one
-        form field failed or if validation has not been called yet.
+        Returns a tuple of rows, where each row contains all non-virtual
+        columns plus also values of all editable virtual columns.  'validate()'
+        must be called before.  Invalid field values (when 'validate()'
+        returned false) will not be present in the returned data.
 
         """
         return self._valid_rows
+
+    def removed_rows(self):
+        """Return all rows removed from the form as a tuple of 'pytis.data.Row' instances.
+
+        'validate()' must be called before.
+
+        """
+        return self._removed_rows

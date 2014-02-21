@@ -90,7 +90,7 @@ pytis.BrowseFormHandler = Class.create({
     access it as '$(form_id).instance'.
       
      */
-    initialize: function(form_id, form_name, uri) {
+    initialize: function(form_id, form_name, uri, allow_insertion) {
 	/* form_id ... HTML id of the pytis form top level element (string)
  	   form_name ... Form name used for distinguishing request parameters
    	     (see form_name in the python class).
@@ -122,6 +122,12 @@ pytis.BrowseFormHandler = Class.create({
 	    this.bind_search_controls(this.form.down('.list-form-controls', 0));
 	    this.bind_search_controls(this.form.down('.list-form-controls', 1));
 	    this.bind_table_headings(this.form.down('table'));
+	}
+	if (allow_insertion) {
+	    var insert_button = new Element('button', {'class': 'new-row-button'});
+	    insert_button.update(pytis._("New row"));
+	    insert_button.observe('click', this.on_insert_new_row.bind(this));
+	    this.form.insert(insert_button);
 	}
     },
 
@@ -266,7 +272,7 @@ pytis.BrowseFormHandler = Class.create({
 	    event.stop();
 	}
     },
-    
+
     on_show_search_controls: function(event) {
 	var search_controls = $(this.form).down('div.query');
 	var i, panel, button;
@@ -294,6 +300,39 @@ pytis.BrowseFormHandler = Class.create({
 	event.stop();
     },
 
+    on_insert_new_row: function(event) {
+	var form = this.form.down('form');
+	if (!form) {
+	    form = this.form.up('form');
+	}
+	var parameters = {'_pytis_form_update_request': 1,
+			  '_pytis_insert_new_row': 1};
+	if (form) {
+	    form.request({
+		parameters: parameters,
+		onSuccess: function(transport) {
+		    try {
+			var tbody = this.form.down('tbody');
+			tbody.insert(transport.responseText);
+			form[this.form_name  + '_inserted_rows'].value++;
+			document.body.style.cursor = "default";
+		    } catch (e) {
+			// Errors in asynchronous handlers are otherwise silently
+			// ignored.  This will only work in Firefox with Firebug,
+			// but it is only useful for debugging anyway...
+			console.log(e);
+		    } finally {
+			document.body.style.cursor = "default";
+		    }
+		}.bind(this),
+		onFailure: function(transport) {
+		    document.body.style.cursor = "default";
+		}.bind(this)
+	    });
+	}
+	event.stop();
+    },
+
     on_load: function (callback) {
 	/* Call given callback function when the form is fully loaded.
 
@@ -311,6 +350,15 @@ pytis.BrowseFormHandler = Class.create({
 	}
     }
 });
+
+pytis.BrowseFormHandler.remove_row = function (element) {
+    /* This must be defined as a static method to be able to pass its name though Python. */
+    var tr = element.up('tr');
+    tr.up('form').insert(new Element('input', {type: 'hidden',
+					       name: '_pytis_removed_row_key',
+					       value: tr.getAttribute('data-pytis-row-key')}));
+    tr.remove();
+};
 
 pytis.FormHandler = Class.create({
     initialize: function(form_id, fields, state) {
