@@ -81,18 +81,21 @@ begin
 end;
 $$ language plpgsql;
 
-create or replace function pytis_crypto_insert_key (name_ text, user_ text, key_ text, psw text) returns bool as $$
+create or replace function pytis_crypto_insert_key (name_ text, user_ text, key_ text, psw text)
+        returns bool as $$
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   if (select count(*) from e_pytis_crypto_keys where name=name_ and username=user_) > 0 then
     return False;
   end if;
-  insert into e_pytis_crypto_keys (name, username, key) values (name_, user_, pytis_crypto_store_key(key_, psw));
+  insert into e_pytis_crypto_keys (name, username, key)
+        values (name_, user_, pytis_crypto_store_key(key_, psw));
   return True;
 end;
 $$ language plpgsql;
 
-create or replace function pytis_crypto_change_password (id_ int, old_psw text, new_psw text) returns bool as $$
+create or replace function pytis_crypto_change_password (id_ int, old_psw text, new_psw text)
+        returns bool as $$
 declare
   key_ text;
   plain_old_psw text := pytis_crypto_decrypt_db_password(old_psw, 'pytis');
@@ -100,7 +103,8 @@ declare
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   begin
-    select pytis_crypto_extract_key(key, plain_old_psw) into key_ from e_pytis_crypto_keys where key_id=id_;
+    select pytis_crypto_extract_key(key, plain_old_psw) into key_ from e_pytis_crypto_keys
+        where key_id=id_;
   exception
     when OTHERS then
       key_ := null;
@@ -108,18 +112,21 @@ begin
   if key_ is null then
     return False;
   end if;
-  update e_pytis_crypto_keys set key=pytis_crypto_store_key(key_, plain_new_psw), fresh=False where key_id=id_;
+  update e_pytis_crypto_keys set key=pytis_crypto_store_key(key_, plain_new_psw), fresh=False
+        where key_id=id_;
   return True;
 end;
 $$ language plpgsql security definer;
 
-create or replace function pytis_crypto_copy_key (name_ text, from_user text, to_user text, from_psw text, to_psw text) returns bool as $$
+create or replace function pytis_crypto_copy_key (name_ text, from_user text, to_user text,
+        from_psw text, to_psw text) returns bool as $$
 declare
   key_ text;
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   begin
-    select pytis_crypto_extract_key(key, from_psw) into key_ from e_pytis_crypto_keys where name=name_ and username=from_user;
+    select pytis_crypto_extract_key(key, from_psw) into key_ from e_pytis_crypto_keys
+        where name=name_ and username=from_user;
   exception
     when OTHERS then
       key_ := null;
@@ -134,7 +141,8 @@ begin
 end;
 $$ language plpgsql;
 
-create or replace function pytis_crypto_delete_key (name_ text, user_ text, force bool) returns bool as $$
+create or replace function pytis_crypto_delete_key (name_ text, user_ text, force bool)
+        returns bool as $$
 begin
   lock e_pytis_crypto_keys in exclusive mode;
   if not force and (select count(*) from e_pytis_crypto_keys where name=name_) <= 1 then
@@ -256,7 +264,8 @@ class PytisCryptoDecryptDbPassword(sql.SQLRaw):
     @classmethod
     def sql(class_):
         return """
-create or replace function pytis_crypto_decrypt_db_password (password_ text, key_name_ text) returns text as $$
+create or replace function pytis_crypto_decrypt_db_password (password_ text, key_name_ text)
+        returns text as $$
 declare
   key text;
 begin
@@ -287,7 +296,8 @@ class PytisCryptoUnlockPasswords(sql.SQLRaw):
     @classmethod
     def sql(class_):
         return """
-create or replace function pytis_crypto_unlock_passwords (user_ text, password_ text) returns setof text as $$
+create or replace function pytis_crypto_unlock_passwords (user_ text, password_ text)
+        returns setof text as $$
 declare
   plain_password text := pytis_crypto_decrypt_db_password(password_, 'pytis');
 begin
@@ -301,7 +311,8 @@ begin
   insert into t_pytis_passwords
          (select name, pytis_crypto_extract_key(key, plain_password)
                  from e_pytis_crypto_keys
-                 where username=user_ and pytis_crypto_extract_key(key, plain_password) is not null);
+                 where username=user_ and
+                       pytis_crypto_extract_key(key, plain_password) is not null);
   return query select name from t_pytis_passwords;
 end;
 $$ language plpgsql;
@@ -314,11 +325,13 @@ class PytisCryptoUnlockCurrentUserPasswords(sql.SQLRaw):
     @classmethod
     def sql(class_):
         return """
-create or replace function pytis_crypto_unlock_current_user_passwords (password_ text) returns setof text as $$
+create or replace function pytis_crypto_unlock_current_user_passwords (password_ text)
+        returns setof text as $$
 select * from pytis_crypto_unlock_passwords(current_user, $1);
 $$ language sql;
 
--- create function pytis_crypto_user_contact (username text) returns pytis_crypto_t_user_contact as ...
+-- create function pytis_crypto_user_contact (username text)
+-- returns pytis_crypto_t_user_contact as ...
 """
     depends_on = (EPytisCryptoKeys, PytisBasicCryptoFunctions, PytisCryptoDbKeys,
                   PytisCryptoUnlockPasswords,)

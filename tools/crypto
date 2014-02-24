@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2012 Brailcom, o.p.s.
+# Copyright (C) 2012, 2014 Brailcom, o.p.s.
 #
 # COPYRIGHT NOTICE
 #
@@ -155,7 +155,7 @@ def command_password(configuration, args):
     area = args.pop(0)
     if args:
         print "Error: extra arguments:", args
-        return        
+        return
     connection_data = configuration.connection_data()
     key_id, key = admin_key(area, connection_data)
     if key_id is None:
@@ -213,17 +213,17 @@ def command_add_user(configuration, args):
         print "Error: invalid password"
         return
     function = pytis.data.DBFunctionDefault('pytis_crypto_copy_key', connection_data)
-    row = pytis.data.Row ((('name_', pytis.data.sval(area),),
-                           ('from_user', pytis.data.sval(admin_user),),
-                           ('to_user', pytis.data.sval(user),),
-                           ('from_psw', pytis.data.sval(admin_password),),
-                           ('to_psw', pytis.data.sval(user_password),),))
+    row = pytis.data.Row((('name_', pytis.data.sval(area),),
+                          ('from_user', pytis.data.sval(admin_user),),
+                          ('to_user', pytis.data.sval(user),),
+                          ('from_psw', pytis.data.sval(admin_password),),
+                          ('to_psw', pytis.data.sval(user_password),),))
     if not function.call(row, transaction=transaction)[0][0]:
         print "Error: user key installation failed"
         return
     subject = u"Vaše heslo pro šifrovanou oblast %s" % (area,)
     text = u"Vaše heslo pro šifrovanou aplikační oblast %s je:\n%s\n" % (area, user_password,)
-    error = pytis.extensions.send_mail(email, sender,subject, text, key=gpg_key)
+    error = pytis.extensions.send_mail(email, sender, subject, text, key=gpg_key)
     if error:
         print "Error: failure when sending mail to the user:", error
         return
@@ -237,7 +237,7 @@ def command_delete_user(configuration, args):
     user = args.pop(0)
     if args:
         print "Error: extra arguments:", args
-        return        
+        return
     connection_data = configuration.connection_data()
     data = key_table(connection_data)
     condition = pytis.data.AND(pytis.data.EQ('username', pytis.data.sval(user)),
@@ -268,7 +268,7 @@ def command_encrypt(configuration, args):
         table_name = table
     else:
         schema_name = table[:pos]
-        table_name = table[pos+1:]
+        table_name = table[pos + 1:]
     cursor.execute(("select typname from pg_class join "
                     "pg_namespace on (relnamespace=pg_namespace.oid) join "
                     "pg_attribute on (attrelid=pg_class.oid) join "
@@ -307,7 +307,8 @@ def command_encrypt(configuration, args):
     if not check_password(key, password, connection_data):
         print "Error: invalid admin password for area:", area
         return
-    cursor.execute("select pytis_crypto_unlock_passwords (%s, %s)", (admin_user, encrypted_password,))
+    cursor.execute("select pytis_crypto_unlock_passwords (%s, %s)",
+                   (admin_user, encrypted_password,))
     if not cursor.fetchone():
         print "Error: password not accepted"
         return
@@ -339,7 +340,6 @@ def command_new_communication_key(configuration, args):
             print "Error: BITS must be power of 2"
             return
         n = n / 2
-    connection_data = configuration.connection_data()
     connection = configuration.connect()
     cursor = connection.cursor()
     cursor.execute("select pytis_crypto_create_db_key('pytis', %s)", (bits,))
