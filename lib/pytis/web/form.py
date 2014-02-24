@@ -2243,7 +2243,7 @@ class EditableBrowseForm(BrowseForm):
         self._editable_columns = editable_columns
         self._set_row_callback = set_row_callback
         self._valid_rows = ()
-        self._removed_rows = ()
+        self._removed_rows = []
         self._allow_insertion = allow_insertion
         self._extra_rows = extra_rows
         super(EditableBrowseForm, self).__init__(view, req, row,
@@ -2261,7 +2261,11 @@ class EditableBrowseForm(BrowseForm):
 
     def _row_attr(self, row, n):
         attr = super(EditableBrowseForm, self)._row_attr(row, n)
-        attr['data-pytis-row-key'] = row[self._key].export()
+        if row[self._key].value() is None:
+            key = row[self._key].export()
+        else:
+            key = 'pytis-inserted-row-%d' % row.inserted_row_number
+        attr['data-pytis-row-key'] = key
         return attr
 
     def _set_row(self, row):
@@ -2303,13 +2307,19 @@ class EditableBrowseForm(BrowseForm):
 
     def _table_rows(self):
         rows = super(EditableBrowseForm, self)._table_rows()
-        self._row.inserted_row_number = 0
+        self._row.inserted_row_number = None
+        removed_keys = pytis.util.xtuple(self._req.param('_pytis_removed_row_key'))
+        self._removed_rows = []
         def g():
             for row in rows:
-                yield row
+                if row[self._key].export() in removed_keys:
+                    self._removed_rows.append(row)
+                else:
+                    yield row
             for i in range(self._extra_rows):
-                self._row.inserted_row_number += 1
-                yield None
+                self._row.inserted_row_number = i
+                if 'pytis-inserted-row-%d' % i not in removed_keys:
+                    yield None
         return g()
 
     def _wrap_exported_rows(self, context, rows, summary, count, page, pages):
@@ -2317,6 +2327,8 @@ class EditableBrowseForm(BrowseForm):
         if self._allow_insertion:
             summary = None
         hidden = g.hidden(self._name + '_inserted_rows', self._extra_rows)
+        for row_key in pytis.util.xtuple(self._req.param('_pytis_removed_row_key')):
+            hidden += g.hidden('_pytis_removed_row_key', row_key)
         return super(EditableBrowseForm, self)._wrap_exported_rows(context, rows, summary,
                                                                    count, page, pages) + hidden
 
@@ -2330,7 +2342,7 @@ class EditableBrowseForm(BrowseForm):
             inserted_rows = int(req.param(self._name + '_inserted_rows'))
         except (TypeError, ValueError):
             inserted_rows = 0
-        self._row.inserted_row_number = inserted_rows + 1
+        self._row.inserted_row_number = inserted_rows
         self._set_row(None)
         def export_row(context):
             self._group = True
@@ -2360,15 +2372,9 @@ class EditableBrowseForm(BrowseForm):
             if cid not in column_ids:
                 column_ids.append(cid)
         rows = []
-        removed = []
         valid = True
-        removed_keys = pytis.util.xtuple(req.param('_pytis_removed_row_key'))
         for row in self._table_rows():
             self._set_row(row)
-            if self._row[self._key].export() in removed_keys:
-                if row is not None:
-                    removed.append(row)
-                continue
             for cid in self._editable_columns:
                 field = self._fields[cid]
                 error = field.validate(req, locale_data)
@@ -2376,7 +2382,6 @@ class EditableBrowseForm(BrowseForm):
                     valid = False
             rows.append(pd.Row([(cid, self._row[cid]) for cid in column_ids]))
         self._valid_rows = tuple(rows)
-        self._removed_rows = tuple(removed)
         return valid
 
     def valid_rows(self):
@@ -2396,4 +2401,4 @@ class EditableBrowseForm(BrowseForm):
         'validate()' must be called before.
 
         """
-        return self._removed_rows
+        return tuple(self._removed_rows)
