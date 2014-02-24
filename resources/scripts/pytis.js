@@ -48,7 +48,7 @@
 
 var pytis = {};
 
-pytis.gettext = new Gettext({domain:'pytis'});
+pytis.gettext = new Gettext({domain:'pytis-web'});
 pytis._ = function (msg) { return pytis.gettext.gettext(msg); };
 
 pytis.show_tooltip = function(event, uri) {
