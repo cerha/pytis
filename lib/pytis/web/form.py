@@ -222,7 +222,8 @@ class Form(lcg.Content):
             context.resource('gettext.js')
             context.resource('pytis.js')
             if context.lang() != 'en':
-                context.resource('pytis.%s.po' % context.lang()) # Translations for Javascript
+                # Translations for Javascript
+                context.resource('pytis-web.%s.po' % context.lang())
         result = g.div(self._export_form(context, form_id), cls=cls, id=form_id)
         if javascript:
             result += g.script(javascript)
