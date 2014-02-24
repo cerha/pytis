@@ -3188,7 +3188,7 @@ class Field(object):
             if selection_type is None:
                 selection_type = e.selection_type
             if default is None and e.default is not None:
-                assert e.default in [v for v, l in e.enumeration]
+                assert e.default in [v for v, l in e.enumeration], (e.default, e.enumeration,)
                 default = e.default
             if display is None:
                 labels = dict(e.enumeration)
