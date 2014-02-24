@@ -344,6 +344,12 @@
     color: #000;
 }
 
+.pytis-form.browse-form .new-row-button {
+    position: relative;
+    left: -2px;
+    top: 2px;
+}
+
 
 
 /* Border-less table:
