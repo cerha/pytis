@@ -314,7 +314,7 @@ pytis.BrowseFormHandler = Class.create({
 		    try {
 			var tbody = this.form.down('tbody');
 			tbody.insert(transport.responseText);
-			form[this.form_name  + '_inserted_rows'].value++;
+			form['_pytis_inserted_rows_' + this.form_name].value++;
 			document.body.style.cursor = "default";
 		    } catch (e) {
 			// Errors in asynchronous handlers are otherwise silently
@@ -351,11 +351,11 @@ pytis.BrowseFormHandler = Class.create({
     }
 });
 
-pytis.BrowseFormHandler.remove_row = function (element) {
-    /* This must be defined as a static method to be able to pass its name though Python. */
+pytis.BrowseFormHandler.remove_row = function (element, form_name) {
+    /* This must be defined as a static method to be able to pass its name through Python. */
     var tr = element.up('tr');
     tr.up('form').insert(new Element('input', {type: 'hidden',
-					       name: '_pytis_removed_row_key',
+					       name: '_pytis_removed_row_key_' + form_name,
 					       value: tr.getAttribute('data-pytis-row-key')}));
     tr.remove();
 };

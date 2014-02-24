@@ -2297,7 +2297,8 @@ class EditableBrowseForm(BrowseForm):
 
     def _popup_menu_items(self, context, row):
         return [lcg.PopupMenuItem(_("Remove"),
-                                  callback='pytis.BrowseFormHandler.remove_row')]
+                                  callback='pytis.BrowseFormHandler.remove_row',
+                                  callback_args=(self._name,))]
 
     def _export_javascript(self, context, form_id):
         g = context.generator()
@@ -2305,10 +2306,18 @@ class EditableBrowseForm(BrowseForm):
         return g.js_call("new pytis.BrowseFormHandler", form_id, self._name, uri,
                          self._allow_insertion)
 
+    def _removed_keys(self):
+        param = '_pytis_removed_row_key_' + self._name
+        if self._req.has_param(param):
+            removed_keys = pytis.util.xtuple(self._req.param(param))
+        else:
+            removed_keys = ()
+        return removed_keys
+            
     def _table_rows(self):
         rows = super(EditableBrowseForm, self)._table_rows()
         self._row.inserted_row_number = None
-        removed_keys = pytis.util.xtuple(self._req.param('_pytis_removed_row_key'))
+        removed_keys = self._removed_keys()
         self._removed_rows = []
         def g():
             for row in rows:
@@ -2326,9 +2335,9 @@ class EditableBrowseForm(BrowseForm):
         g = context.generator()
         if self._allow_insertion:
             summary = None
-        hidden = g.hidden(self._name + '_inserted_rows', self._extra_rows)
-        for row_key in pytis.util.xtuple(self._req.param('_pytis_removed_row_key')):
-            hidden += g.hidden('_pytis_removed_row_key', row_key)
+        hidden = g.hidden('_pytis_inserted_rows_' + self._name, self._extra_rows)
+        for row_key in self._removed_keys():
+            hidden += g.hidden('_pytis_removed_row_key_' + self._name, row_key)
         return super(EditableBrowseForm, self)._wrap_exported_rows(context, rows, summary,
                                                                    count, page, pages) + hidden
 
@@ -2339,7 +2348,7 @@ class EditableBrowseForm(BrowseForm):
 
         """
         try:
-            inserted_rows = int(req.param(self._name + '_inserted_rows'))
+            inserted_rows = int(req.param('_pytis_inserted_rows_' + self._name))
         except (TypeError, ValueError):
             inserted_rows = 0
         self._row.inserted_row_number = inserted_rows
@@ -2363,7 +2372,7 @@ class EditableBrowseForm(BrowseForm):
         """
         data = self._row.data()
         try:
-            self._extra_rows = int(req.param(self._name + '_inserted_rows'))
+            self._extra_rows = int(req.param('_pytis_inserted_rows_' + self._name))
         except (TypeError, ValueError):
             pass
         locale_data = req.localizer().locale_data()
