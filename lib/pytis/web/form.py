@@ -2296,7 +2296,7 @@ class EditableBrowseForm(BrowseForm):
         return result
 
     def _popup_menu_items(self, context, row):
-        return [lcg.PopupMenuItem(_("Remove"),
+        return [lcg.PopupMenuItem(_("Remove this row"),
                                   callback='pytis.BrowseFormHandler.remove_row',
                                   callback_args=(self._name,))]
 
