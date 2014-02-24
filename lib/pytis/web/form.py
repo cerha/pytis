@@ -2261,7 +2261,7 @@ class EditableBrowseForm(BrowseForm):
 
     def _row_attr(self, row, n):
         attr = super(EditableBrowseForm, self)._row_attr(row, n)
-        if row[self._key].value() is None:
+        if row[self._key].value() is not None:
             key = row[self._key].export()
         else:
             key = 'pytis-inserted-row-%d' % row.inserted_row_number
@@ -2348,10 +2348,9 @@ class EditableBrowseForm(BrowseForm):
 
         """
         try:
-            inserted_rows = int(req.param('_pytis_inserted_rows_' + self._name))
+            self._row.inserted_row_number = int(req.param('_pytis_inserted_rows_' + self._name))
         except (TypeError, ValueError):
-            inserted_rows = 0
-        self._row.inserted_row_number = inserted_rows
+            self._row.inserted_row_number = None
         self._set_row(None)
         def export_row(context):
             self._group = True
