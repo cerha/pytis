@@ -69,9 +69,7 @@ class Configuration(object):
         return connection
 
 def key_table(connection_data):
-    return pytis.data.dbtable('e_pytis_crypto_keys',
-                              ('key_id', 'name', 'username', 'key', 'fresh',),
-                              connection_data)
+    return pytis.extensions.crypto_key_table(connection_data)
 
 def check_area(connection_data, name):
     data = pytis.data.dbtable('c_pytis_crypto_names', ('name', 'description',), connection_data)
@@ -89,18 +87,10 @@ def read_password(repeat=False, prompt="Password: "):
     return password, encrypted_password
 
 def check_password(key, password, connection_data):
-    function = pytis.data.DBFunctionDefault('pytis_crypto_extract_key', connection_data)
-    row = pytis.data.Row((('encrypted', key,), ('psw', pytis.data.sval(password),),))
-    return True if function.call(row)[0][0].value() else False
+    return pytis.extensions.check_password(key, password, connection_data)
 
 def admin_key(area, connection_data):
-    data = key_table(connection_data)
-    condition = pytis.data.AND(pytis.data.EQ('username', pytis.data.sval(admin_user)),
-                               pytis.data.EQ('name', pytis.data.sval(area)))
-    if not data.select(condition):
-        return None, None
-    row = data.fetchone()
-    return row['key_id'], row['key']
+    return pytis.extensions.crypto_admin_key(area, admin_user, connection_data)
     
 def command_new_key(configuration, args):
     if not args:
@@ -187,47 +177,12 @@ def command_add_user(configuration, args):
         return
     area, user, sender = args
     connection_data = configuration.connection_data()
-    key_id, key = admin_key(area, connection_data)
-    if key_id is None:
-        print "Error: admin key not found for the area:", area
-        return
-    transaction = pytis.data.DBTransactionDefault(connection_data)
-    condition = pytis.data.AND(pytis.data.EQ('name', pytis.data.sval(area)),
-                               pytis.data.EQ('username', pytis.data.sval(user)))
-    data = pytis.data.dbtable('e_pytis_crypto_keys', ('name', 'username',), connection_data)
-    if data.select(condition) > 0:
-        print "Error: key already exists for the given user and area:", user, area
-        return
-    data.close()
-    function = pytis.data.DBFunctionDefault('pytis_crypto_user_contact', connection_data)
-    row = pytis.data.Row((('username', pytis.data.sval(user),),))
-    result = function.call(row, transaction=transaction)[0]
-    email, gpg_key = [v.value() for v in result]
-    if gpg_key is None:
-        print "Error: crypto contact not found for user:", user
-        return
-    characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789_-=$#%!'
-    user_password = string.join([characters[ord(c) % 64] for c in os.urandom(32)], '')
-    admin_password, encrypted_password = read_password(prompt="Key password: ")
-    if not check_password(key, admin_password, connection_data):
-        print "Error: invalid password"
-        return
-    function = pytis.data.DBFunctionDefault('pytis_crypto_copy_key', connection_data)
-    row = pytis.data.Row((('name_', pytis.data.sval(area),),
-                          ('from_user', pytis.data.sval(admin_user),),
-                          ('to_user', pytis.data.sval(user),),
-                          ('from_psw', pytis.data.sval(admin_password),),
-                          ('to_psw', pytis.data.sval(user_password),),))
-    if not function.call(row, transaction=transaction)[0][0]:
-        print "Error: user key installation failed"
-        return
-    subject = u"Vaše heslo pro šifrovanou oblast %s" % (area,)
-    text = u"Vaše heslo pro šifrovanou aplikační oblast %s je:\n%s\n" % (area, user_password,)
-    error = pytis.extensions.send_mail(email, sender, subject, text, key=gpg_key)
+    error = add_crypto_user(area, user, admin_user, '', sender, connection_data)
+    if error == "invalid password":
+        admin_password, encrypted_password = read_password(prompt="Key password: ")
+        error = add_crypto_user(area, user, admin_user, admin_password, sender, connection_data)
     if error:
-        print "Error: failure when sending mail to the user:", error
-        return
-    transaction.commit()
+        print "Error: %s" % (error,)
 
 def command_delete_user(configuration, args):
     if len(args) < 2:

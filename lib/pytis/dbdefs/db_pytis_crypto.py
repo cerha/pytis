@@ -7,12 +7,16 @@ import pytis.data.gensqlalchemy as sql
 import pytis.data
 from pytis.dbdefs import Base_LogSQLTable, Base_PyFunction, PytisBasicCryptoFunctions, \
     XChanges, default_access_rights
+import pytis.util
+
+_ = pytis.util.translations('pytis-wx')
 
 class CPytisCryptoNames(Base_LogSQLTable):
     """Codebook of encryption areas defined in the application."""
     name = 'c_pytis_crypto_names'
-    fields = (sql.PrimaryColumn('name', pytis.data.String(not_null=False)),
-              sql.Column('description', pytis.data.String(not_null=False)),
+    fields = (sql.PrimaryColumn('name', pytis.data.String(not_null=False),
+                                label=_(u"Šifrovací oblast")),
+              sql.Column('description', pytis.data.String(not_null=False), label=_(u"Popis")),
               )
     inherits = (XChanges,)
     with_oids = True
@@ -23,12 +27,12 @@ class EPytisCryptoKeys(Base_LogSQLTable):
     """Table of encryption keys of users for defined encryption areas."""
     name = 'e_pytis_crypto_keys'
     fields = (sql.PrimaryColumn('key_id', pytis.data.Serial()),
-              sql.Column('name', pytis.data.String(not_null=True),
+              sql.Column('name', pytis.data.String(not_null=True), label=_(u"Šifrovací oblast"),
                          references=sql.a(sql.r.CPytisCryptoNames.name, onupdate='CASCADE')),
-              sql.Column('username', pytis.data.String(not_null=True),
+              sql.Column('username', pytis.data.String(not_null=True), label=_(u"Uživatel"),
                          doc="Arbitrary user identifier."),
               sql.Column('key', pytis.data.Binary(not_null=True)),
-              sql.Column('fresh', pytis.data.Boolean(not_null=True),
+              sql.Column('fresh', pytis.data.Boolean(not_null=True), label=_(u"Nový"),
                          doc="Flag indicating the key is encrypted by a non-login password. ",
                          default=False),
               )

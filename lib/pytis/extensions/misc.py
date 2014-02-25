@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2002, 2003, 2005, 2006, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ hodit.
 
 import os
 import re
+import string
 
 import pytis.presentation
 import pytis.util
@@ -288,3 +289,118 @@ def end_date_value(transaction=None):
     """Vrať nastavené 'datum do' přihlášeného uživatele."""
     from pytis.extensions import cfg_param
     return cfg_param('datum_do', 'Nastaveni.BvUsersCfg')
+
+# Database encryption utilities
+
+def crypto_key_table(connection_data):
+    """Return data object corresponding to the table of crypto keys.
+
+    Arguments:
+
+      connection_data -- database connection data; 'pytis.data.DBConnection'
+        instance
+
+    """
+    return pytis.data.dbtable('e_pytis_crypto_keys',
+                              ('key_id', 'name', 'username', 'key', 'fresh',),
+                              connection_data)
+
+def crypto_admin_key(area, admin_user, connection_data):
+    """Return crypto admin key for the given user and area.
+
+    The return value is a pair (KEY_ID, KEY) where KEY_ID is the database
+    record key and KEY is the actual key.
+
+    Arguments:
+
+      area -- name of the crypto area; basestring
+      admin_user -- login name of the crypto area administrator; basestring
+      connection_data -- database connection data; 'pytis.data.DBConnection'
+        instance
+    
+    """
+    data = crypto_key_table(connection_data)
+    condition = pytis.data.AND(pytis.data.EQ('username', pytis.data.sval(admin_user)),
+                               pytis.data.EQ('name', pytis.data.sval(area)))
+    if not data.select(condition):
+        return None, None
+    row = data.fetchone()
+    return row['key_id'], row['key']
+    
+def check_crypto_password(key, password, connection_data):
+    """Return true iff the given key and password match.
+
+    Arguments:
+
+      key -- encrypted key; basestring
+      password -- password to the key; basestring
+      connection_data -- database connection data; 'pytis.data.DBConnection'
+        instance
+     
+    """
+    function = pytis.data.DBFunctionDefault('pytis_crypto_extract_key', connection_data)
+    row = pytis.data.Row((('encrypted', key,), ('psw', pytis.data.sval(password),),))
+    return True if function.call(row)[0][0].value() else False
+
+def add_crypto_user(area, user, admin_user, admin_password, admin_address, connection_data,
+                    transaction=None):
+    """Add new crypto user for the given area.
+
+    If the action succeeds, return 'None'.  Otherwise return an error
+    description (basestring).
+
+    Arguments:
+
+      area -- name of the crypto area; basestring
+      user -- login name of the user to get the access to the area; basestring
+      admin_user -- login name of the crypto area administrator; basestring
+      admin_password -- password to the admin key; basestring
+      admin_address -- e-mail address of the admin user, to be used as the
+        sender of the notification e-mail; basestring
+      connection_data -- database connection data; 'pytis.data.DBConnection'
+        instance
+      transaction -- transaction to use
+
+    """
+    key_id, key = crypto_admin_key(area, admin_user, connection_data)
+    if key_id is None:
+        return "admin key not found for the area: %s" % (area,)
+    try:
+        transaction_ = transaction
+        if transaction_ is None:
+            transaction_ = pytis.data.DBTransactionDefault(connection_data)
+        condition = pytis.data.AND(pytis.data.EQ('name', pytis.data.sval(area)),
+                                   pytis.data.EQ('username', pytis.data.sval(user)))
+        data = pytis.data.dbtable('e_pytis_crypto_keys', ('name', 'username',), connection_data)
+        if data.select(condition) > 0:
+            return "key already exists for the given user and area: %s %s" % (user, area,)
+        data.close()
+        function = pytis.data.DBFunctionDefault('pytis_crypto_user_contact', connection_data)
+        row = pytis.data.Row((('username', pytis.data.sval(user),),))
+        result = function.call(row, transaction=transaction_)[0]
+        email, gpg_key = [v.value() for v in result]
+        if gpg_key is None:
+            return "crypto contact not found for user: %s" % (user,)
+        characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789_-=$#%!'
+        user_password = string.join([characters[ord(c) % 64] for c in os.urandom(32)], '')
+        if not check_crypto_password(key, admin_password, connection_data):
+            return "invalid password"
+        function = pytis.data.DBFunctionDefault('pytis_crypto_copy_key', connection_data)
+        row = pytis.data.Row((('name_', pytis.data.sval(area),),
+                              ('from_user', pytis.data.sval(admin_user),),
+                              ('to_user', pytis.data.sval(user),),
+                              ('from_psw', pytis.data.sval(admin_password),),
+                              ('to_psw', pytis.data.sval(user_password),),))
+        if not function.call(row, transaction=transaction_)[0][0]:
+            return "user key installation failed"
+        subject = u"Vaše heslo pro šifrovanou oblast %s" % (area,)
+        text = u"Vaše heslo pro šifrovanou aplikační oblast %s je:\n%s\n" % (area, user_password,)
+        error = send_mail(email, admin_address, subject, text, key=gpg_key)
+        if error:
+            return "failure when sending mail to the user: %s" % (error,)
+        if transaction is None:
+            transaction_.commit()
+        transaction_ = None
+    finally:
+        if transaction is None and transaction_ is not None:
+            transaction_.rollback()
