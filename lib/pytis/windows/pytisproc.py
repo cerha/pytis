@@ -304,10 +304,10 @@ class PytisUserService(PytisService):
         return shell.SHGetPathFromIDList(pidl)
 
     def exposed_select_file(self, filename=None, template=None, multi=False):
-        """Return a write-only 'file' like object of a user selected file.
+        """Return a list of filenames selected by user in GUI dialog.
 
-        The file is selected by the user using a GUI dialog.  If the user
-        cancels the dialog, 'None' is returned.
+        The filenames are selected by the user using a GUI dialog.  If the user
+        cancels the dialog, empty list is returned.
 
         Arguments:
 
@@ -319,36 +319,28 @@ class PytisUserService(PytisService):
         assert template is None or isinstance(template, basestring), template
         assert filename is None or isinstance(filename, basestring), filename
         assert isinstance(multi, bool), multi
-        import win32ui
-        import win32con
-        file_filter = u"Všechny soubory (*.*)|*.*||"
+        import Tkinter
+        import tkFileDialog
+        root = Tkinter.Tk()
+        root.withdraw()
+        file_filter = []
         extension = None
         if filename:
             name, ext = os.path.splitext(filename)
             if ext:
                 template = "*" + ext
-                file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
-                               (template, template, file_filter))
+                file_filter.append((u"Soubory požadovaného typu (%s)" % template, template))
                 extension = ext[1:]
         else:
-            filename = "*.*"
+            filename = None
             if template:
-                file_filter = (u"Soubory požadovaného typu (%s)|%s|%s" %
-                               (template, template, file_filter))
-        # This hack with finding non-specified windows is used so that
-        # we get some parent window for CreateFileDialog.
-        # Without this parent windows the method DoModal doesn't show
-        # the dialog window on top...
-        parent = win32ui.FindWindow(None, None)
-        flags = win32con.OFN_HIDEREADONLY | win32con.OFN_OVERWRITEPROMPT
-        if multi:
-            flags |= win32con.OFN_ALLOWMULTISELECT
-        dialog = win32ui.CreateFileDialog(1, extension, "%s" % (filename,), flags,
-                                          file_filter, parent)
-        result = dialog.DoModal()
-        if result != 1:
-            return None
-        filenames = dialog.GetPathNames()
+                file_filter.append((u"Soubory požadovaného typu (%s)" % template, template))
+        if len(file_filter) == 0:
+            file_filter.append((u"Všechny soubory (*.*)", "*.*"))
+        result = tkFileDialog.askopenfilename(parent=root, initialfile=filename,
+                                              defaultextension=extension, multi=multi)
+        filenames = root.tk.splitlist(result)
+        root = None
         return [unicode(f, sys.getfilesystemencoding()) for f in filenames]
 
 class PytisAdminService(PytisService):
