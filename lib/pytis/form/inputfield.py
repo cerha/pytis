@@ -1147,10 +1147,11 @@ class RadioBoxField(Unlabeled, GenericEnumerationField):
       height -- max number of rows (if the orientation is vertical)
 
     """
-    _DEFAULT_WIDTH = 1
+    _DEFAULT_WIDTH = 0
+    _DEFAULT_HEIGHT = 0
 
     def _create_ctrl(self, parent):
-        if self._spec.orientation() == Orientation.VERTICAL:
+        if self._spec.orientation() == Orientation.HORIZONTAL:
             style = wx.RA_SPECIFY_COLS
             dimension = self.width()
         else:
