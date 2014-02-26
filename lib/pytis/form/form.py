@@ -2738,6 +2738,10 @@ class EditForm(RecordForm, TitledForm, Refreshable):
         """
         return self._field(id)
     
+    def fields(self):
+        """Return all form fields as a tuple of 'InputField' instances."""
+        return self._fields
+    
     def changed(self):
         """Return true iff the form data was changed since last saved."""
         return self._row.changed()

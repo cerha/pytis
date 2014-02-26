@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -531,8 +531,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._top_level_sizer.Layout()
         if self._query_fields_minimized():
             row = form.row()
-            values = ['%s: %s' % (form.field(key).spec().label(), row.format(key))
-                      for key in row.keys() if key != '__changed']
+            values = ['%s: %s' % (field.spec().label(), row.format(field.id()))
+                      for field in form.fields()]
             panel.SetToolTipString(', '.join(values))
         elif panel.GetToolTip():
             panel.SetToolTipString(' ')
