@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # ATTENTION: This should be updated on each code change.
-_VERSION = '2013-10-17 17:35'
+_VERSION = '2014-02-25 17:35'
 
 import os
 import rpyc
