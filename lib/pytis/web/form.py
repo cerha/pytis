@@ -2351,7 +2351,7 @@ class EditableBrowseForm(BrowseForm):
         try:
             self._row.inserted_row_number = int(req.param('_pytis_inserted_rows_' + self._name))
         except (TypeError, ValueError):
-            self._row.inserted_row_number = None
+            self._row.inserted_row_number = 0
         self._set_row(None)
         def export_row(context):
             self._group = True
