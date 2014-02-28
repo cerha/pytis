@@ -3051,12 +3051,22 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                 self._pg_number_of_rows = number
         return number
 
+    def _pg_check_arguments(self, arguments):
+        if arguments is self.UNKNOWN_ARGUMENTS or not arguments:
+            return
+        assert self._arguments is not None, ("Arguments passed to a non-function", arguments,)
+        argument_names = [b.id() for b in self._arguments]
+        for k in arguments.keys():
+            assert k in argument_names, ("Invalid function argument", k,)
+
     # Veřejné metody a jimi přímo volané abstraktní metody
 
     def row(self, key, columns=None, transaction=None, arguments={}):
         #log(EVENT, 'Zjištění obsahu řádku:', key)
         if self._arguments is not None and arguments is self.UNKNOWN_ARGUMENTS:
             return None
+        if __debug__:
+            self._pg_check_arguments(arguments)
         # TODO: Temporary compatibility hack.  The current internal db code
         # uses multikeys, but user code does not anymore.  Before we rewrite
         # the internal parts to use single keys only, we should allow both
@@ -3087,6 +3097,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
                arguments={}, async_count=False, stop_check=None, timeout_callback=None):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
+        if __debug__:
+            self._pg_check_arguments(arguments)
         if ((reuse and not self._pg_changed and self._pg_number_of_rows and
              condition == self._pg_last_select_condition and
              sort == self._pg_last_select_sorting and
@@ -3155,12 +3167,16 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return row_count_info
 
     def select_aggregate(self, operation, condition=None, transaction=None, arguments={}):
+        if __debug__:
+            self._pg_check_arguments(arguments)
         return self._pg_select_aggregate(operation[0], (operation[1],),
                                          condition=condition, transaction=transaction,
                                          arguments=arguments)[0]
 
     def select_and_aggregate(self, operation, condition=None, reuse=False, sort=(),
                              columns=None, transaction=None, arguments={}):
+        if __debug__:
+            self._pg_check_arguments(arguments)
         if columns is None:
             function_columns = [g[0] for g in (self._pdbb_column_groups or ()) if g[2] is not None]
             columns = [c.id() for c in self.columns()
@@ -3207,6 +3223,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
           arguments -- dictionary of function call arguments
 
         """
+        if __debug__:
+            self._pg_check_arguments(arguments)
         return self._pg_distinct(column, prefix, condition, sort, transaction=transaction,
                                  arguments=arguments)
 
@@ -3371,6 +3389,8 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
             log(DEBUG, 'Hledání řádku:', (condition, direction))
         assert direction in (FORWARD, BACKWARD), \
             ('Invalid direction', direction)
+        if __debug__:
+            self._pg_check_arguments(arguments)
         if self._pg_select_transaction is None:
             if not self._pg_restore_select():
                 raise ProgramError('Not within select')
