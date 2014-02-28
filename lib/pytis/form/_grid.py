@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -185,15 +185,18 @@ class DataTable(object):
         if __debug__:
             log(DEBUG, 'Zpanikaření gridové tabulky')
 
-    def _get_row(self, row, autoadjust=False):
+    def _get_row(self, row, autoadjust=False, require=True):
         """Return the row number 'row' from the database as a 'PresentedRow' instance.
         
         Arguments:
         
-        row -- row number within the *database select*, starting from 0
-        autoadjust -- when true, 'row' is decreased by one if it is located behind an edited *new*
-          row.  Also when the 'row', equals to the number of the currently edited row (whether new
-          or existing), this edited row is returned.
+          row -- row number within the *database select*, starting from 0
+          autoadjust -- when true, 'row' is decreased by one if it is located
+            behind an edited *new* row.  Also when the 'row', equals to the
+            number of the currently edited row (whether new or existing), this
+            edited row is returned.
+          require -- when true, the requested row must exist, otherwise 'None'
+            is returned if the given row doesn't exist
 
         """
         edited = self._edited_row
@@ -208,16 +211,38 @@ class DataTable(object):
             self._panic()
         return result
 
-    def _retrieve_row(self, row):
+    def _retrieve_row(self, row, require=True):
+        data = self._data
         def fetch(row, direction=pytis.data.FORWARD):
             result = self._data.fetchone(direction=direction)
-            assert result, ('Missing row', row)
+            if result is None:
+                # In theory this shouldn't happen but it actually happens so we
+                # have to attempt some workaround here.
+                if require:
+                    raise Exception('Missing row', row)
+                else:
+                    data = self._data
+                    data.rewind()
+                    if row > 0:
+                        data.skip(row - 1, direction=pytis.data.FORWARD)
+                    result = data.fetchone(direction=pytis.data.FORWARD)
+                    if result is None:
+                        self._init_select()
+                        if row > 0:
+                            data.skip(row - 1, direction=pytis.data.FORWARD)
+                        result = data.fetchone(direction=pytis.data.FORWARD)
+                        if result is None:
+                            log(DEBUG, "Missing grid row")
+                            return None
+                        else:
+                            log(DEBUG, "Grid data count error")
+                    else:
+                        log(DEBUG, "Grid data synchronization error")
             self._presented_row.set_row(result)
             the_row = copy.copy(self._presented_row)
             self._current_row = self._CurrentRow(row, the_row)
         current = self._current_row
         if not current:
-            data = self._data
             data.rewind()
             if row > 0:
                 # Tento fetch pouze zabezpečí přednačtení bufferu v dopředném
@@ -229,7 +254,6 @@ class DataTable(object):
                 data.skip(row - 1, direction=pytis.data.FORWARD)
             fetch(row)
         elif row != current.row:
-            data = self._data
             last = data.last_row_number()
             if row > last:
                 skip = row - last - 1
@@ -305,9 +329,9 @@ class DataTable(object):
         row -- nezáporný integer, první řádek má číslo 0
         
         """
-        if row < 0 or row >= self.number_of_rows(min_value=row+1):
+        if row < 0 or row >= self.number_of_rows(min_value=(row + 1)):
             return None
-        return self._get_row(row, autoadjust=True)
+        return self._get_row(row, autoadjust=True, require=False)
 
     def rewind(self, position=None):
         """Přesuň datové ukazovátko na začátek dat.
@@ -600,7 +624,7 @@ class ListTable(wx.grid.PyGridTableBase, DataTable):
         return wx.grid.GRID_VALUE_STRING
     
     def GetAttr(self, row, col, kind):
-        if row >= self.number_of_rows(min_value=row+1) or col >= self.number_of_columns():
+        if row >= self.number_of_rows(min_value=(row + 1)) or col >= self.number_of_columns():
             # it may happen
             return None
         column = self._columns[col]
