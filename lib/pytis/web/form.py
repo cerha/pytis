@@ -2271,6 +2271,26 @@ class EditableBrowseForm(BrowseForm):
 
     def _set_row(self, row):
         super(EditableBrowseForm, self)._set_row(row)
+        if row is None and not self._row.new():
+            # Apply default values manually here.  This hack is needed, because
+            # the internal PresentedRow instance is not set as new and thus it
+            # doesn't supply default values automatically, but is actually is
+            # a new row when 'row' is None.
+            for field in self._fields.values():
+                # Don't apply default value to the key column because it is used to distinguish 
+                # inserted rows from edited rows (maybe that's wrong).
+                if self._row[field.id].value() is None and field.id != self._key:
+                    default = field.spec.default()
+                    # Exclude serial fields to avoid wasting sequences here. 
+                    if default is not None and not isinstance(field.type, pd.Serial):
+                        if isinstance(default, collections.Callable):
+                            try:
+                                default = default(transaction=self._row.transaction())
+                            except TypeError:
+                                default = default()
+                        self._row[field.id] = pd.Value(field.type, default)
+                    else:
+                        self._row[field.id] = field.type.default_value()
         if self._set_row_callback:
             self._set_row_callback(self._row)
         if self._req.param('submit') and not self._req.param('_pytis_insert_new_row'):
@@ -2282,17 +2302,6 @@ class EditableBrowseForm(BrowseForm):
             for cid in self._editable_columns:
                 field = self._fields[cid]
                 field.validate(self._req, locale_data)
-        if row is None and not self._row.new():
-            # Apply default values manually here.  This hack is needed, because
-            # the internal PresentedRow instance is not set as new and thus it
-            # doesn't supply default values automatically.
-            for field in self._fields.values():
-                if self._row[field.id].value() is None:
-                    default = field.spec.default()
-                    if default is not None:
-                        if isinstance(default, collections.Callable):
-                            default = default()
-                        self._row[field.id] = pd.Value(self._row.type(field.id), default)
 
     def _field(self, id, multirow=False):
         if id in self._editable_columns:
