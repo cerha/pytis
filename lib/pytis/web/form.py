@@ -2282,6 +2282,17 @@ class EditableBrowseForm(BrowseForm):
             for cid in self._editable_columns:
                 field = self._fields[cid]
                 field.validate(self._req, locale_data)
+        if self._req.param('_pytis_insert_new_row') and row is None and not self._row.new():
+            # Apply default values manually here.  This hack is needed, because
+            # the internal PresentedRow instance is not set as new and thus it
+            # doesn't supply default values automatically.
+            for field in self._fields.values():
+                if self._row[field.id].value() is None:
+                    default = field.spec.default()
+                    if default is not None:
+                        if isinstance(default, collections.Callable):
+                            default = default()
+                        self._row[field.id] = pd.Value(self._row.type(field.id), default)
 
     def _field(self, id, multirow=False):
         if id in self._editable_columns:
