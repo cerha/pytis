@@ -2282,7 +2282,7 @@ class EditableBrowseForm(BrowseForm):
             for cid in self._editable_columns:
                 field = self._fields[cid]
                 field.validate(self._req, locale_data)
-        if self._req.param('_pytis_insert_new_row') and row is None and not self._row.new():
+        if row is None and not self._row.new():
             # Apply default values manually here.  This hack is needed, because
             # the internal PresentedRow instance is not set as new and thus it
             # doesn't supply default values automatically.
