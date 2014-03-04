@@ -22,7 +22,7 @@ import copy
 import pytis.data
 import pytis.extensions
 from pytis.presentation import Specification, Field, Binding
-from pytis.util import translations
+from pytis.util import rsa_encrypt, translations
 from pytis import dbdefs
 
 _ = translations('pytis')
@@ -33,6 +33,54 @@ class CryptoAreas(Specification):
     title = _(u"Šifrovací oblasti")
     sorting = (('name', pytis.data.ASCENDENT,),)
     bindings = (Binding('users', _(u"Uživatelé"), 'crypto.Users', binding_column='name'),)
+
+    def actions(self):
+        return (pytis.presentation.Action('change_password', _(u"Změnit heslo administrátora"),
+                                          self._change_admin_password),)
+        
+    def _change_admin_password(self, row):
+        area = row['name'].value()
+        if not area:
+            return
+        db_key = pytis.extensions.dbfunction('pytis_crypto_db_key',
+                                             ('key_name_', pytis.data.sval('pytis'),))
+        import config
+        connection_data = config.dbconnection
+        key_id, key = pytis.extensions.crypto_admin_key(area, 'admin', connection_data)
+        if not key_id or not key:
+            pytis.form.run_dialog(pytis.form.Error,
+                                  _("Nebyl nalezen klíč administrátora pro tuto oblast"))
+            return
+        while True:
+            old_password = pytis.form.run_dialog(pytis.form.InputDialog, passwd=True,
+                                                 prompt=_("Stávající heslo"), message='')
+            if not old_password:
+                return
+            if pytis.extensions.check_crypto_password(key, old_password, connection_data):
+                break
+            pytis.form.run_dialog(pytis.form.Error, _("Chybné heslo"))
+        encrypted_old_password = rsa_encrypt(db_key, old_password)
+        while True:
+            new_password = pytis.form.run_dialog(pytis.form.InputDialog, passwd=True,
+                                                 prompt=_("Nové heslo"), message='')
+            if not new_password:
+                return
+            new_password_2 = pytis.form.run_dialog(pytis.form.InputDialog, passwd=True,
+                                                   prompt=_("Nové heslo ještě jednou"), message='')
+            if new_password_2 is None:
+                return
+            if new_password == new_password_2:
+                break
+            pytis.form.run_dialog(pytis.form.Error, _("Zadaná nová hesla si neodpovídají"))
+        encrypted_new_password = rsa_encrypt(db_key, new_password)
+        function = pytis.data.DBFunctionDefault('pytis_crypto_change_password', connection_data)
+        row = pytis.data.Row((('id_', key_id,),
+                              ('old_psw', pytis.data.sval(encrypted_old_password),),
+                              ('new_psw', pytis.data.sval(encrypted_new_password),),))
+        if not function.call(row)[0][0].value():
+            pytis.form.run_dialog(pytis.form.Error, _("Heslo se změnit nepodařilo"))
+            return
+        pytis.form.run_dialog(pytis.form.Message, _("Heslo bylo změněno"))
 
     def on_new_record(self, *args, **kwargs):
         return None
