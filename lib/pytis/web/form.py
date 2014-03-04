@@ -2061,7 +2061,7 @@ class ListView(BrowseForm):
             else:
                 continue
             # Hack: Create a fake container to force the heading level start at 4.
-            lcg.Container(lcg.Section('', lcg.Section('', content, anchor=anchor)))
+            lcg.Container(lcg.Section('', lcg.Section('', content, id=anchor)))
             parts.append(g.div(content.export(context), cls=cls))
         if self._row_actions and not layout.popup_actions():
             parts.extend(self._export_actions(context, row,
