@@ -826,6 +826,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         localizer = req.localizer()
         localize = localizer.localize
         locale_data = localizer.locale_data()
+        row = self._row
         # Validate all fields first.
         for fid in order:
             field = self._fields[fid]
@@ -835,11 +836,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 # Don't validate fields which depend on the field currently changed by
                 # the user during AJAX form updates.
                 error = None
-            else:
+            elif row.editable(fid): # non-editable field values are empty in the request!
                 error = field.validate(req, locale_data)
                 if error:
                     fdata['error'] = localize(error.message())
-        row = self._row
         # Compute field state after all fields are validated.
         for fid in order:
             if fid != changed_field:
