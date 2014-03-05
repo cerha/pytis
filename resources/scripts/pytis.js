@@ -53,7 +53,7 @@ pytis._ = function (msg) { return pytis.gettext.gettext(msg); };
 
 pytis.show_tooltip = function(event, uri) {
     // This can't be implemented as a Field method as Field instances are not 
-    // created in BrowseForm (currentyl only in edit form).
+    // created in BrowseForm (currently only in edit form).
     var element, tooltip;
     if (event) {
 	element = event.target;
