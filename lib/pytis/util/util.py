@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -635,7 +635,7 @@ class XStack(Stack):
         if len(self._list) <= 1:
             return None
         i = self._list.index(self._active)
-        return self._list[i-1]
+        return self._list[i - 1]
 
 
 class Attribute(object):
@@ -1023,7 +1023,7 @@ def next_subclass(class_, instance):
     if i is None or i == len(mro) - 1:
         result = None
     else:
-        result = mro[i+1]
+        result = mro[i + 1]
     return result
 
 
@@ -1747,13 +1747,12 @@ def exception_info(einfo=None):
     etype, evalue, etb = einfo or sys.exc_info()
     context = 5
     import os
-    import types
     import time
     import traceback
     import linecache
     import inspect
     # Sestavení hlavičky
-    if type(etype) is types.ClassType:
+    if inspect.isclass(etype):
         etype = etype.__name__
     date = time.ctime(time.time())
     head = '%s, %s\n' % (str(etype), date)
@@ -1806,7 +1805,7 @@ def exception_info(einfo=None):
         rows.append(', '.join(dump))
         frames.append(string.join(rows) + '\n')
     exception = ['%s: %s' % (str(etype), str(evalue))]
-    if type(evalue) is types.InstanceType:
+    if not inspect.isclass(evalue):
         for name in dir(evalue):
             value = deepstr(getattr(evalue, name))
             exception.append('\n%s%s =\n%s' % (indent, name, value))
