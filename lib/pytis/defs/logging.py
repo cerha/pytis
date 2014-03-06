@@ -22,9 +22,10 @@ from __future__ import unicode_literals
 import datetime
 
 import config
-import pytis.data as pd, pytis.util
-from pytis.presentation import Specification, Field, CodebookSpec, Editable, \
-    Profile, QueryFields, computer, HGroup, VGroup
+import pytis.data as pd
+import pytis.util
+from pytis.presentation import Specification, Field, Editable, \
+    QueryFields, HGroup, VGroup
 from pytis.form import BrowseForm, run_form
 
 _ = pytis.util.translations('pytis-defs')
@@ -47,7 +48,7 @@ class FormActionLog(Specification):
               width=50, column_width=30, editable=Editable.NEVER),
         Field('action', _("Action"), width=25, editable=Editable.NEVER),
         Field('info', _("Information"), editable=Editable.NEVER, height=10, width=70),
-        )
+    )
     sorting = (('timestamp', pd.ASCENDENT),)
     columns = ('timestamp', 'username', 'spec_name', 'form_name', 'action')
     layout = ('timestamp', 'username', 'spec_name', 'form_name', 'action', 'info')
@@ -84,57 +85,57 @@ class ChangesLog(Specification):
                 Field('search_path_', _("Schema"), type=pd.String, not_null=True,
                       default=self._df_search_path_)
                 )
-    
-    def fields(self): return (
-        Field("id", _("ID"), width=10, type=pd.Integer),
-        Field("timestamp", _("Datum a čas"), width=17, type=pd.DateTime),
-        Field("username", _("User"), width=20, type=pd.String),
-        Field("schemaname", _("Schema"), width=20, type=pd.String),
-        Field("tablename", _("Tabulka"), width=20, type=pd.String),
-        Field("operation", _("Operace"), width=10, type=pd.String),
-        Field("key_column", _("ID klíč"), width=20, type=pd.String),
-        Field("key_value", _("Klíč"), width=20, type=pd.String),
-        Field("detail", _("Řádek"), width=40, height=20, type=pd.String),
-        )
 
+    def fields(self):
+        return (
+            Field("id", _("ID"), width=10, type=pd.Integer),
+            Field("timestamp", _("Datum a čas"), width=17, type=pd.DateTime),
+            Field("username", _("User"), width=20, type=pd.String),
+            Field("schemaname", _("Schema"), width=20, type=pd.String),
+            Field("tablename", _("Tabulka"), width=20, type=pd.String),
+            Field("operation", _("Operace"), width=10, type=pd.String),
+            Field("key_column", _("ID klíč"), width=20, type=pd.String),
+            Field("key_value", _("Klíč"), width=20, type=pd.String),
+            Field("detail", _("Řádek"), width=40, height=20, type=pd.String),
+        )
 
 class ChangesLogUser(ChangesLog):
     """Specification providing query fields for users"""
     public = True
-    
+
     def query_fields(self):
         return QueryFields(self.arguments,
                            layout=HGroup(VGroup('date_from', 'date_to'),
                                          VGroup('username_', 'search_path_'),
                                          VGroup('tablename_', 'key_value_'),
                                          'detail_',))
-    
+
     def argument_provider(self, query_fields, **kwargs):
         if query_fields:
-            date_from   = query_fields['date_from'] 
-            date_to     = query_fields['date_to'] 
-            username_   = query_fields['username_']  
-            tablename_  = query_fields['tablename_'] 
-            key_value_  = query_fields['key_value_'] 
-            detail_  = query_fields['detail_']
+            date_from = query_fields['date_from']
+            date_to = query_fields['date_to']
+            username_ = query_fields['username_']
+            tablename_ = query_fields['tablename_']
+            key_value_ = query_fields['key_value_']
+            detail_ = query_fields['detail_']
             search_path_ = query_fields['search_path_']
         else:
-            date_from  = pd.dval(None)
-            date_to    = pd.dval(None)
-            username_  = pd.sval(None)
+            date_from = pd.dval(None)
+            date_to = pd.dval(None)
+            username_ = pd.sval(None)
             tablename_ = pd.sval(None)
             key_value_ = pd.sval(None)
             detail_ = pd.sval(None)
             search_path_ = pd.sval(None)
         return {
-            'date_from':  date_from, 
-            'date_to':    date_to,   
-            'username_':  username_, 
+            'date_from': date_from,
+            'date_to': date_to,
+            'username_': username_,
             'tablename_': tablename_,
             'key_value_': key_value_,
             'detail_': detail_,
             'search_path_': search_path_}
-    
+
 def proc_spec():
 
     def show_changes_in_row(key_value, tablename=None):
@@ -142,7 +143,7 @@ def proc_spec():
         arguments = {"date_from": pd.dval(datetime.date(year=2000, month=1, day=1)),
                      "date_to": pd.dval(datetime.date(year=2100, month=1, day=1)),
                      "key_value_": pd.sval(key_value.export()),
-                     "schemaname_": pd.sval(config.dbschemas)}
+                     "search_path_": pd.sval(config.dbschemas)}
         if tablename is not None:
             arguments["tablename_"] = pd.sval(tablename)
         return run_form(BrowseForm, CHANGE_LOG_SPEC, arguments=arguments)
