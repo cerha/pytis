@@ -177,10 +177,12 @@ def command_add_user(configuration, args):
         return
     area, user, sender = args
     connection_data = configuration.connection_data()
-    error = add_crypto_user(area, user, admin_user, '', sender, connection_data)
+    error = pytis.extensions.add_crypto_user(area, user, admin_user, '', sender,
+                                             connection_data)
     if error == "invalid password":
         admin_password, encrypted_password = read_password(prompt="Key password: ")
-        error = add_crypto_user(area, user, admin_user, admin_password, sender, connection_data)
+        error = pytis.extensions.add_crypto_user(area, user, admin_user, admin_password,
+                                                 sender, connection_data)
     if error:
         print "Error: %s" % (error,)
 
