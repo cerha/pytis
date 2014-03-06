@@ -27,6 +27,34 @@ from pytis import dbdefs
 
 _ = translations('pytis')
 
+class NewAdminPasswd(Specification):
+    public = True
+
+    data_cls = pytis.data.RestrictedMemData
+    title = _("Změna administrátorského hesla")
+
+    def fields(self):
+        return (
+            Field('old_password', _('Stávající heslo'), width=20,
+                  type=pytis.data.Password, md5=False, verify=False),
+            Field('new_password', _('Nové heslo'), width=20,
+                  type=pytis.data.Password, maxlen=32, minlen=8, md5=False,
+                  strength=self._check_strength),
+        )
+
+    def _check_strength(self, passwd):
+        lower = upper = digits = False
+        for char in passwd:
+            if char.isalpha() and char.islower():
+                lower = True
+            elif char.isalpha() and char.isupper():
+                upper = True
+            elif char.isdigit():
+                digits = True
+        if not (lower and upper and digits):
+            return _(u"Použijte, prosím, kombinaci malých a velkých znaků a číslic.")
+
+
 class CryptoAreas(Specification):
     public = True
     table = dbdefs.CPytisCryptoNames
@@ -37,7 +65,7 @@ class CryptoAreas(Specification):
     def actions(self):
         return (pytis.presentation.Action('change_password', _(u"Změnit heslo administrátora"),
                                           self._change_admin_password),)
-        
+
     def _change_admin_password(self, row):
         area = row['name'].value()
         if not area:
@@ -51,27 +79,14 @@ class CryptoAreas(Specification):
             pytis.form.run_dialog(pytis.form.Error,
                                   _("Nebyl nalezen klíč administrátora pro tuto oblast"))
             return
-        while True:
-            old_password = pytis.form.run_dialog(pytis.form.InputDialog, passwd=True,
-                                                 prompt=_("Stávající heslo"), message='')
-            if not old_password:
-                return
-            if pytis.extensions.check_crypto_password(key, old_password, connection_data):
-                break
+        row = pytis.form.new_record("crypto.NewAdminPasswd", multi_insert=False)
+        if not row:
+            return
+        old_password = row["old_password"].value()
+        if not pytis.extensions.check_crypto_password(key, old_password, connection_data):
             pytis.form.run_dialog(pytis.form.Error, _("Chybné heslo"))
         encrypted_old_password = rsa_encrypt(db_key, old_password)
-        while True:
-            new_password = pytis.form.run_dialog(pytis.form.InputDialog, passwd=True,
-                                                 prompt=_("Nové heslo"), message='')
-            if not new_password:
-                return
-            new_password_2 = pytis.form.run_dialog(pytis.form.InputDialog, passwd=True,
-                                                   prompt=_("Nové heslo ještě jednou"), message='')
-            if new_password_2 is None:
-                return
-            if new_password == new_password_2:
-                break
-            pytis.form.run_dialog(pytis.form.Error, _("Zadaná nová hesla si neodpovídají"))
+        new_password = row["new_password"].value()
         encrypted_new_password = rsa_encrypt(db_key, new_password)
         function = pytis.data.DBFunctionDefault('pytis_crypto_change_password', connection_data)
         row = pytis.data.Row((('id_', key_id,),
@@ -84,8 +99,10 @@ class CryptoAreas(Specification):
 
     def on_new_record(self, *args, **kwargs):
         return None
+
     def on_edit_record(self, row):
         return None
+
     def on_delete_record(self, row):
         return None
 
@@ -93,6 +110,7 @@ class Users(Specification):
     public = True
     table = dbdefs.EPytisCryptoKeys
     title = _(u"Uživatelé")
+
     def _customize_fields(self, fields):
         fields.append(Field('admin_address', _(u"E-mailová adresa administrátora"),
                             virtual=True, type=pytis.data.String(not_null=True)))
@@ -100,7 +118,7 @@ class Users(Specification):
                             virtual=True, type=pytis.data.Password(not_null=True, verify=False)))
     columns = ('username', 'fresh',)
     layout = ('name', 'username', 'admin_address', 'admin_password',)
-    
+
     class _InsertForm(pytis.form.PopupInsertForm):
         def _commit_form(self, close=True):
             import config
@@ -128,7 +146,7 @@ class Users(Specification):
         prefill['name'] = area
         return pytis.form.run_form(self._InsertForm, 'crypto.Users',
                                    prefill=prefill, transaction=transaction)
-        
+
     def on_edit_record(self, row):
         pytis.form.run_dialog(pytis.form.Warning, _(u"Uživatele lze jen přidávat a odebírat"))
         return None
