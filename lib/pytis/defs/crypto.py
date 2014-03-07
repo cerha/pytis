@@ -120,6 +120,8 @@ class Users(Specification):
     layout = ('name', 'username', 'admin_address', 'admin_password',)
 
     class _InsertForm(pytis.form.PopupInsertForm):
+        def _exit_check(self):
+            return True
         def _commit_form(self, close=True):
             import config
             connection_data = config.dbconnection
@@ -135,6 +137,7 @@ class Users(Specification):
                 return None
             if self._governing_transaction is None and self._transaction is not None:
                 self._transaction.commit()
+                self.close()
             return self._row
 
     def on_new_record(self, prefill=None, transaction=None):
