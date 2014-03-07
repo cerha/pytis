@@ -147,7 +147,8 @@ class Users(Specification):
         else:
             prefill = copy.copy(prefill)
         prefill['name'] = area
-        return pytis.form.run_form(self._InsertForm, 'crypto.Users',
+        spec = self._action_spec_name()
+        return pytis.form.run_form(self._InsertForm, spec,
                                    prefill=prefill, transaction=transaction)
 
     def on_edit_record(self, row):
