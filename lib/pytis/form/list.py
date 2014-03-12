@@ -51,7 +51,7 @@ from pytis.presentation import Action, ActionGroup, AggregatedView, \
     FormType, Link, TextFormat, ViewSpec
 from pytis.util import ACTION, DEBUG, EVENT, OPERATIONAL, \
     Attribute, ProgramError, ResolverError, SimpleCache, Structure, \
-    UNDEFINED, compare_objects, find, log, sameclass
+    UNDEFINED, compare_objects, find, form_view_data, log, sameclass
 import pytis.windows
 from dialog import AggregationSetupDialog, Error, InputNumeric, MultiQuestion, Question
 from event import UserBreakException, wx_callback
@@ -2985,16 +2985,17 @@ class BrowseForm(FoldableForm):
             # (new style) specification class.
             def __init__(self, resolver):
                 self._resolver = resolver
-            def body(self, resolver=None, variant=None):
+            def body(self, resolver=None, variant=None, **kwargs):
                 if config.fallback_table_print:
                     table_id = self._resolver.p(BrowseForm._PrintResolver.P_NAME)
-                    result = pytis.output.data_table(self._resolver, table_id)
+                    view, data = form_view_data(self._resolver, table_id)
+                    result = pytis.output.data_table(view, data)
                     return result
                 else:
                     run_dialog(Error, _("Print specification not found!"))
-            def doc_header(self, resolver=None, variant=None):
+            def doc_header(self, resolver=None, variant=None, **kwargs):
                 return None
-            def doc_footer(self, resolver=None, variant=None):
+            def doc_footer(self, resolver=None, variant=None, **kwargs):
                 return None
             
         def _get_module(self, name):
@@ -3377,13 +3378,13 @@ class BrowseForm(FoldableForm):
         parameters = self._formatter_parameters()
         parameters.update({self._PrintResolver.P_NAME: name})
         print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
-        print_resolver = self._PrintResolver(print_file_resolver, self._resolver,
-                                             parameters=parameters)
+        print_resolver = self._PrintResolver(print_file_resolver, self._resolver)
         wiki_template_resolver = self._PlainPrintResolver(config.print_spec_dir, extension='text')
         db_template_resolver = self._DBPrintResolver('ev_pytis_user_output_templates')
         resolvers = (db_template_resolver, wiki_template_resolver, print_resolver,)
         try:
-            formatter = pytis.output.Formatter(resolvers, print_spec_path, form=self,
+            formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec_path,
+                                               form=self, parameters=parameters,
                                                **self._print_form_kwargs())
         except pytis.output.AbortOutput:
             return

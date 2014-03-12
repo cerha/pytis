@@ -2,7 +2,7 @@
 
 # Formátování výstupu
 #
-# Copyright (C) 2002-2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,8 +45,8 @@ Hlavní třídou modulu je třída 'Formatter'.  Ta zajišťuje načtení a zpra
 """
 
 import copy
-import config
 import re
+import string
 import StringIO
 import lcg
 
@@ -55,7 +55,9 @@ import pytis.data
 import pytis.output
 import pytis.presentation
 import pytis.util
-from pytis.util import EVENT, Popen, ResolverError, dev_null_stream, log, xtuple
+from pytis.util import EVENT, Popen, ResolverError, dev_null_stream, form_view_data, log, xtuple
+
+import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -127,9 +129,7 @@ class _DataIterator(lcg.SubstitutionIterator):
     def __init__(self, resolver, form_name, condition, sorting, transaction, codebooks=None):
         self._transaction = transaction
         self._select_kwargs = dict(condition=condition, sort=sorting, transaction=transaction)
-        view = resolver.get(form_name, 'view_spec')
-        data_spec = resolver.get(form_name, 'data_spec')
-        self._data = data_spec.create(dbconnection_spec=config.dbconnection)
+        view, self._data = form_view_data(resolver, form_name)
         self._presented_row = pytis.presentation.PresentedRow(view.fields(), self._data, None,
                                                               singleline=True)
         self._codebooks = None
@@ -175,17 +175,14 @@ class _DataIterator(lcg.SubstitutionIterator):
         if self._select_kwargs is None:
             self._data.rewind()
 class _FormDataIterator(_DataIterator):
-    def __init__(self, resolver, form, transaction):
+    def __init__(self, resolver, form, transaction, parameters):
         name = form.name()
         condition = form.condition()
         sorting = form.sorting()
         if condition is None:
-            try:
-                condition = resolver.p((name, pytis.output.P_CONDITION))
-            except ResolverError:
-                pass
+            condition = parameters.get(name + '/' + pytis.output.P_CONDITION)
         if sorting is None:
-            sorting = resolver.p((name, pytis.output.P_SORTING))
+            sorting = parameters.get(name + '/' + pytis.output.P_SORTING)
         super(_FormDataIterator, self).__init__(resolver, name, condition=condition,
                                                 sorting=sorting, transaction=transaction)
 class _FakeDataIterator(lcg.SubstitutionIterator):
@@ -202,33 +199,23 @@ class LCGFormatter(object):
             return ''
 
     class _LCGGlobals(_ProxyDict):
-        def __init__(self, resolvers, form, form_bindings, codebooks, transaction,
-                     current_row=None):
-            self._resolvers = resolvers
-            if form is not None:
-                name = form.name()
-                for r in resolvers:
-                    try:
-                        r.get(name, 'view_spec')
-                    except ResolverError:
-                        continue
-                    self._selected_resolver = r
-                    break
-                else:
-                    log(EVENT, 'No working resolver found ' + name)
-                    self._selected_resolver = resolvers[0]
+        def __init__(self, resolver, form, form_bindings, codebooks, transaction,
+                     current_row=None, parameters={}):
+            self._resolver = resolver
             self._form = form
             self._form_bindings = form_bindings
             self._transaction = transaction
-            dictionary = self._initial_dictionary(form, form_bindings, codebooks, current_row)
+            dictionary = self._initial_dictionary(form, form_bindings, codebooks, current_row,
+                                                  parameters)
             _ProxyDict.__init__(self, dictionary)
-        def _initial_dictionary(self, form, form_bindings, codebooks, current_row):
+        def _initial_dictionary(self, form, form_bindings, codebooks, current_row, parameters):
             dictionary = _ProxyDict()
             if form is not None:
                 import pytis.form # must be placed before first `pytis' use here
                 if current_row is None:
-                    dictionary['data'] = _FormDataIterator(self._selected_resolver, form,
-                                                           transaction=self._transaction)
+                    dictionary['data'] = _FormDataIterator(self._resolver, form,
+                                                           transaction=self._transaction,
+                                                           parameters=parameters)
                 else:
                     # Using `data' iteration in row templates is most likely an error.
                     # And since it may cause various performance or system problems we forbid it.
@@ -296,7 +283,7 @@ class LCGFormatter(object):
             form = self._form
             if form is None:
                 return lcg.Content()
-            table = pytis.output.data_table(self._selected_resolver, form.name(),
+            table = pytis.output.data_table(form.view_spec(), form.data(),
                                             condition=form.condition(), sorting=form.sorting(),
                                             transaction=self._transaction)
             return table.lcg()
@@ -335,42 +322,42 @@ class LCGFormatter(object):
                 condition = binding_condition(current_row)
             else:
                 condition = pytis.data.AND()
-            table = pytis.output.data_table(self._selected_resolver, binding.name(),
-                                            condition=condition, sorting=(),
+            view, data = form_view_data(self._resolver, binding_name)
+            table = pytis.output.data_table(view, data, condition=condition, sorting=(),
                                             transaction=self._transaction)
             binding_dictionary['table'] = table.lcg()
-            binding_dictionary['data'] = _DataIterator(self._selected_resolver, binding_name,
+            binding_dictionary['data'] = _DataIterator(self._resolver, binding_name,
                                                        condition=condition, sorting=(),
                                                        transaction=self._transaction)
-            codebooks = LCGFormatter._retrieve_codebooks(
-                self._selected_resolver.get(binding_name, 'view_spec'))
-            binding_dictionary['codebook'] = _DataIterator(self._selected_resolver, binding_name,
+            codebooks = LCGFormatter._retrieve_codebooks(view, resolver=self._resolver)
+            binding_dictionary['codebook'] = _DataIterator(self._resolver, binding_name,
                                                            condition=condition, sorting=(),
                                                            transaction=self._transaction,
                                                            codebooks=codebooks)
             return binding_dictionary
         
-    def __init__(self, resolvers, template_id, form=None, form_bindings=None):
-        """
-        Arguments:
+    def __init__(self, resolver, output_resolvers, template_id, form=None, form_bindings=None,
+                 parameters={}):
+        """Arguments:
 
-          resolvers -- resolver of template names and data objects; may also be
-            a non-empty sekvence of resolvers, in such a case the first
-            resolver not throwing 'ResolverError' when accessing the
-            template will be used
+          resolver -- form specification resolver
+          output_resolvers -- resolver of template names and data objects; may
+            also be a non-empty sequence of resolvers, in such a case the first
+            resolver not throwing 'ResolverError' when accessing the template
+            will be used
           template_id -- id of the output template, string
           form -- current form; 'Form' instance or 'None'
           form_bindings -- bindings of the current form (if it is the main form
             of a dual form) as a sequence of 'Binding' instances; or 'None'
-            
+          parameters -- dictionary of form parameters
+
         """
-        self._resolvers = xtuple(resolvers)
+        self._resolver = resolver
+        self._output_resolvers = xtuple(output_resolvers)
         self._template_id = template_id
-        output_parameters, r = self._resolve(template_id, 'init')
-        if r is not None:
-            if output_parameters is None:
-                raise AbortOutput()
-            r.add_output_parameters(output_parameters)
+        self._parameters = HashableDict(parameters)
+        if not self._resolve(template_id, 'init'):
+            raise AbortOutput()
         self._doc_header, __ = self._resolve(template_id, 'doc_header')
         self._doc_footer, __ = self._resolve(template_id, 'doc_footer')
         self._page_header, __ = self._resolve(template_id, 'page_header', default=None)
@@ -440,13 +427,13 @@ class LCGFormatter(object):
         if form is None:
             self._codebooks = None
         else:
-            self._codebooks = self._retrieve_codebooks(form.view_spec())
+            self._codebooks = self._retrieve_codebooks(form.view_spec(), resolver=self._resolver)
 
     def _resolve(self, template_id, element, default=''):
         result = default
-        for resolver in xtuple(self._resolvers):
+        for resolver in xtuple(self._output_resolvers):
             try:
-                result = resolver.get(template_id, element)
+                result = resolver.get(template_id, element, parameters=self._parameters)
             except ResolverError:
                 continue
             break
@@ -455,8 +442,9 @@ class LCGFormatter(object):
         return result, resolver
 
     @classmethod
-    def _retrieve_codebooks(class_, view_spec):
-        resolver = pytis.util.resolver()
+    def _retrieve_codebooks(class_, view_spec, resolver=None):
+        if resolver is None:
+            resolver = pytis.util.resolver()
         codebooks = []
         for field in view_spec.fields():
             cb = field.codebook()
@@ -488,8 +476,9 @@ class LCGFormatter(object):
             i = 1
             row_template = self._row_template
             for row in self._form.presented_rows():
-                row_lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
-                                                   self._codebooks, transaction, current_row=row)
+                row_lcg_globals = self._LCGGlobals(self._resolver, self._form, self._form_bindings,
+                                                   self._codebooks, transaction, current_row=row,
+                                                   parameters=self._parameters)
                 id_ = 'pytissubdoc%d' % (i,)
                 row_template_lcg = row_template.lcg()
                 parameters = self._template_parameters(row_template)
@@ -498,8 +487,8 @@ class LCGFormatter(object):
                                            **parameters)
                 children.append(document)
                 i += 1
-        lcg_globals = self._LCGGlobals(self._resolvers, self._form, self._form_bindings,
-                                       self._codebooks, transaction)
+        lcg_globals = self._LCGGlobals(self._resolver, self._form, self._form_bindings,
+                                       self._codebooks, transaction, parameters=self._parameters)
         lcg_globals['app'] = self._application_variables
         body = self._body
         if not body:
@@ -613,7 +602,7 @@ class LCGFormatter(object):
         for field in view_spec.fields():
             text += '  %s ... %s\n' % (field.id(), field.label(),)
         text += "\n"
-        codebooks = LCGFormatter._retrieve_codebooks(view_spec)
+        codebooks = LCGFormatter._retrieve_codebooks(view_spec, resolver=resolver)
         if codebooks:
             text += _("Codebooks:") + "\n"
             for field_id, cb_fields, _cb in codebooks:
@@ -633,7 +622,7 @@ class LCGFormatter(object):
                     sub_view_spec = resolver.get(b.name(), 'view_spec')
                     for field in sub_view_spec.fields():
                         text += '    %s ... %s\n' % (field.id(), field.label(),)
-                    codebooks = LCGFormatter._retrieve_codebooks(sub_view_spec)
+                    codebooks = LCGFormatter._retrieve_codebooks(sub_view_spec, resolver=resolver)
                     if codebooks:
                         text += "  " + _("Codebooks:")
                         for field_id, cb_fields, _cb in codebooks:
@@ -667,25 +656,33 @@ class PrintSpecification(object):
     output.  You can use 'init()' method for that purpose.
     
     """
-    def __init__(self, resolver):
+    def __init__(self, resolver, parameters):
         """
         Arguments:
 
           resolver -- 'Resolver' instance available to instance methods
+          parameters -- dictionary of print parameters
         
         """
         self._resolver = resolver
+        self._parameters = dict(parameters)
 
-    def init(self):
+    def _parameter(self, name, default=None):
+        if isinstance(name, (tuple, list,)):
+            name = string.join(name, '/')
+        return self._parameters.get(name, default)
+
+    def _add_parameter(self, name, value):
+        self._parameters[name] = value
+
+    def init(self, parameters):
         """Run actions to be performed before the printing starts.
 
-        Return dictionary of arbitrary keys and values.  The dictionary is
-        later given as an argument to the content generating methods.  If the
-        user interaction indicates that printing should be aborted, return
-        'None'.
-        
+        Return true if printing can continue.  If the user interaction
+        indicates that printing should be aborted, return false.
+
         """
-        return HashableDict()
+        return True
         
     def cleanup(self):
         """Run actions to be performed after output formatting."""

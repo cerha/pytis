@@ -2,7 +2,7 @@
 
 # Formátovací funkce pro datové objekty
 #
-# Copyright (C) 2002-2011, 2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2011, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,16 +18,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-"""Formátovací funkce pro datové objekty.
-
-"""
+"""Formátovací funkce pro datové objekty."""
 
 from lcg import UFont
 import pytis.presentation
 import pytis.util
-from pytis.util import ResolverError
 import pytis.output
-import config
 
 _ = pytis.util.translations('pytis-wx')
 
@@ -45,8 +41,7 @@ P_DATA = 'P_DATA'
 """Parametr resolveru identifikující datový objekt."""
 
 
-def data_table(resolver, name, condition=None, sorting=None, transaction=None,
-               **long_table_args):
+def data_table(view, data, condition=None, sorting=None, transaction=None, **long_table_args):
     """Jednoduchý tisk tabulky dat.
 
     Zadaná tabulka bude jednoduchým způsobem zformátována na výstup.  Výběr dat
@@ -56,37 +51,25 @@ def data_table(resolver, name, condition=None, sorting=None, transaction=None,
 
     Argumenty:
 
-      resolver -- resolver specifikací, instance třídy 'pytis.util.Resolver'
-      name -- identifikátor datového objektu a view pro resolver (jako
-        string), stejný jako například ve formulářích
+      view -- presentation specification of the table;
+        'pytis.presentation.Specification' instance
+      data -- data object to use for querying the database; 'pytis.data.Data'
+        instance
       condition -- podmínka výběru řádků tabulky ve formátu argumentu
-        'condition' metody 'pytis.util.Data.select()'; může být též 'None',
-        v kterémžto případě je podmínka získána z parametru resolveru
-        '(name, P_CONDITION)'
+        'condition' metody 'pytis.util.Data.select()'
       sorting -- specifikace třídění řádků tabulky ve formátu argumentu 'sort'
-        metody 'pytis.util.Data.select()'; může být též 'None', v kterémžto
-        případě je specifikace získána z parametru resolveru
-        '(name, P_SORTING)'
+        metody 'pytis.util.Data.select()'
       transaction -- transaction object to use for database operations
       long_table_args -- dodatečné argumenty předané konstruktoru třídy
         'LongTable'
     
     """
-    assert isinstance(name, basestring), repr(name)
-    if condition is None:
-        try:
-            condition = resolver.p((name, P_CONDITION))
-        except ResolverError:
-            pass
-    if sorting is None:
-        sorting = resolver.p((name, P_SORTING))
-    # Prezentace
-    view = resolver.get(name, 'view_spec')
-    data_spec = resolver.get(name, 'data_spec')
-    data = data_spec.create(dbconnection_spec=config.dbconnection)
     import pytis.data
     import pytis.form
     import pytis.presentation
+    assert isinstance(view, pytis.presentation.ViewSpec), view
+    assert isinstance(data, pytis.data.Data), data
+    # Prezentace
     presented_row = pytis.presentation.PresentedRow(view.fields(), data, None, singleline=True)
     columns = []
     for cid in view.columns():
@@ -116,7 +99,7 @@ def data_table(resolver, name, condition=None, sorting=None, transaction=None,
     return pytis.output.LongTable(columns, table_row, **long_table_args)
     
 
-def data_item(resolver, name, column, key=None):
+def data_item(view, data, column, key=None, row=None):
     """Exportovaná hodnota položky záznamu datového objektu.
 
     Jinak řečeno, tato funkce způsobí vložení příslušné \"buňky\" dat na
@@ -126,37 +109,28 @@ def data_item(resolver, name, column, key=None):
 
     Argumenty:
 
-      resolver -- resolver specifikací, instance třídy 'pytis.util.Resolver'
-      name -- identifikátor datového objektu a view pro resolver (jako
-        string), stejný jako například ve formulářích
+      view -- presentation specification of the table;
+        'pytis.presentation.Specification' instance
+      data -- data object to use for querying the database; 'pytis.data.Data'
+        instance
       column -- stringový identifikátor sloupce datového objektu, jehož
         hodnota bude vložena na výstup
-      key -- klíč řádku (ve formě parametru pro 'pytis.data.Data.row()'); může
-        být též 'None', v kterémžto případě je klíč získán z parametru
-        resolveru '(name, P_KEY)' nebo je získán přímo datový řádek z parametru
-        resolveru '(name, P_ROW)'
+      key -- klíč řádku (ve formě parametru pro 'pytis.data.Data.row()')
+      row -- the row containing the required value; 'pytis.data.Row' instance
 
     """
-    assert isinstance(name, basestring)
+    assert isinstance(view, pytis.presentation.Specification), view
+    assert isinstance(data, pytis.data.Data), data
     assert isinstance(column, basestring)
-    if key is None:
-        try:
-            key = resolver.p((name, P_KEY))
-        except ResolverError:
-            pass
-    data_spec = resolver.get(name, 'data_spec')
-    data = data_spec.create(dbconnection_spec=config.dbconnection)
-    if key is None:
-        row = resolver.p((name, P_ROW))
-    else:
+    assert row is None or isinstance(row, pytis.data.Row), row
+    if row is None and key is not None:
         row = data.row(key)
     if row is None:
         return ''
-    view = resolver.get(name, 'view_spec')
     fields = view.fields()
     presented_row = pytis.presentation.PresentedRow(fields, data, row)
     try:
         value = presented_row.format(column, secure=True)
     except KeyError:
-        raise pytis.output.TemplateException(_("Invalid column reference"), name, column)
+        raise pytis.output.TemplateException(_("Invalid column reference"), view.title(), column)
     return value

@@ -1627,6 +1627,30 @@ def load_module(module_name):
             raise ImportError(module_name)
     return module
 
+def form_view_data(resolver, name, dbconnection_spec=None):
+    """Return pair of specification objects (VIEW, DATA) for specification 'name'.
+
+    VIEW is instance of view specification and DATA is instance of the
+    specification data object related to specification named 'name'.
+
+    Arguments:
+
+      resolver -- resolver to use to find the given specification;
+        'pytis.util.Resolver' instance
+      name -- name of the specification; basestring
+    
+    """
+    import pytis.util
+    assert isinstance(resolver, pytis.util.Resolver), resolver
+    assert isinstance(name, basestring), name
+    if dbconnection_spec is None:
+        import config
+        dbconnection_spec = config.dbconnection
+    view = resolver.get(name, 'view_spec')
+    data_spec = resolver.get(name, 'data_spec')
+    data = data_spec.create(dbconnection_spec=dbconnection_spec)
+    return view, data
+
 
 ### Miscellaneous
 

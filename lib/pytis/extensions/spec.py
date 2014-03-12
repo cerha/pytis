@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005-2013 Brailcom, o.p.s.
+# Copyright (C) 2005-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -313,11 +313,11 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     parameters.update({P.P_NAME: spec})
     parameters.update(kwargs)
     print_file_resolver = pytis.output.FileResolver(config.print_spec_dir)
-    print_resolver = P(print_file_resolver, resolver, parameters=parameters)
-    old_print_resolver = P(print_file_resolver, resolver, parameters=parameters, old=True)
-    resolvers = (print_resolver, old_print_resolver,)
+    print_resolver = P(print_file_resolver, resolver)
+    resolvers = (print_resolver,)
     try:
-        formatter = pytis.output.Formatter(resolvers, print_spec)
+        formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec,
+                                           parameters=parameters)
     except pytis.output.AbortOutput:
         return False
     if output_file:

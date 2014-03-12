@@ -1871,6 +1871,14 @@ class ViewSpec(object):
         """Return the id of the referer column as a string or 'None'."""
         return self._referer
 
+    def spec_name(self):
+        """Return name of the corresponding specification as a basestring.
+
+        An empty string may be returned if the name is unknown.
+
+        """
+        return self._spec_name
+
     
 class BindingSpec(object):
     """Specifikace vazby dvou náhledů při propojení do duálního formuláře.
