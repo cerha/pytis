@@ -45,7 +45,7 @@ class GlobalOutputTemplates(pytis.presentation.Specification):
         Field('help', _("Help"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=20, compact=True),
-        )
+    )
     columns = ('module', 'specification', 'template',)
     layout = ('module', 'specification', 'template', 'rowtemplate', 'help',)
 
@@ -78,11 +78,12 @@ class UserOutputTemplates(pytis.presentation.Specification):
         Field('help', _("Help"), virtual=True,
               computer=pytis.presentation.computer(pytis.output.Formatter.template_help),
               width=80, height=25, compact=True),
-        )
+    )
     columns = ('module', 'specification', 'username', 'template',)
     layout = pytis.presentation.TabGroup((_("Šablona"), ('module', 'specification', 'template',)),
                                          (_("Řádková šablona"), ('rowtemplate',)),
-                                         (_("Hlavičky a patičky"), ('header', 'first_page_header', 'footer',)),
+                                         (_("Hlavičky a patičky"), ('header', 'first_page_header',
+                                                                    'footer',)),
                                          (_("Styl"), ('style',)),
                                          (_("Help"), ('help',)))
     def on_delete_record(self, row):
@@ -119,12 +120,12 @@ class DirectUserOutputTemplates(UserOutputTemplates):
             condition = pytis.data.AND(pytis.data.EQ('module', s(module)),
                                        pytis.data.EQ('specification', s(specification)))
             if not data.select(condition):
-                message =  _("Tisková sestava neexistuje: ") + specification
+                message = _("Tisková sestava neexistuje: ") + specification
                 pytis.form.run_dialog(pytis.form.Error, message)
                 return
             row = data.fetchone()
             if data.fetchone() is not None:
-                message =  _("Tisková sestava se vyskytuje ve více exemplářích: ") + specification
+                message = _("Tisková sestava se vyskytuje ve více exemplářích: ") + specification
                 pytis.form.run_dialog(pytis.form.Error, message)
                 return
             record = pytis.presentation.PresentedRow(view_spec.fields(), data, row)
