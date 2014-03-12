@@ -2,7 +2,7 @@
 
 # Resolver pro specifikace výstupu
 #
-# Copyright (C) 2002, 2005, 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2002, 2005, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,7 +123,7 @@ class Resolver(object):
             parts = module_name.split('.')
             module_name = os.path.join(*parts[:-1])
             class_name = parts[-1]
-            instance = self.get_instance(module_name, class_name, self, **kwargs)
+            instance = self.get_instance(module_name, class_name, **kwargs)
             try:
                 method = getattr(instance, spec_name)
             except AttributeError:

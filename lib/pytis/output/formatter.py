@@ -656,15 +656,13 @@ class PrintSpecification(object):
     output.  You can use 'init()' method for that purpose.
     
     """
-    def __init__(self, resolver, parameters):
+    def __init__(self, parameters):
         """
         Arguments:
 
-          resolver -- 'Resolver' instance available to instance methods
           parameters -- dictionary of print parameters
         
         """
-        self._resolver = resolver
         self._parameters = dict(parameters)
 
     def _parameter(self, name, default=None):
@@ -675,7 +673,7 @@ class PrintSpecification(object):
     def _add_parameter(self, name, value):
         self._parameters[name] = value
 
-    def init(self, parameters):
+    def init(self):
         """Run actions to be performed before the printing starts.
 
         Return true if printing can continue.  If the user interaction
