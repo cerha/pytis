@@ -1581,7 +1581,7 @@ class BrowseForm(LayoutForm):
         self._group = True
         self._last_group = None
         group_values = last_group_values = None
-        n = 0
+        exported_row_number = 0
         data.skip(first_record_offset)
         for row in rows:
             self._set_row(row)
@@ -1593,18 +1593,18 @@ class BrowseForm(LayoutForm):
                     group_heading = self._export_group_heading(context)
                     if group_heading is not None:
                         exported_rows.append(group_heading)
-            if found and (limit is None and offset == n or
-                          limit is not None and offset == (n + page * limit)):
+            if found and (limit is None and offset == exported_row_number or
+                          limit is not None and offset == (exported_row_number + page * limit)):
                 row_id = 'found-record'
             else:
                 row_id = None
-            exported_rows.append(self._export_row(context, self._row, n, row_id))
+            exported_rows.append(self._export_row(context, self._row, exported_row_number, row_id))
             self._last_group = self._group
-            n += 1
-            if limit is not None and n >= limit:
+            exported_row_number += 1
+            if limit is not None and exported_row_number >= limit:
                 break
         data.close()
-        if n == 0:
+        if exported_row_number == 0:
             result = None
         else:
             if limit is None or count <= self._limits[0]:
@@ -1615,7 +1615,7 @@ class BrowseForm(LayoutForm):
                 # current listing range.
                 summary = _(u"Displayed records %(first)s-%(last)s of total %(total)s",
                             first=g.strong(str(first_record_offset + 1)),
-                            last=g.strong(str(first_record_offset + n)),
+                            last=g.strong(str(first_record_offset + exported_row_number)),
                             total=g.strong(str(count)))
             result = self._wrap_exported_rows(context, exported_rows, summary, count, page, pages)
         return [x for x in
