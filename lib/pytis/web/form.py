@@ -1228,7 +1228,7 @@ class BrowseForm(LayoutForm):
                                          if self._row.visible(cid)]
         self._align = dict([(f.id, 'right') for f in cfields
                             if not f.type.enumerator() and isinstance(f.type, pd.Number)])
-        self._custom_message = message
+        self._message = message
         self._init_query_fields(req, query_fields)
         provider_kwargs = dict(req=self._req)
         if self._query_fields_row:
@@ -1498,21 +1498,6 @@ class BrowseForm(LayoutForm):
             return conditions[0]
         else:
             return pytis.data.AND(*conditions)
-    
-    def _message(self):
-        if self._custom_message:
-            msg = self._custom_message(self)
-        elif self._text_search_string:
-            # Translators: This string uses plural forms.  '%d' is replaced by
-            # the number and this number also denotes the plural form used.
-            # Please supply translations for all plural forms relevant for the
-            # target language.
-            msg = _.ngettext("Found %d record matching the search expression.",
-                             "Found %d records matching the search expression.",
-                             self._row_count)
-        else:
-            msg = None
-        return msg
 
     def _export_body(self, context, form_id):
         g = context.generator()
@@ -1620,13 +1605,7 @@ class BrowseForm(LayoutForm):
                 break
         data.close()
         if n == 0:
-            if self._message():
-                # The message about search/filter results is printed in _export_message().
-                result = None
-            else:
-                # Translators: Used in empty list forms.  "Records" refers to
-                # database records in the most generic senese possible.
-                result = g.strong(_(u"No records."))
+            result = None
         else:
             if limit is None or count <= self._limits[0]:
                 summary = _(u"Total records:") + ' ' + g.strong(str(count))
@@ -1744,7 +1723,22 @@ class BrowseForm(LayoutForm):
         return (g.div(result, cls='index-search-controls'),)
 
     def _export_message(self, context):
-        msg = self._message()
+        if self._message:
+            msg = self._message(self)
+        elif self._text_search_string:
+            # Translators: This string uses plural forms.  '%d' is replaced by
+            # the number and this number also denotes the plural form used.
+            # Please supply translations for all plural forms relevant for the
+            # target language.
+            msg = _.ngettext("Found %d record matching the search expression.",
+                             "Found %d records matching the search expression.",
+                             self._row_count)
+        elif self._row_count == 0:
+            # Translators: Used in empty list forms.  "Records" refers to
+            # database records in the most generic senese possible.
+            msg = _(u"No records.")
+        else:
+            msg = None
         if msg:
             return context.generator().div(msg, cls='results')
         else:
