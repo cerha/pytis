@@ -2271,11 +2271,11 @@ class EditableBrowseForm(BrowseForm):
             # doesn't supply default values automatically, but is actually is
             # a new row when 'row' is None.
             for field in self._fields.values():
-                # Don't apply default value to the key column because it is used to distinguish 
+                # Don't apply default value to the key column because it is used to distinguish
                 # inserted rows from edited rows (maybe that's wrong).
                 if self._row[field.id].value() is None and field.id != self._key:
                     default = field.spec.default()
-                    # Exclude serial fields to avoid wasting sequences here. 
+                    # Exclude serial fields to avoid wasting sequences here.
                     if default is not None and not isinstance(field.type, pd.Serial):
                         if isinstance(default, collections.Callable):
                             try:
