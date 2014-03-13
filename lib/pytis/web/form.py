@@ -922,6 +922,8 @@ class BrowseForm(LayoutForm):
     _SORTING_DIRECTIONS = {pytis.data.ASCENDENT: 'asc',
                            pytis.data.DESCENDANT: 'desc'}
     _NULL_FILTER_ID = '-'
+    _EXPORT_EMPTY_TABLE = False
+    """Determines whether the table is present on output even if it contains no rows."""
 
     class FormRecord(pytis.presentation.PresentedRow):
 
@@ -1604,7 +1606,7 @@ class BrowseForm(LayoutForm):
             if limit is not None and exported_row_number >= limit:
                 break
         data.close()
-        if exported_row_number == 0:
+        if exported_row_number == 0 and not self._EXPORT_EMPTY_TABLE:
             result = None
         else:
             if limit is None or count <= self._limits[0]:
@@ -1733,7 +1735,7 @@ class BrowseForm(LayoutForm):
             msg = _.ngettext("Found %d record matching the search expression.",
                              "Found %d records matching the search expression.",
                              self._row_count)
-        elif self._row_count == 0:
+        elif self._row_count == 0 and not self._EXPORT_EMPTY_TABLE:
             # Translators: Used in empty list forms.  "Records" refers to
             # database records in the most generic senese possible.
             msg = _(u"No records.")
@@ -2214,6 +2216,7 @@ class EditableBrowseForm(BrowseForm):
     'count-654'.
 
     """
+    _EXPORT_EMPTY_TABLE = True
     
     def __init__(self, view, req, row, editable_columns=None, set_row_callback=None,
                  allow_insertion=False, extra_rows=0, **kwargs):
