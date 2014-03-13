@@ -28,17 +28,19 @@ import pytis.output
 _ = pytis.util.translations('pytis-wx')
 
 P_NAME = 'P_NAME'
-"""Parametr resolveru identifikující specifikační soubor."""
+"""Output parameter storing the specification."""
 P_KEY = 'P_KEY'
-"""Parametr resolveru identifikující datový klíč."""
+"""Output parameter storing the data key."""
 P_ROW = 'P_ROW'
-"""Parametr resolveru identifikující datový řádek."""
+"""Output parameter storing the data row."""
 P_CONDITION = 'P_CONDITION'
-"""Parametr resolveru identifikující podmínku pro 'pytis.data.Data.select()'."""
+"""Output parameter storing the condition for 'pytis.data.Data.select()' call."""
 P_SORTING = 'P_SORTING'
-"""Parametr resolveru identifikující třídění pro 'pytis.data.Data.select()'."""
+"""Output parameter storing the sorting for 'pytis.data.Data.select()' call."""
 P_DATA = 'P_DATA'
-"""Parametr resolveru identifikující datový objekt."""
+"""Output parameter storing the data object."""
+P_LANGUAGE = 'P_LANGUAGE'
+"""Output parameter storing the language code."""
 
 
 def data_table(view, data, condition=None, sorting=None, transaction=None, **long_table_args):

@@ -337,7 +337,7 @@ class LCGFormatter(object):
             return binding_dictionary
         
     def __init__(self, resolver, output_resolvers, template_id, form=None, form_bindings=None,
-                 parameters={}):
+                 parameters={}, language=None, translations=None):
         """Arguments:
 
           resolver -- form specification resolver
@@ -350,12 +350,16 @@ class LCGFormatter(object):
           form_bindings -- bindings of the current form (if it is the main form
             of a dual form) as a sequence of 'Binding' instances; or 'None'
           parameters -- dictionary of form parameters
+          language -- language code to pass to the exporter context
+          translations -- translations to pass to PDFExporter
 
         """
         self._resolver = resolver
         self._output_resolvers = xtuple(output_resolvers)
         self._template_id = template_id
         self._parameters = HashableDict(parameters)
+        self._language = language
+        self._translations = translations
         if not self._resolve(template_id, 'init'):
             raise AbortOutput()
         self._doc_header, __ = self._resolve(template_id, 'doc_header')
@@ -515,10 +519,10 @@ class LCGFormatter(object):
         presentation.page_height = self._page_layout.get(PAGE_HEIGHT)
         presentation.landscape = self._page_layout.get(PAGE_LANDSCAPE_MODE)
         start_time_export = pytis.data.DateTime.now()
-        exporter = lcg.pdf.PDFExporter()
+        exporter = lcg.pdf.PDFExporter(translations=self._translations)
         presentation_args = (self._style or [])
         presentation_set = lcg.PresentationSet(presentation_args)
-        context = exporter.context(lcg_content, None, presentation=presentation_set)
+        context = exporter.context(lcg_content, self._language, presentation=presentation_set)
         try:
             pdf = exporter.export(context, global_presentation=presentation)
         except lcg.SubstitutionIterator.IteratorError, e:
@@ -536,6 +540,10 @@ class LCGFormatter(object):
         except pytis.data.DBSystemException:
             pass
         return pdf
+
+    def pdf(self):
+        "Return the formatted document as PDF data (basestring)."
+        return self._pdf()
         
     def preview(self, stream):
         """Return the formatted document as a plain text.
