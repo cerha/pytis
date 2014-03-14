@@ -2776,12 +2776,14 @@ class PopupEditForm(PopupForm, EditForm):
         self._initial_select_row = None
         
     def _open_data_select(self, data, async_count=False):
-        if self._initial_select_row is None:
+        if self._initial_select_row == 0:
+            # Some special forms (such as virtual forms) may require opening
+            # the data select to initialize their data.
+            return super(PopupEditForm, self)._open_data_select(data, async_count=async_count)
+        else:
             # Apparently we needn't open data select here; it just delays opening
             # the form in some situations.
             return None
-        else:
-            return super(PopupEditForm, self)._open_data_select(data, async_count=async_count)
 
     def _default_transaction(self):
         try:
