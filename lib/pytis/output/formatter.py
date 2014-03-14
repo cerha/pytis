@@ -337,7 +337,7 @@ class LCGFormatter(object):
             return binding_dictionary
         
     def __init__(self, resolver, output_resolvers, template_id, form=None, form_bindings=None,
-                 parameters={}, language=None, translations=None):
+                 parameters={}, language=None, translations=()):
         """Arguments:
 
           resolver -- form specification resolver
