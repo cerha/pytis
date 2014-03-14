@@ -52,13 +52,13 @@
 * html .pytis-form fieldset.group legend { color: #000; position: absolute; top: -0.6em; left: 0.2em; }
 
 .pytis-form div.submit {
-    margin-top: 0.5em;
-    padding: 0.5em;
+    margin-top: .5em;
+    padding: .5em;
     text-align: center;
 }
-.pytis-form div.submit input { 
-    padding: 0.1em 0.5em;
-    margin: 0 1em;
+.pytis-form div.submit button { 
+    padding: .1em .5em;
+    margin: 0 .6em;
 }
 
 .pytis-form .ajax-loading {
