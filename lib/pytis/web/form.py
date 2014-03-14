@@ -265,11 +265,11 @@ class FieldForm(Form):
                         g = context.generator()
                         img = context.resource('print-field.png')
                         if img:
-                            label = g.img(src=context.uri(img), alt=_(u"Print"))
+                            label = g.img(src=context.uri(img), alt=_("Print"))
                         else:
-                            label = _(u"Print")
+                            label = _("Print")
                         formatted = g.a(label, href=uri,
-                                        title=_(u"Export the contents of this field into PDF"),
+                                        title=_("Export the contents of this field into PDF"),
                                         cls='print-field-link') + formatted
                 wrap = context.generator().div
             else:
@@ -519,7 +519,7 @@ class _SingleRecordForm(LayoutForm):
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
 
-    def __init__(self, view, req, row, submit=_(u"Submit"), reset=_(u"Undo all changes"), **kwargs):
+    def __init__(self, view, req, row, submit=_("Submit"), reset=_("Undo all changes"), **kwargs):
         """Arguments:
 
           submit -- custom submit buttons as a sequence of (label, name) pairs.
@@ -532,7 +532,7 @@ class _SubmittableForm(Form):
 
         """
         if not isinstance(submit, (list, tuple)):
-            submit = ((submit or _(u"Submit"), None),)
+            submit = ((submit or _("Submit"), None),)
         self._submit = submit
         self._reset = reset
         self._enctype = None
@@ -558,10 +558,10 @@ class _SubmittableForm(Form):
         if invoked_from is not None:
             hidden.append(('__invoked_from', invoked_from))
         content = [g.hidden(name, value) for name, value in hidden] + \
-            [g.button(g.span(label), name=name, value='1', title=_(u"Submit the form"))
+            [g.button(g.span(label), name=name, value='1', title=_("Submit the form"))
              for label, name in self._submit]
         if self._reset:
-            content.append(g.button(g.span(_(u"Reset")), type='reset', title=self._reset))
+            content.append(g.button(g.span(_("Reset")), type='reset', title=self._reset))
         return [g.div(content, cls='submit')]
 
     def _field_order(self):
@@ -719,7 +719,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             if f.label and f.not_null() and f.id in self._layout.order():
                 g = context.generator()
                 return [g.div(g.span("*", cls="not-null") + ") " +
-                              _(u"Fields marked by an asterisk are mandatory."),
+                              _("Fields marked by an asterisk are mandatory."),
                               cls='footer')]
         return []
 
@@ -907,9 +907,9 @@ class FilterForm(EditForm):
     _CSS_CLS = 'edit-form filter-form'
     
     def __init__(self, fields, req, row, **kwargs):
-        view = ViewSpec(_(u"Filter"), fields)
+        view = ViewSpec(_("Filter"), fields)
         kwargs['reset'] = kwargs.get('reset') # Default to None in this class.
-        kwargs['submit'] = kwargs.get('submit', _(u"Apply Filter"))
+        kwargs['submit'] = kwargs.get('submit', _("Apply Filter"))
         super(FilterForm, self).__init__(view, req, row, **kwargs)
         
     def _export_footer(self, context):
@@ -1450,10 +1450,10 @@ class BrowseForm(LayoutForm):
                 return ''
         g = context.generator()
         data = self._row.data()
-        agg_id, label = {pytis.data.Data.AGG_SUM: ('agg-sum', _(u"Sum")),
-                         pytis.data.Data.AGG_AVG: ('agg-avg', _(u"Average")),
-                         pytis.data.Data.AGG_MIN: ('agg-min', _(u"Minimum")),
-                         pytis.data.Data.AGG_MAX: ('agg-max', _(u"Maximum"))}[op]
+        agg_id, label = {pytis.data.Data.AGG_SUM: ('agg-sum', _("Sum")),
+                         pytis.data.Data.AGG_AVG: ('agg-avg', _("Average")),
+                         pytis.data.Data.AGG_MIN: ('agg-min', _("Minimum")),
+                         pytis.data.Data.AGG_MAX: ('agg-max', _("Maximum"))}[op]
         cells = [i == 0 and
                  g.th(label + ':', scope='row') or
                  g.td(export_aggregation_value(data, op, field), cls='id-' + field.id)
@@ -1610,12 +1610,12 @@ class BrowseForm(LayoutForm):
             result = None
         else:
             if limit is None or count <= self._limits[0]:
-                summary = _(u"Total records:") + ' ' + g.strong(str(count))
+                summary = _("Total records:") + ' ' + g.strong(str(count))
             else:
                 # Translators: The variables '%(first)s', '%(last)s' and
                 # '%(total)s' are replaced by the numbers corresponding to the
                 # current listing range.
-                summary = _(u"Displayed records %(first)s-%(last)s of total %(total)s",
+                summary = _("Displayed records %(first)s-%(last)s of total %(total)s",
                             first=g.strong(str(first_record_offset + 1)),
                             last=g.strong(str(first_record_offset + exported_row_number)),
                             total=g.strong(str(count)))
@@ -1738,7 +1738,7 @@ class BrowseForm(LayoutForm):
         elif self._row_count == 0 and not self._EXPORT_EMPTY_TABLE:
             # Translators: Used in empty list forms.  "Records" refers to
             # database records in the most generic senese possible.
-            msg = _(u"No records.")
+            msg = _("No records.")
         else:
             msg = None
         if msg:
@@ -1793,12 +1793,12 @@ class BrowseForm(LayoutForm):
                              # Translators: Label of filter selection box.
                              # Filtering limits the displayed form records by
                              # certain criterias.
-                             title=(_(u"Filter") + ' ' +
+                             title=(_("Filter") + ' ' +
                                     # Translators: Tooltip text suggesting
                                     # keyboard combination to use for selection
                                     # without unexpected invocation of the
                                     # option.
-                                    _(u"(Use ALT+arrow down to select)")),
+                                    _("(Use ALT+arrow down to select)")),
                              options=[(f.title(), f.id()) for f in filter_set],
                              onchange=onchange),
                 )
@@ -1819,39 +1819,39 @@ class BrowseForm(LayoutForm):
             if pages > 1:
                 offset_id = 'offset-' + html_id
                 if self._allow_search_field:
-                    search_button = g.button(g.span(_(u"Search")), cls='search-button',
+                    search_button = g.button(g.span(_("Search")), cls='search-button',
                                              style=show_search_field and 'display:none' or None)
                 else:
                     search_button = None
                 # Translators: Paging controls allow navigation in long lists which are split into
                 # several pages.  The user can select a specific page or browse forward/backwards.
-                controls += (g.span((g.label(_(u"Page") + ': ', offset_id),
+                controls += (g.span((g.label(_("Page") + ': ', offset_id),
                                      g.select(name='offset', id=offset_id, selected=page * limit,
-                                              title=(_(u"Page") + ' ' +
-                                                     _(u"(Use ALT+arrow down to select)")),
+                                              title=(_("Page") + ' ' +
+                                                     _("(Use ALT+arrow down to select)")),
                                               onchange='this.form.submit(); return true',
                                               options=[(str(i + 1), i * limit)
                                                        for i in range(pages)]),
                                      ' / ',
                                      g.strong(str(pages))), cls="offset"),
-                             g.span((g.button(g.span(_(u"Previous")), name='prev', value='1',
-                                              title=_(u"Go to previous page"), disabled=(page == 0),
+                             g.span((g.button(g.span(_("Previous")), name='prev', value='1',
+                                              title=_("Go to previous page"), disabled=(page == 0),
                                               cls='prev-page-button'),
-                                     g.button(g.span(_(u"Next")), name='next', value='1',
-                                              title=_(u"Go to next page"),
+                                     g.button(g.span(_("Next")), name='next', value='1',
+                                              title=_("Go to next page"),
                                               disabled=(page + 1) * limit >= count,
                                               cls='next-page-button'),
                                      ) + (search_button and (search_button,) or ()),
                                     cls="buttons"))
             limit_id = 'limit-' + html_id
-            controls += (g.span((g.label(_(u"Records per page") + ':', limit_id) + ' ',
+            controls += (g.span((g.label(_("Records per page") + ':', limit_id) + ' ',
                                  g.select(name='limit', id=limit_id, selected=limit,
-                                          title=(_(u"Records per page") + ' ' +
-                                                 _(u"(Use ALT+arrow down to select)")),
+                                          title=(_("Records per page") + ' ' +
+                                                 _("(Use ALT+arrow down to select)")),
                                           onchange='this.form.submit(); return true',
                                           options=[(str(i), i) for i in limits])),
                                 cls='limit'),
-                         g.noscript(g.button(g.span(_(u"Go")), cls='goto-page-button')))
+                         g.noscript(g.button(g.span(_("Go")), cls='goto-page-button')))
             if controls:
                 cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
                 content.append(g.div(controls, cls=cls))
@@ -1859,13 +1859,13 @@ class BrowseForm(LayoutForm):
             if not bottom and self._allow_search_field:
                 search_id = 'filter-' + html_id
                 search_field = g.div(
-                    (g.label(_(u"Search expression") + ': ', search_id),
+                    (g.label(_("Search expression") + ': ', search_id),
                      g.field(self._text_search_string, name='query', id=search_id,
                              cls='text-search-field'),
                      g.hidden('show-search-field', show_search_field and '1' or ''),
                      # Translators: Search button label.
-                     g.button(g.span(_(u"Search")), cls='search-button'),
-                     g.button(g.span(_(u"Cancel")), cls='cancel-search')),
+                     g.button(g.span(_("Search")), cls='search-button'),
+                     g.button(g.span(_("Cancel")), cls='cancel-search')),
                     cls='query' + (show_filters and ' with-filter' or ''),
                     style=not show_search_field and 'display:none' or None,
                 )
@@ -1904,7 +1904,7 @@ class BrowseForm(LayoutForm):
                         filter_labels.append(filter.name())
                     break
         if filter_labels:
-            info = _(u"filtered by: ") + lcg.concat(filter_labels, separator=', ')
+            info = _("filtered by: ") + lcg.concat(filter_labels, separator=', ')
         else:
             info = None
         return info
