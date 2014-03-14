@@ -126,7 +126,8 @@ pytis.BrowseFormHandler = Class.create({
 	}
 	if (allow_insertion) {
 	    var insert_button = new Element('button', {'class': 'new-row-button'});
-	    insert_button.update(pytis._("New row"));
+	    var insert_label = new Element('span').update(pytis._("New row"));
+	    insert_button.update(insert_label);
 	    insert_button.observe('click', this.on_insert_new_row.bind(this));
 	    this.form.insert(insert_button);
 	}
