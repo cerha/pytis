@@ -372,12 +372,10 @@
 .pytis-form.browse-form a.remove-row img {
     position: relative;
     top: 3px;
-    left: 3px;
+    left: 0;
+    padding-left: 2px;
+    padding-right: 3px;
 }
-.pytis-form.browse-form .next-to-remove-row {
-    padding-left: 6px;
-}
-
 
 /* Border-less table:
 .pytis-form.browse-form.mapping table {

@@ -2261,7 +2261,7 @@ class EditableBrowseForm(BrowseForm):
             result = (g.a(g.img(src=context.uri(icon), alt=_("Remove this row")),
                           href='javascript:void(0)',
                           title=_("Remove this row"), cls='remove-row') +
-                      g.span(result, cls='next-to-remove-row'))
+                      result)
         return result
 
     def _row_attr(self, row, n):
