@@ -57,7 +57,7 @@
     text-align: center;
 }
 .pytis-form div.submit button { 
-    padding: .1em .5em;
+    line-height: 1.4em;
     margin: 0 .6em;
 }
 
@@ -208,7 +208,7 @@
     white-space: nowrap;
     font-weight: bold;
 }
-.pytis-form .field-label .not-null { color: #f00; }
+.pytis-form .field-label .not-null { color: #f00; line-height: 1em; }
 .pytis-form .field-label.disabled { color: #444; }
 .pytis-form .field-label.disabled .not-null { display: none; }
 
@@ -241,7 +241,7 @@
 }
 .pytis-form.edit-form th.label {
     /* To display labels vertically centered with form controls. */
-    line-height: 2em;
+    line-height: 1.5em;
 }
 .pytis-form.show-form th.label { 
     /* Force normal line height in a show form embedded in an edit form. */
@@ -282,6 +282,7 @@
 .pytis-form.edit-form select { 
     border: 1px solid #bbb;
     background-color: #fff;
+    margin: 1px 0;
 }
 .pytis-form.edit-form .group input.text:disabled,
 .pytis-form.edit-form .group input.password:disabled,
@@ -290,6 +291,13 @@
 .pytis-form.edit-form textarea:disabled,
 .pytis-form.edit-form select:disabled { 
     background-color: #e8e8e8;
+}
+.pytis-form.edit-form .group input.text,
+.pytis-form.edit-form .group input.password,
+.pytis-form.edit-form .group input.file,
+.pytis-form.edit-form .group input.text,
+.pytis-form.edit-form textarea {
+    padding: 1px;
 }
 .pytis-form textarea.fullsize {
     width: 100%;
@@ -338,13 +346,11 @@
 .actions button, .list-form-controls button {
     width: auto; /* fix MSIE size */
     overflow: visible; /* fix MSIE size */
-    line-height: 1.3em;
-    padding: 1px 0;
 }
 .actions button span, .list-form-controls button span {
+    display: block;
+    line-height: 16px;
     background-position: center left;
-    background-repeat: no-repeat;
-    padding: 3px;
     background-repeat: no-repeat;
     background-attachment: center left;
 }
@@ -360,15 +366,18 @@
     margin: 0;
 }
 
-.pytis-form.browse-form a.remove-row {
-    float: left;
-    padding: 3px 2px 3px 1px;
+.pytis-form.browse-form td {
+    position: relative;
+}
+.pytis-form.browse-form a.remove-row img {
+    position: relative;
+    top: 3px;
+    left: 3px;
+}
+.pytis-form.browse-form .next-to-remove-row {
+    padding-left: 6px;
 }
 
-.pytis-form.browse-form .next-to-remove-row {
-    /* Work around Safari width issue when a.remove-row is floated left. */
-    padding-right: 16px;
-}
 
 /* Border-less table:
 .pytis-form.browse-form.mapping table {
