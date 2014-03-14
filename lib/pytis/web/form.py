@@ -2245,8 +2245,7 @@ class EditableBrowseForm(BrowseForm):
         self._allow_insertion = allow_insertion
         self._extra_rows = extra_rows
         super(EditableBrowseForm, self).__init__(view, req, row,
-                                                 **dict(kwargs, limits=(), limit=None,
-                                                        row_actions=True))
+                                                 **dict(kwargs, limits=(), limit=None))
         if __debug__:
             for cid in editable_columns:
                 assert cid in self._row, cid
@@ -2254,8 +2253,16 @@ class EditableBrowseForm(BrowseForm):
     def _export_cell(self, context, row, n, field, editable=False):
         if field.id in self._editable_columns:
             editable = True
-        return super(EditableBrowseForm, self)._export_cell(context, row, n, field,
-                                                            editable=editable)
+        result = super(EditableBrowseForm, self)._export_cell(context, row, n, field,
+                                                              editable=editable)
+        if field.id == self._column_fields[0].id:
+            g = context.generator()
+            icon = context.resource('delete-record.png')
+            result = (g.a(g.img(src=context.uri(icon), alt=_("Remove this row")),
+                          href='javascript:void(0)',
+                          title=_("Remove this row"), cls='remove-row') +
+                      g.span(result, cls='next-to-remove-row'))
+        return result
 
     def _row_attr(self, row, n):
         attr = super(EditableBrowseForm, self)._row_attr(row, n)
@@ -2312,11 +2319,6 @@ class EditableBrowseForm(BrowseForm):
             if error:
                 result += context.generator().div(error.message(), cls='validation-error')
         return result
-
-    def _popup_menu_items(self, context, row):
-        return [lcg.PopupMenuItem(_("Remove this row"),
-                                  callback='pytis.BrowseFormHandler.remove_row',
-                                  callback_args=(self._name,))]
 
     def _export_javascript(self, context, form_id):
         g = context.generator()

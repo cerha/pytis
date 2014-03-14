@@ -360,7 +360,15 @@
     margin: 0;
 }
 
+.pytis-form.browse-form a.remove-row {
+    float: left;
+    padding: 3px 2px 3px 1px;
+}
 
+.pytis-form.browse-form .next-to-remove-row {
+    /* Work around Safari width issue when a.remove-row is floated left. */
+    padding-right: 16px;
+}
 
 /* Border-less table:
 .pytis-form.browse-form.mapping table {
