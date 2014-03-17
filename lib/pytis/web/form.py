@@ -519,22 +519,32 @@ class _SingleRecordForm(LayoutForm):
 class _SubmittableForm(Form):
     """Mix-in class for forms with submit buttons."""
 
-    def __init__(self, view, req, row, submit=_("Submit"), reset=_("Undo all changes"), **kwargs):
+    def __init__(self, view, req, row, submit_buttons=None,
+                 show_cancel_button=False, show_reset_button=True, **kwargs):
         """Arguments:
 
-          submit -- custom submit buttons as a sequence of (label, name) pairs.
-            A single unnamed button can be passed as just the label string.
-            Default is one button labeled `Submit'.
-          reset -- reset button label as a string or None to omit the reset
-            button.
+          submit_buttons -- submit buttons as a sequence of (NAME, LABEL)
+            pairs, where LABEL is the button label and NAME is the name of the
+            corresponding request parameter which has the value '1' if the form
+            was submitted using given submit button.  If NAME is None, no
+            request parameter is sent by the button.  The default is just one
+            button labeled "Submit" with no NAME.
+          show_cancel_button -- boolean flag indicating whether the cancel
+            button is displayed.  The cancel button will appear as another
+            submit button with name '_cancel'.  If pressed, the form is
+            submitted, so the server processing must take the appropriate
+            action if the request parameter '_cancel' is present (with value
+            '1').
+          show_reset_button -- boolean flag indicating whether the form reset
+            button is displayed.  Pressing this button will reset all form
+            fields to their initial state.
             
           See the parent classes for definition of the remaining arguments.
 
         """
-        if not isinstance(submit, (list, tuple)):
-            submit = ((submit or _("Submit"), None),)
-        self._submit = submit
-        self._reset = reset
+        self._submit_buttons = submit_buttons or ((None, _("Submit")),)
+        self._show_cancel_button = show_cancel_button
+        self._show_reset_button = show_reset_button
         self._enctype = None
         self._last_validation_errors = []
         super(_SubmittableForm, self).__init__(view, req, row, **kwargs)
@@ -558,10 +568,13 @@ class _SubmittableForm(Form):
         if invoked_from is not None:
             hidden.append(('__invoked_from', invoked_from))
         content = [g.hidden(name, value) for name, value in hidden] + \
-            [g.button(g.span(label), name=name, value='1', title=_("Submit the form"))
-             for label, name in self._submit]
-        if self._reset:
-            content.append(g.button(g.span(_("Reset")), type='reset', title=self._reset))
+            [g.button(g.span(label), name=name, value='1' if name else None,
+                      title=_("Submit the form"))
+             for name, label in self._submit_buttons]
+        if self._show_cancel_button:
+            content.append(g.button(g.span(_("Cancel")), name='_cancel', value='1'))
+        if self._show_reset_button:
+            content.append(g.button(g.span(_("Reset")), type='reset', title=_("Undo all changes")))
         return [g.div(content, cls='submit')]
 
     def _field_order(self):
