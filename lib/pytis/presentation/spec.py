@@ -2889,8 +2889,19 @@ class Field(object):
             used).  The application developer is responsible to include the
             referer column in the underlying database view (typically by
             joining it with the codebook table).
+          formatter -- a function used to format the field value for
+            presentation purposes.  The function will get the current field
+            inner value as argument and must return a basestring.  The
+            formatter function actually replaces field type's export method.
+            It is applied by the method 'PresentedRow.format()' so it should be
+            used for all read-only occurences of the field in the user
+            interface.  Editable fields, on the other hand, work with the
+            internally exported value, not the formatted one.
           line_separator -- line separator in single line field value
-            presentation.
+            presentation.  The method 'PresentedRow.format()' will concatenate
+            multiline values into a single line using this string.  If
+            'formatter' is defined, 'line_separator' is applied to its result
+            if needed.
           codebook -- name (string) of the specification which acts as a
             codebook for this field.  This argument has two effects.  It is
             used as the default value of 'enumerator' (if 'enumerator is not
@@ -3102,9 +3113,10 @@ class Field(object):
     def _init(self, id, label=None, column_label=None, descr=None, virtual=False, dbcolumn=None,
               type=None, type_=None, width=None, column_width=None, disable_column=False,
               fixed=False, height=None, editable=None, visible=True, compact=False, nocopy=False,
-              default=None, computer=None, line_separator=';', codebook=None, display=None,
-              prefer_display=None, display_size=None, null_display=None, inline_display=None,
-              inline_referer=None, allow_codebook_insert=False, codebook_insert_spec=None,
+              default=None, computer=None, formatter=None, line_separator=';',
+              codebook=None, display=None, prefer_display=None, display_size=None,
+              null_display=None, inline_display=None, inline_referer=None,
+              allow_codebook_insert=False, codebook_insert_spec=None,
               codebook_insert_prefill=None, codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
@@ -3137,6 +3149,8 @@ class Field(object):
         assert isinstance(compact, bool), compact
         assert isinstance(nocopy, bool), nocopy
         assert computer is None or isinstance(computer, Computer), computer
+        assert formatter is None or isinstance(formatter, collections.Callable), formatter
+        assert line_separator is None or isinstance(line_separator, basestring), line_separator
         assert codebook is None or isinstance(codebook, basestring), codebook
         assert display is None or isinstance(display, (basestring, collections.Callable)), display
         assert (completer is None or
@@ -3276,6 +3290,7 @@ class Field(object):
         self._editable = editable
         assert isinstance(visible, (bool, Computer))
         self._visible = visible
+        self._formatter = formatter
         self._line_separator = line_separator
         self._codebook = codebook
         self._display = display
@@ -3426,6 +3441,9 @@ class Field(object):
     def computer(self):
         return self._computer
 
+    def formatter(self):
+        return self._formatter
+    
     def line_separator(self):
         return self._line_separator
     

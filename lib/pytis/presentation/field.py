@@ -76,6 +76,7 @@ class PresentedRow(object):
             self.type = type
             self.computer = f.computer()
             self.line_separator = f.line_separator()
+            self.formatter = f.formatter()
             self.default = f.default()
             self.editable = f.editable()
             self.visible = f.visible()
@@ -557,7 +558,7 @@ class PresentedRow(object):
         """Return the 'resolver' passed to the constructor."""
         return self._resolver
 
-    def format(self, key, pretty=False, form=None, secure=False, **kwargs):
+    def format(self, key, pretty=False, form=None, secure=False, export=None, **kwargs):
         """Return the string representation of the field value.
 
         Arguments:
@@ -585,18 +586,24 @@ class PresentedRow(object):
             # Může nastat například v případě, kdy k danému sloupci nejsou
             # přístupová práva.
             return ''
+        column = self._coldict[key]
         if secure is False or self.permitted(key, permission=pytis.data.Permission.VIEW):
-            value_type = value.type()
-            if pretty and isinstance(value_type, PrettyType):
-                svalue = value_type.pretty_export(value.value(), row=self, form=form, **kwargs)
+            if column.formatter is not None:
+                svalue = column.formatter(value.value())
             else:
-                svalue = value.export(**kwargs)
+                value_type = value.type()
+                if pretty and isinstance(value_type, PrettyType):
+                    svalue = value_type.pretty_export(value.value(), row=self, form=form, **kwargs)
+                else:
+                    if export is not None:
+                        svalue = export(value, **kwargs)
+                    else:
+                        svalue = value.export(**kwargs)
         else:
             if secure is True:
                 svalue = value.type().secret_export()
             else:
                 svalue = secure
-        column = self._coldict[key]
         if self._singleline and column.line_separator is not None:
             if svalue is None:
                 svalue = ''

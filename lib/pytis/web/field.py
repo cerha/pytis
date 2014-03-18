@@ -107,7 +107,7 @@ class Link(object):
     def target(self):
         return self._target
 
-def localizable_export(value):
+def localizable_export(value, **kwargs):
     """Try to convert a pytis value into a corresponding 'lcg.Localizable'.
 
     Arguemnts:
@@ -142,7 +142,7 @@ def localizable_export(value):
         elif type_cls is pd.Integer:
             return lcg.Decimal(value.value())
         else:
-            return value.export()
+            return value.export(**kwargs)
     else:
         return ''
 
@@ -262,7 +262,7 @@ class Field(object):
         '_display()' result will be added outside the link.
 
         """
-        value = self._exported_value()
+        value = self._row.format(self.id, export=localizable_export)
         if value and not isinstance(value, lcg.Localizable):
             g = context.generator()
             # Preserve linebreaks and indentation in multiline text.
@@ -292,8 +292,7 @@ class Field(object):
                         i += 1
                 return line
             # Join lines and substitute links for HTML links
-            escaped = g.escape(self._row.format(self.id))
-            lines = escaped.splitlines()
+            lines = g.escape(value).splitlines()
             converted_text = '<br>\n'.join(convert_line(l) for l in lines)
             value = self._URL_MATCHER.sub(r'<a href="\1">\1</a>', converted_text)
             len_lines = len(lines)
@@ -846,11 +845,11 @@ class EnumerationField(Field):
         if self._row.prefer_display(fid):
             return self._row.display(fid, export=localizable_export)
         if isinstance(self.type, pd.Boolean):
-            # Boolean fields may by also rendered as radio, etc. when
+            # Boolean fields may be also rendered as radio, etc. when
             # selection_type is defined.
             value = self._row[fid].value() and _(u"Yes") or _(u"No")
         else:
-            value = localizable_export(self._row[fid])
+            value = localizable_export(self._value())
         if self._showform:
             # The display value is returned by the _display method in this case...
             return value
