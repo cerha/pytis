@@ -4359,7 +4359,7 @@ class DbAttachmentStorage(AttachmentStorage):
         else:
             thumbnail_size = None
         return self._resource(row['file_name'].value(),
-                              info=dict(byte_size=row['byte_size'].export(),
+                              info=dict(byte_size=row['byte_size'].value(),
                                         # Pass storage reference to make the storage
                                         # live as long as necessary (see __del__).
                                         storage=self),
