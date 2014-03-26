@@ -692,7 +692,8 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
 
     def _export_form(self, context, form_id):
         return (self._export_errors(context, form_id) +
-                super(EditForm, self)._export_form(context, form_id))
+                super(EditForm, self)._export_form(context, form_id) +
+                self._export_footer(context, form_id))
     
     def _export_errors(self, context, form_id):
         g = context.generator()
@@ -727,7 +728,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
                 js_fields.append(field.javascript(context, form_id, active))
         return g.js_call('new pytis.FormHandler', form_id, js_fields, state)
 
-    def _export_footer(self, context):
+    def _export_footer(self, context, form_id):
         for f in self._fields.values():
             if f.label and f.not_null() and f.id in self._layout.order():
                 g = context.generator()
@@ -925,7 +926,7 @@ class FilterForm(EditForm):
         kwargs['submit'] = kwargs.get('submit', _("Apply Filter"))
         super(FilterForm, self).__init__(view, req, row, **kwargs)
         
-    def _export_footer(self, context):
+    def _export_footer(self, context, form_id):
         return []
 
     
