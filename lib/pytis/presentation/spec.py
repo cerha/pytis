@@ -1194,7 +1194,7 @@ class QueryFields(object):
         layout -- form layout as in ViewSpac, with the difference, that a tuple
           or list is converted to a horizontal group containing all fields
           (ViewSpec default layout is vertical).
-        kwargs -- other ViewSpec construcotr arguments
+        kwargs -- other ViewSpec constructor arguments
         
         """
         assert fields and isinstance(fields, (tuple, list)), fields
@@ -1455,7 +1455,7 @@ class ViewSpec(object):
             returned condition is applied in addition to any other conditions,
             such as the static condition defined by 'condition' or conditions
             implied by form profiles, filtering, etc.  The function is called
-            with various keyword arguments, same as for 'arguemnt_provider'.
+            with various keyword arguments, same as for 'argument_provider'.
             These arguments are described below in section Provider Arguments.
 
           referer -- id of the referer column as a string (one of the id's
