@@ -3057,3 +3057,14 @@ def tval(value):
     """
     assert value is None or isinstance(value, datetime.time), value
     return Value(Time(), value)
+
+def wmval(value):
+    """Return 'VMValue' instance of type 'String' with given value.
+
+    Arguments:
+
+      value -- internal value of the 'WMValue' instance, basestring
+
+    """
+    assert value is None or isinstance(value, basestring), value
+    return WMValue(String(), value)
