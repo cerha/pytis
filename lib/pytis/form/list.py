@@ -3276,7 +3276,7 @@ class BrowseForm(FoldableForm):
         def file_field_data(row, field_id):
             value = row[field_id]
             if isinstance(value.type(), pytis.data.Binary):
-                if isinstance(value.type(), pytis.data.Big):
+                if isinstance(value.type(), pytis.data.Big) and self._data.find_column(field_id):
                     # Big values are not included in list form select.
                     data_object = self.data()
                     key_id = data_object.key()[0].id()
