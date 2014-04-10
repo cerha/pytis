@@ -469,6 +469,7 @@ class LayoutForm(FieldForm):
         if result:
             cls = 'group' + (id and ' ' + id or '')
             if group.label():
+                cls += ' label-' + lcg.text_to_id(group.label())
                 result = g.fieldset(group.label() + ':', result, cls=cls)
             elif content.needs_panel():
                 # If there are any items which need a panel and there is no
