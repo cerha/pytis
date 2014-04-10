@@ -4988,13 +4988,16 @@ class Specification(object):
                 if n is not None:
                     raise Exception("Virtual field collides with a database column", f.id())
                 xfields.append(f)
+                kwargs = f.type_kwargs()
+                if kwargs:
+                    ftype = f.type()
+                    f.set_type(ftype.clone(ftype.__class__(**kwargs)))
             else:
                 if n is None:
                     raise Exception("Field not present in the database specification", f.id())
                 db_field = xfields[n]
                 if not issubclass(f.__class__, db_field.__class__):
-                    raise Exception("Field type incompatible with database specification",
-                                    f.id())
+                    raise Exception("Field type incompatible with database specification", f.id())
                 xfields[n] = result_field = db_field.clone(f)
                 if f.codebook() is not None:
                     result_field.set_type(result_field.type())
