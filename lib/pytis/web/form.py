@@ -653,7 +653,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
     _CSS_CLS = 'edit-form'
     _EDITABLE = True
     
-    def __init__(self, view, req, row, multipart=None, **kwargs):
+    def __init__(self, view, req, row, multipart=None, show_footer=True, **kwargs):
         """Arguments:
 
           multipart -- force form encoding type to 'multipart/form-data'.  If
@@ -662,6 +662,10 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             the form will always use the default encoding type (The 'enctype'
             HTML form attribute is not used) and if True, encoding is always
             forced to 'multipart/form-data'.
+          show_footer -- boolean flag which may be used to disable showing the
+            form footer.  The footer is the area below the submit buttons that
+            includes the note that "Fields marked by an asterisk are
+            mandatory".
 
           See the parent classes for definition of the remaining arguments.
 
@@ -676,6 +680,7 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
             multipart = any([f for f in order if isinstance(self._row.type(f), pytis.data.Binary)])
         self._enctype = (multipart and 'multipart/form-data' or None)
         self._error = None
+        self._show_footer = show_footer
 
     def _export_field_help(self, context, field):
         descr = field.spec.descr()
@@ -729,12 +734,13 @@ class EditForm(_SingleRecordForm, _SubmittableForm):
         return g.js_call('new pytis.FormHandler', form_id, js_fields, state)
 
     def _export_footer(self, context, form_id):
-        for f in self._fields.values():
-            if f.label and f.not_null() and f.id in self._layout.order():
-                g = context.generator()
-                return [g.div(g.span("*", cls="not-null") + ") " +
-                              _("Fields marked by an asterisk are mandatory."),
-                              cls='footer')]
+        if self._show_footer:
+            for f in self._fields.values():
+                if f.label and f.not_null() and f.id in self._layout.order():
+                    g = context.generator()
+                    return [g.div(g.span("*", cls="not-null") + ") " +
+                                  _("Fields marked by an asterisk are mandatory."),
+                                  cls='footer')]
         return []
 
     def _attachment_storage_request(self, req):
