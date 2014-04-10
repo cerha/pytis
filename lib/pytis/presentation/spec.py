@@ -5049,8 +5049,10 @@ class Specification(object):
             def type_(f):
                 t = f.type() or pytis.data.String
                 if type(t) == type(pytis.data.Type):
-                    kwargs = f.type_kwargs()
-                    t = t(**kwargs)
+                    t = t()
+                kwargs = f.type_kwargs()
+                if kwargs:
+                    t = t.clone(t.__class__(**kwargs))
                 return t
             columns = [pytis.data.ColumnSpec(f.id(), type_(f))
                        for f in self._fields if not f.virtual()]
