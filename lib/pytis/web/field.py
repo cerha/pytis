@@ -895,6 +895,7 @@ class RadioField(EnumerationField):
             wrap = g.div
         else:
             wrap = g.span
+        lcg.log('..', self.spec.orientation(), wrap)
         for i, (val, strval, display) in enumerate(choices):
             radio_id = id + '-' + str(i)
             radio = g.radio(value=strval, checked=(val == value.value()), id=radio_id, **kwargs)

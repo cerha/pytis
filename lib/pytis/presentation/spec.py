@@ -2740,6 +2740,9 @@ class Enumeration(object):
     selection_type = SelectionType.CHOICE
     """Overrides Field's 'selection_type' attribute."""
     
+    orientation = SelectionType.CHOICE
+    """Overrides Field's 'orientaion' attribute."""
+    
     null_display = None
     """Overrides Field's 'null_display' attribute."""
 
@@ -3127,7 +3130,7 @@ class Field(object):
               allow_codebook_insert=False, codebook_insert_spec=None,
               codebook_insert_prefill=None, codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
-              orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
+              orientation=None, post_process=None, filter=None, filter_list=None,
               style=None, link=(), filename=None, filename_extensions=(),
               text_format=TextFormat.PLAIN, attachment_storage=None, printable=False,
               slider=False, enumerator=None, value_column=None, validity_column=None,
@@ -3182,7 +3185,7 @@ class Field(object):
                 isinstance(runtime_arguments, Computer)), runtime_arguments
         assert (selection_type is None or
                 selection_type in public_attributes(SelectionType)), selection_type
-        assert orientation in public_attributes(Orientation), orientation
+        assert orientation is None or orientation in public_attributes(Orientation), orientation
         assert post_process is None or isinstance(post_process, collections.Callable) \
             or post_process in public_attributes(PostProcess), post_process
         assert filter is None or filter in public_attributes(TextFilter), filter
@@ -3209,6 +3212,8 @@ class Field(object):
             assert e.selection_type in public_attributes(SelectionType), e.selection_type
             if selection_type is None:
                 selection_type = e.selection_type
+            if orientation is None:
+                orientation = e.orientation
             if default is None and e.default is not None:
                 assert e.default in [v for v, l in e.enumeration], (e.default, e.enumeration,)
                 default = e.default
@@ -3316,7 +3321,7 @@ class Field(object):
         if isinstance(completer, (list, tuple)):
             completer = pytis.data.FixedEnumerator(completer)
         self._completer = completer
-        self._orientation = orientation
+        self._orientation = orientation or Orientation.VERTICAL
         self._post_process = post_process
         self._filter = filter
         self._filter_list = filter_list
