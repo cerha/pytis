@@ -4996,6 +4996,8 @@ class Specification(object):
                 kwargs = f.type_kwargs()
                 if kwargs:
                     ftype = f.type()
+                    if type(ftype) == type(pytis.data.Type):
+                        ftype = ftype()
                     f.set_type(ftype.clone(ftype.__class__(**kwargs)))
             else:
                 if n is None:
