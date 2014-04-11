@@ -267,7 +267,8 @@ cmd_run_any_form = \
     pytis.form.Application.COMMAND_HANDLED_ACTION(handler=run_any_form)
 
 
-def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
+def printdirect(resolver, spec, print_spec, row, output_file=None,
+                language=None, translations=(), **kwargs):
     """Print specification to an output file or show it in a PDF viewer.
 
     Arguments:
@@ -278,6 +279,8 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
       row -- row data for print resolver
       output_file -- name of the file to write output PDF data to, string; if
         'None' then show the output in an external PDF viewer
+      language -- language code to pass to the exporter context
+      translations -- translations to pass to PDFExporter
       kwargs -- passed to the print resolver for use in the print procedure
 
     Return True if the document was printed or displayed; return False if the
@@ -317,7 +320,8 @@ def printdirect(resolver, spec, print_spec, row, output_file=None, **kwargs):
     resolvers = (print_resolver,)
     try:
         formatter = pytis.output.Formatter(config.resolver, resolvers, print_spec,
-                                           parameters=parameters)
+                                           parameters=parameters, language=language,
+                                           translations=translations)
     except pytis.output.AbortOutput:
         return False
     if output_file:
