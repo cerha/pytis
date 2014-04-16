@@ -1124,12 +1124,14 @@ class RegexString(String):
     
     def _init(self, regex=None, **kwargs):
         super(RegexString, self)._init(**kwargs)
-        self._regex = re.compile(regex or self._REGEX)
+        if regex is None:
+            self._regex = self._REGEX
+        else:
+            self._regex = re.compile(regex)
     
     def _validate(self, string, *args, **kwargs):
         # TODO: Shall we rather do the regexp check in _check_constraints?
-        value, error = super(RegexString, self)._validate(string, *args,
-                                                          **kwargs)
+        value, error = super(RegexString, self)._validate(string, *args, **kwargs)
         if error is None and self._regex.match(string) is None:
             value, error = None, self._validation_error(self.VM_FORMAT)
         return value, error
