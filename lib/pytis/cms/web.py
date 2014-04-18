@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 # Author: Tomas Cerha.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -458,7 +458,6 @@ class Application(wiking.CookieAuthentication, wiking.Application):
                     _attachments='HttpAttachmentStorageBackend')
     
     _RIGHTS = {'Documentation': (wiking.Roles.ANYONE,),
-               'Stylesheets': (wiking.Roles.ANYONE,),
                'Resources': (wiking.Roles.ANYONE,),
                'SiteIcon': (wiking.Roles.ANYONE,),
                'HttpAttachmentStorageBackend': (wiking.Roles.ANYONE,)}
