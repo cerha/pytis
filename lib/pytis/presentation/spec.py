@@ -1544,13 +1544,13 @@ class ViewSpec(object):
         if __debug__:
             assert isinstance(actions, (tuple, list)), actions
             assert isinstance(layout, LayoutSpec), layout
-            action_names = [action.name() for action in self._linearize_actions(actions)]
+            action_ids = [action.id() for action in self._linearize_actions(actions)]
             def recourse_group(group):
                 for item in group.items():
                     if isinstance(item, GroupSpec):
                         recourse_group(item)
                     elif isinstance(item, Button):
-                        assert item.action() is None or item.action() in action_names, \
+                        assert item.action() is None or item.action() in action_ids, \
                             err("Unknown button action in layout: %s", item.action())
                     elif isinstance(item, Text):
                         pass
