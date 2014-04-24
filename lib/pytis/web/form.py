@@ -1138,12 +1138,13 @@ class BrowseForm(LayoutForm):
             assert 'profile' not in [fs.id() for fs in filter_sets]
             # Add profile selection as another filter set, since the user interface is the same.
             filter_set = FilterSet('profile', profiles.label() or _("Profile"),
-                                   [Filter(p.id(), p.title(), p.filter()) for p in profiles],
+                                   [Filter(p.id(), p.title(), p.filter())
+                                    for p in profiles.unnest()],
                                    default=profiles.default())
             self._init_filter_sets((filter_set,), req, param)
             profile_id = self._filter_ids['profile']
             if profile_id is not None:
-                profile = pytis.util.find(profile_id, profiles, key=lambda p: p.id())
+                profile = pytis.util.find(profile_id, profiles.unnest(), key=lambda p: p.id())
                 if profile:
                     self._current_profile = profile
                     if profile.columns() is not None:

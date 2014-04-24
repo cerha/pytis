@@ -1296,7 +1296,8 @@ class LookupForm(InnerForm):
                     if profile.id() == self._default_profile.id():
                         profile = self._default_profile
                     else:
-                        profile = find(profile.id(), self._view.profiles(), key=lambda p: p.id())
+                        profile = find(profile.id(), self._view.profiles().unnest(),
+                                       key=lambda p: p.id())
                     self._profiles[index] = profile
                 profile_manager().drop_profile(self._profile_spec_name(), self._form_name(),
                                                profile.id())
@@ -1372,7 +1373,7 @@ class LookupForm(InnerForm):
         elif profile_id == '__constructor_profile__':
             profile = self._initial_profile
         else:
-            profile = find(profile_id, self._view.profiles(), key=lambda p: p.id())
+            profile = find(profile_id, self._view.profiles.unnest(), key=lambda p: p.id())
         profile_manager().drop_profile(self._profile_spec_name(), self._form_name(), profile_id)
         self._profiles[index] = profile
         self._apply_profile(profile)
@@ -1576,6 +1577,10 @@ class LookupForm(InnerForm):
         """Return the current sorting specification."""
         return self._lf_sorting
 
+    def view(self):
+        """Return the form's presentation specification as a 'ViewSpec' instance."""
+        return self._view
+    
     def profiles(self):
         """Return the current form profiles as a list."""
         return self._profiles
@@ -2423,7 +2428,7 @@ class EditForm(RecordForm, TitledForm, Refreshable):
             cmd, args = Application.COMMAND_HANDLED_ACTION(handler=handler, row=self._row,
                                                            enabled=button.enabled())
         else:
-            action = find(button.action(), self._view.actions(linear=True), key=lambda a: a.name())
+            action = find(button.action(), self._view.actions(unnest=True), key=lambda a: a.name())
             label = button.label() or action.title()
             tooltip = button.tooltip() or action.descr()
             cmd, args = self.COMMAND_CONTEXT_ACTION(action=action)

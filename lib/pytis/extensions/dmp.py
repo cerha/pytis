@@ -893,7 +893,7 @@ class DMPRights(DMPObject):
                 access_specification = access_rights.specification()
             add_rights(shortname, access_specification, all_columns)
             # Form actions access rights
-            form_actions = spec.view_spec().actions(linear=True)
+            form_actions = spec.view_spec().actions(unnest=True)
             if form_actions:
                 for a in form_actions:
                     form_action_name = 'action/%s/%s' % (a.id(), spec_name,)
@@ -1486,7 +1486,7 @@ class DMPActions(DMPObject):
                                                  special_shortname=subaction_shortname))
                     subspec = self._specification(bname, [])
                     if subspec is not None:
-                        for a in subspec.view_spec().actions(linear=True):
+                        for a in subspec.view_spec().actions(unnest=True):
                             fullname = 'action/%s/%s' % (a.id(), bname,)
                             subsubaction = self.Action(resolver, messages,
                                                        fullname=fullname, title=a.title(raw=True))
@@ -1497,7 +1497,7 @@ class DMPActions(DMPObject):
                                                        fullname=fullname, title=p.title())
                             self._add_action(subsubaction)
         # Form actions
-        for a in spec.view_spec().actions(linear=True):
+        for a in spec.view_spec().actions(unnest=True):
             fullname = 'action/%s/%s' % (a.id(), form_name,)
             action = self.Action(resolver, messages,
                                  fullname=fullname, title=a.title(raw=True))

@@ -95,9 +95,9 @@ class HelpUpdater(object):
                      description=description, help=help_text)
         data = self._spec_help_items_data
         for kind, items in (('field', view_spec.fields()),
-                            ('profile', view_spec.profiles()),
+                            ('profile', view_spec.profiles().unnest()),
                             ('binding', view_spec.bindings()),
-                            ('action', view_spec.actions(linear=True))):
+                            ('action', view_spec.actions(unnest=True))):
             for item in items:
                 self._update(data, dict(spec_name=spec_name, kind=kind,
                                         identifier=item.id()),
@@ -338,10 +338,10 @@ class HelpGenerator(object):
                         key=lambda x: x[0])),
                 (_("Profiles"), lcg.dl,
                  [(p.title(), description('profile', p.id(), p.descr()))
-                  for p in view_spec.profiles()]),
+                  for p in view_spec.profiles().unnest()]),
                 (_("Context menu actions"), lcg.dl,
                  [(a.title(), description('action', a.id(), a.descr()))
-                  for a in view_spec.actions(linear=True)]),
+                  for a in view_spec.actions(unnest=True)]),
                 (_("Side forms"), lcg.dl,
                  [(spec_link(b.name(), b.title()), description('binding', b.id(), b.descr()))
                   for b in view_spec.bindings() if b.name()]),

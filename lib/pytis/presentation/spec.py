@@ -369,23 +369,9 @@ class ActionContext(object):
     # TODO: Zde by ještě mohla být jedna hodnota, která by umožnila definovat
     # univerzální akce, které pracují implicitně s aktuálním řádkem, ale pokud
     # existuje výběr, tak s výběrem.
-    
 
-class _ActionItem(object):
-    
-    def __init__(self, title):
-        assert isinstance(title, basestring)
-        self._title = title
 
-    def title(self, raw=False):
-        """Vrať název akce."""
-        title = self._title
-        if not raw:
-            title = title.replace("&", "")
-        return title
-            
-    
-class Action(_ActionItem):
+class Action(object):
     """User action specification.
 
     Actions typically appear in the user interface as action buttons or menu items and instances of
@@ -459,6 +445,7 @@ class Action(_ActionItem):
           hotkey -- keyboard shortcut (implemented only in wx forms).
         
         """
+        assert isinstance(title, basestring), title
         assert descr is None or isinstance(descr, basestring), descr
         assert handler is None or isinstance(handler, collections.Callable), handler
         assert context in public_attributes(ActionContext), context
@@ -469,17 +456,17 @@ class Action(_ActionItem):
         assert access_groups is None or isinstance(access_groups, (basestring, tuple, list))
         assert hotkey is None or isinstance(hotkey, (basestring, tuple)), hotkey
         assert kwargs is None or isinstance(kwargs, dict) and not kwargs_, kwargs_
+        self._id = id
+        self._title = title
         self._handler = handler
         self._context = context
         self._secondary_context = secondary_context
-        self._id = id
         self._enabled = enabled
         self._visible = visible
         self._access_groups = access_groups
         self._descr = descr
         self._hotkey = hotkey
         self._kwargs = kwargs or kwargs_
-        super(Action, self).__init__(title)
 
     def id(self):
         return self._id
@@ -488,6 +475,12 @@ class Action(_ActionItem):
         """Deprecated: Use id() instead."""
         return self.id()
     
+    def title(self, raw=False):
+        title = self._title
+        if not raw:
+            title = title.replace("&", "")
+        return title
+            
     def handler(self):
         return self._handler
 
@@ -556,41 +549,78 @@ class PrintAction(object):
         """Return print action name in the form useable for DMP."""
         return self._name.replace('/', '#')
 
+  
+class _TitledGroup(object):
+    """Generic superclass for titled groups of items.
 
-class ActionGroup(_ActionItem):
-    """Definice pojmenované logické skupiny akcí.
-
-    Skupiny akcí slouží k logickému seskupení souvisejících akcí.  V
-    uživatelském rozhraní se takto definované akce například zobrazí jako
-    samostatné podmenu v menu akcí.
+    Named groups can be used to logicaly group items into a hierarchy of
+    sections, which may be represented as hierarchical menus or another kind of
+    nested elements in the user interface.
 
     """
-    def __init__(self, title, *actions):
-        """Inicializuj instanci.
+                 
+    _ITEM_TYPE = None
+    """Defines the Python class that all group items must be instance of."""
+    _ALLOW_SUBSEQUENCES = False
+    """True if the group items may also be nested sequences.
 
-        Argumenty:
-        
-          title -- název skupiny jako řetězec
+    Nested sequences represent visually separated unnamed subgroups."""
 
-          actions -- obsah této skupiny.  Zde platí rekurzívně stejná pravidla
-            jako pro stejnojmenný argument konstruktoru ViewSpec.
+    def __init__(self, title, *items):
+        """Arguments:
+
+          title -- group title as basestring
+          items -- group items are passed as subsequent positional arguments of
+            group constructor
 
         """
-        assert isinstance(actions, (list, tuple))
+        assert isinstance(title, basestring), title
         if __debug__:
-            for x in actions:
-                if isinstance(x, (tuple, list)):
-                    for y in x:
-                        assert isinstance(y, (Action, ActionGroup))
+            for item in items:
+                if self._ALLOW_SUBSEQUENCES and isinstance(item, (tuple, list)):
+                    for x in item:
+                        assert isinstance(x, (self.__class__, self._ITEM_TYPE)), x
                 else:
-                    assert isinstance(x, (Action, ActionGroup))
-        self._actions = actions
-        super(ActionGroup, self).__init__(title)
+                    assert isinstance(item, (self.__class__, self._ITEM_TYPE)), item
+        self._title = title
+        self._items = items
         
-    def actions(self):
-        """Vrať seznam akcí jako tuple."""
-        return self._actions
+    def title(self):
+        return self._title
 
+    def items(self):
+        return self._items
+
+    @classmethod
+    def unnest(cls, items):
+        """Return the list of unnested end items within the given sequence of items.
+        
+        Unnests all nested groups or subsequences of items into one linear
+        sequence of end items.
+
+        """
+        result = []
+        for item in items:
+            if isinstance(item, cls):
+                result.extend(cls.unnest(item.items()))
+            elif isinstance(item, (tuple, list)):
+                result.extend(item)
+            else:
+                assert isinstance(item, cls._ITEM_TYPE)
+                result.append(item)
+        return result
+
+
+class ActionGroup(_TitledGroup):
+    """Specification of titled group of user interface actions.
+
+    Action groups can be used to group user interface actions into logical
+    sections.  More details in the documentation of the argument 'actions' in
+    'ViewSpec' constructor.
+
+    """
+    _ITEM_TYPE = Action
+    _ALLOW_SUBSEQUENCES = True
     
 class Profile(object):
     """Predefined form profile specification.
@@ -727,6 +757,18 @@ class Profile(object):
 
     def is_user_defined_profile(self):
         return self._id.startswith(pytis.form.FormProfileManager.USER_PROFILE_PREFIX)
+
+
+class ProfileGroup(_TitledGroup):
+    """Specification of a titled group of form profiles.
+
+    Profile groups can be used to group profiles in the user interface selector
+    into logical sections.  More details in the documentation of the argument
+    'profiles' in 'ViewSpec' constructor.
+
+    """
+    _ITEM_TYPE = Profile
+
     
 class AggregatedView(object):
     """Predefined aggregated view specification.
@@ -785,10 +827,10 @@ class AggregatedView(object):
 class Profiles(list):
     """A sequence of form profiles with an optional specification of the default profile.
 
-    Profiles can be passed as an ordinary sequence to 'ViewSpec' constructor's
-    'profiles' argument, but when you need to specify which profile is selected
-    by default in the user interface, you need to use this class and pass the
-    'default' argument to the constructor.
+    Form profiles can be passed as an ordinary sequence to 'ViewSpec'
+    constructor's 'profiles' argument, but when you need to specify which
+    profile is selected by default in the user interface, you need to use this
+    class and pass the 'default' argument to the constructor.
 
     """
     _ID_MATCHER = re.compile('[a-z0-9_]+')
@@ -800,14 +842,16 @@ class Profiles(list):
         """Arguments:
 
           profiles -- Profiles can be passed as a single argument (tuple or
-            list of 'Profile' instances) or as separate arguments (one
-            'Profile' instance per one positional argument).
+            list of 'Profile' or 'ProfileGroup' instances) or as separate
+            arguments (one 'Profile' or 'ProfileGroup' instance per one
+            positional argument).
+
           default -- identifier of the profile (from 'profiles') to be selected
             by default
           label -- optional label of the profile selector in the user interface
             (currently only used in web forms).  A default label will be used
             when None.
-        
+
         """
         default = kwargs.pop('default', None)
         label = kwargs.pop('label', None)
@@ -815,12 +859,12 @@ class Profiles(list):
             profiles = profiles[0]
         if __debug__:
             profile_ids = []
-            for p in profiles:
-                assert isinstance(p, Profile)
-                assert p.id() not in profile_ids, "Duplicate profile id '%s'" % p.id()
-                profile_ids.append(p.id())
+            for profile in ProfileGroup.unnest(profiles):
+                assert isinstance(profile, Profile), profile
+                assert profile.id() not in profile_ids, "Duplicate profile id '%s'" % profile.id()
+                profile_ids.append(profile.id())
             assert not kwargs, "Invalid keyword argument(s): %s" % ', '.join(kwargs.keys())
-            assert default is None or default in profile_ids, default
+            assert default is None or default in profile_ids, (default, profile_ids)
         super(Profiles, self).__init__(profiles)
         self._default = default
         self._label = label
@@ -833,7 +877,10 @@ class Profiles(list):
         """Return the user interface label of profile selector or None."""
         return self._label
 
-    
+    def unnest(self):
+        return ProfileGroup.unnest(self)
+
+
 class Filter(Profile):
     """Predefined filter specification to be used within 'FilterSet'.
 
@@ -1395,11 +1442,14 @@ class ViewSpec(object):
             returning the 'Style' for one row (based on its values).
 
           profiles -- predefined form profiles as 'Profiles' instance or an
-            ordinary sequence of 'Profile' instances.  If used the user
-            interface will allow the user to switch between given profiles
-            easily.  You will mostly need to use a 'Profiles' instance if you
-            want to specify which of the profiles is selected in the user
-            interface by default.
+            ordinary sequence of 'Profile' or 'ProfileGroup' instances which
+            will be automatically turned into a 'Profiles' instance.  If not
+            empty, the user interface will allow the user to switch between
+            given profiles easily.  You will mostly need to use a 'Profiles'
+            instance if you want to specify which of the profiles is selected
+            in the user interface by default.  Using 'ProfileGroup' instances
+            allows grouping of profiles into titled groups for presentation
+            purposes.
 
           filter_sets -- Deprecated: Use query_fields instead.
 
@@ -1523,7 +1573,7 @@ class ViewSpec(object):
         self._field_dict = dict([(f.id(), f) for f in fields])
         self._fields = tuple(fields)
         self._spec_name = spec_name
-        for action in self._linearize_actions(actions):
+        for action in ActionGroup.unnest(actions):
             rights = Specification.data_access_rights('action/%s/%s' %
                                                       (action.id(), self._spec_name,))
             if rights is None:
@@ -1544,7 +1594,7 @@ class ViewSpec(object):
         if __debug__:
             assert isinstance(actions, (tuple, list)), actions
             assert isinstance(layout, LayoutSpec), layout
-            action_ids = [action.id() for action in self._linearize_actions(actions)]
+            action_ids = [action.id() for action in ActionGroup.unnest(actions)]
             def recourse_group(group):
                 for item in group.items():
                     if isinstance(item, GroupSpec):
@@ -1624,7 +1674,7 @@ class ViewSpec(object):
         else:
             assert default_filter is None, default_filter
         if not isinstance(profiles, Profiles):
-            assert isinstance(profiles, (tuple, list))
+            assert isinstance(profiles, (tuple, list)), profiles
             profiles = Profiles(*profiles)
         assert isinstance(filter_sets, (tuple, list))
         assert isinstance(aggregations, (tuple, list))
@@ -1704,19 +1754,6 @@ class ViewSpec(object):
         self._query_fields = query_fields
         self._referer = referer
         
-    def _linearize_actions(self, spec):
-        actions = []
-        for x in spec:
-            if isinstance(x, Action):
-                actions.append(x)
-            elif isinstance(x, ActionGroup):
-                actions.extend(self._linearize_actions(x.actions()))
-            elif isinstance(x, (tuple, list)):
-                actions.extend(self._linearize_actions(x))
-            else:
-                raise ProgramError("Invalid action specification: %s" % x)
-        return actions
-    
     def clone(self, other):
         """Clone this instance by another 'ViewSpec' instance and return the cloned instance.
 
@@ -1764,10 +1801,10 @@ class ViewSpec(object):
         """Vrať tuple identifikátorů sloupců pro tabulkový formulář."""
         return self._columns
 
-    def actions(self, linear=False):
+    def actions(self, unnest=False):
         """Vrať specifikaci akcí."""
-        if linear:
-            return self._linearize_actions(self._actions)
+        if unnest:
+            return ActionGroup.unnest(self._actions)
         else:
             return self._actions
 
@@ -1824,7 +1861,6 @@ class ViewSpec(object):
         return self._row_style
 
     def profiles(self):
-        """Return predefined form profiles 'Profiles' instance."""
         return self._profiles
 
     def filter_sets(self):

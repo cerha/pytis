@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1586,6 +1586,22 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         if self._selected_profile_index is not None:
             pytis.form.LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index)
 
+    def _append_label(self, label):
+        i = self.GetItemCount()
+        self.InsertStringItem(i, label)
+        self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
+        self.SetItemData(i, -1)
+
+    def _append_profile(self, profile, index, select=False):
+        title = profile.title()
+        if profile.errors():
+            title += ' ' + _("(invalid)")
+        i = self.GetItemCount()
+        self.InsertStringItem(i, title)
+        self.SetItemData(i, index)
+        if select:
+            self.Select(i)
+
     # The following methods implement the ComboPopup API.
 
     def Create(self, parent):
@@ -1609,24 +1625,20 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         form = pytis.form.current_form()
         profiles = form.profiles()
         current = form.current_profile()
-        first_user_profile = None
+        def append_system_profiles(items):
+            for item in items:
+                if isinstance(item, pytis.presentation.Profile):
+                    profile = find(item.id(), profiles, key=lambda p: p.id())
+                    self._append_profile(profile, profiles.index(profile), profile is current)
+                else:
+                    self._append_label(item.title())
+                    append_system_profiles(item.items())
+        self._append_label('- ' + _("System Profiles") + ' -')
+        append_system_profiles(form.view().profiles())
+        self._append_label('- ' + _("User Profiles") + ' -')
         for i, profile in enumerate(profiles):
-            if ((profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX) and
-                 first_user_profile is None)):
-                first_user_profile = i
-            title = profile.title()
-            if profile.errors():
-                title += ' ' + _("(invalid)")
-            self.InsertStringItem(i, title)
-            self.SetItemData(i, i)
-            if profile is current:
-                self.Select(i)
-        if first_user_profile:
-            for i, label in ((0, _("System Profiles")),
-                             (first_user_profile + 1, _("User Profiles"))):
-                self.InsertStringItem(i, '- ' + label + ' -')
-                self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
-                self.SetItemData(i, -1)
+            if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX):
+                self._append_profile(profile, i, profile is current)
         self.SetColumnWidth(0, minWidth)
         self.SetSize((1, 1)) # Needed for GetViewRect to work consistently.
         width, height = self.GetViewRect()[2:] # Returned sizes are 16 px greater than the reality.
@@ -2162,7 +2174,7 @@ class IN(pytis.data.Operator):
                 manager = pytis.form.profile_manager()
                 condition, profile_name = manager.load_filter(spec_name, data_object, profile_id)
             else:
-                profile = find(profile_id, view_spec.profiles(), lambda p: p.id())
+                profile = find(profile_id, view_spec.profiles().unnest(), lambda p: p.id())
                 if not profile:
                     raise Exception("Profile %s of %s doesn't exist!" % (profile_id, spec_name))
                 condition = profile.filter()

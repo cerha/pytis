@@ -114,7 +114,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
         self._grid = None
         super(ListForm, self)._full_init(*args, **kwargs)
         # Nastav klávesové zkratky z kontextových menu.
-        for action in self._view.actions(linear=True):
+        for action in self._view.actions(unnest=True):
             if action.hotkey():
                 self.define_key(action.hotkey(), self.COMMAND_CONTEXT_ACTION, dict(action=action))
         # Závěrečné akce

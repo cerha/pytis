@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011, 2012, 2013 Brailcom, o.p.s.
+# Copyright (C) 2011, 2012, 2013, 2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -473,7 +473,7 @@ class FormProfileManager(UserSetttingsManager):
             return params, errors
         profiles = []
         # Load user customizations of system profiles first.
-        for profile in (default_profile,) + tuple(view_spec.profiles()):
+        for profile in (default_profile,) + tuple(view_spec.profiles().unnest()):
             # System profiles define the title and filter, which can not be
             # changed, so we only load saved form parameters if they are valid.
             # One of the reasons why filter of system profiles can not be
