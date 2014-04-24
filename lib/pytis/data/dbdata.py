@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2013 Brailcom, o.p.s.
+# Copyright (C) 2001-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -341,6 +341,18 @@ class DBConnectionPool:
             self._allocated_connections = {}
             self._pool = {}
         with_lock(self._lock, lfunction)
+
+    def info(self):
+        """Return list of current transaction commands of all known connections.
+
+        It's useful when debugging idle transactions or connection leaks.
+        
+        """
+        info = []
+        for connections in self._allocated_connections.values():
+            for c in connections.keys():
+                info.append(c.connection_info('transaction_commands'))
+        return info
 
 
 ### Specifikační třídy
