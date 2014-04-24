@@ -1306,22 +1306,20 @@ class ViewSpec(object):
           list_layout -- specification of list layout as a 'ListLayout'
             instance or None.
           
-          columns -- specifikace sloupců tabulkového formuláře, sekvence
-            indentifikátorů políček z 'fields'.  Pokud není určeno, bude
-            výchozí seznam sloupců obsahovat všechna políčka z fields, která
-            nemají 'column_width' nastaveno na nulu nebo 'disable_column' na
-            True.
-            
-          actions -- specifikace dostupných uživatelských akcí jako sekvence
-            instancí 'Action', vnořených sekvencí, nebo instancí 'ActionGroup'.
-            V nejjednodušším případě jde o prostý seznam instancí 'Action'.
-            Pokud chceme ovlivnit reprezentaci seznamu dostupných akcí v
-            uživatelském rozhraní, je možné akce seskupit do vnořenách tuplů či
-            listů.  Takto vytvořené skupiny akcí budou odděleny separátorem.
-            Dále je možné vytvořit vnořenou pojmenovanou skupinu
-            (reprezentovanou jako samostatné podmenu) použitím instance
-            'ActionGroup'.  Prvky v rámci každé 'ActionGroup' lze dále
-            seskupovat stejným způsobem.
+          columns -- specification of table form columns as a sequence of field
+            identifiers from 'fields'.  If not defined, the default column list
+            will include all fields which don't have 'column_width' set to zero
+            or 'disable_column' to true.
+
+          actions -- specification of available user intercafe actions as a
+            sequence of 'Action' instances, nested sequences, or 'ActionGroup'
+            instances.  Using 'ActionGroup' instances allows grouping of
+            actions into titled groups for presentation purposes.  Titled
+            groups are typically represented as nested submenus.  Nested
+            sequences (tuples or lists), on the other hand, may be used to
+            create unnamed groups which are visually separated from their
+            neighbours.  Nested groups may be used inside other groups
+            recursively.
                         
           sorting -- default sorting in the same format as accepted by the
             'sort' argument of 'pytis.data.Data.select()'.  If None, the
