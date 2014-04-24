@@ -247,17 +247,23 @@ class FileResolver(Resolver):
         super(FileResolver, self).__init__()
         self._path = xlist(path)
         
-    def _get_module(self, name):
-        #module = sys.modules.get(name)
+    def _get_module(self, name, path=None):
+        if path is None:
+            path = self._path
+        name_list = name.split('/')
+        top_name = name_list[0]
         try:
-            file, pathname, descr = imp.find_module(name, self._path)
+            file, pathname, descr = imp.find_module(top_name, path)
         except ImportError as e:
-            raise ResolverFileError(name, self._path, e)
+            raise ResolverFileError(top_name, path, e)
         else:
             try:
-                module = imp.load_module(name, file, pathname, descr)
+                module = imp.load_module(top_name, file, pathname, descr)
             finally:
-                file.close()
+                if file is not None:
+                    file.close()
+        if len(name_list) > 1:
+            module = self._get_module(string.join(name_list[1:], '/'), path=module.__path__)
         return module
 
 
