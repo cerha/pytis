@@ -152,7 +152,7 @@ class Form(lcg.Content):
                      ('__invoked_from', self.__class__.__name__),
                      ] + action.kwargs().items()] +
                    [g.button(g.span(action.title()), title=action.descr(),
-                             disabled=not enabled,
+                             disabled=not enabled, type='submit',
                              cls='action-' + action.id() + (not enabled and ' disabled' or ''))],
                    action=uri)
             for action, enabled in self._visible_actions(context, record)]
@@ -570,10 +570,10 @@ class _SubmittableForm(Form):
             hidden.append(('__invoked_from', invoked_from))
         content = [g.hidden(name, value) for name, value in hidden] + \
             [g.button(g.span(label), name=name, value='1' if name else None,
-                      title=_("Submit the form"))
+                      type='submit', title=_("Submit the form"))
              for name, label in self._submit_buttons]
         if self._show_cancel_button:
-            content.append(g.button(g.span(_("Cancel")), name='_cancel', value='1'))
+            content.append(g.button(g.span(_("Cancel")), type='submit', name='_cancel', value='1'))
         if self._show_reset_button:
             content.append(g.button(g.span(_("Reset")), type='reset', title=_("Undo all changes")))
         return [g.div(content, cls='submit')]
@@ -1780,7 +1780,8 @@ class BrowseForm(LayoutForm):
         show_search_field = self._show_search_field
         if show_filters and not bottom:
             # Translators: Button for manual filter invocation.
-            submit_button = g.button(g.span(_("Change filters")), cls='apply-filters')
+            submit_button = g.button(g.span(_("Change filters")), type='submit', 
+                                     cls='apply-filters')
             if self._immediate_filters and not self._query_fields:
                 onchange = 'this.form.submit(); return true'
                 # Leave the submit button in place for non-Javascript browsers.
@@ -1842,6 +1843,7 @@ class BrowseForm(LayoutForm):
                 offset_id = 'offset-' + html_id
                 if self._allow_search_field:
                     search_button = g.button(g.span(_("Search")), cls='search-button',
+                                             type='submit',
                                              style=show_search_field and 'display:none' or None)
                 else:
                     search_button = None
@@ -1858,11 +1860,11 @@ class BrowseForm(LayoutForm):
                                      g.strong(str(pages))), cls="offset"),
                              g.span((g.button(g.span(_("Previous")), name='prev', value='1',
                                               title=_("Go to previous page"), disabled=(page == 0),
-                                              cls='prev-page-button'),
+                                              type='submit', cls='prev-page-button'),
                                      g.button(g.span(_("Next")), name='next', value='1',
                                               title=_("Go to next page"),
                                               disabled=(page + 1) * limit >= count,
-                                              cls='next-page-button'),
+                                              type='submit', cls='next-page-button'),
                                      ) + (search_button and (search_button,) or ()),
                                     cls="buttons"))
             limit_id = 'limit-' + html_id
@@ -1873,7 +1875,8 @@ class BrowseForm(LayoutForm):
                                           onchange='this.form.submit(); return true',
                                           options=[(str(i), i) for i in limits])),
                                 cls='limit'),
-                         g.noscript(g.button(g.span(_("Go")), cls='goto-page-button')))
+                         g.noscript(g.button(g.span(_("Go")), type='submit',
+                                             cls='goto-page-button')))
             if controls:
                 cls = 'paging-controls' + (pages == 1 and ' one-page' or '')
                 content.append(g.div(controls, cls=cls))
@@ -1886,8 +1889,8 @@ class BrowseForm(LayoutForm):
                              cls='text-search-field'),
                      g.hidden('show-search-field', show_search_field and '1' or ''),
                      # Translators: Search button label.
-                     g.button(g.span(_("Search")), cls='search-button'),
-                     g.button(g.span(_("Cancel")), cls='cancel-search')),
+                     g.button(g.span(_("Search")), type='submit', cls='search-button'),
+                     g.button(g.span(_("Cancel")), type='submit', cls='cancel-search')),
                     cls='query' + (show_filters and ' with-filter' or ''),
                     style=not show_search_field and 'display:none' or None,
                 )
