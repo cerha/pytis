@@ -2,7 +2,7 @@
 
 # Formátovací prvky
 #
-# Copyright (C) 2002-2013 Brailcom, o.p.s.
+# Copyright (C) 2002-2014 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,6 +51,8 @@ def _something_to_lcg(something):
     elif isinstance(something, (list, tuple,)):
         result = lcg.Container([_something_to_lcg(s) for s in something],
                                orientation=lcg.Orientation.HORIZONTAL)
+    elif isinstance(something, lcg.Content):
+        result = something
     else:
         result = something.lcg()
     return result

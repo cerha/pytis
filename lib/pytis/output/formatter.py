@@ -499,7 +499,7 @@ class LCGFormatter(object):
             body = []
         elif not isinstance(body, (list, tuple,)):
             body = [body]
-        children = ([document.lcg_document(globals=lcg_globals) for document in body] +
+        children = ([document_.lcg_document(globals=lcg_globals) for document_ in body] +
                     children)
         lcg_content = lcg.ContentNode(id='__dummy', content=lcg.Content(), children=children,
                                       **self._body_parameters)
