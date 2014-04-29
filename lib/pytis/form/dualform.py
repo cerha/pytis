@@ -30,7 +30,7 @@ import wx
 
 import pytis.data
 from pytis.presentation import Orientation
-from pytis.util import EVENT, log, translations
+from pytis.util import EVENT, log, translations, ProgramError
 from dialog import MultiQuestion
 from event import wx_callback
 from form import BrowsableShowForm, EditForm, Form, Refreshable, ShowForm, WebForm
@@ -100,11 +100,9 @@ class DualForm(Form, Refreshable):
         super(DualForm, self)._init_attributes()
         self._unprocessed_kwargs = kwargs
         self._active_form = None
-        self._orientation = self._initial_orientation()
         self._splitter_position_initialized = False
 
     def _initial_orientation(self):
-        #return Orientation.VERTICAL
         return self._view.orientation()
 
     def _create_view_spec(self):
@@ -125,15 +123,18 @@ class DualForm(Form, Refreshable):
         # Vytvoř formuláře
         self._main_form = self._create_main_form(splitter, **self._unprocessed_kwargs)
         self._side_form = self._create_side_form(splitter)
-        if self._orientation == Orientation.HORIZONTAL:
+        orientation = self._initial_orientation()
+        if orientation == Orientation.HORIZONTAL:
             splitter.SplitHorizontally(self._main_form, self._side_form)
-        else:
+        elif orientation == Orientation.VERTICAL:
             splitter.SplitVertically(self._main_form, self._side_form)
+        else:
+            raise ProgramError("Invalid dual form orientation: %r" % orientation)
         if isinstance(self._main_form, EditForm):
             gravity = 0
         elif isinstance(self._side_form, EditForm):
             gravity = 1
-        elif self._orientation == Orientation.HORIZONTAL:
+        elif orientation == Orientation.HORIZONTAL:
             gravity = 0.5
         else:
             gravity = 0
@@ -1153,6 +1154,8 @@ class MultiBrowseDualForm(BrowseDualForm):
     class MainForm(BrowseForm):
         def bindings(self):
             return self._view.bindings()
+        def orientation(self):
+            return self._view.orientation()
         def _print_form_kwargs(self):
             return dict(form_bindings=self.bindings())
         def filter(self, *args, **kwargs):
@@ -1171,7 +1174,7 @@ class MultiBrowseDualForm(BrowseDualForm):
         return None
     
     def _initial_orientation(self):
-        return Orientation.HORIZONTAL
+        return self._main_form.orientation()
         
     def _default_sash_position(self, total_size):
         return total_size.height / 2

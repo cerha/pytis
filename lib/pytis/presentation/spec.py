@@ -1468,7 +1468,17 @@ class ViewSpec(object):
           aggregated_views -- specification of predefined agregated views as a
             sequence of 'AggregatedView' instances.
 
-          bindings -- a sequence of binding specifications as 'Binding' instances.
+          bindings -- a sequence of binding specifications as 'Binding'
+            instances.  Defines the related side forms displayed typically as
+            notebook tabs under the main form (or on the right side when
+            'orientation' is vertical).
+
+          orientation -- orientation of the splitter between the main form and
+            side forms (defined by 'bindings').  One of the 'Orientation' class
+            constants.  The defualt orientation is horizontal, so the side
+            forms are displayed under the main form.  When set to
+            'Orientation.VERTICAL', the side forms will be displayed on the
+            right side.
 
           folding -- 'FoldableForm.Folding' instance defining initial
             folding.  'None' means use the standard folding.
@@ -1553,8 +1563,8 @@ class ViewSpec(object):
               redirect=None, focus_field=None, description=None, help=None, row_style=None,
               profiles=(), filters=(), default_filter=None, filter_sets=(),
               aggregations=(), grouping_functions=(), aggregated_views=(), bindings=(),
-              initial_folding=None, folding=None, arguments=None, argument_provider=None,
-              condition_provider=None,
+              orientation=Orientation.HORIZONTAL, folding=None, initial_folding=None,
+              arguments=None, argument_provider=None, condition_provider=None, 
               query_fields=None, referer=None, spec_name='', public=None):
         def err(msg, *args):
             """Return assertion error message."""
@@ -1701,6 +1711,7 @@ class ViewSpec(object):
                                if attr.startswith('AGG_')]
             for fs in filter_sets:
                 assert isinstance(fs, FilterSet), fs
+        assert orientation in public_attributes(Orientation)
         assert cleanup is None or isinstance(cleanup, collections.Callable)
         assert on_new_record is None or isinstance(on_new_record, collections.Callable)
         assert on_edit_record is None or isinstance(on_edit_record, collections.Callable)
@@ -1745,6 +1756,7 @@ class ViewSpec(object):
         self._grouping_functions = tuple(grouping_functions)
         self._aggregated_views = tuple(aggregated_views)
         self._bindings = tuple(bindings)
+        self._orientation = orientation
         self._folding = folding or initial_folding # initial_folding is deprecated!
         self._arguments = arguments
         self._argument_provider = argument_provider
@@ -1880,6 +1892,9 @@ class ViewSpec(object):
     def bindings(self):
         """Return bindings as a tuple."""
         return self._bindings
+
+    def orientation(self):
+        return self._orientation
 
     def folding(self):
         """Return initial folding as a 'FoldableForm.Folding' instance or 'None'."""
