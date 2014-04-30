@@ -604,7 +604,7 @@ class _TitledGroup(object):
             if isinstance(item, cls):
                 result.extend(cls.unnest(item.items()))
             elif isinstance(item, (tuple, list)):
-                result.extend(item)
+                result.extend(cls.unnest(item))
             else:
                 assert isinstance(item, cls._ITEM_TYPE)
                 result.append(item)
