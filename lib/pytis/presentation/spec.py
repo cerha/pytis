@@ -621,6 +621,7 @@ class ActionGroup(_TitledGroup):
     """
     _ITEM_TYPE = Action
     _ALLOW_SUBSEQUENCES = True
+
     
 class Profile(object):
     """Predefined form profile specification.
