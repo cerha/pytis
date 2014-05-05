@@ -1634,6 +1634,8 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
                     self._append_label(item.title())
                     append_system_profiles(item.items())
         self._append_label('- ' + _("System Profiles") + ' -')
+        # Default profile is always the first in form.profiles().
+        self._append_profile(profiles[0], 0, profiles[0] is current)
         append_system_profiles(form.view().profiles())
         self._append_label('- ' + _("User Profiles") + ' -')
         for i, profile in enumerate(profiles):
