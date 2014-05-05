@@ -3164,7 +3164,7 @@ class BrowseForm(FoldableForm):
                 cmd = self.COMMAND_CONTEXT_ACTION(action=x)
                 items.append(MItem(x.title(raw=True), command=cmd, help=x.descr()))
             elif isinstance(x, ActionGroup):
-                items.append(Menu(x.title(), self._action_mitems(x.actions())))
+                items.append(Menu(x.title(), self._action_mitems(x.items())))
             elif isinstance(x, (types.TupleType, types.ListType)):
                 if items:
                     items.append(MSeparator())
