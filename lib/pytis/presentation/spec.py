@@ -5000,7 +5000,7 @@ class Specification(object):
             descr = None
             if c.label():
                 descr = c.doc()
-            editable = Editable.ALWAYS
+            editable = None # Use the default
             type_ = c.type()
             if isinstance(type_, pytis.data.Serial):
                 editable = Editable.NEVER
