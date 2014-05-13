@@ -1586,14 +1586,16 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         if self._selected_profile_index is not None:
             pytis.form.LookupForm.COMMAND_APPLY_PROFILE.invoke(index=self._selected_profile_index)
 
-    def _append_label(self, label):
+    def _append_label(self, label, toplevel=True):
         i = self.GetItemCount()
         self.InsertStringItem(i, label)
         self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
+        if toplevel:
+            self.SetItemFont(i, wx.Font(self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL, wx.BOLD))
         self.SetItemData(i, -1)
 
-    def _append_profile(self, profile, index, select=False):
-        title = profile.title()
+    def _append_profile(self, profile, index, select=False, indent=''):
+        title = indent + profile.title()
         if profile.errors():
             title += ' ' + _("(invalid)")
         i = self.GetItemCount()
@@ -1625,19 +1627,21 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         form = pytis.form.current_form()
         profiles = form.profiles()
         current = form.current_profile()
-        def append_system_profiles(items):
+        def append_system_profiles(items, level=0):
+            indent = 3 * level * ' '
             for item in items:
                 if isinstance(item, pytis.presentation.Profile):
                     profile = find(item.id(), profiles, key=lambda p: p.id())
-                    self._append_profile(profile, profiles.index(profile), profile is current)
+                    self._append_profile(profile, profiles.index(profile), profile is current,
+                                         indent=indent)
                 else:
-                    self._append_label(item.title())
-                    append_system_profiles(item.items())
-        self._append_label('- ' + _("System Profiles") + ' -')
+                    self._append_label(indent + item.title(), False)
+                    append_system_profiles(item.items(), level=level + 1)
+        self._append_label(_("System Profiles"))
         # Default profile is always the first in form.profiles().
         self._append_profile(profiles[0], 0, profiles[0] is current)
         append_system_profiles(form.view().profiles())
-        self._append_label('- ' + _("User Profiles") + ' -')
+        self._append_label(_("User Profiles"))
         for i, profile in enumerate(profiles):
             if profile.id().startswith(FormProfileManager.USER_PROFILE_PREFIX):
                 self._append_profile(profile, i, profile is current)
